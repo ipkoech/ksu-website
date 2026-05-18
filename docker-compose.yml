@@ -1,0 +1,226 @@
+version: "3.9"
+
+# ── Shared network ────────────────────────────────────────────────────────────
+networks:
+  ksu:
+    driver: bridge
+
+# ── Named volumes ─────────────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+  redis_data:
+  uploads_data:
+
+services:
+
+  # ── API Gateway ──────────────────────────────────────────────────────────────
+  gateway:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - legacy
+      - main
+      - research
+      - library
+    networks: [ksu]
+    restart: unless-stopped
+
+  # ── PostgreSQL (shared DB, separate schemas) ──────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ksu
+      POSTGRES_USER: ksu
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-schemas.sql:/docker-entrypoint-initdb.d/init-schemas.sql:ro
+    ports:
+      - "5432:5432"
+    networks: [ksu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ksu -d ksu"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis (shared: cache + Celery queues) ─────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks: [ksu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Legacy Flask monolith (kept running during migration) ─────────────────────
+  legacy:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    env_file: ./api/.env
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [ksu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Main Site Service (FastAPI) ────────────────────────────────────────────────
+  main:
+    build:
+      context: ./services/main
+      dockerfile: Dockerfile
+    env_file: ./services/main/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://ksu:${POSTGRES_PASSWORD:-secret}@postgres:5432/ksu
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [ksu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Research Service (FastAPI) ─────────────────────────────────────────────────
+  research:
+    build:
+      context: ./services/research
+      dockerfile: Dockerfile
+    env_file: ./services/research/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://ksu:${POSTGRES_PASSWORD:-secret}@postgres:5432/ksu
+      REDIS_URL: redis://redis:6379/2
+      MAIN_SERVICE_URL: http://main:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      main:
+        condition: service_healthy
+    networks: [ksu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Library Service (FastAPI) ──────────────────────────────────────────────────
+  library:
+    build:
+      context: ./services/library
+      dockerfile: Dockerfile
+    env_file: ./services/library/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://ksu:${POSTGRES_PASSWORD:-secret}@postgres:5432/ksu
+      REDIS_URL: redis://redis:6379/1
+      MAIN_SERVICE_URL: http://main:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      main:
+        condition: service_healthy
+    networks: [ksu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Celery workers (one per service) ──────────────────────────────────────────
+  celery-legacy:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    command: celery -A celery_worker.celery_app worker --loglevel=info -Q legacy
+    env_file: ./api/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [ksu]
+    restart: unless-stopped
+
+  celery-main:
+    build:
+      context: ./services/main
+      dockerfile: Dockerfile
+    command: celery -A app.tasks worker --loglevel=info -Q main
+    env_file: ./services/main/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://ksu:${POSTGRES_PASSWORD:-secret}@postgres:5432/ksu
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [ksu]
+    restart: unless-stopped
+
+  celery-research:
+    build:
+      context: ./services/research
+      dockerfile: Dockerfile
+    command: celery -A app.tasks worker --loglevel=info -Q research
+    env_file: ./services/research/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://ksu:${POSTGRES_PASSWORD:-secret}@postgres:5432/ksu
+      REDIS_URL: redis://redis:6379/2
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [ksu]
+    restart: unless-stopped
+
+  celery-library:
+    build:
+      context: ./services/library
+      dockerfile: Dockerfile
+    command: celery -A app.tasks worker --loglevel=info -Q library
+    env_file: ./services/library/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://ksu:${POSTGRES_PASSWORD:-secret}@postgres:5432/ksu
+      REDIS_URL: redis://redis:6379/1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [ksu]
+    restart: unless-stopped

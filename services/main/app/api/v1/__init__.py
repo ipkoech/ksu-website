@@ -1,0 +1,96 @@
+"""API v1 route registration."""
+
+from fastapi import FastAPI
+
+from ...routes.v1.health import router as health_router
+from ...routes.v1.internal import router as internal_router
+from .accommodations import router as accommodations_router
+from .admin import router as admin_router
+from .admissions import router as admissions_router
+from .announcements import router as announcements_router
+from .alumni import router as alumni_router
+from .alumni_associations import router as alumni_associations_router
+from .arts_culture import router as arts_culture_router
+from .auth import router as auth_router
+from .blogs import router as blogs_router
+from .campuses import router as campuses_router
+from .clubs import router as clubs_router
+from .contacts import router as contacts_router
+from .departments import router as departments_router
+from .divisions import router as divisions_router
+from .documents import router as documents_router
+from .events import router as events_router
+from .exchange_programmes import router as exchange_programmes_router
+from .faqs import router as faqs_router
+from .governance import router as governance_router
+from .intakes import router as intakes_router
+from .media import router as media_router
+from .news import router as news_router
+from .newsletters import router as newsletters_router
+from .notifications import router as notifications_router
+from .partners import router as partners_router
+from .persons import router as persons_router
+from .policies import router as policies_router
+from .public_leadership import router as public_leadership_router
+from .programmes import router as programmes_router
+from .search import router as search_router
+from .schools import router as schools_router
+from .sliders import router as sliders_router
+from .social_posts import router as social_posts_router
+from .sports import router as sports_router
+from .staff import router as staff_router
+from .settings import router as settings_router
+from .student_governance import router as student_governance_router
+from .support import router as support_router
+from .testimonials import router as testimonials_router
+from .university_info import router as university_info_router
+from .users import router as users_router
+from .wings import router as wings_router
+
+
+def register_routes(app: FastAPI) -> None:
+    """Register all API v1 routes."""
+    app.include_router(health_router, prefix="/api/v1", tags=["Health"])
+    app.include_router(internal_router, prefix="/api/v1/internal", tags=["Internal"])
+    app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
+    app.include_router(news_router, prefix="/api/v1/news", tags=["Content"])
+    app.include_router(blogs_router, prefix="/api/v1/blogs", tags=["Content"])
+    app.include_router(announcements_router, prefix="/api/v1/announcements", tags=["Content"])
+    app.include_router(events_router, prefix="/api/v1/events", tags=["Content"])
+    app.include_router(sliders_router, prefix="/api/v1/sliders", tags=["Content"])
+    app.include_router(newsletters_router, prefix="/api/v1/newsletters", tags=["Marketing"])
+    app.include_router(testimonials_router, prefix="/api/v1/testimonials", tags=["Marketing"])
+    app.include_router(social_posts_router, prefix="/api/v1/social-posts", tags=["Marketing"])
+    app.include_router(partners_router, prefix="/api/v1/partners", tags=["Research"])
+    app.include_router(users_router, prefix="/api/v1/users", tags=["Users"])
+    app.include_router(search_router, prefix="/api/v1/search", tags=["Search"])
+    app.include_router(settings_router, prefix="/api/v1/settings", tags=["System"])
+    app.include_router(university_info_router, prefix="/api/v1/university-info", tags=["University"])
+    app.include_router(notifications_router, prefix="/api/v1/notifications", tags=["Users"])
+    app.include_router(persons_router, prefix="/api/v1/persons", tags=["Persons"])
+    app.include_router(staff_router, prefix="/api/v1/staff", tags=["Staff"])
+    app.include_router(governance_router, prefix="/api/v1/governance", tags=["Governance"])
+    app.include_router(divisions_router, prefix="/api/v1/divisions", tags=["Organization"])
+    app.include_router(wings_router, prefix="/api/v1/wings", tags=["Organization"])
+    app.include_router(schools_router, prefix="/api/v1/schools", tags=["Academic"])
+    app.include_router(departments_router, prefix="/api/v1/departments", tags=["Academic"])
+    app.include_router(campuses_router, prefix="/api/v1/campuses", tags=["Academic"])
+    app.include_router(programmes_router, prefix="/api/v1/programmes", tags=["Admissions"])
+    app.include_router(intakes_router, prefix="/api/v1/intakes", tags=["Admissions"])
+    app.include_router(admissions_router, prefix="/api/v1/admissions", tags=["Admissions"])
+    app.include_router(clubs_router, prefix="/api/v1/clubs", tags=["Student Life"])
+    app.include_router(accommodations_router, prefix="/api/v1/accommodations", tags=["Student Life"])
+    app.include_router(sports_router, prefix="/api/v1/sports-facilities", tags=["Student Life"])
+    app.include_router(arts_culture_router, prefix="/api/v1/arts-culture", tags=["Student Life"])
+    app.include_router(student_governance_router, prefix="/api/v1/student-governance", tags=["Student Life"])
+    app.include_router(policies_router, prefix="/api/v1/policies", tags=["Documents"])
+    app.include_router(documents_router, prefix="/api/v1/documents", tags=["Documents"])
+    app.include_router(alumni_router, prefix="/api/v1/alumni", tags=["Alumni"])
+    app.include_router(alumni_associations_router, prefix="/api/v1/alumni-associations", tags=["Alumni"])
+    app.include_router(exchange_programmes_router, prefix="/api/v1/exchange-programmes", tags=["Exchange"])
+    app.include_router(faqs_router, prefix="/api/v1/faqs", tags=["Support"])
+    app.include_router(contacts_router, prefix="/api/v1/contacts", tags=["Support"])
+    app.include_router(support_router, prefix="/api/v1/support", tags=["Support"])
+    app.include_router(media_router, prefix="/api/v1/media", tags=["Media"])
+    app.include_router(admin_router, prefix="/api/v1/admin", tags=["Admin"])
+    app.include_router(public_leadership_router, prefix="/api/v1/public/leadership", tags=["Public"])

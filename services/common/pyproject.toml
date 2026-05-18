@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ksu-common"
+version = "0.1.0"
+description = "Shared utilities for KSU microservices"
+requires-python = ">=3.12"
+dependencies = [
+    "PyJWT>=2.8.0",
+    "argon2-cffi>=23.1.0",
+    "fastapi>=0.115.0",
+    "sqlalchemy>=2.0.0",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
+    "redis>=5.0.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["ksu_common"]

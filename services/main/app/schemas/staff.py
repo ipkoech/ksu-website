@@ -1,0 +1,78 @@
+"""Staff assignment schemas."""
+
+from __future__ import annotations
+
+import uuid
+from datetime import date
+
+from pydantic import Field
+
+from .base import BaseReadSchema, BaseSchema
+
+
+class StaffAssignmentCreate(BaseSchema):
+    person_id: uuid.UUID
+    user_id: uuid.UUID | None = None
+    entity_type: str = Field(min_length=1, max_length=32)
+    entity_id: uuid.UUID | None = None
+    role: str = Field(min_length=1, max_length=64)
+    title: str | None = Field(default=None, max_length=255)
+    hierarchy_level: int = Field(ge=1, le=11)
+    reports_to_id: uuid.UUID | None = None
+    is_primary: bool = False
+    is_acting: bool = False
+    is_public: bool = True
+    start_date: date | None = None
+    end_date: date | None = None
+    term_years: int | None = Field(default=None, ge=1, le=10)
+    term_renewable: bool = True
+    show_term_dates: bool = False
+    status: str = Field(default="active", max_length=32)
+    display_order: int = 100
+    notes: str | None = None
+
+
+class StaffAssignmentUpdate(BaseSchema):
+    user_id: uuid.UUID | None = None
+    entity_type: str | None = Field(default=None, min_length=1, max_length=32)
+    entity_id: uuid.UUID | None = None
+    role: str | None = Field(default=None, min_length=1, max_length=64)
+    title: str | None = Field(default=None, max_length=255)
+    hierarchy_level: int | None = Field(default=None, ge=1, le=11)
+    reports_to_id: uuid.UUID | None = None
+    is_primary: bool | None = None
+    is_acting: bool | None = None
+    is_public: bool | None = None
+    start_date: date | None = None
+    end_date: date | None = None
+    term_years: int | None = Field(default=None, ge=1, le=10)
+    term_renewable: bool | None = None
+    show_term_dates: bool | None = None
+    status: str | None = Field(default=None, max_length=32)
+    display_order: int | None = None
+    notes: str | None = None
+
+
+class StaffAssignmentRead(BaseReadSchema):
+    person_id: uuid.UUID
+    user_id: uuid.UUID | None = None
+    entity_type: str
+    entity_id: uuid.UUID | None = None
+    role: str
+    title: str | None = None
+    hierarchy_level: int
+    reports_to_id: uuid.UUID | None = None
+    is_primary: bool
+    is_acting: bool
+    is_public: bool
+    start_date: date | None = None
+    end_date: date | None = None
+    term_years: int | None = None
+    term_renewable: bool
+    show_term_dates: bool
+    status: str
+    display_order: int
+    notes: str | None = None
+    role_display: str | None = None
+    term_display: str | None = None
+    is_current: bool | None = None

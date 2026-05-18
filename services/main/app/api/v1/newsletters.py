@@ -1,0 +1,79 @@
+"""Newsletter endpoints."""
+
+from __future__ import annotations
+
+import uuid
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+
+from ksu_common import cached_public
+from ksu_common.schemas.responses import success
+
+from ...deps import CurrentUser, DbSession, require_scope
+from ...models import Newsletter
+from ...schemas import NewsletterCreate, NewsletterSubscriberCreate, NewsletterUpdate
+from ...services import NewsletterService, NewsletterSubscriberService
+from ._fields import FieldSelection, FieldsDep, build_selector
+
+router = APIRouter()
+
+
+@router.get("")
+@cached_public(timeout=300)
+async def list_newsletters(
+    db: DbSession,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    q: str | None = None,
+    fields: FieldSelection = FieldsDep,
+):
+    selector = build_selector(Newsletter, fields)
+    result = await NewsletterService.list(db, page=page, per_page=per_page, q=q, load_options=selector.load_options)
+    return success(data=selector.apply(result.items), meta=result.meta)
+
+
+@router.get("/{slug}")
+@cached_public(timeout=300)
+async def get_newsletter(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
+    selector = build_selector(Newsletter, fields)
+    item = await NewsletterService.get_by_slug(db, slug, load_options=selector.load_options)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Newsletter not found")
+    return success(data=selector.apply(item))
+
+
+@router.post("/subscribe", status_code=status.HTTP_201_CREATED)
+async def subscribe_newsletter(data: NewsletterSubscriberCreate, db: DbSession):
+    item = await NewsletterSubscriberService.subscribe(db, **data.model_dump())
+    return success(data=item, message="Subscription created")
+
+
+@router.post("/unsubscribe")
+async def unsubscribe_newsletter(email: str, db: DbSession):
+    item = await NewsletterSubscriberService.unsubscribe(db, email)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Subscriber not found")
+    return success(data=item, message="Subscription cancelled")
+
+
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admin:*"))])
+async def create_newsletter(data: NewsletterCreate, db: DbSession, _: CurrentUser):
+    item = await NewsletterService.create(db, **data.model_dump())
+    return success(data=item, message="Newsletter created")
+
+
+@router.patch("/{item_id}", dependencies=[Depends(require_scope("admin:*"))])
+async def update_newsletter(item_id: uuid.UUID, data: NewsletterUpdate, db: DbSession, _: CurrentUser):
+    item = await NewsletterService.get_by_id(db, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Newsletter not found")
+    item = await NewsletterService.update(db, item, **data.model_dump(exclude_unset=True))
+    return success(data=item, message="Newsletter updated")
+
+
+@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+async def delete_newsletter(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
+    item = await NewsletterService.get_by_id(db, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Newsletter not found")
+    await NewsletterService.delete(db, item)

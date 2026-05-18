@@ -1,0 +1,173 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import Link from "next/link";
+import {
+  Button,
+  PasswordInput,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  Alert,
+  AlertDescription,
+} from "@ksu/ui/components";
+import { ArrowLeft, CheckCircle } from "lucide-react";
+
+const resetPasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+      .regex(/[0-9]/, "Password must contain at least one number"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
+type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
+
+export function ResetPasswordForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const form = useForm<ResetPasswordValues>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: { password: "", confirmPassword: "" },
+  });
+
+  async function onSubmit(values: ResetPasswordValues) {
+    if (!token) {
+      setError("Invalid or missing reset token");
+      return;
+    }
+
+    setError(null);
+
+    try {
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token,
+          new_password: values.password,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || "Failed to reset password");
+      }
+
+      setSuccess(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    }
+  }
+
+  if (!token) {
+    return (
+      <div className="space-y-4 text-center">
+        <Alert variant="destructive">
+          <AlertDescription>
+            Invalid or missing reset token. Please request a new password reset link.
+          </AlertDescription>
+        </Alert>
+        <Button asChild variant="outline" className="w-full">
+          <Link href="/forgot-password">Request New Link</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  if (success) {
+    return (
+      <div className="space-y-4 text-center">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
+          <CheckCircle className="h-6 w-6 text-success" />
+        </div>
+        <div>
+          <h3 className="font-semibold">Password Reset Successful</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            Your password has been reset. You can now sign in with your new password.
+          </p>
+        </div>
+        <Button asChild className="w-full">
+          <Link href="/login">Sign In</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>New Password</FormLabel>
+              <FormControl>
+                <PasswordInput placeholder="Enter new password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="confirmPassword"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Confirm Password</FormLabel>
+              <FormControl>
+                <PasswordInput placeholder="Confirm new password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button
+          type="submit"
+          className="w-full"
+          loading={form.formState.isSubmitting}
+        >
+          Reset Password
+        </Button>
+
+        <div className="text-center">
+          <Link
+            href="/login"
+            className="inline-flex items-center text-sm text-primary hover:underline"
+          >
+            <ArrowLeft className="mr-1 h-3 w-3" />
+            Back to login
+          </Link>
+        </div>
+      </form>
+    </Form>
+  );
+}

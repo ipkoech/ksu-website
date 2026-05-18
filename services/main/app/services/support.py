@@ -1,0 +1,177 @@
+"""Services for FAQ, contacts, and tickets."""
+
+from __future__ import annotations
+
+import uuid
+from datetime import datetime, timezone
+from typing import Sequence
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from ksu_common import PaginatedResult
+
+from ..models import ContactDirectory, FAQ, SupportTicket
+from ._base import apply_updates, paginate_query
+
+
+def _apply_scope(query, model, *, scope_type=None, scope_id=None, is_public=None, is_main=None):
+    if scope_type is not None:
+        query = query.where(model.scope_type == scope_type)
+    if scope_id is not None:
+        query = query.where(model.scope_id == scope_id)
+    if is_public is not None and hasattr(model, "is_public"):
+        query = query.where(model.is_public.is_(is_public))
+    if is_main is not None and hasattr(model, "is_main"):
+        query = query.where(model.is_main.is_(is_main))
+    return query
+
+
+class FAQService:
+    @staticmethod
+    async def get_by_id(db: AsyncSession, faq_id: uuid.UUID, *, load_options: Sequence = ()) -> FAQ | None:
+        query = FAQ.active_query().where(FAQ.id == faq_id)
+        if load_options:
+            query = query.options(*load_options)
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def create(db: AsyncSession, **data) -> FAQ:
+        faq = FAQ(**data)
+        db.add(faq)
+        await db.flush()
+        return faq
+
+    @staticmethod
+    async def update(db: AsyncSession, faq: FAQ, **data) -> FAQ:
+        apply_updates(faq, **data)
+        await db.flush()
+        return faq
+
+    @staticmethod
+    async def list(
+        db: AsyncSession,
+        *,
+        page: int = 1,
+        per_page: int = 20,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
+        is_public: bool | None = True,
+        is_main: bool | None = None,
+        status: str | None = "published",
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        query = FAQ.active_query().order_by(FAQ.display_order.asc(), FAQ.created_at.desc())
+        if load_options:
+            query = query.options(*load_options)
+        query = _apply_scope(query, FAQ, scope_type=scope_type, scope_id=scope_id, is_public=is_public, is_main=is_main)
+        if status is not None:
+            query = query.where(FAQ.status == status)
+        return await paginate_query(db, query, page=page, per_page=per_page)
+
+    @staticmethod
+    async def delete(db: AsyncSession, faq: FAQ):
+        faq.soft_delete()
+        await db.flush()
+
+
+class ContactService:
+    @staticmethod
+    async def get_by_id(db: AsyncSession, contact_id: uuid.UUID, *, load_options: Sequence = ()) -> ContactDirectory | None:
+        query = ContactDirectory.active_query().where(ContactDirectory.id == contact_id)
+        if load_options:
+            query = query.options(*load_options)
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def create(db: AsyncSession, **data) -> ContactDirectory:
+        contact = ContactDirectory(**data)
+        db.add(contact)
+        await db.flush()
+        return contact
+
+    @staticmethod
+    async def update(db: AsyncSession, contact: ContactDirectory, **data) -> ContactDirectory:
+        apply_updates(contact, **data)
+        await db.flush()
+        return contact
+
+    @staticmethod
+    async def list(
+        db: AsyncSession,
+        *,
+        page: int = 1,
+        per_page: int = 20,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
+        is_public: bool | None = True,
+        is_main: bool | None = None,
+        status: str | None = "active",
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        query = ContactDirectory.active_query().order_by(ContactDirectory.name.asc())
+        if load_options:
+            query = query.options(*load_options)
+        query = _apply_scope(query, ContactDirectory, scope_type=scope_type, scope_id=scope_id, is_public=is_public, is_main=is_main)
+        if status is not None:
+            query = query.where(ContactDirectory.status == status)
+        return await paginate_query(db, query, page=page, per_page=per_page)
+
+    @staticmethod
+    async def delete(db: AsyncSession, contact: ContactDirectory):
+        contact.soft_delete()
+        await db.flush()
+
+
+class SupportTicketService:
+    @staticmethod
+    async def get_by_id(db: AsyncSession, ticket_id: uuid.UUID, *, load_options: Sequence = ()) -> SupportTicket | None:
+        query = SupportTicket.active_query().where(SupportTicket.id == ticket_id)
+        if load_options:
+            query = query.options(*load_options)
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def create(db: AsyncSession, **data) -> SupportTicket:
+        ticket = SupportTicket(**data)
+        db.add(ticket)
+        await db.flush()
+        return ticket
+
+    @staticmethod
+    async def update(db: AsyncSession, ticket: SupportTicket, **data) -> SupportTicket:
+        apply_updates(ticket, **data)
+        if ticket.status in {"resolved", "closed"} and ticket.resolved_at is None:
+            ticket.resolved_at = datetime.now(timezone.utc)
+        await db.flush()
+        return ticket
+
+    @staticmethod
+    async def list(
+        db: AsyncSession,
+        *,
+        page: int = 1,
+        per_page: int = 20,
+        requester_user_id: uuid.UUID | None = None,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
+        status: str | None = None,
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        query = SupportTicket.active_query().order_by(SupportTicket.created_at.desc())
+        if load_options:
+            query = query.options(*load_options)
+        if requester_user_id:
+            query = query.where(SupportTicket.requester_user_id == requester_user_id)
+        query = _apply_scope(query, SupportTicket, scope_type=scope_type, scope_id=scope_id)
+        if status:
+            query = query.where(SupportTicket.status == status)
+        return await paginate_query(db, query, page=page, per_page=per_page)
+
+    @staticmethod
+    async def delete(db: AsyncSession, ticket: SupportTicket):
+        ticket.soft_delete()
+        await db.flush()

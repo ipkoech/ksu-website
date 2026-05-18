@@ -1,0 +1,332 @@
+"""RBAC role definitions — ported directly from Flask monolith."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Mapping, Sequence
+
+
+@dataclass(frozen=True)
+class RoleDefinition:
+    name: str
+    description: str
+    scopes: Sequence[str]
+
+
+ALL_PERMISSIONS: tuple[str, ...] = (
+    # USER MANAGEMENT
+    "users.view", "users.create", "users.edit", "users.delete", "users.suspend", "users.invite",
+    # ROLES & PERMISSIONS
+    "roles.view", "roles.manage", "permissions.view", "permissions.manage",
+    # SYSTEM
+    "audit.view", "audit.manage", "settings.manage", "docs.view",
+    "analytics.view", "analytics.manage", "logs.view", "logs.manage",
+    "sessions.view", "sessions.manage",
+    "notifications.view", "notifications.manage", "notifications.send",
+    # ACADEMIC
+    "academic.manage_campuses", "academic.manage_schools", "academic.manage_departments",
+    "academic.manage_staff", "academic.manage_programmes", "academic.manage_calendar", "academic.view",
+    # CONTENT
+    "content.manage_pages", "content.manage_news", "content.manage_events", "content.manage_blogs",
+    "content.manage_announcements", "content.manage_categories", "content.view_drafts",
+    "content.publish", "content.view",
+    # RESEARCH
+    "research.view_projects", "research.manage_projects", "research.manage_publications",
+    "research.manage_centers", "research.manage_collaborations", "research.manage_services",
+    "research.manage_resources", "research.manage_guidelines", "research.manage_expertise",
+    "research.manage_grants", "research.review_grants", "research.manage_grant_guidelines",
+    "research.manage_journals", "research.manage_boards", "research.manage_committees",
+    "research.view_internal", "research.manage_impact", "research.manage_reports",
+    "research.submit_reports", "research.manage_endowments", "research.manage_extensions",
+    "research.manage_consultancies", "research.manage_inquiries", "research.view",
+    # INNOVATION
+    "innovation.manage_competitions", "innovation.manage_transfers", "innovation.manage_startups",
+    "innovation.submit_disclosure", "innovation.review_disclosure",
+    "innovation.manage_ecosystem", "innovation.view_sensitive",
+    # LIBRARY
+    "library.manage_resources", "library.manage_services", "library.manage_collections",
+    "library.manage_staff", "library.manage_regulations", "library.manage_events",
+    "library.manage_loans", "library.manage_statistics", "library.view",
+    # ADMISSIONS
+    "admissions.view_applications", "admissions.manage_applications", "admissions.manage_intakes",
+    "admissions.manage_courses", "admissions.manage_info", "admissions.view",
+    # STUDENT LIFE
+    "student_life.manage_clubs", "student_life.manage_accommodations", "student_life.manage_services",
+    "student_life.manage_sports", "student_life.manage_facilities", "student_life.manage_events",
+    "student_life.view",
+    # MEDIA
+    "media.manage", "media.upload", "media.delete", "media.view",
+    # MARKETING
+    "marketing.manage_sliders", "marketing.manage_testimonials",
+    "marketing.manage_newsletters", "marketing.manage_campaigns", "marketing.view",
+    # SUPPORT
+    "support.manage_faqs", "support.manage_contacts", "support.manage_inquiries",
+    "support.manage_feedback", "support.view",
+    # GOVERNANCE
+    "governance.manage_boards", "governance.manage_divisions", "governance.view",
+    # PARTNERSHIPS
+    "partnerships.manage", "partnerships.view", "partnerships.manage_guides",
+    "partnerships.manage_partners", "partnerships.manage_agreements",
+    "partnerships.view_inquiries", "partnerships.view_requests",
+    # POLICIES
+    "policy.manage", "policy.view_drafts", "policy.publish", "policy.view",
+    # ALUMNI
+    "alumni.manage", "alumni.view",
+    # FACILITIES
+    "facilities.manage", "facilities.view",
+    # WORKFLOWS
+    "workflow.initiate", "workflow.approve", "workflow.view_all",
+    "workflow.manage_templates", "workflow.view",
+    # PERSONS
+    "persons.manage", "persons.view",
+    # FUNDING
+    "funding.manage", "funding.view", "funding.approve",
+    # SECURITY
+    "security.manage", "security.view",
+    # PUBLICATIONS
+    "publications.manage", "publications.view", "publications.submit",
+    "publications.review", "publications.approve",
+    # PROGRAMMES
+    "programmes.manage", "programmes.view",
+    # DEVELOPER
+    "docs.access", "api.test",
+    # STAFF
+    "staff.manage_assignments", "staff.view_assignments",
+    # MENTORSHIP
+    "mentorship.manage_programs", "mentorship.view_programs", "mentorship.apply",
+    "mentorship.manage_applications", "mentorship.view_applications",
+    "mentorship.manage_matches", "mentorship.view_matches",
+    # SCHOLARSHIPS
+    "scholarship.manage", "scholarship.view",
+    "scholarship_application.manage", "scholarship_application.view",
+    "scholarship_application.create",
+    # RESEARCH THEMES & PROGRAMS
+    "research_theme.manage", "research_theme.view",
+    "research_program.manage", "research_program.view",
+    # COMMUNITY
+    "community_initiative.manage", "community_initiative.view",
+    # TRAINING
+    "training_program.manage", "training_program.view",
+    # FORMS
+    "form_template.manage", "form_template.view",
+    "form_submission.view", "form_submission.manage",
+    "external_publications.view",
+    # INTERNATIONALIZATION
+    "exchange_programmes.manage", "exchange_programmes.view",
+    # DONATIONS
+    "donations.view", "donations.manage", "donations.confirm",
+    "donations.settings", "donations.manage_metrics", "donations.manage_stories",
+    # SUSTAINABILITY
+    "sustainability.manage", "sustainability.view",
+)
+
+ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
+    "super-admin": RoleDefinition(
+        name="super-admin",
+        description="Supreme administrator with unrestricted access.",
+        scopes=("admin:*", *ALL_PERMISSIONS),
+    ),
+    "admin": RoleDefinition(
+        name="admin",
+        description="System administrator.",
+        scopes=(
+            "admin:*",
+            "users.view", "users.create", "users.edit", "users.suspend", "users.invite",
+            "roles.view", "permissions.view", "audit.view", "audit.manage",
+            "settings.manage", "analytics.view", "logs.view",
+            "notifications.view", "notifications.send",
+            "workflow.approve", "workflow.view_all", "workflow.manage_templates",
+            "partnerships.manage", "partnerships.manage_guides", "partnerships.manage_partners",
+            "partnerships.manage_agreements", "partnerships.view_inquiries", "partnerships.view_requests",
+            "exchange_programmes.manage", "exchange_programmes.view",
+            "content.view", "research.view", "library.view", "academic.view",
+            "research.manage_impact", "student_life.view",
+            "student_life.manage_clubs", "student_life.manage_accommodations",
+            "student_life.manage_services", "student_life.manage_sports",
+            "student_life.manage_facilities", "governance.view",
+            "staff.manage_assignments", "staff.view_assignments", "media.upload",
+            "mentorship.manage_programs", "mentorship.view_programs",
+            "mentorship.manage_applications", "mentorship.view_applications",
+            "mentorship.manage_matches", "mentorship.view_matches",
+            "admissions.manage_info", "admissions.view",
+        ),
+    ),
+    "library-admin": RoleDefinition(
+        name="library-admin",
+        description="Administrator for the Library module.",
+        scopes=(
+            "library.manage_resources", "library.manage_services", "library.manage_collections",
+            "library.view", "library.manage_staff", "library.manage_regulations",
+            "library.manage_events", "library.manage_loans", "library.manage_statistics",
+            "settings.manage", "analytics.view", "workflow.initiate", "workflow.approve",
+            "users.view", "media.upload", "external_publications.view",
+        ),
+    ),
+    "library-manager": RoleDefinition(
+        name="library-manager",
+        description="Manager for Library operations.",
+        scopes=(
+            "library.manage_resources", "library.manage_services", "library.manage_collections",
+            "library.view", "library.manage_staff", "library.manage_regulations",
+            "library.manage_events", "library.manage_loans", "library.manage_statistics",
+            "analytics.view", "workflow.initiate", "users.view", "media.upload",
+            "external_publications.view",
+        ),
+    ),
+    "library-staff": RoleDefinition(
+        name="library-staff",
+        description="Staff member for Library operations.",
+        scopes=("library.manage_resources", "library.manage_services", "library.view", "workflow.initiate", "media.upload"),
+    ),
+    "content-admin": RoleDefinition(
+        name="content-admin",
+        description="Administrator for Content and Marketing.",
+        scopes=(
+            "content.manage_pages", "content.manage_news", "content.manage_events",
+            "content.manage_blogs", "content.manage_announcements", "content.manage_categories",
+            "content.publish", "content.view", "media.manage", "media.upload", "media.delete",
+            "marketing.manage_sliders", "marketing.manage_testimonials",
+            "marketing.manage_newsletters", "marketing.manage_campaigns",
+            "student_life.manage_clubs", "student_life.manage_events",
+            "student_life.manage_sports", "student_life.manage_services", "student_life.view",
+            "settings.manage", "analytics.view",
+            "workflow.initiate", "workflow.approve", "workflow.view_all",
+            "users.view", "support.manage_faqs",
+        ),
+    ),
+    "content-manager": RoleDefinition(
+        name="content-manager",
+        description="Manager for Content operations.",
+        scopes=(
+            "content.manage_pages", "content.manage_news", "content.manage_events",
+            "content.manage_blogs", "content.manage_announcements", "content.manage_categories",
+            "content.publish", "content.view", "media.manage", "media.upload",
+            "marketing.manage_sliders", "marketing.manage_testimonials",
+            "analytics.view", "workflow.initiate", "users.view",
+        ),
+    ),
+    "content-staff": RoleDefinition(
+        name="content-staff",
+        description="Staff member for Content creation.",
+        scopes=(
+            "content.manage_news", "content.manage_events", "content.manage_blogs",
+            "content.view_drafts", "content.view", "media.upload", "workflow.initiate",
+        ),
+    ),
+    "research-admin": RoleDefinition(
+        name="research-admin",
+        description="Administrator for Research and Publications.",
+        scopes=(
+            "research.manage_projects", "research.manage_publications", "research.manage_centers",
+            "research.manage_collaborations", "research.manage_services", "research.manage_resources",
+            "research.manage_guidelines", "research.manage_expertise", "research.manage_grants",
+            "research.review_grants", "research.manage_grant_guidelines", "research.manage_journals",
+            "research.view_internal", "research.view", "research.manage_boards",
+            "research.manage_committees", "research.manage_impact", "research.manage_reports",
+            "research.submit_reports", "research.manage_endowments", "research.manage_extensions",
+            "research.manage_consultancies", "research.manage_inquiries",
+            "publications.manage", "publications.approve",
+            "funding.manage", "funding.approve",
+            "partnerships.manage", "partnerships.manage_guides", "partnerships.manage_partners",
+            "partnerships.manage_agreements", "partnerships.view_inquiries", "partnerships.view_requests",
+            "innovation.manage_competitions", "innovation.manage_transfers", "innovation.manage_startups",
+            "innovation.review_disclosure", "innovation.manage_ecosystem", "innovation.view_sensitive",
+            "settings.manage", "analytics.view", "media.upload",
+            "workflow.initiate", "workflow.approve", "workflow.view_all", "users.view",
+            "content.manage_announcements", "content.manage_news", "content.manage_events",
+            "content.manage_blogs", "content.view_drafts", "content.view",
+            "policy.manage", "policy.view_drafts", "policy.publish", "policy.view",
+            "mentorship.manage_programs", "mentorship.manage_applications", "mentorship.manage_matches",
+            "scholarship.manage", "scholarship_application.manage",
+            "research_theme.manage", "research_program.manage",
+            "community_initiative.manage", "community_initiative.view",
+            "training_program.manage", "training_program.view",
+            "form_template.manage", "form_template.view", "form_submission.view", "form_submission.manage",
+            "academic.manage_staff", "staff.manage_assignments", "staff.view_assignments", "persons.view",
+            "external_publications.view", "marketing.manage_sliders",
+            "donations.view", "donations.manage", "donations.confirm",
+            "donations.settings", "donations.manage_metrics", "donations.manage_stories",
+            "sustainability.manage", "sustainability.view",
+        ),
+    ),
+    "research-manager": RoleDefinition(
+        name="research-manager",
+        description="Manager for Research operations.",
+        scopes=(
+            "research.manage_projects", "research.manage_publications", "research.manage_services",
+            "research.manage_resources", "research.manage_guidelines", "research.view",
+            "publications.manage", "publications.review",
+            "funding.manage",
+            "partnerships.manage", "partnerships.manage_guides", "partnerships.manage_partners",
+            "analytics.view", "content.manage_announcements", "workflow.initiate", "users.view",
+            "media.upload", "scholarship.manage", "scholarship_application.manage",
+            "research_theme.manage", "research_program.manage",
+            "community_initiative.manage", "community_initiative.view",
+            "research.manage_reports", "research.submit_reports", "research.manage_endowments",
+            "research.manage_extensions", "research.manage_consultancies", "research.manage_inquiries",
+            "marketing.manage_sliders", "training_program.manage", "training_program.view",
+            "form_template.manage", "form_template.view", "form_submission.view",
+            "staff.view_assignments", "persons.view", "external_publications.view",
+            "sustainability.manage", "sustainability.view",
+        ),
+    ),
+    "research-staff": RoleDefinition(
+        name="research-staff",
+        description="Staff member for Research operations.",
+        scopes=(
+            "research.view_projects", "research.view", "publications.submit", "publications.view",
+            "workflow.initiate", "media.upload", "scholarship.view",
+            "research_theme.view", "research_program.view", "external_publications.view",
+        ),
+    ),
+    "researcher": RoleDefinition(
+        name="researcher",
+        description="Internal researcher with disclosure submission rights.",
+        scopes=("innovation.submit_disclosure", "research.view_internal"),
+    ),
+    "innovation-officer": RoleDefinition(
+        name="innovation-officer",
+        description="Officer managing technology transfer and innovation.",
+        scopes=(
+            "innovation.manage_competitions", "innovation.manage_transfers", "innovation.manage_startups",
+            "innovation.review_disclosure", "innovation.manage_ecosystem", "innovation.view_sensitive",
+            "users.view", "media.upload",
+        ),
+    ),
+    "lecturer": RoleDefinition(
+        name="lecturer",
+        description="Academic lecturer.",
+        scopes=(
+            "publications.submit", "publications.view", "research.submit_reports",
+            "persons.manage", "workflow.initiate", "media.upload",
+        ),
+    ),
+    "school-admin": RoleDefinition(
+        name="school-admin",
+        description="Administrator for a School.",
+        scopes=(
+            "academic.manage_schools", "academic.manage_departments", "academic.manage_staff",
+            "academic.manage_programmes", "academic.manage_calendar", "academic.view",
+            "content.manage_news", "media.upload", "settings.manage", "analytics.view",
+            "workflow.initiate", "workflow.approve",
+            "staff.manage_assignments", "staff.view_assignments", "users.view",
+        ),
+    ),
+    "dept-admin": RoleDefinition(
+        name="dept-admin",
+        description="Administrator for a Department.",
+        scopes=(
+            "academic.manage_departments", "academic.manage_staff", "academic.manage_programmes",
+            "academic.view", "content.manage_news",
+            "workflow.initiate", "workflow.approve",
+            "staff.manage_assignments", "staff.view_assignments", "users.view", "media.upload",
+        ),
+    ),
+    "dept-staff": RoleDefinition(
+        name="dept-staff",
+        description="Staff member for a Department.",
+        scopes=("academic.view", "content.manage_news", "workflow.initiate", "media.upload"),
+    ),
+}
+
+__all__ = ["RoleDefinition", "ROLE_DEFINITIONS", "ALL_PERMISSIONS"]

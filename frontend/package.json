@@ -1,0 +1,26 @@
+{
+  "name": "ksu-frontend",
+  "private": true,
+  "packageManager": "pnpm@9.1.0",
+  "scripts": {
+    "dev:admin": "pnpm --filter @ksu/admin dev",
+    "dev:web": "pnpm --filter @ksu/web dev",
+    "dev:research": "pnpm --filter @ksu/research dev",
+    "dev:library": "pnpm --filter @ksu/library dev",
+    "build": "turbo build",
+    "build:admin": "pnpm --filter @ksu/admin build",
+    "build:web": "pnpm --filter @ksu/web build",
+    "build:research": "pnpm --filter @ksu/research build",
+    "build:library": "pnpm --filter @ksu/library build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "clean": "turbo clean && rm -rf node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.5",
+    "prettier": "^3.5.3",
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3"
+  }
+}

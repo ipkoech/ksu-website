@@ -1,0 +1,97 @@
+"""Governance schemas."""
+
+from __future__ import annotations
+
+import uuid
+from datetime import date
+
+from pydantic import Field
+
+from .base import BaseReadSchema, BaseSchema, SlugStr
+
+
+class BoardCreate(BaseSchema):
+    name: str = Field(min_length=1, max_length=255)
+    slug: SlugStr
+    board_type: str = Field(default="board", max_length=64)
+    parent_entity_type: str | None = Field(default=None, max_length=32)
+    parent_entity_id: uuid.UUID | None = None
+    chairperson_id: uuid.UUID | None = None
+    vice_chairperson_id: uuid.UUID | None = None
+    secretary_id: uuid.UUID | None = None
+    mandate: str | None = None
+    establishment_date: date | None = None
+    meeting_schedule: str | None = Field(default=None, max_length=255)
+    member_count: int | None = Field(default=None, ge=1)
+    quorum: int | None = Field(default=None, ge=1)
+    standard_term_years: int | None = Field(default=None, ge=1, le=10)
+    max_terms: int | None = Field(default=None, ge=1)
+    show_member_terms: bool = False
+    description: str | None = None
+    head_message: str | None = None
+    mission: str | None = None
+    vision: str | None = None
+    cover_image_id: uuid.UUID | None = None
+    division_id: uuid.UUID | None = None
+    is_public: bool = True
+    is_active: bool = True
+    status: str = Field(default="active", max_length=32)
+    display_order: int = 100
+
+
+class BoardUpdate(BaseSchema):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    slug: SlugStr | None = None
+    board_type: str | None = Field(default=None, max_length=64)
+    parent_entity_type: str | None = Field(default=None, max_length=32)
+    parent_entity_id: uuid.UUID | None = None
+    chairperson_id: uuid.UUID | None = None
+    vice_chairperson_id: uuid.UUID | None = None
+    secretary_id: uuid.UUID | None = None
+    mandate: str | None = None
+    establishment_date: date | None = None
+    meeting_schedule: str | None = Field(default=None, max_length=255)
+    member_count: int | None = Field(default=None, ge=1)
+    quorum: int | None = Field(default=None, ge=1)
+    standard_term_years: int | None = Field(default=None, ge=1, le=10)
+    max_terms: int | None = Field(default=None, ge=1)
+    show_member_terms: bool | None = None
+    description: str | None = None
+    head_message: str | None = None
+    mission: str | None = None
+    vision: str | None = None
+    cover_image_id: uuid.UUID | None = None
+    division_id: uuid.UUID | None = None
+    is_public: bool | None = None
+    is_active: bool | None = None
+    status: str | None = Field(default=None, max_length=32)
+    display_order: int | None = None
+
+
+class BoardRead(BaseReadSchema):
+    name: str
+    slug: str
+    board_type: str
+    parent_entity_type: str | None = None
+    parent_entity_id: uuid.UUID | None = None
+    chairperson_id: uuid.UUID | None = None
+    vice_chairperson_id: uuid.UUID | None = None
+    secretary_id: uuid.UUID | None = None
+    mandate: str | None = None
+    establishment_date: date | None = None
+    meeting_schedule: str | None = None
+    member_count: int | None = None
+    quorum: int | None = None
+    standard_term_years: int | None = None
+    max_terms: int | None = None
+    show_member_terms: bool
+    description: str | None = None
+    head_message: str | None = None
+    mission: str | None = None
+    vision: str | None = None
+    cover_image_id: uuid.UUID | None = None
+    division_id: uuid.UUID | None = None
+    is_public: bool
+    is_active: bool
+    status: str
+    display_order: int
