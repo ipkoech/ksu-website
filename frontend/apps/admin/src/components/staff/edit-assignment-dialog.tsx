@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button, Input, Textarea, Switch, Label, Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
+import { Button, ConfirmDialog, Input, RichTextEditor, richTextToPlainText, Switch, Label, Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
 import { useUpdateStaffAssignment } from "@ksu/api-client";
 
@@ -27,6 +27,7 @@ export function EditAssignmentDialog({ assignment, open, onOpenChange, onSuccess
     });
 
     const updateMutation = useUpdateStaffAssignment();
+    const [confirmOpen, setConfirmOpen] = useState(false);
 
     useEffect(() => {
         if (assignment && open) {
@@ -45,10 +46,11 @@ export function EditAssignmentDialog({ assignment, open, onOpenChange, onSuccess
         }
     }, [assignment, open]);
 
-    const handleSubmit = async () => {
+    const performSubmit = async () => {
         try {
-            await updateMutation.mutateAsync({ id: assignment.id, data: formData });
+            await updateMutation.mutateAsync({ id: assignment.id, data: { ...formData, notes: richTextToPlainText(formData.notes) } });
             toast.success("Assignment updated successfully");
+            setConfirmOpen(false);
             onSuccess();
         } catch (error) {
             toast.error("Failed to update assignment");
@@ -128,22 +130,33 @@ export function EditAssignmentDialog({ assignment, open, onOpenChange, onSuccess
 
                         <div>
                             <Label>Notes</Label>
-                            <Textarea
+                            <RichTextEditor
                                 value={formData.notes}
-                                onChange={(e) => setFormData(p => ({ ...p, notes: e.target.value }))}
+                                onChange={(notes) => setFormData(p => ({ ...p, notes }))}
                                 placeholder="Internal notes..."
+                                toolbar="simple"
+                                minHeight="150px"
                             />
                         </div>
 
                         <div className="flex justify-end gap-2 pt-4">
                             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                            <Button onClick={handleSubmit} disabled={updateMutation.isPending}>
+                            <Button onClick={() => setConfirmOpen(true)} disabled={updateMutation.isPending}>
                                 {updateMutation.isPending ? "Saving..." : "Save Changes"}
                             </Button>
                         </div>
                     </CardContent>
                 </Card>
             </div>
+            <ConfirmDialog
+                open={confirmOpen}
+                onOpenChange={setConfirmOpen}
+                title="Save assignment changes?"
+                description="This will update the assignment record and may affect public staff listings."
+                confirmLabel="Save changes"
+                isLoading={updateMutation.isPending}
+                onConfirm={performSubmit}
+            />
         </div>
     );
 }

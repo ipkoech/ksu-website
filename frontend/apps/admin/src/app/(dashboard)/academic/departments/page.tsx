@@ -1,11 +1,12 @@
 "use client";
 
 import { usePermissions } from "@/hooks/use-permissions";
+import { useDeleteConfirm } from "@/hooks/use-delete-confirm";
 import { DataTable } from "@/components/data-table/data-table";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTransition } from "@/lib/animations";
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, DoorOpen, Building } from "lucide-react";
+import { MoreHorizontal, DoorOpen, Building, Upload } from "lucide-react";
 import { Button, Badge } from "@ksu/ui/components";
 import {
     DropdownMenu,
@@ -17,6 +18,9 @@ import {
 } from "@ksu/ui/components";
 import { useDepartments, useDeleteDepartment } from "@ksu/api-client";
 import { toast } from "@ksu/ui";
+import Link from "next/link";
+import { useState } from "react";
+import { TableSearch } from "@/components/shared/table-search";
 
 const getDepartmentColumns = ({
     canDelete,
@@ -87,11 +91,8 @@ const getDepartmentColumns = ({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => window.location.href = `/academic/departments/${dept.id}`}>
+                        <DropdownMenuItem onClick={() => window.location.href = `/academic/departments/_static?id=${encodeURIComponent(dept.id)}`}>
                             Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigator.clipboard.writeText(dept.id)}>
-                            Copy ID
                         </DropdownMenuItem>
                         {canDelete && (
                             <>
@@ -113,21 +114,17 @@ const getDepartmentColumns = ({
 
 export default function DepartmentsPage() {
     const { canCreate, canDelete } = usePermissions();
-    const { data: departmentsResponse, isLoading } = useDepartments();
+    const { confirmDelete, dialog } = useDeleteConfirm();
+    const [search, setSearch] = useState("");
+    const { data: departmentsResponse, isLoading } = useDepartments({ search: search || undefined });
     const departments = departmentsResponse?.data || [];
-    const { mutate: deleteDepartment } = useDeleteDepartment();
+    const deleteDepartment = useDeleteDepartment();
 
     const handleDelete = (id: string) => {
-        if (confirm("Are you sure you want to delete this department?")) {
-            deleteDepartment(id, {
-                onSuccess: () => {
-                    toast.success("Department deleted successfully");
-                },
-                onError: () => {
-                    toast.error("Failed to delete department");
-                },
-            });
-        }
+        confirmDelete("department", async () => {
+            await deleteDepartment.mutateAsync(id);
+            toast.success("Department deleted successfully");
+        });
     };
 
     const columns = getDepartmentColumns({ canDelete: canDelete("academic"), onDelete: handleDelete });
@@ -137,6 +134,14 @@ export default function DepartmentsPage() {
             <PageHeader
                 title="Departments"
                 description="Manage university departments"
+                actions={canCreate("academic") ? (
+                    <Button variant="outline" asChild>
+                        <Link href="/imports/departments">
+                            <Upload className="h-4 w-4 mr-2" />
+                            Import
+                        </Link>
+                    </Button>
+                ) : undefined}
                 createHref={canCreate("academic") ? "/academic/departments/new" : undefined}
                 createLabel="Add Department"
             />
@@ -144,8 +149,10 @@ export default function DepartmentsPage() {
                 data={departments || []}
                 columns={columns}
                 isLoading={isLoading}
-                emptyMessage="No departments found. Create your first department."
+                toolbar={<TableSearch value={search} onChange={setSearch} placeholder="Search departments by name or code" />}
+                emptyMessage={search ? "No departments match this search." : "No departments found. Create your first department."}
             />
+            {dialog}
         </PageTransition>
     );
 }

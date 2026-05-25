@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
+import {
+  AboutIllustratedHeading,
+  aboutIllustrations,
+} from "@/components/about/AboutIllustration";
 import { BoardMemberGrid } from "@/components/about/BoardMemberGrid";
-import { BreadcrumbTrail, PageHeading, PageShell } from "@/components/site-shell";
+import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { getGovernanceBoard } from "@/lib/about-data";
 
 export default async function GovernanceBoardPage({
@@ -27,10 +31,12 @@ export default async function GovernanceBoardPage({
           ]}
         />
         <div className="mt-8">
-          <PageHeading
+          <AboutIllustratedHeading
             eyebrow={board.board_type}
             title={board.name}
             body={board.description || board.mandate || "Board overview"}
+            illustration={aboutIllustrations.governance}
+            alt="University governance body meeting in a council room"
           />
         </div>
       </section>
@@ -41,7 +47,7 @@ export default async function GovernanceBoardPage({
             Mandate
           </p>
           <p className="mt-4 text-base leading-7 text-slate-600">
-            {board.mandate || "Mandate details will be published here."}
+            {board.mandate || "No public mandate details are currently published for this board."}
           </p>
         </article>
         <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40">
@@ -49,7 +55,7 @@ export default async function GovernanceBoardPage({
             Mission
           </p>
           <p className="mt-4 text-base leading-7 text-slate-600">
-            {board.mission || "Mission details will be published here."}
+            {board.mission || "No public mission details are currently published for this board."}
           </p>
         </article>
         <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40">

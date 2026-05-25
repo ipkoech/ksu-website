@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ksu_common.roles import ALL_PERMISSIONS, ROLE_DEFINITIONS
+
 from ._shared import SeedContext, upsert_permission, upsert_role, upsert_role_permission
 
 
@@ -42,6 +44,30 @@ PERMISSION_SPECS = [
     ("media:delete", "Delete media assets", "media", "delete"),
     ("media:manage", "Manage media folders and links", "media", "manage"),
 ]
+
+
+def _split_permission_name(permission_name: str) -> tuple[str, str]:
+    if ":" in permission_name:
+        resource, action = permission_name.split(":", 1)
+        return resource, action
+    if "." in permission_name:
+        resource, action = permission_name.split(".", 1)
+        return resource, action
+    return permission_name, "access"
+
+
+_existing_permissions = {spec[0] for spec in PERMISSION_SPECS}
+for permission_name in ALL_PERMISSIONS:
+    if permission_name in _existing_permissions:
+        continue
+    resource, action = _split_permission_name(permission_name)
+    PERMISSION_SPECS.append((
+        permission_name,
+        f"Grant {permission_name.replace('_', ' ')}",
+        resource,
+        action,
+    ))
+    _existing_permissions.add(permission_name)
 
 
 ROLE_SPECS = [
@@ -103,6 +129,24 @@ ROLE_SPECS = [
         ],
     },
 ]
+
+_permission_names = {spec[0] for spec in PERMISSION_SPECS}
+_existing_role_names = {spec["name"] for spec in ROLE_SPECS}
+for role_name, definition in ROLE_DEFINITIONS.items():
+    seed_name = role_name.replace("-", "_")
+    if seed_name in _existing_role_names:
+        continue
+    permission_names = [scope for scope in definition.scopes if scope in _permission_names]
+    if not permission_names:
+        continue
+    ROLE_SPECS.append({
+        "name": seed_name,
+        "display_name": definition.name.replace("-", " ").title(),
+        "description": definition.description,
+        "is_system": True,
+        "permission_names": permission_names,
+    })
+    _existing_role_names.add(seed_name)
 
 
 async def seed_rbac(db: AsyncSession, ctx: SeedContext) -> None:

@@ -24,7 +24,7 @@ export default function SystemLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { user, isLoading, checkAuth } = useAuth();
+  const { user, isLoading, activeService, checkAuth, switchService } = useAuth();
   const { hasScope } = usePermissions();
 
   useEffect(() => {
@@ -53,6 +53,12 @@ export default function SystemLayout({
       router.push("/select-service");
     }
   }, [hasSystemAccess, isLoading, user, router]);
+
+  useEffect(() => {
+    if (user && hasSystemAccess && activeService !== "system") {
+      switchService("system");
+    }
+  }, [activeService, hasSystemAccess, switchService, user]);
 
   if (isLoading) {
     return (

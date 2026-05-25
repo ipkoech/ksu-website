@@ -28,7 +28,12 @@ class Settings(BaseSettings):
     MAIN_SERVICE_URL: str = "http://main:8000"
     INTERNAL_API_KEY: str = "change-me-internal"
 
-    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:3003",
+    ]
 
     @field_validator("DATABASE_URL")
     @classmethod

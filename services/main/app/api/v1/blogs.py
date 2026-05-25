@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("page", "per_page", "scope_type", "scope_id", "is_main", "is_published", "search", "fields"))
 async def list_blogs(
     db: DbSession,
     page: int = Query(1, ge=1),
@@ -27,11 +27,62 @@ async def list_blogs(
     scope_type: str | None = None,
     scope_id: uuid.UUID | None = None,
     is_main: bool | None = None,
+    is_published: bool | None = None,
+    search: str | None = None,
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(Blog, fields)
-    result = await BlogService.list(db, page=page, per_page=per_page, scope_type=scope_type, scope_id=scope_id, is_main=is_main, load_options=selector.load_options)
+    result = await BlogService.list(
+        db,
+        page=page,
+        per_page=per_page,
+        scope_type=scope_type,
+        scope_id=scope_id,
+        is_main=is_main,
+        is_published=is_published,
+        search=search,
+        load_options=selector.load_options,
+    )
     return success(data=selector.apply(result.items), meta=result.meta)
+
+
+@router.get("/admin", dependencies=[Depends(require_scope("content.manage_news"))])
+async def list_admin_blogs(
+    db: DbSession,
+    _: CurrentUser,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    scope_type: str | None = None,
+    scope_id: uuid.UUID | None = None,
+    is_main: bool | None = None,
+    is_published: bool | None = None,
+    status: str | None = None,
+    search: str | None = None,
+    fields: FieldSelection = FieldsDep,
+):
+    selector = build_selector(Blog, fields)
+    result = await BlogService.list_admin(
+        db,
+        page=page,
+        per_page=per_page,
+        scope_type=scope_type,
+        scope_id=scope_id,
+        is_main=is_main,
+        is_published=is_published,
+        status=status,
+        search=search,
+        load_options=selector.load_options,
+    )
+    return success(data=selector.apply(result.items), meta=result.meta)
+
+
+@router.get("/id/{blog_id}")
+async def get_blog_by_id(blog_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+    selector = build_selector(Blog, fields)
+    item = await BlogService.get_by_id(db, blog_id, load_options=selector.load_options)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Blog not found")
+    return success(data=selector.apply(item))
 
 
 @router.get("/{slug}")
@@ -46,7 +97,9 @@ async def get_blog(slug: str, db: DbSession, fields: FieldSelection = FieldsDep)
 
 @router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("content.manage_news"))])
 async def create_blog(data: BlogCreate, db: DbSession, user: CurrentUser):
-    item = await BlogService.create(db, author_user_id=user.sub, **data.model_dump())
+    payload = data.model_dump()
+    payload["author_user_id"] = user.id
+    item = await BlogService.create(db, **payload)
     return success(data=item, message="Blog created")
 
 
@@ -57,6 +110,24 @@ async def update_blog(blog_id: uuid.UUID, data: BlogUpdate, db: DbSession, _: Cu
         raise HTTPException(status_code=404, detail="Blog not found")
     item = await BlogService.update(db, item, **data.model_dump(exclude_unset=True))
     return success(data=item, message="Blog updated")
+
+
+@router.post("/id/{blog_id}/publish", dependencies=[Depends(require_scope("content.manage_news"))])
+async def publish_blog(blog_id: uuid.UUID, db: DbSession, _: CurrentUser):
+    item = await BlogService.get_by_id(db, blog_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Blog not found")
+    item = await BlogService.publish(db, item)
+    return success(data=item, message="Blog published")
+
+
+@router.post("/id/{blog_id}/unpublish", dependencies=[Depends(require_scope("content.manage_news"))])
+async def unpublish_blog(blog_id: uuid.UUID, db: DbSession, _: CurrentUser):
+    item = await BlogService.get_by_id(db, blog_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Blog not found")
+    item = await BlogService.unpublish(db, item)
+    return success(data=item, message="Blog unpublished")
 
 
 @router.delete("/id/{blog_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("content.manage_news"))])

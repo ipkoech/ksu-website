@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, usePermissions } from "@ksu/auth";
-import { DataTable, PageHeader, SearchFilter, StatusBadge, Badge } from "@ksu/ui/components";
+import { Badge, ConfirmDialog, DataTable, DeleteConfirmDialog, PageHeader, SearchFilter, StatusBadge } from "@ksu/ui/components";
 import { useDeleteUser, useUpdateUser, useUsers, useRoles } from "@ksu/api-client/hooks/admin";
 import type { User } from "@ksu/api-client/types/admin";
 import { canDeleteUsers, canManageUsers, canViewRoles } from "../_lib/access";
@@ -17,6 +17,7 @@ export default function UsersPage() {
   const [search, setSearch] = React.useState("");
   const [status, setStatus] = React.useState<string | null>(null);
   const [role, setRole] = React.useState<string | null>(null);
+  const [bulkAction, setBulkAction] = React.useState<{ type: "activate" | "deactivate" | "delete"; ids: string[] } | null>(null);
 
   const canManage = canManageUsers(user, hasScope);
   const canDelete = canDeleteUsers(user, hasScope);
@@ -71,7 +72,7 @@ export default function UsersPage() {
               key: "role",
               label: "Role",
               value: role ?? undefined,
-              options: (roles.data?.data ?? []).map((item) => ({ value: item.id, label: item.display_name ?? item.name })),
+              options: (roles.data?.data ?? []).map((item) => ({ value: item.name, label: item.display_name ?? item.name })),
             }] : []),
           ]}
           onFilterChange={(key, value) => {
@@ -135,15 +136,44 @@ export default function UsersPage() {
           onRowClick={(row) => router.push(`/system/users/${row.id}`)}
           bulkActions={[
             ...(canManage ? [
-              { label: "Activate", onClick: (ids: string[]) => void bulkToggle(ids, true) },
-              { label: "Deactivate", onClick: (ids: string[]) => void bulkToggle(ids, false) },
+              { label: "Activate", onClick: (ids: string[]) => setBulkAction({ type: "activate", ids }) },
+              { label: "Deactivate", onClick: (ids: string[]) => setBulkAction({ type: "deactivate", ids }) },
             ] : []),
             ...(canDelete ? [
-              { label: "Delete", onClick: (ids: string[]) => void bulkDelete(ids), variant: "destructive" as const },
+              { label: "Delete", onClick: (ids: string[]) => setBulkAction({ type: "delete", ids }), variant: "destructive" as const },
             ] : []),
           ]}
         />
       </div>
+
+      <ConfirmDialog
+        open={bulkAction?.type === "activate" || bulkAction?.type === "deactivate"}
+        onOpenChange={(open) => !open && setBulkAction(null)}
+        title={bulkAction?.type === "activate" ? "Activate users" : "Deactivate users"}
+        description={`This will ${bulkAction?.type ?? "update"} ${bulkAction?.ids.length ?? 0} selected user account${bulkAction?.ids.length === 1 ? "" : "s"}.`}
+        confirmLabel={bulkAction?.type === "activate" ? "Activate" : "Deactivate"}
+        onConfirm={async () => {
+          if (!bulkAction || bulkAction.type === "delete") return;
+          await bulkToggle(bulkAction.ids, bulkAction.type === "activate");
+          setBulkAction(null);
+        }}
+        isLoading={updateUser.isPending}
+      />
+
+      <DeleteConfirmDialog
+        open={bulkAction?.type === "delete"}
+        onOpenChange={(open) => !open && setBulkAction(null)}
+        title="Delete users"
+        itemName="DELETE"
+        itemCount={bulkAction?.ids.length ?? 0}
+        requireConfirmation
+        onConfirm={async () => {
+          if (!bulkAction || bulkAction.type !== "delete") return;
+          await bulkDelete(bulkAction.ids);
+          setBulkAction(null);
+        }}
+        isDeleting={deleteUser.isPending}
+      />
     </div>
   );
 }

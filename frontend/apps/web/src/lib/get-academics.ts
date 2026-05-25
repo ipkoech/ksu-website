@@ -1,4 +1,5 @@
 import { schoolsApi, programmesApi, intakesApi } from "@ksu/api-client";
+import { publicFileUrl } from "@/lib/public-media";
 
 export interface SchoolCard {
   id: string;
@@ -30,14 +31,14 @@ export async function getSchools(): Promise<SchoolCard[]> {
   try {
     const response = await schoolsApi.list({
       fields: "id,name,slug,code,cover_image_id",
-      limit: 8,
+      per_page: 8,
     });
 
     return (response.data ?? []).map((school) => ({
       id: school.id,
       name: school.name,
       slug: school.slug,
-      coverImage: school.cover_image_id ? `/api/files/${school.cover_image_id}` : null,
+      coverImage: publicFileUrl(school.cover_image_id),
       shortName: school.code,
     }));
   } catch (error) {
@@ -51,7 +52,7 @@ export async function getActiveIntake(): Promise<ActiveIntake | null> {
     const response = await intakesApi.list({
       is_open: true,
       fields: "id,name,application_start,application_end,is_open",
-      limit: 1,
+      per_page: 1,
     });
 
     const intake = response.data?.[0];
@@ -75,7 +76,7 @@ export async function getPostgraduateProgrammes(): Promise<ProgrammeCard[]> {
     const response = await programmesApi.list({
       level: "postgraduate",
       fields: "id,name,slug,level,duration,cover_image_id,department_name",
-      limit: 10,
+      per_page: 10,
     });
 
     return (response.data ?? []).map((programme) => ({
@@ -84,8 +85,8 @@ export async function getPostgraduateProgrammes(): Promise<ProgrammeCard[]> {
       slug: programme.slug,
       level: programme.level || "Postgraduate",
       duration: programme.duration,
-      schoolName: programme.department_name,
-      coverImage: programme.cover_image_id ? `/api/files/${programme.cover_image_id}` : null,
+      schoolName: programme.department_name ?? undefined,
+      coverImage: publicFileUrl(programme.cover_image_id),
     }));
   } catch (error) {
     console.error("Failed to fetch postgraduate programmes:", error);
@@ -98,7 +99,7 @@ export async function getPhdProgrammes(): Promise<ProgrammeCard[]> {
     const response = await programmesApi.list({
       level: "phd",
       fields: "id,name,slug,level,duration,cover_image_id,department_name",
-      limit: 6,
+      per_page: 6,
     });
 
     return (response.data ?? []).map((programme) => ({
@@ -107,8 +108,8 @@ export async function getPhdProgrammes(): Promise<ProgrammeCard[]> {
       slug: programme.slug,
       level: "PhD",
       duration: programme.duration,
-      schoolName: programme.department_name,
-      coverImage: programme.cover_image_id ? `/api/files/${programme.cover_image_id}` : null,
+      schoolName: programme.department_name ?? undefined,
+      coverImage: publicFileUrl(programme.cover_image_id),
     }));
   } catch (error) {
     console.error("Failed to fetch PhD programmes:", error);
@@ -120,7 +121,7 @@ export async function getFeaturedProgrammes(): Promise<ProgrammeCard[]> {
   try {
     const response = await programmesApi.list({
       fields: "id,name,slug,level,duration,cover_image_id,department_name",
-      limit: 8,
+      per_page: 8,
     });
 
     // Shuffle the programmes for variety
@@ -133,8 +134,8 @@ export async function getFeaturedProgrammes(): Promise<ProgrammeCard[]> {
       slug: programme.slug,
       level: programme.level || "Undergraduate",
       duration: programme.duration,
-      schoolName: programme.department_name,
-      coverImage: programme.cover_image_id ? `/api/files/${programme.cover_image_id}` : null,
+      schoolName: programme.department_name ?? undefined,
+      coverImage: publicFileUrl(programme.cover_image_id),
     }));
   } catch (error) {
     console.error("Failed to fetch featured programmes:", error);

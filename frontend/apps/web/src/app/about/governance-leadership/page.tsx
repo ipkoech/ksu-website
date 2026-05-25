@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { Button } from "@ksu/ui/components";
+import {
+  AboutIllustration,
+  aboutIllustrations,
+} from "@/components/about/AboutIllustration";
 import { BoardMemberGrid } from "@/components/about/BoardMemberGrid";
 import { LeaderCard } from "@/components/about/LeaderCard";
 import {
@@ -77,9 +81,15 @@ export default async function GovernanceLeadershipPage() {
               </p>
               <blockquote className="mt-5 font-[family-name:var(--font-display)] text-3xl leading-tight text-slate-950 sm:text-4xl">
                 {overview.chancellor_message ||
-                  "The current official About sources do not publish a dedicated Chancellor message."}
+                  "The current official About pages do not include a dedicated Chancellor message."}
               </blockquote>
               <div className="mt-6 h-px w-20 bg-slate-300" />
+              <AboutIllustration
+                src={aboutIllustrations.governance}
+                alt="Council oversight and executive leadership meeting in a university setting"
+                priority
+                className="mt-8 aspect-[4/3] min-h-[260px] shadow-none"
+              />
             </article>
           </div>
         </section>
@@ -165,9 +175,16 @@ export default async function GovernanceLeadershipPage() {
                 direct institutional navigation.
               </p>
               <div className="mt-8 grid gap-6 md:grid-cols-2">
-                {leadership.deans.map((leader) => (
-                  <LeaderCard key={leader.slug} leader={leader} />
-                ))}
+                {leadership.deans.length ? (
+                  leadership.deans.map((leader) => (
+                    <LeaderCard key={leader.slug} leader={leader} />
+                  ))
+                ) : (
+                  <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6 text-sm leading-7 text-slate-600 md:col-span-2">
+                    No public dean records are currently published by the
+                    school public record.
+                  </div>
+                )}
               </div>
             </article>
           </div>

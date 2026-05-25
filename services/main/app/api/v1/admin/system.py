@@ -48,6 +48,15 @@ async def create_setting(data: SettingCreate, db: DbSession, user: CurrentUser):
     return success(data=item, message="Setting created")
 
 
+@router.get("/settings/{item_id}", dependencies=[Depends(require_scope("settings:read"))])
+async def get_setting(item_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+    selector = build_selector(Setting, fields)
+    item = await SettingService.get_by_id(db, item_id, load_options=selector.load_options)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Setting not found")
+    return success(data=selector.apply(item))
+
+
 @router.put("/settings", dependencies=[Depends(require_scope("settings:write"))])
 async def bulk_update_settings(data: BulkSettingsUpdatePayload, db: DbSession, user: CurrentUser):
     updated_items: list[Setting] = []
@@ -97,6 +106,15 @@ async def create_api_key(data: ApiKeyCreate, db: DbSession, user: CurrentUser):
     return success(data={"api_key": raw_key, "record": item}, message="API key created")
 
 
+@router.get("/api-keys/{item_id}", dependencies=[Depends(require_scope("api_keys:read"))])
+async def get_api_key(item_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+    selector = build_selector(ApiKey, fields)
+    item = await ApiKeyService.get_by_id(db, item_id, load_options=selector.load_options)
+    if item is None:
+        raise HTTPException(status_code=404, detail="API key not found")
+    return success(data=selector.apply(item))
+
+
 @router.patch("/api-keys/{item_id}", dependencies=[Depends(require_scope("api_keys:write"))])
 @router.put("/api-keys/{item_id}", dependencies=[Depends(require_scope("api_keys:write"))])
 async def update_api_key(item_id: uuid.UUID, data: ApiKeyUpdate, db: DbSession, _: CurrentUser):
@@ -126,6 +144,15 @@ async def list_webhooks(db: DbSession, _: CurrentUser, page: int = 1, per_page: 
 async def create_webhook(data: WebhookCreate, db: DbSession, user: CurrentUser):
     item = await WebhookService.create(db, created_by_id=user.id, **data.model_dump())
     return success(data=item, message="Webhook created")
+
+
+@router.get("/webhooks/{item_id}", dependencies=[Depends(require_scope("webhooks:read"))])
+async def get_webhook(item_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+    selector = build_selector(Webhook, fields)
+    item = await WebhookService.get_by_id(db, item_id, load_options=selector.load_options)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Webhook not found")
+    return success(data=selector.apply(item))
 
 
 @router.patch("/webhooks/{item_id}", dependencies=[Depends(require_scope("webhooks:write"))])

@@ -1,14 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import { useAuth, usePermissions } from "@ksu/auth";
 import { ActivityFeed, Button, Card, CardContent, CardHeader, CardTitle, PageHeader, StatsCard } from "@ksu/ui/components";
 import { FileText, KeyRound, Shield, UserPlus, Users } from "lucide-react";
 import { useUsers, useAuditLogs, useApiKeys } from "@ksu/api-client/hooks/admin";
+import { canManageRoles, canManageSettings, canManageUsers, canViewApiKeys, canViewAudit, canViewUsers } from "./_lib/access";
 
 export default function SystemDashboardPage() {
-  const users = useUsers({ page: 1, limit: 1 });
-  const audit = useAuditLogs({ page: 1, limit: 10 });
-  const apiKeys = useApiKeys();
+  const { user } = useAuth();
+  const { hasScope } = usePermissions();
+  const canCreateUsers = canManageUsers(user, hasScope);
+  const canCreateRoles = canManageRoles(user, hasScope);
+  const canEditSettings = canManageSettings(user, hasScope);
+  const canReadUsers = canViewUsers(user, hasScope);
+  const canReadAudit = canViewAudit(user, hasScope);
+  const canReadApiKeys = canViewApiKeys(user, hasScope);
+  const users = useUsers({ page: 1, limit: 1 }, { enabled: canReadUsers });
+  const audit = useAuditLogs({ page: 1, limit: 10 }, { enabled: canReadAudit });
+  const apiKeys = useApiKeys({ enabled: canReadApiKeys });
 
   const activityItems = (audit.data?.data ?? []).map((item) => ({
     id: item.id,
@@ -23,10 +33,10 @@ export default function SystemDashboardPage() {
       <PageHeader
         title="System Administration"
         description="Manage users, roles, permissions, audit activity, and platform settings."
-        primaryAction={{ label: "Add user", href: "/system/users/new" }}
-        secondaryActions={[
+        primaryAction={canCreateUsers ? { label: "Add user", href: "/system/users/new" } : undefined}
+        secondaryActions={canReadAudit ? [
           { label: "View audit logs", href: "/system/audit", variant: "outline" },
-        ]}
+        ] : undefined}
       />
 
       <div className="space-y-6 p-6">
@@ -51,18 +61,18 @@ export default function SystemDashboardPage() {
               <CardTitle>Quick actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button asChild className="w-full justify-start">
+              {canCreateUsers ? <Button asChild className="w-full justify-start">
                 <Link href="/system/users/new">
                   <UserPlus className="h-4 w-4" />
                   Create user
                 </Link>
-              </Button>
-              <Button asChild variant="outline" className="w-full justify-start">
+              </Button> : null}
+              {canCreateRoles ? <Button asChild variant="outline" className="w-full justify-start">
                 <Link href="/system/roles/new">Create role</Link>
-              </Button>
-              <Button asChild variant="outline" className="w-full justify-start">
+              </Button> : null}
+              {canEditSettings ? <Button asChild variant="outline" className="w-full justify-start">
                 <Link href="/system/settings">Review settings</Link>
-              </Button>
+              </Button> : null}
             </CardContent>
           </Card>
         </div>

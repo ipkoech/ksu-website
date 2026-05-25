@@ -1,12 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { usePermissions } from "@/hooks/use-permissions";
+import { useDeleteConfirm } from "@/hooks/use-delete-confirm";
 import { DataTable } from "@/components/data-table/data-table";
 import { PageHeader } from "@/components/shared/page-header";
+import { TableSearch } from "@/components/shared/table-search";
 import { PageTransition } from "@/lib/animations";
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Calendar, Clock } from "lucide-react";
-import { Button, Badge } from "@ksu/ui/components";
+import { MoreHorizontal, Calendar, Clock, FilterX, Upload } from "lucide-react";
+import { AcademicCalendarPicker } from "@/components/relationships";
+import { Button, Badge, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ksu/ui/components";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -15,15 +19,17 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@ksu/ui/components";
-import { intakesApi, queryKeys } from "@ksu/api-client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useDeleteIntake, useIntakes, type Intake } from "@ksu/api-client";
 import { toast } from "@ksu/ui";
+import Link from "next/link";
 
 const getIntakeColumns = ({
+    canDelete,
     onDelete,
 }: {
-    onDelete: (id: string) => void;
-}): ColumnDef<any>[] => [
+    canDelete: boolean;
+    onDelete: (intake: Intake) => void;
+}): ColumnDef<Intake>[] => [
     {
         accessorKey: "name",
         header: "Intake Name",
@@ -37,29 +43,29 @@ const getIntakeColumns = ({
         ),
     },
     {
-        accessorKey: "start_date",
-        header: "Start Date",
+        accessorKey: "application_start",
+        header: "Applications Open",
         cell: ({ row }) => {
-            if (!row.original.start_date) return "-";
-            const date = new Date(row.original.start_date);
+            if (!row.original.application_start) return "-";
+            const date = new Date(row.original.application_start);
             return date.toLocaleDateString();
         },
     },
     {
-        accessorKey: "end_date",
-        header: "End Date",
+        accessorKey: "application_end",
+        header: "Applications Close",
         cell: ({ row }) => {
-            if (!row.original.end_date) return "-";
-            const date = new Date(row.original.end_date);
+            if (!row.original.application_end) return "-";
+            const date = new Date(row.original.application_end);
             return date.toLocaleDateString();
         },
     },
     {
-        accessorKey: "application_deadline",
-        header: "Deadline",
+        accessorKey: "late_application_end",
+        header: "Late Deadline",
         cell: ({ row }) => {
-            if (!row.original.application_deadline) return "-";
-            const date = new Date(row.original.application_deadline);
+            if (!row.original.late_application_end) return "-";
+            const date = new Date(row.original.late_application_end);
             return (
                 <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4 text-muted-foreground" />
@@ -91,16 +97,20 @@ const getIntakeColumns = ({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => window.location.href = `/admissions/intakes/${intake.id}`}>
+                        <DropdownMenuItem onClick={() => window.location.href = `/admissions/intakes/_static?id=${encodeURIComponent(intake.id)}`}>
                             Edit
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                            className="text-destructive" 
-                            onClick={() => onDelete(intake.id)}
-                        >
-                            Delete
-                        </DropdownMenuItem>
+                        {canDelete && (
+                            <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() => onDelete(intake)}
+                                >
+                                    Delete
+                                </DropdownMenuItem>
+                            </>
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             );
@@ -110,46 +120,95 @@ const getIntakeColumns = ({
 
 export default function IntakesPage() {
     const { canCreate, canDelete } = usePermissions();
-    const queryClient = useQueryClient();
-
-    const { data: intakesResponse, isLoading } = useQuery({
-        queryKey: queryKeys.intakes.list(),
-        queryFn: () => intakesApi.list(),
+    const { confirmDelete, dialog } = useDeleteConfirm();
+    const [academicCalendarId, setAcademicCalendarId] = useState("");
+    const [openStatus, setOpenStatus] = useState("all");
+    const [search, setSearch] = useState("");
+    const intakesQuery = useIntakes({
+        academic_calendar_id: academicCalendarId || undefined,
+        is_open: openStatus === "all" ? undefined : openStatus === "open",
+        fields: "id,name,code,slug,academic_calendar_id,application_start,application_end,late_application_end,is_open,is_active",
     });
+    const deleteIntake = useDeleteIntake();
 
-    const deleteMutation = useMutation({
-        mutationFn: (id: string) => intakesApi.delete(id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.intakes.all });
+    const handleDelete = (intake: Intake) => {
+        confirmDelete(intake.name, async () => {
+            await deleteIntake.mutateAsync(intake.id);
             toast.success("Intake deleted successfully");
-        },
-        onError: () => {
-            toast.error("Failed to delete intake");
-        },
-    });
-
-    const handleDelete = (id: string) => {
-        if (confirm("Are you sure you want to delete this intake?")) {
-            deleteMutation.mutate(id);
-        }
+        });
     };
 
-    const columns = getIntakeColumns({ onDelete: handleDelete });
+    const normalizedSearch = search.trim().toLowerCase();
+    const rows = (intakesQuery.data?.data || []).filter((item) => {
+        if (!normalizedSearch) return true;
+        return [item.name, item.code, item.slug].filter(Boolean).some((value) => String(value).toLowerCase().includes(normalizedSearch));
+    });
+    const columns = getIntakeColumns({ canDelete: canDelete("admissions") || canDelete("academic"), onDelete: handleDelete });
+    const hasFilters = Boolean(academicCalendarId) || openStatus !== "all" || Boolean(search);
 
     return (
         <PageTransition>
             <PageHeader
                 title="Intakes"
                 description="Manage admission intakes"
-                createHref={canCreate("admissions") ? "/admissions/intakes/new" : undefined}
+                actions={canCreate("admissions") || canCreate("academic") ? (
+                    <Button variant="outline" asChild>
+                        <Link href="/imports/intakes">
+                            <Upload className="h-4 w-4 mr-2" />
+                            Import
+                        </Link>
+                    </Button>
+                ) : undefined}
+                createHref={canCreate("admissions") || canCreate("academic") ? "/admissions/intakes/new" : undefined}
                 createLabel="Add Intake"
             />
             <DataTable
-                data={intakesResponse?.data || []}
+                data={rows}
                 columns={columns}
-                isLoading={isLoading}
-                emptyMessage="No intakes found. Create your first intake."
+                isLoading={intakesQuery.isLoading}
+                toolbar={(
+                    <div className="grid gap-3 rounded-lg border bg-card p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_180px_auto] md:items-end">
+                        <div className="space-y-2">
+                            <p className="text-sm font-medium">Search</p>
+                            <TableSearch value={search} onChange={setSearch} placeholder="Search intakes" />
+                        </div>
+                        <AcademicCalendarPicker
+                            value={academicCalendarId}
+                            onChange={(value) => setAcademicCalendarId(value)}
+                            label="Academic Calendar"
+                            placeholder="All calendars"
+                        />
+                        <div className="space-y-2">
+                            <p className="text-sm font-medium">Status</p>
+                            <Select value={openStatus} onValueChange={setOpenStatus}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="All statuses" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All statuses</SelectItem>
+                                    <SelectItem value="open">Open</SelectItem>
+                                    <SelectItem value="closed">Closed</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={!hasFilters}
+                            onClick={() => {
+                                setAcademicCalendarId("");
+                                setOpenStatus("all");
+                                setSearch("");
+                            }}
+                        >
+                            <FilterX className="h-4 w-4" />
+                            Clear
+                        </Button>
+                    </div>
+                )}
+                emptyMessage={search ? "No intakes match this search." : "No intakes found. Create your first intake."}
             />
+            {dialog}
         </PageTransition>
     );
 }

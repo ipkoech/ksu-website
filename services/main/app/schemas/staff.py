@@ -4,10 +4,14 @@ from __future__ import annotations
 
 import uuid
 from datetime import date
+from typing import Literal
 
 from pydantic import Field
 
 from .base import BaseReadSchema, BaseSchema
+
+
+ConflictResolution = Literal["cancel", "assign_acting", "replace_current", "edit_selection"]
 
 
 class StaffAssignmentCreate(BaseSchema):
@@ -30,6 +34,9 @@ class StaffAssignmentCreate(BaseSchema):
     status: str = Field(default="active", max_length=32)
     display_order: int = 100
     notes: str | None = None
+    conflict_resolution: ConflictResolution | None = None
+    conflict_end_date: date | None = None
+    conflict_notes: str | None = None
 
 
 class StaffAssignmentUpdate(BaseSchema):
@@ -51,6 +58,48 @@ class StaffAssignmentUpdate(BaseSchema):
     status: str | None = Field(default=None, max_length=32)
     display_order: int | None = None
     notes: str | None = None
+    conflict_resolution: ConflictResolution | None = None
+    conflict_end_date: date | None = None
+    conflict_notes: str | None = None
+
+
+class StaffAssignmentEnd(BaseSchema):
+    end_date: date | None = None
+    notes: str | None = None
+
+
+class StaffAssignmentActivate(BaseSchema):
+    start_date: date | None = None
+    notes: str | None = None
+    conflict_resolution: ConflictResolution | None = None
+    conflict_end_date: date | None = None
+    conflict_notes: str | None = None
+
+
+class StaffAssignmentReassign(BaseSchema):
+    person_id: uuid.UUID
+    title: str | None = Field(default=None, max_length=255)
+    start_date: date | None = None
+    end_previous_date: date | None = None
+    notes: str | None = None
+    conflict_resolution: ConflictResolution | None = None
+    conflict_end_date: date | None = None
+    conflict_notes: str | None = None
+
+
+class StaffAssignmentConflictCheck(BaseSchema):
+    entity_type: str = Field(min_length=1, max_length=32)
+    entity_id: uuid.UUID | None = None
+    role: str = Field(min_length=1, max_length=64)
+    exclude_assignment_id: uuid.UUID | None = None
+
+
+class StaffEntityOption(BaseSchema):
+    id: uuid.UUID | None = None
+    entity_type: str
+    label: str
+    subtitle: str | None = None
+    is_active: bool = True
 
 
 class StaffAssignmentRead(BaseReadSchema):

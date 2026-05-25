@@ -38,8 +38,8 @@ const defaultQuickLinks: QuickLink[] = [
 ];
 
 const defaultContactInfo = {
-  address: "P.O. Box 408-40200, Kisii",
-  phone: "+254 XXX XXX XXX",
+  address: "Main Campus, Kisii",
+  phone: "+254720875082",
   email: "info@kisiiuniversity.ac.ke",
 };
 
@@ -50,21 +50,23 @@ export function MiniHeader({
   className,
 }: MiniHeaderProps) {
   return (
-    <div className={cn("hidden sm:block bg-gray-900 text-white text-sm", className)}>
-      <div className="max-w-7xl mx-auto px-4 py-2">
-        <div className="flex items-center justify-between">
+    <div className={cn("hidden xl:block bg-gray-900 text-white text-xs", className)}>
+      <div className="w-full px-4 py-2 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="flex min-w-0 items-center justify-between gap-4">
           {/* Contact Info */}
-          <div className="flex items-center gap-6">
+          <div className="flex min-w-0 items-center gap-4">
             {contactInfo?.address && (
-              <span className="flex items-center gap-1.5 text-gray-300">
+              <span className="flex min-w-0 items-center gap-1.5 text-gray-300">
                 <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                <span className="hidden lg:inline">{contactInfo.address}</span>
+                <span className="hidden max-w-[150px] truncate xl:inline 2xl:max-w-none">
+                  {contactInfo.address}
+                </span>
               </span>
             )}
             {contactInfo?.phone && (
               <a
                 href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}
-                className="flex items-center gap-1.5 text-gray-300 hover:text-white transition-colors"
+                className="flex min-h-8 shrink-0 items-center gap-1.5 text-gray-300 transition-colors hover:text-white"
               >
                 <Phone className="w-3.5 h-3.5" />
                 <span className="hidden lg:inline">{contactInfo.phone}</span>
@@ -73,7 +75,7 @@ export function MiniHeader({
             {contactInfo?.email && (
               <a
                 href={`mailto:${contactInfo.email}`}
-                className="flex items-center gap-1.5 text-gray-300 hover:text-white transition-colors"
+                className="flex min-h-8 shrink-0 items-center gap-1.5 text-gray-300 transition-colors hover:text-white"
               >
                 <Mail className="w-3.5 h-3.5" />
                 <span className="hidden lg:inline">{contactInfo.email}</span>
@@ -82,16 +84,19 @@ export function MiniHeader({
           </div>
 
           {/* Quick Links & Social */}
-          <div className="flex items-center gap-6">
+          <div className="flex shrink-0 items-center gap-3 2xl:gap-4">
             {/* Quick Links */}
-            <nav className="flex items-center gap-4">
-              {quickLinks.map((link) => (
+            <nav className="flex items-center gap-2.5 2xl:gap-3">
+              {quickLinks.map((link, index) => (
                 <Link
                   key={link.label}
                   href={link.href}
                   target={link.external ? "_blank" : undefined}
                   rel={link.external ? "noopener noreferrer" : undefined}
-                  className="text-gray-300 hover:text-white transition-colors"
+                  className={cn(
+                    "inline-flex min-h-8 items-center text-gray-300 transition-colors hover:text-white",
+                    index > 2 && "hidden 2xl:inline"
+                  )}
                 >
                   {link.label}
                 </Link>
@@ -105,11 +110,11 @@ export function MiniHeader({
             <SearchButton />
 
             {/* Divider */}
-            {socialLinks && <div className="w-px h-4 bg-gray-700" />}
+            {socialLinks && <div className="hidden 2xl:block w-px h-4 bg-gray-700" />}
 
             {/* Social Links */}
             {socialLinks && (
-              <div className="flex items-center gap-3">
+              <div className="hidden 2xl:flex items-center gap-2.5">
                 {socialLinks.facebook && (
                   <SocialIcon href={socialLinks.facebook} label="Facebook">
                     <FacebookIcon />
@@ -172,7 +177,7 @@ function SearchButton() {
             setIsOpen(false);
             setQuery("");
           }}
-          className="text-gray-400 hover:text-white transition-colors"
+          className="flex h-8 w-8 items-center justify-center rounded text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
           aria-label="Close search"
         >
           <X className="w-4 h-4" />
@@ -184,7 +189,7 @@ function SearchButton() {
   return (
     <button
       onClick={() => setIsOpen(true)}
-      className="flex items-center gap-1.5 text-gray-300 hover:text-white transition-colors"
+      className="flex min-h-8 items-center gap-1.5 text-gray-300 transition-colors hover:text-white"
       aria-label="Search"
     >
       <Search className="w-3.5 h-3.5" />
@@ -208,7 +213,7 @@ function SocialIcon({
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
-      className="text-gray-400 hover:text-white transition-colors"
+      className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
     >
       {children}
     </a>

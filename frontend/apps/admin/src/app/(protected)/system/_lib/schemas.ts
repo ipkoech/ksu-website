@@ -25,6 +25,7 @@ export const createRoleSchema = z.object({
 export const webhookSchema = z.object({
   name: z.string().min(1).max(255),
   url: z.string().url(),
+  secret: z.string().max(255).optional().nullable(),
   events: z.array(z.string()).min(1),
   is_active: z.boolean().default(true),
 });

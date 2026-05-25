@@ -45,6 +45,18 @@ export interface UserRole {
   role?: Pick<Role, "id" | "name" | "display_name" | "is_active">;
 }
 
+export interface UserRoleAssignmentPayload {
+  role_id: string;
+  scope_type?: string | null;
+  scope_id?: string | null;
+  expires_at?: string | null;
+  note?: string | null;
+}
+
+export interface UserRolesUpdatePayload {
+  roles: UserRoleAssignmentPayload[];
+}
+
 export interface User extends BaseRead {
   email: string;
   phone: string | null;
@@ -63,12 +75,52 @@ export interface User extends BaseRead {
   role_assignments?: UserRole[];
 }
 
+export interface UserCreatePayload {
+  email: string;
+  phone?: string | null;
+  password: string;
+  full_name: string;
+  avatar_url?: string | null;
+  push_tokens?: string[] | null;
+  is_active?: boolean;
+  is_verified?: boolean;
+  mfa_enabled?: boolean;
+}
+
+export interface UserUpdatePayload {
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  full_name?: string | null;
+  avatar_url?: string | null;
+  push_tokens?: string[] | null;
+  is_active?: boolean | null;
+  is_verified?: boolean | null;
+  mfa_enabled?: boolean | null;
+}
+
 export interface Permission extends BaseRead {
   name: string;
   description: string | null;
   resource: string | null;
   action: string | null;
   is_active: boolean;
+}
+
+export interface RoleCreatePayload {
+  name: string;
+  display_name?: string | null;
+  description?: string | null;
+  is_system?: boolean;
+  is_active?: boolean;
+  permissions: string[];
+}
+
+export interface RoleUpdatePayload {
+  display_name?: string | null;
+  description?: string | null;
+  is_system?: boolean | null;
+  is_active?: boolean | null;
 }
 
 export interface AuditLog extends BaseRead {
@@ -107,6 +159,30 @@ export interface Setting extends BaseRead {
   updated_by_id: string | null;
 }
 
+export interface SettingCreatePayload {
+  key: string;
+  value: unknown;
+  value_type: string;
+  category: string;
+  description?: string | null;
+  is_public?: boolean;
+}
+
+export interface SettingUpdatePayload {
+  value?: unknown;
+  value_type?: string | null;
+  category?: string | null;
+  description?: string | null;
+  is_public?: boolean | null;
+}
+
+export interface BulkSettingsUpdatePayload {
+  settings: Array<{
+    key: string;
+    value: unknown;
+  }>;
+}
+
 export interface ApiKey extends BaseRead {
   name: string;
   description: string | null;
@@ -119,6 +195,23 @@ export interface ApiKey extends BaseRead {
   key_prefix?: string;
 }
 
+export interface ApiKeyCreatePayload {
+  name: string;
+  description?: string | null;
+  scopes: string[];
+  rate_limit?: number;
+  expires_at?: string | null;
+}
+
+export interface ApiKeyUpdatePayload {
+  name?: string | null;
+  description?: string | null;
+  scopes?: string[] | null;
+  rate_limit?: number | null;
+  expires_at?: string | null;
+  is_active?: boolean | null;
+}
+
 export interface Webhook extends BaseRead {
   name: string;
   url: string;
@@ -129,6 +222,106 @@ export interface Webhook extends BaseRead {
   last_status: number | null;
   failure_count: number;
   created_by_id: string;
+}
+
+export interface WebhookCreatePayload {
+  name: string;
+  url: string;
+  secret?: string | null;
+  events: string[];
+  is_active?: boolean;
+}
+
+export interface WebhookUpdatePayload {
+  name?: string | null;
+  url?: string | null;
+  secret?: string | null;
+  events?: string[] | null;
+  is_active?: boolean | null;
+  last_status?: number | null;
+  failure_count?: number | null;
+}
+
+export interface NotificationTemplate extends BaseRead {
+  code: string;
+  name: string;
+  description?: string | null;
+  title_template: string | null;
+  subject_template: string | null;
+  message_template: string | null;
+  channels: string[];
+  variables?: string[] | null;
+  is_active: boolean;
+}
+
+export interface NotificationTemplateCreatePayload {
+  code: string;
+  name: string;
+  description?: string | null;
+  title_template: string;
+  subject_template?: string | null;
+  message_template: string;
+  channels?: string[];
+  variables?: string[] | null;
+  is_active?: boolean;
+}
+
+export interface NotificationTemplateUpdatePayload {
+  name?: string | null;
+  description?: string | null;
+  title_template?: string | null;
+  subject_template?: string | null;
+  message_template?: string | null;
+  channels?: string[] | null;
+  variables?: string[] | null;
+  is_active?: boolean | null;
+}
+
+export interface NotificationDelivery extends BaseRead {
+  notification_id: string | null;
+  user_id: string | null;
+  channel: string;
+  status: string;
+  recipient: string | null;
+  sent_at: string | null;
+  delivered_at: string | null;
+  error_message: string | null;
+}
+
+export interface NotificationCreatePayload {
+  user_id: string;
+  template_id?: string | null;
+  title: string;
+  subject?: string | null;
+  message: string;
+  notification_type?: string;
+  priority?: string;
+  action_url?: string | null;
+  scope_type?: string | null;
+  scope_id?: string | null;
+  channels?: string[];
+  payload?: Record<string, unknown> | null;
+  expires_at?: string | null;
+}
+
+export interface NotificationBroadcastPayload {
+  user_ids?: string[];
+  role_names?: string[];
+  audience_scope_type?: string | null;
+  audience_scope_id?: string | null;
+  template_code?: string | null;
+  template_context?: Record<string, unknown> | null;
+  title?: string | null;
+  subject?: string | null;
+  message?: string | null;
+  notification_type?: string;
+  priority?: string;
+  action_url?: string | null;
+  scope_type?: string | null;
+  scope_id?: string | null;
+  channels?: string[];
+  payload?: Record<string, unknown> | null;
+  expires_at?: string | null;
 }
 
 export interface UserListParams {
@@ -152,13 +345,9 @@ export interface RoleListParams {
 
 export interface AuditLogParams {
   user_id?: string;
-  action?: string;
-  resource?: string;
   resource_type?: string;
   service_name?: string;
   status?: string;
-  date_from?: string;
-  date_to?: string;
   page?: number;
   limit?: number;
 }

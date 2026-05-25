@@ -6,7 +6,7 @@ import hashlib
 import uuid
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, Header, status
+from fastapi import Cookie, Depends, HTTPException, Header, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,7 +17,24 @@ from ksu_common import TokenPayload, get_current_user as get_current_token
 from .core.database import get_session
 from .models import ApiKey, Role, RolePermission, User, UserRole
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
+
+
+async def get_db():
+    """Yield database session."""
+    async for session in get_session():
+        yield session
+
+
+def _credentials_from_request(
+    credentials: HTTPAuthorizationCredentials | None,
+    access_cookie: str | None,
+) -> HTTPAuthorizationCredentials:
+    if credentials is not None:
+        return credentials
+    if access_cookie:
+        return HTTPAuthorizationCredentials(scheme="Bearer", credentials=access_cookie)
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
 
 class ApiKeyUser:
@@ -32,10 +49,7 @@ class ApiKeyUser:
 
     def has_scope(self, scope: str) -> bool:
         """Check if API key has the required scope."""
-        scope_parts = scope.split(":")
-        if len(scope_parts) == 2 and scope_parts[1] == "*":
-            return any(s.startswith(f"{scope_parts[0]}:") for s in self.scopes)
-        return scope in self.scopes
+        return _has_permission(self.scopes, scope)
 
 
 async def get_api_key_user(
@@ -91,17 +105,13 @@ def require_api_key_scope(scope: str):
     return _check
 
 
-async def get_db():
-    """Yield database session."""
-    async for session in get_session():
-        yield session
-
-
 async def get_current_active_user(
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    access_cookie: Annotated[str | None, Cookie(alias="ksu_access")] = None,
 ) -> User:
     """Resolve the currently authenticated active user."""
+    credentials = _credentials_from_request(credentials, access_cookie)
     payload = await get_current_token(credentials)
     try:
         user_id = uuid.UUID(payload.sub)
@@ -125,18 +135,111 @@ async def get_current_active_user(
 
 
 async def get_token_payload(
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)],
+    access_cookie: Annotated[str | None, Cookie(alias="ksu_access")] = None,
 ) -> TokenPayload:
     """Expose the decoded JWT payload."""
+    credentials = _credentials_from_request(credentials, access_cookie)
     return await get_current_token(credentials)
+
+
+def _normalize_scope(scope: str) -> str:
+    return scope.strip().lower()
+
+
+def _split_scope(scope: str) -> tuple[str, str]:
+    normalized = _normalize_scope(scope)
+    colon_index = normalized.index(":") if ":" in normalized else -1
+    dot_index = normalized.index(".") if "." in normalized else -1
+    separator_index = colon_index if dot_index == -1 else dot_index if colon_index == -1 else min(colon_index, dot_index)
+    if separator_index == -1:
+        return normalized, ""
+    return normalized[:separator_index], normalized[separator_index + 1 :]
+
+
+def _resource_aliases(resource: str) -> set[str]:
+    aliases = {
+        "organization": {"organization", "governance"},
+        "governance": {"governance", "organization"},
+    }
+    return aliases.get(resource, {resource})
+
+
+def _action_grants(permission_action: str, required_action: str) -> bool:
+    if permission_action in {"*", required_action}:
+        return True
+
+    read_actions = {"read", "view", "list"}
+    write_actions = {"write", "create", "update", "edit", "manage"}
+    delete_actions = {"delete", "remove"}
+
+    if permission_action == "read":
+        return required_action in read_actions
+    if permission_action == "write":
+        return (
+            required_action in write_actions
+            or required_action.startswith("manage")
+            or required_action in {"publish", "unpublish", "upload", "send"}
+        )
+    if permission_action == "manage":
+        return required_action not in delete_actions
+    if permission_action.startswith("manage"):
+        return required_action in write_actions or required_action.startswith("manage")
+    if permission_action == "delete":
+        return required_action in delete_actions
+    if permission_action == "upload":
+        return required_action == "upload"
+    if permission_action == "send":
+        return required_action == "send"
+    if permission_action == "view":
+        return required_action in read_actions
+
+    return False
+
+
+def _scope_variants(scope: str) -> set[str]:
+    resource, action = _split_scope(scope)
+    if not action:
+        return {resource}
+
+    variants = {
+        f"{resource}:{action}",
+        f"{resource}.{action}",
+    }
+    if action == "read":
+        variants.update({f"{resource}.view", f"{resource}:view"})
+    if action == "view":
+        variants.update({f"{resource}:read", f"{resource}.read"})
+    if action == "write":
+        variants.update({f"{resource}.manage", f"{resource}:manage"})
+    if action.startswith("manage"):
+        variants.update({f"{resource}:write", f"{resource}.write"})
+    return variants
+
+
+def _permission_grants_scope(permission: str, scope: str) -> bool:
+    permission_resource, permission_action = _split_scope(permission)
+    required_resource, required_action = _split_scope(scope)
+    if permission == "*" or permission == "admin:*":
+        return True
+    if not permission_action:
+        return permission == scope
+    if permission_resource not in _resource_aliases(required_resource):
+        return False
+    if required_action == "*":
+        return permission_action == "*"
+    return _action_grants(permission_action, required_action)
 
 
 def _has_permission(permissions: set[str], scope: str) -> bool:
     """Check if any permission grants the required scope."""
-    scope_parts = scope.split(":")
-    if len(scope_parts) == 2 and scope_parts[1] == "*":
-        return any(perm.startswith(f"{scope_parts[0]}:") for perm in permissions)
-    return scope in permissions
+    normalized_permissions = {_normalize_scope(permission) for permission in permissions}
+    normalized_scope = _normalize_scope(scope)
+    if "*" in normalized_permissions or "admin:*" in normalized_permissions:
+        return True
+    if normalized_permissions.intersection(_scope_variants(normalized_scope)):
+        return True
+    return any(_permission_grants_scope(permission, normalized_scope) for permission in normalized_permissions)
 
 
 def require_scope(scope: str):

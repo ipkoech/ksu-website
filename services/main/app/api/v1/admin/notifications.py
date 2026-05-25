@@ -35,6 +35,15 @@ async def create_template(data: NotificationTemplateCreate, db: DbSession, _: Cu
     return success(data=item, message="Notification template created")
 
 
+@router.get("/templates/{template_id}", dependencies=[Depends(require_scope("notifications:read"))])
+async def get_template(template_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+    selector = build_selector(NotificationTemplate, fields)
+    item = await NotificationService.get_template_by_id(db, template_id, load_options=selector.load_options)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Notification template not found")
+    return success(data=selector.apply(item))
+
+
 @router.patch("/templates/{template_id}", dependencies=[Depends(require_scope("notifications:write"))])
 async def update_template(template_id: uuid.UUID, data: NotificationTemplateUpdate, db: DbSession, _: CurrentUser):
     item = await NotificationService.get_template_by_id(db, template_id)

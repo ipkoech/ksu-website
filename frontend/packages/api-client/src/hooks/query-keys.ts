@@ -78,6 +78,22 @@ export const queryKeys = {
     all: ["intakes"] as const,
     list: (params?: Record<string, unknown>) => ["intakes", "list", params] as const,
     detail: (id: string) => ["intakes", "detail", id] as const,
+    bySlug: (slug: string) => ["intakes", "slug", slug] as const,
+  },
+
+  // Admission information
+  admissions: {
+    all: ["admissions"] as const,
+    list: (params?: Record<string, unknown>) => ["admissions", "list", params] as const,
+    detail: (id: string) => ["admissions", "detail", id] as const,
+    bySlug: (slug: string) => ["admissions", "slug", slug] as const,
+  },
+
+  // Academic calendars
+  academicCalendars: {
+    all: ["academic-calendars"] as const,
+    list: (params?: Record<string, unknown>) => ["academic-calendars", "list", params] as const,
+    detail: (id: string) => ["academic-calendars", "detail", id] as const,
   },
 
   // News
@@ -109,6 +125,7 @@ export const queryKeys = {
     all: ["announcements"] as const,
     list: (params?: Record<string, unknown>) => ["announcements", "list", params] as const,
     detail: (id: string) => ["announcements", "detail", id] as const,
+    bySlug: (slug: string) => ["announcements", "slug", slug] as const,
   },
 
   // Sliders
@@ -116,6 +133,7 @@ export const queryKeys = {
     groups: ["slider-groups"] as const,
     groupList: (params?: Record<string, unknown>) => ["slider-groups", "list", params] as const,
     groupDetail: (id: string) => ["slider-groups", "detail", id] as const,
+    sliderList: (params?: Record<string, unknown>) => ["sliders", "list", params] as const,
     items: (groupId: string) => ["slider-groups", groupId, "sliders"] as const,
   },
 
@@ -124,6 +142,10 @@ export const queryKeys = {
     all: ["media"] as const,
     list: (params?: Record<string, unknown>) => ["media", "list", params] as const,
     detail: (id: string) => ["media", "detail", id] as const,
+    folders: (params?: Record<string, unknown>) => ["media", "folders", params] as const,
+    folder: (id: string) => ["media", "folders", id] as const,
+    links: (params?: Record<string, unknown>) => ["media", "links", params] as const,
+    link: (id: string) => ["media", "links", id] as const,
   },
 
   // FAQs
@@ -157,6 +179,22 @@ export const queryKeys = {
     all: ["audit-logs"] as const,
     list: (params?: Record<string, unknown>) => ["audit-logs", "list", params] as const,
     detail: (id: string) => ["audit-logs", "detail", id] as const,
+  },
+
+  // Reports
+  reports: {
+    all: ["reports"] as const,
+    overview: (params?: Record<string, unknown>) => ["reports", "overview", params] as const,
+    traffic: (params?: Record<string, unknown>) => ["reports", "traffic", params] as const,
+    content: (params?: Record<string, unknown>) => ["reports", "content", params] as const,
+    adminActivity: (params?: Record<string, unknown>) => ["reports", "admin-activity", params] as const,
+  },
+
+  // Imports
+  imports: {
+    all: ["imports"] as const,
+    resources: ["imports", "resources"] as const,
+    resource: (resource: string) => ["imports", "resources", resource] as const,
   },
 
   // API Keys

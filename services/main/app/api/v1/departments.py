@@ -10,6 +10,7 @@ from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
+from ._person_media import with_person_photo_urls
 from ...deps import CurrentUser, DbSession, require_scope
 from ...models import Department, DepartmentService as DepartmentServiceModel, Person, Programme
 from ...schemas import DepartmentCreate, DepartmentUpdate
@@ -27,6 +28,7 @@ async def list_departments(
     school_id: uuid.UUID | None = None,
     wing_id: uuid.UUID | None = None,
     department_type: str | None = None,
+    search: str | None = None,
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(Department, fields)
@@ -37,6 +39,7 @@ async def list_departments(
         school_id=school_id,
         wing_id=wing_id,
         department_type=department_type,
+        search=search,
         load_options=selector.load_options,
     )
     return success(data=selector.apply(result.items), meta=result.meta)
@@ -52,6 +55,15 @@ async def get_department(slug: str, db: DbSession, fields: FieldSelection = Fiel
     return success(data=selector.apply(department))
 
 
+@router.get("/id/{department_id}")
+async def get_department_by_id(department_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+    selector = build_selector(Department, fields)
+    department = await DepartmentService.get_by_id(db, department_id, load_options=selector.load_options)
+    if department is None:
+        raise HTTPException(status_code=404, detail="Department not found")
+    return success(data=selector.apply(department))
+
+
 @router.get("/{slug}/staff")
 @cached_public(timeout=300)
 async def get_department_staff(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
@@ -60,7 +72,7 @@ async def get_department_staff(slug: str, db: DbSession, fields: FieldSelection 
         raise HTTPException(status_code=404, detail="Department not found")
     selector = build_selector(Person, fields)
     staff = await DepartmentService.get_staff(db, department.id)
-    return success(data=selector.apply(staff))
+    return success(data=with_person_photo_urls(selector.apply(staff), staff))
 
 
 @router.get("/{slug}/services")
@@ -111,4 +123,4 @@ async def delete_department(department_id: uuid.UUID, db: DbSession, _: CurrentU
     department = await DepartmentService.get_by_id(db, department_id)
     if department is None:
         raise HTTPException(status_code=404, detail="Department not found")
-    department.is_active = False
+    await DepartmentService.delete(db, department)

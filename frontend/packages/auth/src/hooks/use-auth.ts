@@ -2,20 +2,13 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { useAuthStore } from "../store";
-import { getAccessibleServices, hasServiceAccess, getPrimaryService } from "../permissions";
 import type { Service, LoginCredentials } from "../types";
-
-async function tryRefreshToken(): Promise<boolean> {
-  try {
-    const response = await fetch("/api/auth/refresh", {
-      method: "POST",
-      credentials: "include",
-    });
-    return response.ok;
-  } catch {
-    return false;
-  }
-}
+import {
+  fetchCurrentUser,
+  loginWithPassword,
+  logoutCurrentSession,
+  refreshStoredAuthTokens,
+} from "../backend";
 
 export function useAuth() {
   const {
@@ -31,32 +24,21 @@ export function useAuth() {
     logout: logoutStore,
   } = useAuthStore();
 
-  const accessibleServices = user ? getAccessibleServices(user.roles) : [];
+  const accessibleServices = user ? user.services.map((service) => service.service) : [];
 
   const checkAuth = useCallback(async (_retryWithRefresh = true) => {
     setLoading(true);
     try {
-      let response = await fetch("/api/auth/me", {
-        credentials: "include",
-      });
+      let user = await fetchCurrentUser();
 
-      // If unauthorized, try to refresh the token
-      if (response.status === 401 && _retryWithRefresh) {
-        const refreshed = await tryRefreshToken();
+      if (!user && _retryWithRefresh) {
+        const refreshed = await refreshStoredAuthTokens();
         if (refreshed) {
-          // Retry the request with new token
-          response = await fetch("/api/auth/me", {
-            credentials: "include",
-          });
+          user = await fetchCurrentUser();
         }
       }
 
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-      } else {
-        setUser(null);
-      }
+      setUser(user);
     } catch {
       setUser(null);
     } finally {
@@ -70,24 +52,10 @@ export function useAuth() {
       setError(null);
 
       try {
-        const response = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(credentials),
-          credentials: "include",
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          // Handle normalized error response
-          const errorMessage = data.detail || data.message || "Login failed";
-          throw new Error(errorMessage);
-        }
-
+        const data = await loginWithPassword(credentials);
         setUser(data.user);
 
-        const services = getAccessibleServices(data.user.roles);
+        const services = data.user.services.map((service) => service.service);
         if (services.length === 1) {
           setActiveService(services[0]);
         }
@@ -107,41 +75,61 @@ export function useAuth() {
   const logout = useCallback(async () => {
     // Clear user state immediately - no token refresh attempts after this
     logoutStore();
-
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch {
-      // Already logged out locally, ignore API errors
-    }
+    await logoutCurrentSession();
   }, [logoutStore]);
 
   const switchService = useCallback(
     (service: Service) => {
-      if (user && hasServiceAccess(user.roles, service)) {
+      if (user?.services.some((access) => access.service === service)) {
         setActiveService(service);
       }
     },
     [user, setActiveService]
   );
 
+  const scopeCandidates = useCallback((scope: string) => {
+    const normalized = scope.trim().toLowerCase();
+    const candidates = new Set([normalized]);
+
+    if (normalized.includes(":")) {
+      const [resource, action = ""] = normalized.split(":");
+      candidates.add(`${resource}.${action}`);
+      if (action === "read") candidates.add(`${resource}.view`);
+      if (["write", "create", "update", "edit", "manage"].includes(action)) {
+        candidates.add(`${resource}.manage`);
+      }
+    }
+
+    if (normalized.includes(".")) {
+      const [resource, action = ""] = normalized.split(".");
+      candidates.add(`${resource}:${action}`);
+      if (action === "view") candidates.add(`${resource}:read`);
+      if (action.startsWith("manage")) candidates.add(`${resource}:write`);
+    }
+
+    return Array.from(candidates);
+  }, []);
+
   const hasScope = useCallback(
     (scope: string): boolean => {
       if (!user || !activeService) return false;
       const serviceAccess = user.services.find((s) => s.service === activeService);
       if (!serviceAccess) return false;
+      const candidates = scopeCandidates(scope);
       return (
         serviceAccess.scopes.includes("*") ||
-        serviceAccess.scopes.includes(scope) ||
+        serviceAccess.scopes.some((serviceScope) => candidates.includes(serviceScope)) ||
         serviceAccess.scopes.some((s) => {
-          const [resource] = s.split(".");
-          return s === `${resource}.*` && scope.startsWith(`${resource}.`);
+          const separator = s.includes(":") ? ":" : ".";
+          const [resource, action] = s.split(separator);
+          return (
+            action === "*" &&
+            candidates.some((candidate) => candidate.startsWith(`${resource}.`) || candidate.startsWith(`${resource}:`))
+          );
         })
       );
     },
-    [user, activeService]
+    [user, activeService, scopeCandidates]
   );
 
   const hasAnyScope = useCallback(

@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from ksu_common import persist_audit_log, should_skip_audit
 
@@ -15,6 +17,7 @@ from .core.database import AsyncSessionLocal
 from .routes import register_routers
 
 settings = get_settings()
+SEED_ASSETS_DIR = Path(__file__).resolve().parent / "seeders" / "assets"
 
 
 @asynccontextmanager
@@ -79,4 +82,10 @@ def create_app() -> FastAPI:
         return response
 
     register_routers(app)
+    if SEED_ASSETS_DIR.exists():
+        app.mount(
+            "/seed-assets",
+            StaticFiles(directory=SEED_ASSETS_DIR),
+            name="seed-assets",
+        )
     return app

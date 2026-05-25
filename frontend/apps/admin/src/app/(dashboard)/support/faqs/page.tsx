@@ -5,7 +5,7 @@ import { DataTable } from "@/components/data-table/data-table";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTransition } from "@/lib/animations";
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, HelpCircle } from "lucide-react";
+import { MoreHorizontal, HelpCircle, Upload } from "lucide-react";
 import { Button, Badge } from "@ksu/ui/components";
 import {
     DropdownMenu,
@@ -15,13 +15,18 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@ksu/ui/components";
-import { faqsApi, queryKeys } from "@ksu/api-client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useDeleteFAQ, useFAQs } from "@ksu/api-client";
 import { toast } from "@ksu/ui";
+import Link from "next/link";
+import { useDeleteConfirm } from "@/hooks/use-delete-confirm";
+import { useState } from "react";
+import { TableSearch } from "@/components/shared/table-search";
 
 const getFAQColumns = ({
+    canDelete,
     onDelete,
 }: {
+    canDelete: boolean;
     onDelete: (id: string) => void;
 }): ColumnDef<any>[] => [
     {
@@ -46,16 +51,16 @@ const getFAQColumns = ({
         header: "Answer",
         cell: ({ row }) => (
             <span className="line-clamp-1 max-w-[300px]">
-                {row.original.answer ? "Has answer" : "No answer"}
+                {row.original.answer_plain_text || row.original.answer_rich_text || row.original.answer ? "Has answer" : "No answer"}
             </span>
         ),
     },
     {
-        accessorKey: "is_active",
+        accessorKey: "status",
         header: "Status",
         cell: ({ row }) => (
-            <Badge variant={row.original.is_active ? "default" : "secondary"}>
-                {row.original.is_active ? "Active" : "Inactive"}
+            <Badge variant={row.original.status === "published" ? "default" : "secondary"}>
+                {row.original.status || "draft"}
             </Badge>
         ),
     },
@@ -76,13 +81,14 @@ const getFAQColumns = ({
                         <DropdownMenuItem onClick={() => window.location.href = `/support/faqs/${faq.id}`}>
                             Edit
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                            className="text-destructive" 
-                            onClick={() => onDelete(faq.id)}
-                        >
-                            Delete
-                        </DropdownMenuItem>
+                        {canDelete && (
+                            <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-destructive" onClick={() => onDelete(faq.id)}>
+                                    Delete
+                                </DropdownMenuItem>
+                            </>
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             );
@@ -92,46 +98,56 @@ const getFAQColumns = ({
 
 export default function FAQsPage() {
     const { canCreate, canDelete } = usePermissions();
-    const queryClient = useQueryClient();
+    const deleteFAQ = useDeleteFAQ();
+    const { confirmDelete, dialog } = useDeleteConfirm();
+    const [search, setSearch] = useState("");
 
-    const { data: faqsResponse, isLoading } = useQuery({
-        queryKey: queryKeys.faqs.list(),
-        queryFn: () => faqsApi.list(),
-    });
-
-    const deleteMutation = useMutation({
-        mutationFn: (id: string) => faqsApi.delete(id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.faqs.all });
-            toast.success("FAQ deleted successfully");
-        },
-        onError: () => {
-            toast.error("Failed to delete FAQ");
-        },
+    const { data: faqsResponse, isLoading } = useFAQs();
+    const normalizedSearch = search.trim().toLowerCase();
+    const rows = (faqsResponse?.data || []).filter((faq) => {
+        if (!normalizedSearch) return true;
+        return [faq.question, faq.category, faq.answer_plain_text, faq.answer_rich_text, faq.answer]
+            .filter(Boolean)
+            .some((value) => String(value).toLowerCase().includes(normalizedSearch));
     });
 
     const handleDelete = (id: string) => {
-        if (confirm("Are you sure you want to delete this FAQ?")) {
-            deleteMutation.mutate(id);
-        }
+        confirmDelete("FAQ", async () => {
+            try {
+                await deleteFAQ.mutateAsync(id);
+                toast.success("FAQ deleted successfully");
+            } catch {
+                toast.error("Failed to delete FAQ");
+            }
+        });
     };
 
-    const columns = getFAQColumns({ onDelete: handleDelete });
+    const columns = getFAQColumns({ canDelete: canDelete("support"), onDelete: handleDelete });
 
     return (
         <PageTransition>
             <PageHeader
                 title="FAQs"
                 description="Manage frequently asked questions"
+                actions={canCreate("support") ? (
+                    <Button variant="outline" asChild>
+                        <Link href="/imports/faqs">
+                            <Upload className="h-4 w-4 mr-2" />
+                            Import
+                        </Link>
+                    </Button>
+                ) : undefined}
                 createHref={canCreate("support") ? "/support/faqs/new" : undefined}
                 createLabel="Add FAQ"
             />
             <DataTable
-                data={faqsResponse?.data || []}
+                data={rows}
                 columns={columns}
                 isLoading={isLoading}
-                emptyMessage="No FAQs found. Create your first FAQ."
+                toolbar={<TableSearch value={search} onChange={setSearch} placeholder="Search FAQs" />}
+                emptyMessage={search ? "No FAQs match this search." : "No FAQs found. Create your first FAQ."}
             />
+            {dialog}
         </PageTransition>
     );
 }

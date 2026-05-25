@@ -1,59 +1,92 @@
 # About Overview Design Notes
 
-## Final Design Summary
+Status: Implemented / canonical for `/about`
 
-Selected direction: **Modern polished**.
+## Route Status
 
-The final design reframes the public About Overview page around a clear editorial hero, campus image, authenticated public facts, a concise institutional journey, Mission / Vision / Philosophy cards, and public next-step links. It preserves Kisii University brand cues: crest-led header, navy/slate typography, university blue, orange accents, pale blue surfaces, serif display headings, and clean sans-serif UI.
+- `/about` is the canonical About overview route.
+- `/about/overview` redirects to `/about`.
+- `designs/about-overview` is valid only as the canonical `/about` design target, not as a standalone `/about/overview` page.
 
-Final visuals were generated using the `imagegen` skill. No implementation was performed.
+## Latest Redesign Pass
 
-## Product Audit
+The May 19 section-by-section pass rebuilt the page as a full overview rather than a hero-only treatment:
 
-- Product purpose: public university website for institutional information, admissions discovery, academics, governance, research, library, and community-facing content.
-- Page purpose: help public users understand Kisii University, its institutional history, mandate, and where to go next.
-- Primary audience: prospective students, parents, staff, partners, community members, and public stakeholders.
-- Main user goal: quickly understand the university and navigate to related About pages or admissions/programme paths.
-- Product goal: build trust, clarify institutional identity, and support conversion toward admissions and programme exploration.
-- Backend constraints: public data comes from `university-info`, governance boards, divisions, schools, and source-backed fallbacks; create/update/delete flows require authenticated admin scopes.
-- Frontend constraints: public Next.js route, existing public header/footer, Tailwind UI patterns, Playfair-style display typography, Inter-style UI text, blue/orange brand tokens, responsive mobile sheet navigation.
+1. Hero and orientation: breadcrumb, About route navigation, vision-led overview, primary/secondary CTAs, sourced facts, related pages, and institutional focus.
+2. Story and timeline: dated milestone cards for 1965, 1983, 1994, 1999, 2007, and 2013.
+3. Institutional mandate: separate mission, vision, and philosophy panels.
+4. Core values: deep contrast panel using the four published values.
+5. Explore pathways: route cards for Governance & Leadership, University Management, Administrative Division, and Our Service Charter.
 
-## Selected Direction Rationale
+The latest layout revision removes page-level centered max-width constraints from the About content so each section composition spans the full available viewport width.
 
-The modern polished direction scored highest overall because it improves hierarchy without overextending the brand or implying unsupported product behavior. It is clearer than the conservative direction and more feasible/brand-aligned than the bold direction.
+## Files Updated
 
-## Key Sections
+- `frontend/apps/web/src/app/about/about-overview-content.tsx`
+- `frontend/apps/web/src/app/about/page.tsx`
+- `frontend/apps/web/src/app/about/overview/page.tsx`
+- `designs/manifest.md`
+- `designs/about-overview/design-notes.md`
 
-- Public header with crest, navigation, search affordance, and Apply Now.
-- Hero: About Kisii University, vision statement, campus image, and primary/secondary page actions.
-- Fact row: 1965 Established, 61 Acres Donated, 2013 University Charter, 8 Published Schools.
-- Journey timeline: 1965, 1983, 1994, 2007, 2013.
-- Institutional mandate: Mission, Vision, Philosophy.
-- Related links: Governance & Leadership, University Management, Administrative Division, Our Service Charter.
+Related tooling updates from verification:
 
-## Action Hierarchy
+- `frontend/apps/web/package.json`
+- `frontend/pnpm-lock.yaml`
 
-- Primary global action: Apply Now.
-- Primary page action: Leadership & Governance.
-- Secondary page action: University Management.
-- Tertiary actions: Administrative Division, Our Service Charter, Explore Programmes.
+## Frontend Constraints
 
-## Desktop Guidance
+The implementation keeps the real public shell from `PageShell`:
 
-Use a split hero with text/actions on the left and the campus image/fact overlay on the right. Keep related About navigation visible without making it compete with the central page task. The first viewport should include a hint of the mandate or related links section.
+- `Announcements`
+- `MiniHeader`
+- `PublicHeader`
+- page content
+- `PublicFooter`
 
-## Mobile Guidance
+It preserves the frontend-owned logo, header, navigation, mini-header search placement, footer structure, route behavior, color tokens, typography, spacing, border radius, shadows, and card language.
 
-Use a mobile-first stack: header, breadcrumb, hero, image/facts, CTAs, timeline, mandate cards, explore links, Apply Now. Keep facts in two-column cards and make all links full-width touch targets.
+## Backend And Data Constraints
 
-## Accessibility Notes
+The page uses existing About data and fallbacks:
 
-Maintain strong contrast between navy text, white surfaces, and blue/orange actions. Keep buttons at mobile-friendly height, avoid tiny uppercase-only labels for critical information, and preserve visible focus states from the existing design system.
+- `getOverviewData()`
+- `aboutIntro`
+- `officialMission`
+- `officialVision`
+- `officialPhilosophy`
+- `historyTimeline`
+- `coreValues`
+- `quickNavigation`
+
+No API, database, route, admin state, or transactional workflow was added.
 
 ## Product Truthfulness Constraints
 
-Only use supported public facts: founded 1965, 61 acres donated, 1983 secondary teachers college, 1994 Egerton campus, 2007 constituent college, 2013 charter, 8 published schools, mission/vision/philosophy, and current public related pages. Do not add rankings, testimonials, student counts, awards, partner logos, admin controls, or fake live metrics.
+Future revisions should continue to avoid unsupported rankings, fake enrollment counts, fake testimonials, fake certifications, fake partner logos, fake downloadable documents, fake admissions deadlines, fake application states, alternate crests, alternate slogans, and page-specific header/footer structures.
 
-## Self-Evaluation
+## Imagegen Use
 
-All final assets passed the satisfaction rubric with every category scored at least 4/5: product accuracy, page purpose, action hierarchy, visual hierarchy, brand consistency, storytelling clarity, trust/usability, responsiveness, accessibility, image quality, and implementation feasibility. No human approval was requested or required.
+The built-in `imagegen` tool was used for a fresh full-page UI reference before implementation. The latest generated reference remained in Codex's generated image cache and was not saved as a final production asset:
+
+- `/home/egric/.codex/generated_images/019e3d41-b15b-7403-983f-b2184e670309/ig_08e9fecb718e89f9016a0ba0c7663c819dbc2d6f7f1f1cbe2d.png`
+
+The generated reference was used structurally only. Unsupported generated details were rejected.
+
+## Verification
+
+Passed:
+
+- `pnpm --filter @ksu/web typecheck`
+- Playwright desktop render for `/about`
+- Playwright mobile render for `/about`
+- no horizontal overflow on desktop or mobile
+- five page sections rendered inside `main`
+- full-width section verification on desktop and mobile
+- `/about/overview` resolves to `/about`
+
+Latest verification screenshots:
+
+- `/tmp/ksu-about-desktop-full-width.png`
+- `/tmp/ksu-about-mobile-full-width.png`
+
+No backend implementation, route architecture change, database change, or public shell rewrite was performed in this pass.

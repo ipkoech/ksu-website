@@ -22,6 +22,31 @@ from .user import UserService
 settings = get_settings()
 
 
+def _normalize_role(role: str) -> str:
+    return role.strip().lower().replace("_", "-")
+
+
+def _active_roles(user: User) -> list[str]:
+    return [_normalize_role(role) for role in user.roles]
+
+
+def _active_permissions(user: User) -> list[str]:
+    permissions: list[str] = []
+    seen: set[str] = set()
+    for assignment in user.role_assignments:
+        if not assignment.is_active or assignment.role is None or not assignment.role.is_active:
+            continue
+        for role_permission in assignment.role.role_permissions:
+            permission = role_permission.permission
+            if permission is None or not permission.is_active:
+                continue
+            name = permission.name.strip().lower()
+            if name and name not in seen:
+                seen.add(name)
+                permissions.append(name)
+    return permissions
+
+
 class AuthService:
     """Authentication operations."""
 
@@ -35,7 +60,14 @@ class AuthService:
         if user.is_locked:
             raise PermissionError("User account is locked")
 
-        access_token, refresh_token, jti = create_token(str(user.id), user.roles)
+        roles = _active_roles(user)
+        permissions = _active_permissions(user)
+        access_token, refresh_token, jti = create_token(
+            str(user.id),
+            roles,
+            permissions=permissions,
+            scopes=permissions,
+        )
         session = Session(
             user_id=user.id,
             jti=jti,
@@ -61,7 +93,15 @@ class AuthService:
         session = result.scalar_one_or_none()
         if session is None or not session.is_valid():
             raise PermissionError("Session is invalid")
-        access_token, new_refresh_token = issue_refreshed_tokens(str(user.id), user.roles, session.jti)
+        roles = _active_roles(user)
+        permissions = _active_permissions(user)
+        access_token, new_refresh_token = issue_refreshed_tokens(
+            str(user.id),
+            roles,
+            session.jti,
+            permissions=permissions,
+            scopes=permissions,
+        )
         session.touch()
         await db.flush()
         return access_token, new_refresh_token

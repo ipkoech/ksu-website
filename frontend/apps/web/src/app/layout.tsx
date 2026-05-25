@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
+import { AnalyticsTracker } from "@/components/analytics/analytics-tracker";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -61,8 +62,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
+        suppressHydrationWarning
         className={`${inter.variable} ${playfairDisplay.variable} font-sans antialiased`}
       >
+        <AnalyticsTracker />
         {children}
       </body>
     </html>

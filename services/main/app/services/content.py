@@ -14,7 +14,7 @@ from ksu_common import PaginatedResult
 
 from ..helpers.slug import unique_slug
 from ..models import Announcement, Blog, Event, News, Slider, SliderGroup
-from ._base import apply_updates, paginate_query
+from ._base import apply_updates, ilike_any, paginate_query
 
 
 def _apply_scope_filters(query, model, *, scope_type=None, scope_id=None, is_public=None, is_main=None):
@@ -78,8 +78,10 @@ class _RichContentService:
     model = None
 
     @classmethod
-    async def get_by_id(cls, db: AsyncSession, id: uuid.UUID):
+    async def get_by_id(cls, db: AsyncSession, id: uuid.UUID, *, load_options: Sequence = ()):
         query = cls.model.active_query().where(cls.model.id == id)
+        if load_options:
+            query = query.options(*load_options)
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
@@ -121,6 +123,23 @@ class _RichContentService:
         return instance
 
     @classmethod
+    async def publish(cls, db: AsyncSession, instance):
+        instance.is_published = True
+        instance.is_public = True
+        instance.status = "published"
+        if instance.published_at is None:
+            instance.published_at = datetime.now(timezone.utc)
+        await db.flush()
+        return instance
+
+    @classmethod
+    async def unpublish(cls, db: AsyncSession, instance):
+        instance.is_published = False
+        instance.status = "draft"
+        await db.flush()
+        return instance
+
+    @classmethod
     async def list(
         cls,
         db: AsyncSession,
@@ -132,6 +151,7 @@ class _RichContentService:
         is_public: bool | None = True,
         is_main: bool | None = None,
         is_published: bool | None = None,
+        search: str | None = None,
         load_options: Sequence = (),
     ) -> PaginatedResult:
         now = datetime.now(timezone.utc)
@@ -142,7 +162,43 @@ class _RichContentService:
         query = _apply_scope_filters(query, cls.model, scope_type=scope_type, scope_id=scope_id, is_public=is_public, is_main=is_main)
         if is_published is not None:
             query = query.where(cls.model.is_published.is_(is_published))
+        if search:
+            query = query.where(ilike_any(search, cls.model.title, cls.model.slug, cls.model.summary))
         query = query.where(*_active_window_filter(cls.model, now))
+        return await paginate_query(db, query, page=page, per_page=per_page)
+
+    @classmethod
+    async def list_admin(
+        cls,
+        db: AsyncSession,
+        *,
+        page: int = 1,
+        per_page: int = 20,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
+        is_main: bool | None = None,
+        is_published: bool | None = None,
+        status: str | None = None,
+        search: str | None = None,
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        query = cls.model.active_query().order_by(cls.model.created_at.desc())
+        if load_options:
+            query = query.options(*load_options)
+        query = _apply_scope_filters(
+            query,
+            cls.model,
+            scope_type=scope_type,
+            scope_id=scope_id,
+            is_public=None,
+            is_main=is_main,
+        )
+        if is_published is not None:
+            query = query.where(cls.model.is_published.is_(is_published))
+        if status:
+            query = query.where(cls.model.status == status)
+        if search:
+            query = query.where(ilike_any(search, cls.model.title, cls.model.slug, cls.model.summary))
         return await paginate_query(db, query, page=page, per_page=per_page)
 
     @classmethod
@@ -203,6 +259,23 @@ class EventService:
         return event
 
     @staticmethod
+    async def publish(db: AsyncSession, event: Event) -> Event:
+        event.is_published = True
+        event.is_public = True
+        event.status = "published"
+        if event.published_at is None:
+            event.published_at = datetime.now(timezone.utc)
+        await db.flush()
+        return event
+
+    @staticmethod
+    async def unpublish(db: AsyncSession, event: Event) -> Event:
+        event.is_published = False
+        event.status = "draft"
+        await db.flush()
+        return event
+
+    @staticmethod
     async def list(
         db: AsyncSession,
         *,
@@ -214,6 +287,7 @@ class EventService:
         is_main: bool | None = None,
         is_published: bool | None = None,
         upcoming: bool | None = None,
+        search: str | None = None,
         load_options: Sequence = (),
     ) -> PaginatedResult:
         now = datetime.now(timezone.utc)
@@ -224,7 +298,46 @@ class EventService:
         query = _apply_scope_filters(query, Event, scope_type=scope_type, scope_id=scope_id, is_public=is_public, is_main=is_main)
         if is_published is not None:
             query = query.where(Event.is_published.is_(is_published))
+        if search:
+            query = query.where(ilike_any(search, Event.title, Event.slug, Event.summary, Event.location))
         query = query.where(*_active_window_filter(Event, now))
+        if upcoming is True:
+            query = query.where(Event.start_date >= now)
+        return await paginate_query(db, query, page=page, per_page=per_page)
+
+    @staticmethod
+    async def list_admin(
+        db: AsyncSession,
+        *,
+        page: int = 1,
+        per_page: int = 20,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
+        is_main: bool | None = None,
+        is_published: bool | None = None,
+        upcoming: bool | None = None,
+        status: str | None = None,
+        search: str | None = None,
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        now = datetime.now(timezone.utc)
+        query = Event.active_query().order_by(Event.start_date.asc(), Event.display_order.asc())
+        if load_options:
+            query = query.options(*load_options)
+        query = _apply_scope_filters(
+            query,
+            Event,
+            scope_type=scope_type,
+            scope_id=scope_id,
+            is_public=None,
+            is_main=is_main,
+        )
+        if is_published is not None:
+            query = query.where(Event.is_published.is_(is_published))
+        if status:
+            query = query.where(Event.status == status)
+        if search:
+            query = query.where(ilike_any(search, Event.title, Event.slug, Event.summary, Event.location))
         if upcoming is True:
             query = query.where(Event.start_date >= now)
         return await paginate_query(db, query, page=page, per_page=per_page)
@@ -303,8 +416,11 @@ class SliderGroupService:
 
 class SliderService:
     @staticmethod
-    async def get_by_id(db: AsyncSession, slider_id: uuid.UUID) -> Slider | None:
-        result = await db.execute(select(Slider).where(Slider.id == slider_id, Slider.deleted_at.is_(None)))
+    async def get_by_id(db: AsyncSession, slider_id: uuid.UUID, *, load_options: Sequence = ()) -> Slider | None:
+        query = select(Slider).where(Slider.id == slider_id, Slider.deleted_at.is_(None))
+        if load_options:
+            query = query.options(*load_options)
+        result = await db.execute(query)
         return result.scalar_one_or_none()
 
     @staticmethod
@@ -329,10 +445,13 @@ class SliderService:
         scope_id: uuid.UUID | None = None,
         is_public: bool | None = True,
         is_main: bool | None = None,
+        load_options: Sequence = (),
     ) -> list[Slider]:
         now = datetime.now(timezone.utc)
         await _archive_expired_sliders(db, now)
         query = select(Slider).where(Slider.deleted_at.is_(None), Slider.is_active.is_(True))
+        if load_options:
+            query = query.options(*load_options)
         if slider_group_id:
             query = query.where(Slider.slider_group_id == slider_group_id)
         query = _apply_scope_filters(query, Slider, scope_type=scope_type, scope_id=scope_id, is_public=is_public, is_main=is_main)
@@ -341,6 +460,40 @@ class SliderService:
             or_(Slider.start_datetime.is_(None), Slider.start_datetime <= now),
             or_(Slider.end_datetime.is_(None), Slider.end_datetime >= now),
         )
+        query = query.order_by(Slider.display_order.asc(), Slider.created_at.desc())
+        result = await db.execute(query)
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def list_admin(
+        db: AsyncSession,
+        *,
+        slider_group_id: uuid.UUID | None = None,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
+        is_main: bool | None = None,
+        status: str | None = None,
+        load_options: Sequence = (),
+    ) -> list[Slider]:
+        query = select(Slider).where(Slider.deleted_at.is_(None))
+        if load_options:
+            query = query.options(*load_options)
+        if slider_group_id:
+            query = query.where(Slider.slider_group_id == slider_group_id)
+        query = _apply_scope_filters(
+            query,
+            Slider,
+            scope_type=scope_type,
+            scope_id=scope_id,
+            is_public=None,
+            is_main=is_main,
+        )
+        if status == "active":
+            query = query.where(Slider.is_active.is_(True), Slider.archived_at.is_(None))
+        elif status == "inactive":
+            query = query.where(Slider.is_active.is_(False))
+        elif status == "archived":
+            query = query.where(Slider.archived_at.is_not(None))
         query = query.order_by(Slider.display_order.asc(), Slider.created_at.desc())
         result = await db.execute(query)
         return list(result.scalars().all())

@@ -1,0 +1,549 @@
+import {
+  academicCalendarsApi,
+  departmentsApi,
+  divisionsApi,
+  governanceApi,
+  intakesApi,
+  libraryServiceApi,
+  mediaApi,
+  personsApi,
+  programmesApi,
+  schoolsApi,
+  slidersApi,
+  staffApi,
+  usersApi,
+  type AcademicCalendar,
+  type Board,
+  type Department,
+  type Division,
+  type Intake,
+  type LibraryBranch,
+  type LibraryResource,
+  type MediaFolder,
+  type Person,
+  type Programme,
+  type School,
+  type SliderGroup,
+  type StaffEntityOption,
+  type User,
+} from "@ksu/api-client";
+
+export type RelationshipFilters = Record<string, string | number | boolean | null | undefined>;
+
+export type RelationshipOption = {
+  id: string;
+  label: string;
+  description?: string;
+  eyebrow?: string;
+  imageUrl?: string | null;
+  disabled?: boolean;
+  raw?: unknown;
+};
+
+export type RelationshipSearchArgs<TFilters extends RelationshipFilters = RelationshipFilters> = {
+  search?: string;
+  filters?: TFilters;
+  limit?: number;
+};
+
+export type RelationshipAdapter<TFilters extends RelationshipFilters = RelationshipFilters> = {
+  key: string;
+  entityType: string;
+  label: string;
+  pluralLabel: string;
+  searchPlaceholder: string;
+  emptyLabel: string;
+  requiredFilterMessage?: string | ((filters?: TFilters) => string | null);
+  search: (args: RelationshipSearchArgs<TFilters>) => Promise<RelationshipOption[]>;
+  get: (id: string, filters?: TFilters) => Promise<RelationshipOption | null>;
+};
+
+const defaultLimit = 50;
+
+function joinDescription(parts: Array<string | number | boolean | null | undefined>) {
+  return parts
+    .filter((part) => part !== undefined && part !== null && String(part).trim() !== "")
+    .map(String)
+    .join(" · ");
+}
+
+function fullName(person: Pick<Person, "full_name" | "first_name" | "middle_name" | "last_name">) {
+  return person.full_name || [person.first_name, person.middle_name, person.last_name].filter(Boolean).join(" ");
+}
+
+function matches(option: RelationshipOption, search?: string) {
+  const term = search?.trim().toLowerCase();
+  if (!term) return true;
+  return [option.label, option.description, option.eyebrow]
+    .filter(Boolean)
+    .some((part) => String(part).toLowerCase().includes(term));
+}
+
+function limitOptions(options: RelationshipOption[], limit = defaultLimit) {
+  return options.slice(0, limit);
+}
+
+function personOption(person: Person): RelationshipOption {
+  return {
+    id: person.id,
+    label: fullName(person),
+    description: joinDescription([person.email, person.department?.name ?? person.department_name, person.is_active === false ? "Inactive" : undefined]),
+    eyebrow: person.title,
+    imageUrl: person.photo_url,
+    raw: person,
+  };
+}
+
+function userOption(user: User): RelationshipOption {
+  return {
+    id: user.id,
+    label: user.full_name || user.email,
+    description: joinDescription([user.full_name ? user.email : undefined, user.is_active === false ? "Inactive" : undefined]),
+    raw: user,
+  };
+}
+
+function schoolOption(school: School): RelationshipOption {
+  return {
+    id: school.id,
+    label: school.name,
+    description: joinDescription([school.code, school.school_type, school.is_active === false ? "Inactive" : undefined]),
+    raw: school,
+  };
+}
+
+function departmentOption(department: Department): RelationshipOption {
+  return {
+    id: department.id,
+    label: department.name,
+    description: joinDescription([department.code, department.school_name, department.department_type, department.is_active === false ? "Inactive" : undefined]),
+    raw: department,
+  };
+}
+
+function programmeOption(programme: Programme): RelationshipOption {
+  return {
+    id: programme.id,
+    label: programme.name,
+    description: joinDescription([programme.code, programme.level, programme.department_name, programme.is_active === false ? "Inactive" : undefined]),
+    raw: programme,
+  };
+}
+
+function divisionOption(division: Division): RelationshipOption {
+  return {
+    id: division.id,
+    label: division.name,
+    description: joinDescription([division.code, division.division_type, division.is_active === false ? "Inactive" : undefined]),
+    raw: division,
+  };
+}
+
+function intakeOption(intake: Intake): RelationshipOption {
+  return {
+    id: intake.id,
+    label: intake.name,
+    description: joinDescription([intake.code, intake.is_open ? "Open" : "Closed", intake.is_active === false ? "Inactive" : undefined]),
+    raw: intake,
+  };
+}
+
+function academicCalendarOption(calendar: AcademicCalendar): RelationshipOption {
+  return {
+    id: calendar.id,
+    label: `${calendar.academic_year} Semester ${calendar.semester}`,
+    description: joinDescription([calendar.status, `${calendar.start_date} to ${calendar.end_date}`]),
+    raw: calendar,
+  };
+}
+
+function boardOption(board: Board): RelationshipOption {
+  return {
+    id: board.id,
+    label: board.name,
+    description: joinDescription([board.board_type, board.status, board.is_active === false ? "Inactive" : undefined]),
+    raw: board,
+  };
+}
+
+function sliderGroupOption(group: SliderGroup): RelationshipOption {
+  return {
+    id: group.id,
+    label: group.name,
+    description: joinDescription([group.location, group.is_main ? "Main" : undefined, group.is_active === false ? "Inactive" : undefined]),
+    raw: group,
+  };
+}
+
+function mediaFolderOption(folder: MediaFolder): RelationshipOption {
+  return {
+    id: folder.id,
+    label: folder.name,
+    description: joinDescription([folder.slug, folder.is_public ? "Public" : "Private"]),
+    raw: folder,
+  };
+}
+
+function staffEntityOption(entity: StaffEntityOption): RelationshipOption {
+  return {
+    id: entity.id ?? "__university__",
+    label: entity.label,
+    description: joinDescription([entity.subtitle, entity.entity_type, entity.is_active === false ? "Inactive" : undefined]),
+    raw: entity,
+  };
+}
+
+function libraryBranchOption(branch: LibraryBranch): RelationshipOption {
+  return {
+    id: branch.id,
+    label: branch.name,
+    description: joinDescription([branch.short_name, branch.library_type, branch.is_active === false ? "Inactive" : undefined]),
+    raw: branch,
+  };
+}
+
+function libraryResourceOption(resource: LibraryResource): RelationshipOption {
+  return {
+    id: resource.id,
+    label: resource.title,
+    description: joinDescription([resource.authors, resource.resource_type, resource.status, resource.available_copies !== undefined ? `${resource.available_copies} available` : undefined]),
+    raw: resource,
+  };
+}
+
+export const personRelationshipAdapter: RelationshipAdapter<{ status?: string; school_id?: string; department_id?: string }> = {
+  key: "person",
+  entityType: "person",
+  label: "Person",
+  pluralLabel: "People",
+  searchPlaceholder: "Search people by name, email, or staff details",
+  emptyLabel: "No people found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await personsApi.list({
+      per_page: limit,
+      search: search?.trim() || undefined,
+      status: (filters?.status as any) || "all",
+      school_id: filters?.school_id || undefined,
+      department_id: filters?.department_id || undefined,
+      fields: "id,title,first_name,middle_name,last_name,full_name,email,photo_id,photo_url,department_id,is_active",
+      include: "department:id,name,code,school_id",
+    });
+    return (response.data ?? []).map(personOption);
+  },
+  async get(id) {
+    const response = await personsApi.get(id, {
+      fields: "id,title,first_name,middle_name,last_name,full_name,email,photo_id,photo_url,department_id,is_active",
+      include: "department:id,name,code,school_id",
+    });
+    return response.data ? personOption(response.data) : null;
+  },
+};
+
+export const userRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean }> = {
+  key: "user",
+  entityType: "user",
+  label: "User",
+  pluralLabel: "Users",
+  searchPlaceholder: "Search users by name or email",
+  emptyLabel: "No users found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await usersApi.list({
+      per_page: limit,
+      search: search?.trim() || undefined,
+      is_active: filters?.is_active ?? true,
+      fields: "id,email,full_name,is_active",
+    });
+    return (response.data ?? []).map(userOption);
+  },
+  async get(id) {
+    const response = await usersApi.get(id, { fields: "id,email,full_name,is_active" });
+    return response.data ? userOption(response.data) : null;
+  },
+};
+
+export const schoolRelationshipAdapter: RelationshipAdapter = {
+  key: "school",
+  entityType: "school",
+  label: "School",
+  pluralLabel: "Schools",
+  searchPlaceholder: "Search schools by name or code",
+  emptyLabel: "No schools found.",
+  async search({ search, limit = defaultLimit }) {
+    const response = await schoolsApi.list({ per_page: limit, search: search?.trim() || undefined, fields: "id,name,code,slug,school_type,is_active" });
+    return (response.data ?? []).map(schoolOption);
+  },
+  async get(id) {
+    const response = await schoolsApi.get(id, { fields: "id,name,code,slug,school_type,is_active" });
+    return response.data ? schoolOption(response.data) : null;
+  },
+};
+
+export const departmentRelationshipAdapter: RelationshipAdapter<{ school_id?: string; wing_id?: string; department_type?: string }> = {
+  key: "department",
+  entityType: "department",
+  label: "Department",
+  pluralLabel: "Departments",
+  searchPlaceholder: "Search departments by name or code",
+  emptyLabel: "No departments found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await departmentsApi.list({
+      per_page: limit,
+      search: search?.trim() || undefined,
+      school_id: filters?.school_id || undefined,
+      wing_id: filters?.wing_id || undefined,
+      department_type: filters?.department_type || undefined,
+      fields: "id,name,code,slug,school_id,school_name,department_type,is_active",
+    });
+    return (response.data ?? []).map(departmentOption);
+  },
+  async get(id) {
+    const response = await departmentsApi.get(id, { fields: "id,name,code,slug,school_id,school_name,department_type,is_active" });
+    return response.data ? departmentOption(response.data) : null;
+  },
+};
+
+export const programmeRelationshipAdapter: RelationshipAdapter<{ school_id?: string; department_id?: string; level?: string }> = {
+  key: "programme",
+  entityType: "programme",
+  label: "Programme",
+  pluralLabel: "Programmes",
+  searchPlaceholder: "Search programmes by name or code",
+  emptyLabel: "No programmes found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await programmesApi.list({
+      per_page: limit,
+      q: search?.trim() || undefined,
+      school_id: filters?.school_id || undefined,
+      department_id: filters?.department_id || undefined,
+      level: filters?.level || undefined,
+      fields: "id,name,code,slug,level,department_id,department_name,is_active",
+    });
+    return (response.data ?? []).map(programmeOption);
+  },
+  async get(id) {
+    const response = await programmesApi.get(id, { fields: "id,name,code,slug,level,department_id,department_name,is_active" });
+    return response.data ? programmeOption(response.data) : null;
+  },
+};
+
+export const divisionRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean }> = {
+  key: "division",
+  entityType: "division",
+  label: "Division",
+  pluralLabel: "Divisions",
+  searchPlaceholder: "Search divisions by name or code",
+  emptyLabel: "No divisions found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await divisionsApi.list({
+      per_page: 100,
+      is_active: filters?.is_active ?? undefined,
+      fields: "id,name,code,slug,division_type,is_active",
+    });
+    return limitOptions((response.data ?? []).map(divisionOption).filter((option) => matches(option, search)), limit);
+  },
+  async get(id) {
+    const response = await divisionsApi.get(id, { fields: "id,name,code,slug,division_type,is_active" });
+    return response.data ? divisionOption(response.data) : null;
+  },
+};
+
+export const intakeRelationshipAdapter: RelationshipAdapter<{ academic_calendar_id?: string; is_open?: boolean }> = {
+  key: "intake",
+  entityType: "intake",
+  label: "Intake",
+  pluralLabel: "Intakes",
+  searchPlaceholder: "Search intakes by name or code",
+  emptyLabel: "No intakes found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await intakesApi.list({
+      per_page: 100,
+      academic_calendar_id: filters?.academic_calendar_id || undefined,
+      is_open: filters?.is_open ?? undefined,
+      fields: "id,name,code,slug,is_open,is_active",
+    });
+    return limitOptions((response.data ?? []).map(intakeOption).filter((option) => matches(option, search)), limit);
+  },
+  async get(id) {
+    const response = await intakesApi.get(id, { fields: "id,name,code,slug,is_open,is_active" });
+    return response.data ? intakeOption(response.data) : null;
+  },
+};
+
+export const academicCalendarRelationshipAdapter: RelationshipAdapter<{ status?: string; academic_year?: string }> = {
+  key: "academic-calendar",
+  entityType: "academic_calendar",
+  label: "Academic Calendar",
+  pluralLabel: "Academic Calendars",
+  searchPlaceholder: "Search calendars by academic year or semester",
+  emptyLabel: "No academic calendars found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await academicCalendarsApi.list({
+      per_page: 100,
+      status: filters?.status || undefined,
+      academic_year: filters?.academic_year || undefined,
+      fields: "id,academic_year,semester,start_date,end_date,status",
+    });
+    return limitOptions((response.data ?? []).map(academicCalendarOption).filter((option) => matches(option, search)), limit);
+  },
+  async get(id) {
+    const response = await academicCalendarsApi.get(id, { fields: "id,academic_year,semester,start_date,end_date,status" });
+    return response.data ? academicCalendarOption(response.data) : null;
+  },
+};
+
+export const governanceBoardRelationshipAdapter: RelationshipAdapter<{ board_type?: string; parent_entity_type?: string; parent_entity_id?: string }> = {
+  key: "governance-board",
+  entityType: "governance_board",
+  label: "Board",
+  pluralLabel: "Boards",
+  searchPlaceholder: "Search governance boards",
+  emptyLabel: "No governance boards found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await governanceApi.listBoards({
+      board_type: filters?.board_type || undefined,
+      parent_entity_type: filters?.parent_entity_type || undefined,
+      parent_entity_id: filters?.parent_entity_id || undefined,
+      fields: "id,name,slug,board_type,status,is_active",
+    });
+    return limitOptions((response.data ?? []).map(boardOption).filter((option) => matches(option, search)), limit);
+  },
+  async get(id) {
+    const response = await governanceApi.getBoard(id, { fields: "id,name,slug,board_type,status,is_active" });
+    return response.data ? boardOption(response.data) : null;
+  },
+};
+
+export const sliderGroupRelationshipAdapter: RelationshipAdapter<{ scope_type?: string; scope_id?: string; is_main?: boolean }> = {
+  key: "slider-group",
+  entityType: "slider_group",
+  label: "Slider group",
+  pluralLabel: "Slider groups",
+  searchPlaceholder: "Search slider groups",
+  emptyLabel: "No slider groups found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await slidersApi.listGroups({
+      scope_type: filters?.scope_type || undefined,
+      scope_id: filters?.scope_id || undefined,
+      is_main: filters?.is_main ?? undefined,
+      fields: "id,name,slug,location,is_main,is_active",
+    });
+    return limitOptions((response.data ?? []).map(sliderGroupOption).filter((option) => matches(option, search)), limit);
+  },
+  async get(id) {
+    const response = await slidersApi.getGroup(id, { fields: "id,name,slug,location,is_main,is_active" });
+    return response.data ? sliderGroupOption(response.data) : null;
+  },
+};
+
+export const mediaFolderRelationshipAdapter: RelationshipAdapter<{ parent_id?: string }> = {
+  key: "media-folder",
+  entityType: "media_folder",
+  label: "Media folder",
+  pluralLabel: "Media folders",
+  searchPlaceholder: "Search media folders",
+  emptyLabel: "No media folders found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await mediaApi.listFolders({
+      parent_id: filters?.parent_id || undefined,
+      fields: "id,name,slug,is_public,parent_id,scope_type,scope_id",
+    });
+    return limitOptions((response.data ?? []).map(mediaFolderOption).filter((option) => matches(option, search)), limit);
+  },
+  async get(id) {
+    const response = await mediaApi.getFolder(id, { fields: "id,name,slug,is_public,parent_id,scope_type,scope_id" });
+    return response.data ? mediaFolderOption(response.data) : null;
+  },
+};
+
+export const staffEntityRelationshipAdapter: RelationshipAdapter<{ entity_type: string }> = {
+  key: "staff-entity",
+  entityType: "staff_entity",
+  label: "Entity",
+  pluralLabel: "Entities",
+  searchPlaceholder: "Search matching entities",
+  emptyLabel: "No entities found.",
+  requiredFilterMessage: (filters) => (filters?.entity_type ? null : "Choose an entity type first."),
+  async search({ search, filters, limit = defaultLimit }) {
+    if (!filters?.entity_type) return [];
+    const response = await staffApi.listEntities({
+      entity_type: filters.entity_type,
+      search: search?.trim() || undefined,
+      limit,
+    });
+    return (response.data ?? []).map(staffEntityOption);
+  },
+  async get(id, filters) {
+    if (!filters?.entity_type) return null;
+    const response = await staffApi.listEntities({
+      entity_type: filters.entity_type,
+      limit: 100,
+    });
+    const option = (response.data ?? []).map(staffEntityOption).find((item) => item.id === id);
+    return option ?? null;
+  },
+};
+
+export const libraryBranchRelationshipAdapter: RelationshipAdapter<{ active_only?: boolean }> = {
+  key: "library-branch",
+  entityType: "library_branch",
+  label: "Library branch",
+  pluralLabel: "Library branches",
+  searchPlaceholder: "Search library branches",
+  emptyLabel: "No library branches found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await libraryServiceApi.branches.list({
+      active_only: filters?.active_only ?? false,
+      page: 1,
+      per_page: 100,
+      fields: "id,name,short_name,slug,library_type,is_active",
+    });
+    return limitOptions((response.data ?? []).map(libraryBranchOption).filter((option) => matches(option, search)), limit);
+  },
+  async get(id) {
+    const response = await libraryServiceApi.branches.get(id, { fields: "id,name,short_name,slug,library_type,is_active" });
+    return response.data ? libraryBranchOption(response.data) : null;
+  },
+};
+
+export const libraryResourceRelationshipAdapter: RelationshipAdapter<{ library_id?: string; resource_type?: string; status?: string }> = {
+  key: "library-resource",
+  entityType: "library_resource",
+  label: "Library resource",
+  pluralLabel: "Library resources",
+  searchPlaceholder: "Search resources by title, author, ISBN, or barcode",
+  emptyLabel: "No resources found.",
+  requiredFilterMessage: (filters) => (filters?.library_id ? null : "Choose a library branch first."),
+  async search({ search, filters, limit = defaultLimit }) {
+    if (!filters?.library_id) return [];
+    const response = await libraryServiceApi.resources.list({
+      library_id: filters.library_id,
+      resource_type: filters.resource_type || undefined,
+      status: filters.status || undefined,
+      q: search?.trim() || undefined,
+      page: 1,
+      per_page: limit,
+      fields: "id,title,authors,resource_type,status,available_copies",
+    });
+    return (response.data ?? []).map(libraryResourceOption);
+  },
+  async get(id) {
+    const response = await libraryServiceApi.resources.get(id, { fields: "id,title,authors,resource_type,status,available_copies" });
+    return response.data ? libraryResourceOption(response.data) : null;
+  },
+};
+
+export const relationshipAdapters = {
+  person: personRelationshipAdapter,
+  user: userRelationshipAdapter,
+  school: schoolRelationshipAdapter,
+  department: departmentRelationshipAdapter,
+  programme: programmeRelationshipAdapter,
+  division: divisionRelationshipAdapter,
+  intake: intakeRelationshipAdapter,
+  governanceBoard: governanceBoardRelationshipAdapter,
+  sliderGroup: sliderGroupRelationshipAdapter,
+  mediaFolder: mediaFolderRelationshipAdapter,
+  staffEntity: staffEntityRelationshipAdapter,
+  libraryBranch: libraryBranchRelationshipAdapter,
+  libraryResource: libraryResourceRelationshipAdapter,
+};

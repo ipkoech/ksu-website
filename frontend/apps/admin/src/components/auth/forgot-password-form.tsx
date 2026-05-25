@@ -17,6 +17,7 @@ import {
   Alert,
   AlertDescription,
 } from "@ksu/ui/components";
+import { requestPasswordReset } from "@ksu/auth";
 import { ArrowLeft, CheckCircle } from "lucide-react";
 
 const forgotPasswordSchema = z.object({
@@ -38,17 +39,7 @@ export function ForgotPasswordForm() {
     setError(null);
 
     try {
-      const response = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || "Failed to send reset email");
-      }
-
+      await requestPasswordReset(values.email);
       setSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");

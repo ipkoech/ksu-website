@@ -1,7 +1,8 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Bell,
@@ -15,12 +16,13 @@ import { Input } from "@ksu/ui/components";
 import { Avatar, AvatarFallback, AvatarImage } from "@ksu/ui/components";
 import { useAuth } from "@ksu/auth";
 import { useSidebar } from "@/hooks/use-sidebar";
-import { cn } from "@ksu/ui/lib";
 
 export function Toolbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user } = useAuth();
   const { toggle, toggleMobile, isCollapsed } = useSidebar();
+  const [search, setSearch] = useState("");
 
   // Generate breadcrumbs from pathname
   const segments = pathname.split("/").filter(Boolean);
@@ -94,24 +96,35 @@ export function Toolbar() {
       <div className="flex-1" />
 
       {/* Search */}
-      <div className="relative hidden w-48 lg:block lg:w-64">
+      <form
+        className="relative hidden w-48 lg:block lg:w-64"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const query = search.trim();
+          if (query) router.push(`${pathname}?q=${encodeURIComponent(query)}`);
+        }}
+      >
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder="Search..."
           className="h-9 pl-9 pr-4"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
         />
-      </div>
+      </form>
 
       {/* Notifications */}
-      <Button variant="ghost" size="icon" className="relative h-9 w-9">
-        <Bell size={20} />
-        <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
+      <Button asChild variant="ghost" size="icon" className="relative h-9 w-9">
+        <Link href="/system/notifications" aria-label="Notifications">
+          <Bell size={20} />
+          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
+        </Link>
       </Button>
 
       {/* User menu */}
       {user && (
         <Link
-          href="/profile"
+          href="/settings/profile"
           className="flex items-center gap-2 rounded-full border bg-background p-1 pr-3 hover:bg-muted/50 transition-colors"
         >
           <Avatar className="h-7 w-7">

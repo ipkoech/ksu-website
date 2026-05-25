@@ -24,6 +24,7 @@ from typing import Any, Callable, Sequence
 
 import redis.asyncio as redis
 from fastapi import Request, Response
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
 _redis_client: redis.Redis | None = None
@@ -108,8 +109,9 @@ def cached_public(
                 result = await func(*args, **kwargs)
 
                 if isinstance(result, dict):
-                    await client.setex(cache_key, timeout, json.dumps(result))
-                    return JSONResponse(content=result, headers={"X-Cache": "MISS"})
+                    encoded_result = jsonable_encoder(result)
+                    await client.setex(cache_key, timeout, json.dumps(encoded_result))
+                    return JSONResponse(content=encoded_result, headers={"X-Cache": "MISS"})
                 elif isinstance(result, Response):
                     return result
 
@@ -163,8 +165,9 @@ def cache_response(
                 result = await func(*args, **kwargs)
 
                 if isinstance(result, dict):
-                    await client.setex(cache_key, timeout, json.dumps(result))
-                    return JSONResponse(content=result, headers={"X-Cache": "MISS"})
+                    encoded_result = jsonable_encoder(result)
+                    await client.setex(cache_key, timeout, json.dumps(encoded_result))
+                    return JSONResponse(content=encoded_result, headers={"X-Cache": "MISS"})
 
                 return result
 

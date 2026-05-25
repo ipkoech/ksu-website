@@ -13,7 +13,7 @@ from ksu_common import PaginatedResult
 
 from ..helpers.slug import unique_slug
 from ..models import Campus, Department, DepartmentService as DepartmentServiceModel, Person, School, StaffAssignment
-from ._base import apply_updates, paginate_query
+from ._base import apply_updates, ilike_any, paginate_query
 
 
 class CampusService:
@@ -96,12 +96,18 @@ class SchoolService:
         return school
 
     @staticmethod
+    async def delete(db: AsyncSession, school: School) -> None:
+        school.is_active = False
+        await db.flush()
+
+    @staticmethod
     async def list(
         db: AsyncSession,
         *,
         page: int = 1,
         per_page: int = 20,
         campus_id: uuid.UUID | None = None,
+        search: str | None = None,
         is_active: bool | None = True,
         is_public: bool | None = True,
         load_options: Sequence = (),
@@ -111,6 +117,8 @@ class SchoolService:
             query = query.options(*load_options)
         if campus_id:
             query = query.where(School.campus_id == campus_id)
+        if search:
+            query = query.where(ilike_any(search, School.name, School.code))
         if is_active is not None:
             query = query.where(School.is_active.is_(is_active))
         if is_public is not None:
@@ -133,6 +141,7 @@ class SchoolService:
     async def get_staff(db: AsyncSession, school_id: uuid.UUID) -> list[Person]:
         result = await db.execute(
             select(Person)
+            .options(selectinload(Person.photo))
             .join(StaffAssignment, StaffAssignment.person_id == Person.id)
             .where(
                 StaffAssignment.entity_type == "school",
@@ -189,6 +198,11 @@ class DepartmentService:
         return department
 
     @staticmethod
+    async def delete(db: AsyncSession, department: Department) -> None:
+        department.is_active = False
+        await db.flush()
+
+    @staticmethod
     async def list(
         db: AsyncSession,
         *,
@@ -197,6 +211,7 @@ class DepartmentService:
         school_id: uuid.UUID | None = None,
         wing_id: uuid.UUID | None = None,
         department_type: str | None = None,
+        search: str | None = None,
         is_active: bool | None = True,
         load_options: Sequence = (),
     ) -> PaginatedResult:
@@ -209,6 +224,8 @@ class DepartmentService:
             query = query.where(Department.wing_id == wing_id)
         if department_type:
             query = query.where(Department.department_type == department_type)
+        if search:
+            query = query.where(ilike_any(search, Department.name, Department.code))
         if is_active is not None:
             query = query.where(Department.is_active.is_(is_active))
         return await paginate_query(db, query, page=page, per_page=per_page)
@@ -217,6 +234,7 @@ class DepartmentService:
     async def get_staff(db: AsyncSession, dept_id: uuid.UUID) -> list[Person]:
         result = await db.execute(
             select(Person)
+            .options(selectinload(Person.photo))
             .join(StaffAssignment, StaffAssignment.person_id == Person.id)
             .where(
                 StaffAssignment.entity_type == "department",

@@ -84,8 +84,8 @@ const defaultColumns: FooterColumn[] = [
 ];
 
 const defaultContactInfo: ContactInfo = {
-  address: "P.O. Box 408-40200, Kisii, Kenya",
-  phone: "+254 XXX XXX XXX",
+  address: "Main Campus, Kisii",
+  phone: "+254720875082",
   email: "info@kisiiuniversity.ac.ke",
 };
 
@@ -125,14 +125,16 @@ export function PublicFooter({
           {/* Brand Column */}
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-3 mb-4">
-              <Image
-                src="/logos/ksu-logo.png"
-                alt="Kisii University"
-                width={56}
-                height={56}
-                className="brightness-0 invert"
-              />
-              <span className="text-xl font-bold">Kisii University</span>
+              <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-white p-1.5 ring-1 ring-white/20">
+                <Image
+                  src="/logos/ksu-logo.png"
+                  alt="Kisii University"
+                  width={56}
+                  height={56}
+                  className="h-full w-full object-contain"
+                />
+              </span>
+              <span className="text-xl font-bold text-white">Kisii University</span>
             </Link>
             <p className="text-gray-400 mb-6 max-w-sm">
               Transforming Lives Through Education, Research, and Community
@@ -142,21 +144,21 @@ export function PublicFooter({
             {/* Contact Info - Desktop */}
             <div className="hidden lg:block space-y-3">
               <div className="flex items-start gap-3 text-gray-400">
-                <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0 text-secondary" />
                 <span>{contactInfo.address}</span>
               </div>
               <a
                 href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}
                 className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors"
               >
-                <Phone className="w-5 h-5" />
+                <Phone className="w-5 h-5 text-secondary" />
                 <span>{contactInfo.phone}</span>
               </a>
               <a
                 href={`mailto:${contactInfo.email}`}
                 className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors"
               >
-                <Mail className="w-5 h-5" />
+                <Mail className="w-5 h-5 text-secondary" />
                 <span>{contactInfo.email}</span>
               </a>
             </div>
@@ -173,7 +175,7 @@ export function PublicFooter({
                       href={link.href}
                       target={link.external ? "_blank" : undefined}
                       rel={link.external ? "noopener noreferrer" : undefined}
-                      className="text-gray-400 hover:text-white transition-colors"
+                      className="inline-flex min-h-8 items-center text-gray-400 transition-colors hover:text-white"
                     >
                       {link.label}
                     </Link>
@@ -213,7 +215,8 @@ export function PublicFooter({
                           <Link
                             href={link.href}
                             target={link.external ? "_blank" : undefined}
-                            className="text-gray-400 hover:text-white transition-colors"
+                            rel={link.external ? "noopener noreferrer" : undefined}
+                            className="inline-flex min-h-9 items-center text-gray-400 transition-colors hover:text-white"
                           >
                             {link.label}
                           </Link>
@@ -231,21 +234,21 @@ export function PublicFooter({
             <h3 className="font-semibold text-lg mb-4">Contact Us</h3>
             <div className="space-y-3">
               <div className="flex items-start gap-3 text-gray-400">
-                <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0 text-secondary" />
                 <span>{contactInfo.address}</span>
               </div>
               <a
                 href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}
-                className="flex items-center gap-3 text-gray-400 hover:text-white"
+                className="flex min-h-10 items-center gap-3 text-gray-400 hover:text-white"
               >
-                <Phone className="w-5 h-5" />
+                <Phone className="w-5 h-5 text-secondary" />
                 <span>{contactInfo.phone}</span>
               </a>
               <a
                 href={`mailto:${contactInfo.email}`}
-                className="flex items-center gap-3 text-gray-400 hover:text-white"
+                className="flex min-h-10 items-center gap-3 text-gray-400 hover:text-white"
               >
-                <Mail className="w-5 h-5" />
+                <Mail className="w-5 h-5 text-secondary" />
                 <span>{contactInfo.email}</span>
               </a>
             </div>
@@ -269,7 +272,7 @@ export function PublicFooter({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-gray-400 hover:text-white transition-colors"
+                  className="inline-flex min-h-8 items-center text-gray-400 transition-colors hover:text-white"
                 >
                   {link.label}
                 </Link>
@@ -279,27 +282,27 @@ export function PublicFooter({
             {/* Social Links */}
             <div className="flex items-center gap-4">
               {socialLinks.facebook && (
-                <SocialIcon href={socialLinks.facebook} label="Facebook">
+                <SocialIcon href={socialLinks.facebook} label="Facebook" className="text-[#1877f2] hover:bg-[#1877f2]">
                   <FacebookIcon />
                 </SocialIcon>
               )}
               {socialLinks.twitter && (
-                <SocialIcon href={socialLinks.twitter} label="Twitter">
+                <SocialIcon href={socialLinks.twitter} label="Twitter" className="text-slate-950 hover:bg-slate-950">
                   <TwitterIcon />
                 </SocialIcon>
               )}
               {socialLinks.instagram && (
-                <SocialIcon href={socialLinks.instagram} label="Instagram">
+                <SocialIcon href={socialLinks.instagram} label="Instagram" className="text-[#e4405f] hover:bg-[#e4405f]">
                   <InstagramIcon />
                 </SocialIcon>
               )}
               {socialLinks.youtube && (
-                <SocialIcon href={socialLinks.youtube} label="YouTube">
+                <SocialIcon href={socialLinks.youtube} label="YouTube" className="text-[#ff0000] hover:bg-[#ff0000]">
                   <YouTubeIcon />
                 </SocialIcon>
               )}
               {socialLinks.linkedin && (
-                <SocialIcon href={socialLinks.linkedin} label="LinkedIn">
+                <SocialIcon href={socialLinks.linkedin} label="LinkedIn" className="text-[#0a66c2] hover:bg-[#0a66c2]">
                   <LinkedInIcon />
                 </SocialIcon>
               )}
@@ -315,10 +318,12 @@ function SocialIcon({
   href,
   label,
   children,
+  className,
 }: {
   href: string;
   label: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
     <a
@@ -326,7 +331,10 @@ function SocialIcon({
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
-      className="text-gray-400 hover:text-white transition-colors"
+      className={cn(
+        "flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-white/20 transition-colors hover:text-white",
+        className
+      )}
     >
       {children}
     </a>
@@ -351,14 +359,15 @@ function TwitterIcon() {
 
 function InstagramIcon() {
   return (
-    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-      <rect x="2" y="2" width="20" height="20" rx="5" />
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24">
+      <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="2" />
       <path
         d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"
         fill="none"
         stroke="currentColor"
         strokeWidth="2"
       />
+      <circle cx="17.5" cy="6.5" r="1.25" fill="currentColor" />
     </svg>
   );
 }

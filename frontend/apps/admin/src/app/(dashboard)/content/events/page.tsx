@@ -1,6 +1,7 @@
 "use client";
 
 import { usePermissions } from "@/hooks/use-permissions";
+import { useDeleteConfirm } from "@/hooks/use-delete-confirm";
 import { DataTable } from "@/components/data-table/data-table";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTransition } from "@/lib/animations";
@@ -15,8 +16,10 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@ksu/ui/components";
-import { useEvents, useDeleteEvent } from "@ksu/api-client";
+import { useAdminEvents, useDeleteEvent } from "@ksu/api-client";
 import { toast } from "@ksu/ui";
+import { useState } from "react";
+import { TableSearch } from "@/components/shared/table-search";
 
 const getEventColumns = ({
     canDelete,
@@ -89,11 +92,8 @@ const getEventColumns = ({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => window.location.href = `/content/events/${event.slug}`}>
+                        <DropdownMenuItem onClick={() => window.location.href = `/content/events/${event.id}`}>
                             Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigator.clipboard.writeText(event.id)}>
-                            Copy ID
                         </DropdownMenuItem>
                         {canDelete && (
                             <>
@@ -115,21 +115,17 @@ const getEventColumns = ({
 
 export default function EventsPage() {
     const { canCreate, canDelete } = usePermissions();
-    const { data: eventsResponse, isLoading } = useEvents();
+    const { confirmDelete, dialog } = useDeleteConfirm();
+    const [search, setSearch] = useState("");
+    const { data: eventsResponse, isLoading } = useAdminEvents({ search: search || undefined });
     const events = eventsResponse?.data || [];
-    const { mutate: deleteEvent } = useDeleteEvent();
+    const deleteEvent = useDeleteEvent();
 
     const handleDelete = (id: string) => {
-        if (confirm("Are you sure you want to delete this event?")) {
-            deleteEvent(id, {
-                onSuccess: () => {
-                    toast.success("Event deleted successfully");
-                },
-                onError: () => {
-                    toast.error("Failed to delete event");
-                },
-            });
-        }
+        confirmDelete("event", async () => {
+            await deleteEvent.mutateAsync(id);
+            toast.success("Event deleted successfully");
+        });
     };
 
     const columns = getEventColumns({ canDelete: canDelete("content"), onDelete: handleDelete });
@@ -146,8 +142,10 @@ export default function EventsPage() {
                 data={events || []}
                 columns={columns}
                 isLoading={isLoading}
-                emptyMessage="No events found. Create your first event."
+                toolbar={<TableSearch value={search} onChange={setSearch} placeholder="Search events by title, slug, summary, or location" />}
+                emptyMessage={search ? "No events match this search." : "No events found. Create your first event."}
             />
+            {dialog}
         </PageTransition>
     );
 }

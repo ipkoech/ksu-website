@@ -4,10 +4,17 @@ import { queryKeys } from "./query-keys";
 import type { News } from "../main/types";
 import type { PaginationParams } from "../client";
 
-export function useNewsList(params?: PaginationParams & { category?: string; is_published?: boolean }) {
+export function useNewsList(params?: PaginationParams & { scope_type?: string; scope_id?: string; is_main?: boolean; is_published?: boolean; search?: string }) {
   return useQuery({
     queryKey: queryKeys.news.list(params),
     queryFn: () => newsApi.list(params),
+  });
+}
+
+export function useAdminNewsList(params?: PaginationParams & { scope_type?: string; scope_id?: string; is_main?: boolean; is_published?: boolean; status?: string; search?: string }) {
+  return useQuery({
+    queryKey: [...queryKeys.news.list(params), "admin"] as const,
+    queryFn: () => newsApi.listAdmin(params),
   });
 }
 

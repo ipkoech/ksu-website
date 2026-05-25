@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, usePermissions } from "@ksu/auth";
-import { Badge, DataTable, PageHeader, SearchFilter, StatusBadge } from "@ksu/ui/components";
+import { Badge, DataTable, DeleteConfirmDialog, PageHeader, SearchFilter, StatusBadge } from "@ksu/ui/components";
 import { useRoles, useDeleteRole } from "@ksu/api-client/hooks/admin";
 import type { Role } from "@ksu/api-client/types/admin";
 import { canDeleteRoles, canManageRoles } from "../_lib/access";
@@ -16,6 +16,7 @@ export default function RolesPage() {
   const [limit, setLimit] = React.useState(10);
   const [search, setSearch] = React.useState("");
   const [systemOnly, setSystemOnly] = React.useState<string | null>(null);
+  const [deleteIds, setDeleteIds] = React.useState<string[]>([]);
   const roles = useRoles({ page, limit, search, system: systemOnly === "system" ? true : systemOnly === "custom" ? false : undefined });
   const deleteRole = useDeleteRole();
   const canManage = canManageRoles(user, hasScope);
@@ -80,10 +81,24 @@ export default function RolesPage() {
           isLoading={roles.isLoading}
           onRowClick={(row) => router.push(`/system/roles/${row.id}`)}
           bulkActions={canDelete ? [
-            { label: "Delete", onClick: (ids) => void Promise.all(ids.map((id) => deleteRole.mutateAsync(id))), variant: "destructive" },
+            { label: "Delete", onClick: (ids) => setDeleteIds(ids), variant: "destructive" },
           ] : undefined}
         />
       </div>
+
+      <DeleteConfirmDialog
+        open={deleteIds.length > 0}
+        onOpenChange={(open) => !open && setDeleteIds([])}
+        title="Delete roles"
+        itemName="DELETE"
+        itemCount={deleteIds.length}
+        requireConfirmation
+        onConfirm={async () => {
+          await Promise.all(deleteIds.map((id) => deleteRole.mutateAsync(id)));
+          setDeleteIds([]);
+        }}
+        isDeleting={deleteRole.isPending}
+      />
     </div>
   );
 }

@@ -53,6 +53,27 @@ ADMISSION_INFO_SPECS = [
         "audience_levels": ["postgraduate", "bachelors", "diploma", "certificate"],
     },
     {
+        "title": "Entry Requirements",
+        "content_type": "requirements",
+        "summary": "General entry requirement guidance for certificate, diploma, undergraduate, and postgraduate applicants.",
+        "content": "Applicants should confirm the minimum entry route for the level they are applying for, then check programme-specific subject clusters, professional regulator requirements, school guidance, and Senate-recognized equivalencies before submitting an application.",
+        "audience_levels": ["postgraduate", "bachelors", "diploma", "certificate"],
+    },
+    {
+        "title": "Fees and Payment Guidance",
+        "content_type": "fees",
+        "summary": "Fee guidance for applicants preparing programme, application, accommodation, and joining-cost plans.",
+        "content": "Fee information is programme-specific and may include tuition, application charges, approved university charges, accommodation, student services, and programme-specific requirements. Applicants should confirm current fee schedules and payment instructions through official university records before making payment.",
+        "audience_levels": ["postgraduate", "bachelors", "diploma", "certificate"],
+    },
+    {
+        "title": "Scholarships and Financial Support",
+        "content_type": "scholarships",
+        "summary": "Funding and sponsorship guidance for applicants and continuing students.",
+        "content": "Applicants should verify government sponsorship, scholarships, bursaries, employer or county sponsorship, research grants, and external funding through official notices, award letters, and university admissions or finance channels before relying on any funding claim.",
+        "audience_levels": ["postgraduate", "bachelors", "diploma", "certificate"],
+    },
+    {
         "title": "Bridging Application Procedure",
         "content_type": "bridging_application",
         "summary": "Guidance for bridging and qualification-upgrade applications.",

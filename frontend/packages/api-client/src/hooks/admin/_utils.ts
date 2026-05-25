@@ -1,6 +1,20 @@
 import { ApiClientError } from "../../client";
+import { getStoredAccessToken, refreshStoredAccessToken } from "../../auth-tokens";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+
+const MAIN_API_BASE_URL = (
+  process.env.NEXT_PUBLIC_MAIN_API_URL ||
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/v1\/?$/, "") ||
+  "http://localhost:8000"
+).replace(/\/$/, "");
+
+function toBackendPath(path: string) {
+  if (path.startsWith("/api/admin")) {
+    return `/api/v1/admin${path.slice("/api/admin".length)}`;
+  }
+  return path;
+}
 
 function withQuery(path: string, params?: Record<string, unknown>) {
   if (!params) return path;
@@ -22,14 +36,22 @@ export async function adminRequest<T>(
     body?: unknown;
   }
 ): Promise<T> {
-  const response = await fetch(withQuery(path, options?.params), {
-    method,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: options?.body ? JSON.stringify(options.body) : undefined,
-  });
+  const request = () =>
+    fetch(`${MAIN_API_BASE_URL}${withQuery(toBackendPath(path), options?.params)}`, {
+      method,
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(getStoredAccessToken() ? { Authorization: `Bearer ${getStoredAccessToken()}` } : {}),
+      },
+      body: options?.body ? JSON.stringify(options.body) : undefined,
+    });
+
+  let response = await request();
+
+  if (response.status === 401 && (await refreshStoredAccessToken(MAIN_API_BASE_URL))) {
+    response = await request();
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: "Request failed" }));

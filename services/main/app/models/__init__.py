@@ -58,6 +58,7 @@ from .university import UniversityInfo
 
 # System
 from .system import ApiKey, Setting, Webhook
+from .analytics import AnalyticsEvent
 
 # Media
 from .media import Media, MediaFolder, MediaLink
@@ -132,6 +133,7 @@ __all__ = [
     "Setting",
     "ApiKey",
     "Webhook",
+    "AnalyticsEvent",
     # Media
     "Media",
     "MediaFolder",

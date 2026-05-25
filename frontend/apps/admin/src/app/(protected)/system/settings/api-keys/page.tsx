@@ -1,22 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { Copy, Eye, EyeOff, Shield, AlertTriangle, CheckCircle2 } from "lucide-react";
-import { useAuth, usePermissions } from "@ksu/auth";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Checkbox, ConfirmDialog, DataTable, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, FormDialog, Input, Label, PageHeader, Textarea } from "@ksu/ui/components";
-import { useApiKeys, useCreateApiKey, useRevokeApiKey } from "@ksu/api-client/hooks/admin";
+import { CheckCircle2, Copy, Shield } from "lucide-react";
+import { useAuth, usePermissions as useAuthPermissions } from "@ksu/auth";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Checkbox, ConfirmDialog, DataTable, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, FormDialog, Input, Label, PageHeader, RichTextEditor, richTextToPlainText } from "@ksu/ui/components";
+import { useApiKeys, useCreateApiKey, usePermissions as useAdminPermissions, useRevokeApiKey } from "@ksu/api-client/hooks/admin";
 import type { ApiKey } from "@ksu/api-client/types/admin";
-import { canManageApiKeys } from "../../_lib/access";
-
-const AVAILABLE_SCOPES = [
-  { value: "programmes:read", label: "Read Programmes", description: "View programmes list and details" },
-  { value: "settings:read", label: "Read Settings", description: "View public settings" },
-  { value: "schools:read", label: "Read Schools", description: "View schools and departments" },
-  { value: "news:read", label: "Read News", description: "View news and announcements" },
-  { value: "events:read", label: "Read Events", description: "View events and calendars" },
-  { value: "admissions:read", label: "Read Admissions", description: "View admission information" },
-  { value: "staff:read", label: "Read Staff", description: "View staff directory" },
-];
+import { canManageApiKeys, canViewPermissions } from "../../_lib/access";
 
 interface CreateFormState {
   name: string;
@@ -28,18 +18,30 @@ interface CreateFormState {
 
 export default function ApiKeysPage() {
   const { user } = useAuth();
-  const { hasScope } = usePermissions();
+  const { hasScope } = useAuthPermissions();
   const apiKeys = useApiKeys();
   const createApiKey = useCreateApiKey();
   const revokeApiKey = useRevokeApiKey();
   const [createOpen, setCreateOpen] = React.useState(false);
   const [viewTarget, setViewTarget] = React.useState<ApiKey | null>(null);
-  const [showKeyTarget, setShowKeyTarget] = React.useState<{ name: string; key: string } | null>(null);
   const [revokeTarget, setRevokeTarget] = React.useState<ApiKey | null>(null);
-  const [deleteTarget, setDeleteTarget] = React.useState<ApiKey | null>(null);
   const [createdSecret, setCreatedSecret] = React.useState<{ name: string; key: string } | null>(null);
   const [form, setForm] = React.useState<CreateFormState>({ name: "", description: "", scopes: [], expires_at: "", rate_limit: "1000" });
   const canManage = canManageApiKeys(user, hasScope);
+  const canReadPermissions = canViewPermissions(user, hasScope);
+  const permissions = useAdminPermissions(undefined, { enabled: canManage && canReadPermissions });
+
+  const availableScopes = React.useMemo(() => {
+    return (permissions.data ?? [])
+      .filter((permission) => permission.is_active)
+      .map((permission) => ({
+        value: permission.name,
+        label: permission.name,
+        description: permission.description || `${permission.resource ?? "system"} ${permission.action ?? "access"}`,
+        resource: permission.resource ?? "system",
+      }))
+      .sort((left, right) => left.resource.localeCompare(right.resource) || left.label.localeCompare(right.label));
+  }, [permissions.data]);
 
   const handleScopeToggle = (scope: string) => {
     setForm((prev) => ({
@@ -52,7 +54,7 @@ export default function ApiKeysPage() {
     try {
       const response = await createApiKey.mutateAsync({
         name: form.name,
-        description: form.description,
+        description: richTextToPlainText(form.description),
         scopes: form.scopes,
         expires_at: form.expires_at || null,
         rate_limit: parseInt(form.rate_limit, 10) || 1000,
@@ -84,7 +86,7 @@ export default function ApiKeysPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-green-700 mb-3">
-                The API key for <strong>"{createdSecret.name}"</strong> has been created. Copy it now — it will never be shown again.
+                The API key for <strong>"{createdSecret.name}"</strong> has been created. Copy it now; it will never be shown again.
               </p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 rounded-lg bg-muted p-3 text-sm font-mono">{createdSecret.key}</code>
@@ -120,9 +122,6 @@ export default function ApiKeysPage() {
                 {canManage && row.is_active && (
                   <Button variant="ghost" size="sm" onClick={() => setRevokeTarget(row)}>Revoke</Button>
                 )}
-                {canManage && (
-                  <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(row)}>Delete</Button>
-                )}
               </div>
             )},
           ]}
@@ -153,18 +152,18 @@ export default function ApiKeysPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
+            <RichTextEditor
               value={form.description}
-              onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+              onChange={(description) => setForm((current) => ({ ...current, description }))}
               placeholder="Describe the purpose of this key..."
-              rows={2}
+              toolbar="simple"
+              minHeight="130px"
             />
           </div>
           <div className="space-y-2">
             <Label>Permissions / Scopes *</Label>
             <div className="grid grid-cols-1 gap-2 rounded-lg border p-3 max-h-[200px] overflow-y-auto">
-              {AVAILABLE_SCOPES.map((scope) => (
+              {availableScopes.map((scope) => (
                 <label key={scope.value} className="flex items-start gap-3 cursor-pointer hover:bg-muted/50 p-2 rounded">
                   <Checkbox
                     checked={form.scopes.includes(scope.value)}
@@ -177,6 +176,11 @@ export default function ApiKeysPage() {
                   </div>
                 </label>
               ))}
+              {availableScopes.length === 0 ? (
+                <p className="p-3 text-sm text-muted-foreground">
+                  No active backend permissions are available for API key scopes.
+                </p>
+              ) : null}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -216,6 +220,8 @@ export default function ApiKeysPage() {
                 <div className="grid grid-cols-3 gap-2 text-sm">
                   <span className="text-muted-foreground">Name:</span>
                   <span className="col-span-2 font-medium">{viewTarget.name}</span>
+                  <span className="text-muted-foreground">Key prefix:</span>
+                  <span className="col-span-2">{viewTarget.key_prefix || "-"}</span>
                   <span className="text-muted-foreground">Description:</span>
                   <span className="col-span-2">{viewTarget.description || "-"}</span>
                   <span className="text-muted-foreground">Status:</span>
@@ -228,8 +234,6 @@ export default function ApiKeysPage() {
                   <span className="col-span-2">{viewTarget.created_at ? new Date(viewTarget.created_at).toLocaleString() : "Unknown"}</span>
                   <span className="text-muted-foreground">Last used:</span>
                   <span className="col-span-2">{viewTarget.last_used_at ? new Date(viewTarget.last_used_at).toLocaleString() : "Never"}</span>
-                  <span className="text-muted-foreground">ID:</span>
-                  <code className="col-span-2 text-xs">{viewTarget.id}</code>
                 </div>
               </div>
               <div className="space-y-2">
@@ -254,6 +258,7 @@ export default function ApiKeysPage() {
         title="Revoke API Key"
         description={`Are you sure you want to revoke "${revokeTarget?.name}"? This will immediately deactivate the key and all requests using it will fail.`}
         confirmLabel="Revoke Key"
+        variant="destructive"
         onConfirm={async () => {
           if (!revokeTarget) return;
           await revokeApiKey.mutateAsync(revokeTarget.id);
@@ -262,20 +267,6 @@ export default function ApiKeysPage() {
         isLoading={revokeApiKey.isPending}
       />
 
-      <ConfirmDialog
-        open={Boolean(deleteTarget)}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-        title="Delete API Key"
-        description={`Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
-        confirmLabel="Delete"
-        variant="destructive"
-        onConfirm={async () => {
-          if (!deleteTarget) return;
-          await revokeApiKey.mutateAsync(deleteTarget.id);
-          setDeleteTarget(null);
-        }}
-        isLoading={revokeApiKey.isPending}
-      />
     </div>
   );
 }

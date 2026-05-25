@@ -11,16 +11,16 @@ interface AcademicSectionProps {
   activeIntake: ActiveIntake | null;
 }
 
-// School cover image fallbacks based on school code/name
+// School cover image fallbacks use local institutional imagery, not stock photos.
 const schoolImageMap: Record<string, string> = {
-  "SBE": "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&h=400&fit=crop",
-  "SEHRD": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&h=400&fit=crop",
-  "SHS": "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600&h=400&fit=crop",
-  "SIST": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&h=400&fit=crop",
-  "SOL": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&h=400&fit=crop",
-  "SANRM": "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=600&h=400&fit=crop",
-  "SASS": "https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=600&h=400&fit=crop",
-  "SPAS": "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=600&h=400&fit=crop",
+  SBE: "/logos/ksu-bck1.jpg",
+  SEHRD: "/logos/ksu-bck5.jpg",
+  SHS: "/logos/ksu-bck1.jpg",
+  SIST: "/logos/ksu-bck5.jpg",
+  SOL: "/logos/ksu-bck1.jpg",
+  SANRM: "/logos/ksu-bck5.jpg",
+  SASS: "/logos/ksu-bck1.jpg",
+  SPAS: "/logos/ksu-bck5.jpg",
 };
 
 function getSchoolImage(school: SchoolCard): string | null {
@@ -32,14 +32,14 @@ function getSchoolImage(school: SchoolCard): string | null {
 }
 
 const fallbackSchools: SchoolCard[] = [
-  { id: "1", name: "Business and Economics", slug: "business-economics", shortName: "SBE", coverImage: null },
-  { id: "2", name: "Education", slug: "education", shortName: "SEHRD", coverImage: null },
-  { id: "3", name: "Health Sciences", slug: "health-sciences", shortName: "SHS", coverImage: null },
-  { id: "4", name: "Information Science & Technology", slug: "information-technology", shortName: "SIST", coverImage: null },
-  { id: "5", name: "Law", slug: "law", shortName: "SOL", coverImage: null },
-  { id: "6", name: "Agriculture & Natural Resources", slug: "agriculture", shortName: "SANRM", coverImage: null },
-  { id: "7", name: "Arts & Social Sciences", slug: "arts-social-sciences", shortName: "SASS", coverImage: null },
-  { id: "8", name: "Pure & Applied Sciences", slug: "pure-applied-sciences", shortName: "SPAS", coverImage: null },
+  { id: "school-of-agriculture-and-natural-resources-management", name: "School of Agriculture and Natural Resources Management", slug: "school-of-agriculture-and-natural-resources-management", shortName: "SANRM", coverImage: null },
+  { id: "school-of-arts-and-social-sciences", name: "School of Arts and Social Sciences", slug: "school-of-arts-and-social-sciences", shortName: "SASS", coverImage: null },
+  { id: "school-of-business-and-economics", name: "School of Business and Economics", slug: "school-of-business-and-economics", shortName: "SBE", coverImage: null },
+  { id: "school-of-education-and-human-resource-development", name: "School of Education and Human Resource Development", slug: "school-of-education-and-human-resource-development", shortName: "SEHRD", coverImage: null },
+  { id: "school-of-health-sciences", name: "School of Health Sciences", slug: "school-of-health-sciences", shortName: "SHS", coverImage: null },
+  { id: "school-of-information-science-and-technology", name: "School of Information Science and Technology", slug: "school-of-information-science-and-technology", shortName: "SIST", coverImage: null },
+  { id: "school-of-law", name: "School of Law", slug: "school-of-law", shortName: "SOL", coverImage: null },
+  { id: "school-of-pure-and-applied-sciences", name: "School of Pure and Applied Sciences", slug: "school-of-pure-and-applied-sciences", shortName: "SPAS", coverImage: null },
 ];
 
 const programmeCategories = [
@@ -77,12 +77,6 @@ const programmeCategories = [
   },
 ];
 
-const stats = [
-  { value: "8", label: "Schools", icon: School },
-  { value: "150+", label: "Programmes", icon: BookMarked },
-  { value: "20K+", label: "Students", icon: Users },
-];
-
 const journeySteps = [
   { step: 1, title: "Explore Schools", description: "Find your field of interest" },
   { step: 2, title: "Choose Programme", description: "Select your study level" },
@@ -94,6 +88,11 @@ export function AcademicSection({
   activeIntake,
 }: AcademicSectionProps) {
   const schools = initialSchools.length > 0 ? initialSchools : fallbackSchools;
+  const stats = [
+    { value: String(schools.length), label: "Schools", icon: School },
+    { value: String(programmeCategories.length), label: "Study levels", icon: BookMarked },
+    { value: "20K+", label: "Students", icon: Users },
+  ];
 
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
@@ -286,7 +285,7 @@ export function AcademicSection({
                 </h3>
                 <p className="mt-4 text-white/90 max-w-md">
                   {activeIntake
-                    ? "Don't miss the deadline. Start your application today and take the first step towards your future."
+                    ? "Use the published intake information to prepare your application and next steps."
                     : "Ready to join Kisii University? Begin your application process and embark on your academic journey."
                   }
                 </p>

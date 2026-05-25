@@ -6,6 +6,7 @@ import { Sidebar } from "./sidebar";
 import { Toolbar } from "./toolbar";
 import type { Service } from "@ksu/auth";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { AdminAnalyticsTracker } from "@/components/analytics/admin-analytics-tracker";
 
 interface DashboardShellProps {
   service: Service | "system";
@@ -17,6 +18,7 @@ export function DashboardShell({ service, children }: DashboardShellProps) {
 
   return (
     <div className="flex h-screen overflow-hidden">
+      <AdminAnalyticsTracker />
       {/* Mobile overlay */}
       <AnimatePresence>
         {isMobileOpen && (

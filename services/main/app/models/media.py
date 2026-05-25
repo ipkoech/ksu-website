@@ -12,6 +12,28 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ksu_common.models.base import Base
 
+from ..core.config import get_settings
+
+
+def _media_url(value: str) -> str:
+    """Build a public media URL without importing app.helpers during model import."""
+    if value.startswith(("http://", "https://", "data:", "blob:")):
+        return value
+
+    settings = get_settings()
+    media_prefix = settings.MEDIA_URL.strip("/")
+    path = value.replace("\\", "/").strip().lstrip("/")
+    while media_prefix and (path == media_prefix or path.startswith(f"{media_prefix}/")):
+        if path == media_prefix:
+            path = ""
+            break
+        path = path[len(media_prefix) + 1 :]
+
+    parts = [part for part in path.split("/") if part and part not in {".", ".."}]
+    relative_path = "/".join(parts)
+    media_url = settings.MEDIA_URL.rstrip("/")
+    return f"{media_url}/{relative_path}" if relative_path else media_url
+
 
 class MediaFolder(Base):
     """Folder for organizing media files."""
@@ -141,7 +163,11 @@ class Media(Base):
     @property
     def url(self) -> str:
         """Get the best available URL for this media."""
-        return self.cdn_url or self.public_url or self.storage_path
+        if self.cdn_url:
+            return self.cdn_url
+        if self.public_url:
+            return _media_url(self.public_url)
+        return _media_url(self.storage_path)
 
     @property
     def is_image(self) -> bool:

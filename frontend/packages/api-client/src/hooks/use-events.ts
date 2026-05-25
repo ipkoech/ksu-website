@@ -4,10 +4,17 @@ import { queryKeys } from "./query-keys";
 import type { Event } from "../main/types";
 import type { PaginationParams } from "../client";
 
-export function useEvents(params?: PaginationParams & { event_type?: string; upcoming?: boolean }) {
+export function useEvents(params?: PaginationParams & { scope_type?: string; scope_id?: string; is_main?: boolean; is_published?: boolean; upcoming?: boolean; search?: string }) {
   return useQuery({
     queryKey: queryKeys.events.list(params),
     queryFn: () => eventsApi.list(params),
+  });
+}
+
+export function useAdminEvents(params?: PaginationParams & { scope_type?: string; scope_id?: string; is_main?: boolean; is_published?: boolean; upcoming?: boolean; status?: string; search?: string }) {
+  return useQuery({
+    queryKey: [...queryKeys.events.list(params), "admin"] as const,
+    queryFn: () => eventsApi.listAdmin(params),
   });
 }
 
@@ -58,6 +65,30 @@ export function useDeleteEvent() {
     mutationFn: (id: string) => eventsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+    },
+  });
+}
+
+export function usePublishEvent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => eventsApi.publish(id),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(id) });
+    },
+  });
+}
+
+export function useUnpublishEvent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => eventsApi.unpublish(id),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(id) });
     },
   });
 }

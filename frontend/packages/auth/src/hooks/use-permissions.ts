@@ -2,8 +2,40 @@
 
 import { useMemo } from "react";
 import { useAuthStore } from "../store";
-import { hasServiceAccess, isSuperAdmin } from "../permissions";
+import { isSuperAdmin } from "../permissions";
 import type { Service } from "../types";
+
+function normalizeScope(scope: string) {
+  return scope.trim().toLowerCase();
+}
+
+function equivalentScopes(scope: string) {
+  const normalized = normalizeScope(scope);
+  const scopes = new Set([normalized]);
+
+  if (normalized.includes(":")) {
+    const [resource, action = ""] = normalized.split(":");
+    scopes.add(`${resource}.${action}`);
+    if (action === "read") scopes.add(`${resource}.view`);
+    if (["write", "create", "update", "delete", "manage"].includes(action)) {
+      scopes.add(`${resource}.manage`);
+      scopes.add(`${resource}.create`);
+      scopes.add(`${resource}.edit`);
+    }
+  }
+
+  if (normalized.includes(".")) {
+    const [resource, action = ""] = normalized.split(".");
+    scopes.add(`${resource}:${action}`);
+    if (action === "view") scopes.add(`${resource}:read`);
+    if (action.startsWith("manage") || ["create", "edit", "update"].includes(action)) {
+      scopes.add(`${resource}:write`);
+    }
+    if (action === "delete") scopes.add(`${resource}:delete`);
+  }
+
+  return Array.from(scopes);
+}
 
 export function usePermissions() {
   const { user, activeService } = useAuthStore();
@@ -14,22 +46,28 @@ export function usePermissions() {
   }, [user, activeService]);
 
   const scopes = useMemo(() => {
-    return currentServiceAccess?.scopes || [];
+    return (currentServiceAccess?.scopes || []).map(normalizeScope);
   }, [currentServiceAccess]);
+
+  const availableScopes = useMemo(() => {
+    return new Set([
+      ...scopes,
+      ...(user?.permissions ?? []).map(normalizeScope),
+    ]);
+  }, [scopes, user?.permissions]);
 
   const hasScope = (scope: string): boolean => {
     if (!user) return false;
     if (isSuperAdmin(user.roles)) return true;
-    if (!currentServiceAccess) return false;
+    if (availableScopes.has("*") || availableScopes.has("admin:*")) return true;
 
-    return (
-      scopes.includes("*") ||
-      scopes.includes(scope) ||
-      scopes.some((s) => {
-        const [resource] = s.split(".");
-        return s === `${resource}.*` && scope.startsWith(`${resource}.`);
-      })
-    );
+    const candidates = equivalentScopes(scope);
+    if (candidates.some((candidate) => availableScopes.has(candidate))) return true;
+
+    return candidates.some((candidate) => {
+      const resource = candidate.split(candidate.includes(":") ? ":" : ".")[0];
+      return availableScopes.has(`${resource}:*`) || availableScopes.has(`${resource}.*`);
+    });
   };
 
   const hasAnyScope = (checkScopes: string[]): boolean => {
@@ -42,13 +80,13 @@ export function usePermissions() {
 
   const canAccessService = (service: Service): boolean => {
     if (!user) return false;
-    return hasServiceAccess(user.roles, service);
+    return user.services.some((access) => access.service === service);
   };
 
   const isAdmin = useMemo(() => {
     if (!user) return false;
     return user.roles.some((r) =>
-      ["super-admin", "admin", "content-admin", "research-admin", "library-admin"].includes(r)
+      ["super-admin", "admin", "system-admin", "content-admin", "research-admin", "library-admin"].includes(r)
     );
   }, [user]);
 

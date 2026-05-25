@@ -13,6 +13,7 @@ The goal is to stop generated page designs from inventing new shells, logos, nav
 | Public shell sequence | `frontend/apps/web/src/components/site-shell.tsx` |
 | Homepage shell usage | `frontend/apps/web/src/app/page.tsx` |
 | Header and navigation | `frontend/packages/ui/src/components/layout/public/public-header.tsx` |
+| School/department contextual header | `frontend/packages/ui/src/components/layout/public/entity-header.tsx` |
 | Mini header | `frontend/packages/ui/src/components/layout/public/mini-header.tsx` |
 | Announcement bar | `frontend/packages/ui/src/components/layout/public/announcement-bar.tsx` |
 | Footer | `frontend/packages/ui/src/components/layout/public/public-footer.tsx` |
@@ -30,7 +31,7 @@ Public pages use this visual order:
 
 1. `Announcements`
 2. `MiniHeader`
-3. `PublicHeader`
+3. `PublicHeader` or a route-provided contextual entity header
 4. page content
 5. `PublicFooter`
 
@@ -85,6 +86,47 @@ About menu order:
 6. Quality Assurance
 
 The main header currently does not own a visible search button. Search appears in the mini header. Do not add a main-header search affordance in visual designs unless the frontend component is changed first.
+
+Administration menu behavior:
+
+- Organization remains a direct menu item.
+- Administration uses one desktop mega menu, not nested submenus.
+- Quick links sit in a narrow left column.
+- Backend administrative divisions and backend administrative departments sit in the wider right column.
+- The right column groups divisions and departments in responsive grids, separated by a divider.
+
+Academics menu behavior:
+
+- Academics uses one desktop mega menu, not nested submenus.
+- Quick links sit in a narrow left column.
+- Backend schools sit in the wider right column as a responsive grid.
+
+Public-header desktop mega menus should use generous viewport-bounded width and responsive grids so menu content does not clip, overflow, or require internal scrolling.
+Desktop dropdown panels should sit directly below the public header with only a small gap.
+
+School and department detail routes replace `PublicHeader` with `EntityHeader`. The mini header, announcements, page background, and footer remain unchanged.
+
+School contextual navigation:
+
+1. About
+2. Departments
+3. Team
+4. Publications, only when available
+5. News
+6. Downloads
+7. Clubs, only when available
+8. Contact
+
+Department contextual navigation:
+
+1. About
+2. Team
+3. Programmes, only for academic departments
+4. Publications, only when available
+5. Services
+6. News
+7. Downloads
+8. Contact
 
 ## Mini Header Rules
 
@@ -243,4 +285,3 @@ Before a design is considered final:
 - Mobile ordering preserves the same information architecture.
 - The desktop asset is actually desktop-shaped.
 - The design avoids unsupported rankings, metrics, dashboards, forms, deadlines, testimonials, or admin controls.
-

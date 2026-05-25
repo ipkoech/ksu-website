@@ -2,11 +2,12 @@
 
 import { usePermissions } from "@/hooks/use-permissions";
 import { DataTable } from "@/components/data-table/data-table";
+import { DepartmentPicker, SchoolPicker } from "@/components/relationships";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTransition } from "@/lib/animations";
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, User, GraduationCap } from "lucide-react";
-import { Button, Badge } from "@ksu/ui/components";
+import { FilterX, MoreHorizontal, User, GraduationCap, Upload } from "lucide-react";
+import { Button, Badge, ConfirmDialog, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ksu/ui/components";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -15,17 +16,33 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@ksu/ui/components";
-import { usePersons, useDeletePerson } from "@ksu/api-client";
+import { resolveMainMediaUrl, useActivatePerson, useDeactivatePerson, useDeletePerson, usePersons, type Person } from "@ksu/api-client";
 import { toast } from "@ksu/ui";
 import Image from "next/image";
+import { useState } from "react";
+import Link from "next/link";
+
+interface ConfirmState {
+    title: string;
+    description: string;
+    confirmLabel: string;
+    variant?: "default" | "destructive";
+    onConfirm: () => Promise<void>;
+}
 
 const getPersonColumns = ({
+    canWrite,
     canDelete,
     onDelete,
+    onActivate,
+    onDeactivate,
 }: {
+    canWrite: boolean;
     canDelete: boolean;
-    onDelete: (id: string) => void;
-}): ColumnDef<any>[] => [
+    onDelete: (person: Person) => void;
+    onActivate: (person: Person) => void;
+    onDeactivate: (person: Person) => void;
+}): ColumnDef<Person>[] => [
     {
         accessorKey: "name",
         header: "Name",
@@ -34,13 +51,14 @@ const getPersonColumns = ({
             const lastName = row.original.last_name || "";
             const title = row.original.title || "";
             const fullName = [title, firstName, lastName].filter(Boolean).join(" ");
+            const photoUrl = resolveMainMediaUrl(row.original.photo_url);
             
             return (
                 <div className="flex items-center gap-3">
                     <div className="relative h-10 w-10 overflow-hidden rounded-full bg-muted">
-                        {row.original.photo_url ? (
+                        {photoUrl ? (
                             <Image
-                                src={row.original.photo_url}
+                                src={photoUrl}
                                 alt={fullName}
                                 fill
                                 className="object-cover"
@@ -60,9 +78,9 @@ const getPersonColumns = ({
         },
     },
     {
-        accessorKey: "person_type",
-        header: "Type",
-        cell: ({ row }) => <Badge variant="outline">{row.original.person_type || "-"}</Badge>,
+        accessorKey: "employment_type",
+        header: "Employment",
+        cell: ({ row }) => <Badge variant="outline">{row.original.employment_type?.replace(/_/g, " ") || "-"}</Badge>,
     },
     {
         accessorKey: "academic_rank",
@@ -72,12 +90,15 @@ const getPersonColumns = ({
     {
         accessorKey: "department_name",
         header: "Department",
-        cell: ({ row }) => (
-            <div className="flex items-center gap-2">
-                <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                <span>{row.original.department_name || "-"}</span>
-            </div>
-        ),
+        cell: ({ row }) => {
+            const departmentName = row.original.department?.name || row.original.department_name || "-";
+            return (
+                <div className="flex items-center gap-2">
+                    <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                    <span>{departmentName}</span>
+                </div>
+            );
+        },
     },
     {
         accessorKey: "publications_count",
@@ -97,7 +118,6 @@ const getPersonColumns = ({
         id: "actions",
         cell: ({ row }) => {
             const person = row.original;
-            const fullName = [person.title, person.first_name, person.last_name].filter(Boolean).join(" ");
             
             return (
                 <DropdownMenu>
@@ -109,19 +129,21 @@ const getPersonColumns = ({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => window.location.href = `/people/persons/${person.id}`}>
-                            Edit
+                        <DropdownMenuItem onClick={() => window.location.href = `/people/persons/_static?id=${encodeURIComponent(person.id)}`}>
+                            {canWrite ? "Edit" : "View Profile"}
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigator.clipboard.writeText(person.id)}>
-                            Copy ID
+                        <DropdownMenuItem onClick={() => window.location.href = `/people/persons/_static/assignments?id=${encodeURIComponent(person.id)}`}>
+                            Manage Assignments
                         </DropdownMenuItem>
+                        {canWrite ? (
+                            <DropdownMenuItem onClick={() => person.is_active ? onDeactivate(person) : onActivate(person)}>
+                                {person.is_active ? "Deactivate" : "Activate"}
+                            </DropdownMenuItem>
+                        ) : null}
                         {canDelete && (
                             <>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                    className="text-destructive" 
-                                    onClick={() => onDelete(person.id)}
-                                >
+                                <DropdownMenuItem className="text-destructive" onClick={() => onDelete(person)}>
                                     Delete
                                 </DropdownMenuItem>
                             </>
@@ -134,39 +156,170 @@ const getPersonColumns = ({
 ];
 
 export default function PersonsPage() {
-    const { canCreate, canDelete } = usePermissions();
-    const { data: personsResponse, isLoading } = usePersons();
+    const { canCreate, canDelete, canEdit } = usePermissions();
+    const [status, setStatus] = useState<"active" | "inactive" | "deleted" | "all">("active");
+    const [search, setSearch] = useState("");
+    const [schoolId, setSchoolId] = useState("");
+    const [departmentId, setDepartmentId] = useState("");
+    const { data: personsResponse, isLoading } = usePersons({
+        status,
+        search: search || undefined,
+        school_id: schoolId || undefined,
+        department_id: departmentId || undefined,
+    });
+    const deletePerson = useDeletePerson();
+    const activatePerson = useActivatePerson();
+    const deactivatePerson = useDeactivatePerson();
+    const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
+    const [confirmLoading, setConfirmLoading] = useState(false);
     const persons = personsResponse?.data || [];
-    const { mutate: deletePerson } = useDeletePerson();
 
-    const handleDelete = (id: string) => {
-        if (confirm("Are you sure you want to delete this person?")) {
-            deletePerson(id, {
-                onSuccess: () => {
-                    toast.success("Person deleted successfully");
-                },
-                onError: () => {
-                    toast.error("Failed to delete person");
-                },
-            });
-        }
+    const handleDelete = (person: Person) => {
+        const name = person.full_name || [person.first_name, person.last_name].filter(Boolean).join(" ") || "this person";
+        setConfirmState({
+            title: "Delete person?",
+            description: `This will soft delete ${name} and remove them from active staff workflows where deletion is allowed.`,
+            confirmLabel: "Delete person",
+            variant: "destructive",
+            onConfirm: async () => {
+                await deletePerson.mutateAsync(person.id);
+                toast.success("Person deleted successfully");
+            },
+        });
     };
 
-    const columns = getPersonColumns({ canDelete: canDelete("people"), onDelete: handleDelete });
+    const handleActivate = (person: Person) => {
+        const name = person.full_name || [person.first_name, person.last_name].filter(Boolean).join(" ") || "this person";
+        setConfirmState({
+            title: "Activate person?",
+            description: `This will mark ${name} as active again.`,
+            confirmLabel: "Activate",
+            onConfirm: async () => {
+                await activatePerson.mutateAsync(person.id);
+                toast.success("Person activated");
+            },
+        });
+    };
+
+    const handleDeactivate = (person: Person) => {
+        const name = person.full_name || [person.first_name, person.last_name].filter(Boolean).join(" ") || "this person";
+        setConfirmState({
+            title: "Deactivate person?",
+            description: `This will mark ${name} inactive and end active assignments according to the backend lifecycle rules.`,
+            confirmLabel: "Deactivate",
+            variant: "destructive",
+            onConfirm: async () => {
+                await deactivatePerson.mutateAsync(person.id);
+                toast.success("Person deactivated");
+            },
+        });
+    };
+
+    const columns = getPersonColumns({
+        canWrite: canEdit("staff") || canEdit("persons"),
+        canDelete: canDelete("staff") || canDelete("persons"),
+        onDelete: handleDelete,
+        onActivate: handleActivate,
+        onDeactivate: handleDeactivate,
+    });
+    const hasFilters = Boolean(search || schoolId || departmentId || status !== "active");
 
     return (
         <PageTransition>
             <PageHeader
                 title="Persons"
                 description="Manage faculty, staff, and other persons"
-                createHref={canCreate("people") ? "/people/persons/new" : undefined}
+                actions={canCreate("staff") ? (
+                    <Button variant="outline" asChild>
+                        <Link href="/imports/persons">
+                            <Upload className="h-4 w-4 mr-2" />
+                            Import
+                        </Link>
+                    </Button>
+                ) : undefined}
+                createHref={canCreate("staff") || canCreate("persons") ? "/people/persons/new" : undefined}
                 createLabel="Add Person"
             />
             <DataTable
                 data={persons || []}
                 columns={columns}
                 isLoading={isLoading}
+                toolbar={(
+                    <div className="grid gap-3 rounded-lg border bg-card p-3 md:grid-cols-[minmax(220px,1fr)_minmax(220px,1fr)_minmax(220px,1fr)_160px_auto] md:items-end">
+                        <div className="space-y-2">
+                            <p className="text-sm font-medium">Search</p>
+                            <Input
+                                placeholder="Name, email, employee #, department, or school"
+                                value={search}
+                                onChange={(event) => setSearch(event.target.value)}
+                            />
+                        </div>
+                        <SchoolPicker
+                            value={schoolId}
+                            onChange={(value) => {
+                                setSchoolId(value);
+                                setDepartmentId("");
+                            }}
+                            label="School"
+                            placeholder="All schools"
+                        />
+                        <DepartmentPicker
+                            value={departmentId}
+                            onChange={(value) => setDepartmentId(value)}
+                            filters={schoolId ? { school_id: schoolId } : undefined}
+                            label="Department"
+                            placeholder={schoolId ? "All departments" : "Any department"}
+                        />
+                        <div className="space-y-2">
+                            <p className="text-sm font-medium">Status</p>
+                            <Select value={status} onValueChange={(value) => setStatus(value as typeof status)}>
+                                <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="active">Active</SelectItem>
+                                    <SelectItem value="inactive">Inactive</SelectItem>
+                                    <SelectItem value="deleted">Deleted</SelectItem>
+                                    <SelectItem value="all">All</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={!hasFilters}
+                            onClick={() => {
+                                setSearch("");
+                                setStatus("active");
+                                setSchoolId("");
+                                setDepartmentId("");
+                            }}
+                        >
+                            <FilterX className="h-4 w-4" />
+                            Clear
+                        </Button>
+                    </div>
+                )}
                 emptyMessage="No persons found. Add your first person."
+            />
+            <ConfirmDialog
+                open={!!confirmState}
+                onOpenChange={(open) => !open && setConfirmState(null)}
+                title={confirmState?.title}
+                description={confirmState?.description}
+                confirmLabel={confirmState?.confirmLabel}
+                variant={confirmState?.variant}
+                isLoading={confirmLoading}
+                onConfirm={async () => {
+                    if (!confirmState) return;
+                    setConfirmLoading(true);
+                    try {
+                        await confirmState.onConfirm();
+                        setConfirmState(null);
+                    } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "Action failed");
+                    } finally {
+                        setConfirmLoading(false);
+                    }
+                }}
             />
         </PageTransition>
     );

@@ -50,6 +50,15 @@ async def get_intake(slug: str, db: DbSession, fields: FieldSelection = FieldsDe
     return success(data=selector.apply(intake))
 
 
+@router.get("/id/{intake_id}")
+async def get_intake_by_id(intake_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+    selector = build_selector(Intake, fields)
+    intake = await IntakeService.get_by_id(db, intake_id, load_options=selector.load_options)
+    if intake is None:
+        raise HTTPException(status_code=404, detail="Intake not found")
+    return success(data=selector.apply(intake))
+
+
 @router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("academic:write"))])
 async def create_intake(data: IntakeCreate, db: DbSession, _: CurrentUser):
     intake = await IntakeService.create(db, **data.model_dump())

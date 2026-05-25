@@ -1,6 +1,7 @@
 "use client";
 
 import { usePermissions } from "@/hooks/use-permissions";
+import { useDeleteConfirm } from "@/hooks/use-delete-confirm";
 import { DataTable } from "@/components/data-table/data-table";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTransition } from "@/lib/animations";
@@ -18,10 +19,14 @@ import {
 import { announcementsApi, queryKeys } from "@ksu/api-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@ksu/ui";
+import { useState } from "react";
+import { TableSearch } from "@/components/shared/table-search";
 
 const getAnnouncementColumns = ({
+    canDelete,
     onDelete,
 }: {
+    canDelete: boolean;
     onDelete: (id: string) => void;
 }): ColumnDef<any>[] => [
     {
@@ -87,13 +92,17 @@ const getAnnouncementColumns = ({
                         <DropdownMenuItem onClick={() => window.location.href = `/content/announcements/${announcement.id}`}>
                             Edit
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                            className="text-destructive" 
-                            onClick={() => onDelete(announcement.id)}
-                        >
-                            Delete
-                        </DropdownMenuItem>
+                        {canDelete && (
+                            <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                    className="text-destructive" 
+                                    onClick={() => onDelete(announcement.id)}
+                                >
+                                    Delete
+                                </DropdownMenuItem>
+                            </>
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             );
@@ -103,11 +112,13 @@ const getAnnouncementColumns = ({
 
 export default function AnnouncementsPage() {
     const { canCreate, canDelete } = usePermissions();
+    const { confirmDelete, dialog } = useDeleteConfirm();
     const queryClient = useQueryClient();
+    const [search, setSearch] = useState("");
 
     const { data: announcementsResponse, isLoading } = useQuery({
-        queryKey: queryKeys.announcements.list(),
-        queryFn: () => announcementsApi.list(),
+        queryKey: queryKeys.announcements.list({ search: search || undefined }),
+        queryFn: () => announcementsApi.list({ search: search || undefined }),
     });
 
     const deleteMutation = useMutation({
@@ -122,12 +133,10 @@ export default function AnnouncementsPage() {
     });
 
     const handleDelete = (id: string) => {
-        if (confirm("Are you sure you want to delete this announcement?")) {
-            deleteMutation.mutate(id);
-        }
+        confirmDelete("announcement", () => deleteMutation.mutateAsync(id));
     };
 
-    const columns = getAnnouncementColumns({ onDelete: handleDelete });
+    const columns = getAnnouncementColumns({ canDelete: canDelete("content"), onDelete: handleDelete });
 
     return (
         <PageTransition>
@@ -141,8 +150,10 @@ export default function AnnouncementsPage() {
                 data={announcementsResponse?.data || []}
                 columns={columns}
                 isLoading={isLoading}
-                emptyMessage="No announcements found. Create your first announcement."
+                toolbar={<TableSearch value={search} onChange={setSearch} placeholder="Search announcements by title, slug, or summary" />}
+                emptyMessage={search ? "No announcements match this search." : "No announcements found. Create your first announcement."}
             />
+            {dialog}
         </PageTransition>
     );
 }

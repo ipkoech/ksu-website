@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { PaginatedResponse, Role, RoleListParams } from "../../types/admin";
+import type { PaginatedResponse, Role, RoleCreatePayload, RoleListParams, RoleUpdatePayload } from "../../types/admin";
 import { adminRequest, unwrapAdminData } from "./_utils";
 
 export const roleKeys = {
@@ -39,7 +39,7 @@ export function useRole(id: string) {
 export function useCreateRole() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Record<string, unknown>) => adminRequest<{ data: Role }>("POST", "/api/admin/roles", { body: data }),
+    mutationFn: (data: RoleCreatePayload) => adminRequest<{ data: Role }>("POST", "/api/admin/roles", { body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: roleKeys.all });
     },
@@ -49,7 +49,7 @@ export function useCreateRole() {
 export function useUpdateRole() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+    mutationFn: ({ id, data }: { id: string; data: RoleUpdatePayload }) =>
       adminRequest<{ data: Role }>("PUT", `/api/admin/roles/${id}`, { body: data }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: roleKeys.all });

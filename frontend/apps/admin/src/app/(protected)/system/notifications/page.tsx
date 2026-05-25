@@ -3,67 +3,64 @@
 import * as React from "react";
 import Link from "next/link";
 import { useAuth, usePermissions } from "@ksu/auth";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button, Card, CardContent, CardHeader, CardTitle, FormDialog, Input, Label, PageHeader, Textarea } from "@ksu/ui/components";
+import { useCreateNotificationTemplate, useDeleteNotificationTemplate, useNotificationTemplates, useUpdateNotificationTemplate } from "@ksu/api-client/hooks/admin";
+import type { NotificationTemplate } from "@ksu/api-client/types/admin";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Checkbox, DeleteConfirmDialog, FormDialog, Input, Label, PageHeader, RichTextEditor, richTextToPlainText } from "@ksu/ui/components";
 import { canManageNotifications, canSendNotifications, canViewNotifications } from "../_lib/access";
 
-type NotificationTemplate = {
-  id: string;
-  name: string;
-  subject?: string;
-  body?: string;
-  channel?: string;
+const emptyTemplateForm = {
+  code: "",
+  name: "",
+  description: "",
+  title: "",
+  subject: "",
+  body: "",
+  channel: "email",
+  is_active: true,
 };
 
-async function requestTemplates() {
-  const response = await fetch("/api/admin/notifications", { credentials: "include" });
-  if (!response.ok) throw new Error("Failed to load notification templates");
-  return response.json();
+function codeFromName(name: string) {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
 }
 
 export default function NotificationsPage() {
   const { user } = useAuth();
   const { hasScope } = usePermissions();
-  const queryClient = useQueryClient();
   const canManage = canManageNotifications(user, hasScope);
   const canSend = canSendNotifications(user, hasScope);
   const canView = canViewNotifications(user, hasScope);
-  const templates = useQuery({
-    queryKey: ["admin", "notifications"],
-    queryFn: requestTemplates,
-    enabled: canView,
-    select: (response) =>
-      (response.data as Array<{
-        id: string;
-        name: string;
-        subject_template?: string | null;
-        message_template?: string | null;
-        channels?: string[];
-      }>).map((template) => ({
-        id: template.id,
-        name: template.name,
-        subject: template.subject_template ?? undefined,
-        body: template.message_template ?? undefined,
-        channel: template.channels?.[0],
-      })) as NotificationTemplate[],
-  });
-  const createTemplate = useMutation({
-    mutationFn: async (payload: Record<string, unknown>) => {
-      const response = await fetch("/api/admin/notifications", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!response.ok) throw new Error("Failed to create template");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "notifications"] });
-    },
-  });
+  const templates = useNotificationTemplates({ enabled: canView });
+  const createTemplate = useCreateNotificationTemplate();
+  const updateTemplate = useUpdateNotificationTemplate();
+  const deleteTemplate = useDeleteNotificationTemplate();
   const [open, setOpen] = React.useState(false);
-  const [form, setForm] = React.useState({ name: "", subject: "", body: "", channel: "email" });
+  const [editing, setEditing] = React.useState<NotificationTemplate | null>(null);
+  const [deleteTarget, setDeleteTarget] = React.useState<NotificationTemplate | null>(null);
+  const [form, setForm] = React.useState(emptyTemplateForm);
+
+  const openEditor = (template?: NotificationTemplate) => {
+    if (template) {
+      setEditing(template);
+      setForm({
+        code: template.code,
+        name: template.name,
+        description: template.description ?? "",
+        title: template.title_template ?? template.name,
+        subject: template.subject_template ?? "",
+        body: template.message_template ?? "",
+        channel: template.channels[0] ?? "email",
+        is_active: template.is_active,
+      });
+    } else {
+      setEditing(null);
+      setForm(emptyTemplateForm);
+    }
+    setOpen(true);
+  };
 
   return (
     <div>
@@ -71,7 +68,7 @@ export default function NotificationsPage() {
         title="Notifications"
         description="Manage reusable notification templates and send ad hoc announcements."
         breadcrumbs={[{ label: "System", href: "/system" }, { label: "Notifications" }]}
-        primaryAction={canManage ? { label: "New template", onClick: () => setOpen(true) } : undefined}
+        primaryAction={canManage ? { label: "New template", onClick: () => openEditor() } : undefined}
         secondaryActions={canSend ? [{ label: "Send notification", href: "/system/notifications/send" }] : undefined}
       />
       <div className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-3">
@@ -79,11 +76,25 @@ export default function NotificationsPage() {
         {(templates.data ?? []).map((template) => (
           <Card key={template.id}>
             <CardHeader>
-              <CardTitle>{template.name}</CardTitle>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <CardTitle>{template.name}</CardTitle>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {template.channels.map((channel) => <Badge key={channel} variant="secondary">{channel}</Badge>)}
+                    <Badge variant={template.is_active ? "default" : "outline"}>{template.is_active ? "Active" : "Inactive"}</Badge>
+                  </div>
+                </div>
+                {canManage ? (
+                  <div className="flex gap-2">
+                    <Button type="button" variant="ghost" size="sm" onClick={() => openEditor(template)}>Edit</Button>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setDeleteTarget(template)}>Delete</Button>
+                  </div>
+                ) : null}
+              </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">{template.subject || "No subject"}</p>
-              <p className="line-clamp-4 text-sm">{template.body || "No body provided."}</p>
+              <p className="text-sm text-muted-foreground">{template.subject_template || template.title_template || "No subject"}</p>
+              <p className="line-clamp-4 text-sm">{template.message_template || "No body provided."}</p>
               <Button asChild variant="outline" className="w-full">
                 <Link href="/system/notifications/send">Use template</Link>
               </Button>
@@ -95,28 +106,56 @@ export default function NotificationsPage() {
       <FormDialog
         open={open}
         onOpenChange={setOpen}
-        title="Create template"
+        title={editing ? "Edit template" : "Create template"}
         onSubmit={async () => {
-          const code = form.name
-            .trim()
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "_")
-            .replace(/^_+|_+$/g, "");
-          await createTemplate.mutateAsync({
-            code: code || `template_${Date.now()}`,
-            name: form.name,
-            title_template: form.name,
-            subject_template: form.subject || null,
-            message_template: form.body,
-            channels: [form.channel],
-          });
+          const message = richTextToPlainText(form.body);
+          if (editing) {
+            await updateTemplate.mutateAsync({
+              id: editing.id,
+              data: {
+                name: form.name,
+                description: form.description || null,
+                title_template: form.title || form.name,
+                subject_template: form.subject || null,
+                message_template: message,
+                channels: [form.channel],
+                is_active: form.is_active,
+              },
+            });
+          } else {
+            const code = form.code.trim() || codeFromName(form.name);
+            await createTemplate.mutateAsync({
+              code: code || `template_${Date.now()}`,
+              name: form.name,
+              description: form.description || null,
+              title_template: form.title || form.name,
+              subject_template: form.subject || null,
+              message_template: message,
+              channels: [form.channel],
+              is_active: form.is_active,
+            });
+          }
           setOpen(false);
         }}
-        isSubmitting={createTemplate.isPending}
+        isSubmitting={createTemplate.isPending || updateTemplate.isPending}
       >
+        {!editing ? (
+          <div className="space-y-2">
+            <Label>Code</Label>
+            <Input value={form.code} onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))} placeholder="leave blank to generate from name" />
+          </div>
+        ) : null}
         <div className="space-y-2">
           <Label>Name</Label>
           <Input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} />
+        </div>
+        <div className="space-y-2">
+          <Label>Description</Label>
+          <Input value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} />
+        </div>
+        <div className="space-y-2">
+          <Label>Title</Label>
+          <Input value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} />
         </div>
         <div className="space-y-2">
           <Label>Subject</Label>
@@ -124,9 +163,38 @@ export default function NotificationsPage() {
         </div>
         <div className="space-y-2">
           <Label>Body</Label>
-          <Textarea value={form.body} onChange={(event) => setForm((current) => ({ ...current, body: event.target.value }))} />
+          <RichTextEditor value={form.body} onChange={(body) => setForm((current) => ({ ...current, body }))} toolbar="simple" minHeight="160px" />
         </div>
+        <div className="space-y-2">
+          <Label>Channel</Label>
+          <select
+            className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+            value={form.channel}
+            onChange={(event) => setForm((current) => ({ ...current, channel: event.target.value }))}
+          >
+            <option value="email">Email</option>
+            <option value="in_app">In app</option>
+            <option value="sms">SMS</option>
+            <option value="push">Push</option>
+          </select>
+        </div>
+        <label className="flex items-center gap-3 text-sm">
+          <Checkbox checked={form.is_active} onCheckedChange={(checked) => setForm((current) => ({ ...current, is_active: Boolean(checked) }))} />
+          Active template
+        </label>
       </FormDialog>
+
+      <DeleteConfirmDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(nextOpen) => !nextOpen && setDeleteTarget(null)}
+        itemName={deleteTarget?.name ?? "template"}
+        onConfirm={async () => {
+          if (!deleteTarget) return;
+          await deleteTemplate.mutateAsync(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+        isDeleting={deleteTemplate.isPending}
+      />
     </div>
   );
 }

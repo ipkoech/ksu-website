@@ -3,25 +3,41 @@ import { governanceApi } from "../main";
 import { queryKeys } from "./query-keys";
 import type { Board, StaffAssignment } from "../main/types";
 
-export function useBoards(params?: { board_type?: string; parent_entity_type?: string; parent_entity_id?: string }) {
+export function useBoards(params?: { board_type?: string; parent_entity_type?: string; parent_entity_id?: string; fields?: string; include?: string }) {
   return useQuery({
     queryKey: queryKeys.governance.boards(params),
     queryFn: () => governanceApi.listBoards(params),
   });
 }
 
-export function useBoard(slug: string, options?: { enabled?: boolean }) {
+export function useBoard(id: string, options?: { enabled?: boolean; fields?: string; include?: string }) {
   return useQuery({
-    queryKey: queryKeys.governance.board(slug),
-    queryFn: () => governanceApi.getBoard(slug),
+    queryKey: queryKeys.governance.board(id),
+    queryFn: () => governanceApi.getBoard(id, { fields: options?.fields, include: options?.include }),
+    enabled: options?.enabled !== false && !!id,
+  });
+}
+
+export function useBoardBySlug(slug: string, options?: { enabled?: boolean; fields?: string; include?: string }) {
+  return useQuery({
+    queryKey: queryKeys.governance.board(`slug:${slug}`),
+    queryFn: () => governanceApi.getBoardBySlug(slug, { fields: options?.fields, include: options?.include }),
     enabled: options?.enabled !== false && !!slug,
   });
 }
 
-export function useBoardMembers(slug: string, options?: { enabled?: boolean }) {
+export function useBoardMembers(id: string, options?: { enabled?: boolean; fields?: string; include?: string }) {
   return useQuery({
-    queryKey: queryKeys.governance.boardMembers(slug),
-    queryFn: () => governanceApi.getBoardMembers(slug),
+    queryKey: queryKeys.governance.boardMembers(id),
+    queryFn: () => governanceApi.getBoardMembers(id, { fields: options?.fields, include: options?.include }),
+    enabled: options?.enabled !== false && !!id,
+  });
+}
+
+export function useBoardMembersBySlug(slug: string, options?: { enabled?: boolean; fields?: string; include?: string }) {
+  return useQuery({
+    queryKey: queryKeys.governance.boardMembers(`slug:${slug}`),
+    queryFn: () => governanceApi.getBoardMembersBySlug(slug, { fields: options?.fields, include: options?.include }),
     enabled: options?.enabled !== false && !!slug,
   });
 }
@@ -78,10 +94,10 @@ export function useAddBoardMember() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ slug, personId, role, data }: { slug: string; personId: string; role: string; data?: Partial<StaffAssignment> }) =>
-      governanceApi.addMember(slug, personId, role, data),
-    onSuccess: (_, { slug }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.governance.boardMembers(slug) });
+    mutationFn: ({ id, personId, role, data }: { id: string; personId: string; role: string; data?: Partial<StaffAssignment> }) =>
+      governanceApi.addMember(id, personId, role, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.governance.boardMembers(id) });
     },
   });
 }
@@ -90,10 +106,10 @@ export function useRemoveBoardMember() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ slug, personId }: { slug: string; personId: string }) =>
-      governanceApi.removeMember(slug, personId),
-    onSuccess: (_, { slug }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.governance.boardMembers(slug) });
+    mutationFn: ({ id, personId }: { id: string; personId: string }) =>
+      governanceApi.removeMember(id, personId),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.governance.boardMembers(id) });
     },
   });
 }

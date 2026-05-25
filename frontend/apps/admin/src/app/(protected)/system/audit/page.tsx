@@ -13,14 +13,6 @@ const SERVICE_OPTIONS = [
   { value: "research", label: "Research Service" },
 ];
 
-const ACTION_OPTIONS = [
-  { value: "create", label: "Create" },
-  { value: "update", label: "Update" },
-  { value: "delete", label: "Delete" },
-  { value: "login", label: "Login" },
-  { value: "logout", label: "Logout" },
-];
-
 const RESOURCE_OPTIONS = [
   { value: "users", label: "Users" },
   { value: "roles", label: "Roles" },
@@ -34,7 +26,6 @@ export default function AuditPage() {
   const [limit, setLimit] = React.useState(20);
   const [filtersOpen, setFiltersOpen] = React.useState(false);
   const [resourceType, setResourceType] = React.useState<string | null>(null);
-  const [action, setAction] = React.useState<string | null>(null);
   const [serviceName, setServiceName] = React.useState<string | null>(null);
   const [status, setStatus] = React.useState<string | null>(null);
   const [selectedLog, setSelectedLog] = React.useState<AuditLog | null>(null);
@@ -43,16 +34,14 @@ export default function AuditPage() {
     page,
     limit,
     resource_type: resourceType ?? undefined,
-    action: action ?? undefined,
     service_name: serviceName ?? undefined,
     status: status ?? undefined,
   });
 
-  const activeFiltersCount = [resourceType, action, serviceName, status].filter(Boolean).length;
+  const activeFiltersCount = [resourceType, serviceName, status].filter(Boolean).length;
 
   const clearFilters = () => {
     setResourceType(null);
-    setAction(null);
     setServiceName(null);
     setStatus(null);
   };
@@ -103,14 +92,6 @@ export default function AuditPage() {
                 <Badge variant="outline" className="gap-1">
                   Resource: {resourceType}
                   <button onClick={() => setResourceType(null)} className="hover:text-destructive">
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              )}
-              {action && (
-                <Badge variant="outline" className="gap-1">
-                  Action: {action}
-                  <button onClick={() => setAction(null)} className="hover:text-destructive">
                     <X className="h-3 w-3" />
                   </button>
                 </Badge>
@@ -210,15 +191,9 @@ export default function AuditPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="text-xs text-muted-foreground">Status</div>
-                  <div>{selectedLog && getStatusBadge(selectedLog.status_code)}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground">Resource ID</div>
-                  <div className="font-mono text-xs">{selectedLog?.resource_id ?? "-"}</div>
-                </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Status</div>
+                <div>{selectedLog && getStatusBadge(selectedLog.status_code)}</div>
               </div>
 
               <div className="flex items-center gap-2">
@@ -277,19 +252,6 @@ export default function AuditPage() {
                 >
                   <option value="">All services</option>
                   {SERVICE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Action</label>
-                <select
-                  className="w-full rounded-md border p-2"
-                  value={action ?? ""}
-                  onChange={(e) => setAction(e.target.value || null)}
-                >
-                  <option value="">All actions</option>
-                  {ACTION_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>

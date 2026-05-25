@@ -1,88 +1,76 @@
 "use client";
 
-import { motion } from "framer-motion";
+import Link from "next/link";
+import { Settings } from "lucide-react";
+import { useSettings } from "@ksu/api-client/hooks/admin";
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ksu/ui/components";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTransition } from "@/lib/animations";
-import { Button } from "@ksu/ui/button";
-import { Input } from "@ksu/ui/input";
 
 export default function GeneralSettingsPage() {
+    const settings = useSettings();
+    const visibleSettings = settings.data?.slice(0, 6) ?? [];
+
     return (
         <PageTransition>
             <PageHeader
                 title="General Settings"
-                description="Configure general application settings"
+                description="Review persisted system settings. Editing is handled in the system settings workspace."
             />
 
-            <div className="grid gap-6 max-w-2xl">
-                {/* Site Settings */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="rounded-lg border border-border bg-card p-6"
-                >
-                    <h2 className="mb-4 text-lg font-semibold">Site Information</h2>
-                    <form className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Site Name</label>
-                            <Input type="text" placeholder="Kisii University" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Site URL</label>
-                            <Input type="url" placeholder="https://kisiiuniversity.ac.ke" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Support Email</label>
-                            <Input type="email" placeholder="support@kisiiuniversity.ac.ke" />
-                        </div>
-                        <Button className="mt-2">Save Changes</Button>
-                    </form>
-                </motion.div>
-
-                {/* Maintenance Mode */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="rounded-lg border border-border bg-card p-6"
-                >
-                    <h2 className="mb-4 text-lg font-semibold">Maintenance Mode</h2>
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="font-medium">Enable Maintenance Mode</p>
-                                <p className="text-sm text-muted-foreground">
-                                    Temporarily disable access to the portal
-                                </p>
+            <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Current settings</CardTitle>
+                        <CardDescription>Values come from the admin system settings endpoint.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {settings.isLoading ? (
+                            <div className="space-y-3">
+                                {[1, 2, 3].map((item) => (
+                                    <div key={item} className="h-14 animate-pulse rounded-lg bg-muted" />
+                                ))}
                             </div>
-                            <input type="checkbox" className="w-4 h-4" />
-                        </div>
-                    </div>
-                </motion.div>
+                        ) : settings.isError ? (
+                            <p className="rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm text-muted-foreground">
+                                Settings are unavailable for this session.
+                            </p>
+                        ) : visibleSettings.length === 0 ? (
+                            <p className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">
+                                No settings were returned by the backend.
+                            </p>
+                        ) : (
+                            <div className="divide-y rounded-lg border">
+                                {visibleSettings.map((setting) => (
+                                    <div key={setting.id ?? setting.key} className="grid gap-1 p-4 md:grid-cols-[0.6fr_1fr]">
+                                        <p className="font-medium">{setting.description || setting.key}</p>
+                                        <p className="break-words text-sm text-muted-foreground">{String(setting.value ?? "--")}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
 
-                {/* System Information */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="rounded-lg border border-border bg-card p-6"
-                >
-                    <h2 className="mb-4 text-lg font-semibold">System Information</h2>
-                    <div className="space-y-3 text-sm">
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Application Version</span>
-                            <span className="font-medium">0.1.0</span>
+                <Card>
+                    <CardHeader>
+                        <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                            <Settings className="h-5 w-5" />
                         </div>
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Environment</span>
-                            <span className="font-medium">Development</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Database Status</span>
-                            <span className="font-medium text-green-600">Connected</span>
-                        </div>
-                    </div>
-                </motion.div>
+                        <CardTitle>Editing workflow</CardTitle>
+                        <CardDescription>
+                            The system settings page owns validation, save behavior, and audit logging.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <p className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">
+                            This main-service route stays read-only to avoid presenting unsupported save states.
+                        </p>
+                        <Button asChild>
+                            <Link href="/system/settings">Open system settings</Link>
+                        </Button>
+                    </CardContent>
+                </Card>
             </div>
         </PageTransition>
     );

@@ -57,3 +57,11 @@ async def update_faq(faq_id: uuid.UUID, data: FAQUpdate, db: DbSession, _: Curre
         raise HTTPException(status_code=404, detail="FAQ not found")
     item = await FAQService.update(db, item, **data.model_dump(exclude_unset=True))
     return success(data=item, message="FAQ updated")
+
+
+@router.delete("/{faq_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+async def delete_faq(faq_id: uuid.UUID, db: DbSession, _: CurrentUser):
+    item = await FAQService.get_by_id(db, faq_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="FAQ not found")
+    await FAQService.delete(db, item)

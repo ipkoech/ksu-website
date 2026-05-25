@@ -64,7 +64,7 @@ interface NavItem {
 }
 
 const mainNavigation: NavItem[] = [
-  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { title: "Dashboard", href: "/main", icon: LayoutDashboard },
   {
     title: "Content",
     href: "/content",
@@ -72,6 +72,7 @@ const mainNavigation: NavItem[] = [
     scope: "content.view",
     children: [
       { title: "News", href: "/content/news", icon: Newspaper, scope: "content.manage_news" },
+      { title: "Blogs", href: "/content/blogs", icon: FileText, scope: "content.manage_blogs" },
       { title: "Events", href: "/content/events", icon: Calendar, scope: "content.manage_events" },
       { title: "Announcements", href: "/content/announcements", icon: Megaphone, scope: "content.manage_announcements" },
       { title: "Sliders", href: "/content/sliders", icon: Image, scope: "marketing.manage_sliders" },
@@ -92,7 +93,11 @@ const mainNavigation: NavItem[] = [
     title: "Admissions",
     href: "/admissions",
     icon: UserCheck,
-    scope: "admissions.view",
+    scope: ["admin:*", "admissions.view", "admissions.manage_intakes", "admissions.manage_info", "academic.view", "academic.write", "academic:write", "academic.manage"],
+    children: [
+      { title: "Information", href: "/admissions/info", icon: FileText, scope: ["admin:*", "admissions.view", "admissions.manage_info", "academic.view", "academic.write", "academic:write", "academic.manage"] },
+      { title: "Intakes", href: "/admissions/intakes", icon: Calendar, scope: ["admin:*", "admissions.view", "admissions.manage_intakes", "academic.write", "academic:write", "academic.manage"] },
+    ],
   },
   {
     title: "People",
@@ -100,7 +105,18 @@ const mainNavigation: NavItem[] = [
     icon: Users,
     scope: "persons.view",
     children: [
-      { title: "Persons", href: "/people/persons", icon: Users, scope: "staff.manage_persons" },
+      { title: "Persons", href: "/people/persons", icon: Users, scope: ["persons.view", "persons.manage"] },
+      { title: "Staff", href: "/people/staff", icon: UserCheck, scope: ["staff.view_assignments", "staff.manage_assignments"] },
+    ],
+  },
+  {
+    title: "Organization",
+    href: "/organization",
+    icon: Building2,
+    scope: ["governance.view", "organization.manage_divisions", "governance.manage_boards"],
+    children: [
+      { title: "Divisions", href: "/organization/divisions", icon: Building, scope: ["organization.manage_divisions", "governance.manage"] },
+      { title: "Governance", href: "/organization/governance", icon: Shield, scope: ["governance.view", "governance.manage_boards"] },
     ],
   },
   {
@@ -113,14 +129,17 @@ const mainNavigation: NavItem[] = [
     ],
   },
   { title: "Media", href: "/media", icon: Image, scope: "media.view" },
+  { title: "Reports", href: "/reports", icon: FileText, scope: ["analytics.view", "analytics.manage"] },
   { title: "Settings", href: "/settings", icon: Settings, scope: "settings.manage" },
 ];
 
 const researchNavigation: NavItem[] = [
   { title: "Dashboard", href: "/research", icon: LayoutDashboard },
-  { title: "Projects", href: "/research/projects", icon: FlaskConical, scope: "research.view_projects" },
-  { title: "Publications", href: "/research/publications", icon: BookOpen, scope: "publications.view" },
-  { title: "Grants", href: "/research/grants", icon: FileText, scope: "research.manage_grants" },
+  { title: "Projects", href: "/research/projects", icon: FlaskConical, scope: ["research.view_projects", "research.manage_projects"] },
+  { title: "Publications", href: "/research/publications", icon: BookOpen, scope: ["research.view", "research.manage_publications", "publications.manage"] },
+  { title: "Grants", href: "/research/grants", icon: FileText, scope: ["research.view", "research.manage_projects", "funding.manage"] },
+  { title: "Inquiries", href: "/research/inquiries", icon: MessageSquare, scope: ["research.view", "research.manage_inquiries"] },
+  { title: "Reports", href: "/research/reports", icon: FileText, scope: ["research.view", "research.manage_reports", "research.submit_reports"] },
 ];
 
 const libraryNavigation: NavItem[] = [
@@ -128,18 +147,22 @@ const libraryNavigation: NavItem[] = [
   { title: "Catalog", href: "/library/catalog", icon: Library, scope: "library.manage_resources" },
   { title: "Circulation", href: "/library/circulation", icon: BookOpen, scope: "library.manage_loans" },
   { title: "Patrons", href: "/library/patrons", icon: Users, scope: "library.view" },
+  { title: "Branches", href: "/library/branches", icon: Building, scope: ["library.view", "library.manage_services"] },
+  { title: "Electronic", href: "/library/electronic", icon: KeyRound, scope: ["library.view", "library.manage_resources"] },
+  { title: "Engagement", href: "/library/engagement", icon: MessageSquare, scope: ["library.view", "library.manage_services"] },
+  { title: "Staff", href: "/library/staff", icon: UserCheck, scope: ["library.manage_staff", "library.view"] },
 ];
 
 const systemNavigation: NavItem[] = [
   { title: "Dashboard", href: "/system", icon: LayoutDashboard },
-  { title: "Users", href: "/system/users", icon: Users, scope: "users.view" },
-  { title: "Roles", href: "/system/roles", icon: Settings, scope: "roles.view" },
-  { title: "Permissions", href: "/system/permissions", icon: Shield, scope: "permissions.view" },
-  { title: "Audit Logs", href: "/system/audit", icon: FileText, scope: "audit.view" },
-  { title: "Settings", href: "/system/settings", icon: Settings, scope: ["settings.view", "settings.manage"] },
-  { title: "API Keys", href: "/system/settings/api-keys", icon: KeyRound, scope: ["api_keys.view", "api_keys.manage"] },
-  { title: "Webhooks", href: "/system/settings/webhooks", icon: Webhook, scope: ["webhooks.view", "webhooks.manage"] },
-  { title: "Notifications", href: "/system/notifications", icon: BellRing, scope: ["notifications.view", "notifications.send"] },
+  { title: "Users", href: "/system/users", icon: Users, scope: ["users.view", "users:read"] },
+  { title: "Roles", href: "/system/roles", icon: Settings, scope: ["roles.view", "roles:read"] },
+  { title: "Permissions", href: "/system/permissions", icon: Shield, scope: ["permissions.view", "permissions:read"] },
+  { title: "Audit Logs", href: "/system/audit", icon: FileText, scope: ["audit.view", "audit:read"] },
+  { title: "Settings", href: "/system/settings", icon: Settings, scope: ["settings.view", "settings.manage", "settings:read", "settings:write"] },
+  { title: "API Keys", href: "/system/settings/api-keys", icon: KeyRound, scope: ["api_keys.view", "api_keys.manage", "api_keys:read", "api_keys:write"] },
+  { title: "Webhooks", href: "/system/settings/webhooks", icon: Webhook, scope: ["webhooks.view", "webhooks.manage", "webhooks:read", "webhooks:write"] },
+  { title: "Notifications", href: "/system/notifications", icon: BellRing, scope: ["notifications.view", "notifications.send", "notifications:read", "notifications:send"] },
 ];
 
 const navigationMap: Record<string, NavItem[]> = {
@@ -165,10 +188,20 @@ export function Sidebar({ service, collapsed = false, onToggle, isMobileOpen = f
 
   const navigation = navigationMap[service] || [];
 
-  const filteredNav = navigation.filter((item) => {
+  const hasItemScope = (item: NavItem) => {
     if (!item.scope) return true;
     return Array.isArray(item.scope) ? item.scope.some((scope) => hasScope(scope)) : hasScope(item.scope);
-  });
+  };
+
+  const filterNavItem = (item: NavItem): NavItem | null => {
+    const children = item.children?.map(filterNavItem).filter((child): child is NavItem => child !== null);
+    if (!hasItemScope(item) && (!children || children.length === 0)) {
+      return null;
+    }
+    return children && children.length > 0 ? { ...item, children } : { ...item, children: undefined };
+  };
+
+  const filteredNav = navigation.map(filterNavItem).filter((item): item is NavItem => item !== null);
 
   const getInitials = (name: string) => {
     return name
@@ -230,7 +263,10 @@ export function Sidebar({ service, collapsed = false, onToggle, isMobileOpen = f
           <nav className="flex flex-col gap-1">
             {filteredNav.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+              const isActive =
+                pathname === item.href ||
+                pathname.startsWith(item.href + "/") ||
+                Boolean(item.children?.some((child) => pathname === child.href || pathname.startsWith(child.href + "/")));
 
               if (collapsed) {
                 return (
@@ -238,6 +274,7 @@ export function Sidebar({ service, collapsed = false, onToggle, isMobileOpen = f
                     <TooltipTrigger asChild>
                       <Link
                         href={item.href}
+                        onClick={onMobileClose}
                         className={cn(
                           "flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
                           isActive
@@ -254,19 +291,45 @@ export function Sidebar({ service, collapsed = false, onToggle, isMobileOpen = f
               }
 
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent"
+                <div key={item.href}>
+                  <Link
+                    href={item.href}
+                    onClick={onMobileClose}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent"
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.title}
+                  </Link>
+                  {item.children && item.children.length > 0 && (
+                    <div className="ml-5 mt-1 flex flex-col gap-1 border-l border-sidebar-border pl-2">
+                      {item.children.map((child) => {
+                        const ChildIcon = child.icon;
+                        const childIsActive = pathname === child.href || pathname.startsWith(child.href + "/");
+                        return (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            onClick={onMobileClose}
+                            className={cn(
+                              "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
+                              childIsActive
+                                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                                : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            )}
+                          >
+                            <ChildIcon className="h-3.5 w-3.5" />
+                            {child.title}
+                          </Link>
+                        );
+                      })}
+                    </div>
                   )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.title}
-                </Link>
+                </div>
               );
             })}
           </nav>

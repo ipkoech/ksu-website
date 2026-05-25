@@ -1,140 +1,225 @@
 "use client";
 
-import { usePermissions } from "@/hooks/use-permissions";
+import * as React from "react";
+import Link from "next/link";
+import { ColumnDef } from "@tanstack/react-table";
+import { Building2, MoreHorizontal, Upload } from "lucide-react";
+import { toast } from "@ksu/ui";
+import {
+  Badge,
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@ksu/ui/components";
+import { useDeleteDivision, useDivisions, type Division } from "@ksu/api-client";
 import { DataTable } from "@/components/data-table/data-table";
 import { PageHeader } from "@/components/shared/page-header";
+import { TableSearch } from "@/components/shared/table-search";
 import { PageTransition } from "@/lib/animations";
-import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Building2 } from "lucide-react";
-import { Button, Badge } from "@ksu/ui/components";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@ksu/ui/components";
-import { divisionsApi, queryKeys } from "@ksu/api-client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "@ksu/ui";
+import { useDeleteConfirm } from "@/hooks/use-delete-confirm";
+import { usePermissions } from "@/hooks/use-permissions";
 
-const getDivisionColumns = ({
-    onDelete,
+const listFields = [
+  "id",
+  "name",
+  "code",
+  "slug",
+  "division_type",
+  "description",
+  "head_id",
+  "head_name",
+  "is_public",
+  "is_active",
+  "display_order",
+].join(",");
+
+const divisionTypeLabels: Record<string, string> = {
+  division: "Division",
+  directorate: "Directorate",
+  office: "Office",
+  unit: "Unit",
+};
+
+function editHref(id: string) {
+  return `/organization/divisions/_static?id=${encodeURIComponent(id)}`;
+}
+
+function getDivisionColumns({
+  canDelete,
+  onDelete,
 }: {
-    onDelete: (id: string) => void;
-}): ColumnDef<any>[] => [
+  canDelete: boolean;
+  onDelete: (division: Division) => void;
+}): ColumnDef<Division>[] {
+  return [
     {
-        accessorKey: "name",
-        header: "Division Name",
-        cell: ({ row }) => (
-            <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                    <Building2 className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex flex-col">
-                    <span className="font-medium">{row.original.name}</span>
-                    <span className="text-xs text-muted-foreground">{row.original.code}</span>
-                </div>
-            </div>
-        ),
+      accessorKey: "name",
+      header: "Division",
+      cell: ({ row }) => (
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+            <Building2 className="h-5 w-5 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <p className="truncate font-medium">{row.original.name}</p>
+            <p className="text-xs text-muted-foreground">{row.original.code}</p>
+          </div>
+        </div>
+      ),
     },
     {
-        accessorKey: "description",
-        header: "Description",
-        cell: ({ row }) => (
-            <span className="line-clamp-1 max-w-[300px]">
-                {row.original.description || "-"}
-            </span>
-        ),
+      accessorKey: "division_type",
+      header: "Type",
+      cell: ({ row }) => {
+        const type = row.original.division_type || "division";
+        return <Badge variant="outline">{divisionTypeLabels[type] ?? type.replace(/_/g, " ")}</Badge>;
+      },
     },
     {
-        accessorKey: "head_name",
-        header: "Division Head",
-        cell: ({ row }) => row.original.head_name || "-",
+      accessorKey: "description",
+      header: "Description",
+      cell: ({ row }) => (
+        <span className="line-clamp-1 max-w-[340px] text-sm text-muted-foreground">
+          {row.original.description || "-"}
+        </span>
+      ),
     },
     {
-        accessorKey: "is_active",
-        header: "Status",
-        cell: ({ row }) => (
-            <Badge variant={row.original.is_active ? "default" : "secondary"}>
-                {row.original.is_active ? "Active" : "Inactive"}
-            </Badge>
-        ),
+      accessorKey: "head_id",
+      header: "Head",
+      cell: ({ row }) => row.original.head_name || (row.original.head_id ? "Assigned" : "Not assigned"),
     },
     {
-        id: "actions",
-        cell: ({ row }) => {
-            const division = row.original;
-            return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => window.location.href = `/organization/divisions/${division.id}`}>
-                            Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                            className="text-destructive" 
-                            onClick={() => onDelete(division.id)}
-                        >
-                            Delete
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            );
-        },
+      accessorKey: "is_active",
+      header: "Status",
+      cell: ({ row }) => (
+        <div className="flex flex-wrap gap-2">
+          <Badge variant={row.original.is_active ? "default" : "secondary"}>
+            {row.original.is_active ? "Active" : "Inactive"}
+          </Badge>
+          {row.original.is_public ? <Badge variant="outline">Public</Badge> : null}
+        </div>
+      ),
     },
-];
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const division = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => { window.location.href = editHref(division.id); }}>
+                Edit
+              </DropdownMenuItem>
+              {canDelete ? (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-destructive" onClick={() => onDelete(division)}>
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+}
 
 export default function DivisionsPage() {
-    const { canCreate, canDelete } = usePermissions();
-    const queryClient = useQueryClient();
+  const { canCreate, canDelete } = usePermissions();
+  const { confirmDelete, dialog } = useDeleteConfirm();
+  const [status, setStatus] = React.useState<"active" | "inactive" | "all">("active");
+  const [search, setSearch] = React.useState("");
+  const params = React.useMemo(
+    () => ({
+      is_active: status === "all" ? undefined : status === "active",
+      per_page: 100,
+      fields: listFields,
+    }),
+    [status],
+  );
 
-    const { data: divisionsResponse, isLoading } = useQuery({
-        queryKey: queryKeys.divisions.list(),
-        queryFn: () => divisionsApi.list(),
-    });
+  const divisionsQuery = useDivisions(params);
+  const deleteDivision = useDeleteDivision();
+  const normalizedSearch = search.trim().toLowerCase();
+  const rows = (divisionsQuery.data?.data ?? []).filter((division) => {
+    if (!normalizedSearch) return true;
+    return [division.name, division.code, division.slug, division.division_type, division.description, division.head_name]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(normalizedSearch));
+  });
 
-    const deleteMutation = useMutation({
-        mutationFn: (id: string) => divisionsApi.delete(id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.divisions.all });
-            toast.success("Division deleted successfully");
-        },
-        onError: () => {
-            toast.error("Failed to delete division");
-        },
-    });
+  const handleDelete = React.useCallback(
+    (division: Division) => {
+      confirmDelete(division.name, async () => {
+        await deleteDivision.mutateAsync(division.id);
+        toast.success("Division deleted");
+      });
+    },
+    [confirmDelete, deleteDivision],
+  );
 
-    const handleDelete = (id: string) => {
-        if (confirm("Are you sure you want to delete this division?")) {
-            deleteMutation.mutate(id);
+  const columns = React.useMemo(
+    () => getDivisionColumns({ canDelete: canDelete("organization"), onDelete: handleDelete }),
+    [canDelete, handleDelete],
+  );
+
+  return (
+    <PageTransition>
+      <PageHeader
+        title="Divisions"
+        description="Manage university organizational divisions, heads, public content, and visibility."
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <Select value={status} onValueChange={(value) => setStatus(value as typeof status)}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="all">All</SelectItem>
+              </SelectContent>
+            </Select>
+            {canCreate("organization") || canCreate("governance") ? (
+              <Button variant="outline" asChild>
+                <Link href="/imports/divisions">
+                  <Upload className="h-4 w-4" />
+                  Import
+                </Link>
+              </Button>
+            ) : null}
+          </div>
         }
-    };
-
-    const columns = getDivisionColumns({ onDelete: handleDelete });
-
-    return (
-        <PageTransition>
-            <PageHeader
-                title="Divisions"
-                description="Manage university organizational divisions"
-                createHref={canCreate("organization") ? "/organization/divisions/new" : undefined}
-                createLabel="Add Division"
-            />
-            <DataTable
-                data={divisionsResponse?.data || []}
-                columns={columns}
-                isLoading={isLoading}
-                emptyMessage="No divisions found. Create your first division."
-            />
-        </PageTransition>
-    );
+        createHref={canCreate("organization") ? "/organization/divisions/new" : undefined}
+        createLabel="Add Division"
+      />
+      <DataTable
+        data={rows}
+        columns={columns}
+        isLoading={divisionsQuery.isLoading}
+        toolbar={<TableSearch value={search} onChange={setSearch} placeholder="Search divisions" />}
+        emptyMessage={search ? "No divisions match this search." : "No divisions found."}
+      />
+      {dialog}
+    </PageTransition>
+  );
 }

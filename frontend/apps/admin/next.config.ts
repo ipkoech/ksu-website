@@ -1,8 +1,11 @@
 import type { NextConfig } from "next";
+import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 
-const nextConfig: NextConfig = {
+const baseConfig: NextConfig = {
+  trailingSlash: true,
   transpilePackages: ["@ksu/ui", "@ksu/auth", "@ksu/api-client"],
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
@@ -16,4 +19,9 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default function nextConfig(phase: string): NextConfig {
+  return {
+    ...baseConfig,
+    ...(phase === PHASE_DEVELOPMENT_SERVER ? {} : { output: "export" }),
+  };
+}

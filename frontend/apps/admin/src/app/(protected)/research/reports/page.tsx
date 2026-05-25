@@ -1,0 +1,53 @@
+"use client";
+
+import { EditableServiceResourcePage } from "@/components/dashboard/editable-service-resource-page";
+import { researchServiceApi, type ResearchGenericPayload, type ResearchGenericRecord } from "@ksu/api-client";
+import { usePermissions } from "@ksu/auth";
+
+export default function ResearchReportsPage() {
+  const { hasScope } = usePermissions();
+  const canManage = hasScope("research.manage_reports") || hasScope("research.submit_reports") || hasScope("research:write");
+
+  return (
+    <EditableServiceResourcePage<ResearchGenericRecord, ResearchGenericPayload>
+      title="Research Outputs"
+      description="Publish datasets, tools, reports, briefs, and other research outputs."
+      backHref="/research"
+      queryKey={["research", "outputs"]}
+      fields={[
+        { name: "title", label: "Title", required: true },
+        { name: "slug", label: "Slug" },
+        { name: "output_type", label: "Output Type", placeholder: "dataset" },
+        { name: "summary", label: "Summary", type: "textarea" },
+        { name: "access_type", label: "Access Type", placeholder: "open" },
+        { name: "access_url", label: "Access URL" },
+        { name: "release_date", label: "Release Date", type: "date" },
+        { name: "status", label: "Status", placeholder: "published" },
+        { name: "is_active", label: "Active", type: "boolean" },
+        { name: "is_featured", label: "Featured", type: "boolean" },
+      ]}
+      list={() => researchServiceApi.outputs.list({ page: 1, per_page: 50 })}
+      create={(payload) => researchServiceApi.outputs.create(payload)}
+      update={(id, payload) => researchServiceApi.outputs.update(id, payload)}
+      delete={(id) => researchServiceApi.outputs.delete(id)}
+      canCreate={canManage}
+      canEdit={canManage}
+      canDelete={canManage}
+      getRecordTitle={(record) => record.title ?? "Untitled output"}
+      getRecordMeta={(record) => [record.output_type, record.access_type, record.status].filter(Boolean).join(" · ")}
+      emptyMessage="No research outputs were returned by the research service."
+      buildPayload={(values) => ({
+        title: values.title,
+        slug: values.slug,
+        output_type: values.output_type || "dataset",
+        summary: values.summary,
+        access_type: values.access_type || "open",
+        access_url: values.access_url,
+        release_date: values.release_date,
+        status: values.status || "published",
+        is_active: values.is_active,
+        is_featured: values.is_featured,
+      })}
+    />
+  );
+}

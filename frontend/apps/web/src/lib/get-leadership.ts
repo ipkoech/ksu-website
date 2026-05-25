@@ -1,31 +1,61 @@
 import { leadershipApi } from "@ksu/api-client";
+import type { Person, StaffAssignment } from "@ksu/api-client";
 import type { Leader } from "@ksu/ui/components";
+import { publicFileUrl, resolvePublicMediaUrl } from "@/lib/public-media";
+
+const leaderInclude =
+  "person:id,slug,title,first_name,middle_name,last_name,full_name,bio,leadership_message,photo_id";
+
+function personName(person: Person, fallback: string) {
+  const fullName = person.full_name?.trim();
+  if (fullName) return fullName;
+
+  const name = [
+    person.title,
+    person.first_name,
+    person.middle_name,
+    person.last_name,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  return name || fallback;
+}
+
+function personImage(person: Person) {
+  return publicFileUrl(person.photo_id) ?? resolvePublicMediaUrl(person.photo_url);
+}
+
+function toLeader(
+  assignment: StaffAssignment | null | undefined,
+  fallbackName: string,
+  fallbackTitle: string,
+) {
+  if (!assignment?.person) {
+    return null;
+  }
+
+  const person = assignment.person;
+
+  return {
+    id: person.id,
+    name: personName(person, fallbackName),
+    title: assignment.title || (assignment.is_acting ? `Acting ${fallbackTitle}` : fallbackTitle),
+    image: personImage(person),
+    message: person.leadership_message || person.bio || null,
+    slug: person.slug,
+  } satisfies Leader;
+}
 
 export async function getViceChancellor(): Promise<Leader | null> {
   try {
     const response = await leadershipApi.getViceChancellor({
       fields: "id,person_id,role,title,is_acting",
-      include: "person:id,slug,first_name,last_name,title,salutation,bio,photo_url",
+      include: leaderInclude,
     });
 
-    const assignment = response.data;
-    if (!assignment?.person) {
-      return null;
-    }
-
-    const person = assignment.person;
-    const fullName = [person.salutation, person.first_name, person.last_name]
-      .filter(Boolean)
-      .join(" ");
-
-    return {
-      id: person.id,
-      name: fullName || "Vice Chancellor",
-      title: assignment.is_acting ? "Acting Vice Chancellor" : "Vice Chancellor",
-      image: person.photo_url || null,
-      message: person.bio || null,
-      slug: person.slug,
-    };
+    return toLeader(response.data, "Vice Chancellor", "Vice Chancellor");
   } catch (error) {
     console.error("Failed to fetch Vice Chancellor:", error);
     return null;
@@ -36,27 +66,10 @@ export async function getDean(schoolId: string): Promise<Leader | null> {
   try {
     const response = await leadershipApi.getDean(schoolId, {
       fields: "id,person_id,role,title,is_acting",
-      include: "person:id,slug,first_name,last_name,title,salutation,bio,photo_url",
+      include: leaderInclude,
     });
 
-    const assignment = response.data;
-    if (!assignment?.person) {
-      return null;
-    }
-
-    const person = assignment.person;
-    const fullName = [person.salutation, person.first_name, person.last_name]
-      .filter(Boolean)
-      .join(" ");
-
-    return {
-      id: person.id,
-      name: fullName,
-      title: assignment.is_acting ? "Acting Dean" : "Dean",
-      image: person.photo_url || null,
-      message: person.bio || null,
-      slug: person.slug,
-    };
+    return toLeader(response.data, "Dean", "Dean");
   } catch (error) {
     console.error(`Failed to fetch Dean for school ${schoolId}:`, error);
     return null;
@@ -67,27 +80,10 @@ export async function getHOD(departmentId: string): Promise<Leader | null> {
   try {
     const response = await leadershipApi.getHOD(departmentId, {
       fields: "id,person_id,role,title,is_acting",
-      include: "person:id,slug,first_name,last_name,title,salutation,bio,photo_url",
+      include: leaderInclude,
     });
 
-    const assignment = response.data;
-    if (!assignment?.person) {
-      return null;
-    }
-
-    const person = assignment.person;
-    const fullName = [person.salutation, person.first_name, person.last_name]
-      .filter(Boolean)
-      .join(" ");
-
-    return {
-      id: person.id,
-      name: fullName,
-      title: assignment.is_acting ? "Acting HOD" : "Head of Department",
-      image: person.photo_url || null,
-      message: person.bio || null,
-      slug: person.slug,
-    };
+    return toLeader(response.data, "Head of Department", "Head of Department");
   } catch (error) {
     console.error(`Failed to fetch HOD for department ${departmentId}:`, error);
     return null;
@@ -98,27 +94,10 @@ export async function getDirector(divisionId: string): Promise<Leader | null> {
   try {
     const response = await leadershipApi.getDirector(divisionId, {
       fields: "id,person_id,role,title,is_acting",
-      include: "person:id,slug,first_name,last_name,title,salutation,bio,photo_url",
+      include: leaderInclude,
     });
 
-    const assignment = response.data;
-    if (!assignment?.person) {
-      return null;
-    }
-
-    const person = assignment.person;
-    const fullName = [person.salutation, person.first_name, person.last_name]
-      .filter(Boolean)
-      .join(" ");
-
-    return {
-      id: person.id,
-      name: fullName,
-      title: assignment.is_acting ? "Acting Director" : "Director",
-      image: person.photo_url || null,
-      message: person.bio || null,
-      slug: person.slug,
-    };
+    return toLeader(response.data, "Director", "Director");
   } catch (error) {
     console.error(`Failed to fetch Director for division ${divisionId}:`, error);
     return null;
@@ -136,27 +115,10 @@ export async function getLeaderByRole(
       entity_type: entityType,
       entity_id: entityId,
       fields: "id,person_id,role,title,is_acting",
-      include: "person:id,slug,first_name,last_name,title,salutation,bio,photo_url",
+      include: leaderInclude,
     });
 
-    const assignment = response.data;
-    if (!assignment?.person) {
-      return null;
-    }
-
-    const person = assignment.person;
-    const fullName = [person.salutation, person.first_name, person.last_name]
-      .filter(Boolean)
-      .join(" ");
-
-    return {
-      id: person.id,
-      name: fullName,
-      title: assignment.title || assignment.role || "",
-      image: person.photo_url || null,
-      message: person.bio || null,
-      slug: person.slug,
-    };
+    return toLeader(response.data, role, response.data?.title || response.data?.role || "");
   } catch (error) {
     console.error(`Failed to fetch leader (${role}):`, error);
     return null;

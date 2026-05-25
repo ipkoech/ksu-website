@@ -55,12 +55,15 @@ ROLE_HIERARCHY = {
     # Level 1 - Council
     "chairperson": HierarchyLevel.COUNCIL_CHAIR,
     "council_chair": HierarchyLevel.COUNCIL_CHAIR,
+    "chancellor": HierarchyLevel.COUNCIL_CHAIR,
 
     # Level 2 - VC & Council
     "vc": HierarchyLevel.VICE_CHANCELLOR,
     "vice_chancellor": HierarchyLevel.VICE_CHANCELLOR,
     "council_member": HierarchyLevel.VICE_CHANCELLOR,
     "member": HierarchyLevel.VICE_CHANCELLOR,
+    "vice_chairperson": HierarchyLevel.VICE_CHANCELLOR,
+    "ex_officio": HierarchyLevel.VICE_CHANCELLOR,
 
     # Level 3 - DVCs
     "dvc": HierarchyLevel.DEPUTY_VC,
@@ -74,6 +77,7 @@ ROLE_HIERARCHY = {
     "registrar_admin": HierarchyLevel.REGISTRAR,
     "finance_officer": HierarchyLevel.REGISTRAR,
     "board_secretary": HierarchyLevel.REGISTRAR,
+    "secretary": HierarchyLevel.REGISTRAR,
 
     # Level 5 - Deans & Directors
     "dean": HierarchyLevel.DIRECTOR,
@@ -102,6 +106,8 @@ ROLE_HIERARCHY = {
 
     # Level 9 - Senior Staff
     "senior_lecturer": HierarchyLevel.SENIOR_STAFF,
+    "associate_professor": HierarchyLevel.SENIOR_STAFF,
+    "professor": HierarchyLevel.SENIOR_STAFF,
     "senior_officer": HierarchyLevel.SENIOR_STAFF,
     "senior_admin": HierarchyLevel.SENIOR_STAFF,
     "principal_officer": HierarchyLevel.SENIOR_STAFF,
@@ -113,6 +119,10 @@ ROLE_HIERARCHY = {
     "technician": HierarchyLevel.STAFF,
     "staff": HierarchyLevel.STAFF,
     "researcher": HierarchyLevel.STAFF,
+    "senior_researcher": HierarchyLevel.STAFF,
+    "staff_rep": HierarchyLevel.STAFF,
+    "student_rep": HierarchyLevel.STAFF,
+    "convenor": HierarchyLevel.STAFF,
 
     # Level 11 - Assistants
     "assistant_lecturer": HierarchyLevel.ASSISTANT,

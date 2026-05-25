@@ -1,11 +1,12 @@
 "use client";
 
 import { usePermissions } from "@/hooks/use-permissions";
+import { useDeleteConfirm } from "@/hooks/use-delete-confirm";
 import { DataTable } from "@/components/data-table/data-table";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTransition } from "@/lib/animations";
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, GraduationCap, DoorOpen } from "lucide-react";
+import { MoreHorizontal, GraduationCap, DoorOpen, Upload } from "lucide-react";
 import { Button, Badge } from "@ksu/ui/components";
 import {
     DropdownMenu,
@@ -17,6 +18,9 @@ import {
 } from "@ksu/ui/components";
 import { useProgrammes, useDeleteProgramme } from "@ksu/api-client";
 import { toast } from "@ksu/ui";
+import Link from "next/link";
+import { useState } from "react";
+import { TableSearch } from "@/components/shared/table-search";
 
 const getProgrammeColumns = ({
     canDelete,
@@ -88,11 +92,8 @@ const getProgrammeColumns = ({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => window.location.href = `/academic/programmes/${prog.id}`}>
+                        <DropdownMenuItem onClick={() => window.location.href = `/academic/programmes/_static?id=${encodeURIComponent(prog.id)}`}>
                             Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigator.clipboard.writeText(prog.id)}>
-                            Copy ID
                         </DropdownMenuItem>
                         {canDelete && (
                             <>
@@ -114,21 +115,17 @@ const getProgrammeColumns = ({
 
 export default function ProgrammesPage() {
     const { canCreate, canDelete } = usePermissions();
-    const { data: programmesResponse, isLoading } = useProgrammes();
+    const { confirmDelete, dialog } = useDeleteConfirm();
+    const [search, setSearch] = useState("");
+    const { data: programmesResponse, isLoading } = useProgrammes({ q: search || undefined });
     const programmes = programmesResponse?.data || [];
-    const { mutate: deleteProgramme } = useDeleteProgramme();
+    const deleteProgramme = useDeleteProgramme();
 
     const handleDelete = (id: string) => {
-        if (confirm("Are you sure you want to delete this programme?")) {
-            deleteProgramme(id, {
-                onSuccess: () => {
-                    toast.success("Programme deleted successfully");
-                },
-                onError: () => {
-                    toast.error("Failed to delete programme");
-                },
-            });
-        }
+        confirmDelete("programme", async () => {
+            await deleteProgramme.mutateAsync(id);
+            toast.success("Programme deleted successfully");
+        });
     };
 
     const columns = getProgrammeColumns({ canDelete: canDelete("academic"), onDelete: handleDelete });
@@ -138,6 +135,14 @@ export default function ProgrammesPage() {
             <PageHeader
                 title="Programmes"
                 description="Manage university programmes and courses"
+                actions={canCreate("academic") ? (
+                    <Button variant="outline" asChild>
+                        <Link href="/imports/programmes">
+                            <Upload className="h-4 w-4 mr-2" />
+                            Import
+                        </Link>
+                    </Button>
+                ) : undefined}
                 createHref={canCreate("academic") ? "/academic/programmes/new" : undefined}
                 createLabel="Add Programme"
             />
@@ -145,8 +150,10 @@ export default function ProgrammesPage() {
                 data={programmes || []}
                 columns={columns}
                 isLoading={isLoading}
-                emptyMessage="No programmes found. Create your first programme."
+                toolbar={<TableSearch value={search} onChange={setSearch} placeholder="Search programmes by name or code" />}
+                emptyMessage={search ? "No programmes match this search." : "No programmes found. Create your first programme."}
             />
+            {dialog}
         </PageTransition>
     );
 }

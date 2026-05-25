@@ -1,15 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useAuth, getAccessibleServices, getHighestRole, formatRoleName } from "@ksu/auth";
+import type { ComponentType } from "react";
+import { useAuth, getHighestRole, formatRoleName } from "@ksu/auth";
 import type { Service } from "@ksu/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge, LogoIcon } from "@ksu/ui/components";
 import { Building, FlaskConical, Library, Settings } from "lucide-react";
 
-const SERVICE_META: Record<Service | "system", {
+const SERVICE_META: Record<Service, {
   title: string;
   description: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string }>;
   color: string;
 }> = {
   main: {
@@ -40,14 +41,14 @@ const SERVICE_META: Record<Service | "system", {
 
 export default function SelectServicePage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, switchService } = useAuth();
 
   if (!user) return null;
 
-  const services = getAccessibleServices(user.roles);
-  const isSuperAdmin = user.roles.includes("super-admin");
+  const services = Array.from(new Set(user.services.map((service) => service.service)));
 
-  const handleSelect = (service: string) => {
+  const handleSelect = (service: Service) => {
+    switchService(service);
     router.push(`/${service}`);
   };
 
@@ -90,25 +91,6 @@ export default function SelectServicePage() {
             );
           })}
 
-          {isSuperAdmin && (
-            <Card
-              className="cursor-pointer transition-all hover:border-primary hover:shadow-md"
-              onClick={() => handleSelect("system")}
-            >
-              <CardHeader className="flex flex-row items-center gap-4">
-                <div className={`rounded-lg p-3 ${SERVICE_META.system.color} text-white`}>
-                  <Settings className="h-6 w-6" />
-                </div>
-                <div className="flex-1">
-                  <CardTitle className="text-lg">{SERVICE_META.system.title}</CardTitle>
-                  <CardDescription>{SERVICE_META.system.description}</CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Badge variant="default">Super Admin</Badge>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </div>

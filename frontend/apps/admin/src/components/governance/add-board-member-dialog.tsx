@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button, Input, Textarea, Switch, Label, Card, CardContent, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ksu/ui/components";
+import { Button, Input, RichTextEditor, richTextToPlainText, Switch, Label, Card, CardContent, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
 import { useAddBoardMember, usePersons } from "@ksu/api-client";
 
@@ -58,7 +58,7 @@ export function AddBoardMemberDialog({ boardSlug, open, onOpenChange, onSuccess 
         }
         try {
             await addMutation.mutateAsync({ 
-                slug: boardSlug,
+                id: boardSlug,
                 personId: formData.person_id,
                 role: formData.role,
                 data: {
@@ -66,7 +66,7 @@ export function AddBoardMemberDialog({ boardSlug, open, onOpenChange, onSuccess 
                     is_acting: formData.is_acting,
                     start_date: formData.start_date,
                     end_date: formData.term_end_date || undefined,
-                    notes: formData.notes,
+                    notes: richTextToPlainText(formData.notes),
                 }
             });
             toast.success("Member added successfully");
@@ -156,10 +156,12 @@ export function AddBoardMemberDialog({ boardSlug, open, onOpenChange, onSuccess 
 
                         <div>
                             <Label>Notes</Label>
-                            <Textarea 
+                            <RichTextEditor
                                 value={formData.notes}
-                                onChange={(e) => setFormData(p => ({ ...p, notes: e.target.value }))}
+                                onChange={(notes) => setFormData(p => ({ ...p, notes }))}
                                 placeholder="Additional notes..."
+                                toolbar="simple"
+                                minHeight="150px"
                             />
                         </div>
 

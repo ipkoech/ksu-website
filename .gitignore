@@ -18,6 +18,7 @@ ehthumbs.db
 node_modules/
 .pnpm-store/
 .next/
+.next-build/
 out/
 dist/
 build/

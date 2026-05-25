@@ -5,6 +5,7 @@ import {
   schoolsApi,
   universityInfoApi,
 } from "@ksu/api-client";
+import { publicFileUrl, resolvePublicMediaUrl } from "@/lib/public-media";
 import type {
   Board,
   Division,
@@ -30,10 +31,16 @@ export const aboutStats = [
 
 export const quickNavigation = [
   { title: "Overview", emoji: "📜", href: "/about" },
+  { title: "History", emoji: "🕰️", href: "/about/history" },
+  { title: "Mission & Vision", emoji: "🎯", href: "/about/mission-vision" },
+  { title: "Governance", emoji: "🏛️", href: "/about/governance" },
+  { title: "Leadership", emoji: "👥", href: "/about/leadership" },
+  { title: "Quality Assurance", emoji: "✅", href: "/about/quality-assurance" },
   { title: "Governance & Leadership", emoji: "🏛️", href: "/about/governance-leadership" },
   { title: "University Management", emoji: "👥", href: "/about/university-management" },
   { title: "Administrative Division", emoji: "🏢", href: "/about/administrative-division" },
   { title: "Our Service Charter", emoji: "📋", href: "/about/service-charter" },
+  { title: "Strategic Plan", emoji: "🧭", href: "/about/strategic-plan" },
 ];
 
 export const historyTimeline: TimelineItem[] = [
@@ -195,17 +202,6 @@ export const leadershipFallback: (LeaderCardData & {
       "Serves on the published management board in the finance portfolio.",
     education: [],
     group: "registrar",
-  },
-  {
-    slug: "dean-school-placeholder",
-    name: "School Leadership",
-    role: "Dean",
-    summary:
-      "School-level dean information should be sourced from the academic units or live API records rather than inferred here.",
-    biography:
-      "Dean details will be populated from school records where available.",
-    education: [],
-    group: "dean",
   },
 ];
 
@@ -450,23 +446,53 @@ function toLeaderCardFromPerson(person: Person): LeaderCardData {
     summary:
       person.bio ||
       person.full_bio ||
-      "Profile information for this university leader will be updated here as records become available.",
-    photoUrl: person.photo_url,
+      "No detailed public profile summary is currently published for this leader.",
+    photoUrl: resolvePublicMediaUrl(person.photo_url) ?? undefined,
   };
+}
+
+function boardMemberName(assignment: StaffAssignment) {
+  const person = assignment.person;
+  const fullName = person?.full_name?.trim();
+  if (fullName) return fullName;
+
+  if (person) {
+    return [person.title, person.first_name, person.middle_name, person.last_name]
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  return assignment.title || assignment.role;
+}
+
+function boardMemberPhotoUrl(assignment: StaffAssignment) {
+  return publicFileUrl(assignment.person?.photo_id) ?? resolvePublicMediaUrl(assignment.person?.photo_url);
 }
 
 function toBoardMembers(assignments: StaffAssignment[]): BoardMember[] {
   return assignments.map((assignment) => ({
-    name:
-      assignment.person?.title
-        ? `${assignment.person.title} ${assignment.person.first_name} ${assignment.person.last_name}`
-        : assignment.person
-          ? `${assignment.person.first_name} ${assignment.person.last_name}`
-          : assignment.title || assignment.role,
+    name: boardMemberName(assignment),
     role: assignment.role_display || assignment.title || assignment.role,
     note: assignment.term_display,
+    photoUrl: boardMemberPhotoUrl(assignment),
   }));
 }
+
+const boardMemberFieldSelection = {
+  fields: [
+    "id",
+    "person_id",
+    "role",
+    "title",
+    "role_display",
+    "term_display",
+    "hierarchy_level",
+    "display_order",
+    "is_acting",
+  ].join(","),
+  include:
+    "person:id,slug,title,first_name,middle_name,last_name,full_name,photo_id,photo_url",
+};
 
 function mapSchoolToDean(school: School): LeaderCardData | null {
   if (!school.dean_name) {
@@ -477,7 +503,7 @@ function mapSchoolToDean(school: School): LeaderCardData | null {
     slug: `dean-${school.slug}`,
     name: school.dean_name,
     role: `Dean, ${school.name}`,
-    email: school.dean_email,
+    email: school.dean_email ?? undefined,
     summary:
       school.about ||
       school.description ||
@@ -487,7 +513,7 @@ function mapSchoolToDean(school: School): LeaderCardData | null {
 
 export async function getLeadershipData() {
   try {
-    const schoolsResponse = await schoolsApi.list({ limit: 24 });
+    const schoolsResponse = await schoolsApi.list({ per_page: 24 });
     const deanCards = (schoolsResponse.data ?? [])
       .map(mapSchoolToDean)
       .filter((value): value is LeaderCardData => value !== null);
@@ -496,19 +522,17 @@ export async function getLeadershipData() {
       featuredLeader: leadershipFallback.find((leader) => leader.group === "vc")!,
       deputies: leadershipFallback.filter((leader) => leader.group === "dvc"),
       registrars: leadershipFallback.filter((leader) => leader.group === "registrar"),
-      deans: deanCards.length
-        ? deanCards
-        : leadershipFallback.filter((leader) => leader.group === "dean"),
+      deans: deanCards,
     };
   } catch {
-    // Fall back when API data is unavailable.
+    // Fallback content for unavailable data.
   }
 
   return {
     featuredLeader: leadershipFallback.find((leader) => leader.group === "vc")!,
     deputies: leadershipFallback.filter((leader) => leader.group === "dvc"),
     registrars: leadershipFallback.filter((leader) => leader.group === "registrar"),
-    deans: leadershipFallback.filter((leader) => leader.group === "dean"),
+    deans: [],
   };
 }
 
@@ -534,7 +558,7 @@ export async function getLeaderProfile(slug: string) {
       biography:
         person.full_bio ||
         person.bio ||
-        "A detailed biography for this leader will be published as institutional profile records are expanded.",
+        "No detailed public biography is currently published for this leader.",
       education:
         person.qualifications?.map(
           (qualification) =>
@@ -558,16 +582,41 @@ export async function getLeaderProfile(slug: string) {
 
 export async function getGovernanceData() {
   try {
-    const response = await governanceApi.listBoards({ limit: 20, is_public: true });
+    const response = await governanceApi.listBoards({ per_page: 20, is_public: true });
     const boards = response.data ?? [];
 
     if (boards.length > 0) {
-      return boards.map((board) => ({
-        ...board,
-        members:
-          governanceFallback.find((fallbackBoard) => fallbackBoard.slug === board.slug)
-            ?.members ?? [],
-      }));
+      return await Promise.all(
+        boards.map(async (board) => {
+          const fallbackMembers =
+            governanceFallback.find((fallbackBoard) => fallbackBoard.slug === board.slug)
+              ?.members ?? [];
+
+          if (!board.slug) {
+            return {
+              ...board,
+              members: fallbackMembers,
+            };
+          }
+
+          try {
+            const membersResponse = await governanceApi.getBoardMembersBySlug(
+              board.slug,
+              boardMemberFieldSelection,
+            );
+
+            return {
+              ...board,
+              members: toBoardMembers(membersResponse.data ?? []),
+            };
+          } catch {
+            return {
+              ...board,
+              members: fallbackMembers,
+            };
+          }
+        }),
+      );
     }
   } catch {
     // Fall back to prompt-aligned static content.
@@ -579,8 +628,8 @@ export async function getGovernanceData() {
 export async function getGovernanceBoard(slug: string) {
   try {
     const [boardResponse, membersResponse] = await Promise.all([
-      governanceApi.getBoard(slug),
-      governanceApi.getBoardMembers(slug),
+      governanceApi.getBoardBySlug(slug),
+      governanceApi.getBoardMembersBySlug(slug, boardMemberFieldSelection),
     ]);
 
     return {
@@ -594,7 +643,7 @@ export async function getGovernanceBoard(slug: string) {
 
 export async function getAdministrativeDivisions() {
   try {
-    const response = await divisionsApi.list({ limit: 20 });
+    const response = await divisionsApi.list({ per_page: 20 });
     const divisions = response.data ?? [];
 
     if (divisions.length > 0) {
@@ -610,7 +659,7 @@ export async function getAdministrativeDivisions() {
       }));
     }
   } catch {
-    // Use source-backed fallback divisions.
+    // Use fallback divisions.
   }
 
   return administrativeDivisionFallback;

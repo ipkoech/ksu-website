@@ -1,4 +1,4 @@
-export type Service = "main" | "research" | "library";
+export type Service = "main" | "research" | "library" | "system";
 
 export interface User {
   id: string;

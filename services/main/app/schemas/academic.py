@@ -289,3 +289,21 @@ class AcademicCalendarRead(BaseReadSchema):
     holidays: list[dict[str, Any]] | None = None
     events: list[dict[str, Any]] | None = None
     status: str
+
+
+class AcademicCalendarUpdate(BaseSchema):
+    academic_year: str | None = Field(default=None, min_length=4, max_length=32)
+    semester: int | None = Field(default=None, ge=1, le=3)
+    start_date: date | None = None
+    end_date: date | None = None
+    registration_start: date | None = None
+    registration_end: date | None = None
+    late_registration_end: date | None = None
+    teaching_start: date | None = None
+    teaching_end: date | None = None
+    exam_start: date | None = None
+    exam_end: date | None = None
+    results_release: date | None = None
+    holidays: list[dict[str, Any]] | None = None
+    events: list[dict[str, Any]] | None = None
+    status: str | None = Field(default=None, max_length=32)

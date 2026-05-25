@@ -1,4 +1,8 @@
 import { notFound } from "next/navigation";
+import {
+  AboutIllustration,
+  aboutIllustrations,
+} from "@/components/about/AboutIllustration";
 import { BreadcrumbTrail, PageHeading, PageShell } from "@/components/site-shell";
 import { getLeaderProfile } from "@/lib/about-data";
 
@@ -25,7 +29,7 @@ export default async function LeaderProfilePage({
             { label: leader.name },
           ]}
         />
-        <div className="mt-8 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/50 md:grid md:grid-cols-[280px_1fr] md:gap-8 md:p-8">
+        <div className="mt-8 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/50 md:grid md:grid-cols-[240px_1fr] md:gap-8 md:p-8 xl:grid-cols-[240px_minmax(0,1fr)_340px]">
           <div className="flex items-start justify-center">
             {leader.photoUrl ? (
               <img
@@ -54,6 +58,12 @@ export default async function LeaderProfilePage({
               {leader.phone ? <span>{leader.phone}</span> : null}
             </div>
           </div>
+          <AboutIllustration
+            src={aboutIllustrations.leadership}
+            alt="Academic leadership on a university campus"
+            priority
+            className="mt-6 aspect-[4/3] min-h-[240px] md:col-span-2 xl:col-span-1 xl:mt-0"
+          />
         </div>
       </section>
 
@@ -83,7 +93,7 @@ export default async function LeaderProfilePage({
             {leader.education.length ? (
               leader.education.map((item) => <li key={item}>• {item}</li>)
             ) : (
-              <li>Education history will be published as full profile records are completed.</li>
+              <li>No public education records are currently published for this profile.</li>
             )}
           </ul>
         </article>

@@ -42,6 +42,15 @@ async def get_division(slug: str, db: DbSession, fields: FieldSelection = Fields
     return success(data=selector.apply(division))
 
 
+@router.get("/id/{division_id}")
+async def get_division_by_id(division_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+    selector = build_selector(Division, fields)
+    division = await DivisionService.get_by_id(db, division_id, load_options=selector.load_options)
+    if division is None:
+        raise HTTPException(status_code=404, detail="Division not found")
+    return success(data=selector.apply(division))
+
+
 @router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("organization.manage_divisions"))])
 async def create_division(data: DivisionCreate, db: DbSession, _: CurrentUser):
     division = await DivisionService.create(db, **data.model_dump())

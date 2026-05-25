@@ -42,6 +42,15 @@ async def get_slider_group(slug: str, db: DbSession, fields: FieldSelection = Fi
     return success(data=selector.apply(item))
 
 
+@router.get("/groups/id/{group_id}")
+async def get_slider_group_by_id(group_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+    selector = build_selector(SliderGroup, fields)
+    item = await SliderGroupService.get_by_id(db, group_id, load_options=selector.load_options)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Slider group not found")
+    return success(data=selector.apply(item))
+
+
 @router.get("")
 @cached_public(timeout=300)
 async def list_sliders(
@@ -59,6 +68,31 @@ async def list_sliders(
         scope_type=scope_type,
         scope_id=scope_id,
         is_main=is_main,
+        load_options=selector.load_options,
+    )
+    return success(data=selector.apply(items))
+
+
+@router.get("/admin", dependencies=[Depends(require_scope("admin:*"))])
+async def list_admin_sliders(
+    db: DbSession,
+    _: CurrentUser,
+    slider_group_id: uuid.UUID | None = None,
+    scope_type: str | None = None,
+    scope_id: uuid.UUID | None = None,
+    is_main: bool | None = None,
+    status: str | None = None,
+    fields: FieldSelection = FieldsDep,
+):
+    selector = build_selector(Slider, fields)
+    items = await SliderService.list_admin(
+        db,
+        slider_group_id=slider_group_id,
+        scope_type=scope_type,
+        scope_id=scope_id,
+        is_main=is_main,
+        status=status,
+        load_options=selector.load_options,
     )
     return success(data=selector.apply(items))
 
@@ -78,10 +112,27 @@ async def update_slider_group(group_id: uuid.UUID, data: SliderGroupUpdate, db: 
     return success(data=item, message="Slider group updated")
 
 
+@router.delete("/groups/{group_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+async def delete_slider_group(group_id: uuid.UUID, db: DbSession, _: CurrentUser):
+    item = await SliderGroupService.get_by_id(db, group_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Slider group not found")
+    await SliderGroupService.delete(db, item)
+
+
 @router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admin:*"))])
 async def create_slider(data: SliderCreate, db: DbSession, _: CurrentUser):
     item = await SliderService.create(db, **data.model_dump())
     return success(data=item, message="Slider created")
+
+
+@router.get("/{slider_id}")
+async def get_slider(slider_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+    selector = build_selector(Slider, fields)
+    item = await SliderService.get_by_id(db, slider_id, load_options=selector.load_options)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Slider not found")
+    return success(data=selector.apply(item))
 
 
 @router.patch("/{slider_id}", dependencies=[Depends(require_scope("admin:*"))])
@@ -91,3 +142,11 @@ async def update_slider(slider_id: uuid.UUID, data: SliderUpdate, db: DbSession,
         raise HTTPException(status_code=404, detail="Slider not found")
     item = await SliderService.update(db, item, **data.model_dump(exclude_unset=True))
     return success(data=item, message="Slider updated")
+
+
+@router.delete("/{slider_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+async def delete_slider(slider_id: uuid.UUID, db: DbSession, _: CurrentUser):
+    item = await SliderService.get_by_id(db, slider_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Slider not found")
+    await SliderService.delete(db, item)

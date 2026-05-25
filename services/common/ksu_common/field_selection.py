@@ -409,7 +409,7 @@ def apply_field_selection(
     selection: FieldSelection,
     *,
     always_include: set[str] | None = None,
-) -> dict | list[dict]:
+) -> dict | list[dict] | None:
     """Apply field selection to Pydantic model(s) or dict(s).
 
     Args:
@@ -427,6 +427,9 @@ def apply_field_selection(
         # Always include 'id' field
         result = apply_field_selection(data, selection, always_include={"id"})
     """
+    if data is None:
+        return None
+
     if selection.is_empty:
         if isinstance(data, BaseModel):
             return data.model_dump()

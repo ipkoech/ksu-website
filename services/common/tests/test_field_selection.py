@@ -1,4 +1,4 @@
-from ksu_common.field_selection import parse_field_selection
+from ksu_common.field_selection import apply_field_selection, parse_field_selection
 
 
 def test_include_supports_parenthesis_notation():
@@ -54,3 +54,21 @@ def test_include_supports_multiple_nested_relationships_with_fields():
         "display_name",
     }
     assert selection.nested["sessions"].fields == ("id", "last_used_at")
+
+
+def test_apply_field_selection_preserves_null_nested_relationship():
+    class DepartmentRecord:
+        id = "department-1"
+        school = None
+        wing = {"id": "wing-1", "name": "ICT Wing", "code": "ICT"}
+
+    selection = parse_field_selection(
+        fields="id",
+        include="school:id,name;wing:id,name",
+    )
+
+    assert apply_field_selection(DepartmentRecord(), selection) == {
+        "id": "department-1",
+        "school": None,
+        "wing": {"id": "wing-1", "name": "ICT Wing"},
+    }

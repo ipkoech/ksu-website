@@ -27,7 +27,7 @@ export const getNewsColumns = ({ canEdit, canDelete, onDelete }: GetNewsColumnsP
         header: "Status",
     },
     {
-        accessorKey: "createdAt",
+        accessorKey: "created_at",
         header: "Created At",
         cell: ({ row }) => {
             const date = new Date(row.original.created_at);
@@ -49,13 +49,12 @@ export const getNewsColumns = ({ canEdit, canDelete, onDelete }: GetNewsColumnsP
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(news.id)}
-                        >
-                            Copy news ID
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        {canEdit && <DropdownMenuItem>Edit</DropdownMenuItem>}
+                        {canEdit && (
+                            <DropdownMenuItem onClick={() => window.location.href = `/content/news/${news.id}`}>
+                                Edit
+                            </DropdownMenuItem>
+                        )}
+                        {canEdit && canDelete ? <DropdownMenuSeparator /> : null}
                         {canDelete && <DropdownMenuItem className="text-destructive" onClick={() => onDelete(news.id)}>Delete</DropdownMenuItem>}
                     </DropdownMenuContent>
                 </DropdownMenu>

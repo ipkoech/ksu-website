@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { Button } from "@ksu/ui/components";
-import { BreadcrumbTrail, PageHeading, PageShell } from "@/components/site-shell";
+import {
+  AboutIllustratedHeading,
+  aboutIllustrations,
+} from "@/components/about/AboutIllustration";
+import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { serviceCharterUrl } from "@/lib/about-data";
 
 export default function ServiceCharterPage() {
@@ -15,10 +19,12 @@ export default function ServiceCharterPage() {
           ]}
         />
         <div className="mt-8">
-          <PageHeading
+          <AboutIllustratedHeading
             eyebrow="Our Service Charter"
             title="The service charter is part of the official About navigation and should remain directly accessible."
             body="The live Kisii University website exposes the service charter as a dedicated About page. The current public page is primarily a hosted visual/document resource, so this route acts as a clear access point."
+            illustration={aboutIllustrations.serviceCharter}
+            alt="University service desk staff assisting students with public service information"
           />
         </div>
       </section>

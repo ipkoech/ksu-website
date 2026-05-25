@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("page", "per_page", "scope_type", "scope_id", "is_main", "is_published", "search", "fields"))
 async def list_announcements(
     db: DbSession,
     page: int = Query(1, ge=1),
@@ -27,11 +27,32 @@ async def list_announcements(
     scope_type: str | None = None,
     scope_id: uuid.UUID | None = None,
     is_main: bool | None = None,
+    is_published: bool | None = None,
+    search: str | None = None,
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(Announcement, fields)
-    result = await AnnouncementService.list(db, page=page, per_page=per_page, scope_type=scope_type, scope_id=scope_id, is_main=is_main, load_options=selector.load_options)
+    result = await AnnouncementService.list(
+        db,
+        page=page,
+        per_page=per_page,
+        scope_type=scope_type,
+        scope_id=scope_id,
+        is_main=is_main,
+        is_published=is_published,
+        search=search,
+        load_options=selector.load_options,
+    )
     return success(data=selector.apply(result.items), meta=result.meta)
+
+
+@router.get("/id/{announcement_id}")
+async def get_announcement_by_id(announcement_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+    selector = build_selector(Announcement, fields)
+    item = await AnnouncementService.get_by_id(db, announcement_id, load_options=selector.load_options)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Announcement not found")
+    return success(data=selector.apply(item))
 
 
 @router.get("/{slug}")
@@ -57,6 +78,24 @@ async def update_announcement(announcement_id: uuid.UUID, data: AnnouncementUpda
         raise HTTPException(status_code=404, detail="Announcement not found")
     item = await AnnouncementService.update(db, item, **data.model_dump(exclude_unset=True))
     return success(data=item, message="Announcement updated")
+
+
+@router.post("/{announcement_id}/publish", dependencies=[Depends(require_scope("admin:*"))])
+async def publish_announcement(announcement_id: uuid.UUID, db: DbSession, _: CurrentUser):
+    item = await AnnouncementService.get_by_id(db, announcement_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Announcement not found")
+    item = await AnnouncementService.publish(db, item)
+    return success(data=item, message="Announcement published")
+
+
+@router.post("/{announcement_id}/unpublish", dependencies=[Depends(require_scope("admin:*"))])
+async def unpublish_announcement(announcement_id: uuid.UUID, db: DbSession, _: CurrentUser):
+    item = await AnnouncementService.get_by_id(db, announcement_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Announcement not found")
+    item = await AnnouncementService.unpublish(db, item)
+    return success(data=item, message="Announcement unpublished")
 
 
 @router.delete("/{announcement_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])

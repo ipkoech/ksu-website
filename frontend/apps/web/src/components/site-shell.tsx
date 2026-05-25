@@ -6,6 +6,11 @@ import {
   Announcements,
   type MegaMenuData,
 } from "@ksu/ui/layout/public";
+import {
+  getLandingAnnouncements,
+  type LandingAnnouncement,
+} from "@/lib/landing-data";
+import { getNavData } from "@/lib/nav-data";
 
 const socialLinks = {
   facebook: "https://facebook.com/kisiiuniversity",
@@ -16,41 +21,77 @@ const socialLinks = {
 };
 
 const contactInfo = {
-  address: "P.O. Box 408-40200, Kisii",
-  phone: "+254 XXX XXX XXX",
+  address: "Main Campus, Kisii",
+  phone: "+254720875082",
   email: "info@kisiiuniversity.ac.ke",
 };
 
-// Sample announcements - in production, fetch from API
-const announcements = [
+const miniQuickLinks = [
   {
-    id: "intake-2026",
-    message: "September 2026 intake applications are now open!",
-    linkText: "Apply Now",
-    linkHref: "/admissions/how-to-apply",
-    variant: "info" as const,
-    dismissible: true,
+    label: "Student Portal",
+    href: "https://portal.kisiiuniversity.ac.ke",
+    external: true,
   },
+  { label: "Staff Portal", href: "/m/staff" },
+  {
+    label: "E-Learning",
+    href: "https://elearning.kisiiuniversity.ac.ke",
+    external: true,
+  },
+  { label: "Alumni", href: "/alumni" },
+  { label: "A-Z Index", href: "/az-index" },
 ];
 
 interface PageShellProps {
   children: React.ReactNode;
   transparent?: boolean;
   megaMenuData?: MegaMenuData;
+  header?: React.ReactNode;
 }
 
-export function PageShell({
+export async function AnnouncementHeader({
+  announcements,
+}: {
+  announcements?: LandingAnnouncement[];
+}) {
+  const items = announcements ?? (await getLandingAnnouncements());
+
+  return (
+    <Announcements
+      announcements={items}
+      rotating={items.length > 1}
+      intervalMs={6500}
+      background="secondary"
+    />
+  );
+}
+
+export async function PageShell({
   children,
   transparent = false,
   megaMenuData,
+  header,
 }: PageShellProps) {
+  const resolvedMegaMenuData = header
+    ? megaMenuData
+    : megaMenuData || (await getNavData());
+
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_38%,#f6f8fc_100%)] text-slate-950">
-      <Announcements announcements={announcements} />
-      <MiniHeader contactInfo={contactInfo} socialLinks={socialLinks} />
-      <PublicHeader transparent={transparent} megaMenuData={megaMenuData} />
+      <AnnouncementHeader />
+      <MiniHeader
+        contactInfo={contactInfo}
+        quickLinks={miniQuickLinks}
+        socialLinks={socialLinks}
+      />
+      {header ?? (
+        <PublicHeader
+          transparent={transparent}
+          megaMenuData={resolvedMegaMenuData}
+        />
+      )}
       <main>{children}</main>
-      <PublicFooter />
+      <PublicFooter contactInfo={contactInfo} socialLinks={socialLinks} />
     </div>
   );
 }
@@ -119,7 +160,10 @@ export function BreadcrumbTrail({
         {items.map((item, index) => (
           <li key={`${item.label}-${index}`} className="flex items-center gap-2">
             {item.href ? (
-              <Link href={item.href} className="transition hover:text-primary">
+              <Link
+                href={item.href}
+                className="inline-flex min-h-8 items-center transition hover:text-primary"
+              >
                 {item.label}
               </Link>
             ) : (

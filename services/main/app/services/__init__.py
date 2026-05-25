@@ -4,6 +4,7 @@ from .admissions import AdmissionInfoService, IntakeService, ProgrammeService
 from .academic import CampusService, DepartmentService, SchoolService
 from .alumni import AlumniAssociationService, AlumniService
 from .audit import AuditService
+from .analytics import AnalyticsService
 from .auth import AuthService
 from .content import (
     AnnouncementService,
@@ -16,6 +17,7 @@ from .content import (
 from .documents import DocumentService, PolicyService
 from .exchange import ExchangeProgrammeService
 from .governance import GovernanceService
+from .imports import ImportService
 from .marketing import (
     NewsletterService,
     NewsletterSubscriberService,
@@ -39,10 +41,12 @@ from .user import UserService
 __all__ = [
     "AuthService",
     "AuditService",
+    "AnalyticsService",
     "UserService",
     "PersonService",
     "StaffService",
     "GovernanceService",
+    "ImportService",
     "DivisionService",
     "WingService",
     "CampusService",

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import uuid
 
 from fastapi import UploadFile
@@ -16,7 +17,56 @@ from ..helpers.slug import unique_slug
 from ..models import User
 from ..helpers.storage import delete_file, upload_file
 from ..models import Media, MediaFolder, MediaLink
-from ._base import paginate_query
+from ._base import apply_updates, ilike_any, paginate_query
+
+
+ENTITY_FOLDER_ALIASES = {
+    "campus": "campuses",
+    "campuses": "campuses",
+    "school": "schools",
+    "schools": "schools",
+    "department": "departments",
+    "departments": "departments",
+    "person": "persons",
+    "persons": "persons",
+    "staff": "persons",
+    "programme": "programmes",
+    "programmes": "programmes",
+    "program": "programmes",
+    "programs": "programmes",
+    "division": "divisions",
+    "divisions": "divisions",
+    "wing": "wings",
+    "wings": "wings",
+    "board": "boards",
+    "boards": "boards",
+    "news": "news",
+    "blog": "blogs",
+    "blogs": "blogs",
+    "event": "events",
+    "events": "events",
+    "announcement": "announcements",
+    "announcements": "announcements",
+    "slider": "sliders",
+    "sliders": "sliders",
+    "slider-group": "slider-groups",
+    "slider-groups": "slider-groups",
+}
+
+
+def _safe_folder_segment(value: str) -> str:
+    segment = re.sub(r"[^a-zA-Z0-9_-]+", "-", value.strip().replace("_", "-")).strip("-").lower()
+    return segment or "general"
+
+
+def build_entity_upload_folder(entity_type: str, entity_id: uuid.UUID, role: str | None = None) -> str:
+    """Build deterministic upload folders like schools/{id}/cover-image."""
+    normalized_type = _safe_folder_segment(entity_type)
+    entity_folder = ENTITY_FOLDER_ALIASES.get(normalized_type, normalized_type)
+    parts = [entity_folder, str(entity_id)]
+    if role:
+        parts.append(_safe_folder_segment(role))
+    return "/".join(parts)
 
 
 class MediaService:
@@ -30,14 +80,25 @@ class MediaService:
         folder_id: uuid.UUID | None = None,
         uploaded_by_id: uuid.UUID,
         is_public: bool = False,
+        entity_type: str | None = None,
+        entity_id: uuid.UUID | None = None,
+        role: str | None = None,
+        folder_path: str | None = None,
     ) -> Media:
-        folder_path = ""
+        resolved_folder_path = folder_path or ""
+        if entity_type or entity_id:
+            if not entity_type or entity_id is None:
+                raise ValueError("Both entity_type and entity_id are required for entity uploads")
+            resolved_folder_path = build_entity_upload_folder(entity_type, entity_id, role)
+
         if folder_id:
             folder = await MediaFolder.get_by_id(db, folder_id)
             if folder is None:
                 raise ValueError("Media folder not found")
-            folder_path = folder.slug
-        metadata = await upload_file(file, folder_path)
+            if not resolved_folder_path:
+                resolved_folder_path = folder.slug
+
+        metadata = await upload_file(file, resolved_folder_path)
         media = Media(
             folder_id=folder_id,
             uploaded_by_id=uploaded_by_id,
@@ -52,15 +113,15 @@ class MediaService:
 
     @staticmethod
     async def get_by_id(db: AsyncSession, media_id: uuid.UUID, *, load_options: Sequence = ()) -> Media | None:
-        query = Media.active_query().where(Media.id == media_id)
+        query = Media.active_query().options(selectinload(Media.folder)).where(Media.id == media_id)
         if load_options:
             query = query.options(*load_options)
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def get_authorized_by_id(db: AsyncSession, media_id: uuid.UUID, user: User) -> Media | None:
-        media = await MediaService.get_by_id(db, media_id)
+    async def get_authorized_by_id(db: AsyncSession, media_id: uuid.UUID, user: User, *, load_options: Sequence = ()) -> Media | None:
+        media = await MediaService.get_by_id(db, media_id, load_options=load_options)
         if media is None:
             return None
         if await MediaService.can_view_media(db, media, user):
@@ -73,6 +134,31 @@ class MediaService:
         await db.flush()
 
     @staticmethod
+    async def update(db: AsyncSession, media: Media, **data) -> Media:
+        if "metadata" in data:
+            data["extra_metadata"] = data.pop("metadata")
+        apply_updates(media, **data)
+        await db.flush()
+        return media
+
+    @staticmethod
+    async def get_folder_by_id(db: AsyncSession, folder_id: uuid.UUID, *, load_options: Sequence = ()) -> MediaFolder | None:
+        query = MediaFolder.active_query().where(MediaFolder.id == folder_id)
+        if load_options:
+            query = query.options(*load_options)
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_authorized_folder_by_id(db: AsyncSession, folder_id: uuid.UUID, user: User, *, load_options: Sequence = ()) -> MediaFolder | None:
+        folder = await MediaService.get_folder_by_id(db, folder_id, load_options=load_options)
+        if folder is None:
+            return None
+        if user.has_role("admin") or folder.is_public or await MediaService._has_scope_access(user, folder.scope_type, folder.scope_id):
+            return folder
+        return None
+
+    @staticmethod
     async def list(
         db: AsyncSession,
         *,
@@ -82,6 +168,7 @@ class MediaService:
         folder_id: uuid.UUID | None = None,
         media_type: str | None = None,
         uploaded_by_id: uuid.UUID | None = None,
+        search: str | None = None,
         load_options: Sequence = (),
     ) -> PaginatedResult:
         query = Media.active_query().outerjoin(MediaFolder, Media.folder_id == MediaFolder.id).order_by(Media.created_at.desc())
@@ -94,6 +181,8 @@ class MediaService:
             query = query.where(Media.media_type == media_type)
         if uploaded_by_id:
             query = query.where(Media.uploaded_by_id == uploaded_by_id)
+        if search:
+            query = query.where(ilike_any(search, Media.title, Media.original_filename, Media.filename, Media.alt_text, Media.description))
         return await paginate_query(db, query, page=page, per_page=per_page)
 
     @staticmethod
@@ -104,6 +193,19 @@ class MediaService:
         db.add(folder)
         await db.flush()
         return folder
+
+    @staticmethod
+    async def update_folder(db: AsyncSession, folder: MediaFolder, **data) -> MediaFolder:
+        if data.get("name") and not data.get("slug"):
+            data["slug"] = await unique_slug(db, MediaFolder, data["name"], exclude_id=folder.id)
+        apply_updates(folder, **data)
+        await db.flush()
+        return folder
+
+    @staticmethod
+    async def delete_folder(db: AsyncSession, folder: MediaFolder) -> None:
+        folder.soft_delete()
+        await db.flush()
 
     @staticmethod
     async def list_folders(
@@ -148,6 +250,42 @@ class MediaService:
         db.add(link)
         await db.flush()
         return link
+
+    @staticmethod
+    async def get_link_by_id(db: AsyncSession, link_id: uuid.UUID, *, load_options: Sequence = ()) -> MediaLink | None:
+        query = (
+            MediaLink.active_query()
+            .options(selectinload(MediaLink.media), selectinload(MediaLink.folder))
+            .where(MediaLink.id == link_id)
+        )
+        if load_options:
+            query = query.options(*load_options)
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_authorized_link_by_id(db: AsyncSession, link_id: uuid.UUID, user: User, *, load_options: Sequence = ()) -> MediaLink | None:
+        link = await MediaService.get_link_by_id(db, link_id, load_options=load_options)
+        if link is None:
+            return None
+        if user.has_role("admin"):
+            return link
+        if link.is_public:
+            return link
+        if link.media and await MediaService.can_view_media(db, link.media, user):
+            return link
+        return None
+
+    @staticmethod
+    async def update_link(db: AsyncSession, link: MediaLink, **data) -> MediaLink:
+        apply_updates(link, **data)
+        await db.flush()
+        return link
+
+    @staticmethod
+    async def delete_link(db: AsyncSession, link: MediaLink) -> None:
+        link.soft_delete()
+        await db.flush()
 
     @staticmethod
     async def list_links(

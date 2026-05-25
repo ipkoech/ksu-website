@@ -1,87 +1,64 @@
 # About Leadership Design Notes
 
-## Final Design Summary
+## Status
 
-Selected direction: **Modern polished governance and leadership page**.
+- Route: `/about/leadership`
+- Current status: Canonical standalone leadership listing
+- Implementation source: `frontend/apps/web/src/app/about/leadership/page.tsx`
+- Final desktop asset: `about-leadership-desktop-final.png`
+- Final mobile asset: `about-leadership-mobile-final.png`
+- Visual generation: `imagegen` was used for design iteration before implementation.
+- Final asset source: verified browser captures of the implemented page, saved to preserve exact frontend shell fidelity.
 
-The final design treats `/about/leadership` as the combined public Governance and Leadership experience currently represented by `/about/governance-leadership`. It preserves the KSU crest, blue/orange brand palette, campus photography, public header patterns, white card system, and institutional tone while improving hierarchy, task flow, and mobile scanning.
+## Product Audit Summary
 
-## Why This Direction Won
+The page presents Kisii University's public leadership structure without duplicating the governance page. It focuses on the Vice Chancellor, deputy vice chancellors, registrars, finance leadership, and school-level leadership records available from the current public data model.
 
-The modern polished direction scored strongest overall because it best balanced product accuracy, public-user clarity, mobile usability, brand continuity, and implementation feasibility. The conservative direction was safe but less clear, while the bold direction was distinctive but carried more layout complexity.
+The route previously redirected to `/about/governance-leadership`. The redesign restores `/about/leadership` as a standalone route while keeping `/about/governance-leadership` available as a combined context page and `/about/leadership/[slug]` as the profile route.
 
-## Key Page Regions
+## Frontend Constraints
 
-- Official notice strip and public header
-- Hero with `Governance and Leadership`, campus context, and primary actions
-- Public leadership structure map: University Council, Office of the Vice Chancellor, Management Board, School Leadership
-- University Council summary with member initials and meeting-schedule helper
-- Vice Chancellor feature card for Prof. Dr. Nathan Oyori Ogechi
-- Management Board role summary
-- Executive Leadership grouped by Deputy Vice Chancellors, Registrars, and Finance
-- School Leadership records with dean-record helper state
-- Deep navy footer preview
+- Uses the real `PageShell` public sequence: `Announcements`, `MiniHeader`, `PublicHeader`, page content, and `PublicFooter`.
+- Uses existing public navigation and footer behavior.
+- Uses existing token patterns: primary blue, secondary orange, slate text, pale blue-gray bands, white cards, rounded `1.5rem` to `2rem` surfaces, and restrained shadows.
+- Uses Playfair-style display headings and sans-serif body/UI text.
+- Uses full-width page sections with internal responsive grids.
+- Uses `LeaderCard` for leadership records and initials placeholders when no portrait is available.
 
-## Page States
+## Backend And Data Constraints
 
-- Missing leader photos use initials.
-- Council meetings show `Meeting schedule not published` when no schedule is available.
-- School dean information is framed as school-sourced records.
-- Secondary profile details are represented as placeholder content to avoid fabricated claims.
+- Leadership content comes from `getLeadershipData()` and `leadershipFallback` in `frontend/apps/web/src/lib/about-data.ts`.
+- School leadership records are populated from school dean data when available; otherwise the page shows the source-backed school leadership placeholder.
+- Profile links use `/about/leadership/[slug]`.
+- No backend, database, or API changes were made.
 
-## Visual Guidance
+## Page Structure
 
-Colors:
-- Primary blue: `#3B82F6`
-- Accent orange: `#F97316`
-- Deep navy: `#0F172A`
-- Background: pale blue and white
-- Text: slate neutrals
-
-Typography:
-- Playfair-style display headings for page title and major institutional labels
-- Inter-style sans-serif UI text for navigation, cards, labels, and CTAs
-
-## Action Hierarchy
-
-- Primary: `View Vice Chancellor Profile`
-- Secondary: `Open University Council`, `Open Management Board`
-- Tertiary: `View profile` links on leadership cards
-
-## Responsive Guidance
-
-Desktop uses a two-column hero, horizontal structure map, section chips, and grouped cards. Mobile reorders the same content into a campus hero, stacked CTAs, quick-nav chips, vertical structure card, and single-column leadership cards.
-
-## Accessibility Notes
-
-The final assets use high-contrast text, large primary actions, clear card boundaries, generous spacing, and readable labels. No critical page action depends on tiny text or color alone.
+1. Full-width hero with breadcrumb, About navigation, leadership purpose, and primary actions.
+2. Office of the Vice Chancellor feature with Prof. Dr. Nathan Oyori Ogechi and profile navigation.
+3. Leadership structure cards separating executive, deputy, registrar/finance, and school records.
+4. Deputy Vice Chancellors section.
+5. Registrars and Finance section.
+6. School Leadership Records source-backed state.
+7. Continue Through About route cards.
+8. Existing public footer.
 
 ## Product Truthfulness Constraints
 
-The design avoids fake metrics, rankings, testimonials, dates, contact details, integrations, dashboards, admin controls, and invented leader names. Public actions are limited to profile and public board navigation. Content is aligned with the audited backend/frontend support for boards, board members, staff assignments, public profiles, and school dean records.
+Avoid fake leader photos, fake phone numbers, fake emails in page content, fake rankings, testimonials, certifications, dashboards, online workflows, unsupported application states, invented dean names, and governance member rosters on this leadership-focused page.
 
-## Implementation Notes
+## Imagegen Iteration
 
-No implementation was performed. A future build can use the existing Next.js/Tailwind public shell, KSU UI buttons, cards, header/footer, `LeaderCard`, `BoardMemberGrid`, and `about-data` retrieval patterns.
+`imagegen` was used to create a three-direction design board and a refined leadership-focused direction. Generated outputs with shell drift or invented claims were rejected. The final saved assets are browser screenshots from the implemented page so the logo, header, footer, typography, and route behavior match the actual frontend.
 
-## Image Generation and Self-Evaluation
+## Verification
 
-The visual concepts and final assets were generated using the `imagegen` skill. Three directions were generated and evaluated: conservative, modern polished, and bold/experimental. Each direction included desktop and mobile designs. Failed early drafts were rejected for product-accuracy issues and regenerated before final selection.
+Verified on May 19, 2026:
 
-Final desktop and mobile assets passed the satisfaction rubric with all categories scoring at least 4/5 and no critical failures.
-
-Final rubric scores:
-
-| Category | Desktop | Mobile |
-| --- | ---: | ---: |
-| Product accuracy | 5 | 5 |
-| Page purpose and user goal | 5 | 5 |
-| Action hierarchy | 5 | 5 |
-| Visual hierarchy | 5 | 5 |
-| Brand consistency | 5 | 5 |
-| Product storytelling and clarity | 4 | 4 |
-| Trust, confidence, and usability | 4 | 4 |
-| Responsiveness | 5 | 5 |
-| Accessibility | 4 | 4 |
-| Image quality | 4 | 4 |
-| Feasibility for future implementation | 5 | 5 |
+- `/about/leadership` returns `200` with no redirect.
+- Desktop and mobile render the full leadership page.
+- All seven main sections are full-width.
+- No horizontal overflow on 1536px desktop or 390px mobile.
+- Source-backed leader names render.
+- Forbidden unsupported claims such as ISO/rankings/testimonials/dashboards are absent.
+- TypeScript check passes with `pnpm --filter @ksu/web typecheck`.

@@ -1,14 +1,39 @@
 import { mainApi } from "../client";
+import { getStoredAccessToken } from "../auth-tokens";
 import type {
   User,
   Person,
+  PersonCreatePayload,
+  PersonStatusFilter,
+  PersonUpdatePayload,
   StaffAssignment,
+  StaffAssignmentActivatePayload,
+  StaffAssignmentConflict,
+  StaffAssignmentConflictCheckPayload,
+  StaffAssignmentCreatePayload,
+  StaffAssignmentEndPayload,
+  StaffAssignmentReassignPayload,
+  StaffAssignmentStatusFilter,
+  StaffAssignmentUpdatePayload,
+  StaffEntityOption,
+  StaffRoleOption,
   Board,
   School,
   Division,
+  Wing,
   Department,
   Programme,
+  Club,
+  Accommodation,
+  SportsFacility,
+  ArtsCulture,
+  StudentGovernance,
+  Alumni,
+  AlumniAssociation,
+  Document,
   Intake,
+  AcademicCalendar,
+  AdmissionInfo,
   News,
   Blog,
   Event,
@@ -16,22 +41,68 @@ import type {
   SliderGroup,
   Slider,
   Media,
+  MediaFolder,
+  MediaLink,
   FAQ,
+  ContactDirectory,
   Testimonial,
   Role,
   Permission,
-  Session,
   UniversityInfo,
   AuditLog,
+  AdminActivityReport,
+  AnalyticsEventPayload,
   ApiKey,
+  ContentReport,
+  ImportCommitRequest,
+  ImportCommitResult,
+  ImportPreview,
+  ImportResource,
   Setting,
+  SearchPayload,
+  ReportsOverview,
+  TrafficReport,
   LoginRequest,
   LoginResponse,
+  MediaFolderCreatePayload,
+  MediaFolderUpdatePayload,
+  MediaLinkCreatePayload,
+  MediaLinkUpdatePayload,
+  MediaUpdatePayload,
+  MediaUploadOptions,
   PaginatedResponse,
 } from "./types";
 import type { FieldSelectionParams, QueryParams } from "../client";
 
 type ListParams<T extends Record<string, string | number | boolean | undefined> = Record<string, string | number | boolean | undefined>> = QueryParams & T;
+const MAIN_API_BASE_URL = process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000";
+
+export function resolveMainMediaUrl(value?: string | null): string | undefined {
+  const rawValue = value?.trim();
+  if (!rawValue) return undefined;
+  if (/^(https?:|data:|blob:)/i.test(rawValue)) return rawValue;
+
+  let path = rawValue;
+  while (/^\/?uploads\/uploads\//.test(path)) {
+    path = path.replace(/^\/?uploads\/uploads\//, "/uploads/");
+  }
+  if (!path.startsWith("/")) {
+    path = path.startsWith("uploads/") ? `/${path}` : `/uploads/${path}`;
+  }
+  while (/^\/uploads\/uploads\//.test(path)) {
+    path = path.replace(/^\/uploads\/uploads\//, "/uploads/");
+  }
+
+  return new URL(path, MAIN_API_BASE_URL).toString();
+}
+
+async function parseImportResponse<T>(response: Response): Promise<T> {
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || error.message || "Import request failed");
+  }
+  return response.json() as Promise<T>;
+}
 
 // Auth
 export const authApi = {
@@ -92,40 +163,53 @@ export const usersApi = {
 
   delete: (id: string) =>
     mainApi.delete<void>(`/api/v1/users/${id}`),
-
-  assignRole: (userId: string, roleId: string, scopeType?: string, scopeId?: string) =>
-    mainApi.post<void>(`/api/v1/users/${userId}/roles`, {
-      role_id: roleId,
-      scope_type: scopeType,
-      scope_id: scopeId,
-    }),
-
-  removeRole: (userId: string, roleId: string) =>
-    mainApi.delete<void>(`/api/v1/users/${userId}/roles/${roleId}`),
-
-  sessions: (userId: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: Session[] }>(`/api/v1/users/${userId}/sessions`, params),
-
-  revokeSession: (userId: string, sessionId: string) =>
-    mainApi.delete<void>(`/api/v1/users/${userId}/sessions/${sessionId}`),
 };
 
 // Persons
 export const personsApi = {
-  list: (params?: ListParams<{ type?: string }>) =>
+  list: (params?: ListParams<{ search?: string; department_id?: string; school_id?: string; academic_rank?: string; employment_type?: string; status?: PersonStatusFilter }>) =>
     mainApi.get<PaginatedResponse<Person>>("/api/v1/persons", params),
 
   get: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Person }>(`/api/v1/persons/${id}`, params),
 
   getBySlug: (slug: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: Person }>(`/api/v1/persons/slug/${slug}`, params),
+    mainApi.get<{ data: Person }>(`/api/v1/persons/${slug}`, params),
 
-  create: (data: Partial<Person>) =>
+  create: (data: PersonCreatePayload) =>
     mainApi.post<{ data: Person }>("/api/v1/persons", data),
 
-  update: (id: string, data: Partial<Person>) =>
+  update: (id: string, data: PersonUpdatePayload) =>
     mainApi.patch<{ data: Person }>(`/api/v1/persons/${id}`, data),
+
+  activate: (id: string) =>
+    mainApi.patch<{ data: Person }>(`/api/v1/persons/${id}/activate`),
+
+  deactivate: (id: string) =>
+    mainApi.patch<{ data: Person }>(`/api/v1/persons/${id}/deactivate`),
+
+  uploadPhoto: async (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const token = getStoredAccessToken();
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000"}/api/v1/persons/${id}/photo`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: formData,
+      }
+    );
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || "Profile photo upload failed");
+    }
+    return response.json() as Promise<{ data: Person }>;
+  },
+
+  removePhoto: (id: string) =>
+    mainApi.delete<{ data: Person }>(`/api/v1/persons/${id}/photo`),
 
   delete: (id: string) =>
     mainApi.delete<void>(`/api/v1/persons/${id}`),
@@ -133,7 +217,7 @@ export const personsApi = {
 
 // Divisions
 export const divisionsApi = {
-  list: (params?: ListParams) =>
+  list: (params?: ListParams<{ is_active?: boolean }>) =>
     mainApi.get<PaginatedResponse<Division>>("/api/v1/divisions", params),
 
   get: (id: string, params?: FieldSelectionParams) =>
@@ -152,10 +236,25 @@ export const divisionsApi = {
     mainApi.delete<void>(`/api/v1/divisions/id/${id}`),
 };
 
+// Wings
+export const wingsApi = {
+  listByDivision: (divisionId: string, params?: FieldSelectionParams & { is_active?: boolean }) =>
+    mainApi.get<{ data: Wing[] }>(`/api/v1/wings/division/${divisionId}`, params),
+
+  get: (id: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Wing }>(`/api/v1/wings/${id}`, params),
+
+  create: (data: Partial<Wing>) =>
+    mainApi.post<{ data: Wing }>("/api/v1/wings", data),
+
+  update: (id: string, data: Partial<Wing>) =>
+    mainApi.patch<{ data: Wing }>(`/api/v1/wings/${id}`, data),
+};
+
 // Staff Assignments
 export const staffApi = {
-  listAssignments: (params?: ListParams<{ person_id?: string; entity_type?: string; entity_id?: string }>) =>
-    mainApi.get<PaginatedResponse<StaffAssignment>>("/api/v1/staff/assignments", params),
+  listAssignments: (params?: ListParams<{ person_id?: string; entity_type?: string; entity_id?: string; status?: StaffAssignmentStatusFilter }>) =>
+    mainApi.get<{ data: StaffAssignment[] }>("/api/v1/staff/assignments", params),
 
   getAssignment: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: StaffAssignment }>(`/api/v1/staff/assignments/${id}`, params),
@@ -166,31 +265,35 @@ export const staffApi = {
   getDirectReports: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: StaffAssignment[] }>(`/api/v1/staff/assignments/${id}/direct-reports`, params),
 
-  createAssignment: (data: Partial<StaffAssignment>) =>
+  createAssignment: (data: StaffAssignmentCreatePayload) =>
     mainApi.post<{ data: StaffAssignment }>("/api/v1/staff/assignments", data),
 
-  updateAssignment: (id: string, data: Partial<StaffAssignment>) =>
+  updateAssignment: (id: string, data: StaffAssignmentUpdatePayload) =>
     mainApi.patch<{ data: StaffAssignment }>(`/api/v1/staff/assignments/${id}`, data),
 
-  endAssignment: (id: string, data?: { end_date?: string; notes?: string }) =>
+  endAssignment: (id: string, data: StaffAssignmentEndPayload = {}) =>
     mainApi.patch<{ data: StaffAssignment }>(`/api/v1/staff/assignments/${id}/end`, data),
+
+  activateAssignment: (id: string, data: StaffAssignmentActivatePayload = {}) =>
+    mainApi.patch<{ data: StaffAssignment }>(`/api/v1/staff/assignments/${id}/activate`, data),
+
+  reassignAssignment: (id: string, data: StaffAssignmentReassignPayload) =>
+    mainApi.post<{ data: StaffAssignment }>(`/api/v1/staff/assignments/${id}/reassign`, data),
 
   deleteAssignment: (id: string) =>
     mainApi.delete<void>(`/api/v1/staff/assignments/${id}`),
 
-  checkConflict: (entity_type: string, entity_id?: string, role?: string, exclude_assignment_id?: string) =>
-    mainApi.post<{ data: { has_conflict: boolean; current_holder: any } }>("/api/v1/staff/assignments/check-conflict", {
-      entity_type,
-      entity_id,
-      role,
-      exclude_assignment_id,
-    }),
+  checkConflict: (data: StaffAssignmentConflictCheckPayload) =>
+    mainApi.post<{ data: StaffAssignmentConflict }>("/api/v1/staff/assignments/check-conflict", data),
+
+  listEntities: (params: { entity_type: string; search?: string; limit?: number }) =>
+    mainApi.get<{ data: StaffEntityOption[] }>("/api/v1/staff/entities", params),
 
   getEntityTypes: () =>
     mainApi.get<{ data: any[] }>("/api/v1/staff/entity-types"),
 
   getRoles: (entity_type?: string) =>
-    mainApi.get<{ data: any[] }>("/api/v1/staff/roles", entity_type ? { entity_type } : {}),
+    mainApi.get<{ data: StaffRoleOption[] }>("/api/v1/staff/roles", entity_type ? { entity_type } : {}),
 
   getAcademicRanks: () =>
     mainApi.get<{ data: any[] }>("/api/v1/staff/academic-ranks"),
@@ -199,12 +302,18 @@ export const staffApi = {
 // Governance Boards
 export const governanceApi = {
   listBoards: (params?: ListParams<{ board_type?: string; parent_entity_type?: string; parent_entity_id?: string }>) =>
-    mainApi.get<PaginatedResponse<Board>>("/api/v1/governance/boards", params),
+    mainApi.get<{ data: Board[] }>("/api/v1/governance/boards", params),
 
-  getBoard: (slug: string, params?: FieldSelectionParams) =>
+  getBoard: (id: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Board }>(`/api/v1/governance/boards/id/${id}`, params),
+
+  getBoardBySlug: (slug: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Board }>(`/api/v1/governance/boards/${slug}`, params),
 
-  getBoardMembers: (slug: string, params?: FieldSelectionParams) =>
+  getBoardMembers: (id: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: StaffAssignment[] }>(`/api/v1/governance/boards/id/${id}/members`, params),
+
+  getBoardMembersBySlug: (slug: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: StaffAssignment[] }>(`/api/v1/governance/boards/${slug}/members`, params),
 
   getCouncil: (params?: FieldSelectionParams) =>
@@ -222,23 +331,32 @@ export const governanceApi = {
   deleteBoard: (id: string) =>
     mainApi.delete<void>(`/api/v1/governance/boards/id/${id}`),
 
-  addMember: (slug: string, personId: string, role: string, data?: Partial<StaffAssignment>) =>
-    mainApi.post<{ data: StaffAssignment }>(`/api/v1/governance/boards/${slug}/members?person_id=${personId}&role=${role}`, data),
+  addMember: (id: string, personId: string, role: string, data?: Partial<StaffAssignment>) =>
+    mainApi.post<{ data: StaffAssignment }>(`/api/v1/governance/boards/id/${id}/members?person_id=${personId}&role=${role}`, data),
 
-  removeMember: (slug: string, personId: string) =>
-    mainApi.delete<void>(`/api/v1/governance/boards/${slug}/members/${personId}`),
+  removeMember: (id: string, personId: string) =>
+    mainApi.delete<void>(`/api/v1/governance/boards/id/${id}/members/${personId}`),
 };
 
 // Schools
 export const schoolsApi = {
-  list: (params?: ListParams<{ campus_id?: string }>) =>
+  list: (params?: ListParams<{ campus_id?: string; search?: string }>) =>
     mainApi.get<PaginatedResponse<School>>("/api/v1/schools", params),
 
   get: (id: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: School }>(`/api/v1/schools/${id}`, params),
+    mainApi.get<{ data: School }>(`/api/v1/schools/id/${id}`, params),
 
   getBySlug: (slug: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: School }>(`/api/v1/schools/slug/${slug}`, params),
+    mainApi.get<{ data: School }>(`/api/v1/schools/${slug}`, params),
+
+  departments: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Department[] }>(`/api/v1/schools/${slug}/departments`, params),
+
+  staff: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Person[] }>(`/api/v1/schools/${slug}/staff`, params),
+
+  programmes: (slug: string, params?: ListParams<{ level?: string; mode_of_study?: string }>) =>
+    mainApi.get<PaginatedResponse<Programme>>(`/api/v1/schools/${slug}/programmes`, params),
 
   create: (data: Partial<School>) =>
     mainApi.post<{ data: School }>("/api/v1/schools", data),
@@ -252,14 +370,23 @@ export const schoolsApi = {
 
 // Departments
 export const departmentsApi = {
-  list: (params?: ListParams<{ school_id?: string }>) =>
+  list: (params?: ListParams<{ school_id?: string; wing_id?: string; department_type?: string; search?: string }>) =>
     mainApi.get<PaginatedResponse<Department>>("/api/v1/departments", params),
 
   get: (id: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: Department }>(`/api/v1/departments/${id}`, params),
+    mainApi.get<{ data: Department }>(`/api/v1/departments/id/${id}`, params),
 
   getBySlug: (slug: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: Department }>(`/api/v1/departments/slug/${slug}`, params),
+    mainApi.get<{ data: Department }>(`/api/v1/departments/${slug}`, params),
+
+  staff: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Person[] }>(`/api/v1/departments/${slug}/staff`, params),
+
+  services: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: unknown[] }>(`/api/v1/departments/${slug}/services`, params),
+
+  programmes: (slug: string, params?: ListParams<{ level?: string; mode_of_study?: string }>) =>
+    mainApi.get<PaginatedResponse<Programme>>(`/api/v1/departments/${slug}/programmes`, params),
 
   create: (data: Partial<Department>) =>
     mainApi.post<{ data: Department }>("/api/v1/departments", data),
@@ -273,14 +400,17 @@ export const departmentsApi = {
 
 // Programmes
 export const programmesApi = {
-  list: (params?: ListParams<{ department_id?: string; level?: string }>) =>
+  list: (params?: ListParams<{ q?: string; school_id?: string; department_id?: string; level?: string; mode_of_study?: string }>) =>
     mainApi.get<PaginatedResponse<Programme>>("/api/v1/programmes", params),
 
   get: (id: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: Programme }>(`/api/v1/programmes/${id}`, params),
+    mainApi.get<{ data: Programme }>(`/api/v1/programmes/id/${id}`, params),
 
   getBySlug: (slug: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: Programme }>(`/api/v1/programmes/slug/${slug}`, params),
+    mainApi.get<{ data: Programme }>(`/api/v1/programmes/${slug}`, params),
+
+  staff: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Person[] }>(`/api/v1/programmes/${slug}/staff`, params),
 
   create: (data: Partial<Programme>) =>
     mainApi.post<{ data: Programme }>("/api/v1/programmes", data),
@@ -288,17 +418,170 @@ export const programmesApi = {
   update: (id: string, data: Partial<Programme>) =>
     mainApi.patch<{ data: Programme }>(`/api/v1/programmes/${id}`, data),
 
+  addTutor: (id: string, data: { person_id: string; role?: string; is_lead?: boolean }) =>
+    mainApi.post<{ data: unknown }>(`/api/v1/programmes/${id}/tutors`, data),
+
+  addIntake: (id: string, data: { intake_id: string; slots_available?: number; application_deadline?: string; is_active?: boolean }) =>
+    mainApi.post<{ data: unknown }>(`/api/v1/programmes/${id}/intakes`, data),
+
   delete: (id: string) =>
     mainApi.delete<void>(`/api/v1/programmes/${id}`),
 };
 
+// Clubs
+export const clubsApi = {
+  list: (params?: ListParams<{ q?: string; club_type?: string; school_id?: string; department_id?: string }>) =>
+    mainApi.get<PaginatedResponse<Club>>("/api/v1/clubs", params),
+
+  getBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Club }>(`/api/v1/clubs/${slug}`, params),
+
+  activities: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: unknown[] }>(`/api/v1/clubs/${slug}/activities`, params),
+
+  create: (data: Partial<Club>) =>
+    mainApi.post<{ data: Club }>("/api/v1/clubs", data),
+
+  update: (id: string, data: Partial<Club>) =>
+    mainApi.patch<{ data: Club }>(`/api/v1/clubs/${id}`, data),
+
+  delete: (id: string) =>
+    mainApi.delete<void>(`/api/v1/clubs/${id}`),
+};
+
+export const accommodationsApi = {
+  list: (params?: ListParams<{ campus_id?: string; accommodation_type?: string; gender?: string }>) =>
+    mainApi.get<PaginatedResponse<Accommodation>>("/api/v1/accommodations", params),
+
+  getBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Accommodation }>(`/api/v1/accommodations/${slug}`, params),
+
+  create: (data: Partial<Accommodation>) =>
+    mainApi.post<{ data: Accommodation }>("/api/v1/accommodations", data),
+
+  update: (id: string, data: Partial<Accommodation>) =>
+    mainApi.patch<{ data: Accommodation }>(`/api/v1/accommodations/${id}`, data),
+
+  delete: (id: string) =>
+    mainApi.delete<void>(`/api/v1/accommodations/${id}`),
+};
+
+export const sportsFacilitiesApi = {
+  list: (params?: ListParams<{ campus_id?: string; facility_type?: string }>) =>
+    mainApi.get<PaginatedResponse<SportsFacility>>("/api/v1/sports-facilities", params),
+
+  getBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: SportsFacility }>(`/api/v1/sports-facilities/${slug}`, params),
+
+  create: (data: Partial<SportsFacility>) =>
+    mainApi.post<{ data: SportsFacility }>("/api/v1/sports-facilities", data),
+
+  update: (id: string, data: Partial<SportsFacility>) =>
+    mainApi.patch<{ data: SportsFacility }>(`/api/v1/sports-facilities/${id}`, data),
+
+  delete: (id: string) =>
+    mainApi.delete<void>(`/api/v1/sports-facilities/${id}`),
+};
+
+export const artsCultureApi = {
+  list: (params?: ListParams<{ category?: string; school_id?: string; club_id?: string }>) =>
+    mainApi.get<PaginatedResponse<ArtsCulture>>("/api/v1/arts-culture", params),
+
+  getBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: ArtsCulture }>(`/api/v1/arts-culture/${slug}`, params),
+
+  create: (data: Partial<ArtsCulture>) =>
+    mainApi.post<{ data: ArtsCulture }>("/api/v1/arts-culture", data),
+
+  update: (id: string, data: Partial<ArtsCulture>) =>
+    mainApi.patch<{ data: ArtsCulture }>(`/api/v1/arts-culture/${id}`, data),
+
+  delete: (id: string) =>
+    mainApi.delete<void>(`/api/v1/arts-culture/${id}`),
+};
+
+export const studentGovernanceApi = {
+  list: (params?: ListParams<{ governance_type?: string; school_id?: string }>) =>
+    mainApi.get<PaginatedResponse<StudentGovernance>>("/api/v1/student-governance", params),
+
+  getBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: StudentGovernance }>(`/api/v1/student-governance/${slug}`, params),
+
+  create: (data: Partial<StudentGovernance>) =>
+    mainApi.post<{ data: StudentGovernance }>("/api/v1/student-governance", data),
+
+  update: (id: string, data: Partial<StudentGovernance>) =>
+    mainApi.patch<{ data: StudentGovernance }>(`/api/v1/student-governance/${id}`, data),
+
+  delete: (id: string) =>
+    mainApi.delete<void>(`/api/v1/student-governance/${id}`),
+};
+
+export const alumniApi = {
+  list: (params?: ListParams<{ school_id?: string; programme_id?: string; graduation_year?: number; mentor_only?: boolean }>) =>
+    mainApi.get<PaginatedResponse<Alumni>>("/api/v1/alumni", params),
+
+  get: (id: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Alumni }>(`/api/v1/alumni/${id}`, params),
+
+  create: (data: Partial<Alumni>) =>
+    mainApi.post<{ data: Alumni }>("/api/v1/alumni", data),
+
+  update: (id: string, data: Partial<Alumni>) =>
+    mainApi.patch<{ data: Alumni }>(`/api/v1/alumni/${id}`, data),
+
+  delete: (id: string) =>
+    mainApi.delete<void>(`/api/v1/alumni/${id}`),
+};
+
+export const alumniAssociationsApi = {
+  list: (params?: ListParams<{ association_type?: string; school_id?: string }>) =>
+    mainApi.get<PaginatedResponse<AlumniAssociation>>("/api/v1/alumni-associations", params),
+
+  getBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: AlumniAssociation }>(`/api/v1/alumni-associations/${slug}`, params),
+
+  members: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: unknown[] }>(`/api/v1/alumni-associations/${slug}/members`, params),
+
+  create: (data: Partial<AlumniAssociation>) =>
+    mainApi.post<{ data: AlumniAssociation }>("/api/v1/alumni-associations", data),
+
+  update: (id: string, data: Partial<AlumniAssociation>) =>
+    mainApi.patch<{ data: AlumniAssociation }>(`/api/v1/alumni-associations/${id}`, data),
+
+  delete: (id: string) =>
+    mainApi.delete<void>(`/api/v1/alumni-associations/${id}`),
+};
+
+// Documents
+export const documentsApi = {
+  list: (params?: ListParams<{ q?: string; document_type?: string; category?: string; scope_type?: string; scope_id?: string }>) =>
+    mainApi.get<PaginatedResponse<Document>>("/api/v1/documents", params),
+
+  getBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Document }>(`/api/v1/documents/${slug}`, params),
+
+  create: (data: Partial<Document>) =>
+    mainApi.post<{ data: Document }>("/api/v1/documents", data),
+
+  update: (id: string, data: Partial<Document>) =>
+    mainApi.patch<{ data: Document }>(`/api/v1/documents/${id}`, data),
+
+  delete: (id: string) =>
+    mainApi.delete<void>(`/api/v1/documents/${id}`),
+};
+
 // Intakes
 export const intakesApi = {
-  list: (params?: ListParams<{ is_open?: boolean }>) =>
+  list: (params?: ListParams<{ academic_calendar_id?: string; is_open?: boolean }>) =>
     mainApi.get<PaginatedResponse<Intake>>("/api/v1/intakes", params),
 
   get: (id: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: Intake }>(`/api/v1/intakes/${id}`, params),
+    mainApi.get<{ data: Intake }>(`/api/v1/intakes/id/${id}`, params),
+
+  getBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Intake }>(`/api/v1/intakes/${slug}`, params),
 
   create: (data: Partial<Intake>) =>
     mainApi.post<{ data: Intake }>("/api/v1/intakes", data),
@@ -310,16 +593,72 @@ export const intakesApi = {
     mainApi.delete<void>(`/api/v1/intakes/${id}`),
 };
 
-// News
-export const newsApi = {
-  list: (params?: ListParams<{ category?: string; is_published?: boolean }>) =>
-    mainApi.get<PaginatedResponse<News>>("/api/v1/news", params),
+// Academic calendars
+export const academicCalendarsApi = {
+  list: (params?: ListParams<{ academic_year?: string; status?: string }>) =>
+    mainApi.get<PaginatedResponse<AcademicCalendar>>("/api/v1/academic-calendars", params),
 
   get: (id: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: News }>(`/api/v1/news/${id}`, params),
+    mainApi.get<{ data: AcademicCalendar }>(`/api/v1/academic-calendars/id/${id}`, params),
+
+  create: (data: Partial<AcademicCalendar>) =>
+    mainApi.post<{ data: AcademicCalendar }>("/api/v1/academic-calendars", data),
+
+  update: (id: string, data: Partial<AcademicCalendar>) =>
+    mainApi.patch<{ data: AcademicCalendar }>(`/api/v1/academic-calendars/${id}`, data),
+
+  delete: (id: string) =>
+    mainApi.delete<void>(`/api/v1/academic-calendars/${id}`),
+};
+
+// Admission information
+export const admissionsApi = {
+  list: (
+    params?: ListParams<{
+      content_type?: string;
+      audience_level?: string;
+      school_id?: string;
+    }>,
+  ) => mainApi.get<PaginatedResponse<AdmissionInfo>>("/api/v1/admissions", params),
+
+  listAdmin: (
+    params?: ListParams<{
+      content_type?: string;
+      audience_level?: string;
+      school_id?: string;
+      is_published?: boolean;
+    }>,
+  ) => mainApi.get<PaginatedResponse<AdmissionInfo>>("/api/v1/admissions/admin", params),
+
+  get: (id: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: AdmissionInfo }>(`/api/v1/admissions/id/${id}`, params),
 
   getBySlug: (slug: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: News }>(`/api/v1/news/slug/${slug}`, params),
+    mainApi.get<{ data: AdmissionInfo }>(`/api/v1/admissions/${slug}`, params),
+
+  create: (data: Partial<AdmissionInfo>) =>
+    mainApi.post<{ data: AdmissionInfo }>("/api/v1/admissions", data),
+
+  update: (id: string, data: Partial<AdmissionInfo>) =>
+    mainApi.patch<{ data: AdmissionInfo }>(`/api/v1/admissions/${id}`, data),
+
+  delete: (id: string) =>
+    mainApi.delete<void>(`/api/v1/admissions/${id}`),
+};
+
+// News
+export const newsApi = {
+  list: (params?: ListParams<{ scope_type?: string; scope_id?: string; is_main?: boolean; is_published?: boolean; search?: string }>) =>
+    mainApi.get<PaginatedResponse<News>>("/api/v1/news", params),
+
+  listAdmin: (params?: ListParams<{ scope_type?: string; scope_id?: string; is_main?: boolean; is_published?: boolean; status?: string; search?: string }>) =>
+    mainApi.get<PaginatedResponse<News>>("/api/v1/news/admin", params),
+
+  get: (id: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: News }>(`/api/v1/news/id/${id}`, params),
+
+  getBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: News }>(`/api/v1/news/${slug}`, params),
 
   create: (data: Partial<News>) =>
     mainApi.post<{ data: News }>("/api/v1/news", data),
@@ -327,20 +666,23 @@ export const newsApi = {
   update: (id: string, data: Partial<News>) =>
     mainApi.patch<{ data: News }>(`/api/v1/news/${id}`, data),
 
-  delete: (id: string) =>
-    mainApi.delete<void>(`/api/v1/news/${id}`),
-
   publish: (id: string) =>
     mainApi.post<{ data: News }>(`/api/v1/news/${id}/publish`),
 
   unpublish: (id: string) =>
     mainApi.post<{ data: News }>(`/api/v1/news/${id}/unpublish`),
+
+  delete: (id: string) =>
+    mainApi.delete<void>(`/api/v1/news/${id}`),
 };
 
 // Blogs
 export const blogsApi = {
-  list: (params?: ListParams<{ category?: string; is_published?: boolean }>) =>
+  list: (params?: ListParams<{ scope_type?: string; scope_id?: string; is_main?: boolean; is_published?: boolean; search?: string }>) =>
     mainApi.get<PaginatedResponse<Blog>>("/api/v1/blogs", params),
+
+  listAdmin: (params?: ListParams<{ scope_type?: string; scope_id?: string; is_main?: boolean; is_published?: boolean; status?: string; search?: string }>) =>
+    mainApi.get<PaginatedResponse<Blog>>("/api/v1/blogs/admin", params),
 
   get: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Blog }>(`/api/v1/blogs/id/${id}`, params),
@@ -354,20 +696,29 @@ export const blogsApi = {
   update: (id: string, data: Partial<Blog>) =>
     mainApi.patch<{ data: Blog }>(`/api/v1/blogs/id/${id}`, data),
 
+  publish: (id: string) =>
+    mainApi.post<{ data: Blog }>(`/api/v1/blogs/id/${id}/publish`),
+
+  unpublish: (id: string) =>
+    mainApi.post<{ data: Blog }>(`/api/v1/blogs/id/${id}/unpublish`),
+
   delete: (id: string) =>
     mainApi.delete<void>(`/api/v1/blogs/id/${id}`),
 };
 
 // Events
 export const eventsApi = {
-  list: (params?: ListParams<{ event_type?: string; upcoming?: boolean }>) =>
+  list: (params?: ListParams<{ scope_type?: string; scope_id?: string; is_main?: boolean; is_published?: boolean; upcoming?: boolean; search?: string }>) =>
     mainApi.get<PaginatedResponse<Event>>("/api/v1/events", params),
 
+  listAdmin: (params?: ListParams<{ scope_type?: string; scope_id?: string; is_main?: boolean; is_published?: boolean; upcoming?: boolean; status?: string; search?: string }>) =>
+    mainApi.get<PaginatedResponse<Event>>("/api/v1/events/admin", params),
+
   get: (id: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: Event }>(`/api/v1/events/${id}`, params),
+    mainApi.get<{ data: Event }>(`/api/v1/events/id/${id}`, params),
 
   getBySlug: (slug: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: Event }>(`/api/v1/events/slug/${slug}`, params),
+    mainApi.get<{ data: Event }>(`/api/v1/events/${slug}`, params),
 
   create: (data: Partial<Event>) =>
     mainApi.post<{ data: Event }>("/api/v1/events", data),
@@ -375,17 +726,26 @@ export const eventsApi = {
   update: (id: string, data: Partial<Event>) =>
     mainApi.patch<{ data: Event }>(`/api/v1/events/${id}`, data),
 
+  publish: (id: string) =>
+    mainApi.post<{ data: Event }>(`/api/v1/events/${id}/publish`),
+
+  unpublish: (id: string) =>
+    mainApi.post<{ data: Event }>(`/api/v1/events/${id}/unpublish`),
+
   delete: (id: string) =>
     mainApi.delete<void>(`/api/v1/events/${id}`),
 };
 
 // Announcements
 export const announcementsApi = {
-  list: (params?: ListParams<{ priority?: string }>) =>
+  list: (params?: ListParams<{ scope_type?: string; scope_id?: string; is_main?: boolean; is_published?: boolean; search?: string }>) =>
     mainApi.get<PaginatedResponse<Announcement>>("/api/v1/announcements", params),
 
   get: (id: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: Announcement }>(`/api/v1/announcements/${id}`, params),
+    mainApi.get<{ data: Announcement }>(`/api/v1/announcements/id/${id}`, params),
+
+  getBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Announcement }>(`/api/v1/announcements/${slug}`, params),
 
   create: (data: Partial<Announcement>) =>
     mainApi.post<{ data: Announcement }>("/api/v1/announcements", data),
@@ -393,68 +753,126 @@ export const announcementsApi = {
   update: (id: string, data: Partial<Announcement>) =>
     mainApi.patch<{ data: Announcement }>(`/api/v1/announcements/${id}`, data),
 
+  publish: (id: string) =>
+    mainApi.post<{ data: Announcement }>(`/api/v1/announcements/${id}/publish`),
+
+  unpublish: (id: string) =>
+    mainApi.post<{ data: Announcement }>(`/api/v1/announcements/${id}/unpublish`),
+
   delete: (id: string) =>
     mainApi.delete<void>(`/api/v1/announcements/${id}`),
 };
 
 // Sliders
 export const slidersApi = {
-  listGroups: (params?: ListParams) =>
-    mainApi.get<PaginatedResponse<SliderGroup>>("/api/v1/slider-groups", params),
+  listGroups: (params?: ListParams<{ scope_type?: string; scope_id?: string; is_main?: boolean }>) =>
+    mainApi.get<{ data: SliderGroup[] }>("/api/v1/sliders/groups", params),
 
   getGroup: (id: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: SliderGroup }>(`/api/v1/slider-groups/${id}`, params),
+    mainApi.get<{ data: SliderGroup }>(`/api/v1/sliders/groups/id/${id}`, params),
+
+  getGroupBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: SliderGroup }>(`/api/v1/sliders/groups/${slug}`, params),
 
   createGroup: (data: Partial<SliderGroup>) =>
-    mainApi.post<{ data: SliderGroup }>("/api/v1/slider-groups", data),
+    mainApi.post<{ data: SliderGroup }>("/api/v1/sliders/groups", data),
 
   updateGroup: (id: string, data: Partial<SliderGroup>) =>
-    mainApi.patch<{ data: SliderGroup }>(`/api/v1/slider-groups/${id}`, data),
+    mainApi.patch<{ data: SliderGroup }>(`/api/v1/sliders/groups/${id}`, data),
 
   deleteGroup: (id: string) =>
-    mainApi.delete<void>(`/api/v1/slider-groups/${id}`),
+    mainApi.delete<void>(`/api/v1/sliders/groups/${id}`),
 
-  listSliders: (groupId: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: Slider[] }>(`/api/v1/slider-groups/${groupId}/sliders`, params),
+  listSliders: (params?: ListParams<{ slider_group_id?: string; scope_type?: string; scope_id?: string; is_main?: boolean }>) =>
+    mainApi.get<{ data: Slider[] }>("/api/v1/sliders", params),
+
+  listAdminSliders: (params?: ListParams<{ slider_group_id?: string; scope_type?: string; scope_id?: string; is_main?: boolean; status?: string }>) =>
+    mainApi.get<{ data: Slider[] }>("/api/v1/sliders/admin", params),
+
+  listGroupSliders: (groupId: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Slider[] }>("/api/v1/sliders/admin", { ...params, slider_group_id: groupId }),
 
   createSlider: (groupId: string, data: Partial<Slider>) =>
-    mainApi.post<{ data: Slider }>(`/api/v1/slider-groups/${groupId}/sliders`, data),
+    mainApi.post<{ data: Slider }>("/api/v1/sliders", { ...data, slider_group_id: groupId }),
 
-  updateSlider: (groupId: string, sliderId: string, data: Partial<Slider>) =>
-    mainApi.patch<{ data: Slider }>(`/api/v1/slider-groups/${groupId}/sliders/${sliderId}`, data),
+  getSlider: (sliderId: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Slider }>(`/api/v1/sliders/${sliderId}`, params),
 
-  deleteSlider: (groupId: string, sliderId: string) =>
-    mainApi.delete<void>(`/api/v1/slider-groups/${groupId}/sliders/${sliderId}`),
+  updateSlider: (sliderId: string, data: Partial<Slider>) =>
+    mainApi.patch<{ data: Slider }>(`/api/v1/sliders/${sliderId}`, data),
+
+  deleteSlider: (sliderId: string) =>
+    mainApi.delete<void>(`/api/v1/sliders/${sliderId}`),
 };
 
 // Media
 export const mediaApi = {
-  list: (params?: ListParams<{ folder_id?: string; mime_type?: string }>) =>
+  list: (params?: ListParams<{ folder_id?: string; media_type?: string; uploaded_by_id?: string; search?: string }>) =>
     mainApi.get<PaginatedResponse<Media>>("/api/v1/media", params),
 
   get: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Media }>(`/api/v1/media/${id}`, params),
 
-  upload: async (file: File, folderId?: string) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    if (folderId) formData.append("folder_id", folderId);
+  update: (id: string, data: MediaUpdatePayload) =>
+    mainApi.patch<{ data: Media }>(`/api/v1/media/${id}`, data),
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000"}/api/v1/media`,
-      {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      }
-    );
+  upload: async (file: File, options?: MediaUploadOptions) => {
+	    const formData = new FormData();
+	    formData.append("file", file);
+	    if (options?.folderId) formData.append("folder_id", options.folderId);
+	    if (options?.isPublic !== undefined) formData.append("is_public", String(options.isPublic));
+	    if (options?.entityType) formData.append("entity_type", options.entityType);
+	    if (options?.entityId) formData.append("entity_id", options.entityId);
+	    if (options?.role) formData.append("role", options.role);
+	    const token = getStoredAccessToken();
+
+	    const response = await fetch(
+	      `${process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000"}/api/v1/media/upload`,
+	      {
+	        method: "POST",
+	        credentials: "include",
+	        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+	        body: formData,
+	      }
+	    );
 
     if (!response.ok) {
-      throw new Error("Upload failed");
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || error.message || "Upload failed");
     }
 
     return response.json() as Promise<{ data: Media }>;
   },
+
+  listFolders: (params?: FieldSelectionParams & { parent_id?: string }) =>
+    mainApi.get<{ data: MediaFolder[] }>("/api/v1/media/folders", params),
+
+  createFolder: (data: MediaFolderCreatePayload) =>
+    mainApi.post<{ data: MediaFolder }>("/api/v1/media/folders", data),
+
+  getFolder: (id: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: MediaFolder }>(`/api/v1/media/folders/${id}`, params),
+
+  updateFolder: (id: string, data: MediaFolderUpdatePayload) =>
+    mainApi.patch<{ data: MediaFolder }>(`/api/v1/media/folders/${id}`, data),
+
+  deleteFolder: (id: string) =>
+    mainApi.delete<void>(`/api/v1/media/folders/${id}`),
+
+  listLinks: (params: FieldSelectionParams & { entity_type: string; entity_id: string; role?: string }) =>
+    mainApi.get<{ data: MediaLink[] }>("/api/v1/media/links", params),
+
+  createLink: (data: MediaLinkCreatePayload) =>
+    mainApi.post<{ data: MediaLink }>("/api/v1/media/links", data),
+
+  getLink: (id: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: MediaLink }>(`/api/v1/media/links/${id}`, params),
+
+  updateLink: (id: string, data: MediaLinkUpdatePayload) =>
+    mainApi.patch<{ data: MediaLink }>(`/api/v1/media/links/${id}`, data),
+
+  deleteLink: (id: string) =>
+    mainApi.delete<void>(`/api/v1/media/links/${id}`),
 
   delete: (id: string) =>
     mainApi.delete<void>(`/api/v1/media/${id}`),
@@ -462,7 +880,7 @@ export const mediaApi = {
 
 // FAQs
 export const faqsApi = {
-  list: (params?: ListParams<{ category?: string }>) =>
+  list: (params?: ListParams<{ scope_type?: string; scope_id?: string; is_main?: boolean }>) =>
     mainApi.get<PaginatedResponse<FAQ>>("/api/v1/faqs", params),
 
   get: (id: string, params?: FieldSelectionParams) =>
@@ -476,6 +894,26 @@ export const faqsApi = {
 
   delete: (id: string) =>
     mainApi.delete<void>(`/api/v1/faqs/${id}`),
+
+};
+
+export const contactsApi = {
+  list: (params?: ListParams<{ scope_type?: string; scope_id?: string; is_main?: boolean }>) =>
+    mainApi.get<PaginatedResponse<ContactDirectory>>("/api/v1/contacts", params),
+
+  get: (id: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: ContactDirectory }>(`/api/v1/contacts/${id}`, params),
+
+  create: (data: Partial<ContactDirectory>) =>
+    mainApi.post<{ data: ContactDirectory }>("/api/v1/contacts", data),
+
+  update: (id: string, data: Partial<ContactDirectory>) =>
+    mainApi.patch<{ data: ContactDirectory }>(`/api/v1/contacts/${id}`, data),
+};
+
+export const searchApi = {
+  query: (params: FieldSelectionParams & { q: string; limit_per_type?: number; scope_type?: string; scope_id?: string }) =>
+    mainApi.get<{ data: SearchPayload }>("/api/v1/search", params),
 };
 
 // Testimonials
@@ -494,78 +932,147 @@ export const testimonialsApi = {
 
   delete: (id: string) =>
     mainApi.delete<void>(`/api/v1/testimonials/${id}`),
-
-  approve: (id: string) =>
-    mainApi.post<{ data: Testimonial }>(`/api/v1/testimonials/${id}/approve`),
 };
 
 // Roles
 export const rolesApi = {
   list: (params?: ListParams) =>
-    mainApi.get<PaginatedResponse<Role>>("/api/v1/roles", params),
+    mainApi.get<PaginatedResponse<Role>>("/api/v1/admin/roles", params),
 
   get: (id: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: Role }>(`/api/v1/roles/${id}`, params),
+    mainApi.get<{ data: Role }>(`/api/v1/admin/roles/${id}`, params),
 
   create: (data: Partial<Role>) =>
-    mainApi.post<{ data: Role }>("/api/v1/roles", data),
+    mainApi.post<{ data: Role }>("/api/v1/admin/roles", data),
 
   update: (id: string, data: Partial<Role>) =>
-    mainApi.patch<{ data: Role }>(`/api/v1/roles/${id}`, data),
+    mainApi.patch<{ data: Role }>(`/api/v1/admin/roles/${id}`, data),
 
   delete: (id: string) =>
-    mainApi.delete<void>(`/api/v1/roles/${id}`),
+    mainApi.delete<void>(`/api/v1/admin/roles/${id}`),
 };
 
 // Permissions
 export const permissionsApi = {
   list: (params?: FieldSelectionParams) =>
-    mainApi.get<{ data: Permission[] }>("/api/v1/permissions", params),
+    mainApi.get<{ data: Permission[] }>("/api/v1/admin/permissions", params),
+
+  create: (data: { name: string; description?: string; resource?: string; action?: string }) =>
+    mainApi.post<{ data: Permission }>(
+      `/api/v1/admin/permissions?name=${encodeURIComponent(data.name)}${data.description ? `&description=${encodeURIComponent(data.description)}` : ""}${data.resource ? `&resource=${encodeURIComponent(data.resource)}` : ""}${data.action ? `&action=${encodeURIComponent(data.action)}` : ""}`
+    ),
 };
 
 // Audit Logs
 export const auditLogsApi = {
-  list: (params?: ListParams<{ user_id?: string; action?: string; entity_type?: string }>) =>
-    mainApi.get<PaginatedResponse<AuditLog>>("/api/v1/audit-logs", params),
+  list: (params?: ListParams<{ user_id?: string; service_name?: string; action?: string; resource_type?: string; resource_id?: string; status?: string; date_from?: string; date_to?: string }>) =>
+    mainApi.get<PaginatedResponse<AuditLog>>("/api/v1/admin/audit", params),
 
   get: (id: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: AuditLog }>(`/api/v1/audit-logs/${id}`, params),
+    mainApi.get<{ data: AuditLog }>(`/api/v1/admin/audit/${id}`, params),
+};
+
+export const analyticsApi = {
+  ingestEvents: (events: AnalyticsEventPayload[]) =>
+    mainApi.post<{ data: { accepted: number } }>("/api/v1/analytics/events", { events }),
+};
+
+export const importsApi = {
+  listResources: () =>
+    mainApi.get<{ data: ImportResource[] }>("/api/v1/imports/resources"),
+
+  getResource: (resource: string) =>
+    mainApi.get<{ data: ImportResource }>(`/api/v1/imports/resources/${resource}`),
+
+  preview: async (resource: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const token = getStoredAccessToken();
+    const response = await fetch(`${MAIN_API_BASE_URL}/api/v1/imports/${resource}/preview`, {
+      method: "POST",
+      credentials: "include",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: formData,
+    });
+    return parseImportResponse<{ data: ImportPreview }>(response);
+  },
+
+  commit: (resource: string, data: ImportCommitRequest) =>
+    mainApi.post<{ data: ImportCommitResult }>(`/api/v1/imports/${resource}/commit`, data),
+
+  downloadTemplate: async (resource: string) => {
+    const token = getStoredAccessToken();
+    const response = await fetch(`${MAIN_API_BASE_URL}/api/v1/imports/${resource}/template`, {
+      credentials: "include",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || error.message || "Template download failed");
+    }
+    return response.blob();
+  },
+};
+
+export const adminReportsApi = {
+  overview: (params?: { days?: number }) =>
+    mainApi.get<{ data: ReportsOverview }>("/api/v1/admin/reports/overview", params),
+
+  traffic: (params?: { days?: number }) =>
+    mainApi.get<{ data: TrafficReport }>("/api/v1/admin/reports/traffic", params),
+
+  content: (params?: { days?: number }) =>
+    mainApi.get<{ data: ContentReport }>("/api/v1/admin/reports/content", params),
+
+  adminActivity: (params?: { days?: number }) =>
+    mainApi.get<{ data: AdminActivityReport }>("/api/v1/admin/reports/admin-activity", params),
+
+  exportUrl: (reportName: "overview" | "traffic" | "content" | "admin-activity", params?: { days?: number; format?: "csv" | "json" }) => {
+    const query = new URLSearchParams();
+    if (params?.days) query.set("days", String(params.days));
+    if (params?.format) query.set("format", params.format);
+    const suffix = query.toString();
+    return `${process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000"}/api/v1/admin/reports/exports/${reportName}${suffix ? `?${suffix}` : ""}`;
+  },
 };
 
 // API Keys (System)
 export const apiKeysApi = {
   list: (params?: ListParams) =>
-    mainApi.get<PaginatedResponse<ApiKey>>("/admin/system/api-keys", params),
+    mainApi.get<PaginatedResponse<ApiKey>>("/api/v1/admin/system/api-keys", params),
 
   get: (id: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: ApiKey }>(`/admin/system/api-keys/${id}`, params),
+    mainApi.get<{ data: ApiKey }>(`/api/v1/admin/system/api-keys/${id}`, params),
 
   create: (data: Partial<ApiKey>) =>
-    mainApi.post<{ data: ApiKey }>("/admin/system/api-keys", data),
+    mainApi.post<{ data: { api_key: string; record: ApiKey } }>("/api/v1/admin/system/api-keys", data),
 
   update: (id: string, data: Partial<ApiKey>) =>
-    mainApi.patch<{ data: ApiKey }>(`/admin/system/api-keys/${id}`, data),
+    mainApi.patch<{ data: ApiKey }>(`/api/v1/admin/system/api-keys/${id}`, data),
 
   delete: (id: string) =>
-    mainApi.delete<void>(`/admin/system/api-keys/${id}`),
-
-  regenerate: (id: string) =>
-    mainApi.post<{ data: ApiKey }>(`/admin/system/api-keys/${id}/regenerate`),
+    mainApi.delete<void>(`/api/v1/admin/system/api-keys/${id}`),
 };
 
 // Settings (System)
 export const settingsApi = {
   list: (params?: ListParams<{ category?: string }>) =>
-    mainApi.get<PaginatedResponse<Setting>>("/admin/system/settings", params),
+    mainApi.get<PaginatedResponse<Setting>>("/api/v1/admin/system/settings", params),
 
-  get: (key: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: Setting }>(`/admin/system/settings/${key}`, params),
+  get: (id: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Setting }>(`/api/v1/admin/system/settings/${id}`, params),
 
-  update: (key: string, data: Partial<Setting>) =>
-    mainApi.patch<{ data: Setting }>(`/admin/system/settings/${key}`, data),
+  create: (data: Partial<Setting>) =>
+    mainApi.post<{ data: Setting }>("/api/v1/admin/system/settings", data),
 
-  bulkUpdate: (data: Record<string, string>) =>
-    mainApi.post<void>("/admin/system/settings/bulk", data),
+  update: (id: string, data: Partial<Setting>) =>
+    mainApi.patch<{ data: Setting }>(`/api/v1/admin/system/settings/${id}`, data),
+
+  bulkUpdate: (settings: Array<{ key: string; value: unknown }>) =>
+    mainApi.put<{ data: Setting[] }>("/api/v1/admin/system/settings", { settings }),
+
+  delete: (id: string) =>
+    mainApi.delete<void>(`/api/v1/admin/system/settings/${id}`),
 };
 
 // Leadership (Public)

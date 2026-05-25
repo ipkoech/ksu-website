@@ -8,6 +8,11 @@ export {
   type NavClub,
   type MegaMenuData,
 } from "./public-header";
+export {
+  EntityHeader,
+  type EntityHeaderNavItem,
+  type EntityHeaderProps,
+} from "./entity-header";
 export { PublicFooter } from "./public-footer";
 export { CTA } from "./cta";
 export { AnnouncementBar, Announcements } from "./announcement-bar";

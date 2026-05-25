@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from .admissions import ProgrammeTutor
     from .alumni import Alumni
     from .auth import User
+    from .media import Media
     from .staff import StaffAssignment
     from .academic import Department
 
@@ -140,6 +141,7 @@ class Person(Base):
 
     # Relationships
     user: Mapped[Optional["User"]] = relationship("User", back_populates="person")
+    photo: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[photo_id])
     department: Mapped[Optional["Department"]] = relationship(
         "Department",
         foreign_keys=[department_id],
@@ -169,6 +171,18 @@ class Person(Base):
         if self.title:
             return f"{self.title} {self.full_name}"
         return self.full_name
+
+    @property
+    def photo_url(self) -> Optional[str]:
+        """Resolved profile photo URL for API clients."""
+        if self.photo:
+            return self.photo.url
+        return None
+
+    @property
+    def slug(self) -> str:
+        """Stable public identifier for legacy slug-shaped frontend contracts."""
+        return str(self.id)
 
     @property
     def primary_assignment(self) -> Optional["StaffAssignment"]:

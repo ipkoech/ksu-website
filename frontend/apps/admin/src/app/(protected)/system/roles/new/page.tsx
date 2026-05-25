@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, usePermissions as useAuthPermissions } from "@ksu/auth";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Label, PageHeader, Textarea } from "@ksu/ui/components";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Label, PageHeader, RichTextEditor, richTextToPlainText } from "@ksu/ui/components";
 import { useCreateRole, usePermissions } from "@ksu/api-client/hooks/admin";
 import { createRoleSchema } from "../../_lib/schemas";
 import { canManageRoles, canViewPermissions } from "../../_lib/access";
@@ -33,7 +33,7 @@ export default function CreateRolePage() {
   }, [permissions.data]);
 
   const submit = async () => {
-    const parsed = createRoleSchema.safeParse(form);
+    const parsed = createRoleSchema.safeParse({ ...form, description: richTextToPlainText(form.description) });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? "Invalid role");
       return;
@@ -70,7 +70,7 @@ export default function CreateRolePage() {
             </div>
             <div className="space-y-2">
               <Label>Description</Label>
-              <Textarea value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} />
+              <RichTextEditor value={form.description} onChange={(description) => setForm((current) => ({ ...current, description }))} toolbar="simple" minHeight="140px" />
             </div>
           </CardContent>
         </Card>

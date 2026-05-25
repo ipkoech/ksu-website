@@ -2,6 +2,7 @@ export interface BoardMember {
   name: string;
   role: string;
   note?: string;
+  photoUrl?: string | null;
 }
 
 export function BoardMemberGrid({
@@ -16,12 +17,20 @@ export function BoardMemberGrid({
           key={`${member.name}-${member.role}-${index}`}
           className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/40"
         >
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#dbeafe,#f8fafc)] font-[family-name:var(--font-display)] text-xl text-primary">
-            {member.name
-              .split(" ")
-              .slice(0, 2)
-              .map((part) => part[0])
-              .join("")}
+          <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#dbeafe,#f8fafc)] font-[family-name:var(--font-display)] text-xl text-primary">
+            {member.photoUrl ? (
+              <img
+                src={member.photoUrl}
+                alt={member.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              member.name
+                .split(" ")
+                .slice(0, 2)
+                .map((part) => part[0])
+                .join("")
+            )}
           </div>
           <h3 className="mt-4 text-lg font-semibold text-slate-950">
             {member.name}

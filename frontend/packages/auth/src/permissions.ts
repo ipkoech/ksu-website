@@ -4,12 +4,14 @@ export const SERVICE_ROLES: Record<Service, readonly string[]> = {
   main: [
     "super-admin",
     "admin",
+    "academic-admin",
     "content-admin",
     "content-manager",
     "content-staff",
     "school-admin",
     "dept-admin",
     "dept-staff",
+    "staff-admin",
     "lecturer",
   ],
   research: [
@@ -23,9 +25,15 @@ export const SERVICE_ROLES: Record<Service, readonly string[]> = {
   ],
   library: [
     "super-admin",
+    "admin",
     "library-admin",
     "library-manager",
     "library-staff",
+  ],
+  system: [
+    "super-admin",
+    "admin",
+    "system-admin",
   ],
 } as const;
 
@@ -33,7 +41,9 @@ export const ROLE_HIERARCHY: Record<Service, readonly string[]> = {
   main: [
     "super-admin",
     "admin",
+    "academic-admin",
     "content-admin",
+    "staff-admin",
     "school-admin",
     "content-manager",
     "dept-admin",
@@ -52,27 +62,40 @@ export const ROLE_HIERARCHY: Record<Service, readonly string[]> = {
   ],
   library: [
     "super-admin",
+    "admin",
     "library-admin",
     "library-manager",
     "library-staff",
   ],
+  system: [
+    "super-admin",
+    "admin",
+    "system-admin",
+  ],
 };
 
+function normalizeRole(role: string) {
+  return role.trim().toLowerCase().replace(/_/g, "-");
+}
+
 export function getAccessibleServices(roles: string[]): Service[] {
+  const normalizedRoles = roles.map(normalizeRole);
   return (Object.entries(SERVICE_ROLES) as [Service, readonly string[]][])
     .filter(([_, serviceRoles]) =>
-      roles.some((role) => serviceRoles.includes(role))
+      normalizedRoles.some((role) => serviceRoles.includes(role))
     )
     .map(([service]) => service);
 }
 
 export function hasServiceAccess(roles: string[], service: Service): boolean {
-  return roles.some((role) => SERVICE_ROLES[service].includes(role));
+  const normalizedRoles = roles.map(normalizeRole);
+  return normalizedRoles.some((role) => SERVICE_ROLES[service].includes(role));
 }
 
 export function getPrimaryService(roles: string[]): Service | null {
   const services = getAccessibleServices(roles);
   if (services.includes("main")) return "main";
+  if (services.includes("system")) return "system";
   if (services.includes("research")) return "research";
   if (services.includes("library")) return "library";
   return null;
@@ -80,14 +103,15 @@ export function getPrimaryService(roles: string[]): Service | null {
 
 export function getHighestRole(roles: string[], service: Service): string | null {
   const hierarchy = ROLE_HIERARCHY[service];
+  const normalizedRoles = roles.map(normalizeRole);
   for (const role of hierarchy) {
-    if (roles.includes(role)) return role;
+    if (normalizedRoles.includes(role)) return role;
   }
   return null;
 }
 
 export function isSuperAdmin(roles: string[]): boolean {
-  return roles.includes("super-admin");
+  return roles.map(normalizeRole).includes("super-admin");
 }
 
 export function formatRoleName(role: string): string {

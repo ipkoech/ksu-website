@@ -1,6 +1,7 @@
 "use client";
 
 import { usePermissions } from "@/hooks/use-permissions";
+import { useDeleteConfirm } from "@/hooks/use-delete-confirm";
 import { DataTable } from "@/components/data-table/data-table";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTransition } from "@/lib/animations";
@@ -15,13 +16,17 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@ksu/ui/components";
-import { blogsApi, queryKeys } from "@ksu/api-client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { blogsApi, queryKeys, useAdminBlogs } from "@ksu/api-client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@ksu/ui";
+import { useState } from "react";
+import { TableSearch } from "@/components/shared/table-search";
 
 const getBlogColumns = ({
+    canDelete,
     onDelete,
 }: {
+    canDelete: boolean;
     onDelete: (id: string) => void;
 }): ColumnDef<any>[] => [
     {
@@ -77,13 +82,17 @@ const getBlogColumns = ({
                         <DropdownMenuItem onClick={() => window.location.href = `/content/blogs/${blog.id}`}>
                             Edit
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                            className="text-destructive" 
-                            onClick={() => onDelete(blog.id)}
-                        >
-                            Delete
-                        </DropdownMenuItem>
+                        {canDelete && (
+                            <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                    className="text-destructive" 
+                                    onClick={() => onDelete(blog.id)}
+                                >
+                                    Delete
+                                </DropdownMenuItem>
+                            </>
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             );
@@ -93,12 +102,11 @@ const getBlogColumns = ({
 
 export default function BlogsPage() {
     const { canCreate, canDelete } = usePermissions();
+    const { confirmDelete, dialog } = useDeleteConfirm();
     const queryClient = useQueryClient();
+    const [search, setSearch] = useState("");
 
-    const { data: blogsResponse, isLoading } = useQuery({
-        queryKey: queryKeys.blogs.list(),
-        queryFn: () => blogsApi.list(),
-    });
+    const { data: blogsResponse, isLoading } = useAdminBlogs({ search: search || undefined });
 
     const deleteMutation = useMutation({
         mutationFn: (id: string) => blogsApi.delete(id),
@@ -112,12 +120,10 @@ export default function BlogsPage() {
     });
 
     const handleDelete = (id: string) => {
-        if (confirm("Are you sure you want to delete this blog?")) {
-            deleteMutation.mutate(id);
-        }
+        confirmDelete("blog", () => deleteMutation.mutateAsync(id));
     };
 
-    const columns = getBlogColumns({ onDelete: handleDelete });
+    const columns = getBlogColumns({ canDelete: canDelete("content"), onDelete: handleDelete });
 
     return (
         <PageTransition>
@@ -131,8 +137,10 @@ export default function BlogsPage() {
                 data={blogsResponse?.data || []}
                 columns={columns}
                 isLoading={isLoading}
-                emptyMessage="No blogs found. Create your first blog."
+                toolbar={<TableSearch value={search} onChange={setSearch} placeholder="Search blogs by title, slug, or summary" />}
+                emptyMessage={search ? "No blogs match this search." : "No blogs found. Create your first blog."}
             />
+            {dialog}
         </PageTransition>
     );
 }

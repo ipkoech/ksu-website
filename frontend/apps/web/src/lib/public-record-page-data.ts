@@ -1,0 +1,1338 @@
+import {
+  accommodationsApi,
+  alumniApi,
+  alumniAssociationsApi,
+  announcementsApi,
+  artsCultureApi,
+  clubsApi,
+  contactsApi,
+  departmentsApi,
+  divisionsApi,
+  documentsApi,
+  eventsApi,
+  faqsApi,
+  intakesApi,
+  newsApi,
+  programmesApi,
+  schoolsApi,
+  searchApi,
+  sportsFacilitiesApi,
+  studentGovernanceApi,
+  wingsApi,
+  type Accommodation,
+  type Alumni,
+  type AlumniAssociation,
+  type Announcement,
+  type ArtsCulture,
+  type Blog,
+  type Club,
+  type ContactDirectory,
+  type Department,
+  type Division,
+  type Document,
+  type Event,
+  type FAQ,
+  type Intake,
+  type News,
+  type Programme,
+  type School,
+  type SearchPayload,
+  type SportsFacility,
+  type StudentGovernance,
+  type Wing,
+} from "@ksu/api-client";
+import type {
+  PublicCard,
+  PublicIconName,
+  PublicPageConfig,
+  PublicPageSection,
+} from "@/components/public/section-page";
+import {
+  getAcademicsPage,
+  getAdministrationPage,
+  getAlumniPage,
+  getAnnouncementsPage,
+  getCampusLifePage,
+  getEventsPage,
+  getNewsPage,
+  getSearchPage,
+} from "@/lib/public-page-data";
+
+type ListEnvelope<T> = { data?: T[] };
+type RecordEnvelope<T> = { data?: T | null };
+
+const officialSources = {
+  administration: "https://kisiiuniversity.ac.ke/admin_departments/administrative-division",
+  schools: "https://kisiiuniversity.ac.ke/schools_departments",
+  campusLife: "https://kisiiuniversity.ac.ke/campus-life",
+  news: "https://kisiiuniversity.ac.ke/news",
+  conferences: "https://digital.kisiiuniversity.ac.ke/conferences",
+  research: "https://research.kisiiuniversity.ac.ke",
+  portal: "https://portal.kisiiuniversity.ac.ke",
+  elearning: "https://elearning.kisiiuniversity.ac.ke",
+};
+
+const communicationsNav: PublicCard[] = [
+  pageCard("News", "/news", "University news.", "news", "Open news"),
+  pageCard("Events", "/events", "Event records.", "calendar", "Open events"),
+  pageCard("Announcements", "/announcements", "Official public notices.", "megaphone", "Open notices"),
+];
+
+function titleFromSlug(slug?: string) {
+  if (!slug) return "Published record";
+  return slug
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function pageCard(
+  title: string,
+  href: string,
+  body: string,
+  icon: PublicIconName = "file",
+  action = "Open page",
+  external = false,
+): PublicCard {
+  return { title, href, body, icon, action, external };
+}
+
+function infoCard(
+  title: string,
+  body: string,
+  icon: PublicIconName = "file",
+  eyebrow?: string,
+): PublicCard {
+  return { title, body, icon, eyebrow };
+}
+
+function externalCard(
+  title: string,
+  href: string,
+  body: string,
+  icon: PublicIconName = "file",
+  action = "Open official page",
+): PublicCard {
+  return pageCard(title, href, body, icon, action, true);
+}
+
+function stripHtml(value?: string | null) {
+  return (value ?? "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function bestText(...values: Array<string | null | undefined>) {
+  for (const value of values) {
+    const text = stripHtml(value);
+    if (text) return text;
+  }
+  return "";
+}
+
+function bestContent(...values: Array<string | null | undefined>) {
+  for (const value of values) {
+    if (bestText(value)) return value ?? "";
+  }
+  return "";
+}
+
+function shortText(value: string | null | undefined, fallback: string, max = 210) {
+  const text = bestText(value) || fallback;
+  return text.length > max ? `${text.slice(0, max - 3)}...` : text;
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "Not dated";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
+async function safeList<T>(request: Promise<ListEnvelope<T>>): Promise<T[]> {
+  try {
+    const response = await request;
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error) {
+    console.error("Failed to fetch public records:", error);
+    return [];
+  }
+}
+
+async function safeRecord<T>(request: Promise<RecordEnvelope<T>>): Promise<T | null> {
+  try {
+    const response = await request;
+    return response.data ?? null;
+  } catch (error) {
+    console.error("Failed to fetch public record:", error);
+    return null;
+  }
+}
+
+function emptyPublishedCard(label: string, href: string, sourceLabel: string): PublicCard {
+  return externalCard(
+    `${titleFromSlug(label)} information`,
+    href,
+    `Open ${sourceLabel} for current ${label} information and related public guidance.`,
+    "file",
+    `Open ${sourceLabel}`,
+  );
+}
+
+function newsCard(item: News): PublicCard {
+  return pageCard(
+    item.title,
+    `/news/${item.slug}`,
+    shortText(item.summary ?? item.plain_text ?? item.rich_text ?? item.content, "University news item."),
+    "news",
+    item.published_at ? formatDate(item.published_at) : "Read article",
+  );
+}
+
+function blogCard(item: Blog): PublicCard {
+  return pageCard(
+    item.title,
+    `/blogs/${item.slug}`,
+    shortText(item.summary ?? item.plain_text ?? item.rich_text ?? item.content, "University blog post."),
+    "file",
+    item.published_at ? formatDate(item.published_at) : "Read post",
+  );
+}
+
+function eventCard(item: Event): PublicCard {
+  const date = formatDate(item.start_date);
+  const location = item.venue || item.location || (item.is_virtual ? "Virtual event" : "Venue to be confirmed");
+  return pageCard(
+    item.title,
+    `/events/${item.slug}`,
+    shortText(item.summary ?? item.plain_text ?? item.rich_text ?? item.content, `${date}. ${location}.`),
+    "calendar",
+    date,
+  );
+}
+
+function announcementCard(item: Announcement): PublicCard {
+  return pageCard(
+    item.title,
+    `/announcements/${item.slug}`,
+    shortText(
+      item.summary ?? item.plain_text ?? item.rich_text ?? item.content,
+      `${item.priority || "Notice"} for ${item.audience || "public audiences"}.`,
+      150,
+    ),
+    "megaphone",
+    item.published_at ? formatDate(item.published_at) : item.priority || "Open notice",
+  );
+}
+
+function schoolCard(item: School): PublicCard {
+  return pageCard(
+    item.name,
+    `/academics/schools/${item.slug}`,
+    shortText(item.about ?? item.description ?? item.mandate, "Academic school record."),
+    "building",
+    item.departments_count ? `${item.departments_count} departments` : "View school",
+  );
+}
+
+function programmeCard(item: Programme): PublicCard {
+  return pageCard(
+    item.name,
+    `/academics/programmes/${item.slug}`,
+    shortText(item.about ?? item.objectives ?? item.entry_requirements, "Academic programme record."),
+    "book",
+    [item.level, item.duration].filter(Boolean).join(" · ") || "View programme",
+  );
+}
+
+function departmentCard(item: Department, base = "/administration/units"): PublicCard {
+  return pageCard(
+    item.name,
+    `${base}/${item.slug}`,
+    shortText(item.about ?? item.mandate ?? item.service_charter, "Department record."),
+    "building",
+    item.programmes_count ? `${item.programmes_count} programmes` : "View record",
+  );
+}
+
+function divisionCard(item: Division): PublicCard {
+  return pageCard(
+    item.name,
+    `/administration/divisions/${item.slug}`,
+    shortText(item.description ?? item.head_message ?? item.mission, "University division record."),
+    "landmark",
+    item.code || "View division",
+  );
+}
+
+function wingCard(item: Wing): PublicCard {
+  return pageCard(
+    item.name,
+    `/administration/directorates/${item.slug}`,
+    shortText(item.description ?? item.mandate ?? item.service_charter, "Administrative wing record."),
+    "compass",
+    item.code || "View wing",
+  );
+}
+
+function clubCard(item: Club): PublicCard {
+  return pageCard(
+    item.name,
+    `/campus-life/clubs/${item.slug}`,
+    shortText(item.about ?? item.mission ?? item.objectives, "Student club or society record."),
+    "sparkles",
+    item.membership_count ? `${item.membership_count} members` : item.club_type || "View club",
+  );
+}
+
+function accommodationCard(item: Accommodation): PublicCard {
+  return pageCard(
+    item.name,
+    `/campus-life/accommodation/${item.slug}`,
+    shortText(item.about ?? item.rules, "Accommodation record."),
+    "home",
+    item.capacity ? `${item.capacity} capacity` : item.gender || "View housing",
+  );
+}
+
+function sportsCard(item: SportsFacility): PublicCard {
+  return pageCard(
+    item.name,
+    `/campus-life/sports/${item.slug}`,
+    shortText(item.about, item.sport_types?.length ? item.sport_types.join(", ") : "Sports facility record."),
+    "trophy",
+    item.location || item.facility_type || "View facility",
+  );
+}
+
+function artsCard(item: ArtsCulture): PublicCard {
+  return pageCard(
+    item.title,
+    `/campus-life/gallery/${item.slug}`,
+    shortText(item.about, "Arts and culture record."),
+    "file",
+    item.category || "View record",
+  );
+}
+
+function governanceCard(item: StudentGovernance): PublicCard {
+  return pageCard(
+    item.name,
+    `/campus-life/student-life/${item.slug}`,
+    shortText(item.about ?? item.mandate ?? item.constitution, "Student governance record."),
+    "users",
+    item.acronym || item.governance_type || "View body",
+  );
+}
+
+function alumniCard(item: Alumni): PublicCard {
+  const title = [item.current_position, item.current_employer].filter(Boolean).join(", ");
+  return infoCard(
+    title || `Class of ${item.graduation_year}`,
+    shortText(item.bio ?? item.achievements, item.industry || "Published alumni profile."),
+    "user",
+    item.is_mentor_available ? "Mentor available" : `Class of ${item.graduation_year}`,
+  );
+}
+
+function alumniAssociationCard(item: AlumniAssociation): PublicCard {
+  return pageCard(
+    item.name,
+    `/alumni#${item.slug}`,
+    shortText(item.about ?? item.mission ?? item.objectives, "Alumni association record."),
+    "users",
+    item.region || item.acronym || item.association_type || "View association",
+  );
+}
+
+export async function getNewsPageConfig(segments: string[] = []): Promise<PublicPageConfig> {
+  const base = getNewsPage(segments);
+  const [area, slug] = segments;
+  const isCategory = area === "category";
+
+  if (area && !isCategory) {
+    const [article, latest] = await Promise.all([
+      safeRecord(newsApi.getBySlug(area)),
+      safeList(newsApi.list({ is_published: true, per_page: 6 })),
+    ]);
+
+    if (!article) {
+      return {
+        ...base,
+        title: `${titleFromSlug(area)} article not found`,
+        body: "We could not find a news article for this address. Browse the latest university news below.",
+        sections: [
+          {
+            eyebrow: "News",
+            title: "Latest available records",
+            body: "Recent records and related public information.",
+            columns: 3,
+            cards: latest.length ? latest.map(newsCard) : [emptyPublishedCard("news", officialSources.news, "official news")],
+          },
+        ],
+      };
+    }
+
+    return {
+      ...base,
+      eyebrow: article.category || "News Article",
+      title: article.title,
+      body: shortText(article.summary ?? article.plain_text ?? article.rich_text ?? article.content, "University news article.", 360),
+      sections: [
+        {
+          eyebrow: "Article Details",
+          title: article.title,
+          body: bestContent(article.rich_text, article.content, article.plain_text, article.summary) || "Article record.",
+          columns: 3,
+          cards: [
+            infoCard("Category", article.category || "Uncategorized", "book"),
+            infoCard("Published", formatDate(article.published_at ?? article.created_at), "calendar"),
+            infoCard("Status", article.is_published ? "Published" : "Not published", "shield"),
+          ],
+        },
+        {
+          eyebrow: "More News",
+          title: "Latest public records",
+          body: "Related communications remain separated from events and announcements.",
+          tone: "dark",
+          columns: 3,
+          cards: latest.filter((item) => item.slug !== article.slug).slice(0, 3).map(newsCard),
+        },
+      ],
+    };
+  }
+
+  const records = await safeList(newsApi.list({ is_published: true, per_page: 18 }));
+  const filtered = isCategory && slug
+    ? records.filter((item) => (item.category ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-") === slug)
+    : records;
+  const categories = Array.from(new Set(records.map((item) => item.category).filter(Boolean))) as string[];
+
+  return {
+    ...base,
+    title: isCategory && slug ? `${titleFromSlug(slug)} news` : "University news",
+    body: filtered.length
+      ? "News records."
+      : "No matching news records are currently listed.",
+    sections: [
+      {
+        eyebrow: "News",
+        title: isCategory && slug ? `${titleFromSlug(slug)} records` : "Latest university communications",
+        body: "Cards are generated from news records.",
+        columns: 3,
+        cards: filtered.length ? filtered.map(newsCard) : [emptyPublishedCard("news", officialSources.news, "official news")],
+      },
+      {
+        eyebrow: "Categories",
+        title: "Available news categories",
+        body: "Categories are generated from currently public records.",
+        tone: "dark",
+        columns: 3,
+        cards: categories.length
+          ? categories.slice(0, 6).map((category) =>
+              pageCard(
+                category,
+                `/news/category/${category.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`,
+                `Open public records categorized as ${category}.`,
+                "book",
+                "Open category",
+              ),
+            )
+          : communicationsNav,
+      },
+    ],
+  };
+}
+
+export async function getEventsPageConfig(segments: string[] = []): Promise<PublicPageConfig> {
+  const base = getEventsPage(segments);
+  const [slug] = segments;
+
+  if (slug) {
+    const [event, upcoming] = await Promise.all([
+      safeRecord(eventsApi.getBySlug(slug)),
+      safeList(eventsApi.list({ is_published: true, upcoming: true, per_page: 6 })),
+    ]);
+
+    if (!event) {
+      return {
+        ...base,
+        title: `${titleFromSlug(slug)} event not found`,
+        body: "We could not find an event for this address. Browse upcoming events below.",
+        sections: [
+          {
+            eyebrow: "Events",
+            title: "Upcoming event records",
+            body: "Recent records and related public information.",
+            columns: 3,
+            cards: upcoming.length ? upcoming.map(eventCard) : [emptyPublishedCard("event", officialSources.conferences, "conference portal")],
+          },
+        ],
+      };
+    }
+
+    return {
+      ...base,
+      title: event.title,
+      body: shortText(event.summary ?? event.plain_text ?? event.rich_text ?? event.content, "University event.", 360),
+      sections: [
+        {
+          eyebrow: "Event Details",
+          title: event.title,
+          body: bestContent(event.rich_text, event.content, event.plain_text, event.summary) || "Event record.",
+          columns: 3,
+          cards: [
+            infoCard("Date", `${formatDate(event.start_date)}${event.end_date ? ` to ${formatDate(event.end_date)}` : ""}`, "calendar"),
+            infoCard("Venue", event.venue || event.location || (event.is_virtual ? "Virtual" : "To be confirmed"), "landmark"),
+            infoCard("Registration", event.registration_required ? "Registration required" : "No registration requirement published", "clipboard"),
+          ],
+        },
+        {
+          eyebrow: "More Events",
+          title: "Upcoming events",
+          body: "Event cards are generated from event records.",
+          tone: "dark",
+          columns: 3,
+          cards: upcoming.filter((item) => item.slug !== event.slug).slice(0, 3).map(eventCard),
+        },
+      ],
+    };
+  }
+
+  const [upcoming, allEvents] = await Promise.all([
+    safeList(eventsApi.list({ is_published: true, upcoming: true, per_page: 9 })),
+    safeList(eventsApi.list({ is_published: true, per_page: 9 })),
+  ]);
+  const records = upcoming.length ? upcoming : allEvents;
+
+  return {
+    ...base,
+    body: records.length
+      ? "Event records."
+      : "No event records are currently listed.",
+    sections: [
+      {
+        eyebrow: "Events",
+        title: upcoming.length ? "Upcoming events" : "Latest event records",
+        body: "Dates, venues, and registration states come from event records.",
+        columns: 3,
+        cards: records.length ? records.map(eventCard) : [emptyPublishedCard("event", officialSources.conferences, "conference portal")],
+      },
+      {
+        eyebrow: "Communication Links",
+        title: "News, events, and notices",
+        body: "Public communications remain separated by purpose.",
+        tone: "dark",
+        columns: 3,
+        cards: communicationsNav,
+      },
+    ],
+  };
+}
+
+export async function getAnnouncementsPageConfig(segments: string[] = []): Promise<PublicPageConfig> {
+  const base = getAnnouncementsPage();
+  const [slug] = segments;
+
+  if (slug) {
+    const [announcement, latest] = await Promise.all([
+      safeRecord(announcementsApi.getBySlug(slug)),
+      safeList(announcementsApi.list({ is_published: true, per_page: 6 })),
+    ]);
+
+    if (!announcement) {
+      return {
+        ...base,
+        currentHref: `/announcements/${slug}`,
+        title: `${titleFromSlug(slug)} announcement not found`,
+        body: "No matching announcement was found.",
+        sections: [
+          {
+            eyebrow: "Published Announcements",
+            title: "Latest notices",
+            body: "Records.",
+            columns: 3,
+            cards: latest.length ? latest.map(announcementCard) : [emptyPublishedCard("announcement", officialSources.news, "official news")],
+          },
+        ],
+      };
+    }
+
+    const detailCards = [
+      infoCard("Priority", announcement.priority || "Not specified", "megaphone"),
+      infoCard("Audience", announcement.audience || announcement.target_audience?.join(", ") || "Public", "users"),
+      infoCard("Published", formatDate(announcement.published_at ?? announcement.valid_from ?? announcement.created_at), "calendar"),
+      ...(announcement.valid_to
+        ? [infoCard("Valid until", formatDate(announcement.valid_to), "calendar")]
+        : []),
+    ];
+    const relatedAnnouncements = latest
+      .filter((item) => item.slug !== announcement.slug)
+      .slice(0, 3)
+      .map(announcementCard);
+
+    return {
+      ...base,
+      currentHref: `/announcements/${slug}`,
+      eyebrow: announcement.category || "Announcement",
+      title: announcement.title,
+      body: shortText(announcement.summary ?? announcement.plain_text ?? announcement.rich_text ?? announcement.content, "Announcement.", 250),
+      scopeTitle: "Announcement",
+      scopeCards: detailCards.slice(0, 3),
+      asideTitle: "Public notice",
+      asideBody: "Official published announcement record.",
+      relatedTitle: "Related notices",
+      relatedItems: relatedAnnouncements,
+      continueTitle: "More communications",
+      continueBody: "Browse related news, events, and notices.",
+      sections: [
+        {
+          eyebrow: "Notice",
+          title: "Details",
+          body: bestContent(announcement.rich_text, announcement.content, announcement.plain_text, announcement.summary) || "Announcement.",
+          variant: "article",
+          tone: "white",
+          cards: detailCards,
+        },
+        ...(relatedAnnouncements.length
+          ? [
+              {
+                eyebrow: "More Notices",
+                title: "Latest announcements",
+                body: "Other published notices.",
+                tone: "dark" as const,
+                columns: 3 as const,
+                cards: relatedAnnouncements,
+              },
+            ]
+          : []),
+      ],
+    };
+  }
+
+  const records = await safeList(announcementsApi.list({ is_published: true, per_page: 12 }));
+
+  return {
+    ...base,
+    body: records.length
+      ? "Official notices."
+      : "No published announcements were returned.",
+    sections: [
+      {
+        eyebrow: "Published Announcements",
+        title: "Public notices",
+        body: "Priority, audience, and dates come from public records.",
+        columns: 3,
+        cards: records.length ? records.map(announcementCard) : [emptyPublishedCard("announcement", officialSources.news, "official news")],
+      },
+      {
+        eyebrow: "Communication Links",
+        title: "News, events, notices",
+        body: "Each communication type keeps its own route.",
+        tone: "dark",
+        columns: 3,
+        cards: communicationsNav,
+      },
+    ],
+  };
+}
+
+export async function getSearchPageConfig(query?: string): Promise<PublicPageConfig> {
+  const base = getSearchPage(query);
+  const trimmed = query?.trim();
+  const payload = trimmed && trimmed.length >= 2
+    ? await safeRecord<SearchPayload>(searchApi.query({ q: trimmed, limit_per_type: 6 }))
+    : null;
+  const results = payload?.results;
+  const resultCards = [
+    ...(results?.news ?? []).map(newsCard),
+    ...(results?.blogs ?? []).map(blogCard),
+    ...(results?.events ?? []).map(eventCard),
+    ...(results?.announcements ?? []).map(announcementCard),
+    ...(results?.schools ?? []).map(schoolCard),
+    ...(results?.departments ?? []).map((item) =>
+      pageCard(
+        item.name,
+        item.department_type === "academic" ? `/academics/departments/${item.slug}` : `/administration/units/${item.slug}`,
+        shortText(item.about ?? item.mandate, "Department record."),
+        "building",
+        item.department_type || "Open record",
+      ),
+    ),
+    ...(results?.persons ?? []).map((item) =>
+      infoCard(item.full_name || `${item.first_name} ${item.last_name}`, shortText(item.bio ?? item.specialization, "Person record."), "user", item.department_name),
+    ),
+  ];
+
+  return {
+    ...base,
+    body: !trimmed
+      ? "Enter a query from the public search field to return public records."
+      : trimmed.length < 2
+        ? "Search queries must include at least two characters."
+          : resultCards.length
+          ? `Showing public public search results for "${trimmed}".`
+          : `No public records matched "${trimmed}".`,
+    asideBody:
+      "Search results come across news, blogs, events, announcements, people, schools, and departments.",
+    sections: [
+      {
+        eyebrow: "Search Results",
+        title: trimmed ? `Results for "${trimmed}"` : "Search public records",
+        body: "Results are grouped.",
+        columns: 3,
+        cards: resultCards.length
+          ? resultCards
+          : [
+              pageCard("Admissions", "/admissions", "Admissions pathways and application guidance.", "graduation", "Open admissions"),
+              pageCard("Programmes", "/academics/programmes", "Browse programme records.", "book", "Browse programmes"),
+              pageCard("A-Z Index", "/az-index", "Browse public routes.", "search", "Open index"),
+            ],
+      },
+    ],
+    continueItems: resultCards.length ? resultCards.slice(0, 9) : base.continueItems,
+  };
+}
+
+export async function getAdministrationPageConfig(segments: string[] = []): Promise<PublicPageConfig> {
+  const base = getAdministrationPage(segments);
+  const [area, slug] = segments;
+
+  if (area === "divisions" && slug) {
+    const [divisions, units] = await Promise.all([
+      safeList(divisionsApi.list({ is_active: true, per_page: 20 })),
+      safeList(departmentsApi.list({ department_type: "administrative", per_page: 20 })),
+    ]);
+    const division = divisions.find((item) => item.slug === slug);
+
+    return {
+      ...base,
+      title: division?.name ?? `${titleFromSlug(slug)} division`,
+      body: division
+        ? shortText(division.description ?? division.head_message ?? division.mission, "University division record.", 360)
+        : "We could not find that division record.",
+      sections: [
+        {
+          eyebrow: "Division Record",
+          title: division?.name ?? "Division record not found",
+          body: division?.description ?? "Division details are shown when the public record exists.",
+          columns: 3,
+          cards: division
+            ? [
+                infoCard("Code", division.code, "file"),
+                infoCard("Type", division.division_type || "Division", "landmark"),
+                infoCard("Status", division.is_active ? "Active" : "Inactive", "shield"),
+              ]
+            : [emptyPublishedCard("division", officialSources.administration, "administrative division")],
+        },
+        {
+          eyebrow: "Administrative Units",
+          title: "Units under public administration",
+          body: "Administrative unit cards come from department records.",
+          tone: "dark",
+          columns: 4,
+          cards: units.length ? units.map((item) => departmentCard(item)) : [emptyPublishedCard("administrative unit", officialSources.administration, "administrative division")],
+        },
+      ],
+    };
+  }
+
+  const [divisions, units] = await Promise.all([
+    safeList(divisionsApi.list({ is_active: true, per_page: 20 })),
+    safeList(departmentsApi.list({ department_type: "administrative", per_page: 40 })),
+  ]);
+  const wings = (
+    await Promise.all(divisions.map((division) => safeList(wingsApi.listByDivision(division.id, { is_active: true }))))
+  ).flat();
+
+  if (area === "directorates" && slug) {
+    const wing = wings.find((item) => item.slug === slug);
+
+    return {
+      ...base,
+      title: wing?.name ?? `${titleFromSlug(slug)} directorate`,
+      body: wing
+        ? shortText(wing.description ?? wing.mandate ?? wing.service_charter, "Administrative wing record.", 360)
+        : "We could not find that directorate or wing record.",
+      sections: [
+        {
+          eyebrow: "Directorate Record",
+          title: wing?.name ?? "Directorate record not found",
+          body: wing ? bestText(wing.description, wing.mandate, wing.service_charter) : "Directorate details are shown when the public record exists.",
+          columns: 3,
+          cards: wing
+            ? [
+                infoCard("Code", wing.code, "file"),
+                infoCard("Type", wing.wing_type || "Wing", "compass"),
+                infoCard("Office", wing.office_location || "Not published", "landmark"),
+                infoCard("Email", wing.email || "Not published", "handshake"),
+                infoCard("Phone", wing.phone || "Not published", "handshake"),
+                infoCard("Status", wing.is_active ? "Active" : "Inactive", "shield"),
+              ]
+            : [emptyPublishedCard("directorate", officialSources.administration, "administrative division")],
+        },
+      ],
+    };
+  }
+
+  return {
+    ...base,
+    body: "Administration pages now use published division, wing, and administrative department records .",
+    sections: area === "organization"
+      ? [
+          {
+            eyebrow: "Organization Structure",
+            title: "Published administrative structure",
+            body: "Division and unit cards are generated from organization records.",
+            columns: 3,
+            cards: divisions.length ? divisions.map(divisionCard) : [emptyPublishedCard("division", officialSources.administration, "administrative division")],
+          },
+          {
+            eyebrow: "Operational Units",
+            title: "Administrative unit records",
+            body: "Unit records come from administrative departments.",
+            tone: "dark",
+            columns: 4,
+            cards: units.length ? units.map((item) => departmentCard(item)) : [emptyPublishedCard("administrative unit", officialSources.administration, "administrative division")],
+          },
+        ]
+      : area === "directorates"
+        ? [
+            {
+              eyebrow: "Wings and Directorates",
+              title: "Published administrative wings",
+              body: "Directorate and wing cards are generated from organization records.",
+              columns: 3,
+              cards: wings.length ? wings.map(wingCard) : [emptyPublishedCard("directorate", officialSources.administration, "administrative division")],
+            },
+          ]
+        : area === "units"
+          ? [
+              {
+                eyebrow: "Administrative Units",
+                title: "Administrative department records",
+                body: "Unit cards come from administrative department records.",
+                columns: 4,
+                cards: units.length ? units.map((item) => departmentCard(item)) : [emptyPublishedCard("administrative unit", officialSources.administration, "administrative division")],
+              },
+            ]
+          : [
+              {
+                eyebrow: "Administrative Divisions",
+                title: "Published divisions",
+                body: "Division cards come from organization records.",
+                columns: 3,
+                cards: divisions.length ? divisions.map(divisionCard) : [emptyPublishedCard("division", officialSources.administration, "administrative division")],
+              },
+              {
+                eyebrow: "Administrative Units",
+                title: "Unit records",
+                body: "Administrative units come from department records.",
+                tone: "dark",
+                columns: 4,
+                cards: units.length ? units.slice(0, 12).map((item) => departmentCard(item)) : [emptyPublishedCard("administrative unit", officialSources.administration, "administrative division")],
+              },
+            ],
+  };
+}
+
+export async function getAcademicsPageConfig(
+  segments: string[] = [],
+  searchParams: { level?: string; q?: string } = {},
+): Promise<PublicPageConfig> {
+  const base = getAcademicsPage(segments);
+  const [area, slug] = segments;
+
+  if (area === "programmes" && slug) {
+    const programme = await safeRecord(programmesApi.getBySlug(slug));
+
+    return {
+      ...base,
+      title: programme?.name ?? `${titleFromSlug(slug)} programme`,
+      body: programme
+        ? shortText(programme.about ?? programme.objectives ?? programme.entry_requirements, "Programme record.", 360)
+        : "We could not find that programme record.",
+      sections: [
+        {
+          eyebrow: "Programme Record",
+          title: programme?.name ?? "Programme record not found",
+          body: programme
+            ? bestText(programme.about, programme.objectives, programme.curriculum_overview, programme.entry_requirements)
+            : "Programme details are shown when the public record exists.",
+          columns: 3,
+          cards: programme
+            ? [
+                infoCard("Level", programme.level || "Not specified", "graduation"),
+                infoCard("Duration", programme.duration || "Not specified", "calendar"),
+                infoCard("Mode", programme.mode_of_study || "Not specified", "book"),
+                infoCard("Department", programme.department_name || "Not specified", "building"),
+                infoCard("Entry Requirements", shortText(programme.entry_requirements, "No entry requirements published.", 160), "check"),
+                infoCard("Career Prospects", shortText(programme.career_prospects, "No career prospects published.", 160), "sparkles"),
+              ]
+            : [emptyPublishedCard("programme", officialSources.schools, "schools and departments")],
+        },
+      ],
+    };
+  }
+
+  const [schools, programmes, intakes, calendarDocs, examDocs] = await Promise.all([
+    safeList(schoolsApi.list({ per_page: 20 })),
+    safeList(programmesApi.list({ per_page: 24, level: searchParams.level, q: searchParams.q })),
+    safeList(intakesApi.list({ per_page: 8 })),
+    safeList(documentsApi.list({ category: "academic-calendar", per_page: 6 })),
+    safeList(documentsApi.list({ category: "examinations", per_page: 6 })),
+  ]);
+
+  if (area === "schools") {
+    return {
+      ...base,
+      body: schools.length
+        ? "Academic schools."
+        : "No school records are currently listed.",
+      sections: [
+        {
+          eyebrow: "Academic Schools",
+          title: "School records",
+          body: "Browse schools, departments, and academic pathways.",
+          columns: 4,
+          cards: schools.length ? schools.map(schoolCard) : [emptyPublishedCard("school", officialSources.schools, "schools and departments")],
+        },
+      ],
+    };
+  }
+
+  if (area === "programmes") {
+    const filterLabel = [searchParams.level, searchParams.q].filter(Boolean).join(" · ");
+    return {
+      ...base,
+      title: filterLabel ? `${titleFromSlug(filterLabel)} programmes` : base.title,
+      body: programmes.length
+        ? "Academic programme records."
+        : "No programmes match the current filters.",
+      sections: [
+        {
+          eyebrow: "Programme Finder",
+          title: filterLabel ? `Programmes matching ${filterLabel}` : "Programmes",
+          body: "Programme cards show level, duration, department, and requirement context.",
+          columns: 3,
+          cards: programmes.length ? programmes.map(programmeCard) : [emptyPublishedCard("programme", officialSources.schools, "schools and departments")],
+        },
+      ],
+    };
+  }
+
+  if (area === "calendar") {
+    const intakeCards = intakes.map((item: Intake) =>
+      pageCard(
+        item.name,
+        `/admissions/intakes/${item.slug}`,
+        `Applications: ${formatDate(item.application_start)} to ${formatDate(item.application_end)}.`,
+        "calendar",
+        item.is_open ? "Open intake" : "View intake",
+      ),
+    );
+    const documentCards = calendarDocs.map((item: Document) =>
+      pageCard(item.title, `/downloads/${item.slug}`, shortText(item.description, "Academic calendar document."), "file", "Open document"),
+    );
+
+    return {
+      ...base,
+      body: "Calendar-facing content is generated from intake and academic calendar document records.",
+      sections: [
+        {
+          eyebrow: "Academic Calendar",
+          title: "Intakes and calendar documents",
+          body: "Calendar content uses intake records and documents.",
+          columns: 3,
+          cards: [...intakeCards, ...documentCards].length
+            ? [...intakeCards, ...documentCards]
+            : [emptyPublishedCard("calendar", officialSources.schools, "schools and departments")],
+        },
+      ],
+    };
+  }
+
+  if (area === "examinations") {
+    return {
+      ...base,
+      body: "Examination information brings together timetable, notice, and document links.",
+      sections: [
+        {
+          eyebrow: "Examination Records",
+          title: "Examination documents",
+          body: "Timetables, notices, and examination documents for students and staff.",
+          columns: 3,
+          cards: examDocs.length
+            ? examDocs.map((item) =>
+                pageCard(item.title, `/downloads/${item.slug}`, shortText(item.description, "Examination document."), "clipboard", "Open document"),
+              )
+            : [emptyPublishedCard("examination", officialSources.schools, "schools and departments")],
+        },
+      ],
+    };
+  }
+
+  return {
+    ...base,
+    sections: [
+      {
+        eyebrow: "Academic Schools",
+        title: "School records",
+        body: "School cards are generated.",
+        columns: 4,
+        cards: schools.length ? schools.slice(0, 8).map(schoolCard) : [emptyPublishedCard("school", officialSources.schools, "schools and departments")],
+      },
+      {
+        eyebrow: "Programme Finder",
+        title: "Programme records",
+        body: "Programme cards are generated.",
+        tone: "dark",
+        columns: 3,
+        cards: programmes.length ? programmes.slice(0, 6).map(programmeCard) : [emptyPublishedCard("programme", officialSources.schools, "schools and departments")],
+      },
+    ],
+  };
+}
+
+export async function getCampusLifePageConfig(segments: string[] = []): Promise<PublicPageConfig> {
+  const base = getCampusLifePage(segments);
+  const [area, slug] = segments;
+
+  if (area === "clubs" && slug) {
+    const club = await safeRecord(clubsApi.getBySlug(slug));
+    return {
+      ...base,
+      title: club?.name ?? `${titleFromSlug(slug)} club`,
+      body: club
+        ? shortText(club.about ?? club.mission ?? club.objectives, "Club record.", 360)
+        : "We could not find that club record.",
+      sections: [
+        {
+          eyebrow: "Club Record",
+          title: club?.name ?? "Club record not found",
+          body: club ? bestText(club.about, club.mission, club.objectives) : "Club details are shown when the public record exists.",
+          columns: 3,
+          cards: club
+            ? [
+                infoCard("Type", club.club_type || "Club", "sparkles"),
+                infoCard("Membership", club.membership_count ? `${club.membership_count} members` : "Not published", "users"),
+                infoCard("Meeting Schedule", club.meeting_schedule || "Not published", "calendar"),
+              ]
+            : [emptyPublishedCard("club", officialSources.campusLife, "campus life")],
+        },
+      ],
+    };
+  }
+
+  if (area === "sports" && slug) {
+    const facility = await safeRecord(sportsFacilitiesApi.getBySlug(slug));
+    return {
+      ...base,
+      title: facility?.name ?? `${titleFromSlug(slug)} sport and recreation`,
+      body: facility
+        ? shortText(facility.about, "Sports facility record.", 360)
+        : "We could not find that sports facility record.",
+      sections: [
+        {
+          eyebrow: "Sports Facility",
+          title: facility?.name ?? "Sports facility not found",
+          body: facility?.about || "Sports facility details are shown when the public record exists.",
+          columns: 3,
+          cards: facility
+            ? [
+                infoCard("Facility Type", facility.facility_type || "Not specified", "trophy"),
+                infoCard("Sports", facility.sport_types?.join(", ") || "Not specified", "users"),
+                infoCard("Location", facility.location || "Not published", "landmark"),
+              ]
+            : [emptyPublishedCard("sports facility", officialSources.campusLife, "campus life")],
+        },
+      ],
+    };
+  }
+
+  if (area === "accommodation" && slug) {
+    const housing = await safeRecord(accommodationsApi.getBySlug(slug));
+    return {
+      ...base,
+      title: housing?.name ?? `${titleFromSlug(slug)} accommodation`,
+      body: housing
+        ? shortText(housing.about ?? housing.rules, "Accommodation record.", 360)
+        : "We could not find that accommodation record.",
+      sections: [
+        {
+          eyebrow: "Accommodation Record",
+          title: housing?.name ?? "Accommodation record not found",
+          body: housing ? bestText(housing.about, housing.rules) : "Accommodation details are shown when the public record exists.",
+          columns: 3,
+          cards: housing
+            ? [
+                infoCard("Type", housing.accommodation_type || "Not specified", "home"),
+                infoCard("Gender", housing.gender || "Not specified", "users"),
+                infoCard("Capacity", housing.capacity ? `${housing.capacity}` : "Not published", "building"),
+                infoCard("Applications", housing.is_accepting_applications ? "Accepting applications" : "Not accepting applications", "clipboard"),
+                infoCard("Amenities", housing.amenities?.join(", ") || "Not published", "sparkles"),
+                infoCard("Contact", [housing.email, housing.phone].filter(Boolean).join(" · ") || "Not published", "handshake"),
+              ]
+            : [emptyPublishedCard("accommodation", officialSources.campusLife, "campus life")],
+        },
+      ],
+    };
+  }
+
+  if (area === "gallery" && slug) {
+    const item = await safeRecord(artsCultureApi.getBySlug(slug));
+    return {
+      ...base,
+      title: item?.title ?? `${titleFromSlug(slug)} gallery record`,
+      body: item
+        ? shortText(item.about, "Arts and culture record.", 360)
+        : "We could not find that arts and culture record.",
+      sections: [
+        {
+          eyebrow: "Arts and Culture",
+          title: item?.title ?? "Gallery record not found",
+          body: item?.about || "Gallery details are shown when the public record exists.",
+          columns: 3,
+          cards: item
+            ? [
+                infoCard("Category", item.category || "Not specified", "file"),
+                infoCard("Status", item.is_active ? "Active" : "Inactive", "shield"),
+                infoCard("Source", "Arts and culture", "check"),
+              ]
+            : [emptyPublishedCard("gallery", officialSources.campusLife, "campus life")],
+        },
+      ],
+    };
+  }
+
+  if (area === "student-life" && slug) {
+    const body = await safeRecord(studentGovernanceApi.getBySlug(slug));
+    return {
+      ...base,
+      title: body?.name ?? `${titleFromSlug(slug)} student body`,
+      body: body
+        ? shortText(body.about ?? body.mandate ?? body.constitution, "Student governance record.", 360)
+        : "We could not find that student governance record.",
+      sections: [
+        {
+          eyebrow: "Student Governance",
+          title: body?.name ?? "Student governance record not found",
+          body: body ? bestText(body.about, body.mandate, body.constitution) : "Student governance details are shown when the public record exists.",
+          columns: 3,
+          cards: body
+            ? [
+                infoCard("Acronym", body.acronym || "Not published", "file"),
+                infoCard("Type", body.governance_type || "Not specified", "users"),
+                infoCard("Term", [formatDate(body.term_start), formatDate(body.term_end)].filter((value) => value !== "Not dated").join(" to ") || "Not published", "calendar"),
+                infoCard("Office", body.office_location || "Not published", "landmark"),
+                infoCard("Email", body.email || "Not published", "handshake"),
+                infoCard("Phone", body.phone || "Not published", "handshake"),
+              ]
+            : [emptyPublishedCard("student governance", officialSources.campusLife, "campus life")],
+        },
+      ],
+    };
+  }
+
+  const [clubs, accommodations, sports, arts, governance, faqs, contacts] = await Promise.all([
+    safeList(clubsApi.list({ per_page: 12 })),
+    safeList(accommodationsApi.list({ per_page: 8 })),
+    safeList(sportsFacilitiesApi.list({ per_page: 8 })),
+    safeList(artsCultureApi.list({ per_page: 8 })),
+    safeList(studentGovernanceApi.list({ per_page: 6 })),
+    safeList(faqsApi.list({ scope_type: "student_life", per_page: 6 })),
+    safeList(contactsApi.list({ scope_type: "student_life", per_page: 6 })),
+  ]);
+
+  if (area === "clubs") {
+    return {
+      ...base,
+      body: clubs.length ? "Clubs and societies." : "No club records are currently listed.",
+      sections: [
+        {
+          eyebrow: "Clubs and Societies",
+          title: "Club records",
+          body: "Club cards are generated from student life records.",
+          columns: 3,
+          cards: clubs.length ? clubs.map(clubCard) : [emptyPublishedCard("club", officialSources.campusLife, "campus life")],
+        },
+      ],
+    };
+  }
+
+  if (area === "sports") {
+    return {
+      ...base,
+      body: sports.length ? "Sports and recreation records." : "No sports facility records are currently listed.",
+      sections: [
+        {
+          eyebrow: "Sports and Recreation",
+          title: "Sports facilities",
+          body: "Facility cards are generated from sports records.",
+          columns: 3,
+          cards: sports.length ? sports.map(sportsCard) : [emptyPublishedCard("sports", officialSources.campusLife, "campus life")],
+        },
+      ],
+    };
+  }
+
+  if (area === "accommodation") {
+    return {
+      ...base,
+      body: accommodations.length ? "Accommodation records." : "No accommodation records are currently listed.",
+      sections: [
+        {
+          eyebrow: "Accommodation",
+          title: "Housing records",
+          body: "Accommodation cards are generated from student housing records.",
+          columns: 3,
+          cards: accommodations.length ? accommodations.map(accommodationCard) : [emptyPublishedCard("accommodation", officialSources.campusLife, "campus life")],
+        },
+      ],
+    };
+  }
+
+  if (area === "support") {
+    const faqCards = faqs.map((item: FAQ) =>
+      infoCard(item.question, shortText(item.answer_plain_text ?? item.answer_rich_text ?? item.answer, "Student support FAQ."), "handshake", item.category || "FAQ"),
+    );
+    const contactCards = contacts.map((item: ContactDirectory) =>
+      infoCard(
+        item.name,
+        [item.email, item.phone?.join(", "), item.building, item.room_number].filter(Boolean).join(" · ") || "Student support contact.",
+        "user",
+        item.contact_type || "Contact",
+      ),
+    );
+    return {
+      ...base,
+      body: "Student support brings together FAQs, contacts, wellbeing guidance, and service pathways.",
+      sections: [
+        {
+          eyebrow: "Student Support",
+          title: "Support records",
+          body: "FAQs and contacts help students find support services and next steps.",
+          columns: 3,
+          cards: [...faqCards, ...contactCards].length
+            ? [...faqCards, ...contactCards]
+            : [
+                externalCard(
+                  "Customer care centre",
+                  "https://digital.kisiiuniversity.ac.ke",
+                  "Use the official customer care centre for support requests, complaints, compliments, suggestions, and information requests.",
+                  "handshake",
+                  "Open customer care",
+                ),
+              ],
+        },
+      ],
+    };
+  }
+
+  if (area === "student-life") {
+    return {
+      ...base,
+      body: governance.length ? "Student governance and student life records." : "Student life records summarize representative bodies, activities, and support links.",
+      sections: [
+        {
+          eyebrow: "Student Governance",
+          title: "Student bodies",
+          body: "Student governance cards come from student life records.",
+          columns: 3,
+          cards: governance.length ? governance.map(governanceCard) : [emptyPublishedCard("student governance", officialSources.campusLife, "campus life")],
+        },
+      ],
+    };
+  }
+
+  if (area === "gallery") {
+    return {
+      ...base,
+      body: arts.length ? "Arts, culture, and gallery records." : "No gallery records are currently listed .",
+      sections: [
+        {
+          eyebrow: "Gallery and Culture",
+          title: "Arts and culture records",
+          body: "Gallery cards are generated from arts and culture records.",
+          columns: 3,
+          cards: arts.length ? arts.map(artsCard) : [emptyPublishedCard("gallery", officialSources.campusLife, "campus life")],
+        },
+      ],
+    };
+  }
+
+  return {
+    ...base,
+    body: "Campus Life brings together student life, clubs, housing, sports, arts, governance, FAQs, and contact pathways.",
+    sections: [
+      {
+        eyebrow: "Clubs and Societies",
+        title: "Club records",
+        body: "Club cards are generated from student life records.",
+        columns: 3,
+        cards: clubs.length ? clubs.slice(0, 6).map(clubCard) : [emptyPublishedCard("club", officialSources.campusLife, "campus life")],
+      },
+      {
+        eyebrow: "Housing, Sports, and Student Bodies",
+        title: "Student experience records",
+        body: "Student services are grouped across housing, sports, governance, and support pathways.",
+        tone: "dark",
+        columns: 3,
+        cards: [
+          ...(accommodations.length ? accommodations.slice(0, 3).map(accommodationCard) : []),
+          ...(sports.length ? sports.slice(0, 3).map(sportsCard) : []),
+          ...(governance.length ? governance.slice(0, 3).map(governanceCard) : []),
+        ].length
+          ? [
+              ...(accommodations.length ? accommodations.slice(0, 3).map(accommodationCard) : []),
+              ...(sports.length ? sports.slice(0, 3).map(sportsCard) : []),
+              ...(governance.length ? governance.slice(0, 3).map(governanceCard) : []),
+            ]
+          : [emptyPublishedCard("campus life", officialSources.campusLife, "campus life")],
+      },
+    ],
+  };
+}
+
+export async function getAlumniPageConfig(): Promise<PublicPageConfig> {
+  const base = getAlumniPage();
+  const [profiles, associations, events] = await Promise.all([
+    safeList(alumniApi.list({ per_page: 6 })),
+    safeList(alumniAssociationsApi.list({ per_page: 6 })),
+    safeList(eventsApi.list({ is_published: true, per_page: 6 })),
+  ]);
+
+  return {
+    ...base,
+    body: "Alumni content now uses published alumni profiles, association records, and public event records .",
+    asideBody:
+      "Use this section to explore alumni associations, profiles, mentorship, and event links.",
+    sections: [
+      {
+        eyebrow: "Alumni Associations",
+        title: "Published alumni groups",
+        body: "Association records highlight alumni groups and regional networks.",
+        columns: 3,
+        cards: associations.length
+          ? associations.map(alumniAssociationCard)
+          : [emptyPublishedCard("alumni association", officialSources.news, "official news")],
+      },
+      {
+        eyebrow: "Alumni Profiles and Events",
+        title: "Published alumni engagement",
+        body: "Profiles and events highlight alumni engagement and university activities.",
+        tone: "dark",
+        columns: 3,
+        cards: [...profiles.map(alumniCard), ...events.slice(0, 3).map(eventCard)].length
+          ? [...profiles.map(alumniCard), ...events.slice(0, 3).map(eventCard)]
+          : [emptyPublishedCard("alumni", officialSources.news, "official news")],
+      },
+    ],
+  };
+}

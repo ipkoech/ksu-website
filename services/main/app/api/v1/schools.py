@@ -25,10 +25,11 @@ async def list_schools(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     campus_id: uuid.UUID | None = None,
+    search: str | None = None,
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(School, fields)
-    result = await SchoolService.list(db, page=page, per_page=per_page, campus_id=campus_id, load_options=selector.load_options)
+    result = await SchoolService.list(db, page=page, per_page=per_page, campus_id=campus_id, search=search, load_options=selector.load_options)
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
@@ -37,6 +38,15 @@ async def list_schools(
 async def get_school(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(School, fields)
     school = await SchoolService.get_by_slug(db, slug, load_options=selector.load_options)
+    if school is None:
+        raise HTTPException(status_code=404, detail="School not found")
+    return success(data=selector.apply(school))
+
+
+@router.get("/id/{school_id}")
+async def get_school_by_id(school_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+    selector = build_selector(School, fields)
+    school = await SchoolService.get_by_id(db, school_id, load_options=selector.load_options)
     if school is None:
         raise HTTPException(status_code=404, detail="School not found")
     return success(data=selector.apply(school))
@@ -101,4 +111,4 @@ async def delete_school(school_id: uuid.UUID, db: DbSession, _: CurrentUser):
     school = await SchoolService.get_by_id(db, school_id)
     if school is None:
         raise HTTPException(status_code=404, detail="School not found")
-    school.is_active = False
+    await SchoolService.delete(db, school)

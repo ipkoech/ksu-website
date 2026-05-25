@@ -81,7 +81,7 @@ def create_app() -> FastAPI:
         )
         return response
 
-    app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+    app.mount("/uploads", StaticFiles(directory=settings.upload_dir_path), name="uploads")
 
     register_routes(app)
     return app

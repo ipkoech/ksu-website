@@ -1,78 +1,95 @@
 # About Governance Design Notes
 
-## Final Design Summary
+Status: Implemented / canonical for `/about/governance`
 
-Selected direction: **Modern polished public governance page**.
+## Route Status
 
-The final design presents Kisii University's governance structure as a public accountability and navigation page. It keeps the existing KSU crest, blue/orange/deep-navy palette, serif display heading style, white cards, slate dividers, public header, and footer patterns while improving hierarchy and mobile usability.
+- `/about/governance` is now a canonical public About page.
+- The route no longer redirects to `/about/governance-leadership`.
+- `/about/governance/[slug]` remains canonical for board detail pages.
+- `/about/governance-leadership` remains available as a combined governance and leadership page.
 
-## Why This Direction Won
+## Design-First Iteration
 
-The modern polished direction scored strongest overall because it had the clearest public task flow, the strongest mobile hierarchy, the best brand fit, and the fewest implementation risks. It avoids admin-only governance controls and uses only content supported by the audited frontend fallbacks and public governance APIs.
+The May 19 pass used `imagegen` before implementation:
 
-## Key Sections
+1. First generated reference explored the governance page structure but introduced shell and content drift.
+2. Second generated reference tightened route status, public-shell constraints, source-backed governance bodies, and product truthfulness constraints.
+3. Implementation used the second reference structurally while rejecting unsupported generated shell details, fake certificates, fake meeting dates, fake downloads, fake contact values, fake committees, and alternate branding.
 
-- Public announcement/header and breadcrumb
-- Hero with primary governance summary and campus image
-- Primary action area for University Council and Service Charter
-- Governance map for University Council, Senate, and Management Board
-- Governance pathway explaining responsibility areas
-- Governance structure diagram
-- Governing body cards with links to supported board pages
-- Council membership preview using published fallback names and roles
-- Published-records guidance note for schedules and term details
-- Related About links
-- KSU-style footer
+## Latest Redesign Pass
 
-## Action Hierarchy
+The implemented page follows the same full-width principles used by the other About pages:
 
-- Primary: `View University Council`
-- Secondary: `Read Service Charter`
-- Supporting: `View Senate`, `View Management Board`
-- Tertiary: `University Management`, `Administrative Division`, `Strategic Plan`
+1. Hero and orientation: breadcrumb, About navigation, governance summary, CTAs, governance anchors, and related pages.
+2. Governance structure: University Council at the top, with Senate and Management Board presented as distinct public functions.
+3. University Council focus: high-contrast panel using the public council description and mandate, with a link to `/about/governance/university-council`.
+4. Governance bodies: board overview cards for published public boards.
+5. Council members: public member grid using names and roles from the existing fallback/API data.
+6. Continue through About: route cards for About Overview, History, Mission & Vision, Governance & Leadership, University Management, Administrative Division, and Our Service Charter.
 
-## Visual Guidance
+All page sections follow full-width composition rather than a narrow centered max-width canvas.
 
-Colors:
-- Primary blue: `#2563EB` / `#3B82F6`
-- Accent orange: `#F97316`
-- Deep navy for header/footer and emphasis
-- White cards with slate text and dividers
+## Files Updated
 
-Typography:
-- Serif display style for the main H1
-- Sans-serif UI typography for navigation, cards, labels, and body copy
+- `frontend/apps/web/src/app/about/governance/page.tsx`
+- `frontend/apps/web/src/lib/about-data.ts`
+- `frontend/apps/web/src/app/about/about-overview-content.tsx`
+- `designs/manifest.md`
+- `designs/about-governance/design-notes.md`
 
-## Desktop Guidance
+## Frontend Constraints
 
-Desktop uses a split editorial hero with a governance map card over a campus image, followed by a horizontal pathway and structured sections. The page should remain informational and link-driven, not dashboard-like.
+The page keeps the real public shell from `PageShell`:
 
-## Mobile Guidance
+- `Announcements`
+- `MiniHeader`
+- `PublicHeader`
+- page content
+- `PublicFooter`
 
-Mobile is reordered around reachability: hero, primary action, governance map, pathway, structure, governing bodies, council preview, guidance note, and related links. Cards stack vertically and avoid tables.
+It preserves the frontend-owned logo, header, navigation, mini-header search placement, footer structure, route behavior, color tokens, typography, spacing, border radius, shadows, and card language.
 
-## Accessibility Notes
+## Backend And Data Constraints
 
-The final assets use high contrast, large tap targets, readable body text, clear action hierarchy, and card spacing that avoids overlap. Generated text was checked for obvious artifacts before final selection.
+The page uses existing About governance data and fallbacks:
+
+- `getGovernanceData()`
+- `governanceFallback`
+- `BoardMemberGrid`
+- `quickNavigation`
+
+No new API, database model, admin state, voting state, meeting scheduler, or transactional workflow was added.
 
 ## Product Truthfulness Constraints
 
-The design avoids fake rankings, metrics, testimonials, meeting dates, phone numbers, admin controls, dashboards, live analytics, partner logos, and unsupported integrations.
+Future revisions should continue to avoid unsupported rankings, fake certifications, fake committee lists, fake meeting dates, fake dashboards, fake downloads, fake live votes, fake admin controls, fake phone numbers, fake photos, fake portraits, fake testimonials, fake metrics, unsupported legal claims, alternate crests, alternate slogans, and page-specific header/footer structures.
 
-Supported content used:
-- University Council
-- Senate
-- Management Board
-- Public board/member preview
-- `info@kisiiuniversity.ac.ke`
-- `P.O. Box 408-40200, Kisii, Kenya`
+## Imagegen Use
 
-## Implementation Notes
+The built-in `imagegen` tool was used twice before implementation. The latest generated reference remained in Codex's generated image cache and was not saved as a final production asset:
 
-No implementation was performed. These are visual design assets only. A future implementation can build from existing public shell components, breadcrumb helpers, cards, footer patterns, governance board API data, and the existing board member preview pattern.
+- `/home/egric/.codex/generated_images/019e3d41-b15b-7403-983f-b2184e670309/ig_08e9fecb718e89f9016a0ba8c83668819d8ce1c78a07ef6c1e.png`
 
-## Self-Evaluation
+The generated reference was used structurally only. Unsupported generated details were rejected.
 
-Three directions were generated using the `imagegen` skill: conservative, modern polished, and bold/experimental. Each included desktop and mobile concepts, was evaluated against the requested rubric, and weak assets were regenerated until they passed product accuracy, responsiveness, accessibility, visual quality, and feasibility checks.
+## Verification
 
-The final desktop and mobile assets passed all critical checks and scored at least 4/5 in every rubric category. No human approval was requested or required.
+Passed:
+
+- `pnpm --filter @ksu/web typecheck`
+- `git diff --check` for touched Governance files
+- `/about/governance` returns `200` and remains on `/about/governance`
+- Playwright desktop render for `/about/governance`
+- Playwright mobile render for `/about/governance`
+- no horizontal overflow on desktop or mobile
+- six page sections rendered inside `main`
+- full-width section verification on desktop and mobile
+- University Council, Senate, and Management Board render
+- public council member names render
+- public-facing copy does not include internal guardrail phrasing
+
+Latest verification screenshots:
+
+- `/tmp/ksu-about-governance-desktop-v2.png`
+- `/tmp/ksu-about-governance-mobile-v2.png`

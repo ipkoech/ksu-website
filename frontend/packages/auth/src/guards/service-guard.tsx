@@ -3,7 +3,6 @@
 import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../hooks/use-auth";
-import { hasServiceAccess } from "../permissions";
 import type { Service } from "../types";
 
 interface ServiceGuardProps {
@@ -20,23 +19,33 @@ export function ServiceGuard({
   redirectTo = "/select-service",
 }: ServiceGuardProps) {
   const router = useRouter();
-  const { user, isLoading, activeService, switchService } = useAuth();
+  const { user, isLoading, activeService, checkAuth, switchService } = useAuth();
+  const hasAccess = Boolean(user?.services.some((access) => access.service === service));
 
   useEffect(() => {
-    if (!isLoading && user) {
-      if (!hasServiceAccess(user.roles, service)) {
-        router.push(redirectTo);
-      } else if (activeService !== service) {
-        switchService(service);
-      }
+    if (!user) {
+      checkAuth();
     }
-  }, [isLoading, user, service, activeService, switchService, router, redirectTo]);
+  }, [checkAuth, user]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    if (!hasAccess) {
+      router.push(redirectTo);
+    } else if (activeService !== service) {
+      switchService(service);
+    }
+  }, [isLoading, user, hasAccess, service, activeService, switchService, router, redirectTo]);
 
   if (isLoading) {
     return fallback || <ServiceLoadingSkeleton />;
   }
 
-  if (!user || !hasServiceAccess(user.roles, service)) {
+  if (!user || !hasAccess) {
     return fallback || null;
   }
 

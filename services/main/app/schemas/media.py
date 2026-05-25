@@ -21,6 +21,16 @@ class MediaFolderCreate(BaseSchema):
     scope_id: uuid.UUID | None = None
 
 
+class MediaFolderUpdate(BaseSchema):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    slug: SlugStr | None = None
+    parent_id: uuid.UUID | None = None
+    description: str | None = None
+    is_public: bool | None = None
+    scope_type: str | None = Field(default=None, max_length=32)
+    scope_id: uuid.UUID | None = None
+
+
 class MediaFolderRead(BaseReadSchema):
     name: str
     slug: str
@@ -58,6 +68,21 @@ class MediaCreate(BaseSchema):
     uploaded_by_id: uuid.UUID | None = None
     is_public: bool = False
     is_processed: bool = False
+    metadata: dict[str, Any] | None = Field(default=None, validation_alias="metadata", serialization_alias="metadata")
+
+
+class MediaUpdate(BaseSchema):
+    folder_id: uuid.UUID | None = None
+    title: str | None = Field(default=None, max_length=255)
+    alt_text: str | None = Field(default=None, max_length=255)
+    description: str | None = None
+    caption: str | None = None
+    tags: list[str] | None = None
+    credit: str | None = Field(default=None, max_length=255)
+    media_type: str | None = Field(default=None, max_length=32)
+    thumbnail_url: str | None = Field(default=None, max_length=1024)
+    thumbnails: dict[str, Any] | None = None
+    is_public: bool | None = None
     metadata: dict[str, Any] | None = Field(default=None, validation_alias="metadata", serialization_alias="metadata")
 
 
@@ -100,6 +125,16 @@ class MediaLinkCreate(BaseSchema):
     folder_id: uuid.UUID | None = None
     display_order: int = 100
     is_public: bool = True
+
+
+class MediaLinkUpdate(BaseSchema):
+    media_id: uuid.UUID | None = None
+    entity_type: str | None = Field(default=None, min_length=1, max_length=64)
+    entity_id: uuid.UUID | None = None
+    role: str | None = Field(default=None, max_length=64)
+    folder_id: uuid.UUID | None = None
+    display_order: int | None = None
+    is_public: bool | None = None
 
 
 class MediaLinkRead(BaseReadSchema):

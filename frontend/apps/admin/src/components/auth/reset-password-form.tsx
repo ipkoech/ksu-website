@@ -18,6 +18,7 @@ import {
   Alert,
   AlertDescription,
 } from "@ksu/ui/components";
+import { resetPassword } from "@ksu/auth";
 import { ArrowLeft, CheckCircle } from "lucide-react";
 
 const resetPasswordSchema = z
@@ -59,20 +60,7 @@ export function ResetPasswordForm() {
     setError(null);
 
     try {
-      const response = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token,
-          new_password: values.password,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || "Failed to reset password");
-      }
-
+      await resetPassword(token, values.password);
       setSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");

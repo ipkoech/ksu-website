@@ -1,12 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { usePermissions } from "@/hooks/use-permissions";
 import { DataTable } from "@/components/data-table/data-table";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTransition } from "@/lib/animations";
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Layers, Image as ImageIcon } from "lucide-react";
-import { Button, Badge } from "@ksu/ui/components";
+import { MoreHorizontal, Layers, MapPin } from "lucide-react";
+import { Button, Badge, ConfirmDialog } from "@ksu/ui/components";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -15,15 +16,17 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@ksu/ui/components";
-import { slidersApi, queryKeys } from "@ksu/api-client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useDeleteSliderGroup, useSliderGroups } from "@ksu/api-client";
+import type { SliderGroup } from "@ksu/api-client";
 import { toast } from "@ksu/ui";
-import Image from "next/image";
+import { TableSearch } from "@/components/shared/table-search";
 
 const getSliderGroupColumns = ({
+    canDelete,
     onDelete,
 }: {
-    onDelete: (id: string) => void;
+    canDelete: boolean;
+    onDelete: (group: SliderGroup) => void;
 }): ColumnDef<any>[] => [
     {
         accessorKey: "name",
@@ -48,12 +51,12 @@ const getSliderGroupColumns = ({
         cell: ({ row }) => row.original.description || "-",
     },
     {
-        accessorKey: "sliders_count",
-        header: "Sliders",
+        accessorKey: "location",
+        header: "Location",
         cell: ({ row }) => (
             <div className="flex items-center gap-1">
-                <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                <span>{row.original.sliders_count || 0}</span>
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <span>{row.original.location || "-"}</span>
             </div>
         ),
     },
@@ -86,13 +89,14 @@ const getSliderGroupColumns = ({
                         <DropdownMenuItem onClick={() => window.location.href = `/content/slider-groups/${group.id}`}>
                             Edit Group
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                            className="text-destructive" 
-                            onClick={() => onDelete(group.id)}
-                        >
-                            Delete Group
-                        </DropdownMenuItem>
+                        {canDelete && (
+                            <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-destructive" onClick={() => onDelete(group)}>
+                                    Delete Group
+                                </DropdownMenuItem>
+                            </>
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             );
@@ -102,31 +106,31 @@ const getSliderGroupColumns = ({
 
 export default function SlidersPage() {
     const { canCreate, canDelete } = usePermissions();
-    const queryClient = useQueryClient();
+    const deleteSliderGroup = useDeleteSliderGroup();
+    const [deleteTarget, setDeleteTarget] = useState<SliderGroup | null>(null);
+    const [search, setSearch] = useState("");
 
-    const { data: groupsResponse, isLoading } = useQuery({
-        queryKey: queryKeys.sliders.groupList(),
-        queryFn: () => slidersApi.listGroups(),
+    const { data: groupsResponse, isLoading } = useSliderGroups();
+    const normalizedSearch = search.trim().toLowerCase();
+    const rows = (groupsResponse?.data || []).filter((group) => {
+        if (!normalizedSearch) return true;
+        return [group.name, group.slug, group.description, group.location]
+            .filter(Boolean)
+            .some((value) => String(value).toLowerCase().includes(normalizedSearch));
     });
 
-    const deleteMutation = useMutation({
-        mutationFn: (id: string) => slidersApi.deleteGroup(id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.sliders.groups });
+    const handleDelete = async () => {
+        if (!deleteTarget) return;
+        try {
+            await deleteSliderGroup.mutateAsync(deleteTarget.id);
             toast.success("Slider group deleted successfully");
-        },
-        onError: () => {
+            setDeleteTarget(null);
+        } catch {
             toast.error("Failed to delete slider group");
-        },
-    });
-
-    const handleDelete = (id: string) => {
-        if (confirm("Are you sure you want to delete this slider group?")) {
-            deleteMutation.mutate(id);
         }
     };
 
-    const columns = getSliderGroupColumns({ onDelete: handleDelete });
+    const columns = getSliderGroupColumns({ canDelete: canDelete("marketing"), onDelete: setDeleteTarget });
 
     return (
         <PageTransition>
@@ -137,10 +141,23 @@ export default function SlidersPage() {
                 createLabel="Add Slider Group"
             />
             <DataTable
-                data={groupsResponse?.data || []}
+                data={rows}
                 columns={columns}
                 isLoading={isLoading}
-                emptyMessage="No slider groups found. Create your first slider group."
+                toolbar={<TableSearch value={search} onChange={setSearch} placeholder="Search slider groups" />}
+                emptyMessage={search ? "No slider groups match this search." : "No slider groups found. Create your first slider group."}
+            />
+            <ConfirmDialog
+                open={!!deleteTarget}
+                onOpenChange={(open) => {
+                    if (!open) setDeleteTarget(null);
+                }}
+                title="Delete slider group?"
+                description={`This will remove "${deleteTarget?.name ?? "this slider group"}" and its slides from the back office.`}
+                variant="destructive"
+                confirmLabel="Delete"
+                onConfirm={handleDelete}
+                isLoading={deleteSliderGroup.isPending}
             />
         </PageTransition>
     );

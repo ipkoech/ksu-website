@@ -56,6 +56,15 @@ async def get_programme(slug: str, db: DbSession, fields: FieldSelection = Field
     return success(data=selector.apply(programme))
 
 
+@router.get("/id/{programme_id}")
+async def get_programme_by_id(programme_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+    selector = build_selector(Programme, fields)
+    programme = await ProgrammeService.get_by_id(db, programme_id, load_options=selector.load_options)
+    if programme is None:
+        raise HTTPException(status_code=404, detail="Programme not found")
+    return success(data=selector.apply(programme))
+
+
 @router.get("/{slug}/staff")
 @cached_public(timeout=300)
 async def get_programme_staff(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):

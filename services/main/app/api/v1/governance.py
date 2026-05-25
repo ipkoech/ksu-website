@@ -48,10 +48,29 @@ async def get_board(slug: str, db: DbSession, fields: FieldSelection = FieldsDep
     return success(data=selector.apply(board))
 
 
+@router.get("/boards/id/{board_id}")
+async def get_board_by_id(board_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+    selector = build_selector(Board, fields)
+    board = await GovernanceService.get_board(db, board_id, load_options=selector.load_options)
+    if board is None:
+        raise HTTPException(status_code=404, detail="Board not found")
+    return success(data=selector.apply(board))
+
+
 @router.get("/boards/{slug}/members")
 @cached_public(timeout=3600)
 async def get_board_members(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     board = await GovernanceService.get_board_by_slug(db, slug)
+    if board is None:
+        raise HTTPException(status_code=404, detail="Board not found")
+    members = await GovernanceService.get_members(db, board.id)
+    selector = build_selector(StaffAssignment, fields)
+    return success(data=selector.apply(members))
+
+
+@router.get("/boards/id/{board_id}/members")
+async def get_board_members_by_id(board_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+    board = await GovernanceService.get_board(db, board_id)
     if board is None:
         raise HTTPException(status_code=404, detail="Board not found")
     members = await GovernanceService.get_members(db, board.id)
@@ -121,9 +140,26 @@ async def add_board_member(slug: str, person_id: uuid.UUID, role: str, db: DbSes
     return success(data=assignment, message="Member added")
 
 
+@router.post("/boards/id/{board_id}/members", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("governance.manage_boards"))])
+async def add_board_member_by_id(board_id: uuid.UUID, person_id: uuid.UUID, role: str, db: DbSession, _: CurrentUser):
+    board = await GovernanceService.get_board(db, board_id)
+    if board is None:
+        raise HTTPException(status_code=404, detail="Board not found")
+    assignment = await GovernanceService.add_member(db, board.id, person_id, role)
+    return success(data=assignment, message="Member added")
+
+
 @router.delete("/boards/{slug}/members/{person_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("governance.manage_boards"))])
 async def remove_board_member(slug: str, person_id: uuid.UUID, db: DbSession, _: CurrentUser):
     board = await GovernanceService.get_board_by_slug(db, slug)
+    if board is None:
+        raise HTTPException(status_code=404, detail="Board not found")
+    await GovernanceService.remove_member(db, board.id, person_id)
+
+
+@router.delete("/boards/id/{board_id}/members/{person_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("governance.manage_boards"))])
+async def remove_board_member_by_id(board_id: uuid.UUID, person_id: uuid.UUID, db: DbSession, _: CurrentUser):
+    board = await GovernanceService.get_board(db, board_id)
     if board is None:
         raise HTTPException(status_code=404, detail="Board not found")
     await GovernanceService.remove_member(db, board.id, person_id)

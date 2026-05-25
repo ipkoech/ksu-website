@@ -1,0 +1,53 @@
+"use client";
+
+import { EditableServiceResourcePage } from "@/components/dashboard/editable-service-resource-page";
+import { researchServiceApi, type ResearchProject, type ResearchProjectPayload } from "@ksu/api-client";
+import { usePermissions } from "@ksu/auth";
+
+export default function ResearchProjectsPage() {
+  const { hasScope } = usePermissions();
+  const canManage = hasScope("research.manage_projects") || hasScope("research:write");
+
+  return (
+    <EditableServiceResourcePage<ResearchProject, ResearchProjectPayload>
+      title="Research Projects"
+      description="Create, edit, and retire research projects from the research service."
+      backHref="/research"
+      queryKey={["research", "projects"]}
+      fields={[
+        { name: "title", label: "Title", required: true, placeholder: "Project title" },
+        { name: "slug", label: "Slug", placeholder: "project-slug" },
+        { name: "code", label: "Code", placeholder: "RP_001" },
+        { name: "project_type", label: "Project Type", placeholder: "applied" },
+        { name: "summary", label: "Summary", type: "textarea" },
+        { name: "status", label: "Status", placeholder: "ongoing" },
+        { name: "progress_percentage", label: "Progress %", type: "number" },
+        { name: "is_active", label: "Active", type: "boolean" },
+        { name: "is_featured", label: "Featured", type: "boolean" },
+        { name: "is_public", label: "Public", type: "boolean" },
+      ]}
+      list={() => researchServiceApi.projects.list({ page: 1, per_page: 50 })}
+      create={(payload) => researchServiceApi.projects.create(payload)}
+      update={(id, payload) => researchServiceApi.projects.update(id, payload)}
+      delete={(id) => researchServiceApi.projects.delete(id)}
+      canCreate={canManage}
+      canEdit={canManage}
+      canDelete={canManage}
+      getRecordTitle={(record) => record.title}
+      getRecordMeta={(record) => [record.code, record.project_type, record.status].filter(Boolean).join(" · ")}
+      emptyMessage="No research projects were returned by the research service."
+      buildPayload={(values) => ({
+        title: values.title,
+        slug: values.slug,
+        code: values.code,
+        project_type: values.project_type || "applied",
+        summary: values.summary,
+        status: values.status || "ongoing",
+        progress_percentage: values.progress_percentage ?? 0,
+        is_active: values.is_active,
+        is_featured: values.is_featured,
+        is_public: values.is_public,
+      })}
+    />
+  );
+}

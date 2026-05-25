@@ -13,6 +13,7 @@ from ksu_common.schemas.responses import success
 from ...deps import DbSession
 from ...models import StaffAssignment, Person
 from ._fields import FieldSelection, FieldsDep, build_selector
+from ._person_media import with_person_photo_urls
 
 router = APIRouter()
 
@@ -29,7 +30,7 @@ async def get_leader_by_role(
 
     query = (
         select(StaffAssignment)
-        .options(selectinload(StaffAssignment.person))
+        .options(selectinload(StaffAssignment.person).selectinload(Person.photo))
         .where(
             StaffAssignment.entity_type == entity_type,
             StaffAssignment.role.in_(roles),
@@ -71,7 +72,7 @@ async def get_vice_chancellor(
         return success(data=None)
 
     selector = build_selector(StaffAssignment, fields)
-    return success(data=selector.apply(assignment))
+    return success(data=with_person_photo_urls(selector.apply(assignment), assignment))
 
 
 @router.get("/chancellor")
@@ -92,7 +93,7 @@ async def get_chancellor(
         return success(data=None)
 
     selector = build_selector(StaffAssignment, fields)
-    return success(data=selector.apply(assignment))
+    return success(data=with_person_photo_urls(selector.apply(assignment), assignment))
 
 
 @router.get("/dean/{school_id}")
@@ -114,7 +115,7 @@ async def get_dean(
         return success(data=None)
 
     selector = build_selector(StaffAssignment, fields)
-    return success(data=selector.apply(assignment))
+    return success(data=with_person_photo_urls(selector.apply(assignment), assignment))
 
 
 @router.get("/hod/{department_id}")
@@ -136,7 +137,7 @@ async def get_hod(
         return success(data=None)
 
     selector = build_selector(StaffAssignment, fields)
-    return success(data=selector.apply(assignment))
+    return success(data=with_person_photo_urls(selector.apply(assignment), assignment))
 
 
 @router.get("/director/{division_id}")
@@ -168,7 +169,7 @@ async def get_director(
         return success(data=None)
 
     selector = build_selector(StaffAssignment, fields)
-    return success(data=selector.apply(assignment))
+    return success(data=with_person_photo_urls(selector.apply(assignment), assignment))
 
 
 @router.get("/")
@@ -192,7 +193,7 @@ async def get_leader(
         return success(data=None)
 
     selector = build_selector(StaffAssignment, fields)
-    return success(data=selector.apply(assignment))
+    return success(data=with_person_photo_urls(selector.apply(assignment), assignment))
 
 
 @router.get("/list")
@@ -207,7 +208,7 @@ async def list_leaders(
 
     query = (
         select(StaffAssignment)
-        .options(selectinload(StaffAssignment.person))
+        .options(selectinload(StaffAssignment.person).selectinload(Person.photo))
         .where(
             StaffAssignment.entity_type == entity_type,
             StaffAssignment.status == "active",
@@ -229,4 +230,4 @@ async def list_leaders(
     result = await db.execute(query)
     items = list(result.scalars().all())
 
-    return success(data=selector.apply(items))
+    return success(data=with_person_photo_urls(selector.apply(items), items))

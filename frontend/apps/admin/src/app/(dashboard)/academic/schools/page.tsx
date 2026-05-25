@@ -1,11 +1,12 @@
 "use client";
 
 import { usePermissions } from "@/hooks/use-permissions";
+import { useDeleteConfirm } from "@/hooks/use-delete-confirm";
 import { DataTable } from "@/components/data-table/data-table";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTransition } from "@/lib/animations";
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Building, Users } from "lucide-react";
+import { MoreHorizontal, Building, Users, Upload } from "lucide-react";
 import { Button, Badge } from "@ksu/ui/components";
 import {
     DropdownMenu,
@@ -17,6 +18,9 @@ import {
 } from "@ksu/ui/components";
 import { useSchools, useDeleteSchool } from "@ksu/api-client";
 import { toast } from "@ksu/ui";
+import Link from "next/link";
+import { useState } from "react";
+import { TableSearch } from "@/components/shared/table-search";
 
 const getSchoolColumns = ({
     canDelete,
@@ -87,11 +91,8 @@ const getSchoolColumns = ({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => window.location.href = `/academic/schools/${school.id}`}>
+                        <DropdownMenuItem onClick={() => window.location.href = `/academic/schools/_static?id=${encodeURIComponent(school.id)}`}>
                             Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigator.clipboard.writeText(school.id)}>
-                            Copy ID
                         </DropdownMenuItem>
                         {canDelete && (
                             <>
@@ -113,21 +114,17 @@ const getSchoolColumns = ({
 
 export default function SchoolsPage() {
     const { canCreate, canDelete } = usePermissions();
-    const { data: schoolsResponse, isLoading } = useSchools();
+    const { confirmDelete, dialog } = useDeleteConfirm();
+    const [search, setSearch] = useState("");
+    const { data: schoolsResponse, isLoading } = useSchools({ search: search || undefined });
     const schools = schoolsResponse?.data || [];
-    const { mutate: deleteSchool } = useDeleteSchool();
+    const deleteSchool = useDeleteSchool();
 
     const handleDelete = (id: string) => {
-        if (confirm("Are you sure you want to delete this school?")) {
-            deleteSchool(id, {
-                onSuccess: () => {
-                    toast.success("School deleted successfully");
-                },
-                onError: () => {
-                    toast.error("Failed to delete school");
-                },
-            });
-        }
+        confirmDelete("school", async () => {
+            await deleteSchool.mutateAsync(id);
+            toast.success("School deleted successfully");
+        });
     };
 
     const columns = getSchoolColumns({ canDelete: canDelete("academic"), onDelete: handleDelete });
@@ -137,6 +134,14 @@ export default function SchoolsPage() {
             <PageHeader
                 title="Schools"
                 description="Manage university schools and faculties"
+                actions={canCreate("academic") ? (
+                    <Button variant="outline" asChild>
+                        <Link href="/imports/schools">
+                            <Upload className="h-4 w-4 mr-2" />
+                            Import
+                        </Link>
+                    </Button>
+                ) : undefined}
                 createHref={canCreate("academic") ? "/academic/schools/new" : undefined}
                 createLabel="Add School"
             />
@@ -144,8 +149,10 @@ export default function SchoolsPage() {
                 data={schools || []}
                 columns={columns}
                 isLoading={isLoading}
-                emptyMessage="No schools found. Create your first school."
+                toolbar={<TableSearch value={search} onChange={setSearch} placeholder="Search schools by name or code" />}
+                emptyMessage={search ? "No schools match this search." : "No schools found. Create your first school."}
             />
+            {dialog}
         </PageTransition>
     );
 }

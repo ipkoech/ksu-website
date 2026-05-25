@@ -1,3 +1,5 @@
+import { getStoredAccessToken, refreshStoredAccessToken } from "./auth-tokens";
+
 export interface ApiConfig {
   baseUrl: string;
   credentials?: RequestCredentials;
@@ -75,6 +77,9 @@ export class ApiClient {
       credentials: this.credentials,
       headers: {
         ...this.headers,
+        ...(getStoredAccessToken() && !options.headers?.Authorization
+          ? { Authorization: `Bearer ${getStoredAccessToken()}` }
+          : {}),
         ...options.headers,
       },
       body: options.body ? JSON.stringify(options.body) : undefined,
@@ -111,12 +116,8 @@ export class ApiClient {
     }
 
     this.refreshPromise = (async () => {
-      const response = await fetch(`${this.baseUrl}/api/v1/auth/refresh`, {
-        method: "POST",
-        credentials: this.credentials,
-      });
-
-      if (!response.ok) {
+      const refreshed = await refreshStoredAccessToken(this.baseUrl);
+      if (!refreshed) {
         throw new Error("Refresh failed");
       }
     })();

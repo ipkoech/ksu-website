@@ -1,5 +1,9 @@
+import {
+  AboutIllustratedHeading,
+  aboutIllustrations,
+} from "@/components/about/AboutIllustration";
 import { BoardMemberGrid } from "@/components/about/BoardMemberGrid";
-import { BreadcrumbTrail, PageHeading, PageShell } from "@/components/site-shell";
+import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import { getGovernanceBoard, getOverviewData } from "@/lib/about-data";
 
@@ -21,11 +25,12 @@ export default async function UniversityManagementPage() {
           ]}
         />
         <div className="mt-8">
-          <PageHeading
+          <AboutIllustratedHeading
             eyebrow="University Management"
             title="The management page should mirror the official public roster rather than a generalized leadership directory."
             body="The live Kisii University site publishes the University Management Board separately from governance. This page follows that separation and presents the current official lineup."
-            fullWidth
+            illustration={aboutIllustrations.management}
+            alt="University management team coordinating campus operations"
           />
         </div>
       </section>

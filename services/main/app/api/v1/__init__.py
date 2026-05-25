@@ -5,9 +5,11 @@ from fastapi import FastAPI
 from ...routes.v1.health import router as health_router
 from ...routes.v1.internal import router as internal_router
 from .accommodations import router as accommodations_router
+from .academic_calendars import router as academic_calendars_router
 from .admin import router as admin_router
 from .admissions import router as admissions_router
 from .announcements import router as announcements_router
+from .analytics import router as analytics_router
 from .alumni import router as alumni_router
 from .alumni_associations import router as alumni_associations_router
 from .arts_culture import router as arts_culture_router
@@ -23,6 +25,7 @@ from .events import router as events_router
 from .exchange_programmes import router as exchange_programmes_router
 from .faqs import router as faqs_router
 from .governance import router as governance_router
+from .imports import router as imports_router
 from .intakes import router as intakes_router
 from .media import router as media_router
 from .news import router as news_router
@@ -31,6 +34,7 @@ from .notifications import router as notifications_router
 from .partners import router as partners_router
 from .persons import router as persons_router
 from .policies import router as policies_router
+from .public_media import router as public_media_router
 from .public_leadership import router as public_leadership_router
 from .programmes import router as programmes_router
 from .search import router as search_router
@@ -53,6 +57,7 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(health_router, prefix="/api/v1", tags=["Health"])
     app.include_router(internal_router, prefix="/api/v1/internal", tags=["Internal"])
     app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
+    app.include_router(analytics_router, prefix="/api/v1/analytics", tags=["Analytics"])
     app.include_router(news_router, prefix="/api/v1/news", tags=["Content"])
     app.include_router(blogs_router, prefix="/api/v1/blogs", tags=["Content"])
     app.include_router(announcements_router, prefix="/api/v1/announcements", tags=["Content"])
@@ -70,11 +75,13 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(persons_router, prefix="/api/v1/persons", tags=["Persons"])
     app.include_router(staff_router, prefix="/api/v1/staff", tags=["Staff"])
     app.include_router(governance_router, prefix="/api/v1/governance", tags=["Governance"])
+    app.include_router(imports_router, prefix="/api/v1/imports", tags=["Imports"])
     app.include_router(divisions_router, prefix="/api/v1/divisions", tags=["Organization"])
     app.include_router(wings_router, prefix="/api/v1/wings", tags=["Organization"])
     app.include_router(schools_router, prefix="/api/v1/schools", tags=["Academic"])
     app.include_router(departments_router, prefix="/api/v1/departments", tags=["Academic"])
     app.include_router(campuses_router, prefix="/api/v1/campuses", tags=["Academic"])
+    app.include_router(academic_calendars_router, prefix="/api/v1/academic-calendars", tags=["Academic"])
     app.include_router(programmes_router, prefix="/api/v1/programmes", tags=["Admissions"])
     app.include_router(intakes_router, prefix="/api/v1/intakes", tags=["Admissions"])
     app.include_router(admissions_router, prefix="/api/v1/admissions", tags=["Admissions"])
@@ -93,4 +100,5 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(support_router, prefix="/api/v1/support", tags=["Support"])
     app.include_router(media_router, prefix="/api/v1/media", tags=["Media"])
     app.include_router(admin_router, prefix="/api/v1/admin", tags=["Admin"])
+    app.include_router(public_media_router, prefix="/api/v1/public/media", tags=["Public"])
     app.include_router(public_leadership_router, prefix="/api/v1/public/leadership", tags=["Public"])

@@ -11,10 +11,11 @@ from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 FrontendService = Literal["web", "admin", "research", "library"]
+SERVICE_DIR = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=SERVICE_DIR / ".env", extra="ignore")
 
     APP_ENV: str = "development"
     APP_VERSION: str = "0.1.0"
@@ -50,7 +51,12 @@ class Settings(BaseSettings):
 
     INTERNAL_API_KEY: str = "change-me-internal"
 
-    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:3003",
+    ]
 
     UPLOAD_DIR: str = "/app/uploads"
     MEDIA_URL: str = "/uploads"
@@ -73,6 +79,14 @@ class Settings(BaseSettings):
     LINKEDIN_CLIENT_ID: str | None = None
     LINKEDIN_CLIENT_SECRET: str | None = None
     LINKEDIN_CALLBACK_URL: str | None = None
+
+    @property
+    def upload_dir_path(self) -> Path:
+        path = Path(self.UPLOAD_DIR).expanduser()
+        if not path.is_absolute():
+            path = SERVICE_DIR / path
+        path.mkdir(parents=True, exist_ok=True)
+        return path
 
     @property
     def email_template_dir(self) -> Path:

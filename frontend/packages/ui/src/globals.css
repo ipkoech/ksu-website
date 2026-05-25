@@ -444,6 +444,93 @@
     @apply text-primary hover:underline;
   }
 
+  .rich-text-content,
+  .rich-text-editor {
+    @apply text-foreground;
+  }
+
+  .rich-text-content p,
+  .rich-text-editor p {
+    @apply mb-4 leading-7;
+  }
+
+  .rich-text-content h1,
+  .rich-text-editor h1 {
+    @apply mb-4 mt-8 text-3xl font-semibold leading-tight;
+  }
+
+  .rich-text-content h2,
+  .rich-text-editor h2 {
+    @apply mb-4 mt-8 text-2xl font-semibold leading-tight;
+  }
+
+  .rich-text-content h3,
+  .rich-text-editor h3 {
+    @apply mb-3 mt-6 text-xl font-semibold leading-snug;
+  }
+
+  .rich-text-content blockquote,
+  .rich-text-editor blockquote {
+    @apply my-5 border-l-4 border-primary/40 pl-4 italic text-muted-foreground;
+  }
+
+  .rich-text-content img,
+  .rich-text-editor img {
+    @apply my-5 max-w-full rounded-lg border;
+  }
+
+  .rich-text-content table,
+  .rich-text-editor table {
+    @apply my-5 w-full border-collapse overflow-hidden rounded-lg text-sm;
+  }
+
+  .rich-text-content th,
+  .rich-text-content td,
+  .rich-text-editor th,
+  .rich-text-editor td {
+    @apply border border-border px-3 py-2 align-top;
+  }
+
+  .rich-text-content th,
+  .rich-text-editor th {
+    @apply bg-muted font-semibold;
+  }
+
+  .rich-text-content pre,
+  .rich-text-editor pre {
+    @apply my-5 overflow-x-auto rounded-lg bg-muted p-4 text-sm;
+  }
+
+  .rich-text-content code,
+  .rich-text-editor code {
+    @apply rounded bg-muted px-1 py-0.5 text-sm;
+  }
+
+  .rich-text-content pre code,
+  .rich-text-editor pre code {
+    @apply bg-transparent p-0;
+  }
+
+  .rich-text-content mark,
+  .rich-text-editor mark {
+    @apply rounded px-1;
+  }
+
+  .rich-text-content ul[data-type="taskList"],
+  .rich-text-editor ul[data-type="taskList"] {
+    @apply list-none pl-0;
+  }
+
+  .rich-text-content ul[data-type="taskList"] li,
+  .rich-text-editor ul[data-type="taskList"] li {
+    @apply flex items-start gap-2;
+  }
+
+  .rich-text-content ul[data-type="taskList"] input,
+  .rich-text-editor ul[data-type="taskList"] input {
+    @apply mt-1;
+  }
+
   /* Skip Link for Accessibility */
   .skip-link {
     @apply sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-background focus:text-foreground;

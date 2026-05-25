@@ -28,6 +28,7 @@ from .alumni import (
 from .academic import (
     AcademicCalendarCreate,
     AcademicCalendarRead,
+    AcademicCalendarUpdate,
     CampusCreate,
     CampusRead,
     CampusUpdate,
@@ -60,6 +61,15 @@ from .content import (
     SliderUpdate,
 )
 from .audit import AuditLogRead
+from .analytics import (
+    AdminActivityReport,
+    AnalyticsEventBatchCreate,
+    AnalyticsEventCreate,
+    AnalyticsEventRead,
+    ContentReport,
+    ReportsOverview,
+    TrafficReport,
+)
 from .auth import (
     ChangePasswordRequest,
     ForgotPasswordRequest,
@@ -77,6 +87,15 @@ from .base import APIResponse, BaseReadSchema, BaseSchema, PaginatedResponse
 from .document import DocumentCreate, DocumentRead, DocumentUpdate, PolicyCreate, PolicyRead, PolicyUpdate
 from .exchange import ExchangeProgrammeCreate, ExchangeProgrammeRead, ExchangeProgrammeUpdate
 from .governance import BoardCreate, BoardRead, BoardUpdate
+from .imports import (
+    ImportColumnRead,
+    ImportCommitRead,
+    ImportCommitRequest,
+    ImportCommitRowRead,
+    ImportPreviewRead,
+    ImportPreviewRow,
+    ImportResourceRead,
+)
 from .marketing import (
     NewsletterCreate,
     NewsletterRead,
@@ -94,7 +113,17 @@ from .marketing import (
     TestimonialRead,
     TestimonialUpdate,
 )
-from .media import MediaCreate, MediaFolderCreate, MediaFolderRead, MediaLinkCreate, MediaLinkRead, MediaRead
+from .media import (
+    MediaCreate,
+    MediaFolderCreate,
+    MediaFolderRead,
+    MediaFolderUpdate,
+    MediaLinkCreate,
+    MediaLinkRead,
+    MediaLinkUpdate,
+    MediaRead,
+    MediaUpdate,
+)
 from .notification import (
     NotificationBroadcastCreate,
     NotificationCreate,
@@ -122,7 +151,16 @@ from .rbac import (
     UserRoleCreate,
     UserRoleRead,
 )
-from .staff import StaffAssignmentCreate, StaffAssignmentRead, StaffAssignmentUpdate
+from .staff import (
+    StaffAssignmentActivate,
+    StaffAssignmentConflictCheck,
+    StaffAssignmentCreate,
+    StaffAssignmentEnd,
+    StaffAssignmentRead,
+    StaffAssignmentReassign,
+    StaffAssignmentUpdate,
+    StaffEntityOption,
+)
 from .student_life import (
     AccommodationCreate,
     AccommodationRead,
@@ -174,6 +212,13 @@ __all__ = [
     "BaseReadSchema",
     "PaginatedResponse",
     "AuditLogRead",
+    "AnalyticsEventCreate",
+    "AnalyticsEventBatchCreate",
+    "AnalyticsEventRead",
+    "ReportsOverview",
+    "TrafficReport",
+    "ContentReport",
+    "AdminActivityReport",
     "UserCreate",
     "UserUpdate",
     "UserRead",
@@ -197,10 +242,22 @@ __all__ = [
     "PersonRead",
     "StaffAssignmentCreate",
     "StaffAssignmentUpdate",
+    "StaffAssignmentEnd",
+    "StaffAssignmentActivate",
+    "StaffAssignmentReassign",
+    "StaffAssignmentConflictCheck",
     "StaffAssignmentRead",
+    "StaffEntityOption",
     "BoardCreate",
     "BoardUpdate",
     "BoardRead",
+    "ImportColumnRead",
+    "ImportResourceRead",
+    "ImportPreviewRow",
+    "ImportPreviewRead",
+    "ImportCommitRequest",
+    "ImportCommitRowRead",
+    "ImportCommitRead",
     "DivisionCreate",
     "DivisionUpdate",
     "DivisionRead",
@@ -219,6 +276,7 @@ __all__ = [
     "DepartmentUpdate",
     "AcademicCalendarCreate",
     "AcademicCalendarRead",
+    "AcademicCalendarUpdate",
     "ProgrammeCreate",
     "ProgrammeUpdate",
     "ProgrammeRead",
@@ -301,10 +359,13 @@ __all__ = [
     "SliderUpdate",
     "SliderRead",
     "MediaCreate",
+    "MediaUpdate",
     "MediaRead",
     "MediaFolderCreate",
+    "MediaFolderUpdate",
     "MediaFolderRead",
     "MediaLinkCreate",
+    "MediaLinkUpdate",
     "MediaLinkRead",
     "FAQCreate",
     "FAQUpdate",

@@ -1,4 +1,8 @@
-import { BreadcrumbTrail, PageHeading, PageShell } from "@/components/site-shell";
+import {
+  AboutIllustratedHeading,
+  aboutIllustrations,
+} from "@/components/about/AboutIllustration";
+import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { getAdministrativeDivisions } from "@/lib/about-data";
 
 export default async function AdministrativeDivisionPage() {
@@ -15,10 +19,12 @@ export default async function AdministrativeDivisionPage() {
           ]}
         />
         <div className="mt-8">
-          <PageHeading
+          <AboutIllustratedHeading
             eyebrow="Administrative Division"
-            title="Administrative structure should reflect actual divisions and units, not abstract placeholders."
+            title="Administrative structure from published divisions and units."
             body="This page summarizes the main administrative divisions and their public-facing units using the same structure seeded into the main service."
+            illustration={aboutIllustrations.administration}
+            alt="Administrative staff and students receiving university services"
           />
         </div>
       </section>
