@@ -75,7 +75,7 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
     *_expand_programmes(
         programmes=(
             ("PhD in Curriculum Studies", "CIM"),
-            ("PhD in Educational Management", "EDFAPE"),
+            ("PhD in Educational Management", "ECDESNEEPSC"),
             ("PhD in Educational Foundations", "EDFAPE"),
             ("PhD in Educational Psychology", "ECDESNEEPSC"),
             ("PhD in Early Childhood Development Education", "ECDESNEEPSC"),
@@ -110,7 +110,7 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
     ),
     *_expand_programmes(
         programmes=(
-            ("Bachelor of Education (Arts)", "CIM"),
+            ("Bachelor of Education (Arts)", "EDFAPE"),
         ),
         level="undergraduate",
         mode_of_study="full_time_part_time",
@@ -130,9 +130,9 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
     ),
     *_expand_programmes(
         programmes=(
-            ("Bachelor of Education (Primary Option)", "ECDESNEEPSC"),
+            ("Bachelor of Education (Primary Option)", "CIM"),
             ("Bachelor of Education (Early Childhood Development Education)", "ECDESNEEPSC"),
-            ("Bachelor of Education (Special Needs Education)", "ECDESNEEPSC"),
+            ("Bachelor of Education (Special Needs Education)", "CIM"),
         ),
         level="undergraduate",
         mode_of_study="full_time",
@@ -142,7 +142,7 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
     ),
     *_expand_programmes(
         programmes=(
-            ("Diploma in Education Arts", "CIM"),
+            ("Diploma in Education Arts", "ECDESNEEPSC"),
         ),
         level="diploma",
         mode_of_study="full_time",
@@ -223,7 +223,7 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
     *_expand_programmes(
         programmes=(
             ("Diploma in Fisheries and Aquaculture", "AAS"),
-            ("Diploma in Agricultural Economics", "AGECO"),
+            ("Diploma in Agricultural Economics", "AGEDX"),
             ("Diploma in Animal Health and Production", "AGRSCI"),
             ("Diploma in Animal Science and Technology", "AGRSCI"),
         ),
@@ -572,7 +572,7 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
     *_expand_programmes(
         programmes=(
             ("Master in Human Resource", "HRSM"),
-            ("Master of Business Administration", "BUSADM"),
+            ("Master of Business Administration", "ACCFIN"),
             ("MSc in Economics", "ECONSTAT"),
             ("MSc in Project Management, Monitoring and Evaluation", "BUSADM"),
             ("MSc in Finance and Investment", "ACCFIN"),
@@ -602,7 +602,7 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
             ("Bachelor of Tourism and Hospitality Management", "THM"),
             ("Bachelor of Hotel and Hospitality Management", "THM"),
             ("Bachelor of Tours and Travel Management", "THM"),
-            ("Bachelor of Business and Management", "BUSADM"),
+            ("Bachelor of Business and Management", "ACCFIN"),
         ),
         level="undergraduate",
         mode_of_study="full_time",
