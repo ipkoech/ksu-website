@@ -116,7 +116,7 @@ class SeederDataTests(unittest.TestCase):
     def test_live_site_programme_department_relationship_overrides(self):
         expected_department_codes = {
             "Bachelor of Business and Management": "ACCFIN",
-            "Bachelor of Education (Arts)": "EDFAPE",
+            "Bachelor of Education (Arts)": "ECDESNEEPSC",
             "Bachelor of Education (Primary Option)": "CIM",
             "Bachelor of Education (Special Needs Education)": "CIM",
             "Diploma in Agricultural Economics": "AGEDX",
@@ -128,6 +128,21 @@ class SeederDataTests(unittest.TestCase):
 
         for programme_name, department_code in expected_department_codes.items():
             self.assertEqual(department_code, programmes_by_name[programme_name]["department_code"])
+
+    def test_live_site_extra_academic_departments_are_not_seeded(self):
+        removed_department_names = {
+            "Department of Agricultural Economics and Agribusiness",
+            "Department of Creative and Performing Arts",
+            "Department of Economics and Statistics",
+            "Department of Educational Foundations & Educational Administration Planning and Economics of Education",
+        }
+        department_names = {
+            department["name"]
+            for school in SCHOOL_SPECS
+            for department in school["departments"]
+        }
+
+        self.assertEqual(set(), removed_department_names & department_names)
 
     def test_admin_service_specs_are_unique_per_department(self):
         department_codes = {spec["code"] for spec in ADMIN_DEPARTMENTS}

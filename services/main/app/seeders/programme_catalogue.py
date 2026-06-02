@@ -76,7 +76,7 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
         programmes=(
             ("PhD in Curriculum Studies", "CIM"),
             ("PhD in Educational Management", "ECDESNEEPSC"),
-            ("PhD in Educational Foundations", "EDFAPE"),
+            ("PhD in Educational Foundations", "ECDESNEEPSC"),
             ("PhD in Educational Psychology", "ECDESNEEPSC"),
             ("PhD in Early Childhood Development Education", "ECDESNEEPSC"),
             ("PhD in Special Needs Education", "ECDESNEEPSC"),
@@ -91,12 +91,12 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
     *_expand_programmes(
         programmes=(
             ("Master of Education in Curriculum and Instruction", "CIM"),
-            ("Master of Education in Administration", "EDFAPE"),
-            ("Master of Education in Planning and Economics", "EDFAPE"),
-            ("Master of Education in Sociology", "EDFAPE"),
-            ("Master of Education in Philosophy", "EDFAPE"),
-            ("Master of Education in Comparative Education", "EDFAPE"),
-            ("Master of Education in History of Education", "EDFAPE"),
+            ("Master of Education in Administration", "ECDESNEEPSC"),
+            ("Master of Education in Planning and Economics", "ECDESNEEPSC"),
+            ("Master of Education in Sociology", "ECDESNEEPSC"),
+            ("Master of Education in Philosophy", "ECDESNEEPSC"),
+            ("Master of Education in Comparative Education", "ECDESNEEPSC"),
+            ("Master of Education in History of Education", "ECDESNEEPSC"),
             ("Master of Education in Educational Psychology", "ECDESNEEPSC"),
             ("Master of Education in Guidance and Counseling", "ECDESNEEPSC"),
             ("Master of Education in Special Needs Education", "ECDESNEEPSC"),
@@ -110,7 +110,7 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
     ),
     *_expand_programmes(
         programmes=(
-            ("Bachelor of Education (Arts)", "EDFAPE"),
+            ("Bachelor of Education (Arts)", "ECDESNEEPSC"),
         ),
         level="undergraduate",
         mode_of_study="full_time_part_time",
@@ -168,7 +168,7 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
             ("PhD in Environmental Science", "NRES"),
             ("PhD in Fisheries", "AAS"),
             ("PhD in Limnology", "AAS"),
-            ("PhD in Agricultural and Applied Economics", "AGECO"),
+            ("PhD in Agricultural and Applied Economics", "AGRSCI"),
             ("PhD in Agronomy", "AGRSCI"),
             ("PhD in Sustainable Agriculture", "AGRSCI"),
         ),
@@ -182,7 +182,7 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
         programmes=(
             ("MSc in Agricultural Education", "AGEDX"),
             ("MSc in Agricultural Extension", "AGEDX"),
-            ("MSc in Agricultural and Applied Economics", "AGECO"),
+            ("MSc in Agricultural and Applied Economics", "AGRSCI"),
             ("MSc in Natural Resource Management", "NRES"),
             ("MSc in Environmental Science and Water Resource Management", "NRES"),
             ("MSc in Agronomy", "AGRSCI"),
@@ -200,8 +200,8 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
     ),
     *_expand_programmes(
         programmes=(
-            ("Bachelor of Agribusiness Management", "AGECO"),
-            ("Bachelor of Science in Agricultural Economics", "AGECO"),
+            ("Bachelor of Agribusiness Management", "AGRSCI"),
+            ("Bachelor of Science in Agricultural Economics", "AGRSCI"),
             ("Bachelor of Science in Agricultural Education and Extension", "AGEDX"),
             ("Bachelor of Science in Agriculture", "AGRSCI"),
             ("Bachelor of Science in Environmental Sciences", "NRES"),
@@ -313,7 +313,7 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
             ("Bachelor of Arts (Counseling Psychology)", "PSY"),
             ("Bachelor of Arts (Gender and Development Studies)", "SGDS"),
             ("Bachelor of Arts (Religious Studies)", "PRS"),
-            ("Bachelor of Arts in Music", "CPA"),
+            ("Bachelor of Arts in Music", "LLL"),
             ("Bachelor of Arts (Economics and Sociology)", "SGDS"),
         ),
         level="undergraduate",
@@ -328,7 +328,7 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
             ("Diploma in Public Administration", "PSPS"),
             ("Diploma in County Governance and Management", "PSPS"),
             ("Diploma in Social Work and Community Development", "SGDS"),
-            ("Diploma in Music", "CPA"),
+            ("Diploma in Music", "LLL"),
             ("Diploma in International Relations, Peace and Conflict Resolutions", "PSPS"),
             ("Diploma in Gender and Development Studies", "SGDS"),
             ("Diploma in Counseling Psychology", "PSY"),
@@ -341,7 +341,7 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
     ),
     *_expand_programmes(
         programmes=(
-            ("Certificate in Music", "CPA"),
+            ("Certificate in Music", "LLL"),
             ("Certificate in Social Work", "SGDS"),
             ("Certificate in Disaster Management", "PSPS"),
             ("Certificate in Public Administration", "PSPS"),
@@ -561,7 +561,7 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
             ("PhD in Procurement and Logistics Management", "MSC"),
             ("PhD in Tourism Management", "THM"),
             ("PhD in Entrepreneurship and Management", "BUSADM"),
-            ("PhD in Economics", "ECONSTAT"),
+            ("PhD in Economics", "ACCFIN"),
         ),
         level="phd",
         mode_of_study="full_time_part_time",
@@ -573,7 +573,7 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
         programmes=(
             ("Master in Human Resource", "HRSM"),
             ("Master of Business Administration", "ACCFIN"),
-            ("MSc in Economics", "ECONSTAT"),
+            ("MSc in Economics", "ACCFIN"),
             ("MSc in Project Management, Monitoring and Evaluation", "BUSADM"),
             ("MSc in Finance and Investment", "ACCFIN"),
             ("MSc in Procurement and Logistics Management", "MSC"),
@@ -612,7 +612,7 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
     ),
     *_expand_programmes(
         programmes=(
-            ("Bachelor of Science in Economics and Statistics", "ECONSTAT"),
+            ("Bachelor of Science in Economics and Statistics", "ACCFIN"),
         ),
         level="undergraduate",
         mode_of_study="full_time",

@@ -351,7 +351,6 @@ SCHOOL_SPECS: list[dict[str, Any]] = [
         "mandate": "To build capacity for agricultural development, natural resource stewardship, applied research, and community-responsive innovation.",
         "website": "https://kisiiuniversity.ac.ke/school/school-of-agriculture-and-natural-resources-management",
         "departments": [
-            {"name": "Department of Agricultural Economics and Agribusiness", "code": "AGECO"},
             {"name": "Department of Natural Resources", "code": "NRES"},
             {"name": "Department of Agricultural Sciences", "code": "AGRSCI"},
             {"name": "Department of Agricultural Education and Extension", "code": "AGEDX"},
@@ -372,7 +371,6 @@ SCHOOL_SPECS: list[dict[str, Any]] = [
         "departments": [
             {"name": "Department of Accounting and Finance", "code": "ACCFIN"},
             {"name": "Department of Business Administration", "code": "BUSADM"},
-            {"name": "Department of Economics and Statistics", "code": "ECONSTAT"},
             {"name": "Department of Management Science", "code": "MSC"},
             {"name": "Department of Tourism and Hospitality Management", "code": "THM"},
             {"name": "Department of Human Resource and Strategic Management", "code": "HRSM"},
@@ -390,7 +388,6 @@ SCHOOL_SPECS: list[dict[str, Any]] = [
         "website": "https://kisiiuniversity.ac.ke/school/school-of-education-and-human-resource-development",
         "office_location": "Sakagwa Building, Kisii University Main Campus",
         "departments": [
-            {"name": "Department of Educational Foundations & Educational Administration Planning and Economics of Education", "code": "EDFAPE"},
             {"name": "Department of Curriculum Instruction and Media (CIM)", "code": "CIM"},
             {"name": "Department of Early Childhood Development Education (ECDE), Special Needs Education (SNE) & Educational Psychology (EPSC)", "code": "ECDESNEEPSC"},
         ],
@@ -479,7 +476,6 @@ SCHOOL_SPECS: list[dict[str, Any]] = [
             {"name": "Department of Geography", "code": "GEOG"},
             {"name": "Department of Sociology, Gender & Development Studies", "code": "SGDS"},
             {"name": "Department of Philosophy and Religious Studies", "code": "PRS"},
-            {"name": "Department of Creative and Performing Arts", "code": "CPA"},
         ],
     },
     {
