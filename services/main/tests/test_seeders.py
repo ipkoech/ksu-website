@@ -3,7 +3,7 @@ from collections import Counter
 
 from app.seeders._shared import ADMIN_DEPARTMENTS
 from app.seeders._shared import SCHOOL_SPECS
-from app.seeders.seed_admin_departments import ADMIN_SERVICE_SPECS
+from app.seeders.seed_admin_departments import ADMIN_SERVICE_SPECS, MOVED_ADMIN_SERVICE_SLUGS
 from app.seeders.programme_catalogue import BROCHURE_PROGRAMMES
 from app.seeders.seed_programmes import programme_code
 from app.seeders.seed_public_records import CONTACT_SPECS, DOWNLOAD_SPECS, FAQ_SPECS
@@ -18,6 +18,34 @@ class SeederDataTests(unittest.TestCase):
     def test_admin_department_specs_are_unique(self):
         self.assertEqual([], duplicates(spec["code"] for spec in ADMIN_DEPARTMENTS))
         self.assertEqual([], duplicates(spec["name"] for spec in ADMIN_DEPARTMENTS))
+
+    def test_official_administration_departments_are_seeded(self):
+        official_department_names = {
+            "Internal Audit",
+            "Procurement and Supplies",
+            "Salaries",
+            "Student Career Services",
+            "Dean of Students",
+            "Games and Sports Services",
+            "Medical Services",
+            "Security",
+            "Information Communication and Technology (ICT)",
+            "Planning",
+            "Central Services",
+            "Finance",
+            "Registrar Administration",
+            "E-Learning Directorate",
+            "Town Annexes",
+            "Board of Post Graduate Studies",
+            "Corporate Communication",
+            "Legal Department",
+            "Registrar Academic Affairs",
+        }
+        seeded_by_name = {spec["name"]: spec for spec in ADMIN_DEPARTMENTS}
+
+        self.assertEqual(set(), official_department_names - set(seeded_by_name))
+        for department_name in official_department_names:
+            self.assertIn("https://kisiiuniversity.ac.ke/dpt/", seeded_by_name[department_name]["source_url"])
 
     def test_school_and_academic_department_specs_are_unique(self):
         school_codes = [spec["code"] for spec in SCHOOL_SPECS]
@@ -86,6 +114,13 @@ class SeederDataTests(unittest.TestCase):
             set(),
             {spec["department_code"] for spec in ADMIN_SERVICE_SPECS} - department_codes,
         )
+
+    def test_moved_admin_services_are_not_reseeded_on_old_departments(self):
+        service_keys = {(spec["department_code"], spec["slug"]) for spec in ADMIN_SERVICE_SPECS}
+
+        for department_code, service_slugs in MOVED_ADMIN_SERVICE_SLUGS.items():
+            for service_slug in service_slugs:
+                self.assertNotIn((department_code, service_slug), service_keys)
 
     def test_public_record_specs_are_unique(self):
         self.assertEqual([], duplicates(spec["slug"] for spec in DOWNLOAD_SPECS))

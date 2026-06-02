@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models import DepartmentService as DepartmentServiceModel
 from app.schemas.base import slugify
 
 from ._shared import (
@@ -129,7 +131,7 @@ ADMIN_SERVICE_SPECS = [
         "display_order": 3,
     },
     {
-        "department_code": "STUAFFAIRS",
+        "department_code": "AHRCS",
         "name": "Customer Care Ticket",
         "slug": "customer-care-ticket",
         "description": "Customer care ticket submission through the university help desk.",
@@ -140,12 +142,34 @@ ADMIN_SERVICE_SPECS = [
         "display_order": 1,
     },
     {
-        "department_code": "STUAFFAIRS",
+        "department_code": "AHRCS",
         "name": "Complaints, Compliments and Suggestions",
         "slug": "complaints-compliments-suggestions",
         "description": "Feedback services for complaints, compliments, suggestions, information requests, and request follow-up.",
         "requirements": "Requester contact details, request category, and the feedback or information request details.",
         "process": "Use the Customer Care Centre links for complaints, compliments, suggestions, request tracking, or information requests.",
+        "contact_email": "info@kisiiuniversity.ac.ke",
+        "contact_phone": "+254720875082",
+        "display_order": 2,
+    },
+    {
+        "department_code": "STUAFFAIRS",
+        "name": "Student Welfare and Support",
+        "slug": "student-welfare-and-support",
+        "description": "Student welfare and support services associated with the Dean of Students office.",
+        "requirements": "Student details and a clear description of the student support need.",
+        "process": "Contact or visit the Dean of Students office, or use the Customer Care Centre for student-service requests that need ticket tracking.",
+        "contact_email": "info@kisiiuniversity.ac.ke",
+        "contact_phone": "+254720875082",
+        "display_order": 1,
+    },
+    {
+        "department_code": "STUAFFAIRS",
+        "name": "Student Clubs and Campus Life Support",
+        "slug": "student-clubs-and-campus-life-support",
+        "description": "Student clubs, societies, campus life, and welfare support through the Dean of Students office.",
+        "requirements": "Student details and the relevant club, society, or campus life support request.",
+        "process": "Contact the Dean of Students office for student welfare, clubs, societies, and campus life guidance.",
         "contact_email": "info@kisiiuniversity.ac.ke",
         "contact_phone": "+254720875082",
         "display_order": 2,
@@ -205,7 +229,37 @@ ADMIN_SERVICE_SPECS = [
         "contact_phone": "+254720875082",
         "display_order": 1,
     },
+    {
+        "department_code": "CENTRAL",
+        "name": "Central Services Support",
+        "slug": "central-services-support",
+        "description": "General central services support listed under the official Central Services department page.",
+        "requirements": "Requester details and the specific central service needed.",
+        "process": "Contact Central Services or use the Customer Care Centre for service requests that need ticket tracking.",
+        "contact_email": "info@kisiiuniversity.ac.ke",
+        "contact_phone": "+254720875082",
+        "display_order": 1,
+    },
+    {
+        "department_code": "TOWNANNEX",
+        "name": "Town Annexes Support",
+        "slug": "town-annexes-support",
+        "description": "Support for Town Annexes listed as an official administration department.",
+        "requirements": "Requester details and the specific Town Annexes support request.",
+        "process": "Contact Town Annexes or use the Customer Care Centre for service requests that need ticket tracking.",
+        "contact_email": "info@kisiiuniversity.ac.ke",
+        "contact_phone": "+254720875082",
+        "display_order": 1,
+    },
 ]
+
+
+MOVED_ADMIN_SERVICE_SLUGS = {
+    "STUAFFAIRS": {
+        "customer-care-ticket",
+        "complaints-compliments-suggestions",
+    },
+}
 
 
 async def seed_admin_departments(db: AsyncSession, ctx: SeedContext) -> None:
@@ -232,6 +286,7 @@ async def seed_admin_departments(db: AsyncSession, ctx: SeedContext) -> None:
             head_id=head.id if head else None,
             postgraduate_coordinator_id=None,
             about=spec["about"],
+            guidelines=spec.get("source_url"),
             is_active=True,
             is_public=True,
             allows_staff_management=True,
@@ -303,3 +358,16 @@ async def seed_admin_departments(db: AsyncSession, ctx: SeedContext) -> None:
             fee=None,
             is_active=True,
         )
+
+    for department_code, service_slugs in MOVED_ADMIN_SERVICE_SLUGS.items():
+        department = ctx.departments[department_code]
+        stale_services = (
+            await db.execute(
+                select(DepartmentServiceModel).where(
+                    DepartmentServiceModel.department_id == department.id,
+                    DepartmentServiceModel.slug.in_(service_slugs),
+                )
+            )
+        ).scalars()
+        for service in stale_services:
+            service.is_active = False
