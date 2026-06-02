@@ -139,6 +139,72 @@ class SeederDataTests(unittest.TestCase):
             {spec["department_code"] for spec in ADMIN_SERVICE_SPECS} - department_codes,
         )
 
+    def test_requested_administration_office_services_are_seeded(self):
+        services_by_department = {}
+        for spec in ADMIN_SERVICE_SPECS:
+            services_by_department.setdefault(spec["department_code"], set()).add(spec["slug"])
+
+        expected_services = {
+            "ACAFFAIRS": {
+                "online-admission",
+                "online-application",
+                "application-forms",
+                "academic-affairs-office-support",
+            },
+            "AHRCS": {
+                "customer-care-ticket",
+                "complaints-compliments-suggestions",
+                "registrar-administration-office-support",
+                "recruitment-and-staff-advert-notices",
+            },
+            "FIN": {"finance-office-support"},
+            "ICT": {
+                "e-learning-access",
+                "student-staff-portal-access",
+                "turnitin-access",
+                "ict-equipment-repair-and-internet-support",
+                "university-system-account-opening",
+                "ict-equipment-issuance",
+                "website-information-posting",
+                "staff-website-profile-updates",
+                "student-and-staff-password-resets",
+                "erp-system-support",
+                "email-and-communication-services",
+                "security-and-data-protection",
+            },
+            "PROC": {
+                "tenders-and-supplier-notices",
+                "supplier-registration",
+                "acquisition-of-goods-works-and-services",
+                "stores-and-inventory-management",
+                "contract-management-and-disposal",
+                "procurement-planning-and-advisory",
+                "supplier-relationship-management",
+            },
+            "MEDSERV": {
+                "medical-services-support",
+                "general-outpatient-services",
+                "laboratory-and-diagnostic-screening",
+                "alcohol-and-drug-abuse-prevention",
+                "specialized-care-referral",
+                "hiv-and-aids-prevention-and-support",
+                "public-health-and-sanitation",
+            },
+        }
+
+        for department_code, expected_slugs in expected_services.items():
+            self.assertLessEqual(expected_slugs, services_by_department[department_code])
+
+    def test_requested_administration_office_profiles_use_official_source_details(self):
+        departments_by_code = {spec["code"]: spec for spec in ADMIN_DEPARTMENTS}
+
+        self.assertIn("Acting Registrar Academic Affairs", departments_by_code["ACAFFAIRS"]["about"])
+        self.assertIn("university adverts", departments_by_code["AHRCS"]["about"])
+        self.assertIn("Finance Officer", departments_by_code["FIN"]["about"])
+        self.assertIn("ERP support", departments_by_code["ICT"]["mandate"])
+        self.assertIn("consolidated procurement plan", departments_by_code["PROC"]["mandate"])
+        self.assertIn("general outpatient", departments_by_code["MEDSERV"]["mandate"].lower())
+
     def test_dean_of_students_official_mandate_services_are_seeded(self):
         dean_of_students = next(spec for spec in ADMIN_DEPARTMENTS if spec["code"] == "STUAFFAIRS")
         service_slugs = {
@@ -182,6 +248,23 @@ class SeederDataTests(unittest.TestCase):
             "Student Life",
             downloads_by_slug["kisii-university-revised-handbook-2019"]["category"],
         )
+
+    def test_requested_administration_office_downloads_are_seeded(self):
+        downloads_by_slug = {spec["slug"]: spec for spec in DOWNLOAD_SPECS}
+
+        expected_categories = {
+            "ksuerp-access-and-permissions": "Digital Services",
+            "adverts-february-2026-kisii-university": "Administration",
+            "tender-servicing-of-printers-and-photocopiers-may-2026": "Procurement",
+            "tender-for-water-plant-materials-may-2026": "Procurement",
+            "tender-document-for-supply-of-servers-and-other-ict-equipments-may-2026": "Procurement",
+            "structured-cabling-tender-may-2026": "Procurement",
+            "printing-press-materials-tender-document-may-2026": "Procurement",
+            "final-evaluation-report-for-supplier-prequalification-2026-2028": "Procurement",
+        }
+
+        for slug, category in expected_categories.items():
+            self.assertEqual(category, downloads_by_slug[slug]["category"])
 
 
 if __name__ == "__main__":
