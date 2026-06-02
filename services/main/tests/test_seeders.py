@@ -4,6 +4,7 @@ from collections import Counter
 from app.seeders._shared import ADMIN_DEPARTMENTS
 from app.seeders._shared import SCHOOL_SPECS
 from app.seeders.seed_admin_departments import ADMIN_SERVICE_SPECS, MOVED_ADMIN_SERVICE_SLUGS
+from app.seeders.seed_divisions import DIVISION_SPECS, WING_SPECS
 from app.seeders.programme_catalogue import BROCHURE_PROGRAMMES
 from app.seeders.seed_programmes import programme_code
 from app.seeders.seed_public_records import CONTACT_SPECS, DOWNLOAD_SPECS, FAQ_SPECS
@@ -46,6 +47,29 @@ class SeederDataTests(unittest.TestCase):
         self.assertEqual(set(), official_department_names - set(seeded_by_name))
         for department_name in official_department_names:
             self.assertIn("https://kisiiuniversity.ac.ke/dpt/", seeded_by_name[department_name]["source_url"])
+
+    def test_official_administration_divisions_and_direct_units_are_seeded(self):
+        divisions_by_code = {spec["code"]: spec for spec in DIVISION_SPECS}
+        wings_by_division = {}
+        for division_code, _name, code, _wing_type, _head_key in WING_SPECS:
+            wings_by_division.setdefault(division_code, set()).add(code)
+
+        self.assertIn(
+            "https://kisiiuniversity.ac.ke/admin_departments/administrative-division",
+            divisions_by_code["APF"]["source_url"],
+        )
+        self.assertIn(
+            "https://kisiiuniversity.ac.ke/admin_departments/academic-division",
+            divisions_by_code["ARSA"]["source_url"],
+        )
+        self.assertEqual(
+            {"AHRCS", "FIN", "ICT", "MEDICAL", "AUDIT", "PLANNING", "CORPCOMM", "PROC", "LEGAL"},
+            wings_by_division["APF"],
+        )
+        self.assertEqual(
+            {"RAA", "REIRM", "ELEARN", "STUAFFAIRS"},
+            wings_by_division["ARSA"],
+        )
 
     def test_school_and_academic_department_specs_are_unique(self):
         school_codes = [spec["code"] for spec in SCHOOL_SPECS]
