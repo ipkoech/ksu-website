@@ -516,6 +516,10 @@ ADMIN_DEPARTMENTS: list[dict[str, Any]] = [
     {"name": "Legal Department", "code": "LEGAL", "wing_code": "LEGAL", "head_key": "dvc_apf", "about": "Legal Department is listed as an official department under the APF division."},
     {"name": "E-Learning Directorate", "code": "ELEARN", "wing_code": "ELEARN", "head_key": "director_elearning", "about": "E-Learning Directorate is listed as an academic unit under the ARSA division."},
     {"name": "Board of Post Graduate Studies", "code": "BPGS", "wing_code": "RAA", "head_key": "registrar_academic", "about": "Board of Post Graduate Studies is listed as an academic unit under the Academic Affairs wing."},
+    {"name": "Salaries", "code": "SAL", "wing_code": "FIN", "head_key": None, "about": "Salaries is listed as an official administration service department on the university website."},
+    {"name": "Student Career Services", "code": "CAREER", "wing_code": "STUAFFAIRS", "head_key": None, "about": "Student Career Services is listed under the university administration and student life sections."},
+    {"name": "Games and Sports Services", "code": "SPORTSERV", "wing_code": "STUAFFAIRS", "head_key": None, "about": "Games and Sports Services is listed under the university administration and student life sections."},
+    {"name": "Security", "code": "SEC", "wing_code": "AHRCS", "head_key": None, "about": "Security is listed as an official administration service department on the university website."},
 ]
 
 
