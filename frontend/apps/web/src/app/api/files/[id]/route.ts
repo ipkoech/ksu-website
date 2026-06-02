@@ -41,5 +41,17 @@ export async function GET(
     return new NextResponse("Media URL unavailable", { status: 404 });
   }
 
-  return NextResponse.redirect(target, 307);
+  const mediaResponse = await fetch(target, { next: { revalidate: 300 } });
+  if (!mediaResponse.ok) {
+    return new NextResponse("Media not available", { status: 502 });
+  }
+
+  const headers = new Headers();
+  const contentType = mediaResponse.headers.get("content-type");
+  const contentLength = mediaResponse.headers.get("content-length");
+  if (contentType) headers.set("content-type", contentType);
+  if (contentLength) headers.set("content-length", contentLength);
+  headers.set("cache-control", "public, max-age=300, stale-while-revalidate=3600");
+
+  return new NextResponse(mediaResponse.body, { headers });
 }

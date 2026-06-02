@@ -1,1 +1,29 @@
 @import "@ksu/ui/globals.css";
+
+.ksu-compact-public-page section[class*="py-16"],
+.ksu-compact-public-page section[class*="lg:py-20"] {
+  padding-top: clamp(1.75rem, 3vw, 2.75rem);
+  padding-bottom: clamp(1.75rem, 3vw, 2.75rem);
+}
+
+.ksu-compact-public-page [class*="mt-8"] {
+  margin-top: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+.ksu-compact-public-page [class*="gap-8"],
+.ksu-compact-public-page [class*="gap-9"] {
+  gap: clamp(1rem, 2vw, 1.75rem);
+}
+
+@media (max-width: 1023px) {
+  .ksu-compact-public-page nav[aria-label*="About"],
+  .ksu-compact-public-page nav[aria-label*="Related"],
+  .ksu-compact-public-page nav[aria-label*="Admissions navigation"] {
+    display: none;
+  }
+
+  .ksu-compact-public-page img[class*="aspect-"],
+  .ksu-compact-public-page [class*="min-h-[240px]"] {
+    min-height: 0;
+  }
+}

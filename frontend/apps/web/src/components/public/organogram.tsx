@@ -1,6 +1,7 @@
 import type { StaffAssignment } from "@ksu/api-client";
 import { resolvePublicMediaUrl } from "@/lib/public-media";
 import { Mail, Network } from "lucide-react";
+import { PublicImage } from "@/components/public/public-image";
 
 type OrganogramProps = {
   assignments: StaffAssignment[];
@@ -49,7 +50,10 @@ function initialsFromName(name: string) {
   if (!parts.length) return "S";
 
   const selected = parts.length === 1 ? [parts[0]] : [parts[0], parts.at(-1)!];
-  return selected.map((part) => part[0]).join("").toUpperCase();
+  return selected
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 }
 
 function personDisplayName(assignment: StaffAssignment) {
@@ -100,7 +104,8 @@ function formatDate(value?: string | null) {
 
 function assignmentSort(first: StaffAssignment, second: StaffAssignment) {
   return (
-    Number(first.hierarchy_level ?? 99) - Number(second.hierarchy_level ?? 99) ||
+    Number(first.hierarchy_level ?? 99) -
+      Number(second.hierarchy_level ?? 99) ||
     Number(first.display_order ?? 100) - Number(second.display_order ?? 100) ||
     personDisplayName(first).localeCompare(personDisplayName(second))
   );
@@ -141,7 +146,15 @@ function Avatar({ assignment }: { assignment: StaffAssignment }) {
   const image = photoSource(assignment);
 
   if (image) {
-    return <img src={image} alt={name} className="h-full w-full object-cover" />;
+    return (
+      <PublicImage
+        src={image}
+        alt={name}
+        ratio="profile"
+        sizes="64px"
+        className="h-full w-full"
+      />
+    );
   }
 
   return (

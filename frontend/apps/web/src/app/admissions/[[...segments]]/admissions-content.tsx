@@ -22,18 +22,24 @@ import type {
   AdmissionsIntakeSummary,
   AdmissionsPageData,
 } from "@/lib/get-admissions";
+import { ScrollReveal } from "@ksu/ui/components";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 
 type AdmissionsArea =
   | "landing"
   | "undergraduate"
+  | "diploma"
+  | "certificate-bridging"
   | "postgraduate"
   | "international"
   | "requirements"
   | "fees"
   | "scholarships"
   | "how-to-apply"
+  | "brochures"
+  | "booklets"
+  | "graduation-booklets"
   | "intakes"
   | "intake-detail"
   | "record";
@@ -88,6 +94,18 @@ const navItems: RouteLink[] = [
     icon: BookOpenCheck,
   },
   {
+    title: "Diploma",
+    href: "/admissions/diploma",
+    description: "Diploma routes, requirements, and application guidance.",
+    icon: ClipboardCheck,
+  },
+  {
+    title: "Certificate/Bridging",
+    href: "/admissions/certificate-bridging",
+    description: "Certificate and bridging application pathways.",
+    icon: CheckCircle2,
+  },
+  {
     title: "Postgraduate",
     href: "/admissions/postgraduate",
     description: "Postgraduate diploma, masters, fellowship, and PhD study.",
@@ -128,6 +146,24 @@ const navItems: RouteLink[] = [
     href: "/admissions/intakes",
     description: "Published intake windows with official verification.",
     icon: CalendarDays,
+  },
+  {
+    title: "Brochures",
+    href: "/admissions/brochures",
+    description: "Programme brochures and course booklet references.",
+    icon: FileText,
+  },
+  {
+    title: "Booklets",
+    href: "/admissions/booklets",
+    description: "Admissions booklets and applicant references.",
+    icon: Library,
+  },
+  {
+    title: "Graduation Booklets",
+    href: "/admissions/graduation-booklets",
+    description: "Graduation booklets and graduand guidance.",
+    icon: GraduationCap,
   },
 ];
 
@@ -289,6 +325,22 @@ function areaFromSegments(segments: string[], data: AdmissionsPageData) {
     };
   }
 
+  if (area === "certificate" || area === "bridging") {
+    return { area: "certificate-bridging" as AdmissionsArea };
+  }
+
+  if (area === "brochure") {
+    return { area: "brochures" as AdmissionsArea };
+  }
+
+  if (area === "booklet") {
+    return { area: "booklets" as AdmissionsArea };
+  }
+
+  if (area === "graduation" || area === "graduation-booklet") {
+    return { area: "graduation-booklets" as AdmissionsArea };
+  }
+
   if (!area) return { area: "landing" as AdmissionsArea };
   if (known.includes(area)) return { area: area as AdmissionsArea };
 
@@ -358,14 +410,28 @@ function ActionLink({
   primary?: boolean;
 }) {
   const external = href.startsWith("http");
+  const host = external ? new URL(href).host : null;
   const className = primary
     ? "inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
     : "inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:border-primary hover:text-primary";
 
   if (external) {
     return (
-      <a href={href} className={className}>
-        {children}
+      <a
+        href={href}
+        className={className}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`${children?.toString() ?? "Open link"} on ${host}`}
+      >
+        <span className="flex flex-col text-left leading-tight">
+          <span>{children}</span>
+          {host ? (
+            <span className="text-[11px] font-medium opacity-80">
+              Opens {host}
+            </span>
+          ) : null}
+        </span>
         <ExternalLink aria-hidden className="h-4 w-4" />
       </a>
     );
@@ -511,9 +577,14 @@ function ActionRow({
   body: string;
   href: string;
 }) {
+  const external = href.startsWith("http");
+  const host = external ? new URL(href).host : null;
+
   return (
     <a
       href={href}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noopener noreferrer" : undefined}
       className="group flex gap-3 border border-slate-200 bg-white p-4 transition hover:border-primary/40 hover:bg-primary/5"
     >
       <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
@@ -526,6 +597,11 @@ function ActionRow({
         <span className="mt-1 block text-sm leading-6 text-slate-600">
           {body}
         </span>
+        {host ? (
+          <span className="mt-2 block text-xs font-semibold text-primary">
+            Opens {host}
+          </span>
+        ) : null}
       </span>
       <ExternalLink
         aria-hidden
@@ -549,7 +625,8 @@ function Section({
   dark?: boolean;
 }) {
   return (
-    <section
+    <ScrollReveal
+      as="section"
       className={
         dark
           ? "border-y border-slate-900 bg-slate-950 px-4 py-14 text-white sm:px-6 lg:px-8 lg:py-16"
@@ -590,7 +667,7 @@ function Section({
         </div>
         <div>{children}</div>
       </div>
-    </section>
+    </ScrollReveal>
   );
 }
 
@@ -849,7 +926,7 @@ function PublishedRecords({ records }: { records: AdmissionsInfoSummary[] }) {
       body="These records come from the admissions content API. Use them alongside the official application system and the route-specific guidance above."
     >
       <div className="grid gap-4 md:grid-cols-2">
-        {records.slice(0, 6).map((record) => {
+        {records.slice(0, 3).map((record) => {
           const href = record.externalUrl || `/admissions/${record.slug}`;
           const external = href.startsWith("http");
           const body =
@@ -916,48 +993,52 @@ function LandingSections({ data }: { data: AdmissionsPageData }) {
   return (
     <>
       <Section
-        eyebrow="Current Actions"
-        title="Know what is open before you prepare documents"
-        body="Admissions begins with the live action: confirm the intake, verify the programme, then apply through the official university system."
+        eyebrow="Admissions Tasks"
+        title="Start with the three decisions that determine the right route"
+        body="Admissions content is now grouped around applicant tasks: confirm live intake status, choose the correct application route, and verify the programme before submitting."
       >
-        <div className="grid gap-6">
-          <StatStrip intakes={data.intakes} />
-          <IntakesTable intakes={data.intakes.slice(0, 4)} />
+        <div className="grid gap-5 xl:grid-cols-3">
+          <TaskCard
+            icon={CalendarDays}
+            title="1. Confirm current intakes"
+            body="Check whether applications are open, scheduled, or closed before preparing documents or making payment."
+            href="/admissions/intakes"
+            action="View intakes"
+          />
+          <TaskCard
+            icon={ClipboardCheck}
+            title="2. Choose application route"
+            body="Use KUCCPS, direct online application, postgraduate, or international guidance according to how you are joining."
+            href="/admissions/how-to-apply"
+            action="Choose route"
+          />
+          <TaskCard
+            icon={Search}
+            title="3. Verify programme fit"
+            body="Compare requirements, level, duration, school ownership, and mode of study before submitting an application."
+            href="/academics/programmes"
+            action="Find programme"
+          />
         </div>
-      </Section>
-
-      <Section
-        eyebrow="Applicant Routes"
-        title="Pick the route that matches how you are joining"
-        body="Each pathway has different controls, records, and follow-up steps. Start with the correct route before making payments or uploading documents."
-        dark
-      >
-        <LinkPanel
-          dark
-          links={[
-            {
-              title: "Government-sponsored applicants",
-              href: officialLinks.kuccps,
-              description:
-                "Use KUCCPS placement guidance, then confirm admission documents through the university admission centre.",
-              icon: Landmark,
-            },
-            {
-              title: "Self-sponsored applicants",
-              href: officialLinks.onlineApplication,
-              description:
-                "Apply directly through the online system and choose from active intakes and available programmes.",
-              icon: ClipboardCheck,
-            },
-            {
-              title: "Admitted students",
-              href: officialLinks.admissionCenter,
-              description:
-                "Access admission documents, registration actions, and progress tracking after placement or admission.",
-              icon: ShieldCheck,
-            },
-          ]}
-        />
+        <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.42fr)]">
+          <StatStrip intakes={data.intakes} />
+          <div className="border border-slate-200 bg-slate-50 p-5">
+            <h3 className="text-lg font-semibold text-slate-950">
+              Official systems
+            </h3>
+            <p className="mt-2 text-sm leading-7 text-slate-600">
+              Use the university systems for submission, tracking, and admission document access.
+            </p>
+            <div className="mt-4 flex flex-col gap-3">
+              <ActionLink href={officialLinks.onlineApplication} primary>
+                Apply online
+              </ActionLink>
+              <ActionLink href={officialLinks.admissionCenter}>
+                Admission centre
+              </ActionLink>
+            </div>
+          </div>
+        </div>
       </Section>
 
       <Section
@@ -965,7 +1046,7 @@ function LandingSections({ data }: { data: AdmissionsPageData }) {
         title="Move from interest to the correct academic level"
         body="The admissions section is organized around the decisions applicants actually make: level of study, requirements, fees, funding, and application timing."
       >
-        <LinkPanel links={navItems.filter((item) => item.href !== "/admissions")} />
+        <LinkPanel links={navItems.filter((item) => item.href !== "/admissions").slice(0, 6)} />
       </Section>
 
       <Section
@@ -994,6 +1075,37 @@ function LandingSections({ data }: { data: AdmissionsPageData }) {
         </div>
       </Section>
     </>
+  );
+}
+
+function TaskCard({
+  icon: Icon,
+  title,
+  body,
+  href,
+  action,
+}: {
+  icon: LucideIcon;
+  title: string;
+  body: string;
+  href: string;
+  action: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group flex min-h-[15rem] flex-col border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+    >
+      <span className="flex h-12 w-12 items-center justify-center bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
+        <Icon aria-hidden className="h-5 w-5" />
+      </span>
+      <h3 className="mt-5 text-lg font-semibold text-slate-950">{title}</h3>
+      <p className="mt-3 text-sm leading-7 text-slate-600">{body}</p>
+      <span className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-semibold text-primary">
+        {action}
+        <ArrowRight aria-hidden className="h-4 w-4" />
+      </span>
+    </Link>
   );
 }
 
@@ -1054,6 +1166,170 @@ function UndergraduateSections() {
               href: officialLinks.undergraduateForm,
               description: "Use only when the current route asks for a downloadable form.",
               icon: FileText,
+            },
+          ]}
+        />
+      </Section>
+    </>
+  );
+}
+
+function DiplomaSections() {
+  return (
+    <>
+      <Section
+        eyebrow="Diploma Applications"
+        title="Diploma entry routes and application checks"
+        body="Diploma applicants should confirm the exact programme, school, minimum grade, progression route, and intake before submitting an application."
+      >
+        <ComparisonTable
+          headers={["Minimum route", "Progression option", "Before applying"]}
+          rows={[
+            {
+              label: "Diploma",
+              cells: [
+                "KCSE C or equivalent",
+                "KCSE C- with a relevant certificate may be considered",
+                "Check course-specific subject requirements and professional rules",
+              ],
+            },
+            {
+              label: "Professional diploma",
+              cells: [
+                "May require higher grades or regulator-specific conditions",
+                "Prior certificate or experiential-learning routes may apply only where published",
+                "Verify against the current course booklet and programme page",
+              ],
+            },
+          ]}
+        />
+      </Section>
+
+      <Section
+        eyebrow="Diploma File"
+        title="Prepare a complete application file"
+        body="Diploma applications should be submitted only after the applicant has matched the programme to the current requirements and official intake."
+        dark
+      >
+        <CheckList
+          dark
+          items={[
+            "KCSE certificate or equivalent academic record.",
+            "Relevant certificate evidence for certificate-to-diploma progression routes.",
+            "Programme requirements checked in the course booklet.",
+            "Identity details requested by the official application portal.",
+            "Payment instructions confirmed from official university records.",
+            "Open intake verified before submission.",
+          ]}
+        />
+      </Section>
+
+      <Section
+        eyebrow="Diploma Resources"
+        title="Official diploma references"
+        body="Use the local records and official resources together so applicants do not rely on outdated shared links."
+      >
+        <LinkPanel
+          links={[
+            {
+              title: "Apply online",
+              href: officialLinks.onlineApplication,
+              description: "Submit or continue a diploma application through the official system.",
+              icon: ClipboardCheck,
+            },
+            {
+              title: "Diploma application page",
+              href: officialLinks.diploma,
+              description: "Open the legacy official diploma admission resource.",
+              icon: FileText,
+            },
+            {
+              title: "Course booklet",
+              href: officialLinks.brochurePdf,
+              description: "Check diploma programmes, requirements, duration, and fee references.",
+              icon: BookOpenCheck,
+            },
+          ]}
+        />
+      </Section>
+    </>
+  );
+}
+
+function CertificateBridgingSections() {
+  return (
+    <>
+      <Section
+        eyebrow="Certificate And Bridging"
+        title="Certificate courses and bridging pathways"
+        body="Certificate and bridging applicants should confirm the approved pathway, minimum academic record, and target progression before applying."
+      >
+        <ComparisonTable
+          headers={["Typical route", "Purpose", "Before applying"]}
+          rows={[
+            {
+              label: "Certificate",
+              cells: [
+                "KCSE C- or equivalent for many certificate routes",
+                "Entry into foundational or professional training",
+                "Check the specific certificate course requirements",
+              ],
+            },
+            {
+              label: "Bridging",
+              cells: [
+                "Prior qualification plus a published bridging need",
+                "Qualification upgrade or subject preparation",
+                "Confirm that the bridging pathway is currently advertised",
+              ],
+            },
+          ]}
+        />
+      </Section>
+
+      <Section
+        eyebrow="Preparation"
+        title="What certificate and bridging applicants should prepare"
+        body="These routes are often programme-specific, so the published course record and intake notice matter more than a general summary."
+        dark
+      >
+        <CheckList
+          dark
+          items={[
+            "KCSE, O-Level, A-Level, or equivalent academic record.",
+            "Prior certificate or diploma evidence where bridging depends on progression.",
+            "Target programme checked against the course booklet.",
+            "Approved bridging pathway confirmed before payment.",
+            "Official intake and deadline verified through the application portal.",
+            "Any school-specific instructions or attachments prepared.",
+          ]}
+        />
+      </Section>
+
+      <Section
+        eyebrow="Resources"
+        title="Official certificate and bridging references"
+        body="Use the university application system for live submission and current availability."
+      >
+        <LinkPanel
+          links={[
+            {
+              title: "Apply online",
+              href: officialLinks.onlineApplication,
+              description: "Submit or continue an application through the official system.",
+              icon: ClipboardCheck,
+            },
+            {
+              title: "Certificate/bridging page",
+              href: officialLinks.certificate,
+              description: "Open the legacy official certificate and bridging admission resource.",
+              icon: FileText,
+            },
+            {
+              title: "Course booklet",
+              href: officialLinks.brochurePdf,
+              description: "Check certificate programmes, bridging context, requirements, and duration.",
+              icon: BookOpenCheck,
             },
           ]}
         />
@@ -1332,6 +1608,173 @@ function IntakesSections({ data }: { data: AdmissionsPageData }) {
   );
 }
 
+function ResourceRecords({
+  records,
+  fallbackLinks,
+  darkBody,
+}: {
+  records: AdmissionsInfoSummary[];
+  fallbackLinks: RouteLink[];
+  darkBody: string;
+}) {
+  return (
+    <>
+      <Section
+        eyebrow="Published Records"
+        title="Records from the admissions content system"
+        body={
+          records.length
+            ? "These records are available from the backend admissions content model and are shown as explicit admissions resources."
+            : "No matching backend records were returned. Use the official resources below while records are populated."
+        }
+      >
+        {records.length ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            {records.map((record) => {
+              const href = record.externalUrl || record.attachmentUrl || `/admissions/${record.slug}`;
+              const external = href.startsWith("http");
+              const body =
+                record.summary ||
+                contentExcerpt(record.content) ||
+                "Published admissions resource.";
+
+              return external ? (
+                <a
+                  key={record.id}
+                  href={href}
+                  className="border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+                >
+                  <RecordInner record={record} body={body} external />
+                </a>
+              ) : (
+                <Link
+                  key={record.id}
+                  href={href}
+                  className="border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+                >
+                  <RecordInner record={record} body={body} />
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <LinkPanel links={fallbackLinks} />
+        )}
+      </Section>
+
+      <Section
+        eyebrow="Verification"
+        title="Use the current official version before acting"
+        body={darkBody}
+        dark
+      >
+        <CheckList
+          dark
+          items={[
+            "Confirm that the record applies to the current academic year or ceremony.",
+            "Check deadlines and programme availability in the official portal.",
+            "Use only official downloads, attachments, or university-hosted links.",
+            "Contact Admissions or the relevant office if two sources conflict.",
+          ]}
+        />
+      </Section>
+    </>
+  );
+}
+
+function BrochuresSections({ data }: { data: AdmissionsPageData }) {
+  const records = recordsForContentTypes(data, ["brochure"]);
+
+  return (
+    <ResourceRecords
+      records={records}
+      darkBody="Brochures are planning references. Applicants should still verify live intakes, requirements, fees, and application status in the official admissions portal."
+      fallbackLinks={[
+        {
+          title: "Course booklet PDF",
+          href: officialLinks.brochurePdf,
+          description: "Open the official course brochure PDF for programme-level guidance.",
+          icon: BookOpenCheck,
+        },
+        {
+          title: "Programmes",
+          href: "/academics/programmes",
+          description: "Browse programme records in the current implementation.",
+          icon: Search,
+        },
+        {
+          title: "Downloads",
+          href: "/downloads",
+          description: "Check the public downloads index for forms and documents.",
+          icon: FileText,
+        },
+      ]}
+    />
+  );
+}
+
+function BookletsSections({ data }: { data: AdmissionsPageData }) {
+  const records = recordsForContentTypes(data, ["booklet", "brochure"]);
+
+  return (
+    <ResourceRecords
+      records={records}
+      darkBody="Booklets can summarize many admissions details. Always confirm live deadlines, fee instructions, and programme availability before submitting or paying."
+      fallbackLinks={[
+        {
+          title: "Course booklet PDF",
+          href: officialLinks.brochurePdf,
+          description: "Open the official course booklet and admissions reference.",
+          icon: Library,
+        },
+        {
+          title: "Admissions",
+          href: "/admissions",
+          description: "Return to the admissions overview and application routes.",
+          icon: GraduationCap,
+        },
+        {
+          title: "Downloads",
+          href: "/downloads",
+          description: "Check public downloads for additional booklets and forms.",
+          icon: FileText,
+        },
+      ]}
+    />
+  );
+}
+
+function GraduationBookletsSections({ data }: { data: AdmissionsPageData }) {
+  const records = recordsForContentTypes(data, ["graduation"]);
+
+  return (
+    <ResourceRecords
+      records={records}
+      darkBody="Graduation booklet links and ceremony instructions are time-sensitive. Graduands should verify clearance, names, awards, and ceremony instructions against the latest official notice."
+      fallbackLinks={[
+        {
+          title: "15th Graduation Booklet 2026",
+          href: "https://kisiiuniversity.ac.ke/admission/kisii-university-15th-graduation-booklet-2026",
+          description: "Open the current live-site booklet reference while local records are populated.",
+          icon: GraduationCap,
+        },
+        {
+          title: "Announcements",
+          href: "/announcements",
+          description: "Check official notices for graduation updates and deadlines.",
+          icon: FileText,
+        },
+        {
+          title: "Events",
+          href: "/events",
+          description: "Browse ceremony and university event records.",
+          icon: CalendarDays,
+        },
+      ]}
+    />
+  );
+}
+
 function IntakeDetailSections({
   intake,
 }: {
@@ -1447,6 +1890,22 @@ function pageCopy(
     };
   }
 
+  if (area === "diploma") {
+    return {
+      eyebrow: "Diploma Admissions",
+      title: "Apply for diploma programmes with the right requirements",
+      body: "Diploma applicants should verify programme-specific entry requirements, progression routes, intake availability, and official application instructions before submitting.",
+    };
+  }
+
+  if (area === "certificate-bridging") {
+    return {
+      eyebrow: "Certificate And Bridging",
+      title: "Certificate and bridging application pathways",
+      body: "Certificate and bridging routes help applicants start foundational study or prepare for progression where a pathway is officially published.",
+    };
+  }
+
   if (area === "postgraduate") {
     return {
       eyebrow: "Postgraduate Admissions",
@@ -1503,6 +1962,30 @@ function pageCopy(
     };
   }
 
+  if (area === "brochures") {
+    return {
+      eyebrow: "Brochures",
+      title: "Admissions brochures and course booklet references",
+      body: "Use brochures to compare programmes, schools, requirements, study modes, duration, and tuition references before applying.",
+    };
+  }
+
+  if (area === "booklets") {
+    return {
+      eyebrow: "Booklets",
+      title: "Admissions booklets and applicant references",
+      body: "Admissions booklets consolidate applicant guidance, programme information, requirements, and application planning references.",
+    };
+  }
+
+  if (area === "graduation-booklets") {
+    return {
+      eyebrow: "Graduation Booklets",
+      title: "Graduation booklets and graduand guidance",
+      body: "Graduation booklets and related notices help graduands confirm ceremony information, clearance, award details, and official timelines.",
+    };
+  }
+
   if (area === "intake-detail") {
     return {
       eyebrow: "Intake Detail",
@@ -1543,12 +2026,17 @@ function ContentByArea({
   record?: AdmissionsInfoSummary;
 }) {
   if (area === "undergraduate") return <UndergraduateSections />;
+  if (area === "diploma") return <DiplomaSections />;
+  if (area === "certificate-bridging") return <CertificateBridgingSections />;
   if (area === "postgraduate") return <PostgraduateSections />;
   if (area === "international") return <InternationalSections />;
   if (area === "requirements") return <RequirementsSections />;
   if (area === "fees") return <FeesSections />;
   if (area === "scholarships") return <ScholarshipsSections />;
   if (area === "how-to-apply") return <HowToApplySections />;
+  if (area === "brochures") return <BrochuresSections data={data} />;
+  if (area === "booklets") return <BookletsSections data={data} />;
+  if (area === "graduation-booklets") return <GraduationBookletsSections data={data} />;
   if (area === "intakes") return <IntakesSections data={data} />;
   if (area === "intake-detail") return <IntakeDetailSections intake={intake} />;
   if (area === "record") return <RecordSections record={record} />;
@@ -1557,6 +2045,26 @@ function ContentByArea({
 
 function recordsForArea(area: AdmissionsArea, data: AdmissionsPageData) {
   if (area === "landing") return data.admissionInfo;
+
+  if (area === "diploma") {
+    return recordsForAudienceOrTypes(data, ["diploma"], ["application_procedure"]);
+  }
+
+  if (area === "certificate-bridging") {
+    return recordsForAudienceOrTypes(data, ["certificate"], ["bridging_application", "application_procedure"]);
+  }
+
+  if (area === "brochures") {
+    return recordsForContentTypes(data, ["brochure"]);
+  }
+
+  if (area === "booklets") {
+    return recordsForContentTypes(data, ["booklet", "brochure"]);
+  }
+
+  if (area === "graduation-booklets") {
+    return recordsForContentTypes(data, ["graduation"]);
+  }
 
   const normalized = area.replace(/-/g, "_");
   return data.admissionInfo.filter((record) => {
@@ -1567,6 +2075,31 @@ function recordsForArea(area: AdmissionsArea, data: AdmissionsPageData) {
       contentType.includes(normalized) ||
       slug.includes(area) ||
       audiences.includes(normalized)
+    );
+  });
+}
+
+function recordsForContentTypes(data: AdmissionsPageData, contentTypes: string[]) {
+  const normalizedTypes = contentTypes.map((type) => type.toLowerCase());
+
+  return data.admissionInfo.filter((record) =>
+    normalizedTypes.includes(record.contentType.toLowerCase()),
+  );
+}
+
+function recordsForAudienceOrTypes(
+  data: AdmissionsPageData,
+  audiences: string[],
+  contentTypes: string[],
+) {
+  const normalizedAudiences = audiences.map((audience) => audience.toLowerCase());
+  const normalizedTypes = contentTypes.map((type) => type.toLowerCase());
+
+  return data.admissionInfo.filter((record) => {
+    const recordAudiences = record.audienceLevels?.map((audience) => audience.toLowerCase()) ?? [];
+    return (
+      normalizedTypes.includes(record.contentType.toLowerCase()) &&
+      recordAudiences.some((audience) => normalizedAudiences.includes(audience))
     );
   });
 }

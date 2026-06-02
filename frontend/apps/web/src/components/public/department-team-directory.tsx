@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Person, StaffAssignment } from "@ksu/api-client";
 import { resolvePublicMediaUrl } from "@/lib/public-media";
+import { PublicImage } from "@/components/public/public-image";
 import {
   Mail,
   MapPin,
@@ -88,7 +89,10 @@ function initialsFromName(name: string) {
 
   if (!parts.length) return "S";
   const selected = parts.length === 1 ? [parts[0]] : [parts[0], parts.at(-1)!];
-  return selected.map((part) => part[0]).join("").toUpperCase();
+  return selected
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 }
 
 function roleLabel(assignment?: StaffAssignment | null, person?: Person) {
@@ -102,13 +106,22 @@ function roleLabel(assignment?: StaffAssignment | null, person?: Person) {
   );
 }
 
-function categoryFor(memberRole: string, assignment?: StaffAssignment | null): TeamFilter {
+function categoryFor(
+  memberRole: string,
+  assignment?: StaffAssignment | null,
+): TeamFilter {
   const value = `${memberRole} ${assignment?.role ?? ""}`.toLowerCase();
   const level = Number(assignment?.hierarchy_level ?? 99);
-  if (level <= 7 || /manager|head|director|lead/.test(value)) return "leadership";
-  if (/software|developer|systems|web|application/.test(value)) return "software";
-  if (/network|connectivity|internet|lan|infrastructure/.test(value)) return "network";
-  if (/support|cyber|security|installation|maintenance|help|service/.test(value)) return "support";
+  if (level <= 7 || /manager|head|director|lead/.test(value))
+    return "leadership";
+  if (/software|developer|systems|web|application/.test(value))
+    return "software";
+  if (/network|connectivity|internet|lan|infrastructure/.test(value))
+    return "network";
+  if (
+    /support|cyber|security|installation|maintenance|help|service/.test(value)
+  )
+    return "support";
   return "all";
 }
 
@@ -119,7 +132,8 @@ function mediaUrl(person: Person) {
 
 function assignmentSort(first: StaffAssignment, second: StaffAssignment) {
   return (
-    Number(first.hierarchy_level ?? 99) - Number(second.hierarchy_level ?? 99) ||
+    Number(first.hierarchy_level ?? 99) -
+      Number(second.hierarchy_level ?? 99) ||
     Number(first.display_order ?? 100) - Number(second.display_order ?? 100) ||
     displayName(first.person).localeCompare(displayName(second.person))
   );
@@ -146,7 +160,9 @@ function buildMembers(data: DepartmentDetailData): TeamMember[] {
       name: displayName(person),
       email: present(person.email),
       phone: present(person.phone) ?? present(person.office_phone),
-      office: present(person.office_location) ?? present(data.department.office_location),
+      office:
+        present(person.office_location) ??
+        present(data.department.office_location),
       photoUrl: mediaUrl(person),
       role,
       category: categoryFor(role, assignment),
@@ -164,7 +180,9 @@ function buildMembers(data: DepartmentDetailData): TeamMember[] {
       name: displayName(person),
       email: present(person.email),
       phone: present(person.phone) ?? present(person.office_phone),
-      office: present(person.office_location) ?? present(data.department.office_location),
+      office:
+        present(person.office_location) ??
+        present(data.department.office_location),
       photoUrl: mediaUrl(person),
       role,
       category: categoryFor(role, assignment),
@@ -176,7 +194,8 @@ function buildMembers(data: DepartmentDetailData): TeamMember[] {
   return Array.from(byId.values()).sort((first, second) => {
     const firstAssignment = first.assignment;
     const secondAssignment = second.assignment;
-    if (firstAssignment && secondAssignment) return assignmentSort(firstAssignment, secondAssignment);
+    if (firstAssignment && secondAssignment)
+      return assignmentSort(firstAssignment, secondAssignment);
     if (firstAssignment) return -1;
     if (secondAssignment) return 1;
     return first.name.localeCompare(second.name);
@@ -185,7 +204,15 @@ function buildMembers(data: DepartmentDetailData): TeamMember[] {
 
 function Avatar({ member }: { member: TeamMember }) {
   if (member.photoUrl) {
-    return <img src={member.photoUrl} alt={member.name} className="h-full w-full object-cover" />;
+    return (
+      <PublicImage
+        src={member.photoUrl}
+        alt={member.name}
+        ratio="profile"
+        sizes="64px"
+        className="h-full w-full"
+      />
+    );
   }
 
   return (
@@ -213,7 +240,9 @@ function MemberCard({
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="truncate text-base font-semibold text-slate-950">{member.name}</h3>
+              <h3 className="truncate text-base font-semibold text-slate-950">
+                {member.name}
+              </h3>
               <p className="mt-1 line-clamp-2 text-sm font-semibold capitalize leading-5 text-primary">
                 {member.role}
               </p>
@@ -227,13 +256,19 @@ function MemberCard({
 
           <div className="mt-3 grid gap-1.5 text-xs font-medium text-slate-600">
             {member.email ? (
-              <a href={`mailto:${member.email}`} className="flex min-w-0 items-center gap-1.5 hover:text-primary">
+              <a
+                href={`mailto:${member.email}`}
+                className="flex min-w-0 items-center gap-1.5 hover:text-primary"
+              >
                 <Mail aria-hidden className="h-3.5 w-3.5 shrink-0" />
                 <span className="truncate">{member.email}</span>
               </a>
             ) : null}
             {member.phone ? (
-              <a href={`tel:${member.phone}`} className="flex min-w-0 items-center gap-1.5 hover:text-primary">
+              <a
+                href={`tel:${member.phone}`}
+                className="flex min-w-0 items-center gap-1.5 hover:text-primary"
+              >
                 <Phone aria-hidden className="h-3.5 w-3.5 shrink-0" />
                 <span className="truncate">{member.phone}</span>
               </a>
@@ -298,7 +333,11 @@ function groupMembersByHierarchy(members: TeamMember[]): HierarchyGroup[] {
     }));
 }
 
-export function DepartmentTeamDirectory({ data }: { data: DepartmentDetailData }) {
+export function DepartmentTeamDirectory({
+  data,
+}: {
+  data: DepartmentDetailData;
+}) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<TeamFilter>("all");
   const members = useMemo(() => buildMembers(data), [data]);
@@ -314,7 +353,10 @@ export function DepartmentTeamDirectory({ data }: { data: DepartmentDetailData }
       return matchesFilter && matchesQuery;
     });
   }, [filter, members, query]);
-  const groups = useMemo(() => groupMembersByHierarchy(visibleMembers), [visibleMembers]);
+  const groups = useMemo(
+    () => groupMembersByHierarchy(visibleMembers),
+    [visibleMembers],
+  );
   const assignmentMemberById = useMemo(() => {
     const byId = new Map<string, TeamMember>();
 
@@ -340,18 +382,26 @@ export function DepartmentTeamDirectory({ data }: { data: DepartmentDetailData }
   if (!members.length) {
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm font-semibold text-slate-950">No published ICT team records are available yet.</p>
+        <p className="text-sm font-semibold text-slate-950">
+          No published ICT team records are available yet.
+        </p>
       </section>
     );
   }
 
   return (
-    <section id="ict-team-directory" className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm">
+    <section
+      id="ict-team-directory"
+      className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm"
+    >
       <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">Team Structure</p>
+          <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
+            Team Structure
+          </p>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-            Staff are grouped by assignment hierarchy, with reporting lines shown where they are part of the public record.
+            Staff are grouped by assignment hierarchy, with reporting lines
+            shown where they are part of the public record.
           </p>
         </div>
         <div className="inline-flex w-fit items-center gap-2 rounded-xl bg-primary/[0.08] px-3 py-2 text-xs font-bold text-primary">
@@ -362,7 +412,10 @@ export function DepartmentTeamDirectory({ data }: { data: DepartmentDetailData }
 
       <div className="mt-4 grid gap-2 lg:grid-cols-[minmax(220px,1fr)_auto]">
         <label className="relative block">
-          <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search
+            aria-hidden
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+          />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -371,7 +424,10 @@ export function DepartmentTeamDirectory({ data }: { data: DepartmentDetailData }
           />
         </label>
         <div className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
-          <SlidersHorizontal aria-hidden className="ml-2 h-4 w-4 text-slate-500" />
+          <SlidersHorizontal
+            aria-hidden
+            className="ml-2 h-4 w-4 text-slate-500"
+          />
           <select
             value={filter}
             onChange={(event) => setFilter(event.target.value as TeamFilter)}
@@ -405,11 +461,16 @@ export function DepartmentTeamDirectory({ data }: { data: DepartmentDetailData }
                 </span>
                 <div className="min-w-0 lg:mt-2">
                   <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
-                    {group.level === null ? "Unassigned" : `Level ${group.level}`}
+                    {group.level === null
+                      ? "Unassigned"
+                      : `Level ${group.level}`}
                   </p>
-                  <p className="mt-1 text-sm font-bold text-slate-950">{group.label}</p>
+                  <p className="mt-1 text-sm font-bold text-slate-950">
+                    {group.label}
+                  </p>
                   <p className="mt-0.5 text-xs font-semibold text-slate-500">
-                    {group.members.length} profile{group.members.length === 1 ? "" : "s"}
+                    {group.members.length} profile
+                    {group.members.length === 1 ? "" : "s"}
                   </p>
                 </div>
               </div>
@@ -420,12 +481,14 @@ export function DepartmentTeamDirectory({ data }: { data: DepartmentDetailData }
                     member={member}
                     reportsTo={
                       member.assignment?.reports_to_id
-                        ? assignmentMemberById.get(member.assignment.reports_to_id)
+                        ? assignmentMemberById.get(
+                            member.assignment.reports_to_id,
+                          )
                         : undefined
                     }
                     directReports={
                       member.assignment?.id
-                        ? directReportCounts.get(member.assignment.id) ?? 0
+                        ? (directReportCounts.get(member.assignment.id) ?? 0)
                         : 0
                     }
                   />

@@ -21,10 +21,18 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { ScrollReveal } from "@ksu/ui/components";
 import { PageShell } from "@/components/site-shell";
-import { DepartmentTeamDirectory } from "@/components/public/department-team-directory";
+import { PublicImage } from "@/components/public/public-image";
+import { PublicTeamSection } from "@/components/public/public-team-section";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import type { DepartmentDetailData } from "@/lib/department-detail-data";
+import {
+  entityMediaTypeBody,
+  entityMediaTypeMatches,
+  entityMediaTypeTitle,
+  type EntityMediaType,
+} from "@/lib/entity-media-data";
 import { publicFileUrl, resolvePublicMediaUrl } from "@/lib/public-media";
 
 export type DepartmentDetailSectionKey =
@@ -33,7 +41,7 @@ export type DepartmentDetailSectionKey =
   | "programmes"
   | "publications"
   | "services"
-  | "news"
+  | "media"
   | "downloads"
   | "contact";
 
@@ -41,7 +49,7 @@ type QuickLink = {
   label: string;
   href: string;
   icon: LucideIcon;
-  section: DepartmentDetailSectionKey;
+  section: DepartmentDetailSectionKey | EntityMediaType;
 };
 
 type SectionMeta = {
@@ -88,10 +96,10 @@ const sectionMeta: Record<DepartmentDetailSectionKey, SectionMeta> = {
     body: "Services, process details, requirements, and contact channels.",
     icon: BriefcaseBusiness,
   },
-  news: {
-    eyebrow: "News",
-    title: "Department news",
-    body: "News and updates connected to this department.",
+  media: {
+    eyebrow: "Media",
+    title: "Department media",
+    body: "News, events, blogs, announcements, and gallery records connected to this department.",
     icon: Newspaper,
   },
   downloads: {
@@ -152,7 +160,10 @@ function initialsFromName(name: string) {
   if (!parts.length) return "D";
 
   const selected = parts.length === 1 ? [parts[0]] : [parts[0], parts.at(-1)!];
-  return selected.map((part) => part[0]).join("").toUpperCase();
+  return selected
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 }
 
 function personDisplayName(person: {
@@ -177,7 +188,7 @@ function compactMeta(values: Array<string | number | null | undefined>) {
   return values
     .map((value) => present(value))
     .filter(Boolean)
-    .join(" | ");
+    .join(" · ");
 }
 
 function navHas(navItems: EntityHeaderNavItem[] | undefined, label: string) {
@@ -231,14 +242,24 @@ function buildQuickLinks({
       icon: BriefcaseBusiness,
       section: "services",
     },
-    { label: "News", href: `${baseHref}/news`, icon: Newspaper, section: "news" },
+    {
+      label: "Media",
+      href: `${baseHref}/media`,
+      icon: Newspaper,
+      section: "media",
+    },
     {
       label: "Downloads",
       href: `${baseHref}/downloads`,
       icon: Download,
       section: "downloads",
     },
-    { label: "Contact", href: `${baseHref}/contact`, icon: Phone, section: "contact" },
+    {
+      label: "Contact",
+      href: `${baseHref}/contact`,
+      icon: Phone,
+      section: "contact",
+    },
   );
 
   return links;
@@ -247,13 +268,15 @@ function buildQuickLinks({
 function QuickLinksPanel({
   links,
   activeSection,
+  title = "Quick Links",
 }: {
   links: QuickLink[];
-  activeSection: DepartmentDetailSectionKey;
+  activeSection: DepartmentDetailSectionKey | EntityMediaType;
+  title?: string;
 }) {
   return (
-    <section className="rounded-[1.25rem] border border-slate-200 bg-white p-3 shadow-sm">
-      <SectionKicker>Quick Links</SectionKicker>
+    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
+      <SectionKicker>{title}</SectionKicker>
       <nav aria-label="Department quick links" className="mt-3">
         <ul className="divide-y divide-slate-100">
           {links.map((item) => {
@@ -266,7 +289,9 @@ function QuickLinksPanel({
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={`group flex min-h-10 items-center gap-3 py-2 text-sm font-medium transition ${
-                    active ? "text-primary" : "text-slate-700 hover:text-primary"
+                    active
+                      ? "text-primary"
+                      : "text-slate-700 hover:text-primary"
                   }`}
                 >
                   <Icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
@@ -290,7 +315,7 @@ function MobileQuickGrid({
   activeSection,
 }: {
   links: QuickLink[];
-  activeSection: DepartmentDetailSectionKey;
+  activeSection: DepartmentDetailSectionKey | EntityMediaType;
 }) {
   return (
     <section className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:hidden">
@@ -303,7 +328,7 @@ function MobileQuickGrid({
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`flex min-h-[4.5rem] flex-col items-center justify-center gap-2 rounded-[1.1rem] border bg-white p-2 text-center text-[0.72rem] font-semibold leading-4 shadow-sm transition ${
+            className={`flex min-h-[5rem] flex-col items-center justify-center gap-2 rounded-[1.1rem] border bg-white p-2 text-center text-[0.72rem] font-semibold leading-4 shadow-sm transition ${
               active
                 ? "border-primary/30 text-primary"
                 : "border-slate-200 text-slate-700 hover:border-primary/30 hover:text-primary"
@@ -314,6 +339,86 @@ function MobileQuickGrid({
           </Link>
         );
       })}
+    </section>
+  );
+}
+
+function buildMediaTypeLinks(baseHref: string): QuickLink[] {
+  return [
+    { label: "News", href: `${baseHref}/media/news`, icon: Newspaper, section: "news" },
+    {
+      label: "Events",
+      href: `${baseHref}/media/events`,
+      icon: CalendarDays,
+      section: "events",
+    },
+    { label: "Blogs", href: `${baseHref}/media/blogs`, icon: FileText, section: "blogs" },
+    {
+      label: "Announcements",
+      href: `${baseHref}/media/announcements`,
+      icon: Quote,
+      section: "announcements",
+    },
+    {
+      label: "Gallery",
+      href: `${baseHref}/media/gallery`,
+      icon: Download,
+      section: "gallery",
+    },
+  ];
+}
+
+function ExploreMorePanel({ data }: { data: DepartmentDetailData }) {
+  const school = data.isAcademic ? data.department.school : null;
+  const links: QuickLink[] = [
+    school?.slug
+      ? {
+          label: school.name,
+          href: `/academics/schools/${school.slug}`,
+          icon: Landmark,
+          section: "about",
+        }
+      : null,
+    {
+      label: "Academic Calendar",
+      href: "/academics/calendar",
+      icon: CalendarDays,
+      section: "about",
+    },
+    {
+      label: "Admissions",
+      href: "/admissions",
+      icon: GraduationCap,
+      section: "about",
+    },
+  ].filter(Boolean) as QuickLink[];
+
+  if (!links.length) return null;
+
+  return (
+    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
+      <SectionKicker>Explore More</SectionKicker>
+      <ul className="mt-3 divide-y divide-slate-100">
+        {links.map((item) => {
+          const Icon = item.icon;
+
+          return (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                className="group flex min-h-10 items-center gap-3 py-2 text-sm font-medium text-slate-700 transition hover:text-primary"
+              >
+                <Icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
+                <span className="min-w-0 flex-1">{item.label}</span>
+                <ArrowRight
+                  aria-hidden
+                  className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
+                />
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }
@@ -377,20 +482,23 @@ function ContactRow({
     );
   }
 
-  return <div className="flex w-full min-w-0 gap-3 rounded-xl p-2">{content}</div>;
+  return (
+    <div className="flex w-full min-w-0 gap-3 rounded-xl p-2">{content}</div>
+  );
 }
 
 function ContactPanel({ data }: { data: DepartmentDetailData }) {
   const { department } = data;
   const email = present(department.email);
   const phone = present(department.phone);
-  const office = present(department.office_location) ?? present(department.address);
+  const office =
+    present(department.office_location) ?? present(department.address);
   const website = present(department.website);
 
   if (!email && !phone && !office && !website) return null;
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white p-3 shadow-sm">
+    <section className="min-w-0 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
       <SectionKicker>Contact Information</SectionKicker>
       <div className="mt-3 grid min-w-0 gap-1.5">
         <ContactRow icon={MapPin} label="Office" value={office} />
@@ -419,11 +527,16 @@ function ContactPanel({ data }: { data: DepartmentDetailData }) {
 
 function DepartmentInfoPanel({ data }: { data: DepartmentDetailData }) {
   const { department, counts } = data;
-  const schoolName = present(department.school?.name) ?? present(department.school_name);
+  const schoolName =
+    present(department.school?.name) ?? present(department.school_name);
   const wingName = present(department.wing?.name);
   const divisionName = present(department.wing?.division?.name);
   const items = [
-    { label: "Department Code", value: present(department.code), icon: FileText },
+    {
+      label: "Department Code",
+      value: present(department.code),
+      icon: FileText,
+    },
     {
       label: "School",
       value: data.isAcademic ? schoolName : null,
@@ -441,7 +554,9 @@ function DepartmentInfoPanel({ data }: { data: DepartmentDetailData }) {
     },
     {
       label: "Programmes",
-      value: data.isAcademic ? formatCount(counts.programmes, "programme") : null,
+      value: data.isAcademic
+        ? formatCount(counts.programmes, "programme")
+        : null,
       icon: GraduationCap,
     },
     {
@@ -449,7 +564,11 @@ function DepartmentInfoPanel({ data }: { data: DepartmentDetailData }) {
       value: formatCount(counts.services, "service"),
       icon: BriefcaseBusiness,
     },
-    { label: "Team Records", value: formatCount(counts.staff, "record"), icon: Users },
+    {
+      label: "Team Records",
+      value: formatCount(counts.staff, "record"),
+      icon: Users,
+    },
     {
       label: "Last Updated",
       value: formatDate(department.updated_at),
@@ -460,17 +579,25 @@ function DepartmentInfoPanel({ data }: { data: DepartmentDetailData }) {
   if (!items.length) return null;
 
   return (
-    <section className="rounded-[1.25rem] border border-slate-200 bg-white p-3 shadow-sm">
+    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
       <SectionKicker>Department Information</SectionKicker>
       <dl className="mt-3 grid gap-2">
         {items.map((item) => {
           const Icon = item.icon;
 
           return (
-            <div key={item.label} className="flex w-full min-w-0 gap-3 rounded-xl p-2">
-              <Icon aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+            <div
+              key={item.label}
+              className="flex w-full min-w-0 gap-3 rounded-xl p-2"
+            >
+              <Icon
+                aria-hidden
+                className="mt-0.5 h-5 w-5 shrink-0 text-primary"
+              />
               <div className="min-w-0 flex-1">
-                <dt className="text-xs font-bold text-slate-950">{item.label}</dt>
+                <dt className="text-xs font-bold text-slate-950">
+                  {item.label}
+                </dt>
                 <dd className="mt-0.5 break-words text-sm font-medium leading-5 text-primary [overflow-wrap:anywhere]">
                   {item.value}
                 </dd>
@@ -483,17 +610,19 @@ function DepartmentInfoPanel({ data }: { data: DepartmentDetailData }) {
   );
 }
 
-function Avatar({
-  name,
-  image,
-}: {
-  name: string;
-  image?: string | null;
-}) {
+function Avatar({ name, image }: { name: string; image?: string | null }) {
   const source = resolvePublicMediaUrl(image);
 
   if (source) {
-    return <img src={source} alt={name} className="h-full w-full object-cover" />;
+    return (
+      <PublicImage
+        src={source}
+        alt={name}
+        ratio="profile"
+        sizes="72px"
+        className="h-full w-full"
+      />
+    );
   }
 
   return (
@@ -514,43 +643,55 @@ function LeadershipMessageCard({
   const leaderName = present(leader?.name) ?? present(data.department.hod_name);
   const leaderTitle =
     present(leader?.title) ??
-    (data.isAcademic ? "Head of Department" : "Department Lead");
+    (data.isAcademic ? "Coordinator of Department" : "Department Lead");
   const leaderEmail = present(data.department.hod_email);
-  const message = present(leader?.message) ?? present(data.department.head_message);
+  const message =
+    present(leader?.message) ?? present(data.department.head_message);
 
-  if (!leaderName) return null;
+  if (!leaderName && !message) return null;
+  const displayName = leaderName ?? "Department leadership";
 
   return (
-    <section className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm">
-      <SectionKicker>{data.isAcademic ? "Head's Message" : "Leadership Message"}</SectionKicker>
+    <section className="overflow-hidden rounded-[1.5rem] bg-slate-950 p-5 text-white shadow-[0_24px_70px_-48px_rgba(15,23,42,0.9)] sm:p-6">
       <div
-        className={`mt-3 grid gap-4 ${
+        className={`grid gap-5 ${
           compact
-            ? "sm:grid-cols-[110px_minmax(0,1fr)]"
-            : "sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-5"
+            ? "sm:grid-cols-[7rem_minmax(0,1fr)] sm:items-center"
+            : "sm:grid-cols-[7rem_minmax(0,1fr)] sm:items-center"
         }`}
       >
-        <div className="overflow-hidden rounded-[1.1rem] bg-slate-100">
-          <div className={compact ? "aspect-square" : "aspect-[5/4] sm:aspect-square"}>
-            <Avatar name={leaderName} image={leader?.image} />
+        <div className="w-24 overflow-hidden rounded-full bg-white/10 ring-1 ring-white/15 sm:w-auto">
+          <div
+            className={
+              compact ? "aspect-square" : "aspect-[5/4] sm:aspect-square"
+            }
+          >
+            <Avatar name={displayName} image={leader?.image} />
           </div>
         </div>
         <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-[0.08em] text-secondary">
+            {data.isAcademic ? "COD's Message" : "Leadership Message"}
+          </p>
           {message ? (
             <>
-              <Quote aria-hidden className="h-7 w-7 text-primary" />
-              <p className="mt-2 text-sm leading-6 text-slate-700">{message}</p>
+              <Quote aria-hidden className="mt-3 h-7 w-7 text-secondary" />
+              <p className="mt-2 text-sm leading-7 text-white/82 sm:text-base">
+                {message}
+              </p>
             </>
           ) : null}
-          <div className={message ? "mt-4 text-sm leading-6" : "text-sm leading-6"}>
-            <p className="font-bold text-slate-950">{leaderName}</p>
-            <p className="text-slate-600">
+          <div
+            className={message ? "mt-4 text-sm leading-6" : "text-sm leading-6"}
+          >
+            <p className="font-bold text-white">{displayName}</p>
+            <p className="text-white/70">
               {leaderTitle}, {data.department.name}
             </p>
             {leaderEmail ? (
-              <p className="mt-1 text-xs font-semibold text-slate-600">
+              <p className="mt-1 text-xs font-semibold text-white/70">
                 Email:{" "}
-                <a href={`mailto:${leaderEmail}`} className="text-primary">
+                <a href={`mailto:${leaderEmail}`} className="text-secondary">
                   {leaderEmail}
                 </a>
               </p>
@@ -567,13 +708,16 @@ function AboutCard({ data }: { data: DepartmentDetailData }) {
   if (!overview) return null;
 
   return (
-    <section className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_10rem] md:items-center">
+    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_9rem] md:items-center">
         <div>
           <SectionKicker>About the Department</SectionKicker>
-          <p className="mt-3 text-sm leading-6 text-slate-700">{overview}</p>
+          <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
+            {data.department.name}
+          </h2>
+          <p className="mt-3 text-sm leading-7 text-slate-700">{overview}</p>
         </div>
-        <div className="hidden h-24 items-center justify-center rounded-[1.1rem] bg-primary/[0.08] text-primary md:flex">
+        <div className="hidden h-24 items-center justify-center rounded-[1.25rem] bg-primary/[0.08] text-primary md:flex">
           <Landmark aria-hidden className="h-14 w-14 stroke-[1.25]" />
         </div>
       </div>
@@ -591,7 +735,11 @@ function StatementCards({ data }: { data: DepartmentDetailData }) {
       ? { title: "Vision", body: present(department.vision)!, icon: Eye }
       : null,
     present(department.mandate)
-      ? { title: "Mandate", body: present(department.mandate)!, icon: ShieldCheck }
+      ? {
+          title: "Mandate",
+          body: present(department.mandate)!,
+          icon: ShieldCheck,
+        }
       : null,
   ].filter(Boolean) as StatementCard[];
 
@@ -608,7 +756,7 @@ function StatementCards({ data }: { data: DepartmentDetailData }) {
         return (
           <article
             key={item.title}
-            className="rounded-[1.25rem] border border-slate-200 bg-white p-3 shadow-sm"
+            className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm"
           >
             <div className="flex gap-3 md:block">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary/[0.12] text-secondary md:h-12 md:w-12">
@@ -631,13 +779,13 @@ function StatementCards({ data }: { data: DepartmentDetailData }) {
 }
 
 function TeamSection({ data }: { data: DepartmentDetailData }) {
-  const staff = data.staff;
-  const assignments = data.staffAssignments;
-  const hasLeader = Boolean(data.leader ?? present(data.department.hod_name));
-
-  if (!hasLeader && !assignments.length && !staff.length) return null;
-
-  return <DepartmentTeamDirectory data={data} />;
+  return (
+    <PublicTeamSection
+      team={data.team}
+      title={data.isAcademic ? "Department Team" : "Unit Team"}
+      emptyTitle="No public department team records are available yet."
+    />
+  );
 }
 
 function ProgrammesSection({ data }: { data: DepartmentDetailData }) {
@@ -739,7 +887,9 @@ function ServicesSection({ data }: { data: DepartmentDetailData }) {
           {guidelines ? (
             <article className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm">
               <SectionKicker>Guidelines</SectionKicker>
-              <p className="mt-2 text-sm leading-6 text-slate-700">{guidelines}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-700">
+                {guidelines}
+              </p>
             </article>
           ) : null}
         </section>
@@ -783,7 +933,9 @@ function ServicesSection({ data }: { data: DepartmentDetailData }) {
                     ) : null}
                     {present(service.process) ? (
                       <p className="mt-2 text-sm leading-6 text-slate-700">
-                        <span className="font-bold text-slate-950">Process: </span>
+                        <span className="font-bold text-slate-950">
+                          Process:{" "}
+                        </span>
                         {service.process}
                       </p>
                     ) : null}
@@ -803,41 +955,136 @@ function ServicesSection({ data }: { data: DepartmentDetailData }) {
   );
 }
 
-function NewsSection({ data }: { data: DepartmentDetailData }) {
-  if (!data.news.length) return null;
+function mediaHref(item: DepartmentDetailData["updates"][number]) {
+  if (item.recordType === "blog") return `/blogs/${item.slug}`;
+  if (item.recordType === "event") return `/events/${item.slug}`;
+  if (item.recordType === "announcement") return `/announcements/${item.slug}`;
+  if (item.recordType === "gallery") return `/media/${item.id}`;
+  return `/news/${item.slug}`;
+}
+
+function mediaDate(item: DepartmentDetailData["updates"][number]) {
+  if (item.recordType === "gallery") return formatDate(item.created_at);
+  if (item.recordType === "event") return formatDate(item.start_date);
+  return formatDate(item.published_at ?? item.created_at);
+}
+
+function mediaTitle(item: DepartmentDetailData["updates"][number]) {
+  if (item.recordType === "gallery") {
+    return present(item.title) ?? present(item.original_filename) ?? "Gallery image";
+  }
+  return item.title;
+}
+
+function mediaSummary(item: DepartmentDetailData["updates"][number]) {
+  if (item.recordType === "gallery") {
+    return (
+      present(item.description) ?? present(item.caption) ?? present(item.alt_text)
+    );
+  }
+  return present(item.summary);
+}
+
+function mediaLabel(item: DepartmentDetailData["updates"][number]) {
+  if (item.recordType === "gallery") return "Gallery";
+  if (item.recordType === "blog") return "Blog";
+  if (item.recordType === "event") return "Event";
+  if (item.recordType === "announcement") return "Announcement";
+  return "News";
+}
+
+function MediaSection({
+  data,
+  mediaType,
+  baseHref,
+}: {
+  data: DepartmentDetailData;
+  mediaType?: EntityMediaType;
+  baseHref: string;
+}) {
+  const updates = data.updates.filter((item) =>
+    entityMediaTypeMatches(item, mediaType),
+  );
+  const scopedCount = updates.filter((item) => item.recordScope !== "fallback").length;
+  const fallbackCount = updates.filter((item) => item.recordScope === "fallback").length;
 
   return (
-    <section className="grid gap-3 md:grid-cols-2">
-      {data.news.map((item) => {
-        const summary = present(item.summary);
-        const publishedAt = formatDate(item.published_at ?? item.created_at);
-
-        return (
+    <section className="grid gap-3">
+      {!mediaType ? (
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {buildMediaTypeLinks(baseHref).map((item) => (
+            <LinkedMediaCategory key={item.href} item={item} />
+          ))}
+        </div>
+      ) : null}
+      {fallbackCount > 0 && scopedCount === 0 && mediaType !== "gallery" ? (
+        <p className="rounded-[1.25rem] border border-dashed border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
+          No records are currently published for this department, so the latest
+          university-wide {entityMediaTypeTitle(mediaType).toLowerCase()} are shown.
+        </p>
+      ) : null}
+      {!updates.length ? (
+        <p className="rounded-[1.25rem] border border-dashed border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
+          No {mediaType ? entityMediaTypeTitle(mediaType).toLowerCase() : "media"} records
+          are currently published for this department.
+        </p>
+      ) : null}
+      <div className="grid gap-3 md:grid-cols-2">
+        {updates.map((item) => (
           <Link
-            key={item.id}
-            href={`/news/${item.slug}`}
+            key={`${item.recordType}-${item.id}`}
+            href={mediaHref(item)}
             className="group rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
           >
             <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
-              {present(item.category) ?? "News"}
+              {mediaLabel(item)}
             </p>
             <h2 className="mt-2 text-base font-bold text-slate-950 group-hover:text-primary">
-              {item.title}
+              {mediaTitle(item)}
             </h2>
-            {summary ? (
+            {mediaSummary(item) ? (
               <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
-                {summary}
+                {mediaSummary(item)}
               </p>
             ) : null}
-            {publishedAt ? (
+            {mediaDate(item) ? (
               <p className="mt-3 text-xs font-semibold text-slate-500">
-                {publishedAt}
+                {mediaDate(item)}
               </p>
             ) : null}
           </Link>
-        );
-      })}
+        ))}
+      </div>
     </section>
+  );
+}
+
+function LinkedMediaCategory({ item }: { item: QuickLink }) {
+  const Icon = item.icon;
+
+  return (
+    <Link
+      href={item.href}
+      className="group rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
+    >
+      <div className="flex gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
+          <Icon aria-hidden className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
+            Media category
+          </p>
+          <h2 className="mt-1 text-base font-bold text-slate-950 group-hover:text-primary">
+            {item.label}
+          </h2>
+        </div>
+        <ArrowRight
+          aria-hidden
+          className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
+        />
+      </div>
+    </Link>
   );
 }
 
@@ -948,6 +1195,8 @@ function DepartmentOverview({ data }: { data: DepartmentDetailData }) {
 function renderSection(
   section: DepartmentDetailSectionKey,
   data: DepartmentDetailData,
+  baseHref: string,
+  mediaType?: EntityMediaType,
 ) {
   switch (section) {
     case "about":
@@ -960,8 +1209,8 @@ function renderSection(
       return <PublicationsSection data={data} />;
     case "services":
       return <ServicesSection data={data} />;
-    case "news":
-      return <NewsSection data={data} />;
+    case "media":
+      return <MediaSection data={data} mediaType={mediaType} baseHref={baseHref} />;
     case "downloads":
       return <DownloadsSection data={data} />;
     case "contact":
@@ -975,39 +1224,58 @@ export function DepartmentDetailSection({
   baseHref,
   header,
   navItems,
+  mediaType,
 }: {
   data: DepartmentDetailData;
   section: DepartmentDetailSectionKey;
   baseHref: string;
   header?: ReactNode;
   navItems?: EntityHeaderNavItem[];
+  mediaType?: EntityMediaType;
 }) {
-  const quickLinks = buildQuickLinks({ baseHref, data, navItems });
-  const meta = sectionMeta[section];
+  const quickLinks =
+    section === "media" ? buildMediaTypeLinks(baseHref) : buildQuickLinks({ baseHref, data, navItems });
+  const activeSection = mediaType ?? section;
+  const baseMeta = sectionMeta[section];
+  const meta =
+    section === "media"
+      ? {
+          ...baseMeta,
+          title: entityMediaTypeTitle(mediaType),
+          body: entityMediaTypeBody(mediaType),
+        }
+      : baseMeta;
   const contactPanel = <ContactPanel data={data} />;
   const infoPanel = <DepartmentInfoPanel data={data} />;
 
   return (
     <PageShell header={header}>
       <AboutPageLenis>
-        <section className="w-full bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_70%)] px-4 py-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="grid w-full gap-3 xl:grid-cols-[minmax(220px,0.22fr)_minmax(0,1fr)_minmax(240px,0.24fr)] 2xl:grid-cols-[minmax(240px,0.2fr)_minmax(0,1fr)_minmax(280px,0.22fr)] xl:items-start">
-          <aside className="hidden min-w-0 space-y-3 xl:block xl:sticky xl:top-28">
-              <QuickLinksPanel links={quickLinks} activeSection={section} />
+        <section className="w-full bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_68%,#f6f8fc_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+          <div className="grid w-full gap-4 xl:grid-cols-[minmax(220px,0.2fr)_minmax(0,1fr)_minmax(260px,0.22fr)] 2xl:grid-cols-[minmax(240px,0.18fr)_minmax(0,1fr)_minmax(300px,0.22fr)] xl:items-start">
+            <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
+              <QuickLinksPanel
+                links={quickLinks}
+                activeSection={activeSection}
+                title={section === "media" ? "Content Types" : "Quick Links"}
+              />
+              <ExploreMorePanel data={data} />
             </aside>
 
-            <main className="grid min-w-0 gap-3">
-              {section === "about" || section === "team" ? null : <PageIntro meta={meta} />}
-              <MobileQuickGrid links={quickLinks} activeSection={section} />
-              {renderSection(section, data)}
-            </main>
+            <ScrollReveal as="main" className="grid min-w-0 gap-4">
+              {section === "about" || section === "team" ? null : (
+                <PageIntro meta={meta} />
+              )}
+              <MobileQuickGrid links={quickLinks} activeSection={activeSection} />
+              {renderSection(section, data, baseHref, mediaType)}
+            </ScrollReveal>
 
-          <aside className="hidden min-w-0 space-y-3 xl:block xl:sticky xl:top-28">
+            <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
               {contactPanel}
               {infoPanel}
             </aside>
 
-            <aside className="grid gap-3 xl:hidden">
+            <aside className="grid gap-4 xl:hidden">
               {contactPanel}
               {infoPanel}
             </aside>

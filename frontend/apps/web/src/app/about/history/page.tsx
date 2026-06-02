@@ -23,6 +23,7 @@ import {
   AboutIllustration,
   aboutIllustrations,
 } from "@/components/about/AboutIllustration";
+import { ScrollReveal } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 
@@ -77,22 +78,6 @@ const relatedRoutes: RouteCard[] = [
     icon: History,
   },
   {
-    title: "Leadership",
-    href: "/about/leadership",
-    description:
-      "Find the Vice Chancellor, deputy vice chancellors, registrars, finance officer, and school-level leadership records.",
-    action: "View leadership",
-    icon: Users,
-  },
-  {
-    title: "Governance & Leadership",
-    href: "/about/governance-leadership",
-    description:
-      "See how institutional oversight and executive leadership are presented in the public structure.",
-    action: "View governance",
-    icon: Landmark,
-  },
-  {
     title: "Quality Assurance",
     href: "/about/quality-assurance",
     description:
@@ -107,14 +92,6 @@ const relatedRoutes: RouteCard[] = [
       "Review the published management board and senior office responsibilities.",
     action: "View management",
     icon: Users,
-  },
-  {
-    title: "Administrative Division",
-    href: "/about/administrative-division",
-    description:
-      "Explore administrative units supporting the university's public mandate.",
-    action: "View divisions",
-    icon: Building2,
   },
   {
     title: "Our Service Charter",
@@ -227,7 +204,7 @@ export default async function AboutHistoryPage() {
                         <ArrowRight aria-hidden className="h-4 w-4" />
                       </Link>
                       <Link
-                        href="/about/governance-leadership"
+                        href="/about/governance"
                         className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
                       >
                         Explore Governance
@@ -236,7 +213,7 @@ export default async function AboutHistoryPage() {
                     </div>
 
                     <AboutIllustration
-                      src={aboutIllustrations.history}
+                      src="/images/about/about-history-hero-branded.webp"
                       alt="Historical campus growth from teacher training roots to university status"
                       priority
                       sizes="(min-width: 1280px) 760px, (min-width: 1024px) 54vw, 100vw"
@@ -321,7 +298,10 @@ export default async function AboutHistoryPage() {
           </div>
         </section>
 
-        <section className="border-b border-slate-200 bg-white px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+        <ScrollReveal
+          as="section"
+          className="border-b border-slate-200 bg-white px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
+        >
           <div className="grid w-full gap-10 xl:grid-cols-[380px_minmax(0,1fr)] xl:items-start">
             <div className="xl:sticky xl:top-28">
               <p className="text-sm font-semibold uppercase text-secondary">
@@ -370,9 +350,12 @@ export default async function AboutHistoryPage() {
               </div>
             </div>
           </div>
-        </section>
+        </ScrollReveal>
 
-        <section className="bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+        <ScrollReveal
+          as="section"
+          className="bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
+        >
           <div className="w-full">
             <div className="grid gap-8 lg:grid-cols-[0.65fr_1.35fr] lg:items-end">
               <div>
@@ -423,9 +406,12 @@ export default async function AboutHistoryPage() {
               })}
             </div>
           </div>
-        </section>
+        </ScrollReveal>
 
-        <section className="px-4 pb-16 sm:px-6 lg:px-8 lg:pb-20">
+        <ScrollReveal
+          as="section"
+          className="px-4 pb-16 sm:px-6 lg:px-8 lg:pb-20"
+        >
           <div className="grid w-full overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-[0_28px_80px_-44px_rgba(15,23,42,0.7)] lg:grid-cols-[minmax(0,1fr)_420px]">
             <div className="p-7 sm:p-8 lg:p-10">
               <p className="text-sm font-semibold uppercase text-secondary">
@@ -481,58 +467,8 @@ export default async function AboutHistoryPage() {
               </div>
             </div>
           </div>
-        </section>
+        </ScrollReveal>
 
-        <section className="border-y border-slate-200 bg-white px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-          <div className="w-full">
-            <div className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
-              <div>
-                <p className="text-sm font-semibold uppercase text-secondary">
-                  Continue Through About
-                </p>
-                <h2 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
-                  Open the next institutional context
-                </h2>
-              </div>
-              <p className="text-base leading-8 text-slate-600">
-                History gives visitors the institutional path; these links move
-                them into the current structures, offices, and service
-                commitments connected to that public mandate.
-              </p>
-            </div>
-
-            <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-7">
-              {relatedRoutes.map((item) => {
-                const Icon = item.icon;
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="group flex min-h-[260px] flex-col rounded-[1.75rem] border border-slate-200 bg-slate-50 p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:bg-white hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
-                  >
-                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-primary shadow-sm ring-1 ring-slate-200 transition group-hover:bg-primary group-hover:text-white">
-                      <Icon aria-hidden className="h-5 w-5" />
-                    </span>
-                    <h3 className="mt-6 text-xl font-semibold leading-7 text-slate-950">
-                      {item.title}
-                    </h3>
-                    <p className="mt-4 text-sm leading-7 text-slate-600">
-                      {item.description}
-                    </p>
-                    <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-primary">
-                      {item.action}
-                      <ArrowRight
-                        aria-hidden
-                        className="h-4 w-4 transition group-hover:translate-x-1"
-                      />
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </section>
       </AboutPageLenis>
     </PageShell>
   );

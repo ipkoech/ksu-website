@@ -26,9 +26,11 @@ import type {
   SportsFacility,
   StudentGovernance,
 } from "@ksu/api-client";
+import { ScrollReveal } from "@ksu/ui/components";
 import type { CampusLifePageData } from "@/lib/get-campus-life";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
+import { PublicImage } from "@/components/public/public-image";
 
 type CampusArea =
   | "landing"
@@ -179,7 +181,10 @@ function titleFromSlug(slug?: string) {
 }
 
 function shortText(value?: string | null, fallback = "Campus life record.") {
-  const text = (value || fallback).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  const text = (value || fallback)
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   return text.length > 180 ? `${text.slice(0, 177)}...` : text;
 }
 
@@ -217,14 +222,27 @@ function ActionLink({
   primary?: boolean;
 }) {
   const external = href.startsWith("http");
+  const host = external ? new URL(href).host : null;
   const className = primary
     ? "inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
     : "inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:border-primary hover:text-primary";
 
   if (external) {
     return (
-      <a href={href} className={className}>
-        {children}
+      <a
+        href={href}
+        className={className}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span className="flex flex-col text-left leading-tight">
+          <span>{children}</span>
+          {host ? (
+            <span className="text-[11px] font-medium opacity-80">
+              Opens {host}
+            </span>
+          ) : null}
+        </span>
         <ExternalLink aria-hidden className="h-4 w-4" />
       </a>
     );
@@ -320,15 +338,21 @@ function Hero({
               <ActionLink href="/campus-life/clubs" primary>
                 Explore clubs
               </ActionLink>
-              <ActionLink href="/campus-life/support">Student support</ActionLink>
-              <ActionLink href="/campus-life/accommodation">Accommodation</ActionLink>
+              <ActionLink href="/campus-life/support">
+                Student support
+              </ActionLink>
+              <ActionLink href="/campus-life/accommodation">
+                Accommodation
+              </ActionLink>
             </div>
           </div>
           <div className="relative min-h-[320px] overflow-hidden border border-slate-200 bg-slate-100">
-            <img
+            <PublicImage
               src={image}
               alt=""
-              className="absolute inset-0 h-full w-full object-cover"
+              ratio="fill"
+              sizes="(min-width: 1024px) 50vw, 100vw"
+              className="absolute inset-0 h-full w-full"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-950/10 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
@@ -360,7 +384,8 @@ function Section({
   dark?: boolean;
 }) {
   return (
-    <section
+    <ScrollReveal
+      as="section"
       className={
         dark
           ? "border-y border-slate-900 bg-slate-950 px-4 py-14 text-white sm:px-6 lg:px-8 lg:py-16"
@@ -395,7 +420,7 @@ function Section({
         </div>
         <div>{children}</div>
       </div>
-    </section>
+    </ScrollReveal>
   );
 }
 
@@ -428,7 +453,13 @@ function StatStrip({ data }: { data: CampusLifePageData }) {
   );
 }
 
-function FeatureGrid({ items, dark = false }: { items: NavItem[]; dark?: boolean }) {
+function FeatureGrid({
+  items,
+  dark = false,
+}: {
+  items: NavItem[];
+  dark?: boolean;
+}) {
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {items.map((item) => {
@@ -452,13 +483,31 @@ function FeatureGrid({ items, dark = false }: { items: NavItem[]; dark?: boolean
             >
               <Icon aria-hidden className="h-5 w-5" />
             </span>
-            <h3 className={dark ? "mt-5 text-lg font-semibold text-white" : "mt-5 text-lg font-semibold text-slate-950"}>
+            <h3
+              className={
+                dark
+                  ? "mt-5 text-lg font-semibold text-white"
+                  : "mt-5 text-lg font-semibold text-slate-950"
+              }
+            >
               {item.title}
             </h3>
-            <p className={dark ? "mt-2 text-sm leading-7 text-white/70" : "mt-2 text-sm leading-7 text-slate-600"}>
+            <p
+              className={
+                dark
+                  ? "mt-2 text-sm leading-7 text-white/70"
+                  : "mt-2 text-sm leading-7 text-slate-600"
+              }
+            >
               {item.description}
             </p>
-            <span className={dark ? "mt-5 inline-flex items-center gap-2 text-sm font-semibold text-secondary" : "mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary"}>
+            <span
+              className={
+                dark
+                  ? "mt-5 inline-flex items-center gap-2 text-sm font-semibold text-secondary"
+                  : "mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary"
+              }
+            >
               Explore
               <ArrowRight aria-hidden className="h-4 w-4" />
             </span>
@@ -487,13 +536,19 @@ function RecordGrid<T>({
           university channels for current student-life guidance.
         </p>
         <div className="mt-5">
-          <ActionLink href={officialLinks.campusLife}>Official campus life</ActionLink>
+          <ActionLink href={officialLinks.campusLife}>
+            Official campus life
+          </ActionLink>
         </div>
       </div>
     );
   }
 
-  return <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{items.map(render)}</div>;
+  return (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {items.map(render)}
+    </div>
+  );
 }
 
 function ClubCard({ club }: { club: Club }) {
@@ -507,7 +562,10 @@ function ClubCard({ club }: { club: Club }) {
       </p>
       <h3 className="mt-3 text-lg font-semibold text-slate-950">{club.name}</h3>
       <p className="mt-2 text-sm leading-7 text-slate-600">
-        {shortText(club.about ?? club.mission ?? club.objectives, "Student club or society.")}
+        {shortText(
+          club.about ?? club.mission ?? club.objectives,
+          "Student club or society.",
+        )}
       </p>
       <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-slate-200 pt-4 text-sm">
         <div>
@@ -538,13 +596,21 @@ function HousingCard({ item }: { item: Accommodation }) {
       className="grid gap-5 border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5 md:grid-cols-[160px_minmax(0,1fr)]"
     >
       <div className="min-h-36 bg-slate-100">
-        <img src={media.accommodation} alt="" className="h-full w-full object-cover" />
+        <PublicImage
+          src={media.accommodation}
+          alt=""
+          ratio="card"
+          sizes="160px"
+          className="h-full w-full"
+        />
       </div>
       <div>
         <p className="text-xs font-semibold uppercase text-secondary">
           {item.accommodation_type} · {item.gender}
         </p>
-        <h3 className="mt-2 text-xl font-semibold text-slate-950">{item.name}</h3>
+        <h3 className="mt-2 text-xl font-semibold text-slate-950">
+          {item.name}
+        </h3>
         <p className="mt-2 text-sm leading-7 text-slate-600">
           {shortText(item.about ?? item.rules, "Accommodation record.")}
         </p>
@@ -569,7 +635,10 @@ function SportCard({ item }: { item: SportsFacility }) {
       </span>
       <h3 className="mt-5 text-lg font-semibold text-slate-950">{item.name}</h3>
       <p className="mt-2 text-sm leading-7 text-slate-600">
-        {shortText(item.about, listValue(item.sport_types, "Sports facility record."))}
+        {shortText(
+          item.about,
+          listValue(item.sport_types, "Sports facility record."),
+        )}
       </p>
       <p className="mt-4 text-sm font-semibold text-slate-950">
         {item.location || item.facility_type || "Main Campus"}
@@ -585,13 +654,22 @@ function ArtCard({ item }: { item: ArtsCulture }) {
       className="group overflow-hidden border border-slate-200 bg-white transition hover:border-primary/35"
     >
       <div className="h-44 bg-slate-100">
-        <img src={media.gallery} alt="" className="h-full w-full object-cover transition group-hover:scale-[1.03]" />
+        <PublicImage
+          src={media.gallery}
+          alt=""
+          ratio="news"
+          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+          className="h-full w-full"
+          imageClassName="transition group-hover:scale-[1.03]"
+        />
       </div>
       <div className="p-5">
         <p className="text-xs font-semibold uppercase text-secondary">
           {item.category || "Gallery"}
         </p>
-        <h3 className="mt-2 text-lg font-semibold text-slate-950">{item.title}</h3>
+        <h3 className="mt-2 text-lg font-semibold text-slate-950">
+          {item.title}
+        </h3>
         <p className="mt-2 text-sm leading-7 text-slate-600">
           {shortText(item.about, "Arts, culture, and campus-life record.")}
         </p>
@@ -611,7 +689,10 @@ function GovernanceCard({ item }: { item: StudentGovernance }) {
       </p>
       <h3 className="mt-3 text-lg font-semibold text-slate-950">{item.name}</h3>
       <p className="mt-2 text-sm leading-7 text-slate-600">
-        {shortText(item.about ?? item.mandate ?? item.constitution, "Student governance record.")}
+        {shortText(
+          item.about ?? item.mandate ?? item.constitution,
+          "Student governance record.",
+        )}
       </p>
       <p className="mt-4 text-sm text-slate-600">
         Term: {dateText(item.term_start)} to {dateText(item.term_end)}
@@ -691,9 +772,19 @@ function ExperiencePanel({
   href: string;
 }) {
   return (
-    <Link href={href} className="group overflow-hidden border border-slate-200 bg-white">
+    <Link
+      href={href}
+      className="group overflow-hidden border border-slate-200 bg-white"
+    >
       <div className="h-48 bg-slate-100">
-        <img src={image} alt="" className="h-full w-full object-cover transition group-hover:scale-[1.03]" />
+        <PublicImage
+          src={image}
+          alt=""
+          ratio="news"
+          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+          className="h-full w-full"
+          imageClassName="transition group-hover:scale-[1.03]"
+        />
       </div>
       <div className="p-5">
         <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
@@ -708,7 +799,9 @@ function ExperiencePanel({
 }
 
 function ClubsPage({ data }: { data: CampusLifePageData }) {
-  const types = Array.from(new Set(data.clubs.map((club) => club.club_type).filter(Boolean)));
+  const types = Array.from(
+    new Set(data.clubs.map((club) => club.club_type).filter(Boolean)),
+  );
   return (
     <>
       <Section
@@ -719,7 +812,10 @@ function ClubsPage({ data }: { data: CampusLifePageData }) {
         {types.length ? (
           <div className="mb-6 flex flex-wrap gap-2">
             {["All", ...types].map((type) => (
-              <span key={type} className="border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700">
+              <span
+                key={type}
+                className="border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
+              >
                 {type}
               </span>
             ))}
@@ -757,12 +853,24 @@ function ClubDetail({ club }: { club?: Club | null }) {
       <Section
         eyebrow="Club Profile"
         title={club?.name ?? "Club record not found"}
-        body={club ? shortText(club.about ?? club.mission ?? club.objectives, "Club profile.") : "The requested club was not returned by the public records API."}
+        body={
+          club
+            ? shortText(
+                club.about ?? club.mission ?? club.objectives,
+                "Club profile.",
+              )
+            : "The requested club was not returned by the public records API."
+        }
       >
         <DetailGrid
           rows={[
             ["Type", club?.club_type || "Not published"],
-            ["Members", club?.membership_count ? String(club.membership_count) : "Not published"],
+            [
+              "Members",
+              club?.membership_count
+                ? String(club.membership_count)
+                : "Not published",
+            ],
             ["Meeting schedule", club?.meeting_schedule || "Not published"],
             ["Membership fee", money(club?.membership_fee)],
             ["Email", club?.email || "Not published"],
@@ -779,9 +887,18 @@ function ClubDetail({ club }: { club?: Club | null }) {
         <TextBlocks
           dark
           blocks={[
-            ["About", club?.about || "About information has not been published."],
-            ["Mission", club?.mission || "Mission information has not been published."],
-            ["Objectives", club?.objectives || "Objectives have not been published."],
+            [
+              "About",
+              club?.about || "About information has not been published.",
+            ],
+            [
+              "Mission",
+              club?.mission || "Mission information has not been published.",
+            ],
+            [
+              "Objectives",
+              club?.objectives || "Objectives have not been published.",
+            ],
           ]}
         />
       </Section>
@@ -821,7 +938,11 @@ function SportDetail({ sport }: { sport?: SportsFacility | null }) {
       <Section
         eyebrow="Facility Profile"
         title={sport?.name ?? "Sports facility not found"}
-        body={sport ? shortText(sport.about, "Sports facility profile.") : "The requested sports facility was not returned by the public records API."}
+        body={
+          sport
+            ? shortText(sport.about, "Sports facility profile.")
+            : "The requested sports facility was not returned by the public records API."
+        }
       >
         <DetailGrid
           rows={[
@@ -877,16 +998,31 @@ function AccommodationDetail({ item }: { item?: Accommodation | null }) {
       <Section
         eyebrow="Accommodation Profile"
         title={item?.name ?? "Accommodation record not found"}
-        body={item ? shortText(item.about ?? item.rules, "Accommodation profile.") : "The requested accommodation was not returned by the public records API."}
+        body={
+          item
+            ? shortText(item.about ?? item.rules, "Accommodation profile.")
+            : "The requested accommodation was not returned by the public records API."
+        }
       >
         <DetailGrid
           rows={[
             ["Type", item?.accommodation_type || "Not published"],
             ["Gender", item?.gender || "Not published"],
-            ["Capacity", item?.capacity ? String(item.capacity) : "Not published"],
-            ["Rooms", item?.total_rooms ? String(item.total_rooms) : "Not published"],
+            [
+              "Capacity",
+              item?.capacity ? String(item.capacity) : "Not published",
+            ],
+            [
+              "Rooms",
+              item?.total_rooms ? String(item.total_rooms) : "Not published",
+            ],
             ["Fee per semester", money(item?.fee_per_semester)],
-            ["Applications", item?.is_accepting_applications ? "Accepting applications" : "Not accepting applications"],
+            [
+              "Applications",
+              item?.is_accepting_applications
+                ? "Accepting applications"
+                : "Not accepting applications",
+            ],
             ["Amenities", listValue(item?.amenities)],
             ["Email", item?.email || "Not published"],
             ["Phone", item?.phone || "Not published"],
@@ -902,7 +1038,10 @@ function AccommodationDetail({ item }: { item?: Accommodation | null }) {
         <TextBlocks
           dark
           blocks={[
-            ["Amenities", listValue(item?.amenities, "Amenities have not been published.")],
+            [
+              "Amenities",
+              listValue(item?.amenities, "Amenities have not been published."),
+            ],
             ["Rules", item?.rules || "Rules have not been published."],
           ]}
         />
@@ -950,13 +1089,23 @@ function GovernanceDetail({ item }: { item?: StudentGovernance | null }) {
     <Section
       eyebrow="Student Body"
       title={item?.name ?? "Student governance record not found"}
-      body={item ? shortText(item.about ?? item.mandate ?? item.constitution, "Student governance profile.") : "The requested student body was not returned by the public records API."}
+      body={
+        item
+          ? shortText(
+              item.about ?? item.mandate ?? item.constitution,
+              "Student governance profile.",
+            )
+          : "The requested student body was not returned by the public records API."
+      }
     >
       <DetailGrid
         rows={[
           ["Acronym", item?.acronym || "Not published"],
           ["Type", item?.governance_type || "Not published"],
-          ["Term", `${dateText(item?.term_start)} to ${dateText(item?.term_end)}`],
+          [
+            "Term",
+            `${dateText(item?.term_start)} to ${dateText(item?.term_end)}`,
+          ],
           ["Office", item?.office_location || "Not published"],
           ["Email", item?.email || "Not published"],
           ["Phone", item?.phone || "Not published"],
@@ -966,7 +1115,13 @@ function GovernanceDetail({ item }: { item?: StudentGovernance | null }) {
   );
 }
 
-function SupportPage({ data, slug }: { data: CampusLifePageData; slug?: string }) {
+function SupportPage({
+  data,
+  slug,
+}: {
+  data: CampusLifePageData;
+  slug?: string;
+}) {
   const selected = slug ? titleFromSlug(slug) : undefined;
   return (
     <>
@@ -979,14 +1134,19 @@ function SupportPage({ data, slug }: { data: CampusLifePageData; slug?: string }
           {supportServices.map((service) => {
             const Icon = service.icon;
             const external = service.href.startsWith("http");
-            const className = "border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5";
+            const className =
+              "border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5";
             const inner = (
               <>
                 <span className="flex h-11 w-11 items-center justify-center bg-primary/10 text-primary">
                   <Icon aria-hidden className="h-5 w-5" />
                 </span>
-                <h3 className="mt-5 text-lg font-semibold text-slate-950">{service.title}</h3>
-                <p className="mt-2 text-sm leading-7 text-slate-600">{service.body}</p>
+                <h3 className="mt-5 text-lg font-semibold text-slate-950">
+                  {service.title}
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  {service.body}
+                </p>
               </>
             );
             return external ? (
@@ -994,7 +1154,11 @@ function SupportPage({ data, slug }: { data: CampusLifePageData; slug?: string }
                 {inner}
               </a>
             ) : (
-              <Link key={service.title} href={service.href} className={className}>
+              <Link
+                key={service.title}
+                href={service.href}
+                className={className}
+              >
                 {inner}
               </Link>
             );
@@ -1044,24 +1208,42 @@ function SupportRecords({
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {faqs.map((faq) => (
-        <div key={faq.id} className="border border-white/10 bg-white/[0.04] p-5">
+        <div
+          key={faq.id}
+          className="border border-white/10 bg-white/[0.04] p-5"
+        >
           <p className="text-xs font-semibold uppercase text-secondary">
             {faq.category || "FAQ"}
           </p>
-          <h3 className="mt-3 text-lg font-semibold text-white">{faq.question}</h3>
+          <h3 className="mt-3 text-lg font-semibold text-white">
+            {faq.question}
+          </h3>
           <p className="mt-2 text-sm leading-7 text-white/70">
-            {shortText(faq.answer_plain_text ?? faq.answer_rich_text ?? faq.answer, "Student support answer.")}
+            {shortText(
+              faq.answer_plain_text ?? faq.answer_rich_text ?? faq.answer,
+              "Student support answer.",
+            )}
           </p>
         </div>
       ))}
       {contacts.map((contact) => (
-        <div key={contact.id} className="border border-white/10 bg-white/[0.04] p-5">
+        <div
+          key={contact.id}
+          className="border border-white/10 bg-white/[0.04] p-5"
+        >
           <p className="text-xs font-semibold uppercase text-secondary">
             {contact.contact_type || "Contact"}
           </p>
-          <h3 className="mt-3 text-lg font-semibold text-white">{contact.name}</h3>
+          <h3 className="mt-3 text-lg font-semibold text-white">
+            {contact.name}
+          </h3>
           <p className="mt-2 text-sm leading-7 text-white/70">
-            {[contact.email, contact.phone?.join(", "), contact.building, contact.room_number]
+            {[
+              contact.email,
+              contact.phone?.join(", "),
+              contact.building,
+              contact.room_number,
+            ]
               .filter(Boolean)
               .join(" · ") || "Student support contact."}
           </p>
@@ -1092,17 +1274,31 @@ function GalleryPage({ data }: { data: CampusLifePageData }) {
         dark
       >
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {["Graduation", "Cultural week", "Sports day", "Campus life"].map((album) => (
-            <div key={album} className="overflow-hidden border border-white/10 bg-white/[0.04]">
-              <div className="h-36 bg-white/10">
-                <img src={media.gallery} alt="" className="h-full w-full object-cover opacity-80" />
+          {["Graduation", "Cultural week", "Sports day", "Campus life"].map(
+            (album) => (
+              <div
+                key={album}
+                className="overflow-hidden border border-white/10 bg-white/[0.04]"
+              >
+                <div className="h-36 bg-white/10">
+                  <PublicImage
+                    src={media.gallery}
+                    alt=""
+                    ratio="news"
+                    sizes="(min-width: 1280px) 25vw, (min-width: 768px) 50vw, 100vw"
+                    className="h-full w-full"
+                    imageClassName="opacity-80"
+                  />
+                </div>
+                <div className="p-4">
+                  <h3 className="font-semibold text-white">{album}</h3>
+                  <p className="mt-1 text-sm text-white/60">
+                    Photo and video records
+                  </p>
+                </div>
               </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-white">{album}</h3>
-                <p className="mt-1 text-sm text-white/60">Photo and video records</p>
-              </div>
-            </div>
-          ))}
+            ),
+          )}
         </div>
       </Section>
     </>
@@ -1114,7 +1310,11 @@ function GalleryDetail({ item }: { item?: ArtsCulture | null }) {
     <Section
       eyebrow="Gallery Record"
       title={item?.title ?? "Gallery record not found"}
-      body={item ? shortText(item.about, "Gallery profile.") : "The requested gallery record was not returned by the public records API."}
+      body={
+        item
+          ? shortText(item.about, "Gallery profile.")
+          : "The requested gallery record was not returned by the public records API."
+      }
     >
       <DetailGrid
         rows={[
@@ -1130,9 +1330,16 @@ function DetailGrid({ rows }: { rows: [string, string][] }) {
   return (
     <dl className="grid border border-slate-200 bg-white md:grid-cols-2">
       {rows.map(([label, value]) => (
-        <div key={label} className="border-b border-slate-200 p-5 odd:md:border-r">
-          <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-          <dd className="mt-2 text-sm font-semibold leading-7 text-slate-950">{value}</dd>
+        <div
+          key={label}
+          className="border-b border-slate-200 p-5 odd:md:border-r"
+        >
+          <dt className="text-xs font-semibold uppercase text-slate-500">
+            {label}
+          </dt>
+          <dd className="mt-2 text-sm font-semibold leading-7 text-slate-950">
+            {value}
+          </dd>
         </div>
       ))}
     </dl>
@@ -1157,10 +1364,22 @@ function TextBlocks({
               : "border border-slate-200 bg-white p-5"
           }
         >
-          <h3 className={dark ? "text-lg font-semibold text-white" : "text-lg font-semibold text-slate-950"}>
+          <h3
+            className={
+              dark
+                ? "text-lg font-semibold text-white"
+                : "text-lg font-semibold text-slate-950"
+            }
+          >
             {title}
           </h3>
-          <p className={dark ? "mt-2 text-sm leading-7 text-white/70" : "mt-2 text-sm leading-7 text-slate-600"}>
+          <p
+            className={
+              dark
+                ? "mt-2 text-sm leading-7 text-white/70"
+                : "mt-2 text-sm leading-7 text-slate-600"
+            }
+          >
             {body}
           </p>
         </article>
@@ -1169,7 +1388,13 @@ function TextBlocks({
   );
 }
 
-function StepList({ steps, dark = false }: { steps: string[]; dark?: boolean }) {
+function StepList({
+  steps,
+  dark = false,
+}: {
+  steps: string[];
+  dark?: boolean;
+}) {
   return (
     <ol className="grid gap-3">
       {steps.map((step, index) => (
@@ -1184,7 +1409,13 @@ function StepList({ steps, dark = false }: { steps: string[]; dark?: boolean }) 
           <span className="flex h-10 w-10 items-center justify-center bg-primary text-sm font-semibold text-white">
             {index + 1}
           </span>
-          <span className={dark ? "text-sm leading-7 text-white/75" : "text-sm leading-7 text-slate-600"}>
+          <span
+            className={
+              dark
+                ? "text-sm leading-7 text-white/75"
+                : "text-sm leading-7 text-slate-600"
+            }
+          >
             {step}
           </span>
         </li>
@@ -1214,14 +1445,20 @@ function PageCopy({
     return {
       eyebrow: "Club Detail",
       title: data.detail?.club?.name ?? `${titleFromSlug(slug)} club`,
-      body: shortText(data.detail?.club?.about ?? data.detail?.club?.mission, "Club and society profile."),
+      body: shortText(
+        data.detail?.club?.about ?? data.detail?.club?.mission,
+        "Club and society profile.",
+      ),
       image: media.clubs,
     };
   }
   if (area === "sports" || area === "sport-detail") {
     return {
       eyebrow: "Sports and Recreation",
-      title: area === "sport-detail" ? data.detail?.sport?.name ?? titleFromSlug(slug) : "Stay active, compete, and recreate",
+      title:
+        area === "sport-detail"
+          ? (data.detail?.sport?.name ?? titleFromSlug(slug))
+          : "Stay active, compete, and recreate",
       body: "Sports and recreation pages show facilities, activities, locations, and practical next steps for active student life.",
       image: media.sports,
     };
@@ -1229,7 +1466,10 @@ function PageCopy({
   if (area === "accommodation" || area === "accommodation-detail") {
     return {
       eyebrow: "Accommodation",
-      title: area === "accommodation-detail" ? data.detail?.accommodation?.name ?? titleFromSlug(slug) : "Your home base for student life",
+      title:
+        area === "accommodation-detail"
+          ? (data.detail?.accommodation?.name ?? titleFromSlug(slug))
+          : "Your home base for student life",
       body: "Accommodation pages help students compare housing options, amenities, capacity, rules, fees, and application status.",
       image: media.accommodation,
     };
@@ -1237,7 +1477,10 @@ function PageCopy({
   if (area === "support" || area === "support-detail") {
     return {
       eyebrow: "Student Support",
-      title: area === "support-detail" ? `${titleFromSlug(slug)} support` : "Find help before problems become barriers",
+      title:
+        area === "support-detail"
+          ? `${titleFromSlug(slug)} support`
+          : "Find help before problems become barriers",
       body: "Student support brings together wellbeing, health, accessibility, academic help, FAQs, contacts, and official service channels.",
       image: media.support,
     };
@@ -1245,7 +1488,10 @@ function PageCopy({
   if (area === "gallery" || area === "gallery-detail") {
     return {
       eyebrow: "Gallery",
-      title: area === "gallery-detail" ? data.detail?.art?.title ?? titleFromSlug(slug) : "See campus life in action",
+      title:
+        area === "gallery-detail"
+          ? (data.detail?.art?.title ?? titleFromSlug(slug))
+          : "See campus life in action",
       body: "Gallery pages present arts, culture, events, activities, and the visual story of student experience.",
       image: media.gallery,
     };
@@ -1253,7 +1499,9 @@ function PageCopy({
   if (area === "student-life") {
     return {
       eyebrow: "Student Life",
-      title: data.detail?.governance?.name ?? "Belonging, leadership, and student voice",
+      title:
+        data.detail?.governance?.name ??
+        "Belonging, leadership, and student voice",
       body: "Student life connects representation, communities, activities, service access, and student wellbeing across campus.",
       image: media.student,
     };
@@ -1278,7 +1526,8 @@ function ContentByArea({
   if (area === "clubs") return <ClubsPage data={data} />;
   if (area === "club-detail") return <ClubDetail club={data.detail?.club} />;
   if (area === "sports") return <SportsPage data={data} />;
-  if (area === "sport-detail") return <SportDetail sport={data.detail?.sport} />;
+  if (area === "sport-detail")
+    return <SportDetail sport={data.detail?.sport} />;
   if (area === "accommodation") return <AccommodationPage data={data} />;
   if (area === "accommodation-detail") {
     return <AccommodationDetail item={data.detail?.accommodation} />;
@@ -1291,7 +1540,8 @@ function ContentByArea({
     return <SupportPage data={data} slug={slug} />;
   }
   if (area === "gallery") return <GalleryPage data={data} />;
-  if (area === "gallery-detail") return <GalleryDetail item={data.detail?.art} />;
+  if (area === "gallery-detail")
+    return <GalleryDetail item={data.detail?.art} />;
   return <Landing data={data} />;
 }
 

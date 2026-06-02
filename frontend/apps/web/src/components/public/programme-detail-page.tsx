@@ -15,6 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { ScrollReveal } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import type { ProgrammeDetailData } from "@/lib/programme-detail-data";
@@ -492,7 +493,7 @@ export function ProgrammeDetailPage({ data }: { data: ProgrammeDetailData }) {
               <SectionNav sections={sections} />
             </aside>
 
-            <main className="grid min-w-0 gap-4">
+            <ScrollReveal as="main" className="grid min-w-0 gap-4">
               <ProgrammeHero
                 title={title}
                 summary={summary}
@@ -524,7 +525,7 @@ export function ProgrammeDetailPage({ data }: { data: ProgrammeDetailData }) {
 
               <AdmissionPathway />
               <RelatedProgrammes programmes={data.relatedProgrammes} />
-            </main>
+            </ScrollReveal>
 
             <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
               <ProgrammeFactsPanel facts={facts} />

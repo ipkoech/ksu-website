@@ -25,12 +25,11 @@ import {
   officialVision,
   quickNavigation,
 } from "@/lib/about-data";
-import {
-  AboutIllustration,
-  aboutIllustrations,
-} from "@/components/about/AboutIllustration";
+import { aboutIllustrations } from "@/components/about/AboutIllustration";
+import { ScrollReveal } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
+import { PublicImage } from "@/components/public/public-image";
 
 interface AboutOverviewContentProps {
   breadcrumbItems?: { label: string; href?: string }[];
@@ -61,10 +60,10 @@ const navigationMeta: Record<string, NavigationMeta> = {
     action: "View governance",
     icon: Landmark,
   },
-  "/about/leadership": {
+  "/about/university-management": {
     description:
-      "Find the Vice Chancellor, deputy vice chancellors, registrars, finance officer, and school-level leadership records.",
-    action: "View leadership",
+      "Review the published university management structure and senior office roles.",
+    action: "View management",
     icon: Users,
   },
   "/about/quality-assurance": {
@@ -72,24 +71,6 @@ const navigationMeta: Record<string, NavigationMeta> = {
       "Review public quality, strategic plan, service charter, and accountability references.",
     action: "View quality",
     icon: ClipboardCheck,
-  },
-  "/about/governance-leadership": {
-    description:
-      "Understand the governance structure, council oversight, and leadership responsibilities.",
-    action: "View governance",
-    icon: Landmark,
-  },
-  "/about/university-management": {
-    description:
-      "Review the published university management structure and senior office roles.",
-    action: "View management",
-    icon: Users,
-  },
-  "/about/administrative-division": {
-    description:
-      "Explore administrative units that support institutional operations and public service.",
-    action: "View divisions",
-    icon: Building2,
   },
   "/about/service-charter": {
     description:
@@ -147,19 +128,10 @@ const valueIcons: Record<string, LucideIcon> = {
   Fairness: Landmark,
 };
 
-function factValue(value: unknown, fallback: string) {
-  if (value === null || value === undefined || value === "") {
-    return fallback;
-  }
-
-  return String(value);
-}
-
 export async function AboutOverviewContent({
   breadcrumbItems = [{ label: "Home", href: "/" }, { label: "About" }],
 }: AboutOverviewContentProps) {
   const overview = await getOverviewData();
-  const quickFacts = overview.quick_facts as Record<string, unknown> | undefined;
 
   const navigationLinks = quickNavigation
     .filter((item) => item.href !== "/about")
@@ -176,29 +148,6 @@ export async function AboutOverviewContent({
   const rightLinks = navigationLinks.slice(2);
   const vision = overview.vision || officialVision;
   const mission = overview.mission || officialMission;
-
-  const heroStats = [
-    {
-      value: factValue(quickFacts?.founding_year, "1965"),
-      label: "Established",
-      detail: "Teacher training roots",
-    },
-    {
-      value: factValue(quickFacts?.land_acres ?? quickFacts?.acres, "61"),
-      label: "Acres Donated",
-      detail: "County Council of Gusii",
-    },
-    {
-      value: "1994",
-      label: "Egerton Campus",
-      detail: "University campus phase",
-    },
-    {
-      value: factValue(quickFacts?.charter_year, "2013"),
-      label: "University Charter",
-      detail: "Granted February 6",
-    },
-  ];
 
   const mandateStatements = [
     {
@@ -218,15 +167,15 @@ export async function AboutOverviewContent({
   return (
     <PageShell>
       <AboutPageLenis>
-        <section className="relative overflow-hidden border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_46%,#eef4ff_100%)] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.16),transparent_66%)]" />
+        <section className="relative min-h-[55vh] overflow-hidden border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_46%,#eef4ff_100%)] px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.16),transparent_66%)]" />
           <div className="relative w-full">
             <BreadcrumbTrail items={breadcrumbItems} />
 
-            <div className="mt-7 grid gap-6 lg:grid-cols-[236px_minmax(0,1fr)_316px] lg:items-start">
+            <div className="mt-4 grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)_300px] lg:items-start">
               <nav
                 aria-label="About section links"
-                className="rounded-[1.5rem] border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur lg:sticky lg:top-28"
+                className="rounded-[1rem] border border-slate-200 bg-white/80 p-3 shadow-sm backdrop-blur lg:sticky lg:top-28"
               >
                 <p className="px-2 text-xs font-semibold uppercase text-secondary">
                   Explore About
@@ -239,9 +188,9 @@ export async function AboutOverviewContent({
                       <li key={item.href}>
                         <Link
                           href={item.href}
-                          className="group flex items-center gap-3 rounded-2xl border border-transparent px-3 py-3 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
+                          className="group flex items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
                         >
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
                             <Icon aria-hidden className="h-4 w-4" />
                           </span>
                           <span className="min-w-0 flex-1">{item.title}</span>
@@ -256,72 +205,41 @@ export async function AboutOverviewContent({
                 </ul>
               </nav>
 
-              <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_70px_-42px_rgba(15,23,42,0.45)]">
-                <div className="px-6 py-8 sm:px-8 lg:px-10 lg:py-10">
+              <div className="overflow-hidden rounded-[1.5rem] border border-slate-800 bg-slate-950 text-white shadow-[0_24px_70px_-44px_rgba(15,23,42,0.7)]">
+                <div className="px-5 py-5 sm:px-6 lg:px-7 lg:py-6">
                   <p className="text-sm font-semibold uppercase text-secondary">
                     About Kisii University
                   </p>
-                  <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.08] text-slate-950 sm:text-5xl">
+                  <h1 className="mt-3 max-w-4xl font-[family-name:var(--font-display)] text-2xl font-semibold leading-[1.08] text-white sm:text-3xl">
                     {vision}
                   </h1>
-                  <p className="mt-5 text-base leading-8 text-slate-600 sm:text-lg">
+                  <p className="mt-3 max-w-3xl text-sm leading-6 text-white/72">
                     {aboutIntro}
                   </p>
-                  <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                    <Link
-                      href="/about/leadership"
-                      className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-                    >
-                      University Leadership
-                      <ArrowRight aria-hidden className="h-4 w-4" />
-                    </Link>
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                     <Link
                       href="/about/university-management"
-                      className="inline-flex items-center justify-center gap-2 rounded-full border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-primary/90"
                     >
                       University Management
                       <ArrowRight aria-hidden className="h-4 w-4" />
                     </Link>
                   </div>
-
-                  <AboutIllustration
+                  <PublicImage
                     src={aboutIllustrations.overview}
-                    alt="Students and faculty moving through a modern university campus courtyard"
-                    priority
-                    sizes="(min-width: 1280px) 760px, (min-width: 1024px) 54vw, 100vw"
-                    className="mt-8 aspect-[16/7] min-h-[240px] shadow-none"
+                    alt=""
+                    ratio="news"
+                    sizes="(min-width: 1024px) 54vw, 100vw"
+                    className="mt-5 border border-white/10 bg-white/5"
+                    imageClassName="object-cover"
                   />
-
-                  <div className="mt-8 rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-4">
-                    <p className="text-xs font-semibold uppercase text-slate-500">
-                      At a glance
-                    </p>
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                      {heroStats.map((stat) => (
-                        <div
-                          key={stat.label}
-                          className="rounded-2xl border border-slate-200 bg-white p-4"
-                        >
-                          <p className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-none text-slate-950">
-                            {stat.value}
-                          </p>
-                          <p className="mt-2 text-sm font-semibold text-slate-900">
-                            {stat.label}
-                          </p>
-                          <p className="mt-1 text-xs leading-5 text-slate-500">
-                            {stat.detail}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
                 </div>
               </div>
 
-              <aside className="space-y-5">
+              <aside>
                 <nav
                   aria-label="Related institutional pages"
-                  className="rounded-[1.5rem] border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur"
+                  className="rounded-[1rem] border border-slate-200 bg-white/80 p-3 shadow-sm backdrop-blur"
                 >
                   <p className="px-2 text-xs font-semibold uppercase text-secondary">
                     Related Pages
@@ -334,9 +252,9 @@ export async function AboutOverviewContent({
                         <li key={item.href}>
                           <Link
                             href={item.href}
-                            className="group flex items-center gap-3 rounded-2xl border border-transparent px-3 py-3 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
+                            className="group flex items-center gap-2 rounded-xl border border-transparent px-2 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
                           >
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
                               <Icon aria-hidden className="h-4 w-4" />
                             </span>
                             <span className="min-w-0 flex-1">{item.title}</span>
@@ -350,26 +268,15 @@ export async function AboutOverviewContent({
                     })}
                   </ul>
                 </nav>
-
-                <div className="rounded-[1.75rem] bg-slate-950 p-6 text-white shadow-[0_24px_70px_-38px_rgba(15,23,42,0.55)]">
-                  <p className="text-xs font-semibold uppercase text-secondary">
-                    Institutional Focus
-                  </p>
-                  <p className="mt-5 text-sm leading-7 text-white/80 sm:text-base">
-                    {mission}
-                  </p>
-                  <div className="mt-6 border-t border-white/10 pt-5">
-                    <p className="text-xs font-semibold text-white/50">
-                      Mission, vision, philosophy, and values
-                    </p>
-                  </div>
-                </div>
               </aside>
             </div>
           </div>
         </section>
 
-        <section className="border-b border-slate-200 bg-white px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+        <ScrollReveal
+          as="section"
+          className="border-b border-slate-200 bg-white px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
+        >
           <div className="grid w-full gap-10 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start">
             <div className="lg:sticky lg:top-28">
               <p className="text-sm font-semibold uppercase text-secondary">
@@ -429,9 +336,12 @@ export async function AboutOverviewContent({
               </div>
             </div>
           </div>
-        </section>
+        </ScrollReveal>
 
-        <section className="bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+        <ScrollReveal
+          as="section"
+          className="bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
+        >
           <div className="w-full">
             <div className="grid gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:items-end">
               <div>
@@ -480,9 +390,12 @@ export async function AboutOverviewContent({
               })}
             </div>
           </div>
-        </section>
+        </ScrollReveal>
 
-        <section className="px-4 pb-16 sm:px-6 lg:px-8 lg:pb-20">
+        <ScrollReveal
+          as="section"
+          className="px-4 pb-16 sm:px-6 lg:px-8 lg:pb-20"
+        >
           <div className="w-full overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-[0_28px_80px_-44px_rgba(15,23,42,0.7)]">
             <div className="grid gap-0 lg:grid-cols-[360px_minmax(0,1fr)]">
               <div className="border-b border-white/10 bg-white/[0.04] p-7 sm:p-8 lg:border-b-0 lg:border-r">
@@ -521,59 +434,8 @@ export async function AboutOverviewContent({
               </div>
             </div>
           </div>
-        </section>
+        </ScrollReveal>
 
-        <section className="border-y border-slate-200 bg-white px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-          <div className="w-full">
-            <div className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
-              <div>
-                <p className="text-sm font-semibold uppercase text-secondary">
-                  Continue Through About
-                </p>
-                <h2 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
-                  Choose the institutional detail you need next
-                </h2>
-              </div>
-              <p className="text-base leading-8 text-slate-600">
-                The overview ends with direct routes into the public About
-                sections, so visitors can move from orientation into the
-                specific governance, management, administrative, or service
-                charter information they came for.
-              </p>
-            </div>
-
-            <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-              {navigationLinks.map((item) => {
-                const Icon = item.icon;
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="group flex min-h-[260px] flex-col rounded-[1.75rem] border border-slate-200 bg-slate-50 p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:bg-white hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
-                  >
-                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-primary shadow-sm ring-1 ring-slate-200 transition group-hover:bg-primary group-hover:text-white">
-                      <Icon aria-hidden className="h-5 w-5" />
-                    </span>
-                    <h3 className="mt-6 text-xl font-semibold leading-7 text-slate-950">
-                      {item.title}
-                    </h3>
-                    <p className="mt-4 text-sm leading-7 text-slate-600">
-                      {item.description}
-                    </p>
-                    <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-primary">
-                      {item.action}
-                      <ArrowRight
-                        aria-hidden
-                        className="h-4 w-4 transition group-hover:translate-x-1"
-                      />
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </section>
       </AboutPageLenis>
     </PageShell>
   );

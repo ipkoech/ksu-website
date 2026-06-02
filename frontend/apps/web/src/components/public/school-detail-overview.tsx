@@ -3,10 +3,8 @@ import type { ReactNode } from "react";
 import type { EntityHeaderNavItem } from "@ksu/ui/layout/public";
 import {
   ArrowRight,
-  BookOpenCheck,
   Building2,
   CalendarDays,
-  ClipboardCheck,
   Download,
   Eye,
   FileText,
@@ -24,7 +22,9 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { PageShell } from "@/components/site-shell";
+import { ScrollReveal } from "@ksu/ui/components";
+import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
+import { PublicImage } from "@/components/public/public-image";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import type { SchoolDetailOverviewData } from "@/lib/school-detail-data";
 
@@ -38,13 +38,6 @@ type StatementCard = {
   title: string;
   body: string;
   icon: LucideIcon;
-};
-
-type MetricItem = {
-  label: string;
-  value: string;
-  icon: LucideIcon;
-  href?: string;
 };
 
 function initialsFromName(name: string) {
@@ -63,7 +56,10 @@ function initialsFromName(name: string) {
 
   const selected = parts.length === 1 ? [parts[0]] : [parts[0], parts.at(-1)!];
 
-  return selected.map((part) => part[0]).join("").toUpperCase();
+  return selected
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 }
 
 function present(value?: string | number | null) {
@@ -112,7 +108,15 @@ function DeanPortrait({
   image?: string | null;
 }) {
   if (image) {
-    return <img src={image} alt={name} className="h-full w-full object-cover" />;
+    return (
+      <PublicImage
+        src={image}
+        alt={name}
+        ratio="profile"
+        sizes="220px"
+        className="h-full w-full"
+      />
+    );
   }
 
   return (
@@ -300,7 +304,9 @@ function ContactRow({
     );
   }
 
-  return <div className="flex w-full min-w-0 gap-3 rounded-xl p-2">{content}</div>;
+  return (
+    <div className="flex w-full min-w-0 gap-3 rounded-xl p-2">{content}</div>
+  );
 }
 
 function ContactPanel({
@@ -378,10 +384,18 @@ function SchoolInfoPanel({
           const Icon = item.icon;
 
           return (
-            <div key={item.label} className="flex w-full min-w-0 gap-3 rounded-xl p-2">
-              <Icon aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+            <div
+              key={item.label}
+              className="flex w-full min-w-0 gap-3 rounded-xl p-2"
+            >
+              <Icon
+                aria-hidden
+                className="mt-0.5 h-5 w-5 shrink-0 text-primary"
+              />
               <div className="min-w-0 flex-1">
-                <dt className="text-xs font-bold text-slate-950">{item.label}</dt>
+                <dt className="text-xs font-bold text-slate-950">
+                  {item.label}
+                </dt>
                 <dd className="mt-0.5 break-words text-sm font-medium leading-5 text-primary [overflow-wrap:anywhere]">
                   {item.value}
                 </dd>
@@ -390,134 +404,6 @@ function SchoolInfoPanel({
           );
         })}
       </dl>
-    </section>
-  );
-}
-
-function MetricCell({ item }: { item: MetricItem }) {
-  const Icon = item.icon;
-  const content = (
-    <>
-      <Icon aria-hidden className="h-5 w-5 shrink-0 text-primary" />
-      <span className="min-w-0">
-        <span className="block text-[0.68rem] font-bold uppercase leading-4 text-slate-500">
-          {item.label}
-        </span>
-        <span className="mt-1 block break-words text-sm font-bold leading-5 text-slate-950">
-          {item.value}
-        </span>
-      </span>
-    </>
-  );
-
-  const className =
-    "flex min-h-[5.25rem] min-w-0 items-start gap-3 bg-white p-4 transition hover:bg-primary/[0.04]";
-
-  if (item.href) {
-    return (
-      <Link href={item.href} className={className}>
-        {content}
-      </Link>
-    );
-  }
-
-  return <div className={className}>{content}</div>;
-}
-
-function MetricStrip({ items }: { items: MetricItem[] }) {
-  return (
-    <div className="grid gap-px bg-slate-200 sm:grid-cols-2 lg:grid-cols-5">
-      {items.map((item) => (
-        <MetricCell key={item.label} item={item} />
-      ))}
-    </div>
-  );
-}
-
-function SchoolOverviewPanel({
-  schoolName,
-  overview,
-  baseHref,
-  code,
-  established,
-  metrics,
-  sourceBacked,
-}: {
-  schoolName: string;
-  overview: string | null;
-  baseHref: string;
-  code: string | null;
-  established: string | number | null;
-  metrics: MetricItem[];
-  sourceBacked: boolean;
-}) {
-  const status = sourceBacked ? "School profile" : "School overview";
-
-  return (
-    <section className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_17rem]">
-        <div className="min-w-0 px-5 py-6 sm:px-7 lg:px-8">
-          <SectionKicker>About the School</SectionKicker>
-          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] text-slate-950 sm:text-5xl">
-            {schoolName}
-          </h1>
-          <p className="mt-5 max-w-3xl text-sm leading-7 text-slate-700 sm:text-base">
-            {overview ??
-              "This school profile will show its academic focus, departments, programmes, leadership, and contact pathways when the public record is published."}
-          </p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Link
-              href={`${baseHref}/programmes`}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-bold text-white shadow-sm transition hover:bg-primary/90"
-            >
-              View programmes
-              <ArrowRight aria-hidden className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/admissions"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-primary/25 bg-white px-5 text-sm font-bold text-primary transition hover:border-primary hover:bg-primary/[0.06]"
-            >
-              Admissions
-              <ArrowRight aria-hidden className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-
-        <div className="border-t border-slate-200 bg-slate-50 p-5 lg:border-l lg:border-t-0">
-          <div className="rounded-full border border-primary/15 bg-white px-4 py-2 text-xs font-bold text-primary">
-            {status}
-          </div>
-          <dl className="mt-5 grid gap-4">
-            {code ? (
-              <div>
-                <dt className="text-[0.68rem] font-bold uppercase text-slate-500">
-                  Code
-                </dt>
-                <dd className="mt-1 text-sm font-bold text-slate-950">{code}</dd>
-              </div>
-            ) : null}
-            {established ? (
-              <div>
-                <dt className="text-[0.68rem] font-bold uppercase text-slate-500">
-                  Established
-                </dt>
-                <dd className="mt-1 text-sm font-bold text-slate-950">
-                  {established}
-                </dd>
-              </div>
-            ) : null}
-            <div>
-              <dt className="text-[0.68rem] font-bold uppercase text-slate-500">
-                Academic home
-              </dt>
-              <dd className="mt-1 text-sm font-bold text-slate-950">
-                Schools and departments
-              </dd>
-            </div>
-          </dl>
-        </div>
-      </div>
-      <MetricStrip items={metrics} />
     </section>
   );
 }
@@ -575,14 +461,20 @@ function DeanMessageCard({
   );
 }
 
-function AboutCard({ overview }: { overview: string }) {
+function AboutCard({
+  schoolName,
+  overview,
+}: {
+  schoolName: string;
+  overview: string;
+}) {
   return (
     <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_9rem] md:items-center">
         <div>
-          <SectionKicker>School Profile</SectionKicker>
+          <SectionKicker>About the School</SectionKicker>
           <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
-            Academic context
+            {schoolName}
           </h2>
           <p className="mt-3 text-sm leading-7 text-slate-700">{overview}</p>
         </div>
@@ -629,44 +521,6 @@ function StatementCards({ statements }: { statements: StatementCard[] }) {
   );
 }
 
-function PathwayPanel({ baseHref }: { baseHref: string }) {
-  const items: MetricItem[] = [
-    {
-      label: "Departments",
-      value: "Explore academic departments",
-      icon: Building2,
-    },
-    {
-      label: "Programmes",
-      value: "Compare school programmes",
-      href: `${baseHref}/programmes`,
-      icon: BookOpenCheck,
-    },
-    {
-      label: "Admissions",
-      value: "Review application steps",
-      href: "/admissions/how-to-apply",
-      icon: ClipboardCheck,
-    },
-  ];
-
-  return (
-    <section className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
-      <div className="px-5 py-5 sm:px-6">
-        <SectionKicker>Explore Pathways</SectionKicker>
-        <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
-          Continue through the school
-        </h2>
-      </div>
-      <div className="grid gap-px bg-slate-200 md:grid-cols-3">
-        {items.map((item) => (
-          <MetricCell key={item.label} item={item} />
-        ))}
-      </div>
-    </section>
-  );
-}
-
 export function SchoolDetailOverview({
   data,
   header,
@@ -683,9 +537,7 @@ export function SchoolDetailOverview({
     present(dean?.name) ?? present(school.dean_name) ?? "Dean profile";
   const deanTitle = present(dean?.title) ?? "Dean";
   const deanEmail = present(school.dean_email);
-  const deanMessage =
-    present(dean?.message) ??
-    present(school.head_message);
+  const deanMessage = present(school.head_message) ?? present(dean?.message);
   const overview = schoolSummary(data);
   const email = present(school.email);
   const phone = present(school.phone);
@@ -694,39 +546,15 @@ export function SchoolDetailOverview({
   const quickLinks = buildQuickLinks({ baseHref, navItems, counts });
   const established =
     formatDate(school.establishment_date) ?? school.founded_year ?? null;
-  const metricItems: MetricItem[] = [
-    {
-      label: "Departments",
-      value: formatCount(counts.departments, "department") ?? "Not published yet",
-      icon: Building2,
-    },
-    {
-      label: "Programmes",
-      value: formatCount(counts.programmes, "programme") ?? "Not published yet",
-      href: `${baseHref}/programmes`,
-      icon: GraduationCap,
-    },
-    {
-      label: "Team records",
-      value: formatCount(counts.staff, "record") ?? "Not published yet",
-      href: `${baseHref}/team`,
-      icon: Users,
-    },
-    {
-      label: "Downloads",
-      value: formatCount(counts.documents, "file") ?? "Not published yet",
-      href: `${baseHref}/downloads`,
-      icon: Download,
-    },
-    {
-      label: "News",
-      value: formatCount(counts.news, "update") ?? "Not published yet",
-      href: `${baseHref}/news`,
-      icon: Newspaper,
-    },
-  ];
 
-  const contactPanel = <ContactPanel email={email} phone={phone} office={office} website={website} />;
+  const contactPanel = (
+    <ContactPanel
+      email={email}
+      phone={phone}
+      office={office}
+      website={website}
+    />
+  );
   const schoolInfoPanel = (
     <SchoolInfoPanel
       code={present(school.code)}
@@ -746,29 +574,32 @@ export function SchoolDetailOverview({
     vision ? { title: "Vision", body: vision, icon: Eye } : null,
     mandate ? { title: "Mandate", body: mandate, icon: ShieldCheck } : null,
   ].filter(Boolean) as StatementCard[];
-  const showDeanCard = Boolean(dean || present(school.dean_name) || deanMessage);
+  const showDeanCard = Boolean(
+    dean || present(school.dean_name) || deanMessage,
+  );
 
   return (
     <PageShell header={header}>
       <AboutPageLenis>
         <section className="w-full bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_68%,#f6f8fc_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+          <div className="mb-4">
+            <BreadcrumbTrail
+              items={[
+                { label: "Home", href: "/" },
+                { label: "Academics", href: "/academics" },
+                { label: "Schools", href: "/academics/schools" },
+                { label: schoolName },
+              ]}
+            />
+            <h1 className="sr-only">{schoolName}</h1>
+          </div>
           <div className="grid w-full gap-4 xl:grid-cols-[minmax(220px,0.2fr)_minmax(0,1fr)_minmax(260px,0.22fr)] 2xl:grid-cols-[minmax(240px,0.18fr)_minmax(0,1fr)_minmax(300px,0.22fr)] xl:items-start">
             <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
               <QuickLinksPanel links={quickLinks} />
               <ExploreMorePanel />
             </aside>
 
-            <main className="grid min-w-0 gap-4">
-              <SchoolOverviewPanel
-                schoolName={schoolName}
-                overview={overview}
-                baseHref={baseHref}
-                code={present(school.code)}
-                established={established}
-                metrics={metricItems}
-                sourceBacked={data.sourceBacked}
-              />
-              <MobileQuickGrid links={quickLinks} />
+            <ScrollReveal as="main" className="grid min-w-0 gap-4">
               {showDeanCard ? (
                 <DeanMessageCard
                   deanName={deanName}
@@ -779,10 +610,14 @@ export function SchoolDetailOverview({
                   deanEmail={deanEmail}
                 />
               ) : null}
-              {overview ? <AboutCard overview={overview} /> : null}
-              {statements.length ? <StatementCards statements={statements} /> : null}
-              <PathwayPanel baseHref={baseHref} />
-            </main>
+              <MobileQuickGrid links={quickLinks} />
+              {overview ? (
+                <AboutCard schoolName={schoolName} overview={overview} />
+              ) : null}
+              {statements.length ? (
+                <StatementCards statements={statements} />
+              ) : null}
+            </ScrollReveal>
 
             <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
               {contactPanel}

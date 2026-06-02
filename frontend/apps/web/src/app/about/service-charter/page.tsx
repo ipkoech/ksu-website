@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button } from "@ksu/ui/components";
+import { Button, ScrollReveal } from "@ksu/ui/components";
 import {
   AboutIllustratedHeading,
   aboutIllustrations,
@@ -29,7 +29,7 @@ export default function ServiceCharterPage() {
         </div>
       </section>
 
-      <section className="container pb-16">
+      <ScrollReveal as="section" className="container pb-16">
         <article className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/40">
           <p className="max-w-4xl text-base leading-8 text-slate-600">
             Use the official charter page to review the university's public service
@@ -40,11 +40,11 @@ export default function ServiceCharterPage() {
               <Link href={serviceCharterUrl}>Open service charter</Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/about/administrative-division">See administrative division</Link>
+              <Link href="/administration">See administration</Link>
             </Button>
           </div>
         </article>
-      </section>
+      </ScrollReveal>
     </PageShell>
   );
 }

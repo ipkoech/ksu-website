@@ -4,6 +4,7 @@ import {
   aboutIllustrations,
 } from "@/components/about/AboutIllustration";
 import { BoardMemberGrid } from "@/components/about/BoardMemberGrid";
+import { ScrollReveal } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { getGovernanceBoard } from "@/lib/about-data";
 
@@ -41,7 +42,10 @@ export default async function GovernanceBoardPage({
         </div>
       </section>
 
-      <section className="container grid gap-6 pb-12 lg:grid-cols-3">
+      <ScrollReveal
+        as="section"
+        className="container grid gap-6 pb-12 lg:grid-cols-3"
+      >
         <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40">
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-secondary">
             Mandate
@@ -66,9 +70,9 @@ export default async function GovernanceBoardPage({
             {board.meeting_schedule || "Meeting schedule not published."}
           </p>
         </article>
-      </section>
+      </ScrollReveal>
 
-      <section className="container pb-16">
+      <ScrollReveal as="section" className="container pb-16">
         <article className="rounded-[2rem] border border-slate-200 bg-slate-50 p-8">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-secondary">
             Board Members
@@ -80,7 +84,7 @@ export default async function GovernanceBoardPage({
             <BoardMemberGrid members={board.members} />
           </div>
         </article>
-      </section>
+      </ScrollReveal>
     </PageShell>
   );
 }

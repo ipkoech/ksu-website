@@ -27,9 +27,9 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
-import { AboutPageLenis } from "@/components/ui/about-page-lenis";
-import { RichTextRenderer } from "@ksu/ui/components";
+import { RichTextRenderer } from "@ksu/ui/rich-text-renderer";
 
 export type PublicIconName =
   | "arrow"
@@ -103,6 +103,7 @@ export type PublicPageConfig = {
   continueTitle?: string;
   continueBody?: string;
   continueItems?: PublicCard[];
+  hideContinue?: boolean;
 };
 
 const iconMap: Record<PublicIconName, LucideIcon> = {
@@ -155,7 +156,12 @@ function ActionLink({
 
   if (action.external) {
     return (
-      <a href={action.href} className={className}>
+      <a
+        href={action.href}
+        className={className}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         {action.label}
         <ExternalLink aria-hidden className="h-4 w-4" />
       </a>
@@ -185,7 +191,12 @@ function CardLink({
 
   if (card.external) {
     return (
-      <a href={card.href} className={className}>
+      <a
+        href={card.href}
+        className={className}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         {children}
       </a>
     );
@@ -207,10 +218,10 @@ function StandardCard({
 }) {
   const linked = Boolean(card.href);
   const className = dark
-    ? `group flex min-h-[250px] flex-col rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-6 transition ${
+    ? `group flex min-h-[220px] flex-col rounded-lg border border-white/10 bg-white/[0.04] p-5 transition ${
         linked ? "hover:-translate-y-1 hover:bg-white/[0.08]" : ""
       }`
-    : `group flex min-h-[250px] flex-col rounded-[1.75rem] border border-slate-200 bg-slate-50 p-6 shadow-sm transition ${
+    : `group flex min-h-[220px] flex-col rounded-lg border border-slate-200 bg-slate-50 p-5 shadow-sm transition ${
         linked
           ? "hover:-translate-y-1 hover:border-primary/30 hover:bg-white hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
           : ""
@@ -221,8 +232,8 @@ function StandardCard({
       <span
         className={
           dark
-            ? "inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-secondary ring-1 ring-white/10"
-            : "inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-primary shadow-sm ring-1 ring-slate-200 transition group-hover:bg-primary group-hover:text-white"
+            ? "inline-flex h-11 w-11 items-center justify-center rounded-md bg-white/10 text-secondary ring-1 ring-white/10"
+            : "inline-flex h-11 w-11 items-center justify-center rounded-md bg-white text-primary shadow-sm ring-1 ring-slate-200 transition group-hover:bg-primary group-hover:text-white"
         }
       >
         <IconGlyph icon={card.icon} />
@@ -241,8 +252,8 @@ function StandardCard({
       <h3
         className={
           dark
-            ? "mt-4 text-xl font-semibold leading-7 text-white"
-            : "mt-4 text-xl font-semibold leading-7 text-slate-950"
+            ? "mt-4 text-lg font-semibold leading-7 text-white"
+            : "mt-4 text-lg font-semibold leading-7 text-slate-950"
         }
       >
         {card.title}
@@ -298,14 +309,14 @@ function SectionBlock({ section }: { section: PublicPageSection }) {
 
   const dark = section.tone === "dark";
   const wrapperClass = dark
-    ? "border-y border-slate-200 bg-slate-950 px-4 py-16 text-white sm:px-6 lg:px-8 lg:py-20"
+    ? "border-y border-slate-200 bg-slate-950 px-4 py-12 text-white sm:px-6 lg:px-8 lg:py-16"
     : section.tone === "white"
-      ? "bg-white px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
-      : "border-y border-slate-200 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-16 sm:px-6 lg:px-8 lg:py-20";
+      ? "bg-white px-4 py-12 sm:px-6 lg:px-8 lg:py-16"
+      : "border-y border-slate-200 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-12 sm:px-6 lg:px-8 lg:py-16";
 
   return (
-    <section className={wrapperClass}>
-      <div className="grid w-full gap-10 xl:grid-cols-[380px_minmax(0,1fr)] xl:items-start">
+    <ScrollReveal as="section" className={wrapperClass}>
+      <div className="mx-auto grid w-full max-w-[1440px] gap-8 xl:grid-cols-[300px_minmax(0,1fr)] xl:items-start">
         <div className="xl:sticky xl:top-28">
           <p className="text-sm font-semibold uppercase text-secondary">
             {section.eyebrow}
@@ -313,8 +324,8 @@ function SectionBlock({ section }: { section: PublicPageSection }) {
           <h2
             className={
               dark
-                ? "mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-white"
-                : "mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950"
+                ? "mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white"
+                : "mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950"
             }
           >
             {section.title}
@@ -328,33 +339,46 @@ function SectionBlock({ section }: { section: PublicPageSection }) {
             }
           />
         </div>
-        <div className={gridClass(section.columns)}>
+        <ScrollRevealGroup
+          className={gridClass(section.columns)}
+          staggerDelay={70}
+        >
           {section.cards.map((card) => (
-            <StandardCard key={`${section.eyebrow}-${card.title}`} card={card} dark={dark} />
+            <StandardCard
+              key={`${section.eyebrow}-${card.title}`}
+              card={card}
+              dark={dark}
+            />
           ))}
-        </div>
+        </ScrollRevealGroup>
       </div>
-    </section>
+    </ScrollReveal>
   );
 }
 
 function ArticleSectionBlock({ section }: { section: PublicPageSection }) {
   return (
-    <section className="border-y border-slate-200 bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
-      <div className="grid w-full gap-10 xl:grid-cols-[300px_minmax(0,840px)] xl:justify-center">
+    <ScrollReveal
+      as="section"
+      className="border-y border-slate-200 bg-white px-4 py-12 sm:px-6 lg:px-8 lg:py-16"
+    >
+      <div className="mx-auto grid w-full max-w-[1120px] gap-8 xl:grid-cols-[280px_minmax(0,760px)] xl:justify-center">
         <aside className="xl:sticky xl:top-28 xl:self-start">
           <p className="text-sm font-semibold uppercase text-secondary">
             {section.eyebrow}
           </p>
-          <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
             {section.title}
           </h2>
 
           {section.cards.length ? (
             <dl className="mt-7 divide-y divide-slate-200 border-y border-slate-200">
               {section.cards.map((card) => (
-                <div key={`${section.eyebrow}-${card.title}`} className="flex gap-3 py-4">
-                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <div
+                  key={`${section.eyebrow}-${card.title}`}
+                  className="flex gap-3 py-4"
+                >
+                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                     <IconGlyph icon={card.icon} className="h-4 w-4" />
                   </span>
                   <div>
@@ -378,7 +402,7 @@ function ArticleSectionBlock({ section }: { section: PublicPageSection }) {
           />
         </article>
       </div>
-    </section>
+    </ScrollReveal>
   );
 }
 
@@ -386,179 +410,199 @@ export function PublicSectionPage({
   config,
   header,
   heroContent,
+  showHero = true,
 }: {
   config: PublicPageConfig;
   header?: ReactNode;
   heroContent?: ReactNode;
+  showHero?: boolean;
 }) {
   const continueItems = config.continueItems ?? config.navItems;
 
   return (
     <PageShell header={header}>
-      <AboutPageLenis>
-        <section className="relative overflow-hidden border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_44%,#eef4ff_100%)] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.16),transparent_66%)]" />
-          <div className="relative w-full">
-            <BreadcrumbTrail items={config.breadcrumb} />
+      <>
+        {showHero ? (
+          <section className="relative overflow-hidden border-b border-slate-200 bg-slate-50 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+            <div className="relative mx-auto w-full max-w-[1440px]">
+              <BreadcrumbTrail items={config.breadcrumb} />
 
-            <div className="mt-7 grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_340px] xl:items-start">
-              <nav
-                aria-label={config.navLabel}
-                className="rounded-[1.5rem] border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur xl:sticky xl:top-28"
-              >
-                <p className="px-2 text-xs font-semibold uppercase text-secondary">
-                  {config.sectionLabel}
-                </p>
-                <ul className="mt-3 space-y-2">
-                  {config.navItems.map((item) => (
-                    <li key={item.href ?? item.title}>
-                      {item.href ? (
-                        <Link
-                          href={item.href}
-                          className="group flex items-center gap-3 rounded-2xl border border-transparent px-3 py-3 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
-                        >
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
-                            <ChevronRight aria-hidden className="h-4 w-4" />
+              <div className="mt-6 grid gap-5 xl:grid-cols-[240px_minmax(0,780px)_280px] xl:items-start xl:justify-center">
+                <nav
+                  aria-label={config.navLabel}
+                  className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm xl:sticky xl:top-28"
+                >
+                  <p className="px-2 text-xs font-semibold uppercase text-secondary">
+                    {config.sectionLabel}
+                  </p>
+                  <ul className="mt-3 space-y-2">
+                    {config.navItems.map((item) => (
+                      <li key={item.href ?? item.title}>
+                        {item.href ? (
+                          <Link
+                            href={item.href}
+                            className="group flex items-center gap-3 rounded-md border border-transparent px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
+                          >
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
+                              <ChevronRight aria-hidden className="h-4 w-4" />
+                            </span>
+                            <span className="min-w-0 flex-1">{item.title}</span>
+                          </Link>
+                        ) : (
+                          <span className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-slate-700">
+                            {item.title}
                           </span>
-                          <span className="min-w-0 flex-1">{item.title}</span>
-                        </Link>
-                      ) : (
-                        <span className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold text-slate-700">
-                          {item.title}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </nav>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
 
-              <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_70px_-42px_rgba(15,23,42,0.45)]">
-                <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_300px]">
-                  <div className="px-6 py-8 sm:px-8 lg:px-10 lg:py-10">
-                    <p className="text-sm font-semibold uppercase text-secondary">
-                      {config.eyebrow}
-                    </p>
-                    <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.08] text-slate-950 sm:text-5xl xl:text-6xl">
-                      {config.title}
-                    </h1>
-                    <p className="mt-6 text-base leading-8 text-slate-600 sm:text-lg">
-                      {config.body}
-                    </p>
-                    {(config.primaryAction || config.secondaryActions?.length) ? (
-                      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                        {config.primaryAction ? (
-                          <ActionLink action={config.primaryAction} primary />
-                        ) : null}
-                        {config.secondaryActions?.map((action) => (
-                          <ActionLink key={action.label} action={action} />
-                        ))}
-                      </div>
-                    ) : null}
-                    {heroContent}
-                  </div>
-
-                  <div className="border-t border-slate-200 bg-slate-50/80 p-5 lg:border-l lg:border-t-0">
-                    <p className="text-xs font-semibold uppercase text-slate-500">
-                      {config.scopeTitle ?? "Page highlights"}
-                    </p>
-                    <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-                      {(config.scopeCards ?? []).map((item) => (
-                        <div
-                          key={item.title}
-                          className="rounded-2xl border border-slate-200 bg-white p-4"
-                        >
-                          <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15">
-                            <IconGlyph icon={item.icon} />
-                          </span>
-                          <p className="mt-4 text-xs font-semibold uppercase text-slate-500">
-                            {item.eyebrow ?? item.title}
-                          </p>
-                          <p className="mt-2 text-sm font-semibold text-slate-950">
-                            {item.body}
-                          </p>
-                        </div>
+                <div className="min-w-0 p-1 sm:p-2 lg:p-3">
+                  <p className="text-sm font-semibold uppercase text-secondary">
+                    {config.eyebrow}
+                  </p>
+                  <h1 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl xl:text-5xl">
+                    {config.title}
+                  </h1>
+                  <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">
+                    {config.body}
+                  </p>
+                  {config.primaryAction || config.secondaryActions?.length ? (
+                    <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                      {config.primaryAction ? (
+                        <ActionLink action={config.primaryAction} primary />
+                      ) : null}
+                      {config.secondaryActions?.map((action) => (
+                        <ActionLink key={action.label} action={action} />
                       ))}
                     </div>
-                  </div>
-                </div>
-              </div>
+                  ) : null}
+                  {heroContent}
 
-              <aside className="space-y-5">
-                <div className="rounded-[1.5rem] border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur">
-                  <p className="text-xs font-semibold uppercase text-secondary">
-                    {config.asideTitle ?? "Explore this section"}
-                  </p>
-                  <p className="mt-4 text-sm leading-7 text-slate-600">
-                    {config.asideBody}
-                  </p>
+                  {config.scopeCards?.length ? (
+                    <div className="mt-7 border-t border-slate-200 pt-5">
+                      <p className="text-xs font-semibold uppercase text-slate-500">
+                        {config.scopeTitle ?? "Page highlights"}
+                      </p>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                        {config.scopeCards.map((item) => (
+                          <div
+                            key={item.title}
+                            className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+                          >
+                            <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary ring-1 ring-primary/15">
+                              <IconGlyph icon={item.icon} className="h-4 w-4" />
+                            </span>
+                            <p className="mt-3 text-xs font-semibold uppercase text-slate-500">
+                              {item.eyebrow ?? item.title}
+                            </p>
+                            <p className="mt-2 text-sm font-semibold leading-6 text-slate-950">
+                              {item.body}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
 
-                {config.relatedItems?.length ? (
-                  <nav
-                    aria-label={config.relatedTitle ?? "Related pages"}
-                    className="rounded-[1.5rem] border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur"
-                  >
-                    <p className="px-2 text-xs font-semibold uppercase text-secondary">
-                      {config.relatedTitle ?? "Related Pages"}
+                <aside className="space-y-5">
+                  <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                    <p className="text-xs font-semibold uppercase text-secondary">
+                      {config.asideTitle ?? "Explore this section"}
                     </p>
-                    <ul className="mt-3 space-y-2">
-                      {config.relatedItems.slice(0, 4).map((item) => {
-                        if (!item.href) return null;
+                    <p className="mt-4 text-sm leading-7 text-slate-600">
+                      {config.asideBody}
+                    </p>
+                  </div>
 
-                        return (
-                          <li key={item.href}>
-                            <Link
-                              href={item.href}
-                              className="group flex items-center gap-3 rounded-2xl border border-transparent px-3 py-3 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
-                            >
-                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
-                                <IconGlyph icon={item.icon} className="h-4 w-4" />
-                              </span>
-                              <span className="min-w-0 flex-1">{item.title}</span>
-                              <ChevronRight
-                                aria-hidden
-                                className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-primary"
-                              />
-                            </Link>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </nav>
-                ) : null}
-              </aside>
+                  {config.relatedItems?.length ? (
+                    <nav
+                      aria-label={config.relatedTitle ?? "Related pages"}
+                      className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
+                    >
+                      <p className="px-2 text-xs font-semibold uppercase text-secondary">
+                        {config.relatedTitle ?? "Related Pages"}
+                      </p>
+                      <ul className="mt-3 space-y-2">
+                        {config.relatedItems.slice(0, 4).map((item) => {
+                          if (!item.href) return null;
+
+                          return (
+                            <li key={item.href}>
+                              <Link
+                                href={item.href}
+                                className="group flex items-center gap-3 rounded-md border border-transparent px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
+                              >
+                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
+                                  <IconGlyph
+                                    icon={item.icon}
+                                    className="h-4 w-4"
+                                  />
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                  {item.title}
+                                </span>
+                                <ChevronRight
+                                  aria-hidden
+                                  className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-primary"
+                                />
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </nav>
+                  ) : null}
+                </aside>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        ) : null}
 
         {config.sections.map((section) => (
-          <SectionBlock key={`${config.currentHref}-${section.eyebrow}`} section={section} />
+          <SectionBlock
+            key={`${config.currentHref}-${section.eyebrow}`}
+            section={section}
+          />
         ))}
 
-        <section className="border-y border-slate-200 bg-white px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-          <div className="w-full">
-            <div className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
-              <div>
-                <p className="text-sm font-semibold uppercase text-secondary">
-                  Continue
+        {config.hideContinue ? null : (
+          <ScrollReveal
+            as="section"
+            className="border-y border-slate-200 bg-white px-4 py-12 sm:px-6 lg:px-8 lg:py-16"
+          >
+            <div className="mx-auto w-full max-w-[1440px]">
+              <div className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
+                <div>
+                  <p className="text-sm font-semibold uppercase text-secondary">
+                    Continue
+                  </p>
+                  <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
+                    {config.continueTitle ?? "Open related public pages"}
+                  </h2>
+                </div>
+                <p className="text-base leading-8 text-slate-600">
+                  {config.continueBody ??
+                    "Use the related public pathways to continue through the website."}
                 </p>
-                <h2 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
-                  {config.continueTitle ?? "Open related public pages"}
-                </h2>
               </div>
-              <p className="text-base leading-8 text-slate-600">
-                {config.continueBody ??
-                  "Use the related public pathways to continue through the website."}
-              </p>
+              <ScrollRevealGroup
+                className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3"
+                staggerDelay={70}
+              >
+                {continueItems.map((item) => (
+                  <StandardCard
+                    key={`${config.currentHref}-continue-${item.title}`}
+                    card={item}
+                  />
+                ))}
+              </ScrollRevealGroup>
             </div>
-            <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {continueItems.map((item) => (
-                <StandardCard key={`${config.currentHref}-continue-${item.title}`} card={item} />
-              ))}
-            </div>
-          </div>
-        </section>
-      </AboutPageLenis>
+          </ScrollReveal>
+        )}
+      </>
     </PageShell>
   );
 }

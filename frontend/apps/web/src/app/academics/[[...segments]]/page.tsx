@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { EntityHeader } from "@ksu/ui/layout/public";
 import {
   DepartmentDetailSection,
@@ -16,12 +16,13 @@ import { getDepartmentDetailData } from "@/lib/department-detail-data";
 import { getProgrammeDetailData } from "@/lib/programme-detail-data";
 import { getAcademicsPageConfig } from "@/lib/public-record-page-data";
 import { getSchoolDetailOverviewData } from "@/lib/school-detail-data";
+import type { EntityMediaType } from "@/lib/entity-media-data";
 
 const schoolDetailSections = new Set<SchoolDetailSectionKey>([
   "team",
   "programmes",
   "publications",
-  "news",
+  "media",
   "downloads",
   "clubs",
   "contact",
@@ -32,9 +33,17 @@ const departmentDetailSections = new Set<DepartmentDetailSectionKey>([
   "programmes",
   "publications",
   "services",
-  "news",
+  "media",
   "downloads",
   "contact",
+]);
+
+const entityMediaTypes = new Set<EntityMediaType>([
+  "news",
+  "events",
+  "blogs",
+  "announcements",
+  "gallery",
 ]);
 
 export default async function AcademicsRoutePage({
@@ -46,7 +55,7 @@ export default async function AcademicsRoutePage({
 }) {
   const { segments = [] } = await params;
   const filters = await searchParams;
-  const [area, schoolSlug, child, childSlug, departmentChild] = segments;
+  const [area, schoolSlug, child, childSlug, departmentChild, mediaChild] = segments;
 
   if (area === "programmes" && schoolSlug && !child) {
     return <ProgrammeDetailPage data={await getProgrammeDetailData(schoolSlug)} />;
@@ -75,6 +84,10 @@ export default async function AcademicsRoutePage({
     redirect(`/academics/schools/${schoolSlug}/downloads`);
   }
 
+  if (area === "schools" && schoolSlug && child === "news" && !childSlug) {
+    redirect(`/academics/schools/${schoolSlug}/media/news`);
+  }
+
   if (area === "schools" && schoolSlug && child === "departments" && !childSlug) {
     redirect(`/academics/schools/${schoolSlug}`);
   }
@@ -90,7 +103,15 @@ export default async function AcademicsRoutePage({
       redirect(`${baseHref}/downloads`);
     }
 
+    if (departmentChild === "news") {
+      redirect(`${baseHref}/media/news`);
+    }
+
     const section = (departmentChild ?? "about") as DepartmentDetailSectionKey;
+    const mediaType = mediaChild as EntityMediaType | undefined;
+    if (mediaChild && (section !== "media" || !entityMediaTypes.has(mediaType!))) {
+      notFound();
+    }
 
     if (!departmentChild || departmentDetailSections.has(section)) {
       const [headerConfig, departmentData] = await Promise.all([
@@ -103,6 +124,7 @@ export default async function AcademicsRoutePage({
           data={departmentData}
           section={section}
           baseHref={baseHref}
+          mediaType={mediaType}
           header={headerConfig ? <EntityHeader {...headerConfig} /> : undefined}
           navItems={headerConfig?.navItems}
         />
@@ -121,7 +143,15 @@ export default async function AcademicsRoutePage({
       redirect(`${baseHref}/downloads`);
     }
 
+    if (child === "news") {
+      redirect(`${baseHref}/media/news`);
+    }
+
     const section = (child ?? "about") as DepartmentDetailSectionKey;
+    const mediaType = childSlug as EntityMediaType | undefined;
+    if (childSlug && (section !== "media" || !entityMediaTypes.has(mediaType!))) {
+      notFound();
+    }
 
     if (!child || departmentDetailSections.has(section)) {
       const [headerConfig, departmentData] = await Promise.all([
@@ -134,6 +164,7 @@ export default async function AcademicsRoutePage({
           data={departmentData}
           section={section}
           baseHref={baseHref}
+          mediaType={mediaType}
           header={headerConfig ? <EntityHeader {...headerConfig} /> : undefined}
           navItems={headerConfig?.navItems}
         />
@@ -144,9 +175,14 @@ export default async function AcademicsRoutePage({
   if (
     area === "schools" &&
     schoolSlug &&
-    !childSlug &&
     schoolDetailSections.has(child as SchoolDetailSectionKey)
   ) {
+    const section = child as SchoolDetailSectionKey;
+    const mediaType = childSlug as EntityMediaType | undefined;
+    if (childSlug && (section !== "media" || !entityMediaTypes.has(mediaType!))) {
+      notFound();
+    }
+
     const [headerConfig, schoolData] = await Promise.all([
       getAcademicsEntityHeader(segments),
       getSchoolDetailOverviewData(schoolSlug),
@@ -155,7 +191,8 @@ export default async function AcademicsRoutePage({
     return (
       <SchoolDetailSection
         data={schoolData}
-        section={child as SchoolDetailSectionKey}
+        section={section}
+        mediaType={mediaType}
         header={headerConfig ? <EntityHeader {...headerConfig} /> : undefined}
         navItems={headerConfig?.navItems}
       />
