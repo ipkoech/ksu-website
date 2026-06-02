@@ -139,6 +139,29 @@ class SeederDataTests(unittest.TestCase):
             {spec["department_code"] for spec in ADMIN_SERVICE_SPECS} - department_codes,
         )
 
+    def test_dean_of_students_official_mandate_services_are_seeded(self):
+        dean_of_students = next(spec for spec in ADMIN_DEPARTMENTS if spec["code"] == "STUAFFAIRS")
+        service_slugs = {
+            spec["slug"]
+            for spec in ADMIN_SERVICE_SPECS
+            if spec["department_code"] == "STUAFFAIRS"
+        }
+
+        self.assertIn("first-year registration", dean_of_students["mandate"].lower())
+        self.assertEqual(
+            {
+                "student-welfare-and-support",
+                "student-clubs-and-campus-life-support",
+                "first-year-registration-and-orientation",
+                "student-leadership-and-ksusa-support",
+                "student-loans-and-bursaries-coordination",
+                "counselling-and-chaplaincy-services",
+                "student-handbook-and-cultural-integration",
+                "student-bereavement-support",
+            },
+            service_slugs,
+        )
+
     def test_moved_admin_services_are_not_reseeded_on_old_departments(self):
         service_keys = {(spec["department_code"], spec["slug"]) for spec in ADMIN_SERVICE_SPECS}
 
@@ -151,6 +174,14 @@ class SeederDataTests(unittest.TestCase):
         self.assertEqual([], duplicates(spec["url"] for spec in DOWNLOAD_SPECS))
         self.assertEqual([], duplicates(spec["question"] for spec in FAQ_SPECS))
         self.assertEqual([], duplicates(spec["name"] for spec in CONTACT_SPECS))
+
+    def test_dean_of_students_handbook_download_is_seeded(self):
+        downloads_by_slug = {spec["slug"]: spec for spec in DOWNLOAD_SPECS}
+
+        self.assertEqual(
+            "Student Life",
+            downloads_by_slug["kisii-university-revised-handbook-2019"]["category"],
+        )
 
 
 if __name__ == "__main__":

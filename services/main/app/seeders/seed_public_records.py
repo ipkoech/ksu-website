@@ -181,6 +181,16 @@ DOWNLOAD_SPECS = [
         "display_order": 90,
     },
     {
+        "slug": "kisii-university-revised-handbook-2019",
+        "title": "Kisii University Revised Handbook 2019",
+        "url": f"{PUBLIC_SOURCE}/storage/public/downloads//Kisii%20University%20Revised%20Handbook%202019.pdf",
+        "document_type": "handbook",
+        "category": "Student Life",
+        "description": "Student handbook listed on the Dean of Students downloads page.",
+        "mime_type": "application/pdf",
+        "display_order": 95,
+    },
+    {
         "slug": "tender-notice-may-2026",
         "title": "Tender Notice May 2026",
         "url": f"{PUBLIC_SOURCE}/blog/tender-notice-may-2026",
