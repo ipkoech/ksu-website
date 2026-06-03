@@ -116,7 +116,7 @@ export default async function AcademicsRoutePage({
     if (!departmentChild || departmentDetailSections.has(section)) {
       const [headerConfig, departmentData] = await Promise.all([
         getAcademicsEntityHeader(segments),
-        getDepartmentDetailData(childSlug, "academic"),
+        getDepartmentDetailData(childSlug, "academic", filters.q),
       ]);
 
       return (
@@ -156,7 +156,7 @@ export default async function AcademicsRoutePage({
     if (!child || departmentDetailSections.has(section)) {
       const [headerConfig, departmentData] = await Promise.all([
         getAcademicsEntityHeader(segments),
-        getDepartmentDetailData(schoolSlug, "academic"),
+        getDepartmentDetailData(schoolSlug, "academic", filters.q),
       ]);
 
       return (
