@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { cn } from "@ksu/ui/lib/utils";
 
 export function PublicSearchForm({
@@ -15,6 +15,48 @@ export function PublicSearchForm({
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const [isPending, startTransition] = useTransition();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const queryRef = useRef(query);
+  const lastTargetRef = useRef(
+    initialQuery.trim()
+      ? `/search?q=${encodeURIComponent(initialQuery.trim())}`
+      : "/search",
+  );
+
+  useEffect(() => {
+    queryRef.current = query;
+  }, [query]);
+
+  useEffect(() => {
+    const trimmed = initialQuery.trim();
+    lastTargetRef.current = trimmed
+      ? `/search?q=${encodeURIComponent(trimmed)}`
+      : "/search";
+
+    if (
+      inputRef.current === document.activeElement &&
+      initialQuery !== queryRef.current
+    ) {
+      return;
+    }
+
+    setQuery(initialQuery);
+  }, [initialQuery]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      const trimmed = query.trim();
+      const target = trimmed
+        ? `/search?q=${encodeURIComponent(trimmed)}`
+        : "/search";
+
+      if (target === lastTargetRef.current) return;
+      lastTargetRef.current = target;
+      startTransition(() => router.replace(target, { scroll: false }));
+    }, 350);
+
+    return () => window.clearTimeout(timeout);
+  }, [query, router]);
 
   return (
     <form
@@ -26,6 +68,7 @@ export function PublicSearchForm({
         const target = trimmed
           ? `/search?q=${encodeURIComponent(trimmed)}`
           : "/search";
+        lastTargetRef.current = target;
         startTransition(() => router.replace(target, { scroll: false }));
       }}
     >
@@ -38,11 +81,12 @@ export function PublicSearchForm({
           Search Kisii University
         </label>
         <input
+          ref={inputRef}
           id="public-search"
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search Kisii University"
+          placeholder="Type to search Kisii University"
           autoComplete="off"
           className="h-12 w-full rounded-full border border-slate-200 bg-white py-3 pl-12 pr-24 text-base text-slate-950 outline-none transition placeholder:text-slate-500 focus:border-primary focus:ring-4 focus:ring-primary/10"
         />
