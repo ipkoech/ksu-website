@@ -359,6 +359,7 @@ async def seed_cover_images(db: AsyncSession, ctx: SeedContext) -> None:
     settings = get_settings()
     upload_root = settings.upload_dir_path
     targets = cover_targets_from_specs()
+    seen_targets = {(target["entity_type"], target["code"]) for target in targets}
     for target in targets:
         entity: School | Department | None
         if target["entity_type"] == "school":
@@ -378,4 +379,58 @@ async def seed_cover_images(db: AsyncSession, ctx: SeedContext) -> None:
         media = await _upsert_cover_media(db, target, absolute_path, storage_path)
         entity.cover_image_id = media.id
         await _link_cover(db, media, entity_type=target["entity_type"], entity_id=entity.id)
+
+    fallback_schools = (
+        await db.execute(
+            select(School).where(
+                School.is_public.is_(True),
+                School.is_active.is_(True),
+                School.cover_image_id.is_(None),
+            )
+        )
+    ).scalars()
+    for school in fallback_schools:
+        key = ("school", school.code)
+        if key in seen_targets:
+            continue
+        seen_targets.add(key)
+        target = {
+            "entity_type": "school",
+            "code": school.code,
+            "name": school.name,
+            "theme": _theme_for_name(school.name),
+        }
+        storage_path = _target_storage_path(target)
+        absolute_path = upload_root / storage_path
+        _render_cover(absolute_path, name=target["name"], theme=target["theme"])
+        media = await _upsert_cover_media(db, target, absolute_path, storage_path)
+        school.cover_image_id = media.id
+        await _link_cover(db, media, entity_type="school", entity_id=school.id)
+
+    fallback_departments = (
+        await db.execute(
+            select(Department).where(
+                Department.is_public.is_(True),
+                Department.is_active.is_(True),
+                Department.cover_image_id.is_(None),
+            )
+        )
+    ).scalars()
+    for department in fallback_departments:
+        key = ("department", department.code)
+        if key in seen_targets:
+            continue
+        seen_targets.add(key)
+        target = {
+            "entity_type": "department",
+            "code": department.code,
+            "name": department.name,
+            "theme": _theme_for_name(department.name),
+        }
+        storage_path = _target_storage_path(target)
+        absolute_path = upload_root / storage_path
+        _render_cover(absolute_path, name=target["name"], theme=target["theme"])
+        media = await _upsert_cover_media(db, target, absolute_path, storage_path)
+        department.cover_image_id = media.id
+        await _link_cover(db, media, entity_type="department", entity_id=department.id)
     await db.flush()
