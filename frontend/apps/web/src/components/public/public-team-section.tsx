@@ -520,6 +520,24 @@ export function PublicTeamSection({
 
   return (
     <section className="grid gap-5">
+      <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
+            {subtitle}
+          </p>
+          <h2 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+            {heading}
+          </h2>
+        </div>
+        <SearchControls
+          query={query}
+          role={role}
+          roles={roles}
+          onQuery={setQuery}
+          onRole={setRole}
+        />
+      </div>
+
       {visibleMembers.length ? (
         <div className="grid gap-5">
           {topLeadership.length ? (

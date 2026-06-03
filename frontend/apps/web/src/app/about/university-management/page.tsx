@@ -1,14 +1,12 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  Building2,
   ChevronRight,
   ClipboardCheck,
   Compass,
   GraduationCap,
   History,
   Landmark,
-  UserRound,
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";

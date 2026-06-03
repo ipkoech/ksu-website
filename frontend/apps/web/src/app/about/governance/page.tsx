@@ -263,39 +263,6 @@ export default async function GovernancePage() {
                 {council?.mandate ||
                   "Provides strategic oversight, approves policy, and safeguards the university's public mandate under the charter and Universities Act framework."}
               </p>
-              <div className="mt-6 space-y-3 border-t border-white/10 pt-5">
-                <div>
-                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-white/45">
-                    Board Type
-                  </p>
-                  <p className="mt-1 text-sm font-semibold">
-                    {boardTypeLabel(council?.board_type)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-white/45">
-                    Public Members
-                  </p>
-                  <p className="mt-1 text-sm font-semibold">
-                    {council?.members?.length ?? 0}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-white/45">
-                    Meeting Schedule
-                  </p>
-                  <p className="mt-1 text-sm font-semibold">
-                    {council?.meeting_schedule || "Not published"}
-                  </p>
-                </div>
-              </div>
-              <Link
-                href="/about/governance/university-council"
-                className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-secondary hover:text-slate-950"
-              >
-                Open full council page
-                <ArrowRight aria-hidden className="h-4 w-4" />
-              </Link>
             </aside>
           </div>
         </ScrollReveal>

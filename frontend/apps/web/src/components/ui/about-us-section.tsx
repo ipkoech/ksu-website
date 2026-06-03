@@ -18,6 +18,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
+import { PublicImage } from "@/components/public/public-image";
 import {
   motion,
   useInView,
@@ -147,10 +148,30 @@ export default function AboutUsSection({
   ];
 
   const statCards = [
-    { icon: <Award />, value: stats[0]?.value ?? "1965", label: stats[0]?.label ?? "Established", suffix: "" },
-    { icon: <Building2 />, value: Number(stats[1]?.value ?? "61"), label: stats[1]?.label ?? "Acres Donated", suffix: "" },
-    { icon: <Calendar />, value: Number(stats[2]?.value ?? "8"), label: stats[2]?.label ?? "Schools", suffix: "" },
-    { icon: <TrendingUp />, value: Number(stats[4]?.value ?? "2013"), label: stats[4]?.label ?? "University Charter", suffix: "" },
+    {
+      icon: <Award />,
+      value: stats[0]?.value ?? "1965",
+      label: stats[0]?.label ?? "Established",
+      suffix: "",
+    },
+    {
+      icon: <Building2 />,
+      value: Number(stats[1]?.value ?? "61"),
+      label: stats[1]?.label ?? "Acres Donated",
+      suffix: "",
+    },
+    {
+      icon: <Calendar />,
+      value: Number(stats[2]?.value ?? "8"),
+      label: stats[2]?.label ?? "Schools",
+      suffix: "",
+    },
+    {
+      icon: <TrendingUp />,
+      value: Number(stats[4]?.value ?? "2013"),
+      label: stats[4]?.label ?? "University Charter",
+      suffix: "",
+    },
   ];
 
   return (
@@ -167,9 +188,7 @@ export default function AboutUsSection({
         className="absolute bottom-20 right-10 h-80 w-80 rounded-full bg-secondary/10 blur-3xl"
         style={{ y: y2, rotate: rotate2 }}
       />
-      <motion.div
-        className="absolute inset-x-0 top-0 h-56 bg-[linear-gradient(to_right,#4f4f4f14_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f14_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black_70%,transparent_100%)]"
-      />
+      <motion.div className="absolute inset-x-0 top-0 h-56 bg-[linear-gradient(to_right,#4f4f4f14_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f14_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black_70%,transparent_100%)]" />
 
       <motion.div
         className="relative z-10 w-full"
@@ -177,7 +196,10 @@ export default function AboutUsSection({
         animate={isInView || isVisible ? "visible" : "hidden"}
         variants={containerVariants}
       >
-        <motion.div className="mb-8 flex flex-col items-center" variants={itemVariants}>
+        <motion.div
+          className="mb-8 flex flex-col items-center"
+          variants={itemVariants}
+        >
           <span className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.22em] text-secondary">
             <Sparkles className="h-4 w-4" />
             Discover Our Story
@@ -219,17 +241,22 @@ export default function AboutUsSection({
           </div>
 
           <div className="order-first mb-6 flex items-center justify-center md:order-none md:mb-0">
-            <motion.div className="relative w-full max-w-sm" variants={itemVariants}>
+            <motion.div
+              className="relative w-full max-w-sm"
+              variants={itemVariants}
+            >
               <motion.div
                 className="overflow-hidden rounded-[2rem] shadow-2xl shadow-slate-300/40"
                 initial={{ scale: 0.94, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.75, delay: 0.22 }}
               >
-                <img
+                <PublicImage
                   src="/logos/ksu-bck5.jpg"
                   alt="Kisii University campus"
-                  className="h-[520px] w-full object-cover"
+                  ratio="card"
+                  sizes="(min-width: 768px) 384px, 100vw"
+                  className="h-[520px] w-full"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/20 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-6 text-white">
@@ -241,17 +268,11 @@ export default function AboutUsSection({
                   </h3>
                   <div className="mt-6 flex flex-wrap gap-3">
                     <Link
-                      href="/about/governance-leadership"
+                      href="/about/university-management"
                       className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
                     >
-                      Leadership & Governance
+                      University Management
                       <ArrowRight className="h-4 w-4" />
-                    </Link>
-                    <Link
-                      href="/about/university-management"
-                      className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
-                    >
-                      Management
                     </Link>
                   </div>
                 </div>
@@ -298,8 +319,8 @@ export default function AboutUsSection({
             </div>
             <p className="max-w-2xl text-sm leading-7 text-slate-500">
               These markers summarize the university's progression from teacher
-              training college to chartered public university without requiring a
-              separate long history page.
+              training college to chartered public university without requiring
+              a separate long history page.
             </p>
           </div>
           <div className="grid gap-4 xl:grid-cols-3">
@@ -395,7 +416,10 @@ function ServiceItem({
       >
         <motion.div
           className="relative rounded-xl bg-primary/10 p-3 text-primary transition-colors duration-300 group-hover:bg-primary/15"
-          whileHover={{ rotate: [0, -8, 8, -4, 0], transition: { duration: 0.45 } }}
+          whileHover={{
+            rotate: [0, -8, 8, -4, 0],
+            transition: { duration: 0.45 },
+          }}
         >
           {icon}
           {secondaryIcon}
@@ -424,13 +448,7 @@ interface StatCounterProps {
   delay: number;
 }
 
-function StatCounter({
-  icon,
-  value,
-  label,
-  suffix,
-  delay,
-}: StatCounterProps) {
+function StatCounter({ icon, value, label, suffix, delay }: StatCounterProps) {
   const countRef = useRef<HTMLDivElement | null>(null);
   const isInView = useInView(countRef, { once: false });
   const [hasAnimated, setHasAnimated] = useState(false);
@@ -455,7 +473,9 @@ function StatCounter({
     }
   }, [isInView, numericValue, springValue, hasAnimated]);
 
-  const displayValue = useTransform(springValue, (latest) => Math.floor(latest));
+  const displayValue = useTransform(springValue, (latest) =>
+    Math.floor(latest),
+  );
 
   return (
     <motion.div

@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("page", "per_page", "is_active", "fields", "include"))
 async def list_divisions(
     db: DbSession,
     page: int = Query(1, ge=1),
@@ -33,7 +33,7 @@ async def list_divisions(
 
 
 @router.get("/{slug}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("fields", "include"))
 async def get_division(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Division, fields)
     division = await DivisionService.get_by_slug(db, slug, load_options=selector.load_options)

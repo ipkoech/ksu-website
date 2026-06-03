@@ -122,37 +122,11 @@ export default async function AdministrationRoutePage({
     if (canonicalSlug !== slug) {
       redirect(administrationUnitRedirectPath(canonicalSlug, child, grandchild));
     }
-    const officeBaseHref = `/administration/units/${canonicalSlug}`;
-    if (child === "message") redirect(officeBaseHref);
+    const baseHref = `/administration/units/${canonicalSlug}`;
+    if (child === "message") redirect(baseHref);
     if (child === "directorates" || child === "units" || child === "schools") {
-      redirect(officeBaseHref);
+      redirect(baseHref);
     }
-
-    const [headerConfig, data] = await Promise.all([
-      getAdministrationEntityHeader(segments),
-      getAdministrationDirectorateDetailData(slug),
-    ]);
-
-    if (data) {
-      if (child === "about") redirect(officeBaseHref);
-      const section = (child ?? "overview") as AdministrationOfficeDetailSectionKey;
-      if (child && !administrationOfficeSections.has(section)) notFound();
-      const mediaType = grandchild as AdministrationMediaType | undefined;
-      if (grandchild && (section !== "media" || !administrationMediaTypes.has(mediaType!))) {
-        notFound();
-      }
-
-      return (
-        <AdministrationOfficeDetailSection
-          data={data}
-          section={section}
-          mediaType={mediaType}
-          header={headerConfig ? <EntityHeader {...headerConfig} /> : undefined}
-        />
-      );
-    }
-
-    const baseHref = `/administration/units/${slug}`;
 
     if (child === "staff") {
       redirect(`${baseHref}/team`);
@@ -170,29 +144,58 @@ export default async function AdministrationRoutePage({
       redirect(baseHref);
     }
 
-    const section = (child ?? "about") as DepartmentDetailSectionKey;
+    const departmentSection = (child ?? "about") as DepartmentDetailSectionKey;
+    const departmentMediaType = grandchild as AdministrationMediaType | undefined;
+    if (
+      grandchild &&
+      (departmentSection !== "media" ||
+        !administrationMediaTypes.has(departmentMediaType!))
+    ) {
+      notFound();
+    }
+
+    if (!child || administrativeDepartmentSections.has(departmentSection)) {
+      const [headerConfig, departmentData] = await Promise.all([
+        getAdministrationEntityHeader([area, canonicalSlug, child, grandchild].filter(Boolean)),
+        getDepartmentDetailData(canonicalSlug, "administrative"),
+      ]);
+
+      if (departmentData.sourceBacked) {
+        return (
+          <DepartmentDetailSection
+            data={departmentData}
+            section={departmentSection}
+            baseHref={baseHref}
+            mediaType={departmentMediaType}
+            header={headerConfig ? <EntityHeader {...headerConfig} /> : undefined}
+            navItems={headerConfig?.navItems}
+          />
+        );
+      }
+    }
+
+    const [headerConfig, data] = await Promise.all([
+      getAdministrationEntityHeader([area, canonicalSlug, child, grandchild].filter(Boolean)),
+      getAdministrationDirectorateDetailData(canonicalSlug),
+    ]);
+
+    if (!data) notFound();
+    if (child === "about") redirect(baseHref);
+    const section = (child ?? "overview") as AdministrationOfficeDetailSectionKey;
+    if (child && !administrationOfficeSections.has(section)) notFound();
     const mediaType = grandchild as AdministrationMediaType | undefined;
     if (grandchild && (section !== "media" || !administrationMediaTypes.has(mediaType!))) {
       notFound();
     }
 
-    if (!child || administrativeDepartmentSections.has(section)) {
-      const [headerConfig, departmentData] = await Promise.all([
-        getAdministrationEntityHeader(segments),
-        getDepartmentDetailData(slug, "administrative"),
-      ]);
-
-      return (
-        <DepartmentDetailSection
-          data={departmentData}
-          section={section}
-          baseHref={baseHref}
-          mediaType={mediaType}
-          header={headerConfig ? <EntityHeader {...headerConfig} /> : undefined}
-          navItems={headerConfig?.navItems}
-        />
-      );
-    }
+    return (
+      <AdministrationOfficeDetailSection
+        data={data}
+        section={section}
+        mediaType={mediaType}
+        header={headerConfig ? <EntityHeader {...headerConfig} /> : undefined}
+      />
+    );
   }
 
   const headerConfig = await getAdministrationEntityHeader(segments);

@@ -3,7 +3,17 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Button, ScrollReveal } from "@ksu/ui/components";
-import { GraduationCap, BookOpen, Award, FileText, School, Users, BookMarked, ArrowRight } from "lucide-react";
+import {
+  GraduationCap,
+  BookOpen,
+  Award,
+  FileText,
+  School,
+  Users,
+  BookMarked,
+  ArrowRight,
+} from "lucide-react";
+import { PublicImage } from "@/components/public/public-image";
 import type { SchoolCard, ActiveIntake } from "@/lib/get-academics";
 
 interface AcademicSectionProps {
@@ -32,14 +42,62 @@ function getSchoolImage(school: SchoolCard): string | null {
 }
 
 const fallbackSchools: SchoolCard[] = [
-  { id: "school-of-agriculture-and-natural-resources-management", name: "School of Agriculture and Natural Resources Management", slug: "school-of-agriculture-and-natural-resources-management", shortName: "SANRM", coverImage: null },
-  { id: "school-of-arts-and-social-sciences", name: "School of Arts and Social Sciences", slug: "school-of-arts-and-social-sciences", shortName: "SASS", coverImage: null },
-  { id: "school-of-business-and-economics", name: "School of Business and Economics", slug: "school-of-business-and-economics", shortName: "SBE", coverImage: null },
-  { id: "school-of-education-and-human-resource-development", name: "School of Education and Human Resource Development", slug: "school-of-education-and-human-resource-development", shortName: "SEHRD", coverImage: null },
-  { id: "school-of-health-sciences", name: "School of Health Sciences", slug: "school-of-health-sciences", shortName: "SHS", coverImage: null },
-  { id: "school-of-information-science-and-technology", name: "School of Information Science and Technology", slug: "school-of-information-science-and-technology", shortName: "SIST", coverImage: null },
-  { id: "school-of-law", name: "School of Law", slug: "school-of-law", shortName: "SOL", coverImage: null },
-  { id: "school-of-pure-and-applied-sciences", name: "School of Pure and Applied Sciences", slug: "school-of-pure-and-applied-sciences", shortName: "SPAS", coverImage: null },
+  {
+    id: "school-of-agriculture-and-natural-resources-management",
+    name: "School of Agriculture and Natural Resources Management",
+    slug: "school-of-agriculture-and-natural-resources-management",
+    shortName: "SANRM",
+    coverImage: null,
+  },
+  {
+    id: "school-of-arts-and-social-sciences",
+    name: "School of Arts and Social Sciences",
+    slug: "school-of-arts-and-social-sciences",
+    shortName: "SASS",
+    coverImage: null,
+  },
+  {
+    id: "school-of-business-and-economics",
+    name: "School of Business and Economics",
+    slug: "school-of-business-and-economics",
+    shortName: "SBE",
+    coverImage: null,
+  },
+  {
+    id: "school-of-education-and-human-resource-development",
+    name: "School of Education and Human Resource Development",
+    slug: "school-of-education-and-human-resource-development",
+    shortName: "SEHRD",
+    coverImage: null,
+  },
+  {
+    id: "school-of-health-sciences",
+    name: "School of Health Sciences",
+    slug: "school-of-health-sciences",
+    shortName: "SHS",
+    coverImage: null,
+  },
+  {
+    id: "school-of-information-science-and-technology",
+    name: "School of Information Science and Technology",
+    slug: "school-of-information-science-and-technology",
+    shortName: "SIST",
+    coverImage: null,
+  },
+  {
+    id: "school-of-law",
+    name: "School of Law",
+    slug: "school-of-law",
+    shortName: "SOL",
+    coverImage: null,
+  },
+  {
+    id: "school-of-pure-and-applied-sciences",
+    name: "School of Pure and Applied Sciences",
+    slug: "school-of-pure-and-applied-sciences",
+    shortName: "SPAS",
+    coverImage: null,
+  },
 ];
 
 const programmeCategories = [
@@ -78,8 +136,16 @@ const programmeCategories = [
 ];
 
 const journeySteps = [
-  { step: 1, title: "Explore Schools", description: "Find your field of interest" },
-  { step: 2, title: "Choose Programme", description: "Select your study level" },
+  {
+    step: 1,
+    title: "Explore Schools",
+    description: "Find your field of interest",
+  },
+  {
+    step: 2,
+    title: "Choose Programme",
+    description: "Select your study level",
+  },
   { step: 3, title: "Apply Now", description: "Start your journey" },
 ];
 
@@ -90,11 +156,20 @@ export function AcademicSection({
   const schools = initialSchools.length > 0 ? initialSchools : fallbackSchools;
   const stats = [
     { value: String(schools.length), label: "Schools", icon: School },
-    { value: String(programmeCategories.length), label: "Study levels", icon: BookMarked },
+    {
+      value: String(programmeCategories.length),
+      label: "Study levels",
+      icon: BookMarked,
+    },
     { value: "20K+", label: "Students", icon: Users },
   ];
 
-  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [countdown, setCountdown] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
 
   useEffect(() => {
     if (!activeIntake?.endDate) return;
@@ -125,7 +200,6 @@ export function AcademicSection({
   return (
     <section className="py-16 lg:py-24 bg-gradient-to-b from-white to-slate-50">
       <div className="px-4 sm:px-6 lg:px-12">
-
         {/* Header with Stats */}
         <ScrollReveal>
           <div className="text-center mb-8">
@@ -142,13 +216,20 @@ export function AcademicSection({
         <ScrollReveal>
           <div className="flex justify-center gap-6 sm:gap-8 lg:gap-16 mb-6 lg:mb-10 py-4 lg:py-6 border-y border-slate-200">
             {stats.map((stat) => (
-              <div key={stat.label} className="flex items-center gap-2 lg:gap-3">
+              <div
+                key={stat.label}
+                className="flex items-center gap-2 lg:gap-3"
+              >
                 <div className="w-8 h-8 lg:w-12 lg:h-12 rounded-full bg-primary/10 flex items-center justify-center">
                   <stat.icon className="w-4 h-4 lg:w-6 lg:h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-lg lg:text-3xl font-bold text-slate-950">{stat.value}</p>
-                  <p className="text-xs lg:text-sm text-slate-600">{stat.label}</p>
+                  <p className="text-lg lg:text-3xl font-bold text-slate-950">
+                    {stat.value}
+                  </p>
+                  <p className="text-xs lg:text-sm text-slate-600">
+                    {stat.label}
+                  </p>
                 </div>
               </div>
             ))}
@@ -164,7 +245,9 @@ export function AcademicSection({
                   <span className="w-5 h-5 lg:w-8 lg:h-8 rounded-full bg-secondary text-white flex items-center justify-center text-xs lg:text-sm font-bold">
                     {step.step}
                   </span>
-                  <p className="text-xs lg:text-sm font-semibold text-slate-900">{step.title}</p>
+                  <p className="text-xs lg:text-sm font-semibold text-slate-900">
+                    {step.title}
+                  </p>
                 </div>
                 {index < journeySteps.length - 1 && (
                   <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5 text-slate-300 mx-1 lg:mx-2" />
@@ -176,16 +259,22 @@ export function AcademicSection({
 
         {/* Main Content: Schools + Programmes */}
         <div className="grid gap-8 lg:grid-cols-3 mb-12">
-
           {/* Schools Grid - 2/3 width */}
           <div className="lg:col-span-2">
             <ScrollReveal>
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-full bg-secondary text-white flex items-center justify-center text-sm font-bold">1</span>
-                  <h3 className="text-xl font-bold text-slate-950">Explore Our Schools</h3>
+                  <span className="w-8 h-8 rounded-full bg-secondary text-white flex items-center justify-center text-sm font-bold">
+                    1
+                  </span>
+                  <h3 className="text-xl font-bold text-slate-950">
+                    Explore Our Schools
+                  </h3>
                 </div>
-                <Link href="/academics/schools" className="text-sm font-semibold text-primary hover:text-secondary">
+                <Link
+                  href="/academics/schools"
+                  className="text-sm font-semibold text-primary hover:text-secondary"
+                >
                   View all →
                 </Link>
               </div>
@@ -199,21 +288,24 @@ export function AcademicSection({
                       href={`/academics/schools/${school.slug}`}
                       className="group block h-full overflow-hidden rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                     >
-                      <div className="h-28 overflow-hidden">
-                        {imageUrl ? (
-                          <img
-                            src={imageUrl}
-                            alt={school.name}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-                            <span className="text-2xl font-bold text-white/30">
-                              {school.shortName || school.name.charAt(0)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                      <PublicImage
+                        src={imageUrl}
+                        alt={school.name}
+                        ratio="card"
+                        fallbackSrc={
+                          index % 2 === 0
+                            ? "/logos/ksu-bck1.jpg"
+                            : "/logos/ksu-bck5.jpg"
+                        }
+                        fallbackContent={
+                          <span className="text-2xl font-bold text-primary/40">
+                            {school.shortName || school.name.charAt(0)}
+                          </span>
+                        }
+                        sizes="(min-width: 1024px) 18vw, (min-width: 640px) 25vw, 50vw"
+                        className="h-28"
+                        imageClassName="transition-transform duration-300 group-hover:scale-105"
+                      />
                       <div className="p-3 h-16 flex items-center">
                         <h4 className="text-xs font-semibold text-slate-900 leading-tight line-clamp-2 group-hover:text-primary transition-colors">
                           {school.name}
@@ -231,10 +323,17 @@ export function AcademicSection({
             <ScrollReveal>
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-full bg-secondary text-white flex items-center justify-center text-sm font-bold">2</span>
-                  <h3 className="text-xl font-bold text-slate-950">Choose Level</h3>
+                  <span className="w-8 h-8 rounded-full bg-secondary text-white flex items-center justify-center text-sm font-bold">
+                    2
+                  </span>
+                  <h3 className="text-xl font-bold text-slate-950">
+                    Choose Level
+                  </h3>
                 </div>
-                <Link href="/academics/programmes" className="text-sm font-semibold text-primary hover:text-secondary">
+                <Link
+                  href="/academics/programmes"
+                  className="text-sm font-semibold text-primary hover:text-secondary"
+                >
                   View all →
                 </Link>
               </div>
@@ -246,12 +345,16 @@ export function AcademicSection({
                     href={category.href}
                     className="group relative overflow-hidden rounded-xl p-4 h-full min-h-[120px] flex flex-col justify-between transition-transform duration-300 hover:-translate-y-1"
                   >
-                    <div className={`absolute inset-0 bg-gradient-to-br ${category.color}`} />
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-br ${category.color}`}
+                    />
                     <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
 
                     <div className="relative z-10">
                       <category.icon className="w-6 h-6 text-white/90 mb-2" />
-                      <h4 className="text-base font-bold text-white">{category.name}</h4>
+                      <h4 className="text-base font-bold text-white">
+                        {category.name}
+                      </h4>
                     </div>
 
                     <div className="relative z-10 mt-2">
@@ -275,7 +378,9 @@ export function AcademicSection({
             <div className="relative z-10 grid gap-8 lg:grid-cols-3 items-center">
               <div className="lg:col-span-2">
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center text-lg font-bold">3</span>
+                  <span className="w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center text-lg font-bold">
+                    3
+                  </span>
                   <span className="px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-white/20 rounded-full">
                     {activeIntake ? "Applications Open" : "Apply Now"}
                   </span>
@@ -286,8 +391,7 @@ export function AcademicSection({
                 <p className="mt-4 text-white/90 max-w-md">
                   {activeIntake
                     ? "Use the published intake information to prepare your application and next steps."
-                    : "Ready to join Kisii University? Begin your application process and embark on your academic journey."
-                  }
+                    : "Ready to join Kisii University? Begin your application process and embark on your academic journey."}
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
                   <Button
@@ -320,9 +424,16 @@ export function AcademicSection({
                       { value: countdown.minutes, label: "Min" },
                       { value: countdown.seconds, label: "Sec" },
                     ].map((item) => (
-                      <div key={item.label} className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-                        <p className="text-2xl lg:text-3xl font-bold">{String(item.value).padStart(2, '0')}</p>
-                        <p className="text-xs text-white/80 mt-1">{item.label}</p>
+                      <div
+                        key={item.label}
+                        className="bg-white/20 backdrop-blur-sm rounded-xl p-3"
+                      >
+                        <p className="text-2xl lg:text-3xl font-bold">
+                          {String(item.value).padStart(2, "0")}
+                        </p>
+                        <p className="text-xs text-white/80 mt-1">
+                          {item.label}
+                        </p>
                       </div>
                     ))}
                   </div>

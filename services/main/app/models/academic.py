@@ -87,6 +87,11 @@ class School(Base):
         nullable=True,
         index=True,
     )
+    administrative_wing_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("wings.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     name: Mapped[str] = mapped_column(sa.String(255), nullable=False)
     slug: Mapped[str] = mapped_column(sa.String(128), unique=True, nullable=False, index=True)
@@ -142,6 +147,7 @@ class School(Base):
 
     # Relationships
     campus: Mapped[Optional["Campus"]] = relationship("Campus", back_populates="schools")
+    administrative_wing: Mapped[Optional["Wing"]] = relationship("Wing", back_populates="schools")
     dean: Mapped[Optional["Person"]] = relationship("Person", foreign_keys=[dean_id])
     departments: Mapped[list["Department"]] = relationship(
         "Department",

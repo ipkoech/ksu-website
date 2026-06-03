@@ -4,13 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import {
-  Bell,
-  Search,
-  Menu,
-  ChevronRight,
-  Home,
-} from "lucide-react";
+import { Bell, Search, Menu, ChevronRight, Home } from "lucide-react";
 import { Button } from "@ksu/ui/components";
 import { Input } from "@ksu/ui/components";
 import { Avatar, AvatarFallback, AvatarImage } from "@ksu/ui/components";
@@ -40,6 +34,7 @@ export function Toolbar() {
         size="icon"
         className="h-9 w-9 md:hidden"
         onClick={toggleMobile}
+        aria-label="Open navigation"
       >
         <Menu size={20} />
       </Button>
@@ -50,12 +45,9 @@ export function Toolbar() {
         size="icon"
         className="hidden h-9 w-9 md:flex"
         onClick={toggle}
+        aria-label={isCollapsed ? "Expand navigation" : "Collapse navigation"}
       >
-        {isCollapsed ? (
-          <Menu size={20} />
-        ) : (
-          <Menu size={20} />
-        )}
+        {isCollapsed ? <Menu size={20} /> : <Menu size={20} />}
       </Button>
 
       {/* Breadcrumbs */}
@@ -106,8 +98,9 @@ export function Toolbar() {
       >
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search..."
-          className="h-9 pl-9 pr-4"
+          aria-label="Search this admin section"
+          placeholder="Search this section"
+          className="h-11 pl-9 pr-4"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
@@ -117,7 +110,10 @@ export function Toolbar() {
       <Button asChild variant="ghost" size="icon" className="relative h-9 w-9">
         <Link href="/system/notifications" aria-label="Notifications">
           <Bell size={20} />
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
+          <span
+            className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive"
+            aria-hidden
+          />
         </Link>
       </Button>
 

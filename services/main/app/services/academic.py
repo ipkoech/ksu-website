@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import date
 from typing import Sequence
 
 from sqlalchemy import select
@@ -12,7 +13,7 @@ from sqlalchemy.orm import selectinload
 from ksu_common import PaginatedResult
 
 from ..helpers.slug import unique_slug
-from ..models import Campus, Department, DepartmentService as DepartmentServiceModel, Person, School, StaffAssignment
+from ..models import Campus, Department, DepartmentService as DepartmentServiceModel, HierarchyLevel, Person, School, StaffAssignment
 from ._base import apply_updates, ilike_any, paginate_query
 
 
@@ -107,6 +108,7 @@ class SchoolService:
         page: int = 1,
         per_page: int = 20,
         campus_id: uuid.UUID | None = None,
+        administrative_wing_id: uuid.UUID | None = None,
         search: str | None = None,
         is_active: bool | None = True,
         is_public: bool | None = True,
@@ -117,6 +119,8 @@ class SchoolService:
             query = query.options(*load_options)
         if campus_id:
             query = query.where(School.campus_id == campus_id)
+        if administrative_wing_id:
+            query = query.where(School.administrative_wing_id == administrative_wing_id)
         if search:
             query = query.where(ilike_any(search, School.name, School.code))
         if is_active is not None:
@@ -156,9 +160,19 @@ class SchoolService:
 
 
 class DepartmentService:
+    HEAD_ASSIGNMENT_ROLES = ("hod", "head", "cod")
+
     @staticmethod
-    async def get_by_id(db: AsyncSession, dept_id: uuid.UUID, *, load_options: Sequence = ()) -> Department | None:
-        query = select(Department).where(Department.id == dept_id, Department.is_active.is_(True))
+    async def get_by_id(
+        db: AsyncSession,
+        dept_id: uuid.UUID,
+        *,
+        is_active: bool | None = True,
+        load_options: Sequence = (),
+    ) -> Department | None:
+        query = select(Department).where(Department.id == dept_id)
+        if is_active is not None:
+            query = query.where(Department.is_active.is_(is_active))
         if load_options:
             query = query.options(*load_options)
         result = await db.execute(query)
@@ -182,20 +196,109 @@ class DepartmentService:
 
     @staticmethod
     async def create(db: AsyncSession, **data) -> Department:
+        head_id = data.get("head_id")
         if not data.get("slug") and data.get("name"):
             data["slug"] = await unique_slug(db, Department, data["name"])
         department = Department(**data)
         db.add(department)
         await db.flush()
+        if head_id:
+            await DepartmentService._sync_head_assignment(db, department, head_id)
+            await db.flush()
         return department
 
     @staticmethod
     async def update(db: AsyncSession, department: Department, **data) -> Department:
+        head_id_was_provided = "head_id" in data
         if data.get("name") and not data.get("slug"):
             data["slug"] = await unique_slug(db, Department, data["name"], exclude_id=department.id)
         apply_updates(department, **data)
+        if head_id_was_provided:
+            await DepartmentService._sync_head_assignment(db, department, data.get("head_id"))
         await db.flush()
         return department
+
+    @staticmethod
+    async def _sync_head_assignment(
+        db: AsyncSession,
+        department: Department,
+        head_id: uuid.UUID | None,
+    ) -> None:
+        today = date.today()
+        existing_result = await db.execute(
+            select(StaffAssignment).where(
+                StaffAssignment.entity_type == "department",
+                StaffAssignment.entity_id == department.id,
+                StaffAssignment.role.in_(DepartmentService.HEAD_ASSIGNMENT_ROLES),
+                StaffAssignment.status == "active",
+                StaffAssignment.deleted_at.is_(None),
+            )
+        )
+        existing_assignments = list(existing_result.scalars().all())
+
+        if head_id is None:
+            for assignment in existing_assignments:
+                assignment.status = "ended"
+                assignment.is_primary = False
+                assignment.end_date = assignment.end_date or today
+            return
+
+        person = await Person.get_by_id(db, head_id)
+        if person is None or not person.is_active:
+            raise ValueError("Selected HOD/COD was not found or is inactive")
+
+        conflict_result = await db.execute(
+            select(StaffAssignment)
+            .options(selectinload(StaffAssignment.person))
+            .where(
+                StaffAssignment.entity_type == "department",
+                StaffAssignment.entity_id != department.id,
+                StaffAssignment.person_id == head_id,
+                StaffAssignment.role.in_(DepartmentService.HEAD_ASSIGNMENT_ROLES),
+                StaffAssignment.status == "active",
+                StaffAssignment.deleted_at.is_(None),
+            )
+        )
+        conflict = conflict_result.scalars().first()
+        if conflict is not None:
+            conflict_name = conflict.person.full_name if conflict.person else "This person"
+            raise ValueError(f"{conflict_name} is already assigned as HOD/COD for another department")
+
+        target_role = "cod" if department.department_type == "academic" else "head"
+        target_title = "Coordinator of Department" if target_role == "cod" else "Head of Department"
+        matched_assignment: StaffAssignment | None = None
+
+        for assignment in existing_assignments:
+            if assignment.person_id == head_id:
+                matched_assignment = assignment
+                assignment.role = target_role
+                assignment.title = target_title
+                assignment.hierarchy_level = int(HierarchyLevel.HEAD)
+                assignment.is_primary = True
+                assignment.is_public = True
+                assignment.status = "active"
+                assignment.end_date = None
+            else:
+                assignment.status = "ended"
+                assignment.is_primary = False
+                assignment.end_date = assignment.end_date or today
+
+        if matched_assignment is None:
+            db.add(
+                StaffAssignment(
+                    person_id=head_id,
+                    user_id=person.user_id,
+                    entity_type="department",
+                    entity_id=department.id,
+                    role=target_role,
+                    title=target_title,
+                    hierarchy_level=int(HierarchyLevel.HEAD),
+                    is_primary=True,
+                    is_public=True,
+                    status="active",
+                    display_order=0,
+                )
+            )
 
     @staticmethod
     async def delete(db: AsyncSession, department: Department) -> None:

@@ -1,13 +1,23 @@
+import { cache } from "react";
 import {
+  blogsApi,
   contactsApi,
+  eventsApi,
+  intakesApi,
+  libraryServiceApi,
   newsApi,
   programmesApi,
   researchServiceApi,
   schoolsApi,
+  statsApi,
   universityInfoApi,
+  type Blog,
   type ContactDirectory,
+  type Event,
+  type Intake,
   type News,
   type Programme,
+  type PublicStatsResponse,
   type School,
   type UniversityInfo,
 } from "@ksu/api-client";
@@ -17,6 +27,7 @@ import {
   type LandingAnnouncement,
   type LandingHeroData,
 } from "@/lib/landing-data";
+import { getViceChancellor } from "@/lib/get-leadership";
 import { publicFileUrl } from "@/lib/public-media";
 
 export type HomeContactInfo = {
@@ -46,6 +57,7 @@ export type HomeMetric = {
 };
 
 export type HomeCard = {
+  id?: string;
   title: string;
   body: string;
   href: string;
@@ -53,6 +65,7 @@ export type HomeCard = {
   eyebrow?: string;
   external?: boolean;
   imageUrl?: string | null;
+  meta?: string | null;
 };
 
 export type HomeLink = {
@@ -68,6 +81,27 @@ export type HomePartner = {
   href?: string;
 };
 
+export type HomeLeader = {
+  name: string;
+  title: string;
+  image?: string | null;
+  message?: string | null;
+  href?: string;
+};
+
+export type HomeIntake = {
+  id: string;
+  name: string;
+  code: string;
+  slug: string;
+  applicationStart: string;
+  applicationEnd: string;
+  lateApplicationEnd?: string | null;
+  isOpen: boolean;
+  isActive: boolean;
+  href: string;
+};
+
 export type HomepageData = {
   hero: LandingHeroData;
   announcements: LandingAnnouncement[];
@@ -75,12 +109,20 @@ export type HomepageData = {
   socialLinks: HomeSocialLinks;
   miniQuickLinks: HomeLink[];
   facts: HomeMetric[];
+  researchStats: HomeMetric[];
+  libraryStats: HomeMetric[];
   priorityActions: HomeCard[];
   schools: HomeCard[];
+  viceChancellor: HomeLeader | null;
+  featuredProgrammes: HomeCard[];
   programmesSummary: HomeMetric[];
+  activeIntakes: HomeIntake[];
   admissionsActions: HomeCard[];
   latestNews: HomeCard[];
+  upcomingEvents: HomeCard[];
+  latestBlog: HomeCard | null;
   serviceLinks: HomeLink[];
+  publicQuickLinks: HomeLink[];
   contactActions: HomeAction[];
   partners: HomePartner[];
 };
@@ -133,7 +175,22 @@ const serviceLinks: HomeLink[] = [
   },
   { label: "Governance", href: "/about/governance" },
   { label: "Quality Assurance", href: "/about/quality-assurance" },
-  { label: "News & Events", href: "/news" },
+  { label: "Media Desk", href: "/media" },
+];
+
+const publicQuickLinks: HomeLink[] = [
+  { label: "Admissions Guide", href: "/admissions/how-to-apply" },
+  { label: "Programmes", href: "/academics/programmes" },
+  { label: "Fees Structure", href: "/admissions/fees" },
+  { label: "Downloads", href: "/downloads" },
+  { label: "Timetables", href: "/academics/examinations" },
+  {
+    label: "Student Portal",
+    href: "https://portal.kisiiuniversity.ac.ke",
+    external: true,
+  },
+  { label: "Staff Portal", href: "/m/staff" },
+  { label: "Contact Directory", href: "/search" },
 ];
 
 function plainText(value?: string | null) {
@@ -183,7 +240,7 @@ async function safe<T>(
 async function getUniversityInfo(): Promise<UniversityInfo | null> {
   const response = await universityInfoApi.getCurrent({
     fields:
-      "id,name,short_name,motto,overview,mission,founding_year,institution_type,charter_summary,email,phone,physical_address,city,county,social_links,quick_facts",
+      "id,name,short_name,motto,overview,mission,founding_year,institution_type,charter_summary,email,phone,physical_address,city,county,social_links,quick_facts,vc_message_title,vc_message",
   });
   return response.data ?? null;
 }
@@ -208,7 +265,8 @@ async function getSchoolsList() {
 async function getProgrammesList() {
   const response = await programmesApi.list({
     per_page: 100,
-    fields: "id,name,slug,level,mode_of_study,duration,department_name",
+    fields:
+      "id,name,slug,level,mode_of_study,duration,department_name,cover_image_id,display_order",
   });
   return response.data ?? [];
 }
@@ -216,13 +274,45 @@ async function getProgrammesList() {
 async function getLatestNews() {
   const response = await newsApi.list({
     is_published: true,
-    per_page: 4,
-    fields: "id,title,slug,summary,plain_text,category,published_at,is_main,is_featured",
+    per_page: 3,
+    fields:
+      "id,title,slug,summary,plain_text,category,published_at,is_main,is_featured,cover_image_id,featured_media_id,created_at",
   });
   return response.data ?? [];
 }
 
-async function getResearchPartners() {
+async function getUpcomingEvents() {
+  const response = await eventsApi.list({
+    is_published: true,
+    upcoming: true,
+    per_page: 3,
+    fields:
+      "id,title,slug,summary,plain_text,event_type,start_date,end_date,location,venue,cover_image_id,featured_media_id,is_featured,published_at,created_at",
+  });
+  return response.data ?? [];
+}
+
+async function getLatestBlogs() {
+  const response = await blogsApi.list({
+    is_published: true,
+    per_page: 1,
+    fields:
+      "id,title,slug,summary,excerpt,plain_text,category,published_at,author_name,cover_image_id,featured_media_id,created_at",
+  });
+  return response.data ?? [];
+}
+
+async function getActiveIntakes() {
+  const response = await intakesApi.list({
+    is_open: true,
+    per_page: 4,
+    fields:
+      "id,name,code,slug,application_start,application_end,late_application_end,is_active,is_open,cover_image_id,created_at,updated_at",
+  });
+  return response.data ?? [];
+}
+
+const getResearchPartners = cache(async () => {
   const response = await researchServiceApi.partners.list({
     status: "active",
     is_active: true,
@@ -231,7 +321,22 @@ async function getResearchPartners() {
       "id,name,slug,acronym,website,logo_url,social_links,status,is_active,is_featured,display_order",
   });
   return response.data ?? [];
-}
+});
+
+const getHomepageStats = cache(async () => {
+  const response = await statsApi.get({ scope: "homepage" });
+  return response.data ?? null;
+});
+
+const getResearchStats = cache(async () => {
+  const response = await researchServiceApi.stats();
+  return response.data ?? null;
+});
+
+const getLibraryStats = cache(async () => {
+  const response = await libraryServiceApi.stats();
+  return response.data ?? null;
+});
 
 function normalizeSocialLinks(value: unknown): HomeSocialLinks {
   if (!value || typeof value !== "object") return fallbackSocialLinks;
@@ -273,42 +378,52 @@ function buildContactInfo(
 }
 
 function buildFacts(
-  university: UniversityInfo | null,
   schools: School[],
   programmes: Programme[],
+  stats?: PublicStatsResponse | null,
 ): HomeMetric[] {
-  const quickFacts = university?.quick_facts ?? {};
-  const founded =
-    present((quickFacts as Record<string, unknown>).founding_year) ??
-    present(university?.founding_year);
-  const charterYear =
-    present((quickFacts as Record<string, unknown>).charter_year) ??
-    present((quickFacts as Record<string, unknown>).chartered_year);
+  if (stats?.stats?.length) {
+    const visibleStats = stats.stats.filter((stat) => Number(stat.value) > 0);
+    if (visibleStats.length) {
+      return visibleStats.slice(0, 4).map((stat) => ({
+        value: `${stat.value}${stat.suffix ?? ""}`,
+        label: stat.label,
+      }));
+    }
+  }
+
+  const levels = new Set(programmes.map((programme) => programme.level).filter(Boolean));
 
   return [
     {
-      value: present(university?.institution_type) ?? "Public University",
-      label: "Institution",
-      detail:
-        present(university?.charter_summary) ??
-        "Chartered public institution serving Kenya and beyond.",
+      value: `${schools.length}`,
+      label: "Schools",
     },
     {
-      value: schools.length ? `${schools.length} Schools` : "Schools",
-      label: "Academic structure",
-      detail: "Backend-backed schools and academic units.",
+      value: `${programmes.length}`,
+      label: "Programmes",
     },
     {
-      value: programmes.length ? `${programmes.length}+ Programmes` : "Programmes",
-      label: "Study pathways",
-      detail: "Certificate, diploma, undergraduate, and postgraduate routes.",
+      value: levels.size ? `${levels.size}` : "0",
+      label: "Study levels",
     },
     {
-      value: charterYear ? `Chartered ${charterYear}` : founded ? `Founded ${founded}` : "Established",
-      label: "Institutional record",
-      detail: "A long record of public service and professional training.",
+      value: "0",
+      label: "Students",
     },
   ];
+}
+
+function normalizeStats(stats?: PublicStatsResponse | null): HomeMetric[] {
+  return (
+    stats?.stats
+      ?.filter((stat) => Number(stat.value) > 0)
+      .map((stat) => ({
+        value: `${stat.value}${stat.suffix ?? ""}`,
+        label: stat.label,
+        detail: stat.description,
+      })) ?? []
+  );
 }
 
 function schoolBody(school: School) {
@@ -322,12 +437,29 @@ function schoolBody(school: School) {
 
 function normalizeSchools(schools: School[]): HomeCard[] {
   return schools.map((school) => ({
-    title: school.name.replace(/^School of /, "").replace(/^Faculty of /, ""),
+    id: school.id,
+    title: school.name,
     eyebrow: school.code || "School",
     body: schoolBody(school),
     href: `/academics/schools/${school.slug}`,
     action: "View school",
     imageUrl: publicFileUrl(school.cover_image_id),
+  }));
+}
+
+function normalizeFeaturedProgrammes(programmes: Programme[]): HomeCard[] {
+  return programmes.slice(0, 24).map((programme) => ({
+    id: programme.id,
+    title: programme.name,
+    eyebrow: programme.level || "Programme",
+    body: [programme.department_name, programme.duration, programme.mode_of_study]
+      .map((item) => present(item))
+      .filter(Boolean)
+      .join(" · "),
+    href: `/academics/programmes/${programme.slug}`,
+    action: "View programme",
+    imageUrl: publicFileUrl(programme.cover_image_id),
+    meta: programme.level,
   }));
 }
 
@@ -356,6 +488,7 @@ function buildProgrammeSummary(programmes: Programme[]): HomeMetric[] {
 
 function normalizeNews(news: News[]): HomeCard[] {
   return news.map((item) => ({
+    id: item.id,
     title: item.title,
     eyebrow: item.category || "News",
     body: truncate(
@@ -365,9 +498,86 @@ function normalizeNews(news: News[]): HomeCard[] {
         "Read the latest public update from Kisii University.",
       132,
     ),
-    href: `/news/${item.slug}`,
+    href: `/media/news/${item.slug}`,
     action: "Read update",
+    imageUrl: publicFileUrl(item.cover_image_id) ?? publicFileUrl(item.featured_media_id),
+    meta: formatDisplayDate(item.published_at ?? item.created_at),
   }));
+}
+
+function normalizeEvents(events: Event[]): HomeCard[] {
+  return events.map((item) => ({
+    id: item.id,
+    title: item.title,
+    eyebrow: item.event_type || "Event",
+    body: truncate(
+      plainText(item.summary) ||
+        plainText(item.plain_text) ||
+        plainText(item.content) ||
+        "View event details, venue, and schedule information.",
+      110,
+    ),
+    href: `/media/events/${item.slug}`,
+    action: "View event",
+    imageUrl: publicFileUrl(item.cover_image_id) ?? publicFileUrl(item.featured_media_id),
+    meta: [formatDisplayDate(item.start_date), present(item.venue) ?? present(item.location)]
+      .filter(Boolean)
+      .join(" · "),
+  }));
+}
+
+function normalizeBlog(item?: Blog): HomeCard | null {
+  if (!item) return null;
+
+  return {
+    id: item.id,
+    title: item.title,
+    eyebrow: item.category || "Blog",
+    body: truncate(
+      plainText(item.summary) ||
+        plainText(item.excerpt) ||
+        plainText(item.plain_text) ||
+        plainText(item.content) ||
+        "Read the latest university article.",
+      126,
+    ),
+    href: `/media/articles/${item.slug}`,
+    action: "Read blog",
+    imageUrl: publicFileUrl(item.cover_image_id) ?? publicFileUrl(item.featured_media_id),
+    meta: [formatDisplayDate(item.published_at ?? item.created_at), present(item.author_name)]
+      .filter(Boolean)
+      .join(" · "),
+  };
+}
+
+function normalizeIntakes(intakes: Intake[]): HomeIntake[] {
+  return intakes
+    .filter((item) => item.is_active || item.is_open)
+    .map((item) => ({
+      id: item.id,
+      name: item.name,
+      code: item.code,
+      slug: item.slug,
+      applicationStart: item.application_start,
+      applicationEnd: item.application_end,
+      lateApplicationEnd: item.late_application_end,
+      isOpen: item.is_open,
+      isActive: item.is_active,
+      href: `/admissions/intakes/${item.slug}`,
+    }));
+}
+
+function formatDisplayDate(value?: string | null) {
+  const text = present(value);
+  if (!text) return null;
+  const date = new Date(text);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return new Intl.DateTimeFormat("en-KE", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
 }
 
 function resolveResearchAssetUrl(value: string) {
@@ -416,7 +626,14 @@ export async function getHomepageData(): Promise<HomepageData> {
     schools,
     programmes,
     latestNews,
+    upcomingEvents,
+    latestBlogs,
+    activeIntakes,
     partners,
+    homepageStats,
+    researchStats,
+    libraryStats,
+    viceChancellor,
   ] = await Promise.all([
     getLandingHeroData(),
     getLandingAnnouncements(),
@@ -425,10 +642,19 @@ export async function getHomepageData(): Promise<HomepageData> {
     safe(getSchoolsList(), [], "schools"),
     safe(getProgrammesList(), [], "programmes"),
     safe(getLatestNews(), [], "latest news"),
+    safe(getUpcomingEvents(), [], "events"),
+    safe(getLatestBlogs(), [], "blogs"),
+    safe(getActiveIntakes(), [], "intakes"),
     safe(getResearchPartners(), [], "research partners", false),
+    safe(getHomepageStats(), null, "homepage stats", false),
+    safe(getResearchStats(), null, "research stats", false),
+    safe(getLibraryStats(), null, "library stats", false),
+    safe(getViceChancellor(), null, "vice chancellor", false),
   ]);
 
   const contactInfo = buildContactInfo(university, contact);
+  const viceChancellorMessage =
+    plainText(university?.vc_message) || viceChancellor?.message || null;
 
   return {
     hero,
@@ -436,7 +662,9 @@ export async function getHomepageData(): Promise<HomepageData> {
     contactInfo,
     socialLinks: normalizeSocialLinks(university?.social_links),
     miniQuickLinks: stablePortalLinks,
-    facts: buildFacts(university, schools, programmes),
+    facts: buildFacts(schools, programmes, homepageStats),
+    researchStats: normalizeStats(researchStats),
+    libraryStats: normalizeStats(libraryStats),
     priorityActions: [
       {
         title: "Prospective Students",
@@ -463,7 +691,18 @@ export async function getHomepageData(): Promise<HomepageData> {
       },
     ],
     schools: normalizeSchools(schools),
+    viceChancellor: viceChancellor
+      ? {
+          name: viceChancellor.name,
+          title: viceChancellor.title,
+          image: viceChancellor.image,
+          message: viceChancellorMessage,
+          href: viceChancellor.slug ? `/people/${viceChancellor.slug}` : "/about/university-management",
+        }
+      : null,
+    featuredProgrammes: normalizeFeaturedProgrammes(programmes),
     programmesSummary: buildProgrammeSummary(programmes),
+    activeIntakes: normalizeIntakes(activeIntakes),
     admissionsActions: [
       {
         title: "Explore programmes",
@@ -485,7 +724,10 @@ export async function getHomepageData(): Promise<HomepageData> {
       },
     ],
     latestNews: normalizeNews(latestNews),
+    upcomingEvents: normalizeEvents(upcomingEvents),
+    latestBlog: normalizeBlog(latestBlogs[0]),
     serviceLinks,
+    publicQuickLinks,
     contactActions: [
       {
         label: contactInfo.email,

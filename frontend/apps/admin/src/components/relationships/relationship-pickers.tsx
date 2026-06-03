@@ -19,8 +19,13 @@ import {
   mediaFolderRelationshipAdapter,
   personRelationshipAdapter,
   programmeRelationshipAdapter,
+  researchCenterRelationshipAdapter,
+  researchOfficeRelationshipAdapter,
+  researchProgramRelationshipAdapter,
+  researchProjectRelationshipAdapter,
   schoolRelationshipAdapter,
   sliderGroupRelationshipAdapter,
+  staffAssignmentRelationshipAdapter,
   staffEntityRelationshipAdapter,
   userRelationshipAdapter,
   type RelationshipFilters,
@@ -93,6 +98,26 @@ export function LibraryResourcePicker(props: PickerProps<{ library_id?: string; 
   return <EntityPicker adapter={libraryResourceRelationshipAdapter} {...props} />;
 }
 
+export function ResearchCenterPicker(props: PickerProps<{ is_active?: boolean }>) {
+  return <EntityPicker adapter={researchCenterRelationshipAdapter} {...props} />;
+}
+
+export function ResearchProgramPicker(props: PickerProps<{ is_active?: boolean; center_id?: string }>) {
+  return <EntityPicker adapter={researchProgramRelationshipAdapter} {...props} />;
+}
+
+export function ResearchProjectPicker(props: PickerProps<{ is_active?: boolean; is_public?: boolean; project_type?: string }>) {
+  return <EntityPicker adapter={researchProjectRelationshipAdapter} {...props} />;
+}
+
+export function ResearchOfficePicker(props: PickerProps<{ is_active?: boolean }>) {
+  return <EntityPicker adapter={researchOfficeRelationshipAdapter} {...props} />;
+}
+
+export function StaffAssignmentPicker(props: PickerProps<{ status?: string; entity_type?: string; entity_id?: string }>) {
+  return <EntityPicker adapter={staffAssignmentRelationshipAdapter} {...props} />;
+}
+
 export function MainScopePicker(props: Omit<EntityTypeRecordPickerProps, "configs">) {
   return (
     <EntityTypeRecordPicker
@@ -114,7 +139,7 @@ export function GovernanceParentPicker(props: Omit<EntityTypeRecordPickerProps, 
       {...props}
       configs={[
         { value: "school", label: "School", adapter: schoolRelationshipAdapter },
-        { value: "department", label: "Department", adapter: departmentRelationshipAdapter },
+        { value: "department", label: "Administration Department", adapter: departmentRelationshipAdapter, filters: { department_type: "administrative" } },
         { value: "programme", label: "Programme", adapter: programmeRelationshipAdapter },
         { value: "division", label: "Division", adapter: divisionRelationshipAdapter },
       ]}

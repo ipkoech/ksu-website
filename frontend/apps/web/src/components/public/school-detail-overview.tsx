@@ -370,8 +370,6 @@ function SchoolInfoPanel({
     { label: "Established", value: established, icon: CalendarDays },
     { label: "Departments", value: departments, icon: Building2 },
     { label: "Programmes", value: programmes, icon: GraduationCap },
-    { label: "Team Records", value: staff, icon: Users },
-    { label: "Last Updated", value: lastUpdated, icon: CalendarDays },
   ].filter((item) => present(item.value));
 
   if (!items.length) return null;

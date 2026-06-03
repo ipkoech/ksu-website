@@ -4,6 +4,7 @@ export interface ApiConfig {
   baseUrl: string;
   credentials?: RequestCredentials;
   headers?: Record<string, string>;
+  timeoutMs?: number;
 }
 
 export interface ApiResponse<T> {
@@ -42,6 +43,7 @@ export class ApiClient {
   private baseUrl: string;
   private credentials: RequestCredentials;
   private headers: Record<string, string>;
+  private timeoutMs: number;
   private refreshPromise: Promise<void> | null = null;
 
   constructor(config: ApiConfig) {
@@ -51,6 +53,7 @@ export class ApiClient {
       "Content-Type": "application/json",
       ...config.headers,
     };
+    this.timeoutMs = config.timeoutMs ?? 8000;
   }
 
   async request<T>(
@@ -72,18 +75,30 @@ export class ApiClient {
       });
     }
 
-    const response = await fetch(url.toString(), {
-      method,
-      credentials: this.credentials,
-      headers: {
-        ...this.headers,
-        ...(getStoredAccessToken() && !options.headers?.Authorization
-          ? { Authorization: `Bearer ${getStoredAccessToken()}` }
-          : {}),
-        ...options.headers,
-      },
-      body: options.body ? JSON.stringify(options.body) : undefined,
-    });
+    const controller = new AbortController();
+    const timeout = globalThis.setTimeout(
+      () => controller.abort(),
+      this.timeoutMs
+    );
+    let response: Response;
+
+    try {
+      response = await fetch(url.toString(), {
+        method,
+        credentials: this.credentials,
+        headers: {
+          ...this.headers,
+          ...(getStoredAccessToken() && !options.headers?.Authorization
+            ? { Authorization: `Bearer ${getStoredAccessToken()}` }
+            : {}),
+          ...options.headers,
+        },
+        body: options.body ? JSON.stringify(options.body) : undefined,
+        signal: controller.signal,
+      });
+    } finally {
+      globalThis.clearTimeout(timeout);
+    }
 
     if (response.status === 401) {
       const refreshed = await this.tryRefresh();
@@ -116,7 +131,7 @@ export class ApiClient {
     }
 
     this.refreshPromise = (async () => {
-      const refreshed = await refreshStoredAccessToken(this.baseUrl);
+      const refreshed = await refreshStoredAccessToken();
       if (!refreshed) {
         throw new Error("Refresh failed");
       }

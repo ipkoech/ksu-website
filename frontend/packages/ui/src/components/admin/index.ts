@@ -1,4 +1,5 @@
 export * from "./activity-feed";
+export * from "./app-state";
 export * from "./confirm-dialog";
 export * from "./data-table";
 export * from "./date-range-picker";

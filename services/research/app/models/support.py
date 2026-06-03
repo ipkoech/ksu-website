@@ -10,9 +10,95 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from ksu_common.models.base import AttachmentRefsMixin, CoverImageRefMixin, DocumentRefMixin, PhotoRefMixin, SEOMixin
+from ksu_common.models.base import AttachmentRefsMixin, CoverImageRefMixin, DocumentRefMixin, LogoRefMixin, PhotoRefMixin, SEOMixin
 
 from .base import Base
+
+
+class ResearchOffice(Base, SEOMixin, CoverImageRefMixin, LogoRefMixin, AttachmentRefsMixin):
+    """Research office profile linked to the main-service research department."""
+
+    __tablename__ = "research_offices"
+
+    name: Mapped[str] = mapped_column(sa.String(255), nullable=False)
+    slug: Mapped[str] = mapped_column(sa.String(128), unique=True, nullable=False, index=True)
+    code: Mapped[Optional[str]] = mapped_column(sa.String(32), unique=True, nullable=True, index=True)
+
+    department_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
+    director_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
+
+    about: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    mandate: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    mission: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    vision: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    objectives: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    functions: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    services_summary: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    leadership_message: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    strategic_priorities: Mapped[Optional[list[dict]]] = mapped_column(JSONB, nullable=True)
+
+    location: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    address: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    email: Mapped[Optional[str]] = mapped_column(sa.String(320), nullable=True)
+    phone: Mapped[Optional[str]] = mapped_column(sa.String(24), nullable=True)
+    website: Mapped[Optional[str]] = mapped_column(sa.String(512), nullable=True)
+    social_links: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+
+    status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="active", index=True)
+    is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
+    is_featured: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
+    display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
+
+    staff_members: Mapped[list["ResearchOfficeStaff"]] = relationship(
+        "ResearchOfficeStaff",
+        back_populates="office",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+    def __repr__(self) -> str:
+        return f"<ResearchOffice {self.slug}: {self.name}>"
+
+
+class ResearchOfficeStaff(Base, PhotoRefMixin):
+    """Research office staff or leadership assignment."""
+
+    __tablename__ = "research_office_staff"
+
+    office_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("research_offices.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # References main.staff_assignments.id; no FK because this service owns the research schema.
+    staff_assignment_id: Mapped[uuid.UUID] = mapped_column(sa.Uuid, nullable=False, index=True)
+
+    staff_type: Mapped[str] = mapped_column(
+        sa.String(32),
+        nullable=False,
+        server_default="staff",
+        index=True,
+    )  # leadership | staff | committee | liaison
+    role: Mapped[str] = mapped_column(sa.String(128), nullable=False)
+    title_override: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
+    responsibilities: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    leadership_rank: Mapped[Optional[int]] = mapped_column(sa.Integer, nullable=True)
+
+    start_date: Mapped[Optional[date]] = mapped_column(sa.Date, nullable=True)
+    end_date: Mapped[Optional[date]] = mapped_column(sa.Date, nullable=True)
+
+    is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
+    display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
+
+    office: Mapped["ResearchOffice"] = relationship("ResearchOffice", back_populates="staff_members")
+
+    __table_args__ = (
+        sa.UniqueConstraint("office_id", "staff_assignment_id", name="uq_research_office_staff_assignment"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<ResearchOfficeStaff office={self.office_id} role={self.role}>"
 
 
 class ResearchResource(Base, SEOMixin, CoverImageRefMixin, AttachmentRefsMixin):
@@ -312,6 +398,8 @@ class BoardMember(Base, PhotoRefMixin):
 
 
 __all__ = [
+    "ResearchOffice",
+    "ResearchOfficeStaff",
     "ResearchResource",
     "ResearchService",
     "ResearchGuideline",

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { governanceApi } from "../main";
 import { queryKeys } from "./query-keys";
-import type { Board, StaffAssignment } from "../main/types";
+import type { Board, BoardMemberCreatePayload } from "../main/types";
 
 export function useBoards(params?: { board_type?: string; parent_entity_type?: string; parent_entity_id?: string; fields?: string; include?: string }) {
   return useQuery({
@@ -94,8 +94,8 @@ export function useAddBoardMember() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, personId, role, data }: { id: string; personId: string; role: string; data?: Partial<StaffAssignment> }) =>
-      governanceApi.addMember(id, personId, role, data),
+    mutationFn: ({ id, data }: { id: string; data: BoardMemberCreatePayload }) =>
+      governanceApi.addMember(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.governance.boardMembers(id) });
     },

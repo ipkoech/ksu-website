@@ -22,6 +22,22 @@ import Link from "next/link";
 import { useState } from "react";
 import { TableSearch } from "@/components/shared/table-search";
 
+const departmentListFields = [
+    "id",
+    "name",
+    "code",
+    "about",
+    "is_active",
+    "department_type",
+    "school_id",
+    "head_id",
+].join(",");
+
+const departmentListInclude = [
+    "school:id,name,code",
+    "head:id,full_name,email",
+].join(";");
+
 const getDepartmentColumns = ({
     canDelete,
     onDelete,
@@ -50,7 +66,7 @@ const getDepartmentColumns = ({
         cell: ({ row }) => (
             <div className="flex items-center gap-2">
                 <Building className="h-4 w-4 text-muted-foreground" />
-                <span>{row.original.school_name || "-"}</span>
+                <span>{row.original.school?.name || row.original.school_name || "-"}</span>
             </div>
         ),
     },
@@ -66,7 +82,7 @@ const getDepartmentColumns = ({
     {
         accessorKey: "hod_name",
         header: "HOD",
-        cell: ({ row }) => row.original.hod_name || "-",
+        cell: ({ row }) => row.original.head?.full_name || row.original.hod_name || "-",
     },
     {
         accessorKey: "is_active",
@@ -116,7 +132,13 @@ export default function DepartmentsPage() {
     const { canCreate, canDelete } = usePermissions();
     const { confirmDelete, dialog } = useDeleteConfirm();
     const [search, setSearch] = useState("");
-    const { data: departmentsResponse, isLoading } = useDepartments({ search: search || undefined });
+    const normalizedSearch = search.trim();
+    const { data: departmentsResponse, isLoading } = useDepartments({
+        department_type: "academic",
+        search: normalizedSearch || undefined,
+        fields: departmentListFields,
+        include: departmentListInclude,
+    });
     const departments = departmentsResponse?.data || [];
     const deleteDepartment = useDeleteDepartment();
 
@@ -132,8 +154,8 @@ export default function DepartmentsPage() {
     return (
         <PageTransition>
             <PageHeader
-                title="Departments"
-                description="Manage university departments"
+                title="Academic Departments"
+                description="Manage departments that belong to academic schools"
                 actions={canCreate("academic") ? (
                     <Button variant="outline" asChild>
                         <Link href="/imports/departments">
@@ -143,14 +165,14 @@ export default function DepartmentsPage() {
                     </Button>
                 ) : undefined}
                 createHref={canCreate("academic") ? "/academic/departments/new" : undefined}
-                createLabel="Add Department"
+                createLabel="Add Academic Department"
             />
             <DataTable
                 data={departments || []}
                 columns={columns}
                 isLoading={isLoading}
                 toolbar={<TableSearch value={search} onChange={setSearch} placeholder="Search departments by name or code" />}
-                emptyMessage={search ? "No departments match this search." : "No departments found. Create your first department."}
+                emptyMessage={normalizedSearch ? "No academic departments match this search." : "No academic departments found. Create your first department."}
             />
             {dialog}
         </PageTransition>

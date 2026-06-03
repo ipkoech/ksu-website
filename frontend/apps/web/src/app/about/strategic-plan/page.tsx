@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   ArrowRight,
   BookOpenCheck,
-  Building2,
   ChevronRight,
   ClipboardCheck,
   Compass,

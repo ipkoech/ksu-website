@@ -13,14 +13,14 @@
 
     /* ========================================
        KSU Brand Colors
-       Primary: University Blue (#3B82F6)
-       Secondary: Orange accent (#F97316)
+       Primary: University Blue (#1043B1)
+       Secondary: Orange accent (#C15106)
        ======================================== */
 
-    --primary: 221 83% 53%;
+    --primary: 221 83% 38%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 24 95% 53%;
+    --secondary: 24 94% 39%;
     --secondary-foreground: 0 0% 100%;
 
     /* Neutrals */
@@ -40,16 +40,16 @@
     --accent-foreground: 222 47% 11%;
 
     /* Semantic Colors */
-    --destructive: 0 84% 60%;
+    --destructive: 0 74% 42%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 76% 36%;
+    --success: 142 72% 29%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 38 92% 43%;
+    --warning-foreground: 222 47% 11%;
 
-    --info: 199 89% 48%;
+    --info: 199 89% 36%;
     --info-foreground: 0 0% 100%;
 
     /* Form Elements */
@@ -68,10 +68,10 @@
     --sidebar-ring: 221 83% 53%;
 
     /* Chart Colors */
-    --chart-1: 221 83% 53%;
-    --chart-2: 24 95% 53%;
-    --chart-3: 142 76% 36%;
-    --chart-4: 38 92% 50%;
+    --chart-1: 221 83% 38%;
+    --chart-2: 24 94% 39%;
+    --chart-3: 142 72% 29%;
+    --chart-4: 38 92% 43%;
     --chart-5: 262 83% 58%;
 
     /* ========================================
@@ -97,8 +97,8 @@
     --line-height-loose: 2;
 
     /* Letter Spacing */
-    --letter-spacing-tighter: -0.05em;
-    --letter-spacing-tight: -0.025em;
+    --letter-spacing-tighter: 0em;
+    --letter-spacing-tight: 0em;
     --letter-spacing-normal: 0em;
     --letter-spacing-wide: 0.025em;
     --letter-spacing-wider: 0.05em;
@@ -126,9 +126,12 @@
 
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-md:
+      0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg:
+      0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl:
+      0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 
     /* Transitions */
     --transition-fast: 150ms;
@@ -200,9 +203,12 @@
 
     /* Adjusted shadows for dark mode */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+    --shadow-md:
+      0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+    --shadow-lg:
+      0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+    --shadow-xl:
+      0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.3);
   }
 }
 
@@ -223,6 +229,11 @@
     scroll-behavior: smooth;
   }
 
+  html,
+  body {
+    overflow-x: clip;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;
@@ -234,6 +245,7 @@
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
     }
   }
 
@@ -242,43 +254,51 @@
     font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
     font-size: var(--font-size-base);
     line-height: var(--line-height-normal);
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
   }
 
   /* Responsive Typography */
-  h1, .h1 {
+  h1,
+  .h1 {
     font-size: var(--font-size-4xl);
     line-height: var(--line-height-tight);
-    letter-spacing: var(--letter-spacing-tight);
+    letter-spacing: var(--letter-spacing-normal);
     font-weight: 700;
   }
 
-  h2, .h2 {
+  h2,
+  .h2 {
     font-size: var(--font-size-3xl);
     line-height: var(--line-height-tight);
-    letter-spacing: var(--letter-spacing-tight);
+    letter-spacing: var(--letter-spacing-normal);
     font-weight: 600;
   }
 
-  h3, .h3 {
+  h3,
+  .h3 {
     font-size: var(--font-size-2xl);
     line-height: var(--line-height-snug);
     font-weight: 600;
   }
 
-  h4, .h4 {
+  h4,
+  .h4 {
     font-size: var(--font-size-xl);
     line-height: var(--line-height-snug);
     font-weight: 600;
   }
 
-  h5, .h5 {
+  h5,
+  .h5 {
     font-size: var(--font-size-lg);
     line-height: var(--line-height-normal);
     font-weight: 600;
   }
 
-  h6, .h6 {
+  h6,
+  .h6 {
     font-size: var(--font-size-base);
     line-height: var(--line-height-normal);
     font-weight: 600;
@@ -288,7 +308,8 @@
     line-height: var(--line-height-relaxed);
   }
 
-  small, .text-sm {
+  small,
+  .text-sm {
     font-size: var(--font-size-sm);
   }
 
@@ -303,6 +324,22 @@
   /* Links */
   a {
     @apply transition-colors duration-150;
+  }
+
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
   }
 
   /* Focus Styles */
@@ -432,7 +469,8 @@
     @apply mt-6 mb-3;
   }
 
-  .prose ul, .prose ol {
+  .prose ul,
+  .prose ol {
     @apply my-4 pl-6;
   }
 
@@ -514,6 +552,10 @@
   .rich-text-content mark,
   .rich-text-editor mark {
     @apply rounded px-1;
+  }
+
+  .form-status {
+    @apply text-sm;
   }
 
   .rich-text-content ul[data-type="taskList"],
@@ -617,7 +659,11 @@
 
   /* Gradient Backgrounds */
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%);
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--primary) / 0.8) 100%
+    );
   }
 
   .gradient-hero {
@@ -690,43 +736,86 @@
   }
 
   @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 
   @keyframes fade-out {
-    from { opacity: 1; }
-    to { opacity: 0; }
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
   }
 
   @keyframes slide-in-from-top {
-    from { transform: translateY(-10px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+      transform: translateY(-10px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
   }
 
   @keyframes slide-in-from-bottom {
-    from { transform: translateY(10px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+      transform: translateY(10px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
   }
 
   @keyframes slide-in-from-left {
-    from { transform: translateX(-10px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    from {
+      transform: translateX(-10px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
   }
 
   @keyframes slide-in-from-right {
-    from { transform: translateX(10px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    from {
+      transform: translateX(10px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
   }
 
   @keyframes scale-in {
-    from { transform: scale(0.95); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
   }
 
   @keyframes pulse-subtle {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
   }
 
   @keyframes fade-slide-up {
@@ -740,25 +829,51 @@
     }
   }
 
-  .animate-fade-in { animation-name: fade-in; }
-  .animate-fade-out { animation-name: fade-out; }
-  .animate-slide-in-top { animation-name: slide-in-from-top; }
-  .animate-slide-in-bottom { animation-name: slide-in-from-bottom; }
-  .animate-slide-in-left { animation-name: slide-in-from-left; }
-  .animate-slide-in-right { animation-name: slide-in-from-right; }
-  .animate-scale-in { animation-name: scale-in; }
-  .animate-pulse-subtle { animation: pulse-subtle 2s ease-in-out infinite; }
+  .animate-fade-in {
+    animation-name: fade-in;
+  }
+  .animate-fade-out {
+    animation-name: fade-out;
+  }
+  .animate-slide-in-top {
+    animation-name: slide-in-from-top;
+  }
+  .animate-slide-in-bottom {
+    animation-name: slide-in-from-bottom;
+  }
+  .animate-slide-in-left {
+    animation-name: slide-in-from-left;
+  }
+  .animate-slide-in-right {
+    animation-name: slide-in-from-right;
+  }
+  .animate-scale-in {
+    animation-name: scale-in;
+  }
+  .animate-pulse-subtle {
+    animation: pulse-subtle 2s ease-in-out infinite;
+  }
 
   .hero-fade-slide {
     animation: fade-slide-up 0.7s ease-out forwards;
     opacity: 0;
   }
 
-  .hero-delay-1 { animation-delay: 80ms; }
-  .hero-delay-2 { animation-delay: 160ms; }
-  .hero-delay-3 { animation-delay: 240ms; }
-  .hero-delay-4 { animation-delay: 320ms; }
-  .hero-delay-5 { animation-delay: 400ms; }
+  .hero-delay-1 {
+    animation-delay: 80ms;
+  }
+  .hero-delay-2 {
+    animation-delay: 160ms;
+  }
+  .hero-delay-3 {
+    animation-delay: 240ms;
+  }
+  .hero-delay-4 {
+    animation-delay: 320ms;
+  }
+  .hero-delay-5 {
+    animation-delay: 400ms;
+  }
 
   /* Hero animations */
   .animate-fade-up {
@@ -766,9 +881,19 @@
     opacity: 0;
   }
 
-  .animation-delay-100 { animation-delay: 100ms; }
-  .animation-delay-200 { animation-delay: 200ms; }
-  .animation-delay-300 { animation-delay: 300ms; }
-  .animation-delay-400 { animation-delay: 400ms; }
-  .animation-delay-500 { animation-delay: 500ms; }
+  .animation-delay-100 {
+    animation-delay: 100ms;
+  }
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+  .animation-delay-500 {
+    animation-delay: 500ms;
+  }
 }

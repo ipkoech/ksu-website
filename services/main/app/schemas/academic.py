@@ -70,6 +70,7 @@ class CampusUpdate(BaseSchema):
 
 class SchoolCreate(BaseSchema):
     campus_id: uuid.UUID | None = None
+    administrative_wing_id: uuid.UUID | None = None
     name: str = Field(min_length=1, max_length=255)
     slug: SlugStr
     code: CodeStr
@@ -96,6 +97,7 @@ class SchoolCreate(BaseSchema):
 
 class SchoolRead(BaseReadSchema):
     campus_id: uuid.UUID | None = None
+    administrative_wing_id: uuid.UUID | None = None
     name: str
     slug: str
     code: str
@@ -122,6 +124,7 @@ class SchoolRead(BaseReadSchema):
 
 class SchoolUpdate(BaseSchema):
     campus_id: uuid.UUID | None = None
+    administrative_wing_id: uuid.UUID | None = None
     name: str | None = Field(default=None, min_length=1, max_length=255)
     slug: SlugStr | None = None
     code: CodeStr | None = None

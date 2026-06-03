@@ -29,14 +29,16 @@ class ResearchPartnersProxyService:
             "per_page": per_page,
             "status": status,
             "is_active": is_active,
-            "is_featured": is_featured,
         }
+        if is_featured is not None:
+            params["is_featured"] = is_featured
         if search:
             params["search"] = search
 
         async with httpx.AsyncClient(
             base_url=settings.RESEARCH_SERVICE_URL.rstrip("/"),
             timeout=httpx.Timeout(20.0, connect=5.0),
+            headers={"X-KSU-Proxy": "main-partners"},
         ) as client:
             response = await client.get("/api/v1/partners", params=params)
             response.raise_for_status()
@@ -51,6 +53,7 @@ class ResearchPartnersProxyService:
         async with httpx.AsyncClient(
             base_url=settings.RESEARCH_SERVICE_URL.rstrip("/"),
             timeout=httpx.Timeout(20.0, connect=5.0),
+            headers={"X-KSU-Proxy": "main-partners"},
         ) as client:
             response = await client.get(f"/api/v1/partners/{slug}")
             response.raise_for_status()

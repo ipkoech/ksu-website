@@ -158,6 +158,12 @@ class Wing(Base):
         lazy="selectin",
         foreign_keys="Department.wing_id",
     )
+    schools: Mapped[list["School"]] = relationship(
+        "School",
+        back_populates="administrative_wing",
+        lazy="selectin",
+        foreign_keys="School.administrative_wing_id",
+    )
 
     __table_args__ = (
         sa.UniqueConstraint("division_id", "slug", name="uq_wing_division_slug"),

@@ -2,11 +2,15 @@ import { z } from "zod";
 
 export const createUserSchema = z
   .object({
-    email: z.string().email(),
-    first_name: z.string().min(1).max(50),
-    last_name: z.string().min(1).max(50),
-    password: z.string().min(8).regex(/[A-Z]/).regex(/[0-9]/),
-    confirm_password: z.string().min(8),
+    email: z.string().email("Enter a valid email address."),
+    first_name: z.string().min(1, "First name is required.").max(50, "First name must be 50 characters or fewer."),
+    last_name: z.string().min(1, "Last name is required.").max(50, "Last name must be 50 characters or fewer."),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters.")
+      .regex(/[A-Z]/, "Password must include an uppercase letter.")
+      .regex(/[0-9]/, "Password must include a number."),
+    confirm_password: z.string().min(8, "Confirm the password."),
     send_welcome_email: z.boolean().default(true),
     role_ids: z.array(z.string()).optional(),
   })

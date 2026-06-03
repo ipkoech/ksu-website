@@ -14,6 +14,7 @@ export * from "./use-intakes";
 export * from "./use-admissions";
 export * from "./use-academic-calendars";
 export * from "./use-divisions";
+export * from "./use-wings";
 export * from "./use-faqs";
 export * from "./use-sliders";
 export * from "./use-media";

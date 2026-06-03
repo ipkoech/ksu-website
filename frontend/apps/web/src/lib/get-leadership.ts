@@ -4,7 +4,7 @@ import type { Leader } from "@ksu/ui/components";
 import { publicFileUrl, resolvePublicMediaUrl } from "@/lib/public-media";
 
 const leaderInclude =
-  "person:id,slug,title,first_name,middle_name,last_name,full_name,bio,leadership_message,photo_id";
+  "person:id,slug,title,first_name,middle_name,last_name,full_name,bio,leadership_message,photo_id,photo_url";
 
 function personName(person: Person, fallback: string) {
   const fullName = person.full_name?.trim();

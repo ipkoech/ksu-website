@@ -24,6 +24,7 @@ from ...schemas import (
     LibraryLoanCreate,
     LibraryLoanUpdate,
     LibraryReservationCreate,
+    LibraryReservationUpdate,
     LibraryResourceCreate,
     LibraryResourceUpdate,
 )
@@ -271,8 +272,27 @@ async def create_reservation(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[TokenPayload, Depends(requires_scope("library:read"))],
 ):
+    if not has_scope(user.roles, "library:write"):
+        data = data.model_copy(update={"requester_person_id": uuid.UUID(user.sub)})
     reservation = await svc.create_reservation(db, data)
     return success(data=reservation, message="Reservation created")
+
+
+@reservations_router.patch("/{reservation_id}")
+@audit_action(
+    "reservation.update",
+    target_type="LibraryResourceReservation",
+    target_id_param="reservation_id",
+)
+async def update_reservation(
+    request: Request,
+    reservation_id: uuid.UUID,
+    data: LibraryReservationUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+):
+    reservation = await svc.update_reservation(db, reservation_id, data)
+    return success(data=reservation)
 
 
 @reservations_router.delete("/{reservation_id}", status_code=204)
@@ -287,7 +307,12 @@ async def cancel_reservation(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[TokenPayload, Depends(requires_scope("library:read"))],
 ):
-    await svc.cancel_reservation(db, reservation_id, uuid.UUID(user.sub))
+    await svc.cancel_reservation(
+        db,
+        reservation_id,
+        uuid.UUID(user.sub),
+        require_owner=not has_scope(user.roles, "library:write"),
+    )
 
 
 # ── Library charges ───────────────────────────────────────────────────────────

@@ -14,7 +14,7 @@ interface DashboardShellProps {
 }
 
 export function DashboardShell({ service, children }: DashboardShellProps) {
-  const { isCollapsed, isMobileOpen, setMobileOpen } = useSidebar();
+  const { isCollapsed, isMobileOpen, setMobileOpen, toggle } = useSidebar();
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -36,6 +36,7 @@ export function DashboardShell({ service, children }: DashboardShellProps) {
       <Sidebar
         service={service}
         collapsed={isCollapsed}
+        onToggle={toggle}
         isMobileOpen={isMobileOpen}
         onMobileClose={() => setMobileOpen(false)}
       />

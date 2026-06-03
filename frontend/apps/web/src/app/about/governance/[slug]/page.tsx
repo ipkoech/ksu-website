@@ -62,28 +62,6 @@ export default async function GovernanceBoardPage({
             {board.mission || "No public mission details are currently published for this board."}
           </p>
         </article>
-        <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40">
-          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-secondary">
-            Meetings
-          </p>
-          <p className="mt-4 text-base leading-7 text-slate-600">
-            {board.meeting_schedule || "Meeting schedule not published."}
-          </p>
-        </article>
-      </ScrollReveal>
-
-      <ScrollReveal as="section" className="container pb-16">
-        <article className="rounded-[2rem] border border-slate-200 bg-slate-50 p-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-secondary">
-            Board Members
-          </p>
-          <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl text-slate-950">
-            Public-facing board composition.
-          </h2>
-          <div className="mt-10">
-            <BoardMemberGrid members={board.members} />
-          </div>
-        </article>
       </ScrollReveal>
     </PageShell>
   );

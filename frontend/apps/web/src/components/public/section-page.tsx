@@ -80,6 +80,16 @@ export type PublicPageSection = {
   variant?: "cards" | "article";
   columns?: 2 | 3 | 4;
   cards: PublicCard[];
+  filters?: {
+    action: string;
+    query?: string;
+    queryName?: string;
+    queryPlaceholder?: string;
+    level?: string;
+    levelOptions?: { value: string; label: string }[];
+    submitLabel?: string;
+    clearHref?: string;
+  };
 };
 
 export type PublicPageConfig = {
@@ -302,6 +312,96 @@ function gridClass(columns: PublicPageSection["columns"] = 3) {
   return "grid gap-5 md:grid-cols-2 xl:grid-cols-3";
 }
 
+function SectionFilterBar({
+  filters,
+  dark = false,
+}: {
+  filters: NonNullable<PublicPageSection["filters"]>;
+  dark?: boolean;
+}) {
+  const queryName = filters.queryName ?? "q";
+  const isActive = Boolean(filters.query || filters.level);
+
+  return (
+    <form
+      action={filters.action}
+      className={
+        dark
+          ? "mb-6 grid gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-3 sm:grid-cols-[minmax(0,1fr)_180px_auto_auto]"
+          : "mb-6 grid gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:grid-cols-[minmax(0,1fr)_180px_auto_auto]"
+      }
+    >
+      <label className="relative min-w-0">
+        <span className="sr-only">{filters.queryPlaceholder ?? "Search records"}</span>
+        <Search
+          aria-hidden
+          className={
+            dark
+              ? "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/45"
+              : "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+          }
+        />
+        <input
+          type="search"
+          name={queryName}
+          defaultValue={filters.query}
+          placeholder={filters.queryPlaceholder ?? "Search records"}
+          className={
+            dark
+              ? "h-11 w-full rounded-md border border-white/10 bg-slate-950/60 pl-9 pr-3 text-sm font-medium text-white outline-none transition placeholder:text-white/40 focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+              : "h-11 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm font-medium text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15"
+          }
+        />
+      </label>
+
+      {filters.levelOptions?.length ? (
+        <label>
+          <span className="sr-only">Programme level</span>
+          <select
+            name="level"
+            defaultValue={filters.level ?? ""}
+            className={
+              dark
+                ? "h-11 w-full rounded-md border border-white/10 bg-slate-950/60 px-3 text-sm font-semibold text-white outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+                : "h-11 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+            }
+          >
+            {filters.levelOptions.map((option) => (
+              <option key={option.value || "all"} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+
+      <button
+        type="submit"
+        className={
+          dark
+            ? "inline-flex h-11 items-center justify-center rounded-md bg-secondary px-4 text-sm font-semibold text-slate-950 transition hover:bg-secondary/90"
+            : "inline-flex h-11 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90"
+        }
+      >
+        {filters.submitLabel ?? "Filter"}
+      </button>
+
+      {isActive && filters.clearHref ? (
+        <Link
+          href={filters.clearHref}
+          className={
+            dark
+              ? "inline-flex h-11 items-center justify-center rounded-md border border-white/10 px-4 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
+              : "inline-flex h-11 items-center justify-center rounded-md border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:border-primary/25 hover:bg-primary/5 hover:text-primary"
+          }
+        >
+          Clear
+        </Link>
+      ) : null}
+    </form>
+  );
+}
+
 function SectionBlock({ section }: { section: PublicPageSection }) {
   if (section.variant === "article") {
     return <ArticleSectionBlock section={section} />;
@@ -316,7 +416,7 @@ function SectionBlock({ section }: { section: PublicPageSection }) {
 
   return (
     <ScrollReveal as="section" className={wrapperClass}>
-      <div className="mx-auto grid w-full max-w-[1440px] gap-8 xl:grid-cols-[300px_minmax(0,1fr)] xl:items-start">
+      <div className="mx-auto grid w-full max-w-[1680px] gap-8 xl:grid-cols-[260px_minmax(0,1fr)] xl:items-start">
         <div className="xl:sticky xl:top-28">
           <p className="text-sm font-semibold uppercase text-secondary">
             {section.eyebrow}
@@ -343,6 +443,11 @@ function SectionBlock({ section }: { section: PublicPageSection }) {
           className={gridClass(section.columns)}
           staggerDelay={70}
         >
+          {section.filters ? (
+            <div className="md:col-span-2 xl:col-span-full">
+              <SectionFilterBar filters={section.filters} dark={dark} />
+            </div>
+          ) : null}
           {section.cards.map((card) => (
             <StandardCard
               key={`${section.eyebrow}-${card.title}`}
@@ -411,23 +516,38 @@ export function PublicSectionPage({
   header,
   heroContent,
   showHero = true,
+  heroSize = "default",
 }: {
   config: PublicPageConfig;
   header?: ReactNode;
   heroContent?: ReactNode;
   showHero?: boolean;
+  heroSize?: "default" | "compact";
 }) {
   const continueItems = config.continueItems ?? config.navItems;
+  const compactHero = heroSize === "compact";
 
   return (
     <PageShell header={header}>
       <>
         {showHero ? (
-          <section className="relative overflow-hidden border-b border-slate-200 bg-slate-50 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-            <div className="relative mx-auto w-full max-w-[1440px]">
+          <section
+            className={
+              compactHero
+                ? "relative overflow-hidden border-b border-slate-200 bg-slate-50 px-4 py-4 sm:px-6 lg:px-8 lg:py-5"
+                : "relative overflow-hidden border-b border-slate-200 bg-slate-50 px-4 py-6 sm:px-6 lg:px-8 lg:py-8"
+            }
+          >
+            <div className="relative mx-auto w-full max-w-[1680px]">
               <BreadcrumbTrail items={config.breadcrumb} />
 
-              <div className="mt-6 grid gap-5 xl:grid-cols-[240px_minmax(0,780px)_280px] xl:items-start xl:justify-center">
+              <div
+                className={
+                  compactHero
+                    ? "mt-4 grid gap-4 xl:grid-cols-[220px_minmax(0,1fr)_260px] xl:items-start"
+                    : "mt-6 grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)_280px] xl:items-start"
+                }
+              >
                 <nav
                   aria-label={config.navLabel}
                   className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm xl:sticky xl:top-28"
@@ -458,18 +578,36 @@ export function PublicSectionPage({
                   </ul>
                 </nav>
 
-                <div className="min-w-0 p-1 sm:p-2 lg:p-3">
+                <div className={compactHero ? "min-w-0 p-1" : "min-w-0 p-1 sm:p-2 lg:p-3"}>
                   <p className="text-sm font-semibold uppercase text-secondary">
                     {config.eyebrow}
                   </p>
-                  <h1 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl xl:text-5xl">
+                  <h1
+                    className={
+                      compactHero
+                        ? "mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl xl:text-4xl"
+                        : "mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl xl:text-5xl"
+                    }
+                  >
                     {config.title}
                   </h1>
-                  <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">
+                  <p
+                    className={
+                      compactHero
+                        ? "mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base"
+                        : "mt-4 max-w-3xl text-base leading-8 text-slate-600"
+                    }
+                  >
                     {config.body}
                   </p>
                   {config.primaryAction || config.secondaryActions?.length ? (
-                    <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                    <div
+                      className={
+                        compactHero
+                          ? "mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap"
+                          : "mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap"
+                      }
+                    >
                       {config.primaryAction ? (
                         <ActionLink action={config.primaryAction} primary />
                       ) : null}
@@ -481,7 +619,7 @@ export function PublicSectionPage({
                   {heroContent}
 
                   {config.scopeCards?.length ? (
-                    <div className="mt-7 border-t border-slate-200 pt-5">
+                    <div className={compactHero ? "mt-5 border-t border-slate-200 pt-4" : "mt-7 border-t border-slate-200 pt-5"}>
                       <p className="text-xs font-semibold uppercase text-slate-500">
                         {config.scopeTitle ?? "Page highlights"}
                       </p>
@@ -573,7 +711,7 @@ export function PublicSectionPage({
             as="section"
             className="border-y border-slate-200 bg-white px-4 py-12 sm:px-6 lg:px-8 lg:py-16"
           >
-            <div className="mx-auto w-full max-w-[1440px]">
+            <div className="mx-auto w-full max-w-[1680px]">
               <div className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
                 <div>
                   <p className="text-sm font-semibold uppercase text-secondary">

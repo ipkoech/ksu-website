@@ -20,7 +20,7 @@ import {
   AlertDescription,
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
-import { useAuth, getAccessibleServices } from "@ksu/auth";
+import { useAuth } from "@ksu/auth";
 import { CheckCircle2 } from "lucide-react";
 
 const loginSchema = z.object({
@@ -29,6 +29,24 @@ const loginSchema = z.object({
 });
 
 type LoginValues = z.infer<typeof loginSchema>;
+
+function loginErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message.toLowerCase() : "";
+
+  if (
+    message.includes("credential") ||
+    message.includes("password") ||
+    message.includes("unauthorized")
+  ) {
+    return "Email or password is incorrect.";
+  }
+
+  if (message.includes("network") || message.includes("fetch")) {
+    return "We could not reach the admin service. Check your connection and try again.";
+  }
+
+  return "Sign in failed. Check your details and try again.";
+}
 
 export function LoginForm() {
   const router = useRouter();
@@ -45,6 +63,7 @@ export function LoginForm() {
     }
     return null;
   }, [searchParams]);
+  const reason = searchParams.get("reason");
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -67,17 +86,18 @@ export function LoginForm() {
       });
 
       // Use startTransition for smooth navigation
-      const destination = (redirect && redirectChecked)
-        ? redirect
-        : services.length === 1
-          ? `/${services[0]}`
-          : "/select-service";
+      const destination =
+        redirect && redirectChecked
+          ? redirect
+          : services.length === 1
+            ? `/${services[0]}`
+            : "/select-service";
 
       startTransition(() => {
         router.push(destination);
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(loginErrorMessage(err));
     }
   }
 
@@ -95,6 +115,14 @@ export function LoginForm() {
           </Alert>
         )}
 
+        {!error && reason === "session-expired" && (
+          <Alert>
+            <AlertDescription>
+              Your session expired. Sign in again to continue.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <FormField
           control={form.control}
           name="email"
@@ -104,6 +132,7 @@ export function LoginForm() {
               <FormControl>
                 <Input
                   type="email"
+                  autoComplete="username"
                   placeholder="you@kisiiuniversity.ac.ke"
                   {...field}
                 />
@@ -120,7 +149,11 @@ export function LoginForm() {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <PasswordInput placeholder="Enter your password" {...field} />
+                <PasswordInput
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -136,7 +169,11 @@ export function LoginForm() {
         </Button>
 
         {isRedirecting && (
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-2">
+          <div
+            className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground"
+            role="status"
+            aria-live="polite"
+          >
             <CheckCircle2 className="h-4 w-4 text-green-500" />
             <span>Login successful! Taking you to your dashboard...</span>
           </div>
@@ -145,7 +182,7 @@ export function LoginForm() {
         <div className="text-center">
           <Link
             href="/forgot-password"
-            className="text-sm text-primary hover:underline"
+            className="inline-flex min-h-11 items-center text-sm text-primary hover:underline"
           >
             Forgot password?
           </Link>

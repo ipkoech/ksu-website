@@ -24,6 +24,9 @@ async def list_partners(
     is_active: bool | None = True,
     is_featured: bool | None = None,
 ):
+    if request.headers.get("x-ksu-proxy") == "main-partners":
+        raise HTTPException(status_code=503, detail="Research partner proxy loop detected")
+
     try:
         payload = await ResearchPartnersProxyService.list_partners(
             page=page,
@@ -42,6 +45,9 @@ async def list_partners(
 @router.get("/{slug}")
 @cached_public(timeout=300)
 async def get_partner(slug: str, request: Request):
+    if request.headers.get("x-ksu-proxy") == "main-partners":
+        raise HTTPException(status_code=503, detail="Research partner proxy loop detected")
+
     try:
         payload = await ResearchPartnersProxyService.get_partner(slug)
     except HTTPError as exc:

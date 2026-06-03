@@ -64,12 +64,6 @@ const administrationNav = [
     "users",
   ),
   pageCard(
-    "Directorates",
-    "/administration/directorates",
-    "Directorates and specialized administrative functions.",
-    "compass",
-  ),
-  pageCard(
     "Organization",
     "/administration/organization",
     "A public structure view of reporting relationships.",
@@ -367,7 +361,7 @@ function administrationSections(kind: string, label?: string): PublicPageSection
       cards: [
         pageCard("Division of Academic, Research & Student Affairs", "/administration/divisions/academic-research-student-affairs", "Academic affairs, research, e-learning, and student-facing university functions.", "graduation", "View division"),
         pageCard("Division of Administration, Planning & Finance", "/administration/divisions/administration-planning-finance", "Administration, planning, finance, ICT, procurement, and support services.", "building", "View division"),
-        pageCard("Office of the Vice Chancellor", "/about/leadership", "Executive leadership context remains available through the leadership route.", "user", "View leadership"),
+        pageCard("Office of the Vice Chancellor", "/about/university-management", "Executive leadership context remains available through the leadership route.", "user", "View leadership"),
       ],
     },
     {
@@ -1631,9 +1625,9 @@ export function getAlumniPage(): PublicPageConfig {
     title: "Alumni relations and public engagement",
     body:
       "The alumni toolbar link resolves as a public page for alumni engagement, institutional news, events, and published alumni records.",
-    primaryAction: { label: "University News", href: "/news" },
+    primaryAction: { label: "University News", href: "/media/news" },
     secondaryActions: [
-      { label: "Events", href: "/events" },
+      { label: "Events", href: "/media/events" },
       { label: "About Kisii University", href: "/about" },
     ],
     asideBody:
@@ -1883,8 +1877,8 @@ export function getNewsPage(segments: string[] = []): PublicPageConfig {
     title: isCategory ? `${label} news` : segments[0] ? `${label} article` : "University news",
     body:
       "News pages use published communication records and organize articles, dates, authors, or newsletter workflows.",
-    primaryAction: { label: "Events", href: "/events" },
-    secondaryActions: [{ label: "Announcements", href: "/announcements" }],
+    primaryAction: { label: "Events", href: "/media/events" },
+    secondaryActions: [{ label: "Announcements", href: "/media/announcements" }],
     asideBody:
       "News content should come. Use this section to follow university news, announcements, events, and public communications.",
     sections: segments[0] && !isCategory ? newsSections("article", label) : newsSections("listing"),
@@ -1903,8 +1897,8 @@ export function getEventsPage(segments: string[] = []): PublicPageConfig {
     title: segments[0] ? `${label} event` : "University events",
     body:
       "Events pages are prepared for event records, dates, venues, and registration guidance when those fields are available.",
-    primaryAction: { label: "News", href: "/news" },
-    secondaryActions: [{ label: "Announcements", href: "/announcements" }],
+    primaryAction: { label: "News", href: "/media/news" },
+    secondaryActions: [{ label: "Announcements", href: "/media/announcements" }],
     asideBody:
       "Event dates, locations, and registration states should come from event records. The frontend organizes schedules.",
     sections: [
@@ -1939,8 +1933,8 @@ export function getAnnouncementsPage(): PublicPageConfig {
     eyebrow: "Announcements",
     title: "University announcements",
     body: "Official notices with priority, audience, and publication dates.",
-    primaryAction: { label: "News", href: "/news" },
-    secondaryActions: [{ label: "Events", href: "/events" }],
+    primaryAction: { label: "News", href: "/media/news" },
+    secondaryActions: [{ label: "Events", href: "/media/events" }],
     asideBody: "Only public records are shown. Unsupported dates and urgency labels are avoided.",
     sections: [
       {

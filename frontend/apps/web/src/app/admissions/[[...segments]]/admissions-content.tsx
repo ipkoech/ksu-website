@@ -1760,13 +1760,13 @@ function GraduationBookletsSections({ data }: { data: AdmissionsPageData }) {
         },
         {
           title: "Announcements",
-          href: "/announcements",
+          href: "/media/announcements",
           description: "Check official notices for graduation updates and deadlines.",
           icon: FileText,
         },
         {
           title: "Events",
-          href: "/events",
+          href: "/media/events",
           description: "Browse ceremony and university event records.",
           icon: CalendarDays,
         },

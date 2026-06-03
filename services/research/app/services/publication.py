@@ -18,6 +18,7 @@ PublicationAuthorService = build_simple_service(
     "name",
     "affiliation",
     "orcid",
+    reference_fields={"person_id": "persons"},
 )
 JournalService = build_simple_service(
     Journal,
@@ -31,5 +32,5 @@ EditorialBoardService = build_simple_service(
     "name",
     "affiliation",
     "role",
+    reference_fields={"person_id": "persons"},
 )
-

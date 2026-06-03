@@ -36,6 +36,8 @@ from .persons import router as persons_router
 from .policies import router as policies_router
 from .public_media import router as public_media_router
 from .public_leadership import router as public_leadership_router
+from .public_people import router as public_people_router
+from .public_team import router as public_team_router
 from .programmes import router as programmes_router
 from .search import router as search_router
 from .schools import router as schools_router
@@ -43,6 +45,7 @@ from .sliders import router as sliders_router
 from .social_posts import router as social_posts_router
 from .sports import router as sports_router
 from .staff import router as staff_router
+from .stats import router as stats_router
 from .settings import router as settings_router
 from .student_governance import router as student_governance_router
 from .support import router as support_router
@@ -69,6 +72,7 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(partners_router, prefix="/api/v1/partners", tags=["Research"])
     app.include_router(users_router, prefix="/api/v1/users", tags=["Users"])
     app.include_router(search_router, prefix="/api/v1/search", tags=["Search"])
+    app.include_router(stats_router, prefix="/api/v1/stats", tags=["Stats"])
     app.include_router(settings_router, prefix="/api/v1/settings", tags=["System"])
     app.include_router(university_info_router, prefix="/api/v1/university-info", tags=["University"])
     app.include_router(notifications_router, prefix="/api/v1/notifications", tags=["Users"])
@@ -102,3 +106,5 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(admin_router, prefix="/api/v1/admin", tags=["Admin"])
     app.include_router(public_media_router, prefix="/api/v1/public/media", tags=["Public"])
     app.include_router(public_leadership_router, prefix="/api/v1/public/leadership", tags=["Public"])
+    app.include_router(public_people_router, prefix="/api/v1/public/people", tags=["Public"])
+    app.include_router(public_team_router, prefix="/api/v1/public/team", tags=["Public"])

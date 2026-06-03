@@ -52,7 +52,6 @@ const departmentSchema = z.object({
   email: z.string().email().optional().or(z.literal("")),
   phone: z.string().optional(),
   office_location: z.string().optional(),
-  website: z.string().url().optional().or(z.literal("")),
   cover_image_id: z.string().uuid().optional().or(z.literal("")),
   student_count: z.coerce.number().int().min(0),
   postgraduate_student_count: z.coerce.number().int().min(0),
@@ -85,7 +84,6 @@ const defaultValues: DepartmentFormValues = {
   email: "",
   phone: "",
   office_location: "",
-  website: "",
   cover_image_id: "",
   student_count: 0,
   postgraduate_student_count: 0,
@@ -116,7 +114,6 @@ const departmentPayloadFieldMap = {
   email: ["email"],
   phone: ["phone"],
   office_location: ["office_location"],
-  website: ["website"],
   cover_image_id: ["cover_image_id"],
   student_count: ["student_count"],
   postgraduate_student_count: ["postgraduate_student_count"],
@@ -125,6 +122,48 @@ const departmentPayloadFieldMap = {
   is_public: ["is_public"],
   allows_staff_management: ["allows_staff_management"],
 } satisfies PayloadFieldMap<Partial<Department>>;
+
+const departmentDetailParams = {
+  fields: [
+    "id",
+    "name",
+    "slug",
+    "code",
+    "department_type",
+    "school_id",
+    "wing_id",
+    "parent_department_id",
+    "head_id",
+    "postgraduate_coordinator_id",
+    "establishment_date",
+    "about",
+    "head_message",
+    "mission",
+    "vision",
+    "mandate",
+    "core_values",
+    "service_charter",
+    "guidelines",
+    "email",
+    "phone",
+    "office_location",
+    "cover_image_id",
+    "student_count",
+    "postgraduate_student_count",
+    "is_active",
+    "is_public",
+    "allows_staff_management",
+    "display_order",
+    "created_at",
+    "updated_at",
+  ].join(","),
+  include: [
+    "school:id,name,code,slug",
+    "parent_department:id,name,code,slug",
+    "head:id,full_name,email,title,department_id",
+    "postgraduate_coordinator:id,full_name,email,title,department_id",
+  ].join(";"),
+};
 
 function slugify(value: string) {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -156,7 +195,6 @@ function departmentValues(department: Department): DepartmentFormValues {
     email: department.email ?? "",
     phone: department.phone ?? "",
     office_location: department.office_location ?? "",
-    website: department.website ?? "",
     cover_image_id: department.cover_image_id ?? "",
     student_count: department.student_count ?? 0,
     postgraduate_student_count: department.postgraduate_student_count ?? 0,
@@ -174,7 +212,7 @@ export default function DepartmentFormPage() {
   const routeId = params.id as string;
   const id = routeId === "_static" ? searchParams.get("id") || "" : routeId;
   const isNew = routeId === "new";
-  const departmentQuery = useDepartment(!isNew && id ? id : "", { enabled: !isNew && Boolean(id) });
+  const departmentQuery = useDepartment(!isNew && id ? id : "", { enabled: !isNew && Boolean(id), params: departmentDetailParams });
   const department = departmentQuery.data?.data ?? null;
   const createDepartment = useCreateDepartment();
   const updateDepartment = useUpdateDepartment();
@@ -197,6 +235,8 @@ export default function DepartmentFormPage() {
   }, [department, form, isNew]);
 
   const selectedSchoolId = form.watch("school_id");
+  const selectedDepartmentType = form.watch("department_type");
+  const headLabel = selectedDepartmentType === "academic" ? "HOD/COD" : "Department Head";
 
   const onSubmit = async (values: DepartmentFormValues) => {
     const payload: Partial<Department> = {
@@ -220,7 +260,6 @@ export default function DepartmentFormPage() {
       email: values.email || null,
       phone: values.phone || null,
       office_location: values.office_location || null,
-      website: values.website || null,
       cover_image_id: values.cover_image_id || null,
       student_count: values.student_count,
       postgraduate_student_count: values.postgraduate_student_count,
@@ -245,8 +284,9 @@ export default function DepartmentFormPage() {
         toast.success("Department updated successfully");
       }
       router.push("/academic/departments");
-    } catch {
-      toast.error(isNew ? "Failed to create department" : "Failed to update department");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : isNew ? "Failed to create department" : "Failed to update department";
+      toast.error(message);
     }
   };
 
@@ -337,9 +377,6 @@ export default function DepartmentFormPage() {
                       <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="dept@university.ac.ke" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                   </div>
-                  <FormField control={form.control} name="website" render={({ field }) => (
-                    <FormItem><FormLabel>Website</FormLabel><FormControl><Input placeholder="https://..." {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
                   <FormField control={form.control} name="office_location" render={({ field }) => (
                     <FormItem><FormLabel>Office Location</FormLabel><FormControl><Input placeholder="Science block, room 12" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
@@ -352,13 +389,13 @@ export default function DepartmentFormPage() {
                 <CardHeader><CardTitle>Leadership</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   <FormField control={form.control} name="head_id" render={({ field }) => (
-                    <FormItem><PersonPicker value={field.value} onChange={(value) => field.onChange(value)} label="Head of Department" placeholder="Select head" filters={{ status: "active", department_id: department?.id }} /><FormMessage /></FormItem>
+                    <FormItem><PersonPicker value={field.value} onChange={(value) => field.onChange(value)} label={headLabel} placeholder={`Select ${headLabel}`} filters={{ status: "active" }} /><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="postgraduate_coordinator_id" render={({ field }) => (
                     <FormItem><PersonPicker value={field.value} onChange={(value) => field.onChange(value)} label="Postgraduate Coordinator" placeholder="Select coordinator" filters={{ status: "active", department_id: department?.id }} /><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="head_message" render={({ field }) => (
-                    <FormItem><FormLabel>Head Message</FormLabel><FormControl><RichTextEditor value={field.value ?? ""} onChange={field.onChange} toolbar="simple" minHeight="130px" placeholder="Leadership message..." /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{headLabel} Message</FormLabel><FormControl><RichTextEditor value={field.value ?? ""} onChange={field.onChange} toolbar="simple" minHeight="130px" placeholder="Leadership message..." /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="establishment_date" render={({ field }) => (
                     <FormItem><FormLabel>Establishment Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>

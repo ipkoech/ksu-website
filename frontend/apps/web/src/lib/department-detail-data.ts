@@ -1,4 +1,4 @@
-import { departmentsApi, mainApi } from "@ksu/api-client";
+import { departmentsApi, mainApi, statsApi } from "@ksu/api-client";
 import { resolvePublicMediaUrl } from "@/lib/public-media";
 import type {
   Department,
@@ -6,10 +6,16 @@ import type {
   News,
   Person,
   Programme,
+  PublicStatsResponse,
   StaffAssignment,
 } from "@ksu/api-client";
 import type { Leader } from "@ksu/ui/components";
 import { getHOD, getLeaderByRole } from "@/lib/get-leadership";
+import {
+  getScopedEntityMedia,
+  type EntityMediaRecord,
+} from "@/lib/entity-media-data";
+import { getPublicTeam, type PublicTeamData } from "@/lib/public-team-data";
 
 type DepartmentResponse = {
   data?: DepartmentWithRelations;
@@ -64,9 +70,11 @@ type DepartmentRelatedRecords = Pick<
   | "programmes"
   | "staff"
   | "staffAssignments"
+  | "team"
   | "services"
   | "documents"
   | "news"
+  | "updates"
   | "counts"
 >;
 
@@ -267,6 +275,15 @@ async function getDepartmentBySlug(
   }
 }
 
+async function getDepartmentStats(slug: string): Promise<PublicStatsResponse | null> {
+  try {
+    const response = await statsApi.get({ scope: "department", slug });
+    return response.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function getList<T>(
   path: string,
   params?: Record<string, string | number | boolean | undefined>,
@@ -396,9 +413,11 @@ async function getDepartmentRelatedRecords(
     programmes,
     staff,
     staffAssignments,
+    team,
     services,
     documents,
     news,
+    updates,
   ] = await Promise.all([
     isAcademic
       ? getList<Programme>(`/api/v1/departments/${department.slug}/programmes`, {
@@ -416,6 +435,7 @@ async function getDepartmentRelatedRecords(
       fields: staffAssignmentFields,
       include: `person:${staffAssignmentPersonFields}`,
     }),
+    getPublicTeam("department", department.id),
     getList<DepartmentServiceRecord>(
       `/api/v1/departments/${department.slug}/services`,
       { fields: departmentServiceFields },
@@ -432,6 +452,7 @@ async function getDepartmentRelatedRecords(
       fields: newsFields,
       per_page: 40,
     }),
+    getScopedEntityMedia("department", department.id, department.name),
   ]);
 
   const sortedProgrammes = sortByDisplayOrder(programmes.data ?? []);
@@ -452,9 +473,11 @@ async function getDepartmentRelatedRecords(
     programmes: sortedProgrammes,
     staff: staff.data ?? [],
     staffAssignments: staffAssignments.data ?? [],
+    team,
     services: sortedServices,
     documents: documents.data ?? [],
     news: news.data ?? [],
+    updates,
     counts: {
       programmes: listCount(programmes),
       staff: listCount(staff),
@@ -474,9 +497,12 @@ export type DepartmentDetailData = {
   programmes: Programme[];
   staff: Person[];
   staffAssignments: StaffAssignment[];
+  team: PublicTeamData | null;
   services: DepartmentServiceRecord[];
   documents: Document[];
   news: News[];
+  updates: EntityMediaRecord[];
+  stats: PublicStatsResponse | null;
   counts: {
     programmes: number;
     staff: number;
@@ -502,9 +528,11 @@ export async function getDepartmentDetailData(
     programmes: [],
     staff: [],
     staffAssignments: [],
+    team: null,
     services: [],
     documents: [],
     news: [],
+    updates: [],
     counts: {
       programmes: 0,
       staff: 0,
@@ -514,14 +542,38 @@ export async function getDepartmentDetailData(
       news: 0,
     },
   };
-  const related = department?.id
-    ? await getDepartmentRelatedRecords(department, isAcademic)
-    : emptyRelated;
+  const [related, stats] = department?.id
+    ? await Promise.all([
+        getDepartmentRelatedRecords(department, isAcademic),
+        getDepartmentStats(department.slug),
+      ])
+    : [emptyRelated, null];
 
   return {
     department: resolvedDepartment,
     ...related,
+    stats,
+    counts: stats ? mergeDepartmentCounts(related.counts, stats) : related.counts,
     isAcademic,
     sourceBacked: Boolean(department),
+  };
+}
+
+function statValue(stats: PublicStatsResponse, key: string) {
+  const item = stats.stats.find((entry) => entry.key === key);
+  return typeof item?.value === "number" ? item.value : null;
+}
+
+function mergeDepartmentCounts(
+  fallback: DepartmentDetailData["counts"],
+  stats: PublicStatsResponse,
+): DepartmentDetailData["counts"] {
+  return {
+    programmes: statValue(stats, "programmes") ?? fallback.programmes,
+    staff: statValue(stats, "staff") ?? fallback.staff,
+    publications: statValue(stats, "publications") ?? fallback.publications,
+    services: statValue(stats, "services") ?? fallback.services,
+    documents: statValue(stats, "downloads") ?? fallback.documents,
+    news: statValue(stats, "news") ?? fallback.news,
   };
 }

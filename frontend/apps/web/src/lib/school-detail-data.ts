@@ -1,4 +1,4 @@
-import { mainApi, schoolsApi } from "@ksu/api-client";
+import { mainApi, schoolsApi, statsApi } from "@ksu/api-client";
 import type {
   Club,
   Department,
@@ -6,11 +6,17 @@ import type {
   News,
   Person,
   Programme,
+  PublicStatsResponse,
   School,
   StaffAssignment,
 } from "@ksu/api-client";
 import type { Leader } from "@ksu/ui/components";
 import { getDean } from "@/lib/get-leadership";
+import {
+  getScopedEntityMedia,
+  type EntityMediaRecord,
+} from "@/lib/entity-media-data";
+import { getPublicTeam, type PublicTeamData } from "@/lib/public-team-data";
 
 type SchoolResponse = {
   data?: School;
@@ -33,9 +39,11 @@ type SchoolRelatedRecords = Pick<
   | "programmes"
   | "staff"
   | "staffAssignments"
+  | "team"
   | "clubs"
   | "documents"
   | "news"
+  | "updates"
   | "counts"
 >;
 
@@ -231,6 +239,15 @@ async function getSchoolBySlug(slug: string): Promise<School | null> {
   }
 }
 
+async function getSchoolStats(slug: string): Promise<PublicStatsResponse | null> {
+  try {
+    const response = await statsApi.get({ scope: "school", slug });
+    return response.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function getList<T>(
   path: string,
   params?: Record<string, string | number | boolean | undefined>,
@@ -256,7 +273,7 @@ async function getSchoolRelatedRecords(
         Number(first.display_order ?? 0) - Number(second.display_order ?? 0) ||
         first.name.localeCompare(second.name),
     );
-  const [programmes, staff, staffAssignments, clubs, documents, news] =
+  const [programmes, staff, staffAssignments, team, clubs, documents, news, updates] =
     await Promise.all([
       getList<Programme>(`/api/v1/schools/${school.slug}/programmes`, {
         fields: programmeFields,
@@ -272,6 +289,7 @@ async function getSchoolRelatedRecords(
         fields: staffAssignmentFields,
         include: `person:${staffAssignmentPersonFields}`,
       }),
+      getPublicTeam("school", school.id),
       getList<Club>("/api/v1/clubs", {
         school_id: school.id,
         fields: clubFields,
@@ -289,6 +307,7 @@ async function getSchoolRelatedRecords(
         fields: newsFields,
         per_page: 40,
       }),
+      getScopedEntityMedia("school", school.id, school.name),
     ]);
 
   const publicationCount =
@@ -302,9 +321,11 @@ async function getSchoolRelatedRecords(
     programmes: programmes.data ?? [],
     staff: staff.data ?? [],
     staffAssignments: staffAssignments.data ?? [],
+    team,
     clubs: clubs.data ?? [],
     documents: documents.data ?? [],
     news: news.data ?? [],
+    updates,
     counts: {
       departments: departments.length,
       programmes: listCount(programmes),
@@ -349,9 +370,12 @@ export type SchoolDetailOverviewData = {
   programmes: Programme[];
   staff: Person[];
   staffAssignments: StaffAssignment[];
+  team: PublicTeamData | null;
   clubs: Club[];
   documents: Document[];
   news: News[];
+  updates: EntityMediaRecord[];
+  stats: PublicStatsResponse | null;
   counts: {
     departments: number;
     programmes: number;
@@ -375,9 +399,11 @@ export async function getSchoolDetailOverviewData(
     programmes: [],
     staff: [],
     staffAssignments: [],
+    team: null,
     clubs: [],
     documents: [],
     news: [],
+    updates: [],
     counts: {
       departments: 0,
       programmes: 0,
@@ -388,11 +414,13 @@ export async function getSchoolDetailOverviewData(
       news: 0,
     },
   };
+  let stats: PublicStatsResponse | null = null;
 
   if (school?.id) {
-    [dean, related] = await Promise.all([
+    [dean, related, stats] = await Promise.all([
       getDean(school.id),
       getSchoolRelatedRecords(school),
+      getSchoolStats(school.slug),
     ]);
   }
 
@@ -400,6 +428,28 @@ export async function getSchoolDetailOverviewData(
     school: resolvedSchool,
     dean,
     ...related,
+    stats,
+    counts: stats ? mergeSchoolCounts(related.counts, stats) : related.counts,
     sourceBacked: Boolean(school),
+  };
+}
+
+function statValue(stats: PublicStatsResponse, key: string) {
+  const item = stats.stats.find((entry) => entry.key === key);
+  return typeof item?.value === "number" ? item.value : null;
+}
+
+function mergeSchoolCounts(
+  fallback: SchoolDetailOverviewData["counts"],
+  stats: PublicStatsResponse,
+): SchoolDetailOverviewData["counts"] {
+  return {
+    departments: statValue(stats, "departments") ?? fallback.departments,
+    programmes: statValue(stats, "programmes") ?? fallback.programmes,
+    staff: statValue(stats, "staff") ?? fallback.staff,
+    publications: statValue(stats, "publications") ?? fallback.publications,
+    clubs: statValue(stats, "clubs") ?? fallback.clubs,
+    documents: statValue(stats, "downloads") ?? fallback.documents,
+    news: statValue(stats, "news") ?? fallback.news,
   };
 }

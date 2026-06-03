@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ksu_common.auth import TokenPayload, get_optional_user
 from ksu_common.rbac import has_scope, requires_scope
 from ksu_common.schemas.responses import success
-from ksu_common.cache import cached_public, cache_response
+from ksu_common.cache import cache_response
 from ksu_common.audit import audit_action
 
 from ...core.database import get_db
@@ -30,7 +30,6 @@ staff_router = APIRouter(prefix="/library/staff", tags=["Library Staff"])
 
 
 @staff_router.get("/")
-@cached_public(timeout=300, vary_on=("library_id",))
 async def list_staff(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -84,13 +83,14 @@ services_router = APIRouter(prefix="/library/services", tags=["Library Services"
 
 
 @services_router.get("/")
-@cached_public(timeout=300, vary_on=("library_id",))
 async def list_services(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     library_id: uuid.UUID = Query(...),
 ):
-    items = await svc.list_services(db, library_id, public_only=True)
+    is_writer = user is not None and has_scope(user.roles, "library:write")
+    items = await svc.list_services(db, library_id, public_only=not is_writer)
     return success(data=items)
 
 

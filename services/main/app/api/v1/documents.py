@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("page", "per_page", "q", "document_type", "category", "scope_type", "scope_id", "fields", "include"))
 async def list_documents(
     db: DbSession,
     page: int = Query(1, ge=1),

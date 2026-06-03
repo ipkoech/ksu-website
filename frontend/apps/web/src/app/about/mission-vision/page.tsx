@@ -5,7 +5,6 @@ import {
   Building2,
   ChevronRight,
   ClipboardCheck,
-  Compass,
   GraduationCap,
   History,
   Landmark,
@@ -25,10 +24,7 @@ import {
   officialVision,
   quickNavigation,
 } from "@/lib/about-data";
-import {
-  AboutIllustration,
-  aboutIllustrations,
-} from "@/components/about/AboutIllustration";
+import { AboutIllustration } from "@/components/about/AboutIllustration";
 import { ScrollReveal } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";

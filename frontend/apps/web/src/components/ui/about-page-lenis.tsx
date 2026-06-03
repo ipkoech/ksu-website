@@ -2,8 +2,15 @@
 
 import type { ReactNode } from "react";
 import { ReactLenis } from "lenis/react";
+import { useReducedMotion } from "framer-motion";
 
 export function AboutPageLenis({ children }: { children: ReactNode }) {
+  const prefersReducedMotion = useReducedMotion();
+
+  if (prefersReducedMotion) {
+    return <div className="ksu-compact-public-page">{children}</div>;
+  }
+
   return (
     <ReactLenis
       root
@@ -15,7 +22,7 @@ export function AboutPageLenis({ children }: { children: ReactNode }) {
         touchMultiplier: 1,
       }}
     >
-      {children}
+      <div className="ksu-compact-public-page">{children}</div>
     </ReactLenis>
   );
 }

@@ -26,16 +26,30 @@ import {
   FormMessage,
   Input,
   RichTextEditor,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Switch,
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
-import { useCreateSchool, useSchool, useUpdateSchool, type School } from "@ksu/api-client";
+import {
+  useCreateSchool,
+  useDivisions,
+  useSchool,
+  useUpdateSchool,
+  useWing,
+  useWingsByDivision,
+  type School,
+} from "@ksu/api-client";
 
 const schoolSchema = z.object({
   name: z.string().min(1, "Name is required").max(255),
   slug: z.string().optional(),
   code: z.string().min(1, "Code is required").max(32),
   school_type: z.string().max(32).optional(),
+  administrative_wing_id: z.string().uuid().optional().or(z.literal("")),
   dean_id: z.string().uuid().optional().or(z.literal("")),
   establishment_date: z.string().optional(),
   about: z.string().optional(),
@@ -63,6 +77,7 @@ const defaultValues: SchoolFormValues = {
   slug: "",
   code: "",
   school_type: "school",
+  administrative_wing_id: "",
   dean_id: "",
   establishment_date: "",
   about: "",
@@ -88,6 +103,7 @@ const schoolPayloadFieldMap = {
   slug: ["slug"],
   code: ["code"],
   school_type: ["school_type"],
+  administrative_wing_id: ["administrative_wing_id"],
   dean_id: ["dean_id"],
   establishment_date: ["establishment_date"],
   about: ["about"],
@@ -122,6 +138,7 @@ function schoolValues(school: School): SchoolFormValues {
     slug: school.slug ?? "",
     code: school.code ?? "",
     school_type: school.school_type ?? "school",
+    administrative_wing_id: school.administrative_wing_id ?? "",
     dean_id: school.dean_id ?? "",
     establishment_date: dateOnly(school.establishment_date),
     about: richTextToEditorValue(school.about ?? school.description),
@@ -156,11 +173,27 @@ export default function SchoolFormPage() {
   const updateSchool = useUpdateSchool();
   const isPending = createSchool.isPending || updateSchool.isPending;
   const [hasHydratedRecord, setHasHydratedRecord] = useState(isNew);
+  const [selectedDivisionId, setSelectedDivisionId] = useState("");
 
   const form = useForm<SchoolFormValues>({
     resolver: zodResolver(schoolSchema),
     defaultValues,
   });
+  const selectedAdministrativeWingId = form.watch("administrative_wing_id");
+  const divisionsQuery = useDivisions({
+    is_active: true,
+    fields: "id,name,slug,code,division_type",
+    per_page: 100,
+  });
+  const selectedWingQuery = useWing(selectedAdministrativeWingId || "", {
+    enabled: Boolean(selectedAdministrativeWingId),
+    fields: "id,name,division_id",
+  });
+  const wingsQuery = useWingsByDivision(
+    selectedDivisionId,
+    { is_active: true, fields: "id,name,slug,code,wing_type,division_id" },
+    { enabled: Boolean(selectedDivisionId) },
+  );
 
   useEffect(() => {
     if (school) {
@@ -172,12 +205,20 @@ export default function SchoolFormPage() {
     }
   }, [form, isNew, school]);
 
+  useEffect(() => {
+    const divisionId = selectedWingQuery.data?.data?.division_id;
+    if (divisionId) {
+      setSelectedDivisionId(divisionId);
+    }
+  }, [selectedWingQuery.data?.data?.division_id]);
+
   const onSubmit = async (values: SchoolFormValues) => {
     const payload: Partial<School> = {
       name: values.name,
       slug: values.slug || slugify(values.name),
       code: values.code.toUpperCase(),
       school_type: values.school_type || "school",
+      administrative_wing_id: values.administrative_wing_id || null,
       dean_id: values.dean_id || null,
       establishment_date: values.establishment_date || null,
       about: richTextToPayloadValue(values.about),
@@ -310,6 +351,77 @@ export default function SchoolFormPage() {
                   <FormField control={form.control} name="establishment_date" render={({ field }) => (
                     <FormItem><FormLabel>Establishment Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader><CardTitle>Administrative Office</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <FormItem>
+                    <FormLabel>Division</FormLabel>
+                    <Select
+                      value={selectedDivisionId || undefined}
+                      onValueChange={(value) => {
+                        setSelectedDivisionId(value);
+                        form.setValue("administrative_wing_id", "", {
+                          shouldDirty: true,
+                          shouldTouch: true,
+                        });
+                      }}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select division" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {(divisionsQuery.data?.data ?? []).map((division) => (
+                          <SelectItem key={division.id} value={division.id}>
+                            {division.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                  <FormField control={form.control} name="administrative_wing_id" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Directorate / Wing</FormLabel>
+                      <Select
+                        value={field.value || undefined}
+                        onValueChange={field.onChange}
+                        disabled={!selectedDivisionId || wingsQuery.isLoading}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={selectedDivisionId ? "Select directorate" : "Select a division first"} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {(wingsQuery.data?.data ?? []).map((wing) => (
+                            <SelectItem key={wing.id} value={wing.id}>
+                              {wing.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  {selectedAdministrativeWingId ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        form.setValue("administrative_wing_id", "", {
+                          shouldDirty: true,
+                          shouldTouch: true,
+                        });
+                      }}
+                    >
+                      Clear directorate
+                    </Button>
+                  ) : null}
                 </CardContent>
               </Card>
 

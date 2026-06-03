@@ -86,7 +86,7 @@ from .auth import (
 from .base import APIResponse, BaseReadSchema, BaseSchema, PaginatedResponse
 from .document import DocumentCreate, DocumentRead, DocumentUpdate, PolicyCreate, PolicyRead, PolicyUpdate
 from .exchange import ExchangeProgrammeCreate, ExchangeProgrammeRead, ExchangeProgrammeUpdate
-from .governance import BoardCreate, BoardRead, BoardUpdate
+from .governance import BoardCreate, BoardMemberCreate, BoardRead, BoardUpdate
 from .imports import (
     ImportColumnRead,
     ImportCommitRead,
@@ -249,6 +249,7 @@ __all__ = [
     "StaffAssignmentRead",
     "StaffEntityOption",
     "BoardCreate",
+    "BoardMemberCreate",
     "BoardUpdate",
     "BoardRead",
     "ImportColumnRead",

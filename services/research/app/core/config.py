@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,6 +27,8 @@ class Settings(BaseSettings):
 
     MAIN_SERVICE_URL: str = "http://main:8000"
     INTERNAL_API_KEY: str = "change-me-internal"
+    REFERENCE_VALIDATION_MODE: str = "warn"  # disabled | warn | strict
+    REFERENCE_VALIDATION_TIMEOUT_SECONDS: float = 5.0
 
     CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
@@ -51,6 +53,23 @@ class Settings(BaseSettings):
         if not v.startswith(valid_prefixes):
             raise ValueError("Celery broker/backend must use redis, rediss, amqp, or rpc URL")
         return v
+
+    @field_validator("REFERENCE_VALIDATION_MODE")
+    @classmethod
+    def validate_reference_validation_mode(cls, v: str) -> str:
+        normalized = v.lower()
+        if normalized not in {"disabled", "warn", "strict"}:
+            raise ValueError("REFERENCE_VALIDATION_MODE must be disabled, warn, or strict")
+        return normalized
+
+    @model_validator(mode="after")
+    def reject_insecure_production_defaults(self) -> "Settings":
+        if self.APP_ENV.lower() not in {"development", "dev", "local", "test", "testing"}:
+            if self.INTERNAL_API_KEY == "change-me-internal":
+                raise ValueError("INTERNAL_API_KEY must be configured outside local development")
+            if self.REFERENCE_VALIDATION_MODE == "disabled":
+                raise ValueError("REFERENCE_VALIDATION_MODE cannot be disabled outside local development")
+        return self
 
 
 @lru_cache

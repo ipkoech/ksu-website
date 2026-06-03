@@ -26,6 +26,7 @@ from ..schemas import (
     LibraryLoanUpdate,
     LibraryReservationCreate,
     LibraryReservationOut,
+    LibraryReservationUpdate,
     LibraryResourceCreate,
     LibraryResourceUpdate,
 )
@@ -298,14 +299,18 @@ async def create_reservation(
 
 
 async def cancel_reservation(
-    db: AsyncSession, reservation_id: uuid.UUID, person_id: uuid.UUID
+    db: AsyncSession,
+    reservation_id: uuid.UUID,
+    person_id: uuid.UUID,
+    *,
+    require_owner: bool = True,
 ) -> None:
-    """Cancel a reservation (only by the owner)."""
+    """Cancel a reservation."""
     reservation = await LibraryResourceReservation.get_or_raise(
         db, reservation_id, error_message=f"Reservation {reservation_id} not found"
     )
 
-    if reservation.requester_person_id != person_id:
+    if require_owner and reservation.requester_person_id != person_id:
         raise PermissionError("You can only cancel your own reservations")
     if reservation.status not in {"pending", "ready"}:
         raise ValueError(
@@ -314,6 +319,24 @@ async def cancel_reservation(
 
     reservation.status = "cancelled"
     await db.commit()
+
+
+async def update_reservation(
+    db: AsyncSession,
+    reservation_id: uuid.UUID,
+    data: LibraryReservationUpdate,
+) -> LibraryReservationOut:
+    """Update a reservation status and staff-managed hold metadata."""
+    reservation = await LibraryResourceReservation.get_or_raise(
+        db, reservation_id, error_message=f"Reservation {reservation_id} not found"
+    )
+
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(reservation, field, value)
+
+    await db.commit()
+    await db.refresh(reservation)
+    return LibraryReservationOut.model_validate(reservation)
 
 
 async def list_reservations(

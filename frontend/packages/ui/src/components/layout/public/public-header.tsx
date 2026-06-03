@@ -4,6 +4,7 @@ import {
   useState,
   useEffect,
   useRef,
+  type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
 } from "react";
@@ -11,8 +12,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { Menu, ChevronDown, ExternalLink } from "lucide-react";
+import {
+  Menu,
+  ChevronDown,
+  ExternalLink,
+  Search,
+  Mail,
+  Phone,
+} from "lucide-react";
 import { Button } from "../../ui/button";
 import {
   Sheet,
@@ -138,29 +145,33 @@ export function PublicHeader({
     <>
       <header
         className={cn(
-          "sticky top-0 z-50 transition-all duration-300",
+          "sticky top-0 z-50 transition-all duration-300 motion-reduce:transition-none",
           isTransparent
             ? "bg-transparent"
-            : "bg-white/95 backdrop-blur-md shadow-sm",
+            : "border-b border-primary/10 bg-white/95 shadow-[0_12px_36px_-32px_rgba(30,64,175,0.55)] backdrop-blur-md",
           className,
         )}
       >
         <nav className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="flex h-[74px] items-center justify-between lg:h-[68px]">
+          <div className="flex h-[89px] items-center justify-between lg:h-[82px]">
             {/* Logo */}
-            <Link href="/" className="z-10 flex shrink-0 items-center gap-3">
+            <Link
+              href="/"
+              className="z-10 flex min-h-11 shrink-0 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              aria-label="Kisii University home"
+            >
               <Image
                 src="/logos/ksu-logo.png"
                 alt="Kisii University"
                 width={56}
                 height={56}
-                className="h-11 w-auto sm:h-12"
+                className="h-12 w-auto sm:h-14 lg:h-12"
                 priority
               />
-              <span className="min-w-0 lg:hidden xl:block">
+              <span className="min-w-0">
                 <span
                   className={cn(
-                    "block font-[family-name:var(--font-display)] text-lg font-bold uppercase leading-none text-primary transition-colors sm:text-2xl lg:text-xl",
+                    "block font-[family-name:var(--font-display)] text-lg font-bold uppercase leading-none text-primary transition-colors motion-reduce:transition-none sm:text-2xl lg:text-xl",
                     isTransparent ? "text-white" : "text-primary",
                   )}
                 >
@@ -168,7 +179,7 @@ export function PublicHeader({
                 </span>
                 <span
                   className={cn(
-                    "mt-1 block text-xs font-semibold leading-none transition-colors sm:text-sm lg:text-xs",
+                    "mt-1 block text-xs font-semibold leading-none transition-colors motion-reduce:transition-none sm:text-sm lg:text-xs",
                     isTransparent ? "text-white/80" : "text-slate-600",
                   )}
                 >
@@ -178,7 +189,7 @@ export function PublicHeader({
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-0.5">
+            <div className="hidden xl:flex items-center gap-0.5">
               {navigation.map((item, index) => (
                 <MegaMenuDropdown
                   key={item.label}
@@ -194,20 +205,34 @@ export function PublicHeader({
                   isOpen={openDropdown === item.label}
                   onOpen={() => openNavDropdown(item.label)}
                   onClose={closeNavDropdown}
+                  onDismiss={() => setOpenDropdown(null)}
                 />
               ))}
             </div>
 
             {/* Actions */}
             <div className="flex items-center gap-2">
+              <Link
+                href="/search"
+                className={cn(
+                  "inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors motion-reduce:transition-none",
+                  isTransparent
+                    ? "text-white hover:bg-white/10"
+                    : "text-primary hover:bg-primary/10 hover:text-primary",
+                )}
+                aria-label="Search Kisii University"
+              >
+                <Search className="h-5 w-5" aria-hidden />
+              </Link>
+
               <Button
                 asChild
                 size="sm"
                 className={cn(
-                  "hidden xl:flex",
+                  "hidden h-11 rounded-full px-5 text-sm font-semibold xl:flex",
                   isTransparent
                     ? "bg-white text-primary hover:bg-gray-100"
-                    : "bg-secondary text-white hover:bg-secondary/90",
+                    : "bg-primary text-white shadow-sm shadow-primary/20 hover:bg-primary/90",
                 )}
               >
                 <Link href="/admissions/how-to-apply">Apply Now</Link>
@@ -218,12 +243,12 @@ export function PublicHeader({
                 <SheetTrigger asChild>
                   <button
                     className={cn(
-                      "lg:hidden p-2 rounded-md transition-colors",
+                      "h-11 w-11 rounded-full p-2 transition-colors motion-reduce:transition-none xl:hidden",
                       isTransparent
                         ? "text-white hover:bg-white/10"
-                        : "text-gray-700 hover:bg-gray-100",
+                        : "text-primary hover:bg-primary/10",
                     )}
-                    aria-label="Open menu"
+                    aria-label="Open site menu"
                   >
                     <Menu className="w-6 h-6" />
                   </button>
@@ -292,8 +317,8 @@ function buildNavigation(megaMenuData?: MegaMenuData): NavItem[] {
         description: "Council and Senate",
       },
       {
-        label: "Leadership",
-        href: "/about/leadership",
+        label: "University Management",
+        href: "/about/university-management",
         description: "University management team",
       },
       // Quality
@@ -439,9 +464,35 @@ function buildNavigation(megaMenuData?: MegaMenuData): NavItem[] {
     ],
   };
 
+  const mediaDeskItem: NavItem = {
+    label: "Media Desk",
+    href: "/media",
+    children: [
+      {
+        label: "News",
+        href: "/media/news",
+        description: "Latest university news",
+      },
+      {
+        label: "Articles",
+        href: "/media/articles",
+        description: "Stories and feature articles",
+      },
+      {
+        label: "Events",
+        href: "/media/events",
+        description: "Upcoming and recent events",
+      },
+      {
+        label: "Gallery",
+        href: "/media/gallery",
+        description: "Published photos and media",
+      },
+    ],
+  };
+
   // External links
   const externalItems: NavItem[] = [
-    { label: "News", href: "/news" },
     {
       label: "Research",
       href: "https://research.kisiiuniversity.ac.ke",
@@ -460,6 +511,7 @@ function buildNavigation(megaMenuData?: MegaMenuData): NavItem[] {
     admissionsItem,
     academicsItem,
     campusLifeItem,
+    mediaDeskItem,
     ...externalItems,
   ];
 }
@@ -471,6 +523,7 @@ function MegaMenuDropdown({
   isOpen,
   onOpen,
   onClose,
+  onDismiss,
 }: {
   item: NavItem;
   align: "start" | "center" | "end";
@@ -478,6 +531,7 @@ function MegaMenuDropdown({
   isOpen: boolean;
   onOpen: () => void;
   onClose: () => void;
+  onDismiss: () => void;
 }) {
   const triggerRef = useRef<HTMLDivElement | null>(null);
   const [dropdownFrame, setDropdownFrame] = useState<{
@@ -510,6 +564,7 @@ function MegaMenuDropdown({
     isStructuredMegaMenu ||
     rightSections.length > 0 ||
     looseDynamicItems.length > 0;
+  const menuId = `${item.label.toLowerCase().replace(/\s+/g, "-")}-menu`;
 
   const getDropdownFrame = (anchorElement?: HTMLElement | null) => {
     if (typeof window === "undefined") {
@@ -560,6 +615,34 @@ function MegaMenuDropdown({
     onOpen();
   };
 
+  const handleKeyboardOpen = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      onDismiss();
+      event.currentTarget.focus();
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      updateDropdownFrame(event.currentTarget);
+      if (isOpen) {
+        onDismiss();
+      } else {
+        onOpen();
+      }
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      updateDropdownFrame(event.currentTarget);
+      onOpen();
+      window.setTimeout(() => {
+        document.querySelector<HTMLAnchorElement>(`#${menuId} a`)?.focus();
+      }, 0);
+    }
+  };
+
   useEffect(() => {
     if (!isOpen || !hasChildren) {
       setDropdownFrame(null);
@@ -591,10 +674,10 @@ function MegaMenuDropdown({
         target={item.external ? "_blank" : undefined}
         rel={item.external ? "noopener noreferrer" : undefined}
         className={cn(
-          "flex min-h-9 items-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+          "flex min-h-11 items-center gap-1 rounded-full px-3.5 py-2 text-sm font-semibold transition-colors motion-reduce:transition-none",
           isTransparent
-            ? "text-white/90 hover:text-white hover:bg-white/10"
-            : "text-gray-700 hover:text-gray-900 hover:bg-gray-100",
+            ? "text-white/90 hover:bg-white/10 hover:text-white"
+            : "text-slate-700 hover:bg-primary/10 hover:text-primary",
         )}
       >
         {item.label}
@@ -610,37 +693,77 @@ function MegaMenuDropdown({
       onMouseEnter={handleOpen}
       onMouseLeave={onClose}
     >
-      <button
-        type="button"
-        aria-expanded={isOpen}
+      <div
         className={cn(
-          "flex min-h-9 items-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+          "flex min-h-11 items-center overflow-hidden rounded-full text-sm font-semibold transition-colors motion-reduce:transition-none",
           isTransparent
-            ? "text-white/90 hover:text-white hover:bg-white/10"
-            : "text-gray-700 hover:text-gray-900 hover:bg-gray-100",
-          isOpen && (isTransparent ? "bg-white/10 text-white" : "bg-gray-100"),
+            ? "text-white/90 hover:bg-white/10 hover:text-white"
+            : "text-slate-700 hover:bg-primary/10 hover:text-primary",
+          isOpen &&
+            (isTransparent
+              ? "bg-white/10 text-white"
+              : "bg-primary/10 text-primary"),
         )}
       >
-        {item.label}
-        <ChevronDown
-          className={cn("w-4 h-4 transition-transform", isOpen && "rotate-180")}
-        />
-      </button>
+        <Link
+          href={item.href}
+          className="flex min-h-11 items-center px-3.5 py-2"
+          target={item.external ? "_blank" : undefined}
+          rel={item.external ? "noopener noreferrer" : undefined}
+          onFocus={(event) => {
+            updateDropdownFrame(event.currentTarget);
+          }}
+        >
+          {item.label}
+        </Link>
+        <button
+          type="button"
+          aria-expanded={isOpen}
+          aria-haspopup="menu"
+          aria-controls={isOpen ? menuId : undefined}
+          aria-label={`Open ${item.label} navigation`}
+          onClick={(event) => {
+            updateDropdownFrame(event.currentTarget);
+            if (isOpen) {
+              onDismiss();
+            } else {
+              onOpen();
+            }
+          }}
+          onFocus={(event) => {
+            updateDropdownFrame(event.currentTarget);
+          }}
+          onKeyDown={handleKeyboardOpen}
+          className="flex min-h-11 items-center px-2.5 py-2 transition motion-reduce:transition-none hover:bg-primary/10"
+        >
+          <ChevronDown
+            className={cn(
+              "w-4 h-4 transition-transform",
+              isOpen && "rotate-180",
+            )}
+          />
+        </button>
+      </div>
 
       {isOpen && activeDropdownFrame
         ? createPortal(
-            <motion.div
+            <div
               key={`${item.label}-menu`}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              transition={{ duration: 0.15 }}
+              id={menuId}
+              aria-label={`${item.label} navigation`}
+              role="menu"
               className={cn(
-                "fixed z-50 rounded-xl border bg-white shadow-xl",
+                "fixed z-50 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-lg border border-primary/10 bg-white shadow-[0_24px_80px_-48px_rgba(30,64,175,0.6)]",
                 isMegaMenu ? "p-4" : "py-2",
               )}
               onMouseEnter={onOpen}
               onMouseLeave={onClose}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  onDismiss();
+                  triggerRef.current?.querySelector("button")?.focus();
+                }
+              }}
               style={{
                 left: activeDropdownFrame.left,
                 top: activeDropdownFrame.top,
@@ -659,7 +782,7 @@ function MegaMenuDropdown({
                     ) : null}
                   </div>
 
-                  <div className="min-w-0 border-t pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                  <div className="min-w-0 border-t border-primary/10 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                     <GroupedMenuGrid sections={rightSections} />
                   </div>
                 </div>
@@ -669,7 +792,8 @@ function MegaMenuDropdown({
                     <Link
                       key={child.href}
                       href={child.href}
-                      className="block min-h-12 px-4 py-2.5 transition-colors hover:bg-gray-50 group"
+                      role="menuitem"
+                      className="block min-h-12 px-4 py-2.5 transition-colors motion-reduce:transition-none hover:bg-primary/5 group"
                     >
                       <div className="font-medium text-gray-900 group-hover:text-primary transition-colors text-sm">
                         {child.label}
@@ -685,17 +809,18 @@ function MegaMenuDropdown({
               )}
 
               {isMegaMenu && (
-                <div className="mt-4 shrink-0 border-t pt-4">
+                <div className="mt-4 shrink-0 border-t border-primary/10 pt-4">
                   <Link
                     href={item.href}
-                    className="inline-flex min-h-8 items-center gap-1 text-sm font-medium text-primary hover:underline"
+                    role="menuitem"
+                    className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary hover:underline"
                   >
                     View all {item.label.toLowerCase()}
-                    <ChevronDown className="w-4 h-4 -rotate-90" />
+                    <ChevronDown className="w-4 h-4 -rotate-90" aria-hidden />
                   </Link>
                 </div>
               )}
-            </motion.div>,
+            </div>,
             document.body,
           )
         : null}
@@ -726,11 +851,14 @@ function MenuCardLink({ item }: { item: NavItem }) {
       href={item.href}
       target={item.external ? "_blank" : undefined}
       rel={item.external ? "noopener noreferrer" : undefined}
-      className="-mx-3 block min-h-12 rounded-lg px-3 py-2 transition-colors hover:bg-gray-50 group"
+      role="menuitem"
+      className="-mx-3 block min-h-12 rounded-lg px-3 py-2 transition-colors motion-reduce:transition-none hover:bg-gray-50 group"
     >
       <div className="flex items-center gap-2 text-sm font-medium text-gray-900 transition-colors group-hover:text-primary">
         <span className="min-w-0 flex-1">{item.label}</span>
-        {item.external ? <ExternalLink className="h-3.5 w-3.5" /> : null}
+        {item.external ? (
+          <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+        ) : null}
       </div>
       {item.description && (
         <div className="text-xs leading-5 text-gray-500">
@@ -805,7 +933,8 @@ function MenuLinkGrid({ title, items }: { title: string; items: NavItem[] }) {
             href={child.href}
             target={child.external ? "_blank" : undefined}
             rel={child.external ? "noopener noreferrer" : undefined}
-            className="block min-h-9 rounded-lg px-2.5 py-1.5 text-sm leading-5 text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary"
+            role="menuitem"
+            className="block min-h-11 rounded-lg px-2.5 py-2 text-sm leading-5 text-gray-700 transition-colors motion-reduce:transition-none hover:bg-gray-50 hover:text-primary"
           >
             <span className="break-words">{child.label}</span>
           </Link>
@@ -832,8 +961,49 @@ function MobileNav({
 
   return (
     <div className="flex flex-col h-full">
+      <form
+        action="/search"
+        className="border-b p-4"
+        role="search"
+        onSubmit={onClose}
+      >
+        <label htmlFor="mobile-site-search" className="sr-only">
+          Search Kisii University
+        </label>
+        <div className="relative">
+          <Search
+            aria-hidden
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500"
+          />
+          <input
+            id="mobile-site-search"
+            name="q"
+            type="search"
+            placeholder="Search Kisii University"
+            className="h-11 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+      </form>
+
+      <div className="grid grid-cols-2 gap-2 border-b p-4">
+        <a
+          href="tel:+254720875082"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 transition hover:border-primary/30 hover:text-primary"
+        >
+          <Phone aria-hidden className="h-4 w-4" />
+          Call
+        </a>
+        <a
+          href="mailto:info@kisiiuniversity.ac.ke"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 transition hover:border-primary/30 hover:text-primary"
+        >
+          <Mail aria-hidden className="h-4 w-4" />
+          Email
+        </a>
+      </div>
+
       {/* Navigation */}
-      <nav className="flex-1 py-4">
+      <nav className="flex-1 py-4" aria-label="Mobile site navigation">
         {navigation.map((item) => (
           <MobileNavItem
             key={item.href}
@@ -855,14 +1025,14 @@ function MobileNav({
         <div className="space-y-2">
           <Link
             href="/m/staff"
-            className="block min-h-9 text-sm text-gray-700 hover:text-primary"
+            className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
             onClick={onClose}
           >
             Staff Portal
           </Link>
           <a
             href="https://portal.kisiiuniversity.ac.ke"
-            className="block min-h-9 text-sm text-gray-700 hover:text-primary"
+            className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -870,7 +1040,7 @@ function MobileNav({
           </a>
           <a
             href="https://elearning.kisiiuniversity.ac.ke"
-            className="block min-h-9 text-sm text-gray-700 hover:text-primary"
+            className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -919,6 +1089,8 @@ function MobileNavItem({
     <div>
       <button
         onClick={onToggle}
+        aria-expanded={isExpanded}
+        aria-controls={`mobile-nav-${item.href.replace(/[^a-zA-Z0-9_-]/g, "-")}`}
         className="flex min-h-11 w-full items-center justify-between py-3 pr-4 text-left text-gray-900 hover:bg-gray-50"
         style={{ paddingLeft: indent }}
       >
@@ -935,41 +1107,37 @@ function MobileNavItem({
             "ml-3 h-5 w-5 shrink-0 text-gray-400 transition-transform",
             isExpanded && "rotate-180",
           )}
+          aria-hidden
         />
       </button>
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden bg-gray-50"
-          >
-            <MobileNavLink
-              item={{
-                label: `All ${item.label}`,
-                href: item.href,
-                external: item.external,
-              }}
-              depth={depth + 1}
+      {isExpanded && (
+        <div
+          id={`mobile-nav-${item.href.replace(/[^a-zA-Z0-9_-]/g, "-")}`}
+          className="overflow-hidden bg-gray-50"
+        >
+          <MobileNavLink
+            item={{
+              label: `All ${item.label}`,
+              href: item.href,
+              external: item.external,
+            }}
+            depth={depth + 1}
+            onClose={onClose}
+          />
+          {item.children!.map((child) => (
+            <MobileNavItem
+              key={child.href}
+              item={child}
+              isExpanded={expandedItems.includes(child.href)}
+              expandedItems={expandedItems}
+              onToggle={() => onToggleChild(child.href)}
+              onToggleChild={onToggleChild}
               onClose={onClose}
+              depth={depth + 1}
             />
-            {item.children!.map((child) => (
-              <MobileNavItem
-                key={child.href}
-                item={child}
-                isExpanded={expandedItems.includes(child.href)}
-                expandedItems={expandedItems}
-                onToggle={() => onToggleChild(child.href)}
-                onToggleChild={onToggleChild}
-                onClose={onClose}
-                depth={depth + 1}
-              />
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -993,7 +1161,9 @@ function MobileNavLink({
       style={{ paddingLeft: `${1 + depth}rem` }}
     >
       <span className="min-w-0 flex-1">{item.label}</span>
-      {item.external && <ExternalLink className="h-4 w-4 text-gray-400" />}
+      {item.external && (
+        <ExternalLink className="h-4 w-4 text-gray-400" aria-hidden />
+      )}
     </Link>
   );
 }

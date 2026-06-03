@@ -9,38 +9,58 @@ import { getNewsColumns } from "./columns";
 import { PageTransition } from "@/lib/animations";
 import { TableSearch } from "@/components/shared/table-search";
 import { useState } from "react";
-
+import { Button } from "@ksu/ui/components";
+import Link from "next/link";
 
 export default function NewsPage() {
-    const [search, setSearch] = useState("");
-    const { data: newsResponse, isLoading } = useAdminNewsList({ search: search || undefined });
-    const news = newsResponse?.data || [];
-    const { mutateAsync: deleteNews } = useDeleteNews();
-    const { canCreate, canEdit, canDelete } = usePermissions();
-    const { confirmDelete, dialog } = useDeleteConfirm();
+  const [search, setSearch] = useState("");
+  const { data: newsResponse, isLoading } = useAdminNewsList({
+    search: search || undefined,
+  });
+  const news = newsResponse?.data || [];
+  const { mutateAsync: deleteNews } = useDeleteNews();
+  const { canCreate, canEdit, canDelete } = usePermissions();
+  const { confirmDelete, dialog } = useDeleteConfirm();
 
-    const columns = getNewsColumns({
-        canEdit: canEdit("content"),
-        canDelete: canDelete("content"),
-        onDelete: (id) => confirmDelete("news article", () => deleteNews(id)),
-    });
+  const columns = getNewsColumns({
+    canEdit: canEdit("content"),
+    canDelete: canDelete("content"),
+    onDelete: (id) => confirmDelete("news article", () => deleteNews(id)),
+  });
 
-    return (
-        <PageTransition>
-            <PageHeader
-                title="News"
-                description="Manage university news articles"
-                createHref={canCreate("content") ? "/content/news/new" : undefined}
-                createLabel="Add News"
-            />
-            <DataTable
-                data={news || []}
-                columns={columns}
-                isLoading={isLoading}
-                toolbar={<TableSearch value={search} onChange={setSearch} placeholder="Search news by title, slug, or summary" />}
-                emptyMessage={search ? "No news articles match this search." : "No news articles found. Create your first article."}
-            />
-            {dialog}
-        </PageTransition>
-    );
+  return (
+    <PageTransition>
+      <PageHeader
+        title="News"
+        description="Manage university news articles"
+        createHref={canCreate("content") ? "/content/news/new" : undefined}
+        createLabel="Add News"
+      />
+      <DataTable
+        data={news || []}
+        columns={columns}
+        isLoading={isLoading}
+        toolbar={
+          <TableSearch
+            value={search}
+            onChange={setSearch}
+            placeholder="Search news by title, slug, or summary"
+          />
+        }
+        emptyMessage={
+          search
+            ? "No news articles match this search."
+            : "No news articles found. Create your first article."
+        }
+        emptyAction={
+          !search && canCreate("content") ? (
+            <Button asChild size="sm">
+              <Link href="/content/news/new">Add News</Link>
+            </Button>
+          ) : null
+        }
+      />
+      {dialog}
+    </PageTransition>
+  );
 }

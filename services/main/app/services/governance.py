@@ -88,18 +88,45 @@ class GovernanceService:
         board_id: uuid.UUID,
         person_id: uuid.UUID,
         role: str,
+        **data,
     ) -> StaffAssignment:
         board = await GovernanceService.get_board(db, board_id)
         if board is None:
             raise ValueError("Board not found")
-        return await StaffService.assign(
+
+        duplicate = await db.execute(
+            select(StaffAssignment).where(
+                StaffAssignment.entity_type == "board",
+                StaffAssignment.entity_id == board_id,
+                StaffAssignment.person_id == person_id,
+                StaffAssignment.status == "active",
+                StaffAssignment.deleted_at.is_(None),
+            )
+        )
+        if duplicate.scalars().first() is not None:
+            raise ValueError("Person is already an active member of this board")
+
+        conflict = await StaffService.check_position_conflict(db, "board", board_id, role)
+        if conflict is not None:
+            raise ValueError(f"{StaffService.role_label(role)} is already assigned on this board")
+
+        assignment = await StaffService.assign(
             db,
             person_id=person_id,
             entity_type="board",
             entity_id=board_id,
             role=role,
-            is_primary=False,
+            **data,
         )
+        if role in {"chairperson", "council_chair"}:
+            board.chairperson_id = person_id
+        elif role == "vice_chairperson":
+            board.vice_chairperson_id = person_id
+        elif role in {"secretary", "board_secretary"}:
+            board.secretary_id = person_id
+        await db.flush()
+        await db.refresh(assignment)
+        return assignment
 
     @staticmethod
     async def remove_member(

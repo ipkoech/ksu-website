@@ -5,7 +5,15 @@ import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, Database, Search, X } from "lucide-react";
 import { libraryApi, researchApi } from "@ksu/api-client";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from "@ksu/ui/components";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Input,
+} from "@ksu/ui/components";
 import { PageHeader } from "@/components/layout";
 import { getResponseCount } from "@/lib/counts";
 
@@ -58,22 +66,34 @@ function stringValue(record: ResourceRecord, keys: string[]) {
 }
 
 function recordTitle(record: ResourceRecord) {
-  return stringValue(record, [
-    "title",
-    "name",
-    "project_title",
-    "publication_title",
-    "grant_title",
-    "resource_title",
-    "display_name",
-    "slug",
-    "id",
-  ]) ?? "Untitled record";
+  return (
+    stringValue(record, [
+      "title",
+      "name",
+      "project_title",
+      "publication_title",
+      "grant_title",
+      "resource_title",
+      "display_name",
+      "slug",
+      "id",
+    ]) ?? "Untitled record"
+  );
 }
 
 function recordMeta(record: ResourceRecord) {
-  const status = stringValue(record, ["status", "approval_status", "is_active", "is_public"]);
-  const updated = stringValue(record, ["updated_at", "created_at", "start_date", "published_at"]);
+  const status = stringValue(record, [
+    "status",
+    "approval_status",
+    "is_active",
+    "is_public",
+  ]);
+  const updated = stringValue(record, [
+    "updated_at",
+    "created_at",
+    "start_date",
+    "published_at",
+  ]);
 
   return [status, updated].filter(Boolean).join(" · ");
 }
@@ -104,18 +124,14 @@ export function ServiceResourcePage({
 
   return (
     <div>
-      <PageHeader
-        title={title}
-        description={description}
-        backHref={backHref}
-      />
+      <PageHeader title={title} description={description} backHref={backHref} />
 
       <div className="space-y-6 p-6">
         <div className="grid gap-4 md:grid-cols-[0.6fr_1.4fr]">
           <Card>
             <CardHeader>
-              <CardTitle>Backend source</CardTitle>
-              <CardDescription>{endpoint}</CardDescription>
+              <CardTitle>Service status</CardTitle>
+              <CardDescription>Current record availability</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between rounded-lg border bg-background p-3">
@@ -124,7 +140,11 @@ export function ServiceResourcePage({
                   <span className="text-sm font-medium">Records</span>
                 </div>
                 <span className="font-semibold">
-                  {resourceQuery.isLoading ? "--" : resourceQuery.isError ? "Unavailable" : count ?? records.length}
+                  {resourceQuery.isLoading
+                    ? "--"
+                    : resourceQuery.isError
+                      ? "Unavailable"
+                      : (count ?? records.length)}
                 </span>
               </div>
               <p className="text-sm text-muted-foreground">{backendNote}</p>
@@ -134,7 +154,9 @@ export function ServiceResourcePage({
           <Card>
             <CardHeader>
               <CardTitle>Records</CardTitle>
-              <CardDescription>Previewing the first page returned by the backend.</CardDescription>
+              <CardDescription>
+                Showing recent records from this service.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="relative">
@@ -162,26 +184,37 @@ export function ServiceResourcePage({
               {resourceQuery.isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((item) => (
-                    <div key={item} className="h-16 animate-pulse rounded-lg bg-muted" />
+                    <div
+                      key={item}
+                      className="h-16 animate-pulse rounded-lg bg-muted"
+                    />
                   ))}
                 </div>
               ) : resourceQuery.isError ? (
                 <div className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm">
                   <AlertCircle className="mt-0.5 h-4 w-4 text-destructive" />
                   <div>
-                    <p className="font-medium text-destructive">Data unavailable</p>
-                    <p className="mt-1 text-muted-foreground">The service endpoint did not return data for this session.</p>
+                    <p className="font-medium text-destructive">
+                      Data unavailable
+                    </p>
+                    <p className="mt-1 text-muted-foreground">
+                      The service endpoint did not return data for this session.
+                    </p>
                   </div>
                 </div>
               ) : records.length === 0 ? (
-                <p className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">{emptyMessage}</p>
+                <p className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">
+                  {emptyMessage}
+                </p>
               ) : (
                 <div className="divide-y rounded-lg border">
                   {records.map((record, index) => (
                     <div key={String(record.id ?? index)} className="p-4">
                       <div>
                         <p className="font-medium">{recordTitle(record)}</p>
-                        <p className="mt-1 text-sm text-muted-foreground">{recordMeta(record) || "No status metadata"}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {recordMeta(record) || "No status metadata"}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -212,7 +245,9 @@ export function NeutralServicePage({
             <CardDescription>{backendNote}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">{nextStep}</p>
+            <p className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">
+              {nextStep}
+            </p>
             <Button asChild variant="outline">
               <Link href={backHref}>Back</Link>
             </Button>

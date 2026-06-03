@@ -308,6 +308,26 @@ class StaffAssignment(Base):
         sa.Index("ix_staff_assignments_entity_role", "entity_type", "entity_id", "role"),
         sa.Index("ix_staff_assignments_hierarchy", "entity_type", "entity_id", "hierarchy_level"),
         sa.Index("ix_staff_assignments_active", "status", "entity_type"),
+        sa.Index(
+            "uq_staff_assignments_active_school_dean",
+            "entity_type",
+            "entity_id",
+            "role",
+            unique=True,
+            postgresql_where=sa.text(
+                "status = 'active' AND deleted_at IS NULL AND entity_type = 'school' AND role = 'dean'"
+            ),
+        ),
+        sa.Index(
+            "uq_staff_assignments_active_department_head_role",
+            "entity_type",
+            "entity_id",
+            "role",
+            unique=True,
+            postgresql_where=sa.text(
+                "status = 'active' AND deleted_at IS NULL AND entity_type = 'department' AND role IN ('hod', 'cod', 'head')"
+            ),
+        ),
     )
 
     @property

@@ -26,6 +26,16 @@ const forgotPasswordSchema = z.object({
 
 type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
 
+function resetRequestErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message.toLowerCase() : "";
+
+  if (message.includes("network") || message.includes("fetch")) {
+    return "We could not reach the admin service. Check your connection and try again.";
+  }
+
+  return "We could not send the reset link. Check the email address and try again.";
+}
+
 export function ForgotPasswordForm() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -42,20 +52,21 @@ export function ForgotPasswordForm() {
       await requestPasswordReset(values.email);
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(resetRequestErrorMessage(err));
     }
   }
 
   if (success) {
     return (
-      <div className="space-y-4 text-center">
+      <div className="space-y-4 text-center" role="status" aria-live="polite">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
           <CheckCircle className="h-6 w-6 text-success" />
         </div>
         <div>
           <h3 className="font-semibold">Check your email</h3>
           <p className="text-sm text-muted-foreground mt-1">
-            We've sent a password reset link to your email address. The link will expire in 1 hour.
+            We've sent a password reset link to your email address. The link
+            will expire in 1 hour.
           </p>
         </div>
         <Button asChild variant="outline" className="w-full">
@@ -86,6 +97,7 @@ export function ForgotPasswordForm() {
               <FormControl>
                 <Input
                   type="email"
+                  autoComplete="username"
                   placeholder="you@kisiiuniversity.ac.ke"
                   {...field}
                 />
@@ -106,7 +118,7 @@ export function ForgotPasswordForm() {
         <div className="text-center">
           <Link
             href="/login"
-            className="inline-flex items-center text-sm text-primary hover:underline"
+            className="inline-flex min-h-11 items-center text-sm text-primary hover:underline"
           >
             <ArrowLeft className="mr-1 h-3 w-3" />
             Back to login

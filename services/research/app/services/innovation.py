@@ -13,6 +13,7 @@ InnovationService = build_simple_service(
     "description",
     "innovation_type",
     "category",
+    reference_fields={"lead_inventor_id": "persons"},
 )
 OutputService = build_simple_service(
     ResearchOutput,
@@ -22,4 +23,3 @@ OutputService = build_simple_service(
     "output_type",
     "doi",
 )
-

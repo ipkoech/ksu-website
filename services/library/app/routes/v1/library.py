@@ -238,7 +238,6 @@ files_router = APIRouter(
 
 
 @files_router.get("/")
-@cached_public(timeout=300, vary_on=())
 async def list_library_files(
     request: Request,
     library_id: uuid.UUID,

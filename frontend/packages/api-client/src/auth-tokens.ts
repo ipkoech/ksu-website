@@ -44,7 +44,11 @@ export function getStoredAccessToken() {
   return getStoredAuthTokens().accessToken;
 }
 
-export async function refreshStoredAccessToken(baseUrl: string) {
+export function getMainApiBaseUrl() {
+  return (process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000").replace(/\/$/, "");
+}
+
+export async function refreshStoredAccessToken(baseUrl = getMainApiBaseUrl()) {
   const { refreshToken } = getStoredAuthTokens();
   if (!refreshToken) return false;
 

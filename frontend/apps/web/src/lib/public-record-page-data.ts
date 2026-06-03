@@ -4,6 +4,7 @@ import {
   alumniAssociationsApi,
   announcementsApi,
   artsCultureApi,
+  blogsApi,
   clubsApi,
   contactsApi,
   departmentsApi,
@@ -45,7 +46,6 @@ import type {
   PublicCard,
   PublicIconName,
   PublicPageConfig,
-  PublicPageSection,
 } from "@/components/public/section-page";
 import {
   getAcademicsPage,
@@ -74,8 +74,18 @@ const officialSources = {
 
 const communicationsNav: PublicCard[] = [
   pageCard("News", "/news", "University news.", "news", "Open news"),
+  pageCard("Blogs", "/blogs", "Articles and blog records.", "file", "Open blogs"),
   pageCard("Events", "/events", "Event records.", "calendar", "Open events"),
   pageCard("Announcements", "/announcements", "Official public notices.", "megaphone", "Open notices"),
+];
+
+const programmeLevelOptions = [
+  { value: "", label: "All levels" },
+  { value: "certificate", label: "Certificate" },
+  { value: "diploma", label: "Diploma" },
+  { value: "undergraduate", label: "Undergraduate" },
+  { value: "masters", label: "Masters" },
+  { value: "phd", label: "PhD" },
 ];
 
 function titleFromSlug(slug?: string) {
@@ -188,7 +198,7 @@ function emptyPublishedCard(label: string, href: string, sourceLabel: string): P
 function newsCard(item: News): PublicCard {
   return pageCard(
     item.title,
-    `/news/${item.slug}`,
+    `/media/news/${item.slug}`,
     shortText(item.summary ?? item.plain_text ?? item.rich_text ?? item.content, "University news item."),
     "news",
     item.published_at ? formatDate(item.published_at) : "Read article",
@@ -198,8 +208,8 @@ function newsCard(item: News): PublicCard {
 function blogCard(item: Blog): PublicCard {
   return pageCard(
     item.title,
-    `/blogs/${item.slug}`,
-    shortText(item.summary ?? item.plain_text ?? item.rich_text ?? item.content, "University blog post."),
+    `/media/articles/${item.slug}`,
+    shortText(item.summary ?? item.excerpt ?? item.plain_text ?? item.rich_text ?? item.content, "University blog post."),
     "file",
     item.published_at ? formatDate(item.published_at) : "Read post",
   );
@@ -210,7 +220,7 @@ function eventCard(item: Event): PublicCard {
   const location = item.venue || item.location || (item.is_virtual ? "Virtual event" : "Venue to be confirmed");
   return pageCard(
     item.title,
-    `/events/${item.slug}`,
+    `/media/events/${item.slug}`,
     shortText(item.summary ?? item.plain_text ?? item.rich_text ?? item.content, `${date}. ${location}.`),
     "calendar",
     date,
@@ -220,7 +230,7 @@ function eventCard(item: Event): PublicCard {
 function announcementCard(item: Announcement): PublicCard {
   return pageCard(
     item.title,
-    `/announcements/${item.slug}`,
+    `/media/announcements/${item.slug}`,
     shortText(
       item.summary ?? item.plain_text ?? item.rich_text ?? item.content,
       `${item.priority || "Notice"} for ${item.audience || "public audiences"}.`,
@@ -272,13 +282,44 @@ function divisionCard(item: Division): PublicCard {
 }
 
 function wingCard(item: Wing): PublicCard {
+  const slug =
+    item.slug === "information-communication-and-technology"
+      ? "information-communication-and-technology-ict"
+      : item.slug;
+
   return pageCard(
     item.name,
-    `/administration/directorates/${item.slug}`,
-    shortText(item.description ?? item.mandate ?? item.service_charter, "Administrative wing record."),
+    `/administration/units/${slug}`,
+    shortText(item.description ?? item.mandate ?? item.service_charter, "Administrative unit record."),
     "compass",
-    item.code || "View wing",
+    item.code || "View unit",
   );
+}
+
+function isOvcRecord(item: { name?: string | null; code?: string | null; slug?: string | null }) {
+  const text = `${item.code ?? ""} ${item.name ?? ""} ${item.slug ?? ""}`.toLowerCase();
+  return (
+    /\bovc\b/.test(text) ||
+    text.includes("vice chancellor") ||
+    text.includes("vice-chancellor")
+  );
+}
+
+function sortOrganizationRecords<T extends { name?: string | null; code?: string | null; slug?: string | null; display_order?: number | null }>(
+  records: T[],
+) {
+  return records
+    .slice()
+    .sort((first, second) => {
+      const firstOvc = isOvcRecord(first);
+      const secondOvc = isOvcRecord(second);
+      if (firstOvc !== secondOvc) return firstOvc ? -1 : 1;
+
+      return (
+        Number(first.display_order ?? 100) - Number(second.display_order ?? 100) ||
+        (first.name ?? "").localeCompare(second.name ?? "")
+      );
+    });
 }
 
 function clubCard(item: Club): PublicCard {
@@ -357,10 +398,61 @@ export async function getNewsPageConfig(segments: string[] = []): Promise<Public
   const isCategory = area === "category";
 
   if (area && !isCategory) {
-    const [article, latest] = await Promise.all([
+    const [article, migratedBlog, latest] = await Promise.all([
       safeRecord(newsApi.getBySlug(area)),
+      safeRecord(blogsApi.getBySlug(area)),
       safeList(newsApi.list({ is_published: true, per_page: 6 })),
     ]);
+
+    if (!article && migratedBlog) {
+      const latestBlogs = await safeList(blogsApi.list({ is_published: true, per_page: 6 }));
+
+      return {
+        ...base,
+        eyebrow: migratedBlog.category || "Migrated Blog",
+        title: migratedBlog.title,
+        body: shortText(
+          migratedBlog.summary ??
+            migratedBlog.excerpt ??
+            migratedBlog.plain_text ??
+            migratedBlog.rich_text ??
+            migratedBlog.content,
+          "University article.",
+          360,
+        ),
+        sections: [
+          {
+            eyebrow: "Article Details",
+            title: migratedBlog.title,
+            body:
+              bestContent(
+                migratedBlog.rich_text,
+                migratedBlog.content,
+                migratedBlog.plain_text,
+                migratedBlog.summary,
+                migratedBlog.excerpt,
+              ) || "Article record.",
+            columns: 3,
+            cards: [
+              infoCard("Category", migratedBlog.category || "Article", "book"),
+              infoCard("Published", formatDate(migratedBlog.published_at ?? migratedBlog.created_at), "calendar"),
+              infoCard("Source", "Migrated blog record", "shield"),
+            ],
+          },
+          {
+            eyebrow: "More Articles",
+            title: "Latest blog records",
+            body: "Legacy blog slugs are preserved through migrated blog records.",
+            tone: "dark",
+            columns: 3,
+            cards: latestBlogs
+              .filter((item) => item.slug !== migratedBlog.slug)
+              .slice(0, 3)
+              .map(blogCard),
+          },
+        ],
+      };
+    }
 
     if (!article) {
       return {
@@ -438,8 +530,127 @@ export async function getNewsPageConfig(segments: string[] = []): Promise<Public
           ? categories.slice(0, 6).map((category) =>
               pageCard(
                 category,
-                `/news/category/${category.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`,
+                `/media/news/category/${category.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`,
                 `Open public records categorized as ${category}.`,
+                "book",
+                "Open category",
+              ),
+            )
+          : communicationsNav,
+      },
+    ],
+  };
+}
+
+export async function getBlogsPageConfig(segments: string[] = []): Promise<PublicPageConfig> {
+  const base = {
+    ...getNewsPage(segments),
+    sectionLabel: "Articles",
+    currentHref: `/blogs${segments.length ? `/${segments.join("/")}` : ""}`,
+    breadcrumb: [
+      { label: "Home", href: "/" },
+      { label: "News", href: "/media/news" },
+      { label: "Blogs" },
+    ],
+    eyebrow: "Articles",
+    title: "University articles and blogs",
+    body: "Articles, blog posts, and migrated public stories from Kisii University.",
+    navItems: communicationsNav.filter((item) => item.href !== "/blogs"),
+    relatedItems: communicationsNav,
+    continueItems: communicationsNav,
+  } satisfies PublicPageConfig;
+  const [area, slug] = segments;
+  const isCategory = area === "category";
+
+  if (area && !isCategory) {
+    const [article, latest] = await Promise.all([
+      safeRecord(blogsApi.getBySlug(area)),
+      safeList(blogsApi.list({ is_published: true, per_page: 6 })),
+    ]);
+
+    if (!article) {
+      return {
+        ...base,
+        title: `${titleFromSlug(area)} article not found`,
+        body: "We could not find an article for this address. Browse the latest articles below.",
+        sections: [
+          {
+            eyebrow: "Articles",
+            title: "Latest available records",
+            body: "Recent article records and related public information.",
+            columns: 3,
+            cards: latest.length ? latest.map(blogCard) : [emptyPublishedCard("articles", officialSources.news, "official news")],
+          },
+        ],
+      };
+    }
+
+    return {
+      ...base,
+      eyebrow: article.category || "Article",
+      title: article.title,
+      body: shortText(
+        article.summary ?? article.excerpt ?? article.plain_text ?? article.rich_text ?? article.content,
+        "University article.",
+        360,
+      ),
+      sections: [
+        {
+          eyebrow: "Article Details",
+          title: article.title,
+          body:
+            bestContent(article.rich_text, article.content, article.plain_text, article.summary, article.excerpt) ||
+            "Article record.",
+          columns: 3,
+          cards: [
+            infoCard("Category", article.category || "Article", "book"),
+            infoCard("Author", article.author_name || "Kisii University", "user"),
+            infoCard("Published", formatDate(article.published_at ?? article.created_at), "calendar"),
+          ],
+        },
+        {
+          eyebrow: "More Articles",
+          title: "Latest article records",
+          body: "Related migrated articles and public stories.",
+          tone: "dark",
+          columns: 3,
+          cards: latest.filter((item) => item.slug !== article.slug).slice(0, 3).map(blogCard),
+        },
+      ],
+    };
+  }
+
+  const records = await safeList(blogsApi.list({ is_published: true, per_page: 18 }));
+  const filtered =
+    isCategory && slug
+      ? records.filter((item) => (item.category ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-") === slug)
+      : records;
+  const categories = Array.from(new Set(records.map((item) => item.category).filter(Boolean))) as string[];
+
+  return {
+    ...base,
+    title: isCategory && slug ? `${titleFromSlug(slug)} articles` : "University articles and blogs",
+    body: filtered.length ? "Article records." : "No matching article records are currently listed.",
+    sections: [
+      {
+        eyebrow: "Articles",
+        title: isCategory && slug ? `${titleFromSlug(slug)} records` : "Latest articles and blog posts",
+        body: "Cards are generated from blog records, including migrated legacy posts.",
+        columns: 3,
+        cards: filtered.length ? filtered.map(blogCard) : [emptyPublishedCard("articles", officialSources.news, "official news")],
+      },
+      {
+        eyebrow: "Categories",
+        title: "Available article categories",
+        body: "Categories are generated from currently public records.",
+        tone: "dark",
+        columns: 3,
+        cards: categories.length
+          ? categories.slice(0, 6).map((category) =>
+              pageCard(
+                category,
+                `/media/articles/category/${category.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`,
+                `Open public article records categorized as ${category}.`,
                 "book",
                 "Open category",
               ),
@@ -453,6 +664,37 @@ export async function getNewsPageConfig(segments: string[] = []): Promise<Public
 export async function getEventsPageConfig(segments: string[] = []): Promise<PublicPageConfig> {
   const base = getEventsPage(segments);
   const [slug] = segments;
+
+  if (slug === "past") {
+    const records = await safeList(eventsApi.list({ is_published: true, upcoming: false, per_page: 18 }));
+
+    return {
+      ...base,
+      currentHref: "/events/past",
+      eyebrow: "Past Events",
+      title: "Past events",
+      body: records.length
+        ? "Past event records from the public events archive."
+        : "No past event records are currently listed.",
+      sections: [
+        {
+          eyebrow: "Past Events",
+          title: "Event archive",
+          body: "Cards are generated from published event records that are no longer upcoming.",
+          columns: 3,
+          cards: records.length ? records.map(eventCard) : [emptyPublishedCard("past events", officialSources.conferences, "conference portal")],
+        },
+        {
+          eyebrow: "Communication Links",
+          title: "News, events, and notices",
+          body: "Public communications remain separated by purpose.",
+          tone: "dark",
+          columns: 3,
+          cards: communicationsNav,
+        },
+      ],
+    };
+  }
 
   if (slug) {
     const [event, upcoming] = await Promise.all([
@@ -549,7 +791,7 @@ export async function getAnnouncementsPageConfig(segments: string[] = []): Promi
     if (!announcement) {
       return {
         ...base,
-        currentHref: `/announcements/${slug}`,
+        currentHref: `/media/announcements/${slug}`,
         title: `${titleFromSlug(slug)} announcement not found`,
         body: "No matching announcement was found.",
         sections: [
@@ -579,7 +821,7 @@ export async function getAnnouncementsPageConfig(segments: string[] = []): Promi
 
     return {
       ...base,
-      currentHref: `/announcements/${slug}`,
+      currentHref: `/media/announcements/${slug}`,
       eyebrow: announcement.category || "Announcement",
       title: announcement.title,
       body: shortText(announcement.summary ?? announcement.plain_text ?? announcement.rich_text ?? announcement.content, "Announcement.", 250),
@@ -787,19 +1029,31 @@ export async function getAdministrationPageConfig(segments: string[] = []): Prom
     sections: area === "organization"
       ? [
           {
-            eyebrow: "Organization Structure",
-            title: "Published administrative structure",
-            body: "Division and unit cards are generated from organization records.",
+            eyebrow: "Executive Offices",
+            title: "Offices and administrative divisions",
+            body: "The Office of the Vice Chancellor leads the public organization structure, followed by published administrative divisions.",
             columns: 3,
-            cards: divisions.length ? divisions.map(divisionCard) : [emptyPublishedCard("division", officialSources.administration, "administrative division")],
+            cards: divisions.length
+              ? sortOrganizationRecords(divisions).map(divisionCard)
+              : [emptyPublishedCard("division", officialSources.administration, "administrative division")],
+          },
+          {
+            eyebrow: "Directorates",
+            title: "Directorates and specialized offices",
+            body: "Directorates and wings are arranged from published organization records.",
+            columns: 3,
+            cards: wings.length
+              ? sortOrganizationRecords(wings).map(wingCard)
+              : [emptyPublishedCard("directorate", officialSources.administration, "administrative division")],
           },
           {
             eyebrow: "Operational Units",
             title: "Administrative unit records",
             body: "Unit records come from administrative departments.",
-            tone: "dark",
             columns: 4,
-            cards: units.length ? units.map((item) => departmentCard(item)) : [emptyPublishedCard("administrative unit", officialSources.administration, "administrative division")],
+            cards: units.length
+              ? sortOrganizationRecords(units).map((item) => departmentCard(item))
+              : [emptyPublishedCard("administrative unit", officialSources.administration, "administrative division")],
           },
         ]
       : area === "directorates"
@@ -839,6 +1093,7 @@ export async function getAdministrationPageConfig(segments: string[] = []): Prom
                 cards: units.length ? units.slice(0, 12).map((item) => departmentCard(item)) : [emptyPublishedCard("administrative unit", officialSources.administration, "administrative division")],
               },
             ],
+    hideContinue: area === "organization",
   };
 }
 
@@ -846,8 +1101,10 @@ export async function getAcademicsPageConfig(
   segments: string[] = [],
   searchParams: { level?: string; q?: string } = {},
 ): Promise<PublicPageConfig> {
-  const base = getAcademicsPage(segments);
+  const base = { ...getAcademicsPage(segments), hideContinue: true };
   const [area, slug] = segments;
+  const query = searchParams.q?.trim() || undefined;
+  const level = searchParams.level?.trim() || undefined;
 
   if (area === "programmes" && slug) {
     const programme = await safeRecord(programmesApi.getBySlug(slug));
@@ -882,8 +1139,8 @@ export async function getAcademicsPageConfig(
   }
 
   const [schools, programmes, intakes, calendarDocs, examDocs] = await Promise.all([
-    safeList(schoolsApi.list({ per_page: 20 })),
-    safeList(programmesApi.list({ per_page: 24, level: searchParams.level, q: searchParams.q })),
+    safeList(schoolsApi.list({ per_page: 24, search: query })),
+    safeList(programmesApi.list({ per_page: 24, level, q: query })),
     safeList(intakesApi.list({ per_page: 8 })),
     safeList(documentsApi.list({ category: "academic-calendar", per_page: 6 })),
     safeList(documentsApi.list({ category: "examinations", per_page: 6 })),
@@ -899,8 +1156,15 @@ export async function getAcademicsPageConfig(
         {
           eyebrow: "Academic Schools",
           title: "School records",
-          body: "Browse schools, departments, and academic pathways.",
+          body: "Browse schools, departments, and academic pathways. Use search to narrow the grid.",
           columns: 4,
+          filters: {
+            action: "/academics/schools",
+            query,
+            queryPlaceholder: "Search schools",
+            submitLabel: "Search",
+            clearHref: "/academics/schools",
+          },
           cards: schools.length ? schools.map(schoolCard) : [emptyPublishedCard("school", officialSources.schools, "schools and departments")],
         },
       ],
@@ -908,7 +1172,7 @@ export async function getAcademicsPageConfig(
   }
 
   if (area === "programmes") {
-    const filterLabel = [searchParams.level, searchParams.q].filter(Boolean).join(" · ");
+    const filterLabel = [level, query].filter(Boolean).join(" · ");
     return {
       ...base,
       title: filterLabel ? `${titleFromSlug(filterLabel)} programmes` : base.title,
@@ -919,8 +1183,17 @@ export async function getAcademicsPageConfig(
         {
           eyebrow: "Programme Finder",
           title: filterLabel ? `Programmes matching ${filterLabel}` : "Programmes",
-          body: "Programme cards show level, duration, department, and requirement context.",
+          body: "Programme cards show level, duration, department, and requirement context. Search by name or filter by level.",
           columns: 3,
+          filters: {
+            action: "/academics/programmes",
+            query,
+            queryPlaceholder: "Search programmes",
+            level,
+            levelOptions: programmeLevelOptions,
+            submitLabel: "Filter",
+            clearHref: "/academics/programmes",
+          },
           cards: programmes.length ? programmes.map(programmeCard) : [emptyPublishedCard("programme", officialSources.schools, "schools and departments")],
         },
       ],
@@ -984,16 +1257,32 @@ export async function getAcademicsPageConfig(
       {
         eyebrow: "Academic Schools",
         title: "School records",
-        body: "School cards are generated.",
+        body: "School cards are generated from current public academic records. Use search to narrow the grid.",
         columns: 4,
+        filters: {
+          action: "/academics/schools",
+          query,
+          queryPlaceholder: "Search schools",
+          submitLabel: "Search",
+          clearHref: "/academics",
+        },
         cards: schools.length ? schools.slice(0, 8).map(schoolCard) : [emptyPublishedCard("school", officialSources.schools, "schools and departments")],
       },
       {
         eyebrow: "Programme Finder",
         title: "Programme records",
-        body: "Programme cards are generated.",
+        body: "Programme cards are generated from current public academic records. Search by name or filter by level.",
         tone: "dark",
         columns: 3,
+        filters: {
+          action: "/academics",
+          query,
+          queryPlaceholder: "Search programmes",
+          level,
+          levelOptions: programmeLevelOptions,
+          submitLabel: "Filter",
+          clearHref: "/academics",
+        },
         cards: programmes.length ? programmes.slice(0, 6).map(programmeCard) : [emptyPublishedCard("programme", officialSources.schools, "schools and departments")],
       },
     ],

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, Menu, X } from "lucide-react";
+import { Heart, Menu, Search, X } from "lucide-react";
 
 const researchNavItems = [
   { label: "Home", href: "/" },
@@ -22,9 +22,9 @@ export function ResearchHeader() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-white/95 shadow-sm backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-primary/10 bg-white/95 shadow-[0_12px_36px_-32px_rgba(30,64,175,0.55)] backdrop-blur-md">
       <nav className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="flex h-[74px] items-center justify-between lg:h-[68px]">
+        <div className="flex h-[89px] items-center justify-between lg:h-[82px]">
           <Link
             href="/"
             className="flex min-h-11 shrink-0 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -35,7 +35,7 @@ export function ResearchHeader() {
               alt="Kisii University"
               width={56}
               height={56}
-              className="h-11 w-auto sm:h-12"
+              className="h-12 w-auto sm:h-14 lg:h-12"
               priority
             />
             <span className="min-w-0">
@@ -63,16 +63,24 @@ export function ResearchHeader() {
             ))}
             <Link
               href="/connect#donate"
-              className="ml-2 inline-flex min-h-11 items-center gap-2 rounded-md bg-secondary px-3 py-2 text-sm font-semibold text-secondary-foreground transition hover:bg-secondary/90"
+              className="ml-2 inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition hover:bg-primary/90"
             >
               <Heart aria-hidden className="h-4 w-4" />
               Donate
             </Link>
           </div>
 
+          <Link
+            href="/search"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-primary transition hover:bg-primary/10 hover:text-primary"
+            aria-label="Search Kisii University"
+          >
+            <Search aria-hidden className="h-5 w-5" />
+          </Link>
+
           <button
             type="button"
-            className="flex h-11 w-11 items-center justify-center rounded-md text-slate-700 transition hover:bg-slate-100 2xl:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-primary transition hover:bg-primary/10 hover:text-primary 2xl:hidden"
             aria-label={isOpen ? "Close research menu" : "Open research menu"}
             aria-expanded={isOpen}
             onClick={() => setIsOpen((current) => !current)}
@@ -86,7 +94,7 @@ export function ResearchHeader() {
         </div>
 
         {isOpen ? (
-          <div className="border-t py-3 2xl:hidden">
+          <div className="border-t border-primary/10 py-3 2xl:hidden">
             <div className="grid gap-1">
               {researchNavItems.map((item) => (
                 <HeaderLink
@@ -105,7 +113,7 @@ export function ResearchHeader() {
               <Link
                 href="/connect#donate"
                 onClick={() => setIsOpen(false)}
-                className="inline-flex min-h-11 w-full items-center gap-2 rounded-md bg-secondary px-3 py-2 text-sm font-semibold text-secondary-foreground"
+                className="inline-flex min-h-11 w-full items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
               >
                 <Heart aria-hidden className="h-4 w-4" />
                 Donate
@@ -138,8 +146,8 @@ function HeaderLink({
       onClick={onClick}
       className={
         active
-          ? `${mobile ? "w-full" : ""} inline-flex min-h-11 items-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground`
-          : `${mobile ? "w-full" : ""} inline-flex min-h-11 items-center rounded-md px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-950`
+          ? `${mobile ? "w-full" : ""} inline-flex min-h-11 items-center rounded-full bg-primary/10 px-3.5 py-2 text-sm font-semibold text-primary`
+          : `${mobile ? "w-full" : ""} inline-flex min-h-11 items-center rounded-full px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-primary/10 hover:text-primary`
       }
     >
       {label}

@@ -18,6 +18,7 @@ import type {
   StaffEntityOption,
   StaffRoleOption,
   Board,
+  BoardMemberCreatePayload,
   School,
   Division,
   Wing,
@@ -71,11 +72,13 @@ import type {
   MediaUpdatePayload,
   MediaUploadOptions,
   PaginatedResponse,
+  PublicStatsResponse,
 } from "./types";
 import type { FieldSelectionParams, QueryParams } from "../client";
 
 type ListParams<T extends Record<string, string | number | boolean | undefined> = Record<string, string | number | boolean | undefined>> = QueryParams & T;
 const MAIN_API_BASE_URL = process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000";
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export function resolveMainMediaUrl(value?: string | null): string | undefined {
   const rawValue = value?.trim();
@@ -145,6 +148,11 @@ export const universityInfoApi = {
 
   getBySlug: (slug: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: UniversityInfo }>(`/api/v1/university-info/${slug}`, params),
+};
+
+export const statsApi = {
+  get: (params?: ListParams<{ scope?: "homepage" | "school" | "department"; slug?: string }>) =>
+    mainApi.get<{ data: PublicStatsResponse }>("/api/v1/stats", params),
 };
 
 // Users
@@ -244,6 +252,9 @@ export const wingsApi = {
   get: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Wing }>(`/api/v1/wings/${id}`, params),
 
+  getBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Wing }>(`/api/v1/wings/slug/${slug}`, params),
+
   create: (data: Partial<Wing>) =>
     mainApi.post<{ data: Wing }>("/api/v1/wings", data),
 
@@ -331,16 +342,25 @@ export const governanceApi = {
   deleteBoard: (id: string) =>
     mainApi.delete<void>(`/api/v1/governance/boards/id/${id}`),
 
-  addMember: (id: string, personId: string, role: string, data?: Partial<StaffAssignment>) =>
-    mainApi.post<{ data: StaffAssignment }>(`/api/v1/governance/boards/id/${id}/members?person_id=${personId}&role=${role}`, data),
+  addMember: (idOrSlug: string, data: BoardMemberCreatePayload) =>
+    mainApi.post<{ data: StaffAssignment }>(
+      UUID_PATTERN.test(idOrSlug)
+        ? `/api/v1/governance/boards/id/${idOrSlug}/members`
+        : `/api/v1/governance/boards/${idOrSlug}/members`,
+      data
+    ),
 
-  removeMember: (id: string, personId: string) =>
-    mainApi.delete<void>(`/api/v1/governance/boards/id/${id}/members/${personId}`),
+  removeMember: (idOrSlug: string, personId: string) =>
+    mainApi.delete<void>(
+      UUID_PATTERN.test(idOrSlug)
+        ? `/api/v1/governance/boards/id/${idOrSlug}/members/${personId}`
+        : `/api/v1/governance/boards/${idOrSlug}/members/${personId}`
+    ),
 };
 
 // Schools
 export const schoolsApi = {
-  list: (params?: ListParams<{ campus_id?: string; search?: string }>) =>
+  list: (params?: ListParams<{ campus_id?: string; administrative_wing_id?: string; search?: string }>) =>
     mainApi.get<PaginatedResponse<School>>("/api/v1/schools", params),
 
   get: (id: string, params?: FieldSelectionParams) =>

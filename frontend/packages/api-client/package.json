@@ -17,7 +17,7 @@
   "scripts": {
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
-    "generate": "echo 'TODO: Generate from OpenAPI specs'"
+    "generate": "node scripts/generate-openapi.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.76.0"

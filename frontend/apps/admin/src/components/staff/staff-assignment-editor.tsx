@@ -72,6 +72,8 @@ interface StaffAssignmentEditorProps {
   presetPersonId?: string;
   presetEntityType?: string;
   presetEntityId?: string | null;
+  presetEntityLabel?: string;
+  lockEntity?: boolean;
   onSuccess?: (assignment: StaffAssignment) => void;
 }
 
@@ -153,6 +155,8 @@ export function StaffAssignmentEditor({
   presetPersonId,
   presetEntityType,
   presetEntityId,
+  presetEntityLabel,
+  lockEntity = false,
   onSuccess,
 }: StaffAssignmentEditorProps) {
   const [form, setForm] = useState<AssignmentFormState>(defaultForm);
@@ -220,7 +224,7 @@ export function StaffAssignmentEditor({
         status: assignment.status || "active",
       });
       setPersonSearch(formatPersonName(assignment.person) || assignment.person?.email || "");
-      setEntitySearch(assignment.entity?.name || "");
+      setEntitySearch(assignment.entity?.name || presetEntityLabel || "");
       setReportsToSearch(assignment.reports_to ? assignmentOptionLabel(assignment.reports_to) : "");
       return;
     }
@@ -231,9 +235,9 @@ export function StaffAssignmentEditor({
       entity_id: presetEntityId || "",
     });
     setPersonSearch("");
-    setEntitySearch("");
+    setEntitySearch(presetEntityLabel || "");
     setReportsToSearch("");
-  }, [assignment, open, presetEntityId, presetEntityType, presetPersonId]);
+  }, [assignment, open, presetEntityId, presetEntityLabel, presetEntityType, presetPersonId]);
 
   const selectedRole = useMemo(
     () => roles.data?.data.find((role) => role.role === form.role),
@@ -359,7 +363,10 @@ export function StaffAssignmentEditor({
   });
 
   const runConflictCheck = async () => {
-    if (!form.entity_type || !form.role || form.is_acting || form.status !== "active") return null;
+    const strictUniqueRole =
+      (form.entity_type === "school" && form.role === "dean") ||
+      (form.entity_type === "department" && ["hod", "cod", "head"].includes(form.role));
+    if (!form.entity_type || !form.role || (form.is_acting && !strictUniqueRole) || form.status !== "active") return null;
     const response = await checkConflict.mutateAsync({
       entity_type: form.entity_type,
       entity_id: form.entity_type === "university" ? null : valueOrNull(form.entity_id),
@@ -468,6 +475,7 @@ export function StaffAssignmentEditor({
   };
 
   const selectedPerson = people.find((person: Person) => person.id === form.person_id);
+  const isEntityLocked = lockEntity && !!presetEntityType;
   const allowedConflictResolutions = conflict?.allowed_resolutions ?? [];
   const canAssignActing = allowedConflictResolutions.includes("assign_acting");
   const canReplaceCurrent = allowedConflictResolutions.includes("replace_current");
@@ -561,60 +569,68 @@ export function StaffAssignmentEditor({
               </section>
             ) : null}
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Entity type</Label>
-                <Select value={form.entity_type} onValueChange={(value) => setForm((current) => ({ ...current, entity_type: value, entity_id: "", role: "" }))}>
-                  <SelectTrigger><SelectValue placeholder="Select entity type" /></SelectTrigger>
-                  <SelectContent>
-                    {entityTypes.data?.data.map((entityType: { type: string; label: string }) => (
-                      <SelectItem key={entityType.type} value={entityType.type}>{entityType.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {isEntityLocked ? (
+              <div className="rounded-md border bg-muted/40 p-4 text-sm">
+                <Label className="text-xs text-muted-foreground">Governance body</Label>
+                <p className="mt-1 font-medium">{presetEntityLabel || selectedEntity?.label || formatEntityType(form.entity_type)}</p>
+                <p className="text-xs text-muted-foreground">This member will be attached to the current council or board.</p>
               </div>
-              <div className="space-y-2">
-                <Label>Entity</Label>
-                {form.entity_type === "university" ? (
-                  <div className="flex h-10 items-center rounded-md border bg-muted px-3 text-sm text-muted-foreground">University-level assignment</div>
-                ) : (
-                  <>
-                    <Input placeholder="Search entity" value={entitySearch} onChange={(event) => setEntitySearch(event.target.value)} />
-                    <div className="max-h-48 overflow-y-auto rounded-md border bg-background">
-                      {entityOptions.length > 0 ? (
-                        entityOptions.map((entity) => (
-                          <button
-                            key={entity.id || entity.label}
-                            type="button"
-                            className={`flex w-full items-start justify-between gap-3 border-b p-3 text-left text-sm last:border-b-0 ${
-                              form.entity_id === entity.id ? "bg-primary/5" : "hover:bg-muted/60"
-                            }`}
-                            onClick={() => selectEntity(entity)}
-                            disabled={!entity.id}
-                          >
-                            <span>
-                              <span className="block font-medium">{entity.label}</span>
-                              {entity.subtitle ? <span className="block text-xs text-muted-foreground">{entity.subtitle}</span> : null}
-                            </span>
-                            {form.entity_id === entity.id ? <Badge variant="default">Selected</Badge> : null}
-                          </button>
-                        ))
-                      ) : (
-                        <p className="p-3 text-sm text-muted-foreground">
-                          {entities.isFetching ? "Searching entities..." : "No matching entities."}
-                        </p>
-                      )}
-                    </div>
-                    {selectedEntity ? (
-                      <div className="rounded-md border bg-muted/40 p-3 text-sm">
-                        <span className="font-medium">Selected:</span> {selectedEntity.label}
-                        {selectedEntity.subtitle ? <span className="text-muted-foreground"> - {selectedEntity.subtitle}</span> : null}
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Entity type</Label>
+                  <Select value={form.entity_type} onValueChange={(value) => setForm((current) => ({ ...current, entity_type: value, entity_id: "", role: "" }))}>
+                    <SelectTrigger><SelectValue placeholder="Select entity type" /></SelectTrigger>
+                    <SelectContent>
+                      {entityTypes.data?.data.map((entityType: { type: string; label: string }) => (
+                        <SelectItem key={entityType.type} value={entityType.type}>{entityType.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Entity</Label>
+                  {form.entity_type === "university" ? (
+                    <div className="flex h-10 items-center rounded-md border bg-muted px-3 text-sm text-muted-foreground">University-level assignment</div>
+                  ) : (
+                    <>
+                      <Input placeholder="Search entity" value={entitySearch} onChange={(event) => setEntitySearch(event.target.value)} />
+                      <div className="max-h-48 overflow-y-auto rounded-md border bg-background">
+                        {entityOptions.length > 0 ? (
+                          entityOptions.map((entity) => (
+                            <button
+                              key={entity.id || entity.label}
+                              type="button"
+                              className={`flex w-full items-start justify-between gap-3 border-b p-3 text-left text-sm last:border-b-0 ${
+                                form.entity_id === entity.id ? "bg-primary/5" : "hover:bg-muted/60"
+                              }`}
+                              onClick={() => selectEntity(entity)}
+                              disabled={!entity.id}
+                            >
+                              <span>
+                                <span className="block font-medium">{entity.label}</span>
+                                {entity.subtitle ? <span className="block text-xs text-muted-foreground">{entity.subtitle}</span> : null}
+                              </span>
+                              {form.entity_id === entity.id ? <Badge variant="default">Selected</Badge> : null}
+                            </button>
+                          ))
+                        ) : (
+                          <p className="p-3 text-sm text-muted-foreground">
+                            {entities.isFetching ? "Searching entities..." : "No matching entities."}
+                          </p>
+                        )}
                       </div>
-                    ) : null}
-                  </>
-                )}
+                      {selectedEntity ? (
+                        <div className="rounded-md border bg-muted/40 p-3 text-sm">
+                          <span className="font-medium">Selected:</span> {selectedEntity.label}
+                          {selectedEntity.subtitle ? <span className="text-muted-foreground"> - {selectedEntity.subtitle}</span> : null}
+                        </div>
+                      ) : null}
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">

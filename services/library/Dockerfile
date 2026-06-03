@@ -2,15 +2,13 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends gcc libpq-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends bash curl gcc libpq-dev && rm -rf /var/lib/apt/lists/*
 
-COPY ../common /common
+COPY common /common
 RUN pip install --no-cache-dir -e /common
 
-COPY pyproject.toml .
-RUN pip install --no-cache-dir -e .
-
-COPY . .
+COPY library/ .
+RUN pip install --no-cache-dir -e . && chmod +x scripts/*.sh
 
 EXPOSE 8002
 

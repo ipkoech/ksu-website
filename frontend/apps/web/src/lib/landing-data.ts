@@ -261,7 +261,7 @@ function normalizeAnnouncement(announcement: Announcement): LandingAnnouncement 
     id: announcement.id,
     message: truncate(hasDetailTitle ? detail : `${announcement.title}: ${detail}`, 150),
     linkText: "Read",
-    linkHref: `/announcements/${announcement.slug}`,
+    linkHref: `/media/announcements/${announcement.slug}`,
     variant: priorityVariant(announcement.priority),
     dismissible: false,
   };

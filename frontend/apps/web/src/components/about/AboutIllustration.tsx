@@ -2,16 +2,14 @@ import Image from "next/image";
 import { PageHeading } from "@/components/site-shell";
 
 export const aboutIllustrations = {
-  overview: "/images/about/about-overview.webp",
-  history: "/images/about/about-history.webp",
-  missionVision: "/images/about/about-mission-vision.webp",
-  governance: "/images/about/about-governance.webp",
-  leadership: "/images/about/about-leadership.webp",
-  qualityAssurance: "/images/about/about-quality-assurance.webp",
-  management: "/images/about/about-management.webp",
-  administration: "/images/about/about-administration.webp",
-  serviceCharter: "/images/about/about-service-charter.webp",
-  strategicPlan: "/images/about/about-strategic-plan.webp",
+  overview: "/images/about/about-overview-branded.webp",
+  history: "/images/about/about-history-branded.webp",
+  missionVision: "/images/about/about-mission-vision-branded.webp",
+  governance: "/images/about/about-governance-branded.webp",
+  qualityAssurance: "/images/about/about-quality-assurance-branded.webp",
+  management: "/images/about/about-management-branded.webp",
+  serviceCharter: "/images/about/about-service-charter-branded.webp",
+  strategicPlan: "/images/about/about-strategic-plan-branded.webp",
 } as const;
 
 type AboutIllustrationProps = {

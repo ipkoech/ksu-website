@@ -205,6 +205,7 @@ export default async function AcademicsRoutePage({
     <PublicSectionPage
       config={await getAcademicsPageConfig(segments, filters)}
       header={headerConfig ? <EntityHeader {...headerConfig} /> : undefined}
+      heroSize="compact"
     />
   );
 }

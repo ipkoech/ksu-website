@@ -24,6 +24,7 @@
     "./layout/public/public-footer": "./src/components/layout/public/public-footer.tsx",
     "./layout/public/cta": "./src/components/layout/public/cta.tsx",
     "./layout/public/announcement-bar": "./src/components/layout/public/announcement-bar.tsx",
+    "./rich-text-renderer": "./src/components/admin/rich-text-renderer.tsx",
     "./lib/utils": "./src/lib/utils.ts",
     "./components": "./src/components/index.ts",
     "./components/*": "./src/components/ui/*.tsx",

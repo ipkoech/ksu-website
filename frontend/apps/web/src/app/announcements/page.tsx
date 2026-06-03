@@ -1,14 +1,5 @@
-import { ContentListingPage } from "@/components/public/content-pages";
-import { getContentListingData } from "@/lib/content-page-data";
+import { redirect } from "next/navigation";
 
-export default async function AnnouncementsPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  return (
-    <ContentListingPage
-      data={await getContentListingData("announcements", [], await searchParams)}
-    />
-  );
+export default function AnnouncementsPage() {
+  redirect("/media/announcements");
 }

@@ -7,7 +7,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 FrontendService = Literal["web", "admin", "research", "library"]
@@ -48,6 +48,18 @@ class Settings(BaseSettings):
     RESEARCH_SERVICE_URL: str = "http://localhost:8001"
     PASSWORD_RESET_RATE_LIMIT_COUNT: int = 5
     PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS: int = 900
+
+    SMS_PROVIDER: Literal["disabled", "webhook", "twilio"] = "disabled"
+    SMS_WEBHOOK_URL: str | None = None
+    SMS_WEBHOOK_TOKEN: str | None = None
+    TWILIO_ACCOUNT_SID: str | None = None
+    TWILIO_AUTH_TOKEN: str | None = None
+    TWILIO_FROM_NUMBER: str | None = None
+
+    PUSH_PROVIDER: Literal["disabled", "webhook", "fcm_legacy"] = "disabled"
+    PUSH_WEBHOOK_URL: str | None = None
+    PUSH_WEBHOOK_TOKEN: str | None = None
+    FCM_SERVER_KEY: str | None = None
 
     INTERNAL_API_KEY: str = "change-me-internal"
 
@@ -121,6 +133,22 @@ class Settings(BaseSettings):
         if not v.startswith(valid_prefixes):
             raise ValueError("Celery broker/backend must use redis, rediss, amqp, or rpc URL")
         return v
+
+    @field_validator("SMS_WEBHOOK_URL", "PUSH_WEBHOOK_URL")
+    @classmethod
+    def validate_optional_http_url(cls, v: str | None) -> str | None:
+        if v is None or v == "":
+            return None
+        if not v.startswith(("http://", "https://")):
+            raise ValueError("Webhook URLs must start with http:// or https://")
+        return v
+
+    @model_validator(mode="after")
+    def reject_insecure_production_defaults(self) -> "Settings":
+        if self.APP_ENV.lower() not in {"development", "dev", "local", "test", "testing"}:
+            if self.INTERNAL_API_KEY == "change-me-internal":
+                raise ValueError("INTERNAL_API_KEY must be configured outside local development")
+        return self
 
 
 @lru_cache

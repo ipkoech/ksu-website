@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -51,6 +51,13 @@ class Settings(BaseSettings):
         if not v.startswith(valid_prefixes):
             raise ValueError("Celery broker/backend must use redis, rediss, amqp, or rpc URL")
         return v
+
+    @model_validator(mode="after")
+    def reject_insecure_production_defaults(self) -> "Settings":
+        if self.APP_ENV.lower() not in {"development", "dev", "local", "test", "testing"}:
+            if self.INTERNAL_API_KEY == "change-me-internal":
+                raise ValueError("INTERNAL_API_KEY must be configured outside local development")
+        return self
 
 
 @lru_cache

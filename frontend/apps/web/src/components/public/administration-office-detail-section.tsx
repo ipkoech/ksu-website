@@ -96,8 +96,8 @@ function googleScholarHref(person?: PublicPersonProfile | null) {
     externalHref(person?.google_scholar_url) ??
     (present(person?.google_scholar_id)
       ? `https://scholar.google.com/citations?user=${encodeURIComponent(
-          present(person?.google_scholar_id)!,
-        )}`
+        present(person?.google_scholar_id)!,
+      )}`
       : null)
   );
 }
@@ -219,19 +219,19 @@ function getDivisionHead(data: AdministrationOfficeDetailData) {
     .sort(
       (first, second) =>
         Number(first.hierarchy_level ?? 99) -
-          Number(second.hierarchy_level ?? 99) ||
-          Number(second.is_primary) - Number(first.is_primary) ||
+        Number(second.hierarchy_level ?? 99) ||
+        Number(second.is_primary) - Number(first.is_primary) ||
         Number(first.display_order ?? 100) - Number(second.display_order ?? 100),
     );
   const head = profile
     ? sorted.find((assignment) => assignment.person_id === profile.id)
     : sorted.find((assignment) => assignment.is_primary) ??
-      sorted.find((assignment) =>
-        /dvc|head|director|dean|registrar|chair/i.test(
-          `${assignment.role ?? ""} ${assignment.title ?? ""}`,
-        ),
-      ) ??
-      sorted[0];
+    sorted.find((assignment) =>
+      /dvc|head|director|dean|registrar|chair/i.test(
+        `${assignment.role ?? ""} ${assignment.title ?? ""}`,
+      ),
+    ) ??
+    sorted[0];
   const person = profile ?? (head ? data.team?.persons[head.person_id] : null);
 
   return person ? { assignment: head, person } : null;
@@ -262,10 +262,10 @@ function buildHeadContactLinks(
   const email = present(profile?.email ?? person.email);
   const phone = present(
     profile?.phone ??
-      profile?.office_phone ??
-      profile?.alternative_phone ??
-      person.phone ??
-      person.office_phone,
+    profile?.office_phone ??
+    profile?.alternative_phone ??
+    person.phone ??
+    person.office_phone,
   );
   const websiteHref = externalHref(profile?.website_url);
   const linkedinHref = externalHref(profile?.linkedin_url);
@@ -280,81 +280,81 @@ function buildHeadContactLinks(
   const links: Array<ContactIconLink | null> = [
     email
       ? {
-          label: "Email",
-          href: `mailto:${email}`,
-          icon: Mail,
-        }
+        label: "Email",
+        href: `mailto:${email}`,
+        icon: Mail,
+      }
       : null,
     phone
       ? {
-          label: "Call",
-          href: `tel:${phone}`,
-          icon: Phone,
-        }
+        label: "Call",
+        href: `tel:${phone}`,
+        icon: Phone,
+      }
       : null,
     websiteHref
       ? {
-          label: "Website",
-          href: websiteHref,
-          icon: Globe,
-          external: true,
-        }
+        label: "Website",
+        href: websiteHref,
+        icon: Globe,
+        external: true,
+      }
       : null,
     linkedinHref
       ? {
-          label: "LinkedIn",
-          href: linkedinHref,
-          icon: ExternalLink,
-          external: true,
-        }
+        label: "LinkedIn",
+        href: linkedinHref,
+        icon: ExternalLink,
+        external: true,
+      }
       : null,
     scholarHref
       ? {
-          label: "Google Scholar",
-          href: scholarHref,
-          icon: BookOpen,
-          external: true,
-        }
+        label: "Google Scholar",
+        href: scholarHref,
+        icon: BookOpen,
+        external: true,
+      }
       : null,
     orcidProfileHref
       ? {
-          label: "ORCID",
-          href: orcidProfileHref,
-          icon: BadgeCheck,
-          external: true,
-        }
+        label: "ORCID",
+        href: orcidProfileHref,
+        icon: BadgeCheck,
+        external: true,
+      }
       : null,
     researchGateHref
       ? {
-          label: "ResearchGate",
-          href: researchGateHref,
-          icon: ExternalLink,
-          external: true,
-        }
+        label: "ResearchGate",
+        href: researchGateHref,
+        icon: ExternalLink,
+        external: true,
+      }
       : null,
     facebookHref
       ? {
-          label: "Facebook",
-          href: facebookHref,
-          icon: ExternalLink,
-          external: true,
-        }
+        label: "Facebook",
+        href: facebookHref,
+        icon: ExternalLink,
+        external: true,
+      }
       : null,
     xHref
       ? {
-          label: "X",
-          href: xHref,
-          icon: ExternalLink,
-          external: true,
-        }
+        label: "X",
+        href: xHref,
+        icon: ExternalLink,
+        external: true,
+      }
       : null,
     instagramHref
       ? {
-          label: "Instagram",
-          href: instagramHref,
-          icon: ExternalLink,
-          external: true,
-        }
+        label: "Instagram",
+        href: instagramHref,
+        icon: ExternalLink,
+        external: true,
+      }
       : null,
     {
       label: "View profile",
@@ -771,6 +771,15 @@ function DirectoratesSection({
 
 function UnitsSection({ data }: { data: AdministrationOfficeDetailData }) {
   if (!data.childWings.length && !data.departments.length) return null;
+  const departmentWingIds = new Set(
+    data.departments
+      .map((department) => present(department.wing_id))
+      .filter((value): value is string => Boolean(value)),
+  );
+  const visibleWings =
+    data.kind === "division"
+      ? data.childWings.filter((wing) => !departmentWingIds.has(wing.id))
+      : data.childWings;
 
   return (
     <section className="grid gap-4">
@@ -784,9 +793,9 @@ function UnitsSection({ data }: { data: AdministrationOfficeDetailData }) {
         }
         body="Portfolio units and operational departments are listed separately to avoid duplicate records."
       />
-      {data.childWings.length ? (
+      {visibleWings.length ? (
         <div className="grid gap-3 md:grid-cols-2">
-          {data.childWings.map((wing) => (
+          {visibleWings.map((wing) => (
             <LinkedRecordCard
               key={wing.id}
               href={`/administration/units/${wing.slug}`}
@@ -931,15 +940,15 @@ function ServicesSection({
 function mediaHref(item: AdministrationUpdateRecord) {
   switch (item.recordType) {
     case "blog":
-      return `/blogs/${item.slug}`;
+      return `/media/articles/${item.slug}`;
     case "event":
-      return `/events/${item.slug}`;
+      return `/media/events/${item.slug}`;
     case "announcement":
-      return `/announcements/${item.slug}`;
+      return `/media/announcements/${item.slug}`;
     case "gallery":
-      return `/media/${item.id}`;
+      return `/media/gallery/${item.id}`;
     case "news":
-      return `/news/${item.slug}`;
+      return `/media/news/${item.slug}`;
   }
 }
 
@@ -1310,12 +1319,6 @@ function InfoPanel({ data }: { data: AdministrationOfficeDetailData }) {
       value: data.counts.schools || null,
       icon: Landmark,
     },
-    { label: "Team Records", value: data.counts.team || null, icon: Users },
-    {
-      label: "Last Updated",
-      value: formatDate(entity.updated_at),
-      icon: CalendarDays,
-    },
   ].filter((item) => item.value);
 
   if (!items.length) return null;
@@ -1431,35 +1434,35 @@ function buildQuickLinks(data: AdministrationOfficeDetailData): QuickLink[] {
     },
     data.kind === "division" && (data.childWings.length || data.departments.length)
       ? {
-          section: "units",
-          label: "Units",
-          href: `${baseHref}/units`,
-          icon: BriefcaseBusiness,
-        }
+        section: "units",
+        label: "Units",
+        href: `${baseHref}/units`,
+        icon: BriefcaseBusiness,
+      }
       : null,
     data.kind === "division" && data.schools.length
       ? {
-          section: "schools",
-          label: "Schools",
-          href: `${baseHref}/schools`,
-          icon: Landmark,
-        }
+        section: "schools",
+        label: "Schools",
+        href: `${baseHref}/schools`,
+        icon: Landmark,
+      }
       : null,
     data.counts.team > 0
       ? {
-          section: "team",
-          label: "Team",
-          href: `${baseHref}/team`,
-          icon: Users,
-        }
+        section: "team",
+        label: "Team",
+        href: `${baseHref}/team`,
+        icon: Users,
+      }
       : null,
     data.services.length
       ? {
-          section: "services",
-          label: "Services",
-          href: `${baseHref}/services`,
-          icon: BriefcaseBusiness,
-        }
+        section: "services",
+        label: "Services",
+        href: `${baseHref}/services`,
+        icon: BriefcaseBusiness,
+      }
       : null,
     {
       section: "media",
@@ -1469,21 +1472,21 @@ function buildQuickLinks(data: AdministrationOfficeDetailData): QuickLink[] {
     },
     data.documents.length
       ? {
-          section: "downloads",
-          label: "Downloads",
-          href: `${baseHref}/downloads`,
-          icon: Download,
-        }
+        section: "downloads",
+        label: "Downloads",
+        href: `${baseHref}/downloads`,
+        icon: Download,
+      }
       : null,
     present(data.entity.email) ||
-    present(data.entity.phone) ||
-    present(data.entity.office_location)
+      present(data.entity.phone) ||
+      present(data.entity.office_location)
       ? {
-          section: "contact",
-          label: "Contact",
-          href: `${baseHref}/contact`,
-          icon: Phone,
-        }
+        section: "contact",
+        label: "Contact",
+        href: `${baseHref}/contact`,
+        icon: Phone,
+      }
       : null,
   ].filter(Boolean) as QuickLink[];
 }

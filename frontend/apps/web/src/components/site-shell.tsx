@@ -78,6 +78,9 @@ export async function PageShell({
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_38%,#f6f8fc_100%)] text-slate-950">
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <AnnouncementHeader />
       <MiniHeader
         contactInfo={contactInfo}
@@ -90,7 +93,9 @@ export async function PageShell({
           megaMenuData={resolvedMegaMenuData}
         />
       )}
-      <main>{children}</main>
+      <main id="main-content" tabIndex={-1}>
+        {children}
+      </main>
       <PublicFooter contactInfo={contactInfo} socialLinks={socialLinks} />
     </div>
   );
@@ -162,7 +167,7 @@ export function BreadcrumbTrail({
             {item.href ? (
               <Link
                 href={item.href}
-                className="inline-flex min-h-8 items-center transition hover:text-primary"
+                className="inline-flex min-h-11 items-center rounded px-1 transition hover:text-primary"
               >
                 {item.label}
               </Link>

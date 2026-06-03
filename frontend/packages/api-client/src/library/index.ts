@@ -1,6 +1,7 @@
 import { libraryApi } from "../client";
 import type { FieldSelectionParams, QueryParams } from "../client";
 import type { PaginatedResponse } from "../main/types";
+import type { PublicStatsResponse } from "../main/types";
 
 type ListParams<T extends Record<string, string | number | boolean | undefined> = Record<string, string | number | boolean | undefined>> = QueryParams & T;
 
@@ -10,8 +11,16 @@ export interface LibraryBranch {
   short_name?: string | null;
   slug: string;
   description?: string | null;
+  objectives?: string | null;
+  regulations?: string | null;
+  mission?: string | null;
+  vision?: string | null;
+  address?: string | null;
   email?: string | null;
   phone?: string | null;
+  website_url?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   library_type?: string;
   is_active?: boolean;
   is_public?: boolean;
@@ -25,8 +34,16 @@ export interface LibraryBranchPayload {
   short_name?: string | null;
   slug: string;
   description?: string | null;
+  objectives?: string | null;
+  regulations?: string | null;
+  mission?: string | null;
+  vision?: string | null;
+  address?: string | null;
   email?: string | null;
   phone?: string | null;
+  website_url?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   library_type?: string;
   is_active?: boolean;
   is_public?: boolean;
@@ -93,6 +110,52 @@ export interface LibraryLoanPayload {
   notes?: string | null;
 }
 
+export interface LibraryReservation {
+  id: string;
+  resource_id: string;
+  requester_person_id: string;
+  reserved_at: string;
+  expires_at?: string | null;
+  ready_at?: string | null;
+  status: string;
+  queue_position: number;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LibraryReservationPayload {
+  resource_id: string;
+  requester_person_id: string;
+  notes?: string | null;
+}
+
+export interface LibraryReservationUpdatePayload {
+  status?: string;
+  expires_at?: string | null;
+  ready_at?: string | null;
+  queue_position?: number;
+  notes?: string | null;
+}
+
+export interface LibraryCharge {
+  id: string;
+  library_id: string;
+  name: string;
+  description?: string | null;
+  charge_type: string;
+  amount: string;
+  rate_unit: string;
+  currency: string;
+  is_active: boolean;
+  effective_from?: string | null;
+  effective_to?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type LibraryChargePayload = Omit<LibraryCharge, "id" | "created_at" | "updated_at">;
+
 export type LibraryGenericRecord = Record<string, any> & {
   id: string;
   title?: string;
@@ -118,6 +181,7 @@ function crudApi<TRecord, TPayload>(path: string) {
 }
 
 export const libraryServiceApi = {
+  stats: () => libraryApi.get<{ data: PublicStatsResponse }>("/api/v1/stats"),
   branches: {
     list: (params?: ListParams<{ active_only?: boolean }>) =>
       libraryApi.get<PaginatedResponse<LibraryBranch>>("/api/v1/library/branches/", params),
@@ -143,10 +207,30 @@ export const libraryServiceApi = {
   loans: {
     list: (params?: ListParams<{ resource_id?: string; status?: string }>) =>
       libraryApi.get<PaginatedResponse<LibraryLoan>>("/api/v1/library/loans/", params),
+    get: (id: string) => libraryApi.get<{ data: LibraryLoan }>(`/api/v1/library/loans/${id}`),
     create: (data: LibraryLoanPayload) =>
       libraryApi.post<{ data: LibraryLoan }>("/api/v1/library/loans/", data),
     update: (id: string, data: Partial<LibraryLoan>) =>
       libraryApi.patch<{ data: LibraryLoan }>(`/api/v1/library/loans/${id}`, data),
+    renew: (id: string) => libraryApi.post<{ data: LibraryLoan }>(`/api/v1/library/loans/${id}/renew`, {}),
+  },
+  reservations: {
+    list: (params?: ListParams<{ resource_id?: string; status?: string }>) =>
+      libraryApi.get<PaginatedResponse<LibraryReservation>>("/api/v1/library/reservations/", params),
+    create: (data: LibraryReservationPayload) =>
+      libraryApi.post<{ data: LibraryReservation }>("/api/v1/library/reservations/", data),
+    update: (id: string, data: LibraryReservationUpdatePayload) =>
+      libraryApi.patch<{ data: LibraryReservation }>(`/api/v1/library/reservations/${id}`, data),
+    cancel: (id: string) => libraryApi.delete<void>(`/api/v1/library/reservations/${id}`),
+  },
+  charges: {
+    list: (params: ListParams<{ library_id: string; active_only?: boolean }>) =>
+      libraryApi.get<{ data: LibraryCharge[] }>("/api/v1/library/charges/", params),
+    create: (data: LibraryChargePayload) =>
+      libraryApi.post<{ data: LibraryCharge }>("/api/v1/library/charges/", data),
+    update: (id: string, data: Partial<LibraryChargePayload>) =>
+      libraryApi.patch<{ data: LibraryCharge }>(`/api/v1/library/charges/${id}`, data),
+    delete: (id: string) => libraryApi.delete<void>(`/api/v1/library/charges/${id}`),
   },
   databases: crudApi<LibraryGenericRecord, LibraryGenericPayload>("/api/v1/library/databases/"),
   inquiries: crudApi<LibraryGenericRecord, LibraryGenericPayload>("/api/v1/library/inquiries/"),

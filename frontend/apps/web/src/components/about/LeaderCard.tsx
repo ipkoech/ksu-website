@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PublicImage } from "@/components/public/public-image";
 
 export interface LeaderCardData {
   slug: string;
@@ -61,10 +62,12 @@ function LeaderPortrait({
 }) {
   if (photoUrl) {
     return (
-      <img
+      <PublicImage
         src={photoUrl}
         alt={name}
-        className="h-24 w-24 rounded-3xl object-cover"
+        ratio="profile"
+        sizes="96px"
+        className="h-24 w-24 rounded-3xl"
       />
     );
   }
@@ -91,7 +94,9 @@ export function LeaderCard({
         featured ? "md:p-8" : ""
       }`}
     >
-      <div className={`gap-6 ${featured ? "md:grid md:grid-cols-[auto_1fr]" : ""}`}>
+      <div
+        className={`gap-6 ${featured ? "md:grid md:grid-cols-[auto_1fr]" : ""}`}
+      >
         <LeaderPortrait name={leader.name} photoUrl={leader.photoUrl} />
         <div className={featured ? "mt-6 md:mt-0" : "mt-5"}>
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-secondary">

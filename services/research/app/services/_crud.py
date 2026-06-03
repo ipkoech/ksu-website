@@ -10,6 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common import PaginatedResult, paginate
 
+from .references import MainReferenceValidator
+
 M = TypeVar("M")
 
 
@@ -18,6 +20,7 @@ class CRUDService(Generic[M]):
     search_fields: tuple[str, ...] = ()
     slug_field: str = "slug"
     default_order: tuple[str, ...] = ("display_order", "created_at")
+    reference_fields: dict[str, str] = {}
 
     @classmethod
     def _apply_search(cls, query, search: str | None):
@@ -85,6 +88,7 @@ class CRUDService(Generic[M]):
     @classmethod
     async def create(cls, db: AsyncSession, data, *, actor_id: str | uuid.UUID | None = None) -> M:
         payload = data.model_dump(exclude_unset=True) if hasattr(data, "model_dump") else dict(data)
+        await MainReferenceValidator.validate(payload, cls.reference_fields)
         item = cls.model(**payload)
         db.add(item)
         await db.flush()
@@ -94,6 +98,7 @@ class CRUDService(Generic[M]):
     @classmethod
     async def update(cls, db: AsyncSession, item: M, data, *, actor_id: str | uuid.UUID | None = None) -> M:
         payload = data.model_dump(exclude_unset=True) if hasattr(data, "model_dump") else dict(data)
+        await MainReferenceValidator.validate(payload, cls.reference_fields)
         for key, value in payload.items():
             setattr(item, key, value)
         await db.flush()
@@ -110,6 +115,7 @@ def build_simple_service(
     model: type,
     *search_fields: str,
     default_order: tuple[str, ...] = ("display_order", "created_at"),
+    reference_fields: dict[str, str] | None = None,
 ):
     class _Service(CRUDService):
         pass
@@ -117,5 +123,5 @@ def build_simple_service(
     _Service.model = model
     _Service.search_fields = tuple(search_fields)
     _Service.default_order = default_order
+    _Service.reference_fields = reference_fields or {}
     return _Service
-

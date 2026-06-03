@@ -11,6 +11,15 @@ importers:
       '@changesets/cli':
         specifier: ^2.29.5
         version: 2.31.0(@types/node@22.19.19)
+      '@eslint/eslintrc':
+        specifier: ^3.3.5
+        version: 3.3.5
+      eslint:
+        specifier: ^9.39.4
+        version: 9.39.4(jiti@1.21.7)
+      eslint-config-next:
+        specifier: ^15.5.18
+        version: 15.5.18(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3)
       prettier:
         specifier: ^3.5.3
         version: 3.8.3
@@ -90,6 +99,12 @@ importers:
       autoprefixer:
         specifier: ^10.4.21
         version: 10.5.0(postcss@8.5.14)
+      eslint:
+        specifier: ^9.39.4
+        version: 9.39.4(jiti@1.21.7)
+      eslint-config-next:
+        specifier: ^15.5.18
+        version: 15.5.18(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3)
       postcss:
         specifier: ^8.5.10
         version: 8.5.14
@@ -114,6 +129,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.76.0
         version: 5.100.10(react@19.2.6)
+      lucide-react:
+        specifier: ^0.513.0
+        version: 0.513.0(react@19.2.6)
       next:
         specifier: ^15.5.18
         version: 15.5.18(@playwright/test@1.60.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -166,6 +184,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.76.0
         version: 5.100.10(react@19.2.6)
+      lucide-react:
+        specifier: ^0.513.0
+        version: 0.513.0(react@19.2.6)
       next:
         specifier: ^15.5.18
         version: 15.5.18(@playwright/test@1.60.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -258,6 +279,12 @@ importers:
       autoprefixer:
         specifier: ^10.4.21
         version: 10.5.0(postcss@8.5.14)
+      eslint:
+        specifier: ^9.39.4
+        version: 9.39.4(jiti@1.21.7)
+      eslint-config-next:
+        specifier: ^15.5.18
+        version: 15.5.18(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3)
       postcss:
         specifier: ^8.5.10
         version: 8.5.14

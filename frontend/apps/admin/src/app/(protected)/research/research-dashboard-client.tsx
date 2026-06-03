@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, FileText, FlaskConical, HandCoins } from "lucide-react";
+import { BookOpen, FlaskConical, GraduationCap, HandCoins, HeartHandshake, Leaf, Lightbulb, Newspaper, Settings, Sprout } from "lucide-react";
 import { researchApi } from "@ksu/api-client";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ksu/ui/components";
 import { PageHeader } from "@/components/layout";
@@ -19,22 +19,40 @@ const countParams = { page: 1, per_page: 1 };
 
 const researchAreas = [
   {
-    title: "Projects",
-    description: "Manage research project records and their public status.",
-    href: "/research/projects",
+    title: "Main Research",
+    description: "Projects, fundings, impact, publications, partnerships, donations, innovation, and outputs.",
+    href: "/research/main",
     icon: FlaskConical,
   },
   {
-    title: "Publications",
-    description: "Review publication records from the research service.",
-    href: "/research/publications",
-    icon: BookOpen,
+    title: "Research Content",
+    description: "Manage research-scoped news, blogs, events, and announcements through the main content service.",
+    href: "/research/content",
+    icon: Newspaper,
   },
   {
-    title: "Grants",
-    description: "Track grant records and funding workflows exposed by the research API.",
-    href: "/research/grants",
-    icon: HandCoins,
+    title: "Sustainability and Climate Change",
+    description: "Projects, partners, activities, and content for sustainability work.",
+    href: "/research/sustainability",
+    icon: Leaf,
+  },
+  {
+    title: "University Farm",
+    description: "Farm projects, partnerships, impact stories, activities, and focus areas.",
+    href: "/research/farm",
+    icon: Sprout,
+  },
+  {
+    title: "Capacity Building",
+    description: "Training programs, mentorship programs, scholarships, and consultancies.",
+    href: "/research/capacity",
+    icon: GraduationCap,
+  },
+  {
+    title: "Settings",
+    description: "Research configuration and donation settings.",
+    href: "/research/settings",
+    icon: Settings,
   },
 ];
 
@@ -50,6 +68,18 @@ export function ResearchDashboardClient() {
   const grants = useQuery({
     queryKey: ["research", "grants", "count"],
     queryFn: () => researchApi.get<CountResponse>("/api/v1/grants", countParams),
+  });
+  const partners = useQuery({
+    queryKey: ["research", "partners", "count"],
+    queryFn: () => researchApi.get<CountResponse>("/api/v1/partners", countParams),
+  });
+  const innovations = useQuery({
+    queryKey: ["research", "innovations", "count"],
+    queryFn: () => researchApi.get<CountResponse>("/api/v1/innovations", countParams),
+  });
+  const sustainability = useQuery({
+    queryKey: ["research", "sustainability", "count"],
+    queryFn: () => researchApi.get<CountResponse>("/api/v1/sustainability", countParams),
   });
 
   const stats = [
@@ -75,11 +105,25 @@ export function ResearchDashboardClient() {
       href: "/research/grants",
     },
     {
-      title: "Reporting",
-      value: "Not configured",
-      description: "No aggregate research reporting endpoint is wired",
-      icon: FileText,
-      href: "/research",
+      title: "Partnerships",
+      value: formatCount(partners.data, partners.isLoading, partners.isError),
+      description: "From /api/v1/partners",
+      icon: HeartHandshake,
+      href: "/research/partnerships",
+    },
+    {
+      title: "Innovations",
+      value: formatCount(innovations.data, innovations.isLoading, innovations.isError),
+      description: "From /api/v1/innovations",
+      icon: Lightbulb,
+      href: "/research/innovations",
+    },
+    {
+      title: "Sustainability",
+      value: formatCount(sustainability.data, sustainability.isLoading, sustainability.isError),
+      description: "From /api/v1/sustainability",
+      icon: Leaf,
+      href: "/research/sustainability",
     },
   ];
 
@@ -87,7 +131,7 @@ export function ResearchDashboardClient() {
     <div>
       <PageHeader
         title="Research Dashboard"
-        description="Manage research projects, publications, and grants using source-backed research service states."
+        description="Manage main research records, scoped content, sustainability, university farm, capacity building, and settings."
       />
 
       <div className="space-y-6 p-6">
@@ -119,7 +163,7 @@ export function ResearchDashboardClient() {
             <CardTitle>Research work areas</CardTitle>
             <CardDescription>Navigation reflects the research backend modules currently exposed by the admin shell.</CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-3 md:grid-cols-3">
+          <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {researchAreas.map((area) => {
               const Icon = area.icon;
 

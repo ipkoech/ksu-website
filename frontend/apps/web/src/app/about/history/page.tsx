@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   ArrowRight,
   BookOpenCheck,
-  Building2,
   CalendarDays,
   ChevronRight,
   ClipboardCheck,
@@ -19,10 +18,7 @@ import {
   historyTimeline,
   quickNavigation,
 } from "@/lib/about-data";
-import {
-  AboutIllustration,
-  aboutIllustrations,
-} from "@/components/about/AboutIllustration";
+import { AboutIllustration } from "@/components/about/AboutIllustration";
 import { ScrollReveal } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";

@@ -98,6 +98,7 @@ class WingCreate(BaseSchema):
 
 
 class WingUpdate(BaseSchema):
+    division_id: uuid.UUID | None = None
     name: str | None = Field(default=None, min_length=1, max_length=255)
     slug: SlugStr | None = None
     code: CodeStr | None = None

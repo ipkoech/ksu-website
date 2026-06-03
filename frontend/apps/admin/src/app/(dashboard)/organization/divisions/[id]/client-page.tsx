@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,11 +33,21 @@ import {
   richTextToPlainText,
   type JsonEditorField,
 } from "@ksu/ui/components";
-import { useCreateDivision, useDivision, useUpdateDivision, type Division } from "@ksu/api-client";
+import {
+  useCreateDivision,
+  useDepartments,
+  useDivision,
+  useStaffAssignments,
+  useUpdateDivision,
+  useWingsByDivision,
+  type Division,
+  type StaffAssignment,
+} from "@ksu/api-client";
 import { MediaPicker } from "@/components/media";
 import { PersonPicker } from "@/components/relationships";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { PageHeader } from "@/components/shared/page-header";
+import { StaffAssignmentEditor } from "@/components/staff/staff-assignment-editor";
 import { hasChangedPayload, pickChangedPayloadWithRecord, type PayloadFieldMap } from "@/lib/changed-fields";
 
 const objectSchema = z.record(z.string(), z.unknown()).nullable().optional();
@@ -162,6 +174,19 @@ function resolveRouteId(routeId: string, queryId: string | null) {
   return routeId;
 }
 
+function personName(assignment: StaffAssignment) {
+  const person = assignment.person;
+  return (
+    person?.full_name ||
+    [person?.title, person?.first_name, person?.last_name].filter(Boolean).join(" ") ||
+    "Staff assignment"
+  );
+}
+
+function assignmentTitle(assignment: StaffAssignment) {
+  return assignment.title || assignment.role_display || assignment.role?.replace(/_/g, " ") || "Staff role";
+}
+
 export default function DivisionEditorPage() {
   const router = useRouter();
   const params = useParams();
@@ -178,6 +203,40 @@ export default function DivisionEditorPage() {
   const updateDivision = useUpdateDivision();
   const division = divisionQuery.data?.data;
   const isPending = createDivision.isPending || updateDivision.isPending;
+  const [assignmentEditorOpen, setAssignmentEditorOpen] = useState(false);
+  const [selectedAssignment, setSelectedAssignment] = useState<StaffAssignment | null>(null);
+  const staffAssignmentsQuery = useStaffAssignments(
+    {
+      entity_type: "division",
+      entity_id: divisionId,
+      status: "all",
+      fields: "id,person_id,entity_type,entity_id,role,title,hierarchy_level,is_primary,is_acting,is_public,status,display_order,start_date,end_date",
+      include: "person:id,title,first_name,last_name,full_name,email",
+      per_page: 80,
+    },
+    { enabled: !isNew && Boolean(divisionId) },
+  );
+  const wingsQuery = useWingsByDivision(
+    divisionId,
+    { is_active: true, fields: "id,name,slug,code,wing_type,division_id,display_order" },
+    { enabled: !isNew && Boolean(divisionId) },
+  );
+  const departmentsQuery = useDepartments({
+    department_type: "administrative",
+    fields: "id,name,slug,code,wing_id,department_type,display_order",
+    per_page: 200,
+  });
+  const divisionWings = wingsQuery.data?.data ?? [];
+  const wingIds = useMemo(() => new Set(divisionWings.map((wing) => wing.id)), [divisionWings]);
+  const departmentsByWing = useMemo(() => {
+    const grouped = new Map<string, Array<{ id: string; name: string; slug: string; code?: string | null }>>();
+    for (const department of departmentsQuery.data?.data ?? []) {
+      if (!department.wing_id || !wingIds.has(department.wing_id)) continue;
+      grouped.set(department.wing_id, [...(grouped.get(department.wing_id) ?? []), department]);
+    }
+    return grouped;
+  }, [departmentsQuery.data?.data, wingIds]);
+  const assignments = staffAssignmentsQuery.data?.data ?? [];
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -417,6 +476,89 @@ export default function DivisionEditorPage() {
                   ))}
                 </CardContent>
               </Card>
+
+              {!isNew && division ? (
+                <>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Division Team</CardTitle>
+                      <CardDescription>Attach public staff assignments to this division.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          setSelectedAssignment(null);
+                          setAssignmentEditorOpen(true);
+                        }}
+                      >
+                        Attach staff
+                      </Button>
+                      <div className="space-y-2">
+                        {assignments.map((assignment) => (
+                          <button
+                            type="button"
+                            key={assignment.id}
+                            className="w-full rounded-lg border p-3 text-left transition hover:bg-muted"
+                            onClick={() => {
+                              setSelectedAssignment(assignment);
+                              setAssignmentEditorOpen(true);
+                            }}
+                          >
+                            <p className="text-sm font-semibold">{personName(assignment)}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">{assignmentTitle(assignment)}</p>
+                          </button>
+                        ))}
+                        {!assignments.length ? (
+                          <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                            No staff assignments attached.
+                          </p>
+                        ) : null}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Directorates and Units</CardTitle>
+                      <CardDescription>Child directorates and administrative units under this division.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {divisionWings.map((wing) => (
+                        <div key={wing.id} className="rounded-lg border p-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold">{wing.name}</p>
+                              <p className="text-xs text-muted-foreground">{wing.code}</p>
+                            </div>
+                            <Button asChild type="button" variant="ghost" size="sm">
+                              <Link href={`/organization/directorates/_static?id=${encodeURIComponent(wing.id)}`}>
+                                Edit
+                              </Link>
+                            </Button>
+                          </div>
+                          {(departmentsByWing.get(wing.id) ?? []).length ? (
+                            <ul className="mt-3 space-y-1 border-t pt-3">
+                              {(departmentsByWing.get(wing.id) ?? []).map((department) => (
+                                <li key={department.id} className="text-xs text-muted-foreground">
+                                  {department.name}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : null}
+                        </div>
+                      ))}
+                      {!divisionWings.length ? (
+                        <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                          No directorates are attached to this division.
+                        </p>
+                      ) : null}
+                    </CardContent>
+                  </Card>
+                </>
+              ) : null}
             </div>
           </div>
 
@@ -426,6 +568,21 @@ export default function DivisionEditorPage() {
           </div>
         </form>
       </Form>
+      {!isNew && division ? (
+        <StaffAssignmentEditor
+          open={assignmentEditorOpen}
+          onOpenChange={setAssignmentEditorOpen}
+          mode={selectedAssignment ? "edit" : "create"}
+          assignment={selectedAssignment}
+          presetEntityType="division"
+          presetEntityId={division.id}
+          presetEntityLabel={division.name}
+          lockEntity
+          onSuccess={() => {
+            staffAssignmentsQuery.refetch();
+          }}
+        />
+      ) : null}
     </motion.div>
   );
 }

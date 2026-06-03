@@ -4,7 +4,7 @@ import { queryKeys } from "./query-keys";
 import type { School, PaginatedResponse } from "../main/types";
 import type { PaginationParams } from "../client";
 
-export function useSchools(params?: PaginationParams & { campus_id?: string; search?: string }) {
+export function useSchools(params?: PaginationParams & { campus_id?: string; administrative_wing_id?: string; search?: string }) {
   return useQuery({
     queryKey: queryKeys.schools.list(params),
     queryFn: () => schoolsApi.list(params),

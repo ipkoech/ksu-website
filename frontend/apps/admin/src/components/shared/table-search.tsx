@@ -15,19 +15,23 @@ export function TableSearch({
   return (
     <div className="relative">
       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <label htmlFor="table-search" className="sr-only">
+        {placeholder}
+      </label>
       <Input
+        id="table-search"
         type="search"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="h-10 pl-9 pr-10"
+        className="h-11 pl-9 pr-12"
       />
       {value ? (
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+          className="absolute right-0 top-1/2 h-11 w-11 -translate-y-1/2"
           onClick={() => onChange("")}
           aria-label="Clear search"
         >

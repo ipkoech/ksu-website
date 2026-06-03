@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, usePermissions } from "@ksu/auth";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Checkbox, Input, Label, PageHeader } from "@ksu/ui/components";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Checkbox, Input, Label, PageHeader, PasswordInput } from "@ksu/ui/components";
 import { useCreateUser, useRoles, useUpdateUserRoles } from "@ksu/api-client/hooks/admin";
 import { createUserSchema } from "../../_lib/schemas";
 import { canManageRoles, canManageUsers, canViewRoles } from "../../_lib/access";
@@ -28,6 +28,12 @@ export default function CreateUserPage() {
     send_welcome_email: true,
     role_ids: [] as string[],
   });
+  const passwordChecks = [
+    { label: "At least 8 characters", valid: form.password.length >= 8 },
+    { label: "One uppercase letter", valid: /[A-Z]/.test(form.password) },
+    { label: "One number", valid: /[0-9]/.test(form.password) },
+    { label: "Passwords match", valid: form.password.length > 0 && form.password === form.confirm_password },
+  ];
 
   const submit = async () => {
     const parsed = createUserSchema.safeParse(form);
@@ -66,28 +72,43 @@ export default function CreateUserPage() {
             <CardTitle>User details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
+            {error ? (
+              <p className="text-sm font-medium text-destructive" role="alert">
+                {error}
+              </p>
+            ) : null}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Email</Label>
-                <Input value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} />
+                <Label htmlFor="new-user-email">Email</Label>
+                <Input id="new-user-email" type="email" autoComplete="username" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label>First name</Label>
-                <Input value={form.first_name} onChange={(event) => setForm((current) => ({ ...current, first_name: event.target.value }))} />
+                <Label htmlFor="new-user-first-name">First name</Label>
+                <Input id="new-user-first-name" autoComplete="given-name" value={form.first_name} onChange={(event) => setForm((current) => ({ ...current, first_name: event.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label>Last name</Label>
-                <Input value={form.last_name} onChange={(event) => setForm((current) => ({ ...current, last_name: event.target.value }))} />
+                <Label htmlFor="new-user-last-name">Last name</Label>
+                <Input id="new-user-last-name" autoComplete="family-name" value={form.last_name} onChange={(event) => setForm((current) => ({ ...current, last_name: event.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label>Password</Label>
-                <Input type="password" value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} />
+                <Label htmlFor="new-user-password">Password</Label>
+                <PasswordInput id="new-user-password" autoComplete="new-password" aria-describedby="new-user-password-rules" value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label>Confirm password</Label>
-                <Input type="password" value={form.confirm_password} onChange={(event) => setForm((current) => ({ ...current, confirm_password: event.target.value }))} />
+                <Label htmlFor="new-user-confirm-password">Confirm password</Label>
+                <PasswordInput id="new-user-confirm-password" autoComplete="new-password" aria-describedby="new-user-password-rules" value={form.confirm_password} onChange={(event) => setForm((current) => ({ ...current, confirm_password: event.target.value }))} />
               </div>
+            </div>
+
+            <div className="rounded-md border bg-muted/40 p-3" id="new-user-password-rules" aria-live="polite">
+              <p className="text-sm font-medium">Password requirements</p>
+              <ul className="mt-2 grid gap-1 text-sm text-muted-foreground">
+                {passwordChecks.map((check) => (
+                  <li key={check.label} className={check.valid ? "text-success" : undefined}>
+                    {check.valid ? "Met:" : "Needed:"} {check.label}
+                  </li>
+                ))}
+              </ul>
             </div>
 
             {canReadRoles ? <div className="space-y-3">
@@ -99,8 +120,9 @@ export default function CreateUserPage() {
                     <button
                       key={role.id}
                       type="button"
-                      className="rounded-full"
+                      className="min-h-11 rounded-full"
                       disabled={!canAssignRoles}
+                      aria-pressed={selected}
                       onClick={() =>
                         setForm((current) => ({
                           ...current,
@@ -117,7 +139,7 @@ export default function CreateUserPage() {
               </div>
             </div> : null}
 
-            <label className="flex items-center gap-3 text-sm">
+            <label className="flex min-h-11 items-center gap-3 text-sm">
               <Checkbox
                 checked={form.send_welcome_email}
                 onCheckedChange={(checked) => setForm((current) => ({ ...current, send_welcome_email: Boolean(checked) }))}

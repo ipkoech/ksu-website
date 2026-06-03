@@ -67,6 +67,7 @@ from .engagement import (
     SupportTicketOut,
     SupportTicketUpdate,
 )
+from .stats import PublicStatItem, PublicStatsResponse
 
 __all__ = [
     # library
@@ -131,4 +132,7 @@ __all__ = [
     "LibraryRegulationCreate",
     "LibraryRegulationUpdate",
     "LibraryRegulationOut",
+    # stats
+    "PublicStatItem",
+    "PublicStatsResponse",
 ]

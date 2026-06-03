@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { hierarchy } from "d3-hierarchy";
 import type { HierarchyNode } from "d3-hierarchy";
-import { Network } from "lucide-react";
 import type { BoardMember } from "@/components/about/BoardMemberGrid";
+import { PublicImage } from "@/components/public/public-image";
 
 type GovernanceChartProps = {
+  councilOnly?: boolean;
   councilDescription?: string | null;
   senateDescription?: string | null;
   managementDescription?: string | null;
@@ -26,13 +27,13 @@ type OrgNode = {
   children?: OrgNode[];
 };
 
-const NODE_WIDTH = 250;
-const NODE_HEIGHT = 150;
+const NODE_WIDTH = 190;
+const NODE_HEIGHT = 230;
 const MIN_CHART_WIDTH = 1120;
 const ROOT_Y = 0;
-const GROUP_Y = 240;
-const CHILD_Y = 492;
-const SIBLING_GAP = 36;
+const GROUP_Y = 282;
+const CHILD_Y = 584;
+const SIBLING_GAP = 28;
 const GROUP_GAP = 72;
 
 type PositionedNode = {
@@ -56,7 +57,9 @@ function roleIncludes(member: BoardMember, terms: string[]) {
 }
 
 function samePerson(first?: BoardMember, second?: BoardMember) {
-  return Boolean(first && second && normalize(first.name) === normalize(second.name));
+  return Boolean(
+    first && second && normalize(first.name) === normalize(second.name),
+  );
 }
 
 function initials(name: string) {
@@ -74,7 +77,10 @@ function initials(name: string) {
   if (!parts.length) return "K";
 
   const selected = parts.length === 1 ? [parts[0]] : [parts[0], parts.at(-1)!];
-  return selected.map((part) => part[0]).join("").toUpperCase();
+  return selected
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 }
 
 function nodeId(prefix: string, member: BoardMember, index: number) {
@@ -84,12 +90,15 @@ function nodeId(prefix: string, member: BoardMember, index: number) {
     .replace(/(^-|-$)/g, "");
 }
 
-function personNode(prefix: string, member: BoardMember, index: number): OrgNode {
+function personNode(
+  prefix: string,
+  member: BoardMember,
+  index: number,
+): OrgNode {
   return {
     id: nodeId(prefix, member, index),
     title: member.name,
     role: member.role,
-    description: member.note,
     photoUrl: member.photoUrl,
     kind: "person",
   };
@@ -105,6 +114,7 @@ function functionNode(prefix: string, title: string, index: number): OrgNode {
 }
 
 function buildTree({
+  councilOnly = false,
   councilDescription,
   senateDescription,
   managementDescription,
@@ -124,6 +134,11 @@ function buildTree({
   const councilSecretary = publicCouncilMembers.find((member) =>
     roleIncludes(member, ["secretary", "vice chancellor"]),
   );
+  const chancellor = publicCouncilMembers.find(
+    (member) =>
+      roleIncludes(member, ["chancellor"]) &&
+      !roleIncludes(member, ["vice chancellor"]),
+  );
   const viceChancellor =
     managementRoles.find(
       (member) =>
@@ -131,13 +146,22 @@ function buildTree({
         !roleIncludes(member, ["deputy", "dvc"]),
     ) ?? councilSecretary;
   const rootPerson =
-    viceChancellor ??
+    (councilOnly ? chancellor : viceChancellor) ??
+    (!councilOnly ? councilSecretary : undefined) ??
     ({
-      name: "Office of the Vice Chancellor",
-      role: "Vice Chancellor",
+      name: councilOnly ? "Chancellor" : "Office of the Vice Chancellor",
+      role: councilOnly ? "University Council Lead" : "Vice Chancellor",
     } satisfies BoardMember);
+  const councilSecretaryNode =
+    councilSecretary && !samePerson(councilSecretary, rootPerson)
+      ? councilSecretary
+      : ({
+          name: "Secretary to the University Council",
+          role: "Council Secretary",
+        } satisfies BoardMember);
   const councilPeople = publicCouncilMembers.filter(
-    (member) => !samePerson(member, rootPerson),
+    (member) =>
+      !samePerson(member, rootPerson) && !samePerson(member, councilSecretaryNode),
   );
   const managementPeople = managementRoles.filter(
     (member) => !samePerson(member, rootPerson),
@@ -148,61 +172,70 @@ function buildTree({
     "School-level academic leadership",
   ];
 
-  return {
-    id: "vice-chancellor",
-    title: rootPerson.name,
-    role: roleIncludes(rootPerson, ["vice chancellor"])
-      ? rootPerson.role
-      : "Vice Chancellor",
+  const councilNode: OrgNode = {
+    id: councilOnly ? "council-secretary" : "university-council",
+    title: councilOnly ? councilSecretaryNode.name : "University Council",
+    role: councilOnly ? councilSecretaryNode.role : "Council",
     description:
-      "Executive lead connecting Council oversight, academic authority, and institutional implementation.",
+      councilOnly
+        ? undefined
+        : councilDescription ||
+          "Policy oversight, fiduciary stewardship, and institutional accountability.",
+    photoUrl: councilOnly ? councilSecretaryNode.photoUrl : undefined,
+    kind: councilOnly ? "person" : "group",
+    childCount: councilPeople.length,
+    children: councilPeople.map((member, index) =>
+      personNode("council", member, index),
+    ),
+  };
+  const children: OrgNode[] = councilOnly
+    ? [councilNode]
+    : [
+        councilNode,
+        {
+          id: "senate",
+          title: "Senate",
+          role: "Academic authority",
+          description:
+            senateDescription ||
+            "Academic standards, research, examinations, and scholarly direction.",
+          kind: "group",
+          childCount: publicSenateMembers.length || senateFunctions.length,
+          children: publicSenateMembers.length
+            ? publicSenateMembers.map((member, index) =>
+                personNode("senate", member, index),
+              )
+            : senateFunctions.map((item, index) =>
+                functionNode("senate-function", item, index),
+              ),
+        },
+        {
+          id: "management-board",
+          title: "Management Board",
+          role: "Implementation",
+          description:
+            managementDescription ||
+            "Day-to-day administration and implementation of university policies.",
+          kind: "group",
+          childCount: managementPeople.length,
+          children: managementPeople.map((member, index) =>
+            personNode("management", member, index),
+          ),
+        },
+      ];
+
+  return {
+    id: councilOnly ? "chancellor" : "vice-chancellor",
+    title: rootPerson.name,
+    role:
+      rootPerson.role ||
+      (councilOnly ? "Chancellor" : "Vice Chancellor"),
+    description: councilOnly
+      ? undefined
+      : "Executive lead connecting Council oversight, academic authority, and institutional implementation.",
     photoUrl: rootPerson.photoUrl,
     kind: "root",
-    children: [
-      {
-        id: "university-council",
-        title: "University Council",
-        role: "Council",
-        description:
-          councilDescription ||
-          "Policy oversight, fiduciary stewardship, and institutional accountability.",
-        kind: "group",
-        childCount: councilPeople.length,
-        children: councilPeople.map((member, index) =>
-          personNode("council", member, index),
-        ),
-      },
-      {
-        id: "senate",
-        title: "Senate",
-        role: "Academic authority",
-        description:
-          senateDescription ||
-          "Academic standards, research, examinations, and scholarly direction.",
-        kind: "group",
-        childCount: publicSenateMembers.length || senateFunctions.length,
-        children: publicSenateMembers.length
-          ? publicSenateMembers.map((member, index) =>
-              personNode("senate", member, index),
-            )
-          : senateFunctions.map((item, index) =>
-              functionNode("senate-function", item, index),
-            ),
-      },
-      {
-        id: "management-board",
-        title: "Management Board",
-        role: "Implementation",
-        description:
-          managementDescription ||
-          "Day-to-day administration and implementation of university policies.",
-        kind: "group",
-        childCount: managementPeople.length,
-        children: managementPeople.map((member, index) =>
-          personNode("management", member, index),
-        ),
-      },
-    ],
+    children,
   };
 }
 
@@ -216,36 +249,15 @@ function linkPath(source: PositionedNode, target: PositionedNode) {
   return `M ${sourceX} ${sourceY} C ${sourceX} ${middleY}, ${targetX} ${middleY}, ${targetX} ${targetY}`;
 }
 
-function toVisibleTree(node: OrgNode, expandedGroups: Set<string>): OrgNode {
-  if (!node.children?.length) return node;
-
-  if (node.kind === "group" && !expandedGroups.has(node.id)) {
-    return {
-      ...node,
-      children: [],
-    };
-  }
-
-  return {
-    ...node,
-    children: node.children.map((child) => toVisibleTree(child, expandedGroups)),
-  };
-}
-
 function NodeCard({
   node,
-  expanded,
-  onToggle,
 }: {
   node: PositionedNode;
-  expanded: boolean;
-  onToggle: (id: string) => void;
 }) {
   const data = node.data;
   const isRoot = data.kind === "root";
   const isPerson = data.kind === "person" || isRoot;
   const isFunction = data.kind === "function";
-  const canExpand = data.kind === "group" && Boolean(data.childCount);
 
   return (
     <foreignObject
@@ -255,7 +267,7 @@ function NodeCard({
       height={NODE_HEIGHT}
     >
       <div
-        className={`flex h-full w-full overflow-hidden rounded-[1rem] border p-3 shadow-sm ${
+        className={`flex h-full w-full flex-col overflow-hidden rounded-[1rem] border shadow-sm ${
           isRoot
             ? "border-primary/25 bg-white"
             : isFunction
@@ -264,53 +276,44 @@ function NodeCard({
         }`}
       >
         {isPerson ? (
-          <div className="mr-3 h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-[linear-gradient(135deg,#dbeafe,#eef4ff_56%,#fff7ed)] text-primary ring-1 ring-primary/10">
+          <div className="flex h-24 w-full shrink-0 items-center justify-center overflow-hidden bg-[linear-gradient(135deg,#dbeafe,#eef4ff_56%,#fff7ed)] text-primary">
             {data.photoUrl ? (
-              <img
+              <PublicImage
                 src={data.photoUrl}
                 alt={data.title}
-                className="h-full w-full object-cover"
+                ratio="card"
+                sizes="190px"
+                className="h-full w-full"
               />
             ) : (
-              <span className="flex h-full w-full items-center justify-center font-[family-name:var(--font-display)] text-lg font-semibold">
+              <span className="font-[family-name:var(--font-display)] text-3xl font-semibold">
                 {initials(data.title)}
               </span>
             )}
           </div>
         ) : null}
 
-        <div className="min-w-0 flex-1">
-          <p
-            className={`text-[0.65rem] font-bold uppercase tracking-[0.12em] ${
-              isRoot ? "text-secondary" : "text-primary"
-            }`}
-          >
-            {data.role}
-          </p>
+        <div className="min-w-0 flex-1 p-3">
           <h3
-            className={`mt-1 line-clamp-2 font-semibold leading-tight ${
+            className={`line-clamp-2 font-semibold leading-tight ${
               isRoot ? "text-base text-slate-950" : "text-sm text-slate-950"
             }`}
           >
             {data.title}
           </h3>
+          <p
+            className={`mt-2 line-clamp-2 text-[0.64rem] font-bold uppercase tracking-[0.1em] ${
+              isRoot ? "text-secondary" : "text-primary"
+            }`}
+          >
+            {data.role}
+          </p>
           {data.description ? (
             <p
-              className={`mt-2 text-xs leading-5 text-slate-500 ${
-                canExpand ? "line-clamp-2" : "line-clamp-3"
-              }`}
+              className="mt-2 line-clamp-3 text-xs leading-5 text-slate-500"
             >
               {data.description}
             </p>
-          ) : null}
-          {canExpand ? (
-            <button
-              type="button"
-              onClick={() => onToggle(data.id)}
-              className="mt-2 inline-flex items-center rounded-full bg-primary/[0.08] px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-primary transition hover:bg-primary hover:text-white"
-            >
-              {expanded ? "Collapse" : `Show ${data.childCount}`}
-            </button>
           ) : null}
         </div>
       </div>
@@ -333,7 +336,8 @@ function layoutNodes(root: HierarchyNode<OrgNode>) {
   const contentWidth =
     groupWidths.reduce((total, width) => total + width, 0) +
     Math.max(0, groups.length - 1) * GROUP_GAP;
-  const chartWidth = Math.max(MIN_CHART_WIDTH, contentWidth);
+  const minimumWidth = groups.length <= 1 ? 760 : MIN_CHART_WIDTH;
+  const chartWidth = Math.max(minimumWidth, contentWidth);
   let cursorX = (chartWidth - contentWidth) / 2;
   const rootNode: PositionedNode = {
     data: root.data,
@@ -380,36 +384,11 @@ function layoutNodes(root: HierarchyNode<OrgNode>) {
 
 export function GovernanceChart(props: GovernanceChartProps) {
   const fullTree = useMemo(() => buildTree(props), [props]);
-  const groupIds = useMemo(
-    () => fullTree.children?.map((child) => child.id) ?? [],
-    [fullTree],
-  );
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
-    () => new Set(),
-  );
-  const visibleTree = useMemo(
-    () => toVisibleTree(fullTree, expandedGroups),
-    [expandedGroups, fullTree],
-  );
-  const root = hierarchy(visibleTree);
+  const root = hierarchy(fullTree);
   const { positionedNodes, links, chartWidth } = layoutNodes(root);
   const height =
     Math.max(...positionedNodes.map((node) => node.y)) + NODE_HEIGHT + 32;
-  const expandedCount = expandedGroups.size;
-
-  function toggleGroup(id: string) {
-    setExpandedGroups((current) => {
-      const next = new Set(current);
-
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-
-      return next;
-    });
-  }
+  const isCouncilOnly = Boolean(props.councilOnly);
 
   return (
     <div className="w-full">
@@ -419,31 +398,16 @@ export function GovernanceChart(props: GovernanceChartProps) {
             Org Chart
           </p>
           <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
-            Vice Chancellor, governance bodies, and named members
+            {isCouncilOnly
+              ? "Chancellor and University Council"
+              : "Vice Chancellor, governance bodies, and named members"}
           </h2>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setExpandedGroups(new Set(groupIds))}
-            className="inline-flex items-center gap-2 rounded-xl bg-primary/[0.08] px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-primary transition hover:bg-primary hover:text-white"
-          >
-            <Network aria-hidden className="h-4 w-4" />
-            Expand all
-          </button>
-          <button
-            type="button"
-            onClick={() => setExpandedGroups(new Set())}
-            className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-600 transition hover:border-primary/30 hover:text-primary"
-          >
-            Collapse all
-          </button>
         </div>
       </div>
       <p className="mt-3 text-sm leading-6 text-slate-600">
-        Starts minimized with the Vice Chancellor at the top. Expand branches to
-        inspect named Council, Senate, and Management records.
-        {expandedCount ? ` ${expandedCount} branch${expandedCount === 1 ? "" : "es"} expanded.` : ""}
+        {isCouncilOnly
+          ? "The hierarchy starts with the Chancellor, followed by the Council Secretary, then the remaining published Council members."
+          : "The hierarchy is shown without interaction so governance relationships remain visible at a glance."}
       </p>
 
       <div className="mt-6 overflow-x-auto">
@@ -453,7 +417,7 @@ export function GovernanceChart(props: GovernanceChartProps) {
           width={chartWidth}
           height={height}
           viewBox={`0 0 ${chartWidth} ${height}`}
-          className="mx-auto block max-w-none"
+          className="mx-auto block h-auto max-w-full"
         >
           <g fill="none" stroke="#cbd5e1" strokeLinecap="round" strokeWidth="2">
             {links.map((link) => (
@@ -467,8 +431,6 @@ export function GovernanceChart(props: GovernanceChartProps) {
             <NodeCard
               key={node.data.id}
               node={node}
-              expanded={expandedGroups.has(node.data.id)}
-              onToggle={toggleGroup}
             />
           ))}
         </svg>

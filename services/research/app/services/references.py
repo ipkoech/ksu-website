@@ -1,0 +1,62 @@
+"""Cross-service reference validation helpers.
+
+Research owns research records, but several fields intentionally reference
+main-service records by UUID. Validation is application-level and configurable;
+there are no cross-service database foreign keys.
+"""
+
+from __future__ import annotations
+
+import logging
+import uuid
+from typing import Mapping
+
+import httpx
+
+from ..core.config import get_settings
+
+logger = logging.getLogger(__name__)
+
+
+class ReferenceValidationError(ValueError):
+    """Raised when a referenced main-service record does not exist."""
+
+
+class MainReferenceValidator:
+    """Validate UUID references against the main service internal API."""
+
+    @staticmethod
+    async def validate(payload: Mapping[str, object], reference_fields: Mapping[str, str]) -> None:
+        settings = get_settings()
+        mode = settings.REFERENCE_VALIDATION_MODE.lower()
+        if mode == "disabled" or not reference_fields:
+            return
+
+        references = [
+            (field, kind, value)
+            for field, kind in reference_fields.items()
+            if (value := payload.get(field)) is not None
+        ]
+        if not references:
+            return
+
+        async with httpx.AsyncClient(
+            base_url=settings.MAIN_SERVICE_URL.rstrip("/"),
+            headers={"X-Internal-Key": settings.INTERNAL_API_KEY},
+            timeout=httpx.Timeout(settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS),
+        ) as client:
+            for field, kind, value in references:
+                try:
+                    ref_id = value if isinstance(value, uuid.UUID) else uuid.UUID(str(value))
+                    response = await client.get(f"/api/v1/internal/references/{kind}/{ref_id}")
+                    if response.status_code == 404:
+                        raise ReferenceValidationError(f"{field} references missing main {kind} record")
+                    response.raise_for_status()
+                except ReferenceValidationError:
+                    if mode == "strict":
+                        raise
+                    logger.warning("Reference validation failed for %s=%s kind=%s", field, value, kind)
+                except Exception as exc:
+                    if mode == "strict":
+                        raise ReferenceValidationError(f"Could not validate {field} against main service") from exc
+                    logger.warning("Reference validation skipped for %s=%s kind=%s: %s", field, value, kind, exc)

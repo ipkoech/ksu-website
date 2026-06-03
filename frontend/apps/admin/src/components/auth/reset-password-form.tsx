@@ -38,6 +38,20 @@ const resetPasswordSchema = z
 
 type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
+function resetPasswordErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message.toLowerCase() : "";
+
+  if (message.includes("expired") || message.includes("token")) {
+    return "This reset link is invalid or has expired. Request a new password reset link.";
+  }
+
+  if (message.includes("network") || message.includes("fetch")) {
+    return "We could not reach the admin service. Check your connection and try again.";
+  }
+
+  return "Password reset failed. Check the password requirements and try again.";
+}
+
 export function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -50,6 +64,13 @@ export function ResetPasswordForm() {
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: { password: "", confirmPassword: "" },
   });
+  const password = form.watch("password");
+  const passwordChecks = [
+    { label: "At least 8 characters", valid: password.length >= 8 },
+    { label: "One uppercase letter", valid: /[A-Z]/.test(password) },
+    { label: "One lowercase letter", valid: /[a-z]/.test(password) },
+    { label: "One number", valid: /[0-9]/.test(password) },
+  ];
 
   async function onSubmit(values: ResetPasswordValues) {
     if (!token) {
@@ -63,16 +84,17 @@ export function ResetPasswordForm() {
       await resetPassword(token, values.password);
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(resetPasswordErrorMessage(err));
     }
   }
 
   if (!token) {
     return (
-      <div className="space-y-4 text-center">
+      <div className="space-y-4 text-center" role="status" aria-live="polite">
         <Alert variant="destructive">
           <AlertDescription>
-            Invalid or missing reset token. Please request a new password reset link.
+            Invalid or missing reset token. Please request a new password reset
+            link.
           </AlertDescription>
         </Alert>
         <Button asChild variant="outline" className="w-full">
@@ -91,7 +113,8 @@ export function ResetPasswordForm() {
         <div>
           <h3 className="font-semibold">Password Reset Successful</h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Your password has been reset. You can now sign in with your new password.
+            Your password has been reset. You can now sign in with your new
+            password.
           </p>
         </div>
         <Button asChild className="w-full">
@@ -117,12 +140,30 @@ export function ResetPasswordForm() {
             <FormItem>
               <FormLabel>New Password</FormLabel>
               <FormControl>
-                <PasswordInput placeholder="Enter new password" {...field} />
+                <PasswordInput
+                  autoComplete="new-password"
+                  placeholder="Enter new password"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
+        <div className="rounded-md border bg-muted/40 p-3" aria-live="polite">
+          <p className="text-sm font-medium">Password requirements</p>
+          <ul className="mt-2 grid gap-1 text-sm text-muted-foreground">
+            {passwordChecks.map((check) => (
+              <li
+                key={check.label}
+                className={check.valid ? "text-success" : undefined}
+              >
+                {check.valid ? "Met:" : "Needed:"} {check.label}
+              </li>
+            ))}
+          </ul>
+        </div>
 
         <FormField
           control={form.control}
@@ -131,7 +172,11 @@ export function ResetPasswordForm() {
             <FormItem>
               <FormLabel>Confirm Password</FormLabel>
               <FormControl>
-                <PasswordInput placeholder="Confirm new password" {...field} />
+                <PasswordInput
+                  autoComplete="new-password"
+                  placeholder="Confirm new password"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -149,7 +194,7 @@ export function ResetPasswordForm() {
         <div className="text-center">
           <Link
             href="/login"
-            className="inline-flex items-center text-sm text-primary hover:underline"
+            className="inline-flex min-h-11 items-center text-sm text-primary hover:underline"
           >
             <ArrowLeft className="mr-1 h-3 w-3" />
             Back to login

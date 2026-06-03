@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from typing import Optional, Sequence
 
 import httpx
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 

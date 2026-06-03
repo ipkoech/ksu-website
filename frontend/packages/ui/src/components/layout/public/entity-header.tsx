@@ -203,9 +203,17 @@ function EntityHeaderLink({
   );
   const hasDropdown = item.children !== undefined;
   const triggerRef = useRef<HTMLDivElement>(null);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [dropdownFrame, setDropdownFrame] = useState<DropdownFrame | null>(
     null,
   );
+
+  const clearCloseTimeout = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+  };
 
   const getDropdownFrame = (): DropdownFrame | null => {
     if (!triggerRef.current || typeof window === "undefined") return null;
@@ -238,9 +246,25 @@ function EntityHeaderLink({
   };
 
   const openDropdown = () => {
+    clearCloseTimeout();
     updateDropdownFrame();
     onOpen();
   };
+
+  const closeDropdown = () => {
+    clearCloseTimeout();
+    onClose();
+  };
+
+  const scheduleCloseDropdown = () => {
+    clearCloseTimeout();
+    closeTimeoutRef.current = setTimeout(() => {
+      onClose();
+      closeTimeoutRef.current = null;
+    }, 280);
+  };
+
+  useEffect(() => clearCloseTimeout, []);
 
   useEffect(() => {
     if (!open || !hasDropdown) {
@@ -266,7 +290,7 @@ function EntityHeaderLink({
         ref={triggerRef}
         className="relative"
         onMouseEnter={openDropdown}
-        onMouseLeave={onClose}
+        onMouseLeave={scheduleCloseDropdown}
         onFocus={openDropdown}
       >
         <button
@@ -274,7 +298,7 @@ function EntityHeaderLink({
           className={className}
           aria-expanded={open}
           aria-haspopup="menu"
-          onClick={() => (open ? onClose() : openDropdown())}
+          onClick={() => (open ? closeDropdown() : openDropdown())}
         >
           {item.label}
           <ChevronDown
@@ -287,6 +311,8 @@ function EntityHeaderLink({
           <div
             role="menu"
             className="fixed z-50 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl"
+            onMouseEnter={clearCloseTimeout}
+            onMouseLeave={scheduleCloseDropdown}
             style={{
               left: dropdownFrame.left,
               top: dropdownFrame.top,

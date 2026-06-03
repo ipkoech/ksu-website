@@ -1,22 +1,10 @@
-import { notFound } from "next/navigation";
-import { ContentDetailPage, ContentListingPage } from "@/components/public/content-pages";
-import { getContentDetailData, getContentListingData } from "@/lib/content-page-data";
+import { redirect } from "next/navigation";
 
 export default async function NewsRoutePage({
   params,
-  searchParams,
 }: {
   params: Promise<{ segments?: string[] }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { segments = [] } = await params;
-  const query = await searchParams;
-
-  if (segments[0] && segments[0] !== "category") {
-    const data = await getContentDetailData("news", segments[0]);
-    if (!data) notFound();
-    return <ContentDetailPage data={data} />;
-  }
-
-  return <ContentListingPage data={await getContentListingData("news", segments, query)} />;
+  redirect(`/media/news${segments.length ? `/${segments.join("/")}` : ""}`);
 }

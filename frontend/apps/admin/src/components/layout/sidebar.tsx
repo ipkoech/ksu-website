@@ -52,6 +52,11 @@ import {
   KeyRound,
   Webhook,
   BellRing,
+  HandCoins,
+  HeartHandshake,
+  Leaf,
+  Lightbulb,
+  Sprout,
   type LucideIcon,
 } from "lucide-react";
 
@@ -71,11 +76,36 @@ const mainNavigation: NavItem[] = [
     icon: FileText,
     scope: "content.view",
     children: [
-      { title: "News", href: "/content/news", icon: Newspaper, scope: "content.manage_news" },
-      { title: "Blogs", href: "/content/blogs", icon: FileText, scope: "content.manage_blogs" },
-      { title: "Events", href: "/content/events", icon: Calendar, scope: "content.manage_events" },
-      { title: "Announcements", href: "/content/announcements", icon: Megaphone, scope: "content.manage_announcements" },
-      { title: "Sliders", href: "/content/sliders", icon: Image, scope: "marketing.manage_sliders" },
+      {
+        title: "News",
+        href: "/content/news",
+        icon: Newspaper,
+        scope: "content.manage_news",
+      },
+      {
+        title: "Blogs",
+        href: "/content/blogs",
+        icon: FileText,
+        scope: "content.manage_blogs",
+      },
+      {
+        title: "Events",
+        href: "/content/events",
+        icon: Calendar,
+        scope: "content.manage_events",
+      },
+      {
+        title: "Announcements",
+        href: "/content/announcements",
+        icon: Megaphone,
+        scope: "content.manage_announcements",
+      },
+      {
+        title: "Sliders",
+        href: "/content/sliders",
+        icon: Image,
+        scope: "marketing.manage_sliders",
+      },
     ],
   },
   {
@@ -84,19 +114,68 @@ const mainNavigation: NavItem[] = [
     icon: GraduationCap,
     scope: "academic.view",
     children: [
-      { title: "Schools", href: "/academic/schools", icon: Building, scope: "academic.manage_schools" },
-      { title: "Departments", href: "/academic/departments", icon: Building2, scope: "academic.manage_departments" },
-      { title: "Programmes", href: "/academic/programmes", icon: BookOpen, scope: "academic.manage_programmes" },
+      {
+        title: "Schools",
+        href: "/academic/schools",
+        icon: Building,
+        scope: "academic.manage_schools",
+      },
+      {
+        title: "Departments",
+        href: "/academic/departments",
+        icon: Building2,
+        scope: "academic.manage_departments",
+      },
+      {
+        title: "Programmes",
+        href: "/academic/programmes",
+        icon: BookOpen,
+        scope: "academic.manage_programmes",
+      },
     ],
   },
   {
     title: "Admissions",
     href: "/admissions",
     icon: UserCheck,
-    scope: ["admin:*", "admissions.view", "admissions.manage_intakes", "admissions.manage_info", "academic.view", "academic.write", "academic:write", "academic.manage"],
+    scope: [
+      "admin:*",
+      "admissions.view",
+      "admissions.manage_intakes",
+      "admissions.manage_info",
+      "academic.view",
+      "academic.write",
+      "academic:write",
+      "academic.manage",
+    ],
     children: [
-      { title: "Information", href: "/admissions/info", icon: FileText, scope: ["admin:*", "admissions.view", "admissions.manage_info", "academic.view", "academic.write", "academic:write", "academic.manage"] },
-      { title: "Intakes", href: "/admissions/intakes", icon: Calendar, scope: ["admin:*", "admissions.view", "admissions.manage_intakes", "academic.write", "academic:write", "academic.manage"] },
+      {
+        title: "Information",
+        href: "/admissions/info",
+        icon: FileText,
+        scope: [
+          "admin:*",
+          "admissions.view",
+          "admissions.manage_info",
+          "academic.view",
+          "academic.write",
+          "academic:write",
+          "academic.manage",
+        ],
+      },
+      {
+        title: "Intakes",
+        href: "/admissions/intakes",
+        icon: Calendar,
+        scope: [
+          "admin:*",
+          "admissions.view",
+          "admissions.manage_intakes",
+          "academic.write",
+          "academic:write",
+          "academic.manage",
+        ],
+      },
     ],
   },
   {
@@ -105,18 +184,42 @@ const mainNavigation: NavItem[] = [
     icon: Users,
     scope: "persons.view",
     children: [
-      { title: "Persons", href: "/people/persons", icon: Users, scope: ["persons.view", "persons.manage"] },
-      { title: "Staff", href: "/people/staff", icon: UserCheck, scope: ["staff.view_assignments", "staff.manage_assignments"] },
+      {
+        title: "Persons",
+        href: "/people/persons",
+        icon: Users,
+        scope: ["persons.view", "persons.manage"],
+      },
+      {
+        title: "Staff",
+        href: "/people/staff",
+        icon: UserCheck,
+        scope: ["staff.view_assignments", "staff.manage_assignments"],
+      },
     ],
   },
   {
     title: "Organization",
     href: "/organization",
     icon: Building2,
-    scope: ["governance.view", "organization.manage_divisions", "governance.manage_boards"],
+    scope: [
+      "governance.view",
+      "organization.manage_divisions",
+      "governance.manage_boards",
+    ],
     children: [
-      { title: "Divisions", href: "/organization/divisions", icon: Building, scope: ["organization.manage_divisions", "governance.manage"] },
-      { title: "Governance", href: "/organization/governance", icon: Shield, scope: ["governance.view", "governance.manage_boards"] },
+      {
+        title: "Divisions",
+        href: "/organization/divisions",
+        icon: Building,
+        scope: ["organization.manage_divisions", "governance.manage"],
+      },
+      {
+        title: "Governance",
+        href: "/organization/governance",
+        icon: Shield,
+        scope: ["governance.view", "governance.manage_boards"],
+      },
     ],
   },
   {
@@ -125,44 +228,345 @@ const mainNavigation: NavItem[] = [
     icon: HelpCircle,
     scope: "support.view",
     children: [
-      { title: "FAQs", href: "/support/faqs", icon: MessageSquare, scope: "support.manage_faqs" },
+      {
+        title: "FAQs",
+        href: "/support/faqs",
+        icon: MessageSquare,
+        scope: "support.manage_faqs",
+      },
     ],
   },
   { title: "Media", href: "/media", icon: Image, scope: "media.view" },
-  { title: "Reports", href: "/reports", icon: FileText, scope: ["analytics.view", "analytics.manage"] },
-  { title: "Settings", href: "/settings", icon: Settings, scope: "settings.manage" },
+  {
+    title: "Reports",
+    href: "/reports",
+    icon: FileText,
+    scope: ["analytics.view", "analytics.manage"],
+  },
+  {
+    title: "Settings",
+    href: "/settings",
+    icon: Settings,
+    scope: "settings.manage",
+  },
 ];
 
 const researchNavigation: NavItem[] = [
   { title: "Dashboard", href: "/research", icon: LayoutDashboard },
-  { title: "Projects", href: "/research/projects", icon: FlaskConical, scope: ["research.view_projects", "research.manage_projects"] },
-  { title: "Publications", href: "/research/publications", icon: BookOpen, scope: ["research.view", "research.manage_publications", "publications.manage"] },
-  { title: "Grants", href: "/research/grants", icon: FileText, scope: ["research.view", "research.manage_projects", "funding.manage"] },
-  { title: "Inquiries", href: "/research/inquiries", icon: MessageSquare, scope: ["research.view", "research.manage_inquiries"] },
-  { title: "Reports", href: "/research/reports", icon: FileText, scope: ["research.view", "research.manage_reports", "research.submit_reports"] },
+  {
+    title: "Main Research",
+    href: "/research/main",
+    icon: FlaskConical,
+    scope: ["research.view", "research.view_projects", "research.manage_projects"],
+    children: [
+      {
+        title: "Projects",
+        href: "/research/projects",
+        icon: FlaskConical,
+        scope: ["research.view_projects", "research.manage_projects"],
+      },
+      {
+        title: "Centers",
+        href: "/research/centers",
+        icon: Building2,
+        scope: ["research.view", "research.manage_projects"],
+      },
+      {
+        title: "Programs",
+        href: "/research/programs",
+        icon: FlaskConical,
+        scope: ["research.view", "research.manage_projects"],
+      },
+      {
+        title: "Fundings",
+        href: "/research/fundings",
+        icon: HandCoins,
+        scope: ["research.view", "funding.manage"],
+      },
+      {
+        title: "Impact",
+        href: "/research/impact",
+        icon: Leaf,
+        scope: ["research.view", "research.manage_impact", "sustainability.manage"],
+      },
+      {
+        title: "Publications",
+        href: "/research/publications",
+        icon: BookOpen,
+        scope: ["research.view", "research.manage_publications", "publications.manage"],
+      },
+      {
+        title: "Journals",
+        href: "/research/publications/journals",
+        icon: BookOpen,
+        scope: ["research.view", "research.manage_publications", "publications.manage"],
+      },
+      {
+        title: "Partnerships",
+        href: "/research/partnerships",
+        icon: HeartHandshake,
+        scope: ["research.view", "partnerships.manage", "partnerships.manage_partners"],
+      },
+      {
+        title: "Donations",
+        href: "/research/donations",
+        icon: HandCoins,
+        scope: ["research.view", "donations.manage", "donations.view"],
+      },
+      {
+        title: "Innovation",
+        href: "/research/innovations",
+        icon: Lightbulb,
+        scope: ["research.view", "innovation.review_disclosure"],
+      },
+      {
+        title: "Output",
+        href: "/research/outputs",
+        icon: FileText,
+        scope: ["research.view", "research.manage_reports", "research.submit_reports"],
+      },
+      {
+        title: "Themes",
+        href: "/research/themes",
+        icon: Leaf,
+        scope: ["research.view", "research.manage_projects"],
+      },
+    ],
+  },
+  {
+    title: "Research Content",
+    href: "/research/content",
+    icon: Newspaper,
+    scope: ["research.view", "content.view"],
+    children: [
+      { title: "News", href: "/research/content/news", icon: Newspaper, scope: ["research.view", "content.manage_news"] },
+      { title: "Blogs", href: "/research/content/blogs", icon: FileText, scope: ["research.view", "content.manage_blogs"] },
+      { title: "Events", href: "/research/content/events", icon: Calendar, scope: ["research.view", "content.manage_events"] },
+      { title: "Announcements", href: "/research/content/announcements", icon: Megaphone, scope: ["research.view", "content.manage_announcements"] },
+      { title: "Sliders", href: "/research/content/sliders", icon: Image, scope: ["research.view", "marketing.manage_sliders"] },
+    ],
+  },
+  {
+    title: "Sustainability",
+    href: "/research/sustainability",
+    icon: Leaf,
+    scope: ["research.view", "sustainability.view", "sustainability.manage"],
+    children: [
+      { title: "Projects", href: "/research/sustainability/projects", icon: FlaskConical },
+      { title: "Partners", href: "/research/sustainability/partners", icon: HeartHandshake },
+      { title: "Activities", href: "/research/sustainability/activities", icon: Calendar },
+      { title: "Content", href: "/research/content", icon: Newspaper },
+    ],
+  },
+  {
+    title: "University Farm",
+    href: "/research/farm",
+    icon: Sprout,
+    scope: ["research.view", "research.manage_projects"],
+    children: [
+      { title: "Farm Profiles", href: "/research/farm/farms", icon: Sprout },
+      { title: "Projects", href: "/research/farm/projects", icon: FlaskConical },
+      { title: "Partnerships", href: "/research/farm/partnerships", icon: HeartHandshake },
+      { title: "Impact Stories", href: "/research/farm/impact-stories", icon: FileText },
+      { title: "Activities", href: "/research/farm/activities", icon: Calendar },
+      { title: "Focus Areas", href: "/research/farm/focus-areas", icon: Leaf },
+    ],
+  },
+  {
+    title: "Capacity Building",
+    href: "/research/capacity",
+    icon: GraduationCap,
+    scope: ["research.view", "training_program.manage", "scholarship.manage"],
+    children: [
+      { title: "Training Programs", href: "/research/capacity/training", icon: GraduationCap },
+      { title: "Mentorship Programs", href: "/research/capacity/mentorship", icon: UserCheck },
+      { title: "Mentorship Applications", href: "/research/capacity/mentorship-applications", icon: FileText },
+      { title: "Mentorship Matches", href: "/research/capacity/mentorship-matches", icon: UserCheck },
+      { title: "Scholarships", href: "/research/capacity/scholarships", icon: BookOpen },
+      { title: "Scholarship Applications", href: "/research/capacity/scholarship-applications", icon: FileText },
+      { title: "Consultancies", href: "/research/capacity/consultancies", icon: MessageSquare },
+    ],
+  },
+  {
+    title: "Settings",
+    href: "/research/settings",
+    icon: Settings,
+    scope: ["research.view", "research.manage_guidelines", "donations.settings"],
+    children: [
+      {
+        title: "Research Office",
+        href: "/research/office",
+        icon: Building2,
+        scope: ["research.view", "research.manage_office"],
+      },
+      {
+        title: "Office Staff",
+        href: "/research/office/staff",
+        icon: UserCheck,
+        scope: ["research.view", "research.manage_office"],
+      },
+      {
+        title: "General Settings",
+        href: "/research/settings/general",
+        icon: Settings,
+        scope: ["research.view", "research.manage_guidelines", "donations.settings"],
+      },
+      {
+        title: "Resources",
+        href: "/research/settings/resources",
+        icon: FileText,
+        scope: ["research.view", "research.manage_guidelines"],
+      },
+      {
+        title: "Services",
+        href: "/research/settings/services",
+        icon: MessageSquare,
+        scope: ["research.view", "research.manage_guidelines"],
+      },
+      {
+        title: "Guidelines",
+        href: "/research/settings/guidelines",
+        icon: FileText,
+        scope: ["research.view", "research.manage_guidelines"],
+      },
+      {
+        title: "Boards",
+        href: "/research/settings/boards",
+        icon: Building2,
+        scope: ["research.view", "research.manage_office"],
+      },
+      {
+        title: "Board Members",
+        href: "/research/settings/board-members",
+        icon: UserCheck,
+        scope: ["research.view", "research.manage_office"],
+      },
+      {
+        title: "Sliders",
+        href: "/research/settings/sliders",
+        icon: Image,
+        scope: ["research.view", "content.manage"],
+      },
+    ],
+  },
 ];
 
 const libraryNavigation: NavItem[] = [
   { title: "Dashboard", href: "/library", icon: LayoutDashboard },
-  { title: "Catalog", href: "/library/catalog", icon: Library, scope: "library.manage_resources" },
-  { title: "Circulation", href: "/library/circulation", icon: BookOpen, scope: "library.manage_loans" },
-  { title: "Patrons", href: "/library/patrons", icon: Users, scope: "library.view" },
-  { title: "Branches", href: "/library/branches", icon: Building, scope: ["library.view", "library.manage_services"] },
-  { title: "Electronic", href: "/library/electronic", icon: KeyRound, scope: ["library.view", "library.manage_resources"] },
-  { title: "Engagement", href: "/library/engagement", icon: MessageSquare, scope: ["library.view", "library.manage_services"] },
-  { title: "Staff", href: "/library/staff", icon: UserCheck, scope: ["library.manage_staff", "library.view"] },
+  {
+    title: "Catalog",
+    href: "/library/catalog",
+    icon: Library,
+    scope: "library.manage_resources",
+  },
+  {
+    title: "Circulation",
+    href: "/library/circulation",
+    icon: BookOpen,
+    scope: "library.manage_loans",
+  },
+  {
+    title: "Patrons",
+    href: "/library/patrons",
+    icon: Users,
+    scope: "library.view",
+  },
+  {
+    title: "Branches",
+    href: "/library/branches",
+    icon: Building,
+    scope: ["library.view", "library.manage_services"],
+  },
+  {
+    title: "Electronic",
+    href: "/library/electronic",
+    icon: KeyRound,
+    scope: ["library.view", "library.manage_resources"],
+  },
+  {
+    title: "Engagement",
+    href: "/library/engagement",
+    icon: MessageSquare,
+    scope: ["library.view", "library.manage_services"],
+  },
+  {
+    title: "Staff",
+    href: "/library/staff",
+    icon: UserCheck,
+    scope: ["library.manage_staff", "library.view"],
+  },
 ];
 
 const systemNavigation: NavItem[] = [
   { title: "Dashboard", href: "/system", icon: LayoutDashboard },
-  { title: "Users", href: "/system/users", icon: Users, scope: ["users.view", "users:read"] },
-  { title: "Roles", href: "/system/roles", icon: Settings, scope: ["roles.view", "roles:read"] },
-  { title: "Permissions", href: "/system/permissions", icon: Shield, scope: ["permissions.view", "permissions:read"] },
-  { title: "Audit Logs", href: "/system/audit", icon: FileText, scope: ["audit.view", "audit:read"] },
-  { title: "Settings", href: "/system/settings", icon: Settings, scope: ["settings.view", "settings.manage", "settings:read", "settings:write"] },
-  { title: "API Keys", href: "/system/settings/api-keys", icon: KeyRound, scope: ["api_keys.view", "api_keys.manage", "api_keys:read", "api_keys:write"] },
-  { title: "Webhooks", href: "/system/settings/webhooks", icon: Webhook, scope: ["webhooks.view", "webhooks.manage", "webhooks:read", "webhooks:write"] },
-  { title: "Notifications", href: "/system/notifications", icon: BellRing, scope: ["notifications.view", "notifications.send", "notifications:read", "notifications:send"] },
+  {
+    title: "Users",
+    href: "/system/users",
+    icon: Users,
+    scope: ["users.view", "users:read"],
+  },
+  {
+    title: "Roles",
+    href: "/system/roles",
+    icon: Settings,
+    scope: ["roles.view", "roles:read"],
+  },
+  {
+    title: "Permissions",
+    href: "/system/permissions",
+    icon: Shield,
+    scope: ["permissions.view", "permissions:read"],
+  },
+  {
+    title: "Audit Logs",
+    href: "/system/audit",
+    icon: FileText,
+    scope: ["audit.view", "audit:read"],
+  },
+  {
+    title: "Settings",
+    href: "/system/settings",
+    icon: Settings,
+    scope: [
+      "settings.view",
+      "settings.manage",
+      "settings:read",
+      "settings:write",
+    ],
+  },
+  {
+    title: "API Keys",
+    href: "/system/settings/api-keys",
+    icon: KeyRound,
+    scope: [
+      "api_keys.view",
+      "api_keys.manage",
+      "api_keys:read",
+      "api_keys:write",
+    ],
+  },
+  {
+    title: "Webhooks",
+    href: "/system/settings/webhooks",
+    icon: Webhook,
+    scope: [
+      "webhooks.view",
+      "webhooks.manage",
+      "webhooks:read",
+      "webhooks:write",
+    ],
+  },
+  {
+    title: "Notifications",
+    href: "/system/notifications",
+    icon: BellRing,
+    scope: [
+      "notifications.view",
+      "notifications.send",
+      "notifications:read",
+      "notifications:send",
+    ],
+  },
 ];
 
 const navigationMap: Record<string, NavItem[]> = {
@@ -180,7 +584,13 @@ interface SidebarProps {
   onMobileClose?: () => void;
 }
 
-export function Sidebar({ service, collapsed = false, onToggle, isMobileOpen = false, onMobileClose }: SidebarProps) {
+export function Sidebar({
+  service,
+  collapsed = false,
+  onToggle,
+  isMobileOpen = false,
+  onMobileClose,
+}: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { hasScope } = usePermissions();
@@ -190,18 +600,26 @@ export function Sidebar({ service, collapsed = false, onToggle, isMobileOpen = f
 
   const hasItemScope = (item: NavItem) => {
     if (!item.scope) return true;
-    return Array.isArray(item.scope) ? item.scope.some((scope) => hasScope(scope)) : hasScope(item.scope);
+    return Array.isArray(item.scope)
+      ? item.scope.some((scope) => hasScope(scope))
+      : hasScope(item.scope);
   };
 
   const filterNavItem = (item: NavItem): NavItem | null => {
-    const children = item.children?.map(filterNavItem).filter((child): child is NavItem => child !== null);
+    const children = item.children
+      ?.map(filterNavItem)
+      .filter((child): child is NavItem => child !== null);
     if (!hasItemScope(item) && (!children || children.length === 0)) {
       return null;
     }
-    return children && children.length > 0 ? { ...item, children } : { ...item, children: undefined };
+    return children && children.length > 0
+      ? { ...item, children }
+      : { ...item, children: undefined };
   };
 
-  const filteredNav = navigation.map(filterNavItem).filter((item): item is NavItem => item !== null);
+  const filteredNav = navigation
+    .map(filterNavItem)
+    .filter((item): item is NavItem => item !== null);
 
   const getInitials = (name: string) => {
     return name
@@ -221,13 +639,11 @@ export function Sidebar({ service, collapsed = false, onToggle, isMobileOpen = f
         className={cn(
           "fixed left-0 top-0 z-40 flex h-screen flex-col border-r bg-sidebar",
           "md:relative",
-          isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
       >
         {/* Header */}
-        <motion.div 
-          className="flex h-14 items-center justify-between border-b px-4"
-        >
+        <motion.div className="flex h-14 items-center justify-between border-b px-4">
           <AnimatePresence mode="wait">
             {!collapsed ? (
               <motion.div
@@ -237,7 +653,12 @@ export function Sidebar({ service, collapsed = false, onToggle, isMobileOpen = f
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
               >
-                <Logo href="/select-service" size="sm" showText variant="icon" />
+                <Logo
+                  href="/select-service"
+                  size="sm"
+                  showText
+                  variant="icon"
+                />
               </motion.div>
             ) : (
               <motion.div
@@ -253,8 +674,17 @@ export function Sidebar({ service, collapsed = false, onToggle, isMobileOpen = f
               </motion.div>
             )}
           </AnimatePresence>
-          <Button variant="ghost" size="icon-sm" onClick={onToggle}>
-            {collapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onToggle}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? (
+              <Menu className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
           </Button>
         </motion.div>
 
@@ -266,7 +696,13 @@ export function Sidebar({ service, collapsed = false, onToggle, isMobileOpen = f
               const isActive =
                 pathname === item.href ||
                 pathname.startsWith(item.href + "/") ||
-                Boolean(item.children?.some((child) => pathname === child.href || pathname.startsWith(child.href + "/")));
+                Boolean(
+                  item.children?.some(
+                    (child) =>
+                      pathname === child.href ||
+                      pathname.startsWith(child.href + "/"),
+                  ),
+                );
 
               if (collapsed) {
                 return (
@@ -279,7 +715,7 @@ export function Sidebar({ service, collapsed = false, onToggle, isMobileOpen = f
                           "flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
                           isActive
                             ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent"
+                            : "text-sidebar-foreground hover:bg-sidebar-accent",
                         )}
                       >
                         <Icon className="h-5 w-5" />
@@ -299,7 +735,7 @@ export function Sidebar({ service, collapsed = false, onToggle, isMobileOpen = f
                       "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                       isActive
                         ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent",
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -309,7 +745,9 @@ export function Sidebar({ service, collapsed = false, onToggle, isMobileOpen = f
                     <div className="ml-5 mt-1 flex flex-col gap-1 border-l border-sidebar-border pl-2">
                       {item.children.map((child) => {
                         const ChildIcon = child.icon;
-                        const childIsActive = pathname === child.href || pathname.startsWith(child.href + "/");
+                        const childIsActive =
+                          pathname === child.href ||
+                          pathname.startsWith(child.href + "/");
                         return (
                           <Link
                             key={child.href}
@@ -319,7 +757,7 @@ export function Sidebar({ service, collapsed = false, onToggle, isMobileOpen = f
                               "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
                               childIsActive
                                 ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                                : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                                : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                             )}
                           >
                             <ChildIcon className="h-3.5 w-3.5" />
@@ -343,17 +781,21 @@ export function Sidebar({ service, collapsed = false, onToggle, isMobileOpen = f
                 variant="ghost"
                 className={cn(
                   "w-full justify-start gap-3",
-                  collapsed && "justify-center px-2"
+                  collapsed && "justify-center px-2",
                 )}
               >
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={user?.avatarUrl} />
-                  <AvatarFallback>{user ? getInitials(user.name) : "?"}</AvatarFallback>
+                  <AvatarFallback>
+                    {user ? getInitials(user.name) : "?"}
+                  </AvatarFallback>
                 </Avatar>
                 {!collapsed && (
                   <div className="flex-1 text-left">
                     <p className="text-sm font-medium truncate">{user?.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {user?.email}
+                    </p>
                   </div>
                 )}
               </Button>
@@ -368,7 +810,10 @@ export function Sidebar({ service, collapsed = false, onToggle, isMobileOpen = f
                 <Link href="/settings/profile">Profile Settings</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setShowLogoutConfirm(true)} className="text-destructive">
+              <DropdownMenuItem
+                onClick={() => setShowLogoutConfirm(true)}
+                className="text-destructive"
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
               </DropdownMenuItem>

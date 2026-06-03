@@ -234,9 +234,8 @@ function QuickLinksPanel({
                 <Link
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className={`group flex min-h-10 items-center gap-3 py-2 text-sm font-medium transition ${
-                    active ? "text-primary" : "text-slate-700 hover:text-primary"
-                  }`}
+                  className={`group flex min-h-10 items-center gap-3 py-2 text-sm font-medium transition ${active ? "text-primary" : "text-slate-700 hover:text-primary"
+                    }`}
                 >
                   <Icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
                   <span className="min-w-0 flex-1">{item.label}</span>
@@ -272,11 +271,10 @@ function MobileQuickGrid({
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`flex min-h-[4.5rem] flex-col items-center justify-center gap-2 rounded-[1.1rem] border bg-white p-2 text-center text-[0.72rem] font-semibold leading-4 shadow-sm transition ${
-              active
+            className={`flex min-h-[4.5rem] flex-col items-center justify-center gap-2 rounded-[1.1rem] border bg-white p-2 text-center text-[0.72rem] font-semibold leading-4 shadow-sm transition ${active
                 ? "border-primary/30 text-primary"
                 : "border-slate-200 text-slate-700 hover:border-primary/30 hover:text-primary"
-            }`}
+              }`}
           >
             <Icon aria-hidden className="h-5 w-5 text-primary" />
             <span>{item.label}</span>
@@ -378,7 +376,6 @@ function SchoolInfoPanel({ data }: { data: SchoolDetailOverviewData }) {
     { label: "School Code", value: present(school.code), icon: FileText },
     { label: "Programmes", value: counts.programmes || null, icon: GraduationCap },
     { label: "Team Records", value: counts.staff || null, icon: Users },
-    { label: "Last Updated", value: formatDate(school.updated_at), icon: CalendarDays },
   ].filter((item) => present(item.value));
 
   if (!rows.length) return null;
@@ -503,11 +500,11 @@ function PublicationsSection({ data }: { data: SchoolDetailOverviewData }) {
 }
 
 function mediaHref(item: SchoolDetailOverviewData["updates"][number]) {
-  if (item.recordType === "blog") return `/blogs/${item.slug}`;
-  if (item.recordType === "event") return `/events/${item.slug}`;
-  if (item.recordType === "announcement") return `/announcements/${item.slug}`;
-  if (item.recordType === "gallery") return `/media/${item.id}`;
-  return `/news/${item.slug}`;
+  if (item.recordType === "blog") return `/media/articles/${item.slug}`;
+  if (item.recordType === "event") return `/media/events/${item.slug}`;
+  if (item.recordType === "announcement") return `/media/announcements/${item.slug}`;
+  if (item.recordType === "gallery") return `/media/gallery/${item.id}`;
+  return `/media/news/${item.slug}`;
 }
 
 function mediaDate(item: SchoolDetailOverviewData["updates"][number]) {
@@ -792,19 +789,19 @@ export function SchoolDetailSection({
     section === "media"
       ? buildMediaTypeLinks(baseHref)
       : buildQuickLinks({
-          baseHref,
-          navItems,
-          counts: data.counts,
-        });
+        baseHref,
+        navItems,
+        counts: data.counts,
+      });
   const activeSection = mediaType ?? section;
   const baseMeta = sectionMeta[section];
   const meta =
     section === "media"
       ? {
-          ...baseMeta,
-          title: entityMediaTypeTitle(mediaType),
-          body: entityMediaTypeBody(mediaType),
-        }
+        ...baseMeta,
+        title: entityMediaTypeTitle(mediaType),
+        body: entityMediaTypeBody(mediaType),
+      }
       : baseMeta;
 
   return (

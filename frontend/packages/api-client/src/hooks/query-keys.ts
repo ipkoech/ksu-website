@@ -57,6 +57,14 @@ export const queryKeys = {
     bySlug: (slug: string) => ["divisions", "slug", slug] as const,
   },
 
+  // Wings / directorates
+  wings: {
+    all: ["wings"] as const,
+    byDivision: (divisionId: string, params?: Record<string, unknown>) => ["wings", "division", divisionId, params] as const,
+    detail: (id: string) => ["wings", "detail", id] as const,
+    bySlug: (slug: string) => ["wings", "slug", slug] as const,
+  },
+
   // Departments
   departments: {
     all: ["departments"] as const,

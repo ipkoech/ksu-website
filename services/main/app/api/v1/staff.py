@@ -47,17 +47,23 @@ async def _prepare_conflict_or_raise(
         role,
         exclude_assignment_id=exclude_assignment_id,
     )
-    if conflict is None or is_acting:
+    if conflict is None:
         return False
-    if resolution == "assign_acting":
+    strict_unique = StaffService.is_strict_unique_role(entity_type, role)
+    if is_acting and not strict_unique:
+        return False
+    if resolution == "assign_acting" and not strict_unique:
         return True
-    handled = await StaffService.resolve_conflict(
-        db,
-        conflict,
-        resolution=resolution,
-        end_date=end_date,
-        notes=notes,
-    )
+    if resolution == "assign_acting" and strict_unique:
+        handled = False
+    else:
+        handled = await StaffService.resolve_conflict(
+            db,
+            conflict,
+            resolution=resolution,
+            end_date=end_date,
+            notes=notes,
+        )
     if handled:
         return False
     payload = await StaffService.get_conflict_payload(

@@ -30,6 +30,24 @@ type DepartmentRecord = {
   display_order?: number;
 };
 
+type DivisionRecord = {
+  id: string;
+  name: string;
+  slug: string;
+  code?: string | null;
+  division_type?: string | null;
+};
+
+type WingRecord = {
+  id: string;
+  name: string;
+  slug: string;
+  code?: string | null;
+  wing_type?: string | null;
+  division_id?: string | null;
+  division?: DivisionRecord | null;
+};
+
 type PublicationHolder = {
   publications_count?: number;
 };
@@ -109,6 +127,19 @@ async function getDepartment(slug: string) {
   });
 }
 
+async function getDivision(slug: string) {
+  return getItem<DivisionRecord>(`/api/v1/divisions/${slug}`, {
+    fields: "id,name,slug,code,division_type",
+  });
+}
+
+async function getWing(slug: string) {
+  return getItem<WingRecord>(`/api/v1/wings/slug/${slug}`, {
+    fields: "id,name,slug,code,wing_type,division_id",
+    include: "division:id,name,slug,code",
+  });
+}
+
 function sortDepartments(departments: DepartmentRecord[] = []) {
   return departments
     .slice()
@@ -158,6 +189,73 @@ export async function getAdministrationEntityHeader(
 ): Promise<EntityHeaderConfig | null> {
   const [area, slug] = segments;
 
+  if (area === "divisions" && slug) {
+    const division = await getDivision(slug);
+    const baseHref = `/administration/divisions/${slug}`;
+
+    return {
+      eyebrow: "Administration Division",
+      title: division?.name ?? titleFromSlug(slug),
+      href: baseHref,
+      parentLabel: "Administration",
+      parentHref: "/administration",
+      navItems: [
+        { label: "Overview", href: baseHref, exact: true },
+        { label: "Units", href: `${baseHref}/units` },
+        { label: "Team", href: `${baseHref}/team` },
+        { label: "Services", href: `${baseHref}/services` },
+        { label: "Media", href: `${baseHref}/media` },
+        { label: "Downloads", href: `${baseHref}/downloads` },
+        { label: "Contact", href: `${baseHref}/contact` },
+      ],
+    };
+  }
+
+  if ((area === "directorates" || area === "units") && slug) {
+    if (area === "units") {
+      const department = await getDepartment(slug);
+      if (department) {
+        return getDepartmentHeader({
+          slug,
+          baseHref: `/administration/units/${slug}`,
+          parentLabel: "Administration",
+          parentHref: "/administration",
+          fallbackType: "administrative",
+        });
+      }
+    }
+
+    const wing = await getWing(slug);
+    if (!wing && area === "units") {
+      return getDepartmentHeader({
+        slug,
+        baseHref: `/administration/units/${slug}`,
+        parentLabel: "Administration",
+        parentHref: "/administration",
+        fallbackType: "administrative",
+      });
+    }
+    const baseHref = `/administration/units/${slug}`;
+
+    return {
+      eyebrow: "Administrative Unit",
+      title: wing?.name ?? titleFromSlug(slug),
+      href: baseHref,
+      parentLabel: wing?.division?.name ?? "Administration",
+      parentHref: wing?.division?.slug
+        ? `/administration/divisions/${wing.division.slug}`
+        : "/administration",
+      navItems: [
+        { label: "Overview", href: baseHref, exact: true },
+        { label: "Team", href: `${baseHref}/team` },
+        { label: "Services", href: `${baseHref}/services` },
+        { label: "Media", href: `${baseHref}/media` },
+        { label: "Downloads", href: `${baseHref}/downloads` },
+        { label: "Contact", href: `${baseHref}/contact` },
+      ],
+    };
+  }
+
   if (area !== "units" || !slug) {
     return null;
   }
@@ -202,7 +300,7 @@ async function getSchoolHeader(slug: string): Promise<EntityHeaderConfig> {
       ...(hasPublications
         ? [{ label: "Publications", href: `${baseHref}/publications` }]
         : []),
-      { label: "News", href: `${baseHref}/news` },
+      { label: "Media", href: `${baseHref}/media` },
       { label: "Downloads", href: `${baseHref}/downloads` },
       ...(hasClubs ? [{ label: "Clubs", href: `${baseHref}/clubs` }] : []),
       { label: "Contact", href: `${baseHref}/contact` },
@@ -232,7 +330,7 @@ async function getDepartmentHeader({
   const eyebrow = isAcademic
     ? "Academic Department"
     : departmentType === "administrative"
-      ? "Administrative Department"
+      ? "Administrative Unit"
       : "Department";
 
   return {
@@ -251,7 +349,7 @@ async function getDepartmentHeader({
         ? [{ label: "Publications", href: `${baseHref}/publications` }]
         : []),
       { label: "Services", href: `${baseHref}/services` },
-      { label: "News", href: `${baseHref}/news` },
+      { label: "Media", href: `${baseHref}/media` },
       { label: "Downloads", href: `${baseHref}/downloads` },
       { label: "Contact", href: `${baseHref}/contact` },
     ],

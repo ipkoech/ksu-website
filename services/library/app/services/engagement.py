@@ -56,6 +56,7 @@ async def list_inquiries(
     status: Optional[str] = None,
     page: int = 1,
     per_page: int = 20,
+    include_total: bool = True,
 ) -> PaginatedResult:
     """List library inquiries with filtering."""
     query = LibraryInquiry.active_query().order_by(LibraryInquiry.created_at.desc())
@@ -63,7 +64,13 @@ async def list_inquiries(
         query = query.where(LibraryInquiry.library_id == library_id)
     if status is not None:
         query = query.where(LibraryInquiry.status == status)
-    result = await paginate(db, query, page=page, per_page=per_page)
+    result = await paginate(
+        db,
+        query,
+        page=page,
+        per_page=per_page,
+        include_total=include_total,
+    )
     result.items = [LibraryInquiryOut.model_validate(i) for i in result.items]
     return result
 
@@ -140,6 +147,7 @@ async def list_tickets(
     assigned_to: Optional[uuid.UUID] = None,
     page: int = 1,
     per_page: int = 20,
+    include_total: bool = True,
 ) -> PaginatedResult:
     """List support tickets with filtering."""
     query = SupportTicket.active_query().order_by(SupportTicket.created_at.desc())
@@ -149,7 +157,13 @@ async def list_tickets(
         query = query.where(SupportTicket.category == category)
     if assigned_to is not None:
         query = query.where(SupportTicket.assigned_to_person_id == assigned_to)
-    result = await paginate(db, query, page=page, per_page=per_page)
+    result = await paginate(
+        db,
+        query,
+        page=page,
+        per_page=per_page,
+        include_total=include_total,
+    )
     result.items = [SupportTicketOut.model_validate(t) for t in result.items]
     return result
 
@@ -191,6 +205,7 @@ async def list_regulations(
     status: Optional[str] = None,
     page: int = 1,
     per_page: int = 20,
+    include_total: bool = True,
 ) -> PaginatedResult:
     """List library regulations with filtering."""
     query = LibraryRegulation.active_query().order_by(LibraryRegulation.title)
@@ -200,7 +215,13 @@ async def list_regulations(
         query = query.where(LibraryRegulation.category == category)
     if status is not None:
         query = query.where(LibraryRegulation.status == status)
-    result = await paginate(db, query, page=page, per_page=per_page)
+    result = await paginate(
+        db,
+        query,
+        page=page,
+        per_page=per_page,
+        include_total=include_total,
+    )
     result.items = [LibraryRegulationOut.model_validate(r) for r in result.items]
     return result
 

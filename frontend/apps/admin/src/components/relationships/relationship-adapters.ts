@@ -5,6 +5,7 @@ import {
   governanceApi,
   intakesApi,
   libraryServiceApi,
+  researchServiceApi,
   mediaApi,
   personsApi,
   programmesApi,
@@ -22,6 +23,10 @@ import {
   type MediaFolder,
   type Person,
   type Programme,
+  type ResearchDonor,
+  type ResearchGenericRecord,
+  type ResearchProject,
+  type StaffAssignment,
   type School,
   type SliderGroup,
   type StaffEntityOption,
@@ -208,6 +213,53 @@ function libraryResourceOption(resource: LibraryResource): RelationshipOption {
     label: resource.title,
     description: joinDescription([resource.authors, resource.resource_type, resource.status, resource.available_copies !== undefined ? `${resource.available_copies} available` : undefined]),
     raw: resource,
+  };
+}
+
+function researchDonorOption(donor: ResearchDonor): RelationshipOption {
+  const individualName = [donor.first_name, donor.last_name].filter(Boolean).join(" ");
+  return {
+    id: donor.id,
+    label: donor.display_name || donor.organization_name || individualName || "Unnamed donor",
+    description: joinDescription([
+      donor.email,
+      donor.donor_type,
+      donor.tier,
+      donor.donation_count !== undefined ? `${donor.donation_count} donations` : undefined,
+      donor.is_active === false ? "Inactive" : undefined,
+    ]),
+    raw: donor,
+  };
+}
+
+function researchRecordOption(record: ResearchGenericRecord | ResearchProject): RelationshipOption {
+  return {
+    id: record.id,
+    label: record.title ?? ("name" in record ? record.name : undefined) ?? record.slug ?? record.id,
+    description: joinDescription([
+      record.code,
+      "category" in record ? record.category : undefined,
+      record.project_type,
+      record.status,
+      record.is_active === false ? "Inactive" : undefined,
+    ]),
+    raw: record,
+  };
+}
+
+function staffAssignmentOption(assignment: StaffAssignment): RelationshipOption {
+  const person = assignment.person;
+  const personName = person ? fullName(person) : "Staff assignment";
+  return {
+    id: assignment.id,
+    label: joinDescription([personName, assignment.role_display ?? assignment.role]),
+    description: joinDescription([
+      assignment.title,
+      assignment.entity?.name,
+      assignment.entity_type,
+      assignment.status,
+    ]),
+    raw: assignment,
   };
 }
 
@@ -512,23 +564,330 @@ export const libraryResourceRelationshipAdapter: RelationshipAdapter<{ library_i
   pluralLabel: "Library resources",
   searchPlaceholder: "Search resources by title, author, ISBN, or barcode",
   emptyLabel: "No resources found.",
-  requiredFilterMessage: (filters) => (filters?.library_id ? null : "Choose a library branch first."),
   async search({ search, filters, limit = defaultLimit }) {
-    if (!filters?.library_id) return [];
-    const response = await libraryServiceApi.resources.list({
-      library_id: filters.library_id,
-      resource_type: filters.resource_type || undefined,
-      status: filters.status || undefined,
-      q: search?.trim() || undefined,
-      page: 1,
-      per_page: limit,
-      fields: "id,title,authors,resource_type,status,available_copies",
-    });
-    return (response.data ?? []).map(libraryResourceOption);
+    const branchIds = filters?.library_id
+      ? [filters.library_id]
+      : (await libraryServiceApi.branches.list({
+          active_only: true,
+          page: 1,
+          per_page: 20,
+          fields: "id",
+        })).data?.map((branch) => branch.id) ?? [];
+    if (branchIds.length === 0) return [];
+    const responses = await Promise.all(
+      branchIds.map((library_id) =>
+        libraryServiceApi.resources.list({
+          library_id,
+          resource_type: filters?.resource_type || undefined,
+          status: filters?.status || undefined,
+          q: search?.trim() || undefined,
+          page: 1,
+          per_page: limit,
+          fields: "id,title,authors,resource_type,status,available_copies",
+        }),
+      ),
+    );
+    return limitOptions(responses.flatMap((response) => response.data ?? []).map(libraryResourceOption), limit);
   },
   async get(id) {
     const response = await libraryServiceApi.resources.get(id, { fields: "id,title,authors,resource_type,status,available_copies" });
     return response.data ? libraryResourceOption(response.data) : null;
+  },
+};
+
+export const researchDonorRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean }> = {
+  key: "research-donor",
+  entityType: "research_donor",
+  label: "Donor",
+  pluralLabel: "Donors",
+  searchPlaceholder: "Search donors by name, organization, or email",
+  emptyLabel: "No donors found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await researchServiceApi.donors.list({
+      page: 1,
+      per_page: limit,
+      search: search?.trim() || undefined,
+      is_active: filters?.is_active ?? undefined,
+    });
+    return (response.data ?? []).map(researchDonorOption);
+  },
+  async get(id, filters) {
+    const response = await researchServiceApi.donors.list({
+      page: 1,
+      per_page: 100,
+      is_active: filters?.is_active ?? undefined,
+    });
+    return (response.data ?? []).map(researchDonorOption).find((item) => item.id === id) ?? null;
+  },
+};
+
+export const researchCenterRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean }> = {
+  key: "research-center",
+  entityType: "research_center",
+  label: "Research center",
+  pluralLabel: "Research centers",
+  searchPlaceholder: "Search research centers",
+  emptyLabel: "No research centers found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await researchServiceApi.centers.list({
+      page: 1,
+      per_page: limit,
+      search: search?.trim() || undefined,
+      is_active: filters?.is_active ?? undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption);
+  },
+  async get(id, filters) {
+    const response = await researchServiceApi.centers.list({
+      page: 1,
+      per_page: 100,
+      is_active: filters?.is_active ?? undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
+  },
+};
+
+export const researchProgramRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean; center_id?: string }> = {
+  key: "research-program",
+  entityType: "research_program",
+  label: "Research program",
+  pluralLabel: "Research programs",
+  searchPlaceholder: "Search research programs",
+  emptyLabel: "No research programs found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await researchServiceApi.programs.list({
+      page: 1,
+      per_page: limit,
+      search: search?.trim() || undefined,
+      is_active: filters?.is_active ?? undefined,
+      center_id: filters?.center_id || undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption);
+  },
+  async get(id, filters) {
+    const response = await researchServiceApi.programs.list({
+      page: 1,
+      per_page: 100,
+      is_active: filters?.is_active ?? undefined,
+      center_id: filters?.center_id || undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
+  },
+};
+
+export const researchProjectRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean; is_public?: boolean; project_type?: string }> = {
+  key: "research-project",
+  entityType: "research_project",
+  label: "Research project",
+  pluralLabel: "Research projects",
+  searchPlaceholder: "Search research projects",
+  emptyLabel: "No research projects found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await researchServiceApi.projects.list({
+      page: 1,
+      per_page: limit,
+      search: search?.trim() || undefined,
+      is_active: filters?.is_active ?? undefined,
+      is_public: filters?.is_public ?? undefined,
+      project_type: filters?.project_type || undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption);
+  },
+  async get(id, filters) {
+    const response = await researchServiceApi.projects.list({
+      page: 1,
+      per_page: 100,
+      is_active: filters?.is_active ?? undefined,
+      is_public: filters?.is_public ?? undefined,
+      project_type: filters?.project_type || undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
+  },
+};
+
+export const researchGrantRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean; status?: string }> = {
+  key: "research-grant",
+  entityType: "research_grant",
+  label: "Research grant",
+  pluralLabel: "Research grants",
+  searchPlaceholder: "Search research grants",
+  emptyLabel: "No research grants found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await researchServiceApi.grants.list({
+      page: 1,
+      per_page: limit,
+      search: search?.trim() || undefined,
+      is_active: filters?.is_active ?? undefined,
+      status: filters?.status || undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption);
+  },
+  async get(id, filters) {
+    const response = await researchServiceApi.grants.list({
+      page: 1,
+      per_page: 100,
+      is_active: filters?.is_active ?? undefined,
+      status: filters?.status || undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
+  },
+};
+
+export const researchGrantApplicationRelationshipAdapter: RelationshipAdapter<{ status?: string }> = {
+  key: "research-grant-application",
+  entityType: "research_grant_application",
+  label: "Grant application",
+  pluralLabel: "Grant applications",
+  searchPlaceholder: "Search grant applications",
+  emptyLabel: "No grant applications found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await researchServiceApi.grantApplications.list({
+      page: 1,
+      per_page: limit,
+      search: search?.trim() || undefined,
+      status: filters?.status || undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption);
+  },
+  async get(id, filters) {
+    const response = await researchServiceApi.grantApplications.list({
+      page: 1,
+      per_page: 100,
+      status: filters?.status || undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
+  },
+};
+
+export const researchMentorshipRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean; status?: string }> = {
+  key: "research-mentorship",
+  entityType: "research_mentorship",
+  label: "Mentorship program",
+  pluralLabel: "Mentorship programs",
+  searchPlaceholder: "Search mentorship programs",
+  emptyLabel: "No mentorship programs found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await researchServiceApi.mentorship.list({
+      page: 1,
+      per_page: limit,
+      search: search?.trim() || undefined,
+      is_active: filters?.is_active ?? undefined,
+      status: filters?.status || undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption);
+  },
+  async get(id, filters) {
+    const response = await researchServiceApi.mentorship.list({
+      page: 1,
+      per_page: 100,
+      is_active: filters?.is_active ?? undefined,
+      status: filters?.status || undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
+  },
+};
+
+export const researchScholarshipRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean; status?: string }> = {
+  key: "research-scholarship",
+  entityType: "research_scholarship",
+  label: "Scholarship",
+  pluralLabel: "Scholarships",
+  searchPlaceholder: "Search scholarships",
+  emptyLabel: "No scholarships found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await researchServiceApi.scholarships.list({
+      page: 1,
+      per_page: limit,
+      search: search?.trim() || undefined,
+      is_active: filters?.is_active ?? undefined,
+      status: filters?.status || undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption);
+  },
+  async get(id, filters) {
+    const response = await researchServiceApi.scholarships.list({
+      page: 1,
+      per_page: 100,
+      is_active: filters?.is_active ?? undefined,
+      status: filters?.status || undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
+  },
+};
+
+export const researchBoardRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean }> = {
+  key: "research-board",
+  entityType: "research_board",
+  label: "Research board",
+  pluralLabel: "Research boards",
+  searchPlaceholder: "Search research boards",
+  emptyLabel: "No research boards found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await researchServiceApi.boards.list({
+      page: 1,
+      per_page: limit,
+      search: search?.trim() || undefined,
+      is_active: filters?.is_active ?? undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption);
+  },
+  async get(id, filters) {
+    const response = await researchServiceApi.boards.list({
+      page: 1,
+      per_page: 100,
+      is_active: filters?.is_active ?? undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
+  },
+};
+
+export const researchOfficeRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean }> = {
+  key: "research-office",
+  entityType: "research_office",
+  label: "Research office",
+  pluralLabel: "Research offices",
+  searchPlaceholder: "Search research offices",
+  emptyLabel: "No research offices found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await researchServiceApi.offices.list({
+      page: 1,
+      per_page: limit,
+      search: search?.trim() || undefined,
+      is_active: filters?.is_active ?? undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption);
+  },
+  async get(id, filters) {
+    const response = await researchServiceApi.offices.list({
+      page: 1,
+      per_page: 100,
+      is_active: filters?.is_active ?? undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
+  },
+};
+
+export const staffAssignmentRelationshipAdapter: RelationshipAdapter<{ status?: string; entity_type?: string; entity_id?: string }> = {
+  key: "staff-assignment",
+  entityType: "staff_assignment",
+  label: "Staff assignment",
+  pluralLabel: "Staff assignments",
+  searchPlaceholder: "Search staff assignments",
+  emptyLabel: "No staff assignments found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await staffApi.listAssignments({
+      page: 1,
+      per_page: 100,
+      status: (filters?.status as any) || "active",
+      entity_type: filters?.entity_type || undefined,
+      entity_id: filters?.entity_id || undefined,
+      include: "person",
+    });
+    return limitOptions((response.data ?? []).map(staffAssignmentOption).filter((option) => matches(option, search)), limit);
+  },
+  async get(id) {
+    const response = await staffApi.getAssignment(id, { include: "person" });
+    return response.data ? staffAssignmentOption(response.data) : null;
   },
 };
 
@@ -546,4 +905,15 @@ export const relationshipAdapters = {
   staffEntity: staffEntityRelationshipAdapter,
   libraryBranch: libraryBranchRelationshipAdapter,
   libraryResource: libraryResourceRelationshipAdapter,
+  researchDonor: researchDonorRelationshipAdapter,
+  researchCenter: researchCenterRelationshipAdapter,
+  researchProgram: researchProgramRelationshipAdapter,
+  researchProject: researchProjectRelationshipAdapter,
+  researchGrant: researchGrantRelationshipAdapter,
+  researchGrantApplication: researchGrantApplicationRelationshipAdapter,
+  researchMentorship: researchMentorshipRelationshipAdapter,
+  researchScholarship: researchScholarshipRelationshipAdapter,
+  researchBoard: researchBoardRelationshipAdapter,
+  researchOffice: researchOfficeRelationshipAdapter,
+  staffAssignment: staffAssignmentRelationshipAdapter,
 };

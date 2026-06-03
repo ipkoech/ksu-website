@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { departmentsApi } from "../main/api";
 import { queryKeys } from "./query-keys";
 import type { Department, PaginatedResponse } from "../main/types";
-import type { PaginationParams } from "../client";
+import type { FieldSelectionParams, PaginationParams } from "../client";
 
 export function useDepartments(params?: PaginationParams & { school_id?: string; search?: string; wing_id?: string; department_type?: string }) {
   return useQuery({
@@ -11,10 +11,10 @@ export function useDepartments(params?: PaginationParams & { school_id?: string;
   });
 }
 
-export function useDepartment(id: string, options?: { enabled?: boolean }) {
+export function useDepartment(id: string, options?: { enabled?: boolean; params?: FieldSelectionParams }) {
   return useQuery({
-    queryKey: queryKeys.departments.detail(id),
-    queryFn: () => departmentsApi.get(id),
+    queryKey: [...queryKeys.departments.detail(id), options?.params] as const,
+    queryFn: () => departmentsApi.get(id, options?.params),
     enabled: options?.enabled !== false && !!id,
   });
 }

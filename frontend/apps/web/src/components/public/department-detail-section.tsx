@@ -116,6 +116,8 @@ const sectionMeta: Record<DepartmentDetailSectionKey, SectionMeta> = {
   },
 };
 
+const registrarOfficeCodes = new Set(["ACAFFAIRS", "AHRCS", "REIRM"]);
+
 function present(value?: string | number | null) {
   if (value === null || value === undefined) return null;
   const text = String(value).trim();
@@ -193,6 +195,75 @@ function compactMeta(values: Array<string | number | null | undefined>) {
 
 function navHas(navItems: EntityHeaderNavItem[] | undefined, label: string) {
   return Boolean(navItems?.some((item) => item.label === label));
+}
+
+function isRegistrarOffice(data: DepartmentDetailData) {
+  if (data.isAcademic) return false;
+  const code = present(data.department.code)?.toUpperCase();
+  if (code && registrarOfficeCodes.has(code)) return true;
+
+  const text = [
+    data.department.name,
+    data.department.about,
+    data.leader?.title,
+    data.leader?.name,
+  ]
+    .map((value) => present(value))
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return text.includes("registrar");
+}
+
+function registrarSectionMeta(
+  section: DepartmentDetailSectionKey,
+  mediaType?: EntityMediaType,
+): SectionMeta {
+  if (section === "media") {
+    return {
+      ...sectionMeta.media,
+      eyebrow: "Registrar's Office Media",
+      title: entityMediaTypeTitle(mediaType),
+      body: entityMediaTypeBody(mediaType),
+    };
+  }
+
+  const meta = sectionMeta[section];
+  const overrides: Partial<Record<DepartmentDetailSectionKey, SectionMeta>> = {
+    about: {
+      eyebrow: "Registrar's Office",
+      title: "Office overview",
+      body: "Registrar leadership message, office mandate, services, and public contact pathways.",
+      icon: Landmark,
+    },
+    team: {
+      eyebrow: "Office Team",
+      title: "Registrar's office team",
+      body: "Published leadership and staff records attached to this registrar's office.",
+      icon: Users,
+    },
+    services: {
+      eyebrow: "Office Services",
+      title: "Registrar's office services",
+      body: "Service records, process details, requirements, and contact channels for this office.",
+      icon: BriefcaseBusiness,
+    },
+    downloads: {
+      eyebrow: "Office Downloads",
+      title: "Registrar's office documents",
+      body: "Official documents and files published for this registrar's office.",
+      icon: Download,
+    },
+    contact: {
+      eyebrow: "Office Contact",
+      title: "Contact the office",
+      body: "Registrar's office contact details and location information.",
+      icon: Phone,
+    },
+  };
+
+  return overrides[section] ?? meta;
 }
 
 function SectionKicker({ children }: { children: string }) {
@@ -288,11 +359,10 @@ function QuickLinksPanel({
                 <Link
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className={`group flex min-h-10 items-center gap-3 py-2 text-sm font-medium transition ${
-                    active
-                      ? "text-primary"
-                      : "text-slate-700 hover:text-primary"
-                  }`}
+                  className={`group flex min-h-10 items-center gap-3 py-2 text-sm font-medium transition ${active
+                    ? "text-primary"
+                    : "text-slate-700 hover:text-primary"
+                    }`}
                 >
                   <Icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
                   <span className="min-w-0 flex-1">{item.label}</span>
@@ -328,11 +398,10 @@ function MobileQuickGrid({
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`flex min-h-[5rem] flex-col items-center justify-center gap-2 rounded-[1.1rem] border bg-white p-2 text-center text-[0.72rem] font-semibold leading-4 shadow-sm transition ${
-              active
-                ? "border-primary/30 text-primary"
-                : "border-slate-200 text-slate-700 hover:border-primary/30 hover:text-primary"
-            }`}
+            className={`flex min-h-[5rem] flex-col items-center justify-center gap-2 rounded-[1.1rem] border bg-white p-2 text-center text-[0.72rem] font-semibold leading-4 shadow-sm transition ${active
+              ? "border-primary/30 text-primary"
+              : "border-slate-200 text-slate-700 hover:border-primary/30 hover:text-primary"
+              }`}
           >
             <Icon aria-hidden className="h-5 w-5 text-primary" />
             <span>{item.label}</span>
@@ -373,11 +442,11 @@ function ExploreMorePanel({ data }: { data: DepartmentDetailData }) {
   const links: QuickLink[] = [
     school?.slug
       ? {
-          label: school.name,
-          href: `/academics/schools/${school.slug}`,
-          icon: Landmark,
-          section: "about",
-        }
+        label: school.name,
+        href: `/academics/schools/${school.slug}`,
+        icon: Landmark,
+        section: "about",
+      }
       : null,
     {
       label: "Academic Calendar",
@@ -527,13 +596,14 @@ function ContactPanel({ data }: { data: DepartmentDetailData }) {
 
 function DepartmentInfoPanel({ data }: { data: DepartmentDetailData }) {
   const { department, counts } = data;
+  const registrarOffice = isRegistrarOffice(data);
   const schoolName =
     present(department.school?.name) ?? present(department.school_name);
   const wingName = present(department.wing?.name);
   const divisionName = present(department.wing?.division?.name);
   const items = [
     {
-      label: "Department Code",
+      label: registrarOffice ? "Office Code" : "Department Code",
       value: present(department.code),
       icon: FileText,
     },
@@ -564,23 +634,15 @@ function DepartmentInfoPanel({ data }: { data: DepartmentDetailData }) {
       value: formatCount(counts.services, "service"),
       icon: BriefcaseBusiness,
     },
-    {
-      label: "Team Records",
-      value: formatCount(counts.staff, "record"),
-      icon: Users,
-    },
-    {
-      label: "Last Updated",
-      value: formatDate(department.updated_at),
-      icon: CalendarDays,
-    },
   ].filter((item) => present(item.value));
 
   if (!items.length) return null;
 
   return (
     <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
-      <SectionKicker>Department Information</SectionKicker>
+      <SectionKicker>
+        {registrarOffice ? "Office Information" : "Department Information"}
+      </SectionKicker>
       <dl className="mt-3 grid gap-2">
         {items.map((item) => {
           const Icon = item.icon;
@@ -654,11 +716,10 @@ function LeadershipMessageCard({
   return (
     <section className="overflow-hidden rounded-[1.5rem] bg-slate-950 p-5 text-white shadow-[0_24px_70px_-48px_rgba(15,23,42,0.9)] sm:p-6">
       <div
-        className={`grid gap-5 ${
-          compact
-            ? "sm:grid-cols-[7rem_minmax(0,1fr)] sm:items-center"
-            : "sm:grid-cols-[7rem_minmax(0,1fr)] sm:items-center"
-        }`}
+        className={`grid gap-5 ${compact
+          ? "sm:grid-cols-[7rem_minmax(0,1fr)] sm:items-center"
+          : "sm:grid-cols-[7rem_minmax(0,1fr)] sm:items-center"
+          }`}
       >
         <div className="w-24 overflow-hidden rounded-full bg-white/10 ring-1 ring-white/15 sm:w-auto">
           <div
@@ -725,6 +786,168 @@ function AboutCard({ data }: { data: DepartmentDetailData }) {
   );
 }
 
+function RegistrarOfficeHero({ data }: { data: DepartmentDetailData }) {
+  const leader = data.leader;
+  const leaderName = present(leader?.name) ?? present(data.department.hod_name);
+  const leaderTitle = present(leader?.title) ?? "Registrar";
+  const leaderEmail = present(data.department.hod_email) ?? present(data.department.email);
+  const message =
+    present(leader?.message) ??
+    present(data.department.head_message) ??
+    present(data.department.about);
+  const displayName = leaderName ?? "Registrar's office";
+
+  return (
+    <section className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
+      <div className="grid gap-0 lg:grid-cols-[18rem_minmax(0,1fr)]">
+        <div className="bg-slate-950 p-5 text-white sm:p-6">
+          <div className="mx-auto h-32 w-32 overflow-hidden rounded-full bg-white/10 ring-1 ring-white/15">
+            <Avatar name={displayName} image={leader?.image} />
+          </div>
+          <div className="mt-5 text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.08em] text-secondary">
+              Registrar
+            </p>
+            <h1 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight">
+              {displayName}
+            </h1>
+            <p className="mt-2 text-sm font-medium leading-6 text-white/70">
+              {leaderTitle}
+            </p>
+            {leaderEmail ? (
+              <a
+                href={`mailto:${leaderEmail}`}
+                className="mt-4 inline-flex max-w-full items-center justify-center gap-2 rounded-full border border-white/15 px-3 py-2 text-xs font-semibold text-secondary transition hover:bg-white/10"
+              >
+                <Mail aria-hidden className="h-4 w-4 shrink-0" />
+                <span className="truncate">{leaderEmail}</span>
+              </a>
+            ) : null}
+          </div>
+        </div>
+        <div className="min-w-0 p-5 sm:p-6 lg:p-7">
+          <SectionKicker>Registrar's Office</SectionKicker>
+          <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
+            {data.department.name}
+          </h2>
+          {message ? (
+            <div className="mt-5 border-l-4 border-primary/30 pl-4">
+              <Quote aria-hidden className="h-7 w-7 text-primary" />
+              <p className="mt-3 text-sm leading-7 text-slate-700 sm:text-base">
+                {message}
+              </p>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function RegistrarOfficeMandate({ data }: { data: DepartmentDetailData }) {
+  const body =
+    present(data.department.about) ??
+    present(data.department.mandate) ??
+    present(data.department.service_charter);
+
+  if (!body) return null;
+
+  return (
+    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_8rem] md:items-center">
+        <div>
+          <SectionKicker>Office Mandate</SectionKicker>
+          <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
+            {data.department.name}
+          </h2>
+          <p className="mt-3 text-sm leading-7 text-slate-700">{body}</p>
+        </div>
+        <div className="hidden h-24 items-center justify-center rounded-[1.25rem] bg-primary/[0.08] text-primary md:flex">
+          <ShieldCheck aria-hidden className="h-14 w-14 stroke-[1.25]" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function RegistrarPathways({
+  data,
+  baseHref,
+}: {
+  data: DepartmentDetailData;
+  baseHref: string;
+}) {
+  const pathways = [
+    {
+      title: "Office Team",
+      body: "Published registrar office staff and role assignments.",
+      href: `${baseHref}/team`,
+      icon: Users,
+      show: data.counts.staff > 0 || Boolean(data.team?.assignments.length),
+    },
+    {
+      title: "Services",
+      body: "Service records, procedures, requirements, and response timelines.",
+      href: `${baseHref}/services`,
+      icon: BriefcaseBusiness,
+      show: data.services.length > 0,
+    },
+    {
+      title: "Media",
+      body: "News, events, announcements, blogs, and gallery records.",
+      href: `${baseHref}/media`,
+      icon: Newspaper,
+      show: true,
+    },
+    {
+      title: "Contact",
+      body: "Office location, email, phone, and public contact channels.",
+      href: `${baseHref}/contact`,
+      icon: Phone,
+      show:
+        Boolean(present(data.department.email)) ||
+        Boolean(present(data.department.phone)) ||
+        Boolean(present(data.department.office_location)),
+    },
+  ].filter((item) => item.show);
+
+  if (!pathways.length) return null;
+
+  return (
+    <section className="grid gap-3 md:grid-cols-2">
+      {pathways.map((item) => {
+        const Icon = item.icon;
+
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="group rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
+          >
+            <div className="flex gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
+                <Icon aria-hidden className="h-5 w-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base font-bold text-slate-950 group-hover:text-primary">
+                  {item.title}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {item.body}
+                </p>
+              </div>
+              <ArrowRight
+                aria-hidden
+                className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
+              />
+            </div>
+          </Link>
+        );
+      })}
+    </section>
+  );
+}
+
 function StatementCards({ data }: { data: DepartmentDetailData }) {
   const { department } = data;
   const statements: StatementCard[] = [
@@ -736,10 +959,10 @@ function StatementCards({ data }: { data: DepartmentDetailData }) {
       : null,
     present(department.mandate)
       ? {
-          title: "Mandate",
-          body: present(department.mandate)!,
-          icon: ShieldCheck,
-        }
+        title: "Mandate",
+        body: present(department.mandate)!,
+        icon: ShieldCheck,
+      }
       : null,
   ].filter(Boolean) as StatementCard[];
 
@@ -779,11 +1002,23 @@ function StatementCards({ data }: { data: DepartmentDetailData }) {
 }
 
 function TeamSection({ data }: { data: DepartmentDetailData }) {
+  const registrarOffice = isRegistrarOffice(data);
+
   return (
     <PublicTeamSection
       team={data.team}
-      title={data.isAcademic ? "Department Team" : "Unit Team"}
-      emptyTitle="No public department team records are available yet."
+      title={
+        registrarOffice
+          ? "Registrar's Office Team"
+          : data.isAcademic
+            ? "Department Team"
+            : "Unit Team"
+      }
+      emptyTitle={
+        registrarOffice
+          ? "No public registrar office team records are available yet."
+          : "No public department team records are available yet."
+      }
     />
   );
 }
@@ -956,11 +1191,11 @@ function ServicesSection({ data }: { data: DepartmentDetailData }) {
 }
 
 function mediaHref(item: DepartmentDetailData["updates"][number]) {
-  if (item.recordType === "blog") return `/blogs/${item.slug}`;
-  if (item.recordType === "event") return `/events/${item.slug}`;
-  if (item.recordType === "announcement") return `/announcements/${item.slug}`;
-  if (item.recordType === "gallery") return `/media/${item.id}`;
-  return `/news/${item.slug}`;
+  if (item.recordType === "blog") return `/media/articles/${item.slug}`;
+  if (item.recordType === "event") return `/media/events/${item.slug}`;
+  if (item.recordType === "announcement") return `/media/announcements/${item.slug}`;
+  if (item.recordType === "gallery") return `/media/gallery/${item.id}`;
+  return `/media/news/${item.slug}`;
 }
 
 function mediaDate(item: DepartmentDetailData["updates"][number]) {
@@ -1182,7 +1417,34 @@ function ContactSection({ data }: { data: DepartmentDetailData }) {
   );
 }
 
-function DepartmentOverview({ data }: { data: DepartmentDetailData }) {
+function RegistrarOfficeOverview({
+  data,
+  baseHref,
+}: {
+  data: DepartmentDetailData;
+  baseHref: string;
+}) {
+  return (
+    <>
+      <RegistrarOfficeHero data={data} />
+      <RegistrarOfficeMandate data={data} />
+      <RegistrarPathways data={data} baseHref={baseHref} />
+      <StatementCards data={data} />
+    </>
+  );
+}
+
+function DepartmentOverview({
+  data,
+  baseHref,
+}: {
+  data: DepartmentDetailData;
+  baseHref: string;
+}) {
+  if (isRegistrarOffice(data)) {
+    return <RegistrarOfficeOverview data={data} baseHref={baseHref} />;
+  }
+
   return (
     <>
       <LeadershipMessageCard data={data} />
@@ -1200,7 +1462,7 @@ function renderSection(
 ) {
   switch (section) {
     case "about":
-      return <DepartmentOverview data={data} />;
+      return <DepartmentOverview data={data} baseHref={baseHref} />;
     case "team":
       return <TeamSection data={data} />;
     case "programmes":
@@ -1233,17 +1495,20 @@ export function DepartmentDetailSection({
   navItems?: EntityHeaderNavItem[];
   mediaType?: EntityMediaType;
 }) {
+  const registrarOffice = isRegistrarOffice(data);
   const quickLinks =
     section === "media" ? buildMediaTypeLinks(baseHref) : buildQuickLinks({ baseHref, data, navItems });
   const activeSection = mediaType ?? section;
-  const baseMeta = sectionMeta[section];
+  const baseMeta = registrarOffice
+    ? registrarSectionMeta(section, mediaType)
+    : sectionMeta[section];
   const meta =
     section === "media"
       ? {
-          ...baseMeta,
-          title: entityMediaTypeTitle(mediaType),
-          body: entityMediaTypeBody(mediaType),
-        }
+        ...baseMeta,
+        title: entityMediaTypeTitle(mediaType),
+        body: entityMediaTypeBody(mediaType),
+      }
       : baseMeta;
   const contactPanel = <ContactPanel data={data} />;
   const infoPanel = <DepartmentInfoPanel data={data} />;
@@ -1257,7 +1522,13 @@ export function DepartmentDetailSection({
               <QuickLinksPanel
                 links={quickLinks}
                 activeSection={activeSection}
-                title={section === "media" ? "Content Types" : "Quick Links"}
+                title={
+                  section === "media"
+                    ? "Content Types"
+                    : registrarOffice
+                      ? "Office Navigation"
+                      : "Quick Links"
+                }
               />
               <ExploreMorePanel data={data} />
             </aside>

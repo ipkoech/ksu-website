@@ -10,12 +10,22 @@ from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
+from ._person_media import with_person_photo_urls
 from ...deps import CurrentUser, DbSession, require_scope
 from ...models import Board, StaffAssignment
-from ...schemas import BoardCreate, BoardUpdate
+from ...schemas import BoardCreate, BoardMemberCreate, BoardUpdate
 from ...services import GovernanceService
 
 router = APIRouter()
+
+
+def _member_error(error: ValueError) -> HTTPException:
+    message = str(error) or "Board member could not be added"
+    if "already" in message:
+        return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=message)
+    if "not found" in message.lower():
+        return HTTPException(status_code=404, detail=message)
+    return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
 
 
 @router.get("/boards")
@@ -65,7 +75,7 @@ async def get_board_members(slug: str, db: DbSession, fields: FieldSelection = F
         raise HTTPException(status_code=404, detail="Board not found")
     members = await GovernanceService.get_members(db, board.id)
     selector = build_selector(StaffAssignment, fields)
-    return success(data=selector.apply(members))
+    return success(data=with_person_photo_urls(selector.apply(members), members))
 
 
 @router.get("/boards/id/{board_id}/members")
@@ -75,7 +85,7 @@ async def get_board_members_by_id(board_id: uuid.UUID, db: DbSession, _: Current
         raise HTTPException(status_code=404, detail="Board not found")
     members = await GovernanceService.get_members(db, board.id)
     selector = build_selector(StaffAssignment, fields)
-    return success(data=selector.apply(members))
+    return success(data=with_person_photo_urls(selector.apply(members), members))
 
 
 @router.get("/council")
@@ -132,20 +142,32 @@ async def delete_board(board_id: uuid.UUID, db: DbSession, _: CurrentUser):
 
 
 @router.post("/boards/{slug}/members", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("governance.manage_boards"))])
-async def add_board_member(slug: str, person_id: uuid.UUID, role: str, db: DbSession, _: CurrentUser):
+async def add_board_member(slug: str, data: BoardMemberCreate, db: DbSession, _: CurrentUser):
     board = await GovernanceService.get_board_by_slug(db, slug)
     if board is None:
         raise HTTPException(status_code=404, detail="Board not found")
-    assignment = await GovernanceService.add_member(db, board.id, person_id, role)
+    payload = data.model_dump()
+    person_id = payload.pop("person_id")
+    role = payload.pop("role")
+    try:
+        assignment = await GovernanceService.add_member(db, board.id, person_id, role, **payload)
+    except ValueError as error:
+        raise _member_error(error) from error
     return success(data=assignment, message="Member added")
 
 
 @router.post("/boards/id/{board_id}/members", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("governance.manage_boards"))])
-async def add_board_member_by_id(board_id: uuid.UUID, person_id: uuid.UUID, role: str, db: DbSession, _: CurrentUser):
+async def add_board_member_by_id(board_id: uuid.UUID, data: BoardMemberCreate, db: DbSession, _: CurrentUser):
     board = await GovernanceService.get_board(db, board_id)
     if board is None:
         raise HTTPException(status_code=404, detail="Board not found")
-    assignment = await GovernanceService.add_member(db, board.id, person_id, role)
+    payload = data.model_dump()
+    person_id = payload.pop("person_id")
+    role = payload.pop("role")
+    try:
+        assignment = await GovernanceService.add_member(db, board.id, person_id, role, **payload)
+    except ValueError as error:
+        raise _member_error(error) from error
     return success(data=assignment, message="Member added")
 
 

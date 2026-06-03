@@ -34,11 +34,8 @@ export const quickNavigation = [
   { title: "History", emoji: "🕰️", href: "/about/history" },
   { title: "Mission & Vision", emoji: "🎯", href: "/about/mission-vision" },
   { title: "Governance", emoji: "🏛️", href: "/about/governance" },
-  { title: "Leadership", emoji: "👥", href: "/about/leadership" },
-  { title: "Quality Assurance", emoji: "✅", href: "/about/quality-assurance" },
-  { title: "Governance & Leadership", emoji: "🏛️", href: "/about/governance-leadership" },
   { title: "University Management", emoji: "👥", href: "/about/university-management" },
-  { title: "Administrative Division", emoji: "🏢", href: "/about/administrative-division" },
+  { title: "Quality Assurance", emoji: "✅", href: "/about/quality-assurance" },
   { title: "Our Service Charter", emoji: "📋", href: "/about/service-charter" },
   { title: "Strategic Plan", emoji: "🧭", href: "/about/strategic-plan" },
 ];
@@ -472,8 +469,7 @@ function boardMemberPhotoUrl(assignment: StaffAssignment) {
 function toBoardMembers(assignments: StaffAssignment[]): BoardMember[] {
   return assignments.map((assignment) => ({
     name: boardMemberName(assignment),
-    role: assignment.role_display || assignment.title || assignment.role,
-    note: assignment.term_display,
+    role: assignment.role_display || assignment.role || assignment.title || "Member",
     photoUrl: boardMemberPhotoUrl(assignment),
   }));
 }
@@ -485,10 +481,7 @@ const boardMemberFieldSelection = {
     "role",
     "title",
     "role_display",
-    "term_display",
-    "hierarchy_level",
     "display_order",
-    "is_acting",
   ].join(","),
   include:
     "person:id,slug,title,first_name,middle_name,last_name,full_name,photo_id,photo_url",

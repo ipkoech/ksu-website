@@ -15,6 +15,21 @@ export interface User {
   roles: string[];
 }
 
+export interface PublicStatItem {
+  key: string;
+  label: string;
+  value: number;
+  suffix?: string;
+  description: string;
+  href?: string | null;
+}
+
+export interface PublicStatsResponse {
+  scope: string;
+  title: string;
+  stats: PublicStatItem[];
+}
+
 export interface Person {
   id: string;
   user_id?: string | null;
@@ -302,12 +317,33 @@ export interface Board {
   updated_at: string;
 }
 
+export interface BoardMemberCreatePayload {
+  person_id: string;
+  role: string;
+  title?: string | null;
+  hierarchy_level?: number | null;
+  reports_to_id?: string | null;
+  is_primary?: boolean;
+  is_acting?: boolean;
+  is_public?: boolean;
+  start_date?: string | null;
+  end_date?: string | null;
+  term_years?: number | null;
+  term_renewable?: boolean;
+  show_term_dates?: boolean;
+  status?: string;
+  display_order?: number;
+  notes?: string | null;
+}
+
 export interface School {
   id: string;
   name: string;
   code: string;
   slug: string;
   campus_id?: string | null;
+  administrative_wing_id?: string | null;
+  administrative_wing?: Wing | null;
   school_type?: string | null;
   dean_id?: string | null;
   dean_name?: string | null;
@@ -447,9 +483,13 @@ export interface Department {
   school_id?: string | null;
   wing_id?: string | null;
   parent_department_id?: string | null;
+  school?: Pick<School, "id" | "name" | "code" | "slug"> | null;
+  parent_department?: Pick<Department, "id" | "name" | "code" | "slug"> | null;
   school_name?: string | null;
   head_id?: string | null;
   postgraduate_coordinator_id?: string | null;
+  head?: Pick<Person, "id" | "full_name" | "email" | "title" | "department_id"> | null;
+  postgraduate_coordinator?: Pick<Person, "id" | "full_name" | "email" | "title" | "department_id"> | null;
   hod_id?: string | null;
   hod_name?: string | null;
   hod_email?: string | null;

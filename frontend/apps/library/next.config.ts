@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "kisiiuniversity.ac.ke",
+      },
+      {
+        protocol: "https",
         hostname: "*.kisiiuniversity.ac.ke",
       },
       {

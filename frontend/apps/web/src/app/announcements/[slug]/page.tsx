@@ -1,6 +1,4 @@
-import { notFound } from "next/navigation";
-import { ContentDetailPage } from "@/components/public/content-pages";
-import { getContentDetailData } from "@/lib/content-page-data";
+import { redirect } from "next/navigation";
 
 export default async function AnnouncementDetailPage({
   params,
@@ -8,8 +6,5 @@ export default async function AnnouncementDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const data = await getContentDetailData("announcements", slug);
-  if (!data) notFound();
-
-  return <ContentDetailPage data={data} />;
+  redirect(`/media/announcements/${slug}`);
 }

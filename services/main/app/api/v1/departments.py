@@ -20,7 +20,7 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("page", "per_page", "school_id", "wing_id", "department_type", "search", "fields", "include"))
 async def list_departments(
     db: DbSession,
     page: int = Query(1, ge=1),
@@ -58,7 +58,7 @@ async def get_department(slug: str, db: DbSession, fields: FieldSelection = Fiel
 @router.get("/id/{department_id}")
 async def get_department_by_id(department_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(Department, fields)
-    department = await DepartmentService.get_by_id(db, department_id, load_options=selector.load_options)
+    department = await DepartmentService.get_by_id(db, department_id, is_active=None, load_options=selector.load_options)
     if department is None:
         raise HTTPException(status_code=404, detail="Department not found")
     return success(data=selector.apply(department))
@@ -105,22 +105,32 @@ async def get_department_programmes(
 
 @router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("academic:write"))])
 async def create_department(data: DepartmentCreate, db: DbSession, _: CurrentUser):
-    department = await DepartmentService.create(db, **data.model_dump())
+    try:
+        department = await DepartmentService.create(db, **data.model_dump())
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = status.HTTP_409_CONFLICT if "already assigned" in detail else status.HTTP_400_BAD_REQUEST
+        raise HTTPException(status_code=status_code, detail=detail) from exc
     return success(data=department, message="Department created")
 
 
 @router.patch("/{department_id}", dependencies=[Depends(require_scope("academic:write"))])
 async def update_department(department_id: uuid.UUID, data: DepartmentUpdate, db: DbSession, _: CurrentUser):
-    department = await DepartmentService.get_by_id(db, department_id)
+    department = await DepartmentService.get_by_id(db, department_id, is_active=None)
     if department is None:
         raise HTTPException(status_code=404, detail="Department not found")
-    department = await DepartmentService.update(db, department, **data.model_dump(exclude_unset=True))
+    try:
+        department = await DepartmentService.update(db, department, **data.model_dump(exclude_unset=True))
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = status.HTTP_409_CONFLICT if "already assigned" in detail else status.HTTP_400_BAD_REQUEST
+        raise HTTPException(status_code=status_code, detail=detail) from exc
     return success(data=department, message="Department updated")
 
 
 @router.delete("/{department_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("academic:delete"))])
 async def delete_department(department_id: uuid.UUID, db: DbSession, _: CurrentUser):
-    department = await DepartmentService.get_by_id(db, department_id)
+    department = await DepartmentService.get_by_id(db, department_id, is_active=None)
     if department is None:
         raise HTTPException(status_code=404, detail="Department not found")
     await DepartmentService.delete(db, department)

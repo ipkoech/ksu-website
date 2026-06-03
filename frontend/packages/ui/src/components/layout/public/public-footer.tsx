@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, MapPin, Phone, Mail } from "lucide-react";
 import { cn } from "../../../lib/utils";
 
@@ -45,8 +44,8 @@ const defaultColumns: FooterColumn[] = [
     title: "Quick Links",
     links: [
       { label: "About Us", href: "/about" },
-      { label: "Leadership", href: "/about/leadership" },
-      { label: "News & Events", href: "/news" },
+      { label: "University Management", href: "/about/university-management" },
+      { label: "Media Desk", href: "/media" },
       { label: "Careers", href: "/careers" },
       { label: "Contact Us", href: "/contact" },
     ],
@@ -58,7 +57,11 @@ const defaultColumns: FooterColumn[] = [
       { label: "Programmes", href: "/academics/programmes" },
       { label: "Academic Calendar", href: "/academics/calendar" },
       { label: "Examinations", href: "/academics/examinations" },
-      { label: "E-Learning", href: "https://elearning.kisiiuniversity.ac.ke", external: true },
+      {
+        label: "E-Learning",
+        href: "https://elearning.kisiiuniversity.ac.ke",
+        external: true,
+      },
     ],
   },
   {
@@ -74,11 +77,27 @@ const defaultColumns: FooterColumn[] = [
   {
     title: "Resources",
     links: [
-      { label: "Library", href: "https://library.kisiiuniversity.ac.ke", external: true },
-      { label: "Research Portal", href: "https://research.kisiiuniversity.ac.ke", external: true },
-      { label: "Student Portal", href: "https://portal.kisiiuniversity.ac.ke", external: true },
+      {
+        label: "Library",
+        href: "https://library.kisiiuniversity.ac.ke",
+        external: true,
+      },
+      {
+        label: "Research Portal",
+        href: "https://research.kisiiuniversity.ac.ke",
+        external: true,
+      },
+      {
+        label: "Student Portal",
+        href: "https://portal.kisiiuniversity.ac.ke",
+        external: true,
+      },
       { label: "Staff Portal", href: "/m/staff" },
-      { label: "Webmail", href: "https://mail.kisiiuniversity.ac.ke", external: true },
+      {
+        label: "Webmail",
+        href: "https://mail.kisiiuniversity.ac.ke",
+        external: true,
+      },
     ],
   },
 ];
@@ -117,6 +136,10 @@ export function PublicFooter({
     setExpandedColumn((prev) => (prev === title ? null : title));
   };
 
+  const openAnalyticsPreferences = () => {
+    window.dispatchEvent(new Event("ksu-open-analytics-preferences"));
+  };
+
   return (
     <footer className={cn("bg-gray-900 text-white", className)}>
       {/* Main Footer */}
@@ -134,7 +157,9 @@ export function PublicFooter({
                   className="h-full w-full object-contain"
                 />
               </span>
-              <span className="text-xl font-bold text-white">Kisii University</span>
+              <span className="text-xl font-bold text-white">
+                Kisii University
+              </span>
             </Link>
             <p className="text-gray-400 mb-6 max-w-sm">
               Transforming Lives Through Education, Research, and Community
@@ -149,14 +174,14 @@ export function PublicFooter({
               </div>
               <a
                 href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}
-                className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors"
+                className="flex min-h-11 items-center gap-3 text-gray-400 hover:text-white transition-colors"
               >
                 <Phone className="w-5 h-5 text-secondary" />
                 <span>{contactInfo.phone}</span>
               </a>
               <a
                 href={`mailto:${contactInfo.email}`}
-                className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors"
+                className="flex min-h-11 items-center gap-3 text-gray-400 hover:text-white transition-colors"
               >
                 <Mail className="w-5 h-5 text-secondary" />
                 <span>{contactInfo.email}</span>
@@ -175,7 +200,7 @@ export function PublicFooter({
                       href={link.href}
                       target={link.external ? "_blank" : undefined}
                       rel={link.external ? "noopener noreferrer" : undefined}
-                      className="inline-flex min-h-8 items-center text-gray-400 transition-colors hover:text-white"
+                      className="inline-flex min-h-11 items-center text-gray-400 transition-colors hover:text-white"
                     >
                       {link.label}
                     </Link>
@@ -190,41 +215,41 @@ export function PublicFooter({
             {columns.map((column) => (
               <div key={column.title} className="border-b border-gray-800">
                 <button
+                  type="button"
                   onClick={() => toggleColumn(column.title)}
-                  className="flex items-center justify-between w-full py-4 text-left"
+                  aria-expanded={expandedColumn === column.title}
+                  aria-controls={`footer-links-${column.title.replace(/\s+/g, "-").toLowerCase()}`}
+                  className="flex min-h-11 w-full items-center justify-between py-4 text-left"
                 >
                   <span className="font-semibold">{column.title}</span>
                   <ChevronDown
                     className={cn(
                       "w-5 h-5 transition-transform",
-                      expandedColumn === column.title && "rotate-180"
+                      expandedColumn === column.title && "rotate-180",
                     )}
                   />
                 </button>
-                <AnimatePresence>
-                  {expandedColumn === column.title && (
-                    <motion.ul
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden pb-4 space-y-3"
-                    >
-                      {column.links.map((link) => (
-                        <li key={link.href}>
-                          <Link
-                            href={link.href}
-                            target={link.external ? "_blank" : undefined}
-                            rel={link.external ? "noopener noreferrer" : undefined}
-                            className="inline-flex min-h-9 items-center text-gray-400 transition-colors hover:text-white"
-                          >
-                            {link.label}
-                          </Link>
-                        </li>
-                      ))}
-                    </motion.ul>
-                  )}
-                </AnimatePresence>
+                {expandedColumn === column.title && (
+                  <ul
+                    id={`footer-links-${column.title.replace(/\s+/g, "-").toLowerCase()}`}
+                    className="overflow-hidden pb-4 space-y-3"
+                  >
+                    {column.links.map((link) => (
+                      <li key={link.href}>
+                        <Link
+                          href={link.href}
+                          target={link.external ? "_blank" : undefined}
+                          rel={
+                            link.external ? "noopener noreferrer" : undefined
+                          }
+                          className="inline-flex min-h-11 items-center text-gray-400 transition-colors hover:text-white"
+                        >
+                          {link.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             ))}
           </div>
@@ -239,14 +264,14 @@ export function PublicFooter({
               </div>
               <a
                 href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}
-                className="flex min-h-10 items-center gap-3 text-gray-400 hover:text-white"
+                className="flex min-h-11 items-center gap-3 text-gray-400 hover:text-white"
               >
                 <Phone className="w-5 h-5 text-secondary" />
                 <span>{contactInfo.phone}</span>
               </a>
               <a
                 href={`mailto:${contactInfo.email}`}
-                className="flex min-h-10 items-center gap-3 text-gray-400 hover:text-white"
+                className="flex min-h-11 items-center gap-3 text-gray-400 hover:text-white"
               >
                 <Mail className="w-5 h-5 text-secondary" />
                 <span>{contactInfo.email}</span>
@@ -272,37 +297,64 @@ export function PublicFooter({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="inline-flex min-h-8 items-center text-gray-400 transition-colors hover:text-white"
+                  className="inline-flex min-h-11 items-center text-gray-400 transition-colors hover:text-white"
                 >
                   {link.label}
                 </Link>
               ))}
+              <button
+                type="button"
+                onClick={openAnalyticsPreferences}
+                className="inline-flex min-h-11 items-center text-gray-400 transition-colors hover:text-white"
+              >
+                Analytics preferences
+              </button>
             </nav>
 
             {/* Social Links */}
             <div className="flex items-center gap-4">
               {socialLinks.facebook && (
-                <SocialIcon href={socialLinks.facebook} label="Facebook" className="text-[#1877f2] hover:bg-[#1877f2]">
+                <SocialIcon
+                  href={socialLinks.facebook}
+                  label="Facebook"
+                  className="text-[#1877f2] hover:bg-[#1877f2]"
+                >
                   <FacebookIcon />
                 </SocialIcon>
               )}
               {socialLinks.twitter && (
-                <SocialIcon href={socialLinks.twitter} label="Twitter" className="text-slate-950 hover:bg-slate-950">
+                <SocialIcon
+                  href={socialLinks.twitter}
+                  label="Twitter"
+                  className="text-slate-950 hover:bg-slate-950"
+                >
                   <TwitterIcon />
                 </SocialIcon>
               )}
               {socialLinks.instagram && (
-                <SocialIcon href={socialLinks.instagram} label="Instagram" className="text-[#e4405f] hover:bg-[#e4405f]">
+                <SocialIcon
+                  href={socialLinks.instagram}
+                  label="Instagram"
+                  className="text-[#e4405f] hover:bg-[#e4405f]"
+                >
                   <InstagramIcon />
                 </SocialIcon>
               )}
               {socialLinks.youtube && (
-                <SocialIcon href={socialLinks.youtube} label="YouTube" className="text-[#ff0000] hover:bg-[#ff0000]">
+                <SocialIcon
+                  href={socialLinks.youtube}
+                  label="YouTube"
+                  className="text-[#ff0000] hover:bg-[#ff0000]"
+                >
                   <YouTubeIcon />
                 </SocialIcon>
               )}
               {socialLinks.linkedin && (
-                <SocialIcon href={socialLinks.linkedin} label="LinkedIn" className="text-[#0a66c2] hover:bg-[#0a66c2]">
+                <SocialIcon
+                  href={socialLinks.linkedin}
+                  label="LinkedIn"
+                  className="text-[#0a66c2] hover:bg-[#0a66c2]"
+                >
                   <LinkedInIcon />
                 </SocialIcon>
               )}
@@ -332,8 +384,8 @@ function SocialIcon({
       rel="noopener noreferrer"
       aria-label={label}
       className={cn(
-        "flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-white/20 transition-colors hover:text-white",
-        className
+        "flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-white/20 transition-colors hover:text-white",
+        className,
       )}
     >
       {children}
@@ -360,7 +412,15 @@ function TwitterIcon() {
 function InstagramIcon() {
   return (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24">
-      <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="2" />
+      <rect
+        x="3"
+        y="3"
+        width="18"
+        height="18"
+        rx="5"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
       <path
         d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"
         fill="none"

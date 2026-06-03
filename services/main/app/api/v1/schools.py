@@ -19,17 +19,26 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("page", "per_page", "campus_id", "administrative_wing_id", "search", "fields", "include"))
 async def list_schools(
     db: DbSession,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     campus_id: uuid.UUID | None = None,
+    administrative_wing_id: uuid.UUID | None = None,
     search: str | None = None,
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(School, fields)
-    result = await SchoolService.list(db, page=page, per_page=per_page, campus_id=campus_id, search=search, load_options=selector.load_options)
+    result = await SchoolService.list(
+        db,
+        page=page,
+        per_page=per_page,
+        campus_id=campus_id,
+        administrative_wing_id=administrative_wing_id,
+        search=search,
+        load_options=selector.load_options,
+    )
     return success(data=selector.apply(result.items), meta=result.meta)
 
 

@@ -36,6 +36,15 @@ UNIQUE_POSITION_ROLES = {
     "cod",
 }
 
+STRICT_UNIQUE_POSITION_ROLES = {
+    ("school", "dean"),
+    ("department", "hod"),
+    ("department", "cod"),
+    ("department", "head"),
+}
+
+DEPARTMENT_HEAD_ROLES = {"hod", "head", "cod"}
+
 ENTITY_MODEL_CONFIG = {
     "board": (Board, Board.name, Board.board_type),
     "division": (Division, Division.name, Division.code),
@@ -149,22 +158,36 @@ class StaffService:
         """Check if a unique position is already filled."""
         if role not in UNIQUE_POSITION_ROLES:
             return None
+        strict_unique = StaffService.is_strict_unique_role(entity_type, role)
+        role_filter = (
+            StaffAssignment.role.in_(DEPARTMENT_HEAD_ROLES)
+            if entity_type == "department" and role in DEPARTMENT_HEAD_ROLES
+            else StaffAssignment.role == role
+        )
         query = (
             select(StaffAssignment)
             .options(selectinload(StaffAssignment.person))
             .where(
                 StaffAssignment.entity_type == entity_type,
                 StaffAssignment.entity_id == entity_id,
-                StaffAssignment.role == role,
+                role_filter,
                 StaffAssignment.status == "active",
-                StaffAssignment.is_acting.is_(False),
                 StaffAssignment.deleted_at.is_(None),
             )
         )
+        if not strict_unique:
+            query = query.where(StaffAssignment.is_acting.is_(False))
         if exclude_assignment_id:
             query = query.where(StaffAssignment.id != exclude_assignment_id)
-        result = await db.execute(query)
-        return result.scalar_one_or_none()
+        result = await db.execute(
+            query.order_by(
+                StaffAssignment.is_primary.desc(),
+                StaffAssignment.is_acting.asc(),
+                StaffAssignment.start_date.asc().nulls_last(),
+                StaffAssignment.created_at.asc(),
+            )
+        )
+        return result.scalars().first()
 
     @staticmethod
     async def end_assignment(
@@ -288,6 +311,9 @@ class StaffService:
                 "entity_label": entity_label,
                 "allowed_resolutions": [],
             }
+        allowed_resolutions = ["cancel", "replace_current", "edit_selection"]
+        if not StaffService.is_strict_unique_role(entity_type, role):
+            allowed_resolutions.insert(1, "assign_acting")
         return {
             "has_conflict": True,
             "current_holder": {
@@ -301,12 +327,16 @@ class StaffService:
             },
             "role_label": role_label,
             "entity_label": entity_label,
-            "allowed_resolutions": ["cancel", "assign_acting", "replace_current", "edit_selection"],
+            "allowed_resolutions": allowed_resolutions,
         }
 
     @staticmethod
     def role_label(role: str) -> str:
         return role.replace("_", " ").title()
+
+    @staticmethod
+    def is_strict_unique_role(entity_type: str, role: str) -> bool:
+        return (entity_type, role) in STRICT_UNIQUE_POSITION_ROLES
 
     @staticmethod
     async def get_entity_label(db: AsyncSession, entity_type: str, entity_id: uuid.UUID | None) -> str:
@@ -394,7 +424,7 @@ class StaffService:
         entity_id: uuid.UUID | None = None,
         load_options: Sequence = (),
     ) -> list[StaffAssignment]:
-        query = select(StaffAssignment).options(selectinload(StaffAssignment.person)).where(StaffAssignment.deleted_at.is_(None))
+        query = select(StaffAssignment).options(selectinload(StaffAssignment.person).selectinload(Person.photo)).where(StaffAssignment.deleted_at.is_(None))
         if load_options:
             query = query.options(*load_options)
         if person_id:
@@ -428,7 +458,7 @@ class StaffService:
         status: str = "active",
         load_options: Sequence = (),
     ) -> list[StaffAssignment]:
-        query = select(StaffAssignment).options(selectinload(StaffAssignment.person)).where(
+        query = select(StaffAssignment).options(selectinload(StaffAssignment.person).selectinload(Person.photo)).where(
             StaffAssignment.entity_type == entity_type,
             StaffAssignment.entity_id == entity_id,
             StaffAssignment.deleted_at.is_(None),

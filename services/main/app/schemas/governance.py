@@ -68,6 +68,25 @@ class BoardUpdate(BaseSchema):
     display_order: int | None = None
 
 
+class BoardMemberCreate(BaseSchema):
+    person_id: uuid.UUID
+    role: str = Field(default="member", min_length=1, max_length=64)
+    title: str | None = Field(default=None, max_length=255)
+    hierarchy_level: int | None = Field(default=None, ge=1, le=11)
+    reports_to_id: uuid.UUID | None = None
+    is_primary: bool = False
+    is_acting: bool = False
+    is_public: bool = True
+    start_date: date | None = None
+    end_date: date | None = None
+    term_years: int | None = Field(default=None, ge=1, le=10)
+    term_renewable: bool = True
+    show_term_dates: bool = False
+    status: str = Field(default="active", max_length=32)
+    display_order: int = 100
+    notes: str | None = None
+
+
 class BoardRead(BaseReadSchema):
     name: str
     slug: str

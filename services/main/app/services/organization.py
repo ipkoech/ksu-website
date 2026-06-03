@@ -98,6 +98,14 @@ class WingService:
         return result.scalar_one_or_none()
 
     @staticmethod
+    async def get_by_slug(db: AsyncSession, slug: str, *, load_options: Sequence = ()) -> Wing | None:
+        query = select(Wing).where(Wing.slug == slug, Wing.is_active.is_(True))
+        if load_options:
+            query = query.options(*load_options)
+        result = await db.execute(query.order_by(Wing.display_order.asc(), Wing.name.asc()))
+        return result.scalars().first()
+
+    @staticmethod
     async def create(db: AsyncSession, division_id: uuid.UUID, **data) -> Wing:
         if not data.get("slug") and data.get("name"):
             data["slug"] = await unique_slug(db, Wing, data["name"])

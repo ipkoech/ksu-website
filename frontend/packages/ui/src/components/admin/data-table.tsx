@@ -37,6 +37,7 @@ export interface ColumnDef<T> {
   sortable?: boolean;
   className?: string;
   cellClassName?: string;
+  mobileLabel?: string;
 }
 
 export interface DataTableProps<T extends { id?: string }> {
@@ -57,6 +58,7 @@ export interface DataTableProps<T extends { id?: string }> {
   emptyMessage?: string;
   searchPlaceholder?: string;
   onSearch?: (query: string) => void;
+  getRowLabel?: (row: T, index: number) => string;
 }
 
 function getRowId<T extends { id?: string }>(row: T, index: number) {
@@ -76,6 +78,7 @@ export function DataTable<T extends { id?: string }>({
   emptyMessage = "No results found.",
   searchPlaceholder = "Search records...",
   onSearch,
+  getRowLabel,
 }: DataTableProps<T>) {
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
   const [search, setSearch] = React.useState("");
@@ -125,6 +128,7 @@ export function DataTable<T extends { id?: string }>({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder={searchPlaceholder}
+            aria-label={searchPlaceholder}
             className="pl-9"
           />
         </div>
@@ -157,7 +161,7 @@ export function DataTable<T extends { id?: string }>({
         </div>
       </div>
 
-      <div className="rounded-lg border">
+      <div className="hidden rounded-lg border md:block">
         <Table className="min-w-[720px]">
           <TableHeader>
             <TableRow>
@@ -171,12 +175,25 @@ export function DataTable<T extends { id?: string }>({
               {columns.map((column) => {
                 const direction = sortState?.column === column.key ? sortState.direction : null;
                 return (
-                  <TableHead key={column.key} className={column.className}>
+                  <TableHead
+                    key={column.key}
+                    className={column.className}
+                    aria-sort={
+                      column.sortable && direction
+                        ? direction === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : column.sortable
+                          ? "none"
+                          : undefined
+                    }
+                  >
                     {column.sortable ? (
                       <button
                         type="button"
-                        className="inline-flex items-center gap-2 text-left font-medium"
+                        className="inline-flex min-h-11 items-center gap-2 text-left font-medium"
                         onClick={() => handleSort(column)}
+                        aria-label={`Sort by ${typeof column.header === "string" ? column.header : column.key}`}
                       >
                         {typeof column.header === "function" ? column.header(direction) : column.header}
                         <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
@@ -242,14 +259,70 @@ export function DataTable<T extends { id?: string }>({
         </Table>
       </div>
 
+      <div className="grid gap-3 md:hidden">
+        {isLoading ? (
+          Array.from({ length: Math.max(3, Math.min(pagination.limit || 5, 6)) }).map((_, index) => (
+            <div key={`mobile-skeleton-${index}`} className="rounded-lg border bg-card p-4">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="mt-3 h-4 w-full" />
+              <Skeleton className="mt-2 h-4 w-1/2" />
+            </div>
+          ))
+        ) : data.length === 0 ? (
+          <div className="rounded-lg border bg-card px-4 py-10">
+            <EmptyState title="Nothing here yet" description={emptyMessage} />
+          </div>
+        ) : (
+          data.map((row, index) => {
+            const rowId = getRowId(row, index);
+            const selected = selectedIds.includes(rowId);
+            const label = getRowLabel?.(row, index) ?? `Record ${index + 1}`;
+
+            return (
+              <article key={rowId} className="rounded-lg border bg-card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <button
+                    type="button"
+                    className={cn("min-w-0 flex-1 text-left", onRowClick && "cursor-pointer")}
+                    onClick={() => onRowClick?.(row)}
+                  >
+                    <h3 className="truncate text-sm font-semibold">{label}</h3>
+                  </button>
+                  <Checkbox
+                    checked={selected}
+                    onCheckedChange={(checked) => toggleRow(row, index, Boolean(checked))}
+                    aria-label={`Select ${label}`}
+                  />
+                </div>
+                <dl className="mt-3 grid gap-2 text-sm">
+                  {columns.slice(0, 4).map((column) => (
+                    <div key={`${rowId}-${column.key}`} className="grid grid-cols-[7rem_1fr] gap-3">
+                      <dt className="text-muted-foreground">{column.mobileLabel ?? (typeof column.header === "string" ? column.header : column.key)}</dt>
+                      <dd className="min-w-0 break-words font-medium">
+                        {column.cell
+                          ? column.cell(row)
+                          : column.accessor
+                            ? String(row[column.accessor] ?? "")
+                            : null}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </article>
+            );
+          })
+        )}
+      </div>
+
       <div className="flex flex-col gap-3 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-sm text-muted-foreground">
           Page {pagination.page} of {Math.max(pagination.totalPages, 1)}
         </div>
         <div className="flex items-center gap-2">
           <select
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+            className="h-11 rounded-md border border-input bg-background px-3 text-sm"
             value={pagination.limit}
+            aria-label="Rows per page"
             onChange={(event) => onPaginationChange(1, Number(event.target.value))}
           >
             {[10, 20, 50, 100].map((limit) => (
@@ -258,16 +331,16 @@ export function DataTable<T extends { id?: string }>({
               </option>
             ))}
           </select>
-          <Button variant="outline" size="icon-sm" onClick={() => onPaginationChange(1, pagination.limit)} disabled={pagination.page <= 1}>
+          <Button variant="outline" size="icon-sm" onClick={() => onPaginationChange(1, pagination.limit)} disabled={pagination.page <= 1} aria-label="First page">
             <ChevronsLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon-sm" onClick={() => onPaginationChange(pagination.page - 1, pagination.limit)} disabled={pagination.page <= 1}>
+          <Button variant="outline" size="icon-sm" onClick={() => onPaginationChange(pagination.page - 1, pagination.limit)} disabled={pagination.page <= 1} aria-label="Previous page">
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon-sm" onClick={() => onPaginationChange(pagination.page + 1, pagination.limit)} disabled={pagination.page >= pagination.totalPages}>
+          <Button variant="outline" size="icon-sm" onClick={() => onPaginationChange(pagination.page + 1, pagination.limit)} disabled={pagination.page >= pagination.totalPages} aria-label="Next page">
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon-sm" onClick={() => onPaginationChange(pagination.totalPages, pagination.limit)} disabled={pagination.page >= pagination.totalPages}>
+          <Button variant="outline" size="icon-sm" onClick={() => onPaginationChange(pagination.totalPages, pagination.limit)} disabled={pagination.page >= pagination.totalPages} aria-label="Last page">
             <ChevronsRight className="h-4 w-4" />
           </Button>
         </div>

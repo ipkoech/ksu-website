@@ -275,8 +275,8 @@ function SchoolsSection({
           <SectionKicker title="Our Schools" />
           {schools.length ? (
             <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {schools.slice(0, 7).map((school, index) => (
-                <SchoolCard key={school.href} school={school} index={index} />
+              {schools.slice(0, 8).map((school) => (
+                <SchoolCard key={school.href} school={school} />
               ))}
             </div>
           ) : (
@@ -295,38 +295,35 @@ function SchoolsSection({
 }
 
 function ViceChancellorMessage({ leader }: { leader: HomeLeader | null }) {
+  if (!leader) {
+    return null;
+  }
+
   return (
     <aside>
       <SectionKicker title="Message from the Vice Chancellor" />
       <div className="mt-4 grid gap-4">
-        <PublicImage
-          src={leader?.image}
-          alt={leader?.name ?? "Vice Chancellor"}
-          ratio="card"
-          fallbackSrc="/logos/vc3.jpg"
-          sizes="(min-width: 1280px) 24vw, (min-width: 640px) 40vw, 100vw"
-          className="h-64 rounded-md sm:h-72 xl:h-80"
-          imageClassName="object-top"
-        />
+        {leader.image ? (
+          <PublicImage
+            src={leader.image}
+            alt={leader.name}
+            ratio="card"
+            sizes="(min-width: 1280px) 24vw, (min-width: 640px) 40vw, 100vw"
+            className="h-64 rounded-md sm:h-72 xl:h-80"
+            imageClassName="object-top"
+          />
+        ) : null}
         <div>
-          <p className="text-sm leading-6 text-slate-700">
-            {leader?.message ??
-              "Kisii University remains committed to quality teaching, research, innovation, and service to society."}
-          </p>
-          <div className="mt-4">
-            <h3 className="text-sm font-bold text-primary">
-              {leader?.name ?? "Vice Chancellor"}
-            </h3>
-            <p className="text-xs font-semibold text-slate-500">
-              {leader?.title ?? "Vice Chancellor"}
+          {leader.message ? (
+            <p className="text-sm leading-6 text-slate-700">
+              {leader.message}
             </p>
-            <Link
-              href={leader?.href ?? "/about/university-management"}
-              className="mt-3 inline-flex min-h-11 items-center gap-2 text-xs font-bold text-primary hover:text-secondary"
-            >
-              Read full message
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+          ) : null}
+          <div className="mt-4">
+            <h3 className="text-sm font-bold text-primary">{leader.name}</h3>
+            <p className="text-xs font-semibold text-slate-500">
+              {leader.title}
+            </p>
           </div>
         </div>
       </div>
@@ -334,13 +331,11 @@ function ViceChancellorMessage({ leader }: { leader: HomeLeader | null }) {
   );
 }
 
-function SchoolCard({ school, index }: { school: HomeCard; index: number }) {
+function SchoolCard({ school }: { school: HomeCard }) {
   return (
     <Link
       href={school.href}
-      className={`group block h-full overflow-hidden rounded-md border border-blue-100 bg-white shadow-sm shadow-blue-100/60 transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md hover:shadow-blue-200 ${
-        index === 6 ? "sm:col-span-2 lg:col-span-3" : ""
-      }`}
+      className="group block h-full overflow-hidden rounded-md border border-blue-100 bg-white shadow-sm shadow-blue-100/60 transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md hover:shadow-blue-200"
     >
       <PublicImage
         src={school.imageUrl}
@@ -499,7 +494,7 @@ function FeaturedProgrammes({ programmes }: { programmes: HomeCard[] }) {
 }
 
 function AdmissionsGuideCard({
-  activeIntake,
+  activeIntake: _activeIntake,
 }: {
   activeIntake: HomeIntake | null;
 }) {
@@ -570,7 +565,7 @@ function ApplyCtaCard({ activeIntake }: { activeIntake: HomeIntake | null }) {
   );
 }
 
-function AdmissionsPanel({ activeIntakes }: { activeIntakes: HomeIntake[] }) {
+function _AdmissionsPanel({ activeIntakes }: { activeIntakes: HomeIntake[] }) {
   const activeIntake = activeIntakes[0] ?? null;
 
   return (
@@ -735,7 +730,7 @@ function LatestContentSection({
           <div className="mb-4 flex items-center justify-between gap-3">
             <SectionKicker title="Latest News" />
             <Link
-              href="/news"
+              href="/media/news"
               className="inline-flex min-h-11 items-center gap-2 text-xs font-semibold text-primary hover:text-secondary"
             >
               View all news
@@ -755,7 +750,7 @@ function LatestContentSection({
             <HomeEmptyState
               title="News updates are being refreshed"
               body="Open the news listing for current published university updates."
-              actionHref="/news"
+              actionHref="/media/news"
               actionLabel="Open news"
             />
           )}
@@ -832,7 +827,7 @@ function EventsCard({ events }: { events: HomeCard[] }) {
       <div className="mb-3 flex items-center justify-between gap-3">
         <SectionKicker title="Upcoming Events" />
         <Link
-          href="/events"
+          href="/media/events"
           className="inline-flex min-h-11 items-center text-xs font-semibold text-primary hover:text-secondary"
         >
           View all events
@@ -864,7 +859,7 @@ function EventsCard({ events }: { events: HomeCard[] }) {
         <HomeEmptyState
           title="Event listings are being refreshed"
           body="Open the events listing for current university activities."
-          actionHref="/events"
+          actionHref="/media/events"
           actionLabel="Open events"
         />
       )}
@@ -880,7 +875,7 @@ function LatestBlogCard({ blog }: { blog: HomeCard | null }) {
         <HomeEmptyState
           title="Blog updates are being refreshed"
           body="Open the blog listing for current published articles."
-          actionHref="/blogs"
+          actionHref="/media/articles"
           actionLabel="Open blogs"
         />
       </aside>
@@ -892,7 +887,7 @@ function LatestBlogCard({ blog }: { blog: HomeCard | null }) {
       <div className="mb-3 flex items-center justify-between gap-3">
         <SectionKicker title="Latest Blog" />
         <Link
-          href="/blogs"
+          href="/media/articles"
           className="inline-flex min-h-11 items-center text-xs font-semibold text-primary hover:text-secondary"
         >
           View all blogs
@@ -1103,7 +1098,7 @@ function JourneyCta() {
   );
 }
 
-function ContactStrip({
+function _ContactStrip({
   contactInfo,
 }: {
   contactInfo: { address: string; phone: string; email: string };

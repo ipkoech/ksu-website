@@ -26,7 +26,8 @@ export function AuthGuard({
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push(redirectTo);
+      const separator = redirectTo.includes("?") ? "&" : "?";
+      router.push(`${redirectTo}${separator}reason=session-expired`);
     }
   }, [isLoading, isAuthenticated, router, redirectTo]);
 
@@ -44,7 +45,7 @@ export function AuthGuard({
 function AuthLoadingSkeleton() {
   return (
     <div className="flex h-screen items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
+      <div className="flex flex-col items-center gap-4" role="status" aria-live="polite">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         <p className="text-sm text-muted-foreground">Loading...</p>
       </div>

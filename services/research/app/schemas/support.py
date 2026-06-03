@@ -10,6 +10,117 @@ from pydantic import Field
 from .base import BaseReadSchema, BaseSchema, EmailField, PhoneStr, SEOFieldsMixin, SlugMixin, SlugStr, StatusMixin, UrlStr
 
 
+class ResearchOfficeBase(BaseSchema, SlugMixin, SEOFieldsMixin):
+    name: str = Field(max_length=255)
+    code: str | None = Field(None, max_length=32)
+    department_id: uuid.UUID | None = None
+    director_id: uuid.UUID | None = None
+    about: str | None = None
+    mandate: str | None = None
+    mission: str | None = None
+    vision: str | None = None
+    objectives: str | None = None
+    functions: str | None = None
+    services_summary: str | None = None
+    leadership_message: str | None = None
+    strategic_priorities: list[dict] | None = None
+    location: str | None = Field(None, max_length=255)
+    address: str | None = None
+    email: EmailField | None = None
+    phone: PhoneStr | None = None
+    website: UrlStr | None = None
+    social_links: dict | None = None
+    logo_image_url: UrlStr | None = None
+    cover_image_url: UrlStr | None = None
+    attachments: list[dict] | None = None
+    status: str = Field(default="active", max_length=32)
+
+
+class ResearchOfficeCreate(ResearchOfficeBase, StatusMixin):
+    pass
+
+
+class ResearchOfficeUpdate(BaseSchema):
+    name: str | None = Field(None, max_length=255)
+    slug: SlugStr | None = None
+    code: str | None = Field(None, max_length=32)
+    department_id: uuid.UUID | None = None
+    director_id: uuid.UUID | None = None
+    about: str | None = None
+    mandate: str | None = None
+    mission: str | None = None
+    vision: str | None = None
+    objectives: str | None = None
+    functions: str | None = None
+    services_summary: str | None = None
+    leadership_message: str | None = None
+    status: str | None = None
+    is_active: bool | None = None
+    is_featured: bool | None = None
+    display_order: int | None = None
+
+
+class ResearchOfficeRead(ResearchOfficeBase, BaseReadSchema, StatusMixin):
+    pass
+
+
+class ResearchOfficeList(BaseReadSchema):
+    name: str
+    slug: str
+    code: str | None
+    department_id: uuid.UUID | None
+    director_id: uuid.UUID | None
+    status: str
+    is_active: bool
+    is_featured: bool
+
+
+class ResearchOfficeStaffBase(BaseSchema):
+    office_id: uuid.UUID
+    staff_assignment_id: uuid.UUID
+    staff_type: str = Field(default="staff", max_length=32)
+    role: str = Field(max_length=128)
+    title_override: str | None = Field(None, max_length=128)
+    responsibilities: str | None = None
+    leadership_rank: int | None = None
+    start_date: date | None = None
+    end_date: date | None = None
+    photo_url: UrlStr | None = None
+
+
+class ResearchOfficeStaffCreate(ResearchOfficeStaffBase):
+    is_active: bool = True
+    display_order: int = 100
+
+
+class ResearchOfficeStaffUpdate(BaseSchema):
+    staff_assignment_id: uuid.UUID | None = None
+    staff_type: str | None = Field(None, max_length=32)
+    role: str | None = Field(None, max_length=128)
+    title_override: str | None = Field(None, max_length=128)
+    responsibilities: str | None = None
+    leadership_rank: int | None = None
+    end_date: date | None = None
+    is_active: bool | None = None
+    display_order: int | None = None
+
+
+class ResearchOfficeStaffRead(ResearchOfficeStaffBase, BaseReadSchema):
+    is_active: bool
+    display_order: int
+
+
+class ResearchOfficeStaffList(BaseReadSchema):
+    office_id: uuid.UUID
+    staff_assignment_id: uuid.UUID
+    staff_type: str
+    role: str
+    title_override: str | None
+    leadership_rank: int | None
+    is_active: bool
+    display_order: int
+
+
 class ResearchResourceBase(BaseSchema, SlugMixin, SEOFieldsMixin):
     name: str = Field(max_length=255)
     code: str | None = Field(None, max_length=32)
@@ -250,4 +361,3 @@ class BoardMemberUpdate(BaseSchema):
 class BoardMemberRead(BoardMemberBase, BaseReadSchema):
     is_active: bool
     display_order: int
-

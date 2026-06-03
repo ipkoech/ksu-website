@@ -1,3 +1,5 @@
+import { PublicImage } from "@/components/public/public-image";
+
 export interface BoardMember {
   name: string;
   role: string;
@@ -5,11 +7,7 @@ export interface BoardMember {
   photoUrl?: string | null;
 }
 
-export function BoardMemberGrid({
-  members,
-}: {
-  members: BoardMember[];
-}) {
+export function BoardMemberGrid({ members }: { members: BoardMember[] }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {members.map((member, index) => (
@@ -19,10 +17,12 @@ export function BoardMemberGrid({
         >
           <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#dbeafe,#f8fafc)] font-[family-name:var(--font-display)] text-xl text-primary">
             {member.photoUrl ? (
-              <img
+              <PublicImage
                 src={member.photoUrl}
                 alt={member.name}
-                className="h-full w-full object-cover"
+                ratio="profile"
+                sizes="56px"
+                className="h-full w-full"
               />
             ) : (
               member.name
@@ -39,7 +39,9 @@ export function BoardMemberGrid({
             {member.role}
           </p>
           {member.note ? (
-            <p className="mt-3 text-sm leading-6 text-slate-600">{member.note}</p>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              {member.note}
+            </p>
           ) : null}
         </article>
       ))}

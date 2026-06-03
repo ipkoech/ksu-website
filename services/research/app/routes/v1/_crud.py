@@ -27,7 +27,28 @@ def build_crud_router(
     router = APIRouter(prefix=prefix, tags=[tag])
 
     @router.get("")
-    @cached_public(timeout=cache_timeout, vary_on=("page", "per_page", "search", "status", "is_featured", "is_active", "is_public"))
+    @cached_public(
+        timeout=cache_timeout,
+        vary_on=(
+            "page",
+            "per_page",
+            "search",
+            "status",
+            "is_featured",
+            "is_active",
+            "is_public",
+            "category",
+            "project_type",
+            "partner_type",
+            "event_type",
+            "output_type",
+            "program_type",
+            "scholarship_type",
+            "initiative_type",
+            "center_id",
+            "project_id",
+        ),
+    )
     async def list_items(
         request: Request,
         page: int = Query(1, ge=1),
@@ -37,6 +58,16 @@ def build_crud_router(
         is_active: bool | None = None,
         is_featured: bool | None = None,
         is_public: bool | None = None,
+        category: str | None = None,
+        project_type: str | None = None,
+        partner_type: str | None = None,
+        event_type: str | None = None,
+        output_type: str | None = None,
+        program_type: str | None = None,
+        scholarship_type: str | None = None,
+        initiative_type: str | None = None,
+        center_id: uuid.UUID | None = None,
+        project_id: uuid.UUID | None = None,
         db: AsyncSession = Depends(get_db),
     ):
         result = await service.list(
@@ -49,6 +80,16 @@ def build_crud_router(
                 "is_active": is_active,
                 "is_featured": is_featured,
                 "is_public": is_public,
+                "category": category,
+                "project_type": project_type,
+                "partner_type": partner_type,
+                "event_type": event_type,
+                "output_type": output_type,
+                "program_type": program_type,
+                "scholarship_type": scholarship_type,
+                "initiative_type": initiative_type,
+                "center_id": center_id,
+                "project_id": project_id,
             },
         )
         return success(data=result.items, meta=result.meta)
@@ -63,7 +104,10 @@ def build_crud_router(
 
     @router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope(write_scope))])
     async def create_item(data: create_schema, db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
-        item = await service.create(db, data, actor_id=user.sub)
+        try:
+            item = await service.create(db, data, actor_id=user.sub)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
         return success(data=item, message=f"{tag.rstrip('s')} created")
 
     @router.patch("/id/{item_id}", dependencies=[Depends(require_scope(write_scope))])
@@ -76,7 +120,10 @@ def build_crud_router(
         item = await service.get_by_id(db, item_id)
         if item is None:
             raise HTTPException(status_code=404, detail=f"{tag.rstrip('s')} not found")
-        item = await service.update(db, item, data, actor_id=user.sub)
+        try:
+            item = await service.update(db, item, data, actor_id=user.sub)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
         return success(data=item, message=f"{tag.rstrip('s')} updated")
 
     @router.delete("/id/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope(write_scope))])

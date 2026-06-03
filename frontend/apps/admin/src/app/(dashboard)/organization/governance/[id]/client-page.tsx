@@ -136,6 +136,7 @@ const memberFields = [
   "status",
   "display_order",
   "notes",
+  "person",
 ].join(",");
 
 const boardPayloadFieldMap: PayloadFieldMap<BoardPayload> = {
@@ -493,7 +494,7 @@ export default function BoardEditorPage() {
           !isNew && board && canManageGovernance ? (
             <Button type="button" variant="outline" onClick={() => setAssignmentEditor({ mode: "create", assignment: null })}>
               <Users className="h-4 w-4" />
-              Add Member
+              Attach Member
             </Button>
           ) : undefined
         }
@@ -625,12 +626,12 @@ export default function BoardEditorPage() {
                   <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <CardTitle>Members</CardTitle>
-                      <CardDescription>Board membership is backed by staff assignments for this board.</CardDescription>
+                      <CardDescription>Attach council and board members to this governance body.</CardDescription>
                     </div>
                     {canManageGovernance ? (
                       <Button type="button" variant="outline" onClick={() => setAssignmentEditor({ mode: "create", assignment: null })}>
                         <Users className="h-4 w-4" />
-                        Add Member
+                        Attach Member
                       </Button>
                     ) : null}
                   </CardHeader>
@@ -773,6 +774,8 @@ export default function BoardEditorPage() {
           assignment={assignmentEditor?.assignment ?? null}
           presetEntityType="board"
           presetEntityId={board.id}
+          presetEntityLabel={board.name}
+          lockEntity
           onSuccess={handleAssignmentSuccess}
         />
       ) : null}

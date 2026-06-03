@@ -1,8 +1,5 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
-import { Mail, Phone, MapPin, Search, X } from "lucide-react";
+import { Mail, Phone, MapPin, Search } from "lucide-react";
 import { cn } from "../../../lib/utils";
 
 interface QuickLink {
@@ -32,9 +29,21 @@ interface MiniHeaderProps {
 
 const defaultQuickLinks: QuickLink[] = [
   { label: "Staff Portal", href: "/m/staff" },
-  { label: "Student Portal", href: "https://portal.kisiiuniversity.ac.ke", external: true },
-  { label: "E-Learning", href: "https://elearning.kisiiuniversity.ac.ke", external: true },
-  { label: "Webmail", href: "https://mail.kisiiuniversity.ac.ke", external: true },
+  {
+    label: "Student Portal",
+    href: "https://portal.kisiiuniversity.ac.ke",
+    external: true,
+  },
+  {
+    label: "E-Learning",
+    href: "https://elearning.kisiiuniversity.ac.ke",
+    external: true,
+  },
+  {
+    label: "Webmail",
+    href: "https://mail.kisiiuniversity.ac.ke",
+    external: true,
+  },
 ];
 
 const defaultContactInfo = {
@@ -50,13 +59,18 @@ export function MiniHeader({
   className,
 }: MiniHeaderProps) {
   return (
-    <div className={cn("hidden xl:block bg-gray-900 text-white text-xs", className)}>
-      <div className="w-full px-4 py-2 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <div
+      className={cn(
+        "hidden border-b border-white/10 bg-secondary text-xs text-white shadow-[inset_0_-1px_rgba(255,255,255,0.08)] xl:block",
+        className,
+      )}
+    >
+      <div className="w-full px-4 py-1.5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="flex min-w-0 items-center justify-between gap-4">
           {/* Contact Info */}
           <div className="flex min-w-0 items-center gap-4">
             {contactInfo?.address && (
-              <span className="flex min-w-0 items-center gap-1.5 text-gray-300">
+              <span className="flex min-w-0 items-center gap-1.5 text-white/80">
                 <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                 <span className="hidden max-w-[150px] truncate xl:inline 2xl:max-w-none">
                   {contactInfo.address}
@@ -66,7 +80,7 @@ export function MiniHeader({
             {contactInfo?.phone && (
               <a
                 href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}
-                className="flex min-h-8 shrink-0 items-center gap-1.5 text-gray-300 transition-colors hover:text-white"
+                className="flex min-h-10 shrink-0 items-center gap-1.5 text-white/80 transition-colors hover:text-white"
               >
                 <Phone className="w-3.5 h-3.5" />
                 <span className="hidden lg:inline">{contactInfo.phone}</span>
@@ -75,7 +89,7 @@ export function MiniHeader({
             {contactInfo?.email && (
               <a
                 href={`mailto:${contactInfo.email}`}
-                className="flex min-h-8 shrink-0 items-center gap-1.5 text-gray-300 transition-colors hover:text-white"
+                className="flex min-h-10 shrink-0 items-center gap-1.5 text-white/80 transition-colors hover:text-white"
               >
                 <Mail className="w-3.5 h-3.5" />
                 <span className="hidden lg:inline">{contactInfo.email}</span>
@@ -94,8 +108,8 @@ export function MiniHeader({
                   target={link.external ? "_blank" : undefined}
                   rel={link.external ? "noopener noreferrer" : undefined}
                   className={cn(
-                    "inline-flex min-h-8 items-center text-gray-300 transition-colors hover:text-white",
-                    index > 2 && "hidden 2xl:inline"
+                    "inline-flex min-h-10 items-center text-white/80 transition-colors hover:text-white",
+                    index > 2 && "hidden 2xl:inline",
                   )}
                 >
                   {link.label}
@@ -104,13 +118,15 @@ export function MiniHeader({
             </nav>
 
             {/* Divider */}
-            <div className="w-px h-4 bg-gray-700" />
+            <div className="h-4 w-px bg-white/20" />
 
             {/* Search */}
             <SearchButton />
 
             {/* Divider */}
-            {socialLinks && <div className="hidden 2xl:block w-px h-4 bg-gray-700" />}
+            {socialLinks && (
+              <div className="hidden h-4 w-px bg-white/20 2xl:block" />
+            )}
 
             {/* Social Links */}
             {socialLinks && (
@@ -150,51 +166,15 @@ export function MiniHeader({
 }
 
 function SearchButton() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState("");
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (query.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(query.trim())}`;
-    }
-  };
-
-  if (isOpen) {
-    return (
-      <form onSubmit={handleSubmit} className="flex items-center gap-2">
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search..."
-          autoFocus
-          className="w-40 px-2 py-1 text-sm bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-400 focus:outline-none focus:border-gray-500"
-        />
-        <button
-          type="button"
-          onClick={() => {
-            setIsOpen(false);
-            setQuery("");
-          }}
-          className="flex h-8 w-8 items-center justify-center rounded text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
-          aria-label="Close search"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </form>
-    );
-  }
-
   return (
-    <button
-      onClick={() => setIsOpen(true)}
-      className="flex min-h-8 items-center gap-1.5 text-gray-300 transition-colors hover:text-white"
-      aria-label="Search"
+    <Link
+      href="/search"
+      className="flex min-h-10 items-center gap-1.5 text-white/80 transition-colors hover:text-white"
+      aria-label="Search Kisii University"
     >
-      <Search className="w-3.5 h-3.5" />
+      <Search className="w-3.5 h-3.5" aria-hidden />
       <span>Search</span>
-    </button>
+    </Link>
   );
 }
 
@@ -213,7 +193,7 @@ function SocialIcon({
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
-      className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+      className="flex h-10 w-10 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white"
     >
       {children}
     </a>
@@ -263,7 +243,10 @@ function YouTubeIcon() {
   return (
     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
       <path d="M22.54 6.42a2.78 2.78 0 00-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 00-1.94 2A29 29 0 001 11.75a29 29 0 00.46 5.33A2.78 2.78 0 003.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 001.94-2 29 29 0 00.46-5.25 29 29 0 00-.46-5.33z" />
-      <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="white" />
+      <polygon
+        points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"
+        fill="white"
+      />
     </svg>
   );
 }

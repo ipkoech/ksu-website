@@ -57,16 +57,16 @@ export function AddBoardMemberDialog({ boardSlug, open, onOpenChange, onSuccess 
             return;
         }
         try {
-            await addMutation.mutateAsync({ 
+            await addMutation.mutateAsync({
                 id: boardSlug,
-                personId: formData.person_id,
-                role: formData.role,
                 data: {
-                    title: formData.title,
+                    person_id: formData.person_id,
+                    role: formData.is_ex_officio ? "ex_officio" : formData.role,
+                    title: formData.title || null,
                     is_acting: formData.is_acting,
-                    start_date: formData.start_date,
-                    end_date: formData.term_end_date || undefined,
-                    notes: richTextToPlainText(formData.notes),
+                    start_date: formData.start_date || null,
+                    end_date: formData.term_end_date || null,
+                    notes: richTextToPlainText(formData.notes) || null,
                 }
             });
             toast.success("Member added successfully");
