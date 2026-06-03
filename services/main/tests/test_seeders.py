@@ -3,7 +3,9 @@ from collections import Counter
 
 from app.seeders._shared import ADMIN_DEPARTMENTS
 from app.seeders._shared import SCHOOL_SPECS
+from app.seeders._shared import ICT_SECTION_DEPARTMENTS
 from app.seeders.seed_admin_departments import ADMIN_SERVICE_SPECS, MOVED_ADMIN_SERVICE_SLUGS
+from app.seeders.seed_cover_images import cover_targets_from_specs
 from app.seeders.seed_divisions import DIVISION_SPECS, WING_SPECS
 from app.seeders.programme_catalogue import BROCHURE_PROGRAMMES
 from app.seeders.seed_programmes import programme_code
@@ -280,6 +282,28 @@ class SeederDataTests(unittest.TestCase):
 
         for slug, category in expected_categories.items():
             self.assertEqual(category, downloads_by_slug[slug]["category"])
+
+    def test_cover_image_targets_cover_schools_and_departments(self):
+        targets = cover_targets_from_specs()
+        target_keys = {(target["entity_type"], target["code"]) for target in targets}
+        expected_keys = {("school", spec["code"]) for spec in SCHOOL_SPECS}
+        expected_keys |= {
+            ("department", department["code"])
+            for school in SCHOOL_SPECS
+            for department in school["departments"]
+        }
+        expected_keys |= {("department", spec["code"]) for spec in ADMIN_DEPARTMENTS}
+        expected_keys |= {("department", spec["code"]) for spec in ICT_SECTION_DEPARTMENTS}
+
+        self.assertEqual(expected_keys, target_keys)
+
+    def test_cover_image_targets_are_unique(self):
+        targets = cover_targets_from_specs()
+        target_keys = [(target["entity_type"], target["code"]) for target in targets]
+        target_names = [(target["entity_type"], target["name"]) for target in targets]
+
+        self.assertEqual([], duplicates(target_keys))
+        self.assertEqual([], duplicates(target_names))
 
 
 if __name__ == "__main__":

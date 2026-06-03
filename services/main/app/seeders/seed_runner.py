@@ -10,6 +10,7 @@ from ._shared import SeedContext
 from .seed_admin_departments import seed_admin_departments
 from .seed_admission_info import seed_admission_info
 from .seed_content import seed_content
+from .seed_cover_images import seed_cover_images
 from .seed_divisions import seed_divisions
 from .seed_governance import seed_governance
 from .seed_management import seed_management
@@ -36,6 +37,7 @@ async def run() -> None:
             await seed_admission_info(db, ctx)
             await seed_content(db, ctx)
             await seed_admin_departments(db, ctx)
+            await seed_cover_images(db, ctx)
             await seed_staff_assignments(db, ctx)
             await seed_system_settings(db)
             await seed_test_user(db, ctx)
