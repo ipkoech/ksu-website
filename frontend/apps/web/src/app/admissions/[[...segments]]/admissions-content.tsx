@@ -56,6 +56,11 @@ type RouteLink = {
   icon: LucideIcon;
 };
 
+type HeroImageConfig = {
+  src: string;
+  alt: string;
+};
+
 type TableRow = {
   label: string;
   cells: string[];
@@ -166,6 +171,73 @@ const navItems: RouteLink[] = [
     icon: GraduationCap,
   },
 ];
+
+const heroImages: Record<AdmissionsArea, HeroImageConfig> = {
+  landing: {
+    src: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80",
+    alt: "University students walking across campus",
+  },
+  undergraduate: {
+    src: "https://images.unsplash.com/photo-1519452575417-564c1401ecc0?auto=format&fit=crop&w=1200&q=80",
+    alt: "Undergraduate students studying together",
+  },
+  diploma: {
+    src: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1200&q=80",
+    alt: "Students in a classroom discussion",
+  },
+  "certificate-bridging": {
+    src: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
+    alt: "Students collaborating on coursework",
+  },
+  postgraduate: {
+    src: "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1200&q=80",
+    alt: "Graduate students working in a library",
+  },
+  international: {
+    src: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
+    alt: "Campus path with international student planning context",
+  },
+  requirements: {
+    src: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1200&q=80",
+    alt: "Application documents and checklist",
+  },
+  fees: {
+    src: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1200&q=80",
+    alt: "Financial planning documents",
+  },
+  scholarships: {
+    src: "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1200&q=80",
+    alt: "Students on campus after class",
+  },
+  "how-to-apply": {
+    src: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+    alt: "Applicant using a laptop for an online application",
+  },
+  brochures: {
+    src: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1200&q=80",
+    alt: "Printed academic brochures and books",
+  },
+  booklets: {
+    src: "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?auto=format&fit=crop&w=1200&q=80",
+    alt: "Booklets arranged on a study desk",
+  },
+  "graduation-booklets": {
+    src: "https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=80",
+    alt: "Graduation ceremony audience",
+  },
+  intakes: {
+    src: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1200&q=80",
+    alt: "Academic calendar planning on a desk",
+  },
+  "intake-detail": {
+    src: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=1200&q=80",
+    alt: "Calendar and application deadline planning",
+  },
+  record: {
+    src: "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&w=1200&q=80",
+    alt: "Admissions record checklist on a desk",
+  },
+};
 
 const applicationSteps = [
   {
@@ -449,12 +521,12 @@ function SideNav({ currentHref }: { currentHref: string }) {
   return (
     <nav
       aria-label="Admissions navigation"
-      className="border border-slate-200 bg-white p-3 shadow-sm lg:sticky lg:top-28"
+      className="border border-slate-200 bg-white p-2 shadow-sm lg:sticky lg:top-24"
     >
-      <p className="px-3 py-2 text-xs font-semibold uppercase text-secondary">
+      <p className="px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-secondary">
         Admissions
       </p>
-      <div className="mt-1 grid gap-1">
+      <div className="mt-1 grid gap-1 sm:grid-cols-2 lg:grid-cols-1">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = currentHref === item.href;
@@ -463,14 +535,14 @@ function SideNav({ currentHref }: { currentHref: string }) {
             <Link
               key={item.href}
               href={item.href}
-              className={`group flex gap-3 border px-3 py-3 text-sm transition ${
+              className={`group flex min-h-12 items-center gap-2 border px-3 py-2 text-sm transition ${
                 active
                   ? "border-primary/30 bg-primary/5 text-slate-950"
                   : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950"
               }`}
             >
               <span
-                className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center ${
+                className={`flex h-8 w-8 shrink-0 items-center justify-center ${
                   active
                     ? "bg-primary text-white"
                     : "bg-slate-100 text-primary group-hover:bg-primary group-hover:text-white"
@@ -478,11 +550,8 @@ function SideNav({ currentHref }: { currentHref: string }) {
               >
                 <Icon aria-hidden className="h-4 w-4" />
               </span>
-              <span>
+              <span className="min-w-0">
                 <span className="block font-semibold">{item.title}</span>
-                <span className="mt-1 block text-xs leading-5 text-slate-500">
-                  {item.description}
-                </span>
               </span>
             </Link>
           );
@@ -493,18 +562,22 @@ function SideNav({ currentHref }: { currentHref: string }) {
 }
 
 function PageHero({
+  area,
   eyebrow,
   title,
   body,
   currentHref,
 }: {
+  area: AdmissionsArea;
   eyebrow: string;
   title: string;
   body: string;
   currentHref: string;
 }) {
+  const image = heroImages[area] ?? heroImages.landing;
+
   return (
-    <section className="border-b border-slate-200 bg-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+    <section className="border-b border-slate-200 bg-white px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
       <div className="w-full">
         <BreadcrumbTrail
           items={[
@@ -513,51 +586,52 @@ function PageHero({
             { label: eyebrow },
           ]}
         />
-        <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
-          <div className="max-w-5xl">
-            <p className="text-sm font-semibold uppercase text-secondary">
+        <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.36fr)] lg:items-stretch">
+          <div className="max-w-4xl py-1">
+            <p className="text-xs font-bold uppercase tracking-[0.08em] text-secondary">
               {eyebrow}
             </p>
-            <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] text-slate-950 sm:text-5xl lg:text-6xl">
+            <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-[1.08] text-slate-950 sm:text-4xl lg:text-5xl">
               {title}
             </h1>
-            <p className="mt-6 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
               {body}
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <ActionLink href={officialLinks.onlineApplication} primary>
                 Apply online
               </ActionLink>
-              <ActionLink href="/admissions/how-to-apply">How to apply</ActionLink>
+              {currentHref !== "/admissions/how-to-apply" ? (
+                <ActionLink href="/admissions/how-to-apply">How to apply</ActionLink>
+              ) : null}
               {currentHref !== "/admissions/intakes" ? (
                 <ActionLink href="/admissions/intakes">Current intakes</ActionLink>
               ) : null}
             </div>
           </div>
 
-          <div className="border border-slate-200 bg-slate-50 p-5">
-            <p className="text-xs font-semibold uppercase text-slate-500">
-              Official systems
-            </p>
-            <div className="mt-4 grid gap-3">
-              <ActionRow
-                icon={ClipboardCheck}
-                title="Online application portal"
-                body="Create, submit, continue, or track an application."
-                href={officialLinks.onlineApplication}
-              />
-              <ActionRow
-                icon={ShieldCheck}
-                title="Admission centre"
-                body="Access admission documents and registration steps."
-                href={officialLinks.admissionCenter}
-              />
-              <ActionRow
-                icon={BookOpenCheck}
-                title="Course booklet"
-                body="Review requirements, duration, mode, and tuition references."
-                href={officialLinks.brochurePdf}
-              />
+          <div
+            className="relative min-h-[13rem] overflow-hidden border border-slate-200 bg-slate-950"
+            role="img"
+            aria-label={image.alt}
+          >
+            <div
+              className="absolute inset-0 bg-cover bg-center opacity-90"
+              style={{ backgroundImage: `url(${image.src})` }}
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,42,0.72),rgba(15,23,42,0.16))]" />
+            <div className="relative flex h-full min-h-[13rem] flex-col justify-end p-4 text-white">
+              <p className="text-xs font-bold uppercase tracking-[0.08em] text-secondary">
+                Official systems
+              </p>
+              <div className="mt-3 grid gap-2">
+                <HeroActionLink href={officialLinks.admissionCenter} icon={ShieldCheck}>
+                  Admission centre
+                </HeroActionLink>
+                <HeroActionLink href={officialLinks.brochurePdf} icon={BookOpenCheck}>
+                  Course booklet
+                </HeroActionLink>
+              </div>
             </div>
           </div>
         </div>
@@ -566,47 +640,29 @@ function PageHero({
   );
 }
 
-function ActionRow({
-  icon: Icon,
-  title,
-  body,
+function HeroActionLink({
   href,
+  icon: Icon,
+  children,
 }: {
-  icon: LucideIcon;
-  title: string;
-  body: string;
   href: string;
+  icon: LucideIcon;
+  children: React.ReactNode;
 }) {
   const external = href.startsWith("http");
-  const host = external ? new URL(href).host : null;
 
   return (
     <a
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noopener noreferrer" : undefined}
-      className="group flex gap-3 border border-slate-200 bg-white p-4 transition hover:border-primary/40 hover:bg-primary/5"
+      className="group inline-flex min-h-10 items-center justify-between gap-3 border border-white/20 bg-white/15 px-3 text-sm font-bold text-white backdrop-blur transition hover:bg-white/25"
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
-        <Icon aria-hidden className="h-4 w-4" />
+      <span className="inline-flex min-w-0 items-center gap-2">
+        <Icon aria-hidden className="h-4 w-4 shrink-0 text-secondary" />
+        <span className="truncate">{children}</span>
       </span>
-      <span>
-        <span className="block text-sm font-semibold text-slate-950">
-          {title}
-        </span>
-        <span className="mt-1 block text-sm leading-6 text-slate-600">
-          {body}
-        </span>
-        {host ? (
-          <span className="mt-2 block text-xs font-semibold text-primary">
-            Opens {host}
-          </span>
-        ) : null}
-      </span>
-      <ExternalLink
-        aria-hidden
-        className="ml-auto mt-1 h-4 w-4 shrink-0 text-slate-400"
-      />
+      <ExternalLink aria-hidden className="h-4 w-4 shrink-0 opacity-75" />
     </a>
   );
 }
@@ -629,17 +685,17 @@ function Section({
       as="section"
       className={
         dark
-          ? "border-y border-slate-900 bg-slate-950 px-4 py-14 text-white sm:px-6 lg:px-8 lg:py-16"
-          : "border-b border-slate-200 bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-16"
+          ? "border-y border-slate-900 bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8 lg:py-10"
+          : "border-b border-slate-200 bg-white px-4 py-8 sm:px-6 lg:px-8 lg:py-10"
       }
     >
-      <div className="grid w-full gap-9 xl:grid-cols-[340px_minmax(0,1fr)]">
+      <div className="grid w-full gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
         <div>
           <p
             className={
               dark
-                ? "text-sm font-semibold uppercase text-secondary"
-                : "text-sm font-semibold uppercase text-secondary"
+                ? "text-xs font-bold uppercase tracking-[0.08em] text-secondary"
+                : "text-xs font-bold uppercase tracking-[0.08em] text-secondary"
             }
           >
             {eyebrow}
@@ -647,8 +703,8 @@ function Section({
           <h2
             className={
               dark
-                ? "mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white sm:text-4xl"
-                : "mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl"
+                ? "mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-white sm:text-3xl"
+                : "mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl"
             }
           >
             {title}
@@ -657,8 +713,8 @@ function Section({
             <p
               className={
                 dark
-                  ? "mt-5 text-base leading-8 text-white/70"
-                  : "mt-5 text-base leading-8 text-slate-600"
+                  ? "mt-3 text-sm leading-7 text-white/70"
+                  : "mt-3 text-sm leading-7 text-slate-600"
               }
             >
               {body}
@@ -916,47 +972,6 @@ function IntakesTable({ intakes }: { intakes: AdmissionsIntakeSummary[] }) {
   );
 }
 
-function PublishedRecords({ records }: { records: AdmissionsInfoSummary[] }) {
-  if (!records.length) return null;
-
-  return (
-    <Section
-      eyebrow="Published Guidance"
-      title="Admissions records from the content system"
-      body="These records come from the admissions content API. Use them alongside the official application system and the route-specific guidance above."
-    >
-      <div className="grid gap-4 md:grid-cols-2">
-        {records.slice(0, 3).map((record) => {
-          const href = record.externalUrl || `/admissions/${record.slug}`;
-          const external = href.startsWith("http");
-          const body =
-            record.summary ||
-            contentExcerpt(record.content) ||
-            "Published admissions guidance.";
-
-          return external ? (
-            <a
-              key={record.id}
-              href={href}
-              className="border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
-            >
-              <RecordInner record={record} body={body} external />
-            </a>
-          ) : (
-            <Link
-              key={record.id}
-              href={href}
-              className="border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
-            >
-              <RecordInner record={record} body={body} />
-            </Link>
-          );
-        })}
-      </div>
-    </Section>
-  );
-}
-
 function RecordInner({
   record,
   body,
@@ -1022,21 +1037,23 @@ function LandingSections({ data }: { data: AdmissionsPageData }) {
         </div>
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.42fr)]">
           <StatStrip intakes={data.intakes} />
-          <div className="border border-slate-200 bg-slate-50 p-5">
-            <h3 className="text-lg font-semibold text-slate-950">
-              Official systems
-            </h3>
-            <p className="mt-2 text-sm leading-7 text-slate-600">
-              Use the university systems for submission, tracking, and admission document access.
-            </p>
-            <div className="mt-4 flex flex-col gap-3">
-              <ActionLink href={officialLinks.onlineApplication} primary>
-                Apply online
-              </ActionLink>
-              <ActionLink href={officialLinks.admissionCenter}>
-                Admission centre
-              </ActionLink>
+          <div className="grid gap-5 border border-slate-200 bg-slate-50 p-5">
+            <div className="flex gap-4">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center bg-primary text-white">
+                <Search aria-hidden className="h-5 w-5" />
+              </span>
+              <div>
+                <h3 className="text-lg font-semibold text-slate-950">
+                  Find a programme first
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  Compare level, duration, mode, department, and requirements before starting the application.
+                </p>
+              </div>
             </div>
+            <ActionLink href="/academics/programmes" primary>
+              Browse programmes
+            </ActionLink>
           </div>
         </div>
       </Section>
@@ -1047,32 +1064,6 @@ function LandingSections({ data }: { data: AdmissionsPageData }) {
         body="The admissions section is organized around the decisions applicants actually make: level of study, requirements, fees, funding, and application timing."
       >
         <LinkPanel links={navItems.filter((item) => item.href !== "/admissions").slice(0, 6)} />
-      </Section>
-
-      <Section
-        eyebrow="Find A Programme"
-        title="Search programmes before starting the application"
-        body="Programme choice determines requirements, school ownership, duration, study mode, and tuition references. Confirm the programme before creating or submitting an application."
-      >
-        <div className="grid gap-5 border border-slate-200 bg-slate-50 p-6 md:grid-cols-[1fr_auto] md:items-center">
-          <div className="flex gap-4">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center bg-primary text-white">
-              <Search aria-hidden className="h-5 w-5" />
-            </span>
-            <div>
-              <h3 className="text-xl font-semibold text-slate-950">
-                Browse academic programmes
-              </h3>
-              <p className="mt-2 text-sm leading-7 text-slate-600">
-                Compare schools, departments, levels, modes of study, and
-                programme detail pages before applying.
-              </p>
-            </div>
-          </div>
-          <ActionLink href="/academics/programmes" primary>
-            Browse programmes
-          </ActionLink>
-        </div>
       </Section>
     </>
   );
@@ -1094,7 +1085,7 @@ function TaskCard({
   return (
     <Link
       href={href}
-      className="group flex min-h-[15rem] flex-col border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+      className="group flex min-h-[12rem] flex-col border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
     >
       <span className="flex h-12 w-12 items-center justify-center bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
         <Icon aria-hidden className="h-5 w-5" />
@@ -2043,42 +2034,6 @@ function ContentByArea({
   return <LandingSections data={data} />;
 }
 
-function recordsForArea(area: AdmissionsArea, data: AdmissionsPageData) {
-  if (area === "landing") return data.admissionInfo;
-
-  if (area === "diploma") {
-    return recordsForAudienceOrTypes(data, ["diploma"], ["application_procedure"]);
-  }
-
-  if (area === "certificate-bridging") {
-    return recordsForAudienceOrTypes(data, ["certificate"], ["bridging_application", "application_procedure"]);
-  }
-
-  if (area === "brochures") {
-    return recordsForContentTypes(data, ["brochure"]);
-  }
-
-  if (area === "booklets") {
-    return recordsForContentTypes(data, ["booklet", "brochure"]);
-  }
-
-  if (area === "graduation-booklets") {
-    return recordsForContentTypes(data, ["graduation"]);
-  }
-
-  const normalized = area.replace(/-/g, "_");
-  return data.admissionInfo.filter((record) => {
-    const contentType = record.contentType.toLowerCase();
-    const slug = record.slug.toLowerCase();
-    const audiences = record.audienceLevels?.join(" ").toLowerCase() ?? "";
-    return (
-      contentType.includes(normalized) ||
-      slug.includes(area) ||
-      audiences.includes(normalized)
-    );
-  });
-}
-
 function recordsForContentTypes(data: AdmissionsPageData, contentTypes: string[]) {
   const normalizedTypes = contentTypes.map((type) => type.toLowerCase());
 
@@ -2087,35 +2042,17 @@ function recordsForContentTypes(data: AdmissionsPageData, contentTypes: string[]
   );
 }
 
-function recordsForAudienceOrTypes(
-  data: AdmissionsPageData,
-  audiences: string[],
-  contentTypes: string[],
-) {
-  const normalizedAudiences = audiences.map((audience) => audience.toLowerCase());
-  const normalizedTypes = contentTypes.map((type) => type.toLowerCase());
-
-  return data.admissionInfo.filter((record) => {
-    const recordAudiences = record.audienceLevels?.map((audience) => audience.toLowerCase()) ?? [];
-    return (
-      normalizedTypes.includes(record.contentType.toLowerCase()) &&
-      recordAudiences.some((audience) => normalizedAudiences.includes(audience))
-    );
-  });
-}
-
 export function AdmissionsContent({ segments, data }: AdmissionsContentProps) {
   const { area, intake, record } = areaFromSegments(segments, data);
   const [slug] = segments;
   const currentHref = `/admissions${segments.length ? `/${segments.join("/")}` : ""}`;
   const copy = pageCopy(area, segments[1] ?? slug, intake, record);
-  const matchingRecords =
-    area === "record" ? [] : recordsForArea(area, data).slice(0, 6);
 
   return (
     <PageShell>
       <AboutPageLenis>
         <PageHero
+          area={area}
           eyebrow={copy.eyebrow}
           title={copy.title}
           body={copy.body}
@@ -2133,37 +2070,6 @@ export function AdmissionsContent({ segments, data }: AdmissionsContentProps) {
             />
           </div>
         </div>
-
-        <PublishedRecords records={matchingRecords} />
-
-        <section className="border-y border-slate-200 bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
-          <div className="grid w-full gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
-            <div>
-              <p className="text-sm font-semibold uppercase text-secondary">
-                Next Step
-              </p>
-              <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950 sm:text-4xl">
-                Continue with verified admissions actions
-              </h2>
-              <p className="mt-4 text-base leading-8 text-slate-600">
-                Use the application portal for live submission, the admission
-                centre for admitted-student documents, and programme pages for
-                academic fit.
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <ActionLink href={officialLinks.onlineApplication} primary>
-                Apply online
-              </ActionLink>
-              <ActionLink href={officialLinks.admissionCenter}>
-                Admission centre
-              </ActionLink>
-              <ActionLink href="/academics/programmes">
-                Programmes
-              </ActionLink>
-            </div>
-          </div>
-        </section>
       </AboutPageLenis>
     </PageShell>
   );
