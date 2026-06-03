@@ -1,4 +1,5 @@
 import { programmesApi, type Programme } from "@ksu/api-client";
+import type { ProgrammeWithRelations } from "@/lib/department-detail-data";
 
 const programmeFields = [
   "id",
@@ -30,14 +31,20 @@ const programmeFields = [
   "updated_at",
 ].join(",");
 
-async function getProgramme(slug: string): Promise<Programme | null> {
+const programmeRelationInclude = [
+  "department:id,name,slug,code",
+  "tutors:id,role,is_lead,person_id,person(id,slug,title,first_name,middle_name,last_name,full_name,academic_rank,institutional_role,email)",
+  "intakes:id,slots_available,application_deadline,is_active,intake(id,name,slug,application_start,application_end,is_open)",
+].join(";");
+
+async function getProgramme(slug: string): Promise<ProgrammeWithRelations | null> {
   try {
     const response = await programmesApi.getBySlug(slug, {
       fields: programmeFields,
-      include: "department:id,name,slug,code",
+      include: programmeRelationInclude,
     });
 
-    return response.data ?? null;
+    return (response.data as ProgrammeWithRelations | undefined) ?? null;
   } catch {
     return null;
   }
@@ -61,7 +68,7 @@ async function getRelatedProgrammes(programme: Programme | null) {
 
 export type ProgrammeDetailData = {
   slug: string;
-  programme: Programme | null;
+  programme: ProgrammeWithRelations | null;
   relatedProgrammes: Programme[];
   sourceBacked: boolean;
 };

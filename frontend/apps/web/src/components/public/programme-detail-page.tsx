@@ -89,6 +89,49 @@ function formatIntakes(values?: string[] | null) {
   return values.join(", ");
 }
 
+function formatLabel(value?: string | null) {
+  const text = present(value);
+  if (!text) return null;
+
+  return text
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function personDisplayName(person?: {
+  title?: string | null;
+  first_name?: string | null;
+  middle_name?: string | null;
+  last_name?: string | null;
+  full_name?: string | null;
+} | null) {
+  if (!person) return "Published tutor";
+
+  const fullName = present(person.full_name);
+  if (fullName) return fullName;
+
+  return (
+    [person.title, person.first_name, person.middle_name, person.last_name]
+      .map((value) => present(value))
+      .filter(Boolean)
+      .join(" ") || "Published tutor"
+  );
+}
+
+function sortedTutors(programme: ProgrammeDetailData["programme"]) {
+  return (programme?.tutors ?? [])
+    .slice()
+    .sort(
+      (first, second) =>
+        Number(Boolean(second.is_lead)) - Number(Boolean(first.is_lead)) ||
+        personDisplayName(first.person).localeCompare(
+          personDisplayName(second.person),
+        ),
+    );
+}
+
 function SectionKicker({ children }: { children: string }) {
   return (
     <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
@@ -271,6 +314,103 @@ function DetailBlock({ section }: { section: DetailSection }) {
   );
 }
 
+function ProgrammeTutors({
+  programme,
+}: {
+  programme: ProgrammeDetailData["programme"];
+}) {
+  const tutors = sortedTutors(programme);
+  if (!tutors.length) return null;
+
+  return (
+    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <SectionKicker>Programme Tutors</SectionKicker>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        {tutors.map((tutor) => {
+          const name = personDisplayName(tutor.person);
+          const role = tutor.is_lead
+            ? "Lead tutor"
+            : formatLabel(tutor.role) ?? formatLabel(tutor.person?.academic_rank) ?? "Tutor";
+          const href = tutor.person?.slug ? `/people/${tutor.person.slug}` : null;
+          const content = (
+            <>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
+                <Users aria-hidden className="h-5 w-5" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-bold leading-6 text-slate-950">
+                  {name}
+                </span>
+                <span className="mt-0.5 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                  {role}
+                </span>
+              </span>
+            </>
+          );
+
+          if (href) {
+            return (
+              <Link
+                key={tutor.id}
+                href={href}
+                className="group flex gap-3 rounded-2xl border border-slate-200 p-4 transition hover:border-primary/30 hover:bg-primary/[0.04]"
+              >
+                {content}
+              </Link>
+            );
+          }
+
+          return (
+            <article key={tutor.id} className="flex gap-3 rounded-2xl border border-slate-200 p-4">
+              {content}
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function ProgrammeIntakes({
+  programme,
+}: {
+  programme: ProgrammeDetailData["programme"];
+}) {
+  const intakes = programme?.intakes ?? [];
+  if (!intakes.length) return null;
+
+  return (
+    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <SectionKicker>Available Intakes</SectionKicker>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        {intakes.map((item) => (
+          <article key={item.id} className="rounded-2xl border border-slate-200 p-4">
+            <div className="flex gap-3">
+              <CalendarDays aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold leading-6 text-slate-950">
+                  {present(item.intake?.name) ?? "Published intake"}
+                </h3>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  {[
+                    item.intake?.is_open ? "Open" : null,
+                    item.slots_available ? `${item.slots_available} slots` : null,
+                    item.application_deadline
+                      ? `Deadline ${formatDate(item.application_deadline)}`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "Availability details are published by admissions."}
+                </p>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function AdmissionPathway() {
   const steps = [
     {
@@ -409,6 +549,8 @@ export function ProgrammeDetailPage({ data }: { data: ProgrammeDetailData }) {
     bestText(programme?.about, programme?.objectives, programme?.entry_requirements) ??
     "Programme information will appear here when the public record is published.";
   const status = data.sourceBacked ? "Programme record" : "Programme overview";
+  const tutors = sortedTutors(programme);
+  const leadTutor = tutors.find((tutor) => tutor.is_lead);
 
   const facts: FactItem[] = [
     { label: "Level", value: present(programme?.level) ?? "Not published", icon: GraduationCap },
@@ -430,6 +572,12 @@ export function ProgrammeDetailPage({ data }: { data: ProgrammeDetailData }) {
       label: "Credits",
       value: present(programme?.credits_required) ?? "Not published",
       icon: ListChecks,
+    },
+    {
+      label: "Lead tutor",
+      value: leadTutor ? personDisplayName(leadTutor.person) : "Not published",
+      icon: Users,
+      href: leadTutor?.person?.slug ? `/people/${leadTutor.person.slug}` : undefined,
     },
     {
       label: "Updated",
@@ -523,6 +671,8 @@ export function ProgrammeDetailPage({ data }: { data: ProgrammeDetailData }) {
                 <DetailBlock key={section.id} section={section} />
               ))}
 
+              <ProgrammeTutors programme={programme} />
+              <ProgrammeIntakes programme={programme} />
               <AdmissionPathway />
               <RelatedProgrammes programmes={data.relatedProgrammes} />
             </ScrollReveal>

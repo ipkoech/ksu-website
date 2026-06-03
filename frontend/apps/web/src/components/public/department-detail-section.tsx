@@ -16,6 +16,7 @@ import {
   Newspaper,
   Phone,
   Quote,
+  Search,
   ShieldCheck,
   Target,
   Users,
@@ -191,6 +192,41 @@ function compactMeta(values: Array<string | number | null | undefined>) {
     .map((value) => present(value))
     .filter(Boolean)
     .join(" · ");
+}
+
+function formatLabel(value?: string | null) {
+  const text = present(value);
+  if (!text) return null;
+
+  return text
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function programmeTutors(
+  programme: DepartmentDetailData["programmes"][number],
+) {
+  const tutors = programme.tutors ?? [];
+  if (!tutors.length) return [];
+
+  return tutors
+    .slice()
+    .sort(
+      (first, second) =>
+        Number(Boolean(second.is_lead)) - Number(Boolean(first.is_lead)) ||
+        personDisplayName(first.person ?? {}).localeCompare(
+          personDisplayName(second.person ?? {}),
+        ),
+    )
+    .map((tutor) => ({
+      id: tutor.id,
+      name: tutor.person ? personDisplayName(tutor.person) : "Published tutor",
+      role: tutor.is_lead
+        ? "Lead"
+        : formatLabel(tutor.role) ?? formatLabel(tutor.person?.academic_rank) ?? "Tutor",
+    }));
 }
 
 function navHas(navItems: EntityHeaderNavItem[] | undefined, label: string) {
@@ -1024,50 +1060,157 @@ function TeamSection({ data }: { data: DepartmentDetailData }) {
 }
 
 function ProgrammesSection({ data }: { data: DepartmentDetailData }) {
-  if (!data.isAcademic || !data.programmes.length) return null;
+  if (!data.isAcademic) return null;
+
+  const searchQuery = data.programmeSearchQuery ?? "";
+  const hasSearch = Boolean(searchQuery);
 
   return (
-    <section className="grid gap-3 md:grid-cols-2">
-      {data.programmes.map((programme) => {
-        const meta = compactMeta([
-          programme.level,
-          programme.mode_of_study,
-          programme.duration,
-        ]);
-
-        return (
-          <Link
-            key={programme.id}
-            href={`/academics/programmes/${programme.slug}`}
-            className="group rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
+    <section className="grid gap-4">
+      <form action="" className="rounded-[1.25rem] border border-slate-200 bg-white p-3 shadow-sm">
+        <label
+          htmlFor="programme-search"
+          className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500"
+        >
+          Search programmes
+        </label>
+        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+          <div className="relative min-w-0 flex-1">
+            <Search
+              aria-hidden
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              id="programme-search"
+              name="q"
+              type="search"
+              defaultValue={searchQuery}
+              placeholder="Search by title, type, mode, tutor, or requirement"
+              className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15"
+            />
+          </div>
+          <button
+            type="submit"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary/90"
           >
-            <div className="flex gap-3">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
-                <GraduationCap aria-hidden className="h-5 w-5" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <h2 className="text-base font-bold text-slate-950 group-hover:text-primary">
-                  {programme.name}
-                </h2>
-                {meta ? (
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {meta}
+            <Search aria-hidden className="h-4 w-4" />
+            Search
+          </button>
+          {hasSearch ? (
+            <Link
+              href="?"
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-bold text-slate-700 transition hover:border-primary/30 hover:text-primary"
+            >
+              Clear
+            </Link>
+          ) : null}
+        </div>
+        <p className="mt-2 text-xs font-medium text-slate-500">
+          {data.programmes.length} {data.programmes.length === 1 ? "programme" : "programmes"}
+          {hasSearch ? ` matching "${searchQuery}"` : " available"}
+        </p>
+      </form>
+
+      {data.programmes.length ? (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {data.programmes.map((programme) => {
+            const tutors = programmeTutors(programme);
+            const leadTutor = tutors.find((tutor) => tutor.role === "Lead");
+            const otherTutors = tutors.filter((tutor) => tutor.id !== leadTutor?.id);
+
+            return (
+              <Link
+                key={programme.id}
+                href={`/academics/programmes/${programme.slug}`}
+                className="group flex min-h-[20rem] flex-col rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
+                    <GraduationCap aria-hidden className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold uppercase tracking-[0.08em] text-secondary">
+                      {formatLabel(programme.level) ?? "Programme"}
+                    </p>
+                    <h2 className="mt-1 text-base font-bold leading-6 text-slate-950 group-hover:text-primary">
+                      {programme.name}
+                    </h2>
+                    {present(programme.code) ? (
+                      <p className="mt-1 text-xs font-semibold text-slate-500">
+                        {programme.code}
+                      </p>
+                    ) : null}
+                  </div>
+                  <ArrowRight
+                    aria-hidden
+                    className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
+                  />
+                </div>
+
+                <dl className="mt-4 grid gap-2 text-sm">
+                  <div className="flex gap-2 rounded-xl bg-slate-50 p-2">
+                    <CalendarDays aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <div className="min-w-0">
+                      <dt className="text-xs font-bold text-slate-500">Duration</dt>
+                      <dd className="break-words font-semibold text-slate-900">
+                        {present(programme.duration) ?? "Not published"}
+                      </dd>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 rounded-xl bg-slate-50 p-2">
+                    <Users aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <div className="min-w-0">
+                      <dt className="text-xs font-bold text-slate-500">Mode</dt>
+                      <dd className="break-words font-semibold text-slate-900">
+                        {formatLabel(programme.mode_of_study) ?? "Not published"}
+                      </dd>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 rounded-xl bg-slate-50 p-2">
+                    <FileText aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <div className="min-w-0">
+                      <dt className="text-xs font-bold text-slate-500">Type</dt>
+                      <dd className="break-words font-semibold text-slate-900">
+                        {formatLabel(programme.level) ?? "Not published"}
+                      </dd>
+                    </div>
+                  </div>
+                </dl>
+
+                <div className="mt-4 border-t border-slate-100 pt-3">
+                  <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+                    Tutors
                   </p>
-                ) : null}
+                  {leadTutor ? (
+                    <p className="mt-2 text-sm font-bold leading-5 text-slate-950">
+                      Lead: {leadTutor.name}
+                    </p>
+                  ) : null}
+                  {otherTutors.length ? (
+                    <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">
+                      {otherTutors.map((tutor) => tutor.name).join(", ")}
+                    </p>
+                  ) : !leadTutor ? (
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      Tutor details are not published.
+                    </p>
+                  ) : null}
+                </div>
+
                 {present(programme.about) ? (
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+                  <p className="mt-auto line-clamp-2 pt-4 text-sm leading-6 text-slate-600">
                     {programme.about}
                   </p>
                 ) : null}
-              </div>
-              <ArrowRight
-                aria-hidden
-                className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
-              />
-            </div>
-          </Link>
-        );
-      })}
+              </Link>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="rounded-[1.25rem] border border-dashed border-slate-300 bg-white p-6 text-sm leading-6 text-slate-600">
+          No programmes match the current search.
+        </div>
+      )}
     </section>
   );
 }

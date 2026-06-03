@@ -64,6 +64,47 @@ export type DepartmentWithRelations = Department & {
   wing?: DepartmentParent | null;
 };
 
+export type ProgrammeTutorPerson = Pick<
+  Person,
+  | "id"
+  | "slug"
+  | "title"
+  | "first_name"
+  | "middle_name"
+  | "last_name"
+  | "full_name"
+  | "academic_rank"
+  | "institutional_role"
+>;
+
+export type ProgrammeTutorRecord = {
+  id: string;
+  role?: string | null;
+  is_lead?: boolean;
+  person_id?: string | null;
+  person?: ProgrammeTutorPerson | null;
+};
+
+export type ProgrammeIntakeRecord = {
+  id: string;
+  slots_available?: number | null;
+  application_deadline?: string | null;
+  is_active?: boolean;
+  intake?: {
+    id: string;
+    name: string;
+    slug?: string | null;
+    application_start?: string | null;
+    application_end?: string | null;
+    is_open?: boolean;
+  } | null;
+};
+
+export type ProgrammeWithRelations = Programme & {
+  tutors?: ProgrammeTutorRecord[];
+  intakes?: ProgrammeIntakeRecord[];
+};
+
 type DepartmentRelatedRecords = Pick<
   DepartmentDetailData,
   | "leader"
@@ -126,13 +167,22 @@ const programmeFields = [
   "level",
   "mode_of_study",
   "duration",
+  "credits_required",
   "department_id",
   "about",
   "objectives",
   "career_prospects",
+  "entry_requirements",
+  "intake_months",
   "is_active",
   "display_order",
 ].join(",");
+
+const programmeRelationInclude = [
+  "tutors:id,role,is_lead,person_id,person(id,slug,title,first_name,middle_name,last_name,full_name,academic_rank,institutional_role)",
+  "intakes:id,slots_available,application_deadline,is_active,intake(id,name,slug,application_start,application_end,is_open)",
+  "department:id,name,slug,code",
+].join(";");
 
 const staffFields = [
   "id",
@@ -420,11 +470,12 @@ async function getDepartmentRelatedRecords(
     updates,
   ] = await Promise.all([
     isAcademic
-      ? getList<Programme>(`/api/v1/departments/${department.slug}/programmes`, {
+      ? getList<ProgrammeWithRelations>(`/api/v1/departments/${department.slug}/programmes`, {
           fields: programmeFields,
+          include: programmeRelationInclude,
           per_page: 80,
         })
-      : Promise.resolve({ data: [] } satisfies ListResponse<Programme>),
+      : Promise.resolve({ data: [] } satisfies ListResponse<ProgrammeWithRelations>),
     getList<Person>(`/api/v1/departments/${department.slug}/staff`, {
       fields: staffFields,
       per_page: 80,
@@ -494,7 +545,8 @@ export type DepartmentDetailKind = "academic" | "administrative" | "support";
 export type DepartmentDetailData = {
   department: DepartmentWithRelations;
   leader: Leader | null;
-  programmes: Programme[];
+  programmes: ProgrammeWithRelations[];
+  programmeSearchQuery: string | null;
   staff: Person[];
   staffAssignments: StaffAssignment[];
   team: PublicTeamData | null;
@@ -518,6 +570,7 @@ export type DepartmentDetailData = {
 export async function getDepartmentDetailData(
   slug: string,
   fallbackType: DepartmentDetailKind,
+  programmeSearchQuery?: string | null,
 ): Promise<DepartmentDetailData> {
   const department = await getDepartmentBySlug(slug);
   const resolvedDepartment = department ?? fallbackDepartment(slug, fallbackType);
@@ -552,6 +605,8 @@ export async function getDepartmentDetailData(
   return {
     department: resolvedDepartment,
     ...related,
+    programmes: filterProgrammes(related.programmes, programmeSearchQuery),
+    programmeSearchQuery: present(programmeSearchQuery),
     stats,
     counts: stats ? mergeDepartmentCounts(related.counts, stats) : related.counts,
     isAcademic,
@@ -576,4 +631,46 @@ function mergeDepartmentCounts(
     documents: statValue(stats, "downloads") ?? fallback.documents,
     news: statValue(stats, "news") ?? fallback.news,
   };
+}
+
+function programmeSearchText(programme: ProgrammeWithRelations) {
+  return [
+    programme.name,
+    programme.code,
+    programme.level,
+    programme.mode_of_study,
+    programme.duration,
+    programme.about,
+    programme.objectives,
+    programme.career_prospects,
+    programme.entry_requirements,
+    ...(programme.tutors ?? []).flatMap((tutor) => [
+      tutor.role,
+      tutor.person?.full_name,
+      tutor.person?.title,
+      tutor.person?.first_name,
+      tutor.person?.middle_name,
+      tutor.person?.last_name,
+      tutor.person?.academic_rank,
+      tutor.person?.institutional_role,
+    ]),
+  ]
+    .map((value) => present(value))
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function filterProgrammes(
+  programmes: ProgrammeWithRelations[],
+  query?: string | null,
+) {
+  const search = present(query)?.toLowerCase();
+  if (!search) return programmes;
+
+  const terms = search.split(/\s+/).filter(Boolean);
+  return programmes.filter((programme) => {
+    const haystack = programmeSearchText(programme);
+    return terms.every((term) => haystack.includes(term));
+  });
 }
