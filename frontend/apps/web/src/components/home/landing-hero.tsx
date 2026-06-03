@@ -3,13 +3,7 @@
 import { type FocusEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import {
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  Pause,
-  Play,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@ksu/ui/components";
 import type { LandingHeroData, LandingHeroSlide } from "@/lib/landing-data";
 
@@ -43,7 +37,6 @@ export function LandingHero({
   autoPlay = fallbackHeroSettings.autoPlay,
   autoPlayDurationMs = fallbackHeroSettings.autoPlayDurationMs,
   showNavigationDots = fallbackHeroSettings.showNavigationDots,
-  showArrows = fallbackHeroSettings.showArrows,
   transitionEffect = fallbackHeroSettings.transitionEffect,
 }: LandingHeroProps) {
   const slides = useMemo(
@@ -52,7 +45,6 @@ export function LandingHero({
   );
   const prefersReducedMotion = useReducedMotion();
   const [isPaused, setIsPaused] = useState(false);
-  const [isUserPaused, setIsUserPaused] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const activeSlide = slides[activeIndex] ?? fallbackSlide;
   const hasMultipleSlides = slides.length > 1;
@@ -60,12 +52,10 @@ export function LandingHero({
     autoPlay &&
     hasMultipleSlides &&
     !isPaused &&
-    !isUserPaused &&
     !prefersReducedMotion;
   const transitionMode = (transitionEffect ?? "fade").toLowerCase();
   const useSlideTransition = transitionMode.includes("slide");
-  const shouldShowControls =
-    hasMultipleSlides && (showNavigationDots || showArrows);
+  const shouldShowControls = hasMultipleSlides && showNavigationDots;
 
   useEffect(() => {
     if (!shouldAutoPlay) return;
@@ -80,11 +70,6 @@ export function LandingHero({
       setActiveIndex(0);
     }
   }, [activeIndex, slides.length]);
-
-  const nextSlide = () =>
-    setActiveIndex((index) => (index + 1) % slides.length);
-  const previousSlide = () =>
-    setActiveIndex((index) => (index - 1 + slides.length) % slides.length);
 
   const handleBlur = (event: FocusEvent<HTMLElement>) => {
     const nextTarget = event.relatedTarget;
@@ -149,7 +134,7 @@ export function LandingHero({
           <AnimatePresence mode="wait">
             <motion.div
               key={activeSlide.id}
-              aria-live={isUserPaused || isPaused ? "polite" : "off"}
+              aria-live={isPaused ? "polite" : "off"}
               initial={
                 prefersReducedMotion
                   ? false
@@ -218,75 +203,36 @@ export function LandingHero({
             </Button>
           </div>
 
-          {shouldShowControls ? (
-            <div className="mt-8 flex items-center gap-3">
-              {showNavigationDots ? (
-                <div
-                  className="flex items-center gap-2"
-                  aria-label="Hero slides"
-                >
-                  {slides.map((slide, index) => (
-                    <button
-                      key={slide.id}
-                      type="button"
-                      onClick={() => setActiveIndex(index)}
-                      className="group flex h-11 w-11 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
-                      aria-label={`Show slide ${index + 1}: ${slide.title}`}
-                      aria-current={index === activeIndex ? "true" : undefined}
-                    >
-                      <span
-                        className={
-                          index === activeIndex
-                            ? "h-2.5 w-8 rounded-full bg-secondary"
-                            : "h-2.5 w-2.5 rounded-full bg-white/50 transition group-hover:bg-white"
-                        }
-                      />
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-              {showArrows ? (
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={previousSlide}
-                    className="flex h-11 w-11 items-center justify-center rounded-full border border-white/40 bg-white/10 text-white transition hover:bg-white/20"
-                    aria-label="Previous slide"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={nextSlide}
-                    className="flex h-11 w-11 items-center justify-center rounded-full border border-white/40 bg-white/10 text-white transition hover:bg-white/20"
-                    aria-label="Next slide"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : null}
-              {autoPlay && hasMultipleSlides ? (
-                <button
-                  type="button"
-                  onClick={() => setIsUserPaused((paused) => !paused)}
-                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white/40 bg-white/10 text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
-                  aria-label={
-                    isUserPaused
-                      ? "Resume hero carousel"
-                      : "Pause hero carousel"
-                  }
-                >
-                  {isUserPaused ? (
-                    <Play className="h-4 w-4" aria-hidden />
-                  ) : (
-                    <Pause className="h-4 w-4" aria-hidden />
-                  )}
-                </button>
-              ) : null}
-            </div>
-          ) : null}
         </div>
       </div>
+
+      {shouldShowControls ? (
+        <div
+          className="absolute inset-x-0 bottom-1 z-10 flex justify-center"
+          aria-label="Hero slides"
+        >
+          <div className="flex items-center gap-2 rounded-full bg-slate-950/25 px-3 py-2 backdrop-blur-sm">
+            {slides.map((slide, index) => (
+              <button
+                key={slide.id}
+                type="button"
+                onClick={() => setActiveIndex(index)}
+                className="group flex h-5 w-5 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+                aria-label={`Show slide ${index + 1}: ${slide.title}`}
+                aria-current={index === activeIndex ? "true" : undefined}
+              >
+                <span
+                  className={
+                    index === activeIndex
+                      ? "h-2.5 w-2.5 rounded-full bg-secondary ring-2 ring-white/80"
+                      : "h-2.5 w-2.5 rounded-full bg-white/60 transition group-hover:bg-white"
+                  }
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
