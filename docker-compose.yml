@@ -8,6 +8,27 @@ volumes:
   postgres_data:
   redis_data:
   uploads_data:
+  frontend_node_modules:
+  frontend_pnpm_store:
+
+x-frontend-dev: &frontend-dev
+  image: node:22-alpine
+  working_dir: /app
+  network_mode: host
+  volumes:
+    - ./frontend:/app
+    - frontend_node_modules:/app/node_modules
+    - frontend_pnpm_store:/root/.local/share/pnpm/store
+  environment:
+    NEXT_TELEMETRY_DISABLED: "1"
+    WATCHPACK_POLLING: "true"
+    NEXT_PUBLIC_MAIN_API_URL: ${NEXT_PUBLIC_MAIN_API_URL:-http://localhost:${MAIN_SERVICE_PORT:-8000}}
+    NEXT_PUBLIC_RESEARCH_API_URL: ${NEXT_PUBLIC_RESEARCH_API_URL:-http://localhost:${RESEARCH_SERVICE_PORT:-8001}}
+    NEXT_PUBLIC_LIBRARY_API_URL: ${NEXT_PUBLIC_LIBRARY_API_URL:-http://localhost:${LIBRARY_SERVICE_PORT:-8002}}
+    NEXT_PUBLIC_PUBLIC_FRONTEND_URL: ${NEXT_PUBLIC_PUBLIC_FRONTEND_URL:-http://localhost:${PUBLIC_FRONTEND_PORT:-3000}}
+    NEXT_PUBLIC_RESEARCH_FRONTEND_URL: ${NEXT_PUBLIC_RESEARCH_FRONTEND_URL:-http://localhost:${RESEARCH_FRONTEND_PORT:-3002}}
+    NEXT_PUBLIC_LIBRARY_FRONTEND_URL: ${NEXT_PUBLIC_LIBRARY_FRONTEND_URL:-http://localhost:${LIBRARY_FRONTEND_PORT:-3003}}
+  restart: unless-stopped
 
 services:
 
@@ -65,6 +86,8 @@ services:
     build:
       context: ./services
       dockerfile: main/Dockerfile
+    ports:
+      - "${MAIN_SERVICE_PORT:-8000}:8000"
     env_file: ./services/main/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://ksu:${POSTGRES_PASSWORD:-secret}@postgres:5432/ksu
@@ -92,6 +115,8 @@ services:
     build:
       context: ./services
       dockerfile: research/Dockerfile
+    ports:
+      - "${RESEARCH_SERVICE_PORT:-8001}:8001"
     env_file: ./services/research/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://ksu:${POSTGRES_PASSWORD:-secret}@postgres:5432/ksu
@@ -118,6 +143,8 @@ services:
     build:
       context: ./services
       dockerfile: library/Dockerfile
+    ports:
+      - "${LIBRARY_SERVICE_PORT:-8002}:8002"
     env_file: ./services/library/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://ksu:${POSTGRES_PASSWORD:-secret}@postgres:5432/ksu
@@ -178,3 +205,49 @@ services:
         condition: service_healthy
     networks: [ksu]
     restart: unless-stopped
+
+  # ── Frontend dev servers ────────────────────────────────────────────────────
+  web:
+    <<: *frontend-dev
+    profiles: ["main", "frontend", "all"]
+    command: >
+      sh -lc "corepack enable &&
+      corepack prepare pnpm@9.1.0 --activate &&
+      pnpm install --frozen-lockfile &&
+      pnpm --filter @ksu/web dev -- -H 0.0.0.0 -p ${PUBLIC_FRONTEND_PORT:-3000}"
+
+  admin:
+    <<: *frontend-dev
+    profiles: ["main", "frontend", "all"]
+    environment:
+      NEXT_TELEMETRY_DISABLED: "1"
+      WATCHPACK_POLLING: "true"
+      MAIN_API_URL: ${MAIN_API_URL:-http://localhost:${MAIN_SERVICE_PORT:-8000}}
+      NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-KSU Admin}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:${ADMIN_FRONTEND_PORT:-3001}}
+      NEXT_PUBLIC_MAIN_API_URL: ${NEXT_PUBLIC_MAIN_API_URL:-http://localhost:${MAIN_SERVICE_PORT:-8000}}
+      NEXT_PUBLIC_RESEARCH_API_URL: ${NEXT_PUBLIC_RESEARCH_API_URL:-http://localhost:${RESEARCH_SERVICE_PORT:-8001}}
+      NEXT_PUBLIC_LIBRARY_API_URL: ${NEXT_PUBLIC_LIBRARY_API_URL:-http://localhost:${LIBRARY_SERVICE_PORT:-8002}}
+    command: >
+      sh -lc "corepack enable &&
+      corepack prepare pnpm@9.1.0 --activate &&
+      pnpm install --frozen-lockfile &&
+      pnpm --filter @ksu/admin dev -- -H 0.0.0.0 -p ${ADMIN_FRONTEND_PORT:-3001}"
+
+  research-web:
+    <<: *frontend-dev
+    profiles: ["research", "frontend", "all"]
+    command: >
+      sh -lc "corepack enable &&
+      corepack prepare pnpm@9.1.0 --activate &&
+      pnpm install --frozen-lockfile &&
+      pnpm --filter @ksu/research dev -- -H 0.0.0.0 -p ${RESEARCH_FRONTEND_PORT:-3002}"
+
+  library-web:
+    <<: *frontend-dev
+    profiles: ["library", "frontend", "all"]
+    command: >
+      sh -lc "corepack enable &&
+      corepack prepare pnpm@9.1.0 --activate &&
+      pnpm install --frozen-lockfile &&
+      pnpm --filter @ksu/library dev -- -H 0.0.0.0 -p ${LIBRARY_FRONTEND_PORT:-3003}"
