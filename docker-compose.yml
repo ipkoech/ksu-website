@@ -71,6 +71,7 @@ services:
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
+      RESEARCH_SERVICE_URL: http://research:8001
     volumes:
       - uploads_data:/app/uploads
     depends_on:

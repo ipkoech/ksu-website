@@ -6,6 +6,7 @@ import {
   intakesApi,
   libraryServiceApi,
   newsApi,
+  partnersApi,
   programmesApi,
   researchServiceApi,
   schoolsApi,
@@ -313,7 +314,7 @@ async function getActiveIntakes() {
 }
 
 const getResearchPartners = cache(async () => {
-  const response = await researchServiceApi.partners.list({
+  const response = await partnersApi.list({
     status: "active",
     is_active: true,
     per_page: 24,

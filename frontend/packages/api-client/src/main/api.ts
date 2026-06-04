@@ -825,6 +825,15 @@ export const slidersApi = {
     mainApi.delete<void>(`/api/v1/sliders/${sliderId}`),
 };
 
+// Partners proxied through the main service for the public website
+export const partnersApi = {
+  list: (params?: ListParams<{ search?: string; status?: string; is_active?: boolean; is_featured?: boolean }>) =>
+    mainApi.get<{ data: Record<string, unknown>[]; meta?: Record<string, unknown> }>("/api/v1/partners", params),
+
+  getBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Record<string, unknown> }>(`/api/v1/partners/${slug}`, params),
+};
+
 // Media
 export const mediaApi = {
   list: (params?: ListParams<{ folder_id?: string; media_type?: string; uploaded_by_id?: string; search?: string }>) =>
