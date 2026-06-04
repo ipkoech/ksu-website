@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 def _media_url(value: str) -> str:
     """Build a public media URL without importing app.helpers during model import."""
-    if value.startswith(("http://", "https://", "data:", "blob:")):
+    if value.startswith(("http://", "https://", "data:", "blob:", "/")):
         return value
 
     settings = get_settings()

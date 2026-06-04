@@ -14,7 +14,7 @@ from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ...deps import DbSession
-from ...helpers.storage import get_public_url
+from ...helpers.storage import get_media_public_url
 from ...models import Board, Department, Division, Media, Person, School, StaffAssignment, UniversityInfo, Wing
 
 router = APIRouter()
@@ -144,8 +144,7 @@ async def _photo_urls(db: DbSession, people: list[Person]) -> dict[uuid.UUID, st
     urls: dict[uuid.UUID, str | None] = {}
     for person in people:
         media = media_by_id.get(person.photo_id)
-        url = getattr(media, "url", None) if media else None
-        urls[person.id] = get_public_url(url) if url else None
+        urls[person.id] = get_media_public_url(media)
     return urls
 
 

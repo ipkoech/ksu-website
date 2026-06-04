@@ -4,20 +4,16 @@ from __future__ import annotations
 
 from typing import Any
 
-from ...helpers.storage import get_public_url
+from ...helpers.storage import get_media_public_url
 
 
 def _append_person_photo_url(data: dict[str, Any], source: Any) -> dict[str, Any]:
     media = data.get("photo")
-    photo_url = None
-    if media is not None:
-        if isinstance(media, dict):
-            photo_url = media.get("url") or media.get("cdn_url") or media.get("public_url") or media.get("storage_path")
-        else:
-            photo_url = getattr(media, "url", None)
-
-    photo_url = data.get("photo_url") or photo_url or getattr(source, "photo_url", None)
-    data["photo_url"] = get_public_url(photo_url) if photo_url else None
+    photo_url = data.get("photo_url") or get_media_public_url(media)
+    if not photo_url:
+        source_media = getattr(source, "photo", None)
+        photo_url = get_media_public_url(source_media) or getattr(source, "photo_url", None)
+    data["photo_url"] = photo_url
     return data
 
 

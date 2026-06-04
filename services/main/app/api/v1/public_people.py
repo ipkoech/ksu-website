@@ -12,7 +12,7 @@ from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ...deps import DbSession
-from ...helpers.storage import get_public_url
+from ...helpers.storage import get_media_public_url
 from ...models import Board, Department, Division, Media, Person, School, UniversityInfo, Wing
 from ...services import PersonService
 
@@ -138,8 +138,7 @@ async def _person_photo_url(db: DbSession, person: Person) -> str | None:
         photo = result.scalar_one_or_none()
     if photo is None:
         return None
-    url = getattr(photo, "url", None)
-    return get_public_url(url) if url else None
+    return get_media_public_url(photo)
 
 
 async def _safe_person_payload(db: DbSession, person: Person) -> dict[str, Any]:

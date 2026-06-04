@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
+from typing import Any
 from uuid import uuid4
 
 from fastapi import UploadFile
@@ -95,6 +96,36 @@ def get_public_url(storage_path: str) -> str:
     relative_path = normalize_storage_path(storage_path)
     media_url = settings.MEDIA_URL.rstrip("/")
     return f"{media_url}/{relative_path}" if relative_path else media_url
+
+
+def _media_attr(media: Any, key: str) -> str | None:
+    if isinstance(media, dict):
+        value = media.get(key)
+    else:
+        value = getattr(media, key, None)
+    return str(value).strip() if value else None
+
+
+def _browser_url(value: str | None) -> str | None:
+    if not value:
+        return None
+    if _is_external_url(value) or value.startswith("/"):
+        return value
+    return f"/{value.lstrip('/')}"
+
+
+def get_media_public_url(media: Any) -> str | None:
+    """Return the browser-loadable URL for a media-shaped object or dict."""
+    if media is None:
+        return None
+
+    for key in ("cdn_url", "public_url", "url", "thumbnail_url"):
+        url = _browser_url(_media_attr(media, key))
+        if url:
+            return url
+
+    storage_path = _media_attr(media, "storage_path")
+    return get_public_url(storage_path) if storage_path else None
 
 
 def get_signed_url(storage_path: str) -> str:
