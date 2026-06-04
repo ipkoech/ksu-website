@@ -64,25 +64,44 @@ class CRUDService(Generic[M]):
         per_page: int = 20,
         search: str | None = None,
         filters: dict[str, Any] | None = None,
+        load_options: tuple[Any, ...] | list[Any] = (),
     ) -> PaginatedResult:
         query = cls.model.active_query()
+        if load_options:
+            query = query.options(*load_options)
         query = cls._apply_search(query, search)
         query = cls._apply_filters(query, filters)
         query = cls._apply_order(query)
         return await paginate(db, query, page=page, per_page=per_page)
 
     @classmethod
-    async def get_by_id(cls, db: AsyncSession, item_id: uuid.UUID) -> M | None:
-        result = await db.execute(cls.model.active_query().where(cls.model.id == item_id))
+    async def get_by_id(
+        cls,
+        db: AsyncSession,
+        item_id: uuid.UUID,
+        *,
+        load_options: tuple[Any, ...] | list[Any] = (),
+    ) -> M | None:
+        query = cls.model.active_query().where(cls.model.id == item_id)
+        if load_options:
+            query = query.options(*load_options)
+        result = await db.execute(query)
         return result.scalar_one_or_none()
 
     @classmethod
-    async def get_by_slug(cls, db: AsyncSession, slug: str) -> M | None:
+    async def get_by_slug(
+        cls,
+        db: AsyncSession,
+        slug: str,
+        *,
+        load_options: tuple[Any, ...] | list[Any] = (),
+    ) -> M | None:
         if not hasattr(cls.model, cls.slug_field):
             return None
-        result = await db.execute(
-            cls.model.active_query().where(getattr(cls.model, cls.slug_field) == slug)
-        )
+        query = cls.model.active_query().where(getattr(cls.model, cls.slug_field) == slug)
+        if load_options:
+            query = query.options(*load_options)
+        result = await db.execute(query)
         return result.scalar_one_or_none()
 
     @classmethod

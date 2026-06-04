@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 from pydantic import Field
 
 from .base import (
@@ -74,7 +75,9 @@ class GrantUpdate(BaseSchema):
 
 
 class GrantRead(GrantBase, BaseReadSchema, StatusMixin):
-    pass
+    guidelines: list[dict[str, Any]] | None = None
+    applications: list[dict[str, Any]] | None = None
+    reports: list[dict[str, Any]] | None = None
 
 
 class GrantList(BaseReadSchema):
@@ -116,7 +119,7 @@ class GrantGuidelineUpdate(BaseSchema):
 
 
 class GrantGuidelineRead(GrantGuidelineBase, BaseReadSchema, StatusMixin):
-    pass
+    grant: dict[str, Any] | None = None
 
 
 # ============================================================================
@@ -162,6 +165,8 @@ class GrantApplicationRead(GrantApplicationBase, BaseReadSchema):
     submitted_at: datetime | None
     approved_amount: Decimal | None
     decision_date: date | None
+    grant: dict[str, Any] | None = None
+    reviews: list[dict[str, Any]] | None = None
 
 
 class GrantApplicationList(BaseReadSchema):
@@ -202,6 +207,7 @@ class GrantReviewUpdate(BaseSchema):
 class GrantReviewRead(GrantReviewBase, BaseReadSchema):
     status: str
     reviewed_at: datetime | None
+    application: dict[str, Any] | None = None
 
 
 # ============================================================================
@@ -244,6 +250,7 @@ class GrantReportRead(GrantReportBase, BaseReadSchema):
     status: str
     submitted_at: datetime | None
     reviewed_at: datetime | None
+    grant: dict[str, Any] | None = None
 
 
 # ============================================================================

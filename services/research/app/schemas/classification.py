@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any
 from pydantic import Field
 
 from .base import BaseSchema, BaseReadSchema, SlugMixin, StatusMixin, SlugStr, UrlStr
@@ -38,7 +39,7 @@ class ResearchThemeUpdate(BaseSchema):
 
 
 class ResearchThemeRead(ResearchThemeBase, BaseReadSchema, StatusMixin):
-    pass
+    focus_areas: list[dict[str, Any]] | None = None
 
 
 class ResearchThemeList(BaseReadSchema):
@@ -79,7 +80,7 @@ class FocusAreaUpdate(BaseSchema):
 
 
 class FocusAreaRead(FocusAreaBase, BaseReadSchema, StatusMixin):
-    pass
+    theme: dict[str, Any] | None = None
 
 
 class FocusAreaList(BaseReadSchema):

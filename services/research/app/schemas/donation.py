@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 
 from pydantic import Field
 
@@ -52,6 +53,7 @@ class DonorRead(DonorBase, BaseReadSchema):
     first_donation_date: date | None
     last_donation_date: date | None
     is_active: bool
+    donations: list[dict[str, Any]] | None = None
 
 
 class DonorList(BaseReadSchema):
@@ -110,6 +112,7 @@ class DonationUpdate(BaseSchema):
 class DonationRead(DonationBase, BaseReadSchema):
     donation_number: str | None
     status: str
+    donor: dict[str, Any] | None = None
 
 
 class DonationList(BaseReadSchema):

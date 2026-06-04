@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import date
 from decimal import Decimal
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import Field
 
@@ -76,7 +76,10 @@ class ResearchCenterUpdate(BaseSchema):
 
 
 class ResearchCenterRead(ResearchCenterBase, BaseReadSchema, StatusMixin):
-    pass
+    team_members: list[dict[str, Any]] | None = None
+    programs: list[dict[str, Any]] | None = None
+    projects: list[dict[str, Any]] | None = None
+    farms: list[dict[str, Any]] | None = None
 
 
 class ResearchCenterList(BaseReadSchema):
@@ -135,6 +138,7 @@ class ResearchFarmUpdate(BaseSchema):
 
 class ResearchFarmRead(ResearchFarmBase, BaseReadSchema, StatusMixin):
     is_public: bool
+    center: dict[str, Any] | None = None
 
 
 class ResearchFarmList(BaseReadSchema):
@@ -184,7 +188,8 @@ class ResearchProgramUpdate(BaseSchema):
 
 
 class ResearchProgramRead(ResearchProgramBase, BaseReadSchema, StatusMixin):
-    pass
+    center: dict[str, Any] | None = None
+    projects: list[dict[str, Any]] | None = None
 
 
 class ResearchProgramList(BaseReadSchema):
@@ -248,6 +253,9 @@ class ResearchProjectUpdate(BaseSchema):
 
 class ResearchProjectRead(ResearchProjectBase, BaseReadSchema, StatusMixin):
     is_public: bool
+    program: dict[str, Any] | None = None
+    center: dict[str, Any] | None = None
+    team_members: list[dict[str, Any]] | None = None
 
 
 class ResearchProjectList(BaseReadSchema):
@@ -293,7 +301,7 @@ class ProjectTeamMemberUpdate(BaseSchema):
 
 
 class ProjectTeamMemberRead(ProjectTeamMemberBase, BaseReadSchema):
-    pass
+    project: dict[str, Any] | None = None
 
 
 class CenterTeamMemberBase(BaseSchema):
@@ -319,4 +327,4 @@ class CenterTeamMemberUpdate(BaseSchema):
 
 
 class CenterTeamMemberRead(CenterTeamMemberBase, BaseReadSchema):
-    pass
+    center: dict[str, Any] | None = None

@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 from pydantic import Field
 
 from .base import (
@@ -144,7 +145,8 @@ class MentorshipProgramUpdate(BaseSchema):
 
 
 class MentorshipProgramRead(MentorshipProgramBase, BaseReadSchema, StatusMixin):
-    pass
+    applications: list[dict[str, Any]] | None = None
+    matches: list[dict[str, Any]] | None = None
 
 
 class MentorshipProgramList(BaseReadSchema):
@@ -191,6 +193,7 @@ class MentorshipApplicationRead(MentorshipApplicationBase, BaseReadSchema):
     status: str
     submitted_at: datetime | None
     reviewed_at: datetime | None
+    program: dict[str, Any] | None = None
 
 
 # ============================================================================
@@ -225,6 +228,7 @@ class MentorshipMatchRead(MentorshipMatchBase, BaseReadSchema):
     mentor_feedback: str | None
     mentee_feedback: str | None
     rating: int | None
+    program: dict[str, Any] | None = None
 
 
 # ============================================================================
@@ -282,7 +286,7 @@ class ScholarshipUpdate(BaseSchema):
 
 
 class ScholarshipRead(ScholarshipBase, BaseReadSchema, StatusMixin):
-    pass
+    applications: list[dict[str, Any]] | None = None
 
 
 class ScholarshipList(BaseReadSchema):
@@ -333,3 +337,4 @@ class ScholarshipApplicationRead(ScholarshipApplicationBase, BaseReadSchema):
     review_score: int | None
     decision_date: date | None
     awarded_amount: Decimal | None
+    scholarship: dict[str, Any] | None = None

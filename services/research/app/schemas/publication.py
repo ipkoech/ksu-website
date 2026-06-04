@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date
+from typing import Any
 from pydantic import Field
 
 from .base import (
@@ -81,6 +82,8 @@ class PublicationUpdate(BaseSchema):
 
 class PublicationRead(PublicationBase, BaseReadSchema, StatusMixin):
     citation_count: int
+    journal: dict[str, Any] | None = None
+    authors: list[dict[str, Any]] | None = None
 
 
 class PublicationList(BaseReadSchema):
@@ -127,7 +130,7 @@ class PublicationAuthorUpdate(BaseSchema):
 
 
 class PublicationAuthorRead(PublicationAuthorBase, BaseReadSchema):
-    pass
+    publication: dict[str, Any] | None = None
 
 
 # ============================================================================
@@ -172,7 +175,8 @@ class JournalUpdate(BaseSchema):
 
 
 class JournalRead(JournalBase, BaseReadSchema, StatusMixin):
-    pass
+    publications: list[dict[str, Any]] | None = None
+    editorial_board: list[dict[str, Any]] | None = None
 
 
 class JournalList(BaseReadSchema):
@@ -221,4 +225,4 @@ class EditorialBoardMemberUpdate(BaseSchema):
 
 
 class EditorialBoardMemberRead(EditorialBoardMemberBase, BaseReadSchema):
-    pass
+    journal: dict[str, Any] | None = None

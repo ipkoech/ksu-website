@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date
+from typing import Any
 
 from pydantic import Field
 
@@ -61,7 +62,7 @@ class ResearchOfficeUpdate(BaseSchema):
 
 
 class ResearchOfficeRead(ResearchOfficeBase, BaseReadSchema, StatusMixin):
-    pass
+    staff_members: list[dict[str, Any]] | None = None
 
 
 class ResearchOfficeList(BaseReadSchema):
@@ -108,6 +109,7 @@ class ResearchOfficeStaffUpdate(BaseSchema):
 class ResearchOfficeStaffRead(ResearchOfficeStaffBase, BaseReadSchema):
     is_active: bool
     display_order: int
+    office: dict[str, Any] | None = None
 
 
 class ResearchOfficeStaffList(BaseReadSchema):
@@ -318,6 +320,7 @@ class ResearchBoardUpdate(BaseSchema):
 class ResearchBoardRead(ResearchBoardBase, BaseReadSchema):
     is_active: bool
     display_order: int
+    members: list[dict[str, Any]] | None = None
 
 
 class ResearchBoardList(BaseReadSchema):
@@ -361,3 +364,4 @@ class BoardMemberUpdate(BaseSchema):
 class BoardMemberRead(BoardMemberBase, BaseReadSchema):
     is_active: bool
     display_order: int
+    board: dict[str, Any] | None = None

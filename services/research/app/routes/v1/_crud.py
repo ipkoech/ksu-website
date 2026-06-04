@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.auth import get_current_user, require_scope
 from ...core.database import get_db
+from ._fields import FieldSelection, FieldsDep, build_selector
 
 
 def build_crud_router(
@@ -47,6 +48,8 @@ def build_crud_router(
             "initiative_type",
             "center_id",
             "project_id",
+            "fields",
+            "include",
         ),
     )
     async def list_items(
@@ -68,8 +71,10 @@ def build_crud_router(
         initiative_type: str | None = None,
         center_id: uuid.UUID | None = None,
         project_id: uuid.UUID | None = None,
+        fields: FieldSelection = FieldsDep,
         db: AsyncSession = Depends(get_db),
     ):
+        selector = build_selector(service.model, fields)
         result = await service.list(
             db,
             page=page,
@@ -91,16 +96,23 @@ def build_crud_router(
                 "center_id": center_id,
                 "project_id": project_id,
             },
+            load_options=selector.load_options,
         )
-        return success(data=result.items, meta=result.meta)
+        return success(data=selector.apply(result.items), meta=result.meta)
 
     @router.get("/{slug}")
     @cached_public(timeout=cache_timeout)
-    async def get_item(slug: str, request: Request, db: AsyncSession = Depends(get_db)):
-        item = await service.get_by_slug(db, slug)
+    async def get_item(
+        slug: str,
+        request: Request,
+        fields: FieldSelection = FieldsDep,
+        db: AsyncSession = Depends(get_db),
+    ):
+        selector = build_selector(service.model, fields)
+        item = await service.get_by_slug(db, slug, load_options=selector.load_options)
         if item is None:
             raise HTTPException(status_code=404, detail=f"{tag.rstrip('s')} not found")
-        return success(data=item)
+        return success(data=selector.apply(item))
 
     @router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope(write_scope))])
     async def create_item(data: create_schema, db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
