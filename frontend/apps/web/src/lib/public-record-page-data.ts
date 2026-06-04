@@ -57,6 +57,7 @@ import {
   getNewsPage,
   getSearchPage,
 } from "@/lib/public-page-data";
+import { researchFrontendUrl } from "@/lib/service-urls";
 
 type ListEnvelope<T> = { data?: T[] };
 type RecordEnvelope<T> = { data?: T | null };
@@ -67,7 +68,7 @@ const officialSources = {
   campusLife: "https://kisiiuniversity.ac.ke/campus-life",
   news: "https://kisiiuniversity.ac.ke/news",
   conferences: "https://digital.kisiiuniversity.ac.ke/conferences",
-  research: "https://research.kisiiuniversity.ac.ke",
+  research: researchFrontendUrl,
   portal: "https://portal.kisiiuniversity.ac.ke",
   elearning: "https://elearning.kisiiuniversity.ac.ke",
 };

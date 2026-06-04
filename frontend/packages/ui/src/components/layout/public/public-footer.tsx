@@ -37,6 +37,8 @@ interface PublicFooterProps {
   socialLinks?: SocialLinks;
   legalLinks?: FooterLink[];
   className?: string;
+  researchHref?: string;
+  libraryHref?: string;
 }
 
 const defaultColumns: FooterColumn[] = [
@@ -129,8 +131,22 @@ export function PublicFooter({
   socialLinks = defaultSocialLinks,
   legalLinks = defaultLegalLinks,
   className,
+  researchHref,
+  libraryHref,
 }: PublicFooterProps) {
   const [expandedColumn, setExpandedColumn] = useState<string | null>(null);
+  const resolvedColumns = columns.map((column) => ({
+    ...column,
+    links: column.links.map((link) => {
+      if (link.label === "Library") {
+        return { ...link, href: libraryHref || link.href };
+      }
+      if (link.label === "Research Portal") {
+        return { ...link, href: researchHref || link.href };
+      }
+      return link;
+    }),
+  }));
 
   const toggleColumn = (title: string) => {
     setExpandedColumn((prev) => (prev === title ? null : title));
@@ -190,7 +206,7 @@ export function PublicFooter({
           </div>
 
           {/* Link Columns - Desktop */}
-          {columns.map((column) => (
+          {resolvedColumns.map((column) => (
             <div key={column.title} className="hidden lg:block">
               <h3 className="font-semibold text-lg mb-4">{column.title}</h3>
               <ul className="space-y-3">
@@ -212,7 +228,7 @@ export function PublicFooter({
 
           {/* Link Columns - Mobile Accordion */}
           <div className="lg:hidden col-span-full space-y-0 border-t border-gray-800">
-            {columns.map((column) => (
+            {resolvedColumns.map((column) => (
               <div key={column.title} className="border-b border-gray-800">
                 <button
                   type="button"

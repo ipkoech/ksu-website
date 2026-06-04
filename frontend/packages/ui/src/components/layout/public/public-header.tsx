@@ -78,12 +78,16 @@ interface PublicHeaderProps {
   megaMenuData?: MegaMenuData;
   transparent?: boolean;
   className?: string;
+  researchHref?: string;
+  libraryHref?: string;
 }
 
 export function PublicHeader({
   megaMenuData,
   transparent = false,
   className,
+  researchHref,
+  libraryHref,
 }: PublicHeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -94,7 +98,7 @@ export function PublicHeader({
   const pathname = usePathname();
 
   // Build navigation with dynamic data
-  const navigation = buildNavigation(megaMenuData);
+  const navigation = buildNavigation(megaMenuData, { researchHref, libraryHref });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -282,7 +286,13 @@ export function PublicHeader({
   );
 }
 
-function buildNavigation(megaMenuData?: MegaMenuData): NavItem[] {
+function buildNavigation(
+  megaMenuData?: MegaMenuData,
+  serviceLinks: {
+    researchHref?: string;
+    libraryHref?: string;
+  } = {},
+): NavItem[] {
   const schools = megaMenuData?.schools || [];
   const departments = megaMenuData?.departments || [];
   const divisions = megaMenuData?.divisions || [];
@@ -495,12 +505,12 @@ function buildNavigation(megaMenuData?: MegaMenuData): NavItem[] {
   const externalItems: NavItem[] = [
     {
       label: "Research",
-      href: "https://research.kisiiuniversity.ac.ke",
+      href: serviceLinks.researchHref || "https://research.kisiiuniversity.ac.ke",
       external: true,
     },
     {
       label: "Library",
-      href: "https://library.kisiiuniversity.ac.ke",
+      href: serviceLinks.libraryHref || "https://library.kisiiuniversity.ac.ke",
       external: true,
     },
   ];

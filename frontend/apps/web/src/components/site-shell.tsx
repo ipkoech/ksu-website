@@ -11,6 +11,7 @@ import {
   type LandingAnnouncement,
 } from "@/lib/landing-data";
 import { getNavData } from "@/lib/nav-data";
+import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
 
 const socialLinks = {
   facebook: "https://facebook.com/kisiiuniversity",
@@ -91,12 +92,19 @@ export async function PageShell({
         <PublicHeader
           transparent={transparent}
           megaMenuData={resolvedMegaMenuData}
+          researchHref={researchFrontendUrl}
+          libraryHref={libraryFrontendUrl}
         />
       )}
       <main id="main-content" tabIndex={-1}>
         {children}
       </main>
-      <PublicFooter contactInfo={contactInfo} socialLinks={socialLinks} />
+      <PublicFooter
+        contactInfo={contactInfo}
+        socialLinks={socialLinks}
+        researchHref={researchFrontendUrl}
+        libraryHref={libraryFrontendUrl}
+      />
     </div>
   );
 }

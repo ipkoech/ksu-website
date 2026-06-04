@@ -44,10 +44,11 @@ import {
   type HomePartner,
 } from "@/lib/homepage-data";
 import { getNavData } from "@/lib/nav-data";
+import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
 
 export const dynamic = "force-dynamic";
 
-const researchHref = "https://research.kisiiuniversity.ac.ke";
+const researchHref = researchFrontendUrl;
 
 const quickLinkIcons: Record<string, LucideIcon> = {
   "Admissions Guide": ClipboardCheck,
@@ -151,7 +152,11 @@ export default async function HomePage() {
         quickLinks={homepage.miniQuickLinks}
         socialLinks={homepage.socialLinks}
       />
-      <PublicHeader megaMenuData={megaMenuData} />
+      <PublicHeader
+        megaMenuData={megaMenuData}
+        researchHref={researchFrontendUrl}
+        libraryHref={libraryFrontendUrl}
+      />
 
       <main id="main-content" tabIndex={-1}>
         <LandingHero {...homepage.hero} />
@@ -200,6 +205,8 @@ export default async function HomePage() {
       <PublicFooter
         contactInfo={homepage.contactInfo}
         socialLinks={homepage.socialLinks}
+        researchHref={researchFrontendUrl}
+        libraryHref={libraryFrontendUrl}
       />
     </div>
   );

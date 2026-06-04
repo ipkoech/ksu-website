@@ -30,6 +30,7 @@ import {
 } from "@/lib/landing-data";
 import { getViceChancellor } from "@/lib/get-leadership";
 import { publicFileUrl } from "@/lib/public-media";
+import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
 
 export type HomeContactInfo = {
   address: string;
@@ -166,12 +167,12 @@ const serviceLinks: HomeLink[] = [
   { label: "Programmes", href: "/academics/programmes" },
   {
     label: "Library",
-    href: "https://library.kisiiuniversity.ac.ke",
+    href: libraryFrontendUrl,
     external: true,
   },
   {
     label: "Research",
-    href: "https://research.kisiiuniversity.ac.ke",
+    href: researchFrontendUrl,
     external: true,
   },
   { label: "Governance", href: "/about/governance" },
@@ -685,7 +686,7 @@ export async function getHomepageData(): Promise<HomepageData> {
       {
         title: "Partners & Public",
         body: "Find research, governance, news, service information, and public contacts.",
-        href: "https://research.kisiiuniversity.ac.ke",
+        href: researchFrontendUrl,
         action: "Explore research",
         eyebrow: "Public engagement",
         external: true,

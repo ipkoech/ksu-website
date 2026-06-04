@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
 import path from "node:path";
 
+const researchFrontendUrl =
+  process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL ||
+  "https://research.kisiiuniversity.ac.ke";
+const libraryFrontendUrl =
+  process.env.NEXT_PUBLIC_LIBRARY_FRONTEND_URL ||
+  "https://library.kisiiuniversity.ac.ke";
+const withPath = (baseUrl: string, path: string) =>
+  `${baseUrl.replace(/\/$/, "")}${path}`;
+
 const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname, "../.."),
   transpilePackages: ["@ksu/ui", "@ksu/api-client"],
@@ -148,17 +157,22 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/library/library-website",
-        destination: "https://library.kisiiuniversity.ac.ke",
+        destination: libraryFrontendUrl,
         permanent: true,
       },
       {
         source: "/research",
-        destination: "https://research.kisiiuniversity.ac.ke",
+        destination: researchFrontendUrl,
+        permanent: true,
+      },
+      {
+        source: "/research/:path*",
+        destination: withPath(researchFrontendUrl, "/:path*"),
         permanent: true,
       },
       {
         source: "/researc/:path*",
-        destination: "https://research.kisiiuniversity.ac.ke/:path*",
+        destination: withPath(researchFrontendUrl, "/:path*"),
         permanent: true,
       },
       {

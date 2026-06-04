@@ -16,6 +16,7 @@ import type {
   PublicPageConfig,
   PublicPageSection,
 } from "@/components/public/section-page";
+import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
 
 type ListEnvelope<T> = { data?: T[] };
 
@@ -109,11 +110,11 @@ const officialLinks = {
     "https://digital.kisiiuniversity.ac.ke/ksu_feedback_general_cat/suggestion",
   compliment:
     "https://digital.kisiiuniversity.ac.ke/ksu_feedback_general_cat/compliment",
-  library: "https://library.kisiiuniversity.ac.ke",
-  research: "https://research.kisiiuniversity.ac.ke",
+  library: libraryFrontendUrl,
+  research: researchFrontendUrl,
   myloft:
     "https://app.myloft.xyz/user/login?institute=cl4pou55huc740960l7k1mftg",
-  catalogue: "http://library.kisiiuniversity.ac.ke/",
+  catalogue: libraryFrontendUrl,
   repository: "http://repository.kisiiuniversity.ac.ke:8080/xmlui/",
   turnitin: "https://www.turnitinuk.com/login_page.asp",
 };
