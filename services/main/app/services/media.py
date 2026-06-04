@@ -13,11 +13,14 @@ from typing import Sequence
 
 from ksu_common import PaginatedResult
 
+from ..core.config import get_settings
 from ..helpers.slug import unique_slug
 from ..models import User
 from ..helpers.storage import delete_file, upload_file
 from ..models import Media, MediaFolder, MediaLink
 from ._base import apply_updates, ilike_any, paginate_query
+
+settings = get_settings()
 
 
 ENTITY_FOLDER_ALIASES = {
@@ -85,6 +88,8 @@ class MediaService:
         role: str | None = None,
         folder_path: str | None = None,
     ) -> Media:
+        _validate_upload_mime_type(file.content_type)
+
         resolved_folder_path = folder_path or ""
         if entity_type or entity_id:
             if not entity_type or entity_id is None:
@@ -99,6 +104,7 @@ class MediaService:
                 resolved_folder_path = folder.slug
 
         metadata = await upload_file(file, resolved_folder_path)
+        _validate_upload_size(metadata["file_size"])
         media = Media(
             folder_id=folder_id,
             uploaded_by_id=uploaded_by_id,
@@ -380,3 +386,20 @@ def _infer_media_type(mime_type: str) -> str:
     }:
         return "document"
     return "file"
+
+
+def _allowed_upload_types() -> set[str]:
+    return {*settings.allowed_image_types, *settings.allowed_document_types}
+
+
+def _validate_upload_mime_type(mime_type: str | None) -> None:
+    if not mime_type:
+        raise ValueError("Uploaded file content type is required")
+    if mime_type not in _allowed_upload_types():
+        raise ValueError(f"Unsupported file type: {mime_type}")
+
+
+def _validate_upload_size(file_size: int) -> None:
+    max_bytes = settings.MAX_UPLOAD_MB * 1024 * 1024
+    if file_size > max_bytes:
+        raise ValueError(f"Uploaded file exceeds the {settings.MAX_UPLOAD_MB} MB size limit")

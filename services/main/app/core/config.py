@@ -23,11 +23,14 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str
     DB_SCHEMA: str
+    DB_POOL_SIZE: int
+    DB_MAX_OVERFLOW: int
 
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str
     JWT_ACCESS_TTL_MINUTES: int
     JWT_REFRESH_TTL_DAYS: int
+    PASSWORD_RESET_TOKEN_TTL_HOURS: int
 
     REDIS_URL: str
     CELERY_BROKER_URL: str | None
@@ -46,6 +49,7 @@ class Settings(BaseSettings):
     FRONTEND_RESEARCH_URL: str
     FRONTEND_LIBRARY_URL: str
     RESEARCH_SERVICE_URL: str
+    LIBRARY_SERVICE_URL: str
     PASSWORD_RESET_RATE_LIMIT_COUNT: int
     PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS: int
 
@@ -68,6 +72,8 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str
     MEDIA_URL: str
     MAX_UPLOAD_MB: int
+    ALLOWED_IMAGE_TYPES: str
+    ALLOWED_DOCUMENT_TYPES: str
 
     X_API_BASE_URL: str
     X_UPLOAD_BASE_URL: str
@@ -87,6 +93,10 @@ class Settings(BaseSettings):
     LINKEDIN_CLIENT_SECRET: str | None
     LINKEDIN_CALLBACK_URL: str | None
 
+    DEBUG: bool
+    LOG_LEVEL: str
+    LOG_FORMAT: Literal["json", "text"]
+
     @property
     def upload_dir_path(self) -> Path:
         path = Path(self.UPLOAD_DIR).expanduser()
@@ -103,6 +113,14 @@ class Settings(BaseSettings):
     def email_logo_path(self) -> Path:
         return Path(__file__).resolve().parents[1] / "assets" / "logos" / "ksu-logo.png"
 
+    @property
+    def allowed_image_types(self) -> list[str]:
+        return _parse_csv_list(self.ALLOWED_IMAGE_TYPES)
+
+    @property
+    def allowed_document_types(self) -> list[str]:
+        return _parse_csv_list(self.ALLOWED_DOCUMENT_TYPES)
+
     def frontend_url_for(self, service: FrontendService | None = None) -> str:
         service_map = {
             "web": self.FRONTEND_BASE_URL,
@@ -117,6 +135,13 @@ class Settings(BaseSettings):
     def must_be_asyncpg(cls, v: str) -> str:
         if not v.startswith("postgresql+asyncpg"):
             raise ValueError("DATABASE_URL must use postgresql+asyncpg driver")
+        return v
+
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def parse_debug(cls, v: bool | str) -> bool | str:
+        if isinstance(v, str) and v.strip().lower() == "release":
+            return False
         return v
 
     @field_validator("CELERY_BROKER_URL", "CELERY_RESULT_BACKEND")
@@ -144,6 +169,10 @@ class Settings(BaseSettings):
             if self.INTERNAL_API_KEY == "change-me-internal":
                 raise ValueError("INTERNAL_API_KEY must be configured outside local development")
         return self
+
+
+def _parse_csv_list(value: str) -> list[str]:
+    return [item.strip() for item in value.split(",") if item.strip()]
 
 
 @lru_cache

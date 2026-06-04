@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+import logging
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +17,11 @@ from .core.database import AsyncSessionLocal
 from .api.v1 import register_routes
 
 settings = get_settings()
+
+logging.basicConfig(
+    level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
+    format="%(message)s" if settings.LOG_FORMAT == "json" else "%(asctime)s %(levelname)s [%(name)s] %(message)s",
+)
 
 PUBLIC_CACHE_INVALIDATION_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 PUBLIC_CACHE_INVALIDATION_EXCLUDED_PREFIXES = (
@@ -35,8 +41,9 @@ def create_app() -> FastAPI:
         title="KSU Main Site API",
         description="Shared university CMS, institutional structure, admissions, content, media, support, and platform API for Kisii University.",
         version=settings.APP_VERSION,
-        docs_url="/api/docs" if settings.APP_ENV != "production" else None,
-        redoc_url="/api/redoc" if settings.APP_ENV != "production" else None,
+        debug=settings.DEBUG,
+        docs_url="/api/docs" if settings.DEBUG or settings.APP_ENV != "production" else None,
+        redoc_url="/api/redoc" if settings.DEBUG or settings.APP_ENV != "production" else None,
         openapi_url="/api/openapi.json",
         lifespan=lifespan,
     )

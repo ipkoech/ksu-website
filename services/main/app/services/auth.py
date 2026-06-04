@@ -144,7 +144,7 @@ class AuthService:
             return
         token = secrets.token_urlsafe(32)
         user.password_reset_token = token
-        user.password_reset_expires = datetime.now(timezone.utc) + timedelta(hours=1)
+        user.password_reset_expires = datetime.now(timezone.utc) + timedelta(hours=settings.PASSWORD_RESET_TOKEN_TTL_HOURS)
         await db.flush()
         queue_password_reset_email.delay(user.email, token, frontend_service)
 
