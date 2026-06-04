@@ -17,80 +17,75 @@ SERVICE_DIR = Path(__file__).resolve().parents[2]
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=SERVICE_DIR / ".env", extra="ignore")
 
-    APP_ENV: str = "development"
-    APP_VERSION: str = "0.1.0"
-    SERVICE_NAME: str = "main"
+    APP_ENV: str
+    APP_VERSION: str
+    SERVICE_NAME: str
 
     DATABASE_URL: str
-    DB_SCHEMA: str = "main"
+    DB_SCHEMA: str
 
     JWT_SECRET_KEY: str
-    JWT_ALGORITHM: str = "HS256"
-    JWT_ACCESS_TTL_MINUTES: int = 15
-    JWT_REFRESH_TTL_DAYS: int = 7
+    JWT_ALGORITHM: str
+    JWT_ACCESS_TTL_MINUTES: int
+    JWT_REFRESH_TTL_DAYS: int
 
-    REDIS_URL: str = "redis://localhost:6379/0"
-    CELERY_BROKER_URL: str | None = None
-    CELERY_RESULT_BACKEND: str | None = None
+    REDIS_URL: str
+    CELERY_BROKER_URL: str | None
+    CELERY_RESULT_BACKEND: str | None
 
-    SMTP_HOST: str = "smtp.gmail.com"
-    SMTP_PORT: int = 587
-    SMTP_USERNAME: str | None = None
-    SMTP_PASSWORD: str | None = None
-    SMTP_USE_TLS: bool = True
-    EMAIL_FROM: str | None = None
-    SMTP_FROM_EMAIL: str | None = None
-    SMTP_FROM_NAME: str | None = None
-    FRONTEND_BASE_URL: str = "http://localhost:3000"
-    FRONTEND_ADMIN_URL: str = "http://localhost:3001"
-    FRONTEND_RESEARCH_URL: str = "http://localhost:3002"
-    FRONTEND_LIBRARY_URL: str = "http://localhost:3003"
-    RESEARCH_SERVICE_URL: str = "http://localhost:8001"
-    PASSWORD_RESET_RATE_LIMIT_COUNT: int = 5
-    PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS: int = 900
+    SMTP_HOST: str
+    SMTP_PORT: int
+    SMTP_USERNAME: str | None
+    SMTP_PASSWORD: str | None
+    SMTP_USE_TLS: bool
+    EMAIL_FROM: str | None
+    SMTP_FROM_EMAIL: str | None
+    SMTP_FROM_NAME: str | None
+    FRONTEND_BASE_URL: str
+    FRONTEND_ADMIN_URL: str
+    FRONTEND_RESEARCH_URL: str
+    FRONTEND_LIBRARY_URL: str
+    RESEARCH_SERVICE_URL: str
+    PASSWORD_RESET_RATE_LIMIT_COUNT: int
+    PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS: int
 
-    SMS_PROVIDER: Literal["disabled", "webhook", "twilio"] = "disabled"
-    SMS_WEBHOOK_URL: str | None = None
-    SMS_WEBHOOK_TOKEN: str | None = None
-    TWILIO_ACCOUNT_SID: str | None = None
-    TWILIO_AUTH_TOKEN: str | None = None
-    TWILIO_FROM_NUMBER: str | None = None
+    SMS_PROVIDER: Literal["disabled", "webhook", "twilio"]
+    SMS_WEBHOOK_URL: str | None
+    SMS_WEBHOOK_TOKEN: str | None
+    TWILIO_ACCOUNT_SID: str | None
+    TWILIO_AUTH_TOKEN: str | None
+    TWILIO_FROM_NUMBER: str | None
 
-    PUSH_PROVIDER: Literal["disabled", "webhook", "fcm_legacy"] = "disabled"
-    PUSH_WEBHOOK_URL: str | None = None
-    PUSH_WEBHOOK_TOKEN: str | None = None
-    FCM_SERVER_KEY: str | None = None
+    PUSH_PROVIDER: Literal["disabled", "webhook", "fcm_legacy"]
+    PUSH_WEBHOOK_URL: str | None
+    PUSH_WEBHOOK_TOKEN: str | None
+    FCM_SERVER_KEY: str | None
 
-    INTERNAL_API_KEY: str = "change-me-internal"
+    INTERNAL_API_KEY: str
 
-    CORS_ORIGINS: list[str] = [
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://localhost:3002",
-        "http://localhost:3003",
-    ]
+    CORS_ORIGINS: list[str]
 
-    UPLOAD_DIR: str = "/app/uploads"
-    MEDIA_URL: str = "/uploads"
-    MAX_UPLOAD_MB: int = 20
+    UPLOAD_DIR: str
+    MEDIA_URL: str
+    MAX_UPLOAD_MB: int
 
-    X_API_BASE_URL: str = "https://api.x.com"
-    X_UPLOAD_BASE_URL: str = "https://upload.twitter.com"
-    FACEBOOK_GRAPH_API_BASE_URL: str = "https://graph.facebook.com"
-    FACEBOOK_GRAPH_API_VERSION: str = "v23.0"
-    INSTAGRAM_GRAPH_API_VERSION: str = "v23.0"
-    LINKEDIN_API_BASE_URL: str = "https://api.linkedin.com"
-    LINKEDIN_VERSION: str = "202603"
-    TWITTER_CLIENT_ID: str | None = None
-    TWITTER_CLIENT_SECRET: str | None = None
-    TWITTER_CALLBACK_URL: str | None = None
-    FACEBOOK_APP_ID: str | None = None
-    FACEBOOK_APP_SECRET: str | None = None
-    FACEBOOK_CALLBACK_URL: str | None = None
-    INSTAGRAM_CALLBACK_URL: str | None = None
-    LINKEDIN_CLIENT_ID: str | None = None
-    LINKEDIN_CLIENT_SECRET: str | None = None
-    LINKEDIN_CALLBACK_URL: str | None = None
+    X_API_BASE_URL: str
+    X_UPLOAD_BASE_URL: str
+    FACEBOOK_GRAPH_API_BASE_URL: str
+    FACEBOOK_GRAPH_API_VERSION: str
+    INSTAGRAM_GRAPH_API_VERSION: str
+    LINKEDIN_API_BASE_URL: str
+    LINKEDIN_VERSION: str
+    TWITTER_CLIENT_ID: str | None
+    TWITTER_CLIENT_SECRET: str | None
+    TWITTER_CALLBACK_URL: str | None
+    FACEBOOK_APP_ID: str | None
+    FACEBOOK_APP_SECRET: str | None
+    FACEBOOK_CALLBACK_URL: str | None
+    INSTAGRAM_CALLBACK_URL: str | None
+    LINKEDIN_CLIENT_ID: str | None
+    LINKEDIN_CLIENT_SECRET: str | None
+    LINKEDIN_CALLBACK_URL: str | None
 
     @property
     def upload_dir_path(self) -> Path:
