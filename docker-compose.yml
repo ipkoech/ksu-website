@@ -106,6 +106,7 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      start_period: 120s
       interval: 30s
       timeout: 10s
       retries: 3
@@ -134,6 +135,7 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/api/v1/health"]
+      start_period: 120s
       interval: 30s
       timeout: 10s
       retries: 3
@@ -163,6 +165,7 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8002/api/v1/health"]
+      start_period: 120s
       interval: 30s
       timeout: 10s
       retries: 3
@@ -211,10 +214,15 @@ services:
     <<: *frontend-dev
     profiles: ["main", "frontend", "all"]
     command: >
-      sh -lc "corepack enable &&
+      sh -lc "set -e &&
+      corepack enable &&
       corepack prepare pnpm@9.1.0 --activate &&
+      while ! mkdir /app/node_modules/.pnpm-install.lock 2>/dev/null; do sleep 1; done &&
+      trap 'rmdir /app/node_modules/.pnpm-install.lock' EXIT &&
       pnpm install --frozen-lockfile &&
-      pnpm --filter @ksu/web dev -- -H 0.0.0.0 -p ${PUBLIC_FRONTEND_PORT:-3000}"
+      rmdir /app/node_modules/.pnpm-install.lock &&
+      trap - EXIT &&
+      pnpm --dir apps/web exec next dev -H 0.0.0.0 -p ${PUBLIC_FRONTEND_PORT:-3000}"
 
   admin:
     <<: *frontend-dev
@@ -229,25 +237,40 @@ services:
       NEXT_PUBLIC_RESEARCH_API_URL: ${NEXT_PUBLIC_RESEARCH_API_URL:-http://localhost:${RESEARCH_SERVICE_PORT:-8001}}
       NEXT_PUBLIC_LIBRARY_API_URL: ${NEXT_PUBLIC_LIBRARY_API_URL:-http://localhost:${LIBRARY_SERVICE_PORT:-8002}}
     command: >
-      sh -lc "corepack enable &&
+      sh -lc "set -e &&
+      corepack enable &&
       corepack prepare pnpm@9.1.0 --activate &&
+      while ! mkdir /app/node_modules/.pnpm-install.lock 2>/dev/null; do sleep 1; done &&
+      trap 'rmdir /app/node_modules/.pnpm-install.lock' EXIT &&
       pnpm install --frozen-lockfile &&
-      pnpm --filter @ksu/admin dev -- -H 0.0.0.0 -p ${ADMIN_FRONTEND_PORT:-3001}"
+      rmdir /app/node_modules/.pnpm-install.lock &&
+      trap - EXIT &&
+      pnpm --dir apps/admin exec next dev -H 0.0.0.0 -p ${ADMIN_FRONTEND_PORT:-3001}"
 
   research-web:
     <<: *frontend-dev
     profiles: ["research", "frontend", "all"]
     command: >
-      sh -lc "corepack enable &&
+      sh -lc "set -e &&
+      corepack enable &&
       corepack prepare pnpm@9.1.0 --activate &&
+      while ! mkdir /app/node_modules/.pnpm-install.lock 2>/dev/null; do sleep 1; done &&
+      trap 'rmdir /app/node_modules/.pnpm-install.lock' EXIT &&
       pnpm install --frozen-lockfile &&
-      pnpm --filter @ksu/research dev -- -H 0.0.0.0 -p ${RESEARCH_FRONTEND_PORT:-3002}"
+      rmdir /app/node_modules/.pnpm-install.lock &&
+      trap - EXIT &&
+      pnpm --dir apps/research exec next dev -H 0.0.0.0 -p ${RESEARCH_FRONTEND_PORT:-3002}"
 
   library-web:
     <<: *frontend-dev
     profiles: ["library", "frontend", "all"]
     command: >
-      sh -lc "corepack enable &&
+      sh -lc "set -e &&
+      corepack enable &&
       corepack prepare pnpm@9.1.0 --activate &&
+      while ! mkdir /app/node_modules/.pnpm-install.lock 2>/dev/null; do sleep 1; done &&
+      trap 'rmdir /app/node_modules/.pnpm-install.lock' EXIT &&
       pnpm install --frozen-lockfile &&
-      pnpm --filter @ksu/library dev -- -H 0.0.0.0 -p ${LIBRARY_FRONTEND_PORT:-3003}"
+      rmdir /app/node_modules/.pnpm-install.lock &&
+      trap - EXIT &&
+      pnpm --dir apps/library exec next dev -H 0.0.0.0 -p ${LIBRARY_FRONTEND_PORT:-3003}"
