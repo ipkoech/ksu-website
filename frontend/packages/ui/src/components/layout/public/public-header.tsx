@@ -501,17 +501,14 @@ function buildNavigation(
     ],
   };
 
-  // External links
-  const externalItems: NavItem[] = [
+  const serviceItems: NavItem[] = [
     {
       label: "Research",
       href: serviceLinks.researchHref || "https://research.kisiiuniversity.ac.ke",
-      external: true,
     },
     {
       label: "Library",
       href: serviceLinks.libraryHref || "https://library.kisiiuniversity.ac.ke",
-      external: true,
     },
   ];
 
@@ -522,7 +519,7 @@ function buildNavigation(
     academicsItem,
     campusLifeItem,
     mediaDeskItem,
-    ...externalItems,
+    ...serviceItems,
   ];
 }
 
