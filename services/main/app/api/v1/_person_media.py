@@ -8,7 +8,7 @@ from ...helpers.storage import get_public_url
 
 
 def _append_person_photo_url(data: dict[str, Any], source: Any) -> dict[str, Any]:
-    media = data.pop("photo", None)
+    media = data.get("photo")
     photo_url = None
     if media is not None:
         if isinstance(media, dict):

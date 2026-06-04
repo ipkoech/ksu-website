@@ -39,6 +39,10 @@ class MediaFolderRead(BaseReadSchema):
     is_public: bool
     scope_type: str | None = None
     scope_id: uuid.UUID | None = None
+    children: list[dict[str, Any]] | None = None
+    files: list[dict[str, Any]] | None = None
+    links: list[dict[str, Any]] | None = None
+    parent: dict[str, Any] | None = None
     deleted_at: datetime | None = None
 
 
@@ -110,6 +114,9 @@ class MediaRead(BaseReadSchema):
     thumbnail_url: str | None = None
     thumbnails: dict[str, Any] | None = None
     uploaded_by_id: uuid.UUID | None = None
+    uploaded_by: dict[str, Any] | None = None
+    folder: dict[str, Any] | None = None
+    links: list[dict[str, Any]] | None = None
     is_public: bool
     is_processed: bool
     metadata: dict[str, Any] | None = Field(default=None, validation_alias="extra_metadata", serialization_alias="metadata")
@@ -139,10 +146,12 @@ class MediaLinkUpdate(BaseSchema):
 
 class MediaLinkRead(BaseReadSchema):
     media_id: uuid.UUID
+    media: dict[str, Any] | None = None
     entity_type: str
     entity_id: uuid.UUID
     role: str
     folder_id: uuid.UUID | None = None
+    folder: dict[str, Any] | None = None
     display_order: int
     is_public: bool
     deleted_at: datetime | None = None

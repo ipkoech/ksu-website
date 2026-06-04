@@ -60,6 +60,7 @@ class AnalyticsEventRead(BaseReadSchema):
     os: str | None = None
     country_code: str | None = None
     user_id: uuid.UUID | None = None
+    user: dict[str, Any] | None = None
     event_metadata: dict[str, Any] | None = None
     occurred_at: datetime
 

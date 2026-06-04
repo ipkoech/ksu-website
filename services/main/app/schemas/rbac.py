@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any
 from datetime import datetime
 
 from pydantic import Field
@@ -15,6 +16,7 @@ class PermissionRead(BaseReadSchema):
     description: str | None = None
     resource: str | None = None
     action: str | None = None
+    role_permissions: list[dict[str, Any]] | None = None
     is_active: bool
 
 
@@ -39,6 +41,8 @@ class RoleRead(BaseReadSchema):
     description: str | None = None
     is_system: bool
     is_active: bool
+    role_permissions: list[dict[str, Any]] | None = None
+    user_assignments: list[dict[str, Any]] | None = None
     permissions: list[str] = Field(default_factory=list)
 
 
@@ -63,4 +67,7 @@ class UserRoleRead(BaseReadSchema):
     assigned_at: datetime
     expires_at: datetime | None = None
     note: str | None = None
+    assigned_by: dict[str, Any] | None = None
+    role: dict[str, Any] | None = None
+    user: dict[str, Any] | None = None
     is_active: bool

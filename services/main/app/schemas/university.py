@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -150,6 +151,14 @@ class UniversityInfoRead(BaseReadSchema):
     council_chair_message: str | None = None
     additional_head_messages: list[HeadMessageItem] | None = None
     is_public: bool
+    brochure: dict[str, Any] | None = None
+    chancellor: dict[str, Any] | None = None
+    council_chair: dict[str, Any] | None = None
+    cover_image: dict[str, Any] | None = None
+    logo: dict[str, Any] | None = None
+    main_campus: dict[str, Any] | None = None
+    seal: dict[str, Any] | None = None
+    vc: dict[str, Any] | None = None
     is_active: bool
 
 

@@ -1,10 +1,14 @@
 import { leadershipApi } from "@ksu/api-client";
-import type { Person, StaffAssignment } from "@ksu/api-client";
+import type { Media, Person, StaffAssignment } from "@ksu/api-client";
 import type { Leader } from "@ksu/ui/components";
-import { publicFileUrl, resolvePublicMediaUrl } from "@/lib/public-media";
+import { publicFileUrl, publicMediaUrl, resolvePublicMediaUrl } from "@/lib/public-media";
 
 const leaderInclude =
-  "person:id,slug,title,first_name,middle_name,last_name,full_name,bio,leadership_message,photo_id,photo_url";
+  "person(id,slug,title,first_name,middle_name,last_name,full_name,bio,leadership_message,photo_id,photo_url,photo(id,url,public_url,cdn_url,thumbnail_url,alt_text,title))";
+
+type PersonWithMedia = Person & {
+  photo?: Partial<Media> | null;
+};
 
 function personName(person: Person, fallback: string) {
   const fullName = person.full_name?.trim();
@@ -23,8 +27,12 @@ function personName(person: Person, fallback: string) {
   return name || fallback;
 }
 
-function personImage(person: Person) {
-  return publicFileUrl(person.photo_id) ?? resolvePublicMediaUrl(person.photo_url);
+function personImage(person: PersonWithMedia) {
+  return (
+    publicMediaUrl(person.photo) ??
+    publicFileUrl(person.photo_id) ??
+    resolvePublicMediaUrl(person.photo_url)
+  );
 }
 
 function toLeader(

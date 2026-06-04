@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field
 
@@ -124,4 +124,8 @@ class StaffAssignmentRead(BaseReadSchema):
     notes: str | None = None
     role_display: str | None = None
     term_display: str | None = None
+    person: dict[str, Any] | None = None
+    reports_to: dict[str, Any] | None = None
+    subordinates: list[dict[str, Any]] | None = None
+    user: dict[str, Any] | None = None
     is_current: bool | None = None

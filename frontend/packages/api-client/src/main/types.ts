@@ -54,6 +54,7 @@ export interface Person {
   professional_memberships?: Record<string, unknown>[] | null;
   awards_honors?: Record<string, unknown>[] | null;
   photo_id?: string | null;
+  photo?: Media | null;
   photo_url?: string;
   cv_file_id?: string | null;
   person_type?: string;
@@ -362,9 +363,12 @@ export interface School {
   office_location?: string | null;
   website?: string | null;
   logo_image_id?: string | null;
+  logo_image?: Media | null;
   address?: string | null;
   cover_image_id?: string | null;
+  cover_image?: Media | null;
   brochure_id?: string | null;
+  brochure?: Media | null;
   is_active: boolean;
   is_public?: boolean;
   display_order: number;
@@ -544,7 +548,9 @@ export interface Programme {
   accreditation_status?: string | null;
   accrediting_body?: string | null;
   cover_image_id?: string | null;
+  cover_image?: Media | null;
   brochure_id?: string | null;
+  brochure?: Media | null;
   is_active: boolean;
   display_order: number;
   created_at: string;

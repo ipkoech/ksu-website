@@ -145,6 +145,7 @@ class PersonUpdate(BaseSchema):
 
 class PersonRead(BaseReadSchema):
     user_id: uuid.UUID | None = None
+    user: dict[str, Any] | None = None
     slug: str
     title: str | None = None
     first_name: str
@@ -156,6 +157,7 @@ class PersonRead(BaseReadSchema):
     alternative_email: str | None = None
     alternative_phone: str | None = None
     photo_id: uuid.UUID | None = None
+    photo: dict[str, Any] | None = None
     photo_url: str | None = None
     bio: str | None = None
     full_bio: str | None = None
@@ -192,6 +194,11 @@ class PersonRead(BaseReadSchema):
     professional_memberships: list[dict[str, Any]] | None = None
     awards_honors: list[dict[str, Any]] | None = None
     cv_file_id: uuid.UUID | None = None
+    cv_file: dict[str, Any] | None = None
+    department: dict[str, Any] | None = None
+    assignments: list[dict[str, Any]] | None = None
+    programme_tutorships: list[dict[str, Any]] | None = None
+    alumni_profile: dict[str, Any] | None = None
     is_active: bool
     is_public: bool
     is_researcher: bool

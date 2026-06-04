@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any
 from datetime import date
 
 from pydantic import Field, model_validator
@@ -20,6 +21,8 @@ class ProgrammeTutorRead(BaseReadSchema):
     programme_id: uuid.UUID
     person_id: uuid.UUID
     role: str
+    person: dict[str, Any] | None = None
+    programme: dict[str, Any] | None = None
     is_lead: bool
 
 
@@ -35,6 +38,8 @@ class ProgrammeIntakeRead(BaseReadSchema):
     intake_id: uuid.UUID
     slots_available: int | None = None
     application_deadline: date | None = None
+    intake: dict[str, Any] | None = None
+    programme: dict[str, Any] | None = None
     is_active: bool
 
 
@@ -130,6 +135,9 @@ class ProgrammeRead(BaseReadSchema):
     is_active: bool
     display_order: int
     tutors: list[ProgrammeTutorRead] = Field(default_factory=list)
+    brochure: dict[str, Any] | None = None
+    cover_image: dict[str, Any] | None = None
+    department: dict[str, Any] | None = None
     intakes: list[ProgrammeIntakeRead] = Field(default_factory=list)
 
 
@@ -189,6 +197,8 @@ class IntakeRead(BaseReadSchema):
     cover_image_id: uuid.UUID | None = None
     is_active: bool
     is_open: bool
+    academic_calendar: dict[str, Any] | None = None
+    cover_image: dict[str, Any] | None = None
     programmes: list[ProgrammeIntakeRead] = Field(default_factory=list)
 
 
@@ -234,6 +244,9 @@ class AdmissionInfoRead(BaseReadSchema):
     cover_image_id: uuid.UUID | None = None
     attachment_media_id: uuid.UUID | None = None
     is_published: bool
+    attachment_media: dict[str, Any] | None = None
+    cover_image: dict[str, Any] | None = None
+    school: dict[str, Any] | None = None
     display_order: int
 
 

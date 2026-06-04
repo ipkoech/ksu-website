@@ -142,6 +142,7 @@ class Person(Base):
     # Relationships
     user: Mapped[Optional["User"]] = relationship("User", back_populates="person")
     photo: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[photo_id])
+    cv_file: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[cv_file_id])
     department: Mapped[Optional["Department"]] = relationship(
         "Department",
         foreign_keys=[department_id],

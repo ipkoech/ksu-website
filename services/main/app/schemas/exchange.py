@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any
 from datetime import date
 
 from pydantic import Field
@@ -76,6 +77,10 @@ class ExchangeProgrammeRead(BaseReadSchema):
     cover_image_id: uuid.UUID | None = None
     brochure_id: uuid.UUID | None = None
     is_active: bool
+    brochure: dict[str, Any] | None = None
+    coordinator: dict[str, Any] | None = None
+    cover_image: dict[str, Any] | None = None
+    school: dict[str, Any] | None = None
     is_accepting_applications: bool
 
 

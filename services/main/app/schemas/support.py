@@ -108,6 +108,7 @@ class ContactDirectoryRead(BaseReadSchema):
     is_main: bool
     is_public: bool
     status: str
+    contact_person: dict[str, Any] | None = None
     deleted_at: datetime | None = None
 
 
@@ -164,4 +165,6 @@ class SupportTicketRead(BaseReadSchema):
     resolved_at: datetime | None = None
     meta_data: dict[str, Any] | None = None
     is_public: bool
+    assigned_to_user: dict[str, Any] | None = None
+    requester_user: dict[str, Any] | None = None
     deleted_at: datetime | None = None

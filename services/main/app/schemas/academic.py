@@ -45,6 +45,8 @@ class CampusRead(BaseReadSchema):
     email: str | None = None
     phone: str | None = None
     cover_image_id: uuid.UUID | None = None
+    cover_image: dict[str, Any] | None = None
+    schools: list[dict[str, Any]] | None = None
     is_active: bool
     display_order: int
 
@@ -115,8 +117,15 @@ class SchoolRead(BaseReadSchema):
     office_location: str | None = None
     website: str | None = None
     logo_image_id: uuid.UUID | None = None
+    logo_image: dict[str, Any] | None = None
     cover_image_id: uuid.UUID | None = None
+    cover_image: dict[str, Any] | None = None
     brochure_id: uuid.UUID | None = None
+    brochure: dict[str, Any] | None = None
+    campus: dict[str, Any] | None = None
+    administrative_wing: dict[str, Any] | None = None
+    dean: dict[str, Any] | None = None
+    departments: list[dict[str, Any]] | None = None
     is_active: bool
     is_public: bool
     display_order: int
@@ -182,6 +191,7 @@ class DepartmentCreate(BaseSchema):
 
 class DepartmentServiceRead(BaseReadSchema):
     department_id: uuid.UUID
+    department: dict[str, Any] | None = None
     name: str
     slug: str
     description: str | None = None
@@ -218,6 +228,15 @@ class DepartmentRead(BaseReadSchema):
     phone: str | None = None
     office_location: str | None = None
     cover_image_id: uuid.UUID | None = None
+    cover_image: dict[str, Any] | None = None
+    school: dict[str, Any] | None = None
+    wing: dict[str, Any] | None = None
+    parent_department: dict[str, Any] | None = None
+    sub_departments: list[dict[str, Any]] | None = None
+    head: dict[str, Any] | None = None
+    postgraduate_coordinator: dict[str, Any] | None = None
+    staff: list[dict[str, Any]] | None = None
+    programmes: list[dict[str, Any]] | None = None
     student_count: int
     postgraduate_student_count: int
     is_active: bool
@@ -291,6 +310,7 @@ class AcademicCalendarRead(BaseReadSchema):
     results_release: date | None = None
     holidays: list[dict[str, Any]] | None = None
     events: list[dict[str, Any]] | None = None
+    intakes: list[dict[str, Any]] | None = None
     status: str
 
 

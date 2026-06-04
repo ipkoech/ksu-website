@@ -12,6 +12,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ksu_common.models.base import Base
 
 if TYPE_CHECKING:
+    from .media import Media
     from .person import Person
     from .governance import Board
     from .academic import Department
@@ -76,6 +77,7 @@ class Division(Base):
 
     # Relationships
     head: Mapped[Optional["Person"]] = relationship("Person", foreign_keys=[head_id])
+    cover_image: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[cover_image_id])
     wings: Mapped[list["Wing"]] = relationship(
         "Wing",
         back_populates="division",
@@ -151,6 +153,7 @@ class Wing(Base):
     # Relationships
     division: Mapped["Division"] = relationship("Division", back_populates="wings")
     head: Mapped[Optional["Person"]] = relationship("Person", foreign_keys=[head_id])
+    cover_image: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[cover_image_id])
     departments: Mapped[list["Department"]] = relationship(
         "Department",
         back_populates="wing",

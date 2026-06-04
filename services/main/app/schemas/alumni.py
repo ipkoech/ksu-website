@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any
 from datetime import date, datetime
 
 from pydantic import Field
@@ -78,6 +79,10 @@ class AlumniRead(BaseReadSchema):
     is_public: bool
     show_contact: bool
     is_verified: bool
+    association_memberships: list[dict[str, Any]] | None = None
+    person: dict[str, Any] | None = None
+    programme: dict[str, Any] | None = None
+    school: dict[str, Any] | None = None
     verified_at: datetime | None = None
 
 
@@ -137,6 +142,8 @@ class AlumniAssociationMemberRead(BaseReadSchema):
     position: str | None = None
     joined_at: date
     left_at: date | None = None
+    alumni: dict[str, Any] | None = None
+    association: dict[str, Any] | None = None
     is_active: bool
 
 
@@ -158,6 +165,10 @@ class AlumniAssociationRead(BaseReadSchema):
     logo_id: uuid.UUID | None = None
     is_active: bool
     established_date: date | None = None
+    chairperson: dict[str, Any] | None = None
+    logo: dict[str, Any] | None = None
+    school: dict[str, Any] | None = None
+    secretary: dict[str, Any] | None = None
     members: list[AlumniAssociationMemberRead] = Field(default_factory=list)
 
 

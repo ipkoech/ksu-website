@@ -6,6 +6,7 @@ import {
   type Slider,
   type SliderGroup,
 } from "@ksu/api-client";
+import { publicMediaUrl } from "@/lib/public-media";
 
 export type LandingAnnouncementVariant = "info" | "warning" | "urgent" | "success";
 
@@ -119,8 +120,8 @@ const sliderMediaFields = [
 ].join(",");
 
 const sliderInclude = [
-  `desktop_media:${sliderMediaFields}`,
-  `mobile_media:${sliderMediaFields}`,
+  `desktop_media(${sliderMediaFields})`,
+  `mobile_media(${sliderMediaFields})`,
 ].join(";");
 
 const announcementFields = [
@@ -168,7 +169,7 @@ function truncate(value: string, length: number) {
 
 function mediaUrl(media?: SliderMedia | null) {
   if (!media) return undefined;
-  return (
+  return publicMediaUrl(media) ?? (
     resolveMainMediaUrl(media.cdn_url) ??
     resolveMainMediaUrl(media.public_url) ??
     resolveMainMediaUrl(media.url) ??

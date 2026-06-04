@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import EmailStr, Field, field_validator
 
@@ -99,6 +99,10 @@ class UserRead(BaseReadSchema):
     locked_until: datetime | None = None
     email_verified_at: datetime | None = None
     roles: list[str] = Field(default_factory=list)
+    notifications: list[dict[str, Any]] | None = None
+    person: dict[str, Any] | None = None
+    role_assignments: list[dict[str, Any]] | None = None
+    sessions: list[dict[str, Any]] | None = None
     person_id: uuid.UUID | None = None
 
 
@@ -114,6 +118,7 @@ class SessionRead(BaseReadSchema):
     revoked_at: datetime | None = None
     revoked_reason: str | None = None
     last_used_at: datetime | None = None
+    user: dict[str, Any] | None = None
     is_active: bool
 
 

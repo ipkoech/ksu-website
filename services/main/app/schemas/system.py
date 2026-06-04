@@ -35,6 +35,7 @@ class SettingRead(BaseReadSchema):
     category: str
     description: str | None = None
     is_public: bool
+    updated_by: dict[str, Any] | None = None
     updated_by_id: uuid.UUID | None = None
 
 
@@ -63,6 +64,7 @@ class ApiKeyRead(BaseReadSchema):
     expires_at: datetime | None = None
     last_used_at: datetime | None = None
     is_active: bool
+    created_by: dict[str, Any] | None = None
     created_by_id: uuid.UUID
 
 
@@ -98,6 +100,7 @@ class WebhookRead(BaseReadSchema):
     last_triggered_at: datetime | None = None
     last_status: int | None = None
     failure_count: int
+    created_by: dict[str, Any] | None = None
     created_by_id: uuid.UUID
 
 

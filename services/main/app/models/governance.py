@@ -12,6 +12,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ksu_common.models.base import Base
 
 if TYPE_CHECKING:
+    from .media import Media
     from .person import Person
     from .organization import Division
 
@@ -122,6 +123,7 @@ class Board(Base):
     chairperson: Mapped[Optional["Person"]] = relationship("Person", foreign_keys=[chairperson_id])
     vice_chairperson: Mapped[Optional["Person"]] = relationship("Person", foreign_keys=[vice_chairperson_id])
     secretary: Mapped[Optional["Person"]] = relationship("Person", foreign_keys=[secretary_id])
+    cover_image: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[cover_image_id])
     division: Mapped[Optional["Division"]] = relationship("Division", back_populates="boards")
 
     # Indexes for polymorphic parent

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any
 from datetime import datetime
 
 from pydantic import Field
@@ -47,6 +48,8 @@ class NewsletterRead(BaseReadSchema):
     pdf_file_id: uuid.UUID | None = None
     view_count: int
     status: str
+    cover_image: dict[str, Any] | None = None
+    pdf_file: dict[str, Any] | None = None
     is_public: bool
 
 
@@ -119,6 +122,11 @@ class TestimonialRead(BaseReadSchema):
     is_featured: bool
     display_order: int
     is_approved: bool
+    department: dict[str, Any] | None = None
+    person: dict[str, Any] | None = None
+    photo: dict[str, Any] | None = None
+    programme: dict[str, Any] | None = None
+    school: dict[str, Any] | None = None
     is_public: bool
 
 
@@ -160,6 +168,8 @@ class SocialMediaPostRead(BaseReadSchema):
     status: str
     error_message: str | None = None
     validation_summary: dict | None = None
+    created_by: dict[str, Any] | None = None
+    deliveries: list[dict[str, Any]] | None = None
     created_by_id: uuid.UUID
 
 
@@ -189,6 +199,8 @@ class SocialPlatformAccountRead(BaseReadSchema):
     last_validated_at: datetime | None = None
     last_used_at: datetime | None = None
     last_error: str | None = None
+    created_by: dict[str, Any] | None = None
+    deliveries: list[dict[str, Any]] | None = None
     created_by_id: uuid.UUID
 
 
@@ -204,6 +216,8 @@ class SocialMediaDeliveryRead(BaseReadSchema):
     error_message: str | None = None
     validation_errors: list[dict] | None = None
     request_payload: dict | None = None
+    account: dict[str, Any] | None = None
+    social_post: dict[str, Any] | None = None
     response_payload: dict | None = None
 
 

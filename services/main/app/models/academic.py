@@ -14,6 +14,7 @@ from ksu_common.models.base import Base
 
 if TYPE_CHECKING:
     from .admissions import Intake, Programme
+    from .media import Media
     from .person import Person
     from .organization import Wing
 
@@ -63,6 +64,7 @@ class Campus(Base):
     display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
 
     # Relationships
+    cover_image: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[cover_image_id])
     schools: Mapped[list["School"]] = relationship(
         "School",
         back_populates="campus",
@@ -149,6 +151,9 @@ class School(Base):
     campus: Mapped[Optional["Campus"]] = relationship("Campus", back_populates="schools")
     administrative_wing: Mapped[Optional["Wing"]] = relationship("Wing", back_populates="schools")
     dean: Mapped[Optional["Person"]] = relationship("Person", foreign_keys=[dean_id])
+    logo_image: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[logo_image_id])
+    cover_image: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[cover_image_id])
+    brochure: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[brochure_id])
     departments: Mapped[list["Department"]] = relationship(
         "Department",
         back_populates="school",
@@ -276,6 +281,7 @@ class Department(Base):
         "Person",
         foreign_keys=[postgraduate_coordinator_id],
     )
+    cover_image: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[cover_image_id])
     staff: Mapped[list["Person"]] = relationship(
         "Person",
         back_populates="department",

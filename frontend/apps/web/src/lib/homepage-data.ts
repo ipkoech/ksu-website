@@ -16,6 +16,7 @@ import {
   type ContactDirectory,
   type Event,
   type Intake,
+  type Media,
   type News,
   type Programme,
   type PublicStatsResponse,
@@ -29,7 +30,7 @@ import {
   type LandingHeroData,
 } from "@/lib/landing-data";
 import { getViceChancellor } from "@/lib/get-leadership";
-import { publicFileUrl } from "@/lib/public-media";
+import { publicFileUrl, publicMediaUrl } from "@/lib/public-media";
 import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
 
 export type HomeContactInfo = {
@@ -89,6 +90,14 @@ export type HomeLeader = {
   image?: string | null;
   message?: string | null;
   href?: string;
+};
+
+type SchoolWithMedia = School & {
+  cover_image?: Partial<Media> | null;
+};
+
+type ProgrammeWithMedia = Programme & {
+  cover_image?: Partial<Media> | null;
 };
 
 export type HomeIntake = {
@@ -260,8 +269,9 @@ async function getSchoolsList() {
   const response = await schoolsApi.list({
     per_page: 8,
     fields: "id,name,code,slug,description,about,cover_image_id,departments_count",
+    include: "cover_image(id,url,public_url,cdn_url,thumbnail_url,alt_text,title)",
   });
-  return response.data ?? [];
+  return (response.data ?? []) as SchoolWithMedia[];
 }
 
 async function getProgrammesList() {
@@ -269,8 +279,9 @@ async function getProgrammesList() {
     per_page: 100,
     fields:
       "id,name,slug,level,mode_of_study,duration,department_name,cover_image_id,display_order",
+    include: "cover_image(id,url,public_url,cdn_url,thumbnail_url,alt_text,title)",
   });
-  return response.data ?? [];
+  return (response.data ?? []) as ProgrammeWithMedia[];
 }
 
 async function getLatestNews() {
@@ -437,7 +448,7 @@ function schoolBody(school: School) {
   );
 }
 
-function normalizeSchools(schools: School[]): HomeCard[] {
+function normalizeSchools(schools: SchoolWithMedia[]): HomeCard[] {
   return schools.map((school) => ({
     id: school.id,
     title: school.name,
@@ -445,11 +456,11 @@ function normalizeSchools(schools: School[]): HomeCard[] {
     body: schoolBody(school),
     href: `/academics/schools/${school.slug}`,
     action: "View school",
-    imageUrl: publicFileUrl(school.cover_image_id),
+    imageUrl: publicMediaUrl(school.cover_image) ?? publicFileUrl(school.cover_image_id),
   }));
 }
 
-function normalizeFeaturedProgrammes(programmes: Programme[]): HomeCard[] {
+function normalizeFeaturedProgrammes(programmes: ProgrammeWithMedia[]): HomeCard[] {
   return programmes.slice(0, 24).map((programme) => ({
     id: programme.id,
     title: programme.name,
@@ -460,7 +471,7 @@ function normalizeFeaturedProgrammes(programmes: Programme[]): HomeCard[] {
       .join(" · "),
     href: `/academics/programmes/${programme.slug}`,
     action: "View programme",
-    imageUrl: publicFileUrl(programme.cover_image_id),
+    imageUrl: publicMediaUrl(programme.cover_image) ?? publicFileUrl(programme.cover_image_id),
     meta: programme.level,
   }));
 }

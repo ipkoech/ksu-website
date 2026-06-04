@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
@@ -13,6 +13,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ksu_common.models.base import Base
 
 from ..core.config import get_settings
+
+if TYPE_CHECKING:
+    from .auth import User
 
 
 def _media_url(value: str) -> str:
@@ -153,6 +156,7 @@ class Media(Base):
 
     # Relationships
     folder: Mapped[Optional["MediaFolder"]] = relationship("MediaFolder", back_populates="files")
+    uploaded_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[uploaded_by_id])
     links: Mapped[list["MediaLink"]] = relationship(
         "MediaLink",
         back_populates="media",

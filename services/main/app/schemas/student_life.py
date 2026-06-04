@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any
 from datetime import date, datetime
 
 from pydantic import Field
@@ -109,6 +110,8 @@ class ClubActivityRead(BaseReadSchema):
     meeting_link: str | None = None
     cover_image_id: uuid.UUID | None = None
     status: str
+    club: dict[str, Any] | None = None
+    cover_image: dict[str, Any] | None = None
     is_public: bool
 
 
@@ -138,6 +141,15 @@ class ClubRead(BaseReadSchema):
     is_active: bool
     is_public: bool
     display_order: int
+    chairperson: dict[str, Any] | None = None
+    cover_image: dict[str, Any] | None = None
+    department: dict[str, Any] | None = None
+    logo: dict[str, Any] | None = None
+    patron: dict[str, Any] | None = None
+    school: dict[str, Any] | None = None
+    secretary: dict[str, Any] | None = None
+    treasurer: dict[str, Any] | None = None
+    vice_chairperson: dict[str, Any] | None = None
     activities: list[ClubActivityRead] = Field(default_factory=list)
 
 
@@ -204,6 +216,9 @@ class AccommodationRead(BaseReadSchema):
     cover_image_id: uuid.UUID | None = None
     gallery_images: list[str] | None = None
     is_active: bool
+    campus: dict[str, Any] | None = None
+    cover_image: dict[str, Any] | None = None
+    warden: dict[str, Any] | None = None
     is_accepting_applications: bool
 
 
@@ -255,6 +270,9 @@ class SportsFacilityRead(BaseReadSchema):
     email: str | None = None
     phone: str | None = None
     cover_image_id: uuid.UUID | None = None
+    campus: dict[str, Any] | None = None
+    cover_image: dict[str, Any] | None = None
+    manager: dict[str, Any] | None = None
     is_active: bool
 
 
@@ -288,6 +306,9 @@ class ArtsCultureRead(BaseReadSchema):
     school_id: uuid.UUID | None = None
     club_id: uuid.UUID | None = None
     cover_image_id: uuid.UUID | None = None
+    club: dict[str, Any] | None = None
+    cover_image: dict[str, Any] | None = None
+    school: dict[str, Any] | None = None
     is_active: bool
 
 
@@ -351,6 +372,11 @@ class StudentGovernanceRead(BaseReadSchema):
     phone: str | None = None
     office_location: str | None = None
     logo_id: uuid.UUID | None = None
+    chairperson: dict[str, Any] | None = None
+    logo: dict[str, Any] | None = None
+    school: dict[str, Any] | None = None
+    secretary_general: dict[str, Any] | None = None
+    vice_chairperson: dict[str, Any] | None = None
     is_active: bool
 
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any
 from datetime import date, datetime
 
 from pydantic import Field
@@ -70,6 +71,11 @@ class PolicyRead(BaseReadSchema):
     pdf_file_id: uuid.UUID | None = None
     is_public: bool
     status: str
+    approved_by: dict[str, Any] | None = None
+    department: dict[str, Any] | None = None
+    division: dict[str, Any] | None = None
+    pdf_file: dict[str, Any] | None = None
+    supersedes: dict[str, Any] | None = None
     display_order: int
 
 
@@ -119,6 +125,7 @@ class DocumentRead(BaseReadSchema):
     requires_login: bool
     download_count: int
     is_active: bool
+    file: dict[str, Any] | None = None
     display_order: int
 
 

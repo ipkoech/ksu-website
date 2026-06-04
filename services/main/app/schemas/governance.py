@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date
+from typing import Any
 
 from pydantic import Field
 
@@ -94,8 +95,11 @@ class BoardRead(BaseReadSchema):
     parent_entity_type: str | None = None
     parent_entity_id: uuid.UUID | None = None
     chairperson_id: uuid.UUID | None = None
+    chairperson: dict[str, Any] | None = None
     vice_chairperson_id: uuid.UUID | None = None
+    vice_chairperson: dict[str, Any] | None = None
     secretary_id: uuid.UUID | None = None
+    secretary: dict[str, Any] | None = None
     mandate: str | None = None
     establishment_date: date | None = None
     meeting_schedule: str | None = None
@@ -109,7 +113,9 @@ class BoardRead(BaseReadSchema):
     mission: str | None = None
     vision: str | None = None
     cover_image_id: uuid.UUID | None = None
+    cover_image: dict[str, Any] | None = None
     division_id: uuid.UUID | None = None
+    division: dict[str, Any] | None = None
     is_public: bool
     is_active: bool
     status: str

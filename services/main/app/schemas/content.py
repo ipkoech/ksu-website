@@ -101,7 +101,9 @@ class RichContentRead(ScopedContentRead):
     structured_content: dict[str, Any] | None = None
     related_links: list[dict[str, Any]] | None = None
     featured_media_id: uuid.UUID | None = None
+    featured_media: dict[str, Any] | None = None
     author_user_id: uuid.UUID | None = None
+    author: dict[str, Any] | None = None
     meta_title: str | None = None
     meta_description: str | None = None
     keywords: dict[str, Any] | None = None
@@ -116,6 +118,8 @@ class NewsUpdate(RichContentUpdate):
 
 
 class NewsRead(RichContentRead):
+    author: dict[str, Any] | None = None
+    featured_media: dict[str, Any] | None = None
     is_featured: bool
 
 
@@ -131,6 +135,8 @@ class BlogUpdate(RichContentUpdate):
 
 class BlogRead(RichContentRead):
     excerpt: str | None = None
+    author: dict[str, Any] | None = None
+    featured_media: dict[str, Any] | None = None
     is_featured: bool
 
 
@@ -149,6 +155,8 @@ class AnnouncementUpdate(RichContentUpdate):
 class AnnouncementRead(RichContentRead):
     priority: str
     category: str | None = None
+    author: dict[str, Any] | None = None
+    featured_media: dict[str, Any] | None = None
     audience: str
 
 
@@ -225,7 +233,9 @@ class EventRead(ScopedContentRead):
     meeting_link: str | None = None
     is_featured: bool
     featured_media_id: uuid.UUID | None = None
+    featured_media: dict[str, Any] | None = None
     author_user_id: uuid.UUID | None = None
+    author: dict[str, Any] | None = None
     related_links: list[dict[str, Any]] | None = None
     meta_title: str | None = None
     meta_description: str | None = None
@@ -281,6 +291,7 @@ class SliderGroupRead(BaseReadSchema):
     show_navigation_dots: bool
     show_arrows: bool
     transition_effect: str | None = None
+    sliders: list[dict[str, Any]] | None = None
     deleted_at: datetime | None = None
 
 
@@ -350,7 +361,10 @@ class SliderRead(BaseReadSchema):
     rich_text: str | None = None
     structured_content: dict[str, Any] | None = None
     desktop_media_id: uuid.UUID | None = None
+    desktop_media: dict[str, Any] | None = None
     mobile_media_id: uuid.UUID | None = None
+    mobile_media: dict[str, Any] | None = None
+    slider_group: dict[str, Any] | None = None
     external_url: str | None = None
     link_text: str | None = None
     open_in_new_tab: bool

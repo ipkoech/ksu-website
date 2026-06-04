@@ -60,6 +60,7 @@ class DivisionRead(BaseReadSchema):
     code: str
     division_type: str
     head_id: uuid.UUID | None = None
+    head: dict[str, Any] | None = None
     description: str | None = None
     head_message: str | None = None
     mission: str | None = None
@@ -70,6 +71,9 @@ class DivisionRead(BaseReadSchema):
     office_location: str | None = None
     operating_hours: dict[str, Any] | None = None
     cover_image_id: uuid.UUID | None = None
+    cover_image: dict[str, Any] | None = None
+    wings: list[dict[str, Any]] | None = None
+    boards: list[dict[str, Any]] | None = None
     settings: dict[str, Any] | None = None
     is_public: bool
     is_active: bool
@@ -120,11 +124,13 @@ class WingUpdate(BaseSchema):
 
 class WingRead(BaseReadSchema):
     division_id: uuid.UUID
+    division: dict[str, Any] | None = None
     name: str
     slug: str
     code: str
     wing_type: str
     head_id: uuid.UUID | None = None
+    head: dict[str, Any] | None = None
     description: str | None = None
     head_message: str | None = None
     mandate: str | None = None
@@ -134,6 +140,9 @@ class WingRead(BaseReadSchema):
     office_location: str | None = None
     operating_hours: dict[str, Any] | None = None
     cover_image_id: uuid.UUID | None = None
+    cover_image: dict[str, Any] | None = None
+    departments: list[dict[str, Any]] | None = None
+    schools: list[dict[str, Any]] | None = None
     is_public: bool
     is_active: bool
     display_order: int

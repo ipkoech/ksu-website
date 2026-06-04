@@ -117,6 +117,12 @@ def _node_to_selection(node: _SelectionNode) -> FieldSelection:
     )
 
 
+def _default_nested_selection(always_include: set[str] | None = None) -> FieldSelection:
+    """Use an ID-only projection for bare relationship includes."""
+    fields = tuple(always_include or {"id"})
+    return FieldSelection(fields=fields)
+
+
 def _add_selection(node: _SelectionNode, path: Sequence[str], fields: Sequence[str]) -> None:
     current = node
     for segment in path:
@@ -300,19 +306,27 @@ def filter_dict(
 
         value = data[nested_key]
 
-        if nested_selection.is_empty:
-            result[nested_key] = value
-        elif isinstance(value, dict):
-            result[nested_key] = filter_dict(value, nested_selection, always_include=always)
+        effective_selection = (
+            _default_nested_selection(always)
+            if nested_selection.is_empty
+            else nested_selection
+        )
+
+        if isinstance(value, dict):
+            result[nested_key] = filter_dict(value, effective_selection, always_include=always)
         elif isinstance(value, list):
             result[nested_key] = [
-                filter_dict(item, nested_selection, always_include=always)
+                filter_dict(item, effective_selection, always_include=always)
                 if isinstance(item, dict)
-                else item
+                else apply_field_selection(item, effective_selection, always_include=always)
                 for item in value
             ]
         else:
-            result[nested_key] = value
+            result[nested_key] = apply_field_selection(
+                value,
+                effective_selection,
+                always_include=always,
+            )
 
     return result
 
@@ -373,9 +387,14 @@ def _serialize_object_fields(
             nested_value = getattr(data, nested_key)
         except AttributeError:
             continue
+        effective_selection = (
+            _default_nested_selection(always)
+            if nested_selection.is_empty
+            else nested_selection
+        )
         result[nested_key] = apply_field_selection(
             nested_value,
-            nested_selection,
+            effective_selection,
             always_include=always,
         )
 
@@ -461,6 +480,8 @@ def apply_field_selection(
         ]
     elif not isinstance(data, dict) and hasattr(data, "__dict__"):
         return _serialize_object_fields(data, selection, always_include=always)
+    elif not isinstance(data, dict):
+        return data
     return filter_dict(data, selection, always_include=always)
 
 
@@ -522,10 +543,15 @@ def build_load_options(
             )
             for nested_opt in nested_options:
                 load_opt = load_opt.options(nested_opt)
-        elif not nested_selection.is_empty:
+        else:
+            effective_selection = (
+                _default_nested_selection(always_include)
+                if nested_selection.is_empty
+                else nested_selection
+            )
             nested_attrs = _get_load_only_attributes(
                 rel.mapper.class_,
-                nested_selection,
+                effective_selection,
                 always_include=always_include,
             )
             if nested_attrs:

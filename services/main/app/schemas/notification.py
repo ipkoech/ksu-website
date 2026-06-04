@@ -44,6 +44,7 @@ class NotificationTemplateRead(BaseReadSchema):
     channels: list[str]
     variables: list[str] | None = None
     is_active: bool
+    notifications: list[dict[str, Any]] | None = None
     deleted_at: datetime | None = None
 
 
@@ -64,6 +65,7 @@ class NotificationDeliveryRead(BaseReadSchema):
     dead_letter_reason: str | None = None
     expires_at: datetime | None = None
     metadata: dict[str, Any] | None = Field(default=None, validation_alias="extra_metadata", serialization_alias="metadata")
+    notification: dict[str, Any] | None = None
     deleted_at: datetime | None = None
 
 
@@ -136,4 +138,6 @@ class NotificationRead(BaseReadSchema):
     dispatched_at: datetime | None = None
     archived_at: datetime | None = None
     deliveries: list[NotificationDeliveryRead] = Field(default_factory=list)
+    template: dict[str, Any] | None = None
+    user: dict[str, Any] | None = None
     deleted_at: datetime | None = None
