@@ -17,7 +17,6 @@ import { PublicSearchForm } from "@/components/public/search-form";
 import { searchApi, type SearchPayload } from "@ksu/api-client";
 
 type SearchKind =
-  | "all"
   | "news"
   | "blogs"
   | "programmes"
@@ -28,7 +27,7 @@ type SearchKind =
   | "announcements";
 
 type SearchResult = {
-  kind: Exclude<SearchKind, "all">;
+  kind: SearchKind;
   label: string;
   title: string;
   excerpt: string;
@@ -36,28 +35,9 @@ type SearchResult = {
   Icon: LucideIcon;
 };
 
-const searchTypeOptions: { value: SearchKind; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "programmes", label: "Programmes" },
-  { value: "schools", label: "Schools" },
-  { value: "departments", label: "Departments" },
-  { value: "persons", label: "People" },
-  { value: "news", label: "News" },
-  { value: "events", label: "Events" },
-  { value: "announcements", label: "Notices" },
-  { value: "blogs", label: "Blogs" },
-];
-
-function searchType(value?: string): SearchKind {
-  return searchTypeOptions.some((option) => option.value === value)
-    ? (value as SearchKind)
-    : "all";
-}
-
-function searchHref(query: string, type: SearchKind) {
+function searchHref(query: string) {
   const params = new URLSearchParams();
   if (query) params.set("q", query);
-  if (type !== "all") params.set("type", type);
   const search = params.toString();
   return search ? `/search?${search}` : "/search";
 }
@@ -241,17 +221,12 @@ function ResultRow({ item }: { item: SearchResult }) {
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; type?: string }>;
+  searchParams: Promise<{ q?: string }>;
 }) {
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
-  const activeType = searchType(params.type);
   const searchState = await getSearchPayload(query);
-  const allResults = mapResults(searchState.payload);
-  const results =
-    activeType === "all"
-      ? allResults
-      : allResults.filter((item) => item.kind === activeType);
+  const results = mapResults(searchState.payload);
   const resultCount = results.length;
 
   return (
@@ -272,29 +247,6 @@ export default async function SearchPage({
           </div>
 
           <PublicSearchForm initialQuery={query} className="mt-5" />
-          <nav
-            aria-label="Search result categories"
-            className="mt-4 flex gap-2 overflow-x-auto pb-1"
-          >
-            {searchTypeOptions.map((option) => {
-              const isActive = option.value === activeType;
-
-              return (
-                <Link
-                  key={option.value}
-                  href={searchHref(query, option.value)}
-                  className={
-                    isActive
-                      ? "inline-flex min-h-11 shrink-0 items-center rounded-full bg-primary px-4 text-sm font-semibold text-white"
-                      : "inline-flex min-h-11 shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-primary/30 hover:text-primary"
-                  }
-                  aria-current={isActive ? "page" : undefined}
-                >
-                  {option.label}
-                </Link>
-              );
-            })}
-          </nav>
         </div>
       </section>
 
@@ -352,7 +304,7 @@ export default async function SearchPage({
               </p>
               <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                 <Link
-                  href={searchHref(query, activeType)}
+                  href={searchHref(query)}
                   className="inline-flex min-h-11 items-center justify-center rounded-lg border border-amber-300 bg-white px-4 text-sm font-semibold text-amber-950 transition hover:bg-amber-100"
                 >
                   Retry search
