@@ -9,13 +9,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from ksu_common import persist_audit_log, should_skip_audit
+from ksu_common import invalidate_prefix, persist_audit_log, should_skip_audit
 
 from .core.config import get_settings
 from .core.database import AsyncSessionLocal
 from .api.v1 import register_routes
 
 settings = get_settings()
+
+PUBLIC_CACHE_INVALIDATION_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+PUBLIC_CACHE_INVALIDATION_EXCLUDED_PREFIXES = (
+    "/api/v1/analytics",
+    "/api/v1/auth",
+    "/api/v1/notifications",
+)
 
 
 @asynccontextmanager
@@ -79,9 +86,23 @@ def create_app() -> FastAPI:
             request=request,
             status_code=response.status_code,
         )
+        if _should_invalidate_public_cache(request, response.status_code):
+            await invalidate_prefix("public")
         return response
 
     app.mount("/uploads", StaticFiles(directory=settings.upload_dir_path), name="uploads")
 
     register_routes(app)
     return app
+
+
+def _should_invalidate_public_cache(request: Request, status_code: int) -> bool:
+    if request.method not in PUBLIC_CACHE_INVALIDATION_METHODS:
+        return False
+    if status_code >= 400:
+        return False
+
+    path = request.url.path
+    if not path.startswith("/api/v1/"):
+        return False
+    return not path.startswith(PUBLIC_CACHE_INVALIDATION_EXCLUDED_PREFIXES)

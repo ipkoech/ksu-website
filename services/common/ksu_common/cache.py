@@ -17,6 +17,7 @@ Usage:
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
 import os
 from functools import wraps
@@ -60,13 +61,70 @@ def _build_cache_key(
         parts.append(f"user:{user_id}")
 
     params = request.query_params
-    for key in sorted(vary_on):
+    keys = sorted(vary_on or params.keys())
+    for key in keys:
         value = params.get(key)
         if value is not None:
             parts.append(f"{key}:{value}")
 
     key_str = "|".join(parts)
-    return f"cache:{hashlib.sha256(key_str.encode()).hexdigest()[:16]}"
+    key_hash = hashlib.sha256(key_str.encode()).hexdigest()[:16]
+    normalized_prefix = prefix.strip(":") or "default"
+    return f"cache:{normalized_prefix}:{key_hash}"
+
+
+def _normalize_cache_value(value: Any) -> Any:
+    """Convert route arguments into stable, JSON-safe key fragments."""
+    try:
+        return jsonable_encoder(value)
+    except Exception:
+        return str(value)
+
+
+def _build_function_cache_key(
+    prefix: str,
+    func: Callable,
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
+    vary_on: Sequence[str],
+    user_id: str | None = None,
+) -> str:
+    """Build a cache key when a FastAPI endpoint has no Request parameter."""
+    ignored_names = {
+        "db",
+        "session",
+        "request",
+        "response",
+        "user",
+        "_user",
+        "current_user",
+        "_",
+    }
+    parts = [prefix, f"{func.__module__}.{func.__qualname__}"]
+
+    if user_id:
+        parts.append(f"user:{user_id}")
+
+    try:
+        bound = inspect.signature(func).bind_partial(*args, **kwargs)
+        values = bound.arguments
+    except (TypeError, ValueError):
+        values = kwargs
+
+    keys = sorted(vary_on or values.keys())
+    for key in keys:
+        if key in ignored_names or key not in values:
+            continue
+        value = values[key]
+        if value is None or isinstance(value, (Request, Response)):
+            continue
+        normalized = _normalize_cache_value(value)
+        parts.append(f"{key}:{json.dumps(normalized, sort_keys=True, default=str)}")
+
+    key_str = "|".join(parts)
+    key_hash = hashlib.sha256(key_str.encode()).hexdigest()[:16]
+    normalized_prefix = prefix.strip(":") or "default"
+    return f"cache:{normalized_prefix}:{key_hash}"
 
 
 def cached_public(
@@ -92,12 +150,13 @@ def cached_public(
                         request = arg
                         break
 
-            if request is None:
-                return await func(*args, **kwargs)
-
             try:
                 client = await get_redis()
-                cache_key = _build_cache_key(prefix, request, vary_on)
+                cache_key = (
+                    _build_cache_key(prefix, request, vary_on)
+                    if request is not None
+                    else _build_function_cache_key(prefix, func, args, kwargs, vary_on)
+                )
 
                 cached = await client.get(cache_key)
                 if cached:
@@ -148,12 +207,13 @@ def cache_response(
             user = kwargs.get("user") or kwargs.get("_user")
             user_id = getattr(user, "sub", None) if user else None
 
-            if request is None:
-                return await func(*args, **kwargs)
-
             try:
                 client = await get_redis()
-                cache_key = _build_cache_key(prefix, request, vary_on, user_id=user_id)
+                cache_key = (
+                    _build_cache_key(prefix, request, vary_on, user_id=user_id)
+                    if request is not None
+                    else _build_function_cache_key(prefix, func, args, kwargs, vary_on, user_id=user_id)
+                )
 
                 cached = await client.get(cache_key)
                 if cached:
