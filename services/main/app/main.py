@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-import logging
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from ksu_common import invalidate_prefix, persist_audit_log, should_skip_audit
+from ksu_common import configure_service_logging, invalidate_prefix, persist_audit_log, should_skip_audit
 
 from .core.config import get_settings
 from .core.database import AsyncSessionLocal
@@ -18,9 +17,11 @@ from .api.v1 import register_routes
 
 settings = get_settings()
 
-logging.basicConfig(
-    level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
-    format="%(message)s" if settings.LOG_FORMAT == "json" else "%(asctime)s %(levelname)s [%(name)s] %(message)s",
+configure_service_logging(
+    service_name=settings.SERVICE_NAME,
+    log_dir=settings.LOG_DIR,
+    log_level=settings.LOG_LEVEL,
+    log_format=settings.LOG_FORMAT,
 )
 
 PUBLIC_CACHE_INVALIDATION_METHODS = {"POST", "PUT", "PATCH", "DELETE"}

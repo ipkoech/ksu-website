@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -32,6 +33,9 @@ class Settings(BaseSettings):
     INTERNAL_API_KEY: str = "change-me-internal"
     REFERENCE_VALIDATION_MODE: str = "warn"  # disabled | warn | strict
     REFERENCE_VALIDATION_TIMEOUT_SECONDS: float = 5.0
+    LOG_LEVEL: str = "INFO"
+    LOG_FORMAT: Literal["json", "text"] = "json"
+    LOG_DIR: str = "/app/logs"
 
     CORS_ORIGINS: list[str] = [
         "http://localhost:3000",

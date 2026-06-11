@@ -96,6 +96,7 @@ class Settings(BaseSettings):
     DEBUG: bool
     LOG_LEVEL: str
     LOG_FORMAT: Literal["json", "text"]
+    LOG_DIR: str = "/app/logs"
 
     @property
     def upload_dir_path(self) -> Path:

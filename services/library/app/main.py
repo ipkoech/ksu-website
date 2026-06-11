@@ -8,13 +8,19 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 
-from ksu_common import persist_audit_log, should_skip_audit
+from ksu_common import configure_service_logging, persist_audit_log, should_skip_audit
 
 from .core.config import get_settings
 from .core.database import AsyncSessionLocal
 from .routes import register_routers
 
 settings = get_settings()
+configure_service_logging(
+    service_name=settings.SERVICE_NAME,
+    log_dir=settings.LOG_DIR,
+    log_level=settings.LOG_LEVEL,
+    log_format=settings.LOG_FORMAT,
+)
 
 
 @asynccontextmanager

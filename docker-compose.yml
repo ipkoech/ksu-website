@@ -95,8 +95,10 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
       RESEARCH_SERVICE_URL: http://research:8001
+      LOG_DIR: /app/logs
     volumes:
       - uploads_data:/app/uploads
+      - ./logs/main:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
@@ -124,6 +126,11 @@ services:
       REDIS_URL: redis://redis:6379/2
       MAIN_SERVICE_URL: http://main:8000
       REFERENCE_VALIDATION_MODE: strict
+      LOG_LEVEL: ${RESEARCH_LOG_LEVEL:-INFO}
+      LOG_FORMAT: ${RESEARCH_LOG_FORMAT:-json}
+      LOG_DIR: /app/logs
+    volumes:
+      - ./logs/research:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
@@ -154,6 +161,11 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/1
       MAIN_SERVICE_URL: http://main:8000
+      LOG_LEVEL: ${LIBRARY_LOG_LEVEL:-INFO}
+      LOG_FORMAT: ${LIBRARY_LOG_FORMAT:-json}
+      LOG_DIR: /app/logs
+    volumes:
+      - ./logs/library:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
@@ -182,6 +194,9 @@ services:
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
+      LOG_DIR: /app/logs
+    volumes:
+      - ./logs/main:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
@@ -201,6 +216,9 @@ services:
       REDIS_URL: redis://redis:6379/1
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/1
+      LOG_DIR: /app/logs
+    volumes:
+      - ./logs/library:/app/logs
     depends_on:
       postgres:
         condition: service_healthy

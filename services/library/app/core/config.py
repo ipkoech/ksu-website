@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -30,6 +31,9 @@ class Settings(BaseSettings):
 
     MAIN_SERVICE_URL: str = "http://main:8000"
     INTERNAL_API_KEY: str = "change-me-internal"
+    LOG_LEVEL: str = "INFO"
+    LOG_FORMAT: Literal["json", "text"] = "json"
+    LOG_DIR: str = "/app/logs"
 
     CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
