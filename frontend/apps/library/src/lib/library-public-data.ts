@@ -129,10 +129,20 @@ export async function getCatalogSearchData(
   return { branches, resources, selectedLibraryId, query, resourceType, status };
 }
 
-export function getElectronicResources(query?: string) {
+export function getElectronicResources(
+  query?: string,
+  options: {
+    resourceType?: string;
+    accessLevel?: string;
+    featured?: boolean;
+  } = {},
+) {
   return safeList<LibraryGenericRecord>(() =>
     libraryServiceApi.databases.list({
       q: query?.trim() || undefined,
+      resource_type: options.resourceType?.trim() || undefined,
+      access_level: options.accessLevel?.trim() || undefined,
+      featured: options.featured,
       page: 1,
       per_page: 100,
     }),
