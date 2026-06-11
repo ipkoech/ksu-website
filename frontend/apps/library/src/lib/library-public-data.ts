@@ -112,6 +112,8 @@ const PUBLIC_LIBRARY_TIMEOUT_MS = 3000;
 const unavailableMessage =
   "Library records are temporarily unavailable. Try again later or contact the library desk.";
 
+type OpeningHoursMap = Record<string, string>;
+
 async function safeList<T>(
   load: () => Promise<{ data?: T[] }>,
 ): Promise<PublicLibraryData<T>> {
@@ -127,6 +129,16 @@ async function safeList<T>(
   });
 
   return Promise.race([request, timeout]);
+}
+
+function normalizeList<T>(
+  result: PublicLibraryData<T>,
+  normalize: (item: T) => T,
+): PublicLibraryData<T> {
+  return {
+    ...result,
+    data: result.data.map(normalize),
+  };
 }
 
 async function safeStats() {
@@ -154,6 +166,107 @@ async function collectByBranch<T>(
   );
 }
 
+function isOpeningHoursMap(value: unknown): value is OpeningHoursMap {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function normalizeBranch(branch: LibraryBranch): LibraryBranch {
+  return {
+    ...branch,
+    slug: branch.slug ?? branch.code ?? branch.id,
+    short_name: branch.short_name ?? branch.code ?? null,
+    description: branch.description ?? branch.about_content ?? null,
+    objectives: branch.objectives ?? branch.mandates ?? null,
+    address: branch.address ?? branch.location ?? null,
+    email: branch.email ?? branch.contact_email ?? null,
+    phone: branch.phone ?? branch.contact_phone ?? null,
+    website_url:
+      branch.website_url ??
+      branch.catalogue_url ??
+      branch.ebooks_url ??
+      branch.repositories_url ??
+      null,
+  };
+}
+
+function normalizeResource(resource: LibraryResource): LibraryResource {
+  const availableCopies =
+    resource.available_copies ?? resource.available_quantity ?? undefined;
+  const totalCopies = resource.total_copies ?? resource.quantity ?? undefined;
+  const isAvailable =
+    resource.is_available ??
+    (resource.status
+      ? resource.status === "available"
+      : availableCopies === undefined
+        ? undefined
+        : availableCopies > 0);
+
+  return {
+    ...resource,
+    authors: resource.authors ?? resource.author ?? null,
+    resource_type: resource.resource_type ?? resource.type ?? undefined,
+    status:
+      resource.status ??
+      (isAvailable === undefined ? undefined : isAvailable ? "available" : "unavailable"),
+    location_shelf: resource.location_shelf ?? resource.location ?? null,
+    available_copies: availableCopies,
+    total_copies: totalCopies,
+    is_loanable: resource.is_loanable ?? isAvailable,
+  };
+}
+
+function normalizeElectronicResource(
+  resource: LibraryElectronicResource,
+): LibraryElectronicResource {
+  const name = resource.name ?? resource.title ?? "Untitled resource";
+
+  return {
+    ...resource,
+    name,
+    access_url: resource.access_url ?? resource.url ?? null,
+    resource_type: resource.resource_type ?? resource.type ?? "database",
+    section_letter: resource.section_letter ?? name.charAt(0).toUpperCase(),
+    is_active: resource.is_active ?? resource.is_available,
+  };
+}
+
+function normalizeService(service: LibraryServiceRecord): LibraryServiceRecord {
+  return {
+    ...service,
+    service_type: service.service_type ?? "service",
+    is_public: service.is_public ?? service.is_active,
+    is_active: service.is_active ?? service.is_public,
+  };
+}
+
+function normalizeStaff(member: LibraryStaff): LibraryStaff {
+  return {
+    ...member,
+    job_title: member.job_title ?? member.person?.title ?? null,
+    department: member.department ?? member.department_section ?? null,
+  };
+}
+
+function openingHoursToRows(branch: LibraryBranch): LibraryHours[] {
+  if (!isOpeningHoursMap(branch.opening_hours)) return [];
+
+  return Object.entries(branch.opening_hours).map(([day, value]) => {
+    const text = compactText(value);
+    const isClosed = /^closed$/i.test(text);
+    const [opensAt, closesAt] = text.split(/\s*[-–]\s*/, 2);
+
+    return {
+      id: `${branch.id}-${day}`,
+      library_id: branch.id,
+      day_type: day,
+      opens_at: isClosed ? null : compactText(opensAt) || null,
+      closes_at: isClosed ? null : compactText(closesAt) || null,
+      is_closed: isClosed,
+      note: isClosed || closesAt ? null : text || null,
+    };
+  });
+}
+
 export function getPublicBranches() {
   return safeList<LibraryBranch>(() =>
     libraryServiceApi.branches.list({
@@ -161,7 +274,7 @@ export function getPublicBranches() {
       page: 1,
       per_page: 100,
     }),
-  );
+  ).then((result) => normalizeList(result, normalizeBranch));
 }
 
 export async function getCatalogSearchData(
@@ -192,15 +305,21 @@ export async function getCatalogSearchData(
     };
   }
 
-  const resources = await safeList<LibraryResource>(() =>
-    libraryServiceApi.resources.list({
-      library_id: selectedLibraryId,
-      q: query || undefined,
-      resource_type: resourceType || undefined,
-      status: status || undefined,
-      page: 1,
-      per_page: 100,
-    }),
+  const resources = normalizeList(
+    await safeList<LibraryResource>(() =>
+      libraryServiceApi.resources.list({
+        library_id: selectedLibraryId,
+        q: query || undefined,
+        search: query || undefined,
+        resource_type: resourceType || undefined,
+        type: resourceType || undefined,
+        status: status || undefined,
+        is_available: status === "available" ? true : undefined,
+        page: 1,
+        per_page: 100,
+      }),
+    ),
+    normalizeResource,
   );
 
   return { branches, resources, selectedLibraryId, query, resourceType, status };
@@ -217,13 +336,15 @@ export function getElectronicResources(
   return safeList<LibraryElectronicResource>(() =>
     libraryServiceApi.databases.list({
       q: query?.trim() || undefined,
+      search: query?.trim() || undefined,
       resource_type: options.resourceType?.trim() || undefined,
+      type: options.resourceType?.trim() || undefined,
       access_level: options.accessLevel?.trim() || undefined,
       featured: options.featured,
       page: 1,
       per_page: 100,
     }),
-  );
+  ).then((result) => normalizeList(result, normalizeElectronicResource));
 }
 
 async function getBranchServices(branches: LibraryBranch[]) {
@@ -236,7 +357,7 @@ async function getBranchServices(branches: LibraryBranch[]) {
           page: 1,
           per_page: 100,
         }),
-      ),
+      ).then((result) => normalizeList(result, normalizeService)),
   );
 
   return results.map((item) => ({ branch: item.branch, services: item.result }));
@@ -244,7 +365,12 @@ async function getBranchServices(branches: LibraryBranch[]) {
 
 async function getBranchHours(branches: LibraryBranch[]) {
   const results = await collectByBranch<LibraryHours>(branches, (branch) =>
-    safeList<LibraryHours>(() => libraryServiceApi.branches.hours(branch.id)),
+    safeList<LibraryHours>(() => libraryServiceApi.branches.hours(branch.id)).then(
+      (result) =>
+        result.data.length > 0
+          ? result
+          : { data: openingHoursToRows(branch), error: result.error },
+    ),
   );
   return results.map((item) => ({ branch: item.branch, hours: item.result }));
 }
@@ -277,7 +403,7 @@ async function getBranchStaff(branches: LibraryBranch[]) {
           page: 1,
           per_page: 100,
         }),
-      ),
+      ).then((result) => normalizeList(result, normalizeStaff)),
   );
   return results.map((item) => ({ branch: item.branch, staff: item.result }));
 }
@@ -341,7 +467,7 @@ export async function getLibraryOverviewData(): Promise<LibraryOverviewData> {
             page: 1,
             per_page: 6,
           }),
-        )
+        ).then((result) => normalizeList(result, normalizeResource))
       : Promise.resolve({ data: [], error: branches.error }),
     getElectronicResources(),
     getLibraryServices(),
@@ -449,10 +575,11 @@ export async function getLibrarySearchData(
           libraryServiceApi.resources.list({
             library_id: selectedLibraryId,
             q: query || undefined,
+            search: query || undefined,
             page: 1,
             per_page: 10,
           }),
-        )
+        ).then((result) => normalizeList(result, normalizeResource))
       : Promise.resolve({ data: [], error: branches.error }),
     getElectronicResources(query),
   ]);
