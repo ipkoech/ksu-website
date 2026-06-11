@@ -35,6 +35,7 @@ export default function SustainabilityProjectsPage() {
       ]}
       defaults={{ initiative_type: "climate", status: "active" }}
       emptyMessage="No sustainability projects were returned by the research service."
+      detailBaseHref="/research/sustainability/projects"
     />
   );
 }

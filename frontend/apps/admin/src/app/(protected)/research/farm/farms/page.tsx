@@ -40,6 +40,7 @@ export default function ResearchFarmsPage() {
       defaults={{ farm_type: "university", status: "active", is_public: true }}
       emptyMessage="No farm profile records were returned by the research service."
       metaFields={["code", "farm_type", "status"]}
+      detailBaseHref="/research/farm/farms"
     />
   );
 }

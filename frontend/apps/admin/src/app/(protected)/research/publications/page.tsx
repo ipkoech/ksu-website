@@ -79,6 +79,7 @@ export default function ResearchPublicationsPage() {
       canDelete={canManage}
       getRecordTitle={(record) => record.title}
       getRecordMeta={(record) => [record.publication_type, record.journal_name, record.year].filter(Boolean).join(" · ")}
+      getRecordDetailHref={(record) => record.slug ? `/research/publications/${record.slug}` : null}
       emptyMessage="No publications were returned by the research service."
       buildPayload={(values) => ({
         title: values.title,

@@ -41,6 +41,7 @@ export default function ResearchCentersPage() {
       defaults={{ center_type: "center", status: "active" }}
       emptyMessage="No research centers were returned by the research service."
       metaFields={["code", "center_type", "status"]}
+      detailBaseHref="/research/centers"
     />
   );
 }

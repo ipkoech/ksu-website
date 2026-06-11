@@ -22,6 +22,8 @@ interface ResearchResourcePageProps {
   defaults?: ResearchGenericPayload;
   listParams?: Record<string, string | number | boolean | undefined>;
   metaFields?: string[];
+  detailBaseHref?: string;
+  detailHref?: (record: ResearchGenericRecord) => string | null | undefined;
 }
 
 function recordTitle(record: ResearchGenericRecord) {
@@ -53,6 +55,8 @@ export function ResearchResourcePage({
   defaults = {},
   listParams = {},
   metaFields = ["code", "category", "status"],
+  detailBaseHref,
+  detailHref,
 }: ResearchResourcePageProps) {
   const { hasScope } = usePermissions();
   const canManage = manageScopes.some((scope) => hasScope(scope));
@@ -76,6 +80,10 @@ export function ResearchResourcePage({
       canDelete={canManage}
       getRecordTitle={recordTitle}
       getRecordMeta={(record) => recordMeta(record, metaFields)}
+      getRecordDetailHref={(record) =>
+        detailHref?.(record) ??
+        (detailBaseHref && record.slug ? `${detailBaseHref}/${record.slug}` : null)
+      }
       emptyMessage={emptyMessage}
       buildPayload={(values) => ({ ...defaults, ...values })}
     />

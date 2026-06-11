@@ -22,6 +22,7 @@ export default function ResearchDonationRecordsPage() {
       ]}
       defaults={{ currency: "KES", donation_type: "one_time", designation: "unrestricted", status: "completed" }}
       emptyMessage="No donations were returned by the research service."
+      detailHref={(record) => `/research/donations/records/${record.id}`}
     />
   );
 }

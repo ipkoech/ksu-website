@@ -1,8 +1,9 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit, Plus, Trash2 } from "lucide-react";
+import { Edit, Eye, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout";
 import { EntityPicker } from "@/components/relationships/entity-picker";
 import { relationshipAdapters, type RelationshipFilters } from "@/components/relationships/relationship-adapters";
@@ -70,6 +71,7 @@ interface EditableServiceResourcePageProps<
   delete?: (id: string) => Promise<unknown>;
   getRecordTitle: (record: TRecord) => string;
   getRecordMeta?: (record: TRecord) => string;
+  getRecordDetailHref?: (record: TRecord) => string | null | undefined;
   emptyMessage: string;
   buildPayload?: (
     values: RecordShape,
@@ -183,6 +185,7 @@ export function EditableServiceResourcePage<
   delete: deleteRecord,
   getRecordTitle,
   getRecordMeta,
+  getRecordDetailHref,
   emptyMessage,
   buildPayload,
   validate,
@@ -362,6 +365,14 @@ export function EditableServiceResourcePage<
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                      {getRecordDetailHref?.(record) ? (
+                        <Button asChild type="button" variant="outline" size="sm">
+                          <Link href={getRecordDetailHref(record) ?? "#"}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View
+                          </Link>
+                        </Button>
+                      ) : null}
                       {canEdit ? (
                         <Button
                           type="button"

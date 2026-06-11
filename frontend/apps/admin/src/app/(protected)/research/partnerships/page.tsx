@@ -25,6 +25,7 @@ export default function ResearchPartnershipsPage() {
       ]}
       defaults={{ partner_type: "academic", status: "active" }}
       emptyMessage="No partnerships were returned by the research service."
+      detailBaseHref="/research/partnerships"
     />
   );
 }

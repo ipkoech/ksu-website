@@ -36,6 +36,7 @@ export default function ResearchGrantsPage() {
       canDelete={canManage}
       getRecordTitle={(record) => record.title}
       getRecordMeta={(record) => [record.code, record.funder_name, record.status].filter(Boolean).join(" · ")}
+      getRecordDetailHref={(record) => record.slug ? `/research/grants/${record.slug}` : null}
       emptyMessage="No grants were returned by the research service."
       buildPayload={(values) => ({
         title: values.title,

@@ -64,6 +64,7 @@ export default function ResearchProjectsPage() {
       canDelete={canManage}
       getRecordTitle={(record) => record.title}
       getRecordMeta={(record) => [record.code, record.project_type, record.status].filter(Boolean).join(" · ")}
+      getRecordDetailHref={(record) => record.slug ? `/research/projects/${record.slug}` : null}
       emptyMessage="No research projects were returned by the research service."
       buildPayload={(values) => ({
         title: values.title,
