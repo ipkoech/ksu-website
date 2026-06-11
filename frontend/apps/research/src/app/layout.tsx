@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { MiniHeader, PublicFooter } from "@ksu/ui/layout/public";
+import { PublicFooter } from "@ksu/ui/layout/public";
 import { ResearchHeader } from "../components/research-header";
 import "./globals.css";
 
@@ -19,40 +19,6 @@ const contactInfo = {
   phone: "+254720875082",
   email: "info@kisiiuniversity.ac.ke",
 };
-
-const miniQuickLinks = [
-  {
-    label: "Conferences",
-    href: "https://digital.kisiiuniversity.ac.ke/conferences",
-    external: true,
-  },
-  {
-    label: "Tenders",
-    href: "https://digital.kisiiuniversity.ac.ke/procurement_portal/tenders",
-    external: true,
-  },
-  {
-    label: "Careers",
-    href: "https://digital.kisiiuniversity.ac.ke/job_portal/open_adverts",
-    external: true,
-  },
-  {
-    label: "Help Desk",
-    href: "https://digital.kisiiuniversity.ac.ke/ksu_customer_care_center",
-    external: true,
-  },
-  {
-    label: "Visitors",
-    href: "https://kisiiuniversity.ac.ke/visit_home",
-    external: true,
-  },
-  {
-    label: "Downloads",
-    href: "https://kisiiuniversity.ac.ke/page_downloads",
-    external: true,
-  },
-  { label: "FAQ", href: "https://kisiiuniversity.ac.ke/faq", external: true },
-];
 
 export const metadata: Metadata = {
   title: {
@@ -85,11 +51,6 @@ export default function RootLayout({
           <a href="#research-main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-md focus:ring-2 focus:ring-ring">
             Skip to research content
           </a>
-          <MiniHeader
-            contactInfo={contactInfo}
-            quickLinks={miniQuickLinks}
-            socialLinks={socialLinks}
-          />
           <ResearchHeader />
           {children}
           <PublicFooter contactInfo={contactInfo} socialLinks={socialLinks} />
