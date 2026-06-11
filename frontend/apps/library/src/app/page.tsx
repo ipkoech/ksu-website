@@ -31,6 +31,18 @@ export default async function LibraryPage() {
     { label: "Vision", value: primaryBranch?.vision },
     { label: "Objectives", value: primaryBranch?.objectives },
   ].filter((item) => compactText(item.value));
+  const supportRows = [
+    ...services.data.slice(0, 2).map((item) => ({
+      id: item.id,
+      title: item.name ?? "Library service",
+      meta: [formatLabel(item.service_type), "Service"],
+    })),
+    ...regulations.data.slice(0, 2).map((item) => ({
+      id: item.id,
+      title: item.title ?? "Library regulation",
+      meta: [formatLabel(item.category), formatLabel(item.status)],
+    })),
+  ];
 
   return (
     <main id="library-main" className="min-h-screen bg-white">
@@ -302,18 +314,9 @@ export default async function LibraryPage() {
             ))}
           </RecordPanel>
           <RecordPanel title="Support and rules" href="/services">
-            {[...services.data.slice(0, 2), ...regulations.data.slice(0, 2)].map(
-              (item) => (
-                <RecordRow
-                  key={item.id}
-                  title={item.title ?? item.name ?? "Library record"}
-                  meta={[
-                    formatLabel(item.service_type ?? item.category),
-                    formatLabel(item.status),
-                  ]}
-                />
-              ),
-            )}
+            {supportRows.map((item) => (
+              <RecordRow key={item.id} title={item.title} meta={item.meta} />
+            ))}
           </RecordPanel>
         </div>
       </LibrarySection>

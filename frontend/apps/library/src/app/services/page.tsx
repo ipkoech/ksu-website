@@ -1,4 +1,4 @@
-import type { LibraryBranch } from "@ksu/api-client";
+import type { LibraryBranch, LibraryServiceRecord } from "@ksu/api-client";
 import {
   IconCard,
   ExternalAnchor,
@@ -23,7 +23,7 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
-type PublishedService = Record<string, any> & {
+type PublishedService = LibraryServiceRecord & {
   branch: LibraryBranch;
 };
 
@@ -32,10 +32,7 @@ export default async function LibraryServicesPage() {
     await getLibraryServicesData();
   const allServices: PublishedService[] = groupedServices.flatMap(
     ({ branch, services }) =>
-      services.map(
-        (service) =>
-          ({ ...(service as Record<string, any>), branch }) as PublishedService,
-      ),
+      services.map((service) => ({ ...service, branch })),
   );
   const serviceTypes = summarizeServices(allServices);
   const branchContacts = branches.data
@@ -404,9 +401,7 @@ export default async function LibraryServicesPage() {
   );
 }
 
-function summarizeServices(
-  services: Array<Record<string, any>>,
-): Array<{ label: string; count: number }> {
+function summarizeServices(services: PublishedService[]) {
   const counts = new Map<string, number>();
   for (const service of services) {
     const key = formatLabel(service.service_type ?? "other");

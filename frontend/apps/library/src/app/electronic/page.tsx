@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { LibraryElectronicResource } from "@ksu/api-client";
 import {
   ExternalAnchor,
   LibraryHero,
@@ -287,8 +288,8 @@ export default async function ElectronicResourcesPage({
   );
 }
 
-function groupByLetter(items: Record<string, any>[]) {
-  const groups = new Map<string, Record<string, any>[]>();
+function groupByLetter(items: LibraryElectronicResource[]) {
+  const groups = new Map<string, LibraryElectronicResource[]>();
   for (const item of items) {
     const letter =
       compactText(item.section_letter || item.name?.charAt(0) || "#")
@@ -303,7 +304,7 @@ function ResourceCard({
   resource,
   featured = false,
 }: {
-  resource: Record<string, any>;
+  resource: LibraryElectronicResource;
   featured?: boolean;
 }) {
   const accessUrl = safeExternalUrl(resource.access_url);

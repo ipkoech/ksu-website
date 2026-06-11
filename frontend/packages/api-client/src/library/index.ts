@@ -109,6 +109,65 @@ export interface LibraryStaff {
   updated_at?: string;
 }
 
+export interface LibraryServiceRecord {
+  id: string;
+  library_id: string;
+  name: string;
+  slug?: string;
+  description?: string | null;
+  eligibility?: string | null;
+  service_type?: string;
+  how_to_access?: string | null;
+  contact_info?: string | null;
+  is_public?: boolean;
+  is_active?: boolean;
+  sort_order?: number;
+  icon_media_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LibraryRegulation {
+  id: string;
+  library_id?: string | null;
+  title: string;
+  slug?: string;
+  category?: string | null;
+  content?: string | null;
+  effective_date?: string | null;
+  status?: string;
+  is_public?: boolean;
+  sort_order?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LibraryElectronicResource {
+  id: string;
+  library_id?: string | null;
+  name: string;
+  slug?: string;
+  provider?: string | null;
+  description?: string | null;
+  access_url?: string | null;
+  section_letter?: string;
+  resource_type?: string;
+  subjects?: string[] | null;
+  coverage_dates?: string | null;
+  simultaneous_users?: string | null;
+  access_level?: string;
+  access_type?: string;
+  requires_vpn?: boolean;
+  requires_registration?: boolean;
+  is_active?: boolean;
+  is_featured?: boolean;
+  sort_order?: number;
+  logo_image_id?: string | null;
+  notes?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface LibraryResource {
   id: string;
   library_id: string;
@@ -234,7 +293,7 @@ export interface LibraryCharge {
 
 export type LibraryChargePayload = Omit<LibraryCharge, "id" | "created_at" | "updated_at">;
 
-export type LibraryGenericRecord = Record<string, any> & {
+export type LibraryGenericRecord = Record<string, unknown> & {
   id: string;
   title?: string;
   name?: string;
@@ -246,7 +305,7 @@ export type LibraryGenericRecord = Record<string, any> & {
   updated_at?: string;
 };
 
-export type LibraryGenericPayload = Record<string, any>;
+export type LibraryGenericPayload = Record<string, unknown>;
 
 function crudApi<TRecord, TPayload>(path: string) {
   return {
@@ -316,10 +375,10 @@ export const libraryServiceApi = {
       libraryApi.patch<{ data: LibraryCharge }>(`/api/v1/library/charges/${id}`, data),
     delete: (id: string) => libraryApi.delete<void>(`/api/v1/library/charges/${id}`),
   },
-  databases: crudApi<LibraryGenericRecord, LibraryGenericPayload>("/api/v1/library/databases/"),
+  databases: crudApi<LibraryElectronicResource, LibraryGenericPayload>("/api/v1/library/databases/"),
   inquiries: crudApi<LibraryGenericRecord, LibraryGenericPayload>("/api/v1/library/inquiries/"),
   tickets: crudApi<LibraryGenericRecord, LibraryGenericPayload>("/api/v1/library/tickets/"),
-  regulations: crudApi<LibraryGenericRecord, LibraryGenericPayload>("/api/v1/library/regulations/"),
+  regulations: crudApi<LibraryRegulation, LibraryGenericPayload>("/api/v1/library/regulations/"),
   staff: {
     list: (params: ListParams<{ library_id: string }>) =>
       libraryApi.get<{ data: LibraryStaff[] }>("/api/v1/library/staff/", params),
@@ -329,6 +388,6 @@ export const libraryServiceApi = {
       libraryApi.patch<{ data: LibraryStaff }>(`/api/v1/library/staff/${id}`, data),
     delete: (id: string) => libraryApi.delete<void>(`/api/v1/library/staff/${id}`),
   },
-  services: crudApi<LibraryGenericRecord, LibraryGenericPayload>("/api/v1/library/services/"),
+  services: crudApi<LibraryServiceRecord, LibraryGenericPayload>("/api/v1/library/services/"),
   statistics: crudApi<LibraryGenericRecord, LibraryGenericPayload>("/api/v1/library/statistics/"),
 };

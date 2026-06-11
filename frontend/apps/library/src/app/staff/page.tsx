@@ -1,3 +1,4 @@
+import type { LibraryBranch, LibraryStaff } from "@ksu/api-client";
 import {
   LibraryHero,
   LibrarySection,
@@ -18,9 +19,13 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
+type PublishedStaff = LibraryStaff & {
+  branch: LibraryBranch;
+};
+
 export default async function LibraryStaffPage() {
   const { groupedStaff, errors } = await getLibraryStaffData();
-  const staff = groupedStaff.flatMap(({ branch, staff: members }) =>
+  const staff: PublishedStaff[] = groupedStaff.flatMap(({ branch, staff: members }) =>
     members.map((member) => ({ ...member, branch })),
   );
 
@@ -81,7 +86,7 @@ export default async function LibraryStaffPage() {
   );
 }
 
-function StaffCard({ member }: { member: Record<string, any> }) {
+function StaffCard({ member }: { member: PublishedStaff }) {
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
