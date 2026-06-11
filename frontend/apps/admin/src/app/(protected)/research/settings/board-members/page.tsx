@@ -17,10 +17,12 @@ export default function ResearchBoardMembersPage() {
         { name: "title", label: "Title" },
         { name: "affiliation", label: "Affiliation" },
         { name: "email", label: "Email", type: "email" },
+        { name: "bio", label: "Bio", type: "textarea" },
         { name: "role", label: "Role", placeholder: "member" },
         { name: "representation", label: "Representation" },
         { name: "term_start", label: "Term Start", type: "date" },
         { name: "term_end", label: "Term End", type: "date" },
+        { name: "photo_url", label: "Photo URL", type: "url" },
         { name: "is_active", label: "Active", type: "boolean" },
       ]}
       defaults={{ role: "member" }}

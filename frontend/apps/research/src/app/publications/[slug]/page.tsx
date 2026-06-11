@@ -32,7 +32,7 @@ export default async function PublicationDetailPage({
       ]}
       sections={[
         { title: "Abstract", fields: ["abstract", "summary"] },
-        { title: "Citation", fields: ["citation", "funding_acknowledgement", "grant_numbers"] },
+        { title: "Citation", fields: ["citation", "funding_acknowledgment", "grant_numbers"] },
         { title: "Access", fields: ["url", "pdf_url", "repository_url"] },
       ]}
     />

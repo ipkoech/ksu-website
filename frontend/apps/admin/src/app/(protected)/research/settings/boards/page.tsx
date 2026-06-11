@@ -18,9 +18,14 @@ export default function ResearchBoardsPage() {
         { name: "board_type", label: "Board Type", placeholder: "committee" },
         { name: "about", label: "About", type: "textarea" },
         { name: "mandate", label: "Mandate", type: "textarea" },
+        { name: "responsibilities", label: "Responsibilities", type: "textarea" },
+        { name: "composition", label: "Composition", type: "textarea" },
+        { name: "meeting_schedule", label: "Meeting Schedule", type: "textarea" },
         { name: "chair_id", label: "Chair", type: "entity", relation: { adapter: "person", filters: { status: "active" } } },
         { name: "secretary_name", label: "Secretary Name" },
         { name: "contact_email", label: "Contact Email", type: "email" },
+        { name: "contact_phone", label: "Contact Phone" },
+        { name: "document_url", label: "Document URL", type: "url" },
         { name: "is_active", label: "Active", type: "boolean" },
       ]}
       defaults={{ board_type: "committee" }}

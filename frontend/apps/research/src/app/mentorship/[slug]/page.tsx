@@ -21,7 +21,7 @@ export default async function MentorshipDetailPage({ params }: { params: Promise
       labelFields={["program_type", "mentorship_type", "status"]}
       factFields={[
         { label: "Duration", field: "duration" },
-        { label: "Commitment", field: "weekly_commitment" },
+        { label: "Commitment", field: "commitment_hours_weekly" },
         { label: "Applications Open", field: "application_open", format: "date" },
         { label: "Deadline", field: "application_deadline", format: "date" },
       ]}

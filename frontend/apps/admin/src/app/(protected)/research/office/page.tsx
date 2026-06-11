@@ -24,10 +24,13 @@ export default function ResearchOfficePage() {
         { name: "functions", label: "Functions", type: "textarea" },
         { name: "services_summary", label: "Services Summary", type: "textarea" },
         { name: "leadership_message", label: "Leadership Message", type: "textarea" },
+        { name: "address", label: "Address", type: "textarea" },
         { name: "email", label: "Email", type: "email" },
         { name: "phone", label: "Phone" },
         { name: "location", label: "Location" },
         { name: "website", label: "Website", type: "url" },
+        { name: "logo_image_url", label: "Logo Image URL", type: "url" },
+        { name: "cover_image_url", label: "Cover Image URL", type: "url" },
         { name: "status", label: "Status", type: "select", placeholder: "Select status", options: [
           { label: "Active", value: "active" },
           { label: "Inactive", value: "inactive" },

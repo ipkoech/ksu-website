@@ -20,14 +20,23 @@ export default function ResearchServicesPage() {
         { name: "department_id", label: "Department", type: "entity", relation: { adapter: "department" } },
         { name: "summary", label: "Summary", type: "textarea" },
         { name: "description", label: "Description", type: "textarea" },
+        { name: "scope", label: "Scope", type: "textarea" },
+        { name: "process", label: "Process", type: "textarea" },
+        { name: "eligibility", label: "Eligibility", type: "textarea" },
+        { name: "deliverables", label: "Deliverables", type: "textarea" },
+        { name: "turnaround_time", label: "Turnaround Time" },
         { name: "how_to_access", label: "How To Access", type: "textarea" },
         { name: "request_url", label: "Request URL", type: "url" },
         { name: "contact_email", label: "Contact Email", type: "email" },
+        { name: "contact_name", label: "Contact Name" },
+        { name: "contact_phone", label: "Contact Phone" },
         { name: "is_free", label: "Free", type: "boolean" },
+        { name: "fee_structure", label: "Fee Structure", type: "textarea" },
+        { name: "cover_image_url", label: "Cover Image URL", type: "url" },
         { name: "is_active", label: "Active", type: "boolean" },
         { name: "is_featured", label: "Featured", type: "boolean" },
       ]}
-      defaults={{ service_type: "support" }}
+      defaults={{ service_type: "support", is_free: true }}
       emptyMessage="No research services were returned by the research service."
       metaFields={["service_type", "category", "is_free"]}
     />
