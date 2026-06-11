@@ -1,3 +1,4 @@
+import { Children } from "react";
 import {
   IconCard,
   LibraryHero,
@@ -18,6 +19,18 @@ export default async function LibraryPage() {
   const { branches, catalog, electronic, services, regulations, stats, errors } =
     await getLibraryOverviewData();
   const topStats = stats?.stats?.slice(0, 4) ?? [];
+  const primaryBranch = branches.data[0];
+  const branchContacts = branches.data
+    .filter((branch) => branch.phone || branch.email || branch.address)
+    .slice(0, 3);
+  const featuredElectronic = electronic.data
+    .filter((item) => item.is_featured)
+    .slice(0, 3);
+  const missionItems = [
+    { label: "Mission", value: primaryBranch?.mission },
+    { label: "Vision", value: primaryBranch?.vision },
+    { label: "Objectives", value: primaryBranch?.objectives },
+  ].filter((item) => compactText(item.value));
 
   return (
     <main id="library-main" className="min-h-screen bg-white">
@@ -114,6 +127,73 @@ export default async function LibraryPage() {
       </LibrarySection>
 
       <LibrarySection
+        eyebrow="Quick Access"
+        title="Go straight to the resource you need"
+        body="These entry points keep common library journeys visible without changing the current public site design system."
+      >
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+          <div className="grid gap-5 md:grid-cols-2">
+            <IconCard
+              icon="book"
+              title="New and current records"
+              body="Start with recently published catalog records, active databases, and branch services maintained in the Library API."
+              href="#latest-records"
+              action="View records"
+            />
+            <IconCard
+              icon="help"
+              title="Ask for support"
+              body="Find the right branch contact, service desk, regulation, or access support channel before visiting."
+              href="/services#services-heading"
+              action="Get support"
+            />
+          </div>
+          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
+              Library contact point
+            </p>
+            <h3 className="mt-3 text-xl font-semibold text-slate-950">
+              {primaryBranch?.name ?? "Kisii University Library"}
+            </h3>
+            <p className="mt-3 text-sm leading-7 text-slate-600">
+              {compactText(primaryBranch?.description) ||
+                "Branch and service information is maintained by the library team."}
+            </p>
+            <dl className="mt-5 grid gap-3 text-sm text-slate-600">
+              <Meta label="Location" value={primaryBranch?.address} />
+              <Meta label="Phone" value={primaryBranch?.phone} />
+              <Meta label="Email" value={primaryBranch?.email} />
+            </dl>
+          </aside>
+        </div>
+      </LibrarySection>
+
+      {missionItems.length > 0 ? (
+        <LibrarySection
+          eyebrow="Library Direction"
+          title="How the library supports teaching, learning, and research"
+          body="The overview surfaces branch-level mission and planning content when it has been published by the library team."
+          tone="white"
+        >
+          <div className="grid gap-5 lg:grid-cols-3">
+            {missionItems.map((item) => (
+              <article
+                key={item.label}
+                className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
+                  {item.label}
+                </p>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {compactText(item.value)}
+                </p>
+              </article>
+            ))}
+          </div>
+        </LibrarySection>
+      ) : null}
+
+      <LibrarySection
         eyebrow="Branches"
         title="Library access points"
         body="Public branch records are served directly from the Library API."
@@ -138,18 +218,9 @@ export default async function LibraryPage() {
                     "Branch information is being updated by the library team."}
                 </p>
                 <dl className="mt-5 grid gap-2 text-sm text-slate-600">
-                  {branch.address ? (
-                    <div>
-                      <dt className="font-semibold text-slate-900">Location</dt>
-                      <dd>{branch.address}</dd>
-                    </div>
-                  ) : null}
-                  {branch.email ? (
-                    <div>
-                      <dt className="font-semibold text-slate-900">Email</dt>
-                      <dd>{branch.email}</dd>
-                    </div>
-                  ) : null}
+                  <Meta label="Location" value={branch.address} />
+                  <Meta label="Phone" value={branch.phone} />
+                  <Meta label="Email" value={branch.email} />
                 </dl>
               </article>
             ))}
@@ -157,13 +228,53 @@ export default async function LibraryPage() {
         )}
       </LibrarySection>
 
+      {featuredElectronic.length > 0 || branchContacts.length > 0 ? (
+        <LibrarySection
+          eyebrow="Featured Access"
+          title="Frequently used access points"
+          body="A compact overview of featured platforms and branch contact points."
+          tone="white"
+        >
+          <div className="grid gap-5 lg:grid-cols-2">
+            <OverviewList
+              title="Featured e-resources"
+              empty="No featured electronic resources are published yet."
+            >
+              {featuredElectronic.map((item) => (
+                <RecordRow
+                  key={item.id}
+                  title={item.name ?? "Untitled resource"}
+                  meta={[
+                    item.provider,
+                    formatLabel(item.resource_type),
+                    formatLabel(item.access_type),
+                  ]}
+                />
+              ))}
+            </OverviewList>
+            <OverviewList
+              title="Branch contacts"
+              empty="Branch contact details are being updated."
+            >
+              {branchContacts.map((branch) => (
+                <RecordRow
+                  key={branch.id}
+                  title={branch.name}
+                  meta={[branch.phone, branch.email, branch.address]}
+                />
+              ))}
+            </OverviewList>
+          </div>
+        </LibrarySection>
+      ) : null}
+
       <LibrarySection
         eyebrow="Latest Records"
         title="What is currently published"
         body="Seeded and API-backed records below help the Library interface stay testable as the service grows."
         tone="white"
       >
-        <div className="grid gap-5 xl:grid-cols-3">
+        <div id="latest-records" className="grid gap-5 xl:grid-cols-3">
           <RecordPanel title="Catalog highlights" href="/catalog">
             {catalog.data.slice(0, 4).map((item) => (
               <RecordRow
@@ -228,8 +339,33 @@ function RecordPanel({
         </a>
       </div>
       <div className="mt-4 divide-y divide-slate-200">
-        {children || (
+        {Children.count(children) > 0 ? (
+          children
+        ) : (
           <p className="py-4 text-sm text-slate-600">No records available.</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function OverviewList({
+  title,
+  empty,
+  children,
+}: {
+  title: string;
+  empty: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
+      <div className="mt-4 divide-y divide-slate-200">
+        {Children.count(children) > 0 ? (
+          children
+        ) : (
+          <p className="py-4 text-sm text-slate-600">{empty}</p>
         )}
       </div>
     </section>
@@ -254,5 +390,22 @@ function RecordRow({
         </p>
       ) : null}
     </article>
+  );
+}
+
+function Meta({
+  label,
+  value,
+}: {
+  label: string;
+  value?: string | number | null;
+}) {
+  if (!compactText(value)) return null;
+
+  return (
+    <div>
+      <dt className="font-semibold text-slate-950">{label}</dt>
+      <dd className="mt-1">{value}</dd>
+    </div>
   );
 }
