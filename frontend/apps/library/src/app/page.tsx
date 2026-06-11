@@ -54,7 +54,7 @@ export default async function LibraryPage() {
         actions={
           <>
             <PrimaryLink href="/catalog">Search catalog</PrimaryLink>
-            <SecondaryLink href="/electronic">Browse e-resources</SecondaryLink>
+            <SecondaryLink href="/ask">Ask a librarian</SecondaryLink>
           </>
         }
       >
@@ -155,9 +155,9 @@ export default async function LibraryPage() {
             <IconCard
               icon="help"
               title="Ask for support"
-              body="Find the right branch contact, service desk, regulation, or access support channel before visiting."
-              href="/services#services-heading"
-              action="Get support"
+              body="Send a question to the library team for catalog, access, borrowing, research, or training support."
+              href="/ask"
+              action="Ask a librarian"
             />
           </div>
           <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">

@@ -12,6 +12,7 @@ const libraryNavItems = [
   { label: "Catalog", href: "/catalog" },
   { label: "E-resources", href: "/electronic" },
   { label: "Services", href: "/services" },
+  { label: "Ask", href: "/ask" },
   { label: "Branches", href: "/services#branches-heading" },
   { label: "Support", href: "/services#services-heading" },
   { label: "Hours", href: "/hours" },

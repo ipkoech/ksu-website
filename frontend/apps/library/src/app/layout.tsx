@@ -37,7 +37,7 @@ const miniQuickLinks = [
   },
   { label: "Hours", href: "/hours" },
   { label: "Repository", href: "/repositories" },
-  { label: "Help", href: "/services#services-heading" },
+  { label: "Ask", href: "/ask" },
 ];
 
 export const metadata: Metadata = {

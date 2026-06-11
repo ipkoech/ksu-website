@@ -160,6 +160,33 @@ export interface LibraryRegulation {
   updated_at?: string;
 }
 
+export interface LibraryInquiry {
+  id: string;
+  library_id?: string | null;
+  sender_name: string;
+  sender_email: string;
+  sender_phone?: string | null;
+  person_id?: string | null;
+  subject: string;
+  message: string;
+  status: string;
+  replied_at?: string | null;
+  reply_message?: string | null;
+  replied_by_person_id?: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+}
+
+export interface LibraryInquiryPayload {
+  library_id?: string | null;
+  sender_name: string;
+  sender_email: string;
+  sender_phone?: string | null;
+  subject: string;
+  message: string;
+}
+
 export interface LibraryElectronicResource {
   id: string;
   library_id?: string | null;
@@ -406,7 +433,7 @@ export const libraryServiceApi = {
     delete: (id: string) => libraryApi.delete<void>(`/api/v1/library/charges/${id}`),
   },
   databases: crudApi<LibraryElectronicResource, LibraryGenericPayload>("/api/v1/library/databases/"),
-  inquiries: crudApi<LibraryGenericRecord, LibraryGenericPayload>("/api/v1/library/inquiries/"),
+  inquiries: crudApi<LibraryInquiry, LibraryInquiryPayload>("/api/v1/library/inquiries/"),
   tickets: crudApi<LibraryGenericRecord, LibraryGenericPayload>("/api/v1/library/tickets/"),
   regulations: crudApi<LibraryRegulation, LibraryGenericPayload>("/api/v1/library/regulations/"),
   staff: {

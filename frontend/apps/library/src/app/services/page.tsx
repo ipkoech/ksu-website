@@ -59,7 +59,7 @@ export default async function LibraryServicesPage() {
         actions={
           <>
             <PrimaryLink href="/catalog">Search catalog</PrimaryLink>
-            <SecondaryLink href="/electronic">Open e-resources</SecondaryLink>
+            <SecondaryLink href="/ask">Ask a librarian</SecondaryLink>
           </>
         }
       >
@@ -111,8 +111,8 @@ export default async function LibraryServicesPage() {
             icon="help"
             title="Research help"
             body="Use reference support, training, and inter-library loan services for research and academic work."
-            href="#services-heading"
-            action="Get help"
+            href="/ask"
+            action="Ask a librarian"
           />
           <IconCard
             icon="shield"
