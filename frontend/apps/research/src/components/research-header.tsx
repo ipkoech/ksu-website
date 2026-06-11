@@ -70,10 +70,10 @@ const utilityLinks: NavItem[] = [
     external: true,
     icon: ArrowRight,
   },
-  { label: "University Farm", href: "/community-impact", icon: Sprout },
-  { label: "Sustainability", href: "/community-impact", icon: Leaf },
+  { label: "University Farm", href: "/farm", icon: Sprout },
+  { label: "Sustainability", href: "/sustainability", icon: Leaf },
   { label: "Publications", href: "/publications", icon: FileText },
-  { label: "News & Updates", href: "/resources-tools", icon: Newspaper },
+  { label: "News & Updates", href: "/news", icon: Newspaper },
 ];
 
 const researchNavItems: NavSection[] = [
@@ -88,13 +88,14 @@ const researchNavItems: NavSection[] = [
     href: "/projects",
     icon: FlaskConical,
     description: "Research programmes, projects, facilities, and experts.",
+    activePaths: ["/projects", "/programs", "/centers", "/facilities", "/expertise"],
     groups: [
       {
         title: "Research & Discovery",
         items: [
           {
             label: "Research Programs",
-            href: "/projects",
+            href: "/programs",
             icon: BookOpen,
             description: "Multi-year institutional initiatives.",
           },
@@ -106,13 +107,13 @@ const researchNavItems: NavSection[] = [
           },
           {
             label: "Facilities & Labs",
-            href: "/projects",
+            href: "/facilities",
             icon: Building2,
             description: "Research infrastructure and resources.",
           },
           {
             label: "Researchers & Innovators",
-            href: "/connect",
+            href: "/expertise",
             icon: Users,
             description: "Find research contacts and specialists.",
           },
@@ -193,6 +194,7 @@ const researchNavItems: NavSection[] = [
     href: "/community-impact",
     icon: HeartHandshake,
     description: "Community initiatives, outreach, and public events.",
+    activePaths: ["/community-impact", "/events", "/farm", "/sustainability"],
     groups: [
       {
         title: "Community",
@@ -205,7 +207,7 @@ const researchNavItems: NavSection[] = [
           },
           {
             label: "Events Calendar",
-            href: "/community-impact",
+            href: "/events",
             icon: CalendarDays,
             description: "Workshops, forums, and conferences.",
           },
@@ -224,6 +226,7 @@ const researchNavItems: NavSection[] = [
     href: "/resources-tools",
     icon: ClipboardList,
     description: "Policies, templates, guides, news, and resources.",
+    activePaths: ["/resources-tools", "/news", "/outputs", "/forms", "/guidelines", "/services"],
     groups: [
       {
         title: "Resources",
@@ -236,19 +239,19 @@ const researchNavItems: NavSection[] = [
           },
           {
             label: "News & Media",
-            href: "/resources-tools",
+            href: "/news",
             icon: Newspaper,
             description: "Latest research news and updates.",
           },
           {
             label: "Repository",
-            href: "/resources-tools",
+            href: "/outputs",
             icon: GraduationCap,
             description: "Research papers and documents.",
           },
           {
             label: "Forms & Templates",
-            href: "/resources-tools",
+            href: "/forms",
             icon: ClipboardList,
             description: "Ethics, booking, and collaboration forms.",
           },
@@ -261,6 +264,7 @@ const researchNavItems: NavSection[] = [
     href: "/impact-metrics",
     icon: BarChart3,
     description: "Impact dashboard, data, reports, and mentorship links.",
+    activePaths: ["/impact-metrics", "/consultancies", "/mentorship"],
     groups: [
       {
         title: "Impact",
@@ -279,13 +283,13 @@ const researchNavItems: NavSection[] = [
           },
           {
             label: "Consultancies",
-            href: "/partners",
+            href: "/consultancies",
             icon: Briefcase,
             description: "Professional expert services.",
           },
           {
             label: "Mentorship",
-            href: "/connect#mentorship",
+            href: "/mentorship",
             icon: GraduationCap,
             description: "Mentor and mentee programme details.",
           },
@@ -298,14 +302,14 @@ const researchNavItems: NavSection[] = [
     href: "/funding",
     icon: Rocket,
     description: "Grant calls, scholarships, endowments, and training.",
-    activePaths: ["/funding", "/capacity"],
+    activePaths: ["/funding", "/capacity", "/scholarships", "/endowments", "/training"],
     groups: [
       {
         title: "Funding",
         items: [
           {
             label: "Scholarships",
-            href: "/capacity",
+            href: "/scholarships",
             icon: GraduationCap,
             description: "Student funding and awards.",
           },
@@ -317,13 +321,13 @@ const researchNavItems: NavSection[] = [
           },
           {
             label: "Endowment Funds",
-            href: "/funding",
+            href: "/endowments",
             icon: Heart,
             description: "Permanent funding initiatives.",
           },
           {
             label: "Training Programs",
-            href: "/capacity",
+            href: "/training",
             icon: BookOpen,
             description: "Workshops, webinars, and bootcamps.",
           },
@@ -339,17 +343,17 @@ const researchNavItems: NavSection[] = [
   },
   {
     label: "About",
-    href: "/connect#about",
+    href: "/about",
     icon: Users,
     description: "Research team, contacts, forms, and multimedia.",
-    activePaths: [],
+    activePaths: ["/about", "/team"],
     groups: [
       {
         title: "About REIRM",
         items: [
           {
             label: "Our Team",
-            href: "/connect",
+            href: "/team",
             icon: Users,
             description: "Leadership and research staff.",
           },

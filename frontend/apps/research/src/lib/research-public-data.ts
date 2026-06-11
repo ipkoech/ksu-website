@@ -137,11 +137,101 @@ export function getFacilities() {
   );
 }
 
+export function getPrograms() {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.programs.list({
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getThemes() {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.themes.list({
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getFocusAreas() {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.focusAreas.list({
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getExpertiseTags() {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.expertiseTags.list({
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getJournals() {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.journals.list({
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
 export function getOutputs() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.outputs.list({
       is_active: true,
       is_public: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getConsultancies() {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.consultancies.list({
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getFunders() {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.funders.list({
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getEndowments() {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.endowments.list({
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getGrantGuidelines() {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.grantGuidelines.list({
+      is_active: true,
       page: 1,
       per_page: 100,
     }),
@@ -221,6 +311,17 @@ export function getEvents() {
   );
 }
 
+export function getArticles() {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.articles.list({
+      status: "published",
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
 export function getResources() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.resources.list({
@@ -231,9 +332,39 @@ export function getResources() {
   );
 }
 
+export function getServices() {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.services.list({
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
 export function getGuidelines() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.guidelines.list({
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getBoards() {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.boards.list({
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getBoardMembers() {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.boardMembers.list({
       is_active: true,
       page: 1,
       per_page: 100,
