@@ -1,8 +1,48 @@
 "use client";
 
-import { EditableServiceResourcePage } from "@/components/dashboard/editable-service-resource-page";
+import { EditableServiceResourcePage, type EditableListFilter } from "@/components/dashboard/editable-service-resource-page";
 import { researchServiceApi, type ResearchGenericPayload, type ResearchGenericRecord } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
+
+const reportListFilters: EditableListFilter[] = [
+  {
+    name: "output_type",
+    label: "Output Type",
+    type: "select",
+    options: [
+      { label: "Dataset", value: "dataset" },
+      { label: "Software", value: "software" },
+      { label: "Tool", value: "tool" },
+      { label: "Report", value: "report" },
+      { label: "Brief", value: "brief" },
+      { label: "Guideline", value: "guideline" },
+    ],
+  },
+  {
+    name: "access_type",
+    label: "Access Type",
+    type: "select",
+    options: [
+      { label: "Open", value: "open" },
+      { label: "Restricted", value: "restricted" },
+      { label: "Request", value: "request" },
+      { label: "Proprietary", value: "proprietary" },
+    ],
+  },
+  {
+    name: "status",
+    label: "Status",
+    type: "select",
+    options: [
+      { label: "Draft", value: "draft" },
+      { label: "Published", value: "published" },
+      { label: "Archived", value: "archived" },
+      { label: "Deprecated", value: "deprecated" },
+    ],
+  },
+  { name: "is_active", label: "Active", type: "boolean" },
+  { name: "is_featured", label: "Featured", type: "boolean" },
+];
 
 export default function ResearchReportsPage() {
   const { hasScope } = usePermissions();
@@ -14,6 +54,7 @@ export default function ResearchReportsPage() {
       description="Publish datasets, tools, reports, briefs, and other research outputs."
       backHref="/research"
       queryKey={["research", "outputs"]}
+      listFilters={reportListFilters}
       fields={[
         { name: "title", label: "Title", required: true },
         { name: "slug", label: "Slug" },
@@ -41,7 +82,7 @@ export default function ResearchReportsPage() {
         { name: "is_active", label: "Active", type: "boolean" },
         { name: "is_featured", label: "Featured", type: "boolean" },
       ]}
-      list={() => researchServiceApi.outputs.list({ page: 1, per_page: 50 })}
+      list={(filters) => researchServiceApi.outputs.list({ page: 1, per_page: 50, ...filters })}
       create={(payload) => researchServiceApi.outputs.create(payload)}
       update={(id, payload) => researchServiceApi.outputs.update(id, payload)}
       delete={(id) => researchServiceApi.outputs.delete(id)}

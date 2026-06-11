@@ -3,7 +3,7 @@
 import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit, Eye, Plus, Trash2 } from "lucide-react";
+import { Edit, Eye, FilterX, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout";
 import { EntityPicker } from "@/components/relationships/entity-picker";
 import { relationshipAdapters, type RelationshipFilters } from "@/components/relationships/relationship-adapters";
@@ -56,6 +56,18 @@ export interface EditableField {
   };
 }
 
+export interface EditableListFilter {
+  name: string;
+  label: string;
+  type?: "select" | "entity" | "boolean";
+  placeholder?: string;
+  options?: Array<{ label: string; value: string }>;
+  relation?: {
+    adapter: keyof typeof relationshipAdapters;
+    filters?: RelationshipFilters;
+  };
+}
+
 interface EditableServiceResourcePageProps<
   TRecord extends RecordShape,
   TPayload extends RecordShape,
@@ -65,7 +77,8 @@ interface EditableServiceResourcePageProps<
   backHref: string;
   queryKey: readonly unknown[];
   fields: EditableField[];
-  list: () => Promise<{ data?: TRecord[] }>;
+  list: (filters?: RecordShape) => Promise<{ data?: TRecord[] }>;
+  listFilters?: EditableListFilter[];
   create: (payload: TPayload) => Promise<unknown>;
   update: (id: string, payload: Partial<TPayload>) => Promise<unknown>;
   delete?: (id: string) => Promise<unknown>;
@@ -180,6 +193,7 @@ export function EditableServiceResourcePage<
   queryKey,
   fields,
   list,
+  listFilters = [],
   create,
   update,
   delete: deleteRecord,
@@ -201,8 +215,20 @@ export function EditableServiceResourcePage<
   const [values, setValues] = useState<RecordShape>(() =>
     recordToValues(fields),
   );
+  const [filterValues, setFilterValues] = useState<RecordShape>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const recordsQuery = useQuery({ queryKey, queryFn: list });
+  const activeFilters = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(filterValues).filter(([, value]) => value !== undefined && value !== null && value !== ""),
+      ),
+    [filterValues],
+  );
+  const hasActiveFilters = Object.keys(activeFilters).length > 0;
+  const recordsQuery = useQuery({
+    queryKey: [...queryKey, "filters", activeFilters],
+    queryFn: () => list(activeFilters),
+  });
   const records = useMemo(
     () => recordsQuery.data?.data ?? [],
     [recordsQuery.data],
@@ -233,6 +259,18 @@ export function EditableServiceResourcePage<
     setEditingRecord(null);
     setValues(recordToValues(fields));
     setFieldErrors({});
+  };
+
+  const updateFilter = (name: string, value: string | boolean | null) => {
+    setFilterValues((current) => {
+      const next = { ...current };
+      if (value === null || value === "") {
+        delete next[name];
+      } else {
+        next[name] = value;
+      }
+      return next;
+    });
   };
 
   const submit = async () => {
@@ -310,9 +348,85 @@ export function EditableServiceResourcePage<
       <div className="grid gap-6 p-4 sm:p-6 xl:grid-cols-[minmax(0,1fr)_420px]">
         <Card>
           <CardHeader>
-            <CardTitle>Records</CardTitle>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <CardTitle>Records</CardTitle>
+              {listFilters.length > 0 ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="w-fit text-muted-foreground"
+                  onClick={() => setFilterValues({})}
+                  disabled={!hasActiveFilters}
+                >
+                  <FilterX className="mr-2 h-4 w-4" />
+                  Clear Filters
+                </Button>
+              ) : null}
+            </div>
           </CardHeader>
           <CardContent>
+            {listFilters.length > 0 ? (
+              <div className="mb-4 grid gap-3 rounded-lg border bg-muted/20 p-3 sm:grid-cols-2 xl:grid-cols-3">
+                {listFilters.map((filter) => (
+                  <div key={filter.name} className="space-y-2">
+                    <label className="text-sm font-medium">{filter.label}</label>
+                    {filter.type === "entity" && filter.relation ? (
+                      <EntityPicker
+                        adapter={relationshipAdapters[filter.relation.adapter] as any}
+                        value={filterValues[filter.name] || ""}
+                        onChange={(nextValue) => updateFilter(filter.name, nextValue || null)}
+                        filters={filter.relation.filters}
+                        placeholder={filter.placeholder ?? `Filter by ${filter.label.toLowerCase()}`}
+                        allowClear
+                      />
+                    ) : filter.type === "boolean" ? (
+                      <Select
+                        value={
+                          typeof filterValues[filter.name] === "boolean"
+                            ? String(filterValues[filter.name])
+                            : "all"
+                        }
+                        onValueChange={(nextValue) =>
+                          updateFilter(
+                            filter.name,
+                            nextValue === "all" ? null : nextValue === "true",
+                          )
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={filter.placeholder ?? filter.label} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All</SelectItem>
+                          <SelectItem value="true">Yes</SelectItem>
+                          <SelectItem value="false">No</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Select
+                        value={filterValues[filter.name] || "all"}
+                        onValueChange={(nextValue) =>
+                          updateFilter(filter.name, nextValue === "all" ? null : nextValue)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={filter.placeholder ?? filter.label} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All</SelectItem>
+                          {(filter.options ?? []).map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : null}
             {recordsQuery.isLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((item) => (

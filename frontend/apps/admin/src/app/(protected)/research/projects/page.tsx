@@ -1,8 +1,44 @@
 "use client";
 
-import { EditableServiceResourcePage } from "@/components/dashboard/editable-service-resource-page";
+import { EditableServiceResourcePage, type EditableListFilter } from "@/components/dashboard/editable-service-resource-page";
 import { researchServiceApi, type ResearchProject, type ResearchProjectPayload } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
+
+const projectListFilters: EditableListFilter[] = [
+  {
+    name: "project_type",
+    label: "Project Type",
+    type: "select",
+    options: [
+      { label: "Basic", value: "basic" },
+      { label: "Applied", value: "applied" },
+      { label: "Action", value: "action" },
+      { label: "Collaborative", value: "collaborative" },
+      { label: "Commissioned", value: "commissioned" },
+    ],
+  },
+  {
+    name: "status",
+    label: "Status",
+    type: "select",
+    options: [
+      { label: "Proposal", value: "proposal" },
+      { label: "Approved", value: "approved" },
+      { label: "Ongoing", value: "ongoing" },
+      { label: "Completed", value: "completed" },
+      { label: "Suspended", value: "suspended" },
+      { label: "Cancelled", value: "cancelled" },
+    ],
+  },
+  {
+    name: "center_id",
+    label: "Research Center",
+    type: "entity",
+    relation: { adapter: "researchCenter", filters: { is_active: true } },
+  },
+  { name: "is_public", label: "Public", type: "boolean" },
+  { name: "is_featured", label: "Featured", type: "boolean" },
+];
 
 export default function ResearchProjectsPage() {
   const { hasScope } = usePermissions();
@@ -14,6 +50,7 @@ export default function ResearchProjectsPage() {
       description="Create, edit, and retire research projects from the research service."
       backHref="/research"
       queryKey={["research", "projects"]}
+      listFilters={projectListFilters}
       fields={[
         { name: "title", label: "Title", required: true, placeholder: "Project title" },
         { name: "slug", label: "Slug", placeholder: "project-slug" },
@@ -55,7 +92,7 @@ export default function ResearchProjectsPage() {
         { name: "is_featured", label: "Featured", type: "boolean" },
         { name: "is_public", label: "Public", type: "boolean" },
       ]}
-      list={() => researchServiceApi.projects.list({ page: 1, per_page: 50 })}
+      list={(filters) => researchServiceApi.projects.list({ page: 1, per_page: 50, ...filters })}
       create={(payload) => researchServiceApi.projects.create(payload)}
       update={(id, payload) => researchServiceApi.projects.update(id, payload)}
       delete={(id) => researchServiceApi.projects.delete(id)}

@@ -1,6 +1,6 @@
 "use client";
 
-import { EditableServiceResourcePage, type EditableField } from "@/components/dashboard/editable-service-resource-page";
+import { EditableServiceResourcePage, type EditableField, type EditableListFilter } from "@/components/dashboard/editable-service-resource-page";
 import { researchServiceApi, type ResearchGenericPayload, type ResearchGenericRecord } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
 
@@ -21,9 +21,57 @@ interface ResearchResourcePageProps {
   emptyMessage: string;
   defaults?: ResearchGenericPayload;
   listParams?: Record<string, string | number | boolean | undefined>;
+  listFilters?: EditableListFilter[];
   metaFields?: string[];
   detailBaseHref?: string;
   detailHref?: (record: ResearchGenericRecord) => string | null | undefined;
+}
+
+const FILTERABLE_RELATIONS: Record<string, EditableListFilter["relation"]> = {
+  center_id: { adapter: "researchCenter", filters: { is_active: true } },
+  project_id: { adapter: "researchProject", filters: { is_active: true } },
+  grant_id: { adapter: "researchGrant", filters: { is_active: true } },
+  donor_id: { adapter: "researchDonor", filters: { is_active: true } },
+  program_id: { adapter: "researchProgram", filters: { is_active: true } },
+};
+
+const FILTERABLE_BOOLEAN_FIELDS = new Set(["is_active", "is_featured", "is_public", "is_open_access", "is_required"]);
+
+function deriveListFilters(fields: EditableField[]) {
+  const filters: EditableListFilter[] = [];
+
+  for (const field of fields) {
+    if (field.type === "select") {
+      filters.push({
+        name: field.name,
+        label: field.label,
+        type: "select",
+        options: field.options,
+        placeholder: field.placeholder,
+      });
+      continue;
+    }
+
+    if (field.type === "entity" && FILTERABLE_RELATIONS[field.name]) {
+      filters.push({
+        name: field.name,
+        label: field.label,
+        type: "entity",
+        relation: FILTERABLE_RELATIONS[field.name],
+      });
+      continue;
+    }
+
+    if (field.type === "boolean" && FILTERABLE_BOOLEAN_FIELDS.has(field.name)) {
+      filters.push({
+        name: field.name,
+        label: field.label,
+        type: "boolean",
+      });
+    }
+  }
+
+  return filters;
 }
 
 function recordTitle(record: ResearchGenericRecord) {
@@ -54,12 +102,14 @@ export function ResearchResourcePage({
   emptyMessage,
   defaults = {},
   listParams = {},
+  listFilters,
   metaFields = ["code", "category", "status"],
   detailBaseHref,
   detailHref,
 }: ResearchResourcePageProps) {
   const { hasScope } = usePermissions();
   const canManage = manageScopes.some((scope) => hasScope(scope));
+  const resolvedListFilters = listFilters ?? deriveListFilters(fields);
 
   return (
     <EditableServiceResourcePage<ResearchGenericRecord, ResearchGenericPayload>
@@ -68,8 +118,9 @@ export function ResearchResourcePage({
       backHref="/research"
       queryKey={queryKey}
       fields={fields}
-      list={async () => {
-        const response = await resource.list({ page: 1, per_page: 50, ...listParams });
+      listFilters={resolvedListFilters}
+      list={async (filters) => {
+        const response = await resource.list({ page: 1, per_page: 50, ...listParams, ...filters });
         return { data: (response.data ?? []) as ResearchGenericRecord[] };
       }}
       create={(payload) => resource.create(payload)}
