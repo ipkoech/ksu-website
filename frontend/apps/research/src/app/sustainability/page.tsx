@@ -1,7 +1,16 @@
 import type { Metadata } from "next";
-import { GenericRecordGrid } from "../../components/research-listing";
-import { ResearchHero, ResearchSection } from "../../components/research-ui";
-import { getSustainability } from "../../lib/research-public-data";
+import type { ResearchGenericRecord } from "@ksu/api-client";
+import { Badge, FilledBadge, ResearchHero, ResearchSection, StatusMessage } from "../../components/research-ui";
+import {
+  compactText,
+  formatDate,
+  formatLabel,
+  getImpactMetrics,
+  getStories,
+  getSustainability,
+  getSustainabilityActivities,
+  getSustainabilityPartners,
+} from "../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
 
@@ -11,29 +20,263 @@ export const metadata: Metadata = {
 };
 
 export default async function SustainabilityPage() {
-  const sustainability = await getSustainability();
+  const [initiatives, partners, activities, stories, metrics] = await Promise.all([
+    getSustainability(),
+    getSustainabilityPartners(),
+    getSustainabilityActivities(),
+    getStories(),
+    getImpactMetrics(),
+  ]);
+  const errors = [initiatives, partners, activities, stories, metrics].flatMap((item) =>
+    item.error ? [item.error] : [],
+  );
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
       <ResearchHero
         eyebrow="Sustainability"
         title="Sustainability initiatives connected to research."
-        body="Sustainability records are loaded from the Research service and surfaced as public initiatives."
+        body="Explore active climate, conservation, biodiversity, water, food security, and circular-economy work managed through the Research service."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Sustainability" }]}
-      />
-      <ResearchSection
-        eyebrow="Initiatives"
-        title="Sustainability records"
-        body="These records support the public sustainability section."
-        tone="white"
       >
-        <GenericRecordGrid
-          records={sustainability}
-          labelFields={["initiative_type", "category", "status"]}
-          metaFields={["start_date", "location"]}
-          emptyMessage="No sustainability records are available."
-        />
-      </ResearchSection>
+        <HeroSnapshot initiatives={initiatives.data} metrics={metrics.data} />
+      </ResearchHero>
+
+      {errors.length > 0 ? <ErrorBand errors={errors} /> : null}
+
+      {initiatives.data.length > 0 ? (
+        <ResearchSection
+          eyebrow="Initiatives"
+          title="Sustainability and climate records"
+          body="Active sustainability records bring together objectives, approach, activities, impact, dates, SDG alignment, and public contact points."
+          tone="white"
+        >
+          <div className="grid gap-5 lg:grid-cols-2">
+            {initiatives.data.map((initiative) => (
+              <InitiativeCard key={initiative.id} initiative={initiative} />
+            ))}
+          </div>
+        </ResearchSection>
+      ) : null}
+
+      {metrics.data.length > 0 || stories.data.length > 0 ? (
+        <ResearchSection
+          eyebrow="Impact"
+          title="Measured sustainability outcomes"
+          body="Impact metrics and success stories show the public evidence behind sustainability work."
+        >
+          <div className="grid gap-5 lg:grid-cols-[1fr_1.2fr]">
+            {metrics.data.length > 0 ? <MetricPanel records={metrics.data} /> : null}
+            {stories.data.length > 0 ? <StoryPanel records={stories.data} /> : null}
+          </div>
+        </ResearchSection>
+      ) : null}
+
+      {partners.data.length > 0 || activities.data.length > 0 ? (
+        <ResearchSection
+          eyebrow="Delivery Network"
+          title="Partners and public activities"
+          body="Partner and event records show who is involved and where sustainability work is happening."
+          tone="white"
+        >
+          <div className="grid gap-5 lg:grid-cols-2">
+            {partners.data.length > 0 ? (
+              <RecordListPanel title="Partners" records={partners.data} />
+            ) : null}
+            {activities.data.length > 0 ? (
+              <RecordListPanel title="Activities" records={activities.data} dateField="start_date" />
+            ) : null}
+          </div>
+        </ResearchSection>
+      ) : null}
     </main>
+  );
+}
+
+function HeroSnapshot({
+  initiatives,
+  metrics,
+}: {
+  initiatives: ResearchGenericRecord[];
+  metrics: ResearchGenericRecord[];
+}) {
+  const featuredCount = initiatives.filter((item) => item.is_featured).length;
+  const activeCount = initiatives.filter((item) => item.status === "active").length;
+
+  return (
+    <div className="grid gap-3 text-white">
+      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
+        Sustainability snapshot
+      </p>
+      <div className="grid grid-cols-2 gap-3">
+        <SnapshotValue label="Initiatives" value={initiatives.length} />
+        <SnapshotValue label="Active" value={activeCount} />
+        <SnapshotValue label="Featured" value={featuredCount} />
+        <SnapshotValue label="Metrics" value={metrics.length} />
+      </div>
+    </div>
+  );
+}
+
+function SnapshotValue({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-md border border-white/15 bg-white/10 p-4">
+      <p className="text-3xl font-bold">{value}</p>
+      <p className="mt-1 text-xs leading-5 text-white/75">{label}</p>
+    </div>
+  );
+}
+
+function InitiativeCard({ initiative }: { initiative: ResearchGenericRecord }) {
+  const dateRange = [formatDate(initiative.start_date), formatDate(initiative.end_date)]
+    .filter(Boolean)
+    .join(" - ");
+  const textBlocks = [
+    ["Summary", initiative.summary],
+    ["Objectives", initiative.objectives],
+    ["Approach", initiative.approach],
+    ["Activities", initiative.activities],
+    ["Impact", initiative.impact],
+  ].filter(([, value]) => compactText(value));
+  const sdgGoals = Array.isArray(initiative.sdg_goals) ? initiative.sdg_goals : [];
+
+  return (
+    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-wrap gap-2">
+        <Badge>{formatLabel(initiative.initiative_type ?? "sustainability")}</Badge>
+        {initiative.status ? <Badge>{formatLabel(initiative.status)}</Badge> : null}
+        {initiative.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
+      </div>
+      <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
+        {compactText(initiative.name) || compactText(initiative.title) || compactText(initiative.code)}
+      </h2>
+      {textBlocks.map(([label, value]) => (
+        <div key={label} className="mt-4">
+          <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
+          <p className="mt-1 text-sm leading-7 text-slate-600">{compactText(value)}</p>
+        </div>
+      ))}
+      {sdgGoals.length > 0 || dateRange || initiative.contact_email || initiative.website ? (
+        <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
+          {dateRange ? <Fact label="Timeline" value={dateRange} /> : null}
+          {sdgGoals.length > 0 ? <Fact label="SDGs" value={sdgGoals.join(", ")} /> : null}
+          {initiative.contact_email ? <Fact label="Contact" value={compactText(initiative.contact_email)} /> : null}
+          {initiative.website ? <Fact label="Website" value={compactText(initiative.website)} /> : null}
+        </dl>
+      ) : null}
+    </article>
+  );
+}
+
+function MetricPanel({ records }: { records: ResearchGenericRecord[] }) {
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-slate-950">Metrics</h2>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {records.map((record) => (
+          <div key={record.id} className="rounded-md bg-slate-50 p-4">
+            <p className="text-2xl font-bold text-primary">
+              {compactText(record.value)}
+              {record.unit ? <span className="text-base"> {compactText(record.unit)}</span> : null}
+            </p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-950">
+              {compactText(record.name) || compactText(record.title)}
+            </p>
+            {record.reporting_year ? (
+              <p className="mt-1 text-xs font-semibold uppercase text-slate-500">
+                {compactText(record.reporting_year)}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function StoryPanel({ records }: { records: ResearchGenericRecord[] }) {
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-slate-950">Stories</h2>
+      <div className="mt-4 divide-y divide-slate-200">
+        {records.slice(0, 5).map((record) => (
+          <article key={record.id} className="py-4 first:pt-0 last:pb-0">
+            <h3 className="text-base font-semibold leading-6 text-slate-950">
+              {compactText(record.title) || compactText(record.name)}
+            </h3>
+            {compactText(record.summary) || compactText(record.impact) ? (
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {compactText(record.summary) || compactText(record.impact)}
+              </p>
+            ) : null}
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RecordListPanel({
+  title,
+  records,
+  dateField,
+}: {
+  title: string;
+  records: ResearchGenericRecord[];
+  dateField?: string;
+}) {
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+      <div className="mt-4 divide-y divide-slate-200">
+        {records.slice(0, 8).map((record) => (
+          <article key={record.id} className="py-4 first:pt-0 last:pb-0">
+            <div className="flex flex-wrap gap-2">
+              {record.partner_type ? <Badge>{formatLabel(record.partner_type)}</Badge> : null}
+              {record.event_type ? <Badge>{formatLabel(record.event_type)}</Badge> : null}
+              {record.status ? <Badge>{formatLabel(record.status)}</Badge> : null}
+            </div>
+            <h3 className="mt-3 text-base font-semibold leading-6 text-slate-950">
+              {compactText(record.name) || compactText(record.title)}
+            </h3>
+            {compactText(record.about) || compactText(record.summary) ? (
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {compactText(record.about) || compactText(record.summary)}
+              </p>
+            ) : null}
+            {dateField && record[dateField] ? (
+              <p className="mt-2 text-xs font-semibold uppercase text-slate-500">
+                {formatDate(record[dateField] as string)}
+              </p>
+            ) : null}
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-slate-50 p-3">
+      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
+      <dd className="mt-1 font-semibold text-slate-950">{value}</dd>
+    </div>
+  );
+}
+
+function ErrorBand({ errors }: { errors: string[] }) {
+  const uniqueErrors = Array.from(new Set(errors));
+
+  return (
+    <section className="px-4 pt-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1320px] space-y-3">
+        {uniqueErrors.map((error) => (
+          <StatusMessage key={error} tone="error">
+            {error}
+          </StatusMessage>
+        ))}
+      </div>
+    </section>
   );
 }

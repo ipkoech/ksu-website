@@ -61,11 +61,11 @@ export default async function InnovationsPage({
               <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
                 {innovation.title}
               </h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                {compactText(innovation.summary) ||
-                  compactText(innovation.problem_addressed) ||
-                  "Innovation summary is being updated."}
-              </p>
+              {compactText(innovation.summary) || compactText(innovation.problem_addressed) ? (
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {compactText(innovation.summary) || compactText(innovation.problem_addressed)}
+                </p>
+              ) : null}
               {innovation.trl_level ? (
                 <p className="mt-5 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-700">
                   Technology readiness level {innovation.trl_level}
@@ -74,9 +74,6 @@ export default async function InnovationsPage({
             </article>
           ))}
         </div>
-        {!innovations.error && innovations.data.length === 0 ? (
-          <StatusMessage>No innovation records matched this view.</StatusMessage>
-        ) : null}
       </ResearchSection>
       <ResearchSection
         eyebrow="Startups & Entrepreneurship"

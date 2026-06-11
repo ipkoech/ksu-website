@@ -31,7 +31,6 @@ export default async function OutputsPage() {
           records={outputs}
           labelFields={["output_type", "category", "status"]}
           metaFields={["published_at", "year"]}
-          emptyMessage="No public outputs are available."
         />
       </ResearchSection>
     </main>

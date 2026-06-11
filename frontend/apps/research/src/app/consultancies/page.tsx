@@ -31,7 +31,6 @@ export default async function ConsultanciesPage() {
           records={consultancies}
           labelFields={["consultancy_type", "category", "status"]}
           metaFields={["client_name", "start_date"]}
-          emptyMessage="No consultancy records are available."
         />
       </ResearchSection>
     </main>

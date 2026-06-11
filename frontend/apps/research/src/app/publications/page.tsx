@@ -59,15 +59,17 @@ export default async function PublicationsPage({
               <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
                 {publication.title}
               </h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                {[
-                  publication.journal_name,
-                  publication.year,
-                ]
-                  .map(compactText)
-                  .filter(Boolean)
-                  .join(" · ") || "Publication source details are being updated."}
-              </p>
+              {[
+                publication.journal_name,
+                publication.year,
+              ].map(compactText).filter(Boolean).length > 0 ? (
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {[
+                    publication.journal_name,
+                    publication.year,
+                  ].map(compactText).filter(Boolean).join(" · ")}
+                </p>
+              ) : null}
               {publication.doi ? (
                 <p className="mt-5 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-700">
                   DOI: {publication.doi}
@@ -76,9 +78,6 @@ export default async function PublicationsPage({
             </article>
           ))}
         </div>
-        {!publications.error && publications.data.length === 0 ? (
-          <StatusMessage>No publication records matched this view.</StatusMessage>
-        ) : null}
       </ResearchSection>
     </main>
   );

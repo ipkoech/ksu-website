@@ -93,28 +93,25 @@ export default async function CommunityImpactPage() {
               <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
                 {event.title ?? event.name}
               </h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                {compactText(event.summary) || compactText(event.description)}
-              </p>
-              <p className="mt-5 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-700">
-                {formatDate(event.start_date) || compactText(event.venue) || "Date pending"}
-              </p>
+              {compactText(event.summary) || compactText(event.description) ? (
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {compactText(event.summary) || compactText(event.description)}
+                </p>
+              ) : null}
+              {formatDate(event.start_date) || compactText(event.venue) ? (
+                <p className="mt-5 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-700">
+                  {formatDate(event.start_date) || compactText(event.venue)}
+                </p>
+              ) : null}
             </article>
           ))}
         </div>
-        {!events.error && events.data.length === 0 ? (
-          <StatusMessage>No public engagement events are available.</StatusMessage>
-        ) : null}
       </ResearchSection>
     </main>
   );
 }
 
 function RecordGrid({ records }: { records: Array<Record<string, any>> }) {
-  if (records.length === 0) {
-    return <StatusMessage>No community impact records are available.</StatusMessage>;
-  }
-
   return (
     <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
       {records.map((record) => (
@@ -123,11 +120,15 @@ function RecordGrid({ records }: { records: Array<Record<string, any>> }) {
           <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
             {record.title ?? record.name}
           </h2>
-          <p className="mt-3 text-sm leading-7 text-slate-600">
-            {compactText(record.summary) ||
-              compactText(record.description) ||
-              compactText(record.impact)}
-          </p>
+          {compactText(record.summary) ||
+          compactText(record.description) ||
+          compactText(record.impact) ? (
+            <p className="mt-3 text-sm leading-7 text-slate-600">
+              {compactText(record.summary) ||
+                compactText(record.description) ||
+                compactText(record.impact)}
+            </p>
+          ) : null}
         </article>
       ))}
     </div>

@@ -37,7 +37,6 @@ export default async function MentorshipPage() {
           records={mentorship}
           labelFields={["mentorship_type", "program_type", "status"]}
           metaFields={["start_date", "application_deadline"]}
-          emptyMessage="No mentorship records are available."
         />
       </ResearchSection>
     </main>

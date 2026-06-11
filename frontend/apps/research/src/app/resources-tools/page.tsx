@@ -100,10 +100,6 @@ export default async function ResourcesToolsPage() {
 }
 
 function ResourceGrid({ records }: { records: Array<Record<string, any>> }) {
-  if (records.length === 0) {
-    return <StatusMessage>No resource library records are available.</StatusMessage>;
-  }
-
   return (
     <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
       {records.map((record) => (
@@ -112,9 +108,11 @@ function ResourceGrid({ records }: { records: Array<Record<string, any>> }) {
           <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
             {record.title ?? record.name}
           </h2>
-          <p className="mt-3 text-sm leading-7 text-slate-600">
-            {compactText(record.summary) || compactText(record.description)}
-          </p>
+          {compactText(record.summary) || compactText(record.description) ? (
+            <p className="mt-3 text-sm leading-7 text-slate-600">
+              {compactText(record.summary) || compactText(record.description)}
+            </p>
+          ) : null}
         </article>
       ))}
     </div>
@@ -140,17 +138,16 @@ function ListPanel({
             <h3 className="text-base font-semibold leading-6 text-slate-950">
               {record.title ?? record.name}
             </h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              {compactText(record.summary) || compactText(record.description)}
-            </p>
+            {compactText(record.summary) || compactText(record.description) ? (
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {compactText(record.summary) || compactText(record.description)}
+              </p>
+            ) : null}
             <p className="mt-2 text-xs font-semibold uppercase text-slate-500">
               {formatLabel(record.news_type ?? record.event_type ?? record.status)}
             </p>
           </article>
         ))}
-        {!error && records.length === 0 ? (
-          <p className="py-4 text-sm text-slate-600">No records available.</p>
-        ) : null}
       </div>
     </section>
   );

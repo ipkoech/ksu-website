@@ -65,12 +65,7 @@ export default async function ResearchPage() {
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-sm leading-6 text-white/75">
-              Research statistics appear here when the Research API is
-              available.
-            </p>
-          )}
+          ) : null}
         </div>
       </ResearchHero>
 
@@ -161,7 +156,11 @@ export default async function ResearchPage() {
               (item) => (
                 <RecordRow
                   key={item.id}
-                  title={item.title ?? "Research record"}
+                  title={
+                    compactText(item.title) ||
+                    compactText("name" in item ? item.name : undefined) ||
+                    compactText(item.id)
+                  }
                   meta={[
                     formatLabel(
                       "category" in item
@@ -198,11 +197,11 @@ export default async function ResearchPage() {
               <h3 className="mt-4 text-xl font-semibold text-slate-950">
                 {item.title}
               </h3>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                {compactText(item.summary) ||
-                  compactText(item.description) ||
-                  "Innovation details are being updated."}
-              </p>
+              {compactText(item.summary) || compactText(item.description) ? (
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {compactText(item.summary) || compactText(item.description)}
+                </p>
+              ) : null}
             </article>
           ))}
           {partners.data.slice(0, 3).map((item) => (
@@ -217,11 +216,11 @@ export default async function ResearchPage() {
               <h3 className="mt-4 text-xl font-semibold text-slate-950">
                 {item.name}
               </h3>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                {compactText(item.about) ||
-                  compactText(item.collaboration_areas) ||
-                  "Partner details are being updated."}
-              </p>
+              {compactText(item.about) || compactText(item.collaboration_areas) ? (
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {compactText(item.about) || compactText(item.collaboration_areas)}
+                </p>
+              ) : null}
             </article>
           ))}
         </div>
@@ -248,9 +247,7 @@ function RecordPanel({
         </a>
       </div>
       <div className="mt-4 divide-y divide-slate-200">
-        {children || (
-          <p className="py-4 text-sm text-slate-600">No records available.</p>
-        )}
+        {children}
       </div>
     </section>
   );

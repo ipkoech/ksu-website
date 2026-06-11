@@ -40,7 +40,6 @@ export default async function ExpertisePage() {
           labelFields={["role", "staff_type", "status"]}
           descriptionFields={["bio", "summary", "description"]}
           metaFields={["email", "phone"]}
-          emptyMessage="No research team records are available."
         />
       </ResearchSection>
       <ResearchSection
@@ -52,12 +51,10 @@ export default async function ExpertisePage() {
           <GenericRecordGrid
             records={expertiseTags}
             labelFields={["category", "status"]}
-            emptyMessage="No expertise tags are available."
           />
           <GenericRecordGrid
             records={focusAreas}
             labelFields={["category", "status"]}
-            emptyMessage="No focus areas are available."
           />
         </div>
       </ResearchSection>

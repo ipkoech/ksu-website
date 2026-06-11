@@ -34,7 +34,6 @@ export default async function GuidelinesPage() {
           records={guidelines}
           labelFields={["guideline_type", "type", "status"]}
           metaFields={["version", "effective_date"]}
-          emptyMessage="No research guidelines are available."
         />
       </ResearchSection>
       <ResearchSection
@@ -46,7 +45,6 @@ export default async function GuidelinesPage() {
           records={grantGuidelines}
           labelFields={["guideline_type", "category", "status"]}
           metaFields={["version", "effective_date"]}
-          emptyMessage="No grant guidelines are available."
         />
       </ResearchSection>
     </main>

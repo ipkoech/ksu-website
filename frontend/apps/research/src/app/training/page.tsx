@@ -31,7 +31,6 @@ export default async function TrainingPage() {
           records={training}
           labelFields={["program_type", "delivery_mode", "status"]}
           metaFields={["start_date", "venue"]}
-          emptyMessage="No training records are available."
         />
       </ResearchSection>
     </main>

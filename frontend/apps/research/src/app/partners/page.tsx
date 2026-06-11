@@ -61,20 +61,19 @@ export default async function PartnersPage({
               <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
                 {partner.name}
               </h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                {compactText(partner.about) ||
-                  compactText(partner.collaboration_areas) ||
-                  "Partner profile is being updated."}
-              </p>
-              <p className="mt-5 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-700">
-                {compactText(partner.country) || "International collaboration"}
-              </p>
+              {compactText(partner.about) || compactText(partner.collaboration_areas) ? (
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {compactText(partner.about) || compactText(partner.collaboration_areas)}
+                </p>
+              ) : null}
+              {partner.country ? (
+                <p className="mt-5 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-700">
+                  {compactText(partner.country)}
+                </p>
+              ) : null}
             </article>
           ))}
         </div>
-        {!partners.error && partners.data.length === 0 ? (
-          <StatusMessage>No partner records matched this view.</StatusMessage>
-        ) : null}
       </ResearchSection>
       <ResearchSection
         eyebrow="For Industry Partners"

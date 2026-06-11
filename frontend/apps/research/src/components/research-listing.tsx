@@ -10,7 +10,6 @@ import {
 export function GenericRecordGrid({
   records,
   error,
-  emptyMessage = "No records are available.",
   labelFields = ["category", "type", "status"],
   descriptionFields = ["summary", "description", "about", "bio", "impact"],
   metaFields = [],
@@ -38,9 +37,6 @@ export function GenericRecordGrid({
           />
         ))}
       </div>
-      {!records.error && !error && records.data.length === 0 ? (
-        <StatusMessage>{emptyMessage}</StatusMessage>
-      ) : null}
     </>
   );
 }
@@ -48,7 +44,6 @@ export function GenericRecordGrid({
 export function GenericRecordList({
   records,
   error,
-  emptyMessage = "No records are available.",
   labelFields = ["category", "type", "status"],
   descriptionFields = ["summary", "description", "about", "bio", "impact"],
   limit,
@@ -70,24 +65,24 @@ export function GenericRecordList({
       <div className="divide-y divide-slate-200">
         {visibleRecords.map((record) => (
           <article key={record.id} className="py-4 first:pt-0 last:pb-0">
+            {getRecordLabels(record, labelFields).length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {getRecordLabels(record, labelFields).map((label) => (
                 <Badge key={label}>{label}</Badge>
               ))}
             </div>
+            ) : null}
             <h3 className="mt-3 text-base font-semibold leading-6 text-slate-950">
               {getRecordTitle(record)}
             </h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              {getRecordDescription(record, descriptionFields) ||
-                "Details are being updated."}
-            </p>
+            {getRecordDescription(record, descriptionFields) ? (
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {getRecordDescription(record, descriptionFields)}
+              </p>
+            ) : null}
           </article>
         ))}
       </div>
-      {!records.error && !error && visibleRecords.length === 0 ? (
-        <StatusMessage>{emptyMessage}</StatusMessage>
-      ) : null}
     </section>
   );
 }
@@ -120,10 +115,11 @@ function GenericRecordCard({
       <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
         {getRecordTitle(record)}
       </h2>
-      <p className="mt-3 text-sm leading-7 text-slate-600">
-        {getRecordDescription(record, descriptionFields) ||
-          "Details are being updated."}
-      </p>
+      {getRecordDescription(record, descriptionFields) ? (
+        <p className="mt-3 text-sm leading-7 text-slate-600">
+          {getRecordDescription(record, descriptionFields)}
+        </p>
+      ) : null}
       {meta.length > 0 ? (
         <p className="mt-5 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-700">
           {meta.join(" · ")}
@@ -139,7 +135,8 @@ function getRecordTitle(record: ResearchGenericRecord) {
     compactText(record.name) ||
     compactText(record.display_name) ||
     compactText(record.organization_name) ||
-    "Research record"
+    compactText(record.code) ||
+    compactText(record.id)
   );
 }
 

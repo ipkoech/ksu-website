@@ -34,7 +34,6 @@ export default async function FacilitiesPage() {
           records={facilities}
           labelFields={["facility_type", "farm_type", "status"]}
           metaFields={["location"]}
-          emptyMessage="No facilities are available."
         />
       </ResearchSection>
       <ResearchSection
@@ -46,7 +45,6 @@ export default async function FacilitiesPage() {
           records={services}
           labelFields={["service_type", "type", "status"]}
           metaFields={["turnaround_time"]}
-          emptyMessage="No research services are available."
         />
       </ResearchSection>
     </main>

@@ -33,7 +33,6 @@ export default async function FormsPage() {
         <GenericRecordGrid
           records={resources}
           labelFields={["resource_type", "category", "status"]}
-          emptyMessage="No forms or templates are available."
         />
       </ResearchSection>
       <ResearchSection
@@ -44,7 +43,6 @@ export default async function FormsPage() {
         <GenericRecordGrid
           records={guidelines}
           labelFields={["guideline_type", "type", "status"]}
-          emptyMessage="No related guidelines are available."
         />
       </ResearchSection>
     </main>

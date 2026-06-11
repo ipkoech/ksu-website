@@ -62,18 +62,19 @@ export default async function CapacityPage() {
               <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
                 {item.title}
               </h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                {compactText(item.summary) || "Training details are being updated."}
-              </p>
-              <p className="mt-5 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-700">
-                {formatDate(item.start_date) || compactText(item.venue) || "Schedule pending"}
-              </p>
+              {compactText(item.summary) ? (
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {compactText(item.summary)}
+                </p>
+              ) : null}
+              {formatDate(item.start_date) || compactText(item.venue) ? (
+                <p className="mt-5 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-700">
+                  {formatDate(item.start_date) || compactText(item.venue)}
+                </p>
+              ) : null}
             </article>
           ))}
         </div>
-        {!training.error && training.data.length === 0 ? (
-          <StatusMessage>No training records matched this view.</StatusMessage>
-        ) : null}
       </ResearchSection>
       <ResearchSection
         eyebrow="Mentorship and Scholarships"
@@ -134,17 +135,16 @@ function SupportPanel({
             <h3 className="text-base font-semibold leading-6 text-slate-950">
               {record.title ?? record.name}
             </h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              {compactText(record.summary) || compactText(record.description)}
-            </p>
+            {compactText(record.summary) || compactText(record.description) ? (
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {compactText(record.summary) || compactText(record.description)}
+              </p>
+            ) : null}
             <p className="mt-2 text-xs font-semibold uppercase text-slate-500">
               {formatLabel(record.status)}
             </p>
           </article>
         ))}
-        {!error && records.length === 0 ? (
-          <p className="py-4 text-sm text-slate-600">No records available.</p>
-        ) : null}
       </div>
     </section>
   );

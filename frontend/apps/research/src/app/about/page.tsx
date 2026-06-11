@@ -35,7 +35,6 @@ export default async function AboutPage() {
           records={offices}
           labelFields={["office_type", "status"]}
           metaFields={["email", "phone"]}
-          emptyMessage="No research offices are available."
         />
       </ResearchSection>
       <ResearchSection
@@ -47,13 +46,11 @@ export default async function AboutPage() {
           <GenericRecordGrid
             records={boards}
             labelFields={["board_type", "status"]}
-            emptyMessage="No board records are available."
           />
           <GenericRecordGrid
             records={boardMembers}
             labelFields={["role", "member_type", "status"]}
             descriptionFields={["bio", "summary", "description"]}
-            emptyMessage="No board member records are available."
           />
         </div>
       </ResearchSection>

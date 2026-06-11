@@ -31,7 +31,6 @@ export default async function ScholarshipsPage() {
           records={scholarships}
           labelFields={["scholarship_type", "category", "status"]}
           metaFields={["deadline", "amount"]}
-          emptyMessage="No scholarship records are available."
         />
       </ResearchSection>
     </main>

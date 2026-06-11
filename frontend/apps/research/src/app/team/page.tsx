@@ -32,7 +32,6 @@ export default async function TeamPage() {
           labelFields={["role", "staff_type", "status"]}
           descriptionFields={["bio", "summary", "description"]}
           metaFields={["email", "phone"]}
-          emptyMessage="No research team members are available."
         />
       </ResearchSection>
       <ResearchSection
@@ -44,7 +43,6 @@ export default async function TeamPage() {
           records={offices}
           labelFields={["office_type", "status"]}
           metaFields={["email", "phone"]}
-          emptyMessage="No research offices are available."
         />
       </ResearchSection>
     </main>

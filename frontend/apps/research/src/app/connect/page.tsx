@@ -226,11 +226,15 @@ function DirectoryPanel({
             <h3 className="mt-3 text-base font-semibold leading-6 text-slate-950">
               {record.title ?? record.name ?? record.display_name}
             </h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              {compactText(record.summary) ||
-                compactText(record.description) ||
-                compactText(record.bio)}
-            </p>
+            {compactText(record.summary) ||
+            compactText(record.description) ||
+            compactText(record.bio) ? (
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {compactText(record.summary) ||
+                  compactText(record.description) ||
+                  compactText(record.bio)}
+              </p>
+            ) : null}
             {record.email || record.phone ? (
               <p className="mt-2 text-sm font-semibold text-primary">
                 {compactText(record.email) || compactText(record.phone)}
@@ -238,9 +242,6 @@ function DirectoryPanel({
             ) : null}
           </article>
         ))}
-        {!error && records.length === 0 ? (
-          <p className="py-4 text-sm text-slate-600">No records available.</p>
-        ) : null}
       </div>
     </section>
   );

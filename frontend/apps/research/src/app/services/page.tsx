@@ -31,7 +31,6 @@ export default async function ServicesPage() {
           records={services}
           labelFields={["service_type", "type", "status"]}
           metaFields={["turnaround_time"]}
-          emptyMessage="No research services are available."
         />
       </ResearchSection>
     </main>

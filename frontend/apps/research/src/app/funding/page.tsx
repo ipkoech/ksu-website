@@ -62,16 +62,20 @@ export default async function FundingPage({
               <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
                 {grant.title}
               </h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                {compactText(grant.summary) || "Grant summary is being updated."}
-              </p>
+              {compactText(grant.summary) ? (
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {compactText(grant.summary)}
+                </p>
+              ) : null}
               <dl className="mt-5 grid gap-3 text-sm">
-                <div className="rounded-md bg-slate-50 p-3">
-                  <dt className="text-xs font-semibold uppercase text-slate-500">Funder</dt>
-                  <dd className="mt-1 font-semibold text-slate-950">
-                    {grant.funder_name || "Kisii University"}
-                  </dd>
-                </div>
+                {grant.funder_name ? (
+                  <div className="rounded-md bg-slate-50 p-3">
+                    <dt className="text-xs font-semibold uppercase text-slate-500">Funder</dt>
+                    <dd className="mt-1 font-semibold text-slate-950">
+                      {grant.funder_name}
+                    </dd>
+                  </div>
+                ) : null}
                 {grant.deadline ? (
                   <div className="rounded-md bg-slate-50 p-3">
                     <dt className="text-xs font-semibold uppercase text-slate-500">Deadline</dt>
@@ -84,9 +88,6 @@ export default async function FundingPage({
             </article>
           ))}
         </div>
-        {!grants.error && grants.data.length === 0 ? (
-          <StatusMessage>No funding records matched this view.</StatusMessage>
-        ) : null}
       </ResearchSection>
       <ResearchSection
         eyebrow="Funding & Grants"

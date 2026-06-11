@@ -31,7 +31,6 @@ export default async function NewsPage() {
           records={news}
           labelFields={["news_type", "category", "status"]}
           metaFields={["published_at", "created_at"]}
-          emptyMessage="No research news is available."
         />
       </ResearchSection>
       <ResearchSection
@@ -43,7 +42,6 @@ export default async function NewsPage() {
           records={articles}
           labelFields={["article_type", "category", "status"]}
           metaFields={["published_at", "created_at"]}
-          emptyMessage="No research articles are available."
         />
       </ResearchSection>
     </main>

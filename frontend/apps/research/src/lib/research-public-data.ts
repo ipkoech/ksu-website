@@ -137,6 +137,42 @@ export function getFacilities() {
   );
 }
 
+export function getFarmProjects() {
+  return safeList<ResearchProject>(() =>
+    researchServiceApi.projects.list({
+      is_active: true,
+      is_public: true,
+      project_type: "action",
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getFarmPartners() {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.partners.list({
+      is_active: true,
+      is_public: true,
+      status: "active",
+      partner_type: "community",
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getFarmActivities() {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.events.list({
+      is_active: true,
+      event_type: "workshop",
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
 export function getPrograms() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.programs.list({
@@ -263,7 +299,28 @@ export function getSustainability() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.sustainability.list({
       is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getSustainabilityPartners() {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.partners.list({
+      is_active: true,
       is_public: true,
+      status: "active",
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getSustainabilityActivities() {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.events.list({
+      is_active: true,
       page: 1,
       per_page: 100,
     }),

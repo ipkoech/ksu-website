@@ -31,7 +31,6 @@ export default async function EventsPage() {
           records={events}
           labelFields={["event_type", "category", "status"]}
           metaFields={["start_date", "venue", "location"]}
-          emptyMessage="No research events are available."
         />
       </ResearchSection>
     </main>

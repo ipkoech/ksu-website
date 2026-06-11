@@ -31,7 +31,6 @@ export default async function CentersPage() {
           records={centers}
           labelFields={["center_type", "status"]}
           descriptionFields={["summary", "description", "mandate"]}
-          emptyMessage="No research centers are available."
         />
       </ResearchSection>
     </main>

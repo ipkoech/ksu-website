@@ -60,15 +60,14 @@ export default async function ImpactMetricsPage() {
               <h2 className="mt-3 text-base font-semibold leading-6 text-slate-950">
                 {metric.title ?? metric.name ?? metric.label}
               </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {compactText(metric.description)}
-              </p>
+              {compactText(metric.description) ? (
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {compactText(metric.description)}
+                </p>
+              ) : null}
             </article>
           ))}
         </div>
-        {!metrics.error && metrics.data.length === 0 ? (
-          <StatusMessage>No impact metrics are available.</StatusMessage>
-        ) : null}
       </ResearchSection>
       <ResearchSection
         eyebrow="Success Stories"
@@ -82,9 +81,11 @@ export default async function ImpactMetricsPage() {
               <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
                 {record.title ?? record.name}
               </h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                {compactText(record.summary) || compactText(record.description)}
-              </p>
+              {compactText(record.summary) || compactText(record.description) ? (
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {compactText(record.summary) || compactText(record.description)}
+                </p>
+              ) : null}
             </article>
           ))}
         </div>
@@ -93,9 +94,6 @@ export default async function ImpactMetricsPage() {
             <StatusMessage tone="error">{error}</StatusMessage>
           </div>
         ))}
-        {!stories.error && !sustainability.error && stories.data.length + sustainability.data.length === 0 ? (
-          <StatusMessage>No success stories are available.</StatusMessage>
-        ) : null}
       </ResearchSection>
       <ResearchSection
         eyebrow="Download Reports"

@@ -31,7 +31,6 @@ export default async function ProgramsPage() {
           records={programs}
           labelFields={["program_type", "status"]}
           metaFields={["start_date", "end_date"]}
-          emptyMessage="No public research programs are available."
         />
       </ResearchSection>
       <ResearchSection
@@ -42,7 +41,6 @@ export default async function ProgramsPage() {
         <GenericRecordGrid
           records={themes}
           labelFields={["theme_type", "category", "status"]}
-          emptyMessage="No research themes are available."
         />
       </ResearchSection>
     </main>
