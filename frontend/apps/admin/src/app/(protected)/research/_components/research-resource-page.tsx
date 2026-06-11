@@ -1,6 +1,11 @@
 "use client";
 
-import { EditableServiceResourcePage, type EditableField, type EditableListFilter } from "@/components/dashboard/editable-service-resource-page";
+import {
+  EditableServiceResourcePage,
+  type EditableField,
+  type EditableListFilter,
+  type EditableRecordWorkflowAction,
+} from "@/components/dashboard/editable-service-resource-page";
 import { researchServiceApi, type ResearchGenericPayload, type ResearchGenericRecord } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
 
@@ -25,6 +30,9 @@ interface ResearchResourcePageProps {
   metaFields?: string[];
   detailBaseHref?: string;
   detailHref?: (record: ResearchGenericRecord) => string | null | undefined;
+  getRecordWorkflowActions?: (
+    record: ResearchGenericRecord,
+  ) => Array<EditableRecordWorkflowAction<ResearchGenericRecord, ResearchGenericPayload>>;
 }
 
 const FILTERABLE_RELATIONS: Record<string, EditableListFilter["relation"]> = {
@@ -106,6 +114,7 @@ export function ResearchResourcePage({
   metaFields = ["code", "category", "status"],
   detailBaseHref,
   detailHref,
+  getRecordWorkflowActions,
 }: ResearchResourcePageProps) {
   const { hasScope } = usePermissions();
   const canManage = manageScopes.some((scope) => hasScope(scope));
@@ -135,6 +144,7 @@ export function ResearchResourcePage({
         detailHref?.(record) ??
         (detailBaseHref && record.slug ? `${detailBaseHref}/${record.slug}` : null)
       }
+      getRecordWorkflowActions={getRecordWorkflowActions}
       emptyMessage={emptyMessage}
       buildPayload={(values) => ({ ...defaults, ...values })}
     />

@@ -74,6 +74,17 @@ export interface EditableListFilter {
   };
 }
 
+export interface EditableRecordWorkflowAction<
+  TRecord extends RecordShape,
+  TPayload extends RecordShape,
+> {
+  label: string;
+  successMessage?: string;
+  variant?: "default" | "outline" | "secondary" | "destructive" | "ghost";
+  className?: string;
+  payload: Partial<TPayload> | ((record: TRecord) => Partial<TPayload>);
+}
+
 interface EditableServiceResourcePageProps<
   TRecord extends RecordShape,
   TPayload extends RecordShape,
@@ -91,6 +102,7 @@ interface EditableServiceResourcePageProps<
   getRecordTitle: (record: TRecord) => string;
   getRecordMeta?: (record: TRecord) => string;
   getRecordDetailHref?: (record: TRecord) => string | null | undefined;
+  getRecordWorkflowActions?: (record: TRecord) => Array<EditableRecordWorkflowAction<TRecord, TPayload>>;
   emptyMessage: string;
   buildPayload?: (
     values: RecordShape,
@@ -206,6 +218,7 @@ export function EditableServiceResourcePage<
   getRecordTitle,
   getRecordMeta,
   getRecordDetailHref,
+  getRecordWorkflowActions,
   emptyMessage,
   buildPayload,
   validate,
@@ -348,14 +361,52 @@ export function EditableServiceResourcePage<
     }
   };
 
+  const runWorkflowAction = async (
+    record: TRecord,
+    action: EditableRecordWorkflowAction<TRecord, TPayload>,
+  ) => {
+    if (!canEdit) {
+      toast.error(`You do not have permission to update ${title.toLowerCase()}`);
+      return;
+    }
+
+    const payload =
+      typeof action.payload === "function" ? action.payload(record) : action.payload;
+
+    try {
+      await updateMutation.mutateAsync({ id: record.id, payload });
+      toast.success(action.successMessage ?? `${title} updated successfully`);
+    } catch {
+      toast.error(`Failed to update ${title.toLowerCase()}`);
+    }
+  };
+
   const renderRecordActions = (record: TRecord) => {
     const detailHref = getRecordDetailHref?.(record);
-    const canShowMenu = Boolean(detailHref) || canEdit || Boolean(deleteRecord && canDelete);
+    const workflowActions = getRecordWorkflowActions?.(record) ?? [];
+    const canShowMenu =
+      workflowActions.length > 0 ||
+      Boolean(detailHref) ||
+      canEdit ||
+      Boolean(deleteRecord && canDelete);
 
     if (!canShowMenu) return null;
 
     return (
       <div className="flex shrink-0 items-center gap-2">
+        {workflowActions.slice(0, 2).map((action) => (
+          <Button
+            key={action.label}
+            type="button"
+            variant={action.variant ?? "secondary"}
+            size="sm"
+            className={action.className}
+            disabled={updateMutation.isPending}
+            onClick={() => runWorkflowAction(record, action)}
+          >
+            {action.label}
+          </Button>
+        ))}
         {detailHref ? (
           <Button asChild type="button" variant="outline" size="sm" className="min-w-[118px] justify-start">
             <Link href={detailHref}>
@@ -389,6 +440,18 @@ export function EditableServiceResourcePage<
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuLabel>Record Actions</DropdownMenuLabel>
+            {workflowActions.map((action) => (
+              <DropdownMenuItem
+                key={action.label}
+                disabled={updateMutation.isPending}
+                onClick={() => runWorkflowAction(record, action)}
+              >
+                {action.label}
+              </DropdownMenuItem>
+            ))}
+            {workflowActions.length > 0 && (detailHref || canEdit || (deleteRecord && canDelete)) ? (
+              <DropdownMenuSeparator />
+            ) : null}
             {detailHref ? (
               <DropdownMenuItem asChild>
                 <Link href={detailHref}>
