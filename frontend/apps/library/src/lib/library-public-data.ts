@@ -16,6 +16,8 @@ export type CatalogSearchData = {
   resources: PublicLibraryData<LibraryResource>;
   selectedLibraryId: string;
   query: string;
+  resourceType: string;
+  status: string;
 };
 
 export type BranchServices = {
@@ -86,9 +88,16 @@ export function getPublicBranches() {
 }
 
 export async function getCatalogSearchData(
-  options: { libraryId?: string; query?: string } = {},
+  options: {
+    libraryId?: string;
+    query?: string;
+    resourceType?: string;
+    status?: string;
+  } = {},
 ): Promise<CatalogSearchData> {
   const query = options.query?.trim() ?? "";
+  const resourceType = options.resourceType?.trim() ?? "";
+  const status = options.status?.trim() ?? "";
   const branches = await getPublicBranches();
   const selectedLibraryId =
     branches.data.find((branch) => branch.id === options.libraryId)?.id ??
@@ -101,6 +110,8 @@ export async function getCatalogSearchData(
       resources: { data: [], error: branches.error },
       selectedLibraryId,
       query,
+      resourceType,
+      status,
     };
   }
 
@@ -108,12 +119,14 @@ export async function getCatalogSearchData(
     libraryServiceApi.resources.list({
       library_id: selectedLibraryId,
       q: query || undefined,
+      resource_type: resourceType || undefined,
+      status: status || undefined,
       page: 1,
       per_page: 100,
     }),
   );
 
-  return { branches, resources, selectedLibraryId, query };
+  return { branches, resources, selectedLibraryId, query, resourceType, status };
 }
 
 export function getElectronicResources(query?: string) {
