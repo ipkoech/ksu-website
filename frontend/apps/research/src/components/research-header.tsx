@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { cn } from "@ksu/ui/lib/utils";
 import {
   ArrowRight,
   Award,
@@ -431,7 +432,7 @@ export function ResearchHeader() {
               priority
             />
             <span className="min-w-0">
-              <span className="block text-lg font-bold uppercase leading-none text-primary sm:text-2xl lg:text-xl">
+              <span className="block font-[family-name:var(--font-display)] text-lg font-bold uppercase leading-none text-primary sm:text-2xl lg:text-xl">
                 KSU Research
               </span>
               <span className="mt-1 block text-xs font-semibold leading-none text-slate-600 sm:text-sm lg:text-xs">
@@ -491,8 +492,8 @@ export function ResearchHeader() {
         </div>
 
         {isOpen ? (
-          <div className="max-h-[calc(100vh-90px)] overflow-y-auto border-t border-primary/10 py-3 2xl:hidden">
-            <div className="grid gap-2 pb-4">
+          <div className="max-h-[calc(100vh-90px)] overflow-y-auto border-t border-primary/10 bg-white py-2 2xl:hidden">
+            <div className="pb-4">
               {researchNavItems.map((item) => (
                 <MobileMenuItem
                   key={item.label}
@@ -519,8 +520,8 @@ export function ResearchHeader() {
 
 function ResearchUtilityBar() {
   return (
-    <div className="hidden border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wide text-slate-500 lg:block">
-      <div className="flex min-h-10 w-full items-center justify-between gap-4 px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <div className="hidden border-b border-white/10 bg-secondary text-xs text-white shadow-[inset_0_-1px_rgba(255,255,255,0.08)] xl:block">
+      <div className="flex min-h-10 w-full items-center justify-between gap-4 px-4 py-1.5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <nav className="flex min-w-0 items-center gap-5" aria-label="Research utility">
           {utilityLinks.map((link, index) => {
             const Icon = link.icon;
@@ -530,7 +531,7 @@ function ResearchUtilityBar() {
                 href={link.href}
                 target={link.external ? "_blank" : undefined}
                 rel={link.external ? "noopener noreferrer" : undefined}
-                className="inline-flex min-h-10 shrink-0 items-center gap-1.5 transition hover:text-primary"
+                className="inline-flex min-h-10 shrink-0 items-center gap-1.5 text-white/80 transition-colors hover:text-white"
               >
                 {Icon ? (
                   <Icon
@@ -546,14 +547,14 @@ function ResearchUtilityBar() {
         <div className="flex shrink-0 items-center gap-4">
           <Link
             href="/search"
-            className="inline-flex min-h-10 items-center gap-1.5 transition hover:text-primary"
+            className="inline-flex min-h-10 items-center gap-1.5 text-white/80 transition-colors hover:text-white"
           >
             <Search aria-hidden className="h-3.5 w-3.5" />
             Search
           </Link>
           <Link
             href="/connect"
-            className="inline-flex min-h-10 items-center gap-1.5 transition hover:text-primary"
+            className="inline-flex min-h-10 items-center gap-1.5 text-white/80 transition-colors hover:text-white"
           >
             <HelpCircle aria-hidden className="h-3.5 w-3.5" />
             Help Desk
@@ -578,11 +579,12 @@ function DesktopMenuItem({
       <Link
         href={item.href}
         aria-current={active ? "page" : undefined}
-        className={
+        className={cn(
+          "inline-flex min-h-11 items-center gap-1 rounded-full px-3 py-2 text-sm font-semibold transition-colors motion-reduce:transition-none",
           active
-            ? "inline-flex min-h-11 items-center gap-1.5 rounded-full bg-primary/10 px-3 py-2 text-xs font-semibold text-primary"
-            : "inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-primary/10 hover:text-primary"
-        }
+            ? "bg-primary/10 text-primary"
+            : "text-slate-700 hover:bg-primary/10 hover:text-primary",
+        )}
       >
         <span className="max-w-[128px] truncate">{item.label}</span>
         <ChevronDown
@@ -590,41 +592,41 @@ function DesktopMenuItem({
           className="h-3.5 w-3.5 opacity-60 transition group-hover:rotate-180"
         />
       </Link>
-      <div className="invisible absolute left-1/2 top-full z-50 w-[620px] -translate-x-1/2 translate-y-2 pt-3 opacity-0 transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl shadow-slate-950/10">
-          <div className="grid grid-cols-[220px_1fr]">
-            <div className="bg-slate-50 p-5">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
-                <Icon aria-hidden className="h-5 w-5" />
-              </span>
-              <h2 className="mt-4 text-base font-semibold leading-6 text-slate-950">
-                {item.label}
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+      <div className="invisible absolute left-1/2 top-full z-50 w-[min(760px,calc(100vw-2rem))] -translate-x-1/2 translate-y-2 pt-3 opacity-0 transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+        <div className="max-h-[calc(100vh-6rem)] overflow-y-auto rounded-lg border border-primary/10 bg-white p-4 shadow-[0_24px_80px_-48px_rgba(30,64,175,0.6)]">
+          <div className="mb-4 flex items-start justify-between gap-4 border-b border-primary/10 pb-4">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <Icon aria-hidden className="h-4 w-4 text-primary" />
+                <h2 className="text-sm font-semibold text-slate-950">
+                  {item.label}
+                </h2>
+              </div>
+              <p className="mt-1 max-w-xl text-xs leading-5 text-slate-500">
                 {item.description}
               </p>
-              <Link
-                href={item.href}
-                className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary"
-              >
-                Go to section
-                <ArrowRight aria-hidden className="h-4 w-4" />
-              </Link>
             </div>
-            <div className="grid gap-5 p-5 sm:grid-cols-2">
-              {item.groups?.map((group) => (
-                <div key={group.title}>
-                  <h3 className="border-b border-slate-100 pb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
-                    {group.title}
-                  </h3>
-                  <div className="mt-2 grid gap-1">
-                    {group.items.map((subItem) => (
-                      <SubMenuLink key={subItem.label} item={subItem} />
-                    ))}
-                  </div>
+            <Link
+              href={item.href}
+              className="inline-flex min-h-9 shrink-0 items-center gap-1 text-sm font-medium text-primary hover:underline"
+            >
+              View all
+              <ArrowRight aria-hidden className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="grid gap-5 md:grid-cols-2">
+            {item.groups?.map((group) => (
+              <div key={group.title}>
+                <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  {group.title}
+                </h3>
+                <div className="grid gap-1.5">
+                  {group.items.map((subItem) => (
+                    <SubMenuLink key={subItem.label} item={subItem} />
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -633,25 +635,16 @@ function DesktopMenuItem({
 }
 
 function SubMenuLink({ item }: { item: NavItem }) {
-  const Icon = item.icon ?? ArrowRight;
-
   return (
     <Link
       href={item.href}
       target={item.external ? "_blank" : undefined}
       rel={item.external ? "noopener noreferrer" : undefined}
-      className="group/item flex gap-3 rounded-md p-3 transition hover:bg-slate-50"
+      className="block min-h-11 rounded-lg px-2.5 py-2 text-sm leading-5 text-gray-700 transition-colors motion-reduce:transition-none hover:bg-gray-50 hover:text-primary"
     >
-      <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500 transition group-hover/item:bg-primary/10 group-hover/item:text-primary">
-        <Icon aria-hidden className="h-4 w-4" />
-      </span>
-      <span>
-        <span className="block text-sm font-semibold leading-5 text-slate-950 transition group-hover/item:text-primary">
-          {item.label}
-        </span>
-        <span className="mt-1 line-clamp-2 block text-xs leading-5 text-slate-500">
-          {item.description}
-        </span>
+      <span className="break-words font-medium">{item.label}</span>
+      <span className="mt-0.5 line-clamp-2 block text-xs leading-5 text-gray-500">
+        {item.description}
       </span>
     </Link>
   );
@@ -669,25 +662,26 @@ function MobileMenuItem({
   const Icon = item.icon;
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white">
+    <section className="border-b border-slate-100 last:border-b-0">
       <Link
         href={item.href}
         aria-current={active ? "page" : undefined}
         onClick={onClick}
-        className={
+        className={cn(
+          "flex min-h-12 items-center gap-3 px-5 py-3 text-sm font-semibold transition-colors",
           active
-            ? "flex min-h-11 items-center gap-3 rounded-t-lg bg-primary/10 px-4 py-3 text-sm font-semibold text-primary"
-            : "flex min-h-11 items-center gap-3 rounded-t-lg px-4 py-3 text-sm font-semibold text-slate-800 transition hover:bg-primary/10 hover:text-primary"
-        }
+            ? "bg-primary/10 text-primary"
+            : "text-slate-800 hover:bg-slate-50 hover:text-primary",
+        )}
       >
         <Icon aria-hidden className="h-4 w-4" />
         {item.label}
       </Link>
       {item.groups ? (
-        <div className="grid gap-3 border-t border-slate-100 px-4 py-3">
+        <div className="grid gap-3 bg-slate-50 px-5 py-3">
           {item.groups.map((group) => (
             <div key={group.title}>
-              <h3 className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
                 {group.title}
               </h3>
               <div className="mt-2 grid gap-1">
@@ -700,7 +694,7 @@ function MobileMenuItem({
                       target={subItem.external ? "_blank" : undefined}
                       rel={subItem.external ? "noopener noreferrer" : undefined}
                       onClick={onClick}
-                      className="flex min-h-10 items-center gap-3 rounded-md px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-50 hover:text-primary"
+                      className="flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white hover:text-primary"
                     >
                       <SubIcon aria-hidden className="h-4 w-4 text-slate-400" />
                       {subItem.label}
@@ -731,8 +725,8 @@ function HeaderLink({
       aria-current={active ? "page" : undefined}
       className={
         active
-          ? "inline-flex min-h-11 items-center rounded-full bg-primary/10 px-3 py-2 text-xs font-semibold text-primary"
-          : "inline-flex min-h-11 items-center rounded-full px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-primary/10 hover:text-primary"
+          ? "inline-flex min-h-11 items-center rounded-full bg-primary/10 px-3.5 py-2 text-sm font-semibold text-primary"
+          : "inline-flex min-h-11 items-center rounded-full px-3.5 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-primary/10 hover:text-primary"
       }
     >
       {label}
