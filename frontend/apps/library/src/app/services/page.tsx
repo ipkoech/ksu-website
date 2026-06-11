@@ -1,4 +1,6 @@
+import type { LibraryBranch } from "@ksu/api-client";
 import {
+  IconCard,
   ExternalAnchor,
   LibraryHero,
   LibrarySection,
@@ -21,9 +23,30 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
+type PublishedService = Record<string, any> & {
+  branch: LibraryBranch;
+};
+
 export default async function LibraryServicesPage() {
   const { branches, groupedServices, regulations, errors } =
     await getLibraryServicesData();
+  const allServices: PublishedService[] = groupedServices.flatMap(
+    ({ branch, services }) =>
+      services.map(
+        (service) =>
+          ({ ...(service as Record<string, any>), branch }) as PublishedService,
+      ),
+  );
+  const serviceTypes = summarizeServices(allServices);
+  const branchContacts = branches.data
+    .filter((branch) => branch.phone || branch.email || branch.address)
+    .slice(0, 4);
+  const featuredRegulations = regulations.data.slice(0, 3);
+  const supportService = allServices.find((item) =>
+    ["reference", "training", "inter_library_loan"].includes(
+      String(item.service_type ?? ""),
+    ),
+  );
 
   return (
     <main id="library-main" className="min-h-screen bg-white">
@@ -64,6 +87,136 @@ export default async function LibraryServicesPage() {
             ))}
           </div>
         </section>
+      ) : null}
+
+      <LibrarySection
+        eyebrow="Start Here"
+        title="Common service journeys"
+        body="Use these entry points for the library support tasks students, staff, and researchers usually need first."
+        tone="white"
+      >
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          <IconCard
+            icon="book"
+            title="Borrowing and circulation"
+            body="Review borrowing support, item access, branch contacts, and active rules before visiting a service desk."
+            href="#services-heading"
+            action="View services"
+          />
+          <IconCard
+            icon="file"
+            title="Printing and scanning"
+            body="Find branch services for document handling, copies, scans, and related service contacts."
+            href="#services-heading"
+            action="Find branch support"
+          />
+          <IconCard
+            icon="help"
+            title="Research help"
+            body="Use reference support, training, and inter-library loan services for research and academic work."
+            href="#services-heading"
+            action="Get help"
+          />
+          <IconCard
+            icon="shield"
+            title="Rules and guidance"
+            body="Read active access, conduct, borrowing, and fee guidance before using library services."
+            href="#regulations-heading"
+            action="Read regulations"
+          />
+        </div>
+      </LibrarySection>
+
+      <LibrarySection
+        eyebrow="Service Snapshot"
+        title="What support is currently published"
+        body="A quick summary of service records, branch contacts, and active regulations available through the Library API."
+      >
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <SummaryCard label="Public branches" value={branches.data.length} />
+            <SummaryCard label="Published services" value={allServices.length} />
+            <SummaryCard
+              label="Active regulations"
+              value={regulations.data.length}
+            />
+          </div>
+          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
+              Best starting point
+            </p>
+            <h3 className="mt-3 text-lg font-semibold text-slate-950">
+              {supportService?.name ?? "Contact a branch desk"}
+            </h3>
+            <p className="mt-3 text-sm leading-7 text-slate-600">
+              {compactText(supportService?.description) ||
+                "Use the branch cards below to identify the most relevant library desk for service support."}
+            </p>
+            <dl className="mt-5 grid gap-3 text-sm text-slate-600">
+              <Meta
+                label="Branch"
+                value={supportService?.branch?.name ?? branches.data[0]?.name}
+              />
+              <Meta label="Contact" value={supportService?.contact_info} />
+              <Meta
+                label="How to access"
+                value={supportService?.how_to_access}
+              />
+            </dl>
+          </aside>
+        </div>
+      </LibrarySection>
+
+      {serviceTypes.length > 0 ? (
+        <LibrarySection
+          eyebrow="Service Areas"
+          title="Support categories across branches"
+          body="Service categories help users scan the page before choosing a branch."
+          tone="white"
+        >
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            {serviceTypes.map((item) => (
+              <SummaryCard
+                key={item.label}
+                label={item.label}
+                value={item.count}
+                body={`${item.count} published service${
+                  item.count === 1 ? "" : "s"
+                }`}
+              />
+            ))}
+          </div>
+        </LibrarySection>
+      ) : null}
+
+      {branchContacts.length > 0 ? (
+        <LibrarySection
+          eyebrow="Contact Points"
+          title="Branch contacts for service support"
+          body="Use these public contacts when you need service confirmation before visiting a branch."
+          tone="white"
+        >
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            {branchContacts.map((branch) => (
+              <article
+                key={branch.id}
+                className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
+                  {formatLabel(branch.library_type ?? "library")}
+                </p>
+                <h3 className="mt-3 text-lg font-semibold leading-7 text-slate-950">
+                  {branch.name}
+                </h3>
+                <dl className="mt-5 grid gap-3 text-sm text-slate-600">
+                  <Meta label="Phone" value={branch.phone} />
+                  <Meta label="Email" value={branch.email} />
+                  <Meta label="Location" value={branch.address} />
+                </dl>
+              </article>
+            ))}
+          </div>
+        </LibrarySection>
       ) : null}
 
       <LibrarySection
@@ -166,6 +319,7 @@ export default async function LibraryServicesPage() {
                             "Contact the branch desk for service details."}
                         </p>
                         <dl className="mt-5 grid gap-3 text-sm text-slate-600">
+                          <Meta label="Branch" value={branch.name} />
                           <Meta label="Eligibility" value={service.eligibility} />
                           <Meta
                             label="How to access"
@@ -189,7 +343,7 @@ export default async function LibraryServicesPage() {
         body="Use active regulations to understand borrowing, access, conduct, and fee expectations."
         tone="white"
       >
-        <div id="regulations-heading">
+        <div id="regulations-heading" className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
           {regulations.data.length === 0 && !regulations.error ? (
             <StatusMessage>No active library regulations are available yet.</StatusMessage>
           ) : (
@@ -213,9 +367,74 @@ export default async function LibraryServicesPage() {
               ))}
             </div>
           )}
+          <aside className="space-y-5">
+            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+              <h3 className="text-lg font-semibold text-slate-950">
+                Before you visit
+              </h3>
+              <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+                <li>Confirm the branch that offers the service you need.</li>
+                <li>Check eligibility and access notes on the service card.</li>
+                <li>Use active regulations for borrowing, conduct, and fee guidance.</li>
+              </ul>
+            </section>
+            {featuredRegulations.length > 0 ? (
+              <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                <h3 className="text-lg font-semibold text-slate-950">
+                  Key regulations
+                </h3>
+                <div className="mt-4 divide-y divide-slate-200">
+                  {featuredRegulations.map((regulation) => (
+                    <article key={regulation.id} className="py-3 first:pt-0">
+                      <p className="text-sm font-semibold text-slate-950">
+                        {regulation.title ?? "Library regulation"}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        {formatLabel(regulation.category ?? "regulation")}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+          </aside>
         </div>
       </LibrarySection>
     </main>
+  );
+}
+
+function summarizeServices(
+  services: Array<Record<string, any>>,
+): Array<{ label: string; count: number }> {
+  const counts = new Map<string, number>();
+  for (const service of services) {
+    const key = formatLabel(service.service_type ?? "other");
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  return Array.from(counts.entries())
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+}
+
+function SummaryCard({
+  label,
+  value,
+  body,
+}: {
+  label: string;
+  value: string | number;
+  body?: string;
+}) {
+  return (
+    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
+        {label}
+      </p>
+      <p className="mt-3 text-4xl font-bold text-slate-950">{value}</p>
+      {body ? <p className="mt-2 text-sm text-slate-600">{body}</p> : null}
+    </article>
   );
 }
 
