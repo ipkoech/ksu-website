@@ -50,6 +50,65 @@ export interface LibraryBranchPayload {
   sort_order?: number;
 }
 
+export interface LibraryHours {
+  id: string;
+  library_id: string;
+  day_type: string;
+  opens_at?: string | null;
+  closes_at?: string | null;
+  is_closed?: boolean;
+  note?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LibraryExternalLink {
+  id: string;
+  library_id: string;
+  link_type: string;
+  label: string;
+  url: string;
+  description?: string | null;
+  is_active?: boolean;
+  opens_in_new_tab?: boolean;
+  icon?: string | null;
+  sort_order?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LibraryFile {
+  id: string;
+  library_id: string;
+  media_id: string;
+  title: string;
+  description?: string | null;
+  file_category?: string;
+  access_level?: string;
+  is_public?: boolean;
+  sort_order?: number;
+  related_entity_type?: string | null;
+  related_entity_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LibraryStaff {
+  id: string;
+  library_id: string;
+  person_id: string;
+  job_title?: string | null;
+  department?: string | null;
+  role?: string;
+  is_public?: boolean;
+  is_active?: boolean;
+  bio?: string | null;
+  specialization?: string | null;
+  sort_order?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface LibraryResource {
   id: string;
   library_id: string;
@@ -211,6 +270,12 @@ export const libraryServiceApi = {
     update: (id: string, data: Partial<LibraryBranchPayload>) =>
       libraryApi.patch<{ data: LibraryBranch }>(`/api/v1/library/branches/${id}`, data),
     delete: (id: string) => libraryApi.delete<void>(`/api/v1/library/branches/${id}`),
+    hours: (id: string) =>
+      libraryApi.get<{ data: LibraryHours[] }>(`/api/v1/library/branches/${id}/hours/`),
+    links: (id: string, params?: ListParams<{ active_only?: boolean }>) =>
+      libraryApi.get<{ data: LibraryExternalLink[] }>(`/api/v1/library/branches/${id}/links/`, params),
+    files: (id: string) =>
+      libraryApi.get<{ data: LibraryFile[] }>(`/api/v1/library/branches/${id}/files/`),
   },
   resources: {
     list: (params: ListParams<{ library_id: string; resource_type?: string; status?: string; q?: string }>) =>
@@ -255,7 +320,15 @@ export const libraryServiceApi = {
   inquiries: crudApi<LibraryGenericRecord, LibraryGenericPayload>("/api/v1/library/inquiries/"),
   tickets: crudApi<LibraryGenericRecord, LibraryGenericPayload>("/api/v1/library/tickets/"),
   regulations: crudApi<LibraryGenericRecord, LibraryGenericPayload>("/api/v1/library/regulations/"),
-  staff: crudApi<LibraryGenericRecord, LibraryGenericPayload>("/api/v1/library/staff/"),
+  staff: {
+    list: (params: ListParams<{ library_id: string }>) =>
+      libraryApi.get<{ data: LibraryStaff[] }>("/api/v1/library/staff/", params),
+    create: (data: LibraryGenericPayload) =>
+      libraryApi.post<{ data: LibraryStaff }>("/api/v1/library/staff/", data),
+    update: (id: string, data: Partial<LibraryGenericPayload>) =>
+      libraryApi.patch<{ data: LibraryStaff }>(`/api/v1/library/staff/${id}`, data),
+    delete: (id: string) => libraryApi.delete<void>(`/api/v1/library/staff/${id}`),
+  },
   services: crudApi<LibraryGenericRecord, LibraryGenericPayload>("/api/v1/library/services/"),
   statistics: crudApi<LibraryGenericRecord, LibraryGenericPayload>("/api/v1/library/statistics/"),
 };

@@ -1,8 +1,12 @@
 import {
   libraryServiceApi,
   type LibraryBranch,
+  type LibraryExternalLink,
+  type LibraryFile,
   type LibraryGenericRecord,
+  type LibraryHours,
   type LibraryResource,
+  type LibraryStaff,
 } from "@ksu/api-client";
 import type { PublicStatsResponse } from "@ksu/api-client";
 
@@ -25,6 +29,26 @@ export type BranchServices = {
   services: LibraryGenericRecord[];
 };
 
+export type BranchHours = {
+  branch: LibraryBranch;
+  hours: LibraryHours[];
+};
+
+export type BranchFiles = {
+  branch: LibraryBranch;
+  files: LibraryFile[];
+};
+
+export type BranchLinks = {
+  branch: LibraryBranch;
+  links: LibraryExternalLink[];
+};
+
+export type BranchStaff = {
+  branch: LibraryBranch;
+  staff: LibraryStaff[];
+};
+
 export type LibraryOverviewData = {
   branches: PublicLibraryData<LibraryBranch>;
   catalog: PublicLibraryData<LibraryResource>;
@@ -39,6 +63,45 @@ export type LibraryServicesData = {
   branches: PublicLibraryData<LibraryBranch>;
   groupedServices: BranchServices[];
   regulations: PublicLibraryData<LibraryGenericRecord>;
+  errors: string[];
+};
+
+export type LibraryAboutData = {
+  branches: PublicLibraryData<LibraryBranch>;
+  primaryBranch: LibraryBranch | null;
+  errors: string[];
+};
+
+export type LibraryHoursData = {
+  branches: PublicLibraryData<LibraryBranch>;
+  groupedHours: BranchHours[];
+  errors: string[];
+};
+
+export type LibraryDownloadsData = {
+  branches: PublicLibraryData<LibraryBranch>;
+  groupedFiles: BranchFiles[];
+  errors: string[];
+};
+
+export type LibraryLinksData = {
+  branches: PublicLibraryData<LibraryBranch>;
+  groupedLinks: BranchLinks[];
+  errors: string[];
+};
+
+export type LibraryStaffData = {
+  branches: PublicLibraryData<LibraryBranch>;
+  groupedStaff: BranchStaff[];
+  errors: string[];
+};
+
+export type LibrarySearchData = {
+  branches: PublicLibraryData<LibraryBranch>;
+  catalog: PublicLibraryData<LibraryResource>;
+  electronic: PublicLibraryData<LibraryGenericRecord>;
+  selectedLibraryId: string;
+  query: string;
   errors: string[];
 };
 
@@ -166,6 +229,54 @@ async function getBranchServices(branches: LibraryBranch[]) {
   return results;
 }
 
+async function getBranchHours(branches: LibraryBranch[]) {
+  return Promise.all(
+    branches.map(async (branch) => {
+      const hours = await safeList<LibraryHours>(() =>
+        libraryServiceApi.branches.hours(branch.id),
+      );
+      return { branch, hours };
+    }),
+  );
+}
+
+async function getBranchFiles(branches: LibraryBranch[]) {
+  return Promise.all(
+    branches.map(async (branch) => {
+      const files = await safeList<LibraryFile>(() =>
+        libraryServiceApi.branches.files(branch.id),
+      );
+      return { branch, files };
+    }),
+  );
+}
+
+async function getBranchLinks(branches: LibraryBranch[]) {
+  return Promise.all(
+    branches.map(async (branch) => {
+      const links = await safeList<LibraryExternalLink>(() =>
+        libraryServiceApi.branches.links(branch.id, { active_only: true }),
+      );
+      return { branch, links };
+    }),
+  );
+}
+
+async function getBranchStaff(branches: LibraryBranch[]) {
+  return Promise.all(
+    branches.map(async (branch) => {
+      const staff = await safeList<LibraryStaff>(() =>
+        libraryServiceApi.staff.list({
+          library_id: branch.id,
+          page: 1,
+          per_page: 100,
+        }),
+      );
+      return { branch, staff };
+    }),
+  );
+}
+
 export async function getLibraryServices() {
   const branches = await getPublicBranches();
   if (branches.data.length === 0) {
@@ -253,6 +364,101 @@ export async function getLibraryOverviewData(): Promise<LibraryOverviewData> {
       services.error,
       regulations.error,
     ),
+  };
+}
+
+export async function getLibraryAboutData(): Promise<LibraryAboutData> {
+  const branches = await getPublicBranches();
+  return {
+    branches,
+    primaryBranch: branches.data[0] ?? null,
+    errors: uniqueErrors(branches.error),
+  };
+}
+
+export async function getLibraryHoursData(): Promise<LibraryHoursData> {
+  const branches = await getPublicBranches();
+  const grouped = await getBranchHours(branches.data);
+  return {
+    branches,
+    groupedHours: grouped.map((item) => ({
+      branch: item.branch,
+      hours: item.hours.data,
+    })),
+    errors: uniqueErrors(branches.error, ...grouped.map((item) => item.hours.error)),
+  };
+}
+
+export async function getLibraryDownloadsData(): Promise<LibraryDownloadsData> {
+  const branches = await getPublicBranches();
+  const grouped = await getBranchFiles(branches.data);
+  return {
+    branches,
+    groupedFiles: grouped.map((item) => ({
+      branch: item.branch,
+      files: item.files.data,
+    })),
+    errors: uniqueErrors(branches.error, ...grouped.map((item) => item.files.error)),
+  };
+}
+
+export async function getLibraryLinksData(): Promise<LibraryLinksData> {
+  const branches = await getPublicBranches();
+  const grouped = await getBranchLinks(branches.data);
+  return {
+    branches,
+    groupedLinks: grouped.map((item) => ({
+      branch: item.branch,
+      links: item.links.data,
+    })),
+    errors: uniqueErrors(branches.error, ...grouped.map((item) => item.links.error)),
+  };
+}
+
+export async function getLibraryStaffData(): Promise<LibraryStaffData> {
+  const branches = await getPublicBranches();
+  const grouped = await getBranchStaff(branches.data);
+  return {
+    branches,
+    groupedStaff: grouped.map((item) => ({
+      branch: item.branch,
+      staff: item.staff.data,
+    })),
+    errors: uniqueErrors(branches.error, ...grouped.map((item) => item.staff.error)),
+  };
+}
+
+export async function getLibrarySearchData(
+  options: { libraryId?: string; query?: string } = {},
+): Promise<LibrarySearchData> {
+  const query = options.query?.trim() ?? "";
+  const branches = await getPublicBranches();
+  const selectedLibraryId =
+    branches.data.find((branch) => branch.id === options.libraryId)?.id ??
+    branches.data[0]?.id ??
+    "";
+
+  const [catalog, electronic] = await Promise.all([
+    selectedLibraryId
+      ? safeList<LibraryResource>(() =>
+          libraryServiceApi.resources.list({
+            library_id: selectedLibraryId,
+            q: query || undefined,
+            page: 1,
+            per_page: 10,
+          }),
+        )
+      : Promise.resolve({ data: [], error: branches.error }),
+    getElectronicResources(query),
+  ]);
+
+  return {
+    branches,
+    catalog,
+    electronic,
+    selectedLibraryId,
+    query,
+    errors: uniqueErrors(branches.error, catalog.error, electronic.error),
   };
 }
 
