@@ -69,8 +69,20 @@ const libraryAreas = [
   {
     title: "Regulations",
     description: "Publish borrowing, access, conduct, and fee regulations.",
-    href: "/library/engagement",
+    href: "/library/regulations",
     icon: FileText,
+  },
+  {
+    title: "Inquiries",
+    description: "Review Ask a Librarian submissions and record replies.",
+    href: "/library/inquiries",
+    icon: HelpCircle,
+  },
+  {
+    title: "Support tickets",
+    description: "Manage access, service, resource request, and complaint tickets.",
+    href: "/library/tickets",
+    icon: Ticket,
   },
 ];
 
@@ -123,14 +135,14 @@ export function LibraryDashboardClient() {
       ),
       description: "From /api/v1/library/inquiries",
       icon: HelpCircle,
-      href: "/library",
+      href: "/library/inquiries",
     },
     {
       title: "Support tickets",
       value: formatCount(tickets.data, tickets.isLoading, tickets.isError),
       description: "From /api/v1/library/tickets",
       icon: Ticket,
-      href: "/library",
+      href: "/library/tickets",
     },
   ];
 

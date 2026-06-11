@@ -18,8 +18,10 @@ import {
   richTextToPlainText,
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
-import { libraryServiceApi, type LibraryGenericRecord } from "@ksu/api-client";
+import { libraryServiceApi, type LibraryStaff } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
+
+type StaffRecord = LibraryStaff & Record<string, unknown>;
 
 const defaults = {
   person_id: "",
@@ -40,8 +42,8 @@ export default function LibraryStaffPage() {
   const canManageStaff =
     hasScope("library.manage_staff") || hasScope("library:write");
   const [libraryId, setLibraryId] = useState("");
-  const [editing, setEditing] = useState<LibraryGenericRecord | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<LibraryGenericRecord | null>(
+  const [editing, setEditing] = useState<StaffRecord | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<StaffRecord | null>(
     null,
   );
   const [values, setValues] = useState<Record<string, any>>(defaults);
@@ -72,7 +74,10 @@ export default function LibraryStaffPage() {
       }),
     enabled: !!libraryId,
   });
-  const staff = useMemo(() => staffQuery.data?.data ?? [], [staffQuery.data]);
+  const staff = useMemo(
+    () => (staffQuery.data?.data ?? []) as StaffRecord[],
+    [staffQuery.data],
+  );
 
   const createStaff = useMutation({
     mutationFn: libraryServiceApi.staff.create,
@@ -102,7 +107,7 @@ export default function LibraryStaffPage() {
       }),
   });
 
-  const edit = (member: LibraryGenericRecord) => {
+  const edit = (member: StaffRecord) => {
     setEditing(member);
     setValues({
       person_id: member.person_id ?? "",

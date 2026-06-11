@@ -1,15 +1,21 @@
 "use client";
 
 import { EditableServiceResourcePage } from "@/components/dashboard/editable-service-resource-page";
-import { libraryServiceApi, type LibraryGenericPayload, type LibraryGenericRecord } from "@ksu/api-client";
+import {
+  libraryServiceApi,
+  type LibraryGenericPayload,
+  type LibraryRegulation,
+} from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
+
+type RegulationRecord = LibraryRegulation & Record<string, unknown>;
 
 export default function LibraryEngagementPage() {
   const { hasScope } = usePermissions();
-  const canManage = hasScope("library.manage_services") || hasScope("library:write");
+  const canManage = hasScope("library.manage_regulations") || hasScope("library:write");
 
   return (
-    <EditableServiceResourcePage<LibraryGenericRecord, LibraryGenericPayload>
+    <EditableServiceResourcePage<RegulationRecord, LibraryGenericPayload>
       title="Library Regulations"
       description="Publish and maintain borrowing, access, conduct, and fee regulations."
       backHref="/library"
@@ -21,7 +27,10 @@ export default function LibraryEngagementPage() {
         { name: "effective_date", label: "Effective Date", type: "date" },
         { name: "status", label: "Status", placeholder: "active" },
       ]}
-      list={() => libraryServiceApi.regulations.list({ page: 1, per_page: 50 })}
+      list={async () => {
+        const response = await libraryServiceApi.regulations.list({ page: 1, per_page: 50 });
+        return { data: response.data as RegulationRecord[] };
+      }}
       create={(payload) => libraryServiceApi.regulations.create(payload)}
       update={(id, payload) => libraryServiceApi.regulations.update(id, payload)}
       delete={(id) => libraryServiceApi.regulations.delete(id)}

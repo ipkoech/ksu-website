@@ -187,6 +187,55 @@ export interface LibraryInquiryPayload {
   message: string;
 }
 
+export interface LibraryInquiryUpdatePayload {
+  status?: string;
+}
+
+export interface LibraryInquiryReplyPayload {
+  reply_message: string;
+}
+
+export interface LibrarySupportTicket {
+  id: string;
+  requester_person_id?: string | null;
+  requester_email?: string | null;
+  requester_name?: string | null;
+  subject: string;
+  description: string;
+  target_entity_type?: string | null;
+  target_entity_id?: string | null;
+  status: string;
+  priority: string;
+  category: string;
+  assigned_to_person_id?: string | null;
+  resolved_at?: string | null;
+  resolution_notes?: string | null;
+  meta?: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+}
+
+export interface LibrarySupportTicketPayload {
+  requester_email?: string | null;
+  requester_name?: string | null;
+  subject: string;
+  description: string;
+  target_entity_type?: string | null;
+  target_entity_id?: string | null;
+  priority?: string;
+  category?: string;
+}
+
+export interface LibrarySupportTicketUpdatePayload {
+  status?: string | null;
+  priority?: string | null;
+  assigned_to_person_id?: string | null;
+  resolved_at?: string | null;
+  resolution_notes?: string | null;
+  meta?: Record<string, unknown> | null;
+}
+
 export interface LibraryElectronicResource {
   id: string;
   library_id?: string | null;
@@ -433,8 +482,17 @@ export const libraryServiceApi = {
     delete: (id: string) => libraryApi.delete<void>(`/api/v1/library/charges/${id}`),
   },
   databases: crudApi<LibraryElectronicResource, LibraryGenericPayload>("/api/v1/library/databases/"),
-  inquiries: crudApi<LibraryInquiry, LibraryInquiryPayload>("/api/v1/library/inquiries/"),
-  tickets: crudApi<LibraryGenericRecord, LibraryGenericPayload>("/api/v1/library/tickets/"),
+  inquiries: {
+    ...crudApi<LibraryInquiry, LibraryInquiryPayload>("/api/v1/library/inquiries/"),
+    update: (id: string, data: LibraryInquiryUpdatePayload) =>
+      libraryApi.patch<{ data: LibraryInquiry }>(`/api/v1/library/inquiries/${id}`, data),
+    reply: (id: string, data: LibraryInquiryReplyPayload) =>
+      libraryApi.post<{ data: LibraryInquiry }>(`/api/v1/library/inquiries/${id}/reply`, data),
+  },
+  tickets: crudApi<
+    LibrarySupportTicket,
+    LibrarySupportTicketPayload | LibrarySupportTicketUpdatePayload
+  >("/api/v1/library/tickets/"),
   regulations: crudApi<LibraryRegulation, LibraryGenericPayload>("/api/v1/library/regulations/"),
   staff: {
     list: (params: ListParams<{ library_id: string }>) =>

@@ -1,15 +1,21 @@
 "use client";
 
 import { EditableServiceResourcePage } from "@/components/dashboard/editable-service-resource-page";
-import { libraryServiceApi, type LibraryGenericPayload, type LibraryGenericRecord } from "@ksu/api-client";
+import {
+  libraryServiceApi,
+  type LibraryElectronicResource,
+  type LibraryGenericPayload,
+} from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
+
+type ElectronicResourceRecord = LibraryElectronicResource & Record<string, unknown>;
 
 export default function LibraryElectronicPage() {
   const { hasScope } = usePermissions();
   const canManage = hasScope("library.manage_resources") || hasScope("library:write");
 
   return (
-    <EditableServiceResourcePage<LibraryGenericRecord, LibraryGenericPayload>
+    <EditableServiceResourcePage<ElectronicResourceRecord, LibraryGenericPayload>
       title="Electronic Resources"
       description="Manage databases, e-book platforms, aggregators, and online access records."
       backHref="/library"
@@ -30,7 +36,10 @@ export default function LibraryElectronicPage() {
         { name: "is_featured", label: "Featured", type: "boolean" },
         { name: "sort_order", label: "Sort Order", type: "number" },
       ]}
-      list={() => libraryServiceApi.databases.list({ page: 1, per_page: 50 })}
+      list={async () => {
+        const response = await libraryServiceApi.databases.list({ page: 1, per_page: 50 });
+        return { data: response.data as ElectronicResourceRecord[] };
+      }}
       create={(payload) => libraryServiceApi.databases.create(payload)}
       update={(id, payload) => libraryServiceApi.databases.update(id, payload)}
       delete={(id) => libraryServiceApi.databases.delete(id)}
