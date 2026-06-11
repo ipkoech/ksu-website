@@ -31,6 +31,7 @@ export default async function CentersPage() {
           records={centers}
           labelFields={["center_type", "status"]}
           descriptionFields={["summary", "description", "mandate"]}
+          hrefBase="/centers"
         />
       </ResearchSection>
     </main>

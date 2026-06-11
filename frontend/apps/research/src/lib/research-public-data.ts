@@ -12,6 +12,11 @@ export type PublicResearchData<T> = {
   error: string | null;
 };
 
+export type PublicResearchRecord<T> = {
+  data: T | null;
+  error: string | null;
+};
+
 export type ResearchOverviewData = {
   projects: PublicResearchData<ResearchProject>;
   publications: PublicResearchData<ResearchPublication>;
@@ -45,6 +50,23 @@ async function safeList<T>(
   return Promise.race([request, timeout]);
 }
 
+async function safeRecord<T>(
+  load: () => Promise<{ data?: T }>,
+): Promise<PublicResearchRecord<T>> {
+  const request = load()
+    .then((response) => ({ data: response.data ?? null, error: null }))
+    .catch(() => ({ data: null, error: unavailableMessage }));
+
+  const timeout = new Promise<PublicResearchRecord<T>>((resolve) => {
+    setTimeout(
+      () => resolve({ data: null, error: unavailableMessage }),
+      PUBLIC_RESEARCH_TIMEOUT_MS,
+    );
+  });
+
+  return Promise.race([request, timeout]);
+}
+
 async function safeStats() {
   try {
     const response = await researchServiceApi.stats();
@@ -70,6 +92,10 @@ export function getProjects(search?: string) {
   );
 }
 
+export function getProjectBySlug(slug: string) {
+  return safeRecord<ResearchProject>(() => researchServiceApi.projects.getBySlug(slug));
+}
+
 export function getPublications(search?: string) {
   return safeList<ResearchPublication>(() =>
     researchServiceApi.publications.list({
@@ -79,6 +105,12 @@ export function getPublications(search?: string) {
       page: 1,
       per_page: 100,
     }),
+  );
+}
+
+export function getPublicationBySlug(slug: string) {
+  return safeRecord<ResearchPublication>(() =>
+    researchServiceApi.publications.getBySlug(slug),
   );
 }
 
@@ -93,6 +125,10 @@ export function getGrants(search?: string) {
   );
 }
 
+export function getGrantBySlug(slug: string) {
+  return safeRecord<ResearchGrant>(() => researchServiceApi.grants.getBySlug(slug));
+}
+
 export function getInnovations(search?: string) {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.innovations.list({
@@ -102,6 +138,12 @@ export function getInnovations(search?: string) {
       page: 1,
       per_page: 100,
     }),
+  );
+}
+
+export function getInnovationBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.innovations.getBySlug(slug),
   );
 }
 
@@ -117,6 +159,12 @@ export function getPartners(search?: string) {
   );
 }
 
+export function getPartnerBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.partners.getBySlug(slug),
+  );
+}
+
 export function getCenters() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.centers.list({
@@ -127,6 +175,12 @@ export function getCenters() {
   );
 }
 
+export function getCenterBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.centers.getBySlug(slug),
+  );
+}
+
 export function getFacilities() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.farms.list({
@@ -134,6 +188,12 @@ export function getFacilities() {
       page: 1,
       per_page: 100,
     }),
+  );
+}
+
+export function getFarmBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.farms.getBySlug(slug),
   );
 }
 
@@ -180,6 +240,12 @@ export function getPrograms() {
       page: 1,
       per_page: 100,
     }),
+  );
+}
+
+export function getProgramBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.programs.getBySlug(slug),
   );
 }
 
@@ -234,6 +300,12 @@ export function getOutputs() {
   );
 }
 
+export function getOutputBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.outputs.getBySlug(slug),
+  );
+}
+
 export function getConsultancies() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.consultancies.list({
@@ -241,6 +313,12 @@ export function getConsultancies() {
       page: 1,
       per_page: 100,
     }),
+  );
+}
+
+export function getConsultancyBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.consultancies.getBySlug(slug),
   );
 }
 
@@ -264,6 +342,12 @@ export function getEndowments() {
   );
 }
 
+export function getEndowmentBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.endowments.getBySlug(slug),
+  );
+}
+
 export function getGrantGuidelines() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.grantGuidelines.list({
@@ -271,6 +355,12 @@ export function getGrantGuidelines() {
       page: 1,
       per_page: 100,
     }),
+  );
+}
+
+export function getGrantGuidelineBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.grantGuidelines.getBySlug(slug),
   );
 }
 
@@ -295,6 +385,12 @@ export function getStories() {
   );
 }
 
+export function getStoryBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.stories.getBySlug(slug),
+  );
+}
+
 export function getSustainability() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.sustainability.list({
@@ -302,6 +398,12 @@ export function getSustainability() {
       page: 1,
       per_page: 100,
     }),
+  );
+}
+
+export function getSustainabilityBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.sustainability.getBySlug(slug),
   );
 }
 
@@ -337,6 +439,12 @@ export function getTraining() {
   );
 }
 
+export function getTrainingBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.training.getBySlug(slug),
+  );
+}
+
 export function getMentorship() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.mentorship.list({
@@ -347,6 +455,12 @@ export function getMentorship() {
   );
 }
 
+export function getMentorshipBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.mentorship.getBySlug(slug),
+  );
+}
+
 export function getScholarships() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.scholarships.list({
@@ -354,6 +468,12 @@ export function getScholarships() {
       page: 1,
       per_page: 100,
     }),
+  );
+}
+
+export function getScholarshipBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.scholarships.getBySlug(slug),
   );
 }
 
@@ -368,6 +488,12 @@ export function getEvents() {
   );
 }
 
+export function getEventBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.events.getBySlug(slug),
+  );
+}
+
 export function getArticles() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.articles.list({
@@ -376,6 +502,12 @@ export function getArticles() {
       page: 1,
       per_page: 100,
     }),
+  );
+}
+
+export function getArticleBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.articles.getBySlug(slug),
   );
 }
 
@@ -389,6 +521,12 @@ export function getResources() {
   );
 }
 
+export function getResourceBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.resources.getBySlug(slug),
+  );
+}
+
 export function getServices() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.services.list({
@@ -399,6 +537,12 @@ export function getServices() {
   );
 }
 
+export function getServiceBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.services.getBySlug(slug),
+  );
+}
+
 export function getGuidelines() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.guidelines.list({
@@ -406,6 +550,12 @@ export function getGuidelines() {
       page: 1,
       per_page: 100,
     }),
+  );
+}
+
+export function getGuidelineBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.guidelines.getBySlug(slug),
   );
 }
 
@@ -479,6 +629,12 @@ export function getUpdates() {
       page: 1,
       per_page: 6,
     }),
+  );
+}
+
+export function getNewsBySlug(slug: string) {
+  return safeRecord<ResearchGenericRecord>(() =>
+    researchServiceApi.news.getBySlug(slug),
   );
 }
 

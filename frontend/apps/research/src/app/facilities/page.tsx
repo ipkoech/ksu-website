@@ -34,6 +34,7 @@ export default async function FacilitiesPage() {
           records={facilities}
           labelFields={["facility_type", "farm_type", "status"]}
           metaFields={["location"]}
+          hrefBase="/farm"
         />
       </ResearchSection>
       <ResearchSection
@@ -45,6 +46,7 @@ export default async function FacilitiesPage() {
           records={services}
           labelFields={["service_type", "type", "status"]}
           metaFields={["turnaround_time"]}
+          hrefBase="/services"
         />
       </ResearchSection>
     </main>

@@ -34,6 +34,7 @@ export default async function GuidelinesPage() {
           records={guidelines}
           labelFields={["guideline_type", "type", "status"]}
           metaFields={["version", "effective_date"]}
+          hrefBase="/guidelines"
         />
       </ResearchSection>
       <ResearchSection

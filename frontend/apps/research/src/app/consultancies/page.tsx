@@ -31,6 +31,7 @@ export default async function ConsultanciesPage() {
           records={consultancies}
           labelFields={["consultancy_type", "category", "status"]}
           metaFields={["client_name", "start_date"]}
+          hrefBase="/consultancies"
         />
       </ResearchSection>
     </main>

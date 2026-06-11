@@ -33,6 +33,7 @@ export default async function FormsPage() {
         <GenericRecordGrid
           records={resources}
           labelFields={["resource_type", "category", "status"]}
+          hrefBase="/resources-tools"
         />
       </ResearchSection>
       <ResearchSection
@@ -43,6 +44,7 @@ export default async function FormsPage() {
         <GenericRecordGrid
           records={guidelines}
           labelFields={["guideline_type", "type", "status"]}
+          hrefBase="/guidelines"
         />
       </ResearchSection>
     </main>

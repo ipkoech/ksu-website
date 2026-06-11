@@ -182,7 +182,13 @@ function FarmCard({ farm }: { farm: ResearchGenericRecord }) {
         {farm.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
       </div>
       <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-        {compactText(farm.name) || compactText(farm.code)}
+        {farm.slug ? (
+          <a href={`/farm/${farm.slug}`} className="transition hover:text-primary">
+            {compactText(farm.name) || compactText(farm.code)}
+          </a>
+        ) : (
+          compactText(farm.name) || compactText(farm.code)
+        )}
       </h2>
       {textBlocks.map(([label, value]) => (
         <div key={label} className="mt-4">
@@ -216,7 +222,13 @@ function ProjectCard({ project }: { project: ResearchProject }) {
         {project.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
       </div>
       <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-        {project.title}
+        {project.slug ? (
+          <a href={`/projects/${project.slug}`} className="transition hover:text-primary">
+            {project.title}
+          </a>
+        ) : (
+          project.title
+        )}
       </h2>
       {description ? (
         <p className="mt-3 text-sm leading-7 text-slate-600">{description}</p>

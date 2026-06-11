@@ -57,7 +57,13 @@ export default async function PublicationsPage({
                 {publication.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
               </div>
               <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-                {publication.title}
+                {publication.slug ? (
+                  <a href={`/publications/${publication.slug}`} className="transition hover:text-primary">
+                    {publication.title}
+                  </a>
+                ) : (
+                  publication.title
+                )}
               </h2>
               {[
                 publication.journal_name,

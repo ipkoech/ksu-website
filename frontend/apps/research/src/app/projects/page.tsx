@@ -67,7 +67,13 @@ export default async function ProjectsPage({
                 {project.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
               </div>
               <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-                {project.title}
+                {project.slug ? (
+                  <a href={`/projects/${project.slug}`} className="transition hover:text-primary">
+                    {project.title}
+                  </a>
+                ) : (
+                  project.title
+                )}
               </h2>
               {compactText(project.summary) ? (
                 <p className="mt-3 text-sm leading-7 text-slate-600">

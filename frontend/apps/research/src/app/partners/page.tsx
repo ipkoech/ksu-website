@@ -59,7 +59,13 @@ export default async function PartnersPage({
                 {partner.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
               </div>
               <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-                {partner.name}
+                {partner.slug ? (
+                  <a href={`/partners/${partner.slug}`} className="transition hover:text-primary">
+                    {partner.name}
+                  </a>
+                ) : (
+                  partner.name
+                )}
               </h2>
               {compactText(partner.about) || compactText(partner.collaboration_areas) ? (
                 <p className="mt-3 text-sm leading-7 text-slate-600">

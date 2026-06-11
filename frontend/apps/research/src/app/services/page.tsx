@@ -31,6 +31,7 @@ export default async function ServicesPage() {
           records={services}
           labelFields={["service_type", "type", "status"]}
           metaFields={["turnaround_time"]}
+          hrefBase="/services"
         />
       </ResearchSection>
     </main>

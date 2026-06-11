@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Badge, StatusMessage } from "./research-ui";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import {
@@ -13,6 +14,7 @@ export function GenericRecordGrid({
   labelFields = ["category", "type", "status"],
   descriptionFields = ["summary", "description", "about", "bio", "impact"],
   metaFields = [],
+  hrefBase,
 }: {
   records: PublicResearchData<ResearchGenericRecord>;
   error?: string | null;
@@ -20,6 +22,7 @@ export function GenericRecordGrid({
   labelFields?: string[];
   descriptionFields?: string[];
   metaFields?: string[];
+  hrefBase?: string;
 }) {
   return (
     <>
@@ -34,6 +37,7 @@ export function GenericRecordGrid({
             labelFields={labelFields}
             descriptionFields={descriptionFields}
             metaFields={metaFields}
+            href={getRecordHref(record, hrefBase)}
           />
         ))}
       </div>
@@ -92,19 +96,21 @@ function GenericRecordCard({
   labelFields,
   descriptionFields,
   metaFields,
+  href,
 }: {
   record: ResearchGenericRecord;
   labelFields: string[];
   descriptionFields: string[];
   metaFields: string[];
+  href?: string;
 }) {
   const labels = getRecordLabels(record, labelFields);
   const meta = metaFields
     .map((field) => formatRecordValue(record[field]))
     .filter(Boolean);
 
-  return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+  const content = (
+    <>
       {labels.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {labels.map((label) => (
@@ -125,6 +131,19 @@ function GenericRecordCard({
           {meta.join(" · ")}
         </p>
       ) : null}
+    </>
+  );
+
+  return href ? (
+    <Link
+      href={href}
+      className="block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
+    >
+      {content}
+    </Link>
+  ) : (
+    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      {content}
     </article>
   );
 }
@@ -163,4 +182,10 @@ function formatRecordValue(value: unknown) {
     return formatDate(value);
   }
   return compactText(value as string | number | null | undefined);
+}
+
+function getRecordHref(record: ResearchGenericRecord, hrefBase?: string) {
+  const slug = compactText(record.slug);
+  if (!hrefBase || !slug) return undefined;
+  return `${hrefBase}/${slug}`;
 }

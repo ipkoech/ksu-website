@@ -34,6 +34,7 @@ export default async function EndowmentsPage() {
           records={endowments}
           labelFields={["fund_type", "category", "status"]}
           metaFields={["target_amount", "current_amount"]}
+          hrefBase="/endowments"
         />
       </ResearchSection>
       <ResearchSection

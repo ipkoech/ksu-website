@@ -31,6 +31,7 @@ export default async function ProgramsPage() {
           records={programs}
           labelFields={["program_type", "status"]}
           metaFields={["start_date", "end_date"]}
+          hrefBase="/programs"
         />
       </ResearchSection>
       <ResearchSection

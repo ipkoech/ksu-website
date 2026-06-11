@@ -148,7 +148,13 @@ function InitiativeCard({ initiative }: { initiative: ResearchGenericRecord }) {
         {initiative.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
       </div>
       <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-        {compactText(initiative.name) || compactText(initiative.title) || compactText(initiative.code)}
+        {initiative.slug ? (
+          <a href={`/sustainability/${initiative.slug}`} className="transition hover:text-primary">
+            {compactText(initiative.name) || compactText(initiative.title) || compactText(initiative.code)}
+          </a>
+        ) : (
+          compactText(initiative.name) || compactText(initiative.title) || compactText(initiative.code)
+        )}
       </h2>
       {textBlocks.map(([label, value]) => (
         <div key={label} className="mt-4">

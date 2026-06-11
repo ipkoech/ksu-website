@@ -31,6 +31,7 @@ export default async function ScholarshipsPage() {
           records={scholarships}
           labelFields={["scholarship_type", "category", "status"]}
           metaFields={["deadline", "amount"]}
+          hrefBase="/scholarships"
         />
       </ResearchSection>
     </main>

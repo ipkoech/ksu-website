@@ -31,6 +31,7 @@ export default async function EventsPage() {
           records={events}
           labelFields={["event_type", "category", "status"]}
           metaFields={["start_date", "venue", "location"]}
+          hrefBase="/events"
         />
       </ResearchSection>
     </main>

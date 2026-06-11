@@ -31,6 +31,7 @@ export default async function OutputsPage() {
           records={outputs}
           labelFields={["output_type", "category", "status"]}
           metaFields={["published_at", "year"]}
+          hrefBase="/outputs"
         />
       </ResearchSection>
     </main>

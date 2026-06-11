@@ -60,7 +60,13 @@ export default async function FundingPage({
                 {grant.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
               </div>
               <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-                {grant.title}
+                {grant.slug ? (
+                  <a href={`/funding/${grant.slug}`} className="transition hover:text-primary">
+                    {grant.title}
+                  </a>
+                ) : (
+                  grant.title
+                )}
               </h2>
               {compactText(grant.summary) ? (
                 <p className="mt-3 text-sm leading-7 text-slate-600">

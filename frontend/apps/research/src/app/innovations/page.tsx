@@ -59,7 +59,13 @@ export default async function InnovationsPage({
                 {innovation.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
               </div>
               <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-                {innovation.title}
+                {innovation.slug ? (
+                  <a href={`/innovations/${innovation.slug}`} className="transition hover:text-primary">
+                    {innovation.title}
+                  </a>
+                ) : (
+                  innovation.title
+                )}
               </h2>
               {compactText(innovation.summary) || compactText(innovation.problem_addressed) ? (
                 <p className="mt-3 text-sm leading-7 text-slate-600">

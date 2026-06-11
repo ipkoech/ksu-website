@@ -31,6 +31,7 @@ export default async function NewsPage() {
           records={news}
           labelFields={["news_type", "category", "status"]}
           metaFields={["published_at", "created_at"]}
+          hrefBase="/news"
         />
       </ResearchSection>
       <ResearchSection
@@ -42,6 +43,7 @@ export default async function NewsPage() {
           records={articles}
           labelFields={["article_type", "category", "status"]}
           metaFields={["published_at", "created_at"]}
+          hrefBase="/news"
         />
       </ResearchSection>
     </main>
