@@ -66,13 +66,13 @@ export function ResearchRecordDetail({
         ]}
       >
         {labels.length > 0 || facts.length > 0 ? (
-          <div className="grid gap-4 text-white">
+          <div className="grid gap-4">
             {labels.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {Array.from(new Set(labels)).slice(0, 4).map((label) => (
                   <span
                     key={label}
-                    className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold text-white"
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700"
                   >
                     {label}
                   </span>
@@ -82,9 +82,9 @@ export function ResearchRecordDetail({
             {facts.length > 0 ? (
               <dl className="grid grid-cols-2 gap-3">
                 {facts.slice(0, 4).map((fact) => (
-                  <div key={fact.label} className="rounded-md border border-white/15 bg-white/10 p-3">
-                    <dt className="text-xs font-semibold uppercase text-white/65">{fact.label}</dt>
-                    <dd className="mt-1 text-sm font-semibold text-white">{fact.value}</dd>
+                  <div key={fact.label} className="rounded-md border border-slate-200 bg-white p-3">
+                    <dt className="text-xs font-semibold uppercase text-slate-500">{fact.label}</dt>
+                    <dd className="mt-1 text-sm font-semibold text-slate-950">{fact.value}</dd>
                   </div>
                 ))}
               </dl>
@@ -95,7 +95,7 @@ export function ResearchRecordDetail({
 
       {error ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-[1320px]">
+          <div className="mx-auto max-w-[1680px]">
             <StatusMessage tone="error">{error}</StatusMessage>
           </div>
         </section>
@@ -115,7 +115,7 @@ export function ResearchRecordDetail({
             {children}
           </div>
           <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-950">Details</h2>
+            <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">Details</h2>
             <dl className="mt-4 grid gap-3 text-sm">
               {facts.map((fact) => (
                 <div key={fact.label} className="rounded-md bg-slate-50 p-3">
@@ -153,7 +153,7 @@ function DetailTextSection({
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{section.title}</h2>
+      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">{section.title}</h2>
       <div className="mt-4 space-y-4">
         {entries.map((entry) => (
           <div key={entry.label}>

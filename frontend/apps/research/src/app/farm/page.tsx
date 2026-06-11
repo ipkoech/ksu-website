@@ -134,8 +134,8 @@ function HeroSnapshot({
   activities: ResearchGenericRecord[];
 }) {
   return (
-    <div className="grid gap-3 text-white">
-      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
+    <div className="grid gap-3">
+      <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
         Farm snapshot
       </p>
       <div className="grid grid-cols-2 gap-3">
@@ -150,9 +150,9 @@ function HeroSnapshot({
 
 function SnapshotValue({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-md border border-white/15 bg-white/10 p-4">
-      <p className="text-3xl font-bold">{value}</p>
-      <p className="mt-1 text-xs leading-5 text-white/75">{label}</p>
+    <div className="rounded-md border border-slate-200 bg-white p-4">
+      <p className="font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950">{value}</p>
+      <p className="mt-1 text-xs leading-5 text-slate-600">{label}</p>
     </div>
   );
 }
@@ -181,7 +181,7 @@ function FarmCard({ farm }: { farm: ResearchGenericRecord }) {
         {farm.status ? <Badge>{formatLabel(farm.status)}</Badge> : null}
         {farm.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
       </div>
-      <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
+      <h2 className="mt-4 font-[family-name:var(--font-display)] text-xl font-semibold leading-7 text-slate-950">
         {farm.slug ? (
           <a href={`/farm/${farm.slug}`} className="transition hover:text-primary">
             {compactText(farm.name) || compactText(farm.code)}
@@ -295,7 +295,7 @@ function ErrorBand({ errors }: { errors: string[] }) {
 
   return (
     <section className="px-4 pt-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-[1320px] space-y-3">
+      <div className="mx-auto max-w-[1680px] space-y-3">
         {uniqueErrors.map((error) => (
           <StatusMessage key={error} tone="error">
             {error}
