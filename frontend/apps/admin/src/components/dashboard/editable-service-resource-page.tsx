@@ -3,7 +3,7 @@
 import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit, Eye, FilterX, Plus, Trash2 } from "lucide-react";
+import { Edit, Eye, FilterX, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout";
 import { EntityPicker } from "@/components/relationships/entity-picker";
 import { relationshipAdapters, type RelationshipFilters } from "@/components/relationships/relationship-adapters";
@@ -15,6 +15,12 @@ import {
   CardHeader,
   CardTitle,
   ConfirmDialog,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
   Input,
   Select,
   SelectContent,
@@ -342,6 +348,79 @@ export function EditableServiceResourcePage<
     }
   };
 
+  const renderRecordActions = (record: TRecord) => {
+    const detailHref = getRecordDetailHref?.(record);
+    const canShowMenu = Boolean(detailHref) || canEdit || Boolean(deleteRecord && canDelete);
+
+    if (!canShowMenu) return null;
+
+    return (
+      <div className="flex shrink-0 items-center gap-2">
+        {detailHref ? (
+          <Button asChild type="button" variant="outline" size="sm" className="min-w-[118px] justify-start">
+            <Link href={detailHref}>
+              <Eye className="mr-2 h-4 w-4" />
+              Open Details
+            </Link>
+          </Button>
+        ) : canEdit ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="min-w-[118px] justify-start"
+            onClick={() => startEdit(record)}
+          >
+            <Edit className="mr-2 h-4 w-4" />
+            Edit Record
+          </Button>
+        ) : null}
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={`Actions for ${getRecordTitle(record)}`}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuLabel>Record Actions</DropdownMenuLabel>
+            {detailHref ? (
+              <DropdownMenuItem asChild>
+                <Link href={detailHref}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  View details
+                </Link>
+              </DropdownMenuItem>
+            ) : null}
+            {canEdit ? (
+              <DropdownMenuItem onClick={() => startEdit(record)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit record
+              </DropdownMenuItem>
+            ) : null}
+            {deleteRecord && canDelete ? (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={() => setDeleteTarget(record)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete record
+                </DropdownMenuItem>
+              </>
+            ) : null}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    );
+  };
+
   return (
     <div>
       <PageHeader title={title} description={description} backHref={backHref} />
@@ -478,39 +557,7 @@ export function EditableServiceResourcePage<
                           "No metadata"}
                       </p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {getRecordDetailHref?.(record) ? (
-                        <Button asChild type="button" variant="outline" size="sm">
-                          <Link href={getRecordDetailHref(record) ?? "#"}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View
-                          </Link>
-                        </Button>
-                      ) : null}
-                      {canEdit ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => startEdit(record)}
-                        >
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </Button>
-                      ) : null}
-                      {deleteRecord && canDelete ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="text-destructive"
-                          onClick={() => setDeleteTarget(record)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </Button>
-                      ) : null}
-                    </div>
+                    {renderRecordActions(record)}
                   </div>
                 ))}
               </div>
