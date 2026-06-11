@@ -14,8 +14,6 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
       record={data}
       error={error}
       eyebrow="Research Event"
-      fallbackTitle="Research event"
-      fallbackBody="Event record loaded from the Research service."
       backLabel="Events"
       backHref="/events"
       labelFields={["event_type", "category", "status"]}

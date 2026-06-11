@@ -14,8 +14,6 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
       record={data}
       error={error}
       eyebrow="Resource"
-      fallbackTitle="Research resource"
-      fallbackBody="Resource record loaded from the Research service."
       backLabel="Resources"
       backHref="/resources-tools"
       labelFields={["resource_type", "category", "status"]}

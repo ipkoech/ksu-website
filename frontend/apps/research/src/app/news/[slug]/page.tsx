@@ -16,8 +16,6 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
       record={data}
       error={error}
       eyebrow="Research Update"
-      fallbackTitle="Research update"
-      fallbackBody="Content record loaded from the Research service."
       backLabel="News"
       backHref="/news"
       labelFields={["article_type", "news_type", "category", "status"]}

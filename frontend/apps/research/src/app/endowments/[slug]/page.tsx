@@ -14,8 +14,6 @@ export default async function EndowmentDetailPage({ params }: { params: Promise<
       record={data}
       error={error}
       eyebrow="Endowment"
-      fallbackTitle="Research endowment"
-      fallbackBody="Endowment record loaded from the Research service."
       backLabel="Endowments"
       backHref="/endowments"
       labelFields={["fund_type", "category", "status"]}

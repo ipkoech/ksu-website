@@ -14,8 +14,6 @@ export default async function TrainingDetailPage({ params }: { params: Promise<{
       record={data}
       error={error}
       eyebrow="Training"
-      fallbackTitle="Training programme"
-      fallbackBody="Training record loaded from the Research service."
       backLabel="Training"
       backHref="/training"
       labelFields={["program_type", "delivery_mode", "status"]}

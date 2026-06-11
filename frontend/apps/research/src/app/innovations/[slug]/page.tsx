@@ -14,8 +14,6 @@ export default async function InnovationDetailPage({ params }: { params: Promise
       record={data}
       error={error}
       eyebrow="Innovation"
-      fallbackTitle="Innovation"
-      fallbackBody="Innovation record loaded from the Research service."
       backLabel="Innovations"
       backHref="/innovations"
       labelFields={["innovation_type", "category", "status"]}

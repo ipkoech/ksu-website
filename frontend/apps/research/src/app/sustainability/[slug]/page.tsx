@@ -18,8 +18,6 @@ export default async function SustainabilityDetailPage({
       record={data}
       error={error}
       eyebrow="Sustainability"
-      fallbackTitle="Sustainability initiative"
-      fallbackBody="Sustainability record loaded from the Research service."
       backLabel="Sustainability"
       backHref="/sustainability"
       labelFields={["initiative_type", "status"]}

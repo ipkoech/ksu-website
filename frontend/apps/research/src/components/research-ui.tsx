@@ -57,7 +57,7 @@ export function ResearchHero({
 }: {
   eyebrow: string;
   title: string;
-  body: string;
+  body?: string;
   actions?: ReactNode;
   breadcrumbs?: { label: string; href?: string }[];
   children?: ReactNode;
@@ -75,9 +75,11 @@ export function ResearchHero({
           <h1 className="mt-4 max-w-3xl text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
             {title}
           </h1>
-          <p className="mt-5 max-w-2xl text-base leading-8 text-white/80 sm:text-lg">
-            {body}
-          </p>
+          {body ? (
+            <p className="mt-5 max-w-2xl text-base leading-8 text-white/80 sm:text-lg">
+              {body}
+            </p>
+          ) : null}
           {actions ? (
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">{actions}</div>
           ) : null}

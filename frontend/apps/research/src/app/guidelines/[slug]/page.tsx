@@ -14,8 +14,6 @@ export default async function GuidelineDetailPage({ params }: { params: Promise<
       record={data}
       error={error}
       eyebrow="Guideline"
-      fallbackTitle="Research guideline"
-      fallbackBody="Guideline record loaded from the Research service."
       backLabel="Guidelines"
       backHref="/guidelines"
       labelFields={["guideline_type", "category", "status"]}

@@ -14,8 +14,6 @@ export default async function OutputDetailPage({ params }: { params: Promise<{ s
       record={data}
       error={error}
       eyebrow="Research Output"
-      fallbackTitle="Research output"
-      fallbackBody="Output record loaded from the Research service."
       backLabel="Outputs"
       backHref="/outputs"
       labelFields={["output_type", "access_type", "status"]}

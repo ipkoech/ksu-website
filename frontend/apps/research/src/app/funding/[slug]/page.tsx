@@ -15,8 +15,6 @@ export default async function FundingDetailPage({ params }: { params: Promise<{ 
       record={data as ResearchGenericRecord}
       error={error}
       eyebrow="Funding"
-      fallbackTitle="Funding opportunity"
-      fallbackBody="Grant record loaded from the Research service."
       backLabel="Funding"
       backHref="/funding"
       labelFields={["grant_type", "category", "status"]}

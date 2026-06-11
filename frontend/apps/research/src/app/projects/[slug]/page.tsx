@@ -19,8 +19,6 @@ export default async function ProjectDetailPage({
       record={data as ResearchGenericRecord}
       error={error}
       eyebrow="Research Project"
-      fallbackTitle="Research project"
-      fallbackBody="Project record loaded from the Research service."
       backLabel="Projects"
       backHref="/projects"
       labelFields={["project_type", "status"]}

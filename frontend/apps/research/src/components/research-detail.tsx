@@ -18,8 +18,6 @@ export function ResearchRecordDetail({
   record,
   error,
   eyebrow,
-  fallbackTitle,
-  fallbackBody,
   backLabel,
   backHref,
   labelFields = ["category", "type", "status"],
@@ -30,8 +28,6 @@ export function ResearchRecordDetail({
   record: ResearchGenericRecord;
   error?: string | null;
   eyebrow: string;
-  fallbackTitle: string;
-  fallbackBody: string;
   backLabel: string;
   backHref: string;
   labelFields?: string[];
@@ -39,10 +35,14 @@ export function ResearchRecordDetail({
   sections?: DetailSection[];
   children?: ReactNode;
 }) {
-  const title = getTitle(record) || fallbackTitle;
-  const body =
-    getFirstText(record, ["summary", "abstract", "about", "description", "impact"]) ||
-    fallbackBody;
+  const title = getTitle(record);
+  const body = getFirstText(record, [
+    "summary",
+    "abstract",
+    "about",
+    "description",
+    "impact",
+  ]);
   const labels = labelFields
     .map((field) => formatLabel(compactText(record[field])))
     .filter(Boolean);

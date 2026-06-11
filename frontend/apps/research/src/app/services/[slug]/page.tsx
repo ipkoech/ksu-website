@@ -14,8 +14,6 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
       record={data}
       error={error}
       eyebrow="Research Service"
-      fallbackTitle="Research service"
-      fallbackBody="Service record loaded from the Research service."
       backLabel="Services"
       backHref="/services"
       labelFields={["service_type", "category", "status"]}

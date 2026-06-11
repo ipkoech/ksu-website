@@ -14,8 +14,6 @@ export default async function CenterDetailPage({ params }: { params: Promise<{ s
       record={data}
       error={error}
       eyebrow="Research Center"
-      fallbackTitle="Research center"
-      fallbackBody="Center record loaded from the Research service."
       backLabel="Centers"
       backHref="/centers"
       labelFields={["center_type", "status"]}

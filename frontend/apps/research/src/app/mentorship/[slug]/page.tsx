@@ -14,8 +14,6 @@ export default async function MentorshipDetailPage({ params }: { params: Promise
       record={data}
       error={error}
       eyebrow="Mentorship"
-      fallbackTitle="Mentorship programme"
-      fallbackBody="Mentorship record loaded from the Research service."
       backLabel="Mentorship"
       backHref="/mentorship"
       labelFields={["program_type", "mentorship_type", "status"]}

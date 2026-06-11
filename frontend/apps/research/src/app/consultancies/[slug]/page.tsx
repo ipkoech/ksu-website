@@ -14,8 +14,6 @@ export default async function ConsultancyDetailPage({ params }: { params: Promis
       record={data}
       error={error}
       eyebrow="Consultancy"
-      fallbackTitle="Consultancy"
-      fallbackBody="Consultancy record loaded from the Research service."
       backLabel="Consultancies"
       backHref="/consultancies"
       labelFields={["consultancy_type", "category", "status"]}

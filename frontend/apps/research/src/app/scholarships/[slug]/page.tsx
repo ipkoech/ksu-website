@@ -14,8 +14,6 @@ export default async function ScholarshipDetailPage({ params }: { params: Promis
       record={data}
       error={error}
       eyebrow="Scholarship"
-      fallbackTitle="Scholarship"
-      fallbackBody="Scholarship record loaded from the Research service."
       backLabel="Scholarships"
       backHref="/scholarships"
       labelFields={["scholarship_type", "status"]}

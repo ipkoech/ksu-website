@@ -14,8 +14,6 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
       record={data}
       error={error}
       eyebrow="Research Partner"
-      fallbackTitle="Research partner"
-      fallbackBody="Partner record loaded from the Research service."
       backLabel="Partners"
       backHref="/partners"
       labelFields={["partner_type", "partnership_level", "status"]}

@@ -14,8 +14,6 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ slu
       record={data}
       error={error}
       eyebrow="University Farm"
-      fallbackTitle="University farm"
-      fallbackBody="Farm record loaded from the Research service."
       backLabel="University Farm"
       backHref="/farm"
       labelFields={["farm_type", "status"]}

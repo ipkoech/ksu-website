@@ -19,8 +19,6 @@ export default async function PublicationDetailPage({
       record={data as ResearchGenericRecord}
       error={error}
       eyebrow="Publication"
-      fallbackTitle="Publication"
-      fallbackBody="Publication record loaded from the Research service."
       backLabel="Publications"
       backHref="/publications"
       labelFields={["publication_type", "status", "access_type"]}
