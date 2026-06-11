@@ -19,36 +19,25 @@ const contactInfo = {
 
 const miniQuickLinks = [
   {
-    label: "Conferences",
-    href: "https://digital.kisiiuniversity.ac.ke/conferences",
+    label: "Main Site",
+    href: "https://kisiiuniversity.ac.ke",
     external: true,
   },
   {
-    label: "Tenders",
-    href: "https://digital.kisiiuniversity.ac.ke/procurement_portal/tenders",
-    external: true,
+    label: "Catalog",
+    href: "/catalog",
   },
   {
-    label: "Careers",
-    href: "https://digital.kisiiuniversity.ac.ke/job_portal/open_adverts",
-    external: true,
+    label: "E-resources",
+    href: "/electronic",
   },
   {
-    label: "Help Desk",
-    href: "https://digital.kisiiuniversity.ac.ke/ksu_customer_care_center",
-    external: true,
+    label: "Branches",
+    href: "/services#branches-heading",
   },
-  {
-    label: "Visitors",
-    href: "https://kisiiuniversity.ac.ke/visit_home",
-    external: true,
-  },
-  {
-    label: "Downloads",
-    href: "https://kisiiuniversity.ac.ke/page_downloads",
-    external: true,
-  },
-  { label: "FAQ", href: "https://kisiiuniversity.ac.ke/faq", external: true },
+  { label: "Hours", href: "/hours" },
+  { label: "Repository", href: "/repositories" },
+  { label: "Help", href: "/services#services-heading" },
 ];
 
 export const metadata: Metadata = {
@@ -89,7 +78,11 @@ export default function RootLayout({
           />
           <LibraryHeader />
           {children}
-          <PublicFooter contactInfo={contactInfo} socialLinks={socialLinks} />
+          <PublicFooter
+            contactInfo={contactInfo}
+            libraryHref="/"
+            socialLinks={socialLinks}
+          />
         </div>
       </body>
     </html>
