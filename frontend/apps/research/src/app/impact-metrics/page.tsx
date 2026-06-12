@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import {
   Badge,
   IconCard,
-  ResearchHero,
+  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -30,7 +30,7 @@ export default async function ImpactMetricsPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow="Impact & Metrics"
         title="A public dashboard for research outcomes."
         body="Monitor research funding, outputs, patents, startups, jobs, success stories, and partner-facing reports."

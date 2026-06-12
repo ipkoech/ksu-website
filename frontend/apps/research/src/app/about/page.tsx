@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { GenericRecordGrid } from "../../components/research-listing";
-import { ResearchHero, ResearchSection } from "../../components/research-ui";
+import { ResearchPageIntro, ResearchSection } from "../../components/research-ui";
 import { getBoardMembers, getBoards, getOffices } from "../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,7 @@ export default async function AboutPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow="About REIRM"
         title="Research, Extension, Innovation & Resource Mobilization."
         body="Explore the offices, boards, and governance records that structure research activity at Kisii University."

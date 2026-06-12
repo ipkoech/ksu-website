@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import {
   Badge,
   IconCard,
-  ResearchHero,
+  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -33,7 +33,7 @@ export default async function CommunityImpactPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow="Community Impact"
         title="Research that creates local and regional value."
         body="Track community-facing research, sustainability initiatives, outreach events, and social impact stories connected to Kisii University."

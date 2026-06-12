@@ -3,7 +3,7 @@ import {
   Badge,
   FilledBadge,
   IconCard,
-  ResearchHero,
+  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -31,7 +31,7 @@ export default async function FundingPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow="Funding"
         title="Grant calls and research support opportunities."
         body="Review open and featured funding opportunities, eligibility notes, funders, and application deadlines."

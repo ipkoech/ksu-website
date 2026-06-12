@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { GenericRecordGrid } from "../../components/research-listing";
-import { ResearchHero, ResearchSection } from "../../components/research-ui";
+import { ResearchPageIntro, ResearchSection } from "../../components/research-ui";
 import { getTraining } from "../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export default async function TrainingPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow="Training"
         title="Research training, workshops, and bootcamps."
         body="Training programme records are loaded from the Research Training endpoint."

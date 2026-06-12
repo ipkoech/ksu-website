@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { Badge, FilledBadge, ResearchHero, ResearchSection, StatusMessage } from "../../components/research-ui";
+import { Badge, FilledBadge, ResearchPageIntro, ResearchSection, StatusMessage } from "../../components/research-ui";
 import {
   compactText,
   formatDate,
@@ -33,14 +33,12 @@ export default async function SustainabilityPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow="Sustainability"
         title="Sustainability initiatives connected to research."
         body="Explore active climate, conservation, biodiversity, water, food security, and circular-economy work managed through the Research service."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Sustainability" }]}
-      >
-        <HeroSnapshot initiatives={initiatives.data} metrics={metrics.data} />
-      </ResearchHero>
+       />
 
       {errors.length > 0 ? <ErrorBand errors={errors} /> : null}
 
@@ -90,40 +88,6 @@ export default async function SustainabilityPage() {
         </ResearchSection>
       ) : null}
     </main>
-  );
-}
-
-function HeroSnapshot({
-  initiatives,
-  metrics,
-}: {
-  initiatives: ResearchGenericRecord[];
-  metrics: ResearchGenericRecord[];
-}) {
-  const featuredCount = initiatives.filter((item) => item.is_featured).length;
-  const activeCount = initiatives.filter((item) => item.status === "active").length;
-
-  return (
-    <div className="grid gap-3">
-      <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
-        Sustainability snapshot
-      </p>
-      <div className="grid grid-cols-2 gap-3">
-        <SnapshotValue label="Initiatives" value={initiatives.length} />
-        <SnapshotValue label="Active" value={activeCount} />
-        <SnapshotValue label="Featured" value={featuredCount} />
-        <SnapshotValue label="Metrics" value={metrics.length} />
-      </div>
-    </div>
-  );
-}
-
-function SnapshotValue({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-md border border-slate-200 bg-white p-4">
-      <p className="font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950">{value}</p>
-      <p className="mt-1 text-xs leading-5 text-slate-600">{label}</p>
-    </div>
   );
 }
 

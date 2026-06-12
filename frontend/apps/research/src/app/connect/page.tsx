@@ -2,10 +2,8 @@ import type { Metadata } from "next";
 import {
   Badge,
   IconCard,
-  PrimaryLink,
-  ResearchHero,
+  ResearchPageIntro,
   ResearchSection,
-  SecondaryLink,
   StatusMessage,
 } from "../../components/research-ui";
 import {
@@ -61,7 +59,7 @@ export default async function ConnectPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow="Connect & Engage"
         title="Reach research teams, partners, and programmes."
         body="Find departmental contacts, industry liaisons, community coordinators, media channels, donation entry points, and mentorship sign-up."
@@ -70,12 +68,6 @@ export default async function ConnectPage() {
           { label: "Research", href: "/" },
           { label: "Connect & Engage" },
         ]}
-        actions={
-          <>
-            <PrimaryLink href="#get-in-touch">Get in touch</PrimaryLink>
-            <SecondaryLink href="#mentorship">Mentorship sign-up</SecondaryLink>
-          </>
-        }
       />
       <ResearchSection
         eyebrow="Our Teams"

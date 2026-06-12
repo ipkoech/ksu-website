@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { GenericRecordGrid } from "../../components/research-listing";
-import { ResearchHero, ResearchSection } from "../../components/research-ui";
+import { ResearchPageIntro, ResearchSection } from "../../components/research-ui";
 import {
   getExpertiseTags,
   getFocusAreas,
@@ -23,7 +23,7 @@ export default async function ExpertisePage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow="Expertise"
         title="Find researchers, specialists, and focus areas."
         body="The expertise directory is built from research office staff, expertise tags, and focus area records."

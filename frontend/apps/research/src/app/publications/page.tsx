@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import {
   Badge,
   FilledBadge,
-  ResearchHero,
+  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -29,7 +29,7 @@ export default async function PublicationsPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow="Publications"
         title="Scholarly outputs and open access records."
         body="Find journal articles, conference papers, reports, and books published through Kisii University research activity."

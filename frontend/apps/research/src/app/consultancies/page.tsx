@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { GenericRecordGrid } from "../../components/research-listing";
-import { ResearchHero, ResearchSection } from "../../components/research-ui";
+import { ResearchPageIntro, ResearchSection } from "../../components/research-ui";
 import { getConsultancies } from "../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export default async function ConsultanciesPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow="Consultancies"
         title="Professional expert services and applied research support."
         body="Consultancy records are maintained in the Research service and surfaced for partners."

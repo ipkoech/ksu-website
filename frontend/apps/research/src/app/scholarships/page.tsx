@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { GenericRecordGrid } from "../../components/research-listing";
-import { ResearchHero, ResearchSection } from "../../components/research-ui";
+import { ResearchPageIntro, ResearchSection } from "../../components/research-ui";
 import { getScholarships } from "../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export default async function ScholarshipsPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow="Scholarships"
         title="Research scholarships and student funding opportunities."
         body="Scholarship records are loaded directly from the Research Scholarships endpoint."

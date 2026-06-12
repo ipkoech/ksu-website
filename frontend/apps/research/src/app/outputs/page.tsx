@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { GenericRecordGrid } from "../../components/research-listing";
-import { ResearchHero, ResearchSection } from "../../components/research-ui";
+import { ResearchPageIntro, ResearchSection } from "../../components/research-ui";
 import { getOutputs } from "../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export default async function OutputsPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow="Outputs"
         title="Research outputs and public report records."
         body="Outputs are loaded from the Research Outputs endpoint and reflect public-facing research deliverables."

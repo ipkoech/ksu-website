@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { GenericRecordGrid } from "../../components/research-listing";
-import { ResearchHero, ResearchSection } from "../../components/research-ui";
+import { ResearchPageIntro, ResearchSection } from "../../components/research-ui";
 import { getServices } from "../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export default async function ServicesPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow="Services"
         title="Research support services."
         body="Find services that support researchers, partners, and public engagement."

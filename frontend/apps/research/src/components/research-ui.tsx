@@ -47,47 +47,31 @@ const iconMap: Record<IconName, LucideIcon> = {
   x: X,
 };
 
-export function ResearchHero({
+export function ResearchPageIntro({
   eyebrow,
   title,
   body,
-  actions,
   breadcrumbs,
-  children,
 }: {
   eyebrow: string;
   title: string;
   body?: string;
-  actions?: ReactNode;
   breadcrumbs?: { label: string; href?: string }[];
-  children?: ReactNode;
 }) {
   return (
-    <section className="px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto grid w-full max-w-[1680px] gap-6 rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-end lg:p-6">
-        <div className="max-w-4xl">
-          {breadcrumbs?.length ? (
-            <BreadcrumbTrail items={breadcrumbs} />
-          ) : null}
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-secondary">
-            {eyebrow}
+    <section className="bg-white px-4 pb-5 pt-7 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto w-full max-w-[1680px] border-b border-slate-200 pb-6">
+        {breadcrumbs?.length ? <BreadcrumbTrail items={breadcrumbs} /> : null}
+        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-secondary">
+          {eyebrow}
+        </p>
+        <h1 className="mt-3 max-w-5xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+          {title}
+        </h1>
+        {body ? (
+          <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-700 sm:text-base">
+            {body}
           </p>
-          <h1 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl lg:text-5xl">
-            {title}
-          </h1>
-          {body ? (
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-700 sm:text-base">
-              {body}
-            </p>
-          ) : null}
-          {actions ? (
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">{actions}</div>
-          ) : null}
-        </div>
-        {children ? (
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            {children}
-          </div>
         ) : null}
       </div>
     </section>

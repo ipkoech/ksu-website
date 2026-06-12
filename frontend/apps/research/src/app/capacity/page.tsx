@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import {
   Badge,
   FilledBadge,
-  ResearchHero,
+  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -31,7 +31,7 @@ export default async function CapacityPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow="Capacity"
         title="Training, mentorship, and scholarships for research growth."
         body="Find structured opportunities that help staff, students, and collaborators build research methods, writing, ethics, and leadership capacity."

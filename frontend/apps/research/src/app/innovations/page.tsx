@@ -3,7 +3,7 @@ import {
   Badge,
   FilledBadge,
   IconCard,
-  ResearchHero,
+  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -30,7 +30,7 @@ export default async function InnovationsPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow="Innovations"
         title="Research translated into tools, prototypes, and public value."
         body="Explore innovations, intellectual property status, commercialization stages, and practical applications."

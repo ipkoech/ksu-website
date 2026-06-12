@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
-import { Badge, FilledBadge, ResearchHero, ResearchSection, StatusMessage } from "../../components/research-ui";
+import { Badge, FilledBadge, ResearchPageIntro, ResearchSection, StatusMessage } from "../../components/research-ui";
 import {
   compactText,
   formatDate,
@@ -39,19 +39,12 @@ export default async function FarmPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow="University Farm"
         title="Farm-linked research, facilities, and community impact."
         body="Explore farm facilities, action research projects, community partnerships, activities, impact stories, and focus areas backed by the Research service."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "University Farm" }]}
-      >
-        <HeroSnapshot
-          farms={farms.data}
-          projects={projects.data}
-          partners={partners.data}
-          activities={activities.data}
-        />
-      </ResearchHero>
+       />
 
       {errors.length > 0 ? <ErrorBand errors={errors} /> : null}
 
@@ -119,41 +112,6 @@ export default async function FarmPage() {
         </ResearchSection>
       ) : null}
     </main>
-  );
-}
-
-function HeroSnapshot({
-  farms,
-  projects,
-  partners,
-  activities,
-}: {
-  farms: ResearchGenericRecord[];
-  projects: ResearchProject[];
-  partners: ResearchGenericRecord[];
-  activities: ResearchGenericRecord[];
-}) {
-  return (
-    <div className="grid gap-3">
-      <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
-        Farm snapshot
-      </p>
-      <div className="grid grid-cols-2 gap-3">
-        <SnapshotValue label="Facilities" value={farms.length} />
-        <SnapshotValue label="Projects" value={projects.length} />
-        <SnapshotValue label="Partners" value={partners.length} />
-        <SnapshotValue label="Activities" value={activities.length} />
-      </div>
-    </div>
-  );
-}
-
-function SnapshotValue({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-md border border-slate-200 bg-white p-4">
-      <p className="font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950">{value}</p>
-      <p className="mt-1 text-xs leading-5 text-slate-600">{label}</p>
-    </div>
   );
 }
 

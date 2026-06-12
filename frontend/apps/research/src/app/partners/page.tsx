@@ -3,7 +3,7 @@ import {
   Badge,
   FilledBadge,
   IconCard,
-  ResearchHero,
+  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -30,7 +30,7 @@ export default async function PartnersPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow="Partners"
         title="Academic, industry, community, and funder collaborations."
         body="See the partner network supporting Kisii University research, innovation, and capacity building."

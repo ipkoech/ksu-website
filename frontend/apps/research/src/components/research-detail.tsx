@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { Badge, ResearchHero, ResearchSection, StatusMessage } from "./research-ui";
+import { Badge, ResearchPageIntro, ResearchSection, StatusMessage } from "./research-ui";
 import { compactText, formatDate, formatLabel } from "../lib/research-public-data";
 
 type DetailSection = {
@@ -55,7 +55,7 @@ export function ResearchRecordDetail({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow={eyebrow}
         title={title}
         body={body}
@@ -64,34 +64,7 @@ export function ResearchRecordDetail({
           { label: backLabel, href: backHref },
           { label: title },
         ]}
-      >
-        {labels.length > 0 || facts.length > 0 ? (
-          <div className="grid gap-4">
-            {labels.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {Array.from(new Set(labels)).slice(0, 4).map((label) => (
-                  <span
-                    key={label}
-                    className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700"
-                  >
-                    {label}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-            {facts.length > 0 ? (
-              <dl className="grid grid-cols-2 gap-3">
-                {facts.slice(0, 4).map((fact) => (
-                  <div key={fact.label} className="rounded-md border border-slate-200 bg-white p-3">
-                    <dt className="text-xs font-semibold uppercase text-slate-500">{fact.label}</dt>
-                    <dd className="mt-1 text-sm font-semibold text-slate-950">{fact.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            ) : null}
-          </div>
-        ) : null}
-      </ResearchHero>
+       />
 
       {error ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8">

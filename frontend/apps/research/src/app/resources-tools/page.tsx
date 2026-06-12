@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import {
   Badge,
   IconCard,
-  ResearchHero,
+  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -32,7 +32,7 @@ export default async function ResourcesToolsPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow="Resources & Tools"
         title="Tools for collaboration, updates, and research support."
         body="Find collaboration entry points, research news, events, policies, templates, annual reports, and partner resources."

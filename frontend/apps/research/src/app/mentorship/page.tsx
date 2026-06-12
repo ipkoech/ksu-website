@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { GenericRecordGrid } from "../../components/research-listing";
-import { PrimaryLink, ResearchHero, ResearchSection, SecondaryLink } from "../../components/research-ui";
+import { ResearchPageIntro, ResearchSection } from "../../components/research-ui";
 import { getMentorship } from "../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
@@ -15,17 +15,11 @@ export default async function MentorshipPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHero
+      <ResearchPageIntro
         eyebrow="Mentorship"
         title="Mentor and mentee pathways for research growth."
         body="Mentorship programme records are backed by the Research Mentorship endpoint."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Mentorship" }]}
-        actions={
-          <>
-            <PrimaryLink href="/connect#mentorship">Mentor sign-up</PrimaryLink>
-            <SecondaryLink href="/connect#mentorship">Mentee sign-up</SecondaryLink>
-          </>
-        }
       />
       <ResearchSection
         eyebrow="Programs"
