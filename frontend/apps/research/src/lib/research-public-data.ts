@@ -28,6 +28,34 @@ export type ResearchOverviewData = {
   errors: string[];
 };
 
+export type ProjectListFilters = {
+  search?: string;
+  projectType?: string;
+  status?: string;
+  centerId?: string;
+  projectId?: string;
+  year?: string;
+  sort?: string;
+  order?: "asc" | "desc";
+};
+
+export type GenericListFilters = {
+  search?: string;
+  status?: string;
+  category?: string;
+  centerType?: string;
+  farmType?: string;
+  centerId?: string;
+  year?: string;
+  sort?: string;
+  order?: "asc" | "desc";
+};
+
+export type RelationshipFilters = {
+  projectId?: string;
+  centerId?: string;
+};
+
 const PUBLIC_RESEARCH_TIMEOUT_MS = 3000;
 
 const unavailableMessage =
@@ -80,10 +108,20 @@ function uniqueErrors(...items: Array<string | null | undefined>) {
   return Array.from(new Set(items.filter(Boolean) as string[]));
 }
 
-export function getProjects(search?: string) {
+export function getProjects(filters: string | ProjectListFilters = {}) {
+  const params =
+    typeof filters === "string" ? { search: filters } : filters;
+
   return safeList<ResearchProject>(() =>
     researchServiceApi.projects.list({
-      search: search?.trim() || undefined,
+      search: params.search?.trim() || undefined,
+      project_type: params.projectType || undefined,
+      status: params.status || undefined,
+      center_id: params.centerId || undefined,
+      project_id: params.projectId || undefined,
+      year: parseYear(params.year),
+      sort: params.sort || undefined,
+      order: params.order,
       is_active: true,
       is_public: true,
       page: 1,
@@ -100,6 +138,30 @@ export function getPublications(search?: string) {
   return safeList<ResearchPublication>(() =>
     researchServiceApi.publications.list({
       search: search?.trim() || undefined,
+      status: "published",
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getProjectPublications(projectId: string) {
+  return safeList<ResearchPublication>(() =>
+    researchServiceApi.publications.list({
+      project_id: projectId,
+      status: "published",
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getCenterPublications(centerId: string) {
+  return safeList<ResearchPublication>(() =>
+    researchServiceApi.publications.list({
+      center_id: centerId,
       status: "published",
       is_active: true,
       page: 1,
@@ -175,6 +237,33 @@ export function getCenters() {
   );
 }
 
+export function getCentersFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.centers.list({
+      search: filters.search?.trim() || undefined,
+      center_type: filters.centerType || undefined,
+      status: filters.status || undefined,
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getCenterProjects(centerId: string) {
+  return safeList<ResearchProject>(() =>
+    researchServiceApi.projects.list({
+      center_id: centerId,
+      is_active: true,
+      is_public: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
 export function getCenterBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.centers.getBySlug(slug),
@@ -185,6 +274,22 @@ export function getFacilities() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.farms.list({
       is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getFacilitiesFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.farms.list({
+      search: filters.search?.trim() || undefined,
+      farm_type: filters.farmType || undefined,
+      center_id: filters.centerId || undefined,
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: true,
+      is_public: true,
       page: 1,
       per_page: 100,
     }),
@@ -243,9 +348,38 @@ export function getPrograms() {
   );
 }
 
+export function getProgramsFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.programs.list({
+      search: filters.search?.trim() || undefined,
+      status: filters.status || undefined,
+      category: filters.category || undefined,
+      center_id: filters.centerId || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
 export function getProgramBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.programs.getBySlug(slug),
+  );
+}
+
+export function getProgramProjects(programId: string) {
+  return safeList<ResearchProject>(() =>
+    researchServiceApi.projects.list({
+      is_active: true,
+      is_public: true,
+      page: 1,
+      per_page: 100,
+      program_id: programId,
+    }),
   );
 }
 
@@ -292,6 +426,19 @@ export function getJournals() {
 export function getOutputs() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.outputs.list({
+      is_active: true,
+      is_public: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getRelatedOutputs(filters: RelationshipFilters) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.outputs.list({
+      project_id: filters.projectId || undefined,
+      center_id: filters.centerId || undefined,
       is_active: true,
       is_public: true,
       page: 1,
@@ -672,6 +819,12 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
 export function compactText(value?: string | number | null) {
   if (value === null || value === undefined) return "";
   return String(value).replace(/\s+/g, " ").trim();
+}
+
+function parseYear(value?: string) {
+  if (!value) return undefined;
+  const year = Number(value);
+  return Number.isInteger(year) ? year : undefined;
 }
 
 export function formatLabel(value?: string | null) {

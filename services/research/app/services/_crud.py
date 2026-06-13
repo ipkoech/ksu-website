@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from typing import Any, Generic, TypeVar
 
-from sqlalchemy import or_, select
+from sqlalchemy import extract, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common import PaginatedResult, paginate
@@ -41,7 +41,22 @@ class CRUDService(Generic[M]):
         return query
 
     @classmethod
-    def _apply_order(cls, query):
+    def _apply_year(cls, query, year: int | None = None):
+        if year is None:
+            return query
+        if hasattr(cls.model, "year"):
+            return query.where(getattr(cls.model, "year") == year)
+        for field in ("start_date", "publication_date", "created_at"):
+            if hasattr(cls.model, field):
+                return query.where(extract("year", getattr(cls.model, field)) == year)
+        return query
+
+    @classmethod
+    def _apply_order(cls, query, sort: str | None = None, order: str | None = None):
+        if sort and hasattr(cls.model, sort):
+            column = getattr(cls.model, sort)
+            return query.order_by(column.asc() if order == "asc" else column.desc())
+
         order_columns = []
         for name in cls.default_order:
             if hasattr(cls.model, name):
@@ -64,6 +79,9 @@ class CRUDService(Generic[M]):
         per_page: int = 20,
         search: str | None = None,
         filters: dict[str, Any] | None = None,
+        year: int | None = None,
+        sort: str | None = None,
+        order: str | None = None,
         load_options: tuple[Any, ...] | list[Any] = (),
     ) -> PaginatedResult:
         query = cls.model.active_query()
@@ -71,7 +89,8 @@ class CRUDService(Generic[M]):
             query = query.options(*load_options)
         query = cls._apply_search(query, search)
         query = cls._apply_filters(query, filters)
-        query = cls._apply_order(query)
+        query = cls._apply_year(query, year)
+        query = cls._apply_order(query, sort=sort, order=order)
         return await paginate(db, query, page=page, per_page=per_page)
 
     @classmethod

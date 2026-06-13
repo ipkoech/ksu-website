@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
   Badge,
   FilledBadge,
-  IconCard,
   ResearchPageIntro,
   ResearchSection,
   StatusMessage,
@@ -12,9 +12,10 @@ import {
   formatDate,
   formatLabel,
   getCenters,
-  getFacilities,
+  getPrograms,
   getProjects,
 } from "../../lib/research-public-data";
+import type { ResearchProject } from "@ksu/api-client";
 
 export const dynamic = "force-dynamic";
 
@@ -23,116 +24,112 @@ export const metadata: Metadata = {
   description: "Browse Kisii University research projects and active research work.",
 };
 
+type ProjectSearchParams = {
+  q?: string;
+  type?: string;
+  status?: string;
+  center?: string;
+  year?: string;
+  sort?: string;
+};
+
+const projectTypes = ["basic", "applied", "action", "collaborative", "commissioned"];
+const projectStatuses = ["proposal", "approved", "ongoing", "completed", "suspended", "cancelled"];
+const sortOptions = [
+  { label: "Newest", value: "created_at" },
+  { label: "Recently updated", value: "updated_at" },
+  { label: "Start date", value: "start_date" },
+  { label: "Progress", value: "progress_percentage" },
+  { label: "Title", value: "title" },
+];
+
 export default async function ProjectsPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ q?: string }>;
+  searchParams?: Promise<ProjectSearchParams>;
 }) {
-  const params = await searchParams;
-  const query = params?.q;
-  const [projects, centers, facilities] = await Promise.all([
-    getProjects(query),
+  const params = (await searchParams) ?? {};
+  const [projects, allProjects, centers, programs] = await Promise.all([
+    getProjects({
+      search: params.q,
+      projectType: params.type,
+      status: params.status,
+      centerId: params.center,
+      year: params.year,
+      sort: params.sort || "created_at",
+      order: params.sort === "title" ? "asc" : "desc",
+    }),
+    getProjects(),
     getCenters(),
-    getFacilities(),
+    getPrograms(),
   ]);
+  const years = getProjectYears(allProjects.data);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
       <ResearchPageIntro
-        eyebrow="Projects"
-        title="Active research work across Kisii University."
-        body="Browse public research projects, progress, expected outcomes, and institutional impact areas."
+        eyebrow="Discovery"
+        title="Research work across Kisii University."
+        body="Browse public research projects by year, type, status, center, and current progress. Results come directly from the Research Projects endpoint."
         breadcrumbs={[
           { label: "Home", href: "/" },
-          { label: "Research", href: "/" },
+          { label: "Discovery", href: "/projects" },
           { label: "Projects" },
         ]}
       />
+
       <ResearchSection
         eyebrow="Project Registry"
-        title="Research projects"
-        body="Records are loaded from the Research service and reflect the same public project catalogue used by the admin portal."
+        title="Projects"
+        body="Use the filters to narrow the backend project catalogue without changing the public page structure."
         tone="white"
       >
-        {projects.error ? <StatusMessage tone="error">{projects.error}</StatusMessage> : null}
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {projects.data.map((project) => (
-            <article
-              key={project.id}
-              className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
-            >
-              <div className="flex flex-wrap gap-2">
-                <Badge>{formatLabel(project.project_type ?? "research")}</Badge>
-                <Badge>{formatLabel(project.status ?? "ongoing")}</Badge>
-                {project.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
-              </div>
-              <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-                {project.slug ? (
-                  <a href={`/projects/${project.slug}`} className="transition hover:text-primary">
-                    {project.title}
-                  </a>
-                ) : (
-                  project.title
-                )}
-              </h2>
-              {compactText(project.summary) ? (
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  {compactText(project.summary)}
-                </p>
-              ) : null}
-              <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
-                <div className="rounded-md bg-slate-50 p-3">
-                  <dt className="text-xs font-semibold uppercase text-slate-500">Progress</dt>
-                  <dd className="mt-1 font-semibold text-slate-950">
-                    {project.progress_percentage ?? 0}%
-                  </dd>
-                </div>
-                <div className="rounded-md bg-slate-50 p-3">
-                  <dt className="text-xs font-semibold uppercase text-slate-500">Updated</dt>
-                  <dd className="mt-1 font-semibold text-slate-950">
-                    {formatDate(project.updated_at)}
-                  </dd>
-                </div>
-              </dl>
-            </article>
+        <ProjectFilters
+          params={params}
+          centers={centers.data}
+          years={years}
+        />
+
+        {[projects.error, centers.error, programs.error]
+          .filter(Boolean)
+          .map((error) => (
+            <div key={error} className="mt-5">
+              <StatusMessage tone="error">{error}</StatusMessage>
+            </div>
           ))}
-        </div>
+
+        {projects.data.length > 0 ? (
+          <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {projects.data.map((project) => (
+              <ProjectCard key={project.id} project={project} />
+            ))}
+          </div>
+        ) : (
+          <div className="mt-7">
+            <StatusMessage>
+              No published research projects match the current filters.
+            </StatusMessage>
+          </div>
+        )}
       </ResearchSection>
+
       <ResearchSection
-        eyebrow="Expertise & Directory"
-        title="Faculty expertise, centers, and current work"
-        body="Centers, institutes, facilities, and project records form the searchable expertise and directory layer."
+        eyebrow="Research Pathways"
+        title="Programs and centers connected to project work"
+        body="Programs and centers provide the public architecture behind project discovery."
       >
         <div className="grid gap-5 lg:grid-cols-2">
-          <RecordPanel title="Research centers and institutes" records={centers.data} error={centers.error} />
-          <RecordPanel title="Facilities and resources" records={facilities.data} error={facilities.error} />
-        </div>
-      </ResearchSection>
-      <ResearchSection
-        eyebrow="Research Highlights"
-        title="Featured highlights and reports"
-        body="Featured project records support visual storytelling, discovery announcements, and annual impact report promotion."
-        tone="white"
-      >
-        <div className="grid gap-5 md:grid-cols-3">
-          <IconCard
-            icon="flask"
-            title="Featured projects"
-            body="Use featured public projects for homepage storytelling and major discovery highlights."
+          <RelationshipPanel
+            title="Programs"
+            href="/programs"
+            records={programs.data}
+            empty="No research programs are currently published."
           />
-          <IconCard
-            icon="book"
-            title="Annual impact reports"
-            body="Link annual reports from Resources & Tools and Impact & Metrics when records are published."
-            href="/impact-metrics"
-            action="View metrics"
-          />
-          <IconCard
-            icon="news"
-            title="Discovery press releases"
-            body="Publish major discoveries through research updates and cross-promoted events."
-            href="/resources-tools"
-            action="Open updates"
+          <RelationshipPanel
+            title="Centers"
+            href="/centers"
+            records={centers.data}
+            empty="No research centers are currently published."
           />
         </div>
       </ResearchSection>
@@ -140,36 +137,212 @@ export default async function ProjectsPage({
   );
 }
 
-function RecordPanel({
+function ProjectFilters({
+  params,
+  centers,
+  years,
+}: {
+  params: ProjectSearchParams;
+  centers: Array<Record<string, any>>;
+  years: string[];
+}) {
+  return (
+    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/projects">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+        <label className="xl:col-span-2">
+          <span className="text-xs font-semibold uppercase text-slate-500">Search</span>
+          <input
+            name="q"
+            defaultValue={params.q ?? ""}
+            placeholder="Project title, summary, code"
+            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+          />
+        </label>
+        <FilterSelect name="type" label="Type" value={params.type} options={projectTypes} />
+        <FilterSelect name="status" label="Status" value={params.status} options={projectStatuses} />
+        <FilterSelect name="year" label="Year" value={params.year} options={years} />
+        <label>
+          <span className="text-xs font-semibold uppercase text-slate-500">Sort</span>
+          <select
+            name="sort"
+            defaultValue={params.sort ?? "created_at"}
+            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+          >
+            {sortOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="md:col-span-2 xl:col-span-3">
+          <span className="text-xs font-semibold uppercase text-slate-500">Center</span>
+          <select
+            name="center"
+            defaultValue={params.center ?? ""}
+            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+          >
+            <option value="">All centers</option>
+            {centers.map((center) => (
+              <option key={center.id} value={center.id}>
+                {center.name ?? center.title ?? center.code ?? center.id}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="flex items-end gap-2 md:col-span-2 xl:col-span-3">
+          <button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
+            Apply filters
+          </button>
+          <Link
+            href="/projects"
+            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary"
+          >
+            Reset
+          </Link>
+        </div>
+      </div>
+    </form>
+  );
+}
+
+function FilterSelect({
+  name,
+  label,
+  value,
+  options,
+}: {
+  name: string;
+  label: string;
+  value?: string;
+  options: string[];
+}) {
+  return (
+    <label>
+      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
+      <select
+        name={name}
+        defaultValue={value ?? ""}
+        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+      >
+        <option value="">All {label.toLowerCase()}</option>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {formatLabel(option)}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function ProjectCard({ project }: { project: ResearchProject }) {
+  const href = project.slug ? `/projects/${project.slug}` : undefined;
+  const dateRange = [formatDate(project.start_date), formatDate(project.end_date)]
+    .filter(Boolean)
+    .join(" - ");
+
+  const content = (
+    <>
+      <div className="flex flex-wrap gap-2">
+        <Badge>{formatLabel(project.project_type ?? "research")}</Badge>
+        <Badge>{formatLabel(project.status ?? "ongoing")}</Badge>
+        {project.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
+      </div>
+      <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
+        {project.title}
+      </h2>
+      {compactText(project.summary) ? (
+        <p className="mt-3 text-sm leading-7 text-slate-600">
+          {compactText(project.summary)}
+        </p>
+      ) : null}
+      <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
+        <Fact label="Progress" value={`${project.progress_percentage ?? 0}%`} />
+        <Fact label="Timeline" value={dateRange || formatDate(project.updated_at)} />
+      </dl>
+      <span className="mt-5 inline-flex text-sm font-semibold text-primary">
+        View project
+      </span>
+    </>
+  );
+
+  return href ? (
+    <Link
+      href={href}
+      className="group block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
+    >
+      {content}
+    </Link>
+  ) : (
+    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      {content}
+    </article>
+  );
+}
+
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-slate-50 p-3">
+      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
+      <dd className="mt-1 font-semibold text-slate-950">{value || "Not published"}</dd>
+    </div>
+  );
+}
+
+function RelationshipPanel({
   title,
+  href,
   records,
-  error,
+  empty,
 }: {
   title: string;
+  href: string;
   records: Array<Record<string, any>>;
-  error: string | null;
+  empty: string;
 }) {
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
-      {error ? <div className="mt-4"><StatusMessage tone="error">{error}</StatusMessage></div> : null}
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+        <Link href={href} className="text-sm font-semibold text-primary">
+          View all
+        </Link>
+      </div>
       <div className="mt-4 divide-y divide-slate-200">
-        {records.slice(0, 8).map((record) => (
-          <article key={record.id} className="py-4">
-            <h3 className="text-base font-semibold leading-6 text-slate-950">
-              {record.title ?? record.name}
+        {records.slice(0, 5).map((record) => (
+          <article key={record.id} className="py-4 first:pt-0 last:pb-0">
+            <h3 className="text-base font-semibold text-slate-950">
+              {record.slug ? (
+                <Link href={`${href}/${record.slug}`} className="transition hover:text-primary">
+                  {record.name ?? record.title}
+                </Link>
+              ) : (
+                record.name ?? record.title
+              )}
             </h3>
-            {compactText(record.summary) || compactText(record.description) ? (
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {compactText(record.summary) || compactText(record.description)}
-              </p>
-            ) : null}
-            <p className="mt-2 text-xs font-semibold uppercase text-slate-500">
-              {formatLabel(record.center_type ?? record.facility_type ?? record.status)}
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              {compactText(record.summary) ||
+                compactText(record.about) ||
+                compactText(record.description) ||
+                "Relationship details are available when published by the research office."}
             </p>
           </article>
         ))}
+        {records.length === 0 ? (
+          <p className="py-4 text-sm text-slate-600">{empty}</p>
+        ) : null}
       </div>
     </section>
   );
+}
+
+function getProjectYears(projects: ResearchProject[]) {
+  const years = projects
+    .flatMap((project) => [project.start_date, project.end_date, project.created_at])
+    .map((value) => (value ? new Date(value).getFullYear() : null))
+    .filter((year): year is number => Boolean(year) && !Number.isNaN(year));
+  return Array.from(new Set(years))
+    .sort((a, b) => b - a)
+    .map(String);
 }

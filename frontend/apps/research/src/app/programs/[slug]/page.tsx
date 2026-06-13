@@ -1,32 +1,196 @@
 import { notFound } from "next/navigation";
-import { ResearchRecordDetail } from "../../../components/research-detail";
-import { getProgramBySlug } from "../../../lib/research-public-data";
+import Link from "next/link";
+import {
+  Badge,
+  ResearchPageIntro,
+  ResearchSection,
+  StatusMessage,
+} from "../../../components/research-ui";
+import {
+  compactText,
+  formatDate,
+  formatLabel,
+  getProgramBySlug,
+  getProgramProjects,
+} from "../../../lib/research-public-data";
+import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProgramDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function ProgramDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
   const { data, error } = await getProgramBySlug(slug);
   if (!data) notFound();
 
+  const program = data as ResearchGenericRecord;
+  const projects = await getProgramProjects(program.id);
+  const center = program.center as ResearchGenericRecord | undefined;
+
   return (
-    <ResearchRecordDetail
-      record={data}
-      error={error}
-      eyebrow="Research Program"
-      backLabel="Programs"
-      backHref="/programs"
-      labelFields={["program_type", "status"]}
-      factFields={[
-        { label: "Start", field: "start_date", format: "date" },
-        { label: "End", field: "end_date", format: "date" },
-        { label: "Budget", field: "budget" },
-        { label: "Currency", field: "currency" },
-      ]}
-      sections={[
-        { title: "Overview", fields: ["summary", "description"] },
-        { title: "Design", fields: ["objectives", "expected_outcomes", "methodology"] },
-      ]}
-    />
+    <main id="research-main" className="min-h-screen bg-white">
+      <ResearchPageIntro
+        eyebrow="Research Program"
+        title={program.name ?? program.title ?? "Research program"}
+        body={compactText(program.summary) || compactText(program.description)}
+        breadcrumbs={[
+          { label: "Home", href: "/" },
+          { label: "Programs", href: "/programs" },
+          { label: program.name ?? program.title ?? "Program" },
+        ]}
+      />
+
+      {[error, projects.error].filter(Boolean).map((message) => (
+        <section key={message} className="px-4 pt-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-[1680px]">
+            <StatusMessage tone="error">{message}</StatusMessage>
+          </div>
+        </section>
+      ))}
+
+      <ResearchSection
+        eyebrow="Program Pathway"
+        title="Focus, methods, and outcomes"
+        body="Program information is backed by the Research Programs endpoint and connected projects are loaded through the project registry."
+        tone="white"
+      >
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="space-y-5">
+            <TextPanel
+              title="Overview"
+              fields={[
+                ["Summary", program.summary],
+                ["Description", program.description],
+                ["Objectives", program.objectives],
+              ]}
+            />
+            <TextPanel
+              title="Research Approach"
+              fields={[
+                ["Methodology", program.methodology],
+                ["Expected outcomes", program.expected_outcomes],
+              ]}
+            />
+          </div>
+          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex flex-wrap gap-2">
+              <Badge>{formatLabel(program.status ?? "active")}</Badge>
+              {program.is_featured ? <Badge>Featured</Badge> : null}
+            </div>
+            <dl className="mt-5 grid gap-3 text-sm">
+              <Fact label="Start" value={formatDate(program.start_date)} />
+              <Fact label="End" value={formatDate(program.end_date)} />
+              <Fact label="Budget" value={formatMoney(program.budget, program.currency)} />
+              <Fact label="Code" value={compactText(program.code)} />
+            </dl>
+            {center ? (
+              <div className="mt-5 rounded-md bg-slate-50 p-3">
+                <p className="text-xs font-semibold uppercase text-slate-500">Hosted by</p>
+                <Link
+                  href={center.slug ? `/centers/${center.slug}` : "/centers"}
+                  className="mt-1 block font-semibold text-primary"
+                >
+                  {center.name ?? center.title}
+                </Link>
+              </div>
+            ) : null}
+          </aside>
+        </div>
+      </ResearchSection>
+
+      <ResearchSection
+        eyebrow="Connected Projects"
+        title="Projects in this program"
+        body="Programs can have projects in them, but they can also stand alone while the research office builds the project portfolio."
+      >
+        {projects.data.length > 0 ? (
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {projects.data.map((project) => (
+              <ProjectCard key={project.id} project={project} />
+            ))}
+          </div>
+        ) : (
+          <StatusMessage>No public projects are currently linked to this program.</StatusMessage>
+        )}
+      </ResearchSection>
+    </main>
   );
+}
+
+function TextPanel({
+  title,
+  fields,
+}: {
+  title: string;
+  fields: Array<[string, string | number | null | undefined]>;
+}) {
+  const entries = fields
+    .map(([label, value]) => [label, compactText(value)] as const)
+    .filter(([, value]) => value);
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
+        {title}
+      </h2>
+      {entries.length > 0 ? (
+        <div className="mt-4 space-y-4">
+          {entries.map(([label, value]) => (
+            <div key={label}>
+              <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
+              <p className="mt-1 whitespace-pre-line text-sm leading-7 text-slate-600">
+                {value}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 text-sm leading-7 text-slate-600">
+          This section will appear when more program detail is published.
+        </p>
+      )}
+    </section>
+  );
+}
+
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-slate-50 p-3">
+      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
+      <dd className="mt-1 font-semibold text-slate-950">{value || "Not published"}</dd>
+    </div>
+  );
+}
+
+function ProjectCard({ project }: { project: ResearchProject }) {
+  return (
+    <Link
+      href={project.slug ? `/projects/${project.slug}` : "/projects"}
+      className="block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
+    >
+      <div className="flex flex-wrap gap-2">
+        <Badge>{formatLabel(project.project_type ?? "research")}</Badge>
+        <Badge>{formatLabel(project.status ?? "ongoing")}</Badge>
+      </div>
+      <h3 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
+        {project.title}
+      </h3>
+      <p className="mt-3 text-sm leading-7 text-slate-600">
+        {compactText(project.summary) || "Project summary has not been published yet."}
+      </p>
+      <p className="mt-5 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-700">
+        {project.progress_percentage ?? 0}% complete
+      </p>
+    </Link>
+  );
+}
+
+function formatMoney(value?: string | number | null, currency?: string | null) {
+  if (value === null || value === undefined || value === "") return "";
+  const amount = Number(value);
+  if (Number.isNaN(amount)) return compactText(value);
+  return `${currency ?? "KES"} ${new Intl.NumberFormat("en-KE").format(amount)}`;
 }
