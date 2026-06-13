@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BookOpenCheck, Building2, FlaskConical, GraduationCap, Sprout } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
 import {
   Badge,
   FilledBadge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -35,6 +36,39 @@ type ProgramSearchParams = {
 
 const programStatuses = ["planning", "active", "completed", "suspended", "cancelled"];
 
+const discoveryLinks = [
+  {
+    label: "Projects",
+    href: "/projects",
+    description: "Browse funded, applied, action, and collaborative work.",
+    icon: FlaskConical,
+  },
+  {
+    label: "Programs",
+    href: "/programs",
+    description: "See long-term research pathways and related projects.",
+    icon: BookOpenCheck,
+  },
+  {
+    label: "Centers",
+    href: "/centers",
+    description: "Find the institutional homes for research activity.",
+    icon: Building2,
+  },
+  {
+    label: "Facilities",
+    href: "/facilities",
+    description: "Explore farms, labs, and practical research infrastructure.",
+    icon: Sprout,
+  },
+  {
+    label: "Capacity",
+    href: "/capacity",
+    description: "Training, mentorship, and scholarship support.",
+    icon: GraduationCap,
+  },
+];
+
 export default async function ProgramsPage({
   searchParams,
 }: {
@@ -57,7 +91,7 @@ export default async function ProgramsPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchClusterHero
         eyebrow="Discovery"
         title="Research programs and long-term inquiry pathways."
         body="Programs organize related projects, centers, themes, and outputs into public research pathways."
@@ -65,6 +99,16 @@ export default async function ProgramsPage({
           { label: "Home", href: "/" },
           { label: "Discovery", href: "/projects" },
           { label: "Programs" },
+        ]}
+        imageSrc="/images/research/research-demo-imagegen.png"
+        imageAlt="Research teams reviewing long-term programmes and project pathways"
+        links={discoveryLinks}
+        primaryAction={{ label: "Browse projects", href: "/projects" }}
+        stats={[
+          { label: "Program results", value: programs.data.length },
+          { label: "Published programs", value: allPrograms.data.length },
+          { label: "Centers", value: centers.data.length },
+          { label: "Themes", value: themes.data.length },
         ]}
       />
 

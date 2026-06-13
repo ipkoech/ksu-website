@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { BookOpenCheck, Building2, FlaskConical, GraduationCap, Sprout } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
 import {
   Badge,
   FilledBadge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -22,6 +23,39 @@ export const metadata: Metadata = {
   description: "Training, mentorship, and scholarship opportunities for research capacity building.",
 };
 
+const discoveryLinks = [
+  {
+    label: "Projects",
+    href: "/projects",
+    description: "Browse funded, applied, action, and collaborative work.",
+    icon: FlaskConical,
+  },
+  {
+    label: "Programs",
+    href: "/programs",
+    description: "See long-term research pathways and related projects.",
+    icon: BookOpenCheck,
+  },
+  {
+    label: "Centers",
+    href: "/centers",
+    description: "Find the institutional homes for research activity.",
+    icon: Building2,
+  },
+  {
+    label: "Facilities",
+    href: "/facilities",
+    description: "Explore farms, labs, and practical research infrastructure.",
+    icon: Sprout,
+  },
+  {
+    label: "Capacity",
+    href: "/capacity",
+    description: "Training, mentorship, and scholarship support.",
+    icon: GraduationCap,
+  },
+];
+
 export default async function CapacityPage() {
   const [training, mentorship, scholarships] = await Promise.all([
     getTraining(),
@@ -31,7 +65,7 @@ export default async function CapacityPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchClusterHero
         eyebrow="Capacity"
         title="Training, mentorship, and scholarships for research growth."
         body="Find structured opportunities that help staff, students, and collaborators build research methods, writing, ethics, and leadership capacity."
@@ -39,6 +73,16 @@ export default async function CapacityPage() {
           { label: "Home", href: "/" },
           { label: "Research", href: "/" },
           { label: "Capacity" },
+        ]}
+        imageSrc="/images/research/research-demo-imagegen.png"
+        imageAlt="Researchers participating in training and mentorship sessions"
+        links={discoveryLinks}
+        primaryAction={{ label: "Open training", href: "/training" }}
+        stats={[
+          { label: "Training records", value: training.data.length },
+          { label: "Mentorship records", value: mentorship.data.length },
+          { label: "Scholarship records", value: scholarships.data.length },
+          { label: "Support routes", value: 3 },
         ]}
       />
       <ResearchSection

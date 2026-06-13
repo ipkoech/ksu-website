@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BookOpenCheck, Building2, FlaskConical, GraduationCap, Sprout } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
 import {
   Badge,
   FilledBadge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -43,6 +44,39 @@ const sortOptions = [
   { label: "Title", value: "title" },
 ];
 
+const discoveryLinks = [
+  {
+    label: "Projects",
+    href: "/projects",
+    description: "Browse funded, applied, action, and collaborative work.",
+    icon: FlaskConical,
+  },
+  {
+    label: "Programs",
+    href: "/programs",
+    description: "See long-term research pathways and related projects.",
+    icon: BookOpenCheck,
+  },
+  {
+    label: "Centers",
+    href: "/centers",
+    description: "Find the institutional homes for research activity.",
+    icon: Building2,
+  },
+  {
+    label: "Facilities",
+    href: "/facilities",
+    description: "Explore farms, labs, and practical research infrastructure.",
+    icon: Sprout,
+  },
+  {
+    label: "Capacity",
+    href: "/capacity",
+    description: "Training, mentorship, and scholarship support.",
+    icon: GraduationCap,
+  },
+];
+
 export default async function ProjectsPage({
   searchParams,
 }: {
@@ -67,7 +101,7 @@ export default async function ProjectsPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchClusterHero
         eyebrow="Discovery"
         title="Research work across Kisii University."
         body="Browse public research projects by year, type, status, center, and current progress. Results come directly from the Research Projects endpoint."
@@ -75,6 +109,16 @@ export default async function ProjectsPage({
           { label: "Home", href: "/" },
           { label: "Discovery", href: "/projects" },
           { label: "Projects" },
+        ]}
+        imageSrc="/images/research/research-hero-imagegen.png"
+        imageAlt="Researchers collaborating across laboratory, field, and data work"
+        links={discoveryLinks}
+        primaryAction={{ label: "Browse programs", href: "/programs" }}
+        stats={[
+          { label: "Project results", value: projects.data.length },
+          { label: "Published projects", value: allProjects.data.length },
+          { label: "Centers", value: centers.data.length },
+          { label: "Programs", value: programs.data.length },
         ]}
       />
 

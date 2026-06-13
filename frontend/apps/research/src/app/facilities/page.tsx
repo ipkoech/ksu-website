@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BookOpenCheck, Building2, FlaskConical, GraduationCap, Sprout } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
 import {
   Badge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -31,6 +32,39 @@ type FacilitySearchParams = {
 
 const farmTypes = ["crop", "livestock", "aquaculture", "mixed", "demonstration", "experimental"];
 
+const discoveryLinks = [
+  {
+    label: "Projects",
+    href: "/projects",
+    description: "Browse funded, applied, action, and collaborative work.",
+    icon: FlaskConical,
+  },
+  {
+    label: "Programs",
+    href: "/programs",
+    description: "See long-term research pathways and related projects.",
+    icon: BookOpenCheck,
+  },
+  {
+    label: "Centers",
+    href: "/centers",
+    description: "Find the institutional homes for research activity.",
+    icon: Building2,
+  },
+  {
+    label: "Facilities",
+    href: "/facilities",
+    description: "Explore farms, labs, and practical research infrastructure.",
+    icon: Sprout,
+  },
+  {
+    label: "Capacity",
+    href: "/capacity",
+    description: "Training, mentorship, and scholarship support.",
+    icon: GraduationCap,
+  },
+];
+
 export default async function FacilitiesPage({
   searchParams,
 }: {
@@ -51,7 +85,7 @@ export default async function FacilitiesPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchClusterHero
         eyebrow="Discovery"
         title="Facilities, labs, farms, and research infrastructure."
         body="Find research infrastructure, access points, services, and facilities that support discovery and extension."
@@ -59,6 +93,16 @@ export default async function FacilitiesPage({
           { label: "Home", href: "/" },
           { label: "Discovery", href: "/projects" },
           { label: "Facilities" },
+        ]}
+        imageSrc="/images/research/research-workflows.png"
+        imageAlt="Research farm, laboratory, and field infrastructure supporting discovery"
+        links={discoveryLinks}
+        primaryAction={{ label: "View centers", href: "/centers" }}
+        stats={[
+          { label: "Facility results", value: facilities.data.length },
+          { label: "Centers", value: centers.data.length },
+          { label: "Support services", value: services.data.length },
+          { label: "Facility types", value: farmTypes.length },
         ]}
       />
 
