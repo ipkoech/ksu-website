@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BarChart3, BookOpenCheck, Database, FlaskConical } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
 import {
   Badge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -37,6 +38,33 @@ type OutputSearchParams = {
 const outputTypes = ["dataset", "software", "report", "policy_brief", "prototype", "toolkit", "creative_work"];
 const accessTypes = ["open", "restricted", "internal", "on_request"];
 
+const outputLinks = [
+  {
+    label: "Publications",
+    href: "/publications",
+    description: "Articles, books, conference papers, reports, and policy briefs.",
+    icon: BookOpenCheck,
+  },
+  {
+    label: "Outputs",
+    href: "/outputs",
+    description: "Datasets, software, toolkits, prototypes, and deliverables.",
+    icon: Database,
+  },
+  {
+    label: "Impact Metrics",
+    href: "/impact-metrics",
+    description: "Public outcomes, reach, and performance indicators.",
+    icon: BarChart3,
+  },
+  {
+    label: "Projects",
+    href: "/projects",
+    description: "Trace outputs back to the work that produced them.",
+    icon: FlaskConical,
+  },
+];
+
 export default async function OutputsPage({
   searchParams,
 }: {
@@ -61,7 +89,7 @@ export default async function OutputsPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchClusterHero
         eyebrow="Publications & Outputs"
         title="Research outputs, datasets, tools, reports, and public deliverables."
         body="Outputs explain what research produced, who can use it, how to access it, and how it connects to projects or centers."
@@ -69,6 +97,16 @@ export default async function OutputsPage({
           { label: "Home", href: "/" },
           { label: "Publications & Outputs", href: "/publications" },
           { label: "Outputs" },
+        ]}
+        imageSrc="/images/research/research-demo-imagegen.png"
+        imageAlt="Research datasets, reports, software, and public deliverables"
+        links={outputLinks}
+        primaryAction={{ label: "View publications", href: "/publications" }}
+        stats={[
+          { label: "Output results", value: outputs.data.length },
+          { label: "Published outputs", value: allOutputs.data.length },
+          { label: "Centers", value: centers.data.length },
+          { label: "Projects", value: projects.data.length },
         ]}
       />
 

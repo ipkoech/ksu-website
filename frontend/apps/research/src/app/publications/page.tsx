@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BarChart3, BookOpenCheck, Database, FlaskConical } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
 import {
   Badge,
   FilledBadge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -46,6 +47,33 @@ const publicationTypes = [
 ];
 const accessTypes = ["open", "restricted", "subscription", "embargoed"];
 
+const outputLinks = [
+  {
+    label: "Publications",
+    href: "/publications",
+    description: "Articles, books, conference papers, reports, and policy briefs.",
+    icon: BookOpenCheck,
+  },
+  {
+    label: "Outputs",
+    href: "/outputs",
+    description: "Datasets, software, toolkits, prototypes, and deliverables.",
+    icon: Database,
+  },
+  {
+    label: "Impact Metrics",
+    href: "/impact-metrics",
+    description: "Public outcomes, reach, and performance indicators.",
+    icon: BarChart3,
+  },
+  {
+    label: "Projects",
+    href: "/projects",
+    description: "Trace outputs back to the work that produced them.",
+    icon: FlaskConical,
+  },
+];
+
 export default async function PublicationsPage({
   searchParams,
 }: {
@@ -70,7 +98,7 @@ export default async function PublicationsPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchClusterHero
         eyebrow="Publications & Outputs"
         title="Scholarly publications and public research evidence."
         body="Find journal articles, conference papers, reports, books, policy briefs, and open access records."
@@ -78,6 +106,16 @@ export default async function PublicationsPage({
           { label: "Home", href: "/" },
           { label: "Publications & Outputs", href: "/publications" },
           { label: "Publications" },
+        ]}
+        imageSrc="/images/research/research-hero-imagegen.png"
+        imageAlt="Research publications, reports, datasets, and scholarly evidence"
+        links={outputLinks}
+        primaryAction={{ label: "View outputs", href: "/outputs" }}
+        stats={[
+          { label: "Publication results", value: publications.data.length },
+          { label: "Published publications", value: allPublications.data.length },
+          { label: "Centers", value: centers.data.length },
+          { label: "Projects", value: projects.data.length },
         ]}
       />
 

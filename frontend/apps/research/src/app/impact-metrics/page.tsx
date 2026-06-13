@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { BarChart3, BookOpenCheck, Database, FlaskConical } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
 import {
   Badge,
   IconCard,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -21,6 +22,33 @@ export const metadata: Metadata = {
   description: "Research impact dashboard, metrics, success stories, and downloadable reports.",
 };
 
+const outputLinks = [
+  {
+    label: "Publications",
+    href: "/publications",
+    description: "Articles, books, conference papers, reports, and policy briefs.",
+    icon: BookOpenCheck,
+  },
+  {
+    label: "Outputs",
+    href: "/outputs",
+    description: "Datasets, software, toolkits, prototypes, and deliverables.",
+    icon: Database,
+  },
+  {
+    label: "Impact Metrics",
+    href: "/impact-metrics",
+    description: "Public outcomes, reach, and performance indicators.",
+    icon: BarChart3,
+  },
+  {
+    label: "Projects",
+    href: "/projects",
+    description: "Trace outputs back to the work that produced them.",
+    icon: FlaskConical,
+  },
+];
+
 export default async function ImpactMetricsPage() {
   const [metrics, stories, sustainability] = await Promise.all([
     getImpactMetrics(),
@@ -30,7 +58,7 @@ export default async function ImpactMetricsPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchClusterHero
         eyebrow="Impact & Metrics"
         title="A public dashboard for research outcomes."
         body="Monitor research funding, outputs, patents, startups, jobs, success stories, and partner-facing reports."
@@ -38,6 +66,16 @@ export default async function ImpactMetricsPage() {
           { label: "Home", href: "/" },
           { label: "Research", href: "/" },
           { label: "Impact & Metrics" },
+        ]}
+        imageSrc="/images/research/innovation-partnerships.png"
+        imageAlt="Research impact dashboard connecting metrics, stories, partners, and communities"
+        links={outputLinks}
+        primaryAction={{ label: "Open outputs", href: "/outputs" }}
+        stats={[
+          { label: "Metric records", value: metrics.data.length },
+          { label: "Stories", value: stories.data.length },
+          { label: "Sustainability records", value: sustainability.data.length },
+          { label: "Report routes", value: 3 },
         ]}
       />
       <ResearchSection
