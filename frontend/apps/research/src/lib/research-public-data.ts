@@ -45,7 +45,11 @@ export type GenericListFilters = {
   category?: string;
   centerType?: string;
   farmType?: string;
+  publicationType?: string;
+  outputType?: string;
+  accessType?: string;
   centerId?: string;
+  projectId?: string;
   year?: string;
   sort?: string;
   order?: "asc" | "desc";
@@ -139,6 +143,25 @@ export function getPublications(search?: string) {
     researchServiceApi.publications.list({
       search: search?.trim() || undefined,
       status: "published",
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getPublicationsFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchPublication>(() =>
+    researchServiceApi.publications.list({
+      search: filters.search?.trim() || undefined,
+      status: filters.status || "published",
+      publication_type: filters.publicationType || undefined,
+      access_type: filters.accessType || undefined,
+      center_id: filters.centerId || undefined,
+      project_id: filters.projectId || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
       is_active: true,
       page: 1,
       per_page: 100,
@@ -426,6 +449,26 @@ export function getJournals() {
 export function getOutputs() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.outputs.list({
+      is_active: true,
+      is_public: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getOutputsFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.outputs.list({
+      search: filters.search?.trim() || undefined,
+      status: filters.status || undefined,
+      output_type: filters.outputType || undefined,
+      access_type: filters.accessType || undefined,
+      center_id: filters.centerId || undefined,
+      project_id: filters.projectId || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
       is_active: true,
       is_public: true,
       page: 1,
