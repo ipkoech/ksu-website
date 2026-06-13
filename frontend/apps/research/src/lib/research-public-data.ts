@@ -43,6 +43,7 @@ export type GenericListFilters = {
   search?: string;
   status?: string;
   category?: string;
+  grantType?: string;
   centerType?: string;
   farmType?: string;
   publicationType?: string;
@@ -203,6 +204,23 @@ export function getGrants(search?: string) {
   return safeList<ResearchGrant>(() =>
     researchServiceApi.grants.list({
       search: search?.trim() || undefined,
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getGrantsFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGrant>(() =>
+    researchServiceApi.grants.list({
+      search: filters.search?.trim() || undefined,
+      grant_type: filters.grantType || undefined,
+      category: filters.category || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
       is_active: true,
       page: 1,
       per_page: 100,
