@@ -184,10 +184,10 @@ export default async function ConnectPage() {
               Direct donor interest to scholarships, research facilities, innovation funds, community impact work, and endowed programmes.
             </p>
             <a
-              href="mailto:research@kisiiuniversity.ac.ke?subject=Research%20Donation%20Inquiry"
+              href="/donate"
               className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-secondary px-4 py-2 text-sm font-semibold text-secondary-foreground"
             >
-              Start donation inquiry
+              Open donation page
             </a>
           </aside>
         </div>

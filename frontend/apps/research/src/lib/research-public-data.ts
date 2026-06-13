@@ -1063,6 +1063,16 @@ export function getDonationStories() {
   );
 }
 
+export function getDonationSettings() {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.donationSettings.list({
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
 export function getUpdates() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.news.list({

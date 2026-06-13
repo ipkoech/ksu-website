@@ -378,7 +378,7 @@ const researchNavItems: NavSection[] = [
     href: "/connect",
     icon: Mail,
     description: "Contacts, inquiry channels, mentorship, and donations.",
-    activePaths: ["/connect"],
+    activePaths: ["/connect", "/donate"],
     groups: [
       {
         title: "Engage",
@@ -406,6 +406,12 @@ const researchNavItems: NavSection[] = [
             href: "/connect",
             icon: HelpCircle,
             description: "Research support and general help.",
+          },
+          {
+            label: "Donate",
+            href: "/donate",
+            icon: Heart,
+            description: "Support research, scholarships, endowments, and impact.",
           },
         ],
       },
@@ -473,7 +479,7 @@ export function ResearchHeader() {
               <Search aria-hidden className="h-5 w-5" />
             </Link>
             <Link
-              href="/connect#donate"
+              href="/donate"
               className="hidden min-h-11 items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition hover:bg-primary/90 sm:inline-flex 2xl:px-5"
             >
               <Heart aria-hidden className="h-4 w-4" />
@@ -507,7 +513,7 @@ export function ResearchHeader() {
                 />
               ))}
               <Link
-                href="/connect#donate"
+                href="/donate"
                 onClick={() => setIsOpen(false)}
                 className="inline-flex min-h-11 w-full items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground sm:hidden"
               >
