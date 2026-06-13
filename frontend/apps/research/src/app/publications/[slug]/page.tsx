@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { ResearchGenericRecord, ResearchPublication } from "@ksu/api-client";
+import { ResearchDetailHero } from "../../../components/research-detail";
 import {
   Badge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../../components/research-ui";
@@ -36,7 +36,7 @@ export default async function PublicationDetailPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchDetailHero
         eyebrow="Publication"
         title={publication.title}
         body={compactText(publication.abstract) || "Publication detail and access information."}
@@ -45,6 +45,26 @@ export default async function PublicationDetailPage({
           { label: "Publications", href: "/publications" },
           { label: publication.title },
         ]}
+        labels={[
+          publication.publication_type,
+          publication.access_type,
+          publication.is_open_access ? "open access" : null,
+        ]}
+        facts={[
+          { label: "Year", value: compactText(publication.year) },
+          { label: "Published", value: formatDate(publication.publication_date) },
+          { label: "Journal", value: publication.journal_name },
+          { label: "DOI", value: publication.doi },
+        ]}
+        actions={[
+          { label: "Back to publications", href: "/publications", variant: "secondary" },
+          ...accessLinks.slice(0, 2).map(([label, href]) => ({
+            label: compactText(label),
+            href: href ?? "#",
+          })),
+        ]}
+        imageSrc="/images/research/research-hero-imagegen.png"
+        imageAlt="Publication record and research evidence"
       />
 
       {error ? (

@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { ResearchDetailHero } from "../../../components/research-detail";
 import {
   Badge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../../components/research-ui";
@@ -40,7 +40,7 @@ export default async function ProjectDetailPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchDetailHero
         eyebrow="Research Project"
         title={project.title}
         body={compactText(project.summary) || compactText(project.abstract)}
@@ -49,6 +49,19 @@ export default async function ProjectDetailPage({
           { label: "Projects", href: "/projects" },
           { label: project.title },
         ]}
+        labels={[project.project_type, project.status, project.is_featured ? "featured" : null]}
+        facts={[
+          { label: "Progress", value: `${project.progress_percentage ?? 0}%` },
+          { label: "Start", value: formatDate(project.start_date) },
+          { label: "End", value: formatDate(project.end_date) },
+          { label: "Budget", value: formatMoney(project.budget, project.currency) },
+        ]}
+        actions={[
+          { label: "Back to projects", href: "/projects", variant: "secondary" },
+          ...(center?.slug ? [{ label: "View center", href: `/centers/${center.slug}` }] : []),
+        ]}
+        imageSrc="/images/research/research-hero-imagegen.png"
+        imageAlt="Research project profile and related outputs"
       />
 
       {[error, publications.error, outputs.error]

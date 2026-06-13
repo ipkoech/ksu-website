@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { ResearchDetailHero } from "../../../components/research-detail";
 import {
   Badge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../../components/research-ui";
@@ -36,7 +36,7 @@ export default async function FundingDetailPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchDetailHero
         eyebrow={isExternal ? "External Funding" : "Internal Funding"}
         title={grant.title ?? "Funding opportunity"}
         body={compactText(grant.summary) || compactText(grant.description)}
@@ -45,6 +45,21 @@ export default async function FundingDetailPage({
           { label: "Funding", href: "/funding" },
           { label: grant.title ?? "Funding" },
         ]}
+        labels={[grant.grant_type, grant.category, grant.status]}
+        facts={[
+          { label: "Deadline", value: formatDate(grant.deadline) },
+          { label: "Funder", value: grant.funder_name },
+          { label: "Award range", value: formatAwardRange(grant) },
+          { label: "Awards", value: grant.number_of_awards },
+        ]}
+        actions={[
+          { label: "Back to funding", href: "/funding", variant: "secondary" },
+          ...(actionUrl
+            ? [{ label: isExternal ? "Open funder link" : "Apply or submit", href: actionUrl }]
+            : []),
+        ]}
+        imageSrc="/images/research/research-demo-imagegen.png"
+        imageAlt="Research funding opportunity and application workflow"
       />
 
       {error ? (

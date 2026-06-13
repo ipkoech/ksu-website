@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { ResearchDetailHero } from "../../../components/research-detail";
 import {
   Badge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../../components/research-ui";
@@ -43,7 +43,7 @@ export default async function CenterDetailPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchDetailHero
         eyebrow="Research Center"
         title={center.name ?? center.title ?? "Research center"}
         body={compactText(center.about) || compactText(center.mandate)}
@@ -52,6 +52,19 @@ export default async function CenterDetailPage({
           { label: "Centers", href: "/centers" },
           { label: center.name ?? center.title ?? "Center" },
         ]}
+        labels={[center.center_type, center.status, center.is_featured ? "featured" : null]}
+        facts={[
+          { label: "Programs", value: programs.data.length },
+          { label: "Projects", value: projects.data.length },
+          { label: "Publications", value: publications.data.length },
+          { label: "Outputs", value: outputs.data.length },
+        ]}
+        actions={[
+          { label: "Back to centers", href: "/centers", variant: "secondary" },
+          ...(compactText(center.website) ? [{ label: "Open website", href: compactText(center.website) }] : []),
+        ]}
+        imageSrc="/images/research/innovation-partnerships.png"
+        imageAlt="Research center profile and connected work"
       />
 
       {[error, programs.error, projects.error, publications.error, outputs.error]

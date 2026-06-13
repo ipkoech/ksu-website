@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { ResearchDetailHero } from "../../../components/research-detail";
 import {
   Badge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../../components/research-ui";
@@ -32,7 +32,7 @@ export default async function ProgramDetailPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchDetailHero
         eyebrow="Research Program"
         title={program.name ?? program.title ?? "Research program"}
         body={compactText(program.summary) || compactText(program.description)}
@@ -41,6 +41,19 @@ export default async function ProgramDetailPage({
           { label: "Programs", href: "/programs" },
           { label: program.name ?? program.title ?? "Program" },
         ]}
+        labels={[program.status, program.category, program.is_featured ? "featured" : null]}
+        facts={[
+          { label: "Start", value: formatDate(program.start_date) },
+          { label: "End", value: formatDate(program.end_date) },
+          { label: "Budget", value: formatMoney(program.budget, program.currency) },
+          { label: "Projects", value: projects.data.length },
+        ]}
+        actions={[
+          { label: "Back to programs", href: "/programs", variant: "secondary" },
+          ...(center?.slug ? [{ label: "View center", href: `/centers/${center.slug}` }] : []),
+        ]}
+        imageSrc="/images/research/research-demo-imagegen.png"
+        imageAlt="Research program profile and connected projects"
       />
 
       {[error, projects.error].filter(Boolean).map((message) => (

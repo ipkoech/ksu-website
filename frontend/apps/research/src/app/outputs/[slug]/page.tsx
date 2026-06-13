@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { ResearchDetailHero } from "../../../components/research-detail";
 import {
   Badge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../../components/research-ui";
@@ -37,7 +37,7 @@ export default async function OutputDetailPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchDetailHero
         eyebrow="Research Output"
         title={output.title ?? output.name ?? "Research output"}
         body={compactText(output.summary) || compactText(output.description)}
@@ -46,6 +46,22 @@ export default async function OutputDetailPage({
           { label: "Outputs", href: "/outputs" },
           { label: output.title ?? output.name ?? "Output" },
         ]}
+        labels={[output.output_type, output.access_type, output.status]}
+        facts={[
+          { label: "Released", value: formatDate(output.release_date) },
+          { label: "Version", value: output.version },
+          { label: "DOI", value: output.doi },
+          { label: "License", value: output.license },
+        ]}
+        actions={[
+          { label: "Back to outputs", href: "/outputs", variant: "secondary" },
+          ...accessLinks.slice(0, 2).map(([label, href]) => ({
+            label,
+            href: href ?? "#",
+          })),
+        ]}
+        imageSrc="/images/research/research-demo-imagegen.png"
+        imageAlt="Research output, dataset, toolkit, or report detail"
       />
 
       {error ? (
