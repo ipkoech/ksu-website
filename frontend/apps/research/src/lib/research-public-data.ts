@@ -59,6 +59,11 @@ export type GenericListFilters = {
   consultancyType?: string;
   clientType?: string;
   fundType?: string;
+  programType?: string;
+  deliveryMode?: string;
+  eventType?: string;
+  newsType?: string;
+  articleType?: string;
   centerId?: string;
   projectId?: string;
   partnerId?: string;
@@ -732,6 +737,25 @@ export function getTraining() {
   );
 }
 
+export function getTrainingFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.training.list({
+      search: filters.search?.trim() || undefined,
+      program_type: filters.programType || undefined,
+      delivery_mode: filters.deliveryMode || undefined,
+      category: filters.category || undefined,
+      center_id: filters.centerId || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
 export function getTrainingBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.training.getBySlug(slug),
@@ -741,6 +765,23 @@ export function getTrainingBySlug(slug: string) {
 export function getMentorship() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.mentorship.list({
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getMentorshipFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.mentorship.list({
+      search: filters.search?.trim() || undefined,
+      program_type: filters.programType || undefined,
+      center_id: filters.centerId || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
       is_active: true,
       page: 1,
       per_page: 100,
@@ -773,7 +814,24 @@ export function getScholarshipBySlug(slug: string) {
 export function getEvents() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.events.list({
-      status: "published",
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getEventsFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.events.list({
+      search: filters.search?.trim() || undefined,
+      event_type: filters.eventType || undefined,
+      category: filters.category || undefined,
+      center_id: filters.centerId || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
       is_active: true,
       page: 1,
       per_page: 100,
@@ -791,6 +849,25 @@ export function getArticles() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.articles.list({
       status: "published",
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getArticlesFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.articles.list({
+      search: filters.search?.trim() || undefined,
+      article_type: filters.articleType || undefined,
+      category: filters.category || undefined,
+      center_id: filters.centerId || undefined,
+      project_id: filters.projectId || undefined,
+      status: filters.status || "published",
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
       is_active: true,
       page: 1,
       per_page: 100,
@@ -921,6 +998,25 @@ export function getUpdates() {
       is_active: true,
       page: 1,
       per_page: 6,
+    }),
+  );
+}
+
+export function getUpdatesFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.news.list({
+      search: filters.search?.trim() || undefined,
+      news_type: filters.newsType || undefined,
+      category: filters.category || undefined,
+      center_id: filters.centerId || undefined,
+      project_id: filters.projectId || undefined,
+      status: filters.status || "published",
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: true,
+      page: 1,
+      per_page: 100,
     }),
   );
 }
