@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { ResearchDetailHero } from "../../../components/research-detail";
 import {
   Badge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../../components/research-ui";
@@ -37,7 +37,7 @@ export default async function FarmDetailPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchDetailHero
         eyebrow="University Farm"
         title={farm.name ?? farm.title ?? "University farm"}
         body={compactText(farm.about) || compactText(farm.activities)}
@@ -46,6 +46,20 @@ export default async function FarmDetailPage({
           { label: "University Farm", href: "/farm" },
           { label: farm.name ?? farm.title ?? "Farm" },
         ]}
+        labels={[farm.farm_type ?? "farm", farm.status]}
+        facts={[
+          { label: "Size", value: farm.size_hectares ? `${compactText(farm.size_hectares)} hectares` : "" },
+          { label: "Location", value: compactText(farm.location) || compactText(farm.county) },
+          { label: "Manager", value: compactText(farm.manager_name) },
+          { label: "Connected center", value: compactText(center?.name) || compactText(center?.title) },
+        ]}
+        actions={[
+          { label: "Back to farm", href: "/farm", variant: "secondary" },
+          ...(center?.slug ? [{ label: "View center", href: `/centers/${center.slug}` }] : []),
+          ...(compactText(farm.email) ? [{ label: "Contact farm", href: `mailto:${compactText(farm.email)}`, variant: "secondary" as const }] : []),
+        ]}
+        imageSrc="/images/research/research-demo-imagegen.png"
+        imageAlt="University farm research, demonstration, and extension work"
       />
 
       {[error, projects.error, partners.error, activities.error]

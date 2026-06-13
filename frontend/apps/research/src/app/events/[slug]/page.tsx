@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { Badge, ResearchPageIntro, ResearchSection, StatusMessage } from "../../../components/research-ui";
+import { ResearchDetailHero } from "../../../components/research-detail";
+import { Badge, ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { compactText, formatDate, formatLabel, getEventBySlug } from "../../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,30 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro eyebrow="Research Event" title={event.title ?? "Research event"} body={compactText(event.summary) || compactText(event.description)} breadcrumbs={[{ label: "Home", href: "/" }, { label: "Events", href: "/events" }, { label: event.title ?? "Event" }]} />
+      <ResearchDetailHero
+        eyebrow="Research Event"
+        title={event.title ?? "Research event"}
+        body={compactText(event.summary) || compactText(event.description)}
+        breadcrumbs={[
+          { label: "Home", href: "/" },
+          { label: "Events", href: "/events" },
+          { label: event.title ?? "Event" },
+        ]}
+        labels={[event.event_type ?? "event", mode, event.status]}
+        facts={[
+          { label: "Date", value: [formatDate(event.start_date), formatDate(event.end_date)].filter(Boolean).join(" - ") },
+          { label: "Time", value: [compactText(event.start_time), compactText(event.end_time), compactText(event.timezone)].filter(Boolean).join(" - ") },
+          { label: "Venue or platform", value: [event.venue, event.room, event.platform].map(compactText).filter(Boolean).join(" · ") },
+          { label: "Registration", value: formatDate(event.registration_deadline) },
+        ]}
+        actions={[
+          { label: "Back to events", href: "/events", variant: "secondary" },
+          ...(compactText(event.registration_url) ? [{ label: "Register", href: compactText(event.registration_url) }] : []),
+          ...(compactText(event.meeting_url) ? [{ label: "Join online", href: compactText(event.meeting_url), variant: "secondary" as const }] : []),
+        ]}
+        imageSrc="/images/research/research-workflows.png"
+        imageAlt="Research event agenda, speakers, and participation details"
+      />
       {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}
       <ResearchSection eyebrow="Event Details" title="Agenda, access, and registration" body="Event detail shows date, venue or platform, audience, agenda, speakers, registration, fees, recording, and contact." tone="white">
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">

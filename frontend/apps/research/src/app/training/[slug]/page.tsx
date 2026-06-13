@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { Badge, ResearchPageIntro, ResearchSection, StatusMessage } from "../../../components/research-ui";
+import { ResearchDetailHero } from "../../../components/research-detail";
+import { Badge, ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { compactText, formatDate, formatLabel, getTrainingBySlug } from "../../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
@@ -15,11 +16,25 @@ export default async function TrainingDetailPage({ params }: { params: Promise<{
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchDetailHero
         eyebrow="Training"
         title={training.title ?? "Training program"}
         body={compactText(training.summary) || compactText(training.description)}
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Training", href: "/training" }, { label: training.title ?? "Training" }]}
+        labels={[training.program_type, training.delivery_mode, training.offers_certificate ? "certificate" : null]}
+        facts={[
+          { label: "Starts", value: formatDate(training.start_date) },
+          { label: "Registration", value: formatDate(training.registration_deadline) },
+          { label: "Mode", value: formatLabel(training.delivery_mode) },
+          { label: "Fee", value: training.is_free ? "Free" : formatMoney(training.fee, training.currency) },
+        ]}
+        actions={[
+          { label: "Back to training", href: "/training", variant: "secondary" },
+          ...(compactText(training.meeting_link) ? [{ label: "Open meeting", href: compactText(training.meeting_link) }] : []),
+          ...(compactText(training.brochure_url) ? [{ label: "Download brochure", href: compactText(training.brochure_url), variant: "secondary" as const }] : []),
+        ]}
+        imageSrc="/images/research/research-demo-imagegen.png"
+        imageAlt="Research training schedule, registration, and learning details"
       />
       {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}
       <ResearchSection eyebrow="Learning Details" title="Programme, audience, and registration" body="Training detail uses the public training record for schedule, curriculum, facilitators, fees, certification, and materials." tone="white">

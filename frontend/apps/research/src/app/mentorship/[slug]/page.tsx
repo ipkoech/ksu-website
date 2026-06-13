@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { Badge, ResearchPageIntro, ResearchSection, StatusMessage } from "../../../components/research-ui";
+import { ResearchDetailHero } from "../../../components/research-detail";
+import { Badge, ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { compactText, formatDate, formatLabel, getMentorshipBySlug } from "../../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,29 @@ export default async function MentorshipDetailPage({ params }: { params: Promise
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro eyebrow="Mentorship" title={mentorship.name ?? mentorship.title ?? "Mentorship programme"} body={compactText(mentorship.summary) || compactText(mentorship.description)} breadcrumbs={[{ label: "Home", href: "/" }, { label: "Mentorship", href: "/mentorship" }, { label: mentorship.name ?? mentorship.title ?? "Mentorship" }]} />
+      <ResearchDetailHero
+        eyebrow="Mentorship"
+        title={mentorship.name ?? mentorship.title ?? "Mentorship programme"}
+        body={compactText(mentorship.summary) || compactText(mentorship.description)}
+        breadcrumbs={[
+          { label: "Home", href: "/" },
+          { label: "Mentorship", href: "/mentorship" },
+          { label: mentorship.name ?? mentorship.title ?? "Mentorship" },
+        ]}
+        labels={[mentorship.program_type ?? "mentorship", mentorship.status]}
+        facts={[
+          { label: "Deadline", value: formatDate(mentorship.application_deadline) },
+          { label: "Cohort starts", value: formatDate(mentorship.cohort_start_date) },
+          { label: "Duration", value: mentorship.duration_months ? `${mentorship.duration_months} months` : "" },
+          { label: "Capacity", value: [mentorship.max_mentees ? `${mentorship.max_mentees} mentees` : "", mentorship.max_mentors ? `${mentorship.max_mentors} mentors` : ""].filter(Boolean).join(" · ") },
+        ]}
+        actions={[
+          { label: "Back to mentorship", href: "/mentorship", variant: "secondary" },
+          ...(compactText(mentorship.brochure_url) ? [{ label: "Download brochure", href: compactText(mentorship.brochure_url) }] : []),
+        ]}
+        imageSrc="/images/research/registrar-reirm-imagegen.png"
+        imageAlt="Research mentorship programme and application information"
+      />
       {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}
       <ResearchSection eyebrow="Mentorship Pathway" title="Programme fit, expectations, and application window" body="Mentorship detail explains who the pathway serves, how it works, what applicants need, and how cohorts are organized." tone="white">
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">

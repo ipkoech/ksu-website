@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import type { ResearchGenericRecord, ResearchProject, ResearchPublication } from "@ksu/api-client";
-import { Badge, ResearchPageIntro, ResearchSection, StatusMessage } from "../../../components/research-ui";
+import { ResearchDetailHero } from "../../../components/research-detail";
+import { Badge, ResearchSection, StatusMessage } from "../../../components/research-ui";
 import {
   compactText,
   formatDate,
@@ -45,7 +46,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchDetailHero
         eyebrow={isArticle ? "Research Article" : "Research Update"}
         title={record.title ?? "Research update"}
         body={compactText(record.summary) || compactText(record.excerpt)}
@@ -54,6 +55,20 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
           { label: "News", href: "/news" },
           { label: record.title ?? "Update" },
         ]}
+        labels={[record.article_type ?? record.news_type ?? "update", record.category, record.status]}
+        facts={[
+          { label: "Published", value: formatDate(record.published_at) },
+          { label: "Author", value: compactText(record.author_name) },
+          { label: "Source", value: compactText(record.source) },
+          { label: "Reading time", value: record.reading_time_minutes ? `${record.reading_time_minutes} minutes` : "" },
+        ]}
+        actions={[
+          { label: "Back to news", href: "/news", variant: "secondary" },
+          ...(compactText(record.external_url) ? [{ label: "Open source link", href: compactText(record.external_url) }] : []),
+          ...(compactText(record.video_url) ? [{ label: "Watch media", href: compactText(record.video_url), variant: "secondary" as const }] : []),
+        ]}
+        imageSrc="/images/research/research-hero-imagegen.png"
+        imageAlt="Research news and public update context"
       />
       {error ? (
         <section className="px-4 pt-4 sm:px-6 lg:px-8">

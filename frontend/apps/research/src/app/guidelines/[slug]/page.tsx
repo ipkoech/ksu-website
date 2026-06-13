@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { Badge, ResearchPageIntro, ResearchSection, StatusMessage } from "../../../components/research-ui";
+import { ResearchDetailHero } from "../../../components/research-detail";
+import { Badge, ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { compactText, formatDate, formatLabel, getGuidelineBySlug } from "../../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +14,7 @@ export default async function GuidelineDetailPage({ params }: { params: Promise<
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro eyebrow="Guideline" title={guideline.title ?? "Research guideline"} body={compactText(guideline.summary) || compactText(guideline.scope)} breadcrumbs={[{ label: "Home", href: "/" }, { label: "Guidelines", href: "/guidelines" }, { label: guideline.title ?? "Guideline" }]} />
+      <ResearchDetailHero eyebrow="Guideline" title={guideline.title ?? "Research guideline"} body={compactText(guideline.summary) || compactText(guideline.scope)} breadcrumbs={[{ label: "Home", href: "/" }, { label: "Guidelines", href: "/guidelines" }, { label: guideline.title ?? "Guideline" }]} labels={[guideline.guideline_type, guideline.category, guideline.is_mandatory ? "mandatory" : null]} facts={[{ label: "Version", value: guideline.version }, { label: "Effective", value: formatDate(guideline.effective_date) }, { label: "Review", value: formatDate(guideline.review_date) }, { label: "Approved by", value: guideline.approved_by }]} actions={[{ label: "Back to guidelines", href: "/guidelines", variant: "secondary" }, ...(compactText(guideline.document_url) ? [{ label: "Download", href: compactText(guideline.document_url) }] : [])]} imageSrc="/images/research/research-workflows.png" imageAlt="Research guideline document control and download information" />
       {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}
       <ResearchSection eyebrow="Document Detail" title="Policy scope, applicability, and controlled version" body="Guidelines show public-facing document control and practical application details." tone="white">
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">

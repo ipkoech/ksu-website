@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { ResearchDetailHero } from "../../../components/research-detail";
 import {
   Badge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../../components/research-ui";
@@ -37,7 +37,7 @@ export default async function SustainabilityDetailPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchDetailHero
         eyebrow="Sustainability"
         title={initiative.name ?? initiative.title ?? "Sustainability initiative"}
         body={compactText(initiative.summary) || compactText(initiative.description)}
@@ -46,6 +46,20 @@ export default async function SustainabilityDetailPage({
           { label: "Sustainability", href: "/sustainability" },
           { label: initiative.name ?? initiative.title ?? "Initiative" },
         ]}
+        labels={[initiative.initiative_type ?? "sustainability", initiative.status]}
+        facts={[
+          { label: "Start", value: formatDate(initiative.start_date) },
+          { label: "End", value: formatDate(initiative.end_date) },
+          { label: "SDG goals", value: Array.isArray(initiative.sdg_goals) ? initiative.sdg_goals.join(", ") : compactText(initiative.sdg_goals) },
+          { label: "Contact", value: compactText(initiative.contact_email) },
+        ]}
+        actions={[
+          { label: "Back to sustainability", href: "/sustainability", variant: "secondary" },
+          ...(compactText(initiative.website) ? [{ label: "Open website", href: compactText(initiative.website) }] : []),
+          ...(compactText(initiative.contact_email) ? [{ label: "Contact initiative", href: `mailto:${compactText(initiative.contact_email)}`, variant: "secondary" as const }] : []),
+        ]}
+        imageSrc="/images/research/research-workflows.png"
+        imageAlt="Sustainability initiative activities, partnerships, and public impact"
       />
 
       {[error, partners.error, activities.error, outputs.error]
