@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Banknote, Handshake, Lightbulb, Network } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
 import {
   Badge,
   FilledBadge,
   IconCard,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -43,6 +44,13 @@ const ipStatuses = ["pending", "filed", "granted", "licensed", "open_source", "t
 const commercializationStatuses = ["concept", "prototype", "pilot", "market_ready", "commercialized"];
 const innovationStatuses = ["active", "draft", "archived", "discontinued"];
 
+const innovationLinks = [
+  { label: "Innovations", href: "/innovations", description: "Tools, prototypes, software, and translated research.", icon: Lightbulb },
+  { label: "Partners", href: "/partners", description: "Partner profiles, sponsorships, and collaboration routes.", icon: Handshake },
+  { label: "Consultancies", href: "/consultancies", description: "Applied expert services and client engagements.", icon: Network },
+  { label: "Endowments", href: "/endowments", description: "Permanent funding initiatives and named funds.", icon: Banknote },
+];
+
 export default async function InnovationsPage({
   searchParams,
 }: {
@@ -69,7 +77,7 @@ export default async function InnovationsPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchClusterHero
         eyebrow="Innovation & Partnerships"
         title="Research translated into tools, prototypes, services, and public value."
         body="Explore innovations by type, readiness, intellectual property status, commercialization stage, source project, and center."
@@ -77,6 +85,16 @@ export default async function InnovationsPage({
           { label: "Home", href: "/" },
           { label: "Innovation & Partnerships", href: "/innovations" },
           { label: "Innovations" },
+        ]}
+        imageSrc="/images/research/innovation-partnerships.png"
+        imageAlt="Innovation, partnerships, prototypes, and applied research collaborations"
+        links={innovationLinks}
+        primaryAction={{ label: "View partners", href: "/partners" }}
+        stats={[
+          { label: "Innovation results", value: innovations.data.length },
+          { label: "Published innovations", value: allInnovations.data.length },
+          { label: "Centers", value: centers.data.length },
+          { label: "Projects", value: projects.data.length },
         ]}
       />
 

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Banknote, Handshake, Lightbulb, Network } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
 import {
   Badge,
   FilledBadge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -38,6 +39,13 @@ const consultancyTypes = ["research", "technical", "policy", "evaluation", "trai
 const clientTypes = ["government", "ngo", "corporate", "international", "academic"];
 const consultancyStatuses = ["proposal", "awarded", "ongoing", "completed", "cancelled"];
 
+const innovationLinks = [
+  { label: "Innovations", href: "/innovations", description: "Tools, prototypes, software, and translated research.", icon: Lightbulb },
+  { label: "Partners", href: "/partners", description: "Partner profiles, sponsorships, and collaboration routes.", icon: Handshake },
+  { label: "Consultancies", href: "/consultancies", description: "Applied expert services and client engagements.", icon: Network },
+  { label: "Endowments", href: "/endowments", description: "Permanent funding initiatives and named funds.", icon: Banknote },
+];
+
 export default async function ConsultanciesPage({
   searchParams,
 }: {
@@ -61,7 +69,7 @@ export default async function ConsultanciesPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchClusterHero
         eyebrow="Innovation & Partnerships"
         title="Consultancy engagements and applied expert services."
         body="Consultancy records show client needs, scope, methods, deliverables, outcomes, impact, and the university units involved."
@@ -69,6 +77,16 @@ export default async function ConsultanciesPage({
           { label: "Home", href: "/" },
           { label: "Innovation & Partnerships", href: "/innovations" },
           { label: "Consultancies" },
+        ]}
+        imageSrc="/images/research/registrar-reirm-imagegen.png"
+        imageAlt="Applied research consultancy and expert service engagement"
+        links={innovationLinks}
+        primaryAction={{ label: "View partners", href: "/partners" }}
+        stats={[
+          { label: "Consultancy results", value: consultancies.data.length },
+          { label: "Published consultancies", value: allConsultancies.data.length },
+          { label: "Centers", value: centers.data.length },
+          { label: "Service types", value: consultancyTypes.length },
         ]}
       />
 

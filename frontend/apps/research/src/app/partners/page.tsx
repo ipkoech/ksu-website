@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Banknote, Handshake, Lightbulb, Network } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
 import {
   Badge,
   FilledBadge,
   IconCard,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -36,6 +37,13 @@ const partnerTypes = ["academic", "industry", "government", "ngo", "foundation",
 const partnershipLevels = ["strategic", "implementing", "funding", "technical", "community"];
 const partnerStatuses = ["active", "inactive", "pending", "expired"];
 
+const innovationLinks = [
+  { label: "Innovations", href: "/innovations", description: "Tools, prototypes, software, and translated research.", icon: Lightbulb },
+  { label: "Partners", href: "/partners", description: "Partner profiles, sponsorships, and collaboration routes.", icon: Handshake },
+  { label: "Consultancies", href: "/consultancies", description: "Applied expert services and client engagements.", icon: Network },
+  { label: "Endowments", href: "/endowments", description: "Permanent funding initiatives and named funds.", icon: Banknote },
+];
+
 export default async function PartnersPage({
   searchParams,
 }: {
@@ -56,7 +64,7 @@ export default async function PartnersPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchClusterHero
         eyebrow="Innovation & Partnerships"
         title="Academic, industry, community, government, and funder collaborations."
         body="See who partners with Kisii University, what they collaborate on, and where partnership outputs are published."
@@ -64,6 +72,16 @@ export default async function PartnersPage({
           { label: "Home", href: "/" },
           { label: "Innovation & Partnerships", href: "/innovations" },
           { label: "Partners" },
+        ]}
+        imageSrc="/images/research/innovation-partnerships.png"
+        imageAlt="Research partnership network across university, community, industry, and funders"
+        links={innovationLinks}
+        primaryAction={{ label: "Start partnership", href: "/connect#partnership" }}
+        stats={[
+          { label: "Partner results", value: partners.data.length },
+          { label: "Published partners", value: allPartners.data.length },
+          { label: "Partner types", value: partnerTypes.length },
+          { label: "Partnership levels", value: partnershipLevels.length },
         ]}
       />
 

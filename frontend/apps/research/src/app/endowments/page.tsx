@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Banknote, Handshake, Lightbulb, Network } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
 import {
   Badge,
   FilledBadge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -35,6 +36,13 @@ type EndowmentSearchParams = {
 const fundTypes = ["general", "named", "restricted", "scholarship", "chair"];
 const fundStatuses = ["active", "building", "suspended", "closed"];
 
+const innovationLinks = [
+  { label: "Innovations", href: "/innovations", description: "Tools, prototypes, software, and translated research.", icon: Lightbulb },
+  { label: "Partners", href: "/partners", description: "Partner profiles, sponsorships, and collaboration routes.", icon: Handshake },
+  { label: "Consultancies", href: "/consultancies", description: "Applied expert services and client engagements.", icon: Network },
+  { label: "Endowments", href: "/endowments", description: "Permanent funding initiatives and named funds.", icon: Banknote },
+];
+
 export default async function EndowmentsPage({
   searchParams,
 }: {
@@ -56,7 +64,7 @@ export default async function EndowmentsPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchClusterHero
         eyebrow="Innovation & Partnerships"
         title="Endowments and permanent funding initiatives for research impact."
         body="Endowment records publish purpose, donor context, eligibility, fund value, contribution status, and contact information."
@@ -64,6 +72,16 @@ export default async function EndowmentsPage({
           { label: "Home", href: "/" },
           { label: "Innovation & Partnerships", href: "/innovations" },
           { label: "Endowments" },
+        ]}
+        imageSrc="/images/research/research-demo-imagegen.png"
+        imageAlt="Research endowment funding and permanent support initiatives"
+        links={innovationLinks}
+        primaryAction={{ label: "View partners", href: "/partners" }}
+        stats={[
+          { label: "Endowment results", value: endowments.data.length },
+          { label: "Published endowments", value: allEndowments.data.length },
+          { label: "Funders", value: funders.data.length },
+          { label: "Fund types", value: fundTypes.length },
         ]}
       />
 
