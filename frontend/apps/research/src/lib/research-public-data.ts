@@ -64,6 +64,10 @@ export type GenericListFilters = {
   eventType?: string;
   newsType?: string;
   articleType?: string;
+  scholarshipType?: string;
+  resourceType?: string;
+  serviceType?: string;
+  guidelineType?: string;
   centerId?: string;
   projectId?: string;
   partnerId?: string;
@@ -805,6 +809,22 @@ export function getScholarships() {
   );
 }
 
+export function getScholarshipsFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.scholarships.list({
+      search: filters.search?.trim() || undefined,
+      scholarship_type: filters.scholarshipType || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
 export function getScholarshipBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.scholarships.getBySlug(slug),
@@ -891,6 +911,24 @@ export function getResources() {
   );
 }
 
+export function getResourcesFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.resources.list({
+      search: filters.search?.trim() || undefined,
+      resource_type: filters.resourceType || undefined,
+      category: filters.category || undefined,
+      center_id: filters.centerId || undefined,
+      access_type: filters.accessType || undefined,
+      status: filters.status || undefined,
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
 export function getResourceBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.resources.getBySlug(slug),
@@ -907,6 +945,23 @@ export function getServices() {
   );
 }
 
+export function getServicesFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.services.list({
+      search: filters.search?.trim() || undefined,
+      service_type: filters.serviceType || undefined,
+      category: filters.category || undefined,
+      center_id: filters.centerId || undefined,
+      status: filters.status || undefined,
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
 export function getServiceBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.services.getBySlug(slug),
@@ -916,6 +971,23 @@ export function getServiceBySlug(slug: string) {
 export function getGuidelines() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.guidelines.list({
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getGuidelinesFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.guidelines.list({
+      search: filters.search?.trim() || undefined,
+      guideline_type: filters.guidelineType || undefined,
+      category: filters.category || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
       is_active: true,
       page: 1,
       per_page: 100,

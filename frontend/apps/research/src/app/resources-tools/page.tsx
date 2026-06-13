@@ -1,154 +1,50 @@
 import type { Metadata } from "next";
-import {
-  Badge,
-  IconCard,
-  ResearchPageIntro,
-  ResearchSection,
-  StatusMessage,
-} from "../../components/research-ui";
-import {
-  compactText,
-  formatLabel,
-  getEvents,
-  getGuidelines,
-  getResources,
-  getUpdates,
-} from "../../lib/research-public-data";
+import Link from "next/link";
+import type { ResearchGenericRecord } from "@ksu/api-client";
+import { Badge, FilledBadge, ResearchPageIntro, ResearchSection, StatusMessage } from "../../components/research-ui";
+import { compactText, formatLabel, getCenters, getResources, getResourcesFiltered } from "../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Resources & Tools",
-  description: "Research collaboration tools, news, events, policies, reports, and templates.",
-};
+export const metadata: Metadata = { title: "Resources & Tools", description: "Research equipment, tools, templates, platforms, and support resources." };
 
-export default async function ResourcesToolsPage() {
-  const [resources, guidelines, updates, events] = await Promise.all([
+type ResourceParams = { q?: string; type?: string; access?: string; category?: string; center?: string; status?: string; sort?: string };
+const resourceTypes = ["equipment", "software", "dataset", "template", "form", "facility", "platform", "guide"];
+const accessTypes = ["internal", "public", "restricted", "bookable", "request"];
+const statuses = ["available", "unavailable", "maintenance", "retired", "draft"];
+
+export default async function ResourcesToolsPage({ searchParams }: { searchParams?: Promise<ResourceParams> }) {
+  const params = (await searchParams) ?? {};
+  const [resources, allResources, centers] = await Promise.all([
+    getResourcesFiltered({ search: params.q, resourceType: params.type, accessType: params.access, category: params.category, centerId: params.center, status: params.status, sort: params.sort || "name", order: params.sort === "created_at" ? "desc" : "asc" }),
     getResources(),
-    getGuidelines(),
-    getUpdates(),
-    getEvents(),
+    getCenters(),
   ]);
-
+  const categories = Array.from(new Set(allResources.data.map((item) => compactText(item.category)).filter(Boolean))).sort();
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
-        eyebrow="Resources & Tools"
-        title="Tools for collaboration, updates, and research support."
-        body="Find collaboration entry points, research news, events, policies, templates, annual reports, and partner resources."
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Research", href: "/" },
-          { label: "Resources & Tools" },
-        ]}
-      />
-      <ResearchSection
-        eyebrow="Collaboration Platforms"
-        title="Start a research or industry collaboration"
-        body="These entry points cover partnership inquiries, collaboration requests, and industry challenge submissions."
-        tone="white"
-      >
-        <div className="grid gap-5 md:grid-cols-3">
-          <IconCard
-            icon="handshake"
-            title="Partnership inquiry"
-            body="Route industry, foundation, public-sector, and academic partnership requests to the research office."
-            href="/connect#partnership"
-            action="Send inquiry"
-          />
-          <IconCard
-            icon="flask"
-            title="Research collaboration request"
-            body="Invite faculty, students, and external collaborators to propose joint research activity."
-            href="/connect#research"
-            action="Request collaboration"
-          />
-          <IconCard
-            icon="lightbulb"
-            title="Industry challenge portal"
-            body="Capture applied problems that can be explored through student, faculty, or center-led research."
-            href="/partners#how-to-partner"
-            action="View process"
-          />
-        </div>
-      </ResearchSection>
-      <ResearchSection
-        eyebrow="Resource Library"
-        title="Templates, policies, reports, and guides"
-        body="Resource and guideline records are loaded from the Research service support endpoints."
-      >
-        <ResourceGrid records={[...resources.data, ...guidelines.data]} />
-        {[resources.error, guidelines.error].filter(Boolean).map((error, index) => (
-          <div key={`${error}-${index}`} className="mt-4">
-            <StatusMessage tone="error">{error}</StatusMessage>
-          </div>
-        ))}
-      </ResearchSection>
-      <ResearchSection
-        eyebrow="News & Events"
-        title="Research updates and calendar"
-        body="Published news and event records support newsletters, industry updates, and cross-promoted events."
-        tone="white"
-      >
-        <div className="grid gap-5 lg:grid-cols-2">
-          <ListPanel title="Latest updates" records={updates.data} error={updates.error} />
-          <ListPanel title="Research events" records={events.data} error={events.error} />
-        </div>
+      <ResearchPageIntro eyebrow="Funding / Support" title="Research resources, tools, equipment, and platforms." body="Browse available research equipment, facilities, datasets, forms, software, and bookable tools with access and contact details." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Funding", href: "/funding" }, { label: "Resources & Tools" }]} />
+      <ResearchSection eyebrow="Resource Catalogue" title="Find and access research tools" body="Resource records are filtered by type, access level, category, center, availability, and keyword." tone="white">
+        <ResourceFilters params={params} categories={categories} centers={centers.data} />
+        {[resources.error, allResources.error, centers.error].filter(Boolean).map((error) => <div key={error} className="mt-5"><StatusMessage tone="error">{error}</StatusMessage></div>)}
+        {resources.data.length ? <div className="mt-7 grid gap-5 lg:grid-cols-3">{resources.data.map((item) => <ResourceCard key={item.id} item={item} />)}</div> : <div className="mt-7"><StatusMessage>No resources match the current filters.</StatusMessage></div>}
       </ResearchSection>
     </main>
   );
 }
 
-function ResourceGrid({ records }: { records: Array<Record<string, any>> }) {
-  return (
-    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-      {records.map((record) => (
-        <article key={record.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <Badge>{formatLabel(record.resource_type ?? record.guideline_type ?? record.category ?? "resource")}</Badge>
-          <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-            {record.title ?? record.name}
-          </h2>
-          {compactText(record.summary) || compactText(record.description) ? (
-            <p className="mt-3 text-sm leading-7 text-slate-600">
-              {compactText(record.summary) || compactText(record.description)}
-            </p>
-          ) : null}
-        </article>
-      ))}
-    </div>
-  );
+function ResourceFilters({ params, categories, centers }: { params: ResourceParams; categories: string[]; centers: ResearchGenericRecord[] }) {
+  return <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/resources-tools"><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6"><label className="xl:col-span-2"><span className="text-xs font-semibold uppercase text-slate-500">Search</span><input name="q" defaultValue={params.q ?? ""} placeholder="Equipment, tool, facility, capability" className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary" /></label><SelectField name="type" label="Type" value={params.type} options={resourceTypes} /><SelectField name="access" label="Access" value={params.access} options={accessTypes} /><SelectField name="category" label="Category" value={params.category} options={categories} /><SelectField name="status" label="Status" value={params.status} options={statuses} /><label className="md:col-span-2 xl:col-span-3"><span className="text-xs font-semibold uppercase text-slate-500">Center</span><select name="center" defaultValue={params.center ?? ""} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="">All centers</option>{centers.map((center) => <option key={center.id} value={center.id}>{center.name ?? center.title ?? center.code ?? center.id}</option>)}</select></label><label><span className="text-xs font-semibold uppercase text-slate-500">Sort</span><select name="sort" defaultValue={params.sort ?? "name"} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="name">Name</option><option value="created_at">Newest</option><option value="status">Availability</option></select></label><div className="flex items-end gap-2 md:col-span-2"><button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">Apply filters</button><Link href="/resources-tools" className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary">Reset</Link></div></div></form>;
 }
 
-function ListPanel({
-  title,
-  records,
-  error,
-}: {
-  title: string;
-  records: Array<Record<string, any>>;
-  error: string | null;
-}) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
-      {error ? <div className="mt-4"><StatusMessage tone="error">{error}</StatusMessage></div> : null}
-      <div className="mt-4 divide-y divide-slate-200">
-        {records.slice(0, 6).map((record) => (
-          <article key={record.id} className="py-4">
-            <h3 className="text-base font-semibold leading-6 text-slate-950">
-              {record.title ?? record.name}
-            </h3>
-            {compactText(record.summary) || compactText(record.description) ? (
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {compactText(record.summary) || compactText(record.description)}
-              </p>
-            ) : null}
-            <p className="mt-2 text-xs font-semibold uppercase text-slate-500">
-              {formatLabel(record.news_type ?? record.event_type ?? record.status)}
-            </p>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
+function ResourceCard({ item }: { item: ResearchGenericRecord }) {
+  return <article className="flex min-h-[340px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"><div className="flex flex-wrap gap-2"><Badge>{formatLabel(item.resource_type ?? "resource")}</Badge>{item.is_featured ? <FilledBadge>Featured</FilledBadge> : null}{item.status ? <Badge>{formatLabel(item.status)}</Badge> : null}</div><h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950"><Link href={item.slug ? `/resources-tools/${item.slug}` : "/resources-tools"} className="transition hover:text-primary">{item.name ?? "Research resource"}</Link></h2><p className="mt-3 text-sm leading-7 text-slate-600">{compactText(item.description) || compactText(item.capabilities) || "Resource details are not published yet."}</p><dl className="mt-auto grid grid-cols-2 gap-3 pt-5 text-sm"><Fact label="Access" value={formatLabel(item.access_type)} /><Fact label="Location" value={[item.location, item.room].map(compactText).filter(Boolean).join(" · ")} /></dl></article>;
+}
+
+function SelectField({ name, label, value, options }: { name: string; label: string; value?: string; options: string[] }) {
+  return <label><span className="text-xs font-semibold uppercase text-slate-500">{label}</span><select name={name} defaultValue={value ?? ""} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="">All {label.toLowerCase()}</option>{options.map((option) => <option key={option} value={option}>{formatLabel(option)}</option>)}</select></label>;
+}
+
+function Fact({ label, value }: { label: string; value: string }) {
+  return <div className="rounded-md bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt><dd className="mt-1 break-words font-semibold text-slate-950">{value || "Not published"}</dd></div>;
 }
