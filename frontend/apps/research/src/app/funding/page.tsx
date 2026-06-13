@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Banknote, ClipboardList, FileText, GraduationCap, LifeBuoy, Wrench } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
 import {
   Badge,
   FilledBadge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -38,6 +39,15 @@ const grantTypes = ["internal", "external"];
 const grantCategories = ["research", "innovation", "capacity_building", "travel", "equipment", "publication"];
 const grantStatuses = ["open", "closed", "reviewing", "awarded", "cancelled"];
 
+const supportLinks = [
+  { label: "Funding", href: "/funding", description: "Grant calls, internal funding, and deadlines.", icon: Banknote },
+  { label: "Scholarships", href: "/scholarships", description: "Student research funding and fellowship calls.", icon: GraduationCap },
+  { label: "Guidelines", href: "/guidelines", description: "Policies, procedures, templates, and grant guidance.", icon: FileText },
+  { label: "Forms", href: "/forms", description: "Downloadable forms and research templates.", icon: ClipboardList },
+  { label: "Resources", href: "/resources-tools", description: "Tools, platforms, equipment, and access routes.", icon: Wrench },
+  { label: "Services", href: "/services", description: "Support services and request pathways.", icon: LifeBuoy },
+];
+
 export default async function FundingPage({
   searchParams,
 }: {
@@ -61,7 +71,7 @@ export default async function FundingPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchClusterHero
         eyebrow="Funding & Support"
         title="Grant calls, internal funding, and research support opportunities."
         body="Review open and featured funding opportunities, eligibility notes, funders, application documents, and deadline status."
@@ -69,6 +79,16 @@ export default async function FundingPage({
           { label: "Home", href: "/" },
           { label: "Funding & Support", href: "/funding" },
           { label: "Funding" },
+        ]}
+        imageSrc="/images/research/research-demo-imagegen.png"
+        imageAlt="Research funding support workflow with grant calls and application guidance"
+        links={supportLinks}
+        primaryAction={{ label: "Open guidelines", href: "/guidelines" }}
+        stats={[
+          { label: "Funding results", value: grants.data.length },
+          { label: "Published grants", value: allGrants.data.length },
+          { label: "Guidance records", value: guidelines.data.length },
+          { label: "Resources", value: resources.data.length },
         ]}
       />
 

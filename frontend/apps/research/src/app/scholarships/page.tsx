@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { Badge, FilledBadge, ResearchPageIntro, ResearchSection, StatusMessage } from "../../components/research-ui";
+import { Banknote, ClipboardList, FileText, GraduationCap, LifeBuoy, Wrench } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
+import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, formatDate, formatLabel, getScholarships, getScholarshipsFiltered } from "../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +16,15 @@ export const metadata: Metadata = {
 type ScholarshipParams = { q?: string; type?: string; status?: string; year?: string; sort?: string };
 const scholarshipTypes = ["research", "postgraduate", "doctoral", "masters", "mobility", "seed", "fellowship"];
 const statuses = ["open", "upcoming", "closed", "awarded", "draft"];
+
+const supportLinks = [
+  { label: "Funding", href: "/funding", description: "Grant calls, internal funding, and deadlines.", icon: Banknote },
+  { label: "Scholarships", href: "/scholarships", description: "Student research funding and fellowship calls.", icon: GraduationCap },
+  { label: "Guidelines", href: "/guidelines", description: "Policies, procedures, templates, and grant guidance.", icon: FileText },
+  { label: "Forms", href: "/forms", description: "Downloadable forms and research templates.", icon: ClipboardList },
+  { label: "Resources", href: "/resources-tools", description: "Tools, platforms, equipment, and access routes.", icon: Wrench },
+  { label: "Services", href: "/services", description: "Support services and request pathways.", icon: LifeBuoy },
+];
 
 export default async function ScholarshipsPage({ searchParams }: { searchParams?: Promise<ScholarshipParams> }) {
   const params = (await searchParams) ?? {};
@@ -31,11 +42,21 @@ export default async function ScholarshipsPage({ searchParams }: { searchParams?
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchClusterHero
         eyebrow="Funding / Support"
         title="Research scholarships and student funding opportunities."
         body="Scholarship calls show eligibility, award value, coverage, application deadlines, and direct application links from the Research Scholarships endpoint."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Funding", href: "/funding" }, { label: "Scholarships" }]}
+        imageSrc="/images/research/research-demo-imagegen.png"
+        imageAlt="Students and researchers reviewing scholarship support opportunities"
+        links={supportLinks}
+        primaryAction={{ label: "View funding", href: "/funding" }}
+        stats={[
+          { label: "Scholarship results", value: scholarships.data.length },
+          { label: "Published scholarships", value: allScholarships.data.length },
+          { label: "Scholarship types", value: scholarshipTypes.length },
+          { label: "Statuses", value: statuses.length },
+        ]}
       />
       <ResearchSection eyebrow="Scholarship Calls" title="Open and published opportunities" body="Filter research scholarships by type, status, deadline year, and keyword." tone="white">
         <ScholarshipFilters params={params} years={getYears(allScholarships.data)} />

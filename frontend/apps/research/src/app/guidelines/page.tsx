@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { Badge, FilledBadge, ResearchPageIntro, ResearchSection, StatusMessage } from "../../components/research-ui";
+import { Banknote, ClipboardList, FileText, GraduationCap, LifeBuoy, Wrench } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
+import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, formatDate, formatLabel, getGrantGuidelines, getGuidelines, getGuidelinesFiltered } from "../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +17,15 @@ type GuidelineParams = { q?: string; type?: string; category?: string; status?: 
 const guidelineTypes = ["guideline", "policy", "procedure", "manual", "sop", "template", "checklist"];
 const statuses = ["active", "draft", "archived", "superseded"];
 
+const supportLinks = [
+  { label: "Funding", href: "/funding", description: "Grant calls, internal funding, and deadlines.", icon: Banknote },
+  { label: "Scholarships", href: "/scholarships", description: "Student research funding and fellowship calls.", icon: GraduationCap },
+  { label: "Guidelines", href: "/guidelines", description: "Policies, procedures, templates, and grant guidance.", icon: FileText },
+  { label: "Forms", href: "/forms", description: "Downloadable forms and research templates.", icon: ClipboardList },
+  { label: "Resources", href: "/resources-tools", description: "Tools, platforms, equipment, and access routes.", icon: Wrench },
+  { label: "Services", href: "/services", description: "Support services and request pathways.", icon: LifeBuoy },
+];
+
 export default async function GuidelinesPage({ searchParams }: { searchParams?: Promise<GuidelineParams> }) {
   const params = (await searchParams) ?? {};
   const [guidelines, allGuidelines, grantGuidelines] = await Promise.all([
@@ -26,7 +37,7 @@ export default async function GuidelinesPage({ searchParams }: { searchParams?: 
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro eyebrow="Funding / Support" title="Research guidelines, policies, procedures, and grant guidance." body="Guidelines are presented as controlled documents with version, approval, effective date, review date, mandatory status, and download links." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Funding", href: "/funding" }, { label: "Guidelines" }]} />
+      <ResearchClusterHero eyebrow="Funding / Support" title="Research guidelines, policies, procedures, and grant guidance." body="Guidelines are presented as controlled documents with version, approval, effective date, review date, mandatory status, and download links." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Funding", href: "/funding" }, { label: "Guidelines" }]} imageSrc="/images/research/research-workflows.png" imageAlt="Research support documents, policy guidance, and application procedures" links={supportLinks} primaryAction={{ label: "Open forms", href: "/forms" }} stats={[{ label: "Guideline results", value: guidelines.data.length }, { label: "Published guidelines", value: allGuidelines.data.length }, { label: "Grant guidance", value: grantGuidelines.data.length }, { label: "Categories", value: categories.length }]} />
       <ResearchSection eyebrow="Document Control" title="Research guidelines" body="Filter by document type, category, status, effective year, and keyword." tone="white">
         <GuidelineFilters params={params} categories={categories} years={getYears(allGuidelines.data)} />
         {[guidelines.error, allGuidelines.error, grantGuidelines.error].filter(Boolean).map((error) => <div key={error} className="mt-5"><StatusMessage tone="error">{error}</StatusMessage></div>)}

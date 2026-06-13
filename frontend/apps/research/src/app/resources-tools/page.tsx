@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { Badge, FilledBadge, ResearchPageIntro, ResearchSection, StatusMessage } from "../../components/research-ui";
+import { Banknote, ClipboardList, FileText, GraduationCap, LifeBuoy, Wrench } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
+import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, formatLabel, getCenters, getResources, getResourcesFiltered } from "../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +15,15 @@ const resourceTypes = ["equipment", "software", "dataset", "template", "form", "
 const accessTypes = ["internal", "public", "restricted", "bookable", "request"];
 const statuses = ["available", "unavailable", "maintenance", "retired", "draft"];
 
+const supportLinks = [
+  { label: "Funding", href: "/funding", description: "Grant calls, internal funding, and deadlines.", icon: Banknote },
+  { label: "Scholarships", href: "/scholarships", description: "Student research funding and fellowship calls.", icon: GraduationCap },
+  { label: "Guidelines", href: "/guidelines", description: "Policies, procedures, templates, and grant guidance.", icon: FileText },
+  { label: "Forms", href: "/forms", description: "Downloadable forms and research templates.", icon: ClipboardList },
+  { label: "Resources", href: "/resources-tools", description: "Tools, platforms, equipment, and access routes.", icon: Wrench },
+  { label: "Services", href: "/services", description: "Support services and request pathways.", icon: LifeBuoy },
+];
+
 export default async function ResourcesToolsPage({ searchParams }: { searchParams?: Promise<ResourceParams> }) {
   const params = (await searchParams) ?? {};
   const [resources, allResources, centers] = await Promise.all([
@@ -23,7 +34,7 @@ export default async function ResourcesToolsPage({ searchParams }: { searchParam
   const categories = Array.from(new Set(allResources.data.map((item) => compactText(item.category)).filter(Boolean))).sort();
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro eyebrow="Funding / Support" title="Research resources, tools, equipment, and platforms." body="Browse available research equipment, facilities, datasets, forms, software, and bookable tools with access and contact details." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Funding", href: "/funding" }, { label: "Resources & Tools" }]} />
+      <ResearchClusterHero eyebrow="Funding / Support" title="Research resources, tools, equipment, and platforms." body="Browse available research equipment, facilities, datasets, forms, software, and bookable tools with access and contact details." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Funding", href: "/funding" }, { label: "Resources & Tools" }]} imageSrc="/images/research/research-hero-imagegen.png" imageAlt="Research tools, platforms, equipment, and support resources" links={supportLinks} primaryAction={{ label: "Open services", href: "/services" }} stats={[{ label: "Resource results", value: resources.data.length }, { label: "Published resources", value: allResources.data.length }, { label: "Centers", value: centers.data.length }, { label: "Categories", value: categories.length }]} />
       <ResearchSection eyebrow="Resource Catalogue" title="Find and access research tools" body="Resource records are filtered by type, access level, category, center, availability, and keyword." tone="white">
         <ResourceFilters params={params} categories={categories} centers={centers.data} />
         {[resources.error, allResources.error, centers.error].filter(Boolean).map((error) => <div key={error} className="mt-5"><StatusMessage tone="error">{error}</StatusMessage></div>)}

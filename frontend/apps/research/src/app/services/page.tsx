@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { Badge, FilledBadge, ResearchPageIntro, ResearchSection, StatusMessage } from "../../components/research-ui";
+import { Banknote, ClipboardList, FileText, GraduationCap, LifeBuoy, Wrench } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
+import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, formatLabel, getCenters, getServices, getServicesFiltered } from "../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +12,15 @@ export const metadata: Metadata = { title: "Research Services", description: "Re
 
 type ServiceParams = { q?: string; type?: string; category?: string; center?: string; sort?: string };
 const serviceTypes = ["support", "consultation", "ethics", "data", "proposal", "training", "commercialization", "partnership"];
+
+const supportLinks = [
+  { label: "Funding", href: "/funding", description: "Grant calls, internal funding, and deadlines.", icon: Banknote },
+  { label: "Scholarships", href: "/scholarships", description: "Student research funding and fellowship calls.", icon: GraduationCap },
+  { label: "Guidelines", href: "/guidelines", description: "Policies, procedures, templates, and grant guidance.", icon: FileText },
+  { label: "Forms", href: "/forms", description: "Downloadable forms and research templates.", icon: ClipboardList },
+  { label: "Resources", href: "/resources-tools", description: "Tools, platforms, equipment, and access routes.", icon: Wrench },
+  { label: "Services", href: "/services", description: "Support services and request pathways.", icon: LifeBuoy },
+];
 
 export default async function ServicesPage({ searchParams }: { searchParams?: Promise<ServiceParams> }) {
   const params = (await searchParams) ?? {};
@@ -21,7 +32,7 @@ export default async function ServicesPage({ searchParams }: { searchParams?: Pr
   const categories = Array.from(new Set(allServices.data.map((item) => compactText(item.category)).filter(Boolean))).sort();
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro eyebrow="Funding / Support" title="Research support services." body="Find services for researchers, students, partners, and public engagement, with process, eligibility, turnaround, deliverables, fees, and request links." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Funding", href: "/funding" }, { label: "Services" }]} />
+      <ResearchClusterHero eyebrow="Funding / Support" title="Research support services." body="Find services for researchers, students, partners, and public engagement, with process, eligibility, turnaround, deliverables, fees, and request links." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Funding", href: "/funding" }, { label: "Services" }]} imageSrc="/images/research/registrar-reirm-imagegen.png" imageAlt="Research office service desk supporting researchers and partners" links={supportLinks} primaryAction={{ label: "Contact support", href: "/connect" }} stats={[{ label: "Service results", value: services.data.length }, { label: "Published services", value: allServices.data.length }, { label: "Centers", value: centers.data.length }, { label: "Categories", value: categories.length }]} />
       <ResearchSection eyebrow="Service Catalogue" title="Available research services" body="Filter backend-backed services by type, category, center, and keyword." tone="white">
         <ServiceFilters params={params} categories={categories} centers={centers.data} />
         {[services.error, allServices.error, centers.error].filter(Boolean).map((error) => <div key={error} className="mt-5"><StatusMessage tone="error">{error}</StatusMessage></div>)}
