@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { CalendarDays, Handshake, Sprout, Target } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
 import {
   Badge,
   IconCard,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -23,6 +24,13 @@ export const metadata: Metadata = {
   description: "Research community impact, outreach, public engagement, and success stories.",
 };
 
+const extensionLinks = [
+  { label: "University Farm", href: "/farm", description: "Farm facilities, field research, demonstrations, and partners.", icon: Sprout },
+  { label: "Sustainability", href: "/sustainability", description: "Climate, biodiversity, water, and circular-economy initiatives.", icon: Target },
+  { label: "Community Impact", href: "/community-impact", description: "Outreach, social value, events, and public stories.", icon: Handshake },
+  { label: "Events", href: "/events", description: "Public engagement and research activity calendar.", icon: CalendarDays },
+];
+
 export default async function CommunityImpactPage() {
   const [stories, sustainability, events, donationImpacts] = await Promise.all([
     getStories(),
@@ -33,7 +41,7 @@ export default async function CommunityImpactPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchClusterHero
         eyebrow="Community Impact"
         title="Research that creates local and regional value."
         body="Track community-facing research, sustainability initiatives, outreach events, and social impact stories connected to Kisii University."
@@ -41,6 +49,16 @@ export default async function CommunityImpactPage() {
           { label: "Home", href: "/" },
           { label: "Research", href: "/" },
           { label: "Community Impact" },
+        ]}
+        imageSrc="/images/research/research-workflows.png"
+        imageAlt="Community impact, outreach events, sustainability work, and public engagement"
+        links={extensionLinks}
+        primaryAction={{ label: "View events", href: "/events" }}
+        stats={[
+          { label: "Impact stories", value: stories.data.length },
+          { label: "Sustainability records", value: sustainability.data.length },
+          { label: "Events", value: events.data.length },
+          { label: "Donation impacts", value: donationImpacts.data.length },
         ]}
       />
       <ResearchSection

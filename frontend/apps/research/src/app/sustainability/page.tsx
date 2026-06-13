@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { Badge, FilledBadge, ResearchPageIntro, ResearchSection, StatusMessage } from "../../components/research-ui";
+import { CalendarDays, Handshake, Sprout, Target } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
+import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import {
   compactText,
   formatDate,
@@ -19,6 +21,13 @@ export const metadata: Metadata = {
   description: "Sustainability initiatives and impact records.",
 };
 
+const extensionLinks = [
+  { label: "University Farm", href: "/farm", description: "Farm facilities, field research, demonstrations, and partners.", icon: Sprout },
+  { label: "Sustainability", href: "/sustainability", description: "Climate, biodiversity, water, and circular-economy initiatives.", icon: Target },
+  { label: "Community Impact", href: "/community-impact", description: "Outreach, social value, events, and public stories.", icon: Handshake },
+  { label: "Events", href: "/events", description: "Public engagement and research activity calendar.", icon: CalendarDays },
+];
+
 export default async function SustainabilityPage() {
   const [initiatives, partners, activities, stories, metrics] = await Promise.all([
     getSustainability(),
@@ -33,11 +42,21 @@ export default async function SustainabilityPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchClusterHero
         eyebrow="Sustainability"
         title="Sustainability initiatives connected to research."
         body="Explore active climate, conservation, biodiversity, water, food security, and circular-economy work managed through the Research service."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Sustainability" }]}
+        imageSrc="/images/research/research-workflows.png"
+        imageAlt="Sustainability research, climate action, conservation, and community fieldwork"
+        links={extensionLinks}
+        primaryAction={{ label: "View community impact", href: "/community-impact" }}
+        stats={[
+          { label: "Initiatives", value: initiatives.data.length },
+          { label: "Partners", value: partners.data.length },
+          { label: "Activities", value: activities.data.length },
+          { label: "Metrics", value: metrics.data.length },
+        ]}
        />
 
       {errors.length > 0 ? <ErrorBand errors={errors} /> : null}

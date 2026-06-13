@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
-import { Badge, FilledBadge, ResearchPageIntro, ResearchSection, StatusMessage } from "../../components/research-ui";
+import { CalendarDays, Handshake, Sprout, Target } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
+import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import {
   compactText,
   formatDate,
@@ -19,6 +21,13 @@ export const metadata: Metadata = {
   title: "University Farm",
   description: "Research farms and farm-linked sustainability work.",
 };
+
+const extensionLinks = [
+  { label: "University Farm", href: "/farm", description: "Farm facilities, field research, demonstrations, and partners.", icon: Sprout },
+  { label: "Sustainability", href: "/sustainability", description: "Climate, biodiversity, water, and circular-economy initiatives.", icon: Target },
+  { label: "Community Impact", href: "/community-impact", description: "Outreach, social value, events, and public stories.", icon: Handshake },
+  { label: "Events", href: "/events", description: "Public engagement and research activity calendar.", icon: CalendarDays },
+];
 
 export default async function FarmPage() {
   const [farms, projects, partners, activities, stories, focusAreas] =
@@ -39,11 +48,21 @@ export default async function FarmPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchClusterHero
         eyebrow="University Farm"
         title="Farm-linked research, facilities, and community impact."
         body="Explore farm facilities, action research projects, community partnerships, activities, impact stories, and focus areas backed by the Research service."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "University Farm" }]}
+        imageSrc="/images/research/research-workflows.png"
+        imageAlt="University farm research, field demonstration, and community extension work"
+        links={extensionLinks}
+        primaryAction={{ label: "View sustainability", href: "/sustainability" }}
+        stats={[
+          { label: "Farm records", value: farms.data.length },
+          { label: "Farm projects", value: projects.data.length },
+          { label: "Partners", value: partners.data.length },
+          { label: "Activities", value: activities.data.length },
+        ]}
        />
 
       {errors.length > 0 ? <ErrorBand errors={errors} /> : null}
