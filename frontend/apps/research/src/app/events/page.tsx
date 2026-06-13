@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Badge, FilledBadge, ResearchPageIntro, ResearchSection, StatusMessage } from "../../components/research-ui";
+import { BookOpenCheck, CalendarDays, Newspaper, Users } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
+import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, formatDate, formatLabel, getCenters, getEvents, getEventsFiltered } from "../../lib/research-public-data";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 
@@ -14,6 +16,13 @@ export const metadata: Metadata = {
 type EventSearchParams = { q?: string; type?: string; status?: string; category?: string; center?: string; year?: string; sort?: string };
 const eventTypes = ["conference", "seminar", "workshop", "webinar", "symposium", "colloquium", "defense", "lecture"];
 const statuses = ["upcoming", "ongoing", "completed", "cancelled", "postponed", "draft"];
+
+const learningLinks = [
+  { label: "Training", href: "/training", description: "Workshops, courses, bootcamps, and seminars.", icon: BookOpenCheck },
+  { label: "Mentorship", href: "/mentorship", description: "Mentor and mentee pathways for research growth.", icon: Users },
+  { label: "Events", href: "/events", description: "Public calendar for forums, workshops, and conferences.", icon: CalendarDays },
+  { label: "News", href: "/news", description: "Research updates, notices, stories, and articles.", icon: Newspaper },
+];
 
 export default async function EventsPage({ searchParams }: { searchParams?: Promise<EventSearchParams> }) {
   const params = (await searchParams) ?? {};
@@ -34,7 +43,7 @@ export default async function EventsPage({ searchParams }: { searchParams?: Prom
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro eyebrow="Events" title="Research workshops, forums, seminars, and conferences." body="Browse the public research calendar by type, status, center, year, and format cues." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Learning", href: "/training" }, { label: "Events" }]} />
+      <ResearchClusterHero eyebrow="Events" title="Research workshops, forums, seminars, and conferences." body="Browse the public research calendar by type, status, center, year, and format cues." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Learning", href: "/training" }, { label: "Events" }]} imageSrc="/images/research/research-workflows.png" imageAlt="Research events, forums, workshops, seminars, and conference activity" links={learningLinks} primaryAction={{ label: "View news", href: "/news" }} stats={[{ label: "Event results", value: events.data.length }, { label: "Published events", value: allEvents.data.length }, { label: "Centers", value: centers.data.length }, { label: "Event types", value: eventTypes.length }]} />
       <ResearchSection eyebrow="Calendar" title="Research events" body="Events are loaded from the Research Events endpoint and filtered through backend query parameters." tone="white">
         <EventFilters params={params} years={getYears(allEvents.data)} centers={centers.data} />
         {[events.error, allEvents.error, centers.error].filter(Boolean).map((error) => <div key={error} className="mt-5"><StatusMessage tone="error">{error}</StatusMessage></div>)}

@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
+import { BookOpenCheck, CalendarDays, Newspaper, Users } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
 import {
   Badge,
   FilledBadge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -43,6 +44,13 @@ type NewsSearchParams = {
 const newsTypes = ["news", "announcement", "press_release", "notice", "achievement"];
 const articleTypes = ["article", "feature", "opinion", "case_study", "research_story"];
 const passthroughImageLoader = ({ src }: { src: string }) => src;
+
+const learningLinks = [
+  { label: "Training", href: "/training", description: "Workshops, courses, bootcamps, and seminars.", icon: BookOpenCheck },
+  { label: "Mentorship", href: "/mentorship", description: "Mentor and mentee pathways for research growth.", icon: Users },
+  { label: "Events", href: "/events", description: "Public calendar for forums, workshops, and conferences.", icon: CalendarDays },
+  { label: "News", href: "/news", description: "Research updates, notices, stories, and articles.", icon: Newspaper },
+];
 
 export default async function NewsPage({
   searchParams,
@@ -87,7 +95,7 @@ export default async function NewsPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchClusterHero
         eyebrow="Learning / Events / Updates"
         title="Research news, updates, and feature articles."
         body="Follow public research announcements, stories, milestones, and explanatory articles from the Research Directorate and connected research units."
@@ -95,6 +103,16 @@ export default async function NewsPage({
           { label: "Home", href: "/" },
           { label: "Learning / Events / Updates", href: "/training" },
           { label: "News" },
+        ]}
+        imageSrc="/images/research/research-hero-imagegen.png"
+        imageAlt="Research news desk with updates, stories, and event coverage"
+        links={learningLinks}
+        primaryAction={{ label: "View events", href: "/events" }}
+        stats={[
+          { label: "Update results", value: updates.data.length },
+          { label: "Article results", value: articles.data.length },
+          { label: "Centers", value: centers.data.length },
+          { label: "Projects", value: projects.data.length },
         ]}
       />
 

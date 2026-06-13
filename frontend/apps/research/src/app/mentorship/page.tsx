@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Badge, FilledBadge, ResearchPageIntro, ResearchSection, StatusMessage } from "../../components/research-ui";
+import { BookOpenCheck, CalendarDays, Newspaper, Users } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
+import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, formatDate, formatLabel, getCenters, getMentorship, getMentorshipFiltered } from "../../lib/research-public-data";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 
@@ -14,6 +16,13 @@ export const metadata: Metadata = {
 type MentorshipSearchParams = { q?: string; type?: string; status?: string; center?: string; year?: string; sort?: string };
 const programTypes = ["research", "career", "academic", "writing", "grant_writing", "leadership"];
 const statuses = ["draft", "accepting_applications", "matching", "active", "completed", "suspended"];
+
+const learningLinks = [
+  { label: "Training", href: "/training", description: "Workshops, courses, bootcamps, and seminars.", icon: BookOpenCheck },
+  { label: "Mentorship", href: "/mentorship", description: "Mentor and mentee pathways for research growth.", icon: Users },
+  { label: "Events", href: "/events", description: "Public calendar for forums, workshops, and conferences.", icon: CalendarDays },
+  { label: "News", href: "/news", description: "Research updates, notices, stories, and articles.", icon: Newspaper },
+];
 
 export default async function MentorshipPage({ searchParams }: { searchParams?: Promise<MentorshipSearchParams> }) {
   const params = (await searchParams) ?? {};
@@ -33,7 +42,7 @@ export default async function MentorshipPage({ searchParams }: { searchParams?: 
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro eyebrow="Learning" title="Mentor and mentee pathways for research growth." body="Find structured mentorship programmes for researchers, students, writers, grant applicants, and emerging leaders." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Learning", href: "/training" }, { label: "Mentorship" }]} />
+      <ResearchClusterHero eyebrow="Learning" title="Mentor and mentee pathways for research growth." body="Find structured mentorship programmes for researchers, students, writers, grant applicants, and emerging leaders." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Learning", href: "/training" }, { label: "Mentorship" }]} imageSrc="/images/research/registrar-reirm-imagegen.png" imageAlt="Mentorship session for researchers and postgraduate students" links={learningLinks} primaryAction={{ label: "View training", href: "/training" }} stats={[{ label: "Mentorship results", value: mentorship.data.length }, { label: "Published mentorship", value: allMentorship.data.length }, { label: "Centers", value: centers.data.length }, { label: "Program types", value: programTypes.length }]} />
       <ResearchSection eyebrow="Mentorship Pathways" title="Mentorship programmes" body="Mentorship records are loaded from the Research Mentorship endpoint and filtered through backend query parameters." tone="white">
         <MentorshipFilters params={params} years={getYears(allMentorship.data)} centers={centers.data} />
         {[mentorship.error, allMentorship.error, centers.error].filter(Boolean).map((error) => <div key={error} className="mt-5"><StatusMessage tone="error">{error}</StatusMessage></div>)}

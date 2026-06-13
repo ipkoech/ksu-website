@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Badge, FilledBadge, ResearchPageIntro, ResearchSection, StatusMessage } from "../../components/research-ui";
+import { BookOpenCheck, CalendarDays, Newspaper, Users } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
+import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import {
   compactText,
   formatDate,
@@ -34,6 +36,13 @@ const deliveryModes = ["in_person", "online", "hybrid"];
 const categories = ["research_methods", "writing", "grant_writing", "data_analysis", "leadership", "ethics", "career"];
 const statuses = ["draft", "published", "ongoing", "completed", "cancelled", "postponed"];
 
+const learningLinks = [
+  { label: "Training", href: "/training", description: "Workshops, courses, bootcamps, and seminars.", icon: BookOpenCheck },
+  { label: "Mentorship", href: "/mentorship", description: "Mentor and mentee pathways for research growth.", icon: Users },
+  { label: "Events", href: "/events", description: "Public calendar for forums, workshops, and conferences.", icon: CalendarDays },
+  { label: "News", href: "/news", description: "Research updates, notices, stories, and articles.", icon: Newspaper },
+];
+
 export default async function TrainingPage({ searchParams }: { searchParams?: Promise<TrainingSearchParams> }) {
   const params = (await searchParams) ?? {};
   const [training, allTraining, centers] = await Promise.all([
@@ -54,11 +63,21 @@ export default async function TrainingPage({ searchParams }: { searchParams?: Pr
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchClusterHero
         eyebrow="Learning"
         title="Research training, workshops, seminars, and bootcamps."
         body="Find research methods, writing, ethics, grant writing, data, innovation, and leadership capacity-building programmes."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Learning", href: "/training" }, { label: "Training" }]}
+        imageSrc="/images/research/research-demo-imagegen.png"
+        imageAlt="Research training workshop with staff and postgraduate students"
+        links={learningLinks}
+        primaryAction={{ label: "View events", href: "/events" }}
+        stats={[
+          { label: "Training results", value: training.data.length },
+          { label: "Published training", value: allTraining.data.length },
+          { label: "Centers", value: centers.data.length },
+          { label: "Delivery modes", value: deliveryModes.length },
+        ]}
       />
       <ResearchSection
         eyebrow="Training Catalogue"
