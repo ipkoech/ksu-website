@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { ResearchDetailHero } from "../../../components/research-detail";
 import {
   Badge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../../components/research-ui";
@@ -40,7 +40,7 @@ export default async function ConsultancyDetailPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchDetailHero
         eyebrow="Consultancy"
         title={consultancy.title ?? "Consultancy"}
         body={compactText(consultancy.summary) || compactText(consultancy.description)}
@@ -49,6 +49,19 @@ export default async function ConsultancyDetailPage({
           { label: "Consultancies", href: "/consultancies" },
           { label: consultancy.title ?? "Consultancy" },
         ]}
+        labels={[consultancy.consultancy_type, consultancy.client_type, consultancy.status]}
+        facts={[
+          { label: "Client", value: consultancy.client_name },
+          { label: "Value", value: formatMoney(consultancy.contract_value, consultancy.currency) },
+          { label: "Start", value: formatDate(consultancy.start_date) },
+          { label: "End", value: formatDate(consultancy.end_date) },
+        ]}
+        actions={[
+          { label: "Back to consultancies", href: "/consultancies", variant: "secondary" },
+          ...(partner?.slug ? [{ label: "View partner", href: `/partners/${partner.slug}` }] : []),
+        ]}
+        imageSrc="/images/research/registrar-reirm-imagegen.png"
+        imageAlt="Consultancy engagement profile and deliverables"
       />
 
       {[error, partners.error, centers.error].filter(Boolean).map((message) => (

@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { ResearchDetailHero } from "../../../components/research-detail";
 import {
   Badge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../../components/research-ui";
@@ -28,7 +28,7 @@ export default async function EndowmentDetailPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchDetailHero
         eyebrow="Endowment"
         title={fund.name ?? fund.title ?? "Endowment fund"}
         body={compactText(fund.purpose) || compactText(fund.description)}
@@ -37,6 +37,19 @@ export default async function EndowmentDetailPage({
           { label: "Endowments", href: "/endowments" },
           { label: fund.name ?? fund.title ?? "Endowment" },
         ]}
+        labels={[fund.fund_type, fund.status, fund.is_accepting_contributions ? "accepting contributions" : null]}
+        facts={[
+          { label: "Current value", value: formatMoney(fund.current_value, fund.currency) },
+          { label: "Annual distribution", value: formatMoney(fund.annual_distribution, fund.currency) },
+          { label: "Established", value: formatDate(fund.established_date) },
+          { label: "Donor", value: fund.donor_name },
+        ]}
+        actions={[
+          { label: "Back to endowments", href: "/endowments", variant: "secondary" },
+          ...(compactText(fund.contribution_url) ? [{ label: "Contribute", href: compactText(fund.contribution_url) }] : []),
+        ]}
+        imageSrc="/images/research/research-demo-imagegen.png"
+        imageAlt="Research endowment fund purpose and contribution information"
       />
 
       {error ? (

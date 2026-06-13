@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { ResearchDetailHero } from "../../../components/research-detail";
 import {
   Badge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../../components/research-ui";
@@ -47,7 +47,7 @@ export default async function InnovationDetailPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchDetailHero
         eyebrow="Innovation"
         title={innovation.title ?? "Innovation"}
         body={compactText(innovation.summary) || compactText(innovation.problem_addressed)}
@@ -56,6 +56,19 @@ export default async function InnovationDetailPage({
           { label: "Innovations", href: "/innovations" },
           { label: innovation.title ?? "Innovation" },
         ]}
+        labels={[innovation.innovation_type, innovation.development_stage, innovation.status]}
+        facts={[
+          { label: "TRL", value: innovation.trl_level ? `TRL ${innovation.trl_level}` : "" },
+          { label: "IP status", value: formatLabel(innovation.ip_status) },
+          { label: "Commercialization", value: formatLabel(innovation.commercialization_status) },
+          { label: "Outputs", value: outputs.data.length },
+        ]}
+        actions={[
+          { label: "Back to innovations", href: "/innovations", variant: "secondary" },
+          ...(project?.slug ? [{ label: "View project", href: `/projects/${project.slug}` }] : []),
+        ]}
+        imageSrc="/images/research/innovation-partnerships.png"
+        imageAlt="Innovation profile with readiness, intellectual property, and adoption context"
       />
 
       {[error, projects.error, centers.error, outputs.error]

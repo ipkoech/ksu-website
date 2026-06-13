@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { ResearchDetailHero } from "../../../components/research-detail";
 import {
   Badge,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../../components/research-ui";
@@ -31,7 +31,7 @@ export default async function PartnerDetailPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchDetailHero
         eyebrow="Research Partner"
         title={partner.name ?? "Research partner"}
         body={compactText(partner.about) || compactText(partner.collaboration_areas)}
@@ -40,6 +40,19 @@ export default async function PartnerDetailPage({
           { label: "Partners", href: "/partners" },
           { label: partner.name ?? "Partner" },
         ]}
+        labels={[partner.partner_type, partner.partnership_level, partner.status]}
+        facts={[
+          { label: "Country", value: partner.country },
+          { label: "Start", value: formatDate(partner.partnership_start) },
+          { label: "MOU expiry", value: formatDate(partner.mou_expiry_date) },
+          { label: "Engagements", value: consultancies.data.length },
+        ]}
+        actions={[
+          { label: "Back to partners", href: "/partners", variant: "secondary" },
+          ...(compactText(partner.website) ? [{ label: "Open website", href: compactText(partner.website) }] : []),
+        ]}
+        imageSrc="/images/research/innovation-partnerships.png"
+        imageAlt="Research partner profile and collaboration context"
       />
 
       {[error, consultancies.error].filter(Boolean).map((message) => (
