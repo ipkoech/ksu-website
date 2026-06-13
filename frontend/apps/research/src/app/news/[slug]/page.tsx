@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import type { ResearchGenericRecord, ResearchProject, ResearchPublication } from "@ksu/api-client";
 import { Badge, ResearchPageIntro, ResearchSection, StatusMessage } from "../../../components/research-ui";
@@ -15,6 +16,7 @@ import {
 } from "../../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
+const passthroughImageLoader = ({ src }: { src: string }) => src;
 
 export default async function NewsDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -39,6 +41,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
   const project = findById(projects.data, record.project_id);
   const publication = findById(publications.data, record.publication_id);
   const innovation = findById(innovations.data, record.innovation_id);
+  const imageUrl = compactText(record.cover_image_url) || compactText(record.photo_url);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
@@ -68,11 +71,15 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
       >
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-5">
-            {compactText(record.cover_image_url) || compactText(record.photo_url) ? (
+            {imageUrl ? (
               <figure className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-                <img
-                  src={compactText(record.cover_image_url) || compactText(record.photo_url)}
+                <Image
+                  loader={passthroughImageLoader}
+                  unoptimized
+                  src={imageUrl}
                   alt=""
+                  width={1600}
+                  height={900}
                   className="max-h-[520px] w-full object-cover"
                 />
                 {compactText(record.cover_image_caption) ? (

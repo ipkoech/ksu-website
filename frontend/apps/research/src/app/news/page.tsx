@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
 import {
@@ -41,6 +42,7 @@ type NewsSearchParams = {
 
 const newsTypes = ["news", "announcement", "press_release", "notice", "achievement"];
 const articleTypes = ["article", "feature", "opinion", "case_study", "research_story"];
+const passthroughImageLoader = ({ src }: { src: string }) => src;
 
 export default async function NewsPage({
   searchParams,
@@ -309,12 +311,17 @@ function UpdateRow({ record }: { record: ResearchGenericRecord }) {
 
 function ArticleCard({ record }: { record: ResearchGenericRecord }) {
   const href = record.slug ? `/news/${record.slug}` : "/news";
+  const imageUrl = compactText(record.cover_image_url) || compactText(record.photo_url);
   return (
     <article className="flex min-h-[360px] flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]">
-      {compactText(record.cover_image_url) || compactText(record.photo_url) ? (
-        <img
-          src={compactText(record.cover_image_url) || compactText(record.photo_url)}
+      {imageUrl ? (
+        <Image
+          loader={passthroughImageLoader}
+          unoptimized
+          src={imageUrl}
           alt=""
+          width={1200}
+          height={675}
           className="aspect-[16/9] w-full object-cover"
         />
       ) : null}
