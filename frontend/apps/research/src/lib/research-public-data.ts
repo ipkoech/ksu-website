@@ -34,6 +34,7 @@ export type ProjectListFilters = {
   status?: string;
   centerId?: string;
   projectId?: string;
+  partnerId?: string;
   year?: string;
   sort?: string;
   order?: "asc" | "desc";
@@ -49,8 +50,18 @@ export type GenericListFilters = {
   publicationType?: string;
   outputType?: string;
   accessType?: string;
+  innovationType?: string;
+  developmentStage?: string;
+  ipStatus?: string;
+  commercializationStatus?: string;
+  partnerType?: string;
+  partnershipLevel?: string;
+  consultancyType?: string;
+  clientType?: string;
+  fundType?: string;
   centerId?: string;
   projectId?: string;
+  partnerId?: string;
   year?: string;
   sort?: string;
   order?: "asc" | "desc";
@@ -244,6 +255,28 @@ export function getInnovations(search?: string) {
   );
 }
 
+export function getInnovationsFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.innovations.list({
+      search: filters.search?.trim() || undefined,
+      innovation_type: filters.innovationType || undefined,
+      development_stage: filters.developmentStage || undefined,
+      ip_status: filters.ipStatus || undefined,
+      commercialization_status: filters.commercializationStatus || undefined,
+      category: filters.category || undefined,
+      center_id: filters.centerId || undefined,
+      project_id: filters.projectId || undefined,
+      status: filters.status || undefined,
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: true,
+      is_public: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
 export function getInnovationBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.innovations.getBySlug(slug),
@@ -255,6 +288,22 @@ export function getPartners(search?: string) {
     researchServiceApi.partners.list({
       search: search?.trim() || undefined,
       status: "active",
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getPartnersFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.partners.list({
+      search: filters.search?.trim() || undefined,
+      partner_id: filters.partnerId || undefined,
+      partnership_level: filters.partnershipLevel || undefined,
+      status: filters.status || "active",
+      sort: filters.sort || undefined,
+      order: filters.order,
       is_active: true,
       page: 1,
       per_page: 100,
@@ -524,6 +573,26 @@ export function getConsultancies() {
   );
 }
 
+export function getConsultanciesFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.consultancies.list({
+      search: filters.search?.trim() || undefined,
+      consultancy_type: filters.consultancyType || undefined,
+      client_type: filters.clientType || undefined,
+      partner_type: filters.partnerType || undefined,
+      center_id: filters.centerId || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: true,
+      is_public: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
 export function getConsultancyBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.consultancies.getBySlug(slug),
@@ -543,6 +612,22 @@ export function getFunders() {
 export function getEndowments() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.endowments.list({
+      is_active: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getEndowmentsFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.endowments.list({
+      search: filters.search?.trim() || undefined,
+      fund_type: filters.fundType || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
       is_active: true,
       page: 1,
       per_page: 100,
