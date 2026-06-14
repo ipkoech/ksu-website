@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BarChart3, BookOpenCheck, Database, FlaskConical } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFact } from "../../components/research-detail";
 import {
   Badge,
   FilledBadge,
@@ -298,23 +299,12 @@ function PublicationRow({ publication }: { publication: ResearchPublication }) {
         </p>
       </div>
       <dl className="grid gap-3 text-sm">
-        <Fact label="Published in" value={publication.journal_name || publication.publisher || publication.conference_name || ""} />
-        <Fact label="Year" value={compactText(publication.year)} />
-        <Fact label="Date" value={formatDate(publication.publication_date)} />
-        <Fact label="DOI" value={compactText(publication.doi)} />
+        <ResearchFact label="Published in" value={publication.journal_name || publication.publisher || publication.conference_name || ""} />
+        <ResearchFact label="Year" value={compactText(publication.year)} />
+        <ResearchFact label="Date" value={formatDate(publication.publication_date)} />
+        <ResearchFact label="DOI" value={compactText(publication.doi)} />
       </dl>
     </article>
-  );
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-slate-50 p-3">
-      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-      <dd className="mt-1 break-words font-semibold text-slate-950">
-        {value || "Not published"}
-      </dd>
-    </div>
   );
 }
 

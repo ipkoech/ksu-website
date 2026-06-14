@@ -1,7 +1,11 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import type { ResearchGenericRecord, ResearchPublication } from "@ksu/api-client";
-import { ResearchDetailHero } from "../../../components/research-detail";
+import {
+  ResearchDetailHero,
+  ResearchFact,
+  ResearchRelationshipCard,
+  ResearchTextPanel,
+} from "../../../components/research-detail";
 import {
   Badge,
   ResearchSection,
@@ -83,14 +87,14 @@ export default async function PublicationDetailPage({
       >
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-5">
-            <TextPanel
+            <ResearchTextPanel
               title="About this publication"
               fields={[
                 ["Abstract", publication.abstract],
                 ["Funding acknowledgement", publication.funding_acknowledgment],
               ]}
             />
-            <TextPanel
+            <ResearchTextPanel
               title="Published in"
               fields={[
                 ["Journal", publication.journal_name],
@@ -109,10 +113,10 @@ export default async function PublicationDetailPage({
               {publication.is_open_access ? <Badge>Open access</Badge> : null}
             </div>
             <dl className="mt-5 grid gap-3 text-sm">
-              <Fact label="Year" value={compactText(publication.year)} />
-              <Fact label="Published" value={formatDate(publication.publication_date)} />
-              <Fact label="DOI" value={compactText(publication.doi)} />
-              <Fact label="ISSN / ISBN" value={[publication.issn, publication.isbn].map(compactText).filter(Boolean).join(" / ")} />
+              <ResearchFact label="Year" value={compactText(publication.year)} />
+              <ResearchFact label="Published" value={formatDate(publication.publication_date)} />
+              <ResearchFact label="DOI" value={compactText(publication.doi)} />
+              <ResearchFact label="ISSN / ISBN" value={[publication.issn, publication.isbn].map(compactText).filter(Boolean).join(" / ")} />
             </dl>
             {accessLinks.length > 0 ? (
               <div className="mt-5 grid gap-2">
@@ -137,19 +141,19 @@ export default async function PublicationDetailPage({
         body="Relationships are displayed as project and center context where they are published by the API."
       >
         <div className="grid gap-5 lg:grid-cols-2">
-          <RelationshipCard
+          <ResearchRelationshipCard
             title="Related project"
             record={project}
             hrefBase="/projects"
             empty="No public project is linked to this publication yet."
           />
-          <RelationshipCard
+          <ResearchRelationshipCard
             title="Related center"
             record={center}
             hrefBase="/centers"
             empty="No public center is linked to this publication yet."
           />
-          <TextPanel
+          <ResearchTextPanel
             title="Citation"
             fields={[
               ["DOI", publication.doi],
@@ -158,7 +162,7 @@ export default async function PublicationDetailPage({
               ["URL", publication.url],
             ]}
           />
-          <TextPanel
+          <ResearchTextPanel
             title="Access"
             fields={[
               ["Access type", publication.access_type],
@@ -169,91 +173,5 @@ export default async function PublicationDetailPage({
         </div>
       </ResearchSection>
     </main>
-  );
-}
-
-function TextPanel({
-  title,
-  fields,
-}: {
-  title: string;
-  fields: Array<[string, string | number | null | undefined]>;
-}) {
-  const entries = fields
-    .map(([label, value]) => [label, compactText(value)] as const)
-    .filter(([, value]) => value);
-
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
-        {title}
-      </h2>
-      {entries.length > 0 ? (
-        <div className="mt-4 space-y-4">
-          {entries.map(([label, value]) => (
-            <div key={label}>
-              <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
-              <p className="mt-1 break-words whitespace-pre-line text-sm leading-7 text-slate-600">
-                {value}
-              </p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="mt-3 text-sm leading-7 text-slate-600">
-          This information has not been published yet.
-        </p>
-      )}
-    </section>
-  );
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-slate-50 p-3">
-      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-      <dd className="mt-1 break-words font-semibold text-slate-950">
-        {value || "Not published"}
-      </dd>
-    </div>
-  );
-}
-
-function RelationshipCard({
-  title,
-  record,
-  hrefBase,
-  empty,
-}: {
-  title: string;
-  record?: ResearchGenericRecord;
-  hrefBase: string;
-  empty: string;
-}) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
-      {record ? (
-        <>
-          <h3 className="mt-4 text-base font-semibold text-slate-950">
-            {record.slug ? (
-              <Link href={`${hrefBase}/${record.slug}`} className="transition hover:text-primary">
-                {record.name ?? record.title}
-              </Link>
-            ) : (
-              record.name ?? record.title
-            )}
-          </h3>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
-            {compactText(record.summary) ||
-              compactText(record.about) ||
-              compactText(record.description) ||
-              "Additional relationship details are not published yet."}
-          </p>
-        </>
-      ) : (
-        <p className="mt-3 text-sm leading-7 text-slate-600">{empty}</p>
-      )}
-    </section>
   );
 }

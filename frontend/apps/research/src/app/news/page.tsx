@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
 import { BookOpenCheck, CalendarDays, Newspaper, Users } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFact } from "../../components/research-detail";
 import {
   Badge,
   FilledBadge,
@@ -320,8 +321,8 @@ function UpdateRow({ record }: { record: ResearchGenericRecord }) {
         </p>
       </div>
       <div className="space-y-3 text-sm">
-        <Fact label="Author" value={compactText(record.author_name)} />
-        <Fact label="Source" value={compactText(record.source)} />
+        <ResearchFact label="Author" value={compactText(record.author_name)} />
+        <ResearchFact label="Source" value={compactText(record.source)} />
       </div>
     </article>
   );
@@ -359,8 +360,8 @@ function ArticleCard({ record }: { record: ResearchGenericRecord }) {
             "This article is published without a public summary."}
         </p>
         <div className="mt-auto grid gap-2 pt-5 text-sm sm:grid-cols-2">
-          <Fact label="Published" value={formatDate(record.published_at)} />
-          <Fact label="Author" value={compactText(record.author_name)} />
+          <ResearchFact label="Published" value={formatDate(record.published_at)} />
+          <ResearchFact label="Author" value={compactText(record.author_name)} />
         </div>
       </div>
     </article>
@@ -394,15 +395,6 @@ function SelectField({
         ))}
       </select>
     </label>
-  );
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-slate-50 p-3">
-      <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
-      <p className="mt-1 break-words font-semibold text-slate-950">{value || "Not published"}</p>
-    </div>
   );
 }
 

@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ResearchDetailHero } from "../../../components/research-detail";
+import {
+  ResearchDetailHero,
+  ResearchFact,
+  ResearchTextPanel,
+} from "../../../components/research-detail";
 import {
   Badge,
   ResearchSection,
@@ -72,7 +76,7 @@ export default async function ProgramDetailPage({
       >
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-5">
-            <TextPanel
+            <ResearchTextPanel
               title="Overview"
               fields={[
                 ["Summary", program.summary],
@@ -80,7 +84,7 @@ export default async function ProgramDetailPage({
                 ["Objectives", program.objectives],
               ]}
             />
-            <TextPanel
+            <ResearchTextPanel
               title="Research Approach"
               fields={[
                 ["Methodology", program.methodology],
@@ -94,10 +98,10 @@ export default async function ProgramDetailPage({
               {program.is_featured ? <Badge>Featured</Badge> : null}
             </div>
             <dl className="mt-5 grid gap-3 text-sm">
-              <Fact label="Start" value={formatDate(program.start_date)} />
-              <Fact label="End" value={formatDate(program.end_date)} />
-              <Fact label="Budget" value={formatMoney(program.budget, program.currency)} />
-              <Fact label="Code" value={compactText(program.code)} />
+              <ResearchFact label="Start" value={formatDate(program.start_date)} />
+              <ResearchFact label="End" value={formatDate(program.end_date)} />
+              <ResearchFact label="Budget" value={formatMoney(program.budget, program.currency)} />
+              <ResearchFact label="Code" value={compactText(program.code)} />
             </dl>
             {center ? (
               <div className="mt-5 rounded-md bg-slate-50 p-3">
@@ -130,51 +134,6 @@ export default async function ProgramDetailPage({
         )}
       </ResearchSection>
     </main>
-  );
-}
-
-function TextPanel({
-  title,
-  fields,
-}: {
-  title: string;
-  fields: Array<[string, string | number | null | undefined]>;
-}) {
-  const entries = fields
-    .map(([label, value]) => [label, compactText(value)] as const)
-    .filter(([, value]) => value);
-
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
-        {title}
-      </h2>
-      {entries.length > 0 ? (
-        <div className="mt-4 space-y-4">
-          {entries.map(([label, value]) => (
-            <div key={label}>
-              <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
-              <p className="mt-1 whitespace-pre-line text-sm leading-7 text-slate-600">
-                {value}
-              </p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="mt-3 text-sm leading-7 text-slate-600">
-          This section will appear when more program detail is published.
-        </p>
-      )}
-    </section>
-  );
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-slate-50 p-3">
-      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-      <dd className="mt-1 font-semibold text-slate-950">{value || "Not published"}</dd>
-    </div>
   );
 }
 

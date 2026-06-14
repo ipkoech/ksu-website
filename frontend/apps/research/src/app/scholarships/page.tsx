@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { Banknote, ClipboardList, FileText, GraduationCap, LifeBuoy, Wrench } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFact } from "../../components/research-detail";
 import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, formatDate, formatLabel, getScholarships, getScholarshipsFiltered } from "../../lib/research-public-data";
 
@@ -103,14 +104,10 @@ function ScholarshipCard({ item }: { item: ResearchGenericRecord }) {
       <div className="flex flex-wrap gap-2"><Badge>{formatLabel(item.scholarship_type ?? "scholarship")}</Badge>{item.status ? <FilledBadge>{formatLabel(item.status)}</FilledBadge> : null}</div>
       <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950"><Link href={item.slug ? `/scholarships/${item.slug}` : "/scholarships"} className="transition hover:text-primary">{item.name ?? "Research scholarship"}</Link></h2>
       <p className="mt-3 text-sm leading-7 text-slate-600">{compactText(item.summary) || compactText(item.eligibility) || "Scholarship information will appear when published."}</p>
-      <dl className="mt-5 grid grid-cols-2 gap-3 text-sm"><Fact label="Deadline" value={formatDate(item.application_deadline)} /><Fact label="Value" value={value} /><Fact label="Funder" value={compactText(item.funder_name)} /><Fact label="Available" value={compactText(item.number_available)} /></dl>
+      <dl className="mt-5 grid grid-cols-2 gap-3 text-sm"><ResearchFact label="Deadline" value={formatDate(item.application_deadline)} /><ResearchFact label="Value" value={value} /><ResearchFact label="Funder" value={compactText(item.funder_name)} /><ResearchFact label="Available" value={compactText(item.number_available)} /></dl>
       {coverage.length ? <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Covers {coverage.join(", ")}</p> : null}
     </article>
   );
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-md bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt><dd className="mt-1 break-words font-semibold text-slate-950">{value || "Not published"}</dd></div>;
 }
 
 function getYears(records: ResearchGenericRecord[]) {

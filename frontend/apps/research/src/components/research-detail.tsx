@@ -363,10 +363,12 @@ export function ResearchFact({ label, value }: { label: string; value: string })
 export function ResearchRecordPanel({
   title,
   records,
+  hrefBase,
   empty = "No public records are linked yet.",
 }: {
   title: string;
   records: ResearchGenericRecord[];
+  hrefBase?: string;
   empty?: string;
 }) {
   return (
@@ -374,7 +376,12 @@ export function ResearchRecordPanel({
       <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
       <div className="mt-4 divide-y divide-slate-200">
         {records.slice(0, 8).map((record, index) => (
-          <SimpleRecordItem key={record.id ?? `${title}-${index}`} record={record} index={index} />
+          <SimpleRecordItem
+            key={record.id ?? `${title}-${index}`}
+            record={record}
+            index={index}
+            hrefBase={hrefBase}
+          />
         ))}
         {records.length === 0 ? (
           <p className="py-4 text-sm text-slate-600">{empty}</p>
@@ -416,24 +423,75 @@ export function ResearchRecordGrid({
   );
 }
 
+export function ResearchRelationshipCard({
+  title,
+  record,
+  hrefBase,
+  empty,
+}: {
+  title: string;
+  record?: ResearchGenericRecord;
+  hrefBase: string;
+  empty: string;
+}) {
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+      {record ? (
+        <>
+          <h3 className="mt-4 text-base font-semibold text-slate-950">
+            {record.slug ? (
+              <Link href={`${hrefBase}/${record.slug}`} className="transition hover:text-primary">
+                {record.name ?? record.title}
+              </Link>
+            ) : (
+              record.name ?? record.title
+            )}
+          </h3>
+          <p className="mt-2 text-sm leading-7 text-slate-600">
+            {compactText(record.summary) ||
+              compactText(record.about) ||
+              compactText(record.description) ||
+              "Additional relationship details are not published yet."}
+          </p>
+        </>
+      ) : (
+        <p className="mt-3 text-sm leading-7 text-slate-600">{empty}</p>
+      )}
+    </section>
+  );
+}
+
 function SimpleRecordItem({
   record,
   index,
+  hrefBase,
 }: {
   record: ResearchGenericRecord;
   index: number;
+  hrefBase?: string;
 }) {
+  const title =
+    record.name ??
+    record.title ??
+    record.project_title ??
+    record.full_name ??
+    record.application_type ??
+    record.award_name ??
+    record.file_name ??
+    record.document_name ??
+    `Record ${index + 1}`;
+
   return (
     <article className="py-4 first:pt-0 last:pb-0">
       <h3 className="text-base font-semibold text-slate-950">
-        {record.name ??
-          record.title ??
-          record.project_title ??
-          record.full_name ??
-          record.application_type ??
-          record.file_name ??
-          record.document_name ??
-          `Record ${index + 1}`}
+        {hrefBase && record.slug ? (
+          <Link href={`${hrefBase}/${record.slug}`} className="transition hover:text-primary">
+            {title}
+          </Link>
+        ) : (
+          title
+        )}
       </h3>
       <p className="mt-2 text-sm leading-6 text-slate-600">
         {compactText(record.motivation) ||
@@ -441,7 +499,10 @@ function SimpleRecordItem({
           compactText(record.role) ||
           compactText(record.bio) ||
           compactText(record.summary) ||
+          compactText(record.about) ||
           compactText(record.description) ||
+          compactText(record.impact) ||
+          compactText(record.organization) ||
           compactText(record.status) ||
           compactText(record.caption) ||
           "Additional details are not published yet."}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpenCheck, CalendarDays, Newspaper, Users } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFact } from "../../components/research-detail";
 import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, formatDate, formatLabel, getCenters, getEvents, getEventsFiltered } from "../../lib/research-public-data";
 import type { ResearchGenericRecord } from "@ksu/api-client";
@@ -85,13 +86,9 @@ function EventCard({ event }: { event: ResearchGenericRecord }) {
       <div className="flex flex-wrap gap-2"><Badge>{formatLabel(event.event_type ?? "event")}</Badge><Badge>{mode}</Badge>{event.is_featured ? <FilledBadge>Featured</FilledBadge> : null}</div>
       <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">{event.title}</h2>
       <p className="mt-3 text-sm leading-7 text-slate-600">{compactText(event.summary) || compactText(event.description) || compactText(event.agenda) || "Event details will appear when published."}</p>
-      <dl className="mt-5 grid grid-cols-2 gap-3 text-sm"><Fact label="Date" value={formatDate(event.start_date)} /><Fact label="Venue" value={compactText(event.venue) || compactText(event.platform)} /></dl>
+      <dl className="mt-5 grid grid-cols-2 gap-3 text-sm"><ResearchFact label="Date" value={formatDate(event.start_date)} /><ResearchFact label="Venue" value={compactText(event.venue) || compactText(event.platform)} /></dl>
     </Link>
   );
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-md bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt><dd className="mt-1 font-semibold text-slate-950">{value || "Not published"}</dd></div>;
 }
 
 function getYears(records: ResearchGenericRecord[]) {

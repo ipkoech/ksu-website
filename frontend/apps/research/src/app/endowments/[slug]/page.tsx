@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { ResearchDetailHero } from "../../../components/research-detail";
+import {
+  ResearchDetailHero,
+  ResearchFact,
+  ResearchTextPanel,
+} from "../../../components/research-detail";
 import {
   Badge,
   ResearchSection,
@@ -68,7 +72,7 @@ export default async function EndowmentDetailPage({
       >
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-5">
-            <TextPanel
+            <ResearchTextPanel
               title="Purpose"
               fields={[
                 ["Purpose", fund.purpose],
@@ -77,7 +81,7 @@ export default async function EndowmentDetailPage({
                 ["Use guidelines", fund.use_guidelines],
               ]}
             />
-            <TextPanel
+            <ResearchTextPanel
               title="Donor message"
               fields={[
                 ["Donor", fund.donor_name],
@@ -92,61 +96,16 @@ export default async function EndowmentDetailPage({
               {fund.is_accepting_contributions ? <Badge>Accepting contributions</Badge> : null}
             </div>
             <dl className="mt-5 grid gap-3 text-sm">
-              <Fact label="Principal amount" value={formatMoney(fund.principal_amount, fund.currency)} />
-              <Fact label="Current value" value={formatMoney(fund.current_value, fund.currency)} />
-              <Fact label="Annual distribution" value={formatMoney(fund.annual_distribution, fund.currency)} />
-              <Fact label="Established" value={formatDate(fund.established_date)} />
-              <Fact label="Contact" value={[fund.contact_name, fund.contact_email].map(compactText).filter(Boolean).join(" · ")} />
+              <ResearchFact label="Principal amount" value={formatMoney(fund.principal_amount, fund.currency)} />
+              <ResearchFact label="Current value" value={formatMoney(fund.current_value, fund.currency)} />
+              <ResearchFact label="Annual distribution" value={formatMoney(fund.annual_distribution, fund.currency)} />
+              <ResearchFact label="Established" value={formatDate(fund.established_date)} />
+              <ResearchFact label="Contact" value={[fund.contact_name, fund.contact_email].map(compactText).filter(Boolean).join(" · ")} />
             </dl>
           </aside>
         </div>
       </ResearchSection>
     </main>
-  );
-}
-
-function TextPanel({
-  title,
-  fields,
-}: {
-  title: string;
-  fields: Array<[string, string | number | null | undefined]>;
-}) {
-  const entries = fields
-    .map(([label, value]) => [label, compactText(value)] as const)
-    .filter(([, value]) => value);
-
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
-        {title}
-      </h2>
-      {entries.length > 0 ? (
-        <div className="mt-4 space-y-4">
-          {entries.map(([label, value]) => (
-            <div key={label}>
-              <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
-              <p className="mt-1 whitespace-pre-line text-sm leading-7 text-slate-600">
-                {value}
-              </p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="mt-3 text-sm leading-7 text-slate-600">
-          This information has not been published yet.
-        </p>
-      )}
-    </section>
-  );
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-slate-50 p-3">
-      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-      <dd className="mt-1 break-words font-semibold text-slate-950">{value || "Not published"}</dd>
-    </div>
   );
 }
 

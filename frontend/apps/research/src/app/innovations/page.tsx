@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Banknote, Handshake, Lightbulb, Network } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFact } from "../../components/research-detail";
 import {
   Badge,
   FilledBadge,
@@ -292,19 +293,10 @@ function InnovationCard({ innovation }: { innovation: ResearchGenericRecord }) {
           "Innovation summary will appear when published."}
       </p>
       <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
-        <Fact label="TRL" value={innovation.trl_level ? `Level ${innovation.trl_level}` : ""} />
-        <Fact label="Commercial" value={formatLabel(innovation.commercialization_status)} />
+        <ResearchFact label="TRL" value={innovation.trl_level ? `Level ${innovation.trl_level}` : ""} />
+        <ResearchFact label="Commercial" value={formatLabel(innovation.commercialization_status)} />
       </dl>
       <p className="mt-5 text-sm font-semibold text-primary">View innovation</p>
     </Link>
-  );
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-slate-50 p-3">
-      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-      <dd className="mt-1 font-semibold text-slate-950">{value || "Not published"}</dd>
-    </div>
   );
 }

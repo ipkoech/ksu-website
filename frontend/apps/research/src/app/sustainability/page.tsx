@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { CalendarDays, Handshake, Sprout, Target } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFact } from "../../components/research-detail";
 import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import {
   compactText,
@@ -147,10 +148,10 @@ function InitiativeCard({ initiative }: { initiative: ResearchGenericRecord }) {
       ))}
       {sdgGoals.length > 0 || dateRange || initiative.contact_email || initiative.website ? (
         <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
-          {dateRange ? <Fact label="Timeline" value={dateRange} /> : null}
-          {sdgGoals.length > 0 ? <Fact label="SDGs" value={sdgGoals.join(", ")} /> : null}
-          {initiative.contact_email ? <Fact label="Contact" value={compactText(initiative.contact_email)} /> : null}
-          {initiative.website ? <Fact label="Website" value={compactText(initiative.website)} /> : null}
+          {dateRange ? <ResearchFact label="Timeline" value={dateRange} /> : null}
+          {sdgGoals.length > 0 ? <ResearchFact label="SDGs" value={sdgGoals.join(", ")} /> : null}
+          {initiative.contact_email ? <ResearchFact label="Contact" value={compactText(initiative.contact_email)} /> : null}
+          {initiative.website ? <ResearchFact label="Website" value={compactText(initiative.website)} /> : null}
         </dl>
       ) : null}
     </article>
@@ -242,15 +243,6 @@ function RecordListPanel({
         ))}
       </div>
     </section>
-  );
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-slate-50 p-3">
-      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-      <dd className="mt-1 font-semibold text-slate-950">{value}</dd>
-    </div>
   );
 }
 

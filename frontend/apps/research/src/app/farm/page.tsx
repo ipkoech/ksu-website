@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
 import { CalendarDays, Handshake, Sprout, Target } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFact } from "../../components/research-detail";
 import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import {
   compactText,
@@ -176,7 +177,7 @@ function FarmCard({ farm }: { farm: ResearchGenericRecord }) {
       {facts.length > 0 ? (
         <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
           {facts.map(([label, value]) => (
-            <Fact key={label} label={label} value={value} />
+            <ResearchFact key={label} label={label} value={value} />
           ))}
         </dl>
       ) : null}
@@ -211,8 +212,8 @@ function ProjectCard({ project }: { project: ResearchProject }) {
         <p className="mt-3 text-sm leading-7 text-slate-600">{description}</p>
       ) : null}
       <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
-        <Fact label="Progress" value={`${project.progress_percentage ?? 0}%`} />
-        {project.updated_at ? <Fact label="Updated" value={formatDate(project.updated_at)} /> : null}
+        <ResearchFact label="Progress" value={`${project.progress_percentage ?? 0}%`} />
+        {project.updated_at ? <ResearchFact label="Updated" value={formatDate(project.updated_at)} /> : null}
       </dl>
     </article>
   );
@@ -255,15 +256,6 @@ function RecordListPanel({
         ))}
       </div>
     </section>
-  );
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-slate-50 p-3">
-      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-      <dd className="mt-1 font-semibold text-slate-950">{value}</dd>
-    </div>
   );
 }
 

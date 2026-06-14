@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpenCheck, CalendarDays, Newspaper, Users } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFact } from "../../components/research-detail";
 import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import {
   compactText,
@@ -162,15 +163,11 @@ function TrainingCard({ item }: { item: ResearchGenericRecord }) {
       <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">{item.title}</h2>
       <p className="mt-3 text-sm leading-7 text-slate-600">{compactText(item.summary) || compactText(item.target_audience) || "Training details will appear when published."}</p>
       <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
-        <Fact label="Starts" value={formatDate(item.start_date)} />
-        <Fact label="Registration" value={formatDate(item.registration_deadline)} />
+        <ResearchFact label="Starts" value={formatDate(item.start_date)} />
+        <ResearchFact label="Registration" value={formatDate(item.registration_deadline)} />
       </dl>
     </Link>
   );
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-md bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt><dd className="mt-1 font-semibold text-slate-950">{value || "Not published"}</dd></div>;
 }
 
 function getYears(records: ResearchGenericRecord[]) {

@@ -1,6 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ResearchDetailHero } from "../../../components/research-detail";
+import {
+  ResearchDetailHero,
+  ResearchFact,
+  ResearchRecordPanel,
+  ResearchTextPanel,
+} from "../../../components/research-detail";
 import {
   Badge,
   ResearchSection,
@@ -85,7 +90,7 @@ export default async function CenterDetailPage({
       >
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-5">
-            <TextPanel
+            <ResearchTextPanel
               title="Profile"
               fields={[
                 ["About", center.about],
@@ -94,7 +99,7 @@ export default async function CenterDetailPage({
                 ["Vision", center.vision],
               ]}
             />
-            <TextPanel
+            <ResearchTextPanel
               title="Research areas"
               fields={[
                 ["Focus areas", center.research_areas],
@@ -108,10 +113,10 @@ export default async function CenterDetailPage({
               {center.is_featured ? <Badge>Featured</Badge> : null}
             </div>
             <dl className="mt-5 grid gap-3 text-sm">
-              <Fact label="Location" value={compactText(center.location)} />
-              <Fact label="Email" value={compactText(center.email)} />
-              <Fact label="Phone" value={compactText(center.phone)} />
-              <Fact label="Website" value={compactText(center.website)} />
+              <ResearchFact label="Location" value={compactText(center.location)} />
+              <ResearchFact label="Email" value={compactText(center.email)} />
+              <ResearchFact label="Phone" value={compactText(center.phone)} />
+              <ResearchFact label="Website" value={compactText(center.website)} />
             </dl>
           </aside>
         </div>
@@ -123,7 +128,7 @@ export default async function CenterDetailPage({
         body="Each relationship is shown as a public record, not as backend language."
       >
         <div className="grid gap-5 lg:grid-cols-2">
-          <GenericPanel
+          <ResearchRecordPanel
             title="Research programs"
             records={programs.data}
             hrefBase="/programs"
@@ -131,19 +136,19 @@ export default async function CenterDetailPage({
           />
           <ProjectPanel records={projects.data} />
           <PublicationPanel records={publications.data} />
-          <GenericPanel
+          <ResearchRecordPanel
             title="Research outputs"
             records={outputs.data}
             hrefBase="/outputs"
             empty="No public outputs are currently linked to this center."
           />
-          <GenericPanel
+          <ResearchRecordPanel
             title="Facilities and farms"
             records={farms}
             hrefBase="/farm"
             empty="No public facilities are currently linked to this center."
           />
-          <GenericPanel
+          <ResearchRecordPanel
             title="People"
             records={teamMembers}
             empty="No public team members are currently linked to this center."
@@ -151,53 +156,6 @@ export default async function CenterDetailPage({
         </div>
       </ResearchSection>
     </main>
-  );
-}
-
-function TextPanel({
-  title,
-  fields,
-}: {
-  title: string;
-  fields: Array<[string, string | number | null | undefined]>;
-}) {
-  const entries = fields
-    .map(([label, value]) => [label, compactText(value)] as const)
-    .filter(([, value]) => value);
-
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
-        {title}
-      </h2>
-      {entries.length > 0 ? (
-        <div className="mt-4 space-y-4">
-          {entries.map(([label, value]) => (
-            <div key={label}>
-              <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
-              <p className="mt-1 whitespace-pre-line text-sm leading-7 text-slate-600">
-                {value}
-              </p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="mt-3 text-sm leading-7 text-slate-600">
-          This section will appear when more center detail is published.
-        </p>
-      )}
-    </section>
-  );
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-slate-50 p-3">
-      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-      <dd className="mt-1 break-words font-semibold text-slate-950">
-        {value || "Not published"}
-      </dd>
-    </div>
   );
 }
 
@@ -257,47 +215,6 @@ function PublicationPanel({ records }: { records: ResearchPublication[] }) {
             No public publications are currently linked to this center.
           </p>
         ) : null}
-      </div>
-    </section>
-  );
-}
-
-function GenericPanel({
-  title,
-  records,
-  hrefBase,
-  empty,
-}: {
-  title: string;
-  records: ResearchGenericRecord[];
-  hrefBase?: string;
-  empty: string;
-}) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
-      <div className="mt-4 divide-y divide-slate-200">
-        {records.slice(0, 5).map((record) => (
-          <article key={record.id} className="py-4 first:pt-0 last:pb-0">
-            <h3 className="text-base font-semibold text-slate-950">
-              {hrefBase && record.slug ? (
-                <Link href={`${hrefBase}/${record.slug}`} className="transition hover:text-primary">
-                  {record.name ?? record.title}
-                </Link>
-              ) : (
-                record.name ?? record.title ?? record.role ?? record.id
-              )}
-            </h3>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
-              {compactText(record.summary) ||
-                compactText(record.about) ||
-                compactText(record.description) ||
-                compactText(record.role) ||
-                "Additional details are not published yet."}
-            </p>
-          </article>
-        ))}
-        {records.length === 0 ? <p className="py-4 text-sm text-slate-600">{empty}</p> : null}
       </div>
     </section>
   );

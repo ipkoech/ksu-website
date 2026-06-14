@@ -1,7 +1,12 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { ResearchDetailHero } from "../../../components/research-detail";
+import {
+  ResearchDetailHero,
+  ResearchFact,
+  ResearchRecordPanel,
+  ResearchRelationshipCard,
+  ResearchTextPanel,
+} from "../../../components/research-detail";
 import {
   Badge,
   ResearchSection,
@@ -80,7 +85,7 @@ export default async function ConsultancyDetailPage({
       >
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-5">
-            <TextPanel
+            <ResearchTextPanel
               title="Summary"
               fields={[
                 ["Summary", consultancy.summary],
@@ -88,7 +93,7 @@ export default async function ConsultancyDetailPage({
                 ["Objectives", consultancy.objectives],
               ]}
             />
-            <TextPanel
+            <ResearchTextPanel
               title="Method, deliverables, and impact"
               fields={[
                 ["Methodology", consultancy.methodology],
@@ -105,11 +110,11 @@ export default async function ConsultancyDetailPage({
               {consultancy.status ? <Badge>{formatLabel(consultancy.status)}</Badge> : null}
             </div>
             <dl className="mt-5 grid gap-3 text-sm">
-              <Fact label="Client" value={compactText(consultancy.client_name)} />
-              <Fact label="Value" value={formatMoney(consultancy.contract_value, consultancy.currency)} />
-              <Fact label="Start" value={formatDate(consultancy.start_date)} />
-              <Fact label="End" value={formatDate(consultancy.end_date)} />
-              <Fact label="Location" value={[consultancy.location, consultancy.country].map(compactText).filter(Boolean).join(" · ")} />
+              <ResearchFact label="Client" value={compactText(consultancy.client_name)} />
+              <ResearchFact label="Value" value={formatMoney(consultancy.contract_value, consultancy.currency)} />
+              <ResearchFact label="Start" value={formatDate(consultancy.start_date)} />
+              <ResearchFact label="End" value={formatDate(consultancy.end_date)} />
+              <ResearchFact label="Location" value={[consultancy.location, consultancy.country].map(compactText).filter(Boolean).join(" · ")} />
             </dl>
           </aside>
         </div>
@@ -121,131 +126,13 @@ export default async function ConsultancyDetailPage({
         body="Related records are shown when the public API exposes linked IDs or embedded lists."
       >
         <div className="grid gap-5 lg:grid-cols-3">
-          <RelationshipCard title="Partner" record={partner} hrefBase="/partners" empty="No public partner is linked." />
-          <RelationshipCard title="Center" record={center} hrefBase="/centers" empty="No public center is linked." />
-          <RecordPanel title="Team" records={team} />
-          <RecordPanel title="Documents" records={documents} />
+          <ResearchRelationshipCard title="Partner" record={partner} hrefBase="/partners" empty="No public partner is linked." />
+          <ResearchRelationshipCard title="Center" record={center} hrefBase="/centers" empty="No public center is linked." />
+          <ResearchRecordPanel title="Team" records={team} />
+          <ResearchRecordPanel title="Documents" records={documents} />
         </div>
       </ResearchSection>
     </main>
-  );
-}
-
-function TextPanel({
-  title,
-  fields,
-}: {
-  title: string;
-  fields: Array<[string, string | number | null | undefined]>;
-}) {
-  const entries = fields
-    .map(([label, value]) => [label, compactText(value)] as const)
-    .filter(([, value]) => value);
-
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
-        {title}
-      </h2>
-      {entries.length > 0 ? (
-        <div className="mt-4 space-y-4">
-          {entries.map(([label, value]) => (
-            <div key={label}>
-              <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
-              <p className="mt-1 whitespace-pre-line text-sm leading-7 text-slate-600">
-                {value}
-              </p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="mt-3 text-sm leading-7 text-slate-600">
-          This information has not been published yet.
-        </p>
-      )}
-    </section>
-  );
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-slate-50 p-3">
-      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-      <dd className="mt-1 break-words font-semibold text-slate-950">{value || "Not published"}</dd>
-    </div>
-  );
-}
-
-function RelationshipCard({
-  title,
-  record,
-  hrefBase,
-  empty,
-}: {
-  title: string;
-  record?: ResearchGenericRecord;
-  hrefBase: string;
-  empty: string;
-}) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
-      {record ? (
-        <>
-          <h3 className="mt-4 text-base font-semibold text-slate-950">
-            {record.slug ? (
-              <Link href={`${hrefBase}/${record.slug}`} className="transition hover:text-primary">
-                {record.name ?? record.title}
-              </Link>
-            ) : (
-              record.name ?? record.title
-            )}
-          </h3>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
-            {compactText(record.about) ||
-              compactText(record.summary) ||
-              compactText(record.description) ||
-              "Additional relationship details are not published yet."}
-          </p>
-        </>
-      ) : (
-        <p className="mt-3 text-sm leading-7 text-slate-600">{empty}</p>
-      )}
-    </section>
-  );
-}
-
-function RecordPanel({ title, records }: { title: string; records: ResearchGenericRecord[] }) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
-      <div className="mt-4 divide-y divide-slate-200">
-        {records.slice(0, 6).map((record, index) => {
-          const href = compactText(record.document_url) || compactText(record.url) || compactText(record.file_url);
-          return (
-            <article key={record.id ?? `${title}-${index}`} className="py-4 first:pt-0 last:pb-0">
-              <h3 className="text-base font-semibold text-slate-950">
-                {record.title ?? record.name ?? record.full_name ?? record.document_name ?? `Record ${index + 1}`}
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {compactText(record.role) ||
-                  compactText(record.summary) ||
-                  compactText(record.description) ||
-                  "Additional details are not published yet."}
-              </p>
-              {href ? (
-                <a href={href} className="mt-2 inline-flex text-sm font-semibold text-primary">
-                  Download
-                </a>
-              ) : null}
-            </article>
-          );
-        })}
-        {records.length === 0 ? (
-          <p className="py-4 text-sm text-slate-600">No public records are linked yet.</p>
-        ) : null}
-      </div>
-    </section>
   );
 }
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Banknote, ClipboardList, FileText, GraduationCap, LifeBuoy, Wrench } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFact } from "../../components/research-detail";
 import {
   Badge,
   FilledBadge,
@@ -235,7 +236,7 @@ function GrantCard({ grant }: { grant: ResearchGrant }) {
           "Funding details will appear when published by the research office."}
       </p>
       <dl className="mt-5 grid gap-3 text-sm">
-        <Fact label="Funder" value={compactText(grant.funder_name)} />
+        <ResearchFact label="Funder" value={compactText(grant.funder_name)} />
         <div className={`rounded-md p-3 ${deadline.className}`}>
           <dt className="text-xs font-semibold uppercase">{deadline.label}</dt>
           <dd className="mt-1 font-semibold">{deadline.value}</dd>
@@ -245,15 +246,6 @@ function GrantCard({ grant }: { grant: ResearchGrant }) {
         {grant.grant_type === "external" ? "View external opportunity" : "View application workflow"}
       </p>
     </Link>
-  );
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-slate-50 p-3">
-      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-      <dd className="mt-1 font-semibold text-slate-950">{value || "Not published"}</dd>
-    </div>
   );
 }
 

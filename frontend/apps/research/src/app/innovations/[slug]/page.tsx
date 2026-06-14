@@ -1,7 +1,12 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { ResearchDetailHero } from "../../../components/research-detail";
+import {
+  ResearchDetailHero,
+  ResearchFact,
+  ResearchRecordPanel,
+  ResearchRelationshipCard,
+  ResearchTextPanel,
+} from "../../../components/research-detail";
 import {
   Badge,
   ResearchSection,
@@ -89,7 +94,7 @@ export default async function InnovationDetailPage({
       >
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-5">
-            <TextPanel
+            <ResearchTextPanel
               title="Problem and solution"
               fields={[
                 ["Problem addressed", innovation.problem_addressed],
@@ -99,7 +104,7 @@ export default async function InnovationDetailPage({
                 ["Target users", innovation.target_users],
               ]}
             />
-            <TextPanel
+            <ResearchTextPanel
               title="Description"
               fields={[
                 ["Summary", innovation.summary],
@@ -114,11 +119,11 @@ export default async function InnovationDetailPage({
               {innovation.status ? <Badge>{formatLabel(innovation.status)}</Badge> : null}
             </div>
             <dl className="mt-5 grid gap-3 text-sm">
-              <Fact label="Technology readiness" value={innovation.trl_level ? `TRL ${innovation.trl_level}` : ""} />
-              <Fact label="IP status" value={formatLabel(innovation.ip_status)} />
-              <Fact label="Commercialization" value={formatLabel(innovation.commercialization_status)} />
-              <Fact label="Patent" value={compactText(innovation.patent_number)} />
-              <Fact label="Invention date" value={formatDate(innovation.invention_date)} />
+              <ResearchFact label="Technology readiness" value={innovation.trl_level ? `TRL ${innovation.trl_level}` : ""} />
+              <ResearchFact label="IP status" value={formatLabel(innovation.ip_status)} />
+              <ResearchFact label="Commercialization" value={formatLabel(innovation.commercialization_status)} />
+              <ResearchFact label="Patent" value={compactText(innovation.patent_number)} />
+              <ResearchFact label="Invention date" value={formatDate(innovation.invention_date)} />
             </dl>
           </aside>
         </div>
@@ -130,22 +135,22 @@ export default async function InnovationDetailPage({
         body="Relationships are resolved from backend records where the public API exposes linked IDs."
       >
         <div className="grid gap-5 lg:grid-cols-3">
-          <RelationshipCard
+          <ResearchRelationshipCard
             title="Source project"
             record={project}
             hrefBase="/projects"
             empty="No public project is linked to this innovation."
           />
-          <RelationshipCard
+          <ResearchRelationshipCard
             title="Connected center"
             record={center}
             hrefBase="/centers"
             empty="No public center is linked to this innovation."
           />
-          <RecordPanel title="Related outputs" records={outputs.data} hrefBase="/outputs" />
-          <RecordPanel title="Inventors" records={inventors} />
-          <RecordPanel title="Awards" records={awards} />
-          <TextPanel
+          <ResearchRecordPanel title="Related outputs" records={outputs.data} hrefBase="/outputs" />
+          <ResearchRecordPanel title="Inventors" records={inventors} />
+          <ResearchRecordPanel title="Awards" records={awards} />
+          <ResearchTextPanel
             title="Commercial notes"
             fields={[
               ["License type", innovation.license_type],
@@ -157,131 +162,6 @@ export default async function InnovationDetailPage({
         </div>
       </ResearchSection>
     </main>
-  );
-}
-
-function TextPanel({
-  title,
-  fields,
-}: {
-  title: string;
-  fields: Array<[string, string | number | null | undefined]>;
-}) {
-  const entries = fields
-    .map(([label, value]) => [label, compactText(value)] as const)
-    .filter(([, value]) => value);
-
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
-        {title}
-      </h2>
-      {entries.length > 0 ? (
-        <div className="mt-4 space-y-4">
-          {entries.map(([label, value]) => (
-            <div key={label}>
-              <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
-              <p className="mt-1 break-words whitespace-pre-line text-sm leading-7 text-slate-600">
-                {value}
-              </p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="mt-3 text-sm leading-7 text-slate-600">
-          This information has not been published yet.
-        </p>
-      )}
-    </section>
-  );
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-slate-50 p-3">
-      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-      <dd className="mt-1 break-words font-semibold text-slate-950">{value || "Not published"}</dd>
-    </div>
-  );
-}
-
-function RelationshipCard({
-  title,
-  record,
-  hrefBase,
-  empty,
-}: {
-  title: string;
-  record?: ResearchGenericRecord;
-  hrefBase: string;
-  empty: string;
-}) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
-      {record ? (
-        <>
-          <h3 className="mt-4 text-base font-semibold text-slate-950">
-            {record.slug ? (
-              <Link href={`${hrefBase}/${record.slug}`} className="transition hover:text-primary">
-                {record.title ?? record.name}
-              </Link>
-            ) : (
-              record.title ?? record.name
-            )}
-          </h3>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
-            {compactText(record.summary) ||
-              compactText(record.about) ||
-              compactText(record.description) ||
-              "Additional relationship details are not published yet."}
-          </p>
-        </>
-      ) : (
-        <p className="mt-3 text-sm leading-7 text-slate-600">{empty}</p>
-      )}
-    </section>
-  );
-}
-
-function RecordPanel({
-  title,
-  records,
-  hrefBase,
-}: {
-  title: string;
-  records: ResearchGenericRecord[];
-  hrefBase?: string;
-}) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
-      <div className="mt-4 divide-y divide-slate-200">
-        {records.slice(0, 6).map((record, index) => (
-          <article key={record.id ?? `${title}-${index}`} className="py-4 first:pt-0 last:pb-0">
-            <h3 className="text-base font-semibold text-slate-950">
-              {hrefBase && record.slug ? (
-                <Link href={`${hrefBase}/${record.slug}`} className="transition hover:text-primary">
-                  {record.title ?? record.name}
-                </Link>
-              ) : (
-                record.title ?? record.name ?? record.full_name ?? record.award_name ?? `Record ${index + 1}`
-              )}
-            </h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              {compactText(record.summary) ||
-                compactText(record.description) ||
-                compactText(record.role) ||
-                compactText(record.organization) ||
-                "Additional details are not published yet."}
-            </p>
-          </article>
-        ))}
-        {records.length === 0 ? (
-          <p className="py-4 text-sm text-slate-600">No public records are linked yet.</p>
-        ) : null}
-      </div>
-    </section>
   );
 }
 

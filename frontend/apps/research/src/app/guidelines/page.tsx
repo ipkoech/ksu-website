@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { Banknote, ClipboardList, FileText, GraduationCap, LifeBuoy, Wrench } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFact } from "../../components/research-detail";
 import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, formatDate, formatLabel, getGrantGuidelines, getGuidelines, getGuidelinesFiltered } from "../../lib/research-public-data";
 
@@ -55,7 +56,7 @@ function GuidelineFilters({ params, categories, years }: { params: GuidelinePara
 }
 
 function GuidelineRow({ item, hrefBase }: { item: ResearchGenericRecord; hrefBase: string }) {
-  return <article className="grid gap-4 p-5 lg:grid-cols-[1fr_280px]"><div><div className="flex flex-wrap gap-2"><Badge>{formatLabel(item.guideline_type ?? item.category ?? "guideline")}</Badge>{item.is_mandatory ? <FilledBadge>Mandatory</FilledBadge> : null}{item.status ? <Badge>{formatLabel(item.status)}</Badge> : null}</div><h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950"><Link href={item.slug ? `${hrefBase}/${item.slug}` : hrefBase} className="transition hover:text-primary">{item.title ?? "Research guideline"}</Link></h2><p className="mt-3 text-sm leading-7 text-slate-600">{compactText(item.summary) || compactText(item.scope) || "Guideline summary is not published yet."}</p></div><dl className="grid gap-3 text-sm"><Fact label="Version" value={compactText(item.version)} /><Fact label="Effective" value={formatDate(item.effective_date)} /><Fact label="Review" value={formatDate(item.review_date)} /></dl></article>;
+  return <article className="grid gap-4 p-5 lg:grid-cols-[1fr_280px]"><div><div className="flex flex-wrap gap-2"><Badge>{formatLabel(item.guideline_type ?? item.category ?? "guideline")}</Badge>{item.is_mandatory ? <FilledBadge>Mandatory</FilledBadge> : null}{item.status ? <Badge>{formatLabel(item.status)}</Badge> : null}</div><h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950"><Link href={item.slug ? `${hrefBase}/${item.slug}` : hrefBase} className="transition hover:text-primary">{item.title ?? "Research guideline"}</Link></h2><p className="mt-3 text-sm leading-7 text-slate-600">{compactText(item.summary) || compactText(item.scope) || "Guideline summary is not published yet."}</p></div><dl className="grid gap-3 text-sm"><ResearchFact label="Version" value={compactText(item.version)} /><ResearchFact label="Effective" value={formatDate(item.effective_date)} /><ResearchFact label="Review" value={formatDate(item.review_date)} /></dl></article>;
 }
 
 function GuidelineCard({ item }: { item: ResearchGenericRecord }) {
@@ -64,10 +65,6 @@ function GuidelineCard({ item }: { item: ResearchGenericRecord }) {
 
 function SelectField({ name, label, value, options }: { name: string; label: string; value?: string; options: string[] }) {
   return <label><span className="text-xs font-semibold uppercase text-slate-500">{label}</span><select name={name} defaultValue={value ?? ""} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="">All {label.toLowerCase()}</option>{options.map((option) => <option key={option} value={option}>{formatLabel(option)}</option>)}</select></label>;
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-md bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt><dd className="mt-1 break-words font-semibold text-slate-950">{value || "Not published"}</dd></div>;
 }
 
 function getYears(records: ResearchGenericRecord[]) {

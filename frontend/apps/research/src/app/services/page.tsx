@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { Banknote, ClipboardList, FileText, GraduationCap, LifeBuoy, Wrench } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFact } from "../../components/research-detail";
 import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, formatLabel, getCenters, getServices, getServicesFiltered } from "../../lib/research-public-data";
 
@@ -47,13 +48,9 @@ function ServiceFilters({ params, categories, centers }: { params: ServiceParams
 }
 
 function ServiceCard({ item }: { item: ResearchGenericRecord }) {
-  return <article className="flex min-h-[340px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"><div className="flex flex-wrap gap-2"><Badge>{formatLabel(item.service_type ?? "service")}</Badge>{item.is_free ? <FilledBadge>Free</FilledBadge> : null}{item.category ? <Badge>{formatLabel(item.category)}</Badge> : null}</div><h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950"><Link href={item.slug ? `/services/${item.slug}` : "/services"} className="transition hover:text-primary">{item.name ?? "Research service"}</Link></h2><p className="mt-3 text-sm leading-7 text-slate-600">{compactText(item.summary) || compactText(item.scope) || compactText(item.description) || "Service details are not published yet."}</p><dl className="mt-auto grid grid-cols-2 gap-3 pt-5 text-sm"><Fact label="Turnaround" value={compactText(item.turnaround_time)} /><Fact label="Access" value={compactText(item.how_to_access)} /></dl></article>;
+  return <article className="flex min-h-[340px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"><div className="flex flex-wrap gap-2"><Badge>{formatLabel(item.service_type ?? "service")}</Badge>{item.is_free ? <FilledBadge>Free</FilledBadge> : null}{item.category ? <Badge>{formatLabel(item.category)}</Badge> : null}</div><h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950"><Link href={item.slug ? `/services/${item.slug}` : "/services"} className="transition hover:text-primary">{item.name ?? "Research service"}</Link></h2><p className="mt-3 text-sm leading-7 text-slate-600">{compactText(item.summary) || compactText(item.scope) || compactText(item.description) || "Service details are not published yet."}</p><dl className="mt-auto grid grid-cols-2 gap-3 pt-5 text-sm"><ResearchFact label="Turnaround" value={compactText(item.turnaround_time)} /><ResearchFact label="Access" value={compactText(item.how_to_access)} /></dl></article>;
 }
 
 function SelectField({ name, label, value, options }: { name: string; label: string; value?: string; options: string[] }) {
   return <label><span className="text-xs font-semibold uppercase text-slate-500">{label}</span><select name={name} defaultValue={value ?? ""} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="">All {label.toLowerCase()}</option>{options.map((option) => <option key={option} value={option}>{formatLabel(option)}</option>)}</select></label>;
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-md bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt><dd className="mt-1 break-words font-semibold text-slate-950">{value || "Not published"}</dd></div>;
 }
