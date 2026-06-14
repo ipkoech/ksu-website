@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { HeartHandshake, Mail, Newspaper, Users } from "lucide-react";
+import { ResearchClusterHero } from "../../components/research-cluster";
 import {
   Badge,
   IconCard,
-  ResearchPageIntro,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
@@ -49,6 +50,33 @@ const inquiryLinks = [
   },
 ];
 
+const engageLinks = [
+  {
+    label: "Research Inquiry",
+    href: "/connect#get-in-touch",
+    description: "Project collaboration, research support, and office help.",
+    icon: Mail,
+  },
+  {
+    label: "Mentorship",
+    href: "/connect#mentorship",
+    description: "Mentor and mentee pathways connected to published programmes.",
+    icon: Users,
+  },
+  {
+    label: "Media",
+    href: "/connect#media",
+    description: "Research interviews, expert comments, multimedia, and press routes.",
+    icon: Newspaper,
+  },
+  {
+    label: "Donate",
+    href: "/donate",
+    description: "Support research projects, scholarships, endowments, and impact.",
+    icon: HeartHandshake,
+  },
+];
+
 export default async function ConnectPage() {
   const [offices, staff, mentorship, donationStories] = await Promise.all([
     getOffices(),
@@ -59,7 +87,7 @@ export default async function ConnectPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchPageIntro
+      <ResearchClusterHero
         eyebrow="Connect & Engage"
         title="Reach research teams, partners, and programmes."
         body="Find departmental contacts, industry liaisons, community coordinators, media channels, donation entry points, and mentorship sign-up."
@@ -67,6 +95,16 @@ export default async function ConnectPage() {
           { label: "Home", href: "/" },
           { label: "Research", href: "/" },
           { label: "Connect & Engage" },
+        ]}
+        imageSrc="/images/research/registrar-reirm-imagegen.png"
+        imageAlt="Research office contacts, engagement channels, mentorship, and donor support"
+        links={engageLinks}
+        primaryAction={{ label: "Start an inquiry", href: "/connect#get-in-touch" }}
+        stats={[
+          { label: "Research offices", value: offices.data.length },
+          { label: "Team members", value: staff.data.length },
+          { label: "Mentorship programmes", value: mentorship.data.length },
+          { label: "Donation stories", value: donationStories.data.length },
         ]}
       />
       <ResearchSection
