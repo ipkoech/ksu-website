@@ -21,7 +21,7 @@ export default function ResearchDonationDetailPage() {
       ]}
       sections={[
         { title: "Purpose", fields: ["purpose", "notes"] },
-        { title: "Payment", fields: ["payment_method", "reference", "receipt_number"] },
+        { title: "Payment", fields: ["payment_method", "payment_reference", "receipt_number"] },
       ]}
     />
   );
