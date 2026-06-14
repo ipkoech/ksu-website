@@ -313,6 +313,148 @@ function DetailTextSection({
   );
 }
 
+export function ResearchTextPanel({
+  title,
+  fields,
+  empty = "This information has not been published yet.",
+}: {
+  title: string;
+  fields: Array<[string, string | number | null | undefined]>;
+  empty?: string;
+}) {
+  const entries = fields
+    .map(([label, value]) => [label, compactText(value)] as const)
+    .filter(([, value]) => value);
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
+        {title}
+      </h2>
+      {entries.length > 0 ? (
+        <div className="mt-4 space-y-4">
+          {entries.map(([label, value]) => (
+            <div key={label}>
+              <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
+              <p className="mt-1 whitespace-pre-line text-sm leading-7 text-slate-600">
+                {value}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 text-sm leading-7 text-slate-600">{empty}</p>
+      )}
+    </section>
+  );
+}
+
+export function ResearchFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-slate-50 p-3">
+      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
+      <dd className="mt-1 break-words font-semibold text-slate-950">
+        {value || "Not published"}
+      </dd>
+    </div>
+  );
+}
+
+export function ResearchRecordPanel({
+  title,
+  records,
+  empty = "No public records are linked yet.",
+}: {
+  title: string;
+  records: ResearchGenericRecord[];
+  empty?: string;
+}) {
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+      <div className="mt-4 divide-y divide-slate-200">
+        {records.slice(0, 8).map((record, index) => (
+          <SimpleRecordItem key={record.id ?? `${title}-${index}`} record={record} index={index} />
+        ))}
+        {records.length === 0 ? (
+          <p className="py-4 text-sm text-slate-600">{empty}</p>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+export function ResearchRecordGrid({
+  records,
+  empty = "No supporting files are linked yet.",
+}: {
+  records: ResearchGenericRecord[];
+  empty?: string;
+}) {
+  return (
+    <div className="grid gap-5 lg:grid-cols-3">
+      {records.map((record, index) => (
+        <article key={record.id ?? index} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-base font-semibold text-slate-950">
+            {record.name ?? record.title ?? record.file_name ?? record.document_name ?? `File ${index + 1}`}
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            {compactText(record.description) ||
+              compactText(record.summary) ||
+              compactText(record.caption) ||
+              "Supporting resource"}
+          </p>
+          {record.url || record.file_url || record.document_url ? (
+            <a href={record.url ?? record.file_url ?? record.document_url} className="mt-3 inline-flex text-sm font-semibold text-primary">
+              Open file
+            </a>
+          ) : null}
+        </article>
+      ))}
+      {records.length === 0 ? <StatusMessage>{empty}</StatusMessage> : null}
+    </div>
+  );
+}
+
+function SimpleRecordItem({
+  record,
+  index,
+}: {
+  record: ResearchGenericRecord;
+  index: number;
+}) {
+  return (
+    <article className="py-4 first:pt-0 last:pb-0">
+      <h3 className="text-base font-semibold text-slate-950">
+        {record.name ??
+          record.title ??
+          record.project_title ??
+          record.full_name ??
+          record.application_type ??
+          record.file_name ??
+          record.document_name ??
+          `Record ${index + 1}`}
+      </h3>
+      <p className="mt-2 text-sm leading-6 text-slate-600">
+        {compactText(record.motivation) ||
+          compactText(record.goals) ||
+          compactText(record.role) ||
+          compactText(record.bio) ||
+          compactText(record.summary) ||
+          compactText(record.description) ||
+          compactText(record.status) ||
+          compactText(record.caption) ||
+          "Additional details are not published yet."}
+      </p>
+      {record.url || record.file_url || record.document_url ? (
+        <a href={record.url ?? record.file_url ?? record.document_url} className="mt-2 inline-flex text-sm font-semibold text-primary">
+          Open resource
+        </a>
+      ) : null}
+    </article>
+  );
+}
+
 function getTitle(record: ResearchGenericRecord) {
   return (
     compactText(record.title) ||
