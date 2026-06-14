@@ -16,6 +16,7 @@ from .seed_governance import seed_governance
 from .seed_management import seed_management
 from .seed_programmes import seed_programmes
 from .seed_public_records import seed_public_records
+from .seed_portal_users import seed_portal_users
 from .seed_rbac import seed_rbac
 from .seed_schools import seed_schools
 from .seed_staff_assignments import seed_staff_assignments
@@ -42,6 +43,7 @@ async def run() -> None:
             await seed_cover_images(db, ctx)
             await seed_staff_assignments(db, ctx)
             await seed_system_settings(db)
+            await seed_portal_users(db, ctx)
             await seed_test_user(db, ctx)
             await db.commit()
         except Exception:

@@ -1,10 +1,10 @@
 import { Metadata } from "next";
-import { LibraryDashboardClient } from "./library-dashboard-client";
+import { PortalDashboard } from "@/components/portals/portal-dashboard";
 
 export const metadata: Metadata = {
   title: "Library Dashboard",
 };
 
 export default function LibraryDashboardPage() {
-  return <LibraryDashboardClient />;
+  return <PortalDashboard portalKey="library" />;
 }

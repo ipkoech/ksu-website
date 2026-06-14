@@ -22,6 +22,7 @@ import {
 import { toast } from "@ksu/ui";
 import { useAuth } from "@ksu/auth";
 import { CheckCircle2 } from "lucide-react";
+import { resolvePostLoginDestination } from "@/lib/auth-routing";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -51,7 +52,7 @@ function loginErrorMessage(error: unknown) {
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login } = useAuth();
+  const { login, switchService } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [redirectChecked, setRedirectChecked] = useState(false);
   const [isRedirecting, startTransition] = useTransition();
@@ -85,16 +86,17 @@ export function LoginForm() {
         description: `Welcome back, ${user.name}!`,
       });
 
-      // Use startTransition for smooth navigation
-      const destination =
-        redirect && redirectChecked
-          ? redirect
-          : services.length === 1
-            ? `/${services[0]}`
-            : "/select-service";
+      const destination = resolvePostLoginDestination(
+        user,
+        redirect && redirectChecked ? redirect : null,
+      );
+
+      if (destination.service) {
+        switchService(destination.service);
+      }
 
       startTransition(() => {
-        router.push(destination);
+        router.push(destination.href);
       });
     } catch (err) {
       setError(loginErrorMessage(err));

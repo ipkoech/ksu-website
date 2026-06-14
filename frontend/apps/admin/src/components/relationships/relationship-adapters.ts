@@ -897,6 +897,7 @@ export const relationshipAdapters = {
   school: schoolRelationshipAdapter,
   department: departmentRelationshipAdapter,
   programme: programmeRelationshipAdapter,
+  academicCalendar: academicCalendarRelationshipAdapter,
   division: divisionRelationshipAdapter,
   intake: intakeRelationshipAdapter,
   governanceBoard: governanceBoardRelationshipAdapter,

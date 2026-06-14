@@ -15,7 +15,7 @@ export function PermissionGate({
   children,
   requireAll = false,
 }: PermissionGateProps) {
-  const { hasPermission, hasAllPermissions, hasAnyPermission } = usePermissions();
+  const { hasAllPermissions, hasAnyPermission } = usePermissions();
 
   const permissions = Array.isArray(permission) ? permission : [permission];
 

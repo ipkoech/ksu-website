@@ -83,6 +83,10 @@ export interface EditableRecordWorkflowAction<
   variant?: "default" | "outline" | "secondary" | "destructive" | "ghost";
   className?: string;
   payload: Partial<TPayload> | ((record: TRecord) => Partial<TPayload>);
+  run?: (record: TRecord) => Promise<unknown>;
+  confirmTitle?: string | ((record: TRecord) => string);
+  confirmDescription?: string | ((record: TRecord) => string);
+  confirmLabel?: string;
 }
 
 interface EditableServiceResourcePageProps<
@@ -231,6 +235,10 @@ export function EditableServiceResourcePage<
   const formId = useId();
   const [editingRecord, setEditingRecord] = useState<TRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TRecord | null>(null);
+  const [workflowTarget, setWorkflowTarget] = useState<{
+    record: TRecord;
+    action: EditableRecordWorkflowAction<TRecord, TPayload>;
+  } | null>(null);
   const [values, setValues] = useState<RecordShape>(() =>
     recordToValues(fields),
   );
@@ -370,15 +378,26 @@ export function EditableServiceResourcePage<
       return;
     }
 
-    const payload =
-      typeof action.payload === "function" ? action.payload(record) : action.payload;
-
     try {
-      await updateMutation.mutateAsync({ id: record.id, payload });
+      if (action.run) {
+        await action.run(record);
+        await queryClient.invalidateQueries({ queryKey });
+      } else {
+        const payload =
+          typeof action.payload === "function" ? action.payload(record) : action.payload;
+        await updateMutation.mutateAsync({ id: record.id, payload });
+      }
       toast.success(action.successMessage ?? `${title} updated successfully`);
     } catch {
       toast.error(`Failed to update ${title.toLowerCase()}`);
     }
+  };
+
+  const requestWorkflowAction = (
+    record: TRecord,
+    action: EditableRecordWorkflowAction<TRecord, TPayload>,
+  ) => {
+    setWorkflowTarget({ record, action });
   };
 
   const renderRecordActions = (record: TRecord) => {
@@ -402,7 +421,7 @@ export function EditableServiceResourcePage<
             size="sm"
             className={action.className}
             disabled={updateMutation.isPending}
-            onClick={() => runWorkflowAction(record, action)}
+            onClick={() => requestWorkflowAction(record, action)}
           >
             {action.label}
           </Button>
@@ -444,7 +463,7 @@ export function EditableServiceResourcePage<
               <DropdownMenuItem
                 key={action.label}
                 disabled={updateMutation.isPending}
-                onClick={() => runWorkflowAction(record, action)}
+                onClick={() => requestWorkflowAction(record, action)}
               >
                 {action.label}
               </DropdownMenuItem>
@@ -862,6 +881,35 @@ export function EditableServiceResourcePage<
         confirmLabel="Delete"
         onConfirm={confirmDelete}
         isLoading={deleteMutation.isPending}
+      />
+      <ConfirmDialog
+        open={!!workflowTarget}
+        onOpenChange={(open) => {
+          if (!open) setWorkflowTarget(null);
+        }}
+        title={
+          workflowTarget
+            ? typeof workflowTarget.action.confirmTitle === "function"
+              ? workflowTarget.action.confirmTitle(workflowTarget.record)
+              : workflowTarget.action.confirmTitle ?? `${workflowTarget.action.label} ${title.toLowerCase()}?`
+            : "Confirm action"
+        }
+        description={
+          workflowTarget
+            ? typeof workflowTarget.action.confirmDescription === "function"
+              ? workflowTarget.action.confirmDescription(workflowTarget.record)
+              : workflowTarget.action.confirmDescription ??
+                `This will run "${workflowTarget.action.label}" for "${getRecordTitle(workflowTarget.record)}".`
+            : "Confirm this workflow action."
+        }
+        variant={workflowTarget?.action.variant === "destructive" ? "destructive" : "default"}
+        confirmLabel={workflowTarget?.action.confirmLabel ?? workflowTarget?.action.label ?? "Confirm"}
+        onConfirm={async () => {
+          if (!workflowTarget) return;
+          await runWorkflowAction(workflowTarget.record, workflowTarget.action);
+          setWorkflowTarget(null);
+        }}
+        isLoading={updateMutation.isPending}
       />
     </div>
   );

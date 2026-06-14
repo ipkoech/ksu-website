@@ -58,7 +58,7 @@ export default function LibraryStaffPage() {
         per_page: 100,
       }),
   });
-  const branches = branchesQuery.data?.data ?? [];
+  const branches = useMemo(() => branchesQuery.data?.data ?? [], [branchesQuery.data]);
 
   useEffect(() => {
     if (!libraryId && branches[0]?.id) setLibraryId(branches[0].id);

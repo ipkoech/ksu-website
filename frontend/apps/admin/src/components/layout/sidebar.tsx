@@ -17,7 +17,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  Separator,
   Tooltip,
   TooltipContent,
   TooltipProvider,

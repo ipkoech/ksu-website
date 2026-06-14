@@ -1,10 +1,10 @@
 import { Metadata } from "next";
-import { ResearchDashboardClient } from "./research-dashboard-client";
+import { PortalDashboard } from "@/components/portals/portal-dashboard";
 
 export const metadata: Metadata = {
   title: "Research Dashboard",
 };
 
 export default function ResearchDashboardPage() {
-  return <ResearchDashboardClient />;
+  return <PortalDashboard portalKey="research" />;
 }

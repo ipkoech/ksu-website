@@ -48,7 +48,7 @@ async def list_events(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/admin", dependencies=[Depends(require_scope("admin:*"))])
+@router.get("/admin", dependencies=[Depends(require_scope("content.manage_events"))])
 async def list_admin_events(
     db: DbSession,
     _: CurrentUser,
@@ -99,13 +99,13 @@ async def get_event(slug: str, db: DbSession, fields: FieldSelection = FieldsDep
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admin:*"))])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("content.manage_events"))])
 async def create_event(data: EventCreate, db: DbSession, _: CurrentUser):
     item = await EventService.create(db, **data.model_dump())
     return success(data=item, message="Event created")
 
 
-@router.patch("/{event_id}", dependencies=[Depends(require_scope("admin:*"))])
+@router.patch("/{event_id}", dependencies=[Depends(require_scope("content.manage_events"))])
 async def update_event(event_id: uuid.UUID, data: EventUpdate, db: DbSession, _: CurrentUser):
     item = await EventService.get_by_id(db, event_id)
     if item is None:
@@ -114,7 +114,7 @@ async def update_event(event_id: uuid.UUID, data: EventUpdate, db: DbSession, _:
     return success(data=item, message="Event updated")
 
 
-@router.post("/{event_id}/publish", dependencies=[Depends(require_scope("admin:*"))])
+@router.post("/{event_id}/publish", dependencies=[Depends(require_scope("content.manage_events"))])
 async def publish_event(event_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await EventService.get_by_id(db, event_id)
     if item is None:
@@ -123,7 +123,7 @@ async def publish_event(event_id: uuid.UUID, db: DbSession, _: CurrentUser):
     return success(data=item, message="Event published")
 
 
-@router.post("/{event_id}/unpublish", dependencies=[Depends(require_scope("admin:*"))])
+@router.post("/{event_id}/unpublish", dependencies=[Depends(require_scope("content.manage_events"))])
 async def unpublish_event(event_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await EventService.get_by_id(db, event_id)
     if item is None:
@@ -132,7 +132,7 @@ async def unpublish_event(event_id: uuid.UUID, db: DbSession, _: CurrentUser):
     return success(data=item, message="Event unpublished")
 
 
-@router.delete("/{event_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+@router.delete("/{event_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("content.manage_events"))])
 async def delete_event(event_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await EventService.get_by_id(db, event_id)
     if item is None:

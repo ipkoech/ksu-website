@@ -46,7 +46,7 @@ async def list_news(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/admin", dependencies=[Depends(require_scope("admin:*"))])
+@router.get("/admin", dependencies=[Depends(require_scope("content.manage_news"))])
 async def list_admin_news(
     db: DbSession,
     _: CurrentUser,
@@ -95,13 +95,13 @@ async def get_news(slug: str, db: DbSession, fields: FieldSelection = FieldsDep)
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admin:*"))])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("content.manage_news"))])
 async def create_news(data: NewsCreate, db: DbSession, _: CurrentUser):
     item = await NewsService.create(db, **data.model_dump())
     return success(data=item, message="News created")
 
 
-@router.patch("/{news_id}", dependencies=[Depends(require_scope("admin:*"))])
+@router.patch("/{news_id}", dependencies=[Depends(require_scope("content.manage_news"))])
 async def update_news(news_id: uuid.UUID, data: NewsUpdate, db: DbSession, _: CurrentUser):
     item = await NewsService.get_by_id(db, news_id)
     if item is None:
@@ -110,7 +110,7 @@ async def update_news(news_id: uuid.UUID, data: NewsUpdate, db: DbSession, _: Cu
     return success(data=item, message="News updated")
 
 
-@router.post("/{news_id}/publish", dependencies=[Depends(require_scope("admin:*"))])
+@router.post("/{news_id}/publish", dependencies=[Depends(require_scope("content.manage_news"))])
 async def publish_news(news_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await NewsService.get_by_id(db, news_id)
     if item is None:
@@ -119,7 +119,7 @@ async def publish_news(news_id: uuid.UUID, db: DbSession, _: CurrentUser):
     return success(data=item, message="News published")
 
 
-@router.post("/{news_id}/unpublish", dependencies=[Depends(require_scope("admin:*"))])
+@router.post("/{news_id}/unpublish", dependencies=[Depends(require_scope("content.manage_news"))])
 async def unpublish_news(news_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await NewsService.get_by_id(db, news_id)
     if item is None:
@@ -128,7 +128,7 @@ async def unpublish_news(news_id: uuid.UUID, db: DbSession, _: CurrentUser):
     return success(data=item, message="News unpublished")
 
 
-@router.delete("/{news_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+@router.delete("/{news_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("content.manage_news"))])
 async def delete_news(news_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await NewsService.get_by_id(db, news_id)
     if item is None:
