@@ -6,7 +6,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 
-from ksu_common import cached_public
+from ksu_common import cached_public, rate_limit
 from ksu_common.schemas.responses import success
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,6 +24,8 @@ def build_crud_router(
     update_schema,
     write_scope: str,
     cache_timeout: int = 300,
+    public_create: bool = False,
+    public_create_rate_limit: tuple[int, int] = (5, 60),
 ):
     router = APIRouter(prefix=prefix, tags=[tag])
 
@@ -186,13 +188,38 @@ def build_crud_router(
             raise HTTPException(status_code=404, detail=f"{tag.rstrip('s')} not found")
         return success(data=selector.apply(item))
 
-    @router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope(write_scope))])
-    async def create_item(data: create_schema, db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
-        try:
-            item = await service.create(db, data, actor_id=user.sub)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-        return success(data=item, message=f"{tag.rstrip('s')} created")
+    if public_create:
+        requests, window = public_create_rate_limit
+
+        @router.post("", status_code=status.HTTP_201_CREATED)
+        @rate_limit(requests=requests, window=window, by_user=False)
+        async def create_item(
+            request: Request,
+            data: create_schema,
+            db: AsyncSession = Depends(get_db),
+        ):
+            try:
+                item = await service.create(db, data)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+            return success(data=item, message=f"{tag.rstrip('s')} created")
+
+    else:
+        @router.post(
+            "",
+            status_code=status.HTTP_201_CREATED,
+            dependencies=[Depends(require_scope(write_scope))],
+        )
+        async def create_item(
+            data: create_schema,
+            db: AsyncSession = Depends(get_db),
+            user=Depends(get_current_user),
+        ):
+            try:
+                item = await service.create(db, data, actor_id=user.sub)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+            return success(data=item, message=f"{tag.rstrip('s')} created")
 
     @router.patch("/id/{item_id}", dependencies=[Depends(require_scope(write_scope))])
     async def update_item(
