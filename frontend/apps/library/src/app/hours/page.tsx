@@ -1,8 +1,10 @@
 import {
   LibraryHero,
-  LibrarySection,
+  MockupBand,
+  MockupHeading,
   PrimaryLink,
   SecondaryLink,
+  SidePanel,
   StatusMessage,
 } from "../../components/library-ui";
 import {
@@ -46,7 +48,7 @@ export default async function LibraryHoursPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
             Published schedules
           </p>
-          <p className="mt-3 text-5xl font-bold">{publishedCount}</p>
+          <p className="mt-3 text-4xl font-bold sm:text-5xl">{publishedCount}</p>
           <p className="mt-2 text-sm leading-6 text-white/75">
             Hour records across {branches.data.length} public branch
             {branches.data.length === 1 ? "" : "es"}.
@@ -62,13 +64,22 @@ export default async function LibraryHoursPage() {
         </section>
       ))}
 
-      <LibrarySection
-        eyebrow="Schedules"
-        title="Branch operating hours"
-        body="Hours are shown when the library team has published a schedule for the branch."
-        tone="white"
-      >
-        <div className="grid gap-5 lg:grid-cols-2">
+      <MockupBand>
+        <div className="mb-6 rounded-lg border border-primary/20 bg-primary/5 p-5">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+            Today
+          </p>
+          <p className="mt-2 text-lg font-semibold text-slate-950">
+            Check the branch schedule below before visiting.
+          </p>
+        </div>
+        <MockupHeading
+          eyebrow="Schedules"
+          title="Branch operating hours"
+          body="Hours are shown when the library team has published a schedule for the branch."
+        />
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="grid gap-5 lg:grid-cols-2">
           {groupedHours.length === 0 ? (
             <StatusMessage>No public library branches are available yet.</StatusMessage>
           ) : (
@@ -116,8 +127,21 @@ export default async function LibraryHoursPage() {
               </article>
             ))
           )}
+          </div>
+          <SidePanel title="Service points" eyebrow="Hours">
+            <div className="divide-y divide-slate-200">
+              {branches.data.slice(0, 6).map((branch) => (
+                <article key={branch.id} className="py-3 first:pt-0">
+                  <p className="text-sm font-semibold text-slate-950">{branch.name}</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    {branch.address ?? branch.short_name ?? "Location being updated"}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </SidePanel>
         </div>
-      </LibrarySection>
+      </MockupBand>
     </main>
   );
 }

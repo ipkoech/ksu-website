@@ -183,8 +183,7 @@ const stablePortalLinks: HomeLink[] = [
   },
   {
     label: "Downloads",
-    href: "https://kisiiuniversity.ac.ke/page_downloads",
-    external: true,
+    href: "/downloads",
   },
   { label: "FAQ", href: "https://kisiiuniversity.ac.ke/faq", external: true },
 ];
@@ -212,14 +211,13 @@ const publicQuickLinks: HomeLink[] = [
   { label: "Programmes", href: "/academics/programmes" },
   { label: "Fees Structure", href: "/admissions/fees" },
   { label: "Downloads", href: "/downloads" },
-  { label: "Timetables", href: "/academics/examinations" },
   {
     label: "Student Portal",
     href: "https://portal.kisiiuniversity.ac.ke",
     external: true,
   },
-  { label: "Staff Portal", href: "/m/staff" },
-  { label: "Contact Directory", href: "/search" },
+  { label: "Staff Portal", href: "https://digital.kisiiuniversity.ac.ke/staff/services/login", external: true },
+  { label: "Contact Directory", href: "/contact" },
 ];
 
 function plainText(value?: string | null) {

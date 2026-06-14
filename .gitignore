@@ -18,6 +18,7 @@ ehthumbs.db
 node_modules/
 .pnpm-store/
 .next/
+.next-codex/
 .next-build/
 out/
 dist/
@@ -70,3 +71,8 @@ celerybeat.pid
 tmp/
 .scratch/
 .design-scratch/
+
+designs/
+docs/
+frontend/apps/library/.chrome-visual-profile/
+frontend/apps/library/visual-audit/

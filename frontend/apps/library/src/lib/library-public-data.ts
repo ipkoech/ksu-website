@@ -1,5 +1,10 @@
 import {
+  blogsApi,
+  eventsApi,
   libraryServiceApi,
+  newsApi,
+  type Blog,
+  type Event,
   type LibraryBranch,
   type LibraryElectronicResource,
   type LibraryExternalLink,
@@ -9,6 +14,9 @@ import {
   type LibraryResource,
   type LibraryServiceRecord,
   type LibraryStaff,
+  type LibrarySearchResponse,
+  type LibraryTodayHours,
+  type News,
 } from "@ksu/api-client";
 import type { PublicStatsResponse } from "@ksu/api-client";
 
@@ -57,6 +65,10 @@ export type LibraryOverviewData = {
   electronic: PublicLibraryData<LibraryElectronicResource>;
   services: PublicLibraryData<LibraryServiceRecord>;
   regulations: PublicLibraryData<LibraryRegulation>;
+  todayHours: PublicLibraryData<LibraryTodayHours>;
+  news: PublicLibraryData<News>;
+  events: PublicLibraryData<Event>;
+  articles: PublicLibraryData<Blog>;
   stats: PublicStatsResponse | null;
   errors: string[];
 };
@@ -102,7 +114,14 @@ export type LibrarySearchData = {
   branches: PublicLibraryData<LibraryBranch>;
   catalog: PublicLibraryData<LibraryResource>;
   electronic: PublicLibraryData<LibraryElectronicResource>;
+  unified: LibrarySearchResponse | null;
   selectedLibraryId: string;
+  query: string;
+  errors: string[];
+};
+
+export type LibraryContentData<T> = {
+  records: PublicLibraryData<T>;
   query: string;
   errors: string[];
 };
@@ -147,6 +166,17 @@ async function safeStats() {
     return response.data ?? null;
   } catch {
     return null;
+  }
+}
+
+async function safeRecord<T>(
+  load: () => Promise<{ data?: T | null }>,
+): Promise<{ data: T | null; error: string | null }> {
+  try {
+    const response = await load();
+    return { data: response.data ?? null, error: null };
+  } catch {
+    return { data: null, error: unavailableMessage };
   }
 }
 
@@ -459,7 +489,7 @@ export async function getLibraryOverviewData(): Promise<LibraryOverviewData> {
   const branches = await getPublicBranches();
   const selectedLibraryId = branches.data[0]?.id;
 
-  const [catalog, electronic, services, regulations, stats] = await Promise.all([
+  const [catalog, electronic, services, regulations, todayHours, news, events, articles, stats] = await Promise.all([
     selectedLibraryId
       ? safeList<LibraryResource>(() =>
           libraryServiceApi.resources.list({
@@ -478,6 +508,10 @@ export async function getLibraryOverviewData(): Promise<LibraryOverviewData> {
         per_page: 4,
       }),
     ),
+    safeList<LibraryTodayHours>(() => libraryServiceApi.todayHours()),
+    getLibraryNewsData({ perPage: 3 }).then((result) => result.records),
+    getLibraryEventsData({ perPage: 3 }).then((result) => result.records),
+    getLibraryArticlesData({ perPage: 3 }).then((result) => result.records),
     safeStats(),
   ]);
 
@@ -487,6 +521,10 @@ export async function getLibraryOverviewData(): Promise<LibraryOverviewData> {
     electronic,
     services,
     regulations,
+    todayHours,
+    news,
+    events,
+    articles,
     stats,
     errors: uniqueErrors(
       branches.error,
@@ -494,6 +532,10 @@ export async function getLibraryOverviewData(): Promise<LibraryOverviewData> {
       electronic.error,
       services.error,
       regulations.error,
+      todayHours.error,
+      news.error,
+      events.error,
+      articles.error,
     ),
   };
 }
@@ -559,6 +601,99 @@ export async function getLibraryStaffData(): Promise<LibraryStaffData> {
   };
 }
 
+export async function getLibraryLeadershipData(): Promise<PublicLibraryData<LibraryStaff>> {
+  return safeList<LibraryStaff>(() =>
+    libraryServiceApi.staff.leadership({ page: 1, per_page: 100 }),
+  ).then((result) => normalizeList(result, normalizeStaff));
+}
+
+export async function getLibraryNewsData({
+  query,
+  perPage = 12,
+}: {
+  query?: string;
+  perPage?: number;
+} = {}): Promise<LibraryContentData<News>> {
+  let records = await safeList<News>(() =>
+    newsApi.list({
+      scope_type: "library",
+      is_published: true,
+      search: query?.trim() || undefined,
+      page: 1,
+      per_page: perPage,
+    }),
+  );
+  if (records.data.length === 0 && !records.error) {
+    records = await safeList<News>(() =>
+      newsApi.list({
+        is_published: true,
+        search: query?.trim() || undefined,
+        page: 1,
+        per_page: perPage,
+      }),
+    );
+  }
+  return { records, query: query?.trim() ?? "", errors: uniqueErrors(records.error) };
+}
+
+export async function getLibraryEventsData({
+  query,
+  perPage = 12,
+}: {
+  query?: string;
+  perPage?: number;
+} = {}): Promise<LibraryContentData<Event>> {
+  let records = await safeList<Event>(() =>
+    eventsApi.list({
+      scope_type: "library",
+      is_published: true,
+      search: query?.trim() || undefined,
+      page: 1,
+      per_page: perPage,
+    }),
+  );
+  if (records.data.length === 0 && !records.error) {
+    records = await safeList<Event>(() =>
+      eventsApi.list({
+        is_published: true,
+        search: query?.trim() || undefined,
+        page: 1,
+        per_page: perPage,
+      }),
+    );
+  }
+  return { records, query: query?.trim() ?? "", errors: uniqueErrors(records.error) };
+}
+
+export async function getLibraryArticlesData({
+  query,
+  perPage = 12,
+}: {
+  query?: string;
+  perPage?: number;
+} = {}): Promise<LibraryContentData<Blog>> {
+  let records = await safeList<Blog>(() =>
+    blogsApi.list({
+      scope_type: "library",
+      is_published: true,
+      search: query?.trim() || undefined,
+      page: 1,
+      per_page: perPage,
+    }),
+  );
+  if (records.data.length === 0 && !records.error) {
+    records = await safeList<Blog>(() =>
+      blogsApi.list({
+        is_published: true,
+        search: query?.trim() || undefined,
+        page: 1,
+        per_page: perPage,
+      }),
+    );
+  }
+  return { records, query: query?.trim() ?? "", errors: uniqueErrors(records.error) };
+}
+
 export async function getLibrarySearchData(
   options: { libraryId?: string; query?: string } = {},
 ): Promise<LibrarySearchData> {
@@ -583,14 +718,24 @@ export async function getLibrarySearchData(
       : Promise.resolve({ data: [], error: branches.error }),
     getElectronicResources(query),
   ]);
+  const unified = query
+    ? await safeRecord<LibrarySearchResponse>(() =>
+        libraryServiceApi.search({
+          q: query,
+          library_id: selectedLibraryId || undefined,
+          limit: 40,
+        }),
+      )
+    : { data: null, error: null };
 
   return {
     branches,
     catalog,
     electronic,
+    unified: unified.data,
     selectedLibraryId,
     query,
-    errors: uniqueErrors(branches.error, catalog.error, electronic.error),
+    errors: uniqueErrors(branches.error, catalog.error, electronic.error, unified.error),
   };
 }
 
@@ -614,4 +759,20 @@ export function formatLabel(value?: string | null) {
   return compactText(value)
     .replace(/_/g, " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+export function formatDate(value?: string | null) {
+  if (!value) return "Not dated";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
+export function shortText(value?: string | null, fallback = "Details are being updated.", max = 180) {
+  const text = compactText((value ?? "").replace(/<[^>]*>/g, " ")) || fallback;
+  return text.length > max ? `${text.slice(0, max - 3)}...` : text;
 }

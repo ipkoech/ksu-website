@@ -72,6 +72,20 @@ export interface LibraryHours {
   updated_at?: string;
 }
 
+export interface LibraryTodayHours {
+  library_id: string;
+  library_name: string;
+  library_slug: string;
+  day_type: string;
+  is_open: boolean;
+  is_closed: boolean;
+  opens_at?: string | null;
+  closes_at?: string | null;
+  note?: string | null;
+  checked_at: string;
+  timezone: string;
+}
+
 export interface LibraryExternalLink {
   id: string;
   library_id: string;
@@ -99,6 +113,9 @@ export interface LibraryFile {
   sort_order?: number;
   related_entity_type?: string | null;
   related_entity_id?: string | null;
+  file_url?: string | null;
+  thumbnail_url?: string | null;
+  media?: Record<string, unknown> | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -413,6 +430,24 @@ export type LibraryGenericRecord = Record<string, unknown> & {
 
 export type LibraryGenericPayload = Record<string, unknown>;
 
+export interface LibrarySearchResult {
+  id: string;
+  type: string;
+  title: string;
+  description?: string | null;
+  url?: string | null;
+  library_id?: string | null;
+  library_name?: string | null;
+  metadata: Record<string, unknown>;
+}
+
+export interface LibrarySearchResponse {
+  query: string;
+  total: number;
+  results: LibrarySearchResult[];
+  by_type: Record<string, number>;
+}
+
 function crudApi<TRecord, TPayload>(path: string) {
   return {
     list: (params?: ListParams) => libraryApi.get<PaginatedResponse<TRecord>>(path, params),
@@ -437,11 +472,17 @@ export const libraryServiceApi = {
     delete: (id: string) => libraryApi.delete<void>(`/api/v1/library/branches/${id}`),
     hours: (id: string) =>
       libraryApi.get<{ data: LibraryHours[] }>(`/api/v1/library/branches/${id}/hours/`),
+    todayHours: (id: string, params?: ListParams<{ timezone?: string }>) =>
+      libraryApi.get<{ data: LibraryTodayHours | null }>(`/api/v1/library/branches/${id}/hours/today`, params),
     links: (id: string, params?: ListParams<{ active_only?: boolean }>) =>
       libraryApi.get<{ data: LibraryExternalLink[] }>(`/api/v1/library/branches/${id}/links/`, params),
     files: (id: string) =>
       libraryApi.get<{ data: LibraryFile[] }>(`/api/v1/library/branches/${id}/files/`),
   },
+  todayHours: (params?: ListParams<{ timezone?: string }>) =>
+    libraryApi.get<{ data: LibraryTodayHours[] }>("/api/v1/library/hours/today", params),
+  search: (params: ListParams<{ q: string; types?: string; library_id?: string; limit?: number }>) =>
+    libraryApi.get<{ data: LibrarySearchResponse }>("/api/v1/library/search", params),
   resources: {
     list: (params: ListParams<{ library_id: string; resource_type?: string; status?: string; q?: string }>) =>
       libraryApi.get<PaginatedResponse<LibraryResource>>("/api/v1/library/resources/", params),
@@ -497,6 +538,8 @@ export const libraryServiceApi = {
   staff: {
     list: (params: ListParams<{ library_id: string }>) =>
       libraryApi.get<{ data: LibraryStaff[] }>("/api/v1/library/staff/", params),
+    leadership: (params?: ListParams<{ library_id?: string }>) =>
+      libraryApi.get<{ data: LibraryStaff[] }>("/api/v1/library/staff/leadership", params),
     create: (data: LibraryGenericPayload) =>
       libraryApi.post<{ data: LibraryStaff }>("/api/v1/library/staff/", data),
     update: (id: string, data: Partial<LibraryGenericPayload>) =>

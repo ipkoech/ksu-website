@@ -1,8 +1,11 @@
 import {
   LibraryHero,
-  LibrarySection,
+  MetricStrip,
+  MockupBand,
+  MockupHeading,
   PrimaryLink,
   SecondaryLink,
+  SidePanel,
   StatusMessage,
 } from "../../components/library-ui";
 import {
@@ -49,7 +52,7 @@ export default async function LibraryAboutPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
             Public branches
           </p>
-          <p className="mt-3 text-5xl font-bold">{branches.data.length}</p>
+          <p className="mt-3 text-4xl font-bold sm:text-5xl">{branches.data.length}</p>
           <p className="mt-2 text-sm leading-6 text-white/75">
             Active access points published through the Library API.
           </p>
@@ -64,16 +67,15 @@ export default async function LibraryAboutPage() {
         </section>
       ))}
 
-      <LibrarySection
-        eyebrow="Overview"
-        title={primaryBranch?.name ?? "Kisii University Library"}
-        body={
-          compactText(primaryBranch?.description) ||
-          "Library overview content is being updated by the library team."
-        }
-        tone="white"
-      >
-        <div className="grid gap-5 lg:grid-cols-3">
+      <MockupBand>
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div>
+            <MockupHeading
+              eyebrow="Overview"
+              title={primaryBranch?.name ?? "Kisii University Library"}
+              body={compactText(primaryBranch?.description) || "Library overview content is being updated by the library team."}
+            />
+            <div className="grid gap-5 lg:grid-cols-3">
           {directionItems.length > 0 ? (
             directionItems.map((item) => (
               <article
@@ -94,14 +96,31 @@ export default async function LibraryAboutPage() {
               published.
             </StatusMessage>
           )}
+            </div>
+          </div>
+          <SidePanel title="Library contact" eyebrow="Main desk">
+            <dl className="grid gap-3 text-sm text-slate-600">
+              <Meta label="Location" value={primaryBranch?.address} />
+              <Meta label="Phone" value={primaryBranch?.phone} />
+              <Meta label="Email" value={primaryBranch?.email} />
+            </dl>
+          </SidePanel>
         </div>
-      </LibrarySection>
+      </MockupBand>
 
-      <LibrarySection
-        eyebrow="Branches"
-        title="Library access points"
-        body="Each branch record is maintained by the library team and reused across the public pages."
-      >
+      <MockupBand tone="soft">
+        <MetricStrip
+          items={[
+            { label: "Access points", value: branches.data.length },
+            { label: "Public branch", value: primaryBranch ? 1 : 0 },
+            { label: "Contacts", value: branches.data.filter((branch) => branch.phone || branch.email).length },
+          ]}
+        />
+        <MockupHeading
+          eyebrow="Branches"
+          title="Library access points"
+          body="Each branch record is maintained by the library team and reused across the public pages."
+        />
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {branches.data.map((branch) => (
             <article
@@ -126,7 +145,7 @@ export default async function LibraryAboutPage() {
             </article>
           ))}
         </div>
-      </LibrarySection>
+      </MockupBand>
     </main>
   );
 }

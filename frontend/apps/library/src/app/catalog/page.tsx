@@ -1,10 +1,14 @@
 import Link from "next/link";
 import type { LibraryResource } from "@ksu/api-client";
 import {
+  CompactRecord,
   LibraryHero,
-  LibrarySection,
+  MetricStrip,
+  MockupBand,
+  MockupHeading,
   PrimaryLink,
   SecondaryLink,
+  SidePanel,
   StatusMessage,
 } from "../../components/library-ui";
 import {
@@ -106,15 +110,10 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
         </div>
       </LibraryHero>
 
-      <LibrarySection
-        eyebrow="Search"
-        title="Catalog search"
-        body="Results come from the Library resources endpoint and reflect current branch-scoped resource records."
-        tone="white"
-      >
+      <MockupBand>
         <form
           action="/catalog"
-          className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5 shadow-sm xl:grid-cols-[240px_minmax(240px,1fr)_190px_190px_auto] xl:items-end"
+          className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.55)] xl:grid-cols-[240px_minmax(240px,1fr)_190px_190px_auto] xl:items-end"
         >
           <div className="space-y-2">
             <label
@@ -223,20 +222,19 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
             <StatusMessage tone="error">{resources.error}</StatusMessage>
           </div>
         ) : null}
-      </LibrarySection>
+      </MockupBand>
 
-      <LibrarySection
-        eyebrow="Results"
-        title={
-          query ? `Catalog results for "${query}"` : "Current catalog records"
-        }
-        body={resultSummary({
-          count: resources.data.length,
-          branchName: selectedBranch?.name,
-          resourceType,
-          status,
-        })}
-      >
+      <MockupBand tone="soft">
+        <MockupHeading
+          eyebrow="Results"
+          title={query ? `Catalog results for "${query}"` : "Current catalog records"}
+          body={resultSummary({
+            count: resources.data.length,
+            branchName: selectedBranch?.name,
+            resourceType,
+            status,
+          })}
+        />
         {resources.data.length === 0 && !resources.error ? (
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
             <StatusMessage>
@@ -247,125 +245,68 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
             <SearchTips />
           </div>
         ) : (
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_320px]">
+            <SidePanel title="Refine results" eyebrow="Filters">
+              <div className="space-y-3 text-sm leading-6 text-slate-600">
+                <p>Branch: {selectedBranch?.name ?? "All branches"}</p>
+                <p>Type: {resourceType ? formatLabel(resourceType) : "All types"}</p>
+                <p>Status: {status ? formatLabel(status) : "All statuses"}</p>
+                <Link href="/ask" className="inline-flex text-sm font-semibold text-primary">
+                  Ask for catalog help
+                </Link>
+              </div>
+            </SidePanel>
+            <div className="grid gap-4">
               {resources.data.map((resource) => (
                 <CatalogCard key={resource.id} resource={resource} />
               ))}
             </div>
 
             <aside className="space-y-5">
-              <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="text-lg font-semibold text-slate-950">
-                  Results at a glance
-                </h2>
-                <dl className="mt-5 grid gap-3 text-sm">
-                  <SummaryRow label="Returned records" value={resources.data.length} />
-                  <SummaryRow label="Available now" value={availableCount} />
-                  <SummaryRow label="Loanable" value={loanableCount} />
-                  <SummaryRow label="Reference only" value={referenceCount} />
-                </dl>
-              </section>
+              <MetricStrip
+                items={[
+                  { label: "Available now", value: availableCount },
+                  { label: "Loanable", value: loanableCount },
+                  { label: "Reference only", value: referenceCount },
+                ]}
+              />
               <SearchTips />
               {selectedBranch ? (
-                <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-                    Selected branch
-                  </p>
-                  <h2 className="mt-3 text-lg font-semibold text-slate-950">
-                    {selectedBranch.name}
-                  </h2>
+                <SidePanel title={selectedBranch.name} eyebrow="Selected branch">
                   <dl className="mt-4 grid gap-3 text-sm text-slate-600">
                     <Meta label="Location" value={selectedBranch.address} />
                     <Meta label="Phone" value={selectedBranch.phone} />
                     <Meta label="Email" value={selectedBranch.email} />
                   </dl>
-                </section>
+                </SidePanel>
               ) : null}
             </aside>
           </div>
         )}
-      </LibrarySection>
+      </MockupBand>
     </main>
   );
 }
 
 function CatalogCard({ resource }: { resource: LibraryResource }) {
-  const subjects = Array.isArray(resource.subject_tags)
-    ? resource.subject_tags.filter(Boolean)
-    : [];
-
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
-          {formatLabel(resource.resource_type ?? "resource")}
-        </span>
-        <span
-          className={
-            resource.status === "available"
-              ? "rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white"
-              : "rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700"
-          }
-        >
-          {formatLabel(resource.status ?? "status unknown")}
-        </span>
-        {resource.is_reference_only ? (
-          <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-white">
-            Reference only
-          </span>
-        ) : null}
-        {resource.is_loanable === false ? (
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-            In-library use
-          </span>
-        ) : null}
-      </div>
-
-      <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-        {resource.title}
-      </h2>
-      {resource.subtitle ? (
-        <p className="mt-1 text-sm leading-6 text-slate-600">
-          {resource.subtitle}
-        </p>
-      ) : null}
-
-      <dl className="mt-5 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
-        <Meta label="Author" value={resource.authors} />
-        <Meta label="Publisher" value={resource.publisher} />
-        <Meta label="Year" value={resource.publication_year} />
-        <Meta label="Call number" value={resource.call_number} />
-        <Meta label="ISBN" value={resource.isbn} />
-        <Meta label="ISSN" value={resource.issn} />
-        <Meta label="Shelf" value={resource.location_shelf} />
-        <Meta
-          label="Copies"
-          value={`${resource.available_copies ?? 0} of ${
-            resource.total_copies ?? 0
-          } available`}
-        />
-      </dl>
-
-      {subjects.length > 0 ? (
-        <div className="mt-5 flex flex-wrap gap-2">
-          {subjects.slice(0, 5).map((subject) => (
-            <span
-              key={subject}
-              className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600"
-            >
-              {subject}
-            </span>
-          ))}
-        </div>
-      ) : null}
-
-      {compactText(resource.description) ? (
-        <p className="mt-5 text-sm leading-7 text-slate-600">
-          {compactText(resource.description)}
-        </p>
-      ) : null}
-    </article>
+    <CompactRecord
+      icon="book"
+      eyebrow={formatLabel(resource.resource_type ?? "resource")}
+      title={resource.title}
+      body={compactText(resource.description) || resource.subtitle}
+      meta={[
+        resource.authors,
+        resource.publisher,
+        resource.publication_year,
+        resource.call_number,
+        resource.location_shelf,
+        `${resource.available_copies ?? 0} of ${resource.total_copies ?? 0} available`,
+        formatLabel(resource.status ?? "status unknown"),
+        resource.is_reference_only ? "Reference only" : null,
+        resource.is_loanable === false ? "In-library use" : null,
+      ]}
+    />
   );
 }
 
@@ -387,21 +328,6 @@ function SearchTips() {
         </Link>
       </div>
     </section>
-  );
-}
-
-function SummaryRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3 last:border-0 last:pb-0">
-      <dt className="text-slate-600">{label}</dt>
-      <dd className="font-semibold text-slate-950">{value}</dd>
-    </div>
   );
 }
 

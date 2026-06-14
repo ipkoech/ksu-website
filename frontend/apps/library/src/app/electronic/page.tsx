@@ -4,8 +4,13 @@ import {
   ExternalAnchor,
   LibraryHero,
   LibrarySection,
+  MetricStrip,
+  MockupBand,
+  MockupHeading,
   PrimaryLink,
+  SearchPanel,
   SecondaryLink,
+  SidePanel,
   StatusMessage,
 } from "../../components/library-ui";
 import {
@@ -97,22 +102,23 @@ export default async function ElectronicResourcesPage({
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
             E-resource records
           </p>
-          <p className="mt-3 text-5xl font-bold">{resources.data.length}</p>
+          <p className="mt-3 text-4xl font-bold sm:text-5xl">{resources.data.length}</p>
           <p className="mt-2 text-sm leading-6 text-white/75">
             Active databases and online platforms returned by the Library API.
           </p>
         </div>
       </LibraryHero>
 
-      <LibrarySection
-        eyebrow="Search"
-        title="Find an electronic resource"
-        body="Search by database name, provider, subject, access level, or platform type."
-        tone="white"
-      >
+      <MockupBand>
+        <SearchPanel>
+          <MockupHeading
+            eyebrow="Search"
+            title="Find an electronic resource"
+            body="Search by database name, provider, subject, access level, or platform type."
+          />
         <form
           action="/electronic"
-          className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5 shadow-sm xl:grid-cols-[minmax(260px,1fr)_220px_220px_auto_auto] xl:items-end"
+          className="grid gap-4 xl:grid-cols-[minmax(260px,1fr)_220px_220px_auto_auto] xl:items-end"
         >
           <div className="space-y-2">
             <label
@@ -202,13 +208,14 @@ export default async function ElectronicResourcesPage({
             </Link>
           </div>
         ) : null}
+        </SearchPanel>
 
         {resources.error ? (
           <div className="mt-5">
             <StatusMessage tone="error">{resources.error}</StatusMessage>
           </div>
         ) : null}
-      </LibrarySection>
+      </MockupBand>
 
       {featured.length > 0 ? (
         <LibrarySection
@@ -224,17 +231,28 @@ export default async function ElectronicResourcesPage({
         </LibrarySection>
       ) : null}
 
-      <LibrarySection
-        eyebrow="A-Z Listing"
-        title={query ? `Results for "${query}"` : "Browse all e-resources"}
-        body={resultSummary({
+      <MockupBand tone="soft">
+        <MockupHeading
+          eyebrow="A-Z Listing"
+          title={query ? `Results for "${query}"` : "Browse all e-resources"}
+          body={resultSummary({
           count: resources.data.length,
           resourceType,
           accessLevel,
           featuredOnly,
-        })}
-        tone="white"
-      >
+          })}
+        />
+        <div className="mb-6 flex flex-wrap gap-2">
+          {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => (
+            <a
+              key={letter}
+              href={`#letter-${letter}`}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:border-primary/30 hover:text-primary"
+            >
+              {letter}
+            </a>
+          ))}
+        </div>
         {resources.data.length === 0 && !resources.error ? (
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
             <StatusMessage>
@@ -265,25 +283,27 @@ export default async function ElectronicResourcesPage({
             </div>
 
             <aside className="space-y-5">
-              <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="text-lg font-semibold text-slate-950">
-                  Access at a glance
-                </h2>
-                <dl className="mt-5 grid gap-3 text-sm">
-                  <SummaryRow label="Returned resources" value={resources.data.length} />
-                  <SummaryRow label="Off-campus access" value={offCampusCount} />
-                  <SummaryRow label="VPN required" value={vpnCount} />
-                  <SummaryRow
-                    label="Registration required"
-                    value={registrationCount}
-                  />
-                </dl>
-              </section>
+              <MetricStrip
+                items={[
+                  { label: "Returned", value: resources.data.length },
+                  { label: "Off campus", value: offCampusCount },
+                  { label: "VPN required", value: vpnCount },
+                ]}
+              />
+              <SidePanel title="Remote access" eyebrow="Support">
+                <p className="text-sm leading-7 text-slate-600">
+                  Some platforms require campus network access, VPN, or a personal account.
+                  Use the access notes on each record before opening the provider site.
+                </p>
+                <p className="mt-3 text-sm font-semibold text-slate-950">
+                  {registrationCount} resources require registration.
+                </p>
+              </SidePanel>
               <AccessHelp />
             </aside>
           </div>
         )}
-      </LibrarySection>
+      </MockupBand>
     </main>
   );
 }
@@ -408,21 +428,6 @@ function AccessHelp() {
         </Link>
       </div>
     </section>
-  );
-}
-
-function SummaryRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3 last:border-0 last:pb-0">
-      <dt className="text-slate-600">{label}</dt>
-      <dd className="font-semibold text-slate-950">{value}</dd>
-    </div>
   );
 }
 

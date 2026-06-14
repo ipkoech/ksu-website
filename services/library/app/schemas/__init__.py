@@ -68,6 +68,7 @@ from .engagement import (
     SupportTicketUpdate,
 )
 from .stats import PublicStatItem, PublicStatsResponse
+from .search import LibrarySearchResponse, LibrarySearchResult
 
 __all__ = [
     # library
@@ -135,4 +136,6 @@ __all__ = [
     # stats
     "PublicStatItem",
     "PublicStatsResponse",
+    "LibrarySearchResult",
+    "LibrarySearchResponse",
 ]

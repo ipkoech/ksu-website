@@ -13,7 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from ...core.config import get_settings
 from ...core.database import get_db
-from ...models import Department, Person, StaffAssignment
+from ...models import Department, Media, Person, StaffAssignment
 from ...services import DepartmentService, PersonService, StaffService
 
 router = APIRouter(tags=["Internal"])
@@ -85,6 +85,29 @@ async def get_department_snapshot(department_id: uuid.UUID, db: AsyncSession = D
         "department_type": department.department_type,
         "school_id": str(department.school_id) if department.school_id else None,
         "is_active": department.is_active,
+    }
+
+
+@router.get("/media/{media_id}", dependencies=[Depends(verify_internal_key)])
+async def get_public_media_snapshot(media_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    """Return browser-safe fields for public media referenced by sibling services."""
+    media = await Media.get_by_id(db, media_id)
+    if media is None or not media.is_public:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Media not found")
+    return {
+        "id": str(media.id),
+        "filename": media.filename,
+        "original_filename": media.original_filename,
+        "mime_type": media.mime_type,
+        "file_size": media.file_size,
+        "title": media.title,
+        "alt_text": media.alt_text,
+        "description": media.description,
+        "caption": media.caption,
+        "media_type": media.media_type,
+        "thumbnail_url": media.thumbnail_url,
+        "url": media.url,
+        "is_public": media.is_public,
     }
 
 

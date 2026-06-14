@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, time
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from typing import Sequence
 
 import sqlalchemy as sa
@@ -157,6 +159,100 @@ async def get_library_hours(
         .order_by(LibraryHours.day_type)
     )
     return [LibraryHoursOut.model_validate(h) for h in result.scalars().all()]
+
+
+def _day_type_for_datetime(value: datetime) -> str:
+    weekday = value.weekday()
+    if weekday < 5:
+        return "weekday"
+    if weekday == 5:
+        return "saturday"
+    return "sunday"
+
+
+def _parse_clock(value: str | None) -> time | None:
+    if not value:
+        return None
+    try:
+        return time.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def library_open_status(
+    library: Library,
+    hours: LibraryHours | None,
+    *,
+    now: datetime,
+) -> dict:
+    opens_at = _parse_clock(hours.opens_at if hours else None)
+    closes_at = _parse_clock(hours.closes_at if hours else None)
+    is_closed = bool(hours.is_closed) if hours else True
+    is_open = False
+
+    if not is_closed and opens_at is not None and closes_at is not None:
+        current = now.timetz().replace(tzinfo=None)
+        if opens_at <= closes_at:
+            is_open = opens_at <= current <= closes_at
+        else:
+            is_open = current >= opens_at or current <= closes_at
+
+    return {
+        "library_id": str(library.id),
+        "library_name": library.name,
+        "library_slug": library.slug,
+        "day_type": _day_type_for_datetime(now),
+        "is_open": is_open,
+        "is_closed": is_closed,
+        "opens_at": hours.opens_at if hours else None,
+        "closes_at": hours.closes_at if hours else None,
+        "note": hours.note if hours else "Hours are not published for today",
+        "checked_at": now.isoformat(),
+        "timezone": str(now.tzinfo),
+    }
+
+
+async def get_today_status(
+    db: AsyncSession,
+    *,
+    library_id: uuid.UUID | None = None,
+    timezone_name: str = "Africa/Nairobi",
+) -> list[dict]:
+    """Compute open-now status for one or all active public libraries."""
+    try:
+        now = datetime.now(ZoneInfo(timezone_name))
+    except ZoneInfoNotFoundError:
+        now = datetime.now(ZoneInfo("Africa/Nairobi"))
+        timezone_name = "Africa/Nairobi"
+
+    day_type = _day_type_for_datetime(now)
+    libraries_query = Library.active_query().where(
+        Library.is_active.is_(True),
+        Library.is_public.is_(True),
+    )
+    if library_id is not None:
+        libraries_query = libraries_query.where(Library.id == library_id)
+    libraries_query = libraries_query.order_by(Library.sort_order, Library.name)
+    libraries = list((await db.execute(libraries_query)).scalars().all())
+
+    if not libraries:
+        return []
+
+    hours_result = await db.execute(
+        sa.select(LibraryHours).where(
+            LibraryHours.library_id.in_([library.id for library in libraries]),
+            LibraryHours.day_type == day_type,
+        )
+    )
+    hours_by_library = {row.library_id: row for row in hours_result.scalars().all()}
+    return [
+        library_open_status(
+            library,
+            hours_by_library.get(library.id),
+            now=now,
+        )
+        for library in libraries
+    ]
 
 
 # ── LibraryExternalLink ───────────────────────────────────────────────────────

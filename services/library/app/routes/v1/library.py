@@ -27,6 +27,7 @@ from ...schemas import (
     LibraryUpdate,
 )
 from ...services import library as svc
+from ...services.media import attach_public_media
 
 # ── Library branches ──────────────────────────────────────────────────────────
 
@@ -147,6 +148,38 @@ async def get_library_hours(
     return success(data=hours)
 
 
+@hours_router.get("/today")
+@cached_public(timeout=60, vary_on=("timezone",))
+async def get_library_today_hours(
+    request: Request,
+    library_id: uuid.UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    timezone: str = Query("Africa/Nairobi"),
+):
+    status_rows = await svc.get_today_status(
+        db,
+        library_id=library_id,
+        timezone_name=timezone,
+    )
+    return success(data=status_rows[0] if status_rows else None)
+
+
+today_hours_router = APIRouter(
+    prefix="/library/hours",
+    tags=["Library Hours"],
+)
+
+
+@today_hours_router.get("/today")
+@cached_public(timeout=60, vary_on=("timezone",))
+async def list_today_hours(
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    timezone: str = Query("Africa/Nairobi"),
+):
+    return success(data=await svc.get_today_status(db, timezone_name=timezone))
+
+
 # ── Library external links ────────────────────────────────────────────────────
 
 links_router = APIRouter(
@@ -246,7 +279,8 @@ async def list_library_files(
 ):
     is_writer = user is not None and has_scope(user.roles, "library:write")
     files = await svc.list_library_files(db, library_id, public_only=not is_writer)
-    return success(data=files)
+    data = [file.model_dump(mode="json") for file in files]
+    return success(data=await attach_public_media(data))
 
 
 @files_router.post("/")
@@ -281,5 +315,6 @@ async def delete_library_file(
 router = APIRouter()
 router.include_router(branches_router)
 router.include_router(hours_router)
+router.include_router(today_hours_router)
 router.include_router(links_router)
 router.include_router(files_router)

@@ -1,8 +1,11 @@
 import {
+  CompactRecord,
   LibraryHero,
-  LibrarySection,
+  MockupBand,
+  MockupHeading,
   PrimaryLink,
   SecondaryLink,
+  SidePanel,
   StatusMessage,
 } from "../../components/library-ui";
 import {
@@ -48,7 +51,7 @@ export default async function LibraryDownloadsPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
             Public files
           </p>
-          <p className="mt-3 text-5xl font-bold">{files.length}</p>
+          <p className="mt-3 text-4xl font-bold sm:text-5xl">{files.length}</p>
           <p className="mt-2 text-sm leading-6 text-white/75">
             Documents attached to public branch records.
           </p>
@@ -63,60 +66,78 @@ export default async function LibraryDownloadsPage() {
         </section>
       ))}
 
-      <LibrarySection
-        eyebrow="Files"
-        title="Available downloads"
-        body="Download links depend on media records published by the library team. File metadata is shown when public files are available."
-        tone="white"
-      >
+      <MockupBand>
+        <form
+          action="/downloads"
+          className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.55)] lg:grid-cols-[minmax(0,1fr)_220px_auto] lg:items-end"
+        >
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-900">Search documents</span>
+            <input
+              name="q"
+              type="search"
+              placeholder="Forms, guides, policies, reports"
+              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-900">Category</span>
+            <select
+              name="category"
+              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <option value="">All documents</option>
+              <option value="form">Forms</option>
+              <option value="guide">Guides</option>
+              <option value="policy">Policies</option>
+              <option value="report">Reports</option>
+            </select>
+          </label>
+          <button className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90">
+            Search
+          </button>
+        </form>
+      </MockupBand>
+
+      <MockupBand tone="soft">
+        <MockupHeading
+          eyebrow="Files"
+          title="Available downloads"
+          body="Download links use resolved media URLs when they are available from the shared media service."
+        />
         {files.length === 0 ? (
           <StatusMessage>No public library downloads are available yet.</StatusMessage>
         ) : (
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {files.map((file) => (
-              <article
-                key={file.id}
-                className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-                  {formatLabel(file.file_category ?? "file")}
-                </p>
-                <h2 className="mt-3 text-xl font-semibold text-slate-950">
-                  {file.title}
-                </h2>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  {compactText(file.description) ||
-                    "Document details are being updated."}
-                </p>
-                <dl className="mt-5 grid gap-3 text-sm text-slate-600">
-                  <Meta label="Branch" value={file.branch.name} />
-                  <Meta label="Access" value={formatLabel(file.access_level)} />
-                </dl>
-                <p className="mt-5 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-600">
-                  File delivery is managed by the media service. Contact the
-                  branch desk if a document link is not yet visible.
-                </p>
-              </article>
-            ))}
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="grid gap-4">
+              {files.map((file) => (
+                <CompactRecord
+                  key={file.id}
+                  icon="file"
+                  eyebrow={formatLabel(file.file_category ?? "file")}
+                  title={file.title}
+                  body={compactText(file.description) || "Document details are being updated."}
+                  meta={[file.branch.name, formatLabel(file.access_level), file.file_url ? "Download ready" : "Link pending"]}
+                  href={file.file_url ?? undefined}
+                  action="Download"
+                />
+              ))}
+            </div>
+            <SidePanel title="Most requested" eyebrow="Downloads">
+              <div className="divide-y divide-slate-200">
+                {files.slice(0, 5).map((file) => (
+                  <article key={file.id} className="py-3 first:pt-0">
+                    <p className="text-sm font-semibold text-slate-950">{file.title}</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      {formatLabel(file.file_category ?? "file")} · {file.branch.name}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </SidePanel>
           </div>
         )}
-      </LibrarySection>
+      </MockupBand>
     </main>
-  );
-}
-
-function Meta({
-  label,
-  value,
-}: {
-  label: string;
-  value?: string | number | null;
-}) {
-  if (!compactText(value)) return null;
-  return (
-    <div>
-      <dt className="font-semibold text-slate-950">{label}</dt>
-      <dd className="mt-1">{value}</dd>
-    </div>
   );
 }

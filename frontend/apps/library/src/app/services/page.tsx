@@ -4,6 +4,7 @@ import {
   ExternalAnchor,
   LibraryHero,
   LibrarySection,
+  PillNav,
   PrimaryLink,
   SecondaryLink,
   StatusMessage,
@@ -67,7 +68,7 @@ export default async function LibraryServicesPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
             Public branches
           </p>
-          <p className="mt-3 text-5xl font-bold">{branches.data.length}</p>
+          <p className="mt-3 text-4xl font-bold sm:text-5xl">{branches.data.length}</p>
           <p className="mt-2 text-sm leading-6 text-white/75">
             Branch records with contacts and service listings.
           </p>
@@ -92,6 +93,16 @@ export default async function LibraryServicesPage() {
         body="Use these entry points for the library support tasks students, staff, and researchers usually need first."
         tone="white"
       >
+        <div className="mb-6">
+          <PillNav
+            items={[
+              { label: "Service snapshot", href: "#service-snapshot" },
+              { label: "Branches", href: "#branches-heading" },
+              { label: "Support areas", href: "#services-heading" },
+              { label: "Regulations", href: "#regulations-heading" },
+            ]}
+          />
+        </div>
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           <IconCard
             icon="book"
@@ -129,7 +140,7 @@ export default async function LibraryServicesPage() {
         title="What support is currently published"
         body="A quick summary of service records, branch contacts, and active regulations available through the Library API."
       >
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div id="service-snapshot" className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             <SummaryCard label="Public branches" value={branches.data.length} />
             <SummaryCard label="Published services" value={allServices.length} />
@@ -222,7 +233,8 @@ export default async function LibraryServicesPage() {
         body="Branch records are maintained in the Library service and reused across the public and admin interfaces."
         tone="white"
       >
-        <div id="branches-heading" className="grid gap-5 lg:grid-cols-2">
+        <div id="branches-heading" className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+          <div className="grid gap-5 lg:grid-cols-2">
           {branches.data.length === 0 && !branches.error ? (
             <StatusMessage>No public library branches are available yet.</StatusMessage>
           ) : (
@@ -264,6 +276,22 @@ export default async function LibraryServicesPage() {
               </article>
             ))
           )}
+          </div>
+          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
+              Branch map
+            </p>
+            <div className="mt-4 aspect-[4/3] rounded-md border border-slate-200 bg-slate-50 p-4">
+              <div className="grid h-full place-items-center text-center">
+                <div>
+                  <p className="text-lg font-semibold text-slate-950">Kisii University Library Network</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Map coordinates can be connected when branch location data is published.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </aside>
         </div>
       </LibrarySection>
 
@@ -427,7 +455,7 @@ function SummaryCard({
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
         {label}
       </p>
-      <p className="mt-3 text-4xl font-bold text-slate-950">{value}</p>
+      <p className="mt-3 text-3xl font-bold text-slate-950 sm:text-4xl">{value}</p>
       {body ? <p className="mt-2 text-sm text-slate-600">{body}</p> : null}
     </article>
   );

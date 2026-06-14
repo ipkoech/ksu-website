@@ -1,10 +1,11 @@
 import { Children } from "react";
 import Link from "next/link";
 import {
-  LibraryHero,
-  LibrarySection,
-  PrimaryLink,
-  SecondaryLink,
+  MockupBand,
+  MockupHeading,
+  PillNav,
+  SearchPanel,
+  SidePanel,
   StatusMessage,
 } from "../../components/library-ui";
 import {
@@ -38,32 +39,79 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
 
   return (
     <main id="library-main" className="min-h-screen bg-white">
-      <LibraryHero
-        eyebrow="Library Search"
-        title="Search catalog records and electronic resources together."
-        body="Use a single query to discover branch catalog items and subscribed or recommended electronic platforms."
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Library", href: "/" },
-          { label: "Search" },
-        ]}
-        actions={
-          <>
-            <PrimaryLink href="/catalog">Advanced catalog search</PrimaryLink>
-            <SecondaryLink href="/electronic">Browse e-resources</SecondaryLink>
-          </>
-        }
-      >
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-            Combined results
+      <MockupBand>
+        <div className="mb-6">
+          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-secondary">
+            Library Search
           </p>
-          <p className="mt-3 text-5xl font-bold">{total}</p>
-          <p className="mt-2 text-sm leading-6 text-white/75">
-            Catalog and e-resource records returned for the current query.
+          <h1 className="mt-3 max-w-4xl text-wrap font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-slate-950 sm:text-5xl">
+            Search catalog records, e-resources, downloads, services, and staff.
+          </h1>
+          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
+            Use a single query to discover branch catalog items, subscribed platforms,
+            public files, support services, and library contacts.
           </p>
         </div>
-      </LibraryHero>
+        <SearchPanel>
+          <PillNav
+            items={[
+              { label: "All", href: "/search" },
+              { label: "Catalog", href: "/catalog" },
+              { label: "E-resources", href: "/electronic" },
+              { label: "Services", href: "/services" },
+              { label: "Downloads", href: "/downloads" },
+              { label: "Staff", href: "/staff" },
+            ]}
+          />
+          <form
+            action="/search"
+            className="mt-4 grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)_auto] lg:items-end"
+          >
+            <div className="space-y-2">
+              <label
+                className="text-sm font-semibold text-slate-900"
+                htmlFor="search-branch"
+              >
+                Catalog branch
+              </label>
+              <select
+                id="search-branch"
+                name="branch"
+                defaultValue={selectedLibraryId}
+                className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                {branches.data.map((branch) => (
+                  <option key={branch.id} value={branch.id}>
+                    {branch.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label
+                className="text-sm font-semibold text-slate-900"
+                htmlFor="search-query"
+              >
+                Search terms
+              </label>
+              <input
+                id="search-query"
+                name="q"
+                type="search"
+                defaultValue={query}
+                placeholder="Title, author, database, provider, subject"
+                className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              />
+            </div>
+            <button
+              type="submit"
+              className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
+            >
+              Search
+            </button>
+          </form>
+        </SearchPanel>
+      </MockupBand>
 
       {errors.map((error) => (
         <section key={error} className="px-4 pt-6 sm:px-6 lg:px-8">
@@ -73,67 +121,14 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
         </section>
       ))}
 
-      <LibrarySection
-        eyebrow="Search"
-        title="Find library resources"
-        body="For detailed filters, use the dedicated catalog and e-resource pages."
-        tone="white"
-      >
-        <form
-          action="/search"
-          className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5 shadow-sm lg:grid-cols-[260px_minmax(0,1fr)_auto] lg:items-end"
-        >
-          <div className="space-y-2">
-            <label
-              className="text-sm font-semibold text-slate-900"
-              htmlFor="search-branch"
-            >
-              Catalog branch
-            </label>
-            <select
-              id="search-branch"
-              name="branch"
-              defaultValue={selectedLibraryId}
-              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              {branches.data.map((branch) => (
-                <option key={branch.id} value={branch.id}>
-                  {branch.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-2">
-            <label
-              className="text-sm font-semibold text-slate-900"
-              htmlFor="search-query"
-            >
-              Search terms
-            </label>
-            <input
-              id="search-query"
-              name="q"
-              type="search"
-              defaultValue={query}
-              placeholder="Title, author, database, provider, subject"
-              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-          </div>
-          <button
-            type="submit"
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-          >
-            Search
-          </button>
-        </form>
-      </LibrarySection>
-
-      <LibrarySection
-        eyebrow="Results"
-        title={query ? `Results for "${query}"` : "Current library records"}
-        body={`${total} combined result${total === 1 ? "" : "s"} returned.`}
-      >
-        <div className="grid gap-5 xl:grid-cols-2">
+      <MockupBand tone="soft">
+        <MockupHeading
+          eyebrow="Results"
+          title={query ? `Results for "${query}"` : "Current library records"}
+          body={`${total} combined result${total === 1 ? "" : "s"} returned.`}
+        />
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="grid gap-5 xl:grid-cols-2">
           <ResultPanel title="Catalog records" href={`/catalog?q=${encodeURIComponent(query)}`}>
             {catalog.data.slice(0, 8).map((item) => (
               <ResultRow
@@ -163,8 +158,16 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
               />
             ))}
           </ResultPanel>
+          </div>
+          <SidePanel title="Quick access" eyebrow="Search">
+            <div className="grid gap-3 text-sm">
+              <Link href="/catalog" className="font-semibold text-primary">Advanced catalog</Link>
+              <Link href="/electronic" className="font-semibold text-primary">Browse e-resources</Link>
+              <Link href="/ask" className="font-semibold text-primary">Ask a librarian</Link>
+            </div>
+          </SidePanel>
         </div>
-      </LibrarySection>
+      </MockupBand>
     </main>
   );
 }

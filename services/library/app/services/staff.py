@@ -7,6 +7,23 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+try:
+    from ksu_common.leadership import LIBRARY_LEADERSHIP_ROLES
+except ModuleNotFoundError:  # Local venvs may have an older installed common package.
+    LIBRARY_LEADERSHIP_ROLES = frozenset(
+        {
+            "university_librarian",
+            "chief_librarian",
+            "deputy_librarian",
+            "head_librarian",
+            "senior_librarian",
+            "branch_librarian",
+            "head",
+            "manager",
+            "coordinator",
+        }
+    )
+
 from ..models import LibraryService, LibraryStaff, LibraryStatistics
 from ..schemas import (
     LibraryServiceCreate,
@@ -34,6 +51,26 @@ async def list_staff(
         LibraryStaff.library_id == library_id,
         LibraryStaff.is_active.is_(True),
     )
+    if public_only:
+        query = query.where(LibraryStaff.is_public.is_(True))
+    query = query.order_by(LibraryStaff.sort_order, LibraryStaff.created_at)
+    result = await db.execute(query)
+    return [LibraryStaffOut.model_validate(s) for s in result.scalars().all()]
+
+
+async def list_leadership(
+    db: AsyncSession,
+    *,
+    library_id: uuid.UUID | None = None,
+    public_only: bool = True,
+) -> list[LibraryStaffOut]:
+    """List public library leadership using the shared leadership role vocabulary."""
+    query = LibraryStaff.active_query().where(
+        LibraryStaff.is_active.is_(True),
+        LibraryStaff.role.in_(LIBRARY_LEADERSHIP_ROLES),
+    )
+    if library_id is not None:
+        query = query.where(LibraryStaff.library_id == library_id)
     if public_only:
         query = query.where(LibraryStaff.is_public.is_(True))
     query = query.order_by(LibraryStaff.sort_order, LibraryStaff.created_at)

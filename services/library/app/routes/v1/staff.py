@@ -41,6 +41,22 @@ async def list_staff(
     return success(data=members)
 
 
+@staff_router.get("/leadership")
+async def list_library_leadership(
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
+    library_id: Optional[uuid.UUID] = Query(None),
+):
+    is_writer = user is not None and has_scope(user.roles, "library:write")
+    members = await svc.list_leadership(
+        db,
+        library_id=library_id,
+        public_only=not is_writer,
+    )
+    return success(data=members)
+
+
 @staff_router.post("/")
 @audit_action("staff.create", target_type="LibraryStaff", include_body=True)
 async def create_staff(

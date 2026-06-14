@@ -145,6 +145,9 @@ class LibraryFileOut(LibraryFileBase):
 
     id: uuid.UUID
     library_id: uuid.UUID
+    file_url: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    media: Optional[dict] = None
     created_at: datetime
     updated_at: datetime
     deleted_at: Optional[datetime] = None
