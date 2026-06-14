@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { ArrowRight, FileText, Handshake, Quote, Search, Send, Sprout } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
+import { ResearchClusterHero } from "../components/research-cluster";
 import { Badge, FilledBadge, StatusMessage } from "../components/research-ui";
 import {
   compactText,
@@ -91,6 +92,33 @@ const ecosystemCards = [
   },
 ];
 
+const homeLinks = [
+  {
+    label: "Projects",
+    href: "/projects",
+    description: "Browse funded, applied, action, and collaborative work.",
+    icon: Search,
+  },
+  {
+    label: "Publications",
+    href: "/publications",
+    description: "Read articles, reports, briefs, books, and research outputs.",
+    icon: FileText,
+  },
+  {
+    label: "Funding",
+    href: "/funding",
+    description: "Find grant calls, support services, forms, and guidelines.",
+    icon: Sprout,
+  },
+  {
+    label: "Partnerships",
+    href: "/partners",
+    description: "Explore collaborations, sponsors, consultancies, and endowments.",
+    icon: Handshake,
+  },
+];
+
 export default async function ResearchPage() {
   const {
     projects,
@@ -106,7 +134,23 @@ export default async function ResearchPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchHomeHero topStats={topStats} />
+      <ResearchClusterHero
+        eyebrow="Kisii University Research"
+        title="Research that connects discovery, innovation, and public service."
+        body="Explore the work of the Directorate of Research, Extension, Innovation and Resource Mobilization: projects, publications, partnerships, grants, outputs, community impact, and the evidence behind Kisii University scholarship."
+        breadcrumbs={[
+          { label: "Home", href: "/" },
+          { label: "Research" },
+        ]}
+        imageSrc="/images/research/research-hero-imagegen.png"
+        imageAlt="University researchers collaborating across laboratory, data, and field research"
+        links={homeLinks}
+        primaryAction={{ label: "Explore research", href: "/projects" }}
+        stats={topStats.map((item) => ({
+          label: item.label,
+          value: `${item.value}${item.suffix ?? ""}`,
+        }))}
+      />
 
       {errors.length > 0 ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
@@ -346,64 +390,6 @@ export default async function ResearchPage() {
         </div>
       </ScrollReveal>
     </main>
-  );
-}
-
-function ResearchHomeHero({
-  topStats,
-}: {
-  topStats: Array<{ key: string; label: string; value: number | string; suffix?: string }>;
-}) {
-  return (
-    <section className="relative min-h-[calc(100vh-130px)] overflow-hidden">
-      <Image
-        src="/images/research/research-hero-imagegen.png"
-        alt="University researchers collaborating across laboratory, data, and field research"
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover"
-      />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.86)_0%,rgba(15,23,42,0.68)_44%,rgba(15,23,42,0.22)_100%)]" />
-      <div className="relative flex min-h-[calc(100vh-130px)] items-end px-4 pb-8 pt-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="mx-auto grid w-full max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)] lg:items-end">
-          <ScrollReveal className="max-w-5xl pb-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-secondary">
-              Kisii University Research
-            </p>
-            <h1 className="mt-4 max-w-4xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-white sm:text-6xl lg:text-7xl">
-              Research that connects discovery, innovation, and public service.
-            </h1>
-            <p className="mt-5 max-w-3xl text-base leading-8 text-white/82 sm:text-lg">
-              Explore the work of the Directorate of Research, Extension,
-              Innovation and Resource Mobilization: projects, publications,
-              partnerships, grants, outputs, community impact, and the evidence
-              behind Kisii University scholarship.
-            </p>
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <ActionLink href="/projects" variant="gold">Explore research</ActionLink>
-              <ActionLink href="/partners" variant="light">Partner with us</ActionLink>
-            </div>
-          </ScrollReveal>
-
-          {topStats.length > 0 ? (
-            <ScrollReveal className="grid gap-0 overflow-hidden rounded-lg border border-white/20 bg-white/10 backdrop-blur-md sm:grid-cols-2 xl:grid-cols-4">
-              {topStats.map((item) => (
-                <div key={item.key} className="border-white/15 bg-white/8 p-4 text-white sm:border-l first:sm:border-l-0">
-                  <p className="font-[family-name:var(--font-display)] text-3xl font-semibold">
-                    {item.value}
-                    {item.suffix}
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-white/75">
-                    {item.label}
-                  </p>
-                </div>
-              ))}
-            </ScrollReveal>
-          ) : null}
-        </div>
-      </div>
-    </section>
   );
 }
 
