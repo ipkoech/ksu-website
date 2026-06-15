@@ -18,15 +18,15 @@ import type { LucideIcon } from "lucide-react";
 import { ScrollReveal } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
+import {
+  PublicFactRow,
+  PublicFactStrip,
+  type PublicFactItem,
+} from "@/components/public/public-primitives";
 import type { ProgrammeDetailData } from "@/lib/programme-detail-data";
 import { publicFileUrl } from "@/lib/public-media";
 
-type FactItem = {
-  label: string;
-  value: string;
-  icon: LucideIcon;
-  href?: string;
-};
+type FactItem = PublicFactItem;
 
 type DetailSection = {
   id: string;
@@ -140,43 +140,13 @@ function SectionKicker({ children }: { children: string }) {
   );
 }
 
-function FactRow({ item }: { item: FactItem }) {
-  const Icon = item.icon;
-  const content = (
-    <>
-      <Icon aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-      <span className="min-w-0 flex-1">
-        <span className="block text-xs font-bold text-slate-950">
-          {item.label}
-        </span>
-        <span className="mt-0.5 block break-words text-sm font-medium leading-5 text-primary [overflow-wrap:anywhere]">
-          {item.value}
-        </span>
-      </span>
-    </>
-  );
-
-  const className =
-    "flex w-full min-w-0 gap-3 rounded-xl p-2 transition hover:bg-primary/[0.05]";
-
-  if (item.href) {
-    return (
-      <Link href={item.href} className={className}>
-        {content}
-      </Link>
-    );
-  }
-
-  return <div className={className}>{content}</div>;
-}
-
 function ProgrammeFactsPanel({ facts }: { facts: FactItem[] }) {
   return (
     <section className="min-w-0 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
       <SectionKicker>Programme Facts</SectionKicker>
       <dl className="mt-3 grid min-w-0 gap-1.5">
         {facts.map((item) => (
-          <FactRow key={item.label} item={item} />
+          <PublicFactRow key={item.label} item={item} />
         ))}
       </dl>
     </section>
@@ -211,30 +181,6 @@ function SectionNav({ sections }: { sections: DetailSection[] }) {
         </ul>
       </nav>
     </section>
-  );
-}
-
-function HeroFactStrip({ facts }: { facts: FactItem[] }) {
-  return (
-    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-px bg-slate-200 sm:grid-cols-2 lg:grid-cols-4">
-      {facts.slice(0, 4).map((item) => {
-        const Icon = item.icon;
-
-        return (
-          <div key={item.label} className="flex min-h-[5rem] min-w-0 gap-3 bg-white p-4">
-            <Icon aria-hidden className="h-5 w-5 shrink-0 text-primary" />
-            <span className="min-w-0">
-              <span className="block text-[0.68rem] font-bold uppercase leading-4 text-slate-500">
-                {item.label}
-              </span>
-              <span className="mt-1 block break-words text-sm font-bold leading-5 text-slate-950">
-                {item.value}
-              </span>
-            </span>
-          </div>
-        );
-      })}
-    </div>
   );
 }
 
@@ -284,7 +230,7 @@ function ProgrammeHero({
           <BookOpenCheck aria-hidden className="h-28 w-28 stroke-[1.15]" />
         </div>
       </div>
-      <HeroFactStrip facts={facts} />
+      <PublicFactStrip facts={facts} />
     </section>
   );
 }

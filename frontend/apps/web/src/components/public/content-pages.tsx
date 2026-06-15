@@ -597,7 +597,6 @@ function ContentFilters({
       clearHref={data.href}
       total={data.total}
       visible={visible}
-      buttonHeightClassName="h-10"
     />
   );
 }

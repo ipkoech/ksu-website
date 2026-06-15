@@ -1,76 +1,23 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import {
-  ArrowRight,
-  BookOpenCheck,
-  Building2,
-  CalendarDays,
-  CheckCircle2,
-  ChevronRight,
-  ClipboardCheck,
-  Compass,
-  ExternalLink,
-  FileText,
-  GraduationCap,
-  HeartHandshake,
-  History,
-  Home,
-  Landmark,
-  Library,
-  Megaphone,
-  Newspaper,
-  Search,
-  ShieldCheck,
-  Sparkles,
-  Trophy,
-  UserRound,
-  Users,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { RichTextRenderer } from "@ksu/ui/rich-text-renderer";
+import {
+  PublicActionLink,
+  PublicCardSurface,
+  PublicFilterButton,
+  PublicFilterClearLink,
+  PublicFilterSelect,
+  PublicFilterTextInput,
+  PublicIconGlyph,
+  type PublicAction,
+  type PublicCard,
+  type PublicIconName,
+} from "@/components/public/public-primitives";
 
-export type PublicIconName =
-  | "arrow"
-  | "book"
-  | "building"
-  | "calendar"
-  | "check"
-  | "clipboard"
-  | "compass"
-  | "file"
-  | "graduation"
-  | "handshake"
-  | "heart"
-  | "history"
-  | "home"
-  | "landmark"
-  | "library"
-  | "megaphone"
-  | "news"
-  | "search"
-  | "shield"
-  | "sparkles"
-  | "trophy"
-  | "user"
-  | "users";
-
-export type PublicAction = {
-  label: string;
-  href: string;
-  external?: boolean;
-};
-
-export type PublicCard = {
-  title: string;
-  body: string;
-  href?: string;
-  action?: string;
-  icon?: PublicIconName;
-  eyebrow?: string;
-  external?: boolean;
-};
+export type { PublicAction, PublicCard, PublicIconName };
 
 export type PublicPageSection = {
   eyebrow: string;
@@ -122,190 +69,6 @@ export type PublicPageConfig = {
   hideContinue?: boolean;
 };
 
-const iconMap: Record<PublicIconName, LucideIcon> = {
-  arrow: ArrowRight,
-  book: BookOpenCheck,
-  building: Building2,
-  calendar: CalendarDays,
-  check: CheckCircle2,
-  clipboard: ClipboardCheck,
-  compass: Compass,
-  file: FileText,
-  graduation: GraduationCap,
-  handshake: HeartHandshake,
-  heart: HeartHandshake,
-  history: History,
-  home: Home,
-  landmark: Landmark,
-  library: Library,
-  megaphone: Megaphone,
-  news: Newspaper,
-  search: Search,
-  shield: ShieldCheck,
-  sparkles: Sparkles,
-  trophy: Trophy,
-  user: UserRound,
-  users: Users,
-};
-
-function IconGlyph({
-  icon = "file",
-  className = "h-5 w-5",
-}: {
-  icon?: PublicIconName;
-  className?: string;
-}) {
-  const Icon = iconMap[icon] ?? FileText;
-  return <Icon aria-hidden className={className} />;
-}
-
-function ActionLink({
-  action,
-  primary = false,
-}: {
-  action: PublicAction;
-  primary?: boolean;
-}) {
-  const className = primary
-    ? "inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-    : "inline-flex items-center justify-center gap-2 rounded-full border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5";
-
-  if (action.external) {
-    return (
-      <a
-        href={action.href}
-        className={className}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {action.label}
-        <ExternalLink aria-hidden className="h-4 w-4" />
-      </a>
-    );
-  }
-
-  return (
-    <Link href={action.href} className={className}>
-      {action.label}
-      <ArrowRight aria-hidden className="h-4 w-4" />
-    </Link>
-  );
-}
-
-function CardLink({
-  card,
-  className,
-  children,
-}: {
-  card: PublicCard;
-  className: string;
-  children: ReactNode;
-}) {
-  if (!card.href) {
-    return <article className={className}>{children}</article>;
-  }
-
-  if (card.external) {
-    return (
-      <a
-        href={card.href}
-        className={className}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {children}
-      </a>
-    );
-  }
-
-  return (
-    <Link href={card.href} className={className}>
-      {children}
-    </Link>
-  );
-}
-
-function StandardCard({
-  card,
-  dark = false,
-}: {
-  card: PublicCard;
-  dark?: boolean;
-}) {
-  const linked = Boolean(card.href);
-  const className = dark
-    ? `group flex min-h-[220px] flex-col rounded-lg border border-white/10 bg-white/[0.04] p-5 transition ${
-        linked ? "hover:-translate-y-1 hover:bg-white/[0.08]" : ""
-      }`
-    : `group flex min-h-[220px] flex-col rounded-lg border border-slate-200 bg-slate-50 p-5 shadow-sm transition ${
-        linked
-          ? "hover:-translate-y-1 hover:border-primary/30 hover:bg-white hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
-          : ""
-      }`;
-
-  return (
-    <CardLink card={card} className={className}>
-      <span
-        className={
-          dark
-            ? "inline-flex h-11 w-11 items-center justify-center rounded-md bg-white/10 text-secondary ring-1 ring-white/10"
-            : "inline-flex h-11 w-11 items-center justify-center rounded-md bg-white text-primary shadow-sm ring-1 ring-slate-200 transition group-hover:bg-primary group-hover:text-white"
-        }
-      >
-        <IconGlyph icon={card.icon} />
-      </span>
-      {card.eyebrow ? (
-        <p
-          className={
-            dark
-              ? "mt-6 text-xs font-semibold uppercase text-secondary"
-              : "mt-6 text-xs font-semibold uppercase text-secondary"
-          }
-        >
-          {card.eyebrow}
-        </p>
-      ) : null}
-      <h3
-        className={
-          dark
-            ? "mt-4 text-lg font-semibold leading-7 text-white"
-            : "mt-4 text-lg font-semibold leading-7 text-slate-950"
-        }
-      >
-        {card.title}
-      </h3>
-      <p
-        className={
-          dark
-            ? "mt-4 text-sm leading-7 text-white/70"
-            : "mt-4 text-sm leading-7 text-slate-600"
-        }
-      >
-        {card.body}
-      </p>
-      {card.action ? (
-        <span
-          className={
-            dark
-              ? "mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-secondary"
-              : "mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-primary"
-          }
-        >
-          {card.action}
-          {card.external ? (
-            <ExternalLink aria-hidden className="h-4 w-4" />
-          ) : (
-            <ArrowRight
-              aria-hidden
-              className="h-4 w-4 transition group-hover:translate-x-1"
-            />
-          )}
-        </span>
-      ) : null}
-    </CardLink>
-  );
-}
-
 function gridClass(columns: PublicPageSection["columns"] = 3) {
   if (columns === 2) {
     return "grid gap-5 md:grid-cols-2";
@@ -343,135 +106,60 @@ function SectionFilterBar({
           : "mb-6 grid gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_repeat(4,minmax(140px,180px))_auto_auto]"
       }
     >
-      <label className="relative min-w-0">
-        <span className="sr-only">{filters.queryPlaceholder ?? "Search records"}</span>
-        <Search
-          aria-hidden
-          className={
-            dark
-              ? "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/45"
-              : "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-          }
-        />
-        <input
-          type="search"
-          name={queryName}
-          defaultValue={filters.query}
-          placeholder={filters.queryPlaceholder ?? "Search records"}
-          className={
-            dark
-              ? "h-11 w-full rounded-md border border-white/10 bg-slate-950/60 pl-9 pr-3 text-sm font-medium text-white outline-none transition placeholder:text-white/40 focus:border-secondary focus:ring-2 focus:ring-secondary/20"
-              : "h-11 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm font-medium text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15"
-          }
-        />
-      </label>
+      <PublicFilterTextInput
+        name={queryName}
+        value={filters.query}
+        placeholder={filters.queryPlaceholder ?? "Search records"}
+        label={filters.queryPlaceholder ?? "Search records"}
+        dark={dark}
+      />
 
       {filters.levelOptions?.length ? (
-        <label>
-          <span className="sr-only">Programme level</span>
-          <select
-            name="level"
-            defaultValue={filters.level ?? ""}
-            className={
-              dark
-                ? "h-11 w-full rounded-md border border-white/10 bg-slate-950/60 px-3 text-sm font-semibold text-white outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/20"
-                : "h-11 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
-            }
-          >
-            {filters.levelOptions.map((option) => (
-              <option key={option.value || "all"} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <PublicFilterSelect
+          name="level"
+          label="Programme level"
+          value={filters.level}
+          options={filters.levelOptions}
+          dark={dark}
+        />
       ) : null}
 
       {filters.schoolOptions?.length ? (
-        <label>
-          <span className="sr-only">School</span>
-          <select
-            name="school_id"
-            defaultValue={filters.schoolId ?? ""}
-            className={
-              dark
-                ? "h-11 w-full rounded-md border border-white/10 bg-slate-950/60 px-3 text-sm font-semibold text-white outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/20"
-                : "h-11 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
-            }
-          >
-            {filters.schoolOptions.map((option) => (
-              <option key={option.value || "all-schools"} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <PublicFilterSelect
+          name="school_id"
+          label="School"
+          value={filters.schoolId}
+          options={filters.schoolOptions}
+          dark={dark}
+        />
       ) : null}
 
       {filters.modeOptions?.length ? (
-        <label>
-          <span className="sr-only">Study mode</span>
-          <select
-            name="mode_of_study"
-            defaultValue={filters.mode ?? ""}
-            className={
-              dark
-                ? "h-11 w-full rounded-md border border-white/10 bg-slate-950/60 px-3 text-sm font-semibold text-white outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/20"
-                : "h-11 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
-            }
-          >
-            {filters.modeOptions.map((option) => (
-              <option key={option.value || "all-modes"} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <PublicFilterSelect
+          name="mode_of_study"
+          label="Study mode"
+          value={filters.mode}
+          options={filters.modeOptions}
+          dark={dark}
+        />
       ) : null}
 
       {filters.sortOptions?.length ? (
-        <label>
-          <span className="sr-only">Sort programmes</span>
-          <select
-            name="sort"
-            defaultValue={filters.sort ?? ""}
-            className={
-              dark
-                ? "h-11 w-full rounded-md border border-white/10 bg-slate-950/60 px-3 text-sm font-semibold text-white outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/20"
-                : "h-11 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
-            }
-          >
-            {filters.sortOptions.map((option) => (
-              <option key={option.value || "recommended"} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <PublicFilterSelect
+          name="sort"
+          label="Sort programmes"
+          value={filters.sort}
+          options={filters.sortOptions}
+          dark={dark}
+        />
       ) : null}
 
-      <button
-        type="submit"
-        className={
-          dark
-            ? "inline-flex h-11 items-center justify-center rounded-md bg-secondary px-4 text-sm font-semibold text-slate-950 transition hover:bg-secondary/90"
-            : "inline-flex h-11 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90"
-        }
-      >
+      <PublicFilterButton dark={dark}>
         {filters.submitLabel ?? "Filter"}
-      </button>
+      </PublicFilterButton>
 
       {isActive && filters.clearHref ? (
-        <Link
-          href={filters.clearHref}
-          className={
-            dark
-              ? "inline-flex h-11 items-center justify-center rounded-md border border-white/10 px-4 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
-              : "inline-flex h-11 items-center justify-center rounded-md border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:border-primary/25 hover:bg-primary/5 hover:text-primary"
-          }
-        >
-          Clear
-        </Link>
+        <PublicFilterClearLink href={filters.clearHref} dark={dark} />
       ) : null}
     </form>
   );
@@ -523,7 +211,7 @@ function SectionBlock({ section }: { section: PublicPageSection }) {
             staggerDelay={70}
           >
             {section.cards.map((card) => (
-              <StandardCard
+              <PublicCardSurface
                 key={`${section.eyebrow}-${card.title}`}
                 card={card}
                 dark={dark}
@@ -559,7 +247,7 @@ function ArticleSectionBlock({ section }: { section: PublicPageSection }) {
                   className="flex gap-3 py-4"
                 >
                   <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                    <IconGlyph icon={card.icon} className="h-4 w-4" />
+                    <PublicIconGlyph icon={card.icon} className="h-4 w-4" />
                   </span>
                   <div>
                     <dt className="text-xs font-semibold uppercase text-slate-500">
@@ -684,10 +372,10 @@ export function PublicSectionPage({
                       }
                     >
                       {config.primaryAction ? (
-                        <ActionLink action={config.primaryAction} primary />
+                        <PublicActionLink action={config.primaryAction} primary />
                       ) : null}
                       {config.secondaryActions?.map((action) => (
-                        <ActionLink key={action.label} action={action} />
+                        <PublicActionLink key={action.label} action={action} />
                       ))}
                     </div>
                   ) : null}
@@ -705,7 +393,7 @@ export function PublicSectionPage({
                             className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
                           >
                             <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary ring-1 ring-primary/15">
-                              <IconGlyph icon={item.icon} className="h-4 w-4" />
+                              <PublicIconGlyph icon={item.icon} className="h-4 w-4" />
                             </span>
                             <p className="mt-3 text-xs font-semibold uppercase text-slate-500">
                               {item.eyebrow ?? item.title}
@@ -749,7 +437,7 @@ export function PublicSectionPage({
                                 className="group flex items-center gap-3 rounded-md border border-transparent px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
                               >
                                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
-                                  <IconGlyph
+                                  <PublicIconGlyph
                                     icon={item.icon}
                                     className="h-4 w-4"
                                   />
@@ -806,7 +494,7 @@ export function PublicSectionPage({
                 staggerDelay={70}
               >
                 {continueItems.map((item) => (
-                  <StandardCard
+                  <PublicCardSurface
                     key={`${config.currentHref}-continue-${item.title}`}
                     card={item}
                   />
