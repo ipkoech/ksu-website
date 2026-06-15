@@ -99,15 +99,15 @@ export function LandingHero({
             initial={
               prefersReducedMotion
                 ? false
-                : { opacity: 0, x: useSlideTransition ? 24 : 0, scale: 1.04 }
+                : { opacity: 0 }
             }
             animate={
-              prefersReducedMotion ? undefined : { opacity: 1, x: 0, scale: 1 }
+              prefersReducedMotion ? undefined : { opacity: 1 }
             }
             exit={
               prefersReducedMotion
                 ? undefined
-                : { opacity: 0, x: useSlideTransition ? -18 : 0, scale: 1.02 }
+                : { opacity: 0 }
             }
             transition={{
               duration: prefersReducedMotion ? 0 : 0.7,
@@ -120,7 +120,7 @@ export function LandingHero({
             <img
               src={activeSlide.desktopImageUrl ?? activeSlide.imageUrl}
               alt={activeSlide.imageAlt}
-              className="h-full w-full scale-110 object-cover object-[45%_50%] opacity-90 sm:scale-105 lg:scale-100 lg:object-[58%_50%]"
+              className="h-full w-full object-cover object-[45%_50%] opacity-90 lg:object-[58%_50%]"
               fetchPriority={activeIndex === 0 ? "high" : "auto"}
             />
           </motion.picture>
