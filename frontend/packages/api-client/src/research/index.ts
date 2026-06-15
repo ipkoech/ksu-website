@@ -3,18 +3,24 @@ import type { FieldSelectionParams, QueryParams } from "../client";
 import type { PaginatedResponse } from "../main/types";
 import type { PublicStatsResponse } from "../main/types";
 
-type ListParams<T extends Record<string, string | number | boolean | undefined> = Record<string, string | number | boolean | undefined>> = QueryParams & T & {
-  category?: string;
-  project_type?: string;
-  partner_type?: string;
-  event_type?: string;
-  output_type?: string;
-  program_type?: string;
-  scholarship_type?: string;
-  initiative_type?: string;
-  center_id?: string;
-  project_id?: string;
-};
+type ListParams<
+  T extends Record<string, string | number | boolean | undefined> = Record<
+    string,
+    string | number | boolean | undefined
+  >,
+> = QueryParams &
+  T & {
+    category?: string;
+    project_type?: string;
+    partner_type?: string;
+    event_type?: string;
+    output_type?: string;
+    program_type?: string;
+    scholarship_type?: string;
+    initiative_type?: string;
+    center_id?: string;
+    project_id?: string;
+  };
 
 export interface ResearchProject {
   id: string;
@@ -230,59 +236,150 @@ export type ResearchGenericPayload = Record<string, any>;
 
 function crudApi<TRecord, TPayload>(path: string) {
   return {
-    list: (params?: ListParams) => researchApi.get<PaginatedResponse<TRecord>>(path, params),
-    getBySlug: (slug: string, params?: FieldSelectionParams) => researchApi.get<{ data: TRecord }>(`${path}/${slug}`, params),
+    list: (params?: ListParams) =>
+      researchApi.get<PaginatedResponse<TRecord>>(path, params),
+    getBySlug: (slug: string, params?: FieldSelectionParams) =>
+      researchApi.get<{ data: TRecord }>(`${path}/${slug}`, params),
     create: (data: TPayload) => researchApi.post<{ data: TRecord }>(path, data),
-    update: (id: string, data: Partial<TPayload>) => researchApi.patch<{ data: TRecord }>(`${path}/id/${id}`, data),
+    update: (id: string, data: Partial<TPayload>) =>
+      researchApi.patch<{ data: TRecord }>(`${path}/id/${id}`, data),
     delete: (id: string) => researchApi.delete<void>(`${path}/id/${id}`),
   };
 }
 
 export const researchServiceApi = {
   stats: () => researchApi.get<{ data: PublicStatsResponse }>("/api/v1/stats"),
-  projects: crudApi<ResearchProject, ResearchProjectPayload>("/api/v1/projects"),
-  publications: crudApi<ResearchPublication, ResearchPublicationPayload>("/api/v1/publications"),
+  adminStats: () =>
+    researchApi.get<{ data: PublicStatsResponse }>("/api/v1/stats/admin"),
+  projects: crudApi<ResearchProject, ResearchProjectPayload>(
+    "/api/v1/projects",
+  ),
+  publications: crudApi<ResearchPublication, ResearchPublicationPayload>(
+    "/api/v1/publications",
+  ),
   grants: crudApi<ResearchGrant, ResearchGrantPayload>("/api/v1/grants"),
-  centers: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/centers"),
-  farms: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/farms"),
-  programs: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/programs"),
-  themes: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/themes"),
-  focusAreas: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/focus-areas"),
-  expertiseTags: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/expertise-tags"),
-  journals: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/journals"),
-  grantGuidelines: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/grant-guidelines"),
-  grantApplications: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/grant-applications"),
-  grantReviews: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/grant-reviews"),
-  grantReports: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/grant-reports"),
-  funders: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/funders"),
-  endowments: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/endowments"),
-  outputs: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/outputs"),
-  impactMetrics: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/impact-metrics"),
-  stories: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/stories"),
-  sustainability: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/sustainability"),
-  innovations: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/innovations"),
-  partners: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/partners"),
-  consultancies: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/consultancies"),
+  centers: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/centers",
+  ),
+  farms: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/farms",
+  ),
+  programs: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/programs",
+  ),
+  themes: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/themes",
+  ),
+  focusAreas: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/focus-areas",
+  ),
+  expertiseTags: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/expertise-tags",
+  ),
+  journals: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/journals",
+  ),
+  grantGuidelines: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/grant-guidelines",
+  ),
+  grantApplications: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/grant-applications",
+  ),
+  grantReviews: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/grant-reviews",
+  ),
+  grantReports: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/grant-reports",
+  ),
+  funders: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/funders",
+  ),
+  endowments: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/endowments",
+  ),
+  outputs: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/outputs",
+  ),
+  impactMetrics: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/impact-metrics",
+  ),
+  stories: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/stories",
+  ),
+  sustainability: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/sustainability",
+  ),
+  innovations: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/innovations",
+  ),
+  partners: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/partners",
+  ),
+  consultancies: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/consultancies",
+  ),
   donors: crudApi<ResearchDonor, ResearchGenericPayload>("/api/v1/donors"),
-  donations: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/donations"),
-  donationImpacts: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/donation-impacts"),
-  donationStories: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/donation-stories"),
-  donationSettings: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/donation-settings"),
-  training: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/training"),
-  mentorship: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/mentorship"),
-  mentorshipApplications: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/mentorship-applications"),
-  mentorshipMatches: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/mentorship-matches"),
-  scholarships: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/scholarships"),
-  scholarshipApplications: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/scholarship-applications"),
+  donations: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/donations",
+  ),
+  donationImpacts: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/donation-impacts",
+  ),
+  donationStories: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/donation-stories",
+  ),
+  donationSettings: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/donation-settings",
+  ),
+  training: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/training",
+  ),
+  mentorship: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/mentorship",
+  ),
+  mentorshipApplications: crudApi<
+    ResearchGenericRecord,
+    ResearchGenericPayload
+  >("/api/v1/mentorship-applications"),
+  mentorshipMatches: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/mentorship-matches",
+  ),
+  scholarships: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/scholarships",
+  ),
+  scholarshipApplications: crudApi<
+    ResearchGenericRecord,
+    ResearchGenericPayload
+  >("/api/v1/scholarship-applications"),
   news: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/news"),
-  articles: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/articles"),
-  events: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/events"),
-  sliders: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/sliders"),
-  offices: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/offices"),
-  officeStaff: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/office-staff"),
-  resources: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/resources"),
-  services: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/services"),
-  guidelines: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/guidelines"),
-  boards: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/boards"),
-  boardMembers: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/board-members"),
+  articles: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/articles",
+  ),
+  events: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/events",
+  ),
+  sliders: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/sliders",
+  ),
+  offices: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/offices",
+  ),
+  officeStaff: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/office-staff",
+  ),
+  resources: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/resources",
+  ),
+  services: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/services",
+  ),
+  guidelines: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/guidelines",
+  ),
+  boards: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/boards",
+  ),
+  boardMembers: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/board-members",
+  ),
 };

@@ -14,15 +14,22 @@ import {
 import {
   mediaApi,
   queryKeys,
+  statsApi,
   useDepartments,
-  useEvents,
   useNewsList,
   usePersons,
   useProgrammes,
   useSchools,
   useStaffAssignments,
 } from "@ksu/api-client";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ksu/ui/components";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@ksu/ui/components";
 import { PageHeader } from "@/components/layout";
 import { formatCount } from "@/lib/counts";
 
@@ -32,12 +39,27 @@ const quickActions = [
   { label: "Create news", href: "/content/news/new", icon: Newspaper },
   { label: "Add event", href: "/content/events/new", icon: Calendar },
   { label: "Upload media", href: "/media", icon: ImageIcon },
-  { label: "Manage programmes", href: "/academic/programmes", icon: GraduationCap },
+  {
+    label: "Manage programmes",
+    href: "/academic/programmes",
+    icon: GraduationCap,
+  },
 ];
 
+function adminStatValue(
+  stats: Awaited<ReturnType<typeof statsApi.admin>> | undefined,
+  key: string,
+) {
+  const value = stats?.data.stats.find((item) => item.key === key)?.value;
+  return typeof value === "number" ? value.toLocaleString() : undefined;
+}
+
 export function MainDashboardClient() {
+  const adminStats = useQuery({
+    queryKey: ["main", "admin-stats"],
+    queryFn: () => statsApi.admin(),
+  });
   const news = useNewsList({ ...countParams, is_published: true });
-  const events = useEvents({ ...countParams, upcoming: true });
   const schools = useSchools(countParams);
   const departments = useDepartments(countParams);
   const programmes = useProgrammes(countParams);
@@ -51,29 +73,37 @@ export function MainDashboardClient() {
   const stats = [
     {
       title: "Published news",
-      value: formatCount(news.data, news.isLoading, news.isError),
-      description: "From the news API",
+      value:
+        adminStatValue(adminStats.data, "published_content") ??
+        formatCount(news.data, news.isLoading, news.isError),
+      description: "From the main stats API",
       icon: FileText,
       href: "/content/news",
     },
     {
-      title: "Upcoming events",
-      value: formatCount(events.data, events.isLoading, events.isError),
-      description: "Filtered by upcoming events",
+      title: "Open intakes",
+      value:
+        adminStatValue(adminStats.data, "open_intakes") ??
+        (adminStats.isLoading ? "--" : "Unavailable"),
+      description: "Open institutional intake cycles",
       icon: Calendar,
-      href: "/content/events",
+      href: "/admissions",
     },
     {
       title: "Academic programmes",
-      value: formatCount(programmes.data, programmes.isLoading, programmes.isError),
-      description: "Current programme records",
+      value:
+        adminStatValue(adminStats.data, "programmes") ??
+        formatCount(programmes.data, programmes.isLoading, programmes.isError),
+      description: "From the main stats API",
       icon: GraduationCap,
       href: "/academic/programmes",
     },
     {
       title: "Media assets",
-      value: formatCount(media.data, media.isLoading, media.isError),
-      description: "Files in media library",
+      value:
+        adminStatValue(adminStats.data, "media") ??
+        formatCount(media.data, media.isLoading, media.isError),
+      description: "From the main stats API",
       icon: ImageIcon,
       href: "/media",
     },
@@ -90,7 +120,8 @@ export function MainDashboardClient() {
     },
     {
       title: "Academic",
-      description: "Schools, departments, and programme records used by the public site.",
+      description:
+        "Schools, departments, and programme records used by the public site.",
       href: "/academic",
       value: formatCount(schools.data, schools.isLoading, schools.isError),
       valueLabel: "schools",
@@ -98,7 +129,8 @@ export function MainDashboardClient() {
     },
     {
       title: "People",
-      description: "Person profiles and staff assignments for university entities.",
+      description:
+        "Person profiles and staff assignments for university entities.",
       href: "/people",
       value: formatCount(persons.data, persons.isLoading, persons.isError),
       valueLabel: "persons",
@@ -106,9 +138,14 @@ export function MainDashboardClient() {
     },
     {
       title: "Organization",
-      description: "Department and staff structures that feed directory experiences.",
+      description:
+        "Department and staff structures that feed directory experiences.",
       href: "/academic/departments",
-      value: formatCount(departments.data, departments.isLoading, departments.isError),
+      value: formatCount(
+        departments.data,
+        departments.isLoading,
+        departments.isError,
+      ),
       valueLabel: "departments",
       icon: School,
     },
@@ -139,7 +176,9 @@ export function MainDashboardClient() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{stat.value}</div>
-                    <p className="text-xs text-muted-foreground">{stat.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {stat.description}
+                    </p>
                   </CardContent>
                 </Card>
               </Link>
@@ -151,7 +190,9 @@ export function MainDashboardClient() {
           <Card>
             <CardHeader>
               <CardTitle>Main service modules</CardTitle>
-              <CardDescription>Source-backed admin areas currently exposed in the main service.</CardDescription>
+              <CardDescription>
+                Source-backed admin areas currently exposed in the main service.
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3 md:grid-cols-2">
               {modules.map((module) => {
@@ -169,11 +210,15 @@ export function MainDashboardClient() {
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-semibold">{module.value}</p>
-                        <p className="text-xs text-muted-foreground">{module.valueLabel}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {module.valueLabel}
+                        </p>
                       </div>
                     </div>
                     <h3 className="font-semibold">{module.title}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{module.description}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {module.description}
+                    </p>
                   </Link>
                 );
               })}
@@ -183,14 +228,21 @@ export function MainDashboardClient() {
           <Card>
             <CardHeader>
               <CardTitle>Quick actions</CardTitle>
-              <CardDescription>Common actions that map to implemented admin routes.</CardDescription>
+              <CardDescription>
+                Common actions that map to implemented admin routes.
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-2">
               {quickActions.map((action) => {
                 const Icon = action.icon;
 
                 return (
-                  <Button key={action.href} variant="outline" className="justify-start" asChild>
+                  <Button
+                    key={action.href}
+                    variant="outline"
+                    className="justify-start"
+                    asChild
+                  >
                     <Link href={action.href}>
                       <Icon className="mr-2 h-4 w-4" />
                       {action.label}
@@ -206,21 +258,36 @@ export function MainDashboardClient() {
           <CardHeader>
             <CardTitle>Data coverage</CardTitle>
             <CardDescription>
-              Counts are read from backend list endpoints. Analytics, traffic, and trend metrics are not shown until a reporting API is available.
+              Counts are read from backend list endpoints. Analytics, traffic,
+              and trend metrics are not shown until a reporting API is
+              available.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 text-sm md:grid-cols-3">
             <div className="rounded-lg border bg-background p-3">
               <p className="font-medium">Staff assignments</p>
-              <p className="mt-1 text-muted-foreground">{formatCount(staff.data, staff.isLoading, staff.isError)} records</p>
+              <p className="mt-1 text-muted-foreground">
+                {formatCount(staff.data, staff.isLoading, staff.isError)}{" "}
+                records
+              </p>
             </div>
             <div className="rounded-lg border bg-background p-3">
               <p className="font-medium">Departments</p>
-              <p className="mt-1 text-muted-foreground">{formatCount(departments.data, departments.isLoading, departments.isError)} records</p>
+              <p className="mt-1 text-muted-foreground">
+                {formatCount(
+                  departments.data,
+                  departments.isLoading,
+                  departments.isError,
+                )}{" "}
+                records
+              </p>
             </div>
             <div className="rounded-lg border bg-background p-3">
               <p className="font-medium">People</p>
-              <p className="mt-1 text-muted-foreground">{formatCount(persons.data, persons.isLoading, persons.isError)} records</p>
+              <p className="mt-1 text-muted-foreground">
+                {formatCount(persons.data, persons.isLoading, persons.isError)}{" "}
+                records
+              </p>
             </div>
           </CardContent>
         </Card>

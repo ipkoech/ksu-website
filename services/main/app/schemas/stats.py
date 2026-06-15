@@ -17,6 +17,6 @@ class PublicStatItem(BaseSchema):
 
 
 class PublicStatsResponse(BaseSchema):
-    scope: str = Field(pattern="^(homepage|school|department)$")
+    scope: str = Field(pattern="^(homepage|university|school|department|admin)$")
     title: str
     stats: list[PublicStatItem]

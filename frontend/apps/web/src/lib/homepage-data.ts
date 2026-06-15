@@ -216,7 +216,11 @@ const publicQuickLinks: HomeLink[] = [
     href: "https://portal.kisiiuniversity.ac.ke",
     external: true,
   },
-  { label: "Staff Portal", href: "https://digital.kisiiuniversity.ac.ke/staff/services/login", external: true },
+  {
+    label: "Staff Portal",
+    href: "https://digital.kisiiuniversity.ac.ke/staff/services/login",
+    external: true,
+  },
   { label: "Contact Directory", href: "/contact" },
 ];
 
@@ -234,7 +238,9 @@ function plainText(value?: string | null) {
 }
 
 function truncate(value: string, length: number) {
-  return value.length > length ? `${value.slice(0, length - 1).trim()}...` : value;
+  return value.length > length
+    ? `${value.slice(0, length - 1).trim()}...`
+    : value;
 }
 
 function present(value: unknown) {
@@ -276,7 +282,8 @@ async function getMainContact() {
   const response = await contactsApi.list({
     is_main: true,
     per_page: 1,
-    fields: "id,name,email,phone,physical_address,building,room_number,is_main,is_public,status",
+    fields:
+      "id,name,email,phone,physical_address,building,room_number,is_main,is_public,status",
   });
   return response.data?.[0] ?? null;
 }
@@ -284,8 +291,10 @@ async function getMainContact() {
 async function getSchoolsList() {
   const response = await schoolsApi.list({
     per_page: 8,
-    fields: "id,name,code,slug,description,about,cover_image_id,departments_count",
-    include: "cover_image(id,url,public_url,cdn_url,thumbnail_url,alt_text,title)",
+    fields:
+      "id,name,code,slug,description,about,cover_image_id,departments_count",
+    include:
+      "cover_image(id,url,public_url,cdn_url,thumbnail_url,alt_text,title)",
   });
   return (response.data ?? []) as SchoolWithMedia[];
 }
@@ -295,7 +304,8 @@ async function getProgrammesList() {
     per_page: 100,
     fields:
       "id,name,slug,level,mode_of_study,duration,department_name,cover_image_id,display_order",
-    include: "cover_image(id,url,public_url,cdn_url,thumbnail_url,alt_text,title)",
+    include:
+      "cover_image(id,url,public_url,cdn_url,thumbnail_url,alt_text,title)",
   });
   return (response.data ?? []) as ProgrammeWithMedia[];
 }
@@ -353,7 +363,7 @@ const getResearchPartners = cache(async () => {
 });
 
 const getHomepageStats = cache(async () => {
-  const response = await statsApi.get({ scope: "homepage" });
+  const response = await statsApi.get({ scope: "university" });
   return response.data ?? null;
 });
 
@@ -390,7 +400,9 @@ function buildContactInfo(
   const address =
     present(contact?.physical_address) ??
     present(university?.physical_address) ??
-    [present(university?.city), present(university?.county)].filter(Boolean).join(", ") ??
+    [present(university?.city), present(university?.county)]
+      .filter(Boolean)
+      .join(", ") ??
     fallbackContactInfo.address;
 
   return {
@@ -448,8 +460,8 @@ function normalizeStats(stats?: PublicStatsResponse | null): HomeMetric[] {
 function schoolBody(school: School) {
   return truncate(
     plainText(school.description) ||
-    plainText(school.about) ||
-    "Departments, programmes, academic advising, and student progression.",
+      plainText(school.about) ||
+      "Departments, programmes, academic advising, and student progression.",
     132,
   );
 }
@@ -462,28 +474,40 @@ function normalizeSchools(schools: SchoolWithMedia[]): HomeCard[] {
     body: schoolBody(school),
     href: `/academics/schools/${school.slug}`,
     action: "View school",
-    imageUrl: publicMediaUrl(school.cover_image) ?? publicFileUrl(school.cover_image_id),
+    imageUrl:
+      publicMediaUrl(school.cover_image) ??
+      publicFileUrl(school.cover_image_id),
   }));
 }
 
-function normalizeFeaturedProgrammes(programmes: ProgrammeWithMedia[]): HomeCard[] {
+function normalizeFeaturedProgrammes(
+  programmes: ProgrammeWithMedia[],
+): HomeCard[] {
   return programmes.slice(0, 24).map((programme) => ({
     id: programme.id,
     title: programme.name,
     eyebrow: programme.level || "Programme",
-    body: [programme.department_name, programme.duration, programme.mode_of_study]
+    body: [
+      programme.department_name,
+      programme.duration,
+      programme.mode_of_study,
+    ]
       .map((item) => present(item))
       .filter(Boolean)
       .join(" · "),
     href: `/academics/programmes/${programme.slug}`,
     action: "View programme",
-    imageUrl: publicMediaUrl(programme.cover_image) ?? publicFileUrl(programme.cover_image_id),
+    imageUrl:
+      publicMediaUrl(programme.cover_image) ??
+      publicFileUrl(programme.cover_image_id),
     meta: programme.level,
   }));
 }
 
 function buildProgrammeSummary(programmes: Programme[]): HomeMetric[] {
-  const modes = new Set(programmes.map((programme) => programme.mode_of_study).filter(Boolean));
+  const modes = new Set(
+    programmes.map((programme) => programme.mode_of_study).filter(Boolean),
+  );
 
   return [
     {
@@ -506,14 +530,16 @@ function normalizeNews(news: News[]): HomeCard[] {
     eyebrow: item.category || "News",
     body: truncate(
       plainText(item.summary) ||
-      plainText(item.plain_text) ||
-      plainText(item.content) ||
-      "Read the latest public update from Kisii University.",
+        plainText(item.plain_text) ||
+        plainText(item.content) ||
+        "Read the latest public update from Kisii University.",
       132,
     ),
     href: `/media/news/${item.slug}`,
     action: "Read update",
-    imageUrl: publicFileUrl(item.cover_image_id) ?? publicFileUrl(item.featured_media_id),
+    imageUrl:
+      publicFileUrl(item.cover_image_id) ??
+      publicFileUrl(item.featured_media_id),
     meta: formatDisplayDate(item.published_at ?? item.created_at),
   }));
 }
@@ -525,15 +551,20 @@ function normalizeEvents(events: Event[]): HomeCard[] {
     eyebrow: item.event_type || "Event",
     body: truncate(
       plainText(item.summary) ||
-      plainText(item.plain_text) ||
-      plainText(item.content) ||
-      "View event details, venue, and schedule information.",
+        plainText(item.plain_text) ||
+        plainText(item.content) ||
+        "View event details, venue, and schedule information.",
       110,
     ),
     href: `/media/events/${item.slug}`,
     action: "View event",
-    imageUrl: publicFileUrl(item.cover_image_id) ?? publicFileUrl(item.featured_media_id),
-    meta: [formatDisplayDate(item.start_date), present(item.venue) ?? present(item.location)]
+    imageUrl:
+      publicFileUrl(item.cover_image_id) ??
+      publicFileUrl(item.featured_media_id),
+    meta: [
+      formatDisplayDate(item.start_date),
+      present(item.venue) ?? present(item.location),
+    ]
       .filter(Boolean)
       .join(" · "),
   }));
@@ -548,16 +579,21 @@ function normalizeBlog(item?: Blog): HomeCard | null {
     eyebrow: item.category || "Blog",
     body: truncate(
       plainText(item.summary) ||
-      plainText(item.excerpt) ||
-      plainText(item.plain_text) ||
-      plainText(item.content) ||
-      "Read the latest university article.",
+        plainText(item.excerpt) ||
+        plainText(item.plain_text) ||
+        plainText(item.content) ||
+        "Read the latest university article.",
       126,
     ),
     href: `/media/articles/${item.slug}`,
     action: "Read blog",
-    imageUrl: publicFileUrl(item.cover_image_id) ?? publicFileUrl(item.featured_media_id),
-    meta: [formatDisplayDate(item.published_at ?? item.created_at), present(item.author_name)]
+    imageUrl:
+      publicFileUrl(item.cover_image_id) ??
+      publicFileUrl(item.featured_media_id),
+    meta: [
+      formatDisplayDate(item.published_at ?? item.created_at),
+      present(item.author_name),
+    ]
       .filter(Boolean)
       .join(" · "),
   };
@@ -595,7 +631,10 @@ function formatDisplayDate(value?: string | null) {
 
 function resolveResearchAssetUrl(value: string) {
   if (/^(https?:|data:|blob:)/i.test(value)) return value;
-  return new URL(value.startsWith("/") ? value : `/${value}`, researchApiBaseUrl).toString();
+  return new URL(
+    value.startsWith("/") ? value : `/${value}`,
+    researchApiBaseUrl,
+  ).toString();
 }
 
 function partnerLogoUrl(record: Record<string, unknown>) {
@@ -604,7 +643,9 @@ function partnerLogoUrl(record: Record<string, unknown>) {
 
   const socialLinks = record.social_links;
   if (socialLinks && typeof socialLinks === "object") {
-    const assetPath = present((socialLinks as Record<string, unknown>).asset_path);
+    const assetPath = present(
+      (socialLinks as Record<string, unknown>).asset_path,
+    );
     if (assetPath) return resolveResearchAssetUrl(assetPath);
   }
 
@@ -706,12 +747,14 @@ export async function getHomepageData(): Promise<HomepageData> {
     schools: normalizeSchools(schools),
     viceChancellor: viceChancellor
       ? {
-        name: viceChancellor.name,
-        title: viceChancellor.title,
-        image: viceChancellor.image,
-        message: viceChancellorMessage,
-        href: viceChancellor.slug ? `/people/${viceChancellor.slug}` : "/about/university-management",
-      }
+          name: viceChancellor.name,
+          title: viceChancellor.title,
+          image: viceChancellor.image,
+          message: viceChancellorMessage,
+          href: viceChancellor.slug
+            ? `/people/${viceChancellor.slug}`
+            : "/about/university-management",
+        }
       : null,
     featuredProgrammes: normalizeFeaturedProgrammes(programmes),
     programmesSummary: buildProgrammeSummary(programmes),

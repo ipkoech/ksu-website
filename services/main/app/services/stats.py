@@ -12,18 +12,32 @@ from ..models import (
     Announcement,
     ArtsCulture,
     Blog,
+    Campus,
     Club,
+    ContactDirectory,
     Department,
     DepartmentService,
     Document,
     Event,
+    FAQ,
     Intake,
+    NewsletterSubscriber,
     News,
     Person,
     Programme,
     School,
     SportsFacility,
     StaffAssignment,
+    SupportTicket,
+    User,
+    Division,
+    Wing,
+    Board,
+    Alumni,
+    AlumniAssociation,
+    ExchangeProgramme,
+    Media,
+    Policy,
 )
 from ..schemas.stats import PublicStatItem, PublicStatsResponse
 
@@ -184,6 +198,138 @@ async def homepage_stats(db: AsyncSession) -> PublicStatsResponse:
     return PublicStatsResponse(
         scope="homepage",
         title="Kisii University at a glance",
+        stats=stats,
+    )
+
+
+async def university_stats(db: AsyncSession) -> PublicStatsResponse:
+    """Comprehensive public-safe university-wide stats."""
+
+    public_content = (
+        lambda model: (
+            model.is_public.is_(True),
+            model.is_published.is_(True),
+            model.status == "published",
+            model.archived_at.is_(None),
+        )
+    )
+
+    students_result = await db.execute(
+        select(
+            func.coalesce(
+                func.sum(Department.student_count + Department.postgraduate_student_count),
+                0,
+            )
+        ).where(
+            Department.deleted_at.is_(None),
+            Department.is_active.is_(True),
+            Department.is_public.is_(True),
+            Department.department_type == "academic",
+        )
+    )
+    students = int(students_result.scalar_one() or 0)
+
+    postgraduate_result = await db.execute(
+        select(func.coalesce(func.sum(Department.postgraduate_student_count), 0)).where(
+            Department.deleted_at.is_(None),
+            Department.is_active.is_(True),
+            Department.is_public.is_(True),
+            Department.department_type == "academic",
+        )
+    )
+    postgraduate_students = int(postgraduate_result.scalar_one() or 0)
+
+    active_staff_people = (
+        select(StaffAssignment.person_id)
+        .where(
+            StaffAssignment.deleted_at.is_(None),
+            StaffAssignment.is_public.is_(True),
+            StaffAssignment.status == "active",
+        )
+        .distinct()
+    )
+
+    public_updates = sum(
+        [
+            await _count(db, News, *public_content(News)),
+            await _count(db, Event, *public_content(Event)),
+            await _count(db, Blog, *public_content(Blog)),
+            await _count(db, Announcement, *public_content(Announcement)),
+        ]
+    )
+
+    student_life_records = sum(
+        [
+            await _count(db, Club, Club.is_active.is_(True), Club.is_public.is_(True)),
+            await _count(db, ArtsCulture, ArtsCulture.is_active.is_(True)),
+            await _count(db, SportsFacility, SportsFacility.is_active.is_(True)),
+        ]
+    )
+
+    support_records = sum(
+        [
+            await _count(db, FAQ, FAQ.is_public.is_(True), FAQ.status == "published"),
+            await _count(
+                db,
+                ContactDirectory,
+                ContactDirectory.is_public.is_(True),
+                ContactDirectory.status == "active",
+            ),
+        ]
+    )
+
+    stats = [
+        _item("campuses", "Campuses", await _count(db, Campus, Campus.is_active.is_(True)), "Active campuses", "/about/campuses"),
+        _item("schools", "Schools", await _count(db, School, School.is_active.is_(True), School.is_public.is_(True)), "Active public schools", "/academics/schools"),
+        _item(
+            "academic_departments",
+            "Academic Departments",
+            await _count(
+                db,
+                Department,
+                Department.is_active.is_(True),
+                Department.is_public.is_(True),
+                Department.department_type == "academic",
+            ),
+            "Active public academic departments",
+            "/academics/departments",
+        ),
+        _item("programmes", "Programmes", await _count(db, Programme, Programme.is_active.is_(True)), "Active academic programmes", "/academics/programmes"),
+        _item("students", "Students", students, "Students recorded across active public academic departments", "/academics"),
+        _item("postgraduate_students", "Postgraduate Students", postgraduate_students, "Postgraduate students recorded across public academic departments", "/academics/postgraduate"),
+        _item(
+            "public_staff",
+            "Public Staff Profiles",
+            await _count(db, Person, Person.is_active.is_(True), Person.is_public.is_(True)),
+            "Active public people and staff profiles",
+            "/people",
+        ),
+        _item(
+            "staff_assignments",
+            "Staff Assignments",
+            await _count(db, StaffAssignment, StaffAssignment.is_public.is_(True), StaffAssignment.status == "active"),
+            "Published active staff assignments",
+            "/people",
+        ),
+        _item(
+            "publication_records",
+            "Publication Records",
+            await _sum_publications_for_people(db, active_staff_people),
+            "Publication counts linked to published staff profiles",
+            "/research/publications",
+        ),
+        _item("open_intakes", "Open Intakes", await _count(db, Intake, Intake.is_active.is_(True), Intake.is_open.is_(True)), "Currently open admission intakes", "/admissions"),
+        _item("published_updates", "Published Updates", public_updates, "Published news, events, blogs, and announcements", "/news"),
+        _item("student_life", "Student Life Records", student_life_records, "Published clubs, arts, culture, and sports records", "/campus-life"),
+        _item("public_downloads", "Public Downloads", await _count(db, Document, Document.is_active.is_(True), Document.is_public.is_(True), Document.requires_login.is_(False)), "Public documents and downloads", "/downloads"),
+        _item("support_records", "Support Records", support_records, "Published FAQs and public contact records", "/contact"),
+        _item("alumni_records", "Alumni Records", await _count(db, Alumni, Alumni.is_public.is_(True)), "Public alumni records", "/alumni"),
+        _item("exchange_programmes", "Exchange Programmes", await _count(db, ExchangeProgramme, ExchangeProgramme.is_active.is_(True)), "Active exchange programmes", "/international"),
+    ]
+
+    return PublicStatsResponse(
+        scope="university",
+        title="University-wide institutional statistics",
         stats=stats,
     )
 
@@ -440,8 +586,57 @@ async def public_stats(
 ) -> PublicStatsResponse | None:
     if scope == "homepage":
         return await homepage_stats(db)
+    if scope == "university":
+        return await university_stats(db)
     if scope == "school" and slug:
         return await school_stats(db, slug)
     if scope == "department" and slug:
         return await department_stats(db, slug)
     return None
+
+
+async def admin_stats(db: AsyncSession) -> PublicStatsResponse:
+    """Operational stats for admin dashboards."""
+
+    published_content = sum(
+        [
+            await _count(db, News, News.status == "published", News.is_published.is_(True)),
+            await _count(db, Event, Event.status == "published", Event.is_published.is_(True)),
+            await _count(db, Blog, Blog.status == "published", Blog.is_published.is_(True)),
+            await _count(db, Announcement, Announcement.status == "published", Announcement.is_published.is_(True)),
+        ]
+    )
+    draft_content = sum(
+        [
+            await _count(db, News, News.status != "published"),
+            await _count(db, Event, Event.status != "published"),
+            await _count(db, Blog, Blog.status != "published"),
+            await _count(db, Announcement, Announcement.status != "published"),
+        ]
+    )
+
+    stats = [
+        _item("users", "Users", await _count(db, User), "User accounts in the main system", "/system/users"),
+        _item("active_users", "Active Users", await _count(db, User, User.is_active.is_(True)), "Active user accounts", "/system/users"),
+        _item("campuses", "Campuses", await _count(db, Campus), "Campus records", "/campuses"),
+        _item("schools", "Schools", await _count(db, School), "School records", "/schools"),
+        _item("departments", "Departments", await _count(db, Department), "Department records", "/departments"),
+        _item("divisions", "Divisions", await _count(db, Division), "Administrative division records", "/governance"),
+        _item("wings", "Wings", await _count(db, Wing), "Administrative wing records", "/governance"),
+        _item("boards", "Boards", await _count(db, Board), "Governance board records", "/governance"),
+        _item("programmes", "Programmes", await _count(db, Programme), "Programme records", "/academic/programmes"),
+        _item("open_intakes", "Open Intakes", await _count(db, Intake, Intake.is_open.is_(True)), "Admission intakes currently open", "/admissions"),
+        _item("people", "People Profiles", await _count(db, Person), "People and staff profile records", "/people"),
+        _item("staff_assignments", "Staff Assignments", await _count(db, StaffAssignment), "Staff assignment records", "/people"),
+        _item("published_content", "Published Content", published_content, "Published public content records", "/content"),
+        _item("draft_content", "Draft Content", draft_content, "Content records still not published", "/content"),
+        _item("documents", "Documents", await _count(db, Document), "Document records", "/documents"),
+        _item("policies", "Policies", await _count(db, Policy), "Policy records", "/policies"),
+        _item("media", "Media Assets", await _count(db, Media), "Media library assets", "/media"),
+        _item("support_tickets", "Support Tickets", await _count(db, SupportTicket), "Support ticket records", "/support"),
+        _item("newsletter_subscribers", "Newsletter Subscribers", await _count(db, NewsletterSubscriber, NewsletterSubscriber.status == "active"), "Active newsletter subscribers", "/newsletters"),
+        _item("alumni", "Alumni", await _count(db, Alumni), "Alumni records", "/alumni"),
+        _item("alumni_associations", "Alumni Associations", await _count(db, AlumniAssociation), "Alumni association records", "/alumni"),
+    ]
+
+    return PublicStatsResponse(scope="admin", title="Main service operational statistics", stats=stats)

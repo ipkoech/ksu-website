@@ -471,6 +471,8 @@ function crudApi<TRecord, TPayload>(path: string) {
 
 export const libraryServiceApi = {
   stats: () => libraryApi.get<{ data: PublicStatsResponse }>("/api/v1/stats"),
+  adminStats: () =>
+    libraryApi.get<{ data: PublicStatsResponse }>("/api/v1/stats/admin"),
   branches: {
     list: (params?: ListParams<{ active_only?: boolean }>) =>
       libraryApi.get<PaginatedResponse<LibraryBranch>>(
