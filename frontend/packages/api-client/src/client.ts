@@ -18,9 +18,21 @@ export interface ApiResponse<T> {
 }
 
 export interface ApiError {
-  detail: string;
+  detail?: string | ValidationIssue[] | Record<string, unknown>;
+  message?: string;
   code?: string;
-  errors?: Record<string, string[]>;
+  error?: {
+    detail?: string;
+    message?: string;
+  };
+  errors?: Record<string, string[] | string>;
+}
+
+interface ValidationIssue {
+  loc?: Array<string | number>;
+  msg?: string;
+  message?: string;
+  type?: string;
 }
 
 export interface PaginationParams {
@@ -110,10 +122,12 @@ export class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
+      const normalized = normalizeApiError(error);
       throw new ApiClientError(
-        error.detail || "Request failed",
+        normalized.message,
         response.status,
-        error.errors
+        normalized.errors,
+        normalized.code
       );
     }
 
@@ -172,11 +186,72 @@ export class ApiClientError extends Error {
   constructor(
     message: string,
     public status: number,
-    public errors?: Record<string, string[]>
+    public errors?: Record<string, string[]>,
+    public code?: string
   ) {
     super(message);
     this.name = "ApiClientError";
   }
+}
+
+function normalizeApiError(error: ApiError): {
+  message: string;
+  errors?: Record<string, string[]>;
+  code?: string;
+} {
+  const errors = normalizeErrorMap(error.errors) ?? validationIssuesToErrors(error.detail);
+  const validationMessage = validationIssuesToMessage(error.detail);
+  const message =
+    stringValue(error.detail) ||
+    stringValue(error.message) ||
+    stringValue(error.error?.detail) ||
+    stringValue(error.error?.message) ||
+    validationMessage ||
+    "Request failed";
+
+  return {
+    message,
+    errors,
+    code: error.code,
+  };
+}
+
+function normalizeErrorMap(
+  errors?: Record<string, string[] | string>
+): Record<string, string[]> | undefined {
+  if (!errors) return undefined;
+
+  return Object.fromEntries(
+    Object.entries(errors).map(([key, value]) => [
+      key,
+      Array.isArray(value) ? value.map(String) : [String(value)],
+    ])
+  );
+}
+
+function validationIssuesToErrors(
+  detail?: ApiError["detail"]
+): Record<string, string[]> | undefined {
+  if (!Array.isArray(detail)) return undefined;
+
+  return detail.reduce<Record<string, string[]>>((acc, issue) => {
+    const key = issue.loc?.length ? issue.loc.map(String).join(".") : "detail";
+    const message = issue.msg || issue.message || issue.type || "Invalid value";
+    acc[key] = [...(acc[key] ?? []), message];
+    return acc;
+  }, {});
+}
+
+function validationIssuesToMessage(detail?: ApiError["detail"]) {
+  if (!Array.isArray(detail) || detail.length === 0) return undefined;
+  const first = detail[0];
+  const field = first.loc?.length ? first.loc.map(String).join(".") : "request";
+  const message = first.msg || first.message || first.type || "Invalid value";
+  return `Validation failed: ${field} ${message}`;
+}
+
+function stringValue(value: unknown) {
+  return typeof value === "string" && value.trim() ? value : undefined;
 }
 
 // Service-specific clients
