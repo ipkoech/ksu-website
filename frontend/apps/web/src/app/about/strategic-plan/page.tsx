@@ -149,9 +149,9 @@ export default function StrategicPlanPage() {
                 </ul>
               </nav>
 
-              <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_70px_-42px_rgba(15,23,42,0.45)]">
-                <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_300px]">
-                  <div className="px-6 py-6 sm:px-8 lg:px-8 lg:py-7">
+              <div className="min-w-0 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_70px_-42px_rgba(15,23,42,0.45)]">
+                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-0 lg:grid-cols-[minmax(0,1fr)_300px]">
+                  <div className="min-w-0 px-6 py-6 sm:px-8 lg:px-8 lg:py-7">
                     <p className="text-sm font-semibold uppercase text-secondary">
                       Strategic Plan
                     </p>
@@ -163,11 +163,11 @@ export default function StrategicPlanPage() {
                       plan, key result areas, implementation references, and
                       related planning documents.
                     </p>
-                    <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                    <div className="mt-5 flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap">
                       {strategicPlan?.href ? (
                         <a
                           href={strategicPlan.href}
-                          className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
+                          className="inline-flex min-w-0 items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
                         >
                           Open strategic plan
                           <ExternalLink aria-hidden className="h-4 w-4" />
@@ -175,7 +175,7 @@ export default function StrategicPlanPage() {
                       ) : null}
                       <Link
                         href="/about/quality-assurance"
-                        className="inline-flex items-center justify-center gap-2 rounded-full border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
+                        className="inline-flex min-w-0 items-center justify-center gap-2 rounded-full border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
                       >
                         View quality context
                         <ArrowRight aria-hidden className="h-4 w-4" />
@@ -183,7 +183,7 @@ export default function StrategicPlanPage() {
                     </div>
                   </div>
 
-                  <div className="border-t border-slate-200 bg-slate-950 p-4 lg:border-l lg:border-t-0">
+                  <div className="min-w-0 border-t border-slate-200 bg-slate-950 p-4 lg:border-l lg:border-t-0">
                     <AboutIllustration
                       src={aboutIllustrations.strategicPlan}
                       alt="University stakeholders mapping strategic priorities in a planning workshop"

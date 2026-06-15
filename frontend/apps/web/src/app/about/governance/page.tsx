@@ -155,9 +155,9 @@ export default async function GovernancePage() {
                 </ul>
               </nav>
 
-              <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_70px_-42px_rgba(15,23,42,0.45)]">
-                <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_320px]">
-                  <div className="px-6 py-8 sm:px-8 lg:px-10 lg:py-10">
+              <div className="min-w-0 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_70px_-42px_rgba(15,23,42,0.45)]">
+                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-0 lg:grid-cols-[minmax(0,1fr)_320px]">
+                  <div className="min-w-0 px-6 py-8 sm:px-8 lg:px-10 lg:py-10">
                     <p className="text-sm font-semibold uppercase text-secondary">
                       University Governance
                     </p>
@@ -178,17 +178,17 @@ export default async function GovernancePage() {
                         {chancellorMessage}
                       </blockquote>
                     </article>
-                    <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                    <div className="mt-8 flex min-w-0 flex-col gap-3 sm:flex-row">
                       <Link
                         href="/about/governance/university-council"
-                        className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
+                        className="inline-flex min-w-0 items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
                       >
                         View University Council
                         <ArrowRight aria-hidden className="h-4 w-4" />
                       </Link>
                     </div>
                   </div>
-                  <div className="border-t border-slate-200 bg-slate-950 p-4 lg:border-l lg:border-t-0">
+                  <div className="min-w-0 border-t border-slate-200 bg-slate-950 p-4 lg:border-l lg:border-t-0">
                     <AboutIllustration
                       src={aboutIllustrations.governance}
                       alt="University Council governance meeting"
