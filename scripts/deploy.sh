@@ -5,6 +5,8 @@ usage() {
   cat <<'USAGE'
 Usage:
   scripts/deploy.sh local [options]
+  scripts/deploy.sh vm --host HOST --env dev|staging|production [options]
+  scripts/deploy.sh vm-backup --host HOST --env dev|staging|production [options]
   scripts/deploy.sh cloud --env dev|staging|production --project PROJECT_ID [options]
 
 Local options:
@@ -14,6 +16,21 @@ Local options:
   --skip-frontend      Skip pnpm install/build.
   --skip-build         Skip Docker image rebuild.
   --pull               Run git pull before deploying. Default for --remote.
+
+VM options:
+  --host HOST          SSH host, for example ubuntu@203.0.113.10. Required.
+  --env ENV            Deployment environment: dev, staging, or production. Required.
+  --branch BRANCH      Branch to deploy. Defaults to current branch.
+  --path PATH          Repository path on the VM. Defaults to this local repo path.
+  --project-name NAME  Docker Compose project name. Defaults to ksu-ENV.
+  --bootstrap          Install Docker packages on an Ubuntu/Debian VM before deploy.
+  --no-pull            Do not fetch/pull before deploying.
+  --no-backup          Skip the pre-deploy database backup.
+  --backup-dir DIR     Backup directory on the VM. Defaults to PATH/backups/ENV.
+  --no-gateway         Skip the nginx gateway.
+  --skip-frontend      Skip pnpm install/build.
+  --skip-build         Skip Docker image rebuild.
+  --dry-run            Print the SSH command without executing it.
 
 Cloud options:
   --env ENV            Deployment environment: dev, staging, or production. Required.
@@ -33,6 +50,8 @@ Cloud options:
 Examples:
   scripts/deploy.sh local
   scripts/deploy.sh local --skip-frontend
+  scripts/deploy.sh vm --host ubuntu@VM_IP --env staging --branch main
+  scripts/deploy.sh vm-backup --host ubuntu@VM_IP --env production
   scripts/deploy.sh cloud --env dev --project my-gcp-project
   scripts/deploy.sh cloud --env staging --project my-gcp-project --image-tag abc1234 --skip-build
   scripts/deploy.sh cloud --env production --project my-gcp-project --image-tag abc1234 --skip-build --run-migrations
@@ -70,6 +89,20 @@ require_cmd() {
 
 current_git_sha() {
   git -C "${ROOT}" rev-parse --short=12 HEAD
+}
+
+validate_env_name() {
+  case "$1" in
+    dev|staging|production) ;;
+    *)
+      echo "error: --env must be one of: dev, staging, production" >&2
+      exit 1
+      ;;
+  esac
+}
+
+shell_quote() {
+  printf '%q' "$1"
 }
 
 deploy_local() {
@@ -183,6 +216,270 @@ deploy_local() {
   docker compose ps "${services[@]}"
 }
 
+vm_remote_script() {
+  local mode="$1"
+  local env_name="$2"
+  local branch="$3"
+  local repo_path="$4"
+  local project_name="$5"
+  local bootstrap="$6"
+  local pull="$7"
+  local backup="$8"
+  local backup_dir="$9"
+  local with_gateway="${10}"
+  local skip_frontend="${11}"
+  local skip_build="${12}"
+
+  cat <<REMOTE
+set -euo pipefail
+
+ENV_NAME=$(shell_quote "${env_name}")
+BRANCH=$(shell_quote "${branch}")
+REPO_PATH=$(shell_quote "${repo_path}")
+PROJECT_NAME=$(shell_quote "${project_name}")
+BOOTSTRAP=$(shell_quote "${bootstrap}")
+PULL=$(shell_quote "${pull}")
+BACKUP=$(shell_quote "${backup}")
+BACKUP_DIR=$(shell_quote "${backup_dir}")
+WITH_GATEWAY=$(shell_quote "${with_gateway}")
+SKIP_FRONTEND=$(shell_quote "${skip_frontend}")
+SKIP_BUILD=$(shell_quote "${skip_build}")
+MODE=$(shell_quote "${mode}")
+
+if [[ "\${BOOTSTRAP}" -eq 1 ]]; then
+  if ! command -v docker >/dev/null 2>&1; then
+    echo "Installing Docker..."
+    sudo apt-get update
+    sudo apt-get install -y docker.io docker-compose-plugin
+    sudo systemctl enable --now docker
+  fi
+fi
+
+if ! command -v docker >/dev/null 2>&1; then
+  echo "error: docker is not installed on the VM; rerun with --bootstrap or install Docker first" >&2
+  exit 1
+fi
+
+DOCKER=(docker)
+if ! docker ps >/dev/null 2>&1; then
+  if sudo -n docker ps >/dev/null 2>&1; then
+    DOCKER=(sudo docker)
+  else
+    echo "error: current SSH user cannot access Docker; add the user to the docker group or allow passwordless sudo for docker" >&2
+    exit 1
+  fi
+fi
+
+if ! "\${DOCKER[@]}" compose version >/dev/null 2>&1; then
+  echo "error: docker compose plugin is not available on the VM" >&2
+  exit 1
+fi
+
+if [[ ! -d "\${REPO_PATH}/.git" ]]; then
+  echo "error: repository not found at \${REPO_PATH} on the VM" >&2
+  echo "Clone the repo there first, or pass --path." >&2
+  exit 1
+fi
+
+cd "\${REPO_PATH}"
+
+if [[ "\${PULL}" -eq 1 ]]; then
+  if [[ -z "\${BRANCH}" ]]; then
+    echo "error: branch is required when pulling" >&2
+    exit 1
+  fi
+  git fetch origin "\${BRANCH}"
+  git checkout "\${BRANCH}"
+  git pull --ff-only origin "\${BRANCH}"
+fi
+
+backup_database() {
+  mkdir -p "\${BACKUP_DIR}"
+  local stamp
+  stamp="\$(date -u +%Y%m%dT%H%M%SZ)"
+  local output="\${BACKUP_DIR}/ksu-\${ENV_NAME}-\${stamp}.sql.gz"
+
+  echo "Creating database backup: \${output}"
+  if "\${DOCKER[@]}" compose -p "\${PROJECT_NAME}" ps --status running postgres --format '{{.Service}}' | grep -qx postgres; then
+    "\${DOCKER[@]}" compose -p "\${PROJECT_NAME}" exec -T postgres pg_dump -U ksu -d ksu | gzip -9 > "\${output}"
+  elif "\${DOCKER[@]}" compose ps --status running postgres --format '{{.Service}}' | grep -qx postgres; then
+    "\${DOCKER[@]}" compose exec -T postgres pg_dump -U ksu -d ksu | gzip -9 > "\${output}"
+  else
+    echo "warning: postgres container is not running; skipping database backup" >&2
+    return 0
+  fi
+
+  chmod 600 "\${output}"
+  echo "Backup complete: \${output}"
+}
+
+if [[ "\${MODE}" = "backup" ]]; then
+  backup_database
+  exit 0
+fi
+
+if [[ "\${BACKUP}" -eq 1 ]]; then
+  backup_database
+fi
+
+if [[ "\${SKIP_FRONTEND}" -eq 0 && -f frontend/package.json ]]; then
+  if ! command -v pnpm >/dev/null 2>&1; then
+    echo "error: pnpm is required for frontend build; install pnpm or use --skip-frontend" >&2
+    exit 1
+  fi
+  echo "Installing frontend dependencies..."
+  (cd frontend && pnpm install --frozen-lockfile)
+  echo "Building frontend apps/packages..."
+  (cd frontend && pnpm build)
+fi
+
+services=(postgres redis main research library celery-main celery-library)
+if [[ "\${WITH_GATEWAY}" -eq 1 ]]; then
+  services+=(gateway)
+fi
+
+compose_args=(up -d --remove-orphans)
+if [[ "\${SKIP_BUILD}" -eq 0 ]]; then
+  compose_args+=(--build)
+fi
+compose_args+=("\${services[@]}")
+
+echo "Deploying Docker Compose project \${PROJECT_NAME}: \${services[*]}"
+"\${DOCKER[@]}" compose -p "\${PROJECT_NAME}" "\${compose_args[@]}"
+echo
+"\${DOCKER[@]}" compose -p "\${PROJECT_NAME}" ps "\${services[@]}"
+REMOTE
+}
+
+deploy_vm() {
+  local mode="$1"
+  shift
+
+  local host=""
+  local env_name=""
+  local branch
+  branch="$(git -C "${ROOT}" branch --show-current)"
+  local repo_path="${ROOT}"
+  local project_name=""
+  local bootstrap=0
+  local pull=1
+  local backup=1
+  local backup_dir=""
+  local with_gateway=1
+  local skip_frontend=0
+  local skip_build=0
+  DRY_RUN=0
+
+  if [[ "${mode}" = "backup" ]]; then
+    pull=0
+  fi
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --host)
+        host="${2:-}"
+        shift 2
+        ;;
+      --env)
+        env_name="${2:-}"
+        shift 2
+        ;;
+      --branch)
+        branch="${2:-}"
+        shift 2
+        ;;
+      --path)
+        repo_path="${2:-}"
+        shift 2
+        ;;
+      --project-name)
+        project_name="${2:-}"
+        shift 2
+        ;;
+      --bootstrap)
+        bootstrap=1
+        shift
+        ;;
+      --no-pull)
+        pull=0
+        shift
+        ;;
+      --no-backup)
+        backup=0
+        shift
+        ;;
+      --backup-dir)
+        backup_dir="${2:-}"
+        shift 2
+        ;;
+      --with-gateway)
+        with_gateway=1
+        shift
+        ;;
+      --no-gateway)
+        with_gateway=0
+        shift
+        ;;
+      --skip-frontend)
+        skip_frontend=1
+        shift
+        ;;
+      --skip-build)
+        skip_build=1
+        shift
+        ;;
+      --dry-run)
+        DRY_RUN=1
+        shift
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      *)
+        echo "error: unknown vm option: $1" >&2
+        usage >&2
+        exit 1
+        ;;
+    esac
+  done
+
+  if [[ -z "${host}" ]]; then
+    echo "error: --host is required for vm deploy" >&2
+    exit 1
+  fi
+  if [[ -z "${env_name}" ]]; then
+    echo "error: --env is required for vm deploy" >&2
+    exit 1
+  fi
+  validate_env_name "${env_name}"
+
+  if [[ -z "${branch}" && "${pull}" -eq 1 ]]; then
+    echo "error: cannot determine current branch; pass --branch or --no-pull" >&2
+    exit 1
+  fi
+
+  if [[ -z "${project_name}" ]]; then
+    project_name="ksu-${env_name}"
+  fi
+
+  if [[ -z "${backup_dir}" ]]; then
+    backup_dir="${repo_path}/backups/${env_name}"
+  fi
+
+  local remote
+  if [[ "${mode}" = "backup" ]]; then
+    backup=1
+  fi
+  remote="$(vm_remote_script "${mode}" "${env_name}" "${branch}" "${repo_path}" "${project_name}" "${bootstrap}" "${pull}" "${backup}" "${backup_dir}" "${with_gateway}" "${skip_frontend}" "${skip_build}")"
+
+  if [[ "${DRY_RUN}" -eq 1 ]]; then
+    printf '+ ssh %q %q\n' "${host}" "${remote}"
+  else
+    ssh "${host}" "${remote}"
+  fi
+}
+
 cloud_services() {
   cat <<'SERVICES'
 main:services/main/Dockerfile:8000:main
@@ -208,13 +505,7 @@ SERVICES
 }
 
 validate_cloud_env() {
-  case "$1" in
-    dev|staging|production) ;;
-    *)
-      echo "error: --env must be one of: dev, staging, production" >&2
-      exit 1
-      ;;
-  esac
+  validate_env_name "$1"
 }
 
 image_uri() {
@@ -546,6 +837,14 @@ main() {
     local)
       shift
       deploy_local "$@"
+      ;;
+    vm)
+      shift
+      deploy_vm deploy "$@"
+      ;;
+    vm-backup)
+      shift
+      deploy_vm backup "$@"
       ;;
     cloud)
       shift
