@@ -19,7 +19,20 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=300, vary_on=("page", "per_page", "campus_id", "accommodation_type", "gender", "fields", "include"))
+@cached_public(
+    timeout=300,
+    vary_on=(
+        "page",
+        "per_page",
+        "campus_id",
+        "accommodation_type",
+        "gender",
+        "is_active",
+        "is_accepting_applications",
+        "fields",
+        "include",
+    ),
+)
 async def list_accommodations(
     db: DbSession,
     page: int = Query(1, ge=1),
@@ -27,6 +40,8 @@ async def list_accommodations(
     campus_id: uuid.UUID | None = None,
     accommodation_type: str | None = None,
     gender: str | None = None,
+    is_active: bool | None = True,
+    is_accepting_applications: bool | None = None,
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(Accommodation, fields)
@@ -37,13 +52,15 @@ async def list_accommodations(
         campus_id=campus_id,
         accommodation_type=accommodation_type,
         gender=gender,
+        is_active=is_active,
+        is_accepting_applications=is_accepting_applications,
         load_options=selector.load_options,
     )
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
 @router.get("/{slug}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_accommodation(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Accommodation, fields)
     item = await AccommodationService.get_by_slug(db, slug, load_options=selector.load_options)

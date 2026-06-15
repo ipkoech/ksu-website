@@ -19,13 +19,14 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=300, vary_on=("page", "per_page", "governance_type", "school_id", "fields", "include"))
+@cached_public(timeout=300, vary_on=("page", "per_page", "governance_type", "school_id", "is_active", "fields", "include"))
 async def list_student_governance(
     db: DbSession,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     governance_type: str | None = None,
     school_id: uuid.UUID | None = None,
+    is_active: bool | None = True,
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(StudentGovernance, fields)
@@ -35,13 +36,14 @@ async def list_student_governance(
         per_page=per_page,
         governance_type=governance_type,
         school_id=school_id,
+        is_active=is_active,
         load_options=selector.load_options,
     )
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
 @router.get("/{slug}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_student_governance(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(StudentGovernance, fields)
     item = await StudentGovernanceService.get_by_slug(db, slug, load_options=selector.load_options)

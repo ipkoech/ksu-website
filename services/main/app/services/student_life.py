@@ -179,6 +179,7 @@ class AccommodationService:
         accommodation_type: str | None = None,
         gender: str | None = None,
         is_active: bool | None = True,
+        is_accepting_applications: bool | None = None,
         load_options: Sequence = (),
     ) -> PaginatedResult:
         query = select(Accommodation).order_by(Accommodation.name.asc())
@@ -192,6 +193,8 @@ class AccommodationService:
             query = query.where(Accommodation.gender == gender)
         if is_active is not None:
             query = query.where(Accommodation.is_active.is_(is_active))
+        if is_accepting_applications is not None:
+            query = query.where(Accommodation.is_accepting_applications.is_(is_accepting_applications))
         return await paginate_query(db, query, page=page, per_page=per_page)
 
 

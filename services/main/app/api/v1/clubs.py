@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=300, vary_on=("page", "per_page", "q", "club_type", "school_id", "department_id", "fields", "include"))
+@cached_public(timeout=300, vary_on=("page", "per_page", "q", "club_type", "school_id", "department_id", "is_active", "fields", "include"))
 async def list_clubs(
     db: DbSession,
     page: int = Query(1, ge=1),
@@ -28,6 +28,7 @@ async def list_clubs(
     club_type: str | None = None,
     school_id: uuid.UUID | None = None,
     department_id: uuid.UUID | None = None,
+    is_active: bool | None = True,
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(Club, fields)
@@ -39,13 +40,14 @@ async def list_clubs(
         club_type=club_type,
         school_id=school_id,
         department_id=department_id,
+        is_active=is_active,
         load_options=selector.load_options,
     )
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
 @router.get("/{slug}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_club(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Club, fields)
     item = await ClubService.get_by_slug(db, slug, load_options=selector.load_options)
@@ -55,7 +57,7 @@ async def get_club(slug: str, db: DbSession, fields: FieldSelection = FieldsDep)
 
 
 @router.get("/{slug}/activities")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_club_activities(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     item = await ClubService.get_by_slug(db, slug)
     if item is None:

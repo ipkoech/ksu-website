@@ -89,6 +89,22 @@ function baseParams(perPage: number, fields: string): QueryParams {
   return { per_page: perPage, fields };
 }
 
+function statusParams(
+  status: string | undefined,
+  targetArea: string,
+): QueryParams {
+  const value = clean(status);
+  if (value === "active") return { is_active: true };
+  if (value === "inactive") return { is_active: false };
+  if (targetArea === "accommodation" && value === "accepting") {
+    return { is_accepting_applications: true };
+  }
+  if (targetArea === "accommodation" && value === "closed") {
+    return { is_accepting_applications: false };
+  }
+  return {};
+}
+
 function listParamsForArea(
   area: string | undefined,
   targetArea: string,
@@ -101,6 +117,7 @@ function listParamsForArea(
   if (area === targetArea) {
     if (typeParam) params[typeParam] = clean(filters?.type);
     if (targetArea === "clubs") params.q = clean(filters?.q);
+    Object.assign(params, statusParams(filters?.status, targetArea));
   }
   return params;
 }

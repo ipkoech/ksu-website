@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=300, vary_on=("page", "per_page", "category", "school_id", "club_id", "fields", "include"))
+@cached_public(timeout=300, vary_on=("page", "per_page", "category", "school_id", "club_id", "is_active", "fields", "include"))
 async def list_arts_culture(
     db: DbSession,
     page: int = Query(1, ge=1),
@@ -27,6 +27,7 @@ async def list_arts_culture(
     category: str | None = None,
     school_id: uuid.UUID | None = None,
     club_id: uuid.UUID | None = None,
+    is_active: bool | None = True,
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(ArtsCulture, fields)
@@ -37,13 +38,14 @@ async def list_arts_culture(
         category=category,
         school_id=school_id,
         club_id=club_id,
+        is_active=is_active,
         load_options=selector.load_options,
     )
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
 @router.get("/{slug}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_arts_culture(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(ArtsCulture, fields)
     item = await ArtsCultureService.get_by_slug(db, slug, load_options=selector.load_options)

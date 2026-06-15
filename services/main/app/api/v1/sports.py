@@ -19,13 +19,14 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=300, vary_on=("page", "per_page", "campus_id", "facility_type", "fields", "include"))
+@cached_public(timeout=300, vary_on=("page", "per_page", "campus_id", "facility_type", "is_active", "fields", "include"))
 async def list_sports_facilities(
     db: DbSession,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     campus_id: uuid.UUID | None = None,
     facility_type: str | None = None,
+    is_active: bool | None = True,
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(SportsFacility, fields)
@@ -35,13 +36,14 @@ async def list_sports_facilities(
         per_page=per_page,
         campus_id=campus_id,
         facility_type=facility_type,
+        is_active=is_active,
         load_options=selector.load_options,
     )
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
 @router.get("/{slug}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_sports_facility(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(SportsFacility, fields)
     item = await SportsFacilityService.get_by_slug(db, slug, load_options=selector.load_options)

@@ -450,7 +450,7 @@ export const programmesApi = {
 
 // Clubs
 export const clubsApi = {
-  list: (params?: ListParams<{ q?: string; club_type?: string; school_id?: string; department_id?: string }>) =>
+  list: (params?: ListParams<{ q?: string; club_type?: string; school_id?: string; department_id?: string; is_active?: boolean }>) =>
     mainApi.get<PaginatedResponse<Club>>("/api/v1/clubs", params),
 
   getBySlug: (slug: string, params?: FieldSelectionParams) =>
@@ -470,7 +470,7 @@ export const clubsApi = {
 };
 
 export const accommodationsApi = {
-  list: (params?: ListParams<{ campus_id?: string; accommodation_type?: string; gender?: string }>) =>
+  list: (params?: ListParams<{ campus_id?: string; accommodation_type?: string; gender?: string; is_active?: boolean; is_accepting_applications?: boolean }>) =>
     mainApi.get<PaginatedResponse<Accommodation>>("/api/v1/accommodations", params),
 
   getBySlug: (slug: string, params?: FieldSelectionParams) =>
@@ -487,7 +487,7 @@ export const accommodationsApi = {
 };
 
 export const sportsFacilitiesApi = {
-  list: (params?: ListParams<{ campus_id?: string; facility_type?: string }>) =>
+  list: (params?: ListParams<{ campus_id?: string; facility_type?: string; is_active?: boolean }>) =>
     mainApi.get<PaginatedResponse<SportsFacility>>("/api/v1/sports-facilities", params),
 
   getBySlug: (slug: string, params?: FieldSelectionParams) =>
@@ -504,7 +504,7 @@ export const sportsFacilitiesApi = {
 };
 
 export const artsCultureApi = {
-  list: (params?: ListParams<{ category?: string; school_id?: string; club_id?: string }>) =>
+  list: (params?: ListParams<{ category?: string; school_id?: string; club_id?: string; is_active?: boolean }>) =>
     mainApi.get<PaginatedResponse<ArtsCulture>>("/api/v1/arts-culture", params),
 
   getBySlug: (slug: string, params?: FieldSelectionParams) =>
@@ -521,7 +521,7 @@ export const artsCultureApi = {
 };
 
 export const studentGovernanceApi = {
-  list: (params?: ListParams<{ governance_type?: string; school_id?: string }>) =>
+  list: (params?: ListParams<{ governance_type?: string; school_id?: string; is_active?: boolean }>) =>
     mainApi.get<PaginatedResponse<StudentGovernance>>("/api/v1/student-governance", params),
 
   getBySlug: (slug: string, params?: FieldSelectionParams) =>
