@@ -85,7 +85,7 @@ export function ResearchInstitutionalHero({
               </div>
 
               <div className="mt-5 overflow-hidden rounded-lg border border-white/10 bg-white/5">
-                <div className="relative aspect-[16/9] min-h-[260px]">
+                <div className="relative aspect-[16/9] min-h-[190px] sm:min-h-[260px]">
                   <Image
                     src={imageSrc}
                     alt={imageAlt}
@@ -136,7 +136,7 @@ export function InstitutionalPanel({
   return (
     <article
       id={id}
-      className={`rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)] ${className}`}
+      className={`min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)] ${className}`}
     >
       {children}
     </article>

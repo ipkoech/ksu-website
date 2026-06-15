@@ -38,8 +38,8 @@ export default async function TrainingDetailPage({ params }: { params: Promise<{
       />
       {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}
       <ResearchSection eyebrow="Learning Details" title="Programme, audience, and registration" body="Training detail uses the public training record for schedule, curriculum, facilitators, fees, certification, and materials." tone="white">
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="space-y-5">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0 space-y-5">
             <ResearchTextPanel title="Overview" fields={[["Summary", training.summary], ["Description", training.description], ["Objectives", training.objectives], ["Target audience", training.target_audience]]} />
             <ResearchTextPanel title="Curriculum and outcomes" fields={[["Prerequisites", training.prerequisites], ["Curriculum", training.curriculum], ["Outcomes", training.outcomes], ["Schedule", training.schedule]]} />
           </div>

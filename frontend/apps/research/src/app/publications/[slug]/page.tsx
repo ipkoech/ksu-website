@@ -85,8 +85,8 @@ export default async function PublicationDetailPage({
         body="This page uses public language for bibliographic, access, and research-context relationships."
         tone="white"
       >
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="space-y-5">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0 space-y-5">
             <ResearchTextPanel
               title="About this publication"
               fields={[

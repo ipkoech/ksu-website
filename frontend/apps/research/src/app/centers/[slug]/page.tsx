@@ -88,8 +88,8 @@ export default async function CenterDetailPage({
         body="Center profiles are loaded from the Research Centers endpoint and connected records are resolved through their public endpoints."
         tone="white"
       >
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="space-y-5">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0 space-y-5">
             <ResearchTextPanel
               title="Profile"
               fields={[

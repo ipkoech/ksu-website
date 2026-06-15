@@ -73,8 +73,8 @@ export default async function PartnerDetailPage({
         body="Partner profiles show what the organization supports, how they collaborate, and where public engagement records exist."
         tone="white"
       >
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="space-y-5">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0 space-y-5">
             <ResearchTextPanel
               title="About"
               fields={[

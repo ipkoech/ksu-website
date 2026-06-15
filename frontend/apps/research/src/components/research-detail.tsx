@@ -129,7 +129,7 @@ export function ResearchDetailHero({
           </ScrollReveal>
 
           <ScrollReveal className="overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white shadow-sm">
-            <div className="relative aspect-[4/3] min-h-[300px]">
+            <div className="relative aspect-[4/3] min-h-[220px] sm:min-h-[300px]">
               <Image
                 src={imageSrc}
                 alt={imageAlt || title}
@@ -215,8 +215,8 @@ export function ResearchRecordDetail({
         body={compactText(record.code) ? `Code: ${compactText(record.code)}` : undefined}
         tone="white"
       >
-        <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
-          <div className="space-y-5">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0 space-y-5">
             {sections.map((section) => (
               <DetailTextSection key={section.title} record={record} section={section} />
             ))}
@@ -297,13 +297,13 @@ function DetailTextSection({
   if (entries.length === 0) return null;
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">{section.title}</h2>
       <div className="mt-4 space-y-4">
         {entries.map((entry) => (
           <div key={entry.label}>
             <p className="text-xs font-semibold uppercase text-slate-500">{entry.label}</p>
-            <p className="mt-1 whitespace-pre-line text-sm leading-7 text-slate-600">
+            <p className="mt-1 break-words whitespace-pre-line text-sm leading-7 text-slate-600">
               {entry.value}
             </p>
           </div>
@@ -327,7 +327,7 @@ export function ResearchTextPanel({
     .filter(([, value]) => value);
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
         {title}
       </h2>
@@ -336,7 +336,7 @@ export function ResearchTextPanel({
           {entries.map(([label, value]) => (
             <div key={label}>
               <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
-              <p className="mt-1 whitespace-pre-line text-sm leading-7 text-slate-600">
+              <p className="mt-1 break-words whitespace-pre-line text-sm leading-7 text-slate-600">
                 {value}
               </p>
             </div>
@@ -351,9 +351,9 @@ export function ResearchTextPanel({
 
 export function ResearchFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md bg-slate-50 p-3">
+    <div className="min-w-0 rounded-md bg-slate-50 p-3">
       <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-      <dd className="mt-1 break-words font-semibold text-slate-950">
+      <dd className="mt-1 break-words font-semibold text-slate-950 [overflow-wrap:anywhere]">
         {value || "Not published"}
       </dd>
     </div>
@@ -372,7 +372,7 @@ export function ResearchRecordPanel({
   empty?: string;
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
       <div className="mt-4 divide-y divide-slate-200">
         {records.slice(0, 8).map((record, index) => (
@@ -401,7 +401,7 @@ export function ResearchRecordGrid({
   return (
     <div className="grid gap-5 lg:grid-cols-3">
       {records.map((record, index) => (
-        <article key={record.id ?? index} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <article key={record.id ?? index} className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-base font-semibold text-slate-950">
             {record.name ?? record.title ?? record.file_name ?? record.document_name ?? `File ${index + 1}`}
           </h2>
@@ -435,7 +435,7 @@ export function ResearchRelationshipCard({
   empty: string;
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
       {record ? (
         <>

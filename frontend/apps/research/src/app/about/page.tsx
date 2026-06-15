@@ -122,7 +122,7 @@ export default async function AboutPage() {
         body="The mandate, mission, vision, priorities, and leadership message are pulled from published Research Office records."
         tone="white"
       >
-        <div id="mandate" className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div id="mandate" className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <ScrollReveal>
             {leadOffice ? (
               <InstitutionalPanel className="h-full">

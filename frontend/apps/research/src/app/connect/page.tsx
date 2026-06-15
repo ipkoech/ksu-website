@@ -148,7 +148,7 @@ export default async function ConnectPage() {
         body="Public mentorship programmes are listed here with direct routes for prospective mentors and mentees to contact the research office."
         tone="white"
       >
-        <div id="mentorship" className="grid gap-5 lg:grid-cols-[1fr_360px]">
+        <div id="mentorship" className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <DirectoryPanel title="Available mentorship programmes" records={mentorship.data} error={mentorship.error} />
           <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-xl font-semibold text-slate-950">Sign up</h2>
@@ -214,7 +214,7 @@ export default async function ConnectPage() {
         body="Donation stories and impact records show why philanthropic support matters."
         tone="white"
       >
-        <div id="donate" className="grid gap-5 lg:grid-cols-[1fr_360px]">
+        <div id="donate" className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <DirectoryPanel title="Donation stories" records={donationStories.data} error={donationStories.error} />
           <aside className="rounded-lg border border-secondary/30 bg-secondary/10 p-5 shadow-sm">
             <h2 className="text-xl font-semibold text-slate-950">Donate to research</h2>

@@ -89,8 +89,8 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
         body="This page presents the public story and connects it to the research activity, unit, output, or innovation it references."
         tone="white"
       >
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="space-y-5">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0 space-y-5">
             {imageUrl ? (
               <figure className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
                 <Image

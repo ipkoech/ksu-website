@@ -170,8 +170,8 @@ export default async function DonatePage() {
         body="This form follows the backend donor and donation schema. The final payment route is controlled by donation settings, so the public page can point to the approved giving channel."
         tone="white"
       >
-        <div id="make-a-gift" className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_520px]">
-          <div className="space-y-5">
+        <div id="make-a-gift" className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_520px]">
+          <div className="min-w-0 space-y-5">
             <ImpactFeature impact={featuredImpact} />
             <StoryFeature story={featuredStory} />
           </div>
@@ -208,7 +208,7 @@ export default async function DonatePage() {
         body="Endowments and major gifts need a more guided conversation. The page keeps those pathways visible without mixing them into quick giving."
         tone="white"
       >
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="grid gap-5 md:grid-cols-2">
             {endowments.data.slice(0, 4).map((fund) => (
               <article key={fund.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -622,7 +622,7 @@ function InputField({
 function ImpactFeature({ impact }: { impact?: ResearchGenericRecord }) {
   return (
     <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="relative aspect-[16/7] min-h-[220px]">
+      <div className="relative aspect-[16/7] min-h-[150px] sm:min-h-[220px]">
         <Image
           src="/images/research/research-workflows.png"
           alt="Donation impact reporting and research outcomes"

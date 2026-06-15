@@ -110,7 +110,7 @@ export default async function FundingPage({
           ))}
 
         {grants.data.length > 0 ? (
-          <div className="mt-7 grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="mt-7 grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
             <div className="grid gap-5 md:grid-cols-2">
               {grants.data.map((grant) => (
                 <GrantCard key={grant.id} grant={grant} />

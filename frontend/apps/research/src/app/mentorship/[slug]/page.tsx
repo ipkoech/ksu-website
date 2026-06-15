@@ -41,8 +41,8 @@ export default async function MentorshipDetailPage({ params }: { params: Promise
       />
       {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}
       <ResearchSection eyebrow="Mentorship Pathway" title="Programme fit, expectations, and application window" body="Mentorship detail explains who the pathway serves, how it works, what applicants need, and how cohorts are organized." tone="white">
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="space-y-5">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0 space-y-5">
             <ResearchTextPanel title="Overview" fields={[["Summary", mentorship.summary], ["Description", mentorship.description], ["Objectives", mentorship.objectives], ["Benefits", mentorship.benefits]]} />
             <ResearchTextPanel title="Requirements and expectations" fields={[["Mentor requirements", mentorship.mentor_requirements], ["Mentee requirements", mentorship.mentee_requirements], ["Expectations", mentorship.expectations], ["Guidelines", mentorship.guidelines]]} />
           </div>

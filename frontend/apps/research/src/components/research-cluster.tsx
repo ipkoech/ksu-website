@@ -85,7 +85,7 @@ export function ResearchClusterHero({
           </ScrollReveal>
 
           <ScrollReveal className="overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white shadow-sm">
-            <div className="relative aspect-[4/3] min-h-[300px]">
+            <div className="relative aspect-[4/3] min-h-[220px] sm:min-h-[300px]">
               <Image
                 src={imageSrc}
                 alt={imageAlt}
