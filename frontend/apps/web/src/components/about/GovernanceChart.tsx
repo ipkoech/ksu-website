@@ -178,6 +178,8 @@ function buildTree({
   ];
 
   if (managementOnly) {
+    type ManagementPortfolio = "arsa" | "apf";
+
     const deputyPeople = managementPeople.filter((member) =>
       roleIncludes(member, ["deputy", "dvc"]),
     );
@@ -190,45 +192,109 @@ function buildTree({
     );
     const managementChildren: OrgNode[] = [];
 
+    const memberKey = (member: BoardMember) =>
+      `${normalize(member.name)}-${normalize(member.role)}`;
+    const deputyPortfolio = (member: BoardMember): ManagementPortfolio | null => {
+      if (
+        roleIncludes(member, [
+          "arsa",
+          "academic",
+          "research",
+          "student affairs",
+        ])
+      ) {
+        return "arsa";
+      }
+
+      if (
+        roleIncludes(member, [
+          "ap&f",
+          "administration",
+          "planning",
+          "finance",
+        ])
+      ) {
+        return "apf";
+      }
+
+      return null;
+    };
+    const officerPortfolio = (
+      member: BoardMember,
+    ): ManagementPortfolio | null => {
+      if (
+        roleIncludes(member, [
+          "aa",
+          "academic affairs",
+          "reirm",
+          "research",
+          "extension",
+          "innovation",
+        ])
+      ) {
+        return "arsa";
+      }
+
+      if (
+        roleIncludes(member, [
+          "ahrcs",
+          "administration",
+          "human resource",
+          "central services",
+          "finance",
+        ])
+      ) {
+        return "apf";
+      }
+
+      return null;
+    };
+    const assignedOfficerKeys = new Set<string>();
+
     if (deputyPeople.length) {
-      managementChildren.push({
-        id: "deputy-vice-chancellors",
-        title: "Deputy Vice Chancellors",
-        role: "Executive portfolios",
-        description: "Academic, research, student affairs, administration, planning, and finance leadership.",
-        kind: "group",
-        childCount: deputyPeople.length,
-        children: deputyPeople.map((member, index) =>
-          personNode("deputy", member, index),
-        ),
+      deputyPeople.forEach((deputy, deputyIndex) => {
+        const portfolio = deputyPortfolio(deputy);
+        const portfolioOfficers = registrarPeople.filter((officer) => {
+          const isMatch =
+            portfolio !== null && officerPortfolio(officer) === portfolio;
+
+          if (isMatch) assignedOfficerKeys.add(memberKey(officer));
+
+          return isMatch;
+        });
+
+        managementChildren.push({
+          ...personNode("deputy", deputy, deputyIndex),
+          description:
+            portfolio === "arsa"
+              ? "Academic, research, and student affairs portfolio."
+              : portfolio === "apf"
+                ? "Administration, planning, and finance portfolio."
+                : undefined,
+          childCount: portfolioOfficers.length,
+          children: portfolioOfficers.map((member, index) =>
+            personNode(`deputy-${deputyIndex}-officer`, member, index),
+          ),
+        });
       });
     }
 
-    if (registrarPeople.length) {
-      managementChildren.push({
-        id: "registrars-and-finance",
-        title: "Registrars and Finance",
-        role: "Administrative leadership",
-        description: "Registrar portfolios and financial stewardship offices.",
-        kind: "group",
-        childCount: registrarPeople.length,
-        children: registrarPeople.map((member, index) =>
-          personNode("registrar-finance", member, index),
-        ),
-      });
-    }
+    const unassignedOfficers = registrarPeople.filter(
+      (member) => !assignedOfficerKeys.has(memberKey(member)),
+    );
+    const otherMembers = [...unassignedOfficers, ...otherManagementPeople];
 
-    if (otherManagementPeople.length) {
+    if (otherMembers.length) {
       managementChildren.push({
-        id: "management-board",
-        title: "Management Board",
-        role: "Implementation",
+        id: "other-management-members",
+        title: "Other Management Members",
+        role: "Management support",
         description:
           managementDescription ||
-          "Day-to-day administration and implementation of university policies.",
+          "Additional published university management records.",
         kind: "group",
-        childCount: otherManagementPeople.length,
-        children: otherManagementPeople.map((member, index) =>
+        childCount: otherMembers.length,
+        children: otherMembers.map((member, index) =>
           personNode("management", member, index),
         ),
       });
