@@ -26,17 +26,27 @@ type TeamMember = {
   office: string | null;
   interests: string[];
   photoUrl: string | null;
-  group: string;
+  group: TeamGroupKey;
   assignment: PublicTeamAssignment;
 };
 
+type TeamGroupKey =
+  | "leadership"
+  | "academic"
+  | "administrative"
+  | "technical"
+  | "other";
+
+type TeamGroupFilter = "all" | TeamGroupKey;
+
 type StaffGroup = {
-  key: string;
+  key: TeamGroupKey;
   label: string;
   members: TeamMember[];
 };
 
-const groupLabels: Record<string, string> = {
+const groupLabels: Record<TeamGroupKey, string> = {
+  leadership: "Leadership",
   academic: "Academic Staff",
   administrative: "Administrative Staff",
   technical: "Technical Staff",
@@ -113,13 +123,37 @@ function roleLabel(
   );
 }
 
-function groupKey(assignment: PublicTeamAssignment, person?: PublicTeamPerson) {
-  if (assignment.group && assignment.group !== "leadership")
-    return assignment.group;
+function groupKey(
+  assignment: PublicTeamAssignment,
+  person?: PublicTeamPerson,
+): TeamGroupKey {
+  const declaredGroup = assignment.group?.toLowerCase().replace(/[\s-]+/g, "_");
+  if (declaredGroup) {
+    if (/academic|faculty|teaching/.test(declaredGroup)) return "academic";
+    if (/admin|office|professional/.test(declaredGroup))
+      return "administrative";
+    if (/technical|technician|lab|ict/.test(declaredGroup)) return "technical";
+    if (/leadership|management|executive/.test(declaredGroup))
+      return "leadership";
+  }
 
-  const role = assignment.role?.toLowerCase() ?? "";
+  const role = [
+    assignment.role,
+    assignment.role_label,
+    assignment.role_display,
+    assignment.title,
+    person?.institutional_role,
+    person?.academic_rank,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  const level = Number(assignment.hierarchy_level ?? 99);
   if (
-    ["dean", "deputy_dean", "hod", "head", "cod", "coordinator"].includes(role)
+    level <= 8 ||
+    /dean|director|registrar|head|hod|chair|coordinator|lead|principal/.test(
+      role,
+    )
   ) {
     return "leadership";
   }
@@ -192,14 +226,14 @@ function isDeputyOrCoordinator(member: TeamMember) {
 }
 
 function groupStaffMembers(members: TeamMember[]): StaffGroup[] {
-  const grouped = new Map<string, TeamMember[]>();
+  const grouped = new Map<TeamGroupKey, TeamMember[]>();
 
   for (const member of members) {
     const key = member.group === "leadership" ? "other" : member.group;
     grouped.set(key, [...(grouped.get(key) ?? []), member]);
   }
 
-  return ["academic", "administrative", "technical", "other"]
+  return (["academic", "administrative", "technical", "other"] as const)
     .map((key) => ({
       key,
       label: groupLabels[key] ?? "Team Members",
@@ -221,17 +255,31 @@ function roleOptions(members: TeamMember[]) {
     .sort((first, second) => first.label.localeCompare(second.label));
 }
 
-function filterMembers(members: TeamMember[], query: string, role: string) {
+function groupOptions(members: TeamMember[]) {
+  const groups = new Set(members.map((member) => member.group));
+
+  return (["leadership", "academic", "administrative", "technical", "other"] as const)
+    .filter((key) => groups.has(key))
+    .map((key) => ({ value: key, label: groupLabels[key] }));
+}
+
+function filterMembers(
+  members: TeamMember[],
+  query: string,
+  role: string,
+  group: TeamGroupFilter,
+) {
   const term = query.trim().toLowerCase();
 
   return members.filter((member) => {
     const matchesRole = role === "all" || member.assignment.role === role;
+    const matchesGroup = group === "all" || member.group === group;
     const matchesQuery =
       !term ||
       [member.name, member.role, member.email, member.office]
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(term));
-    return matchesRole && matchesQuery;
+    return matchesRole && matchesGroup && matchesQuery;
   });
 }
 
@@ -258,18 +306,24 @@ function Avatar({ member }: { member: TeamMember }) {
 function SearchControls({
   query,
   role,
+  group,
   roles,
+  groups,
   onQuery,
   onRole,
+  onGroup,
 }: {
   query: string;
   role: string;
+  group: TeamGroupFilter;
   roles: Array<{ value: string; label: string }>;
+  groups: Array<{ value: TeamGroupKey; label: string }>;
   onQuery: (value: string) => void;
   onRole: (value: string) => void;
+  onGroup: (value: TeamGroupFilter) => void;
 }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-[minmax(220px,1fr)_10rem]">
+    <div className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_11rem_10rem]">
       <label className="relative block">
         <Search
           aria-hidden
@@ -280,6 +334,24 @@ function SearchControls({
           onChange={(event) => onQuery(event.target.value)}
           placeholder="Search team member..."
           className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none ring-primary/20 transition placeholder:text-slate-400 focus:border-primary focus:ring-4"
+        />
+      </label>
+      <label className="relative block">
+        <select
+          value={group}
+          onChange={(event) => onGroup(event.target.value as TeamGroupFilter)}
+          className="h-11 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-9 text-sm font-semibold text-slate-700 outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
+        >
+          <option value="all">All Groups</option>
+          {groups.map((item) => (
+            <option key={item.value} value={item.value}>
+              {item.label}
+            </option>
+          ))}
+        </select>
+        <ChevronDown
+          aria-hidden
+          className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
         />
       </label>
       <label className="relative block">
@@ -484,11 +556,13 @@ export function PublicTeamSection({
 }) {
   const [query, setQuery] = useState("");
   const [role, setRole] = useState("all");
+  const [group, setGroup] = useState<TeamGroupFilter>("all");
   const members = useMemo(() => (team ? buildMembers(team) : []), [team]);
   const roles = useMemo(() => roleOptions(members), [members]);
+  const groups = useMemo(() => groupOptions(members), [members]);
   const visibleMembers = useMemo(
-    () => filterMembers(members, query, role),
-    [members, query, role],
+    () => filterMembers(members, query, role, group),
+    [group, members, query, role],
   );
   const topLeadership = visibleMembers.filter(isTopLeadership);
   const deputies = visibleMembers.filter(isDeputyOrCoordinator);
@@ -532,9 +606,12 @@ export function PublicTeamSection({
         <SearchControls
           query={query}
           role={role}
+          group={group}
           roles={roles}
+          groups={groups}
           onQuery={setQuery}
           onRole={setRole}
+          onGroup={setGroup}
         />
       </div>
 
@@ -589,7 +666,8 @@ export function PublicTeamSection({
             No team members match the current search.
           </p>
           <p className="mt-1 text-sm leading-6 text-slate-600">
-            Clear the search field or choose All Roles to view the full team.
+            Clear the search field or choose All Groups and All Roles to view
+            the full team.
           </p>
         </section>
       )}
