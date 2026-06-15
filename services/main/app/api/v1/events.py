@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=300, vary_on=("page", "per_page", "scope_type", "scope_id", "is_main", "is_published", "upcoming", "search", "fields"))
+@cached_public(timeout=300, vary_on=("page", "per_page", "scope_type", "scope_id", "is_main", "is_published", "upcoming", "search", "fields", "include"))
 async def list_events(
     db: DbSession,
     page: int = Query(1, ge=1),
