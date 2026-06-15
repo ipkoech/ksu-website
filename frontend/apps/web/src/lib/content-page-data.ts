@@ -69,6 +69,10 @@ export type ContentListingData = {
   categories: ContentPageLink[];
   calendarEvents?: EventRecord[];
   total: number;
+  filters: {
+    q?: string;
+    type?: string;
+  };
 };
 
 export type ContentDetailData = {
@@ -615,6 +619,10 @@ export async function getContentListingData(
         eventRecords.total +
         articleRecords.total +
         announcementRecords.total,
+      filters: {
+        q: search,
+        type: mediaType,
+      },
     };
   }
 
@@ -669,6 +677,10 @@ export async function getContentListingData(
     categories: categoryLinks(allForCategories.records, kind),
     calendarEvents: await getCalendarEvents(),
     total: primary.total,
+    filters: {
+      q: search,
+      type: mediaType,
+    },
   };
 }
 

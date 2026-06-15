@@ -9,6 +9,8 @@ import {
   LinkIcon,
   MapPin,
   Newspaper,
+  Search,
+  SlidersHorizontal,
 } from "lucide-react";
 import { RichTextRenderer } from "@ksu/ui/rich-text-renderer";
 import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
@@ -457,11 +459,28 @@ function MediaDeskStack({ data, records }: { data: ContentListingData; records: 
 
   if (data.mediaDeskSection === "gallery") {
     return (
-      <MediaGalleryBento
-        items={galleryBentoItems(records)}
-        title={data.title}
-        description={section?.body ?? data.body}
-      />
+      <div className="grid gap-5">
+        <ScrollReveal
+          as="section"
+          className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:p-6"
+        >
+          <div>
+            <SectionKicker>{`${data.total} records`}</SectionKicker>
+            <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+              {data.title}
+            </h1>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-700">
+              {section?.body ?? data.body}
+            </p>
+          </div>
+          <ContentFilters data={data} visible={records.length} />
+        </ScrollReveal>
+        <MediaGalleryBento
+          items={galleryBentoItems(records)}
+          title="Published gallery"
+          description="Image, video, and file records from the public media library."
+        />
+      </div>
     );
   }
 
@@ -491,6 +510,7 @@ function MediaDeskStack({ data, records }: { data: ContentListingData; records: 
           </div>
         ) : null}
       </div>
+      <ContentFilters data={data} visible={records.length} />
 
       {records.length ? (
         <ScrollRevealGroup className="mt-5 grid gap-3" staggerDelay={55}>
@@ -528,6 +548,90 @@ function MediaDeskStack({ data, records }: { data: ContentListingData; records: 
         </article>
       )}
     </ScrollReveal>
+  );
+}
+
+function ContentFilters({
+  data,
+  visible,
+}: {
+  data: ContentListingData;
+  visible: number;
+}) {
+  const typeOptions =
+    data.kind === "media"
+      ? data.categories.map((item) => {
+          const url = new URL(item.href, "https://kisiiuniversity.ac.ke");
+          return {
+            value: url.searchParams.get("type") ?? "",
+            label: item.label,
+          };
+        }).filter((item) => item.value)
+      : [];
+  const hasFilters = Boolean(data.filters.q) || Boolean(data.filters.type);
+
+  return (
+    <form className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-3">
+      <div className="grid gap-3 md:grid-cols-[minmax(220px,1fr)_auto] xl:grid-cols-[minmax(220px,1fr)_12rem_auto] xl:items-end">
+        <label className="block">
+          <span className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+            Search
+          </span>
+          <span className="relative mt-2 block">
+            <Search
+              aria-hidden
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              name="q"
+              defaultValue={data.filters.q ?? ""}
+              placeholder={`Search ${kindLabel(data.kind).toLowerCase()}`}
+              className="h-10 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none ring-primary/20 transition placeholder:text-slate-400 focus:border-primary focus:ring-4"
+            />
+          </span>
+        </label>
+        {typeOptions.length ? (
+          <label className="block">
+            <span className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+              Type
+            </span>
+            <select
+              name="type"
+              defaultValue={data.filters.type ?? ""}
+              className="mt-2 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
+            >
+              <option value="">All types</option>
+              {typeOptions.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="submit"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary/90"
+          >
+            <SlidersHorizontal aria-hidden className="h-4 w-4" />
+            Apply
+          </button>
+          {hasFilters ? (
+            <Link
+              href={data.href}
+              className="inline-flex h-10 items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-primary hover:text-primary"
+            >
+              Clear
+            </Link>
+          ) : null}
+        </div>
+      </div>
+      <p className="mt-3 text-sm font-medium text-slate-600">
+        Showing {visible} of {data.total} published record
+        {data.total === 1 ? "" : "s"}.
+      </p>
+    </form>
   );
 }
 
