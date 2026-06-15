@@ -8,9 +8,7 @@ import {
   HeartHandshake,
   ImageIcon,
   Mail,
-  Search,
   ShieldCheck,
-  SlidersHorizontal,
   Sparkles,
   Trophy,
   Users,
@@ -30,6 +28,10 @@ import type { CampusLifePageData } from "@/lib/get-campus-life";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { PublicImage } from "@/components/public/public-image";
+import {
+  PublicListFilterForm,
+  type ListFilterOption,
+} from "@/components/public/list-filter-form";
 
 type CampusArea =
   | "landing"
@@ -55,11 +57,6 @@ type CampusLifeFilters = {
   q?: string;
   type?: string;
   status?: string;
-};
-
-type FilterOption = {
-  value: string;
-  label: string;
 };
 
 type NavItem = {
@@ -235,7 +232,9 @@ function optionLabel(value: string) {
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-function uniqueOptions(values: Array<string | null | undefined>): FilterOption[] {
+function uniqueOptions(
+  values: Array<string | null | undefined>,
+): ListFilterOption[] {
   return Array.from(
     new Set(values.map((value) => filterValue(value)).filter(Boolean)),
   )
@@ -394,7 +393,7 @@ function ActionLink({
   );
 }
 
-function ListFilters({
+function CampusListFilters({
   filters,
   typeLabel,
   typeOptions,
@@ -404,96 +403,41 @@ function ListFilters({
 }: {
   filters?: CampusLifeFilters;
   typeLabel: string;
-  typeOptions: FilterOption[];
-  statusOptions?: FilterOption[];
+  typeOptions: ListFilterOption[];
+  statusOptions?: ListFilterOption[];
   total: number;
   visible: number;
 }) {
-  const hasFilters =
-    Boolean(filterValue(filters?.q)) ||
-    Boolean(filterValue(filters?.type)) ||
-    Boolean(filterValue(filters?.status));
-
   return (
-    <form className="mb-6 border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-[minmax(220px,1fr)_12rem_12rem_auto] 2xl:items-end">
-        <label className="block">
-          <span className="text-xs font-semibold uppercase text-slate-500">
-            Search
-          </span>
-          <span className="relative mt-2 block">
-            <Search
-              aria-hidden
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-            />
-            <input
-              name="q"
-              defaultValue={filterValue(filters?.q)}
-              placeholder="Search records"
-              className="h-11 w-full border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none ring-primary/20 transition placeholder:text-slate-400 focus:border-primary focus:ring-4"
-            />
-          </span>
-        </label>
-        <label className="block">
-          <span className="text-xs font-semibold uppercase text-slate-500">
-            {typeLabel}
-          </span>
-          <select
-            name="type"
-            defaultValue={filterValue(filters?.type)}
-            className="mt-2 h-11 w-full border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
-          >
-            <option value="">All {typeLabel.toLowerCase()}</option>
-            {typeOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block">
-          <span className="text-xs font-semibold uppercase text-slate-500">
-            Status
-          </span>
-          <select
-            name="status"
-            defaultValue={filterValue(filters?.status)}
-            className="mt-2 h-11 w-full border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
-          >
-            <option value="">All statuses</option>
-            {(statusOptions ?? [
+    <PublicListFilterForm
+      className="mb-6 border border-slate-200 bg-white p-4 shadow-sm"
+      gridClassName="grid gap-3 md:grid-cols-2 2xl:grid-cols-[minmax(220px,1fr)_12rem_12rem_auto] 2xl:items-end"
+      searchValue={filters?.q}
+      searchPlaceholder="Search records"
+      selects={[
+        {
+          name: "type",
+          label: typeLabel,
+          value: filters?.type,
+          allLabel: `All ${typeLabel.toLowerCase()}`,
+          options: typeOptions,
+        },
+        {
+          name: "status",
+          label: "Status",
+          value: filters?.status,
+          allLabel: "All statuses",
+          options:
+            statusOptions ?? [
               { value: "active", label: "Active" },
               { value: "inactive", label: "Inactive" },
-            ]).map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="submit"
-            className="inline-flex h-11 items-center justify-center gap-2 bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90"
-          >
-            <SlidersHorizontal aria-hidden className="h-4 w-4" />
-            Apply
-          </button>
-          {hasFilters ? (
-            <Link
-              href="?"
-              className="inline-flex h-11 items-center justify-center border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-primary hover:text-primary"
-            >
-              Clear
-            </Link>
-          ) : null}
-        </div>
-      </div>
-      <p className="mt-3 text-sm font-medium text-slate-600">
-        Showing {visible} of {total} published record
-        {total === 1 ? "" : "s"}.
-      </p>
-    </form>
+            ],
+        },
+      ]}
+      clearHref="?"
+      total={total}
+      visible={visible}
+    />
   );
 }
 
@@ -1055,7 +999,7 @@ function ClubsPage({
         title="Browse clubs and societies"
         body="Use club records to understand purpose, membership size, schedule, and contact options before joining."
       >
-        <ListFilters
+        <CampusListFilters
           filters={filters}
           typeLabel="Type"
           typeOptions={types}
@@ -1162,7 +1106,7 @@ function SportsPage({
         title="Facilities and recreation records"
         body="Sports pages should show where students can train, compete, stay fit, and participate recreationally."
       >
-        <ListFilters
+        <CampusListFilters
           filters={filters}
           typeLabel="Facility type"
           typeOptions={uniqueOptions(data.sports.map((item) => item.facility_type))}
@@ -1228,7 +1172,7 @@ function AccommodationPage({
         title="Student accommodation records"
         body="Accommodation pages should help students compare housing type, capacity, room availability context, amenities, rules, fees, and application status."
       >
-        <ListFilters
+        <CampusListFilters
           filters={filters}
           typeLabel="Housing type"
           typeOptions={uniqueOptions(
@@ -1342,7 +1286,7 @@ function StudentLifePage({
         title="Leadership, representation, and student voice"
         body="Student-life pages connect campus belonging with governance records, representative offices, leadership terms, and student engagement."
       >
-        <ListFilters
+        <CampusListFilters
           filters={filters}
           typeLabel="Governance type"
           typeOptions={uniqueOptions(
@@ -1561,7 +1505,7 @@ function GalleryPage({
         title="Campus life in photos, arts, and culture"
         body="Gallery records should show the lived experience of student activities, cultural moments, clubs, leadership, and events."
       >
-        <ListFilters
+        <CampusListFilters
           filters={filters}
           typeLabel="Category"
           typeOptions={uniqueOptions(data.arts.map((item) => item.category))}
