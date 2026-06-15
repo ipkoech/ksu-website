@@ -131,6 +131,25 @@ const PUBLIC_LIBRARY_TIMEOUT_MS = 3000;
 const unavailableMessage =
   "Library records are temporarily unavailable. Try again later or contact the library desk.";
 
+const branchFields =
+  "id,name,code,short_name,slug,description,about_content,objectives,mandates,regulations,mission,vision,address,location,email,contact_email,phone,contact_phone,website_url,catalogue_url,ebooks_url,repositories_url,opening_hours,library_type,is_active,is_public,sort_order";
+const catalogFields =
+  "id,library_id,title,subtitle,authors,author,publisher,publication_year,edition,language,isbn,issn,call_number,resource_type,type,status,location_shelf,location,total_copies,quantity,available_copies,available_quantity,subject_tags,description,url,cover_image,is_loanable,is_available,is_reference_only,is_active";
+const electronicFields =
+  "id,name,title,slug,provider,description,access_url,url,section_letter,resource_type,type,subjects,coverage_dates,simultaneous_users,access_level,access_type,requires_vpn,requires_registration,is_active,is_available,is_featured,sort_order,logo_image_id,notes";
+const serviceFields =
+  "id,library_id,name,slug,description,eligibility,service_type,how_to_access,contact_info,is_public,is_active,sort_order,icon_media_id";
+const regulationFields =
+  "id,library_id,title,slug,category,content,effective_date,status,is_public,sort_order";
+const staffFields =
+  "id,library_id,person_id,job_title,department,department_section,role,is_public,is_active,bio,specialization,sort_order";
+const branchFileFields =
+  "id,library_id,media_id,title,description,file_category,access_level,is_public,sort_order,related_entity_type,related_entity_id,file_url,thumbnail_url";
+const branchLinkFields =
+  "id,library_id,link_type,label,url,description,is_active,opens_in_new_tab,icon,sort_order";
+const editorialFields =
+  "id,title,slug,summary,excerpt,plain_text,rich_text,content,category,published_at,start_date,end_date,location,venue,is_virtual,created_at";
+
 type OpeningHoursMap = Record<string, string>;
 
 async function safeList<T>(
@@ -237,7 +256,11 @@ function normalizeResource(resource: LibraryResource): LibraryResource {
     resource_type: resource.resource_type ?? resource.type ?? undefined,
     status:
       resource.status ??
-      (isAvailable === undefined ? undefined : isAvailable ? "available" : "unavailable"),
+      (isAvailable === undefined
+        ? undefined
+        : isAvailable
+          ? "available"
+          : "unavailable"),
     location_shelf: resource.location_shelf ?? resource.location ?? null,
     available_copies: availableCopies,
     total_copies: totalCopies,
@@ -300,6 +323,7 @@ function openingHoursToRows(branch: LibraryBranch): LibraryHours[] {
 export function getPublicBranches() {
   return safeList<LibraryBranch>(() =>
     libraryServiceApi.branches.list({
+      fields: branchFields,
       active_only: true,
       page: 1,
       per_page: 100,
@@ -338,6 +362,7 @@ export async function getCatalogSearchData(
   const resources = normalizeList(
     await safeList<LibraryResource>(() =>
       libraryServiceApi.resources.list({
+        fields: catalogFields,
         library_id: selectedLibraryId,
         q: query || undefined,
         search: query || undefined,
@@ -352,7 +377,14 @@ export async function getCatalogSearchData(
     normalizeResource,
   );
 
-  return { branches, resources, selectedLibraryId, query, resourceType, status };
+  return {
+    branches,
+    resources,
+    selectedLibraryId,
+    query,
+    resourceType,
+    status,
+  };
 }
 
 export function getElectronicResources(
@@ -365,6 +397,7 @@ export function getElectronicResources(
 ) {
   return safeList<LibraryElectronicResource>(() =>
     libraryServiceApi.databases.list({
+      fields: electronicFields,
       q: query?.trim() || undefined,
       search: query?.trim() || undefined,
       resource_type: options.resourceType?.trim() || undefined,
@@ -383,6 +416,7 @@ async function getBranchServices(branches: LibraryBranch[]) {
     (branch) =>
       safeList<LibraryServiceRecord>(() =>
         libraryServiceApi.services.list({
+          fields: serviceFields,
           library_id: branch.id,
           page: 1,
           per_page: 100,
@@ -390,16 +424,20 @@ async function getBranchServices(branches: LibraryBranch[]) {
       ).then((result) => normalizeList(result, normalizeService)),
   );
 
-  return results.map((item) => ({ branch: item.branch, services: item.result }));
+  return results.map((item) => ({
+    branch: item.branch,
+    services: item.result,
+  }));
 }
 
 async function getBranchHours(branches: LibraryBranch[]) {
   const results = await collectByBranch<LibraryHours>(branches, (branch) =>
-    safeList<LibraryHours>(() => libraryServiceApi.branches.hours(branch.id)).then(
-      (result) =>
-        result.data.length > 0
-          ? result
-          : { data: openingHoursToRows(branch), error: result.error },
+    safeList<LibraryHours>(() =>
+      libraryServiceApi.branches.hours(branch.id),
+    ).then((result) =>
+      result.data.length > 0
+        ? result
+        : { data: openingHoursToRows(branch), error: result.error },
     ),
   );
   return results.map((item) => ({ branch: item.branch, hours: item.result }));
@@ -407,7 +445,9 @@ async function getBranchHours(branches: LibraryBranch[]) {
 
 async function getBranchFiles(branches: LibraryBranch[]) {
   const results = await collectByBranch<LibraryFile>(branches, (branch) =>
-    safeList<LibraryFile>(() => libraryServiceApi.branches.files(branch.id)),
+    safeList<LibraryFile>(() =>
+      libraryServiceApi.branches.files(branch.id, { fields: branchFileFields }),
+    ),
   );
   return results.map((item) => ({ branch: item.branch, files: item.result }));
 }
@@ -417,23 +457,25 @@ async function getBranchLinks(branches: LibraryBranch[]) {
     branches,
     (branch) =>
       safeList<LibraryExternalLink>(() =>
-        libraryServiceApi.branches.links(branch.id, { active_only: true }),
+        libraryServiceApi.branches.links(branch.id, {
+          fields: branchLinkFields,
+          active_only: true,
+        }),
       ),
   );
   return results.map((item) => ({ branch: item.branch, links: item.result }));
 }
 
 async function getBranchStaff(branches: LibraryBranch[]) {
-  const results = await collectByBranch<LibraryStaff>(
-    branches,
-    (branch) =>
-      safeList<LibraryStaff>(() =>
-        libraryServiceApi.staff.list({
-          library_id: branch.id,
-          page: 1,
-          per_page: 100,
-        }),
-      ).then((result) => normalizeList(result, normalizeStaff)),
+  const results = await collectByBranch<LibraryStaff>(branches, (branch) =>
+    safeList<LibraryStaff>(() =>
+      libraryServiceApi.staff.list({
+        fields: staffFields,
+        library_id: branch.id,
+        page: 1,
+        per_page: 100,
+      }),
+    ).then((result) => normalizeList(result, normalizeStaff)),
   );
   return results.map((item) => ({ branch: item.branch, staff: item.result }));
 }
@@ -463,6 +505,7 @@ export async function getLibraryServicesData(): Promise<LibraryServicesData> {
     getBranchServices(branches.data),
     safeList<LibraryRegulation>(() =>
       libraryServiceApi.regulations.list({
+        fields: regulationFields,
         status: "active",
         page: 1,
         per_page: 100,
@@ -489,10 +532,21 @@ export async function getLibraryOverviewData(): Promise<LibraryOverviewData> {
   const branches = await getPublicBranches();
   const selectedLibraryId = branches.data[0]?.id;
 
-  const [catalog, electronic, services, regulations, todayHours, news, events, articles, stats] = await Promise.all([
+  const [
+    catalog,
+    electronic,
+    services,
+    regulations,
+    todayHours,
+    news,
+    events,
+    articles,
+    stats,
+  ] = await Promise.all([
     selectedLibraryId
       ? safeList<LibraryResource>(() =>
           libraryServiceApi.resources.list({
+            fields: catalogFields,
             library_id: selectedLibraryId,
             page: 1,
             per_page: 6,
@@ -503,6 +557,7 @@ export async function getLibraryOverviewData(): Promise<LibraryOverviewData> {
     getLibraryServices(),
     safeList<LibraryRegulation>(() =>
       libraryServiceApi.regulations.list({
+        fields: regulationFields,
         status: "active",
         page: 1,
         per_page: 4,
@@ -558,7 +613,10 @@ export async function getLibraryHoursData(): Promise<LibraryHoursData> {
       branch: item.branch,
       hours: item.hours.data,
     })),
-    errors: uniqueErrors(branches.error, ...grouped.map((item) => item.hours.error)),
+    errors: uniqueErrors(
+      branches.error,
+      ...grouped.map((item) => item.hours.error),
+    ),
   };
 }
 
@@ -571,7 +629,10 @@ export async function getLibraryDownloadsData(): Promise<LibraryDownloadsData> {
       branch: item.branch,
       files: item.files.data,
     })),
-    errors: uniqueErrors(branches.error, ...grouped.map((item) => item.files.error)),
+    errors: uniqueErrors(
+      branches.error,
+      ...grouped.map((item) => item.files.error),
+    ),
   };
 }
 
@@ -584,7 +645,10 @@ export async function getLibraryLinksData(): Promise<LibraryLinksData> {
       branch: item.branch,
       links: item.links.data,
     })),
-    errors: uniqueErrors(branches.error, ...grouped.map((item) => item.links.error)),
+    errors: uniqueErrors(
+      branches.error,
+      ...grouped.map((item) => item.links.error),
+    ),
   };
 }
 
@@ -597,13 +661,22 @@ export async function getLibraryStaffData(): Promise<LibraryStaffData> {
       branch: item.branch,
       staff: item.staff.data,
     })),
-    errors: uniqueErrors(branches.error, ...grouped.map((item) => item.staff.error)),
+    errors: uniqueErrors(
+      branches.error,
+      ...grouped.map((item) => item.staff.error),
+    ),
   };
 }
 
-export async function getLibraryLeadershipData(): Promise<PublicLibraryData<LibraryStaff>> {
+export async function getLibraryLeadershipData(): Promise<
+  PublicLibraryData<LibraryStaff>
+> {
   return safeList<LibraryStaff>(() =>
-    libraryServiceApi.staff.leadership({ page: 1, per_page: 100 }),
+    libraryServiceApi.staff.leadership({
+      fields: staffFields,
+      page: 1,
+      per_page: 100,
+    }),
   ).then((result) => normalizeList(result, normalizeStaff));
 }
 
@@ -616,6 +689,7 @@ export async function getLibraryNewsData({
 } = {}): Promise<LibraryContentData<News>> {
   let records = await safeList<News>(() =>
     newsApi.list({
+      fields: editorialFields,
       scope_type: "library",
       is_published: true,
       search: query?.trim() || undefined,
@@ -626,6 +700,7 @@ export async function getLibraryNewsData({
   if (records.data.length === 0 && !records.error) {
     records = await safeList<News>(() =>
       newsApi.list({
+        fields: editorialFields,
         is_published: true,
         search: query?.trim() || undefined,
         page: 1,
@@ -633,7 +708,11 @@ export async function getLibraryNewsData({
       }),
     );
   }
-  return { records, query: query?.trim() ?? "", errors: uniqueErrors(records.error) };
+  return {
+    records,
+    query: query?.trim() ?? "",
+    errors: uniqueErrors(records.error),
+  };
 }
 
 export async function getLibraryEventsData({
@@ -645,6 +724,7 @@ export async function getLibraryEventsData({
 } = {}): Promise<LibraryContentData<Event>> {
   let records = await safeList<Event>(() =>
     eventsApi.list({
+      fields: editorialFields,
       scope_type: "library",
       is_published: true,
       search: query?.trim() || undefined,
@@ -655,6 +735,7 @@ export async function getLibraryEventsData({
   if (records.data.length === 0 && !records.error) {
     records = await safeList<Event>(() =>
       eventsApi.list({
+        fields: editorialFields,
         is_published: true,
         search: query?.trim() || undefined,
         page: 1,
@@ -662,7 +743,11 @@ export async function getLibraryEventsData({
       }),
     );
   }
-  return { records, query: query?.trim() ?? "", errors: uniqueErrors(records.error) };
+  return {
+    records,
+    query: query?.trim() ?? "",
+    errors: uniqueErrors(records.error),
+  };
 }
 
 export async function getLibraryArticlesData({
@@ -674,6 +759,7 @@ export async function getLibraryArticlesData({
 } = {}): Promise<LibraryContentData<Blog>> {
   let records = await safeList<Blog>(() =>
     blogsApi.list({
+      fields: editorialFields,
       scope_type: "library",
       is_published: true,
       search: query?.trim() || undefined,
@@ -684,6 +770,7 @@ export async function getLibraryArticlesData({
   if (records.data.length === 0 && !records.error) {
     records = await safeList<Blog>(() =>
       blogsApi.list({
+        fields: editorialFields,
         is_published: true,
         search: query?.trim() || undefined,
         page: 1,
@@ -691,7 +778,11 @@ export async function getLibraryArticlesData({
       }),
     );
   }
-  return { records, query: query?.trim() ?? "", errors: uniqueErrors(records.error) };
+  return {
+    records,
+    query: query?.trim() ?? "",
+    errors: uniqueErrors(records.error),
+  };
 }
 
 export async function getLibrarySearchData(
@@ -708,6 +799,7 @@ export async function getLibrarySearchData(
     selectedLibraryId
       ? safeList<LibraryResource>(() =>
           libraryServiceApi.resources.list({
+            fields: catalogFields,
             library_id: selectedLibraryId,
             q: query || undefined,
             search: query || undefined,
@@ -735,7 +827,12 @@ export async function getLibrarySearchData(
     unified: unified.data,
     selectedLibraryId,
     query,
-    errors: uniqueErrors(branches.error, catalog.error, electronic.error, unified.error),
+    errors: uniqueErrors(
+      branches.error,
+      catalog.error,
+      electronic.error,
+      unified.error,
+    ),
   };
 }
 
@@ -772,7 +869,11 @@ export function formatDate(value?: string | null) {
   }).format(date);
 }
 
-export function shortText(value?: string | null, fallback = "Details are being updated.", max = 180) {
+export function shortText(
+  value?: string | null,
+  fallback = "Details are being updated.",
+  max = 180,
+) {
   const text = compactText((value ?? "").replace(/<[^>]*>/g, " ")) || fallback;
   return text.length > max ? `${text.slice(0, max - 3)}...` : text;
 }

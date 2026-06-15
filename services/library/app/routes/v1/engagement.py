@@ -13,9 +13,11 @@ from ksu_common.rbac import requires_scope
 from ksu_common.schemas.responses import success
 from ksu_common.cache import cached_public, cache_response
 from ksu_common.audit import audit_action
+from ksu_common.field_selection import FieldSelection, FieldsQuery, FieldSelector
 from ksu_common.rate_limit import rate_limit
 
 from ...core.database import get_db
+from ...models import LibraryRegulation
 from ...schemas import (
     LibraryInquiryCreate,
     LibraryInquiryOut,
@@ -247,11 +249,21 @@ regulations_router = APIRouter(
 @regulations_router.get("/")
 @cached_public(
     timeout=3600,
-    vary_on=("library_id", "category", "status", "page", "per_page", "include_total"),
+    vary_on=(
+        "library_id",
+        "category",
+        "status",
+        "page",
+        "per_page",
+        "include_total",
+        "fields",
+        "include",
+    ),
 )
 async def list_regulations(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
+    fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
     library_id: Optional[uuid.UUID] = Query(None),
     category: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
@@ -268,23 +280,29 @@ async def list_regulations(
         per_page=per_page,
         include_total=include_total,
     )
+    selector = FieldSelector(LibraryRegulation, fields, always_include={"id"})
+    data = [
+        LibraryRegulationOut.model_validate(r).model_dump(mode="json")
+        for r in result.items
+    ]
     return success(
-        data=[
-            LibraryRegulationOut.model_validate(r).model_dump() for r in result.items
-        ],
+        data=selector.apply(data),
         meta=result.meta,
     )
 
 
 @regulations_router.get("/{regulation_id}")
-@cached_public(timeout=3600, vary_on=())
+@cached_public(timeout=3600, vary_on=("fields", "include"))
 async def get_regulation(
     request: Request,
     regulation_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
+    fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
     regulation = await svc.get_regulation(db, regulation_id)
-    return success(data=LibraryRegulationOut.model_validate(regulation).model_dump())
+    selector = FieldSelector(LibraryRegulation, fields, always_include={"id"})
+    data = LibraryRegulationOut.model_validate(regulation).model_dump(mode="json")
+    return success(data=selector.apply(data))
 
 
 @regulations_router.post("/")

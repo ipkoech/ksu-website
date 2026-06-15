@@ -13,8 +13,10 @@ from ksu_common.rbac import has_scope, requires_scope
 from ksu_common.schemas.responses import success
 from ksu_common.cache import cache_response
 from ksu_common.audit import audit_action
+from ksu_common.field_selection import FieldSelection, FieldsQuery, FieldSelector
 
 from ...core.database import get_db
+from ...models import LibraryService, LibraryStaff
 from ...schemas import (
     LibraryServiceCreate,
     LibraryServiceUpdate,
@@ -34,11 +36,14 @@ async def list_staff(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
+    fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
     library_id: uuid.UUID = Query(...),
 ):
     is_writer = user is not None and has_scope(user.roles, "library:write")
+    selector = FieldSelector(LibraryStaff, fields, always_include={"id"})
     members = await svc.list_staff(db, library_id, public_only=not is_writer)
-    return success(data=members)
+    data = [member.model_dump(mode="json") for member in members]
+    return success(data=selector.apply(data))
 
 
 @staff_router.get("/leadership")
@@ -46,15 +51,18 @@ async def list_library_leadership(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
+    fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
     library_id: Optional[uuid.UUID] = Query(None),
 ):
     is_writer = user is not None and has_scope(user.roles, "library:write")
+    selector = FieldSelector(LibraryStaff, fields, always_include={"id"})
     members = await svc.list_leadership(
         db,
         library_id=library_id,
         public_only=not is_writer,
     )
-    return success(data=members)
+    data = [member.model_dump(mode="json") for member in members]
+    return success(data=selector.apply(data))
 
 
 @staff_router.post("/")
@@ -103,11 +111,14 @@ async def list_services(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
+    fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
     library_id: uuid.UUID = Query(...),
 ):
     is_writer = user is not None and has_scope(user.roles, "library:write")
+    selector = FieldSelector(LibraryService, fields, always_include={"id"})
     items = await svc.list_services(db, library_id, public_only=not is_writer)
-    return success(data=items)
+    data = [item.model_dump(mode="json") for item in items]
+    return success(data=selector.apply(data))
 
 
 @services_router.post("/")

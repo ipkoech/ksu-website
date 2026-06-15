@@ -16,7 +16,7 @@ from ksu_common.cache import cached_public
 from ksu_common.audit import audit_action
 
 from ...core.database import get_db
-from ...models import Library
+from ...models import Library, LibraryExternalLink, LibraryFile
 from ...schemas import (
     LibraryCreate,
     LibraryExternalLinkCreate,
@@ -189,15 +189,17 @@ links_router = APIRouter(
 
 
 @links_router.get("/")
-@cached_public(timeout=300, vary_on=("active_only",))
+@cached_public(timeout=300, vary_on=("active_only", "fields", "include"))
 async def list_external_links(
     request: Request,
     library_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
+    fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
     active_only: bool = Query(True),
 ):
+    selector = FieldSelector(LibraryExternalLink, fields, always_include={"id"})
     links = await svc.list_external_links(db, library_id, active_only=active_only)
-    return success(data=links)
+    return success(data=selector.apply(links))
 
 
 @links_router.post("/")
@@ -276,10 +278,12 @@ async def list_library_files(
     library_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
+    fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
     is_writer = user is not None and has_scope(user.roles, "library:write")
+    selector = FieldSelector(LibraryFile, fields, always_include={"id"})
     files = await svc.list_library_files(db, library_id, public_only=not is_writer)
-    data = [file.model_dump(mode="json") for file in files]
+    data = selector.apply(files)
     return success(data=await attach_public_media(data))
 
 

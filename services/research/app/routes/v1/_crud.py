@@ -24,13 +24,24 @@ def build_crud_router(
     update_schema,
     write_scope: str,
     cache_timeout: int = 300,
+    public_read: bool = True,
     public_create: bool = False,
     public_create_rate_limit: tuple[int, int] = (5, 60),
 ):
     router = APIRouter(prefix=prefix, tags=[tag])
+    read_dependencies = [] if public_read else [Depends(require_scope(write_scope))]
 
-    @router.get("")
-    @cached_public(
+    def maybe_cached_public(*args, **kwargs):
+        if public_read:
+            return cached_public(*args, **kwargs)
+
+        def decorator(func):
+            return func
+
+        return decorator
+
+    @router.get("", dependencies=read_dependencies)
+    @maybe_cached_public(
         timeout=cache_timeout,
         vary_on=(
             "page",
@@ -125,7 +136,8 @@ def build_crud_router(
         db: AsyncSession = Depends(get_db),
     ):
         selector = build_selector(service.model, fields)
-        result = await service.list(
+        list_method = service.list_public if public_read else service.list
+        result = await list_method(
             db,
             page=page,
             per_page=per_page,
@@ -174,8 +186,8 @@ def build_crud_router(
         )
         return success(data=selector.apply(result.items), meta=result.meta)
 
-    @router.get("/{slug}")
-    @cached_public(timeout=cache_timeout)
+    @router.get("/{slug}", dependencies=read_dependencies)
+    @maybe_cached_public(timeout=cache_timeout, vary_on=("slug", "fields", "include"))
     async def get_item(
         slug: str,
         request: Request,
@@ -183,7 +195,8 @@ def build_crud_router(
         db: AsyncSession = Depends(get_db),
     ):
         selector = build_selector(service.model, fields)
-        item = await service.get_by_slug(db, slug, load_options=selector.load_options)
+        get_method = service.get_public_by_slug if public_read else service.get_by_slug
+        item = await get_method(db, slug, load_options=selector.load_options)
         if item is None:
             raise HTTPException(status_code=404, detail=f"{tag.rstrip('s')} not found")
         return success(data=selector.apply(item))

@@ -3,7 +3,12 @@ import type { FieldSelectionParams, QueryParams } from "../client";
 import type { PaginatedResponse } from "../main/types";
 import type { PublicStatsResponse } from "../main/types";
 
-type ListParams<T extends Record<string, string | number | boolean | undefined> = Record<string, string | number | boolean | undefined>> = QueryParams & T;
+type ListParams<
+  T extends Record<string, string | number | boolean | undefined> = Record<
+    string,
+    string | number | boolean | undefined
+  >,
+> = QueryParams & T;
 
 export interface LibraryBranch {
   id: string;
@@ -414,7 +419,10 @@ export interface LibraryCharge {
   updated_at: string;
 }
 
-export type LibraryChargePayload = Omit<LibraryCharge, "id" | "created_at" | "updated_at">;
+export type LibraryChargePayload = Omit<
+  LibraryCharge,
+  "id" | "created_at" | "updated_at"
+>;
 
 export type LibraryGenericRecord = Record<string, unknown> & {
   id: string;
@@ -450,10 +458,13 @@ export interface LibrarySearchResponse {
 
 function crudApi<TRecord, TPayload>(path: string) {
   return {
-    list: (params?: ListParams) => libraryApi.get<PaginatedResponse<TRecord>>(path, params),
-    get: (id: string, params?: FieldSelectionParams) => libraryApi.get<{ data: TRecord }>(`${path}${id}`, params),
+    list: (params?: ListParams) =>
+      libraryApi.get<PaginatedResponse<TRecord>>(path, params),
+    get: (id: string, params?: FieldSelectionParams) =>
+      libraryApi.get<{ data: TRecord }>(`${path}${id}`, params),
     create: (data: TPayload) => libraryApi.post<{ data: TRecord }>(path, data),
-    update: (id: string, data: Partial<TPayload>) => libraryApi.patch<{ data: TRecord }>(`${path}${id}`, data),
+    update: (id: string, data: Partial<TPayload>) =>
+      libraryApi.patch<{ data: TRecord }>(`${path}${id}`, data),
     delete: (id: string) => libraryApi.delete<void>(`${path}${id}`),
   };
 }
@@ -462,90 +473,204 @@ export const libraryServiceApi = {
   stats: () => libraryApi.get<{ data: PublicStatsResponse }>("/api/v1/stats"),
   branches: {
     list: (params?: ListParams<{ active_only?: boolean }>) =>
-      libraryApi.get<PaginatedResponse<LibraryBranch>>("/api/v1/library/branches/", params),
+      libraryApi.get<PaginatedResponse<LibraryBranch>>(
+        "/api/v1/library/branches/",
+        params,
+      ),
     get: (id: string, params?: FieldSelectionParams) =>
-      libraryApi.get<{ data: LibraryBranch }>(`/api/v1/library/branches/${id}`, params),
+      libraryApi.get<{ data: LibraryBranch }>(
+        `/api/v1/library/branches/${id}`,
+        params,
+      ),
     create: (data: LibraryBranchPayload) =>
-      libraryApi.post<{ data: LibraryBranch }>("/api/v1/library/branches/", data),
+      libraryApi.post<{ data: LibraryBranch }>(
+        "/api/v1/library/branches/",
+        data,
+      ),
     update: (id: string, data: Partial<LibraryBranchPayload>) =>
-      libraryApi.patch<{ data: LibraryBranch }>(`/api/v1/library/branches/${id}`, data),
-    delete: (id: string) => libraryApi.delete<void>(`/api/v1/library/branches/${id}`),
+      libraryApi.patch<{ data: LibraryBranch }>(
+        `/api/v1/library/branches/${id}`,
+        data,
+      ),
+    delete: (id: string) =>
+      libraryApi.delete<void>(`/api/v1/library/branches/${id}`),
     hours: (id: string) =>
-      libraryApi.get<{ data: LibraryHours[] }>(`/api/v1/library/branches/${id}/hours/`),
+      libraryApi.get<{ data: LibraryHours[] }>(
+        `/api/v1/library/branches/${id}/hours/`,
+      ),
     todayHours: (id: string, params?: ListParams<{ timezone?: string }>) =>
-      libraryApi.get<{ data: LibraryTodayHours | null }>(`/api/v1/library/branches/${id}/hours/today`, params),
+      libraryApi.get<{ data: LibraryTodayHours | null }>(
+        `/api/v1/library/branches/${id}/hours/today`,
+        params,
+      ),
     links: (id: string, params?: ListParams<{ active_only?: boolean }>) =>
-      libraryApi.get<{ data: LibraryExternalLink[] }>(`/api/v1/library/branches/${id}/links/`, params),
-    files: (id: string) =>
-      libraryApi.get<{ data: LibraryFile[] }>(`/api/v1/library/branches/${id}/files/`),
+      libraryApi.get<{ data: LibraryExternalLink[] }>(
+        `/api/v1/library/branches/${id}/links/`,
+        params,
+      ),
+    files: (id: string, params?: FieldSelectionParams) =>
+      libraryApi.get<{ data: LibraryFile[] }>(
+        `/api/v1/library/branches/${id}/files/`,
+        params,
+      ),
   },
   todayHours: (params?: ListParams<{ timezone?: string }>) =>
-    libraryApi.get<{ data: LibraryTodayHours[] }>("/api/v1/library/hours/today", params),
-  search: (params: ListParams<{ q: string; types?: string; library_id?: string; limit?: number }>) =>
-    libraryApi.get<{ data: LibrarySearchResponse }>("/api/v1/library/search", params),
+    libraryApi.get<{ data: LibraryTodayHours[] }>(
+      "/api/v1/library/hours/today",
+      params,
+    ),
+  search: (
+    params: ListParams<{
+      q: string;
+      types?: string;
+      library_id?: string;
+      limit?: number;
+    }>,
+  ) =>
+    libraryApi.get<{ data: LibrarySearchResponse }>(
+      "/api/v1/library/search",
+      params,
+    ),
   resources: {
-    list: (params: ListParams<{ library_id: string; resource_type?: string; status?: string; q?: string }>) =>
-      libraryApi.get<PaginatedResponse<LibraryResource>>("/api/v1/library/resources/", params),
+    list: (
+      params: ListParams<{
+        library_id: string;
+        resource_type?: string;
+        status?: string;
+        q?: string;
+      }>,
+    ) =>
+      libraryApi.get<PaginatedResponse<LibraryResource>>(
+        "/api/v1/library/resources/",
+        params,
+      ),
     get: (id: string, params?: FieldSelectionParams) =>
-      libraryApi.get<{ data: LibraryResource }>(`/api/v1/library/resources/${id}`, params),
+      libraryApi.get<{ data: LibraryResource }>(
+        `/api/v1/library/resources/${id}`,
+        params,
+      ),
     create: (data: LibraryResourcePayload) =>
-      libraryApi.post<{ data: LibraryResource }>("/api/v1/library/resources/", data),
+      libraryApi.post<{ data: LibraryResource }>(
+        "/api/v1/library/resources/",
+        data,
+      ),
     update: (id: string, data: Partial<LibraryResourcePayload>) =>
-      libraryApi.patch<{ data: LibraryResource }>(`/api/v1/library/resources/${id}`, data),
-    delete: (id: string) => libraryApi.delete<void>(`/api/v1/library/resources/${id}`),
+      libraryApi.patch<{ data: LibraryResource }>(
+        `/api/v1/library/resources/${id}`,
+        data,
+      ),
+    delete: (id: string) =>
+      libraryApi.delete<void>(`/api/v1/library/resources/${id}`),
   },
   loans: {
     list: (params?: ListParams<{ resource_id?: string; status?: string }>) =>
-      libraryApi.get<PaginatedResponse<LibraryLoan>>("/api/v1/library/loans/", params),
-    get: (id: string) => libraryApi.get<{ data: LibraryLoan }>(`/api/v1/library/loans/${id}`),
+      libraryApi.get<PaginatedResponse<LibraryLoan>>(
+        "/api/v1/library/loans/",
+        params,
+      ),
+    get: (id: string) =>
+      libraryApi.get<{ data: LibraryLoan }>(`/api/v1/library/loans/${id}`),
     create: (data: LibraryLoanPayload) =>
       libraryApi.post<{ data: LibraryLoan }>("/api/v1/library/loans/", data),
     update: (id: string, data: Partial<LibraryLoan>) =>
-      libraryApi.patch<{ data: LibraryLoan }>(`/api/v1/library/loans/${id}`, data),
-    renew: (id: string) => libraryApi.post<{ data: LibraryLoan }>(`/api/v1/library/loans/${id}/renew`, {}),
+      libraryApi.patch<{ data: LibraryLoan }>(
+        `/api/v1/library/loans/${id}`,
+        data,
+      ),
+    renew: (id: string) =>
+      libraryApi.post<{ data: LibraryLoan }>(
+        `/api/v1/library/loans/${id}/renew`,
+        {},
+      ),
   },
   reservations: {
     list: (params?: ListParams<{ resource_id?: string; status?: string }>) =>
-      libraryApi.get<PaginatedResponse<LibraryReservation>>("/api/v1/library/reservations/", params),
+      libraryApi.get<PaginatedResponse<LibraryReservation>>(
+        "/api/v1/library/reservations/",
+        params,
+      ),
     create: (data: LibraryReservationPayload) =>
-      libraryApi.post<{ data: LibraryReservation }>("/api/v1/library/reservations/", data),
+      libraryApi.post<{ data: LibraryReservation }>(
+        "/api/v1/library/reservations/",
+        data,
+      ),
     update: (id: string, data: LibraryReservationUpdatePayload) =>
-      libraryApi.patch<{ data: LibraryReservation }>(`/api/v1/library/reservations/${id}`, data),
-    cancel: (id: string) => libraryApi.delete<void>(`/api/v1/library/reservations/${id}`),
+      libraryApi.patch<{ data: LibraryReservation }>(
+        `/api/v1/library/reservations/${id}`,
+        data,
+      ),
+    cancel: (id: string) =>
+      libraryApi.delete<void>(`/api/v1/library/reservations/${id}`),
   },
   charges: {
     list: (params: ListParams<{ library_id: string; active_only?: boolean }>) =>
-      libraryApi.get<{ data: LibraryCharge[] }>("/api/v1/library/charges/", params),
+      libraryApi.get<{ data: LibraryCharge[] }>(
+        "/api/v1/library/charges/",
+        params,
+      ),
     create: (data: LibraryChargePayload) =>
-      libraryApi.post<{ data: LibraryCharge }>("/api/v1/library/charges/", data),
+      libraryApi.post<{ data: LibraryCharge }>(
+        "/api/v1/library/charges/",
+        data,
+      ),
     update: (id: string, data: Partial<LibraryChargePayload>) =>
-      libraryApi.patch<{ data: LibraryCharge }>(`/api/v1/library/charges/${id}`, data),
-    delete: (id: string) => libraryApi.delete<void>(`/api/v1/library/charges/${id}`),
+      libraryApi.patch<{ data: LibraryCharge }>(
+        `/api/v1/library/charges/${id}`,
+        data,
+      ),
+    delete: (id: string) =>
+      libraryApi.delete<void>(`/api/v1/library/charges/${id}`),
   },
-  databases: crudApi<LibraryElectronicResource, LibraryGenericPayload>("/api/v1/library/databases/"),
+  databases: crudApi<LibraryElectronicResource, LibraryGenericPayload>(
+    "/api/v1/library/databases/",
+  ),
   inquiries: {
-    ...crudApi<LibraryInquiry, LibraryInquiryPayload>("/api/v1/library/inquiries/"),
+    ...crudApi<LibraryInquiry, LibraryInquiryPayload>(
+      "/api/v1/library/inquiries/",
+    ),
     update: (id: string, data: LibraryInquiryUpdatePayload) =>
-      libraryApi.patch<{ data: LibraryInquiry }>(`/api/v1/library/inquiries/${id}`, data),
+      libraryApi.patch<{ data: LibraryInquiry }>(
+        `/api/v1/library/inquiries/${id}`,
+        data,
+      ),
     reply: (id: string, data: LibraryInquiryReplyPayload) =>
-      libraryApi.post<{ data: LibraryInquiry }>(`/api/v1/library/inquiries/${id}/reply`, data),
+      libraryApi.post<{ data: LibraryInquiry }>(
+        `/api/v1/library/inquiries/${id}/reply`,
+        data,
+      ),
   },
   tickets: crudApi<
     LibrarySupportTicket,
     LibrarySupportTicketPayload | LibrarySupportTicketUpdatePayload
   >("/api/v1/library/tickets/"),
-  regulations: crudApi<LibraryRegulation, LibraryGenericPayload>("/api/v1/library/regulations/"),
+  regulations: crudApi<LibraryRegulation, LibraryGenericPayload>(
+    "/api/v1/library/regulations/",
+  ),
   staff: {
     list: (params: ListParams<{ library_id: string }>) =>
-      libraryApi.get<{ data: LibraryStaff[] }>("/api/v1/library/staff/", params),
+      libraryApi.get<{ data: LibraryStaff[] }>(
+        "/api/v1/library/staff/",
+        params,
+      ),
     leadership: (params?: ListParams<{ library_id?: string }>) =>
-      libraryApi.get<{ data: LibraryStaff[] }>("/api/v1/library/staff/leadership", params),
+      libraryApi.get<{ data: LibraryStaff[] }>(
+        "/api/v1/library/staff/leadership",
+        params,
+      ),
     create: (data: LibraryGenericPayload) =>
       libraryApi.post<{ data: LibraryStaff }>("/api/v1/library/staff/", data),
     update: (id: string, data: Partial<LibraryGenericPayload>) =>
-      libraryApi.patch<{ data: LibraryStaff }>(`/api/v1/library/staff/${id}`, data),
-    delete: (id: string) => libraryApi.delete<void>(`/api/v1/library/staff/${id}`),
+      libraryApi.patch<{ data: LibraryStaff }>(
+        `/api/v1/library/staff/${id}`,
+        data,
+      ),
+    delete: (id: string) =>
+      libraryApi.delete<void>(`/api/v1/library/staff/${id}`),
   },
-  services: crudApi<LibraryServiceRecord, LibraryGenericPayload>("/api/v1/library/services/"),
-  statistics: crudApi<LibraryGenericRecord, LibraryGenericPayload>("/api/v1/library/statistics/"),
+  services: crudApi<LibraryServiceRecord, LibraryGenericPayload>(
+    "/api/v1/library/services/",
+  ),
+  statistics: crudApi<LibraryGenericRecord, LibraryGenericPayload>(
+    "/api/v1/library/statistics/",
+  ),
 };
