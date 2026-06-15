@@ -8,6 +8,10 @@ import { PublicImage } from "@/components/public/public-image";
 
 type GovernanceChartProps = {
   councilOnly?: boolean;
+  managementOnly?: boolean;
+  title?: string;
+  description?: string;
+  ariaLabel?: string;
   councilDescription?: string | null;
   senateDescription?: string | null;
   managementDescription?: string | null;
@@ -115,6 +119,7 @@ function functionNode(prefix: string, title: string, index: number): OrgNode {
 
 function buildTree({
   councilOnly = false,
+  managementOnly = false,
   councilDescription,
   senateDescription,
   managementDescription,
@@ -171,6 +176,91 @@ function buildTree({
     "Research direction and examinations",
     "School-level academic leadership",
   ];
+
+  if (managementOnly) {
+    const deputyPeople = managementPeople.filter((member) =>
+      roleIncludes(member, ["deputy", "dvc"]),
+    );
+    const registrarPeople = managementPeople.filter((member) =>
+      roleIncludes(member, ["registrar", "finance"]),
+    );
+    const otherManagementPeople = managementPeople.filter(
+      (member) =>
+        !roleIncludes(member, ["deputy", "dvc", "registrar", "finance"]),
+    );
+    const managementChildren: OrgNode[] = [];
+
+    if (deputyPeople.length) {
+      managementChildren.push({
+        id: "deputy-vice-chancellors",
+        title: "Deputy Vice Chancellors",
+        role: "Executive portfolios",
+        description: "Academic, research, student affairs, administration, planning, and finance leadership.",
+        kind: "group",
+        childCount: deputyPeople.length,
+        children: deputyPeople.map((member, index) =>
+          personNode("deputy", member, index),
+        ),
+      });
+    }
+
+    if (registrarPeople.length) {
+      managementChildren.push({
+        id: "registrars-and-finance",
+        title: "Registrars and Finance",
+        role: "Administrative leadership",
+        description: "Registrar portfolios and financial stewardship offices.",
+        kind: "group",
+        childCount: registrarPeople.length,
+        children: registrarPeople.map((member, index) =>
+          personNode("registrar-finance", member, index),
+        ),
+      });
+    }
+
+    if (otherManagementPeople.length) {
+      managementChildren.push({
+        id: "management-board",
+        title: "Management Board",
+        role: "Implementation",
+        description:
+          managementDescription ||
+          "Day-to-day administration and implementation of university policies.",
+        kind: "group",
+        childCount: otherManagementPeople.length,
+        children: otherManagementPeople.map((member, index) =>
+          personNode("management", member, index),
+        ),
+      });
+    }
+
+    if (publicSenateMembers.length) {
+      managementChildren.push({
+        id: "senate",
+        title: "Senate",
+        role: "Academic authority",
+        description:
+          senateDescription ||
+          "Academic standards, research, examinations, and scholarly direction.",
+        kind: "group",
+        childCount: publicSenateMembers.length,
+        children: publicSenateMembers.map((member, index) =>
+          personNode("senate", member, index),
+        ),
+      });
+    }
+
+    return {
+      id: "vice-chancellor",
+      title: rootPerson.name,
+      role: rootPerson.role || "Vice Chancellor",
+      description:
+        "Executive lead for university management and institutional implementation.",
+      photoUrl: rootPerson.photoUrl,
+      kind: "root",
+      children: managementChildren,
+    };
+  }
 
   const councilNode: OrgNode = {
     id: councilOnly ? "council-secretary" : "university-council",
@@ -389,6 +479,7 @@ export function GovernanceChart(props: GovernanceChartProps) {
   const height =
     Math.max(...positionedNodes.map((node) => node.y)) + NODE_HEIGHT + 32;
   const isCouncilOnly = Boolean(props.councilOnly);
+  const isManagementOnly = Boolean(props.managementOnly);
 
   return (
     <div className="w-full">
@@ -398,22 +489,26 @@ export function GovernanceChart(props: GovernanceChartProps) {
             Org Chart
           </p>
           <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
-            {isCouncilOnly
-              ? "Chancellor and University Council"
-              : "Vice Chancellor, governance bodies, and named members"}
+            {props.title ??
+              (isCouncilOnly
+                ? "Chancellor and University Council"
+                : isManagementOnly
+                  ? "Vice Chancellor and university management"
+                  : "Vice Chancellor, governance bodies, and named members")}
           </h2>
         </div>
       </div>
       <p className="mt-3 text-sm leading-6 text-slate-600">
-        {isCouncilOnly
-          ? "The hierarchy starts with the Chancellor, followed by the Council Secretary, then the remaining published Council members."
-          : "The hierarchy is shown without interaction so governance relationships remain visible at a glance."}
+        {props.description ??
+          (isCouncilOnly
+            ? "The hierarchy starts with the Chancellor, followed by the Council Secretary, then the remaining published Council members."
+            : "The hierarchy is shown without interaction so governance relationships remain visible at a glance.")}
       </p>
 
       <div className="mt-6 overflow-x-auto">
         <svg
           role="img"
-          aria-label="Kisii University governance org chart"
+          aria-label={props.ariaLabel ?? "Kisii University governance org chart"}
           width={chartWidth}
           height={height}
           viewBox={`0 0 ${chartWidth} ${height}`}

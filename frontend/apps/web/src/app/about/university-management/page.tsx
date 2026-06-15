@@ -12,6 +12,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { BoardMemberGrid } from "@/components/about/BoardMemberGrid";
 import type { BoardMember } from "@/components/about/BoardMemberGrid";
+import { GovernanceChart } from "@/components/about/GovernanceChart";
 import type { LeaderCardData } from "@/components/about/LeaderCard";
 import { ScrollReveal } from "@ksu/ui/components";
 import { PublicImage } from "@/components/public/public-image";
@@ -74,101 +75,18 @@ function leaderProfileHref(slug: string) {
   return `/about/university-management/${slug}`;
 }
 
-function initialsFromName(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-}
-
 function isPlaceholderMember(member: BoardMember) {
   return member.name.trim().toLowerCase().startsWith("published via");
 }
 
-function LeaderNode({
-  leader,
-}: {
-  leader: LeaderCardData;
-}) {
-  const photoUrl =
-    leader.photoUrl || (leader.role === "Vice Chancellor" ? "/logos/vc3.jpg" : undefined);
-
-  return (
-    <article className="min-w-0 overflow-hidden rounded-[1rem] border border-slate-200 bg-white shadow-sm">
-      <div className="flex h-20 w-full items-center justify-center overflow-hidden bg-[linear-gradient(135deg,#dbeafe,#eef4ff_56%,#fff7ed)] font-[family-name:var(--font-display)] text-2xl font-semibold text-primary">
-        {photoUrl ? (
-          <PublicImage
-            src={photoUrl}
-            alt={leader.name}
-            ratio="card"
-            sizes="(min-width: 1280px) 260px, (min-width: 768px) 45vw, 100vw"
-            className="h-full w-full"
-          />
-        ) : (
-          initialsFromName(leader.name)
-        )}
-      </div>
-      <div className="min-w-0 p-3">
-        <h3 className="line-clamp-2 text-sm font-semibold leading-tight text-slate-950">
-          {leader.name}
-        </h3>
-        <p className="mt-2 line-clamp-2 text-[0.64rem] font-bold uppercase tracking-[0.1em] text-secondary">
-          {leader.role}
-        </p>
-      </div>
-    </article>
-  );
-}
-
-function UniversityManagementOrgChart({
-  viceChancellor,
-  deputies,
-  officers,
-}: {
-  viceChancellor: LeaderCardData;
-  deputies: LeaderCardData[];
-  officers: LeaderCardData[];
-}) {
-  return (
-    <div className="w-full overflow-hidden">
-      <div className="mx-auto max-w-sm">
-        <LeaderNode
-          leader={viceChancellor}
-        />
-      </div>
-      <div className="mx-auto h-5 w-px bg-slate-200" />
-      <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-          Deputy Vice Chancellors
-        </p>
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          {deputies.map((leader) => (
-            <LeaderNode
-              key={leader.slug}
-              leader={leader}
-            />
-          ))}
-        </div>
-      </div>
-      <div className="mx-auto h-5 w-px bg-slate-200" />
-      <div className="rounded-[1.25rem] border border-slate-200 bg-white p-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-          Registrars and Finance
-        </p>
-        <div className="mt-3 grid grid-cols-2 gap-3 xl:grid-cols-4">
-          {officers.map((leader) => (
-            <LeaderNode
-              key={leader.slug}
-              leader={leader}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+function leaderToBoardMember(leader: LeaderCardData): BoardMember {
+  return {
+    name: leader.name,
+    role: leader.role,
+    photoUrl:
+      leader.photoUrl ||
+      (leader.role === "Vice Chancellor" ? "/logos/vc3.jpg" : undefined),
+  };
 }
 
 export default async function UniversityManagementPage() {
@@ -192,6 +110,11 @@ export default async function UniversityManagementPage() {
   );
   const viceChancellor = leadership.featuredLeader;
   const vcPhotoUrl = viceChancellor.photoUrl || "/logos/vc3.jpg";
+  const managementMembers = [
+    viceChancellor,
+    ...leadership.deputies,
+    ...leadership.registrars,
+  ].map(leaderToBoardMember);
 
   return (
     <PageShell>
@@ -317,20 +240,14 @@ export default async function UniversityManagementPage() {
         >
           <div className="grid w-full gap-6 xl:grid-cols-[minmax(0,4fr)_minmax(220px,1fr)]">
             <div className="min-w-0 overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-              <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-                <div>
-                  <p className="text-sm font-semibold uppercase text-secondary">
-                    University Management Org Chart
-                  </p>
-                  <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
-                    Vice Chancellor, deputies, registrars, and finance
-                  </h2>
-                </div>
-              </div>
-              <UniversityManagementOrgChart
-                viceChancellor={viceChancellor}
-                deputies={leadership.deputies}
-                officers={leadership.registrars}
+              <GovernanceChart
+                managementOnly
+                title="Vice Chancellor and university management"
+                description="The chart follows the same structure used on Governance, with the Vice Chancellor at the top and management portfolios grouped below."
+                ariaLabel="Kisii University university management org chart"
+                senateDescription={senate?.mandate}
+                managementMembers={managementMembers}
+                senateMembers={senateMembers}
               />
             </div>
 
@@ -369,55 +286,49 @@ export default async function UniversityManagementPage() {
           </div>
         </ScrollReveal>
 
-        <ScrollReveal
-          as="section"
-          className="bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-12 sm:px-6 lg:px-8 lg:py-14"
-        >
-          <div className="grid w-full gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
-            <aside className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm xl:sticky xl:top-28 xl:self-start">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15">
-                <GraduationCap aria-hidden className="h-5 w-5" />
-              </span>
-              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-secondary">
-                Senate
-              </p>
-              <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
-                Academic authority for standards and scholarship
-              </h2>
-              <p className="mt-5 text-sm leading-7 text-slate-600">
-                {senate?.mandate ||
-                  "Oversees academic standards, programme quality, examinations, and scholarly direction."}
-              </p>
-              <Link
-                href="/about/mission-vision"
-                className="mt-6 inline-flex items-center gap-2 border-t border-slate-200 pt-5 text-sm font-semibold text-primary"
-              >
-                View mission, vision, and values
-                <ArrowRight aria-hidden className="h-4 w-4" />
-              </Link>
-            </aside>
-
-            <div className="min-w-0 overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-              <div className="mb-6">
-                <p className="text-sm font-semibold uppercase text-secondary">
-                  Senate Members
+        {senateMembers.length ? (
+          <ScrollReveal
+            as="section"
+            className="bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-12 sm:px-6 lg:px-8 lg:py-14"
+          >
+            <div className="grid w-full gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+              <aside className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm xl:sticky xl:top-28 xl:self-start">
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15">
+                  <GraduationCap aria-hidden className="h-5 w-5" />
+                </span>
+                <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-secondary">
+                  Senate
                 </p>
-                <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
-                  Published Senate records
+                <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
+                  Academic authority for standards and scholarship
                 </h2>
-              </div>
-              {senateMembers.length ? (
-                <BoardMemberGrid members={senateMembers} />
-              ) : (
-                <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm leading-7 text-slate-600">
-                  No named Senate member records are currently published in the
-                  public data source. When published, members will render here
-                  from the backend record.
+                <p className="mt-5 text-sm leading-7 text-slate-600">
+                  {senate?.mandate ||
+                    "Oversees academic standards, programme quality, examinations, and scholarly direction."}
+                </p>
+                <Link
+                  href="/about/mission-vision"
+                  className="mt-6 inline-flex items-center gap-2 border-t border-slate-200 pt-5 text-sm font-semibold text-primary"
+                >
+                  View mission, vision, and values
+                  <ArrowRight aria-hidden className="h-4 w-4" />
+                </Link>
+              </aside>
+
+              <div className="min-w-0 overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <div className="mb-6">
+                  <p className="text-sm font-semibold uppercase text-secondary">
+                    Senate Members
+                  </p>
+                  <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
+                    Published Senate records
+                  </h2>
                 </div>
-              )}
+                <BoardMemberGrid members={senateMembers} />
+              </div>
             </div>
-          </div>
-        </ScrollReveal>
+          </ScrollReveal>
+        ) : null}
       </AboutPageLenis>
     </PageShell>
   );
