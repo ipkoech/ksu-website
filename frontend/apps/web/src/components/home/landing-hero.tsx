@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@ksu/ui/components";
+import { ArtDirectedImage } from "@/components/public/art-directed-image";
 import type { LandingHeroData, LandingHeroSlide } from "@/lib/landing-data";
 
 const fallbackSlide: LandingHeroSlide = {
@@ -93,9 +94,9 @@ export function LandingHero({
     >
       <div className="absolute inset-0">
         <AnimatePresence mode="wait">
-          <motion.picture
+          <motion.div
             key={activeSlide.id}
-            className="absolute inset-0 block h-full w-full"
+            className="absolute inset-0 h-full w-full"
             initial={
               prefersReducedMotion
                 ? false
@@ -114,16 +115,14 @@ export function LandingHero({
               ease: "easeOut",
             }}
           >
-            {activeSlide.mobileImageUrl ? (
-              <source media="(max-width: 767px)" srcSet={activeSlide.mobileImageUrl} />
-            ) : null}
-            <img
-              src={activeSlide.desktopImageUrl ?? activeSlide.imageUrl}
+            <ArtDirectedImage
+              desktopSrc={activeSlide.desktopImageUrl ?? activeSlide.imageUrl}
+              mobileSrc={activeSlide.mobileImageUrl}
               alt={activeSlide.imageAlt}
-              className="h-full w-full object-cover object-[45%_50%] opacity-90 lg:object-[58%_50%]"
-              fetchPriority={activeIndex === 0 ? "high" : "auto"}
+              priority={activeIndex === 0}
+              imageClassName="h-full w-full object-cover object-[45%_50%] opacity-90 lg:object-[58%_50%]"
             />
-          </motion.picture>
+          </motion.div>
         </AnimatePresence>
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.86)_0%,rgba(2,20,49,0.68)_34%,rgba(2,20,49,0.18)_78%,rgba(2,20,49,0.06)_100%)]" />
         <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-950/30 to-transparent" />
