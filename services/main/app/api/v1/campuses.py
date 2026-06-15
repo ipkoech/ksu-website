@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("is_active", "fields", "include"))
 async def list_campuses(db: DbSession, is_active: bool | None = True, fields: FieldSelection = FieldsDep):
     selector = build_selector(Campus, fields)
     items = await CampusService.list(db, is_active=is_active, load_options=selector.load_options)

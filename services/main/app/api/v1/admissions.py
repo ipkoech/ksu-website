@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("page", "per_page", "content_type", "audience_level", "school_id", "fields", "include"))
 async def list_admission_info(
     db: DbSession,
     page: int = Query(1, ge=1),

@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("page", "per_page", "q", "category", "division_id", "department_id", "fields", "include"))
 async def list_policies(
     db: DbSession,
     page: int = Query(1, ge=1),

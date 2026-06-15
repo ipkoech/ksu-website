@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=600)
+@cached_public(timeout=600, vary_on=("category", "fields", "include"))
 async def list_public_settings(db: DbSession, category: str | None = Query(default=None), fields: FieldSelection = FieldsDep):
     selector = build_selector(Setting, fields)
     items = await SettingService.list_public(db, category=category, load_options=selector.load_options)

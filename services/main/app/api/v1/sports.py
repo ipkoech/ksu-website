@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("page", "per_page", "campus_id", "facility_type", "fields", "include"))
 async def list_sports_facilities(
     db: DbSession,
     page: int = Query(1, ge=1),

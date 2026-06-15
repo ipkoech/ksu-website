@@ -29,7 +29,7 @@ def _member_error(error: ValueError) -> HTTPException:
 
 
 @router.get("/boards")
-@cached_public(timeout=3600)
+@cached_public(timeout=3600, vary_on=("board_type", "parent_entity_type", "parent_entity_id", "fields", "include"))
 async def list_boards(
     db: DbSession,
     board_type: str | None = None,

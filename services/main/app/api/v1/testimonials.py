@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("page", "per_page", "testimonial_type", "school_id", "department_id", "programme_id", "featured_only", "fields", "include"))
 async def list_testimonials(
     db: DbSession,
     page: int = Query(1, ge=1),

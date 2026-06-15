@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("/groups")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("scope_type", "scope_id", "is_main", "fields", "include"))
 async def list_slider_groups(
     db: DbSession,
     scope_type: str | None = None,
@@ -52,7 +52,7 @@ async def get_slider_group_by_id(group_id: uuid.UUID, db: DbSession, _: CurrentU
 
 
 @router.get("")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slider_group_id", "scope_type", "scope_id", "is_main", "fields", "include"))
 async def list_sliders(
     db: DbSession,
     slider_group_id: uuid.UUID | None = None,

@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("page", "per_page", "q", "fields", "include"))
 async def list_newsletters(
     db: DbSession,
     page: int = Query(1, ge=1),
