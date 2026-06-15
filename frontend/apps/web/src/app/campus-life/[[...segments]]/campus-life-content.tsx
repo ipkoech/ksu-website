@@ -8,7 +8,9 @@ import {
   HeartHandshake,
   ImageIcon,
   Mail,
+  Search,
   ShieldCheck,
+  SlidersHorizontal,
   Sparkles,
   Trophy,
   Users,
@@ -46,6 +48,18 @@ type CampusArea =
 type CampusLifeContentProps = {
   segments: string[];
   data: CampusLifePageData;
+  filters?: CampusLifeFilters;
+};
+
+type CampusLifeFilters = {
+  q?: string;
+  type?: string;
+  status?: string;
+};
+
+type FilterOption = {
+  value: string;
+  label: string;
 };
 
 type NavItem = {
@@ -209,6 +223,133 @@ function listValue(value?: string[] | null, fallback = "Not published") {
   return value?.length ? value.join(", ") : fallback;
 }
 
+function filterValue(value?: string | null) {
+  return value?.trim() || "";
+}
+
+function optionLabel(value: string) {
+  return value
+    .replace(/[_-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function uniqueOptions(values: Array<string | null | undefined>): FilterOption[] {
+  return Array.from(
+    new Set(values.map((value) => filterValue(value)).filter(Boolean)),
+  )
+    .sort((first, second) => first.localeCompare(second))
+    .map((value) => ({ value, label: optionLabel(value) }));
+}
+
+function matchesQuery(fields: Array<string | number | null | undefined>, query?: string) {
+  const term = filterValue(query).toLowerCase();
+  if (!term) return true;
+  return fields
+    .filter((value) => value !== null && value !== undefined)
+    .some((value) => String(value).toLowerCase().includes(term));
+}
+
+function matchesType(value: string | null | undefined, selected?: string) {
+  const type = filterValue(selected);
+  return !type || value === type;
+}
+
+function matchesActiveStatus(isActive: boolean, selected?: string) {
+  const status = filterValue(selected);
+  if (!status) return true;
+  if (status === "active") return isActive;
+  if (status === "inactive") return !isActive;
+  return true;
+}
+
+function matchesAccommodationStatus(item: Accommodation, selected?: string) {
+  const status = filterValue(selected);
+  if (!status) return true;
+  if (status === "accepting") return item.is_accepting_applications;
+  if (status === "closed") return !item.is_accepting_applications;
+  return matchesActiveStatus(item.is_active, status);
+}
+
+function filterClubs(items: Club[], filters?: CampusLifeFilters) {
+  return items.filter(
+    (item) =>
+      matchesType(item.club_type, filters?.type) &&
+      matchesActiveStatus(item.is_active, filters?.status) &&
+      matchesQuery(
+        [
+          item.name,
+          item.club_type,
+          item.about,
+          item.mission,
+          item.objectives,
+          item.meeting_schedule,
+        ],
+        filters?.q,
+      ),
+  );
+}
+
+function filterSports(items: SportsFacility[], filters?: CampusLifeFilters) {
+  return items.filter(
+    (item) =>
+      matchesType(item.facility_type, filters?.type) &&
+      matchesActiveStatus(item.is_active, filters?.status) &&
+      matchesQuery(
+        [item.name, item.facility_type, item.location, item.about, ...(item.sport_types ?? [])],
+        filters?.q,
+      ),
+  );
+}
+
+function filterAccommodations(items: Accommodation[], filters?: CampusLifeFilters) {
+  return items.filter(
+    (item) =>
+      matchesType(item.accommodation_type, filters?.type) &&
+      matchesAccommodationStatus(item, filters?.status) &&
+      matchesQuery(
+        [
+          item.name,
+          item.accommodation_type,
+          item.gender,
+          item.about,
+          item.rules,
+          ...(item.amenities ?? []),
+        ],
+        filters?.q,
+      ),
+  );
+}
+
+function filterGovernance(items: StudentGovernance[], filters?: CampusLifeFilters) {
+  return items.filter(
+    (item) =>
+      matchesType(item.governance_type, filters?.type) &&
+      matchesActiveStatus(item.is_active, filters?.status) &&
+      matchesQuery(
+        [
+          item.name,
+          item.acronym,
+          item.governance_type,
+          item.about,
+          item.mandate,
+          item.office_location,
+        ],
+        filters?.q,
+      ),
+  );
+}
+
+function filterArts(items: ArtsCulture[], filters?: CampusLifeFilters) {
+  return items.filter(
+    (item) =>
+      matchesType(item.category, filters?.type) &&
+      matchesActiveStatus(item.is_active, filters?.status) &&
+      matchesQuery([item.title, item.category, item.about], filters?.q),
+  );
+}
+
 function ActionLink({
   href,
   children,
@@ -250,6 +391,109 @@ function ActionLink({
       {children}
       <ArrowRight aria-hidden className="h-4 w-4" />
     </Link>
+  );
+}
+
+function ListFilters({
+  filters,
+  typeLabel,
+  typeOptions,
+  statusOptions,
+  total,
+  visible,
+}: {
+  filters?: CampusLifeFilters;
+  typeLabel: string;
+  typeOptions: FilterOption[];
+  statusOptions?: FilterOption[];
+  total: number;
+  visible: number;
+}) {
+  const hasFilters =
+    Boolean(filterValue(filters?.q)) ||
+    Boolean(filterValue(filters?.type)) ||
+    Boolean(filterValue(filters?.status));
+
+  return (
+    <form className="mb-6 border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-[minmax(220px,1fr)_12rem_12rem_auto] 2xl:items-end">
+        <label className="block">
+          <span className="text-xs font-semibold uppercase text-slate-500">
+            Search
+          </span>
+          <span className="relative mt-2 block">
+            <Search
+              aria-hidden
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              name="q"
+              defaultValue={filterValue(filters?.q)}
+              placeholder="Search records"
+              className="h-11 w-full border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none ring-primary/20 transition placeholder:text-slate-400 focus:border-primary focus:ring-4"
+            />
+          </span>
+        </label>
+        <label className="block">
+          <span className="text-xs font-semibold uppercase text-slate-500">
+            {typeLabel}
+          </span>
+          <select
+            name="type"
+            defaultValue={filterValue(filters?.type)}
+            className="mt-2 h-11 w-full border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
+          >
+            <option value="">All {typeLabel.toLowerCase()}</option>
+            {typeOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="text-xs font-semibold uppercase text-slate-500">
+            Status
+          </span>
+          <select
+            name="status"
+            defaultValue={filterValue(filters?.status)}
+            className="mt-2 h-11 w-full border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
+          >
+            <option value="">All statuses</option>
+            {(statusOptions ?? [
+              { value: "active", label: "Active" },
+              { value: "inactive", label: "Inactive" },
+            ]).map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="submit"
+            className="inline-flex h-11 items-center justify-center gap-2 bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90"
+          >
+            <SlidersHorizontal aria-hidden className="h-4 w-4" />
+            Apply
+          </button>
+          {hasFilters ? (
+            <Link
+              href="?"
+              className="inline-flex h-11 items-center justify-center border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-primary hover:text-primary"
+            >
+              Clear
+            </Link>
+          ) : null}
+        </div>
+      </div>
+      <p className="mt-3 text-sm font-medium text-slate-600">
+        Showing {visible} of {total} published record
+        {total === 1 ? "" : "s"}.
+      </p>
+    </form>
   );
 }
 
@@ -795,10 +1039,15 @@ function ExperiencePanel({
   );
 }
 
-function ClubsPage({ data }: { data: CampusLifePageData }) {
-  const types = Array.from(
-    new Set(data.clubs.map((club) => club.club_type).filter(Boolean)),
-  );
+function ClubsPage({
+  data,
+  filters,
+}: {
+  data: CampusLifePageData;
+  filters?: CampusLifeFilters;
+}) {
+  const records = filterClubs(data.clubs, filters);
+  const types = uniqueOptions(data.clubs.map((club) => club.club_type));
   return (
     <>
       <Section
@@ -806,20 +1055,15 @@ function ClubsPage({ data }: { data: CampusLifePageData }) {
         title="Browse clubs and societies"
         body="Use club records to understand purpose, membership size, schedule, and contact options before joining."
       >
-        {types.length ? (
-          <div className="mb-6 flex flex-wrap gap-2">
-            {["All", ...types].map((type) => (
-              <span
-                key={type}
-                className="border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
-              >
-                {type}
-              </span>
-            ))}
-          </div>
-        ) : null}
+        <ListFilters
+          filters={filters}
+          typeLabel="Type"
+          typeOptions={types}
+          total={data.clubs.length}
+          visible={records.length}
+        />
         <RecordGrid
-          items={data.clubs}
+          items={records}
           emptyTitle="No club records are currently published"
           render={(club) => <ClubCard key={club.id} club={club} />}
         />
@@ -903,7 +1147,14 @@ function ClubDetail({ club }: { club?: Club | null }) {
   );
 }
 
-function SportsPage({ data }: { data: CampusLifePageData }) {
+function SportsPage({
+  data,
+  filters,
+}: {
+  data: CampusLifePageData;
+  filters?: CampusLifeFilters;
+}) {
+  const records = filterSports(data.sports, filters);
   return (
     <>
       <Section
@@ -911,8 +1162,15 @@ function SportsPage({ data }: { data: CampusLifePageData }) {
         title="Facilities and recreation records"
         body="Sports pages should show where students can train, compete, stay fit, and participate recreationally."
       >
+        <ListFilters
+          filters={filters}
+          typeLabel="Facility type"
+          typeOptions={uniqueOptions(data.sports.map((item) => item.facility_type))}
+          total={data.sports.length}
+          visible={records.length}
+        />
         <RecordGrid
-          items={data.sports}
+          items={records}
           emptyTitle="No sports facilities are currently published"
           render={(item) => <SportCard key={item.id} item={item} />}
         />
@@ -955,7 +1213,14 @@ function SportDetail({ sport }: { sport?: SportsFacility | null }) {
   );
 }
 
-function AccommodationPage({ data }: { data: CampusLifePageData }) {
+function AccommodationPage({
+  data,
+  filters,
+}: {
+  data: CampusLifePageData;
+  filters?: CampusLifeFilters;
+}) {
+  const records = filterAccommodations(data.accommodations, filters);
   return (
     <>
       <Section
@@ -963,8 +1228,23 @@ function AccommodationPage({ data }: { data: CampusLifePageData }) {
         title="Student accommodation records"
         body="Accommodation pages should help students compare housing type, capacity, room availability context, amenities, rules, fees, and application status."
       >
+        <ListFilters
+          filters={filters}
+          typeLabel="Housing type"
+          typeOptions={uniqueOptions(
+            data.accommodations.map((item) => item.accommodation_type),
+          )}
+          statusOptions={[
+            { value: "accepting", label: "Accepting applications" },
+            { value: "closed", label: "Applications closed" },
+            { value: "active", label: "Active" },
+            { value: "inactive", label: "Inactive" },
+          ]}
+          total={data.accommodations.length}
+          visible={records.length}
+        />
         <RecordGrid
-          items={data.accommodations}
+          items={records}
           emptyTitle="No accommodation records are currently published"
           render={(item) => <HousingCard key={item.id} item={item} />}
         />
@@ -1047,7 +1327,14 @@ function AccommodationDetail({ item }: { item?: Accommodation | null }) {
   );
 }
 
-function StudentLifePage({ data }: { data: CampusLifePageData }) {
+function StudentLifePage({
+  data,
+  filters,
+}: {
+  data: CampusLifePageData;
+  filters?: CampusLifeFilters;
+}) {
+  const records = filterGovernance(data.governance, filters);
   return (
     <>
       <Section
@@ -1055,8 +1342,17 @@ function StudentLifePage({ data }: { data: CampusLifePageData }) {
         title="Leadership, representation, and student voice"
         body="Student-life pages connect campus belonging with governance records, representative offices, leadership terms, and student engagement."
       >
+        <ListFilters
+          filters={filters}
+          typeLabel="Governance type"
+          typeOptions={uniqueOptions(
+            data.governance.map((item) => item.governance_type),
+          )}
+          total={data.governance.length}
+          visible={records.length}
+        />
         <RecordGrid
-          items={data.governance}
+          items={records}
           emptyTitle="No student governance records are currently published"
           render={(item) => <GovernanceCard key={item.id} item={item} />}
         />
@@ -1250,7 +1546,14 @@ function SupportRecords({
   );
 }
 
-function GalleryPage({ data }: { data: CampusLifePageData }) {
+function GalleryPage({
+  data,
+  filters,
+}: {
+  data: CampusLifePageData;
+  filters?: CampusLifeFilters;
+}) {
+  const records = filterArts(data.arts, filters);
   return (
     <>
       <Section
@@ -1258,8 +1561,15 @@ function GalleryPage({ data }: { data: CampusLifePageData }) {
         title="Campus life in photos, arts, and culture"
         body="Gallery records should show the lived experience of student activities, cultural moments, clubs, leadership, and events."
       >
+        <ListFilters
+          filters={filters}
+          typeLabel="Category"
+          typeOptions={uniqueOptions(data.arts.map((item) => item.category))}
+          total={data.arts.length}
+          visible={records.length}
+        />
         <RecordGrid
-          items={data.arts}
+          items={records}
           emptyTitle="No gallery records are currently published"
           render={(item) => <ArtCard key={item.id} item={item} />}
         />
@@ -1515,34 +1825,42 @@ function ContentByArea({
   area,
   slug,
   data,
+  filters,
 }: {
   area: CampusArea;
   slug?: string;
   data: CampusLifePageData;
+  filters?: CampusLifeFilters;
 }) {
-  if (area === "clubs") return <ClubsPage data={data} />;
+  if (area === "clubs") return <ClubsPage data={data} filters={filters} />;
   if (area === "club-detail") return <ClubDetail club={data.detail?.club} />;
-  if (area === "sports") return <SportsPage data={data} />;
+  if (area === "sports") return <SportsPage data={data} filters={filters} />;
   if (area === "sport-detail")
     return <SportDetail sport={data.detail?.sport} />;
-  if (area === "accommodation") return <AccommodationPage data={data} />;
+  if (area === "accommodation")
+    return <AccommodationPage data={data} filters={filters} />;
   if (area === "accommodation-detail") {
     return <AccommodationDetail item={data.detail?.accommodation} />;
   }
   if (area === "student-life" && slug) {
     return <GovernanceDetail item={data.detail?.governance} />;
   }
-  if (area === "student-life") return <StudentLifePage data={data} />;
+  if (area === "student-life")
+    return <StudentLifePage data={data} filters={filters} />;
   if (area === "support" || area === "support-detail") {
     return <SupportPage data={data} slug={slug} />;
   }
-  if (area === "gallery") return <GalleryPage data={data} />;
+  if (area === "gallery") return <GalleryPage data={data} filters={filters} />;
   if (area === "gallery-detail")
     return <GalleryDetail item={data.detail?.art} />;
   return <Landing data={data} />;
 }
 
-export function CampusLifeContent({ segments, data }: CampusLifeContentProps) {
+export function CampusLifeContent({
+  segments,
+  data,
+  filters,
+}: CampusLifeContentProps) {
   const area = areaFromSegments(segments);
   const [, slug] = segments;
   const currentHref = `/campus-life${segments.length ? `/${segments.join("/")}` : ""}`;
@@ -1560,7 +1878,12 @@ export function CampusLifeContent({ segments, data }: CampusLifeContentProps) {
         <div className="grid w-full gap-8 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-8 sm:px-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:px-8">
           <SideNav currentHref={currentHref} />
           <div className="min-w-0">
-            <ContentByArea area={area} slug={slug} data={data} />
+            <ContentByArea
+              area={area}
+              slug={slug}
+              data={data}
+              filters={filters}
+            />
           </div>
         </div>
         <section className="border-y border-slate-200 bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
