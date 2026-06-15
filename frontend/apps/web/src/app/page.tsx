@@ -166,6 +166,14 @@ export default async function HomePage() {
             <TrustFactRow facts={homepage.facts} />
             {isContentDegraded ? <ContentDegradedNotice /> : null}
             <LandingReveal>
+              <PriorityPathwaysSection
+                actions={homepage.priorityActions}
+                admissionsActions={homepage.admissionsActions}
+                serviceLinks={homepage.serviceLinks}
+                activeIntakes={homepage.activeIntakes}
+              />
+            </LandingReveal>
+            <LandingReveal>
               <SchoolsSection
                 schools={homepage.schools}
                 quickLinks={homepage.publicQuickLinks}
@@ -260,6 +268,172 @@ function TrustFactRow({ facts }: { facts: HomeMetric[] }) {
     <LandingReveal>
       <AnimatedStatRow facts={facts} />
     </LandingReveal>
+  );
+}
+
+const pathwayIcons: Record<string, LucideIcon> = {
+  "Prospective Students": GraduationCap,
+  "Students & Staff": Users,
+  "Partners & Public": Building2,
+};
+
+function PriorityPathwaysSection({
+  actions,
+  admissionsActions,
+  serviceLinks,
+  activeIntakes,
+}: {
+  actions: HomeCard[];
+  admissionsActions: HomeCard[];
+  serviceLinks: HomeLink[];
+  activeIntakes: HomeIntake[];
+}) {
+  const activeIntake = activeIntakes[0] ?? null;
+  const serviceItems = serviceLinks.slice(0, 8);
+
+  return (
+    <section className="border-b border-blue-100 bg-white py-8">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(300px,0.68fr)] xl:items-start">
+        <div className="min-w-0">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
+                Start here
+              </p>
+              <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-slate-950 sm:text-4xl">
+                Find the university pathway that matches your next step.
+              </h2>
+            </div>
+            <Link
+              href="/search"
+              className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md border border-blue-100 bg-blue-50 px-4 text-sm font-semibold text-primary transition hover:border-primary/30 hover:bg-white"
+            >
+              Search the website
+              <Search className="h-4 w-4" aria-hidden />
+            </Link>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {actions.map((action) => {
+              const Icon = pathwayIcons[action.title] ?? ArrowRight;
+              return (
+                <Link
+                  key={`${action.title}-${action.href}`}
+                  href={action.href}
+                  {...linkProps(action)}
+                  className="group flex min-h-[210px] min-w-0 flex-col rounded-md border border-blue-100 bg-white p-5 shadow-sm shadow-blue-100/60 transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+                >
+                  <span className="flex h-11 w-11 items-center justify-center rounded-md bg-blue-50 text-primary transition group-hover:bg-primary group-hover:text-white">
+                    <Icon className="h-5 w-5" aria-hidden />
+                  </span>
+                  {action.eyebrow ? (
+                    <span className="mt-5 text-xs font-bold uppercase tracking-[0.12em] text-secondary">
+                      {action.eyebrow}
+                    </span>
+                  ) : null}
+                  <h3 className="mt-2 font-[family-name:var(--font-display)] text-xl font-bold leading-6 text-slate-950 transition group-hover:text-primary">
+                    {action.title}
+                  </h3>
+                  <p className="mt-3 flex-1 text-sm leading-6 text-slate-600">
+                    {action.body}
+                  </p>
+                  <span className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-primary">
+                    {action.action ?? "Open"}
+                    {action.external ? (
+                      <ExternalLink className="h-4 w-4" aria-hidden />
+                    ) : (
+                      <ArrowRight
+                        className="h-4 w-4 transition group-hover:translate-x-1"
+                        aria-hidden
+                      />
+                    )}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className="mt-5 grid gap-3 rounded-md border border-blue-100 bg-blue-50/60 p-3 sm:grid-cols-3">
+            {admissionsActions.map((action) => (
+              <Link
+                key={`${action.title}-${action.href}`}
+                href={action.href}
+                className="group min-w-0 rounded-md bg-white p-4 shadow-sm transition hover:shadow-md"
+              >
+                <h3 className="text-sm font-bold text-slate-950 group-hover:text-primary">
+                  {action.title}
+                </h3>
+                <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600">
+                  {action.body}
+                </p>
+                <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-primary">
+                  {action.action}
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <aside className="min-w-0 rounded-md bg-primary p-5 text-white shadow-sm shadow-blue-100/70">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+                Key services
+              </p>
+              <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-bold leading-7">
+                University services in one place.
+              </h2>
+            </div>
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-white/10 text-secondary">
+              <ClipboardCheck className="h-5 w-5" aria-hidden />
+            </span>
+          </div>
+
+          {activeIntake ? (
+            <Link
+              href={activeIntake.href}
+              className="mt-5 block rounded-md bg-white/10 p-4 text-white ring-1 ring-white/10 transition hover:bg-white/15"
+            >
+              <span className="text-xs font-bold uppercase tracking-[0.12em] text-secondary">
+                Active intake
+              </span>
+              <span className="mt-1 block text-lg font-bold">
+                {intakeLabel(activeIntake)}
+              </span>
+              <span className="mt-2 block text-xs font-semibold text-white/78">
+                Deadline:{" "}
+                {formatDate(
+                  activeIntake.lateApplicationEnd ??
+                    activeIntake.applicationEnd,
+                )}
+              </span>
+            </Link>
+          ) : null}
+
+          <div className="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+            {serviceItems.map((link) => {
+              const external = link.external ?? isExternalHref(link.href);
+              return (
+                <Link
+                  key={`${link.label}-${link.href}`}
+                  href={link.href}
+                  {...linkProps(link)}
+                  className="group flex min-h-11 min-w-0 items-center gap-3 rounded-md bg-white/8 px-3 text-sm font-semibold text-white ring-1 ring-white/10 transition hover:bg-white hover:text-primary"
+                >
+                  <span className="min-w-0 flex-1 truncate">{link.label}</span>
+                  {external ? (
+                    <ExternalLink className="h-3.5 w-3.5 shrink-0 text-white/50 transition group-hover:text-primary" />
+                  ) : (
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-white/50 transition group-hover:translate-x-1 group-hover:text-primary" />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </aside>
+      </div>
+    </section>
   );
 }
 
@@ -947,22 +1121,53 @@ function ResearchSection() {
 
 function CampusLifeSection() {
   return (
-    <section className="py-5">
-      <SectionKicker title="Life at Kisii University" />
-      <div className="mt-4 grid gap-1 sm:grid-cols-2 lg:grid-cols-4">
+    <section className="border-b border-blue-100 bg-white py-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <SectionKicker title="Life at Kisii University" />
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+            Student life connects support services, accommodation, clubs,
+            wellness, and everyday participation across the university.
+          </p>
+        </div>
+        <Link
+          href="/campus-life"
+          className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary hover:text-secondary"
+        >
+          Explore campus life
+          <ArrowRight className="h-4 w-4" aria-hidden />
+        </Link>
+      </div>
+      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {campusLife.map((item) => (
-          <Link key={item.href} href={item.href} className="group block">
+          <Link
+            key={item.href}
+            href={item.href}
+            className="group min-w-0 overflow-hidden rounded-md border border-blue-100 bg-white shadow-sm shadow-blue-100/60 transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+          >
             <ProgressiveImageCard
               src={item.imageUrl}
               alt=""
               ratio="card"
               sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-              className="h-32 rounded-sm"
+              className="h-32"
             >
-              <span className="absolute bottom-2 left-3 right-3 text-center text-xs font-bold text-white drop-shadow">
+              <span className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-md bg-white/90 text-primary shadow-sm">
+                <item.icon className="h-4 w-4" aria-hidden />
+              </span>
+              <span className="absolute bottom-2 left-3 right-3 text-xs font-bold text-white drop-shadow">
                 {item.title}
               </span>
             </ProgressiveImageCard>
+            <div className="p-4">
+              <p className="line-clamp-3 text-sm leading-6 text-slate-600">
+                {item.body}
+              </p>
+              <span className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-primary">
+                Open section
+                <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
+              </span>
+            </div>
           </Link>
         ))}
       </div>
