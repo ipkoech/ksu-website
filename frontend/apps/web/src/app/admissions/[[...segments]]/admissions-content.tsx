@@ -467,6 +467,39 @@ function intakeStatus(intake: AdmissionsIntakeSummary) {
   return intake.isOpen ? "Open" : "Scheduled or closed";
 }
 
+function daysUntil(value?: string | null) {
+  const date = parseAdmissionDate(value);
+  if (!date) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.ceil((date.getTime() - today.getTime()) / 86400000);
+}
+
+function intakeStatusClass(intake: AdmissionsIntakeSummary) {
+  const status = intakeStatus(intake);
+  const remainingDays = daysUntil(intakeDeadline(intake));
+
+  if (status === "Deadline passed") return "bg-slate-100 text-slate-700";
+  if (remainingDays !== null && remainingDays <= 14) {
+    return "bg-red-50 text-red-700 ring-1 ring-red-100";
+  }
+  if (remainingDays !== null && remainingDays <= 30) {
+    return "bg-amber-50 text-amber-800 ring-1 ring-amber-100";
+  }
+  if (status === "Open") return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100";
+  return "bg-blue-50 text-primary ring-1 ring-blue-100";
+}
+
+function intakeDeadlineLabel(intake?: AdmissionsIntakeSummary) {
+  if (!intake) return "Verify in portal";
+  const remainingDays = daysUntil(intakeDeadline(intake));
+  if (remainingDays === null) return "Deadline to be confirmed";
+  if (remainingDays < 0) return "Deadline passed";
+  if (remainingDays === 0) return "Closes today";
+  if (remainingDays === 1) return "Closes tomorrow";
+  return `${remainingDays} days left`;
+}
+
 function contentExcerpt(text?: string | null) {
   if (!text) return "";
   return text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
@@ -689,8 +722,8 @@ function Section({
           : "border-b border-slate-200 bg-white px-4 py-8 sm:px-6 lg:px-8 lg:py-10"
       }
     >
-      <div className="grid w-full gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
-        <div>
+      <div className="grid w-full min-w-0 gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="min-w-0">
           <p
             className={
               dark
@@ -721,7 +754,7 @@ function Section({
             </p>
           ) : null}
         </div>
-        <div>{children}</div>
+        <div className="min-w-0">{children}</div>
       </div>
     </ScrollReveal>
   );
@@ -807,6 +840,254 @@ function ProcessTimeline() {
       ))}
     </ol>
   );
+}
+
+function AdmissionsJourneyMap({
+  intakes,
+  compact = false,
+}: {
+  intakes: AdmissionsIntakeSummary[];
+  compact?: boolean;
+}) {
+  const openIntake =
+    intakes.find(
+      (intake) => intake.isOpen && !isPastDate(intakeDeadline(intake)),
+    ) ?? intakes[0];
+  const stages = [
+    {
+      title: "Find programme",
+      body: "Compare level, department, duration, study mode, and entry requirements.",
+      href: "/academics/programmes",
+      action: "Browse programmes",
+      icon: Search,
+      meta: "Academic fit",
+    },
+    {
+      title: "Check intake",
+      body: openIntake
+        ? `${openIntake.name}: ${intakeDeadlineLabel(openIntake)}.`
+        : "Use the portal to confirm open application windows.",
+      href: openIntake ? `/admissions/intakes/${openIntake.slug}` : "/admissions/intakes",
+      action: "View intake",
+      icon: CalendarDays,
+      meta: openIntake ? intakeStatus(openIntake) : "Portal check",
+      intake: openIntake,
+    },
+    {
+      title: "Prepare documents",
+      body: "Gather academic records, identity details, transcripts, and route-specific evidence.",
+      href: "/admissions/requirements",
+      action: "Check requirements",
+      icon: ClipboardCheck,
+      meta: "Applicant file",
+    },
+    {
+      title: "Apply officially",
+      body: "Submit through the online application system or the published route for your intake.",
+      href: officialLinks.onlineApplication,
+      action: "Apply online",
+      icon: FileText,
+      meta: "Official portal",
+      external: true,
+    },
+    {
+      title: "Track admission",
+      body: "Use the admission centre after admission or placement for documents and registration.",
+      href: officialLinks.admissionCenter,
+      action: "Admission centre",
+      icon: ShieldCheck,
+      meta: "After offer",
+      external: true,
+    },
+  ];
+
+  return (
+    <div
+      className={
+        compact
+          ? "grid gap-3 lg:grid-cols-5"
+          : "grid gap-4 md:grid-cols-2 xl:grid-cols-5"
+      }
+    >
+      {stages.map((stage, index) => {
+        const Icon = stage.icon;
+        const statusClass = stage.intake
+          ? intakeStatusClass(stage.intake)
+          : "bg-blue-50 text-primary ring-1 ring-blue-100";
+        const external = Boolean(stage.external);
+        const content = (
+          <>
+            <div className="flex items-start justify-between gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
+                <Icon aria-hidden className="h-5 w-5" />
+              </span>
+              <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusClass}`}>
+                {stage.meta}
+              </span>
+            </div>
+            <p className="mt-5 text-xs font-bold uppercase tracking-[0.08em] text-secondary">
+              Step {index + 1}
+            </p>
+            <h3 className="mt-2 text-base font-semibold leading-6 text-slate-950">
+              {stage.title}
+            </h3>
+            <p className="mt-2 flex-1 text-sm leading-6 text-slate-600">
+              {stage.body}
+            </p>
+            <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+              {stage.action}
+              {external ? (
+                <ExternalLink aria-hidden className="h-4 w-4" />
+              ) : (
+                <ArrowRight aria-hidden className="h-4 w-4" />
+              )}
+            </span>
+          </>
+        );
+
+        const className =
+          "group flex min-w-0 flex-col border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/35 hover:bg-primary/5";
+
+        return external ? (
+          <a
+            key={stage.title}
+            href={stage.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={className}
+          >
+            {content}
+          </a>
+        ) : (
+          <Link key={stage.title} href={stage.href} className={className}>
+            {content}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+function AdmissionsResourcePanel({ data }: { data: AdmissionsPageData }) {
+  const records = data.admissionInfo.slice(0, 4);
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.38fr)]">
+      <div className="grid gap-4 md:grid-cols-2">
+        {records.length
+          ? records.map((record) => {
+              const href =
+                record.externalUrl ||
+                record.attachmentUrl ||
+                `/admissions/${record.slug}`;
+              const external = href.startsWith("http");
+              const body =
+                record.summary ||
+                contentExcerpt(record.content) ||
+                "Published admissions guidance.";
+              const content = (
+                <>
+                  <p className="text-xs font-bold uppercase tracking-[0.08em] text-secondary">
+                    {formatAdmissionResourceType(record.contentType)}
+                  </p>
+                  <h3 className="mt-3 text-base font-semibold leading-6 text-slate-950">
+                    {record.title}
+                  </h3>
+                  <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
+                    {body}
+                  </p>
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                    {external ? "Open resource" : "Read guidance"}
+                    {external ? (
+                      <ExternalLink aria-hidden className="h-4 w-4" />
+                    ) : (
+                      <ArrowRight aria-hidden className="h-4 w-4" />
+                    )}
+                  </span>
+                </>
+              );
+
+              const className =
+                "group min-w-0 border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5";
+
+              return external ? (
+                <a
+                  key={record.id}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={className}
+                >
+                  {content}
+                </a>
+              ) : (
+                <Link key={record.id} href={href} className={className}>
+                  {content}
+                </Link>
+              );
+            })
+          : [
+              {
+                title: "Course booklet",
+                href: officialLinks.brochurePdf,
+                description: "Use the official booklet for programme requirements, duration, mode, and planning references.",
+                icon: BookOpenCheck,
+              },
+              {
+                title: "How to apply",
+                href: officialLinks.howToApply,
+                description: "Open official application guidance before submitting any form or payment.",
+                icon: ClipboardCheck,
+              },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <a
+                  key={item.title}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group min-w-0 border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+                >
+                  <Icon aria-hidden className="h-5 w-5 text-primary" />
+                  <h3 className="mt-3 text-base font-semibold text-slate-950">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {item.description}
+                  </p>
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                    Open resource
+                    <ExternalLink aria-hidden className="h-4 w-4" />
+                  </span>
+                </a>
+              );
+            })}
+      </div>
+
+      <aside className="border border-primary/15 bg-primary/[0.06] p-5">
+        <p className="text-xs font-bold uppercase tracking-[0.08em] text-secondary">
+          Verification rule
+        </p>
+        <h3 className="mt-3 text-xl font-semibold leading-7 text-slate-950">
+          Use official resources before acting.
+        </h3>
+        <p className="mt-3 text-sm leading-7 text-slate-700">
+          Downloadable forms, booklets, and links are helpful only when they
+          match the current intake, programme, fee guidance, and application
+          route.
+        </p>
+        <div className="mt-5 grid gap-2">
+          <ActionLink href="/admissions/brochures">View brochures</ActionLink>
+          <ActionLink href="/downloads">Open downloads</ActionLink>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function formatAdmissionResourceType(value: string) {
+  return value.replace(/[_-]+/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function CheckList({ items, dark = false }: { items: string[]; dark?: boolean }) {
@@ -1008,6 +1289,14 @@ function LandingSections({ data }: { data: AdmissionsPageData }) {
   return (
     <>
       <Section
+        eyebrow="Applicant Journey"
+        title="Follow the full admissions flow in order"
+        body="The admissions experience should help applicants move from programme choice to intake verification, document preparation, official submission, and admission tracking without guessing the next step."
+      >
+        <AdmissionsJourneyMap intakes={data.intakes} />
+      </Section>
+
+      <Section
         eyebrow="Admissions Tasks"
         title="Start with the three decisions that determine the right route"
         body="Admissions content is now grouped around applicant tasks: confirm live intake status, choose the correct application route, and verify the programme before submitting."
@@ -1064,6 +1353,14 @@ function LandingSections({ data }: { data: AdmissionsPageData }) {
         body="The admissions section is organized around the decisions applicants actually make: level of study, requirements, fees, funding, and application timing."
       >
         <LinkPanel links={navItems.filter((item) => item.href !== "/admissions").slice(0, 6)} />
+      </Section>
+
+      <Section
+        eyebrow="Forms And Resources"
+        title="Use backend-published admissions resources where available"
+        body="Forms, booklets, notices, and linked resources should appear as part of the admissions workflow, with official fallback links when backend records are not yet populated."
+      >
+        <AdmissionsResourcePanel data={data} />
       </Section>
     </>
   );
@@ -1521,9 +1818,17 @@ function ScholarshipsSections() {
   );
 }
 
-function HowToApplySections() {
+function HowToApplySections({ data }: { data: AdmissionsPageData }) {
   return (
     <>
+      <Section
+        eyebrow="Journey Map"
+        title="Complete the application in the right order"
+        body="Use the journey map as the control flow for admissions: programme first, intake second, documents third, official submission fourth, and tracking last."
+      >
+        <AdmissionsJourneyMap intakes={data.intakes} compact />
+      </Section>
+
       <Section
         eyebrow="Application Process"
         title="From programme choice to admission documents"
@@ -2024,7 +2329,7 @@ function ContentByArea({
   if (area === "requirements") return <RequirementsSections />;
   if (area === "fees") return <FeesSections />;
   if (area === "scholarships") return <ScholarshipsSections />;
-  if (area === "how-to-apply") return <HowToApplySections />;
+  if (area === "how-to-apply") return <HowToApplySections data={data} />;
   if (area === "brochures") return <BrochuresSections data={data} />;
   if (area === "booklets") return <BookletsSections data={data} />;
   if (area === "graduation-booklets") return <GraduationBookletsSections data={data} />;
