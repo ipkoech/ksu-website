@@ -12,10 +12,13 @@ from ksu_common import PaginatedResult, paginate
 
 
 def apply_updates(instance: Any, **data: Any) -> Any:
-    """Apply non-None updates to an ORM instance."""
+    """Apply provided update values to an ORM instance.
+
+    Callers should pass data produced with exclude_unset=True when partial
+    update semantics are needed. Explicit None values are intentional clears.
+    """
     for key, value in data.items():
-        if value is not None:
-            setattr(instance, key, value)
+        setattr(instance, key, value)
     return instance
 
 
