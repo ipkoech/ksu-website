@@ -101,6 +101,7 @@ class _RichContentService:
             query = query.options(*load_options)
         if public_only:
             query = query.where(cls.model.is_public.is_(True))
+            query = query.where(cls.model.is_published.is_(True))
             query = query.where(*_active_window_filter(cls.model, now))
         result = await db.execute(query)
         return result.scalar_one_or_none()
@@ -237,6 +238,7 @@ class EventService:
             query = query.options(*load_options)
         if public_only:
             query = query.where(Event.is_public.is_(True))
+            query = query.where(Event.is_published.is_(True))
             query = query.where(*_active_window_filter(Event, now))
         result = await db.execute(query)
         return result.scalar_one_or_none()
