@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { Banknote, ClipboardList, FileText, GraduationCap, LifeBuoy, Wrench } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
-import { ResearchFact } from "../../components/research-detail";
-import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
+import { ResearchFilterForm, ResearchListCard } from "../../components/research-listing";
+import { ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, formatLabel, getCenters, getResources, getResourcesFiltered } from "../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
@@ -46,13 +45,42 @@ export default async function ResourcesToolsPage({ searchParams }: { searchParam
 }
 
 function ResourceFilters({ params, categories, centers }: { params: ResourceParams; categories: string[]; centers: ResearchGenericRecord[] }) {
-  return <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/resources-tools"><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6"><label className="xl:col-span-2"><span className="text-xs font-semibold uppercase text-slate-500">Search</span><input name="q" defaultValue={params.q ?? ""} placeholder="Equipment, tool, facility, capability" className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary" /></label><SelectField name="type" label="Type" value={params.type} options={resourceTypes} /><SelectField name="access" label="Access" value={params.access} options={accessTypes} /><SelectField name="category" label="Category" value={params.category} options={categories} /><SelectField name="status" label="Status" value={params.status} options={statuses} /><label className="md:col-span-2 xl:col-span-3"><span className="text-xs font-semibold uppercase text-slate-500">Center</span><select name="center" defaultValue={params.center ?? ""} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="">All centers</option>{centers.map((center) => <option key={center.id} value={center.id}>{center.name ?? center.title ?? center.code ?? center.id}</option>)}</select></label><label><span className="text-xs font-semibold uppercase text-slate-500">Sort</span><select name="sort" defaultValue={params.sort ?? "name"} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="name">Name</option><option value="created_at">Newest</option><option value="status">Availability</option></select></label><div className="flex items-end gap-2 md:col-span-2"><button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">Apply filters</button><Link href="/resources-tools" className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary">Reset</Link></div></div></form>;
+  return (
+    <ResearchFilterForm
+      action="/resources-tools"
+      resetHref="/resources-tools"
+      searchValue={params.q}
+      searchPlaceholder="Equipment, tool, facility, capability"
+      selects={[
+        { name: "type", label: "Type", value: params.type, options: resourceTypes },
+        { name: "access", label: "Access", value: params.access, options: accessTypes },
+        { name: "category", label: "Category", value: params.category, options: categories },
+        { name: "status", label: "Status", value: params.status, options: statuses },
+      ]}
+      centers={centers}
+      centerValue={params.center}
+      sortValue={params.sort ?? "name"}
+      sortOptions={[
+        { value: "name", label: "Name" },
+        { value: "created_at", label: "Newest" },
+        { value: "status", label: "Availability" },
+      ]}
+    />
+  );
 }
 
 function ResourceCard({ item }: { item: ResearchGenericRecord }) {
-  return <article className="flex min-h-[340px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"><div className="flex flex-wrap gap-2"><Badge>{formatLabel(item.resource_type ?? "resource")}</Badge>{item.is_featured ? <FilledBadge>Featured</FilledBadge> : null}{item.status ? <Badge>{formatLabel(item.status)}</Badge> : null}</div><h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950"><Link href={item.slug ? `/resources-tools/${item.slug}` : "/resources-tools"} className="transition hover:text-primary">{item.name ?? "Research resource"}</Link></h2><p className="mt-3 text-sm leading-7 text-slate-600">{compactText(item.description) || compactText(item.capabilities) || "Resource details are not published yet."}</p><dl className="mt-auto grid grid-cols-2 gap-3 pt-5 text-sm"><ResearchFact label="Access" value={formatLabel(item.access_type)} /><ResearchFact label="Location" value={[item.location, item.room].map(compactText).filter(Boolean).join(" · ")} /></dl></article>;
-}
-
-function SelectField({ name, label, value, options }: { name: string; label: string; value?: string; options: string[] }) {
-  return <label><span className="text-xs font-semibold uppercase text-slate-500">{label}</span><select name={name} defaultValue={value ?? ""} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="">All {label.toLowerCase()}</option>{options.map((option) => <option key={option} value={option}>{formatLabel(option)}</option>)}</select></label>;
+  return (
+    <ResearchListCard
+      href={item.slug ? `/resources-tools/${item.slug}` : "/resources-tools"}
+      title={item.name ?? "Research resource"}
+      description={compactText(item.description) || compactText(item.capabilities) || "Resource details are not published yet."}
+      badges={[item.resource_type ?? "resource", item.status]}
+      filledBadges={item.is_featured ? ["Featured"] : []}
+      facts={[
+        { label: "Access", value: formatLabel(item.access_type) },
+        { label: "Location", value: [item.location, item.room].map(compactText).filter(Boolean).join(" · ") },
+      ]}
+    />
+  );
 }

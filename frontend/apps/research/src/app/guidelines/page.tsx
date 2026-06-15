@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { Banknote, ClipboardList, FileText, GraduationCap, LifeBuoy, Wrench } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
-import { ResearchFact } from "../../components/research-detail";
-import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
+import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
+import { Badge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, formatDate, formatLabel, getGrantGuidelines, getGuidelines, getGuidelinesFiltered } from "../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
@@ -52,19 +51,49 @@ export default async function GuidelinesPage({ searchParams }: { searchParams?: 
 }
 
 function GuidelineFilters({ params, categories, years }: { params: GuidelineParams; categories: string[]; years: string[] }) {
-  return <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/guidelines"><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6"><label className="xl:col-span-2"><span className="text-xs font-semibold uppercase text-slate-500">Search</span><input name="q" defaultValue={params.q ?? ""} placeholder="Policy, procedure, code, scope" className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary" /></label><SelectField name="type" label="Type" value={params.type} options={guidelineTypes} /><SelectField name="category" label="Category" value={params.category} options={categories} /><SelectField name="status" label="Status" value={params.status} options={statuses} /><SelectField name="year" label="Year" value={params.year} options={years} /><label><span className="text-xs font-semibold uppercase text-slate-500">Sort</span><select name="sort" defaultValue={params.sort ?? "effective_date"} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="effective_date">Effective date</option><option value="review_date">Review date</option><option value="approval_date">Approval date</option><option value="title">Title</option><option value="created_at">Newest</option></select></label><div className="flex items-end gap-2 md:col-span-2 xl:col-span-6"><button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">Apply filters</button><Link href="/guidelines" className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary">Reset</Link></div></div></form>;
+  return (
+    <ResearchFilterForm
+      action="/guidelines"
+      resetHref="/guidelines"
+      searchValue={params.q}
+      searchPlaceholder="Policy, procedure, code, scope"
+      selects={[
+        { name: "type", label: "Type", value: params.type, options: guidelineTypes },
+        { name: "category", label: "Category", value: params.category, options: categories },
+        { name: "status", label: "Status", value: params.status, options: statuses },
+        { name: "year", label: "Year", value: params.year, options: years },
+      ]}
+      sortValue={params.sort ?? "effective_date"}
+      sortOptions={[
+        { value: "effective_date", label: "Effective date" },
+        { value: "review_date", label: "Review date" },
+        { value: "approval_date", label: "Approval date" },
+        { value: "title", label: "Title" },
+        { value: "created_at", label: "Newest" },
+      ]}
+    />
+  );
 }
 
 function GuidelineRow({ item, hrefBase }: { item: ResearchGenericRecord; hrefBase: string }) {
-  return <article className="grid gap-4 p-5 lg:grid-cols-[1fr_280px]"><div><div className="flex flex-wrap gap-2"><Badge>{formatLabel(item.guideline_type ?? item.category ?? "guideline")}</Badge>{item.is_mandatory ? <FilledBadge>Mandatory</FilledBadge> : null}{item.status ? <Badge>{formatLabel(item.status)}</Badge> : null}</div><h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950"><Link href={item.slug ? `${hrefBase}/${item.slug}` : hrefBase} className="transition hover:text-primary">{item.title ?? "Research guideline"}</Link></h2><p className="mt-3 text-sm leading-7 text-slate-600">{compactText(item.summary) || compactText(item.scope) || "Guideline summary is not published yet."}</p></div><dl className="grid gap-3 text-sm"><ResearchFact label="Version" value={compactText(item.version)} /><ResearchFact label="Effective" value={formatDate(item.effective_date)} /><ResearchFact label="Review" value={formatDate(item.review_date)} /></dl></article>;
+  return (
+    <ResearchRecordRow
+      href={item.slug ? `${hrefBase}/${item.slug}` : hrefBase}
+      title={item.title ?? "Research guideline"}
+      description={compactText(item.summary) || compactText(item.scope) || "Guideline summary is not published yet."}
+      badges={[item.guideline_type ?? item.category ?? "guideline", item.status]}
+      filledBadges={item.is_mandatory ? ["Mandatory"] : []}
+      facts={[
+        { label: "Version", value: compactText(item.version) },
+        { label: "Effective", value: formatDate(item.effective_date) },
+        { label: "Review", value: formatDate(item.review_date) },
+      ]}
+    />
+  );
 }
 
 function GuidelineCard({ item }: { item: ResearchGenericRecord }) {
   return <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><Badge>{formatLabel(item.guideline_type ?? "grant guidance")}</Badge><h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">{item.title ?? "Grant guideline"}</h2><p className="mt-3 text-sm leading-7 text-slate-600">{compactText(item.summary) || compactText(item.description) || "Grant guidance details are not published yet."}</p>{compactText(item.document_url) ? <a href={item.document_url} className="mt-4 inline-flex text-sm font-semibold text-primary">Download document</a> : null}</article>;
-}
-
-function SelectField({ name, label, value, options }: { name: string; label: string; value?: string; options: string[] }) {
-  return <label><span className="text-xs font-semibold uppercase text-slate-500">{label}</span><select name={name} defaultValue={value ?? ""} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="">All {label.toLowerCase()}</option>{options.map((option) => <option key={option} value={option}>{formatLabel(option)}</option>)}</select></label>;
 }
 
 function getYears(records: ResearchGenericRecord[]) {

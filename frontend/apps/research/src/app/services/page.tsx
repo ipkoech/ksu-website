@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { Banknote, ClipboardList, FileText, GraduationCap, LifeBuoy, Wrench } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
-import { ResearchFact } from "../../components/research-detail";
-import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
-import { compactText, formatLabel, getCenters, getServices, getServicesFiltered } from "../../lib/research-public-data";
+import { ResearchFilterForm, ResearchListCard } from "../../components/research-listing";
+import { ResearchSection, StatusMessage } from "../../components/research-ui";
+import { compactText, getCenters, getServices, getServicesFiltered } from "../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
 
@@ -44,13 +43,40 @@ export default async function ServicesPage({ searchParams }: { searchParams?: Pr
 }
 
 function ServiceFilters({ params, categories, centers }: { params: ServiceParams; categories: string[]; centers: ResearchGenericRecord[] }) {
-  return <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/services"><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6"><label className="xl:col-span-2"><span className="text-xs font-semibold uppercase text-slate-500">Search</span><input name="q" defaultValue={params.q ?? ""} placeholder="Service, process, deliverable" className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary" /></label><SelectField name="type" label="Type" value={params.type} options={serviceTypes} /><SelectField name="category" label="Category" value={params.category} options={categories} /><label className="md:col-span-2 xl:col-span-2"><span className="text-xs font-semibold uppercase text-slate-500">Center</span><select name="center" defaultValue={params.center ?? ""} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="">All centers</option>{centers.map((center) => <option key={center.id} value={center.id}>{center.name ?? center.title ?? center.code ?? center.id}</option>)}</select></label><label><span className="text-xs font-semibold uppercase text-slate-500">Sort</span><select name="sort" defaultValue={params.sort ?? "name"} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="name">Name</option><option value="created_at">Newest</option><option value="turnaround_time">Turnaround</option></select></label><div className="flex items-end gap-2 md:col-span-2 xl:col-span-6"><button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">Apply filters</button><Link href="/services" className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary">Reset</Link></div></div></form>;
+  return (
+    <ResearchFilterForm
+      action="/services"
+      resetHref="/services"
+      searchValue={params.q}
+      searchPlaceholder="Service, process, deliverable"
+      selects={[
+        { name: "type", label: "Type", value: params.type, options: serviceTypes },
+        { name: "category", label: "Category", value: params.category, options: categories },
+      ]}
+      centers={centers}
+      centerValue={params.center}
+      sortValue={params.sort ?? "name"}
+      sortOptions={[
+        { value: "name", label: "Name" },
+        { value: "created_at", label: "Newest" },
+        { value: "turnaround_time", label: "Turnaround" },
+      ]}
+    />
+  );
 }
 
 function ServiceCard({ item }: { item: ResearchGenericRecord }) {
-  return <article className="flex min-h-[340px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"><div className="flex flex-wrap gap-2"><Badge>{formatLabel(item.service_type ?? "service")}</Badge>{item.is_free ? <FilledBadge>Free</FilledBadge> : null}{item.category ? <Badge>{formatLabel(item.category)}</Badge> : null}</div><h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950"><Link href={item.slug ? `/services/${item.slug}` : "/services"} className="transition hover:text-primary">{item.name ?? "Research service"}</Link></h2><p className="mt-3 text-sm leading-7 text-slate-600">{compactText(item.summary) || compactText(item.scope) || compactText(item.description) || "Service details are not published yet."}</p><dl className="mt-auto grid grid-cols-2 gap-3 pt-5 text-sm"><ResearchFact label="Turnaround" value={compactText(item.turnaround_time)} /><ResearchFact label="Access" value={compactText(item.how_to_access)} /></dl></article>;
-}
-
-function SelectField({ name, label, value, options }: { name: string; label: string; value?: string; options: string[] }) {
-  return <label><span className="text-xs font-semibold uppercase text-slate-500">{label}</span><select name={name} defaultValue={value ?? ""} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="">All {label.toLowerCase()}</option>{options.map((option) => <option key={option} value={option}>{formatLabel(option)}</option>)}</select></label>;
+  return (
+    <ResearchListCard
+      href={item.slug ? `/services/${item.slug}` : "/services"}
+      title={item.name ?? "Research service"}
+      description={compactText(item.summary) || compactText(item.scope) || compactText(item.description) || "Service details are not published yet."}
+      badges={[item.service_type ?? "service", item.category]}
+      filledBadges={item.is_free ? ["Free"] : []}
+      facts={[
+        { label: "Turnaround", value: compactText(item.turnaround_time) },
+        { label: "Access", value: compactText(item.how_to_access) },
+      ]}
+    />
+  );
 }

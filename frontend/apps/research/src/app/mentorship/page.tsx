@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { BookOpenCheck, CalendarDays, Newspaper, Users } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
-import { ResearchFact } from "../../components/research-detail";
-import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
-import { compactText, formatDate, formatLabel, getCenters, getMentorship, getMentorshipFiltered } from "../../lib/research-public-data";
+import { ResearchFilterForm, ResearchListCard } from "../../components/research-listing";
+import { ResearchSection, StatusMessage } from "../../components/research-ui";
+import { compactText, formatDate, getCenters, getMentorship, getMentorshipFiltered } from "../../lib/research-public-data";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 
 export const dynamic = "force-dynamic";
@@ -55,32 +54,42 @@ export default async function MentorshipPage({ searchParams }: { searchParams?: 
 
 function MentorshipFilters({ params, years, centers }: { params: MentorshipSearchParams; years: string[]; centers: ResearchGenericRecord[] }) {
   return (
-    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/mentorship">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <label className="xl:col-span-2"><span className="text-xs font-semibold uppercase text-slate-500">Search</span><input name="q" defaultValue={params.q ?? ""} placeholder="Programme, requirements, benefits" className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary" /></label>
-        <SelectField name="type" label="Type" value={params.type} options={programTypes} />
-        <SelectField name="status" label="Status" value={params.status} options={statuses} />
-        <SelectField name="year" label="Year" value={params.year} options={years} />
-        <label className="xl:col-span-2"><span className="text-xs font-semibold uppercase text-slate-500">Center</span><select name="center" defaultValue={params.center ?? ""} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="">All centers</option>{centers.map((center) => <option key={center.id} value={center.id}>{center.name ?? center.title ?? center.code ?? center.id}</option>)}</select></label>
-        <label><span className="text-xs font-semibold uppercase text-slate-500">Sort</span><select name="sort" defaultValue={params.sort ?? "application_deadline"} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="application_deadline">Application deadline</option><option value="cohort_start_date">Cohort start</option><option value="created_at">Newest</option><option value="name">Name</option></select></label>
-        <div className="flex items-end gap-2 md:col-span-2 xl:col-span-5"><button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">Apply filters</button><Link href="/mentorship" className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary">Reset</Link></div>
-      </div>
-    </form>
+    <ResearchFilterForm
+      action="/mentorship"
+      resetHref="/mentorship"
+      searchValue={params.q}
+      searchPlaceholder="Programme, requirements, benefits"
+      selects={[
+        { name: "type", label: "Type", value: params.type, options: programTypes },
+        { name: "status", label: "Status", value: params.status, options: statuses },
+        { name: "year", label: "Year", value: params.year, options: years },
+      ]}
+      centers={centers}
+      centerValue={params.center}
+      sortValue={params.sort ?? "application_deadline"}
+      sortOptions={[
+        { value: "application_deadline", label: "Application deadline" },
+        { value: "cohort_start_date", label: "Cohort start" },
+        { value: "created_at", label: "Newest" },
+        { value: "name", label: "Name" },
+      ]}
+    />
   );
-}
-
-function SelectField({ name, label, value, options }: { name: string; label: string; value?: string; options: string[] }) {
-  return <label><span className="text-xs font-semibold uppercase text-slate-500">{label}</span><select name={name} defaultValue={value ?? ""} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="">All {label.toLowerCase()}</option>{options.map((option) => <option key={option} value={option}>{formatLabel(option)}</option>)}</select></label>;
 }
 
 function MentorshipCard({ item }: { item: ResearchGenericRecord }) {
   return (
-    <Link href={item.slug ? `/mentorship/${item.slug}` : "/mentorship"} className="block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]">
-      <div className="flex flex-wrap gap-2"><Badge>{formatLabel(item.program_type ?? "mentorship")}</Badge><Badge>{formatLabel(item.status ?? "active")}</Badge>{item.is_featured ? <FilledBadge>Featured</FilledBadge> : null}</div>
-      <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">{item.name ?? item.title}</h2>
-      <p className="mt-3 text-sm leading-7 text-slate-600">{compactText(item.summary) || compactText(item.benefits) || "Mentorship details will appear when published."}</p>
-      <dl className="mt-5 grid grid-cols-2 gap-3 text-sm"><ResearchFact label="Deadline" value={formatDate(item.application_deadline)} /><ResearchFact label="Cohort" value={formatDate(item.cohort_start_date)} /></dl>
-    </Link>
+    <ResearchListCard
+      href={item.slug ? `/mentorship/${item.slug}` : "/mentorship"}
+      title={item.name ?? item.title}
+      description={compactText(item.summary) || compactText(item.benefits) || "Mentorship details will appear when published."}
+      badges={[item.program_type ?? "mentorship", item.status ?? "active"]}
+      filledBadges={item.is_featured ? ["Featured"] : []}
+      facts={[
+        { label: "Deadline", value: formatDate(item.application_deadline) },
+        { label: "Cohort", value: formatDate(item.cohort_start_date) },
+      ]}
+    />
   );
 }
 

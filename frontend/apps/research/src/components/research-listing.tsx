@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { Badge, StatusMessage } from "./research-ui";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import {
@@ -7,6 +8,255 @@ import {
   formatLabel,
   type PublicResearchData,
 } from "../lib/research-public-data";
+
+type FilterOption = {
+  name: string;
+  label: string;
+  value?: string;
+  options: string[];
+};
+
+type CenterOption = {
+  id?: string;
+  name?: string | null;
+  title?: string | null;
+  code?: string | null;
+};
+
+type SortOption = {
+  value: string;
+  label: string;
+};
+
+type ListingFact = {
+  label: string;
+  value: string;
+};
+
+export function ResearchFilterForm({
+  action,
+  resetHref,
+  searchValue,
+  searchPlaceholder,
+  selects = [],
+  centers,
+  centerValue,
+  sortValue,
+  sortOptions = [],
+}: {
+  action: string;
+  resetHref: string;
+  searchValue?: string;
+  searchPlaceholder: string;
+  selects?: FilterOption[];
+  centers?: CenterOption[];
+  centerValue?: string;
+  sortValue?: string;
+  sortOptions?: SortOption[];
+}) {
+  return (
+    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action={action}>
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+        <label className="xl:col-span-2">
+          <span className="text-xs font-semibold uppercase text-slate-500">Search</span>
+          <input
+            name="q"
+            defaultValue={searchValue ?? ""}
+            placeholder={searchPlaceholder}
+            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+          />
+        </label>
+
+        {selects.map((select) => (
+          <ResearchSelectField key={select.name} {...select} />
+        ))}
+
+        {centers ? (
+          <label className="md:col-span-2 xl:col-span-2">
+            <span className="text-xs font-semibold uppercase text-slate-500">Center</span>
+            <select
+              name="center"
+              defaultValue={centerValue ?? ""}
+              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+            >
+              <option value="">All centers</option>
+              {centers.map((center) => (
+                <option key={center.id} value={center.id}>
+                  {center.name ?? center.title ?? center.code ?? center.id}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+
+        {sortOptions.length > 0 ? (
+          <label>
+            <span className="text-xs font-semibold uppercase text-slate-500">Sort</span>
+            <select
+              name="sort"
+              defaultValue={sortValue ?? sortOptions[0]?.value ?? ""}
+              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+            >
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+
+        <div className="flex items-end gap-2 md:col-span-2 xl:col-span-6">
+          <button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
+            Apply filters
+          </button>
+          <Link
+            href={resetHref}
+            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary"
+          >
+            Reset
+          </Link>
+        </div>
+      </div>
+    </form>
+  );
+}
+
+export function ResearchSelectField({
+  name,
+  label,
+  value,
+  options,
+}: FilterOption) {
+  return (
+    <label>
+      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
+      <select
+        name={name}
+        defaultValue={value ?? ""}
+        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+      >
+        <option value="">All {label.toLowerCase()}</option>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {formatLabel(option)}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+export function ResearchListCard({
+  href,
+  title,
+  description,
+  badges = [],
+  filledBadges = [],
+  facts = [],
+}: {
+  href: string;
+  title: ReactNode;
+  description: ReactNode;
+  badges?: Array<string | null | undefined>;
+  filledBadges?: Array<string | null | undefined>;
+  facts?: ListingFact[];
+}) {
+  const cleanBadges = badges.map((badge) => formatLabel(compactText(badge))).filter(Boolean);
+  const cleanFilledBadges = filledBadges.map((badge) => compactText(badge)).filter(Boolean);
+
+  return (
+    <article className="flex min-h-[340px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]">
+      <div className="flex flex-wrap gap-2">
+        {cleanBadges.map((badge) => (
+          <Badge key={badge}>{badge}</Badge>
+        ))}
+        {cleanFilledBadges.map((badge) => (
+          <span
+            key={badge}
+            className="inline-flex items-center rounded-full bg-secondary px-3 py-1 text-xs font-semibold uppercase text-primary"
+          >
+            {badge}
+          </span>
+        ))}
+      </div>
+      <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
+        <Link href={href} className="transition hover:text-primary">
+          {title}
+        </Link>
+      </h2>
+      <p className="mt-3 text-sm leading-7 text-slate-600">{description}</p>
+      {facts.length > 0 ? (
+        <dl className="mt-auto grid grid-cols-2 gap-3 pt-5 text-sm">
+          {facts.map((fact) => (
+            <ResearchListingFact key={fact.label} label={fact.label} value={fact.value} />
+          ))}
+        </dl>
+      ) : null}
+    </article>
+  );
+}
+
+export function ResearchListingFact({ label, value }: ListingFact) {
+  return (
+    <div className="rounded-md bg-slate-50 p-3">
+      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
+      <dd className="mt-1 break-words font-semibold text-slate-950">
+        {value || "Not published"}
+      </dd>
+    </div>
+  );
+}
+
+export function ResearchRecordRow({
+  href,
+  title,
+  description,
+  badges = [],
+  filledBadges = [],
+  facts = [],
+}: {
+  href: string;
+  title: ReactNode;
+  description: ReactNode;
+  badges?: Array<string | null | undefined>;
+  filledBadges?: Array<string | null | undefined>;
+  facts?: ListingFact[];
+}) {
+  const cleanBadges = badges.map((badge) => formatLabel(compactText(badge))).filter(Boolean);
+  const cleanFilledBadges = filledBadges.map((badge) => compactText(badge)).filter(Boolean);
+
+  return (
+    <article className="grid gap-4 p-5 lg:grid-cols-[1fr_280px]">
+      <div>
+        <div className="flex flex-wrap gap-2">
+          {cleanBadges.map((badge) => (
+            <Badge key={badge}>{badge}</Badge>
+          ))}
+          {cleanFilledBadges.map((badge) => (
+            <span
+              key={badge}
+              className="inline-flex items-center rounded-full bg-secondary px-3 py-1 text-xs font-semibold uppercase text-primary"
+            >
+              {badge}
+            </span>
+          ))}
+        </div>
+        <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
+          <Link href={href} className="transition hover:text-primary">
+            {title}
+          </Link>
+        </h2>
+        <p className="mt-3 text-sm leading-7 text-slate-600">{description}</p>
+      </div>
+      <dl className="grid gap-3 text-sm">
+        {facts.map((fact) => (
+          <ResearchListingFact key={fact.label} label={fact.label} value={fact.value} />
+        ))}
+      </dl>
+    </article>
+  );
+}
 
 export function GenericRecordGrid({
   records,
