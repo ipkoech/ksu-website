@@ -177,11 +177,27 @@ type SearchResponseState =
   | { status: "available"; payload: SearchPayload }
   | { status: "unavailable"; payload: null };
 
+const searchFieldParams = {
+  news_fields: "id,title,slug,summary,plain_text,rich_text,content",
+  blogs_fields: "id,title,slug,summary,plain_text,rich_text,content",
+  events_fields: "id,title,slug,summary,plain_text,rich_text,content,location",
+  announcements_fields: "id,title,slug,summary,plain_text,rich_text,content",
+  schools_fields: "id,name,slug,about,description,mandate",
+  departments_fields:
+    "id,name,slug,department_type,about,mandate,service_charter",
+  persons_fields:
+    "id,full_name,first_name,last_name,bio,specialization,department_name",
+};
+
 async function getSearchPayload(query: string): Promise<SearchResponseState> {
   if (query.length < 2) return { status: "idle", payload: null };
 
   try {
-    const response = await searchApi.query({ q: query, limit_per_type: 8 });
+    const response = await searchApi.query({
+      q: query,
+      limit_per_type: 8,
+      ...searchFieldParams,
+    });
     return { status: "available", payload: response.data };
   } catch (error) {
     console.error("Failed to load public search results:", error);

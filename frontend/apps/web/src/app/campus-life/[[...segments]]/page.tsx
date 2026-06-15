@@ -14,7 +14,7 @@ export default async function CampusLifeRoutePage({
 }) {
   const { segments = [] } = await params;
   const filters = await searchParams;
-  const data = await getCampusLifeData(segments);
+  const data = await getCampusLifeData(segments, filters);
 
   return <CampusLifeContent segments={segments} data={data} filters={filters} />;
 }

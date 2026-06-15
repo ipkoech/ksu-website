@@ -73,6 +73,52 @@ const officialSources = {
   elearning: "https://elearning.kisiiuniversity.ac.ke",
 };
 
+const editorialFields =
+  "id,title,slug,summary,excerpt,plain_text,rich_text,content,category,published_at,created_at,is_published,author_name";
+const eventFields =
+  "id,title,slug,summary,plain_text,rich_text,content,start_date,end_date,venue,location,is_virtual,registration_required,published_at,created_at";
+const announcementFields =
+  "id,title,slug,summary,plain_text,rich_text,content,category,priority,audience,target_audience,published_at,valid_from,valid_to,created_at";
+const schoolFields =
+  "id,name,slug,about,description,mandate,departments_count";
+const programmeFields =
+  "id,name,slug,level,mode_of_study,duration,department_name,about,objectives,curriculum_overview,entry_requirements,career_prospects";
+const intakeFields =
+  "id,name,slug,application_start,application_end,is_open";
+const documentFields = "id,title,slug,description";
+const divisionFields =
+  "id,name,slug,code,division_type,description,head_message,mission,is_active,display_order";
+const wingFields =
+  "id,name,slug,code,wing_type,description,mandate,service_charter,office_location,email,phone,is_active,display_order";
+const departmentFields =
+  "id,name,slug,department_type,about,mandate,service_charter,programmes_count,display_order";
+const clubFields =
+  "id,name,slug,club_type,about,mission,objectives,membership_count,meeting_schedule";
+const accommodationFields =
+  "id,name,slug,accommodation_type,gender,about,rules,capacity,is_accepting_applications,amenities,email,phone";
+const sportsFields =
+  "id,name,slug,facility_type,sport_types,about,location";
+const artsFields = "id,title,slug,category,about";
+const governanceFields =
+  "id,name,slug,acronym,governance_type,about,mandate,constitution,office_location,email,phone";
+const faqFields = "id,question,answer,answer_plain_text,category";
+const contactFields =
+  "id,name,email,phone,building,room_number,physical_address";
+const alumniFields =
+  "id,current_position,current_employer,graduation_year,bio,achievements,industry,is_mentor_available";
+const alumniAssociationFields =
+  "id,name,slug,acronym,association_type,region,about,mission,objectives";
+const searchFieldParams = {
+  news_fields: editorialFields,
+  blogs_fields: editorialFields,
+  events_fields: eventFields,
+  announcements_fields: announcementFields,
+  schools_fields: schoolFields,
+  departments_fields: departmentFields,
+  persons_fields:
+    "id,full_name,first_name,last_name,bio,specialization,department_name",
+};
+
 const communicationsNav: PublicCard[] = [
   pageCard("News", "/news", "University news.", "news", "Open news"),
   pageCard("Blogs", "/blogs", "Articles and blog records.", "file", "Open blogs"),
@@ -473,13 +519,13 @@ export async function getNewsPageConfig(segments: string[] = []): Promise<Public
 
   if (area && !isCategory) {
     const [article, migratedBlog, latest] = await Promise.all([
-      safeRecord(newsApi.getBySlug(area)),
-      safeRecord(blogsApi.getBySlug(area)),
-      safeList(newsApi.list({ is_published: true, per_page: 6 })),
+      safeRecord(newsApi.getBySlug(area, { fields: editorialFields })),
+      safeRecord(blogsApi.getBySlug(area, { fields: editorialFields })),
+      safeList(newsApi.list({ is_published: true, per_page: 6, fields: editorialFields })),
     ]);
 
     if (!article && migratedBlog) {
-      const latestBlogs = await safeList(blogsApi.list({ is_published: true, per_page: 6 }));
+      const latestBlogs = await safeList(blogsApi.list({ is_published: true, per_page: 6, fields: editorialFields }));
 
       return {
         ...base,
@@ -574,7 +620,7 @@ export async function getNewsPageConfig(segments: string[] = []): Promise<Public
     };
   }
 
-  const records = await safeList(newsApi.list({ is_published: true, per_page: 18 }));
+  const records = await safeList(newsApi.list({ is_published: true, per_page: 18, fields: editorialFields }));
   const filtered = isCategory && slug
     ? records.filter((item) => (item.category ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-") === slug)
     : records;
@@ -638,8 +684,8 @@ export async function getBlogsPageConfig(segments: string[] = []): Promise<Publi
 
   if (area && !isCategory) {
     const [article, latest] = await Promise.all([
-      safeRecord(blogsApi.getBySlug(area)),
-      safeList(blogsApi.list({ is_published: true, per_page: 6 })),
+      safeRecord(blogsApi.getBySlug(area, { fields: editorialFields })),
+      safeList(blogsApi.list({ is_published: true, per_page: 6, fields: editorialFields })),
     ]);
 
     if (!article) {
@@ -694,7 +740,7 @@ export async function getBlogsPageConfig(segments: string[] = []): Promise<Publi
     };
   }
 
-  const records = await safeList(blogsApi.list({ is_published: true, per_page: 18 }));
+  const records = await safeList(blogsApi.list({ is_published: true, per_page: 18, fields: editorialFields }));
   const filtered =
     isCategory && slug
       ? records.filter((item) => (item.category ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-") === slug)
@@ -740,7 +786,7 @@ export async function getEventsPageConfig(segments: string[] = []): Promise<Publ
   const [slug] = segments;
 
   if (slug === "past") {
-    const records = await safeList(eventsApi.list({ is_published: true, upcoming: false, per_page: 18 }));
+    const records = await safeList(eventsApi.list({ is_published: true, upcoming: false, per_page: 18, fields: eventFields }));
 
     return {
       ...base,
@@ -772,8 +818,8 @@ export async function getEventsPageConfig(segments: string[] = []): Promise<Publ
 
   if (slug) {
     const [event, upcoming] = await Promise.all([
-      safeRecord(eventsApi.getBySlug(slug)),
-      safeList(eventsApi.list({ is_published: true, upcoming: true, per_page: 6 })),
+      safeRecord(eventsApi.getBySlug(slug, { fields: eventFields })),
+      safeList(eventsApi.list({ is_published: true, upcoming: true, per_page: 6, fields: eventFields })),
     ]);
 
     if (!event) {
@@ -822,8 +868,8 @@ export async function getEventsPageConfig(segments: string[] = []): Promise<Publ
   }
 
   const [upcoming, allEvents] = await Promise.all([
-    safeList(eventsApi.list({ is_published: true, upcoming: true, per_page: 9 })),
-    safeList(eventsApi.list({ is_published: true, per_page: 9 })),
+    safeList(eventsApi.list({ is_published: true, upcoming: true, per_page: 9, fields: eventFields })),
+    safeList(eventsApi.list({ is_published: true, per_page: 9, fields: eventFields })),
   ]);
   const records = upcoming.length ? upcoming : allEvents;
 
@@ -858,8 +904,8 @@ export async function getAnnouncementsPageConfig(segments: string[] = []): Promi
 
   if (slug) {
     const [announcement, latest] = await Promise.all([
-      safeRecord(announcementsApi.getBySlug(slug)),
-      safeList(announcementsApi.list({ is_published: true, per_page: 6 })),
+      safeRecord(announcementsApi.getBySlug(slug, { fields: announcementFields })),
+      safeList(announcementsApi.list({ is_published: true, per_page: 6, fields: announcementFields })),
     ]);
 
     if (!announcement) {
@@ -932,7 +978,7 @@ export async function getAnnouncementsPageConfig(segments: string[] = []): Promi
     };
   }
 
-  const records = await safeList(announcementsApi.list({ is_published: true, per_page: 12 }));
+  const records = await safeList(announcementsApi.list({ is_published: true, per_page: 12, fields: announcementFields }));
 
   return {
     ...base,
@@ -963,7 +1009,7 @@ export async function getSearchPageConfig(query?: string): Promise<PublicPageCon
   const base = getSearchPage(query);
   const trimmed = query?.trim();
   const payload = trimmed && trimmed.length >= 2
-    ? await safeRecord<SearchPayload>(searchApi.query({ q: trimmed, limit_per_type: 6 }))
+    ? await safeRecord<SearchPayload>(searchApi.query({ q: trimmed, limit_per_type: 6, ...searchFieldParams }))
     : null;
   const results = payload?.results;
   const resultCards = [
@@ -1022,8 +1068,8 @@ export async function getAdministrationPageConfig(segments: string[] = []): Prom
 
   if (area === "divisions" && slug) {
     const [divisions, units] = await Promise.all([
-      safeList(divisionsApi.list({ is_active: true, per_page: 20 })),
-      safeList(departmentsApi.list({ department_type: "administrative", per_page: 20 })),
+      safeList(divisionsApi.list({ is_active: true, per_page: 20, fields: divisionFields })),
+      safeList(departmentsApi.list({ department_type: "administrative", per_page: 20, fields: departmentFields })),
     ]);
     const division = divisions.find((item) => item.slug === slug);
 
@@ -1060,11 +1106,11 @@ export async function getAdministrationPageConfig(segments: string[] = []): Prom
   }
 
   const [divisions, units] = await Promise.all([
-    safeList(divisionsApi.list({ is_active: true, per_page: 20 })),
-    safeList(departmentsApi.list({ department_type: "administrative", per_page: 40 })),
+    safeList(divisionsApi.list({ is_active: true, per_page: 20, fields: divisionFields })),
+    safeList(departmentsApi.list({ department_type: "administrative", per_page: 40, fields: departmentFields })),
   ]);
   const wings = (
-    await Promise.all(divisions.map((division) => safeList(wingsApi.listByDivision(division.id, { is_active: true }))))
+    await Promise.all(divisions.map((division) => safeList(wingsApi.listByDivision(division.id, { is_active: true, fields: wingFields }))))
   ).flat();
 
   if (area === "directorates" && slug) {
@@ -1190,7 +1236,7 @@ export async function getAcademicsPageConfig(
   const sort = searchParams.sort?.trim() || undefined;
 
   if (area === "programmes" && slug) {
-    const programme = await safeRecord(programmesApi.getBySlug(slug));
+    const programme = await safeRecord(programmesApi.getBySlug(slug, { fields: programmeFields }));
 
     return {
       ...base,
@@ -1222,12 +1268,12 @@ export async function getAcademicsPageConfig(
   }
 
   const [schools, allSchools, programmesRaw, intakes, calendarDocs, examDocs] = await Promise.all([
-    safeList(schoolsApi.list({ per_page: 24, search: query })),
-    safeList(schoolsApi.list({ per_page: 100 })),
-    safeList(programmesApi.list({ per_page: 100, level, q: query, school_id: schoolId, mode_of_study: mode })),
-    safeList(intakesApi.list({ per_page: 8 })),
-    safeList(documentsApi.list({ category: "academic-calendar", per_page: 6 })),
-    safeList(documentsApi.list({ category: "examinations", per_page: 6 })),
+    safeList(schoolsApi.list({ per_page: 24, search: query, fields: schoolFields })),
+    safeList(schoolsApi.list({ per_page: 100, fields: "id,name" })),
+    safeList(programmesApi.list({ per_page: 100, level, q: query, school_id: schoolId, mode_of_study: mode, fields: programmeFields })),
+    safeList(intakesApi.list({ per_page: 8, fields: intakeFields })),
+    safeList(documentsApi.list({ category: "academic-calendar", per_page: 6, fields: documentFields })),
+    safeList(documentsApi.list({ category: "examinations", per_page: 6, fields: documentFields })),
   ]);
   const programmes = sortProgrammes(programmesRaw, sort);
   const activeFilters = [
@@ -1397,7 +1443,7 @@ export async function getCampusLifePageConfig(segments: string[] = []): Promise<
   const [area, slug] = segments;
 
   if (area === "clubs" && slug) {
-    const club = await safeRecord(clubsApi.getBySlug(slug));
+    const club = await safeRecord(clubsApi.getBySlug(slug, { fields: clubFields }));
     return {
       ...base,
       title: club?.name ?? `${titleFromSlug(slug)} club`,
@@ -1423,7 +1469,7 @@ export async function getCampusLifePageConfig(segments: string[] = []): Promise<
   }
 
   if (area === "sports" && slug) {
-    const facility = await safeRecord(sportsFacilitiesApi.getBySlug(slug));
+    const facility = await safeRecord(sportsFacilitiesApi.getBySlug(slug, { fields: sportsFields }));
     return {
       ...base,
       title: facility?.name ?? `${titleFromSlug(slug)} sport and recreation`,
@@ -1449,7 +1495,7 @@ export async function getCampusLifePageConfig(segments: string[] = []): Promise<
   }
 
   if (area === "accommodation" && slug) {
-    const housing = await safeRecord(accommodationsApi.getBySlug(slug));
+    const housing = await safeRecord(accommodationsApi.getBySlug(slug, { fields: accommodationFields }));
     return {
       ...base,
       title: housing?.name ?? `${titleFromSlug(slug)} accommodation`,
@@ -1478,7 +1524,7 @@ export async function getCampusLifePageConfig(segments: string[] = []): Promise<
   }
 
   if (area === "gallery" && slug) {
-    const item = await safeRecord(artsCultureApi.getBySlug(slug));
+    const item = await safeRecord(artsCultureApi.getBySlug(slug, { fields: artsFields }));
     return {
       ...base,
       title: item?.title ?? `${titleFromSlug(slug)} gallery record`,
@@ -1504,7 +1550,7 @@ export async function getCampusLifePageConfig(segments: string[] = []): Promise<
   }
 
   if (area === "student-life" && slug) {
-    const body = await safeRecord(studentGovernanceApi.getBySlug(slug));
+    const body = await safeRecord(studentGovernanceApi.getBySlug(slug, { fields: governanceFields }));
     return {
       ...base,
       title: body?.name ?? `${titleFromSlug(slug)} student body`,
@@ -1533,13 +1579,13 @@ export async function getCampusLifePageConfig(segments: string[] = []): Promise<
   }
 
   const [clubs, accommodations, sports, arts, governance, faqs, contacts] = await Promise.all([
-    safeList(clubsApi.list({ per_page: 12 })),
-    safeList(accommodationsApi.list({ per_page: 8 })),
-    safeList(sportsFacilitiesApi.list({ per_page: 8 })),
-    safeList(artsCultureApi.list({ per_page: 8 })),
-    safeList(studentGovernanceApi.list({ per_page: 6 })),
-    safeList(faqsApi.list({ scope_type: "student_life", per_page: 6 })),
-    safeList(contactsApi.list({ scope_type: "student_life", per_page: 6 })),
+    safeList(clubsApi.list({ per_page: 12, fields: clubFields })),
+    safeList(accommodationsApi.list({ per_page: 8, fields: accommodationFields })),
+    safeList(sportsFacilitiesApi.list({ per_page: 8, fields: sportsFields })),
+    safeList(artsCultureApi.list({ per_page: 8, fields: artsFields })),
+    safeList(studentGovernanceApi.list({ per_page: 6, fields: governanceFields })),
+    safeList(faqsApi.list({ scope_type: "student_life", per_page: 6, fields: faqFields })),
+    safeList(contactsApi.list({ scope_type: "student_life", per_page: 6, fields: contactFields })),
   ]);
 
   if (area === "clubs") {
@@ -1695,9 +1741,9 @@ export async function getCampusLifePageConfig(segments: string[] = []): Promise<
 export async function getAlumniPageConfig(): Promise<PublicPageConfig> {
   const base = getAlumniPage();
   const [profiles, associations, events] = await Promise.all([
-    safeList(alumniApi.list({ per_page: 6 })),
-    safeList(alumniAssociationsApi.list({ per_page: 6 })),
-    safeList(eventsApi.list({ is_published: true, per_page: 6 })),
+    safeList(alumniApi.list({ per_page: 6, fields: alumniFields })),
+    safeList(alumniAssociationsApi.list({ per_page: 6, fields: alumniAssociationFields })),
+    safeList(eventsApi.list({ is_published: true, per_page: 6, fields: eventFields })),
   ]);
 
   return {

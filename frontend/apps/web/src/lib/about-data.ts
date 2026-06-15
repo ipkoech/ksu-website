@@ -506,7 +506,10 @@ function mapSchoolToDean(school: School): LeaderCardData | null {
 
 export async function getLeadershipData() {
   try {
-    const schoolsResponse = await schoolsApi.list({ per_page: 24 });
+    const schoolsResponse = await schoolsApi.list({
+      per_page: 24,
+      fields: "id,name,slug,dean_name,dean_email,about,description",
+    });
     const deanCards = (schoolsResponse.data ?? [])
       .map(mapSchoolToDean)
       .filter((value): value is LeaderCardData => value !== null);
@@ -540,7 +543,10 @@ export async function getOverviewData() {
 
 export async function getLeaderProfile(slug: string) {
   try {
-    const response = await personsApi.getBySlug(slug);
+    const response = await personsApi.getBySlug(slug, {
+      fields:
+        "id,slug,title,first_name,middle_name,last_name,full_name,email,phone,photo_id,photo_url,bio,full_bio,qualifications,academic_rank,person_type",
+    });
     const person = response.data;
 
     return {
@@ -636,7 +642,10 @@ export async function getGovernanceBoard(slug: string) {
 
 export async function getAdministrativeDivisions() {
   try {
-    const response = await divisionsApi.list({ per_page: 20 });
+    const response = await divisionsApi.list({
+      per_page: 20,
+      fields: "id,name,code,description",
+    });
     const divisions = response.data ?? [];
 
     if (divisions.length > 0) {
