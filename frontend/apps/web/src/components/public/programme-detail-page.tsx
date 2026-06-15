@@ -185,7 +185,7 @@ function ProgrammeFactsPanel({ facts }: { facts: FactItem[] }) {
 
 function SectionNav({ sections }: { sections: DetailSection[] }) {
   return (
-    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="min-w-0 rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
       <SectionKicker>Programme Sections</SectionKicker>
       <nav aria-label="Programme sections" className="mt-3">
         <ul className="divide-y divide-slate-100">
@@ -216,12 +216,12 @@ function SectionNav({ sections }: { sections: DetailSection[] }) {
 
 function HeroFactStrip({ facts }: { facts: FactItem[] }) {
   return (
-    <div className="grid gap-px bg-slate-200 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-px bg-slate-200 sm:grid-cols-2 lg:grid-cols-4">
       {facts.slice(0, 4).map((item) => {
         const Icon = item.icon;
 
         return (
-          <div key={item.label} className="flex min-h-[5rem] gap-3 bg-white p-4">
+          <div key={item.label} className="flex min-h-[5rem] min-w-0 gap-3 bg-white p-4">
             <Icon aria-hidden className="h-5 w-5 shrink-0 text-primary" />
             <span className="min-w-0">
               <span className="block text-[0.68rem] font-bold uppercase leading-4 text-slate-500">
@@ -250,8 +250,8 @@ function ProgrammeHero({
   facts: FactItem[];
 }) {
   return (
-    <section className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm">
-      <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_18rem]">
+    <section className="min-w-0 overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-0 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="min-w-0 px-5 py-6 sm:px-7 lg:px-8">
           <SectionKicker>Programme Overview</SectionKicker>
           <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] text-slate-950 sm:text-5xl">
@@ -260,10 +260,10 @@ function ProgrammeHero({
           <p className="mt-5 max-w-3xl text-sm leading-7 text-slate-700 sm:text-base">
             {summary}
           </p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <div className="mt-6 flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Link
               href="/admissions/how-to-apply"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-bold text-white shadow-sm transition hover:bg-primary/90"
+              className="inline-flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-bold text-white shadow-sm transition hover:bg-primary/90"
             >
               How to apply
               <ArrowRight aria-hidden className="h-4 w-4" />
@@ -271,7 +271,7 @@ function ProgrammeHero({
             {brochureId ? (
               <a
                 href={publicFileUrl(brochureId) ?? undefined}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-primary/25 bg-white px-5 text-sm font-bold text-primary transition hover:border-primary hover:bg-primary/[0.06]"
+                className="inline-flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-full border border-primary/25 bg-white px-5 text-sm font-bold text-primary transition hover:border-primary hover:bg-primary/[0.06]"
               >
                 Programme brief
                 <Download aria-hidden className="h-4 w-4" />
@@ -280,7 +280,7 @@ function ProgrammeHero({
           </div>
         </div>
 
-        <div className="flex min-h-48 items-center justify-center border-t border-slate-200 bg-[linear-gradient(135deg,#eef4ff,#ffffff)] p-8 text-primary lg:border-l lg:border-t-0">
+        <div className="flex min-h-48 min-w-0 items-center justify-center border-t border-slate-200 bg-[linear-gradient(135deg,#eef4ff,#ffffff)] p-8 text-primary lg:border-l lg:border-t-0">
           <BookOpenCheck aria-hidden className="h-28 w-28 stroke-[1.15]" />
         </div>
       </div>
@@ -295,7 +295,7 @@ function DetailBlock({ section }: { section: DetailSection }) {
   return (
     <section
       id={section.id}
-      className="scroll-mt-32 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+      className="min-w-0 scroll-mt-32 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
     >
       <div className="flex gap-4">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.08] text-primary ring-1 ring-primary/10">
@@ -323,7 +323,7 @@ function ProgrammeTutors({
   if (!tutors.length) return null;
 
   return (
-    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <section className="min-w-0 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <SectionKicker>Programme Tutors</SectionKicker>
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         {tutors.map((tutor) => {
@@ -361,7 +361,7 @@ function ProgrammeTutors({
           }
 
           return (
-            <article key={tutor.id} className="flex gap-3 rounded-2xl border border-slate-200 p-4">
+            <article key={tutor.id} className="flex min-w-0 gap-3 rounded-2xl border border-slate-200 p-4">
               {content}
             </article>
           );
@@ -380,11 +380,11 @@ function ProgrammeIntakes({
   if (!intakes.length) return null;
 
   return (
-    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <section className="min-w-0 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <SectionKicker>Available Intakes</SectionKicker>
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         {intakes.map((item) => (
-          <article key={item.id} className="rounded-2xl border border-slate-200 p-4">
+          <article key={item.id} className="min-w-0 rounded-2xl border border-slate-200 p-4">
             <div className="flex gap-3">
               <CalendarDays aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
               <div className="min-w-0">
@@ -436,7 +436,7 @@ function AdmissionPathway() {
   ];
 
   return (
-    <section className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-950 text-white shadow-sm">
+    <section className="min-w-0 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-950 text-white shadow-sm">
       <div className="px-5 py-5 sm:px-6">
         <p className="text-xs font-bold uppercase tracking-[0.08em] text-secondary">
           Admission Pathway
@@ -445,12 +445,12 @@ function AdmissionPathway() {
           From programme choice to application
         </h2>
       </div>
-      <div className="grid gap-px bg-white/10 md:grid-cols-2">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-px bg-white/10 md:grid-cols-2">
         {steps.map((step) => {
           const Icon = step.icon;
 
           return (
-            <div key={step.title} className="bg-slate-950 p-5">
+            <div key={step.title} className="min-w-0 bg-slate-950 p-5">
               <Icon aria-hidden className="h-5 w-5 text-secondary" />
               <h3 className="mt-3 text-sm font-bold text-white">{step.title}</h3>
               <p className="mt-2 text-sm leading-6 text-white/70">{step.body}</p>
@@ -479,14 +479,14 @@ function RelatedProgrammes({
   if (!programmes.length) return null;
 
   return (
-    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <section className="min-w-0 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <SectionKicker>Related Programmes</SectionKicker>
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         {programmes.map((programme) => (
           <Link
             key={programme.id}
             href={`/academics/programmes/${programme.slug}`}
-            className="group rounded-2xl border border-slate-200 p-4 transition hover:border-primary/30 hover:bg-primary/[0.04]"
+            className="group min-w-0 rounded-2xl border border-slate-200 p-4 transition hover:border-primary/30 hover:bg-primary/[0.04]"
           >
             <p className="text-sm font-bold leading-6 text-slate-950">
               {programme.name}
@@ -511,7 +511,7 @@ function RelatedProgrammes({
 
 function GuidancePanel() {
   return (
-    <section className="rounded-[1.5rem] border border-primary/10 bg-primary/[0.06] p-4 shadow-sm">
+    <section className="min-w-0 rounded-[1.5rem] border border-primary/10 bg-primary/[0.06] p-4 shadow-sm">
       <PhoneIcon />
       <h2 className="mt-3 text-sm font-bold text-slate-950">Need guidance?</h2>
       <p className="mt-2 text-sm leading-6 text-slate-700">
@@ -636,12 +636,12 @@ export function ProgrammeDetailPage({ data }: { data: ProgrammeDetailData }) {
             ]}
           />
 
-          <div className="mt-5 grid w-full gap-4 xl:grid-cols-[minmax(220px,0.2fr)_minmax(0,1fr)_minmax(260px,0.22fr)] 2xl:grid-cols-[minmax(240px,0.18fr)_minmax(0,1fr)_minmax(300px,0.22fr)] xl:items-start">
+          <div className="mt-5 grid w-full min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(220px,0.2fr)_minmax(0,1fr)_minmax(260px,0.22fr)] 2xl:grid-cols-[minmax(240px,0.18fr)_minmax(0,1fr)_minmax(300px,0.22fr)] xl:items-start">
             <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
               <SectionNav sections={sections} />
             </aside>
 
-            <ScrollReveal as="main" className="grid min-w-0 gap-4">
+            <ScrollReveal as="main" className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
               <ProgrammeHero
                 title={title}
                 summary={summary}
@@ -649,13 +649,13 @@ export function ProgrammeDetailPage({ data }: { data: ProgrammeDetailData }) {
                 facts={facts}
               />
 
-              <div className="grid gap-3 xl:hidden">
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 xl:hidden">
                 <ProgrammeFactsPanel facts={facts} />
               </div>
 
               <section
                 id="overview"
-                className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+                className="min-w-0 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
               >
                 <SectionKicker>Learning Focus</SectionKicker>
                 <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
