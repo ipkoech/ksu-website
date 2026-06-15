@@ -82,17 +82,6 @@ const routeMeta: Record<string, RouteCard> = {
   },
 };
 
-function boardTypeLabel(boardType?: string) {
-  if (!boardType) {
-    return "Board";
-  }
-
-  return boardType
-    .replace(/_/g, " ")
-    .toLowerCase()
-    .replace(/\b\w/g, (character) => character.toUpperCase());
-}
-
 export default async function GovernancePage() {
   const [council, overview] = await Promise.all([
     getGovernanceBoard("university-council"),

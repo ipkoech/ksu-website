@@ -1099,7 +1099,7 @@ export async function getAdministrationPageConfig(segments: string[] = []): Prom
 
   return {
     ...base,
-    body: "Administration pages now use published division, wing, and administrative department records .",
+    body: "Administration pages use published division, wing, and administrative department records.",
     sections: area === "organization"
       ? [
           {
