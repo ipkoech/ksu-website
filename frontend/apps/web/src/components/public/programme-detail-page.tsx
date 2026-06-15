@@ -305,7 +305,7 @@ function DetailBlock({ section }: { section: DetailSection }) {
           <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
             {section.title}
           </h2>
-          <p className="mt-3 text-sm leading-7 text-slate-700">
+          <p className="mt-3 text-sm leading-7 text-slate-700 [overflow-wrap:anywhere]">
             {section.body}
           </p>
         </div>
@@ -391,7 +391,7 @@ function ProgrammeIntakes({
                 <h3 className="text-sm font-bold leading-6 text-slate-950">
                   {present(item.intake?.name) ?? "Published intake"}
                 </h3>
-                <p className="mt-1 text-sm leading-6 text-slate-600">
+                <p className="mt-1 text-sm leading-6 text-slate-600 [overflow-wrap:anywhere]">
                   {[
                     item.intake?.is_open ? "Open" : null,
                     item.slots_available ? `${item.slots_available} slots` : null,
@@ -661,7 +661,7 @@ export function ProgrammeDetailPage({ data }: { data: ProgrammeDetailData }) {
                 <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
                   What this programme covers
                 </h2>
-                <p className="mt-3 text-sm leading-7 text-slate-700">
+                <p className="mt-3 text-sm leading-7 text-slate-700 [overflow-wrap:anywhere]">
                   {bestText(programme?.objectives, programme?.about) ??
                     "The programme overview will show learning outcomes and academic focus ."}
                 </p>

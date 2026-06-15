@@ -87,6 +87,12 @@ export type PublicPageSection = {
     queryPlaceholder?: string;
     level?: string;
     levelOptions?: { value: string; label: string }[];
+    schoolId?: string;
+    schoolOptions?: { value: string; label: string }[];
+    mode?: string;
+    modeOptions?: { value: string; label: string }[];
+    sort?: string;
+    sortOptions?: { value: string; label: string }[];
     submitLabel?: string;
     clearHref?: string;
   };
@@ -320,15 +326,21 @@ function SectionFilterBar({
   dark?: boolean;
 }) {
   const queryName = filters.queryName ?? "q";
-  const isActive = Boolean(filters.query || filters.level);
+  const isActive = Boolean(
+    filters.query ||
+      filters.level ||
+      filters.schoolId ||
+      filters.mode ||
+      filters.sort,
+  );
 
   return (
     <form
       action={filters.action}
       className={
         dark
-          ? "mb-6 grid gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-3 sm:grid-cols-[minmax(0,1fr)_180px_auto_auto]"
-          : "mb-6 grid gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:grid-cols-[minmax(0,1fr)_180px_auto_auto]"
+          ? "mb-6 grid gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_repeat(4,minmax(140px,180px))_auto_auto]"
+          : "mb-6 grid gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_repeat(4,minmax(140px,180px))_auto_auto]"
       }
     >
       <label className="relative min-w-0">
@@ -368,6 +380,69 @@ function SectionFilterBar({
           >
             {filters.levelOptions.map((option) => (
               <option key={option.value || "all"} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+
+      {filters.schoolOptions?.length ? (
+        <label>
+          <span className="sr-only">School</span>
+          <select
+            name="school_id"
+            defaultValue={filters.schoolId ?? ""}
+            className={
+              dark
+                ? "h-11 w-full rounded-md border border-white/10 bg-slate-950/60 px-3 text-sm font-semibold text-white outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+                : "h-11 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+            }
+          >
+            {filters.schoolOptions.map((option) => (
+              <option key={option.value || "all-schools"} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+
+      {filters.modeOptions?.length ? (
+        <label>
+          <span className="sr-only">Study mode</span>
+          <select
+            name="mode_of_study"
+            defaultValue={filters.mode ?? ""}
+            className={
+              dark
+                ? "h-11 w-full rounded-md border border-white/10 bg-slate-950/60 px-3 text-sm font-semibold text-white outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+                : "h-11 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+            }
+          >
+            {filters.modeOptions.map((option) => (
+              <option key={option.value || "all-modes"} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+
+      {filters.sortOptions?.length ? (
+        <label>
+          <span className="sr-only">Sort programmes</span>
+          <select
+            name="sort"
+            defaultValue={filters.sort ?? ""}
+            className={
+              dark
+                ? "h-11 w-full rounded-md border border-white/10 bg-slate-950/60 px-3 text-sm font-semibold text-white outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+                : "h-11 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+            }
+          >
+            {filters.sortOptions.map((option) => (
+              <option key={option.value || "recommended"} value={option.value}>
                 {option.label}
               </option>
             ))}
@@ -439,23 +514,23 @@ function SectionBlock({ section }: { section: PublicPageSection }) {
             }
           />
         </div>
-        <ScrollRevealGroup
-          className={gridClass(section.columns)}
-          staggerDelay={70}
-        >
+        <div className="min-w-0">
           {section.filters ? (
-            <div className="md:col-span-2 xl:col-span-full">
-              <SectionFilterBar filters={section.filters} dark={dark} />
-            </div>
+            <SectionFilterBar filters={section.filters} dark={dark} />
           ) : null}
-          {section.cards.map((card) => (
-            <StandardCard
-              key={`${section.eyebrow}-${card.title}`}
-              card={card}
-              dark={dark}
-            />
-          ))}
-        </ScrollRevealGroup>
+          <ScrollRevealGroup
+            className={gridClass(section.columns)}
+            staggerDelay={70}
+          >
+            {section.cards.map((card) => (
+              <StandardCard
+                key={`${section.eyebrow}-${card.title}`}
+                card={card}
+                dark={dark}
+              />
+            ))}
+          </ScrollRevealGroup>
+        </div>
       </div>
     </ScrollReveal>
   );

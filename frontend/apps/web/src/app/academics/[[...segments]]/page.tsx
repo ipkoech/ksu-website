@@ -51,7 +51,13 @@ export default async function AcademicsRoutePage({
   searchParams,
 }: {
   params: Promise<{ segments?: string[] }>;
-  searchParams: Promise<{ level?: string; q?: string }>;
+  searchParams: Promise<{
+    level?: string;
+    mode_of_study?: string;
+    q?: string;
+    school_id?: string;
+    sort?: string;
+  }>;
 }) {
   const { segments = [] } = await params;
   const filters = await searchParams;

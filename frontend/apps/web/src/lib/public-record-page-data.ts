@@ -89,6 +89,20 @@ const programmeLevelOptions = [
   { value: "phd", label: "PhD" },
 ];
 
+const programmeModeOptions = [
+  { value: "", label: "All modes" },
+  { value: "full_time", label: "Full-time" },
+  { value: "part_time", label: "Part-time" },
+  { value: "full_time_part_time", label: "Full-time / part-time" },
+];
+
+const programmeSortOptions = [
+  { value: "", label: "Recommended" },
+  { value: "name", label: "Programme name" },
+  { value: "level", label: "Academic level" },
+  { value: "duration", label: "Duration" },
+];
+
 function titleFromSlug(slug?: string) {
   if (!slug) return "Published record";
   return slug
@@ -96,6 +110,16 @@ function titleFromSlug(slug?: string) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function formatPublicLabel(value?: string | null) {
+  const text = value?.trim();
+  if (!text) return null;
+  return text
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function pageCard(
@@ -253,13 +277,62 @@ function schoolCard(item: School): PublicCard {
 }
 
 function programmeCard(item: Programme): PublicCard {
+  const department = item.department_name ?? item.department?.name;
+  const facts = [
+    formatPublicLabel(item.level),
+    item.duration,
+    formatPublicLabel(item.mode_of_study),
+    department,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const requirementContext = shortText(
+    item.entry_requirements,
+    "Open the programme record to review requirements, learning focus, intakes, and application guidance.",
+    150,
+  );
+
   return pageCard(
     item.name,
     `/academics/programmes/${item.slug}`,
-    shortText(item.about ?? item.objectives ?? item.entry_requirements, "Academic programme record."),
+    [facts, requirementContext].filter(Boolean).join(". "),
     "book",
-    [item.level, item.duration].filter(Boolean).join(" · ") || "View programme",
+    "View programme",
   );
+}
+
+function schoolOptions(schools: School[]) {
+  return [
+    { value: "", label: "All schools" },
+    ...schools.map((school) => ({ value: school.id, label: school.name })),
+  ];
+}
+
+function sortProgrammes(programmes: Programme[], sort?: string) {
+  const collator = new Intl.Collator("en", { sensitivity: "base", numeric: true });
+  const records = programmes.slice();
+
+  if (sort === "name") {
+    return records.sort((first, second) => collator.compare(first.name, second.name));
+  }
+
+  if (sort === "level") {
+    return records.sort(
+      (first, second) =>
+        collator.compare(first.level ?? "", second.level ?? "") ||
+        collator.compare(first.name, second.name),
+    );
+  }
+
+  if (sort === "duration") {
+    return records.sort(
+      (first, second) =>
+        collator.compare(first.duration ?? "", second.duration ?? "") ||
+        collator.compare(first.name, second.name),
+    );
+  }
+
+  return records;
 }
 
 function departmentCard(item: Department, base = "/administration/units"): PublicCard {
@@ -1100,12 +1173,21 @@ export async function getAdministrationPageConfig(segments: string[] = []): Prom
 
 export async function getAcademicsPageConfig(
   segments: string[] = [],
-  searchParams: { level?: string; q?: string } = {},
+  searchParams: {
+    level?: string;
+    mode_of_study?: string;
+    q?: string;
+    school_id?: string;
+    sort?: string;
+  } = {},
 ): Promise<PublicPageConfig> {
   const base = { ...getAcademicsPage(segments), hideContinue: true };
   const [area, slug] = segments;
   const query = searchParams.q?.trim() || undefined;
   const level = searchParams.level?.trim() || undefined;
+  const mode = searchParams.mode_of_study?.trim() || undefined;
+  const schoolId = searchParams.school_id?.trim() || undefined;
+  const sort = searchParams.sort?.trim() || undefined;
 
   if (area === "programmes" && slug) {
     const programme = await safeRecord(programmesApi.getBySlug(slug));
@@ -1139,13 +1221,21 @@ export async function getAcademicsPageConfig(
     };
   }
 
-  const [schools, programmes, intakes, calendarDocs, examDocs] = await Promise.all([
+  const [schools, allSchools, programmesRaw, intakes, calendarDocs, examDocs] = await Promise.all([
     safeList(schoolsApi.list({ per_page: 24, search: query })),
-    safeList(programmesApi.list({ per_page: 24, level, q: query })),
+    safeList(schoolsApi.list({ per_page: 100 })),
+    safeList(programmesApi.list({ per_page: 100, level, q: query, school_id: schoolId, mode_of_study: mode })),
     safeList(intakesApi.list({ per_page: 8 })),
     safeList(documentsApi.list({ category: "academic-calendar", per_page: 6 })),
     safeList(documentsApi.list({ category: "examinations", per_page: 6 })),
   ]);
+  const programmes = sortProgrammes(programmesRaw, sort);
+  const activeFilters = [
+    level ? formatPublicLabel(level) : null,
+    mode ? formatPublicLabel(mode) : null,
+    schoolId ? allSchools.find((school) => school.id === schoolId)?.name ?? "Selected school" : null,
+    query,
+  ].filter(Boolean);
 
   if (area === "schools") {
     return {
@@ -1173,18 +1263,18 @@ export async function getAcademicsPageConfig(
   }
 
   if (area === "programmes") {
-    const filterLabel = [level, query].filter(Boolean).join(" · ");
+    const filterLabel = activeFilters.join(" · ");
     return {
       ...base,
       title: filterLabel ? `${titleFromSlug(filterLabel)} programmes` : base.title,
       body: programmes.length
-        ? "Academic programme records."
+        ? "Search, filter, and compare backend-backed academic programme records."
         : "No programmes match the current filters.",
       sections: [
         {
           eyebrow: "Programme Finder",
           title: filterLabel ? `Programmes matching ${filterLabel}` : "Programmes",
-          body: "Programme cards show level, duration, department, and requirement context. Search by name or filter by level.",
+          body: "Programme cards show level, duration, study mode, department, and requirement context. Search by name, filter by level, school, or study mode, then open the programme record for application guidance.",
           columns: 3,
           filters: {
             action: "/academics/programmes",
@@ -1192,6 +1282,12 @@ export async function getAcademicsPageConfig(
             queryPlaceholder: "Search programmes",
             level,
             levelOptions: programmeLevelOptions,
+            schoolId,
+            schoolOptions: schoolOptions(allSchools),
+            mode,
+            modeOptions: programmeModeOptions,
+            sort,
+            sortOptions: programmeSortOptions,
             submitLabel: "Filter",
             clearHref: "/academics/programmes",
           },
@@ -1272,7 +1368,7 @@ export async function getAcademicsPageConfig(
       {
         eyebrow: "Programme Finder",
         title: "Programme records",
-        body: "Programme cards are generated from current public academic records. Search by name or filter by level.",
+        body: "Programme cards are generated from current public academic records. Search by name or filter by level, school, and study mode.",
         tone: "dark",
         columns: 3,
         filters: {
@@ -1281,6 +1377,12 @@ export async function getAcademicsPageConfig(
           queryPlaceholder: "Search programmes",
           level,
           levelOptions: programmeLevelOptions,
+          schoolId,
+          schoolOptions: schoolOptions(allSchools),
+          mode,
+          modeOptions: programmeModeOptions,
+          sort,
+          sortOptions: programmeSortOptions,
           submitLabel: "Filter",
           clearHref: "/academics",
         },
