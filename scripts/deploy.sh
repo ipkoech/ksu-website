@@ -1,0 +1,568 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  scripts/deploy.sh local [options]
+  scripts/deploy.sh cloud --env dev|staging|production --project PROJECT_ID [options]
+
+Local options:
+  --remote HOST        Deploy by SSH on HOST from the same repository path.
+  --branch BRANCH      Branch to deploy on the remote host. Defaults to current branch.
+  --no-gateway         Skip the nginx gateway.
+  --skip-frontend      Skip pnpm install/build.
+  --skip-build         Skip Docker image rebuild.
+  --pull               Run git pull before deploying. Default for --remote.
+
+Cloud options:
+  --env ENV            Deployment environment: dev, staging, or production. Required.
+  --project PROJECT    GCP project ID. Defaults to GCP_PROJECT if set.
+  --region REGION      GCP region. Defaults to GCP_REGION or us-central1.
+  --repo REPO          Artifact Registry repository. Defaults to ksu.
+  --image-tag TAG      Image tag. Defaults to current git short SHA.
+  --service-prefix P   Cloud Run service prefix. Defaults to ksu.
+  --allow-unauth       Allow public access to deployed HTTP services. Default.
+  --no-allow-unauth    Require authenticated access to deployed HTTP services.
+  --include-workers    Deploy Celery worker services. Off by default to control cost.
+  --skip-frontends     Deploy backend services only.
+  --run-migrations     Run Alembic migrations for main, research, and library.
+  --skip-build         Reuse images that already exist in Artifact Registry.
+  --dry-run            Print the gcloud/docker commands without executing them.
+
+Examples:
+  scripts/deploy.sh local
+  scripts/deploy.sh local --skip-frontend
+  scripts/deploy.sh cloud --env dev --project my-gcp-project
+  scripts/deploy.sh cloud --env staging --project my-gcp-project --image-tag abc1234 --skip-build
+  scripts/deploy.sh cloud --env production --project my-gcp-project --image-tag abc1234 --skip-build --run-migrations
+
+Free-trial guidance:
+  Start with only the dev environment, keep Cloud Run min instances at zero, and do not
+  deploy workers until background jobs are actually needed. Cloud SQL and Memorystore
+  can consume the $300 credit quickly if left running for three full environments.
+USAGE
+}
+
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+if [[ -z "${ROOT}" ]]; then
+  echo "error: run this inside a git repository" >&2
+  exit 1
+fi
+
+run_cmd() {
+  if [[ "${DRY_RUN:-0}" -eq 1 ]]; then
+    printf '+'
+    printf ' %q' "$@"
+    printf '\n'
+  else
+    "$@"
+  fi
+}
+
+require_cmd() {
+  local name="$1"
+  if ! command -v "${name}" >/dev/null 2>&1; then
+    echo "error: ${name} is required but was not found on PATH" >&2
+    exit 1
+  fi
+}
+
+current_git_sha() {
+  git -C "${ROOT}" rev-parse --short=12 HEAD
+}
+
+deploy_local() {
+  local remote_host=""
+  local branch
+  branch="$(git -C "${ROOT}" branch --show-current)"
+  local with_gateway=1
+  local skip_frontend=0
+  local skip_build=0
+  local pull=0
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --remote)
+        remote_host="${2:-}"
+        pull=1
+        shift 2
+        ;;
+      --branch)
+        branch="${2:-}"
+        shift 2
+        ;;
+      --with-gateway)
+        with_gateway=1
+        shift
+        ;;
+      --no-gateway)
+        with_gateway=0
+        shift
+        ;;
+      --skip-frontend)
+        skip_frontend=1
+        shift
+        ;;
+      --skip-build)
+        skip_build=1
+        shift
+        ;;
+      --pull)
+        pull=1
+        shift
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      *)
+        echo "error: unknown local option: $1" >&2
+        usage >&2
+        exit 1
+        ;;
+    esac
+  done
+
+  if [[ -n "${remote_host}" ]]; then
+    if [[ -z "${branch}" ]]; then
+      echo "error: cannot determine current branch; pass --branch" >&2
+      exit 1
+    fi
+
+    local remote_cmd
+    remote_cmd="cd $(printf '%q' "${ROOT}") && scripts/deploy.sh local --branch $(printf '%q' "${branch}") --pull"
+    [[ "${with_gateway}" -eq 0 ]] && remote_cmd+=" --no-gateway"
+    [[ "${skip_frontend}" -eq 1 ]] && remote_cmd+=" --skip-frontend"
+    [[ "${skip_build}" -eq 1 ]] && remote_cmd+=" --skip-build"
+
+    ssh "${remote_host}" "${remote_cmd}"
+    return
+  fi
+
+  cd "${ROOT}"
+  require_cmd docker
+
+  if ! docker compose version >/dev/null 2>&1; then
+    echo "error: docker compose is not available" >&2
+    exit 1
+  fi
+
+  if [[ "${pull}" -eq 1 ]]; then
+    if [[ -z "${branch}" ]]; then
+      echo "error: branch is required when pulling" >&2
+      exit 1
+    fi
+    git fetch origin "${branch}"
+    git checkout "${branch}"
+    git pull --ff-only origin "${branch}"
+  fi
+
+  if [[ "${skip_frontend}" -eq 0 && -f frontend/package.json ]]; then
+    require_cmd pnpm
+    echo "Installing frontend dependencies..."
+    (cd frontend && pnpm install --frozen-lockfile)
+    echo "Building frontend apps/packages..."
+    (cd frontend && pnpm build)
+  fi
+
+  local services=(postgres redis main research library celery-main celery-library)
+  if [[ "${with_gateway}" -eq 1 ]]; then
+    services+=(gateway)
+  fi
+
+  local compose_args=(up -d --remove-orphans)
+  if [[ "${skip_build}" -eq 0 ]]; then
+    compose_args+=(--build)
+  fi
+  compose_args+=("${services[@]}")
+
+  echo "Starting Docker Compose services: ${services[*]}"
+  docker compose "${compose_args[@]}"
+  echo
+  docker compose ps "${services[@]}"
+}
+
+cloud_services() {
+  cat <<'SERVICES'
+main:services/main/Dockerfile:8000:main
+research:services/research/Dockerfile:8001:research
+library:services/library/Dockerfile:8002:library
+SERVICES
+}
+
+cloud_worker_services() {
+  cat <<'SERVICES'
+main-worker:services/main/Dockerfile:./scripts/start-celery-worker.sh:main
+library-worker:services/library/Dockerfile:./scripts/start-celery-worker.sh:library
+SERVICES
+}
+
+cloud_frontend_services() {
+  cat <<'SERVICES'
+web:web:@ksu/web
+admin:admin:@ksu/admin
+research-web:research:@ksu/research
+library-web:library:@ksu/library
+SERVICES
+}
+
+validate_cloud_env() {
+  case "$1" in
+    dev|staging|production) ;;
+    *)
+      echo "error: --env must be one of: dev, staging, production" >&2
+      exit 1
+      ;;
+  esac
+}
+
+image_uri() {
+  local project="$1"
+  local region="$2"
+  local repo="$3"
+  local env="$4"
+  local service="$5"
+  local tag="$6"
+  printf '%s-docker.pkg.dev/%s/%s/%s-%s:%s' "${region}" "${project}" "${repo}" "${env}" "${service}" "${tag}"
+}
+
+deploy_cloud() {
+  local env_name=""
+  local project="${GCP_PROJECT:-}"
+  local region="${GCP_REGION:-us-central1}"
+  local repo="${GCP_AR_REPOSITORY:-ksu}"
+  local tag=""
+  local prefix="ksu"
+  local allow_unauth=1
+  local include_workers=0
+  local skip_frontends=0
+  local run_migrations=0
+  local skip_build=0
+  DRY_RUN=0
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --env)
+        env_name="${2:-}"
+        shift 2
+        ;;
+      --project)
+        project="${2:-}"
+        shift 2
+        ;;
+      --region)
+        region="${2:-}"
+        shift 2
+        ;;
+      --repo)
+        repo="${2:-}"
+        shift 2
+        ;;
+      --image-tag)
+        tag="${2:-}"
+        shift 2
+        ;;
+      --service-prefix)
+        prefix="${2:-}"
+        shift 2
+        ;;
+      --allow-unauth)
+        allow_unauth=1
+        shift
+        ;;
+      --no-allow-unauth)
+        allow_unauth=0
+        shift
+        ;;
+      --include-workers)
+        include_workers=1
+        shift
+        ;;
+      --skip-frontends)
+        skip_frontends=1
+        shift
+        ;;
+      --run-migrations)
+        run_migrations=1
+        shift
+        ;;
+      --skip-build)
+        skip_build=1
+        shift
+        ;;
+      --dry-run)
+        DRY_RUN=1
+        shift
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      *)
+        echo "error: unknown cloud option: $1" >&2
+        usage >&2
+        exit 1
+        ;;
+    esac
+  done
+
+  if [[ -z "${env_name}" ]]; then
+    echo "error: --env is required for cloud deploy" >&2
+    exit 1
+  fi
+  validate_cloud_env "${env_name}"
+
+  if [[ -z "${project}" ]]; then
+    echo "error: --project is required, or set GCP_PROJECT" >&2
+    exit 1
+  fi
+
+  if [[ -z "${tag}" ]]; then
+    tag="$(current_git_sha)"
+  fi
+
+  if [[ "${DRY_RUN}" -eq 0 ]]; then
+    require_cmd gcloud
+    require_cmd docker
+  fi
+
+  cd "${ROOT}"
+
+  echo "Cloud deployment target:"
+  echo "  environment: ${env_name}"
+  echo "  project:     ${project}"
+  echo "  region:      ${region}"
+  echo "  repository:  ${repo}"
+  echo "  image tag:   ${tag}"
+  echo
+
+  echo "Checking required GCP services..."
+  run_cmd gcloud services enable \
+    artifactregistry.googleapis.com \
+    cloudbuild.googleapis.com \
+    run.googleapis.com \
+    secretmanager.googleapis.com \
+    --project "${project}"
+
+  if [[ "${skip_build}" -eq 0 ]]; then
+    echo "Ensuring Artifact Registry repository exists..."
+    if [[ "${DRY_RUN}" -eq 1 ]]; then
+      run_cmd gcloud artifacts repositories describe "${repo}" --location "${region}" --project "${project}"
+      run_cmd gcloud artifacts repositories create "${repo}" --repository-format docker --location "${region}" --project "${project}"
+    elif ! gcloud artifacts repositories describe "${repo}" --location "${region}" --project "${project}" >/dev/null 2>&1; then
+      gcloud artifacts repositories create "${repo}" \
+        --repository-format docker \
+        --location "${region}" \
+        --project "${project}"
+    fi
+
+    run_cmd gcloud auth configure-docker "${region}-docker.pkg.dev" --quiet
+
+    while IFS=: read -r service dockerfile _port _config_group; do
+      local image
+      image="$(image_uri "${project}" "${region}" "${repo}" "${env_name}" "${service}" "${tag}")"
+      echo "Building ${service}: ${image}"
+      run_cmd docker build -f "${dockerfile}" -t "${image}" services
+      run_cmd docker push "${image}"
+    done < <(cloud_services)
+
+    if [[ "${include_workers}" -eq 1 ]]; then
+      while IFS=: read -r service dockerfile _command _config_group; do
+        local image
+        image="$(image_uri "${project}" "${region}" "${repo}" "${env_name}" "${service}" "${tag}")"
+        echo "Building ${service}: ${image}"
+        run_cmd docker build -f "${dockerfile}" -t "${image}" services
+        run_cmd docker push "${image}"
+      done < <(cloud_worker_services)
+    fi
+  fi
+
+  local auth_flag=--allow-unauthenticated
+  if [[ "${allow_unauth}" -eq 0 ]]; then
+    auth_flag=--no-allow-unauthenticated
+  fi
+
+  while IFS=: read -r service _dockerfile port config_group; do
+    local image service_name env_prefix
+    image="$(image_uri "${project}" "${region}" "${repo}" "${env_name}" "${service}" "${tag}")"
+    service_name="${prefix}-${env_name}-${service}"
+    env_prefix="$(printf '%s' "${env_name}" | tr '[:lower:]' '[:upper:]')"
+
+    echo "Deploying Cloud Run service ${service_name}"
+    run_cmd gcloud run deploy "${service_name}" \
+      --image "${image}" \
+      --project "${project}" \
+      --region "${region}" \
+      --platform managed \
+      "${auth_flag}" \
+      --port "${port}" \
+      --cpu 1 \
+      --memory 512Mi \
+      --min-instances 0 \
+      --max-instances 2 \
+      --concurrency 80 \
+      --timeout 300 \
+      --set-env-vars "APP_ENV=${env_name},SERVICE_NAME=${config_group},LOG_FORMAT=json,LOG_DIR=/tmp/logs" \
+      --set-secrets "DATABASE_URL=${env_prefix}_${config_group^^}_DATABASE_URL:latest,REDIS_URL=${env_prefix}_${config_group^^}_REDIS_URL:latest,JWT_SECRET_KEY=${env_prefix}_JWT_SECRET_KEY:latest,INTERNAL_API_KEY=${env_prefix}_INTERNAL_API_KEY:latest"
+  done < <(cloud_services)
+
+  local main_url=""
+  local research_url=""
+  local library_url=""
+
+  if [[ "${DRY_RUN}" -eq 1 ]]; then
+    main_url="https://${prefix}-${env_name}-main-${region}.a.run.app"
+    research_url="https://${prefix}-${env_name}-research-${region}.a.run.app"
+    library_url="https://${prefix}-${env_name}-library-${region}.a.run.app"
+  else
+    main_url="$(gcloud run services describe "${prefix}-${env_name}-main" --project "${project}" --region "${region}" --format 'value(status.url)')"
+    research_url="$(gcloud run services describe "${prefix}-${env_name}-research" --project "${project}" --region "${region}" --format 'value(status.url)')"
+    library_url="$(gcloud run services describe "${prefix}-${env_name}-library" --project "${project}" --region "${region}" --format 'value(status.url)')"
+  fi
+
+  if [[ "${skip_frontends}" -eq 0 ]]; then
+    local public_frontend_url="${NEXT_PUBLIC_PUBLIC_FRONTEND_URL:-}"
+    local research_frontend_url="${NEXT_PUBLIC_RESEARCH_FRONTEND_URL:-}"
+    local library_frontend_url="${NEXT_PUBLIC_LIBRARY_FRONTEND_URL:-}"
+    local admin_frontend_url="${NEXT_PUBLIC_APP_URL:-}"
+
+    if [[ "${DRY_RUN}" -eq 1 ]]; then
+      public_frontend_url="${public_frontend_url:-https://${prefix}-${env_name}-web-${region}.a.run.app}"
+      admin_frontend_url="${admin_frontend_url:-https://${prefix}-${env_name}-admin-${region}.a.run.app}"
+      research_frontend_url="${research_frontend_url:-https://${prefix}-${env_name}-research-web-${region}.a.run.app}"
+      library_frontend_url="${library_frontend_url:-https://${prefix}-${env_name}-library-web-${region}.a.run.app}"
+    fi
+
+    if [[ "${skip_build}" -eq 0 ]]; then
+      while IFS=: read -r service app_dir package_name; do
+        local image
+        image="$(image_uri "${project}" "${region}" "${repo}" "${env_name}" "${service}" "${tag}")"
+        echo "Building frontend ${service}: ${image}"
+        run_cmd docker build -f frontend/Dockerfile -t "${image}" \
+          --build-arg "APP_DIR=${app_dir}" \
+          --build-arg "PACKAGE_NAME=${package_name}" \
+          --build-arg "NEXT_PUBLIC_API_URL=${main_url}/api/v1" \
+          --build-arg "NEXT_PUBLIC_MAIN_API_URL=${main_url}" \
+          --build-arg "NEXT_PUBLIC_RESEARCH_API_URL=${research_url}" \
+          --build-arg "NEXT_PUBLIC_LIBRARY_API_URL=${library_url}" \
+          --build-arg "NEXT_PUBLIC_PUBLIC_FRONTEND_URL=${public_frontend_url}" \
+          --build-arg "NEXT_PUBLIC_RESEARCH_FRONTEND_URL=${research_frontend_url}" \
+          --build-arg "NEXT_PUBLIC_LIBRARY_FRONTEND_URL=${library_frontend_url}" \
+          --build-arg "NEXT_PUBLIC_APP_URL=${admin_frontend_url}" \
+          frontend
+        run_cmd docker push "${image}"
+      done < <(cloud_frontend_services)
+    fi
+
+    while IFS=: read -r service _app_dir _package_name; do
+      local image service_name
+      image="$(image_uri "${project}" "${region}" "${repo}" "${env_name}" "${service}" "${tag}")"
+      service_name="${prefix}-${env_name}-${service}"
+
+      echo "Deploying frontend ${service_name}"
+      run_cmd gcloud run deploy "${service_name}" \
+        --image "${image}" \
+        --project "${project}" \
+        --region "${region}" \
+        --platform managed \
+        "${auth_flag}" \
+        --port 3000 \
+        --cpu 1 \
+        --memory 512Mi \
+        --min-instances 0 \
+        --max-instances 2 \
+        --concurrency 80 \
+        --timeout 300 \
+        --set-env-vars "APP_ENV=${env_name},NEXT_TELEMETRY_DISABLED=1,NEXT_PUBLIC_API_URL=${main_url}/api/v1,NEXT_PUBLIC_MAIN_API_URL=${main_url},NEXT_PUBLIC_RESEARCH_API_URL=${research_url},NEXT_PUBLIC_LIBRARY_API_URL=${library_url}"
+    done < <(cloud_frontend_services)
+  fi
+
+  if [[ "${include_workers}" -eq 1 ]]; then
+    while IFS=: read -r service _dockerfile command config_group; do
+      local image service_name env_prefix
+      image="$(image_uri "${project}" "${region}" "${repo}" "${env_name}" "${service}" "${tag}")"
+      service_name="${prefix}-${env_name}-${service}"
+      env_prefix="$(printf '%s' "${env_name}" | tr '[:lower:]' '[:upper:]')"
+
+      echo "Deploying worker ${service_name}"
+      run_cmd gcloud run deploy "${service_name}" \
+        --image "${image}" \
+        --project "${project}" \
+        --region "${region}" \
+        --platform managed \
+        --no-allow-unauthenticated \
+        --command "${command}" \
+        --cpu 1 \
+        --memory 512Mi \
+        --min-instances 1 \
+        --max-instances 1 \
+        --concurrency 1 \
+        --timeout 3600 \
+        --set-env-vars "APP_ENV=${env_name},SERVICE_NAME=${config_group},LOG_FORMAT=json,LOG_DIR=/tmp/logs" \
+        --set-secrets "DATABASE_URL=${env_prefix}_${config_group^^}_DATABASE_URL:latest,REDIS_URL=${env_prefix}_${config_group^^}_REDIS_URL:latest,CELERY_BROKER_URL=${env_prefix}_${config_group^^}_REDIS_URL:latest,CELERY_RESULT_BACKEND=${env_prefix}_${config_group^^}_REDIS_URL:latest,JWT_SECRET_KEY=${env_prefix}_JWT_SECRET_KEY:latest,INTERNAL_API_KEY=${env_prefix}_INTERNAL_API_KEY:latest"
+    done < <(cloud_worker_services)
+  fi
+
+  if [[ "${run_migrations}" -eq 1 ]]; then
+    while IFS=: read -r service _dockerfile _port _config_group; do
+      local image job_name env_prefix
+      image="$(image_uri "${project}" "${region}" "${repo}" "${env_name}" "${service}" "${tag}")"
+      job_name="${prefix}-${env_name}-${service}-migrate"
+      env_prefix="$(printf '%s' "${env_name}" | tr '[:lower:]' '[:upper:]')"
+
+      echo "Running migrations for ${service}"
+      if [[ "${DRY_RUN}" -eq 1 ]]; then
+        run_cmd gcloud run jobs delete "${job_name}" --project "${project}" --region "${region}" --quiet
+      elif gcloud run jobs describe "${job_name}" --project "${project}" --region "${region}" >/dev/null 2>&1; then
+        gcloud run jobs delete "${job_name}" --project "${project}" --region "${region}" --quiet
+      fi
+      run_cmd gcloud run jobs create "${job_name}" \
+        --image "${image}" \
+        --project "${project}" \
+        --region "${region}" \
+        --command alembic \
+        --args upgrade,head \
+        --set-env-vars "APP_ENV=${env_name},LOG_FORMAT=json,LOG_DIR=/tmp/logs" \
+        --set-secrets "DATABASE_URL=${env_prefix}_${service^^}_DATABASE_URL:latest"
+      run_cmd gcloud run jobs execute "${job_name}" \
+        --project "${project}" \
+        --region "${region}" \
+        --wait
+    done < <(cloud_services)
+  fi
+
+  echo
+  echo "Cloud deploy complete for ${env_name}."
+  echo "Next promotion step: reuse --image-tag ${tag} with --skip-build for the next environment."
+}
+
+main() {
+  local command="${1:-}"
+  case "${command}" in
+    "")
+      deploy_local
+      ;;
+    local)
+      shift
+      deploy_local "$@"
+      ;;
+    cloud)
+      shift
+      deploy_cloud "$@"
+      ;;
+    -h|--help)
+      usage
+      ;;
+    --*)
+      deploy_local "$@"
+      ;;
+    *)
+      echo "error: unknown command: ${command}" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+}
+
+main "$@"
