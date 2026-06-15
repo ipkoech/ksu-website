@@ -35,8 +35,7 @@ const routeMeta: Record<string, RouteCard> = {
   "/about": {
     title: "About Overview",
     href: "/about",
-    description:
-      "Return to the consolidated About overview for history, mandate, values, and institutional pathways.",
+    description: "Return to the About overview.",
     action: "Back to overview",
     icon: History,
   },
@@ -49,11 +48,10 @@ const routeMeta: Record<string, RouteCard> = {
     icon: History,
   },
   "/about/mission-vision": {
-    title: "Mission & Vision",
+    title: "Mission, Vision & Values",
     href: "/about/mission-vision",
-    description:
-      "Read the mission, vision, philosophy, and values that guide the university's public mandate.",
-    action: "View mandate",
+    description: "Read the official institutional statements.",
+    action: "View statements",
     icon: Compass,
   },
   "/about/quality-assurance": {
@@ -103,13 +101,12 @@ export default async function GovernancePage() {
       " and Senate",
       "",
     ) ||
-    "The Chancellor guides the University Council in safeguarding the university's charter, public mandate, and accountability to students, staff, partners, and the community.";
+    "The Chancellor supports the University Council in safeguarding the university's charter, governance, and public accountability.";
 
   return (
     <PageShell>
       <AboutPageLenis>
         <section className="relative overflow-hidden border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_44%,#eef4ff_100%)] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.16),transparent_66%)]" />
           <div className="relative w-full">
             <BreadcrumbTrail
               items={[
@@ -154,9 +151,8 @@ export default async function GovernancePage() {
                       University Council governance and accountability
                     </h1>
                     <p className="mt-6 text-base leading-8 text-slate-600 sm:text-lg">
-                      University governance is presented through the University
-                      Council, the institution's public oversight body chaired
-                      under the leadership of the Chancellor.
+                      The University Council provides oversight, policy
+                      direction, and stewardship for the institution.
                     </p>
                     <article className="mt-8 rounded-[1.25rem] border border-slate-200 bg-slate-50/80 p-5">
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-secondary">
@@ -250,7 +246,7 @@ export default async function GovernancePage() {
               </h2>
               <p className="mt-5 text-sm leading-7 text-white/75">
                 {council?.mandate ||
-                  "Provides strategic oversight, approves policy, and safeguards the university's public mandate under the charter and Universities Act framework."}
+                  "Provides strategic oversight, approves policy, and safeguards the university's mandate under the charter and Universities Act framework."}
               </p>
             </aside>
           </div>

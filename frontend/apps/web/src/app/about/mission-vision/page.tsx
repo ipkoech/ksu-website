@@ -42,7 +42,7 @@ const routeMeta: Record<string, RouteCard> = {
     title: "About Overview",
     href: "/about",
     description:
-      "Return to the consolidated About overview for history, mandate, values, and institutional pathways.",
+      "Return to the About overview.",
     action: "Back to overview",
     icon: History,
   },
@@ -182,13 +182,12 @@ export default async function MissionVisionPage() {
     <PageShell>
       <AboutPageLenis>
         <section className="relative overflow-hidden border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_44%,#eef4ff_100%)] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.16),transparent_66%)]" />
           <div className="relative w-full">
             <BreadcrumbTrail
               items={[
                 { label: "Home", href: "/" },
                 { label: "About", href: "/about" },
-                { label: "Mission & Vision" },
+                { label: "Mission, Vision & Values" },
               ]}
             />
 
@@ -221,16 +220,15 @@ export default async function MissionVisionPage() {
                 <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px]">
                   <div className="px-6 py-8 sm:px-8 lg:px-10 lg:py-10">
                     <p className="text-sm font-semibold uppercase text-secondary">
-                      Mission and Vision
+                      Mission, Vision & Values
                     </p>
                     <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.08] text-slate-950 sm:text-5xl xl:text-6xl">
-                      The purpose and principles that guide Kisii University
+                      Official statements that guide Kisii University
                     </h1>
                     <p className="mt-6 text-base leading-8 text-slate-600 sm:text-lg">
-                      The university's published mission, vision, philosophy,
-                      and values describe the environment it works to create,
-                      the future it aims toward, and the principles behind its
-                      service to society.
+                      The mission states what the university does. The vision
+                      states where it is going. The philosophy and core values
+                      state how it serves.
                     </p>
                     <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                       <Link
@@ -290,9 +288,8 @@ export default async function MissionVisionPage() {
                     Institutional Direction
                   </p>
                   <p className="mt-4 text-sm leading-7 text-slate-600">
-                    Mission, vision, philosophy, and values are presented
-                    together so visitors can see how institutional direction is
-                    framed in the university's published statements.
+                    The statements below are shown plainly so they can be read
+                    and referenced without interpretation.
                   </p>
                 </div>
 
@@ -379,7 +376,7 @@ export default async function MissionVisionPage() {
                 Philosophy
               </p>
               <h2 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
-                The thinking behind institutional service
+                The philosophy behind institutional service
               </h2>
               <p className="mt-5 text-base leading-8 text-slate-600">
                 {officialPhilosophy}
@@ -421,11 +418,11 @@ export default async function MissionVisionPage() {
                 Core Values
               </p>
               <h2 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight">
-                Principles that shape the university's culture
+                Core values
               </h2>
               <p className="mt-5 text-base leading-8 text-white/70">
-                The values keep the mission and vision grounded in how the
-                institution relates to people, ideas, and public responsibility.
+                These values guide the way the university works with people,
+                ideas, and public responsibility.
               </p>
             </div>
             <div className="grid gap-0 sm:grid-cols-2">
@@ -464,14 +461,12 @@ export default async function MissionVisionPage() {
                   Mandate in Practice
                 </p>
                 <h2 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
-                  How the statements connect to public work
+                  How the statements connect to university work
                 </h2>
               </div>
               <p className="text-base leading-8 text-slate-600">
-                The published statements point to grounded areas of work:
-                learning, research, student experience, and community
-                engagement, with each connection kept tied to the published
-                mission and philosophy.
+                The mission and philosophy point directly to learning,
+                research, student experience, and community engagement.
               </p>
             </div>
 

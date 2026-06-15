@@ -68,8 +68,7 @@ const relatedRoutes: RouteCard[] = [
   {
     title: "About Overview",
     href: "/about",
-    description:
-      "Return to the consolidated About overview for mission, vision, values, and institutional pathways.",
+    description: "Return to the About overview.",
     action: "Back to overview",
     icon: History,
   },
@@ -144,7 +143,6 @@ export default async function AboutHistoryPage() {
     <PageShell>
       <AboutPageLenis>
         <section className="relative overflow-hidden border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_44%,#eef4ff_100%)] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.16),transparent_66%)]" />
           <div className="relative w-full">
             <BreadcrumbTrail
               items={[

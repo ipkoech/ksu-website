@@ -49,8 +49,8 @@ const navigationMeta: Record<string, NavigationMeta> = {
   },
   "/about/mission-vision": {
     description:
-      "Read the mission, vision, philosophy, and values that guide the university's public mandate.",
-    action: "View mandate",
+      "Read the official mission, vision, philosophy, and core values.",
+    action: "View statements",
     icon: Compass,
   },
   "/about/governance": {
@@ -102,19 +102,19 @@ const mandateCards: {
 }[] = [
   {
     label: "Mission",
-    title: "How the university serves its public mandate",
+    title: "Creating a transformative environment",
     icon: BookOpenCheck,
     panel: "bg-white",
   },
   {
     label: "Vision",
-    title: "The destination that shapes institutional direction",
+    title: "Inclusive, borderless, and change-making",
     icon: Compass,
     panel: "bg-blue-50/80",
   },
   {
     label: "Philosophy",
-    title: "The thinking behind teaching, research, and service",
+    title: "Creative and responsive service to humanity",
     icon: Lightbulb,
     panel: "bg-orange-50/70",
   },
@@ -167,7 +167,6 @@ export async function AboutOverviewContent({
     <PageShell>
       <AboutPageLenis>
         <section className="relative min-h-[55vh] overflow-hidden border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_46%,#eef4ff_100%)] px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.16),transparent_66%)]" />
           <div className="relative w-full">
             <BreadcrumbTrail items={breadcrumbItems} />
 
@@ -285,19 +284,18 @@ export async function AboutOverviewContent({
                 From teacher training roots to a chartered university
               </h2>
               <p className="mt-5 text-base leading-8 text-slate-600">
-                The overview follows the public institutional record from the
-                1965 founding through the 2013 charter, keeping the story
-                anchored to dated milestones and official institutional
-                statements.
+                Kisii University began as a teacher training college in 1965,
+                grew through Egerton University, and became a chartered
+                university on February 6, 2013.
               </p>
               <div className="mt-7 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
                 <p className="text-sm font-semibold text-slate-950">
                   Overview focus
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  History, mandate, values, and onward About pathways are
-                  presented together so visitors can orient themselves before
-                  opening a more specific institutional page.
+                  Start with the institution's history, mission, vision, core
+                  values, leadership, governance, quality, and service
+                  commitments.
                 </p>
               </div>
             </div>
@@ -352,9 +350,8 @@ export async function AboutOverviewContent({
                 </h2>
               </div>
               <p className="text-base leading-8 text-slate-600">
-                Visitors can quickly separate the university's operational
-                mission, future-facing vision, and guiding philosophy before
-                continuing into governance or management pages.
+                These are the official statements that guide institutional
+                purpose, direction, and culture.
               </p>
             </div>
 
@@ -402,11 +399,11 @@ export async function AboutOverviewContent({
                   Core Values
                 </p>
                 <h2 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight">
-                  Principles behind the public mandate
+                  Core values
                 </h2>
                 <p className="mt-5 text-base leading-8 text-white/70">
-                  These values frame the tone for teaching, research,
-                  engagement, and institutional decision-making.
+                  The values describe how the university expects people,
+                  ideas, and decisions to be treated.
                 </p>
               </div>
               <div className="grid gap-0 sm:grid-cols-2">

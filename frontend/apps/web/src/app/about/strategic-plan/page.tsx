@@ -39,17 +39,15 @@ const routeMeta: Record<string, RouteCard> = {
   "/about": {
     title: "About Overview",
     href: "/about",
-    description:
-      "Return to the consolidated About overview for history, mandate, values, and institutional pathways.",
+    description: "Return to the About overview.",
     action: "Back to overview",
     icon: History,
   },
   "/about/mission-vision": {
-    title: "Mission & Vision",
+    title: "Mission, Vision & Values",
     href: "/about/mission-vision",
-    description:
-      "Read the mission, vision, philosophy, and values that guide the university's public mandate.",
-    action: "View mandate",
+    description: "Read the official institutional statements.",
+    action: "View statements",
     icon: Compass,
   },
   "/about/governance": {
@@ -114,7 +112,6 @@ export default function StrategicPlanPage() {
     <PageShell>
       <AboutPageLenis>
         <section className="relative overflow-hidden border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_44%,#eef4ff_100%)] px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.16),transparent_66%)]" />
           <div className="relative w-full">
             <BreadcrumbTrail
               items={[
@@ -159,9 +156,9 @@ export default function StrategicPlanPage() {
                       Institutional priorities and implementation focus
                     </h1>
                     <p className="mt-4 text-base leading-7 text-slate-600">
-                      This page is the internal home for the current strategic
-                      plan, key result areas, implementation references, and
-                      related planning documents.
+                      The strategic plan sets the university's priorities, key
+                      result areas, implementation focus, and planning
+                      references.
                     </p>
                     <div className="mt-5 flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap">
                       {strategicPlan?.href ? (
@@ -242,7 +239,7 @@ export default function StrategicPlanPage() {
                 Key Result Areas
               </p>
               <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
-                Published strategic priorities for fast scanning
+                Strategic priorities
               </h2>
               <div className="mt-8 grid gap-5 md:grid-cols-2">
                 {strategicPlanHighlights.map((highlight, index) => {
@@ -310,9 +307,8 @@ export default function StrategicPlanPage() {
                 </h2>
               </div>
               <p className="text-base leading-8 text-slate-600">
-                These references keep the strategic plan connected to the public
-                accountability pages without duplicating strategic-plan content
-                elsewhere.
+                These references connect planning with governance and service
+                commitments.
               </p>
             </div>
 

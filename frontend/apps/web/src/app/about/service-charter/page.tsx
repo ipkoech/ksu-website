@@ -21,8 +21,8 @@ export default function ServiceCharterPage() {
         <div className="mt-8">
           <AboutIllustratedHeading
             eyebrow="Our Service Charter"
-            title="The service charter is part of the official About navigation and should remain directly accessible."
-            body="The live Kisii University website exposes the service charter as a dedicated About page. The current public page is primarily a hosted visual/document resource, so this route acts as a clear access point."
+            title="Service commitments and accountability"
+            body="The service charter sets out the university's public service commitments, expected standards, and accountability information."
             illustration={aboutIllustrations.serviceCharter}
             alt="University service desk staff assisting students with public service information"
           />
@@ -32,8 +32,8 @@ export default function ServiceCharterPage() {
       <ScrollReveal as="section" className="container pb-16">
         <article className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/40">
           <p className="max-w-4xl text-base leading-8 text-slate-600">
-            Use the official charter page to review the university's public service
-            commitments and accountability information as published on the live site.
+            Open the official charter to review service standards, public
+            commitments, and accountability information.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
             <Button asChild>

@@ -21,8 +21,6 @@ import {
   getGovernanceBoard,
   getLeadershipData,
   getOverviewData,
-  officialMission,
-  officialVision,
   quickNavigation,
 } from "@/lib/about-data";
 
@@ -38,7 +36,7 @@ const routeMeta: Record<string, RouteCard> = {
   "/about": {
     title: "About Overview",
     href: "/about",
-    description: "Return to the consolidated About overview.",
+    description: "Return to the About overview.",
     action: "Back to overview",
     icon: History,
   },
@@ -50,10 +48,10 @@ const routeMeta: Record<string, RouteCard> = {
     icon: History,
   },
   "/about/mission-vision": {
-    title: "Mission & Vision",
+    title: "Mission, Vision & Values",
     href: "/about/mission-vision",
-    description: "Read the university mandate.",
-    action: "View mandate",
+    description: "Read the official institutional statements.",
+    action: "View statements",
     icon: Compass,
   },
   "/about/governance": {
@@ -199,7 +197,6 @@ export default async function UniversityManagementPage() {
     <PageShell>
       <AboutPageLenis>
         <section className="relative overflow-hidden border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_44%,#eef4ff_100%)] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.16),transparent_66%)]" />
           <div className="relative w-full">
             <BreadcrumbTrail
               items={[
@@ -350,9 +347,9 @@ export default async function UniversityManagementPage() {
               <p className="mt-5 text-sm leading-7 text-white/75">
                 The Vice Chancellor leads institutional execution through the
                 deputy vice chancellors, registrars, and finance office. These
-                offices coordinate academic delivery, research, student affairs,
-                administration, planning, human resources, resource mobilization,
-                and financial stewardship.
+                offices coordinate academic delivery, research, student
+                affairs, administration, planning, human resources, resource
+                mobilization, and financial stewardship.
               </p>
               <div className="mt-6 grid gap-3 border-t border-white/10 pt-5">
                 {[
@@ -391,24 +388,13 @@ export default async function UniversityManagementPage() {
                 {senate?.mandate ||
                   "Oversees academic standards, programme quality, examinations, and scholarly direction."}
               </p>
-              <div className="mt-6 space-y-4 border-t border-slate-200 pt-5">
-                <div>
-                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-slate-500">
-                    Vision
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-700">
-                    {officialVision}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-slate-500">
-                    Mission
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-700">
-                    {officialMission}
-                  </p>
-                </div>
-              </div>
+              <Link
+                href="/about/mission-vision"
+                className="mt-6 inline-flex items-center gap-2 border-t border-slate-200 pt-5 text-sm font-semibold text-primary"
+              >
+                View mission, vision, and values
+                <ArrowRight aria-hidden className="h-4 w-4" />
+              </Link>
             </aside>
 
             <div className="min-w-0 overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">

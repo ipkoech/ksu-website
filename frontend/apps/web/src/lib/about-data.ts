@@ -30,14 +30,14 @@ export const aboutStats = [
 ];
 
 export const quickNavigation = [
-  { title: "Overview", emoji: "📜", href: "/about" },
-  { title: "History", emoji: "🕰️", href: "/about/history" },
-  { title: "Mission & Vision", emoji: "🎯", href: "/about/mission-vision" },
-  { title: "Governance", emoji: "🏛️", href: "/about/governance" },
-  { title: "University Management", emoji: "👥", href: "/about/university-management" },
-  { title: "Quality Assurance", emoji: "✅", href: "/about/quality-assurance" },
-  { title: "Our Service Charter", emoji: "📋", href: "/about/service-charter" },
-  { title: "Strategic Plan", emoji: "🧭", href: "/about/strategic-plan" },
+  { title: "Overview", href: "/about" },
+  { title: "History", href: "/about/history" },
+  { title: "Mission, Vision & Values", href: "/about/mission-vision" },
+  { title: "Governance", href: "/about/governance" },
+  { title: "University Management", href: "/about/university-management" },
+  { title: "Quality Assurance", href: "/about/quality-assurance" },
+  { title: "Service Charter", href: "/about/service-charter" },
+  { title: "Strategic Plan", href: "/about/strategic-plan" },
 ];
 
 export const historyTimeline: TimelineItem[] = [
@@ -410,7 +410,7 @@ const overviewFallback: Pick<
     "The institution was founded in 1965, upgraded in 1983, became an Egerton University campus in 1994, became a constituent college in 2007, and received its charter in 2013.",
   chancellor_message_title: "Message from the Chancellor",
   chancellor_message:
-    "The current official About sources do not publish a dedicated Chancellor message. The Chancellor is described in official university publications as the titular head of the University who, in the name of the University, confers degrees and other awards in consultation with the University Council and Senate.",
+    "The Chancellor is the titular head of the University and confers degrees and other awards in consultation with the University Council and Senate.",
   vc_message_title: "Message from the Vice Chancellor",
   vc_message:
     "On behalf of the University Council, Management, and the wider university community, the Vice Chancellor welcomes students to a fast-growing and dynamic institution committed to academic excellence, research, integrity, professionalism, and social responsibility.",

@@ -37,8 +37,7 @@ const routeMeta: Record<string, RouteCard> = {
   "/about": {
     title: "About Overview",
     href: "/about",
-    description:
-      "Return to the consolidated About overview for history, mandate, values, and institutional pathways.",
+    description: "Return to the About overview.",
     action: "Back to overview",
     icon: History,
   },
@@ -51,11 +50,10 @@ const routeMeta: Record<string, RouteCard> = {
     icon: History,
   },
   "/about/mission-vision": {
-    title: "Mission & Vision",
+    title: "Mission, Vision & Values",
     href: "/about/mission-vision",
-    description:
-      "Read the mission, vision, philosophy, and values that guide the university's public mandate.",
-    action: "View mandate",
+    description: "Read the official institutional statements.",
+    action: "View statements",
     icon: Compass,
   },
   "/about/governance": {
@@ -137,7 +135,6 @@ export default function QualityAssurancePage() {
     <PageShell>
       <AboutPageLenis>
         <section className="relative overflow-hidden border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_44%,#eef4ff_100%)] px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.16),transparent_66%)]" />
           <div className="relative w-full">
             <BreadcrumbTrail
               items={[
@@ -182,10 +179,9 @@ export default function QualityAssurancePage() {
                       Quality, standards, and service accountability
                     </h1>
                     <p className="mt-4 text-base leading-7 text-slate-600">
-                      Kisii University presents quality assurance through its
-                      charter context, strategic plan, service charter,
-                      governance structure, and administrative accountability
-                      pathways.
+                      Quality assurance is presented through the university
+                      charter, strategic plan, service charter, governance
+                      structure, and administrative accountability.
                     </p>
                     <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                       <a
@@ -275,8 +271,8 @@ export default function QualityAssurancePage() {
                 Public references that explain quality and accountability
               </h2>
               <p className="mt-5 text-base leading-8 text-slate-600">
-                The quality page uses published About data and official
-                document links rather than implying a live compliance system.
+                These references show where standards, planning, service
+                commitments, and institutional accountability are documented.
               </p>
             </div>
 
@@ -320,9 +316,8 @@ export default function QualityAssurancePage() {
                 </h2>
               </div>
               <p className="text-base leading-8 text-slate-600">
-                These cards summarize the available About data. The QMS
-                reference is framed as strategic-plan support, not as a
-                standalone credential.
+                These are the available public references for quality,
+                standards, and accountability.
               </p>
             </div>
 
