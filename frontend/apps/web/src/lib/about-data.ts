@@ -394,9 +394,15 @@ const overviewFallback: Pick<
   | "chancellor_message"
   | "vc_message_title"
   | "vc_message"
+  | "email"
   | "phone"
+  | "alternate_phone"
   | "website"
   | "postal_address"
+  | "physical_address"
+  | "city"
+  | "county"
+  | "country"
   | "quick_facts"
 > = {
   name: "Kisii University",
@@ -414,9 +420,15 @@ const overviewFallback: Pick<
   vc_message_title: "Message from the Vice Chancellor",
   vc_message:
     "On behalf of the University Council, Management, and the wider university community, the Vice Chancellor welcomes students to a fast-growing and dynamic institution committed to academic excellence, research, integrity, professionalism, and social responsibility.",
+  email: "info@kisiiuniversity.ac.ke",
   phone: "+254720875082",
+  alternate_phone: undefined,
   website: "https://kisiiuniversity.ac.ke",
   postal_address: "P.O. Box 408-40200, Kisii, Kenya",
+  physical_address: "Kisii University Main Campus",
+  city: "Kisii",
+  county: "Kisii",
+  country: "Kenya",
   quick_facts: {
     founding_year: 1965,
     charter_year: 2013,
@@ -535,6 +547,35 @@ export async function getLeadershipData() {
 export async function getOverviewData() {
   try {
     const response = await universityInfoApi.getCurrent();
+    return response.data;
+  } catch {
+    return overviewFallback;
+  }
+}
+
+export async function getServiceCharterOverviewData() {
+  try {
+    const response = await universityInfoApi.getCurrent({
+      fields: [
+        "id",
+        "name",
+        "slug",
+        "mission",
+        "vision",
+        "charter_summary",
+        "email",
+        "phone",
+        "alternate_phone",
+        "website",
+        "postal_address",
+        "physical_address",
+        "city",
+        "county",
+        "country",
+        "quick_facts",
+      ].join(","),
+    });
+
     return response.data;
   } catch {
     return overviewFallback;
