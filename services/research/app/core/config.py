@@ -74,8 +74,8 @@ class Settings(BaseSettings):
         if self.APP_ENV.lower() not in {"development", "dev", "local", "test", "testing"}:
             if self.INTERNAL_API_KEY == "change-me-internal":
                 raise ValueError("INTERNAL_API_KEY must be configured outside local development")
-            if self.REFERENCE_VALIDATION_MODE == "disabled":
-                raise ValueError("REFERENCE_VALIDATION_MODE cannot be disabled outside local development")
+            if self.REFERENCE_VALIDATION_MODE != "strict":
+                raise ValueError("REFERENCE_VALIDATION_MODE must be strict outside local development")
         return self
 
 

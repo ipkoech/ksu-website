@@ -7,14 +7,15 @@ import { usePermissions, useRoles } from "@ksu/api-client/hooks/admin";
 export default function PermissionsPage() {
   const permissions = usePermissions();
   const roles = useRoles({ page: 1, limit: 100 });
+  const permissionItems = React.useMemo(() => permissions.data ?? [], [permissions.data]);
 
   const groupedPermissions = React.useMemo(() => {
-    return (permissions.data ?? []).reduce<Record<string, typeof permissions.data>>((acc, permission) => {
+    return permissionItems.reduce<Record<string, typeof permissionItems>>((acc, permission) => {
       const resourceKey = permission.resource ?? "uncategorized";
       acc[resourceKey] = [...(acc[resourceKey] ?? []), permission];
       return acc;
     }, {});
-  }, [permissions.data]);
+  }, [permissionItems]);
 
   return (
     <div>

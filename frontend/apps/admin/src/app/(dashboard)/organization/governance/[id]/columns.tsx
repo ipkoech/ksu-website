@@ -1,8 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Badge, Button } from "@ksu/ui";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Badge } from "@ksu/ui";
 
 export const columns: ColumnDef<any>[] = [
     {

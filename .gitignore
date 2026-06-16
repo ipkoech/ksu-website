@@ -73,6 +73,7 @@ tmp/
 .design-scratch/
 
 designs/
+design/
 docs/
 frontend/apps/library/.chrome-visual-profile/
 frontend/apps/library/visual-audit/

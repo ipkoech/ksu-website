@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("")
-@cached_public(timeout=600)
+@cached_public(timeout=600, vary_on=("fields", "include"))
 async def get_university_info(db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(UniversityInfo, fields)
     item = await UniversityInfoService.get_current(db, load_options=selector.load_options)
@@ -29,7 +29,7 @@ async def get_university_info(db: DbSession, fields: FieldSelection = FieldsDep)
 
 
 @router.get("/{slug}")
-@cached_public(timeout=600)
+@cached_public(timeout=600, vary_on=("slug", "fields", "include"))
 async def get_university_info_by_slug(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(UniversityInfo, fields)
     item = await UniversityInfoService.get_by_slug(db, slug, load_options=selector.load_options)

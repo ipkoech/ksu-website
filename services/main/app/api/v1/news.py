@@ -86,7 +86,7 @@ async def get_news_by_id(news_id: uuid.UUID, db: DbSession, _: CurrentUser, fiel
 
 
 @router.get("/{slug}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_news(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(News, fields)
     item = await NewsService.get_by_slug(db, slug, public_only=True, load_options=selector.load_options)

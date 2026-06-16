@@ -78,7 +78,7 @@ async def get_admission_info_by_id(item_id: uuid.UUID, db: DbSession, _: Current
 
 
 @router.get("/{slug}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_admission_info(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(AdmissionInfo, fields)
     item = await AdmissionInfoService.get_by_slug(db, slug, load_options=selector.load_options)

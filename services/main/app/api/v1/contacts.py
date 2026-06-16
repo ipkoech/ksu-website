@@ -35,7 +35,7 @@ async def list_contacts(
 
 
 @router.get("/{contact_id}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("contact_id", "fields", "include"))
 async def get_contact(contact_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(ContactDirectory, fields)
     item = await ContactService.get_by_id(db, contact_id, load_options=selector.load_options)

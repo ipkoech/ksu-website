@@ -43,7 +43,7 @@ async def list_schools(
 
 
 @router.get("/{slug}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_school(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(School, fields)
     school = await SchoolService.get_by_slug(db, slug, load_options=selector.load_options)
@@ -62,7 +62,7 @@ async def get_school_by_id(school_id: uuid.UUID, db: DbSession, _: CurrentUser, 
 
 
 @router.get("/{slug}/departments")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_school_departments(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     school = await SchoolService.get_by_slug(db, slug)
     if school is None:
@@ -73,7 +73,7 @@ async def get_school_departments(slug: str, db: DbSession, fields: FieldSelectio
 
 
 @router.get("/{slug}/staff")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_school_staff(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     school = await SchoolService.get_by_slug(db, slug)
     if school is None:
@@ -84,7 +84,7 @@ async def get_school_staff(slug: str, db: DbSession, fields: FieldSelection = Fi
 
 
 @router.get("/{slug}/programmes")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "page", "per_page", "fields", "include"))
 async def get_school_programmes(
     slug: str,
     db: DbSession,

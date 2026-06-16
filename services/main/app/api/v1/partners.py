@@ -43,7 +43,7 @@ async def list_partners(
 
 
 @router.get("/{slug}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug",))
 async def get_partner(slug: str, request: Request):
     if request.headers.get("x-ksu-proxy") == "main-partners":
         raise HTTPException(status_code=503, detail="Research partner proxy loop detected")

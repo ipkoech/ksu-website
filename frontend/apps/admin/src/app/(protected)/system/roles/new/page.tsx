@@ -23,14 +23,15 @@ export default function CreateRolePage() {
     permissions: [] as string[],
   });
   const canManage = canManageRoles(user, hasScope);
+  const permissionItems = React.useMemo(() => permissions.data ?? [], [permissions.data]);
 
   const groupedPermissions = React.useMemo(() => {
-    return (permissions.data ?? []).reduce<Record<string, typeof permissions.data>>((acc, permission) => {
+    return permissionItems.reduce<Record<string, typeof permissionItems>>((acc, permission) => {
       const key = permission.resource ?? "uncategorized";
       acc[key] = [...(acc[key] ?? []), permission];
       return acc;
     }, {});
-  }, [permissions.data]);
+  }, [permissionItems]);
 
   const submit = async () => {
     const parsed = createRoleSchema.safeParse({ ...form, description: richTextToPlainText(form.description) });

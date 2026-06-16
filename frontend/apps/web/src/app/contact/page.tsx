@@ -1,173 +1,13 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  CheckCircle2,
-  ClipboardCheck,
-  ExternalLink,
-  FileText,
-  HeartHandshake,
-  Home,
-  Mail,
-  Megaphone,
-  Phone,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { FileText, Mail, Phone } from "lucide-react";
 import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { getContactPageConfig } from "@/lib/utility-page-data";
-import type {
-  PublicAction,
-  PublicCard,
-  PublicIconName,
-  PublicPageSection,
-} from "@/components/public/section-page";
-
-const iconMap: Partial<Record<PublicIconName, LucideIcon>> = {
-  check: CheckCircle2,
-  clipboard: ClipboardCheck,
-  file: FileText,
-  handshake: HeartHandshake,
-  home: Home,
-  megaphone: Megaphone,
-};
-
-function IconGlyph({
-  icon = "handshake",
-  className = "h-5 w-5",
-}: {
-  icon?: PublicIconName;
-  className?: string;
-}) {
-  const Icon = iconMap[icon] ?? HeartHandshake;
-  return <Icon aria-hidden className={className} />;
-}
-
-function ActionLink({
-  action,
-  primary = false,
-}: {
-  action: PublicAction;
-  primary?: boolean;
-}) {
-  const className = primary
-    ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-    : "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary";
-
-  if (action.external) {
-    return (
-      <a
-        href={action.href}
-        className={className}
-        target={action.href.startsWith("mailto:") ? undefined : "_blank"}
-        rel={
-          action.href.startsWith("mailto:") ? undefined : "noopener noreferrer"
-        }
-      >
-        {action.label}
-        <ExternalLink aria-hidden className="h-4 w-4" />
-      </a>
-    );
-  }
-
-  return (
-    <Link href={action.href} className={className}>
-      {action.label}
-      <ArrowRight aria-hidden className="h-4 w-4" />
-    </Link>
-  );
-}
-
-function ContactCard({
-  card,
-  dark = false,
-}: {
-  card: PublicCard;
-  dark?: boolean;
-}) {
-  const content = (
-    <>
-      <span
-        className={
-          dark
-            ? "inline-flex h-11 w-11 items-center justify-center rounded-md bg-white/10 text-secondary ring-1 ring-white/10"
-            : "inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary ring-1 ring-primary/15"
-        }
-      >
-        <IconGlyph icon={card.icon} />
-      </span>
-      <p
-        className={
-          dark
-            ? "mt-5 text-xs font-semibold uppercase text-secondary"
-            : "mt-5 text-xs font-semibold uppercase text-secondary"
-        }
-      >
-        {card.eyebrow ?? "Contact"}
-      </p>
-      <h3
-        className={
-          dark
-            ? "mt-3 text-lg font-semibold leading-7 text-white"
-            : "mt-3 text-lg font-semibold leading-7 text-slate-950"
-        }
-      >
-        {card.title}
-      </h3>
-      <p
-        className={
-          dark
-            ? "mt-3 text-sm leading-7 text-white/70"
-            : "mt-3 text-sm leading-7 text-slate-600"
-        }
-      >
-        {card.body}
-      </p>
-      {card.action ? (
-        <span
-          className={
-            dark
-              ? "mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-secondary"
-              : "mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-primary"
-          }
-        >
-          {card.action}
-          {card.external ? (
-            <ExternalLink aria-hidden className="h-4 w-4" />
-          ) : (
-            <ArrowRight aria-hidden className="h-4 w-4" />
-          )}
-        </span>
-      ) : null}
-    </>
-  );
-
-  const className = dark
-    ? "group flex min-h-[220px] flex-col rounded-lg border border-white/10 bg-white/[0.04] p-5 transition hover:bg-white/[0.08]"
-    : "group flex min-h-[220px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/25 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]";
-
-  if (!card.href) {
-    return <article className={className}>{content}</article>;
-  }
-
-  if (card.external) {
-    return (
-      <a
-        href={card.href}
-        className={className}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {content}
-      </a>
-    );
-  }
-
-  return (
-    <Link href={card.href} className={className}>
-      {content}
-    </Link>
-  );
-}
+import {
+  PublicActionLink,
+  PublicCardSurface,
+} from "@/components/public/public-primitives";
+import type { PublicPageSection } from "@/components/public/section-page";
 
 function ContactSection({ section }: { section: PublicPageSection }) {
   const dark = section.tone === "dark";
@@ -207,7 +47,7 @@ function ContactSection({ section }: { section: PublicPageSection }) {
         </div>
         <ScrollRevealGroup className={gridClass} staggerDelay={70}>
           {section.cards.map((card) => (
-            <ContactCard
+            <PublicCardSurface
               key={`${section.eyebrow}-${card.title}`}
               card={card}
               dark={dark}
@@ -244,10 +84,10 @@ export default async function ContactPage() {
                 </p>
                 <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                   {config.primaryAction ? (
-                    <ActionLink action={config.primaryAction} primary />
+                    <PublicActionLink action={config.primaryAction} primary />
                   ) : null}
                   {config.secondaryActions?.map((action) => (
-                    <ActionLink key={action.label} action={action} />
+                    <PublicActionLink key={action.label} action={action} />
                   ))}
                 </div>
               </div>
@@ -283,7 +123,7 @@ export default async function ContactPage() {
                 </div>
 
                 {primaryCards.map((card) => (
-                  <ContactCard key={`hero-${card.title}`} card={card} />
+                  <PublicCardSurface key={`hero-${card.title}`} card={card} />
                 ))}
               </div>
             </div>

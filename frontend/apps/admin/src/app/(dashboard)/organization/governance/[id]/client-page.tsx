@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -300,11 +300,13 @@ function toFormValues(board: Board): BoardFormValues {
 export default function BoardEditorPage() {
   const router = useRouter();
   const params = useParams();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { canEdit } = usePermissions();
   const routeId = params.id as string;
   const boardId = resolveRouteId(routeId, searchParams.get("id"));
   const isNew = boardId === "new";
+  const listHref = pathname.startsWith("/governance") ? "/governance/council" : "/organization/governance";
 
   const boardQuery = useBoard(isNew ? "" : boardId, {
     enabled: !isNew && Boolean(boardId),
@@ -448,7 +450,7 @@ export default function BoardEditorPage() {
         await updateBoard.mutateAsync({ id: board.id, data: patch });
         toast.success("Board updated");
       }
-      router.push("/organization/governance");
+      router.push(listHref);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : isNew ? "Failed to create board" : "Failed to update board");
     }
@@ -476,7 +478,7 @@ export default function BoardEditorPage() {
   if (!isNew && !boardId) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Board not found" backHref="/organization/governance" />
+        <PageHeader title="Board not found" backHref={listHref} />
         <Card><CardContent className="p-6 text-sm text-muted-foreground">Missing board id.</CardContent></Card>
       </div>
     );
@@ -489,7 +491,7 @@ export default function BoardEditorPage() {
       <PageHeader
         title={isNew ? "Create Board" : board?.name ?? "Edit Board"}
         description={isNew ? "Create a governance board or committee." : `${boardTypeLabels[board?.board_type ?? ""] ?? board?.board_type ?? "Board"} governance record`}
-        backHref="/organization/governance"
+        backHref={listHref}
         actions={
           !isNew && board && canManageGovernance ? (
             <Button type="button" variant="outline" onClick={() => setAssignmentEditor({ mode: "create", assignment: null })}>

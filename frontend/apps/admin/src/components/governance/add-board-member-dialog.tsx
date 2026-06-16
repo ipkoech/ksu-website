@@ -71,7 +71,7 @@ export function AddBoardMemberDialog({ boardSlug, open, onOpenChange, onSuccess 
             });
             toast.success("Member added successfully");
             onSuccess();
-        } catch (error) {
+        } catch {
             toast.error("Failed to add member");
         }
     };

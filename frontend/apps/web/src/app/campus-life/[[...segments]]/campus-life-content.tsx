@@ -4,7 +4,6 @@ import {
   BedDouble,
   CheckCircle2,
   Dumbbell,
-  ExternalLink,
   HeartHandshake,
   ImageIcon,
   Mail,
@@ -32,6 +31,7 @@ import {
   PublicListFilterForm,
   type ListFilterOption,
 } from "@/components/public/list-filter-form";
+import { PublicActionLink } from "@/components/public/public-primitives";
 
 type CampusArea =
   | "landing"
@@ -358,38 +358,15 @@ function ActionLink({
   children: React.ReactNode;
   primary?: boolean;
 }) {
-  const external = href.startsWith("http");
-  const host = external ? new URL(href).host : null;
-  const className = primary
-    ? "inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-    : "inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:border-primary hover:text-primary";
-
-  if (external) {
-    return (
-      <a
-        href={href}
-        className={className}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <span className="flex flex-col text-left leading-tight">
-          <span>{children}</span>
-          {host ? (
-            <span className="text-[11px] font-medium opacity-80">
-              Opens {host}
-            </span>
-          ) : null}
-        </span>
-        <ExternalLink aria-hidden className="h-4 w-4" />
-      </a>
-    );
-  }
-
   return (
-    <Link href={href} className={className}>
-      {children}
-      <ArrowRight aria-hidden className="h-4 w-4" />
-    </Link>
+    <PublicActionLink
+      action={{
+        label: typeof children === "string" ? children : "Open",
+        href,
+        external: href.startsWith("http"),
+      }}
+      primary={primary}
+    />
   );
 }
 

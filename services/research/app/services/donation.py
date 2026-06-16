@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +20,67 @@ class DonationService(CRUDService):
     model = Donation
     search_fields = ("donation_number", "purpose", "payment_reference", "status")
     default_order = ("created_at",)
+
+    @staticmethod
+    def _public_display_name(payload: dict) -> str | None:
+        if payload.get("is_anonymous"):
+            return "Anonymous Donor"
+        if payload.get("display_name"):
+            return payload["display_name"]
+        if payload.get("organization_name"):
+            return payload["organization_name"]
+        full_name = " ".join(
+            part for part in (payload.get("first_name"), payload.get("last_name")) if part
+        ).strip()
+        return full_name or None
+
+    @classmethod
+    async def create_public_submission(cls, db: AsyncSession, data):
+        payload = data.model_dump(exclude_unset=True) if hasattr(data, "model_dump") else dict(data)
+        donor = Donor(
+            donor_type=payload.get("donor_type", "individual"),
+            first_name=payload.get("first_name"),
+            last_name=payload.get("last_name"),
+            organization_name=payload.get("organization_name"),
+            organization_type=payload.get("organization_type"),
+            display_name=cls._public_display_name(payload),
+            is_anonymous=payload.get("is_anonymous", False),
+            email=payload.get("email"),
+            phone=payload.get("phone"),
+            city=payload.get("city"),
+            country=payload.get("country"),
+            interests=payload.get("interests"),
+            is_active=True,
+        )
+        db.add(donor)
+        await db.flush()
+
+        donation = Donation(
+            donor_id=donor.id,
+            amount=payload["amount"],
+            currency=payload.get("currency", "KES"),
+            donation_type=payload.get("donation_type", "one_time"),
+            designation=payload.get("designation", "unrestricted"),
+            purpose=payload.get("purpose"),
+            fund_id=payload.get("fund_id"),
+            project_id=payload.get("project_id"),
+            center_id=payload.get("center_id"),
+            scholarship_id=payload.get("scholarship_id"),
+            payment_method=payload.get("preferred_payment_method"),
+            donation_date=date.today(),
+            message=payload.get("message"),
+            dedication=payload.get("dedication"),
+            is_tribute=payload.get("is_tribute", False),
+            tribute_type=payload.get("tribute_type"),
+            tribute_name=payload.get("tribute_name"),
+            is_public=payload.get("recognition_public", False),
+            status="pending",
+        )
+        db.add(donation)
+        await db.flush()
+        await db.refresh(donor)
+        await db.refresh(donation)
+        return donation
 
     @classmethod
     async def _sync_donor_stats(cls, db: AsyncSession, donor_id):
@@ -61,4 +122,3 @@ class DonationService(CRUDService):
         donor_id = item.donor_id
         await super().soft_delete(db, item, actor_id=actor_id)
         await cls._sync_donor_stats(db, donor_id)
-

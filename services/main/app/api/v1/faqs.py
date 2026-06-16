@@ -35,7 +35,7 @@ async def list_faqs(
 
 
 @router.get("/{faq_id}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("faq_id", "fields", "include"))
 async def get_faq(faq_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(FAQ, fields)
     item = await FAQService.get_by_id(db, faq_id, load_options=selector.load_options)

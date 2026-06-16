@@ -56,7 +56,7 @@ async def get_announcement_by_id(announcement_id: uuid.UUID, db: DbSession, _: C
 
 
 @router.get("/{slug}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_announcement(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Announcement, fields)
     item = await AnnouncementService.get_by_slug(db, slug, public_only=True, load_options=selector.load_options)

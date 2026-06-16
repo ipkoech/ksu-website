@@ -1,4 +1,4 @@
-import api, { ApiResponse, ListParams } from "./client";
+import api, { ListParams } from "./client";
 
 // Types
 export interface News {

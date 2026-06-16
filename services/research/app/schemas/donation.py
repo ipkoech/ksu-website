@@ -100,6 +100,48 @@ class DonationCreate(DonationBase):
     status: str = Field(default="completed", max_length=32)
 
 
+class PublicDonationSubmission(BaseSchema):
+    donor_type: str = Field(default="individual", max_length=32)
+    first_name: str | None = Field(None, max_length=128)
+    last_name: str | None = Field(None, max_length=128)
+    organization_name: str | None = Field(None, max_length=255)
+    organization_type: str | None = Field(None, max_length=64)
+    display_name: str | None = Field(None, max_length=255)
+    is_anonymous: bool = False
+    email: EmailField | None = None
+    phone: PhoneStr | None = None
+    city: str | None = Field(None, max_length=128)
+    country: str | None = Field(None, max_length=128)
+    interests: list[str] | None = None
+    amount: Decimal = Field(gt=0)
+    currency: str = Field(default="KES", min_length=3, max_length=3)
+    donation_type: str = Field(default="one_time", max_length=32)
+    designation: str = Field(default="unrestricted", max_length=32)
+    purpose: str | None = Field(None, max_length=255)
+    fund_id: uuid.UUID | None = None
+    project_id: uuid.UUID | None = None
+    center_id: uuid.UUID | None = None
+    scholarship_id: uuid.UUID | None = None
+    preferred_payment_method: str | None = Field(None, max_length=32)
+    message: str | None = None
+    dedication: str | None = None
+    is_tribute: bool = False
+    tribute_type: str | None = Field(None, max_length=32)
+    tribute_name: str | None = Field(None, max_length=255)
+    recognition_public: bool = False
+
+
+class PublicDonationSubmissionRead(BaseSchema):
+    donation_id: uuid.UUID
+    donor_id: uuid.UUID
+    status: str
+    amount: Decimal
+    currency: str
+    donation_type: str
+    designation: str
+    payment_method: str | None
+
+
 class DonationUpdate(BaseSchema):
     amount: Decimal | None = None
     received_date: date | None = None
@@ -246,4 +288,3 @@ class DonationStoryList(BaseReadSchema):
     status: str
     is_active: bool
     is_featured: bool
-

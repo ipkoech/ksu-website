@@ -23,6 +23,7 @@ Usage:
 from __future__ import annotations
 
 import hashlib
+import secrets
 import time
 from functools import wraps
 from typing import Callable
@@ -88,7 +89,7 @@ class RateLimiter:
 
             pipe = redis.pipeline()
             pipe.zremrangebyscore(key, 0, window_start)
-            pipe.zadd(key, {str(now): now})
+            pipe.zadd(key, {f"{now}:{secrets.token_hex(4)}": now})
             pipe.zcard(key)
             pipe.expire(key, self.window)
             results = await pipe.execute()

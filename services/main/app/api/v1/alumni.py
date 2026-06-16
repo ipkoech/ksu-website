@@ -45,7 +45,7 @@ async def list_alumni(
 
 
 @router.get("/{item_id}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("item_id", "fields", "include"))
 async def get_alumnus(item_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Alumni, fields)
     item = await AlumniService.get_by_id(db, item_id, load_options=selector.load_options)

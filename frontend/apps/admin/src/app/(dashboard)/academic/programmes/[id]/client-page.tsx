@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
 import { MediaPicker } from "@/components/media";
-import { DepartmentPicker } from "@/components/relationships";
+import { DepartmentPicker, IntakePicker, PersonPicker } from "@/components/relationships";
 import { PageHeader } from "@/components/shared/page-header";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { hasChangedPayload, pickChangedPayloadWithRecord, type PayloadFieldMap } from "@/lib/changed-fields";
@@ -16,8 +16,10 @@ import {
   Button,
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
+  ConfirmDialog,
   Form,
   FormControl,
   FormField,
@@ -30,7 +32,14 @@ import {
   Switch,
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
-import { useCreateProgramme, useProgramme, useUpdateProgramme, type Programme } from "@ksu/api-client";
+import {
+  useAddProgrammeIntake,
+  useAddProgrammeTutor,
+  useCreateProgramme,
+  useProgramme,
+  useUpdateProgramme,
+  type Programme,
+} from "@ksu/api-client";
 
 const programmeSchema = z
   .object({
@@ -186,16 +195,32 @@ function programmeValues(programme: Programme): ProgrammeFormValues {
 export default function ProgrammeFormPage() {
   const params = useParams();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const routeId = params.id as string;
   const id = routeId === "_static" ? searchParams.get("id") || "" : routeId;
   const isNew = routeId === "new";
+  const listHref = pathname.startsWith("/schools")
+    ? "/schools/programmes"
+    : pathname.startsWith("/departments")
+      ? "/departments/programmes"
+      : "/academic/programmes";
   const programmeQuery = useProgramme(!isNew && id ? id : "", { enabled: !isNew && Boolean(id) });
   const programme = programmeQuery.data?.data ?? null;
   const createProgramme = useCreateProgramme();
   const updateProgramme = useUpdateProgramme();
+  const addTutor = useAddProgrammeTutor();
+  const addIntake = useAddProgrammeIntake();
   const isPending = createProgramme.isPending || updateProgramme.isPending;
   const [hasHydratedRecord, setHasHydratedRecord] = useState(isNew);
+  const [tutorForm, setTutorForm] = useState({ person_id: "", role: "programme_tutor", is_lead: false });
+  const [intakeForm, setIntakeForm] = useState({
+    intake_id: "",
+    slots_available: "",
+    application_deadline: "",
+    is_active: true,
+  });
+  const [confirmAction, setConfirmAction] = useState<"tutor" | "intake" | null>(null);
 
   const form = useForm<ProgrammeFormValues>({
     resolver: zodResolver(programmeSchema),
@@ -254,17 +279,55 @@ export default function ProgrammeFormPage() {
         form.reset(programmeValues(response.data));
         toast.success("Programme updated successfully");
       }
-      router.push("/academic/programmes");
+      router.push(listHref);
     } catch {
       toast.error(isNew ? "Failed to create programme" : "Failed to update programme");
     }
+  };
+
+  const attachTutor = async () => {
+    if (!programme || !tutorForm.person_id) {
+      toast.error("Select a tutor before attaching");
+      return;
+    }
+    await addTutor.mutateAsync({
+      id: programme.id,
+      data: {
+        person_id: tutorForm.person_id,
+        role: tutorForm.role || "programme_tutor",
+        is_lead: tutorForm.is_lead,
+      },
+    });
+    toast.success("Programme tutor attached");
+    setTutorForm({ person_id: "", role: "programme_tutor", is_lead: false });
+    setConfirmAction(null);
+  };
+
+  const attachIntake = async () => {
+    if (!programme || !intakeForm.intake_id) {
+      toast.error("Select an intake before attaching");
+      return;
+    }
+    const slots = intakeForm.slots_available.trim();
+    await addIntake.mutateAsync({
+      id: programme.id,
+      data: {
+        intake_id: intakeForm.intake_id,
+        slots_available: slots ? Number(slots) : undefined,
+        application_deadline: intakeForm.application_deadline || undefined,
+        is_active: intakeForm.is_active,
+      },
+    });
+    toast.success("Programme intake attached");
+    setIntakeForm({ intake_id: "", slots_available: "", application_deadline: "", is_active: true });
+    setConfirmAction(null);
   };
 
   if (programmeQuery.isLoading || !hasHydratedRecord) return <LoadingSkeleton rows={15} />;
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-      <PageHeader title={isNew ? "Create Programme" : "Edit Programme"} description={isNew ? "Add a new programme" : `Editing: ${programme?.name}`} backHref="/academic/programmes" />
+      <PageHeader title={isNew ? "Create Programme" : "Edit Programme"} description={isNew ? "Add a new programme" : `Editing: ${programme?.name}`} backHref={listHref} />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-3">
@@ -400,6 +463,91 @@ export default function ProgrammeFormPage() {
                 </CardContent>
               </Card>
 
+              {!isNew && programme ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Teaching Team</CardTitle>
+                    <CardDescription>Attach tutors through the programme tutor endpoint.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <PersonPicker
+                      value={tutorForm.person_id}
+                      onChange={(value) => setTutorForm((current) => ({ ...current, person_id: value }))}
+                      filters={{ status: "active" }}
+                      label="Tutor"
+                      placeholder="Select tutor"
+                    />
+                    <Input
+                      value={tutorForm.role}
+                      onChange={(event) => setTutorForm((current) => ({ ...current, role: event.target.value }))}
+                      placeholder="programme_tutor"
+                    />
+                    <div className="flex items-center justify-between rounded-lg border p-3">
+                      <FormLabel className="cursor-pointer">Lead tutor</FormLabel>
+                      <Switch
+                        checked={tutorForm.is_lead}
+                        onCheckedChange={(value) => setTutorForm((current) => ({ ...current, is_lead: value }))}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      disabled={addTutor.isPending || !tutorForm.person_id}
+                      onClick={() => setConfirmAction("tutor")}
+                    >
+                      Attach Tutor
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : null}
+
+              {!isNew && programme ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Admissions Intake</CardTitle>
+                    <CardDescription>Attach intakes through the programme intake endpoint.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <IntakePicker
+                      value={intakeForm.intake_id}
+                      onChange={(value) => setIntakeForm((current) => ({ ...current, intake_id: value }))}
+                      filters={{ is_open: true }}
+                      label="Intake"
+                      placeholder="Select intake"
+                    />
+                    <Input
+                      type="number"
+                      min={0}
+                      value={intakeForm.slots_available}
+                      onChange={(event) => setIntakeForm((current) => ({ ...current, slots_available: event.target.value }))}
+                      placeholder="Slots available"
+                    />
+                    <Input
+                      type="date"
+                      value={intakeForm.application_deadline}
+                      onChange={(event) => setIntakeForm((current) => ({ ...current, application_deadline: event.target.value }))}
+                    />
+                    <div className="flex items-center justify-between rounded-lg border p-3">
+                      <FormLabel className="cursor-pointer">Active intake</FormLabel>
+                      <Switch
+                        checked={intakeForm.is_active}
+                        onCheckedChange={(value) => setIntakeForm((current) => ({ ...current, is_active: value }))}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      disabled={addIntake.isPending || !intakeForm.intake_id}
+                      onClick={() => setConfirmAction("intake")}
+                    >
+                      Attach Intake
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : null}
+
               <Card>
                 <CardHeader><CardTitle>Status</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
@@ -419,10 +567,28 @@ export default function ProgrammeFormPage() {
 
           <div className="flex items-center gap-4">
             <Button type="submit" disabled={isPending}>{isPending ? "Saving..." : isNew ? "Create Programme" : "Save Changes"}</Button>
-            <Button type="button" variant="outline" onClick={() => router.push("/academic/programmes")}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => router.push(listHref)}>Cancel</Button>
           </div>
         </form>
       </Form>
+      <ConfirmDialog
+        open={confirmAction === "tutor"}
+        onOpenChange={(open) => !open && setConfirmAction(null)}
+        title="Attach tutor?"
+        description="This will attach the selected person to this programme through the programme tutor endpoint."
+        confirmLabel="Attach tutor"
+        onConfirm={attachTutor}
+        isLoading={addTutor.isPending}
+      />
+      <ConfirmDialog
+        open={confirmAction === "intake"}
+        onOpenChange={(open) => !open && setConfirmAction(null)}
+        title="Attach intake?"
+        description="This will make the selected intake available for this programme."
+        confirmLabel="Attach intake"
+        onConfirm={attachIntake}
+        isLoading={addIntake.isPending}
+      />
     </motion.div>
   );
 }

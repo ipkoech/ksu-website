@@ -49,7 +49,7 @@ async def list_boards(
 
 
 @router.get("/boards/{slug}")
-@cached_public(timeout=3600)
+@cached_public(timeout=3600, vary_on=("slug", "fields", "include"))
 async def get_board(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Board, fields)
     board = await GovernanceService.get_board_by_slug(db, slug, load_options=selector.load_options)
@@ -68,7 +68,7 @@ async def get_board_by_id(board_id: uuid.UUID, db: DbSession, _: CurrentUser, fi
 
 
 @router.get("/boards/{slug}/members")
-@cached_public(timeout=3600)
+@cached_public(timeout=3600, vary_on=("slug", "fields", "include"))
 async def get_board_members(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     board = await GovernanceService.get_board_by_slug(db, slug)
     if board is None:
@@ -89,7 +89,7 @@ async def get_board_members_by_id(board_id: uuid.UUID, db: DbSession, _: Current
 
 
 @router.get("/council")
-@cached_public(timeout=3600)
+@cached_public(timeout=3600, vary_on=("fields", "include"))
 async def get_council(db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Board, fields)
     board = await GovernanceService.get_board_by_slug(db, "university-council", load_options=selector.load_options)
@@ -99,7 +99,7 @@ async def get_council(db: DbSession, fields: FieldSelection = FieldsDep):
 
 
 @router.get("/management-board")
-@cached_public(timeout=3600)
+@cached_public(timeout=3600, vary_on=("fields", "include"))
 async def get_management_board(db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Board, fields)
     board = await GovernanceService.get_board_by_slug(db, "management-board", load_options=selector.load_options)
@@ -109,7 +109,7 @@ async def get_management_board(db: DbSession, fields: FieldSelection = FieldsDep
 
 
 @router.get("/senate")
-@cached_public(timeout=3600)
+@cached_public(timeout=3600, vary_on=("fields", "include"))
 async def get_senate(db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Board, fields)
     board = await GovernanceService.get_board_by_slug(db, "senate", load_options=selector.load_options)

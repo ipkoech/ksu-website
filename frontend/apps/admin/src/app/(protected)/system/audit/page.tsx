@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Button } from "@ksu/ui/components";
-import { Card, CardContent, DataTable, PageHeader, Badge } from "@ksu/ui/components";
+import { DataTable, PageHeader, Badge } from "@ksu/ui/components";
 import { SlidersHorizontal, X, ChevronRight, Clock, User, Globe, Terminal, AlertCircle } from "lucide-react";
 import { useAuditLogs } from "@ksu/api-client/hooks/admin";
 import type { AuditLog } from "@ksu/api-client/types/admin";

@@ -45,7 +45,7 @@ async def list_policies(
 
 
 @router.get("/{slug}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_policy(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Policy, fields)
     item = await PolicyService.get_by_slug(db, slug, load_options=selector.load_options)

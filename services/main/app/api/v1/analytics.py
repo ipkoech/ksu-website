@@ -2,18 +2,26 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Request, status
 
+from ksu_common import rate_limit
 from ksu_common.schemas.responses import success
 
+from ...core.config import get_settings
 from ...deps import DbSession
 from ...schemas import AnalyticsEventBatchCreate
 from ...services import AnalyticsService
 
 router = APIRouter()
+settings = get_settings()
 
 
 @router.post("/events", status_code=status.HTTP_202_ACCEPTED)
-async def ingest_events(payload: AnalyticsEventBatchCreate, db: DbSession):
+@rate_limit(
+    requests=settings.ANALYTICS_RATE_LIMIT_COUNT,
+    window=settings.ANALYTICS_RATE_LIMIT_WINDOW_SECONDS,
+    prefix="main:analytics",
+)
+async def ingest_events(request: Request, payload: AnalyticsEventBatchCreate, db: DbSession):
     events = await AnalyticsService.ingest(db, payload.events)
     return success(data={"accepted": len(events)}, message="Analytics events accepted")

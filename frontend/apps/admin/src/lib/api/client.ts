@@ -17,8 +17,6 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
     (response) => response.data,
     async (error: AxiosError<{ error?: { message?: string } }>) => {
-        const message = error.response?.data?.error?.message || error.message;
-
         if (error.response?.status === 401) {
             window.location.href = "/login";
             return Promise.reject(error);

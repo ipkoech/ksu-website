@@ -47,7 +47,7 @@ async def list_programmes(
 
 
 @router.get("/{slug}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_programme(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Programme, fields)
     programme = await ProgrammeService.get_by_slug(db, slug, load_options=selector.load_options)
@@ -66,7 +66,7 @@ async def get_programme_by_id(programme_id: uuid.UUID, db: DbSession, _: Current
 
 
 @router.get("/{slug}/staff")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_programme_staff(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     programme = await ProgrammeService.get_by_slug(db, slug)
     if programme is None:

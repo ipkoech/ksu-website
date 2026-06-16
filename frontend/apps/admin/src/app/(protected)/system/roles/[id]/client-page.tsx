@@ -25,6 +25,7 @@ export default function RoleDetailPage() {
   const [form, setForm] = React.useState({ name: "", display_name: "", description: "" });
   const canManageRole = canManageRoles(currentUser, hasScope);
   const canDeleteRole = canDeleteRoles(currentUser, hasScope);
+  const permissionItems = React.useMemo(() => permissions.data ?? [], [permissions.data]);
 
   React.useEffect(() => {
     if (!role.data) return;
@@ -43,12 +44,12 @@ export default function RoleDetailPage() {
   }, [role.data]);
 
   const groupedPermissions = React.useMemo(() => {
-    return (permissions.data ?? []).reduce<Record<string, typeof permissions.data>>((acc, permission) => {
+    return permissionItems.reduce<Record<string, typeof permissionItems>>((acc, permission) => {
       const resourceKey = permission.resource ?? "uncategorized";
       acc[resourceKey] = [...(acc[resourceKey] ?? []), permission];
       return acc;
     }, {});
-  }, [permissions.data]);
+  }, [permissionItems]);
 
   if (!role.data && role.isLoading) {
     return <div className="p-6 text-sm text-muted-foreground">Loading role...</div>;

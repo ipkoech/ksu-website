@@ -226,7 +226,7 @@ export default function DivisionEditorPage() {
     fields: "id,name,slug,code,wing_id,department_type,display_order",
     per_page: 200,
   });
-  const divisionWings = wingsQuery.data?.data ?? [];
+  const divisionWings = useMemo(() => wingsQuery.data?.data ?? [], [wingsQuery.data]);
   const wingIds = useMemo(() => new Set(divisionWings.map((wing) => wing.id)), [divisionWings]);
   const departmentsByWing = useMemo(() => {
     const grouped = new Map<string, Array<{ id: string; name: string; slug: string; code?: string | null }>>();

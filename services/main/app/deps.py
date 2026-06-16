@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import uuid
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import Cookie, Depends, HTTPException, Header, status
@@ -13,11 +14,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ksu_common import TokenPayload, get_current_user as get_current_token
+from ksu_common.cache import get_redis
 
+from .core.config import get_settings
 from .core.database import get_session
 from .models import ApiKey, Role, RolePermission, User, UserRole
 
 security = HTTPBearer(auto_error=False)
+settings = get_settings()
 
 
 async def get_db():
@@ -78,6 +82,19 @@ async def get_api_key_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or inactive API key",
         )
+    if api_key.expires_at is not None:
+        expires_at = api_key.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if expires_at <= datetime.now(timezone.utc):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="API key has expired",
+            )
+
+    await _enforce_api_key_rate_limit(api_key)
+    api_key.last_used_at = datetime.now(timezone.utc)
+    await db.flush()
 
     user = None
     if api_key.created_by_id:
@@ -87,6 +104,29 @@ async def get_api_key_user(
         user = user_result.scalar_one_or_none()
 
     return ApiKeyUser(api_key, user)
+
+
+async def _enforce_api_key_rate_limit(api_key: ApiKey) -> None:
+    """Enforce per-key request limits over the configured API-key window."""
+    try:
+        redis = await get_redis()
+        window = settings.API_KEY_RATE_LIMIT_WINDOW_SECONDS
+        key = f"main:api-key:{api_key.id}:window"
+        current = await redis.incr(key)
+        if current == 1:
+            await redis.expire(key, window)
+        if current > api_key.rate_limit:
+            ttl = await redis.ttl(key)
+            retry_after = ttl if ttl and ttl > 0 else window
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="API key rate limit exceeded",
+                headers={"Retry-After": str(retry_after)},
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        return None
 
 
 def require_api_key_scope(scope: str):

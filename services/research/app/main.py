@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from ksu_common import configure_service_logging, persist_audit_log, should_skip_audit
+from ksu_common import configure_service_logging, invalidate_prefix, persist_audit_log, should_skip_audit
 
 from .core.config import get_settings
 from .core.database import AsyncSessionLocal
@@ -24,6 +24,12 @@ configure_service_logging(
     log_format=settings.LOG_FORMAT,
 )
 SEED_ASSETS_DIR = Path(__file__).resolve().parent / "seeders" / "assets"
+PUBLIC_CACHE_INVALIDATION_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+PUBLIC_CACHE_INVALIDATION_EXCLUDED_PREFIXES = (
+    "/api/v1/audit",
+    "/api/v1/health",
+    "/api/v1/donations/submit",
+)
 
 
 @asynccontextmanager
@@ -37,6 +43,7 @@ def create_app() -> FastAPI:
         version=settings.APP_VERSION,
         docs_url="/api/docs" if settings.APP_ENV != "production" else None,
         redoc_url="/api/redoc" if settings.APP_ENV != "production" else None,
+        openapi_url="/api/openapi.json" if settings.APP_ENV != "production" else None,
         lifespan=lifespan,
     )
 
@@ -85,13 +92,27 @@ def create_app() -> FastAPI:
             request=request,
             status_code=response.status_code,
         )
+        if _should_invalidate_public_cache(request, response.status_code):
+            await invalidate_prefix("public")
         return response
 
     register_routers(app)
-    if SEED_ASSETS_DIR.exists():
+    if settings.APP_ENV != "production" and SEED_ASSETS_DIR.exists():
         app.mount(
             "/seed-assets",
             StaticFiles(directory=SEED_ASSETS_DIR),
             name="seed-assets",
         )
     return app
+
+
+def _should_invalidate_public_cache(request: Request, status_code: int) -> bool:
+    if request.method not in PUBLIC_CACHE_INVALIDATION_METHODS:
+        return False
+    if status_code >= 400:
+        return False
+
+    path = request.url.path
+    if not path.startswith("/api/v1/"):
+        return False
+    return not path.startswith(PUBLIC_CACHE_INVALIDATION_EXCLUDED_PREFIXES)

@@ -83,6 +83,9 @@ ROLE_HIERARCHY = {
     "dean": HierarchyLevel.DIRECTOR,
     "director": HierarchyLevel.DIRECTOR,
     "librarian": HierarchyLevel.DIRECTOR,
+    "university_librarian": HierarchyLevel.DIRECTOR,
+    "chief_librarian": HierarchyLevel.DIRECTOR,
+    "head_librarian": HierarchyLevel.DIRECTOR,
     "chief_officer": HierarchyLevel.DIRECTOR,
 
     # Level 6 - Managers
@@ -103,6 +106,9 @@ ROLE_HIERARCHY = {
     "coordinator": HierarchyLevel.COORDINATOR,
     "program_coordinator": HierarchyLevel.COORDINATOR,
     "project_coordinator": HierarchyLevel.COORDINATOR,
+    "branch_librarian": HierarchyLevel.COORDINATOR,
+    "principal_investigator": HierarchyLevel.COORDINATOR,
+    "project_lead": HierarchyLevel.COORDINATOR,
 
     # Level 9 - Senior Staff
     "senior_lecturer": HierarchyLevel.SENIOR_STAFF,
@@ -152,10 +158,15 @@ ENTITY_ROLES = {
         "admin", "technician", "officer", "assistant", "staff",
     ],
     "committee": ["chairperson", "vice_chairperson", "secretary", "member", "ex_officio", "convenor"],
-    "library": ["librarian", "deputy_librarian", "senior_officer", "officer", "admin", "assistant", "staff"],
+    "library": [
+        "university_librarian", "chief_librarian", "librarian", "deputy_librarian",
+        "head_librarian", "senior_librarian", "branch_librarian", "senior_officer",
+        "manager", "coordinator", "officer", "admin", "assistant", "staff",
+    ],
     "research": [
         "director", "deputy_director", "manager", "coordinator", "project_coordinator",
-        "researcher", "senior_researcher", "admin", "officer", "staff",
+        "principal_investigator", "project_lead", "chairperson", "researcher",
+        "senior_researcher", "admin", "officer", "staff",
     ],
     "directorate": ["director", "deputy_director", "manager", "coordinator", "officer", "admin", "staff"],
 }

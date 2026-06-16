@@ -41,7 +41,7 @@ async def list_alumni_associations(
 
 
 @router.get("/{slug}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_alumni_association(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(AlumniAssociation, fields)
     item = await AlumniAssociationService.get_by_slug(db, slug, load_options=selector.load_options)
@@ -51,7 +51,7 @@ async def get_alumni_association(slug: str, db: DbSession, fields: FieldSelectio
 
 
 @router.get("/{slug}/members")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_alumni_association_members(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     item = await AlumniAssociationService.get_by_slug(db, slug)
     if item is None:

@@ -119,6 +119,8 @@ export function PublicActionLink({
   action: PublicAction;
   primary?: boolean;
 }) {
+  const isDirectProtocol =
+    action.href.startsWith("mailto:") || action.href.startsWith("tel:");
   const className = primary
     ? "inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
     : "inline-flex items-center justify-center gap-2 rounded-full border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5";
@@ -128,11 +130,15 @@ export function PublicActionLink({
       <a
         href={action.href}
         className={className}
-        target="_blank"
-        rel="noopener noreferrer"
+        target={isDirectProtocol ? undefined : "_blank"}
+        rel={isDirectProtocol ? undefined : "noopener noreferrer"}
       >
         {action.label}
-        <ExternalLink aria-hidden className="h-4 w-4" />
+        {isDirectProtocol ? (
+          <ArrowRight aria-hidden className="h-4 w-4" />
+        ) : (
+          <ExternalLink aria-hidden className="h-4 w-4" />
+        )}
       </a>
     );
   }

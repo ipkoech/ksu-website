@@ -4,16 +4,19 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
+from sqlalchemy import select
 
 from ksu_common import configure_service_logging, invalidate_prefix, persist_audit_log, should_skip_audit
 
 from .core.config import get_settings
 from .core.database import AsyncSessionLocal
 from .api.v1 import register_routes
+from .helpers.storage import normalize_storage_path
+from .models import Media
 
 settings = get_settings()
 
@@ -45,7 +48,7 @@ def create_app() -> FastAPI:
         debug=settings.DEBUG,
         docs_url="/api/docs" if settings.DEBUG or settings.APP_ENV != "production" else None,
         redoc_url="/api/redoc" if settings.DEBUG or settings.APP_ENV != "production" else None,
-        openapi_url="/api/openapi.json",
+        openapi_url="/api/openapi.json" if settings.DEBUG or settings.APP_ENV != "production" else None,
         lifespan=lifespan,
     )
 
@@ -98,7 +101,33 @@ def create_app() -> FastAPI:
             await invalidate_prefix("public")
         return response
 
-    app.mount("/uploads", StaticFiles(directory=settings.upload_dir_path), name="uploads")
+    @app.get("/uploads/{storage_path:path}", include_in_schema=False)
+    async def serve_public_upload(storage_path: str):
+        normalized_path = normalize_storage_path(storage_path)
+        if not normalized_path:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Media not found")
+
+        upload_root = settings.upload_dir_path.resolve()
+        file_path = (upload_root / normalized_path).resolve()
+        try:
+            file_path.relative_to(upload_root)
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Media not found") from exc
+
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(
+                select(Media).where(
+                    Media.storage_path == normalized_path,
+                    Media.deleted_at.is_(None),
+                    Media.is_public.is_(True),
+                )
+            )
+            media = result.scalar_one_or_none()
+
+        if media is None or not file_path.is_file():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Media not found")
+
+        return FileResponse(file_path, media_type=media.mime_type)
 
     register_routes(app)
     return app

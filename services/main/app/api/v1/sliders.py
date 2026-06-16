@@ -33,7 +33,7 @@ async def list_slider_groups(
 
 
 @router.get("/groups/{slug}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_slider_group(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(SliderGroup, fields)
     item = await SliderGroupService.get_by_slug(db, slug, load_options=selector.load_options)

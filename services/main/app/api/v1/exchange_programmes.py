@@ -45,7 +45,7 @@ async def list_exchange_programmes(
 
 
 @router.get("/{slug}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_exchange_programme(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(ExchangeProgramme, fields)
     item = await ExchangeProgrammeService.get_by_slug(db, slug, load_options=selector.load_options)

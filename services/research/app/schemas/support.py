@@ -6,7 +6,23 @@ import uuid
 from datetime import date
 from typing import Any
 
-from pydantic import Field
+from pydantic import Field, field_validator
+
+try:
+    from ksu_common.leadership import LEADERSHIP_STAFF_TYPES, RESEARCH_LEADERSHIP_ROLES
+except ModuleNotFoundError:  # Local venvs may have an older installed common package.
+    LEADERSHIP_STAFF_TYPES = frozenset({"leadership", "staff", "committee", "liaison"})
+    RESEARCH_LEADERSHIP_ROLES = frozenset(
+        {
+            "director",
+            "deputy_director",
+            "manager",
+            "coordinator",
+            "principal_investigator",
+            "project_lead",
+            "chairperson",
+        }
+    )
 
 from .base import BaseReadSchema, BaseSchema, EmailField, PhoneStr, SEOFieldsMixin, SlugMixin, SlugStr, StatusMixin, UrlStr
 
@@ -87,6 +103,28 @@ class ResearchOfficeStaffBase(BaseSchema):
     start_date: date | None = None
     end_date: date | None = None
     photo_url: UrlStr | None = None
+
+    @field_validator("staff_type")
+    @classmethod
+    def validate_staff_type(cls, value: str) -> str:
+        if value not in LEADERSHIP_STAFF_TYPES:
+            raise ValueError(f"staff_type must be one of {sorted(LEADERSHIP_STAFF_TYPES)}")
+        return value
+
+    @field_validator("role")
+    @classmethod
+    def validate_role(cls, value: str) -> str:
+        allowed = {
+            *RESEARCH_LEADERSHIP_ROLES,
+            "researcher",
+            "senior_researcher",
+            "admin",
+            "officer",
+            "staff",
+        }
+        if value not in allowed:
+            raise ValueError(f"role must be one of {sorted(allowed)}")
+        return value
 
 
 class ResearchOfficeStaffCreate(ResearchOfficeStaffBase):

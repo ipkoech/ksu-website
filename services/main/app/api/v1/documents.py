@@ -47,7 +47,7 @@ async def list_documents(
 
 
 @router.get("/{slug}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_document(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Document, fields)
     item = await DocumentService.get_by_slug(db, slug, load_options=selector.load_options)

@@ -19,7 +19,6 @@ import {
   TableRow,
 } from "@ksu/ui/table"; // Assuming this path
 import { DataTablePagination } from "./pagination"; // Local component
-import { cn } from "@ksu/ui/lib/utils";
 import React from "react";
 
 interface DataTableProps<T> {

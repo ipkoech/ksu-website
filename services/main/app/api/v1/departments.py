@@ -46,7 +46,7 @@ async def list_departments(
 
 
 @router.get("/{slug}")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_department(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Department, fields)
     department = await DepartmentService.get_by_slug(db, slug, load_options=selector.load_options)
@@ -65,7 +65,7 @@ async def get_department_by_id(department_id: uuid.UUID, db: DbSession, _: Curre
 
 
 @router.get("/{slug}/staff")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_department_staff(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     department = await DepartmentService.get_by_slug(db, slug)
     if department is None:
@@ -76,7 +76,7 @@ async def get_department_staff(slug: str, db: DbSession, fields: FieldSelection 
 
 
 @router.get("/{slug}/services")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_department_services(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     department = await DepartmentService.get_by_slug(db, slug)
     if department is None:
@@ -87,7 +87,7 @@ async def get_department_services(slug: str, db: DbSession, fields: FieldSelecti
 
 
 @router.get("/{slug}/programmes")
-@cached_public(timeout=300)
+@cached_public(timeout=300, vary_on=("slug", "page", "per_page", "fields", "include"))
 async def get_department_programmes(
     slug: str,
     db: DbSession,

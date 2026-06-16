@@ -53,12 +53,15 @@ class AuthService:
     @staticmethod
     async def login(db: AsyncSession, email: str, password: str) -> tuple[User, str, str]:
         user = await UserService.get_by_email(db, email)
-        if user is None or not verify_password(password, user.password_hash):
+        if user is None:
             raise PermissionError("Invalid credentials")
         if not user.is_active:
             raise PermissionError("User account is inactive")
         if user.is_locked:
             raise PermissionError("User account is locked")
+        if not verify_password(password, user.password_hash):
+            await AuthService._record_failed_login(db, user)
+            raise PermissionError("Invalid credentials")
 
         roles = _active_roles(user)
         permissions = _active_permissions(user)
@@ -77,9 +80,19 @@ class AuthService:
         )
         user.last_login_at = datetime.now(timezone.utc)
         user.failed_login_attempts = 0
+        user.locked_until = None
         db.add(session)
         await db.flush()
         return user, access_token, refresh_token
+
+    @staticmethod
+    async def _record_failed_login(db: AsyncSession, user: User) -> None:
+        user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
+        if user.failed_login_attempts >= settings.AUTH_LOGIN_MAX_ATTEMPTS:
+            user.locked_until = datetime.now(timezone.utc) + timedelta(
+                minutes=settings.AUTH_LOGIN_LOCKOUT_MINUTES
+            )
+        await db.flush()
 
     @staticmethod
     async def refresh_token(db: AsyncSession, refresh_token: str) -> tuple[str, str]:

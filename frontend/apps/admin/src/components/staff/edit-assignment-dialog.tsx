@@ -52,7 +52,7 @@ export function EditAssignmentDialog({ assignment, open, onOpenChange, onSuccess
             toast.success("Assignment updated successfully");
             setConfirmOpen(false);
             onSuccess();
-        } catch (error) {
+        } catch {
             toast.error("Failed to update assignment");
         }
     };
