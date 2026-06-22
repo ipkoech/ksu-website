@@ -10,7 +10,9 @@ from ksu_common.schemas.responses import success
 from ._person_media import with_person_photo_urls
 from ...deps import CurrentUser, DbSession, require_scope
 from ...models import Person
+from ...schemas.access import PortalAccessResponse
 from ...schemas import MyProfileUpdate, PersonRead
+from ...services.portal_access import get_portal_access
 from ...services import PersonService
 
 router = APIRouter()
@@ -49,3 +51,11 @@ async def update_my_profile(data: MyProfileUpdate, db: DbSession, user: CurrentU
     person = await _current_profile(db, user)
     await PersonService.update(db, person, **data.model_dump(exclude_unset=True))
     return success(data=_profile_data(person), message="Profile updated")
+
+
+@router.get("/portal-access")
+async def get_my_portal_access(db: DbSession, user: CurrentUser):
+    """Return backend-authoritative portal access records for the authenticated user."""
+    portals = await get_portal_access(db, user)
+    payload = PortalAccessResponse(portals=portals)
+    return success(data=payload.model_dump(mode="json"))

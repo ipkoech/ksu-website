@@ -11,6 +11,10 @@ export const queryKeys = {
     detail: ["me", "profile"] as const,
   },
 
+  portalAccess: {
+    detail: ["me", "portal-access"] as const,
+  },
+
   // Users
   users: {
     all: ["users"] as const,

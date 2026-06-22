@@ -18,7 +18,7 @@ from ksu_common.cache import get_redis
 
 from .core.config import get_settings
 from .core.database import get_session
-from .models import ApiKey, Role, RolePermission, User, UserRole
+from .models import ApiKey, Person, Role, RolePermission, User, UserRole
 
 security = HTTPBearer(auto_error=False)
 settings = get_settings()
@@ -160,7 +160,7 @@ async def get_current_active_user(
     result = await db.execute(
         select(User)
         .options(
-            selectinload(User.person),
+            selectinload(User.person).selectinload(Person.assignments),
             selectinload(User.role_assignments)
             .selectinload(UserRole.role)
             .selectinload(Role.role_permissions)

@@ -21,8 +21,9 @@ import {
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
 import { useAuth } from "@ksu/auth";
+import { portalAccessApi } from "@ksu/api-client";
 import { CheckCircle2 } from "lucide-react";
-import { resolvePostLoginDestination } from "@/lib/auth-routing";
+import { resolvePortalAccessDestination, resolvePostLoginDestination } from "@/lib/auth-routing";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -86,10 +87,24 @@ export function LoginForm() {
         description: `Welcome back, ${user.name}!`,
       });
 
-      const destination = resolvePostLoginDestination(
+      let destination = resolvePostLoginDestination(
         user,
         redirect && redirectChecked ? redirect : null,
       );
+
+      try {
+        const access = await portalAccessApi.get();
+        destination = resolvePortalAccessDestination(
+          access.data.portals,
+          user,
+          redirect && redirectChecked ? redirect : null,
+        );
+      } catch {
+        destination = resolvePostLoginDestination(
+          user,
+          redirect && redirectChecked ? redirect : null,
+        );
+      }
 
       if (destination.service) {
         switchService(destination.service);

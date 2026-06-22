@@ -160,6 +160,23 @@ export type PersonUpdatePayload = Partial<PersonCreatePayload>;
 
 export type MyProfile = Person;
 
+export interface PortalAccess {
+  key: string;
+  label: string;
+  service: "main" | "research" | "library" | "system";
+  href: string;
+  scope_type: string;
+  scope_id?: string | null;
+  scope_label: string;
+  permissions: string[];
+  source: "role" | "assignment" | "mixed" | string;
+  locked_scope: boolean;
+}
+
+export interface PortalAccessResponse {
+  portals: PortalAccess[];
+}
+
 export type MyProfileUpdatePayload = Partial<
   Pick<
     PersonCreatePayload,

@@ -8,6 +8,10 @@ export const SERVICE_ROLES: Record<Service, readonly string[]> = {
     "content-admin",
     "content-manager",
     "content-staff",
+    "institution-admin",
+    "office-admin",
+    "office-editor",
+    "office-staff-manager",
     "school-admin",
     "dept-admin",
     "dept-staff",
@@ -45,6 +49,10 @@ export const ROLE_HIERARCHY: Record<Service, readonly string[]> = {
     "academic-admin",
     "content-admin",
     "staff-admin",
+    "institution-admin",
+    "office-admin",
+    "office-editor",
+    "office-staff-manager",
     "school-admin",
     "content-manager",
     "dept-admin",
@@ -157,6 +165,10 @@ export const ALL_SCOPES = [
   "support.manage_faqs", "support.manage_contacts", "support.view",
   // Staff
   "staff.manage_assignments", "staff.view_assignments", "profile.self_edit",
+  // Institutional administration / office self-service
+  "administration.view", "administration.manage_units", "administration.manage_content",
+  "administration.manage_staff", "administration.manage_services",
+  "office.view", "office.manage_content", "office.manage_staff", "office.manage_services",
   // Persons
   "persons.manage", "persons.view",
   // Alumni

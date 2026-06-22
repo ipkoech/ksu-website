@@ -8,6 +8,7 @@ import type {
 } from "@/components/dashboard/editable-service-resource-page";
 
 export type PortalKey =
+  | "institutional-administration"
   | "governance"
   | "schools"
   | "departments"

@@ -225,6 +225,24 @@ function mapPermissionToScopes(permission: string): string[] {
       if (action === "write") return ["staff.manage_assignments"];
       if (action === "delete") return ["staff.delete"];
       return [wildcard];
+    case "administration":
+      if (action === "view" || action === "read") return ["administration.view"];
+      if (action === "write" || action === "manage") {
+        return [
+          "administration.manage_units",
+          "administration.manage_content",
+          "administration.manage_staff",
+          "administration.manage_services",
+          "administration.view",
+        ];
+      }
+      return [dotScope, wildcard];
+    case "office":
+      if (action === "view" || action === "read") return ["office.view"];
+      if (action === "write" || action === "manage") {
+        return ["office.manage_content", "office.manage_staff", "office.manage_services", "office.view"];
+      }
+      return [dotScope, wildcard];
     case "governance":
       if (action === "read") return ["governance.view"];
       if (action === "write") return ["governance.manage", "governance.manage_boards", "organization.manage_divisions"];
@@ -293,6 +311,27 @@ function inferServiceScopes(service: Service, roles: string[], permissions: stri
   }
   if (service === "main" && roles.includes("staff-admin")) {
     return ["staff.*", "persons.*", "governance.*", "organization.*", "academic.view"];
+  }
+  if (service === "main" && roles.includes("institution-admin")) {
+    return ["administration.*", "office.*", "staff.*", "persons.view", "media.view", "media.upload"];
+  }
+  if (service === "main" && roles.includes("office-admin")) {
+    return [
+      "administration.view",
+      "office.view",
+      "office.manage_content",
+      "office.manage_staff",
+      "office.manage_services",
+      "staff.view_assignments",
+      "media.view",
+      "media.upload",
+    ];
+  }
+  if (service === "main" && roles.includes("office-editor")) {
+    return ["administration.view", "office.view", "office.manage_content", "office.manage_services", "media.view", "media.upload"];
+  }
+  if (service === "main" && roles.includes("office-staff-manager")) {
+    return ["administration.view", "office.view", "office.manage_staff", "staff.view_assignments", "staff.manage_assignments", "persons.view"];
   }
   if (service === "main" && roles.includes("content-admin")) {
     return ["content.*", "media.*", "support.*", "marketing.*"];

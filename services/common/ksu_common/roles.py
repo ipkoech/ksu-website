@@ -18,6 +18,10 @@ ALL_PERMISSIONS: tuple[str, ...] = (
     "users.view", "users.create", "users.edit", "users.delete", "users.suspend", "users.invite",
     # SELF-SERVICE PROFILE
     "profile.self_edit",
+    # INSTITUTIONAL ADMINISTRATION / OFFICE SELF-SERVICE
+    "administration.view", "administration.manage_units", "administration.manage_content",
+    "administration.manage_staff", "administration.manage_services",
+    "office.view", "office.manage_content", "office.manage_staff", "office.manage_services",
     # ROLES & PERMISSIONS
     "roles.view", "roles.manage", "permissions.view", "permissions.manage",
     # SYSTEM
@@ -188,6 +192,45 @@ ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
         name="staff",
         description="General staff member with self-service profile access.",
         scopes=("profile.self_edit", "media.upload"),
+    ),
+    "institution-admin": RoleDefinition(
+        name="institution-admin",
+        description="Institution-wide administrator for VC, DVC, registrar, directorate, and administrative office data.",
+        scopes=(
+            "administration.view", "administration.manage_units", "administration.manage_content",
+            "administration.manage_staff", "administration.manage_services",
+            "office.view", "office.manage_content", "office.manage_staff", "office.manage_services",
+            "staff.view_assignments", "staff.manage_assignments", "persons.view",
+            "media.upload", "media.view", "profile.self_edit",
+        ),
+    ),
+    "office-admin": RoleDefinition(
+        name="office-admin",
+        description="Scoped administrator for a single office, division, wing, directorate, or administrative department.",
+        scopes=(
+            "administration.view",
+            "office.view", "office.manage_content", "office.manage_staff", "office.manage_services",
+            "staff.view_assignments", "media.upload", "media.view", "profile.self_edit",
+        ),
+    ),
+    "office-editor": RoleDefinition(
+        name="office-editor",
+        description="Scoped editor for public office content, contacts, services, documents, and media.",
+        scopes=(
+            "administration.view",
+            "office.view", "office.manage_content", "office.manage_services",
+            "media.upload", "media.view", "profile.self_edit",
+        ),
+    ),
+    "office-staff-manager": RoleDefinition(
+        name="office-staff-manager",
+        description="Scoped manager for office staff assignment records.",
+        scopes=(
+            "administration.view",
+            "office.view", "office.manage_staff",
+            "staff.view_assignments", "staff.manage_assignments", "persons.view",
+            "profile.self_edit",
+        ),
     ),
     "content-admin": RoleDefinition(
         name="content-admin",

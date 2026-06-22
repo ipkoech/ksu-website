@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowRight, Settings } from "lucide-react";
+import { ArrowRight, Settings, UserCheck } from "lucide-react";
 import { useAuth, getHighestRole, formatRoleName } from "@ksu/auth";
 import type { Service } from "@ksu/auth";
+import { usePortalAccess, type PortalAccess } from "@ksu/api-client";
 import {
   Badge,
   Button,
@@ -23,9 +24,14 @@ type PortalDirectoryItem = Pick<
   "key" | "title" | "description" | "service" | "baseHref" | "icon" | "accentClassName"
 > & {
   requiredScopes: string[];
+  access?: PortalAccess;
 };
 
 const portalItems: PortalDirectoryItem[] = [
+  {
+    ...portalConfigs["institutional-administration"],
+    requiredScopes: ["administration.view", "office.view", "office.manage_content"],
+  },
   {
     ...portalConfigs.governance,
     requiredScopes: ["governance.view", "governance.manage_boards"],
@@ -64,11 +70,54 @@ const portalItems: PortalDirectoryItem[] = [
     accentClassName: "text-slate-700 bg-slate-50 border-slate-200",
     requiredScopes: ["users.view", "roles.view", "permissions.view", "audit.view"],
   },
+  {
+    key: "staff-profile" as any,
+    title: "Staff Profile Portal",
+    description: "Update your public staff profile, photo, CV, contacts, biography, and research profile links.",
+    service: "main",
+    baseHref: "/settings/profile",
+    icon: UserCheck,
+    accentClassName: "text-emerald-700 bg-emerald-50 border-emerald-100",
+    requiredScopes: ["profile.self_edit"],
+  },
 ];
+
+const portalFallbacks = new Map<string, PortalDirectoryItem>(
+  portalItems.map((item) => [item.key, item]),
+);
+
+function directoryItemFromAccess(access: PortalAccess): PortalDirectoryItem {
+  const fallback = portalFallbacks.get(access.key);
+  if (fallback) {
+    return {
+      ...fallback,
+      title: access.label || fallback.title,
+      description:
+        access.scope_type === "global"
+          ? fallback.description
+          : `${fallback.description} Current scope: ${access.scope_label}.`,
+      baseHref: access.href || fallback.baseHref,
+      access,
+    };
+  }
+
+  return {
+    key: access.key as any,
+    title: access.label,
+    description: `Scoped workspace for ${access.scope_label}.`,
+    service: access.service,
+    baseHref: access.href,
+    icon: Settings,
+    accentClassName: "text-slate-700 bg-slate-50 border-slate-200",
+    requiredScopes: access.permissions,
+    access,
+  };
+}
 
 export default function SelectServicePage() {
   const router = useRouter();
   const { user, switchService } = useAuth();
+  const portalAccessQuery = usePortalAccess();
 
   if (!user) return null;
 
@@ -87,7 +136,10 @@ export default function SelectServicePage() {
     return item.requiredScopes.some((scope) => scopes.has(scope.toLowerCase()));
   };
 
-  const visiblePortals = portalItems.filter(canAccess);
+  const backendPortals = portalAccessQuery.data?.data.portals;
+  const visiblePortals = backendPortals?.length
+    ? backendPortals.map(directoryItemFromAccess)
+    : portalItems.filter(canAccess);
 
   const handleSelect = (service: Service, href: string) => {
     switchService(service);
@@ -113,12 +165,18 @@ export default function SelectServicePage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {visiblePortals.map((portal) => {
-            const Icon = portal.icon;
-            const role = getHighestRole(user.roles, portal.service);
+            {visiblePortals.map((portal) => {
+              const Icon = portal.icon;
+              const role = getHighestRole(user.roles, portal.service);
+              const badgeLabel =
+                portal.access?.scope_type && portal.access.scope_type !== "global"
+                  ? portal.access.scope_label
+                  : role
+                    ? formatRoleName(role)
+                    : "Scoped Access";
 
-            return (
-              <Card key={portal.baseHref} className="flex h-full flex-col">
+              return (
+              <Card key={`${portal.baseHref}:${portal.access?.scope_type ?? "derived"}:${portal.access?.scope_id ?? "global"}`} className="flex h-full flex-col">
                 <CardHeader className="flex flex-row items-start gap-4">
                   <div className={cn("rounded-lg border p-3", portal.accentClassName)}>
                     <Icon className="h-6 w-6" />
@@ -131,9 +189,7 @@ export default function SelectServicePage() {
                   </div>
                 </CardHeader>
                 <CardContent className="mt-auto flex items-center justify-between gap-3">
-                  <Badge variant="outline">
-                    {role ? formatRoleName(role) : "Scoped Access"}
-                  </Badge>
+                  <Badge variant="outline">{badgeLabel}</Badge>
                   <Button
                     type="button"
                     size="sm"

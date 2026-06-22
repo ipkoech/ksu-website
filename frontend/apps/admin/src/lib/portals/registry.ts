@@ -789,6 +789,50 @@ const governanceResources: Record<string, PortalResourceConfig<any, any>> = {
   } as PortalResourceConfig<Document>,
 };
 
+const administrationResources: Record<string, PortalResourceConfig<any, any>> = {
+  divisions: {
+    ...governanceResources.divisions,
+    title: "DVC Divisions & Directorates",
+    description:
+      "Manage DVC divisions, high-level directorates, mandates, contacts, and public office content.",
+    backHref: "/institutional-administration",
+    queryKey: ["institutional-administration", "divisions"],
+    viewScopes: ["administration.view", "office.view"],
+    manageScopes: ["administration.manage_units"],
+  },
+  offices: {
+    ...governanceResources.wings,
+    key: "offices",
+    title: "Registrar Offices & Wings",
+    description:
+      "Manage registrar offices, administrative wings, service units, contacts, and public office details.",
+    backHref: "/institutional-administration",
+    queryKey: ["institutional-administration", "offices"],
+    viewScopes: ["administration.view", "office.view"],
+    manageScopes: ["administration.manage_units", "office.manage_content"],
+  },
+  "staff-assignments": {
+    ...governanceResources["staff-assignments"],
+    title: "Office Staff Assignments",
+    description:
+      "Attach staff to VC, DVC, registrar, directorate, and administrative office roles.",
+    backHref: "/institutional-administration",
+    queryKey: ["institutional-administration", "staff-assignments"],
+    viewScopes: ["staff.view_assignments", "office.view", "administration.view"],
+    manageScopes: ["staff.manage_assignments", "office.manage_staff", "administration.manage_staff"],
+  },
+  documents: {
+    ...governanceResources.documents,
+    title: "Office Documents & Media",
+    description:
+      "Manage public documents, service charters, policy files, and office media for administrative units.",
+    backHref: "/institutional-administration",
+    queryKey: ["institutional-administration", "documents"],
+    viewScopes: ["administration.view", "office.view", "policy.view"],
+    manageScopes: ["office.manage_content", "administration.manage_content", "policy.manage"],
+  },
+};
+
 const schoolResources: Record<string, PortalResourceConfig<any, any>> = {
   profiles: {
     key: "profiles",
@@ -3256,6 +3300,102 @@ function publicationResource(
 }
 
 export const portalConfigs: Record<string, PortalConfig> = {
+  "institutional-administration": {
+    key: "institutional-administration",
+    title: "Institutional Administration Portal",
+    shortTitle: "Administration",
+    description:
+      "VC office, DVC divisions, registrar offices, directorates, administrative wings, documents, services, contacts, and staff assignments.",
+    service: "main",
+    baseHref: "/institutional-administration",
+    icon: Building2,
+    accentClassName: "text-sky-700 bg-sky-50 border-sky-100",
+    nav: [
+      {
+        title: "Dashboard",
+        href: "/institutional-administration",
+        icon: PanelsTopLeft,
+        scope: "administration.view",
+      },
+      {
+        title: "DVC Divisions",
+        href: "/institutional-administration/divisions",
+        icon: Building2,
+        scope: "administration.manage_units",
+      },
+      {
+        title: "Registrar Offices",
+        href: "/institutional-administration/offices",
+        icon: Landmark,
+        scope: ["office.view", "office.manage_content"],
+      },
+      {
+        title: "Staff Assignments",
+        href: "/institutional-administration/staff-assignments",
+        icon: UserCheck,
+        scope: ["office.manage_staff", "staff.view_assignments"],
+      },
+      {
+        title: "Documents & Media",
+        href: "/institutional-administration/documents",
+        icon: ScrollText,
+        scope: ["office.manage_content", "administration.manage_content", "policy.view"],
+      },
+    ],
+    dashboard: dashboard(
+      "Institutional Administration",
+      "Manage administrative offices with scoped ownership instead of one shared governance workspace.",
+      [
+        stat(
+          "DVC Divisions",
+          "Divisions and directorates",
+          "/institutional-administration/divisions",
+          Building2,
+          ["administration.view"],
+          ["institutional-administration", "divisions"],
+          () => divisionsApi.list(countParams),
+        ),
+        stat(
+          "Registrar Offices",
+          "Wings and offices",
+          "/institutional-administration/offices",
+          Landmark,
+          ["office.view"],
+          ["institutional-administration", "offices"],
+          async () => {
+            const divisionId = await firstDivisionId();
+            if (!divisionId) return statCount(0);
+            return wingsApi.listByDivision(divisionId, countParams);
+          },
+        ),
+        stat(
+          "Assignments",
+          "Office staff roles",
+          "/institutional-administration/staff-assignments",
+          UserCheck,
+          ["staff.view_assignments"],
+          ["institutional-administration", "staff"],
+          () => staffApi.listAssignments({ entity_type: "division" }),
+        ),
+        stat(
+          "Documents",
+          "Office files",
+          "/institutional-administration/documents",
+          ScrollText,
+          ["office.view"],
+          ["institutional-administration", "documents"],
+          () => documentsApi.list({ ...countParams, scope_type: "office" }),
+        ),
+      ],
+      administrationResources,
+      [
+        "administration.manage_units",
+        "office.manage_content",
+        "office.manage_staff",
+      ],
+    ),
+    resources: administrationResources,
+  },
   governance: {
     key: "governance",
     title: "Governance Portal",

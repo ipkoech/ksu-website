@@ -1,4 +1,5 @@
 import type { Service, User } from "@ksu/auth";
+import type { PortalAccess } from "@ksu/api-client";
 
 type RoleDestination = {
   roles: string[];
@@ -13,6 +14,7 @@ const roleDestinations: RoleDestination[] = [
   { roles: ["researcher", "lecturer"], href: "/publications/submissions", service: "research" },
   { roles: ["school-admin", "academic-admin"], href: "/schools", service: "main" },
   { roles: ["dept-admin", "dept-staff"], href: "/departments", service: "main" },
+  { roles: ["institution-admin", "office-admin", "office-editor", "office-staff-manager"], href: "/institutional-administration", service: "main" },
   { roles: ["content-admin", "content-manager", "content-staff"], href: "/corporate-communication", service: "main" },
   { roles: ["staff-admin"], href: "/governance", service: "main" },
   { roles: ["staff"], href: "/settings/profile", service: "main" },
@@ -66,6 +68,38 @@ export function resolvePostLoginDestination(user: User, redirect?: string | null
   }
 
   return { href: "/select-service", service: null };
+}
+
+export function resolvePortalAccessDestination(
+  portals: PortalAccess[] | undefined,
+  user: User,
+  redirect?: string | null,
+) {
+  if (redirect?.startsWith("/")) {
+    return { href: redirect, service: null };
+  }
+
+  const available = portals ?? [];
+  const staffProfileOnly =
+    available.length === 1 && available[0]?.key === "staff-profile";
+
+  if (staffProfileOnly) {
+    return { href: staffProfileHref, service: "main" as Service };
+  }
+
+  const nonProfilePortals = available.filter((portal) => portal.key !== "staff-profile");
+  if (nonProfilePortals.length === 1) {
+    return {
+      href: nonProfilePortals[0].href,
+      service: nonProfilePortals[0].service,
+    };
+  }
+
+  if (nonProfilePortals.length > 1) {
+    return { href: "/select-service", service: null };
+  }
+
+  return resolvePostLoginDestination(user, null);
 }
 
 export function isStaffProfileOnlyUser(user: User) {
