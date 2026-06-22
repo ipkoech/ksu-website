@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from types import SimpleNamespace
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 
@@ -10,11 +11,46 @@ from ksu_common.schemas.responses import success
 
 from ...deps import CurrentUser, DbSession, require_scope
 from ...models import Media, MediaFolder, MediaLink
+from ...security.scopes import can_access_scope
 from ...schemas import MediaFolderCreate, MediaFolderUpdate, MediaLinkCreate, MediaLinkUpdate, MediaUpdate
 from ...services import MediaService
 from ._fields import FieldSelection, FieldsDep, build_selector
 
 router = APIRouter()
+
+MEDIA_FOLDER_MANAGE_PERMISSIONS = ["media.manage", "media.upload"]
+
+
+def _media_folder_scope(scope_type: str | None, scope_id: uuid.UUID | None) -> tuple[str, uuid.UUID | None]:
+    return (scope_type or "global", scope_id)
+
+
+async def _can_access_media_folder_scope(
+    db: DbSession,
+    user: CurrentUser,
+    permissions: list[str],
+    scope_type: str | None,
+    scope_id: uuid.UUID | None,
+) -> bool:
+    target_scope_type, target_scope_id = _media_folder_scope(scope_type, scope_id)
+    for permission in permissions:
+        if await can_access_scope(db, user, permission, target_scope_type, target_scope_id):
+            return True
+    return False
+
+
+async def _require_media_folder_scope(
+    db: DbSession,
+    user: CurrentUser,
+    permissions: list[str],
+    scope_type: str | None,
+    scope_id: uuid.UUID | None,
+) -> None:
+    if not await _can_access_media_folder_scope(db, user, permissions, scope_type, scope_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient privileges for this media folder scope",
+        )
 
 
 @router.get("")
@@ -55,6 +91,17 @@ async def upload_media(
     entity_id: uuid.UUID | None = Form(default=None),
     role: str | None = Form(default=None, max_length=64),
 ):
+    if folder_id is not None:
+        folder = await MediaService.get_folder_by_id(db, folder_id)
+        if folder is None:
+            raise HTTPException(status_code=404, detail="Folder not found")
+        await _require_media_folder_scope(
+            db,
+            user,
+            MEDIA_FOLDER_MANAGE_PERMISSIONS,
+            folder.scope_type,
+            folder.scope_id,
+        )
     try:
         media = await MediaService.upload(
             db,
@@ -78,8 +125,15 @@ async def list_folders(db: DbSession, user: CurrentUser, parent_id: uuid.UUID | 
     return success(data=selector.apply(folders))
 
 
-@router.post("/folders", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("media:manage"))])
-async def create_folder(data: MediaFolderCreate, db: DbSession, _: CurrentUser):
+@router.post("/folders", status_code=status.HTTP_201_CREATED)
+async def create_folder(data: MediaFolderCreate, db: DbSession, user: CurrentUser):
+    await _require_media_folder_scope(
+        db,
+        user,
+        MEDIA_FOLDER_MANAGE_PERMISSIONS,
+        data.scope_type,
+        data.scope_id,
+    )
     folder = await MediaService.create_folder(db, **data.model_dump())
     return success(data=folder, message="Folder created")
 
@@ -93,20 +147,46 @@ async def get_folder(folder_id: uuid.UUID, db: DbSession, user: CurrentUser, fie
     return success(data=selector.apply(folder))
 
 
-@router.patch("/folders/{folder_id}", dependencies=[Depends(require_scope("media:manage"))])
-async def update_folder(folder_id: uuid.UUID, data: MediaFolderUpdate, db: DbSession, _: CurrentUser):
+@router.patch("/folders/{folder_id}")
+async def update_folder(folder_id: uuid.UUID, data: MediaFolderUpdate, db: DbSession, user: CurrentUser):
     folder = await MediaService.get_folder_by_id(db, folder_id)
     if folder is None:
         raise HTTPException(status_code=404, detail="Folder not found")
-    folder = await MediaService.update_folder(db, folder, **data.model_dump(exclude_unset=True))
+    await _require_media_folder_scope(
+        db,
+        user,
+        MEDIA_FOLDER_MANAGE_PERMISSIONS,
+        folder.scope_type,
+        folder.scope_id,
+    )
+    payload = data.model_dump(exclude_unset=True)
+    next_scope = SimpleNamespace(
+        scope_type=payload.get("scope_type", folder.scope_type),
+        scope_id=payload.get("scope_id", folder.scope_id),
+    )
+    await _require_media_folder_scope(
+        db,
+        user,
+        MEDIA_FOLDER_MANAGE_PERMISSIONS,
+        next_scope.scope_type,
+        next_scope.scope_id,
+    )
+    folder = await MediaService.update_folder(db, folder, **payload)
     return success(data=folder, message="Folder updated")
 
 
-@router.delete("/folders/{folder_id}", dependencies=[Depends(require_scope("media:manage"))], status_code=status.HTTP_204_NO_CONTENT)
-async def delete_folder(folder_id: uuid.UUID, db: DbSession, _: CurrentUser):
+@router.delete("/folders/{folder_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_folder(folder_id: uuid.UUID, db: DbSession, user: CurrentUser):
     folder = await MediaService.get_folder_by_id(db, folder_id)
     if folder is None:
         raise HTTPException(status_code=404, detail="Folder not found")
+    await _require_media_folder_scope(
+        db,
+        user,
+        MEDIA_FOLDER_MANAGE_PERMISSIONS,
+        folder.scope_type,
+        folder.scope_id,
+    )
     await MediaService.delete_folder(db, folder)
 
 
@@ -177,7 +257,19 @@ async def update_media(media_id: uuid.UUID, data: MediaUpdate, db: DbSession, us
     media = await MediaService.get_authorized_by_id(db, media_id, user)
     if media is None:
         raise HTTPException(status_code=404, detail="Media not found")
-    media = await MediaService.update(db, media, **data.model_dump(exclude_unset=True))
+    payload = data.model_dump(exclude_unset=True)
+    if "folder_id" in payload and payload["folder_id"] is not None:
+        folder = await MediaService.get_folder_by_id(db, payload["folder_id"])
+        if folder is None:
+            raise HTTPException(status_code=404, detail="Folder not found")
+        await _require_media_folder_scope(
+            db,
+            user,
+            MEDIA_FOLDER_MANAGE_PERMISSIONS,
+            folder.scope_type,
+            folder.scope_id,
+        )
+    media = await MediaService.update(db, media, **payload)
     return success(data=media, message="Media updated")
 
 
