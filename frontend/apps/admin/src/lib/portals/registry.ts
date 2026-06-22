@@ -442,6 +442,16 @@ function contentFields(
           },
         ]
       : []),
+    {
+      name: "featured_media_id",
+      label: "Featured Image",
+      type: "entity" as const,
+      relation: {
+        adapter: "media" as const,
+        filters: { media_type: "image" },
+        allowClear: true,
+      },
+    },
     { name: "is_published", label: "Published", type: "boolean" as const },
     { name: "is_featured", label: "Featured", type: "boolean" as const },
   ];
@@ -544,7 +554,7 @@ function contentResource<TRecord extends PortalRecord>({
         : undefined,
     getRecordTitle: titleOf,
     getRecordMeta: (record) =>
-      metaOf(record, ["status", "scope_type", "published_at", "updated_at"]),
+      metaOf(record, ["status", "published_at", "updated_at"]),
     emptyMessage: `No ${title.toLowerCase()} records were returned.`,
     buildPayload: (values) =>
       commonContentPayload(
