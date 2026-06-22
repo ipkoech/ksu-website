@@ -974,7 +974,7 @@ const schoolResources: Record<string, PortalResourceConfig<any, any>> = {
         relation: { adapter: "department", filters: { is_active: true } },
       },
     ],
-    list: (filters) => programmesApi.list({ ...pageParams, ...filters }),
+    list: (filters) => programmesApi.listAdmin({ ...pageParams, ...filters }),
     create: (payload) => programmesApi.create(payload),
     update: (id, payload) => programmesApi.update(id, payload),
     delete: (id) => programmesApi.delete(id),
@@ -3585,7 +3585,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
           BookOpen,
           ["academic.view"],
           ["schools", "programmes"],
-          () => programmesApi.list(countParams),
+          () => programmesApi.listAdmin(countParams),
         ),
         stat(
           "Departments",
@@ -3705,7 +3705,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
           BookOpen,
           ["academic.view"],
           ["departments", "programmes"],
-          () => programmesApi.list(countParams),
+          () => programmesApi.listAdmin(countParams),
         ),
         stat(
           "Notices",

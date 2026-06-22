@@ -598,6 +598,21 @@ export const programmesApi = {
     }>,
   ) => mainApi.get<PaginatedResponse<Programme>>("/api/v1/programmes", params),
 
+  listAdmin: (
+    params?: ListParams<{
+      q?: string;
+      school_id?: string;
+      department_id?: string;
+      level?: string;
+      mode_of_study?: string;
+      is_active?: boolean;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<Programme>>(
+      "/api/v1/programmes/admin",
+      params,
+    ),
+
   get: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Programme }>(`/api/v1/programmes/id/${id}`, params),
 
