@@ -480,6 +480,16 @@ export const schoolsApi = {
     }>,
   ) => mainApi.get<PaginatedResponse<School>>("/api/v1/schools", params),
 
+  listAdmin: (
+    params?: ListParams<{
+      campus_id?: string;
+      administrative_wing_id?: string;
+      search?: string;
+      is_active?: boolean;
+      is_public?: boolean;
+    }>,
+  ) => mainApi.get<PaginatedResponse<School>>("/api/v1/schools/admin", params),
+
   get: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: School }>(`/api/v1/schools/id/${id}`, params),
 
@@ -524,6 +534,21 @@ export const departmentsApi = {
     }>,
   ) =>
     mainApi.get<PaginatedResponse<Department>>("/api/v1/departments", params),
+
+  listAdmin: (
+    params?: ListParams<{
+      school_id?: string;
+      wing_id?: string;
+      department_type?: string;
+      search?: string;
+      is_active?: boolean;
+      is_public?: boolean;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<Department>>(
+      "/api/v1/departments/admin",
+      params,
+    ),
 
   get: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Department }>(`/api/v1/departments/id/${id}`, params),

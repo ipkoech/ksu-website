@@ -316,6 +316,7 @@ class DepartmentService:
         department_type: str | None = None,
         search: str | None = None,
         is_active: bool | None = True,
+        is_public: bool | None = True,
         load_options: Sequence = (),
     ) -> PaginatedResult:
         query = select(Department).options(selectinload(Department.services)).order_by(Department.display_order.asc(), Department.name.asc())
@@ -331,6 +332,8 @@ class DepartmentService:
             query = query.where(ilike_any(search, Department.name, Department.code))
         if is_active is not None:
             query = query.where(Department.is_active.is_(is_active))
+        if is_public is not None:
+            query = query.where(Department.is_public.is_(is_public))
         return await paginate_query(db, query, page=page, per_page=per_page)
 
     @staticmethod

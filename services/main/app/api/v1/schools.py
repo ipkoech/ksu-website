@@ -4,18 +4,47 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status
 
 from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
-from ...deps import CurrentUser, DbSession, require_scope
+from ...deps import CurrentUser, DbSession
 from ...models import Department, Person, Programme, School
+from ...security.scopes import can_access_scope
 from ...schemas import SchoolCreate, SchoolUpdate
 from ...services import ProgrammeService, SchoolService
 
 router = APIRouter()
+
+SCHOOL_VIEW_PERMISSIONS = ["academic.view", "academic.manage_schools"]
+SCHOOL_MANAGE_PERMISSIONS = ["academic.manage_schools"]
+
+
+async def _can_access_school_scope(
+    db: DbSession,
+    user: CurrentUser,
+    permissions: list[str],
+    school_id: uuid.UUID | None,
+) -> bool:
+    for permission in permissions:
+        if await can_access_scope(db, user, permission, "school", school_id):
+            return True
+    return False
+
+
+async def _require_school_scope(
+    db: DbSession,
+    user: CurrentUser,
+    permissions: list[str],
+    school_id: uuid.UUID | None,
+) -> None:
+    if not await _can_access_school_scope(db, user, permissions, school_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient privileges for this school scope",
+        )
 
 
 @router.get("")
@@ -40,6 +69,40 @@ async def list_schools(
         load_options=selector.load_options,
     )
     return success(data=selector.apply(result.items), meta=result.meta)
+
+
+@router.get("/admin")
+async def list_admin_schools(
+    db: DbSession,
+    user: CurrentUser,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    campus_id: uuid.UUID | None = None,
+    administrative_wing_id: uuid.UUID | None = None,
+    search: str | None = None,
+    is_active: bool | None = None,
+    is_public: bool | None = None,
+    fields: FieldSelection = FieldsDep,
+):
+    selector = build_selector(School, fields)
+    result = await SchoolService.list(
+        db,
+        page=page,
+        per_page=per_page,
+        campus_id=campus_id,
+        administrative_wing_id=administrative_wing_id,
+        search=search,
+        is_active=is_active,
+        is_public=is_public,
+        load_options=selector.load_options,
+    )
+    items = []
+    for item in result.items:
+        if await _can_access_school_scope(db, user, SCHOOL_VIEW_PERMISSIONS, item.id):
+            items.append(item)
+    meta = dict(result.meta)
+    meta["total"] = len(items)
+    return success(data=selector.apply(items), meta=meta)
 
 
 @router.get("/{slug}")
@@ -100,24 +163,31 @@ async def get_school_programmes(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("academic:write"))])
-async def create_school(data: SchoolCreate, db: DbSession, _: CurrentUser):
+@router.post("", status_code=status.HTTP_201_CREATED)
+async def create_school(data: SchoolCreate, db: DbSession, user: CurrentUser):
+    if not await can_access_scope(db, user, "academic.manage_schools", "university", None):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient privileges to create schools",
+        )
     school = await SchoolService.create(db, **data.model_dump())
     return success(data=school, message="School created")
 
 
-@router.patch("/{school_id}", dependencies=[Depends(require_scope("academic:write"))])
-async def update_school(school_id: uuid.UUID, data: SchoolUpdate, db: DbSession, _: CurrentUser):
+@router.patch("/{school_id}")
+async def update_school(school_id: uuid.UUID, data: SchoolUpdate, db: DbSession, user: CurrentUser):
     school = await SchoolService.get_by_id(db, school_id)
     if school is None:
         raise HTTPException(status_code=404, detail="School not found")
+    await _require_school_scope(db, user, SCHOOL_MANAGE_PERMISSIONS, school.id)
     school = await SchoolService.update(db, school, **data.model_dump(exclude_unset=True))
     return success(data=school, message="School updated")
 
 
-@router.delete("/{school_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("academic:delete"))])
-async def delete_school(school_id: uuid.UUID, db: DbSession, _: CurrentUser):
+@router.delete("/{school_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_school(school_id: uuid.UUID, db: DbSession, user: CurrentUser):
     school = await SchoolService.get_by_id(db, school_id)
     if school is None:
         raise HTTPException(status_code=404, detail="School not found")
+    await _require_school_scope(db, user, SCHOOL_MANAGE_PERMISSIONS, school.id)
     await SchoolService.delete(db, school)
