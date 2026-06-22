@@ -30,6 +30,16 @@ LEADERSHIP_ASSIGNMENT_ROLES = {
     "deputy_registrar",
     "manager",
 }
+SCHOOL_LEADERSHIP_ASSIGNMENT_ROLES = {
+    "dean",
+    "deputy_dean",
+}
+DEPARTMENT_LEADERSHIP_ASSIGNMENT_ROLES = {
+    "hod",
+    "head",
+    "cod",
+    "deputy_hod",
+}
 
 PROFILE_PERMISSION = "profile.self_edit"
 PROFILE_PORTAL_KEY = "staff-profile"
@@ -210,6 +220,10 @@ def _assignment_scope_type(scope_type: str | None) -> str:
     return normalized
 
 
+def _assignment_role(role: str | None) -> str:
+    return _normalize(role).replace("-", "_")
+
+
 def _portal_keys_for_permissions(permissions: set[str], scope_type: str | None) -> list[str]:
     if permissions.intersection(GLOBAL_ADMIN_PERMISSIONS):
         return list(PORTAL_DEFINITIONS)
@@ -274,24 +288,49 @@ def build_portal_access_records(user: User, scope_labels: Mapping[ScopeKey, str]
             continue
         entity_type = _assignment_scope_type(getattr(assignment, "entity_type", None))
         entity_id = getattr(assignment, "entity_id", None)
-        role = _normalize(getattr(assignment, "role", None))
-        if entity_type not in ADMINISTRATION_SCOPE_TYPES or role not in LEADERSHIP_ASSIGNMENT_ROLES:
-            continue
-        _add_or_merge(
-            records,
-            key="institutional-administration",
-            scope_type=entity_type,
-            scope_id=entity_id,
-            permissions=[
-                "administration.view",
-                "office.view",
-                "office.manage_content",
-                "office.manage_services",
-                "staff.view_assignments",
-            ],
-            scope_labels=scope_labels,
-            source="assignment",
-        )
+        role = _assignment_role(getattr(assignment, "role", None))
+        if entity_type in ADMINISTRATION_SCOPE_TYPES and role in LEADERSHIP_ASSIGNMENT_ROLES:
+            _add_or_merge(
+                records,
+                key="institutional-administration",
+                scope_type=entity_type,
+                scope_id=entity_id,
+                permissions=[
+                    "administration.view",
+                    "office.view",
+                    "office.manage_content",
+                    "office.manage_services",
+                    "staff.view_assignments",
+                ],
+                scope_labels=scope_labels,
+                source="assignment",
+            )
+        elif entity_type == "school" and role in SCHOOL_LEADERSHIP_ASSIGNMENT_ROLES:
+            _add_or_merge(
+                records,
+                key="schools",
+                scope_type=entity_type,
+                scope_id=entity_id,
+                permissions=[
+                    "academic.view",
+                    "academic.manage_schools",
+                ],
+                scope_labels=scope_labels,
+                source="assignment",
+            )
+        elif entity_type == "department" and role in DEPARTMENT_LEADERSHIP_ASSIGNMENT_ROLES:
+            _add_or_merge(
+                records,
+                key="departments",
+                scope_type=entity_type,
+                scope_id=entity_id,
+                permissions=[
+                    "academic.view",
+                    "academic.manage_departments",
+                ],
+                scope_labels=scope_labels,
+                source="assignment",
+            )
 
     return sorted(records.values(), key=lambda record: (record.service, record.key, record.scope_label))
 

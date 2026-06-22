@@ -39,6 +39,47 @@ LEADERSHIP_SCOPE_ROLES = {
     "cod",
 }
 
+SCHOOL_LEADERSHIP_SCOPE_ROLES = {
+    "dean",
+    "deputy_dean",
+}
+
+DEPARTMENT_LEADERSHIP_SCOPE_ROLES = {
+    "hod",
+    "head",
+    "cod",
+    "deputy_hod",
+}
+
+ADMINISTRATION_ASSIGNMENT_PERMISSIONS = frozenset(
+    {
+        "administration.view",
+        "office.view",
+        "office.manage_content",
+        "office.manage_services",
+        "staff.view_assignments",
+    }
+)
+
+SCHOOL_ASSIGNMENT_PERMISSIONS = frozenset(
+    {
+        "academic.view",
+        "academic.manage_schools",
+        "academic.manage_departments",
+        "academic.manage_programmes",
+        "staff.view_assignments",
+    }
+)
+
+DEPARTMENT_ASSIGNMENT_PERMISSIONS = frozenset(
+    {
+        "academic.view",
+        "academic.manage_departments",
+        "academic.manage_programmes",
+        "staff.view_assignments",
+    }
+)
+
 
 @dataclass(frozen=True)
 class ScopedGrant:
@@ -53,6 +94,20 @@ def normalize_scope_type(value: str | None) -> str:
     if normalized == "directorate":
         return "division"
     return normalized
+
+
+def normalize_assignment_role(value: str | None) -> str:
+    return (value or "").strip().lower().replace("-", "_")
+
+
+def assignment_permissions(scope_type: str, role: str) -> frozenset[str]:
+    if role in LEADERSHIP_SCOPE_ROLES:
+        if scope_type == "school" and role in SCHOOL_LEADERSHIP_SCOPE_ROLES:
+            return SCHOOL_ASSIGNMENT_PERMISSIONS
+        if scope_type == "department" and role in DEPARTMENT_LEADERSHIP_SCOPE_ROLES:
+            return DEPARTMENT_ASSIGNMENT_PERMISSIONS
+        return ADMINISTRATION_ASSIGNMENT_PERMISSIONS
+    return frozenset()
 
 
 def _active_role_assignments(user: User) -> Iterable:
@@ -92,21 +147,14 @@ def user_scoped_grants(user: User) -> list[ScopedGrant]:
     for assignment in getattr(person, "assignments", []) or []:
         if getattr(assignment, "status", "active") != "active":
             continue
-        role = str(getattr(assignment, "role", "") or "").strip().lower().replace("-", "_")
-        if role not in LEADERSHIP_SCOPE_ROLES:
-            continue
         scope_type = normalize_scope_type(getattr(assignment, "entity_type", None))
+        role = normalize_assignment_role(getattr(assignment, "role", None))
+        permissions = assignment_permissions(scope_type, role)
+        if not permissions:
+            continue
         grants.append(
             ScopedGrant(
-                permissions=frozenset(
-                    {
-                        "administration.view",
-                        "office.view",
-                        "office.manage_content",
-                        "office.manage_services",
-                        "staff.view_assignments",
-                    }
-                ),
+                permissions=permissions,
                 scope_type=scope_type,
                 scope_id=getattr(assignment, "entity_id", None),
                 source="assignment",

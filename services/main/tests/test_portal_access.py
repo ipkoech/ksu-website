@@ -127,6 +127,50 @@ class PortalAccessTests(unittest.TestCase):
         self.assertEqual("Division of Academic, Research and Student Affairs", office.scope_label)
         self.assertIn("office.manage_services", office.permissions)
 
+    def test_dean_assignment_infers_school_portal_access(self):
+        school_id = uuid.uuid4()
+        user = _user(
+            role_assignments=[
+                _assignment("staff", permissions=["profile.self_edit"]),
+            ],
+            staff_assignments=[
+                _staff_assignment("school", school_id, role="dean", title="Dean"),
+            ],
+        )
+
+        records = build_portal_access_records(
+            user,
+            scope_labels={("school", school_id): "School of Business"},
+        )
+
+        school = next(record for record in records if record.key == "schools")
+        self.assertEqual("school", school.scope_type)
+        self.assertEqual(school_id, school.scope_id)
+        self.assertEqual("School of Business", school.scope_label)
+        self.assertIn("academic.manage_schools", school.permissions)
+
+    def test_hod_assignment_infers_department_portal_access(self):
+        department_id = uuid.uuid4()
+        user = _user(
+            role_assignments=[
+                _assignment("staff", permissions=["profile.self_edit"]),
+            ],
+            staff_assignments=[
+                _staff_assignment("department", department_id, role="hod", title="Head of Department"),
+            ],
+        )
+
+        records = build_portal_access_records(
+            user,
+            scope_labels={("department", department_id): "Department of Computing Sciences"},
+        )
+
+        department = next(record for record in records if record.key == "departments")
+        self.assertEqual("department", department.scope_type)
+        self.assertEqual(department_id, department.scope_id)
+        self.assertEqual("Department of Computing Sciences", department.scope_label)
+        self.assertIn("academic.manage_departments", department.permissions)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -116,6 +116,60 @@ class ScopedAccessTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertTrue(allowed)
 
+    async def test_dean_assignment_grants_own_school_scope(self):
+        school_id = uuid.uuid4()
+        user = _user(
+            staff_assignments=[
+                _staff_assignment("school", school_id, role="dean"),
+            ]
+        )
+
+        self.assertTrue(
+            await can_access_scope(
+                None,
+                user,
+                "academic.manage_schools",
+                "school",
+                school_id,
+            )
+        )
+        self.assertFalse(
+            await can_access_scope(
+                None,
+                user,
+                "academic.manage_schools",
+                "school",
+                uuid.uuid4(),
+            )
+        )
+
+    async def test_hod_assignment_grants_own_department_scope(self):
+        department_id = uuid.uuid4()
+        user = _user(
+            staff_assignments=[
+                _staff_assignment("department", department_id, role="hod"),
+            ]
+        )
+
+        self.assertTrue(
+            await can_access_scope(
+                None,
+                user,
+                "academic.manage_departments",
+                "department",
+                department_id,
+            )
+        )
+        self.assertFalse(
+            await can_access_scope(
+                None,
+                user,
+                "academic.manage_departments",
+                "department",
+                uuid.uuid4(),
+            )
+        )
+
     async def test_filter_records_for_scope_removes_other_offices(self):
         own_wing_id = uuid.uuid4()
         other_wing_id = uuid.uuid4()
