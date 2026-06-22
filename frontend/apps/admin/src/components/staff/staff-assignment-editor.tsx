@@ -532,7 +532,7 @@ export function StaffAssignmentEditor({
                 ) : null}
                 <div className="rounded-md bg-muted/50 p-3">
                   <Button type="button" variant="outline" size="sm" onClick={() => setShowCreatePerson((value) => !value)}>
-                    <UserPlus className="mr-2 h-4 w-4" />
+                    <UserPlus data-icon="inline-start" />
                     Create staff profile
                   </Button>
                   {showCreatePerson ? (
@@ -561,7 +561,7 @@ export function StaffAssignmentEditor({
                         />
                       </div>
                       <Button type="button" size="sm" onClick={createStaffInline} disabled={createPerson.isPending}>
-                        <Plus className="mr-2 h-4 w-4" />
+                        <Plus data-icon="inline-start" />
                         Create and select
                       </Button>
                     </div>
