@@ -225,7 +225,7 @@ export interface StaffAssignment {
   person?: Person;
   entity_type: string;
   entity_id?: string | null;
-  entity?: { id: string; name: string; type: string };
+  entity?: { id: string | null; name: string; type: string; subtitle?: string | null; is_active?: boolean };
   role: string;
   title?: string;
   hierarchy_level?: number;

@@ -1015,12 +1015,20 @@ export const staffAssignmentRelationshipAdapter: RelationshipAdapter<{ status?: 
       status: (filters?.status as any) || "active",
       entity_type: filters?.entity_type || undefined,
       entity_id: filters?.entity_id || undefined,
-      include: "person",
+      fields:
+        "id,person_id,entity_type,entity_id,role,title,hierarchy_level,is_primary,is_acting,is_public,start_date,end_date,status,display_order",
+      include:
+        "person:id,title,first_name,middle_name,last_name,full_name,email,photo_url;entity",
     });
     return limitOptions((response.data ?? []).map(staffAssignmentOption).filter((option) => matches(option, search)), limit);
   },
   async get(id) {
-    const response = await staffApi.getAssignment(id, { include: "person" });
+    const response = await staffApi.getAssignment(id, {
+      fields:
+        "id,person_id,entity_type,entity_id,role,title,hierarchy_level,is_primary,is_acting,is_public,start_date,end_date,status,display_order",
+      include:
+        "person:id,title,first_name,middle_name,last_name,full_name,email,photo_url;entity",
+    });
     return response.data ? staffAssignmentOption(response.data) : null;
   },
 };

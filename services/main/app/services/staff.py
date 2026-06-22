@@ -340,19 +340,71 @@ class StaffService:
 
     @staticmethod
     async def get_entity_label(db: AsyncSession, entity_type: str, entity_id: uuid.UUID | None) -> str:
-        if entity_type == "university":
-            result = await db.execute(select(UniversityInfo).order_by(UniversityInfo.created_at.asc()))
+        summary = await StaffService.get_entity_summary(db, entity_type, entity_id)
+        return str(summary["name"])
+
+    @staticmethod
+    async def get_entity_summary(db: AsyncSession, entity_type: str, entity_id: uuid.UUID | None) -> dict:
+        summaries = await StaffService.get_entity_summaries(db, [(entity_type, entity_id)])
+        return summaries.get(
+            (entity_type, entity_id),
+            {
+                "id": entity_id,
+                "name": entity_type.replace("_", " ").title(),
+                "type": entity_type,
+                "subtitle": None,
+                "is_active": True,
+            },
+        )
+
+    @staticmethod
+    async def get_entity_summaries(
+        db: AsyncSession,
+        entities: Sequence[tuple[str, uuid.UUID | None]],
+    ) -> dict[tuple[str, uuid.UUID | None], dict]:
+        summaries: dict[tuple[str, uuid.UUID | None], dict] = {}
+        if any(entity_type == "university" for entity_type, _ in entities):
+            result = await db.execute(select(UniversityInfo).order_by(UniversityInfo.created_at.asc()).limit(1))
             university = result.scalars().first()
-            return university.name if university else "University"
-        if not entity_id:
-            return entity_type.replace("_", " ").title()
-        config = ENTITY_MODEL_CONFIG.get(entity_type)
-        if config is None:
-            return entity_type.replace("_", " ").title()
-        model, _, _ = config
-        result = await db.execute(select(model).where(model.id == entity_id))
-        entity = result.scalar_one_or_none()
-        return getattr(entity, "name", entity_type.replace("_", " ").title()) if entity else entity_type.replace("_", " ").title()
+            summaries[("university", None)] = {
+                "id": None,
+                "name": university.name if university else "University",
+                "type": "university",
+                "subtitle": "University-level position",
+                "is_active": True,
+            }
+
+        ids_by_type: dict[str, set[uuid.UUID]] = {}
+        for entity_type, entity_id in entities:
+            if entity_type == "university" or entity_id is None:
+                continue
+            if entity_type in ENTITY_MODEL_CONFIG:
+                ids_by_type.setdefault(entity_type, set()).add(entity_id)
+
+        for entity_type, entity_ids in ids_by_type.items():
+            model, label_column, subtitle_column = ENTITY_MODEL_CONFIG[entity_type]
+            result = await db.execute(select(model).where(model.id.in_(entity_ids)))
+            for item in result.scalars().all():
+                summaries[(entity_type, item.id)] = {
+                    "id": item.id,
+                    "name": getattr(item, "name", str(item.id)),
+                    "type": entity_type,
+                    "subtitle": str(getattr(item, subtitle_column.key, "") or "") or None,
+                    "is_active": bool(getattr(item, "is_active", True)),
+                }
+
+        for entity_type, entity_id in entities:
+            summaries.setdefault(
+                (entity_type, entity_id),
+                {
+                    "id": entity_id,
+                    "name": entity_type.replace("_", " ").title(),
+                    "type": entity_type,
+                    "subtitle": None,
+                    "is_active": True,
+                },
+            )
+        return summaries
 
     @staticmethod
     async def search_entities(

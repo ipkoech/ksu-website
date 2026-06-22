@@ -102,6 +102,14 @@ class StaffEntityOption(BaseSchema):
     is_active: bool = True
 
 
+class StaffAssignmentEntitySummary(BaseSchema):
+    id: uuid.UUID | None = None
+    name: str
+    type: str
+    subtitle: str | None = None
+    is_active: bool = True
+
+
 class StaffAssignmentRead(BaseReadSchema):
     person_id: uuid.UUID
     user_id: uuid.UUID | None = None
@@ -124,6 +132,7 @@ class StaffAssignmentRead(BaseReadSchema):
     notes: str | None = None
     role_display: str | None = None
     term_display: str | None = None
+    entity: StaffAssignmentEntitySummary | None = None
     person: dict[str, Any] | None = None
     reports_to: dict[str, Any] | None = None
     subordinates: list[dict[str, Any]] | None = None

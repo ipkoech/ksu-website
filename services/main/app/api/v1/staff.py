@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Sequence
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -27,6 +29,27 @@ router = APIRouter()
 
 
 CONTROL_FIELDS = {"conflict_resolution", "conflict_end_date", "conflict_notes"}
+
+
+async def _with_assignment_entities(
+    db: DbSession,
+    assignments: StaffAssignment | Sequence[StaffAssignment],
+    data: dict[str, Any] | list[dict[str, Any]],
+    fields: FieldSelection,
+) -> dict[str, Any] | list[dict[str, Any]]:
+    if not fields.has_field("entity"):
+        return data
+    items = list(assignments) if isinstance(assignments, Sequence) else [assignments]
+    summaries = await StaffService.get_entity_summaries(
+        db,
+        [(item.entity_type, item.entity_id) for item in items],
+    )
+    if isinstance(data, list):
+        for item, row in zip(items, data, strict=False):
+            row["entity"] = summaries.get((item.entity_type, item.entity_id))
+        return data
+    data["entity"] = summaries.get((items[0].entity_type, items[0].entity_id))
+    return data
 
 
 async def _require_assignment_scope(
@@ -117,7 +140,9 @@ async def list_assignments(
         items,
         scope_getter=lambda item: (item.entity_type, item.entity_id),
     )
-    return success(data=selector.apply(items))
+    data = selector.apply(items)
+    data = await _with_assignment_entities(db, items, data, fields)
+    return success(data=data)
 
 
 @router.post("/assignments/check-conflict")
@@ -152,7 +177,9 @@ async def get_assignment(assignment_id: uuid.UUID, db: DbSession, user: CurrentU
         assignment.entity_type,
         assignment.entity_id,
     )
-    return success(data=selector.apply(assignment))
+    data = selector.apply(assignment)
+    data = await _with_assignment_entities(db, assignment, data, fields)
+    return success(data=data)
 
 
 @router.get("/assignments/{assignment_id}/reporting-chain")

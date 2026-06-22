@@ -355,6 +355,85 @@ function metaOf(record: PortalRecord, keys: string[]) {
     .join(" · ");
 }
 
+function joinMetaValues(values: Array<string | number | boolean | null | undefined>) {
+  return values
+    .filter(
+      (value) =>
+        value !== undefined && value !== null && String(value).trim() !== "",
+    )
+    .map(String)
+    .join(" · ");
+}
+
+const staffAssignmentEntityConfigs = [
+  {
+    value: "university",
+    label: "University",
+    adapter: "staffEntity" as const,
+    filters: { entity_type: "university" },
+    recordRequired: false,
+  },
+  {
+    value: "board",
+    label: "Board",
+    adapter: "staffEntity" as const,
+    filters: { entity_type: "board" },
+  },
+  {
+    value: "division",
+    label: "Division",
+    adapter: "staffEntity" as const,
+    filters: { entity_type: "division" },
+  },
+  {
+    value: "wing",
+    label: "Registrar Office / Wing",
+    adapter: "staffEntity" as const,
+    filters: { entity_type: "wing" },
+  },
+  {
+    value: "directorate",
+    label: "Directorate",
+    adapter: "staffEntity" as const,
+    filters: { entity_type: "directorate" },
+  },
+  {
+    value: "school",
+    label: "School / Faculty",
+    adapter: "staffEntity" as const,
+    filters: { entity_type: "school" },
+  },
+  {
+    value: "department",
+    label: "Department",
+    adapter: "staffEntity" as const,
+    filters: { entity_type: "department" },
+  },
+];
+
+const staffEntityTypeOptions = staffAssignmentEntityConfigs.map((config) => ({
+  label: config.label,
+  value: config.value,
+}));
+
+function staffAssignmentPersonName(record: StaffAssignment) {
+  const person = record.person as Person | undefined;
+  return (
+    person?.full_name ||
+    [person?.first_name, person?.middle_name, person?.last_name]
+      .filter(Boolean)
+      .join(" ") ||
+    "Unassigned staff"
+  );
+}
+
+function staffAssignmentTitle(record: StaffAssignment) {
+  return joinMetaValues([
+    staffAssignmentPersonName(record),
+    record.title || record.role_display || record.role,
+  ]);
+}
+
 function libraryLabelOf(record: PortalRecord) {
   const library = record.library as
     | { name?: string | null; short_name?: string | null }
@@ -757,24 +836,18 @@ const governanceResources: Record<string, PortalResourceConfig<any, any>> = {
         relation: { adapter: "person", filters: { status: "active" } },
       },
       {
-        name: "entity_type",
-        label: "Entity Type",
-        required: true,
-        type: "select",
-        options: [
-          { label: "University", value: "university" },
-          { label: "Board", value: "board" },
-          { label: "Division", value: "division" },
-        ],
-      },
-      {
-        name: "entity_id",
-        label: "Entity",
-        type: "entity",
-        relation: {
-          adapter: "staffEntity",
-          filters: { entity_type: "board" },
-          allowClear: true,
+        name: "entity",
+        label: "Office / Entity",
+        type: "entity-record",
+        entityRecord: {
+          typeName: "entity_type",
+          idName: "entity_id",
+          configs: staffAssignmentEntityConfigs,
+          description:
+            "Choose the office, directorate, school, department, board, or university-level scope for this role.",
+          typePlaceholder: "Select office type",
+          recordPlaceholder: "Select office or unit",
+          allowNone: false,
         },
       },
       { name: "role", label: "Role", required: true },
@@ -795,11 +868,7 @@ const governanceResources: Record<string, PortalResourceConfig<any, any>> = {
         name: "entity_type",
         label: "Entity Type",
         type: "select",
-        options: [
-          { label: "University", value: "university" },
-          { label: "Board", value: "board" },
-          { label: "Division", value: "division" },
-        ],
+        options: staffEntityTypeOptions,
       },
       {
         name: "status",
@@ -813,14 +882,22 @@ const governanceResources: Record<string, PortalResourceConfig<any, any>> = {
         ...filters,
         page: undefined,
         per_page: undefined,
+        fields:
+          "id,person_id,entity_type,entity_id,role,title,hierarchy_level,is_primary,is_acting,is_public,start_date,end_date,status,display_order",
+        include:
+          "person:id,title,first_name,middle_name,last_name,full_name,email,photo_url;entity",
       }),
     create: (payload) => staffApi.createAssignment(payload as any),
     update: (id, payload) => staffApi.updateAssignment(id, payload as any),
     delete: (id) => staffApi.deleteAssignment(id),
-    getRecordTitle: (record) =>
-      record.title || record.role_display || record.role,
+    getRecordTitle: (record) => staffAssignmentTitle(record),
     getRecordMeta: (record) =>
-      metaOf(record, ["entity_type", "status", "start_date"]),
+      joinMetaValues([
+        record.entity?.name,
+        record.entity?.name ? undefined : record.entity_type,
+        record.status,
+        record.start_date,
+      ]),
     getRecordWorkflowActions: () => [
       {
         label: "Activate",
@@ -837,8 +914,11 @@ const governanceResources: Record<string, PortalResourceConfig<any, any>> = {
     emptyMessage: "No governance staff assignments were returned.",
     buildPayload: (values) => ({
       person_id: values.person_id,
-      entity_type: values.entity_type || "board",
-      entity_id: values.entity_id,
+      entity_type: values.entity_type || "university",
+      entity_id:
+        values.entity_type === "university" || values.entity_id === "__university__"
+          ? null
+          : values.entity_id,
       role: values.role,
       title: values.title,
       start_date: values.start_date,
@@ -848,6 +928,15 @@ const governanceResources: Record<string, PortalResourceConfig<any, any>> = {
       is_public: values.is_public,
       hierarchy_level: values.hierarchy_level ?? 1,
     }),
+    validate: (values) => {
+      const errors: Record<string, string> = {};
+      if (!values.entity_type) {
+        errors.entity = "Choose the office or entity type for this assignment.";
+      } else if (values.entity_type !== "university" && !values.entity_id) {
+        errors.entity = "Choose the office or unit for this assignment.";
+      }
+      return errors;
+    },
     viewScopes: ["staff.view_assignments", "governance.view"],
     manageScopes: ["staff.manage_assignments", "governance.manage_boards"],
   } as PortalResourceConfig<StaffAssignment>,
