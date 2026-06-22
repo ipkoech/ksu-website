@@ -139,9 +139,124 @@ const yesNoFilters = [
   { name: "is_public", label: "Public", type: "boolean" as const },
 ];
 
-type PortalEntityScope = "school" | "department";
+type PortalEntityScope =
+  | "school"
+  | "department"
+  | "wing"
+  | "division"
+  | "university"
+  | "administration";
+
+const portalScopeConfigs = [
+  {
+    value: "university",
+    label: "University",
+    adapter: "staffEntity" as const,
+    filters: { entity_type: "university" },
+    recordRequired: false,
+  },
+  {
+    value: "division",
+    label: "DVC Division / Directorate",
+    adapter: "staffEntity" as const,
+    filters: { entity_type: "division" },
+  },
+  {
+    value: "wing",
+    label: "Registrar Office / Wing",
+    adapter: "staffEntity" as const,
+    filters: { entity_type: "wing" },
+  },
+  {
+    value: "department",
+    label: "Administrative Department",
+    adapter: "staffEntity" as const,
+    filters: { entity_type: "department" },
+  },
+];
+
+function normalizeScopePayload(
+  values: PortalPayload,
+  fallbackScopeType?: string,
+) {
+  const scopeType = fallbackScopeType ?? values.scope_type;
+  return {
+    scope_type: scopeType,
+    scope_id:
+      scopeType === "university" || values.scope_id === "__university__"
+        ? null
+        : values.scope_id,
+  };
+}
+
+function validateScopeValues(values: PortalPayload) {
+  const errors: Record<string, string> = {};
+  if (!values.scope_type) {
+    errors.scope = "Choose the office scope for this record.";
+  } else if (values.scope_type !== "university" && !values.scope_id) {
+    errors.scope = "Choose the office, division, or unit for this record.";
+  }
+  return errors;
+}
 
 function scopeEntityFields(scopeType?: PortalEntityScope): EditableField[] {
+  if (scopeType === "administration") {
+    return [
+      {
+        name: "scope",
+        label: "Office Scope",
+        type: "entity-record",
+        entityRecord: {
+          typeName: "scope_type",
+          idName: "scope_id",
+          configs: portalScopeConfigs,
+          description:
+            "Attach this record to the university, a DVC division, registrar office, or administrative department.",
+          typePlaceholder: "Select office scope",
+          recordPlaceholder: "Select office or unit",
+          allowNone: false,
+        },
+      },
+    ];
+  }
+  if (scopeType === "university") {
+    return [
+      {
+        name: "scope_type",
+        label: "Scope",
+        type: "select",
+        options: [{ label: "University", value: "university" }],
+      },
+    ];
+  }
+  if (scopeType === "division") {
+    return [
+      {
+        name: "scope_id",
+        label: "Division",
+        type: "entity",
+        required: true,
+        relation: {
+          adapter: "division",
+          filters: { is_active: true },
+        },
+      },
+    ];
+  }
+  if (scopeType === "wing") {
+    return [
+      {
+        name: "scope_id",
+        label: "Office / Wing",
+        type: "entity",
+        required: true,
+        relation: {
+          adapter: "staffEntity",
+          filters: { entity_type: "wing" },
+        },
+      },
+    ];
+  }
   if (scopeType === "school") {
     return [
       {
@@ -174,6 +289,45 @@ function scopeEntityFields(scopeType?: PortalEntityScope): EditableField[] {
 }
 
 function scopeEntityFilters(scopeType?: PortalEntityScope): EditableListFilter[] {
+  if (scopeType === "administration") {
+    return [
+      {
+        name: "scope_type",
+        label: "Office Scope",
+        type: "select",
+        options: portalScopeConfigs.map((config) => ({
+          label: config.label,
+          value: config.value,
+        })),
+      },
+    ];
+  }
+  if (scopeType === "division") {
+    return [
+      {
+        name: "scope_id",
+        label: "Division",
+        type: "entity",
+        relation: {
+          adapter: "division",
+          filters: { is_active: true },
+        },
+      },
+    ];
+  }
+  if (scopeType === "wing") {
+    return [
+      {
+        name: "scope_id",
+        label: "Office / Wing",
+        type: "entity",
+        relation: {
+          adapter: "staffEntity",
+          filters: { entity_type: "wing" },
+        },
+      },
+    ];
+  }
   if (scopeType === "school") {
     return [
       {
@@ -1028,14 +1182,93 @@ const administrationResources: Record<string, PortalResourceConfig<any, any>> = 
       "Manage public documents, service charters, policy files, and office media for administrative units.",
     backHref: "/institutional-administration",
     queryKey: ["institutional-administration", "documents"],
+    fields: documentFields("administration"),
+    listFilters: [
+      {
+        name: "document_type",
+        label: "Document Type",
+        type: "select",
+        options: [
+          { label: "Policy", value: "policy" },
+          { label: "Charter", value: "charter" },
+          { label: "Report", value: "report" },
+          { label: "Minutes", value: "minutes" },
+        ],
+      },
+      ...scopeEntityFilters("administration"),
+    ],
     list: (filters) =>
       documentsApi.listAdmin({
         ...pageParams,
         ...filters,
       }),
+    buildPayload: (values) => ({
+      ...values,
+      ...normalizeScopePayload(values),
+    }),
+    validate: validateScopeValues,
     viewScopes: ["administration.view", "office.view", "policy.view"],
     manageScopes: ["office.manage_content", "administration.manage_content", "policy.manage"],
   },
+  faqs: {
+    key: "faqs",
+    title: "Office FAQs",
+    description:
+      "Manage public frequently asked questions for registrar offices, DVC divisions, and administrative departments.",
+    backHref: "/institutional-administration",
+    queryKey: ["institutional-administration", "faqs"],
+    fields: faqFields("administration"),
+    listFilters: [
+      ...scopeEntityFilters("administration"),
+      { name: "is_public", label: "Public", type: "boolean" },
+    ],
+    list: (filters) => faqsApi.listAdmin({ ...pageParams, ...filters }),
+    create: (payload) => faqsApi.create(payload),
+    update: (id, payload) => faqsApi.update(id, payload),
+    delete: (id) => faqsApi.delete(id),
+    getRecordTitle: (record) => record.question,
+    getRecordMeta: (record) =>
+      metaOf(record, ["scope_type", "category", "status", "updated_at"]),
+    emptyMessage: "No office FAQs were returned.",
+    buildPayload: (values) => ({
+      ...values,
+      ...normalizeScopePayload(values),
+      status: values.status || "published",
+    }),
+    validate: validateScopeValues,
+    viewScopes: ["administration.view", "office.view", "content.view"],
+    manageScopes: ["office.manage_content", "administration.manage_content", "support.manage_faqs"],
+  } as PortalResourceConfig<FAQ>,
+  contacts: {
+    key: "contacts",
+    title: "Office Contacts",
+    description:
+      "Manage public contact directory entries for offices, directorates, and administrative units.",
+    backHref: "/institutional-administration",
+    queryKey: ["institutional-administration", "contacts"],
+    fields: contactFields("administration"),
+    listFilters: [
+      ...scopeEntityFilters("administration"),
+      { name: "is_public", label: "Public", type: "boolean" },
+    ],
+    list: (filters) => contactsApi.listAdmin({ ...pageParams, ...filters }),
+    create: (payload) => contactsApi.create(payload),
+    update: (id, payload) => contactsApi.update(id, payload),
+    getRecordTitle: (record) => record.name,
+    getRecordMeta: (record) =>
+      metaOf(record, ["scope_type", "contact_type", "email", "status"]),
+    emptyMessage: "No office contacts were returned.",
+    buildPayload: (values) => ({
+      ...values,
+      ...normalizeScopePayload(values),
+      phone: splitList(values.phone),
+      status: values.status || "published",
+    }),
+    validate: validateScopeValues,
+    viewScopes: ["administration.view", "office.view", "content.view"],
+    manageScopes: ["office.manage_content", "administration.manage_content", "support.manage_contacts"],
+    canDelete: false,
+  } as PortalResourceConfig<ContactDirectory>,
 };
 
 const schoolResources: Record<string, PortalResourceConfig<any, any>> = {
@@ -3695,6 +3928,18 @@ export const portalConfigs: Record<string, PortalConfig> = {
         icon: ScrollText,
         scope: ["office.manage_content", "administration.manage_content", "policy.view"],
       },
+      {
+        title: "Office FAQs",
+        href: "/institutional-administration/faqs",
+        icon: ClipboardCheck,
+        scope: ["office.manage_content", "support.manage_faqs"],
+      },
+      {
+        title: "Office Contacts",
+        href: "/institutional-administration/contacts",
+        icon: Users,
+        scope: ["office.manage_content", "support.manage_contacts"],
+      },
     ],
     dashboard: dashboard(
       "Institutional Administration",
@@ -3735,6 +3980,24 @@ export const portalConfigs: Record<string, PortalConfig> = {
           ["office.view"],
           ["institutional-administration", "documents"],
           () => documentsApi.listAdmin({ ...countParams }),
+        ),
+        stat(
+          "Office FAQs",
+          "Public help content",
+          "/institutional-administration/faqs",
+          ClipboardCheck,
+          ["office.view"],
+          ["institutional-administration", "faqs"],
+          () => faqsApi.listAdmin({ ...countParams }),
+        ),
+        stat(
+          "Office Contacts",
+          "Public contact entries",
+          "/institutional-administration/contacts",
+          Users,
+          ["office.view"],
+          ["institutional-administration", "contacts"],
+          () => contactsApi.listAdmin({ ...countParams }),
         ),
       ],
       administrationResources,
