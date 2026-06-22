@@ -80,7 +80,7 @@ function DefaultOptionRow({
         </div>
         {option.description ? <p className="truncate text-xs text-muted-foreground">{option.description}</p> : null}
       </div>
-      {selected ? <Check className="h-4 w-4 shrink-0 text-primary" /> : null}
+      {selected ? <Check className="size-4 shrink-0 text-primary" /> : null}
     </div>
   );
 }
@@ -175,7 +175,7 @@ export function EntityPicker<TFilters extends RelationshipFilters = Relationship
           <span className={cn("truncate", !selectedLabel && "text-muted-foreground")}>
             {selectedQuery.isLoading ? `Loading ${adapter.label.toLowerCase()}...` : selectedLabel || placeholder || `Select ${adapter.label.toLowerCase()}`}
           </span>
-          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <ChevronDown data-icon="inline-end" className="text-muted-foreground" />
         </Button>
         {allowClear && value ? (
           <Button
@@ -186,7 +186,7 @@ export function EntityPicker<TFilters extends RelationshipFilters = Relationship
             onClick={() => onChange("", null)}
             aria-label={`Clear ${adapter.label.toLowerCase()}`}
           >
-            <X className="h-4 w-4" />
+            <X data-icon />
           </Button>
         ) : null}
       </div>
@@ -207,7 +207,7 @@ export function EntityPicker<TFilters extends RelationshipFilters = Relationship
               <>
                 <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
                   <div className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
@@ -217,7 +217,7 @@ export function EntityPicker<TFilters extends RelationshipFilters = Relationship
                   </div>
                   {onCreate ? (
                     <Button type="button" variant="outline" onClick={onCreate}>
-                      <Plus className="h-4 w-4" />
+                      <Plus data-icon="inline-start" />
                       {createLabel ?? `Create ${adapter.label.toLowerCase()}`}
                     </Button>
                   ) : null}
@@ -226,7 +226,7 @@ export function EntityPicker<TFilters extends RelationshipFilters = Relationship
                 <div className="max-h-[420px] overflow-y-auto rounded-md border">
                   {optionsQuery.isLoading ? (
                     <div className="flex items-center justify-center gap-2 p-8 text-sm text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className="size-4 animate-spin" />
                       Loading {adapter.pluralLabel.toLowerCase()}...
                     </div>
                   ) : options.length ? (
@@ -323,7 +323,7 @@ export function MultiEntityPicker<TFilters extends RelationshipFilters = Relatio
                 className="rounded-sm text-muted-foreground hover:text-foreground disabled:pointer-events-none"
                 aria-label={`Remove ${option.label}`}
               >
-                <X className="h-3 w-3" />
+                <X className="size-3" />
               </button>
             </Badge>
           ))}

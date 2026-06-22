@@ -47,9 +47,9 @@ function MediaPreview({ media, className = "h-20 w-28" }: { media?: Media | null
       {url && isImageMedia(media) ? (
         <ImageRenderer src={url} alt={getMediaLabel(media)} className="h-full border-0" imageClassName="h-full w-full" />
       ) : isImageMedia(media) ? (
-        <ImageIcon className="h-5 w-5 text-muted-foreground" />
+        <ImageIcon className="size-5 text-muted-foreground" />
       ) : (
-        <File className="h-5 w-5 text-muted-foreground" />
+        <File className="size-5 text-muted-foreground" />
       )}
     </div>
   );
@@ -142,18 +142,18 @@ export function MediaPicker({
           {selectedQuery.isLoading ? <p className="mt-2 text-xs text-muted-foreground">Loading selected media...</p> : null}
           <div className="mt-3 flex flex-wrap gap-2">
             <Button type="button" variant="outline" size="sm" disabled={disabled} onClick={() => setOpen(true)}>
-              <Search className="h-4 w-4" />
+              <Search data-icon="inline-start" />
               Choose
             </Button>
             {allowUpload ? (
               <Button type="button" variant="outline" size="sm" disabled={disabled || uploadMedia.isPending} onClick={() => inputRef.current?.click()}>
-                {uploadMedia.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+                {uploadMedia.isPending ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <UploadCloud data-icon="inline-start" />}
                 Upload
               </Button>
             ) : null}
             {allowClear && mediaId ? (
               <Button type="button" variant="ghost" size="sm" disabled={disabled} onClick={() => onChange("", null)}>
-                <X className="h-4 w-4" />
+                <X data-icon="inline-start" />
                 Remove
               </Button>
             ) : null}
@@ -171,7 +171,7 @@ export function MediaPicker({
           <div className="space-y-4">
             <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
               <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
@@ -181,7 +181,7 @@ export function MediaPicker({
               </div>
               {allowUpload ? (
                 <Button type="button" variant="outline" disabled={disabled || uploadMedia.isPending} onClick={() => inputRef.current?.click()}>
-                  {uploadMedia.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+                  {uploadMedia.isPending ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <UploadCloud data-icon="inline-start" />}
                   {uploadLabel}
                 </Button>
               ) : null}
@@ -214,7 +214,7 @@ export function MediaPicker({
               </div>
             ) : (
               <div className="rounded-lg border border-dashed p-8 text-center">
-                <File className="mx-auto h-8 w-8 text-muted-foreground" />
+                <File className="mx-auto size-8 text-muted-foreground" />
                 <p className="mt-3 text-sm font-medium">No media found</p>
                 <p className="mt-1 text-xs text-muted-foreground">Upload a file or try another search term.</p>
               </div>
