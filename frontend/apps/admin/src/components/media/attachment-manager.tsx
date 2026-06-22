@@ -10,6 +10,7 @@ import {
   ImageRenderer,
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -106,13 +107,13 @@ function AttachmentRow({
       {url ? (
         <Button type="button" variant="outline" size="sm" asChild>
           <a href={url} target="_blank" rel="noreferrer">
-            <Link2 className="h-4 w-4" />
+            <Link2 data-icon="inline-start" />
             View
           </a>
         </Button>
       ) : null}
       <Button type="button" variant="ghost" size="icon" disabled={disabled} onClick={onRemove} aria-label="Remove attachment">
-        <Trash2 className="h-4 w-4" />
+        <Trash2 data-icon />
       </Button>
     </div>
   );
@@ -259,11 +260,13 @@ export function AttachmentManager({
                 <SelectValue placeholder="Attachment role" />
               </SelectTrigger>
               <SelectContent>
-                {roles.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
+                <SelectGroup>
+                  {roles.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
