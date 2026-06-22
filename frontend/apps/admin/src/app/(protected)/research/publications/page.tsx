@@ -63,7 +63,7 @@ export default function ResearchPublicationsPage() {
         { name: "slug", label: "Slug", placeholder: "publication-slug" },
         { name: "project_id", label: "Source Project", type: "entity", relation: { adapter: "researchProject", filters: { is_active: true } } },
         { name: "center_id", label: "Research Center", type: "entity", relation: { adapter: "researchCenter", filters: { is_active: true } } },
-        { name: "journal_id", label: "Journal ID" },
+        { name: "journal_id", label: "Journal", type: "entity", relation: { adapter: "researchJournal", filters: { is_active: true } } },
         { name: "publication_type", label: "Publication Type", type: "select", placeholder: "Select type", options: [
           { label: "Journal Article", value: "journal_article" },
           { label: "Conference Paper", value: "conference_paper" },

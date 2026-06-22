@@ -7,6 +7,11 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import { PageHeader } from "@/components/layout";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import {
+  relationshipAdapters,
+  type RelationshipAdapter,
+  type RelationshipFilters,
+} from "@/components/relationships/relationship-adapters";
 
 type ResourceApi = {
   getBySlug?: (slug: string) => Promise<{ data?: ResearchGenericRecord }>;
@@ -22,6 +27,10 @@ type FactField = {
   label: string;
   field: string;
   format?: "date" | "datetime" | "label" | "boolean";
+  relation?: {
+    adapter: keyof typeof relationshipAdapters;
+    filters?: RelationshipFilters;
+  };
 };
 
 export function ResearchAdminDetailPage({
@@ -69,11 +78,6 @@ export function ResearchAdminDetailPage({
   const recordTitle = record ? getTitle(record) : title;
   const labels = record
     ? labelFields.map((field) => formatLabel(record[field])).filter(Boolean)
-    : [];
-  const facts = record
-    ? factFields
-        .map((item) => ({ label: item.label, value: formatValue(record[item.field], item.format) }))
-        .filter((item) => item.value)
     : [];
   const publicHref = record?.slug && publicHrefBase ? `${publicHrefBase}/${record.slug}` : null;
   const resolvedEditHref = record ? editHref?.(record) : null;
@@ -139,9 +143,12 @@ export function ResearchAdminDetailPage({
                     </div>
                   ) : null}
                   <dl className="space-y-3">
-                    <Fact label="ID" value={record.id} />
-                    {facts.map((fact) => (
-                      <Fact key={fact.label} label={fact.label} value={fact.value} />
+                    {factFields.map((fact) => (
+                      <RecordFact
+                        key={fact.label}
+                        record={record}
+                        fact={fact}
+                      />
                     ))}
                   </dl>
                 </CardContent>
@@ -152,6 +159,58 @@ export function ResearchAdminDetailPage({
       </div>
     </div>
   );
+}
+
+function RecordFact({
+  record,
+  fact,
+}: {
+  record: ResearchGenericRecord;
+  fact: FactField;
+}) {
+  const rawValue = record[fact.field];
+  const formattedValue = formatValue(rawValue, fact.format);
+  if (!formattedValue) return null;
+
+  if (fact.relation && typeof rawValue === "string") {
+    return (
+      <RelationshipFact
+        label={fact.label}
+        id={rawValue}
+        adapterKey={fact.relation.adapter}
+        filters={fact.relation.filters}
+      />
+    );
+  }
+
+  return <Fact label={fact.label} value={formattedValue} />;
+}
+
+function RelationshipFact({
+  label,
+  id,
+  adapterKey,
+  filters,
+}: {
+  label: string;
+  id: string;
+  adapterKey: keyof typeof relationshipAdapters;
+  filters?: RelationshipFilters;
+}) {
+  const adapter = relationshipAdapters[adapterKey] as RelationshipAdapter;
+  const relationQuery = useQuery({
+    queryKey: ["relationship-fact", adapterKey, id, filters],
+    queryFn: () => adapter.get(id, filters),
+    enabled: Boolean(id),
+  });
+  const option = relationQuery.data;
+  const value = option
+    ? [option.label, option.description].filter(Boolean).join(" - ")
+    : relationQuery.isLoading
+      ? "Loading..."
+      : "Not found";
+
+  return <Fact label={label} value={value} />;
 }
 
 function DetailSectionCard({

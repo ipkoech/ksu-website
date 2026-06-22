@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/layout";
 import {
   Badge,
@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@ksu/ui/components";
 import { libraryServiceApi } from "@ksu/api-client";
+import { personRelationshipAdapter } from "@/components/relationships/relationship-adapters";
 
 export default function LibraryPatronsPage() {
   const loansQuery = useQuery({
@@ -34,6 +35,21 @@ export default function LibraryPatronsPage() {
       ...stats,
     }));
   }, [loansQuery.data]);
+  const patronPeopleQueries = useQueries({
+    queries: patrons.map((patron) => ({
+      queryKey: ["relationship", "person", patron.personId],
+      queryFn: () => personRelationshipAdapter.get(patron.personId),
+      enabled: Boolean(patron.personId),
+    })),
+  });
+  const patronLabels = useMemo(() => {
+    const labels = new Map<string, { label: string; description?: string }>();
+    patrons.forEach((patron, index) => {
+      const option = patronPeopleQueries[index]?.data;
+      if (option) labels.set(patron.personId, option);
+    });
+    return labels;
+  }, [patronPeopleQueries, patrons]);
 
   return (
     <div>
@@ -77,10 +93,10 @@ export default function LibraryPatronsPage() {
                   >
                     <div className="min-w-0">
                       <p className="break-words font-medium">
-                        {patron.personId}
+                        {patronLabels.get(patron.personId)?.label ?? "Loading patron..."}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Person ID from borrower records
+                        {patronLabels.get(patron.personId)?.description ?? "Linked person from borrower records"}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">

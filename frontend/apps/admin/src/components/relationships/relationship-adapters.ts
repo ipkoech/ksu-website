@@ -798,6 +798,32 @@ export const researchEndowmentRelationshipAdapter: RelationshipAdapter<{ is_acti
   },
 };
 
+export const researchJournalRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean }> = {
+  key: "research-journal",
+  entityType: "research_journal",
+  label: "Journal",
+  pluralLabel: "Journals",
+  searchPlaceholder: "Search journals",
+  emptyLabel: "No journals found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await researchServiceApi.journals.list({
+      page: 1,
+      per_page: limit,
+      search: search?.trim() || undefined,
+      is_active: filters?.is_active ?? undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption);
+  },
+  async get(id, filters) {
+    const response = await researchServiceApi.journals.list({
+      page: 1,
+      per_page: 100,
+      is_active: filters?.is_active ?? undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
+  },
+};
+
 export const researchGrantApplicationRelationshipAdapter: RelationshipAdapter<{ status?: string }> = {
   key: "research-grant-application",
   entityType: "research_grant_application",
@@ -978,6 +1004,7 @@ export const relationshipAdapters = {
   researchProject: researchProjectRelationshipAdapter,
   researchGrant: researchGrantRelationshipAdapter,
   researchEndowment: researchEndowmentRelationshipAdapter,
+  researchJournal: researchJournalRelationshipAdapter,
   researchGrantApplication: researchGrantApplicationRelationshipAdapter,
   researchMentorship: researchMentorshipRelationshipAdapter,
   researchScholarship: researchScholarshipRelationshipAdapter,

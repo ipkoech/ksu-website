@@ -17,7 +17,7 @@ export default function ResearchDonationDetailPage() {
         { label: "Amount", field: "amount" },
         { label: "Currency", field: "currency" },
         { label: "Date", field: "donation_date", format: "date" },
-        { label: "Donor ID", field: "donor_id" },
+        { label: "Donor", field: "donor_id", relation: { adapter: "researchDonor" } },
       ]}
       sections={[
         { title: "Purpose", fields: ["purpose", "notes"] },

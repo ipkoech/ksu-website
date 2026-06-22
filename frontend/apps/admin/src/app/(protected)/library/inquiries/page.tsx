@@ -59,11 +59,28 @@ export default function LibraryInquiriesPage() {
         per_page: 100,
       }),
   });
+  const branchesQuery = useQuery({
+    queryKey: ["library", "branches", "inquiry-labels"],
+    queryFn: () =>
+      libraryServiceApi.branches.list({
+        active_only: false,
+        page: 1,
+        per_page: 100,
+        fields: "id,name,short_name,slug,library_type,is_active",
+      }),
+  });
 
   const inquiries = useMemo(
     () => inquiriesQuery.data?.data ?? [],
     [inquiriesQuery.data],
   );
+  const branchById = useMemo(() => {
+    const labels = new Map<string, string>();
+    for (const branch of branchesQuery.data?.data ?? []) {
+      labels.set(branch.id, [branch.name, branch.short_name].filter(Boolean).join(" - "));
+    }
+    return labels;
+  }, [branchesQuery.data]);
   const selectedInquiry = useMemo(
     () =>
       inquiries.find((inquiry) => inquiry.id === selectedInquiryId) ??
@@ -223,7 +240,14 @@ export default function LibraryInquiriesPage() {
                     <Meta label="Sender" value={selectedInquiry.sender_name} />
                     <Meta label="Email" value={selectedInquiry.sender_email} />
                     <Meta label="Phone" value={selectedInquiry.sender_phone} />
-                    <Meta label="Library ID" value={selectedInquiry.library_id} />
+                    <Meta
+                      label="Library"
+                      value={
+                        selectedInquiry.library_id
+                          ? branchById.get(selectedInquiry.library_id) ?? "Branch not found"
+                          : "Not assigned"
+                      }
+                    />
                   </dl>
 
                   <section className="rounded-lg border p-4">
