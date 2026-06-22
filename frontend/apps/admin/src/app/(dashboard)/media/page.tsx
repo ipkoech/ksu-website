@@ -31,6 +31,7 @@ import {
   Label,
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -377,10 +378,10 @@ function FolderSummary({
             {canManage ? (
               <div className="flex justify-end gap-1 border-t px-2 py-1">
                 <Button type="button" variant="ghost" size="icon-sm" onClick={() => onEdit(folder)} aria-label="Edit folder">
-                  <Pencil className="h-4 w-4" />
+                  <Pencil data-icon />
                 </Button>
                 <Button type="button" variant="ghost" size="icon-sm" onClick={() => onDelete(folder)} aria-label="Delete folder">
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 data-icon />
                 </Button>
               </div>
             ) : null}
@@ -485,9 +486,9 @@ function DropdownActions({
     <div className="flex justify-end">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
+          <Button variant="ghost" size="icon-sm">
             <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
+            <MoreHorizontal data-icon />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -832,7 +833,7 @@ function MediaDetailSheet({
                       {url ? (
                         <div className="flex flex-wrap gap-2 pt-2">
                           <Button type="button" variant="outline" size="sm" asChild>
-                            <a href={url} target="_blank" rel="noreferrer"><Link2 className="h-4 w-4" /> View</a>
+                            <a href={url} target="_blank" rel="noreferrer"><Link2 data-icon="inline-start" /> View</a>
                           </Button>
                           <Button
                             type="button"
@@ -843,7 +844,7 @@ function MediaDetailSheet({
                               toast.success("Media URL copied");
                             }}
                           >
-                            <Copy className="h-4 w-4" />
+                            <Copy data-icon="inline-start" />
                             Copy URL
                           </Button>
                         </div>
@@ -861,11 +862,13 @@ function MediaDetailSheet({
                       <Select value={form.media_type} onValueChange={(value) => setForm((current) => ({ ...current, media_type: value }))}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="image">Image</SelectItem>
-                          <SelectItem value="document">Document</SelectItem>
-                          <SelectItem value="video">Video</SelectItem>
-                          <SelectItem value="audio">Audio</SelectItem>
-                          <SelectItem value="file">File</SelectItem>
+                          <SelectGroup>
+                            <SelectItem value="image">Image</SelectItem>
+                            <SelectItem value="document">Document</SelectItem>
+                            <SelectItem value="video">Video</SelectItem>
+                            <SelectItem value="audio">Audio</SelectItem>
+                            <SelectItem value="file">File</SelectItem>
+                          </SelectGroup>
                         </SelectContent>
                       </Select>
                     </div>
@@ -959,7 +962,7 @@ function MediaDetailSheet({
                         placeholder="Optional folder"
                       />
                       <Button type="button" disabled={createLink.isPending || !canManage} onClick={() => void addLink()}>
-                        <Plus className="h-4 w-4" />
+                        <Plus data-icon="inline-start" />
                         Link media
                       </Button>
                     </CardContent>
@@ -976,7 +979,7 @@ function MediaDetailSheet({
                         </div>
                         {canManage ? (
                           <Button type="button" variant="ghost" size="icon" onClick={() => setRemoveLink(link)} aria-label="Remove media link">
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 data-icon />
                           </Button>
                         ) : null}
                       </div>
@@ -1080,13 +1083,13 @@ export default function MediaPage() {
           <div className="flex flex-wrap gap-2">
             {canManageMedia ? (
               <Button type="button" variant="outline" onClick={() => setFolderDialog({ mode: "create" })}>
-                <Folder className="h-4 w-4" />
+                <Folder data-icon="inline-start" />
                 New Folder
               </Button>
             ) : null}
             {canCreate("media") ? (
               <Button type="button" onClick={() => setUploadOpen(true)}>
-                <UploadCloud className="h-4 w-4" />
+                <UploadCloud data-icon="inline-start" />
                 Upload
               </Button>
             ) : null}
@@ -1115,12 +1118,14 @@ export default function MediaPage() {
               <Select value={mediaType} onValueChange={(value) => setMediaType(value as MediaFilter)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All types</SelectItem>
-                  <SelectItem value="image">Images</SelectItem>
-                  <SelectItem value="document">Documents</SelectItem>
-                  <SelectItem value="video">Videos</SelectItem>
-                  <SelectItem value="audio">Audio</SelectItem>
-                  <SelectItem value="file">Files</SelectItem>
+                  <SelectGroup>
+                    <SelectItem value="all">All types</SelectItem>
+                    <SelectItem value="image">Images</SelectItem>
+                    <SelectItem value="document">Documents</SelectItem>
+                    <SelectItem value="video">Videos</SelectItem>
+                    <SelectItem value="audio">Audio</SelectItem>
+                    <SelectItem value="file">Files</SelectItem>
+                  </SelectGroup>
                 </SelectContent>
               </Select>
               <MediaFolderPicker
