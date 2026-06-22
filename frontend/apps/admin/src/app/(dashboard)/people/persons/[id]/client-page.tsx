@@ -703,11 +703,11 @@ export default function PersonFormPage() {
             </div>
             <div className="flex flex-wrap gap-2">
                 <Button type="button" variant="outline" size="sm" disabled={!canWriteProfile} onClick={() => openAssignmentEditor("edit", assignment)}>
-                    <Edit className="mr-2 h-4 w-4" />
+                    <Edit data-icon="inline-start" />
                     Edit
                 </Button>
                 <Button type="button" variant="outline" size="sm" disabled={!canWriteProfile} onClick={() => openAssignmentEditor("reassign", assignment)}>
-                    <RefreshCw className="mr-2 h-4 w-4" />
+                    <RefreshCw data-icon="inline-start" />
                     Reassign
                 </Button>
             </div>
@@ -731,7 +731,7 @@ export default function PersonFormPage() {
         <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" size="sm" disabled={!canWriteProfile || isPending} asChild>
                 <label>
-                    <Camera className="mr-2 h-4 w-4" />
+                    <Camera data-icon="inline-start" />
                     Upload image
                     <input
                         type="file"
@@ -767,7 +767,7 @@ export default function PersonFormPage() {
                         },
                     })}
                 >
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    <Trash2 data-icon="inline-start" />
                     Remove
                 </Button>
             ) : null}
@@ -1238,7 +1238,7 @@ export default function PersonFormPage() {
                                                 ) : null}
                                             </div>
                         <Button type="button" size="sm" disabled={!canWriteProfile} onClick={() => openAssignmentEditor("create")}>
-                                                <Plus className="mr-2 h-4 w-4" />
+                                                <Plus data-icon="inline-start" />
                                                 Add
                                             </Button>
                                         </div>
@@ -1297,7 +1297,7 @@ export default function PersonFormPage() {
                                         </div>
                                         {!isNew ? (
                                             <Button type="button" disabled={!canWriteProfile} onClick={() => openAssignmentEditor("create")}>
-                                                <Plus className="mr-2 h-4 w-4" />
+                                                <Plus data-icon="inline-start" />
                                                 Add assignment
                                             </Button>
                                         ) : null}

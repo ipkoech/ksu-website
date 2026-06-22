@@ -56,11 +56,11 @@ export default function PersonAssignmentsPage() {
       </div>
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="outline" size="sm" onClick={() => openEditor("edit", assignment)}>
-          <Edit className="mr-2 h-4 w-4" />
+          <Edit data-icon="inline-start" />
           Edit
         </Button>
         <Button type="button" variant="outline" size="sm" onClick={() => openEditor("reassign", assignment)}>
-          <RefreshCw className="mr-2 h-4 w-4" />
+          <RefreshCw data-icon="inline-start" />
           Reassign
         </Button>
       </div>
@@ -75,7 +75,7 @@ export default function PersonAssignmentsPage() {
         backHref={`/people/persons/_static?id=${encodeURIComponent(personId)}`}
         actions={
           <Button type="button" onClick={() => openEditor("create")}>
-            <UserPlus className="mr-2 h-4 w-4" />
+            <UserPlus data-icon="inline-start" />
             Assign staff
           </Button>
         }

@@ -21,7 +21,7 @@ export default function NewAssignmentPage() {
       <Card>
         <CardContent className="flex min-h-64 items-center justify-center">
           <Button type="button" onClick={() => setOpen(true)}>
-            <UserPlus className="mr-2 h-4 w-4" />
+            <UserPlus data-icon="inline-start" />
             Open assignment editor
           </Button>
         </CardContent>

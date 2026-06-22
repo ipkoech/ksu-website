@@ -61,7 +61,7 @@ export default function StaffAssignmentDetailPage() {
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => { setEditorMode("edit"); setEditorOpen(true); }}>Edit</Button>
             <Button variant="outline" onClick={() => { setEditorMode("reassign"); setEditorOpen(true); }}>
-              <RefreshCw className="mr-2 h-4 w-4" />
+              <RefreshCw data-icon="inline-start" />
               Reassign
             </Button>
           </div>
