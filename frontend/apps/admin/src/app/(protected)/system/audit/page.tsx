@@ -1,8 +1,24 @@
 "use client";
 
 import * as React from "react";
-import { Button } from "@ksu/ui/components";
-import { DataTable, PageHeader, Badge } from "@ksu/ui/components";
+import {
+  Badge,
+  Button,
+  DataTable,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  PageHeader,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@ksu/ui/components";
 import { SlidersHorizontal, X, ChevronRight, Clock, User, Globe, Terminal, AlertCircle } from "lucide-react";
 import { useAuditLogs } from "@ksu/api-client/hooks/admin";
 import type { AuditLog } from "@ksu/api-client/types/admin";
@@ -19,6 +35,12 @@ const RESOURCE_OPTIONS = [
   { value: "permissions", label: "Permissions" },
   { value: "settings", label: "Settings" },
   { value: "media", label: "Media" },
+];
+
+const STATUS_OPTIONS = [
+  { value: "success", label: "Success" },
+  { value: "error", label: "Error" },
+  { value: "warning", label: "Warning" },
 ];
 
 export default function AuditPage() {
@@ -70,7 +92,7 @@ export default function AuditPage() {
                 onClick={() => setFiltersOpen(true)}
                 className="gap-2"
               >
-                <SlidersHorizontal className="h-4 w-4" />
+                <SlidersHorizontal data-icon="inline-start" />
                 Filters
                 {activeFiltersCount > 0 && (
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
@@ -149,7 +171,7 @@ export default function AuditPage() {
               <span className="font-semibold">Audit Details</span>
             </div>
             <Button variant="ghost" size="icon" onClick={() => setSelectedLog(null)}>
-              <X className="h-4 w-4" />
+              <X data-icon />
             </Button>
           </div>
           <div className="flex-1 overflow-auto p-4">
@@ -232,64 +254,83 @@ export default function AuditPage() {
         </div>
       </div>
 
-      {/* Filters Dialog */}
-      {filtersOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80">
-          <div className="w-full max-w-md rounded-lg border bg-background p-6 shadow-lg">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Filters</h2>
-              <Button variant="ghost" size="icon" onClick={() => setFiltersOpen(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="space-y-4">
+      <Dialog open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Filters</DialogTitle>
+            <DialogDescription>Limit audit logs by service, resource, or request status.</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Service</label>
-                <select
-                  className="w-full rounded-md border p-2"
-                  value={serviceName ?? ""}
-                  onChange={(e) => setServiceName(e.target.value || null)}
+                <Select
+                  value={serviceName ?? "all"}
+                  onValueChange={(value) => setServiceName(value === "all" ? null : value)}
                 >
-                  <option value="">All services</option>
-                  {SERVICE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All services" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="all">All services</SelectItem>
+                      {SERVICE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Resource Type</label>
-                <select
-                  className="w-full rounded-md border p-2"
-                  value={resourceType ?? ""}
-                  onChange={(e) => setResourceType(e.target.value || null)}
+                <Select
+                  value={resourceType ?? "all"}
+                  onValueChange={(value) => setResourceType(value === "all" ? null : value)}
                 >
-                  <option value="">All resources</option>
-                  {RESOURCE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All resources" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="all">All resources</SelectItem>
+                      {RESOURCE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Status</label>
-                <select
-                  className="w-full rounded-md border p-2"
-                  value={status ?? ""}
-                  onChange={(e) => setStatus(e.target.value || null)}
+                <Select
+                  value={status ?? "all"}
+                  onValueChange={(value) => setStatus(value === "all" ? null : value)}
                 >
-                  <option value="">All statuses</option>
-                  <option value="success">Success</option>
-                  <option value="error">Error</option>
-                  <option value="warning">Warning</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="all">All statuses</SelectItem>
+                      {STATUS_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-            <div className="mt-6 flex justify-end gap-2">
-              <Button variant="outline" onClick={clearFilters}>Clear</Button>
-              <Button onClick={() => setFiltersOpen(false)}>Apply</Button>
-            </div>
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button variant="outline" onClick={clearFilters}>Clear</Button>
+            <Button onClick={() => setFiltersOpen(false)}>Apply</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

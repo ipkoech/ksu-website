@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout";
+import { LibraryBranchPicker } from "@/components/relationships/relationship-pickers";
 import {
   Badge,
   Button,
@@ -13,6 +14,12 @@ import {
   CardTitle,
   ConfirmDialog,
   Input,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Switch,
   RichTextEditor,
   richTextToPlainText,
@@ -37,6 +44,24 @@ const defaults = {
   is_active: true,
 };
 
+const resourceTypeOptions = [
+  { value: "book", label: "Book" },
+  { value: "journal", label: "Journal" },
+  { value: "thesis", label: "Thesis" },
+  { value: "ebook", label: "E-book" },
+  { value: "database", label: "Database" },
+  { value: "video", label: "Video" },
+  { value: "audio", label: "Audio" },
+  { value: "other", label: "Other" },
+];
+
+const statusOptions = [
+  { value: "available", label: "Available" },
+  { value: "unavailable", label: "Unavailable" },
+  { value: "archived", label: "Archived" },
+  { value: "maintenance", label: "Maintenance" },
+];
+
 export default function LibraryCatalogPage() {
   const queryClient = useQueryClient();
   const formId = useId();
@@ -51,20 +76,20 @@ export default function LibraryCatalogPage() {
   const [values, setValues] = useState<Record<string, any>>(defaults);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const branchesQuery = useQuery({
-    queryKey: ["library", "branches", "catalog"],
+  const firstBranchQuery = useQuery({
+    queryKey: ["library", "branches", "catalog", "first"],
     queryFn: () =>
       libraryServiceApi.branches.list({
         active_only: false,
         page: 1,
-        per_page: 100,
+        per_page: 1,
       }),
   });
-  const branches = useMemo(() => branchesQuery.data?.data ?? [], [branchesQuery.data]);
+  const firstBranch = firstBranchQuery.data?.data?.[0];
 
   useEffect(() => {
-    if (!libraryId && branches[0]?.id) setLibraryId(branches[0].id);
-  }, [branches, libraryId]);
+    if (!libraryId && firstBranch?.id) setLibraryId(firstBranch.id);
+  }, [firstBranch?.id, libraryId]);
 
   const resourcesQuery = useQuery({
     queryKey: ["library", "resources", libraryId],
@@ -224,29 +249,16 @@ export default function LibraryCatalogPage() {
             <CardTitle>Resources</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label
-                htmlFor={`${formId}-branch`}
-                className="text-sm font-medium"
-              >
-                Library branch
-              </label>
-              <select
-                id={`${formId}-branch`}
-                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                value={libraryId}
-                onChange={(event) => setLibraryId(event.target.value)}
-              >
-                <option value="">Select branch</option>
-                {branches.map((branch) => (
-                  <option key={branch.id} value={branch.id}>
-                    {branch.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <LibraryBranchPicker
+              label="Library branch"
+              value={libraryId}
+              onChange={(value) => setLibraryId(value)}
+              filters={{ active_only: false }}
+              placeholder="Select branch"
+              required
+            />
 
-            {branchesQuery.isError ? (
+            {firstBranchQuery.isError ? (
               <p
                 role="status"
                 className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive"
@@ -316,7 +328,7 @@ export default function LibraryCatalogPage() {
                             size="sm"
                             onClick={() => edit(resource)}
                           >
-                            <Edit className="mr-2 h-4 w-4" />
+                            <Edit data-icon="inline-start" />
                             Edit
                           </Button>
                           <Button
@@ -325,7 +337,7 @@ export default function LibraryCatalogPage() {
                             className="text-destructive"
                             onClick={() => setDeleteTarget(resource)}
                           >
-                            <Trash2 className="mr-2 h-4 w-4" />
+                            <Trash2 data-icon="inline-start" />
                             Delete
                           </Button>
                         </>
@@ -351,8 +363,6 @@ export default function LibraryCatalogPage() {
               ["authors", "Authors"],
               ["publisher", "Publisher"],
               ["publication_year", "Publication Year"],
-              ["resource_type", "Resource Type"],
-              ["status", "Status"],
               ["total_copies", "Total Copies"],
               ["available_copies", "Available Copies"],
             ].map(([name, label]) => (
@@ -407,6 +417,54 @@ export default function LibraryCatalogPage() {
                 ) : null}
               </div>
             ))}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label htmlFor={`${formId}-resource_type`} className="text-sm font-medium">
+                  Resource Type
+                </label>
+                <Select
+                  value={values.resource_type ?? "book"}
+                  onValueChange={(value) => setValues((current) => ({ ...current, resource_type: value }))}
+                  disabled={!canManageResources}
+                >
+                  <SelectTrigger id={`${formId}-resource_type`}>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {resourceTypeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label htmlFor={`${formId}-status`} className="text-sm font-medium">
+                  Status
+                </label>
+                <Select
+                  value={values.status ?? "available"}
+                  onValueChange={(value) => setValues((current) => ({ ...current, status: value }))}
+                  disabled={!canManageResources}
+                >
+                  <SelectTrigger id={`${formId}-status`}>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {statusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div className="space-y-2">
               <label
                 id={`${formId}-description-label`}

@@ -5,7 +5,28 @@ import Link from "next/link";
 import { useAuth, usePermissions } from "@ksu/auth";
 import { useCreateNotificationTemplate, useDeleteNotificationTemplate, useNotificationTemplates, useUpdateNotificationTemplate } from "@ksu/api-client/hooks/admin";
 import type { NotificationTemplate } from "@ksu/api-client/types/admin";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Checkbox, DeleteConfirmDialog, FormDialog, Input, Label, PageHeader, RichTextEditor, richTextToPlainText } from "@ksu/ui/components";
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Checkbox,
+  DeleteConfirmDialog,
+  FormDialog,
+  Input,
+  Label,
+  PageHeader,
+  RichTextEditor,
+  richTextToPlainText,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@ksu/ui/components";
 import { canManageNotifications, canSendNotifications, canViewNotifications } from "../_lib/access";
 
 const emptyTemplateForm = {
@@ -18,6 +39,13 @@ const emptyTemplateForm = {
   channel: "email",
   is_active: true,
 };
+
+const channelOptions = [
+  { value: "email", label: "Email" },
+  { value: "in_app", label: "In app" },
+  { value: "sms", label: "SMS" },
+  { value: "push", label: "Push" },
+];
 
 function codeFromName(name: string) {
   return name
@@ -167,16 +195,23 @@ export default function NotificationsPage() {
         </div>
         <div className="space-y-2">
           <Label>Channel</Label>
-          <select
-            className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+          <Select
             value={form.channel}
-            onChange={(event) => setForm((current) => ({ ...current, channel: event.target.value }))}
+            onValueChange={(value) => setForm((current) => ({ ...current, channel: value }))}
           >
-            <option value="email">Email</option>
-            <option value="in_app">In app</option>
-            <option value="sms">SMS</option>
-            <option value="push">Push</option>
-          </select>
+            <SelectTrigger>
+              <SelectValue placeholder="Select channel" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {channelOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
         <label className="flex items-center gap-3 text-sm">
           <Checkbox checked={form.is_active} onCheckedChange={(checked) => setForm((current) => ({ ...current, is_active: Boolean(checked) }))} />
