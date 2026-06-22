@@ -71,7 +71,7 @@ export function ForgotPasswordForm() {
         </div>
         <Button asChild variant="outline" className="w-full">
           <Link href="/login">
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <ArrowLeft data-icon="inline-start" />
             Back to login
           </Link>
         </Button>

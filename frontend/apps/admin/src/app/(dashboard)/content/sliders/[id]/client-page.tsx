@@ -252,15 +252,15 @@ function SlideRow({
       </div>
       <div className="flex gap-2">
         <Button type="button" variant="outline" size="sm" onClick={onView}>
-          <Eye className="mr-2 h-4 w-4" />
+          <Eye data-icon="inline-start" />
           Details
         </Button>
         <Button type="button" variant="outline" size="sm" onClick={onEdit}>
-          <Edit className="mr-2 h-4 w-4" />
+          <Edit data-icon="inline-start" />
           Edit
         </Button>
         <Button type="button" variant="outline" size="sm" className="text-destructive" onClick={onDelete}>
-          <Trash2 className="mr-2 h-4 w-4" />
+          <Trash2 data-icon="inline-start" />
           Delete
         </Button>
       </div>
