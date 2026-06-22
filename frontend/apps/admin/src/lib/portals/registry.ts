@@ -2254,6 +2254,11 @@ async function firstDivisionId() {
   return divisions.data?.[0]?.id;
 }
 
+const libraryBranchPortalScope = {
+  idField: "library_id",
+  allowedScopeTypes: ["library"],
+};
+
 const researchResources: Record<string, PortalResourceConfig<any, any>> = {
   projects: {
     key: "projects",
@@ -2795,6 +2800,7 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
     description: "Review branch operating hours from the library service.",
     backHref: "/library",
     queryKey: ["library-portal", "branch-hours"],
+    portalScope: libraryBranchPortalScope,
     fields: [
       { name: "day_type", label: "Day Type" },
       { name: "opens_at", label: "Opens At" },
@@ -2831,6 +2837,7 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
     description: "Review external links configured for a library branch.",
     backHref: "/library",
     queryKey: ["library-portal", "branch-links"],
+    portalScope: libraryBranchPortalScope,
     fields: [
       { name: "label", label: "Label" },
       { name: "url", label: "URL", type: "url" },
@@ -2869,6 +2876,7 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
     description: "Review files attached to a library branch.",
     backHref: "/library",
     queryKey: ["library-portal", "branch-files"],
+    portalScope: libraryBranchPortalScope,
     fields: [
       { name: "title", label: "Title" },
       { name: "description", label: "Description", type: "textarea" },
@@ -2946,6 +2954,7 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
       "Manage branch-scoped books, journals, and digital catalog resources.",
     backHref: "/library",
     queryKey: ["library-portal", "catalog"],
+    portalScope: libraryBranchPortalScope,
     fields: [
       {
         name: "library_id",
@@ -3237,6 +3246,7 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
     description: "Manage branch-specific library charges and rates.",
     backHref: "/library",
     queryKey: ["library-portal", "charges"],
+    portalScope: libraryBranchPortalScope,
     fields: [
       {
         name: "library_id",
@@ -3323,6 +3333,7 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
       libraryServiceApi.regulations,
       ["library.manage_regulations"],
     ),
+    portalScope: libraryBranchPortalScope,
     fields: [
       {
         name: "library_id",
@@ -3356,6 +3367,7 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
       libraryServiceApi.inquiries,
       ["library.manage_services"],
     ),
+    portalScope: libraryBranchPortalScope,
     fields: [
       {
         name: "library_id",
@@ -3536,6 +3548,7 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
       libraryServiceApi.statistics,
       ["library.manage_statistics"],
     ),
+    portalScope: libraryBranchPortalScope,
     list: async (filters) => {
       const libraryId = filters?.library_id || (await firstLibraryId());
       if (!libraryId) return { data: [] };
@@ -3554,6 +3567,7 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
       libraryServiceApi.staff as any,
       ["library.manage_staff"],
     ),
+    portalScope: libraryBranchPortalScope,
     list: async (filters) => {
       const libraryId = filters?.library_id || (await firstLibraryId());
       if (!libraryId) return { data: [] };
@@ -3619,6 +3633,7 @@ function libraryGenericResource<
     description,
     backHref: "/library",
     queryKey: ["library-portal", key],
+    portalScope: libraryBranchPortalScope,
     fields: [
       {
         name: "library_id",
