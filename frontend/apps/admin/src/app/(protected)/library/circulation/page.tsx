@@ -54,9 +54,9 @@ export default function LibraryCirculationPage() {
       update={(id, payload) => libraryServiceApi.loans.update(id, payload)}
       canCreate={canManage}
       canEdit={canManage}
-      getRecordTitle={(record) => record.resource_id}
+      getRecordTitle={(record) => `Loan ${record.status ?? "record"}`}
       getRecordMeta={(record) =>
-        [record.borrower_person_id, record.status, record.due_at]
+        [record.borrowed_at ? `Borrowed ${formatDateTime(record.borrowed_at)}` : null, record.due_at ? `Due ${formatDateTime(record.due_at)}` : null]
           .filter(Boolean)
           .join(" · ")
       }
@@ -94,4 +94,16 @@ export default function LibraryCirculationPage() {
       })}
     />
   );
+}
+
+function formatDateTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
 }

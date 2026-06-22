@@ -354,6 +354,19 @@ function metaOf(record: PortalRecord, keys: string[]) {
     .join(" · ");
 }
 
+function formatDateTime(value: unknown) {
+  if (!value) return "";
+  const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
 function normalizeText(value: unknown) {
   return typeof value === "string" && value.trim() === "" ? null : value;
 }
@@ -2625,9 +2638,14 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
       libraryServiceApi.loans.list({ ...pageParams, ...filters }),
     create: (payload) => libraryServiceApi.loans.create(payload as any),
     update: (id, payload) => libraryServiceApi.loans.update(id, payload as any),
-    getRecordTitle: (record) => `Loan ${record.id}`,
+    getRecordTitle: (record) => `Loan ${record.status ?? "record"}`,
     getRecordMeta: (record) =>
-      metaOf(record, ["status", "borrowed_at", "due_at"]),
+      [
+        record.borrowed_at ? `Borrowed ${formatDateTime(record.borrowed_at)}` : null,
+        record.due_at ? `Due ${formatDateTime(record.due_at)}` : null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
     getRecordWorkflowActions: () => [
       {
         label: "Renew",
@@ -2720,9 +2738,14 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
     update: (id, payload) =>
       libraryServiceApi.reservations.update(id, payload as any),
     delete: (id) => libraryServiceApi.reservations.cancel(id),
-    getRecordTitle: (record) => `Reservation ${record.id}`,
+    getRecordTitle: (record) => `Reservation ${record.status ?? "record"}`,
     getRecordMeta: (record) =>
-      metaOf(record, ["status", "queue_position", "expires_at"]),
+      [
+        record.queue_position ? `Queue ${record.queue_position}` : null,
+        record.expires_at ? `Expires ${formatDateTime(record.expires_at)}` : null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
     getRecordWorkflowActions: () => [
       {
         label: "Mark Ready",
