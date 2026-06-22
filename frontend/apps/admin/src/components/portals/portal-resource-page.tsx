@@ -32,17 +32,32 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
   const portalAccessQuery = usePortalAccess();
   const resource = getPortalResource(portalKey, resourceKey);
   const [selectedScopeKey, setSelectedScopeKey] = useState<string>("");
+  const portalAccess = useMemo(
+    () => portalAccessQuery.data?.data.portals ?? [],
+    [portalAccessQuery.data?.data.portals],
+  );
 
   const lockedAccessOptions = useMemo(() => {
     const binding = resource?.portalScope;
     if (!binding) return [];
 
-    return (portalAccessQuery.data?.data.portals ?? []).filter((access) => {
+    return portalAccess.filter((access) => {
       if (access.key !== portalKey || !access.locked_scope) return false;
       if (access.scope_type === "global" || access.scope_type === "profile") return false;
       return !binding.allowedScopeTypes || binding.allowedScopeTypes.includes(access.scope_type);
     });
-  }, [portalAccessQuery.data?.data.portals, portalKey, resource?.portalScope]);
+  }, [portalAccess, portalKey, resource?.portalScope]);
+
+  const hasGlobalPortalAccess = useMemo(
+    () =>
+      portalAccess.some(
+        (access) =>
+          access.key === portalKey &&
+          !access.locked_scope &&
+          access.scope_type === "global",
+      ),
+    [portalAccess, portalKey],
+  );
 
   const selectedLockedAccess = useMemo(() => {
     if (lockedAccessOptions.length === 0) return null;
@@ -128,7 +143,7 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
     );
   }
 
-  if (resource.portalScope && !selectedLockedAccess) {
+  if (resource.portalScope && !selectedLockedAccess && !hasGlobalPortalAccess) {
     return (
       <div>
         <PageHeader title={resource.title} description={resource.description} backHref={resource.backHref} />
@@ -221,6 +236,8 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
           />
         ) : selectedLockedAccess ? (
           <Badge variant="secondary">{selectedLockedAccess.scope_label}</Badge>
+        ) : resource.portalScope && hasGlobalPortalAccess ? (
+          <Badge variant="secondary">All scopes</Badge>
         ) : null
       }
     />
