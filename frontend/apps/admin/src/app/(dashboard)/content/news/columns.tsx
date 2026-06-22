@@ -4,6 +4,7 @@ import { Button } from "@ksu/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
@@ -42,20 +43,26 @@ export const getNewsColumns = ({ canEdit, canDelete, onDelete }: GetNewsColumnsP
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
+                        <Button variant="ghost" size="icon-sm">
                             <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
+                            <MoreHorizontal data-icon />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         {canEdit && (
-                            <DropdownMenuItem onClick={() => window.location.href = `/content/news/${news.id}`}>
-                                Edit
-                            </DropdownMenuItem>
+                            <DropdownMenuGroup>
+                                <DropdownMenuItem onClick={() => window.location.href = `/content/news/${news.id}`}>
+                                    Edit
+                                </DropdownMenuItem>
+                            </DropdownMenuGroup>
                         )}
                         {canEdit && canDelete ? <DropdownMenuSeparator /> : null}
-                        {canDelete && <DropdownMenuItem className="text-destructive" onClick={() => onDelete(news.id)}>Delete</DropdownMenuItem>}
+                        {canDelete ? (
+                            <DropdownMenuGroup>
+                                <DropdownMenuItem className="text-destructive" onClick={() => onDelete(news.id)}>Delete</DropdownMenuItem>
+                            </DropdownMenuGroup>
+                        ) : null}
                     </DropdownMenuContent>
                 </DropdownMenu>
             );
