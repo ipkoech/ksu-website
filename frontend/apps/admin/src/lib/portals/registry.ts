@@ -764,7 +764,7 @@ const governanceResources: Record<string, PortalResourceConfig<any, any>> = {
       },
     ],
     list: (filters) =>
-      documentsApi.list({
+      documentsApi.listAdmin({
         ...pageParams,
         scope_type: "governance",
         ...filters,
@@ -1273,7 +1273,7 @@ const departmentalResources: Record<string, PortalResourceConfig<any, any>> = {
     backHref: "/departments",
     queryKey: ["departments", "resources"],
     list: (filters) =>
-      documentsApi.list({
+      documentsApi.listAdmin({
         ...pageParams,
         scope_type: "department",
         ...filters,
@@ -3476,7 +3476,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
           ScrollText,
           ["policy.view"],
           ["governance", "documents"],
-          () => documentsApi.list({ ...countParams, scope_type: "governance" }),
+          () => documentsApi.listAdmin({ ...countParams, scope_type: "governance" }),
         ),
         stat(
           "Assignments",
@@ -3724,7 +3724,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
           CalendarDays,
           ["content.view"],
           ["departments", "events"],
-          () => eventsApi.list({ ...countParams, scope_type: "department" }),
+          () => eventsApi.listAdmin({ ...countParams, scope_type: "department" }),
         ),
       ],
       departmentalResources,
