@@ -4,15 +4,18 @@ from __future__ import annotations
 
 import uuid
 from datetime import date
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, foreign, mapped_column, relationship
 
 from ksu_common.models.base import CoverImageRefMixin, PhotoRefMixin, SEOMixin
 
 from .base import Base
+
+if TYPE_CHECKING:
+    from .core import ResearchCenter, ResearchProject
 
 
 class Publication(Base, SEOMixin, CoverImageRefMixin):
@@ -107,6 +110,16 @@ class Publication(Base, SEOMixin, CoverImageRefMixin):
     display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
 
     # Relationships
+    project: Mapped[Optional["ResearchProject"]] = relationship(
+        "ResearchProject",
+        primaryjoin="Publication.project_id == foreign(ResearchProject.id)",
+        viewonly=True,
+    )
+    center: Mapped[Optional["ResearchCenter"]] = relationship(
+        "ResearchCenter",
+        primaryjoin="Publication.center_id == foreign(ResearchCenter.id)",
+        viewonly=True,
+    )
     journal: Mapped[Optional["Journal"]] = relationship("Journal", back_populates="publications")
     authors: Mapped[list["PublicationAuthor"]] = relationship(
         "PublicationAuthor",

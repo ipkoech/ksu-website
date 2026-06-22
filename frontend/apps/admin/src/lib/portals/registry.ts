@@ -3446,6 +3446,8 @@ function publicationResource(
     list: (filters) =>
       researchServiceApi.publications.list({
         ...pageParams,
+        fields: "id,title,slug,publication_type,project_id,center_id,journal_id,journal_name,year,status,is_open_access,is_featured,is_active",
+        include: "project:id,title,code;center:id,name,code;journal:id,name,abbreviation",
         ...defaultFilters,
         ...filters,
       }),
@@ -3455,7 +3457,17 @@ function publicationResource(
     delete: (id) => researchServiceApi.publications.delete(id),
     getRecordTitle: (record) => record.title,
     getRecordMeta: (record) =>
-      metaOf(record, ["publication_type", "journal_name", "status", "year"]),
+      [
+        record.publication_type,
+        (record.project as { title?: string } | undefined)?.title,
+        (record.center as { name?: string } | undefined)?.name,
+        (record.journal as { name?: string } | undefined)?.name ??
+          record.journal_name,
+        record.status,
+        record.year,
+      ]
+        .filter(Boolean)
+        .join(" · "),
     getRecordWorkflowActions: (record) => {
       const actions = [];
       if (["draft", "returned_for_correction"].includes(record.status ?? "")) {

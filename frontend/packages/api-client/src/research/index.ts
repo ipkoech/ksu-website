@@ -93,6 +93,9 @@ export interface ResearchPublication {
   project_id?: string | null;
   center_id?: string | null;
   journal_id?: string | null;
+  project?: ResearchProject | null;
+  center?: ResearchGenericRecord | null;
+  journal?: ResearchGenericRecord | null;
   abstract?: string | null;
   journal_name?: string | null;
   publisher?: string | null;

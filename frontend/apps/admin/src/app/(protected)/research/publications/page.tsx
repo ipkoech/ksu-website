@@ -114,7 +114,15 @@ export default function ResearchPublicationsPage() {
         { name: "is_active", label: "Active", type: "boolean" },
         { name: "is_featured", label: "Featured", type: "boolean" },
       ]}
-      list={(filters) => researchServiceApi.publications.list({ page: 1, per_page: 50, ...filters })}
+      list={(filters) =>
+        researchServiceApi.publications.list({
+          page: 1,
+          per_page: 50,
+          fields: "id,title,slug,publication_type,project_id,center_id,journal_id,journal_name,year,status,is_open_access,is_featured,is_active",
+          include: "project:id,title,code;center:id,name,code;journal:id,name,abbreviation",
+          ...filters,
+        })
+      }
       create={(payload) => researchServiceApi.publications.create(payload)}
       update={(id, payload) => researchServiceApi.publications.update(id, payload)}
       delete={(id) => researchServiceApi.publications.delete(id)}
@@ -122,7 +130,17 @@ export default function ResearchPublicationsPage() {
       canEdit={canManage}
       canDelete={canManage}
       getRecordTitle={(record) => record.title}
-      getRecordMeta={(record) => [record.publication_type, record.journal_name, record.year].filter(Boolean).join(" · ")}
+      getRecordMeta={(record) =>
+        [
+          record.publication_type,
+          record.project?.title,
+          record.center?.name,
+          record.journal?.name ?? record.journal_name,
+          record.year,
+        ]
+          .filter(Boolean)
+          .join(" · ")
+      }
       getRecordDetailHref={(record) => record.slug ? `/research/publications/${record.slug}` : null}
       emptyMessage="No publications were returned by the research service."
       buildPayload={(values) => ({
