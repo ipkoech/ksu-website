@@ -13,6 +13,7 @@ import {
   AvatarImage,
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -814,20 +815,24 @@ export function Sidebar({
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/select-service">Switch Service</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/settings/profile">Profile Settings</Link>
-              </DropdownMenuItem>
+              <DropdownMenuGroup>
+                <DropdownMenuItem asChild>
+                  <Link href="/select-service">Switch Service</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings/profile">Profile Settings</Link>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => setShowLogoutConfirm(true)}
-                className="text-destructive"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </DropdownMenuItem>
+              <DropdownMenuGroup>
+                <DropdownMenuItem
+                  onClick={() => setShowLogoutConfirm(true)}
+                  className="text-destructive"
+                >
+                  <LogOut data-icon="inline-start" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

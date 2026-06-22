@@ -33,7 +33,7 @@ export function PageHeader({
         {backHref && (
           <Button variant="ghost" size="icon" asChild>
             <Link href={backHref} aria-label="Go back">
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft data-icon />
             </Link>
           </Button>
         )}
@@ -51,7 +51,7 @@ export function PageHeader({
         {createHref && (
           <Button asChild>
             <Link href={createHref}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus data-icon="inline-start" />
               {createLabel || "Create New"}
             </Link>
           </Button>
