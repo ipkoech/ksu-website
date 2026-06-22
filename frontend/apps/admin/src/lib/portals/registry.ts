@@ -93,6 +93,10 @@ import type {
   PortalRecord,
   PortalResourceConfig,
 } from "./types";
+import type {
+  EditableField,
+  EditableListFilter,
+} from "@/components/dashboard/editable-service-resource-page";
 
 const pageParams = { page: 1, per_page: 50 };
 const countParams = { page: 1, per_page: 1, fields: "id" };
@@ -134,12 +138,76 @@ const yesNoFilters = [
   { name: "is_public", label: "Public", type: "boolean" as const },
 ];
 
-const faqFields = [
+type PortalEntityScope = "school" | "department";
+
+function scopeEntityFields(scopeType?: PortalEntityScope): EditableField[] {
+  if (scopeType === "school") {
+    return [
+      {
+        name: "scope_id",
+        label: "School",
+        type: "entity",
+        required: true,
+        relation: {
+          adapter: "school",
+          filters: { is_active: true },
+        },
+      },
+    ];
+  }
+  if (scopeType === "department") {
+    return [
+      {
+        name: "scope_id",
+        label: "Department",
+        type: "entity",
+        required: true,
+        relation: {
+          adapter: "department",
+          filters: { is_active: true },
+        },
+      },
+    ];
+  }
+  return [];
+}
+
+function scopeEntityFilters(scopeType?: PortalEntityScope): EditableListFilter[] {
+  if (scopeType === "school") {
+    return [
+      {
+        name: "scope_id",
+        label: "School",
+        type: "entity",
+        relation: {
+          adapter: "school",
+          filters: { is_active: true },
+        },
+      },
+    ];
+  }
+  if (scopeType === "department") {
+    return [
+      {
+        name: "scope_id",
+        label: "Department",
+        type: "entity",
+        relation: {
+          adapter: "department",
+          filters: { is_active: true },
+        },
+      },
+    ];
+  }
+  return [];
+}
+
+function faqFields(scopeType?: PortalEntityScope): EditableField[] {
+  return [
   { name: "question", label: "Question", required: true },
   { name: "answer", label: "Answer", type: "textarea" as const },
   { name: "category", label: "Category" },
-  { name: "scope_type", label: "Scope Type" },
-  { name: "scope_id", label: "Scope ID" },
+  ...scopeEntityFields(scopeType),
   {
     name: "status",
     label: "Status",
@@ -149,9 +217,11 @@ const faqFields = [
   { name: "display_order", label: "Display Order", type: "number" as const },
   { name: "is_main", label: "Main Site", type: "boolean" as const },
   { name: "is_public", label: "Public", type: "boolean" as const },
-];
+  ];
+}
 
-const contactFields = [
+function contactFields(scopeType?: PortalEntityScope): EditableField[] {
+  return [
   { name: "name", label: "Name", required: true },
   { name: "contact_type", label: "Contact Type" },
   { name: "email", label: "Email", type: "email" as const },
@@ -174,8 +244,7 @@ const contactFields = [
       allowClear: true,
     },
   },
-  { name: "scope_type", label: "Scope Type" },
-  { name: "scope_id", label: "Scope ID" },
+  ...scopeEntityFields(scopeType),
   {
     name: "status",
     label: "Status",
@@ -184,7 +253,34 @@ const contactFields = [
   },
   { name: "is_main", label: "Main Site", type: "boolean" as const },
   { name: "is_public", label: "Public", type: "boolean" as const },
-];
+  ];
+}
+
+function documentFields(scopeType?: PortalEntityScope | "governance"): EditableField[] {
+  return [
+    { name: "title", label: "Title", required: true },
+    { name: "slug", label: "Slug" },
+    { name: "document_type", label: "Document Type", required: true },
+    { name: "category", label: "Category" },
+    { name: "description", label: "Description", type: "textarea" },
+    {
+      name: "file_id",
+      label: "Document File",
+      type: "entity",
+      required: true,
+      relation: {
+        adapter: "media",
+        filters: { media_type: "document" },
+      },
+    },
+    ...scopeEntityFields(scopeType === "governance" ? undefined : scopeType),
+    { name: "version", label: "Version" },
+    { name: "display_order", label: "Display Order", type: "number" },
+    { name: "is_public", label: "Public", type: "boolean" },
+    { name: "requires_login", label: "Requires Login", type: "boolean" },
+    { name: "is_active", label: "Active", type: "boolean" },
+  ];
+}
 
 const testimonialFields = [
   {
@@ -729,21 +825,7 @@ const governanceResources: Record<string, PortalResourceConfig<any, any>> = {
       "Manage governance policies, charters, and official documents.",
     backHref: "/governance",
     queryKey: ["governance", "documents"],
-    fields: [
-      { name: "title", label: "Title", required: true },
-      { name: "slug", label: "Slug" },
-      { name: "document_type", label: "Document Type" },
-      { name: "category", label: "Category" },
-      { name: "summary", label: "Summary", type: "textarea" },
-      { name: "scope_type", label: "Scope Type", placeholder: "governance" },
-      {
-        name: "status",
-        label: "Status",
-        type: "select",
-        options: statusOptions,
-      },
-      { name: "is_public", label: "Public", type: "boolean" },
-    ],
+    fields: documentFields("governance"),
     listFilters: [
       {
         name: "document_type",
@@ -755,12 +837,6 @@ const governanceResources: Record<string, PortalResourceConfig<any, any>> = {
           { label: "Report", value: "report" },
           { label: "Minutes", value: "minutes" },
         ],
-      },
-      {
-        name: "scope_type",
-        label: "Scope Type",
-        type: "select",
-        options: [{ label: "Governance", value: "governance" }],
       },
     ],
     list: (filters) =>
@@ -778,7 +854,7 @@ const governanceResources: Record<string, PortalResourceConfig<any, any>> = {
     emptyMessage: "No governance documents were returned.",
     buildPayload: (values) => ({
       ...values,
-      scope_type: values.scope_type || "governance",
+      scope_type: "governance",
     }),
     viewScopes: ["policy.view", "governance.view"],
     manageScopes: [
@@ -1273,6 +1349,21 @@ const departmentalResources: Record<string, PortalResourceConfig<any, any>> = {
       "Manage department files, forms, guides, and service documents.",
     backHref: "/departments",
     queryKey: ["departments", "resources"],
+    fields: documentFields("department"),
+    listFilters: [
+      {
+        name: "document_type",
+        label: "Document Type",
+        type: "select",
+        options: [
+          { label: "Policy", value: "policy" },
+          { label: "Charter", value: "charter" },
+          { label: "Report", value: "report" },
+          { label: "Minutes", value: "minutes" },
+        ],
+      },
+      ...scopeEntityFilters("department"),
+    ],
     list: (filters) =>
       documentsApi.listAdmin({
         ...pageParams,
@@ -1281,7 +1372,7 @@ const departmentalResources: Record<string, PortalResourceConfig<any, any>> = {
       }),
     buildPayload: (values) => ({
       ...values,
-      scope_type: values.scope_type || "department",
+      scope_type: "department",
     }),
   },
   faqs: {
@@ -1290,14 +1381,9 @@ const departmentalResources: Record<string, PortalResourceConfig<any, any>> = {
     description: "Manage department-scoped frequently asked questions.",
     backHref: "/departments",
     queryKey: ["departments", "faqs"],
-    fields: faqFields,
+    fields: faqFields("department"),
     listFilters: [
-      {
-        name: "scope_id",
-        label: "Department",
-        type: "entity",
-        relation: { adapter: "department", filters: { is_active: true } },
-      },
+      ...scopeEntityFilters("department"),
       { name: "is_public", label: "Public", type: "boolean" },
     ],
     list: (filters) =>
@@ -1323,14 +1409,9 @@ const departmentalResources: Record<string, PortalResourceConfig<any, any>> = {
     description: "Manage department-scoped contact directory entries.",
     backHref: "/departments",
     queryKey: ["departments", "contacts"],
-    fields: contactFields,
+    fields: contactFields("department"),
     listFilters: [
-      {
-        name: "scope_id",
-        label: "Department",
-        type: "entity",
-        relation: { adapter: "department", filters: { is_active: true } },
-      },
+      ...scopeEntityFilters("department"),
       { name: "is_public", label: "Public", type: "boolean" },
     ],
     list: (filters) =>
@@ -1619,7 +1700,7 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     description: "Manage main-site frequently asked questions.",
     backHref: "/corporate-communication",
     queryKey: ["corporate", "faqs"],
-    fields: faqFields,
+    fields: faqFields(),
     listFilters: [
       { name: "is_public", label: "Public", type: "boolean" },
       { name: "is_main", label: "Main Site", type: "boolean" },
@@ -1648,7 +1729,7 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       "Manage public contact directory entries for corporate communication.",
     backHref: "/corporate-communication",
     queryKey: ["corporate", "contacts"],
-    fields: contactFields,
+    fields: contactFields(),
     listFilters: [
       { name: "is_public", label: "Public", type: "boolean" },
       { name: "is_main", label: "Main Site", type: "boolean" },

@@ -20,6 +20,7 @@ import {
   type Intake,
   type LibraryBranch,
   type LibraryResource,
+  type Media,
   type MediaFolder,
   type Person,
   type Programme,
@@ -186,6 +187,16 @@ function mediaFolderOption(folder: MediaFolder): RelationshipOption {
     label: folder.name,
     description: joinDescription([folder.slug, folder.is_public ? "Public" : "Private"]),
     raw: folder,
+  };
+}
+
+function mediaOption(media: Media): RelationshipOption {
+  return {
+    id: media.id,
+    label: media.title || media.original_filename || media.filename,
+    description: joinDescription([media.media_type, media.mime_type, media.is_public ? "Public" : "Private"]),
+    imageUrl: media.thumbnail_url || media.public_url || media.url,
+    raw: media,
   };
 }
 
@@ -504,6 +515,32 @@ export const mediaFolderRelationshipAdapter: RelationshipAdapter<{ parent_id?: s
   async get(id) {
     const response = await mediaApi.getFolder(id, { fields: "id,name,slug,is_public,parent_id,scope_type,scope_id" });
     return response.data ? mediaFolderOption(response.data) : null;
+  },
+};
+
+export const mediaRelationshipAdapter: RelationshipAdapter<{ media_type?: string; folder_id?: string }> = {
+  key: "media",
+  entityType: "media",
+  label: "Media asset",
+  pluralLabel: "Media assets",
+  searchPlaceholder: "Search media assets",
+  emptyLabel: "No media assets found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await mediaApi.list({
+      page: 1,
+      per_page: limit,
+      search: search?.trim() || undefined,
+      media_type: filters?.media_type || undefined,
+      folder_id: filters?.folder_id || undefined,
+      fields: "id,title,filename,original_filename,media_type,mime_type,is_public,thumbnail_url,public_url,url",
+    });
+    return (response.data ?? []).map(mediaOption);
+  },
+  async get(id) {
+    const response = await mediaApi.get(id, {
+      fields: "id,title,filename,original_filename,media_type,mime_type,is_public,thumbnail_url,public_url,url",
+    });
+    return response.data ? mediaOption(response.data) : null;
   },
 };
 
@@ -902,6 +939,7 @@ export const relationshipAdapters = {
   intake: intakeRelationshipAdapter,
   governanceBoard: governanceBoardRelationshipAdapter,
   sliderGroup: sliderGroupRelationshipAdapter,
+  media: mediaRelationshipAdapter,
   mediaFolder: mediaFolderRelationshipAdapter,
   staffEntity: staffEntityRelationshipAdapter,
   libraryBranch: libraryBranchRelationshipAdapter,
