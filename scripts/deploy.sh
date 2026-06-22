@@ -20,9 +20,13 @@ Local options:
 VM options:
   --host HOST          SSH host, for example ubuntu@203.0.113.10. Required.
   --env ENV            Deployment environment: dev, staging, or production. Required.
-  --branch BRANCH      Branch to deploy. Defaults to current branch.
+  --branch BRANCH      Branch to deploy. Defaults to dev.
+  --repo-url URL       Git repository URL. Defaults to the local origin URL.
   --path PATH          Repository path on the VM. Defaults to this local repo path.
   --project-name NAME  Docker Compose project name. Defaults to ksu-ENV.
+  --public-host HOST   Public website host or IP. Defaults to the SSH host/IP.
+  --api-host HOST      API host. Defaults to api.PUBLIC_HOST for DNS hosts, or PUBLIC_HOST for IP access.
+  --research-host HOST Research frontend host. Defaults to dev.research.kisiiuniversity.ac.ke for dev.
   --bootstrap          Install Docker packages on an Ubuntu/Debian VM before deploy.
   --no-pull            Do not fetch/pull before deploying.
   --no-backup          Skip the pre-deploy database backup.
@@ -50,7 +54,7 @@ Cloud options:
 Examples:
   scripts/deploy.sh local
   scripts/deploy.sh local --skip-frontend
-  scripts/deploy.sh vm --host ubuntu@VM_IP --env staging --branch main
+  scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --branch dev --path /srv/ksu
   scripts/deploy.sh vm-backup --host ubuntu@VM_IP --env production
   scripts/deploy.sh cloud --env dev --project my-gcp-project
   scripts/deploy.sh cloud --env staging --project my-gcp-project --image-tag abc1234 --skip-build
@@ -220,23 +224,31 @@ vm_remote_script() {
   local mode="$1"
   local env_name="$2"
   local branch="$3"
-  local repo_path="$4"
-  local project_name="$5"
-  local bootstrap="$6"
-  local pull="$7"
-  local backup="$8"
-  local backup_dir="$9"
-  local with_gateway="${10}"
-  local skip_frontend="${11}"
-  local skip_build="${12}"
+  local repo_url="$4"
+  local repo_path="$5"
+  local project_name="$6"
+  local public_host="$7"
+  local api_host="$8"
+  local research_host="$9"
+  local bootstrap="${10}"
+  local pull="${11}"
+  local backup="${12}"
+  local backup_dir="${13}"
+  local with_gateway="${14}"
+  local skip_frontend="${15}"
+  local skip_build="${16}"
 
   cat <<REMOTE
 set -euo pipefail
 
 ENV_NAME=$(shell_quote "${env_name}")
 BRANCH=$(shell_quote "${branch}")
+REPO_URL=$(shell_quote "${repo_url}")
 REPO_PATH=$(shell_quote "${repo_path}")
 PROJECT_NAME=$(shell_quote "${project_name}")
+PUBLIC_HOST=$(shell_quote "${public_host}")
+API_HOST=$(shell_quote "${api_host}")
+RESEARCH_HOST=$(shell_quote "${research_host}")
 BOOTSTRAP=$(shell_quote "${bootstrap}")
 PULL=$(shell_quote "${pull}")
 BACKUP=$(shell_quote "${backup}")
@@ -247,6 +259,11 @@ SKIP_BUILD=$(shell_quote "${skip_build}")
 MODE=$(shell_quote "${mode}")
 
 if [[ "\${BOOTSTRAP}" -eq 1 ]]; then
+  if ! command -v git >/dev/null 2>&1; then
+    echo "Installing Git..."
+    sudo apt-get update
+    sudo apt-get install -y git
+  fi
   if ! command -v docker >/dev/null 2>&1; then
     echo "Installing Docker..."
     sudo apt-get update
@@ -276,9 +293,13 @@ if ! "\${DOCKER[@]}" compose version >/dev/null 2>&1; then
 fi
 
 if [[ ! -d "\${REPO_PATH}/.git" ]]; then
-  echo "error: repository not found at \${REPO_PATH} on the VM" >&2
-  echo "Clone the repo there first, or pass --path." >&2
-  exit 1
+  if [[ -z "\${REPO_URL}" ]]; then
+    echo "error: repository not found at \${REPO_PATH} and no --repo-url was provided" >&2
+    exit 1
+  fi
+  echo "Cloning \${REPO_URL} into \${REPO_PATH}..."
+  mkdir -p "\$(dirname "\${REPO_PATH}")"
+  git clone --branch "\${BRANCH}" "\${REPO_URL}" "\${REPO_PATH}"
 fi
 
 cd "\${REPO_PATH}"
@@ -291,6 +312,59 @@ if [[ "\${PULL}" -eq 1 ]]; then
   git fetch origin "\${BRANCH}"
   git checkout "\${BRANCH}"
   git pull --ff-only origin "\${BRANCH}"
+fi
+
+APP_SCHEME="http"
+PUBLIC_URL="\${APP_SCHEME}://\${PUBLIC_HOST}"
+API_SERVER_NAME="\${API_HOST}"
+if [[ "\${API_HOST}" = "\${PUBLIC_HOST}" ]]; then
+  API_SERVER_NAME="api.invalid.local"
+  API_URL="\${PUBLIC_URL}"
+else
+  API_URL="\${APP_SCHEME}://\${API_HOST}"
+fi
+RESEARCH_SERVER_NAME="\${RESEARCH_HOST}"
+if [[ "\${RESEARCH_HOST}" = "\${PUBLIC_HOST}" ]]; then
+  RESEARCH_SERVER_NAME="research.invalid.local"
+fi
+RESEARCH_URL="\${APP_SCHEME}://\${RESEARCH_HOST}"
+LIBRARY_URL="\${PUBLIC_URL}/library"
+ADMIN_URL="\${PUBLIC_URL}/admin"
+COMPOSE_ENV_FILE=".deploy/\${ENV_NAME}.compose.env"
+
+mkdir -p .deploy
+if [[ -f .env ]]; then
+  cat .env > "\${COMPOSE_ENV_FILE}"
+else
+  : > "\${COMPOSE_ENV_FILE}"
+fi
+cat >> "\${COMPOSE_ENV_FILE}" <<EOF
+APP_ENV=\${ENV_NAME}
+EDGE_HTTP_PORT=80
+PUBLIC_SERVER_NAME=\${PUBLIC_HOST}
+API_SERVER_NAME=\${API_SERVER_NAME}
+RESEARCH_SERVER_NAME=\${RESEARCH_SERVER_NAME}
+NEXT_PUBLIC_API_URL=\${API_URL}/api/v1
+NEXT_PUBLIC_MAIN_API_URL=\${API_URL}
+NEXT_PUBLIC_RESEARCH_API_URL=\${API_URL}
+NEXT_PUBLIC_LIBRARY_API_URL=\${API_URL}
+NEXT_PUBLIC_PUBLIC_FRONTEND_URL=\${PUBLIC_URL}
+NEXT_PUBLIC_RESEARCH_FRONTEND_URL=\${RESEARCH_URL}
+NEXT_PUBLIC_LIBRARY_FRONTEND_URL=\${LIBRARY_URL}
+NEXT_PUBLIC_APP_URL=\${ADMIN_URL}
+EOF
+
+missing_env=()
+for env_file in services/main/.env services/research/.env services/library/.env; do
+  if [[ ! -f "\${env_file}" ]]; then
+    missing_env+=("\${env_file}")
+  fi
+done
+if [[ "\${#missing_env[@]}" -gt 0 ]]; then
+  echo "error: missing service env files on the VM:" >&2
+  printf '  %s\n' "\${missing_env[@]}" >&2
+  echo "Create them from the matching .env.example files before deploying." >&2
+  exit 1
 fi
 
 backup_database() {
@@ -323,19 +397,15 @@ if [[ "\${BACKUP}" -eq 1 ]]; then
 fi
 
 if [[ "\${SKIP_FRONTEND}" -eq 0 && -f frontend/package.json ]]; then
-  if ! command -v pnpm >/dev/null 2>&1; then
-    echo "error: pnpm is required for frontend build; install pnpm or use --skip-frontend" >&2
-    exit 1
-  fi
-  echo "Installing frontend dependencies..."
-  (cd frontend && pnpm install --frozen-lockfile)
-  echo "Building frontend apps/packages..."
-  (cd frontend && pnpm build)
+  echo "Frontend apps will be built by Docker Compose."
 fi
 
 services=(postgres redis main research library celery-main celery-library)
 if [[ "\${WITH_GATEWAY}" -eq 1 ]]; then
   services+=(gateway)
+fi
+if [[ "\${SKIP_FRONTEND}" -eq 0 ]]; then
+  services+=(web-prod admin-prod research-web-prod library-web-prod edge)
 fi
 
 compose_args=(up -d --remove-orphans)
@@ -345,9 +415,9 @@ fi
 compose_args+=("\${services[@]}")
 
 echo "Deploying Docker Compose project \${PROJECT_NAME}: \${services[*]}"
-"\${DOCKER[@]}" compose -p "\${PROJECT_NAME}" "\${compose_args[@]}"
+"\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" -f docker-compose.yml -f docker-compose.vm.yml "\${compose_args[@]}"
 echo
-"\${DOCKER[@]}" compose -p "\${PROJECT_NAME}" ps "\${services[@]}"
+"\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" -f docker-compose.yml -f docker-compose.vm.yml ps "\${services[@]}"
 REMOTE
 }
 
@@ -357,10 +427,14 @@ deploy_vm() {
 
   local host=""
   local env_name=""
-  local branch
-  branch="$(git -C "${ROOT}" branch --show-current)"
+  local branch="dev"
+  local repo_url
+  repo_url="$(git -C "${ROOT}" remote get-url origin 2>/dev/null || true)"
   local repo_path="${ROOT}"
   local project_name=""
+  local public_host=""
+  local api_host=""
+  local research_host=""
   local bootstrap=0
   local pull=1
   local backup=1
@@ -388,12 +462,28 @@ deploy_vm() {
         branch="${2:-}"
         shift 2
         ;;
+      --repo-url)
+        repo_url="${2:-}"
+        shift 2
+        ;;
       --path)
         repo_path="${2:-}"
         shift 2
         ;;
       --project-name)
         project_name="${2:-}"
+        shift 2
+        ;;
+      --public-host)
+        public_host="${2:-}"
+        shift 2
+        ;;
+      --api-host)
+        api_host="${2:-}"
+        shift 2
+        ;;
+      --research-host)
+        research_host="${2:-}"
         shift 2
         ;;
       --bootstrap)
@@ -463,6 +553,26 @@ deploy_vm() {
     project_name="ksu-${env_name}"
   fi
 
+  if [[ -z "${public_host}" ]]; then
+    public_host="${host##*@}"
+  fi
+
+  if [[ -z "${api_host}" ]]; then
+    if [[ "${public_host}" =~ ^[0-9]+(\.[0-9]+){3}$ ]]; then
+      api_host="${public_host}"
+    else
+      api_host="api.${public_host}"
+    fi
+  fi
+
+  if [[ -z "${research_host}" ]]; then
+    case "${env_name}" in
+      dev) research_host="dev.research.kisiiuniversity.ac.ke" ;;
+      staging) research_host="staging.research.kisiiuniversity.ac.ke" ;;
+      production) research_host="research.kisiiuniversity.ac.ke" ;;
+    esac
+  fi
+
   if [[ -z "${backup_dir}" ]]; then
     backup_dir="${repo_path}/backups/${env_name}"
   fi
@@ -471,7 +581,7 @@ deploy_vm() {
   if [[ "${mode}" = "backup" ]]; then
     backup=1
   fi
-  remote="$(vm_remote_script "${mode}" "${env_name}" "${branch}" "${repo_path}" "${project_name}" "${bootstrap}" "${pull}" "${backup}" "${backup_dir}" "${with_gateway}" "${skip_frontend}" "${skip_build}")"
+  remote="$(vm_remote_script "${mode}" "${env_name}" "${branch}" "${repo_url}" "${repo_path}" "${project_name}" "${public_host}" "${api_host}" "${research_host}" "${bootstrap}" "${pull}" "${backup}" "${backup_dir}" "${with_gateway}" "${skip_frontend}" "${skip_build}")"
 
   if [[ "${DRY_RUN}" -eq 1 ]]; then
     printf '+ ssh %q %q\n' "${host}" "${remote}"

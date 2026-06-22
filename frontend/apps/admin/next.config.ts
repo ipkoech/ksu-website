@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 
+const basePath = process.env.NEXT_BASE_PATH || "";
+
 const baseConfig: NextConfig = {
+  ...(basePath ? { basePath } : {}),
   distDir: process.env.NEXT_DIST_DIR || ".next",
   trailingSlash: true,
   transpilePackages: ["@ksu/ui", "@ksu/auth", "@ksu/api-client"],

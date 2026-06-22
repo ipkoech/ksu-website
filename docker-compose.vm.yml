@@ -1,0 +1,108 @@
+# VM deployment overlay. Use with:
+# docker compose --env-file .deploy/dev.compose.env -f docker-compose.yml -f docker-compose.vm.yml up -d
+
+services:
+  edge:
+    image: nginx:1.27-alpine
+    ports:
+      - "${EDGE_HTTP_PORT:-80}:80"
+    environment:
+      PUBLIC_SERVER_NAME: ${PUBLIC_SERVER_NAME:-_}
+      API_SERVER_NAME: ${API_SERVER_NAME:-_}
+      RESEARCH_SERVER_NAME: ${RESEARCH_SERVER_NAME:-_}
+    volumes:
+      - ./gateway/edge.vm.conf.template:/etc/nginx/templates/default.conf.template:ro
+    depends_on:
+      gateway:
+        condition: service_started
+      web-prod:
+        condition: service_started
+      admin-prod:
+        condition: service_started
+      research-web-prod:
+        condition: service_started
+      library-web-prod:
+        condition: service_started
+    networks: [ksu]
+    restart: unless-stopped
+
+  web-prod:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        APP_DIR: web
+        PACKAGE_NAME: "@ksu/web"
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_MAIN_API_URL: ${NEXT_PUBLIC_MAIN_API_URL}
+        NEXT_PUBLIC_RESEARCH_API_URL: ${NEXT_PUBLIC_RESEARCH_API_URL}
+        NEXT_PUBLIC_LIBRARY_API_URL: ${NEXT_PUBLIC_LIBRARY_API_URL}
+        NEXT_PUBLIC_PUBLIC_FRONTEND_URL: ${NEXT_PUBLIC_PUBLIC_FRONTEND_URL}
+        NEXT_PUBLIC_RESEARCH_FRONTEND_URL: ${NEXT_PUBLIC_RESEARCH_FRONTEND_URL}
+        NEXT_PUBLIC_LIBRARY_FRONTEND_URL: ${NEXT_PUBLIC_LIBRARY_FRONTEND_URL}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+    environment:
+      PORT: 3000
+      NEXT_TELEMETRY_DISABLED: "1"
+    networks: [ksu]
+    restart: unless-stopped
+
+  admin-prod:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        APP_DIR: admin
+        PACKAGE_NAME: "@ksu/admin"
+        NEXT_BASE_PATH: /admin
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_MAIN_API_URL: ${NEXT_PUBLIC_MAIN_API_URL}
+        NEXT_PUBLIC_RESEARCH_API_URL: ${NEXT_PUBLIC_RESEARCH_API_URL}
+        NEXT_PUBLIC_LIBRARY_API_URL: ${NEXT_PUBLIC_LIBRARY_API_URL}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+    environment:
+      PORT: 3000
+      NEXT_TELEMETRY_DISABLED: "1"
+    networks: [ksu]
+    restart: unless-stopped
+
+  research-web-prod:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        APP_DIR: research
+        PACKAGE_NAME: "@ksu/research"
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_MAIN_API_URL: ${NEXT_PUBLIC_MAIN_API_URL}
+        NEXT_PUBLIC_RESEARCH_API_URL: ${NEXT_PUBLIC_RESEARCH_API_URL}
+        NEXT_PUBLIC_LIBRARY_API_URL: ${NEXT_PUBLIC_LIBRARY_API_URL}
+        NEXT_PUBLIC_PUBLIC_FRONTEND_URL: ${NEXT_PUBLIC_PUBLIC_FRONTEND_URL}
+        NEXT_PUBLIC_RESEARCH_FRONTEND_URL: ${NEXT_PUBLIC_RESEARCH_FRONTEND_URL}
+        NEXT_PUBLIC_LIBRARY_FRONTEND_URL: ${NEXT_PUBLIC_LIBRARY_FRONTEND_URL}
+    environment:
+      PORT: 3000
+      NEXT_TELEMETRY_DISABLED: "1"
+    networks: [ksu]
+    restart: unless-stopped
+
+  library-web-prod:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        APP_DIR: library
+        PACKAGE_NAME: "@ksu/library"
+        NEXT_BASE_PATH: /library
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_MAIN_API_URL: ${NEXT_PUBLIC_MAIN_API_URL}
+        NEXT_PUBLIC_RESEARCH_API_URL: ${NEXT_PUBLIC_RESEARCH_API_URL}
+        NEXT_PUBLIC_LIBRARY_API_URL: ${NEXT_PUBLIC_LIBRARY_API_URL}
+        NEXT_PUBLIC_PUBLIC_FRONTEND_URL: ${NEXT_PUBLIC_PUBLIC_FRONTEND_URL}
+        NEXT_PUBLIC_RESEARCH_FRONTEND_URL: ${NEXT_PUBLIC_RESEARCH_FRONTEND_URL}
+        NEXT_PUBLIC_LIBRARY_FRONTEND_URL: ${NEXT_PUBLIC_LIBRARY_FRONTEND_URL}
+    environment:
+      PORT: 3000
+      NEXT_TELEMETRY_DISABLED: "1"
+    networks: [ksu]
+    restart: unless-stopped
