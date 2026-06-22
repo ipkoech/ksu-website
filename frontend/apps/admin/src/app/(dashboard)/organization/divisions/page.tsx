@@ -10,12 +10,14 @@ import {
   Button,
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -117,22 +119,26 @@ function getDivisionColumns({
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
+              <Button variant="ghost" size="icon-sm">
                 <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal data-icon />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => { window.location.href = editHref(division.id); }}>
-                Edit
-              </DropdownMenuItem>
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => { window.location.href = editHref(division.id); }}>
+                  Edit
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
               {canDelete ? (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-destructive" onClick={() => onDelete(division)}>
-                    Delete
-                  </DropdownMenuItem>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem className="text-destructive" onClick={() => onDelete(division)}>
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
                 </>
               ) : null}
             </DropdownMenuContent>
@@ -194,15 +200,17 @@ export default function DivisionsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="all">All</SelectItem>
+                <SelectGroup>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="all">All</SelectItem>
+                </SelectGroup>
               </SelectContent>
             </Select>
             {canCreate("organization") || canCreate("governance") ? (
               <Button variant="outline" asChild>
                 <Link href="/imports/divisions">
-                  <Upload className="h-4 w-4" />
+                  <Upload data-icon="inline-start" />
                   Import
                 </Link>
               </Button>

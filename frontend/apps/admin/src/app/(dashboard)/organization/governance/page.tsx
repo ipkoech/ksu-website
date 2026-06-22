@@ -9,12 +9,14 @@ import {
   Button,
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -137,22 +139,26 @@ function getBoardColumns({
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
+              <Button variant="ghost" size="icon-sm">
                 <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal data-icon />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => { window.location.href = editHref(board.id); }}>
-                Open
-              </DropdownMenuItem>
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => { window.location.href = editHref(board.id); }}>
+                  Open
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
               {canDelete ? (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-destructive" onClick={() => onDelete(board)}>
-                    Delete
-                  </DropdownMenuItem>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem className="text-destructive" onClick={() => onDelete(board)}>
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
                 </>
               ) : null}
             </DropdownMenuContent>
@@ -211,14 +217,16 @@ export default function GovernancePage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All boards</SelectItem>
-              <SelectItem value="council">Council</SelectItem>
-              <SelectItem value="senate">Senate</SelectItem>
-              <SelectItem value="management_board">Management Board</SelectItem>
-              <SelectItem value="school_board">School Board</SelectItem>
-              <SelectItem value="department_board">Department Board</SelectItem>
-              <SelectItem value="committee">Committee</SelectItem>
-              <SelectItem value="taskforce">Taskforce</SelectItem>
+              <SelectGroup>
+                <SelectItem value="all">All boards</SelectItem>
+                <SelectItem value="council">Council</SelectItem>
+                <SelectItem value="senate">Senate</SelectItem>
+                <SelectItem value="management_board">Management Board</SelectItem>
+                <SelectItem value="school_board">School Board</SelectItem>
+                <SelectItem value="department_board">Department Board</SelectItem>
+                <SelectItem value="committee">Committee</SelectItem>
+                <SelectItem value="taskforce">Taskforce</SelectItem>
+              </SelectGroup>
             </SelectContent>
           </Select>
         }
