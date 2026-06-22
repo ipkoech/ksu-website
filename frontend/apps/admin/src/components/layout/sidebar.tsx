@@ -490,6 +490,30 @@ const libraryNavigation: NavItem[] = [
     scope: ["library.view", "library.manage_regulations"],
   },
   {
+    title: "Guides",
+    href: "/library/guides",
+    icon: BookOpen,
+    scope: ["library.view", "library.manage_services"],
+  },
+  {
+    title: "Specialists",
+    href: "/library/specialists",
+    icon: UserCheck,
+    scope: ["library.view", "library.manage_staff"],
+  },
+  {
+    title: "Workflows",
+    href: "/library/workflows",
+    icon: Settings,
+    scope: ["library.view", "library.manage_services"],
+  },
+  {
+    title: "Policies",
+    href: "/library/policies",
+    icon: FileText,
+    scope: ["library.view", "library.manage_regulations"],
+  },
+  {
     title: "Inquiries",
     href: "/library/inquiries",
     icon: MessageSquare,

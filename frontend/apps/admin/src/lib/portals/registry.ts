@@ -60,14 +60,18 @@ import {
   type LibraryChargePayload,
   type LibraryGenericPayload,
   type LibraryGenericRecord,
+  type LibraryGuide,
   type LibraryInquiry,
   type LibraryLoan,
+  type LibraryPolicyPage,
   type LibraryReservation,
   type LibraryRegulation,
   type LibraryResource,
   type LibraryResourcePayload,
   type LibraryStaff,
+  type LibrarySpecialist,
   type LibrarySupportTicket,
+  type LibraryWorkflow,
   type Media,
   type MediaFolder,
   type News,
@@ -137,6 +141,36 @@ const contentStatusOptions = [
 const yesNoFilters = [
   { name: "is_active", label: "Active", type: "boolean" as const },
   { name: "is_public", label: "Public", type: "boolean" as const },
+];
+
+const libraryGuideTypeOptions = [
+  { label: "Subject", value: "subject" },
+  { label: "Course", value: "course" },
+  { label: "Database", value: "database" },
+  { label: "Research", value: "research" },
+  { label: "Other", value: "other" },
+];
+
+const libraryWorkflowTypeOptions = [
+  { label: "Borrowing", value: "borrowing" },
+  { label: "Clearance", value: "clearance" },
+  { label: "Research", value: "research" },
+  { label: "Repository", value: "repository" },
+  { label: "Other", value: "other" },
+];
+
+const libraryPolicyTypeOptions = [
+  { label: "Borrowing", value: "borrowing" },
+  { label: "Access", value: "access" },
+  { label: "Clearance", value: "clearance" },
+  { label: "Repository", value: "repository" },
+  { label: "Other", value: "other" },
+];
+
+const libraryPolicyStatusOptions = [
+  { label: "Draft", value: "draft" },
+  { label: "Active", value: "active" },
+  { label: "Archived", value: "archived" },
 ];
 
 type PortalEntityScope =
@@ -3593,6 +3627,367 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
       });
     },
   },
+  guides: {
+    key: "guides",
+    title: "Library Guides",
+    description:
+      "Manage public subject, course, database, and research guides for each branch.",
+    backHref: "/library",
+    queryKey: ["library-portal", "guides"],
+    portalScope: libraryBranchPortalScope,
+    fields: [
+      {
+        name: "library_id",
+        label: "Library Branch",
+        type: "entity",
+        relation: {
+          adapter: "libraryBranch",
+          filters: { active_only: false },
+          allowClear: true,
+        },
+      },
+      { name: "title", label: "Title", required: true },
+      { name: "slug", label: "Slug", required: true },
+      {
+        name: "guide_type",
+        label: "Guide Type",
+        type: "select",
+        options: libraryGuideTypeOptions,
+      },
+      { name: "summary", label: "Summary", type: "textarea" },
+      { name: "subject", label: "Subject" },
+      { name: "course_code", label: "Course Code" },
+      { name: "audience", label: "Audience" },
+      {
+        name: "school_id",
+        label: "School",
+        type: "entity",
+        relation: { adapter: "school", filters: { is_active: true }, allowClear: true },
+      },
+      {
+        name: "department_id",
+        label: "Department",
+        type: "entity",
+        relation: { adapter: "department", filters: { is_active: true }, allowClear: true },
+      },
+      {
+        name: "owner_staff_id",
+        label: "Guide Owner",
+        type: "entity",
+        relation: { adapter: "libraryStaff", allowClear: true },
+      },
+      { name: "is_public", label: "Public", type: "boolean" },
+      { name: "is_active", label: "Active", type: "boolean" },
+      { name: "sort_order", label: "Sort Order", type: "number" },
+    ],
+    listFilters: [
+      {
+        name: "library_id",
+        label: "Library Branch",
+        type: "entity",
+        relation: { adapter: "libraryBranch", filters: { active_only: false } },
+      },
+      {
+        name: "guide_type",
+        label: "Guide Type",
+        type: "select",
+        options: libraryGuideTypeOptions,
+      },
+      ...yesNoFilters,
+    ],
+    list: async (filters) => {
+      const libraryId = filters?.library_id || (await firstLibraryId());
+      if (!libraryId) return { data: [] };
+      return libraryServiceApi.guides.list({
+        ...pageParams,
+        ...filters,
+        library_id: String(libraryId),
+      });
+    },
+    create: (payload) => libraryServiceApi.guides.create(payload),
+    update: (id, payload) => libraryServiceApi.guides.update(id, payload),
+    delete: (id) => libraryServiceApi.guides.delete(id),
+    getRecordTitle: (record) => record.title,
+    getRecordMeta: (record) =>
+      metaOf(record, ["guide_type", "subject", "course_code", "is_public"]),
+    emptyMessage: "No library guides were returned.",
+    buildPayload: (values) => ({
+      ...values,
+      guide_type: values.guide_type || "subject",
+      is_public: values.is_public,
+      is_active: values.is_active,
+      sort_order: values.sort_order ?? 100,
+    }),
+    viewScopes: ["library.view", "library.manage_services"],
+    manageScopes: ["library.manage_services"],
+  } as PortalResourceConfig<LibraryGuide, LibraryGenericPayload>,
+  specialists: {
+    key: "specialists",
+    title: "Library Specialists",
+    description:
+      "Assign public specialist support areas to library staff without typing staff IDs.",
+    backHref: "/library",
+    queryKey: ["library-portal", "specialists"],
+    portalScope: libraryBranchPortalScope,
+    fields: [
+      {
+        name: "library_id",
+        label: "Library Branch",
+        type: "entity",
+        relation: {
+          adapter: "libraryBranch",
+          filters: { active_only: false },
+          allowClear: true,
+        },
+      },
+      {
+        name: "staff_id",
+        label: "Library Staff",
+        type: "entity",
+        relation: { adapter: "libraryStaff", allowClear: true },
+      },
+      {
+        name: "subjects",
+        label: "Subjects",
+        type: "textarea",
+        placeholder: "One subject per line or comma-separated",
+      },
+      {
+        name: "schools",
+        label: "Schools",
+        type: "textarea",
+        placeholder: "One school per line or comma-separated",
+      },
+      {
+        name: "departments",
+        label: "Departments",
+        type: "textarea",
+        placeholder: "One department per line or comma-separated",
+      },
+      {
+        name: "support_areas",
+        label: "Support Areas",
+        type: "textarea",
+        placeholder: "Referencing, literature search, repository deposits",
+      },
+      { name: "booking_url", label: "Booking URL", type: "url" },
+      { name: "is_public", label: "Public", type: "boolean" },
+      { name: "is_active", label: "Active", type: "boolean" },
+      { name: "sort_order", label: "Sort Order", type: "number" },
+    ],
+    listFilters: [
+      {
+        name: "library_id",
+        label: "Library Branch",
+        type: "entity",
+        relation: { adapter: "libraryBranch", filters: { active_only: false } },
+      },
+      ...yesNoFilters,
+    ],
+    list: async (filters) => {
+      const libraryId = filters?.library_id || (await firstLibraryId());
+      if (!libraryId) return { data: [] };
+      return libraryServiceApi.specialists.list({
+        ...pageParams,
+        ...filters,
+        library_id: String(libraryId),
+      });
+    },
+    create: (payload) => libraryServiceApi.specialists.create(payload),
+    update: (id, payload) => libraryServiceApi.specialists.update(id, payload),
+    delete: (id) => libraryServiceApi.specialists.delete(id),
+    getRecordTitle: (record) =>
+      [
+        ...(record.subjects ?? []),
+        ...(record.support_areas ?? []),
+      ][0] ?? "Library specialist",
+    getRecordMeta: (record) =>
+      [
+        libraryLabelOf(record),
+        (record.schools ?? []).join(", "),
+        (record.departments ?? []).join(", "),
+        record.is_public ? "Public" : "Private",
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    emptyMessage: "No library specialists were returned.",
+    buildPayload: (values) => ({
+      ...values,
+      subjects: splitList(values.subjects),
+      schools: splitList(values.schools),
+      departments: splitList(values.departments),
+      support_areas: splitList(values.support_areas),
+      is_public: values.is_public,
+      is_active: values.is_active,
+      sort_order: values.sort_order ?? 100,
+    }),
+    viewScopes: ["library.view", "library.manage_staff"],
+    manageScopes: ["library.manage_staff"],
+  } as PortalResourceConfig<LibrarySpecialist, LibraryGenericPayload>,
+  workflows: {
+    key: "workflows",
+    title: "Library Workflows",
+    description:
+      "Manage public borrowing, clearance, research, and repository workflows.",
+    backHref: "/library",
+    queryKey: ["library-portal", "workflows"],
+    portalScope: libraryBranchPortalScope,
+    fields: [
+      {
+        name: "library_id",
+        label: "Library Branch",
+        type: "entity",
+        relation: {
+          adapter: "libraryBranch",
+          filters: { active_only: false },
+          allowClear: true,
+        },
+      },
+      { name: "title", label: "Title", required: true },
+      { name: "slug", label: "Slug", required: true },
+      {
+        name: "workflow_type",
+        label: "Workflow Type",
+        type: "select",
+        options: libraryWorkflowTypeOptions,
+      },
+      { name: "summary", label: "Summary", type: "textarea" },
+      { name: "audience", label: "Audience" },
+      { name: "is_public", label: "Public", type: "boolean" },
+      { name: "is_active", label: "Active", type: "boolean" },
+      { name: "sort_order", label: "Sort Order", type: "number" },
+    ],
+    listFilters: [
+      {
+        name: "library_id",
+        label: "Library Branch",
+        type: "entity",
+        relation: { adapter: "libraryBranch", filters: { active_only: false } },
+      },
+      {
+        name: "workflow_type",
+        label: "Workflow Type",
+        type: "select",
+        options: libraryWorkflowTypeOptions,
+      },
+      ...yesNoFilters,
+    ],
+    list: async (filters) => {
+      const libraryId = filters?.library_id || (await firstLibraryId());
+      if (!libraryId) return { data: [] };
+      return libraryServiceApi.workflows.list({
+        ...pageParams,
+        ...filters,
+        library_id: String(libraryId),
+      });
+    },
+    create: (payload) => libraryServiceApi.workflows.create(payload),
+    update: (id, payload) => libraryServiceApi.workflows.update(id, payload),
+    delete: (id) => libraryServiceApi.workflows.delete(id),
+    getRecordTitle: (record) => record.title,
+    getRecordMeta: (record) =>
+      metaOf(record, ["workflow_type", "audience", "is_public"]),
+    emptyMessage: "No library workflows were returned.",
+    buildPayload: (values) => ({
+      ...values,
+      workflow_type: values.workflow_type || "other",
+      is_public: values.is_public,
+      is_active: values.is_active,
+      sort_order: values.sort_order ?? 100,
+    }),
+    viewScopes: ["library.view", "library.manage_services"],
+    manageScopes: ["library.manage_services"],
+  } as PortalResourceConfig<LibraryWorkflow, LibraryGenericPayload>,
+  policies: {
+    key: "policies",
+    title: "Library Policies",
+    description:
+      "Manage public library policy pages, including borrowing and access rules.",
+    backHref: "/library",
+    queryKey: ["library-portal", "policies"],
+    portalScope: libraryBranchPortalScope,
+    fields: [
+      {
+        name: "library_id",
+        label: "Library Branch",
+        type: "entity",
+        relation: {
+          adapter: "libraryBranch",
+          filters: { active_only: false },
+          allowClear: true,
+        },
+      },
+      { name: "title", label: "Title", required: true },
+      { name: "slug", label: "Slug", required: true },
+      {
+        name: "policy_type",
+        label: "Policy Type",
+        type: "select",
+        options: libraryPolicyTypeOptions,
+      },
+      { name: "content", label: "Content", type: "textarea" },
+      {
+        name: "file_id",
+        label: "Policy File",
+        type: "entity",
+        relation: { adapter: "media", allowClear: true },
+      },
+      {
+        name: "status",
+        label: "Status",
+        type: "select",
+        options: libraryPolicyStatusOptions,
+      },
+      { name: "is_public", label: "Public", type: "boolean" },
+      { name: "sort_order", label: "Sort Order", type: "number" },
+    ],
+    listFilters: [
+      {
+        name: "library_id",
+        label: "Library Branch",
+        type: "entity",
+        relation: { adapter: "libraryBranch", filters: { active_only: false } },
+      },
+      {
+        name: "policy_type",
+        label: "Policy Type",
+        type: "select",
+        options: libraryPolicyTypeOptions,
+      },
+      {
+        name: "status",
+        label: "Status",
+        type: "select",
+        options: libraryPolicyStatusOptions,
+      },
+      { name: "is_public", label: "Public", type: "boolean" },
+    ],
+    list: async (filters) => {
+      const libraryId = filters?.library_id || (await firstLibraryId());
+      if (!libraryId) return { data: [] };
+      return libraryServiceApi.policies.list({
+        ...pageParams,
+        ...filters,
+        library_id: String(libraryId),
+      });
+    },
+    create: (payload) => libraryServiceApi.policies.create(payload),
+    update: (id, payload) => libraryServiceApi.policies.update(id, payload),
+    delete: (id) => libraryServiceApi.policies.delete(id),
+    getRecordTitle: (record) => record.title,
+    getRecordMeta: (record) =>
+      metaOf(record, ["policy_type", "status", "is_public"]),
+    emptyMessage: "No library policies were returned.",
+    buildPayload: (values) => ({
+      ...values,
+      policy_type: values.policy_type || "other",
+      status: values.status || "draft",
+      is_public: values.is_public,
+      sort_order: values.sort_order ?? 100,
+    }),
+    viewScopes: ["library.view", "library.manage_regulations"],
+    manageScopes: ["library.manage_regulations"],
+  } as PortalResourceConfig<LibraryPolicyPage, LibraryGenericPayload>,
   staff: {
     ...libraryGenericResource(
       "staff",

@@ -21,6 +21,7 @@ import {
   type LibraryBranch,
   type LibraryElectronicResource,
   type LibraryResource,
+  type LibraryStaff,
   type Media,
   type MediaFolder,
   type Person,
@@ -225,6 +226,27 @@ function libraryResourceOption(resource: LibraryResource): RelationshipOption {
     label: resource.title,
     description: joinDescription([resource.authors, resource.resource_type, resource.status, resource.available_copies !== undefined ? `${resource.available_copies} available` : undefined]),
     raw: resource,
+  };
+}
+
+function libraryStaffOption(staff: LibraryStaff): RelationshipOption {
+  const person = staff.person;
+  const name =
+    person?.full_name ||
+    person?.title ||
+    staff.job_title ||
+    "Library staff";
+  return {
+    id: staff.id,
+    label: name,
+    description: joinDescription([
+      staff.job_title,
+      staff.department,
+      staff.role,
+      staff.is_active === false ? "Inactive" : undefined,
+    ]),
+    imageUrl: person?.photo || null,
+    raw: staff,
   };
 }
 
@@ -643,6 +665,47 @@ export const libraryResourceRelationshipAdapter: RelationshipAdapter<{ library_i
   },
 };
 
+export const libraryStaffRelationshipAdapter: RelationshipAdapter<{ library_id?: string; role?: string }> = {
+  key: "library-staff",
+  entityType: "library_staff",
+  label: "Library staff",
+  pluralLabel: "Library staff",
+  searchPlaceholder: "Search library staff by name, role, or department",
+  emptyLabel: "No library staff found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const branchIds = filters?.library_id
+      ? [filters.library_id]
+      : (await libraryServiceApi.branches.list({
+          active_only: true,
+          page: 1,
+          per_page: 20,
+          fields: "id",
+        })).data?.map((branch) => branch.id) ?? [];
+    if (branchIds.length === 0) return [];
+    const responses = await Promise.all(
+      branchIds.map((library_id) =>
+        libraryServiceApi.staff.list({
+          library_id,
+          role: filters?.role || undefined,
+          fields:
+            "id,job_title,department,role,is_active,person:id,title,full_name,email,photo",
+        } as any),
+      ),
+    );
+    return limitOptions(
+      responses
+        .flatMap((response) => response.data ?? [])
+        .map(libraryStaffOption)
+        .filter((option) => matches(option, search)),
+      limit,
+    );
+  },
+  async get(id, filters) {
+    const options = await this.search({ filters, limit: 100 });
+    return options.find((option) => option.id === id) ?? null;
+  },
+};
+
 export const libraryElectronicResourceRelationshipAdapter: RelationshipAdapter<{ library_id?: string; resource_type?: string; access_level?: string; is_active?: boolean }> = {
   key: "library-electronic-resource",
   entityType: "library_electronic_resource",
@@ -1049,6 +1112,7 @@ export const relationshipAdapters = {
   staffEntity: staffEntityRelationshipAdapter,
   libraryBranch: libraryBranchRelationshipAdapter,
   libraryResource: libraryResourceRelationshipAdapter,
+  libraryStaff: libraryStaffRelationshipAdapter,
   libraryElectronicResource: libraryElectronicResourceRelationshipAdapter,
   researchDonor: researchDonorRelationshipAdapter,
   researchCenter: researchCenterRelationshipAdapter,
