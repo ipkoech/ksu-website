@@ -4,7 +4,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout";
-import { PersonPicker } from "@/components/relationships/relationship-pickers";
+import { LibraryBranchPicker, PersonPicker } from "@/components/relationships/relationship-pickers";
 import {
   Badge,
   Button,
@@ -50,20 +50,20 @@ export default function LibraryStaffPage() {
   const [values, setValues] = useState<Record<string, any>>(defaults);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const branchesQuery = useQuery({
-    queryKey: ["library", "branches", "staff"],
+  const firstBranchQuery = useQuery({
+    queryKey: ["library", "branches", "staff", "first"],
     queryFn: () =>
       libraryServiceApi.branches.list({
         active_only: false,
         page: 1,
-        per_page: 100,
+        per_page: 1,
       }),
   });
-  const branches = useMemo(() => branchesQuery.data?.data ?? [], [branchesQuery.data]);
+  const firstBranch = firstBranchQuery.data?.data?.[0];
 
   useEffect(() => {
-    if (!libraryId && branches[0]?.id) setLibraryId(branches[0].id);
-  }, [branches, libraryId]);
+    if (!libraryId && firstBranch?.id) setLibraryId(firstBranch.id);
+  }, [firstBranch?.id, libraryId]);
 
   const staffQuery = useQuery({
     queryKey: ["library", "staff", libraryId],
@@ -206,29 +206,16 @@ export default function LibraryStaffPage() {
             <CardTitle>Staff</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label
-                htmlFor={`${formId}-branch`}
-                className="text-sm font-medium"
-              >
-                Library branch
-              </label>
-              <select
-                id={`${formId}-branch`}
-                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                value={libraryId}
-                onChange={(event) => setLibraryId(event.target.value)}
-              >
-                <option value="">Select branch</option>
-                {branches.map((branch) => (
-                  <option key={branch.id} value={branch.id}>
-                    {branch.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <LibraryBranchPicker
+              label="Library branch"
+              value={libraryId}
+              onChange={(value) => setLibraryId(value)}
+              filters={{ active_only: false }}
+              placeholder="Select branch"
+              required
+            />
 
-            {branchesQuery.isError ? (
+            {firstBranchQuery.isError ? (
               <p
                 role="status"
                 className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive"
@@ -296,7 +283,7 @@ export default function LibraryStaffPage() {
                             size="sm"
                             onClick={() => edit(member)}
                           >
-                            <Edit className="mr-2 h-4 w-4" />
+                            <Edit data-icon="inline-start" />
                             Edit
                           </Button>
                           <Button
@@ -305,7 +292,7 @@ export default function LibraryStaffPage() {
                             className="text-destructive"
                             onClick={() => setDeleteTarget(member)}
                           >
-                            <Trash2 className="mr-2 h-4 w-4" />
+                            <Trash2 data-icon="inline-start" />
                             Delete
                           </Button>
                         </>
