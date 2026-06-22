@@ -1172,6 +1172,11 @@ const administrationResources: Record<string, PortalResourceConfig<any, any>> = 
       "Attach staff to VC, DVC, registrar, directorate, and administrative office roles.",
     backHref: "/institutional-administration",
     queryKey: ["institutional-administration", "staff-assignments"],
+    portalScope: {
+      typeField: "entity_type",
+      idField: "entity_id",
+      allowedScopeTypes: ["university", "division", "wing", "department"],
+    },
     viewScopes: ["staff.view_assignments", "office.view", "administration.view"],
     manageScopes: ["staff.manage_assignments", "office.manage_staff", "administration.manage_staff"],
   },
@@ -1182,6 +1187,11 @@ const administrationResources: Record<string, PortalResourceConfig<any, any>> = 
       "Manage public documents, service charters, policy files, and office media for administrative units.",
     backHref: "/institutional-administration",
     queryKey: ["institutional-administration", "documents"],
+    portalScope: {
+      typeField: "scope_type",
+      idField: "scope_id",
+      allowedScopeTypes: ["university", "division", "wing", "department"],
+    },
     fields: documentFields("administration"),
     listFilters: [
       {
@@ -1217,6 +1227,11 @@ const administrationResources: Record<string, PortalResourceConfig<any, any>> = 
       "Manage public frequently asked questions for registrar offices, DVC divisions, and administrative departments.",
     backHref: "/institutional-administration",
     queryKey: ["institutional-administration", "faqs"],
+    portalScope: {
+      typeField: "scope_type",
+      idField: "scope_id",
+      allowedScopeTypes: ["university", "division", "wing", "department"],
+    },
     fields: faqFields("administration"),
     listFilters: [
       ...scopeEntityFilters("administration"),
@@ -1246,6 +1261,11 @@ const administrationResources: Record<string, PortalResourceConfig<any, any>> = 
       "Manage public contact directory entries for offices, directorates, and administrative units.",
     backHref: "/institutional-administration",
     queryKey: ["institutional-administration", "contacts"],
+    portalScope: {
+      typeField: "scope_type",
+      idField: "scope_id",
+      allowedScopeTypes: ["university", "division", "wing", "department"],
+    },
     fields: contactFields("administration"),
     listFilters: [
       ...scopeEntityFilters("administration"),

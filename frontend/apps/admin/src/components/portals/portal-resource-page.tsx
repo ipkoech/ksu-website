@@ -1,7 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
 import { EditableServiceResourcePage } from "@/components/dashboard/editable-service-resource-page";
 import { getPortalResource } from "@/lib/portals/registry";
+import type { PortalPayload, PortalResourceConfig } from "@/lib/portals/types";
+import { usePortalAccess, type PortalAccess } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ksu/ui/components";
 import { PageHeader } from "@/components/layout";
@@ -13,7 +16,26 @@ interface PortalResourcePageProps {
 
 export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePageProps) {
   const { hasAnyScope } = usePermissions();
+  const portalAccessQuery = usePortalAccess();
   const resource = getPortalResource(portalKey, resourceKey);
+
+  const lockedAccess = useMemo(() => {
+    const binding = resource?.portalScope;
+    if (!binding) return null;
+
+    const scoped = (portalAccessQuery.data?.data.portals ?? []).filter((access) => {
+      if (access.key !== portalKey || !access.locked_scope) return false;
+      if (access.scope_type === "global" || access.scope_type === "profile") return false;
+      return !binding.allowedScopeTypes || binding.allowedScopeTypes.includes(access.scope_type);
+    });
+
+    return scoped.length === 1 ? scoped[0] : null;
+  }, [portalAccessQuery.data?.data.portals, portalKey, resource?.portalScope]);
+
+  const scopedResource = useMemo(
+    () => (resource && lockedAccess ? lockResourceToPortalScope(resource, lockedAccess) : resource),
+    [lockedAccess, resource],
+  );
 
   if (!resource) {
     return (
@@ -33,18 +55,20 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
     );
   }
 
-  const canView = hasAnyScope(resource.viewScopes);
-  const canManage = hasAnyScope(resource.manageScopes);
-  const canCreate = canManage && resource.canCreate !== false;
-  const canEdit = canManage && resource.canEdit !== false;
+  if (!scopedResource) return null;
+
+  const canView = hasAnyScope(scopedResource.viewScopes);
+  const canManage = hasAnyScope(scopedResource.manageScopes);
+  const canCreate = canManage && scopedResource.canCreate !== false;
+  const canEdit = canManage && scopedResource.canEdit !== false;
   const canDelete =
-    hasAnyScope(resource.deleteScopes ?? resource.manageScopes) &&
-    resource.canDelete !== false;
+    hasAnyScope(scopedResource.deleteScopes ?? scopedResource.manageScopes) &&
+    scopedResource.canDelete !== false;
 
   if (!canView) {
     return (
       <div>
-        <PageHeader title={resource.title} description={resource.description} backHref={resource.backHref} />
+        <PageHeader title={scopedResource.title} description={scopedResource.description} backHref={scopedResource.backHref} />
         <div className="p-4 sm:p-6">
           <Card>
             <CardHeader>
@@ -55,7 +79,7 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
             </CardHeader>
             <CardContent>
               <p className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
-                Required scopes: {resource.viewScopes.join(", ")}
+                Required scopes: {scopedResource.viewScopes.join(", ")}
               </p>
             </CardContent>
           </Card>
@@ -66,27 +90,67 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
 
   return (
     <EditableServiceResourcePage
-      title={resource.title}
-      description={resource.description}
-      backHref={resource.backHref}
-      queryKey={resource.queryKey}
-      fields={resource.fields}
-      listFilters={resource.listFilters}
-      list={resource.list}
-      create={resource.create}
-      update={resource.update}
-      delete={resource.delete}
-      getRecordTitle={resource.getRecordTitle}
-      getRecordMeta={resource.getRecordMeta}
-      getRecordDetailHref={resource.getRecordDetailHref}
-      getRecordWorkflowActions={resource.getRecordWorkflowActions}
-      emptyMessage={resource.emptyMessage}
-      buildPayload={resource.buildPayload}
-      validate={resource.validate}
+      title={scopedResource.title}
+      description={
+        lockedAccess
+          ? `${scopedResource.description} Showing ${lockedAccess.scope_label}.`
+          : scopedResource.description
+      }
+      backHref={scopedResource.backHref}
+      queryKey={scopedResource.queryKey}
+      fields={scopedResource.fields}
+      listFilters={scopedResource.listFilters}
+      list={scopedResource.list}
+      create={scopedResource.create}
+      update={scopedResource.update}
+      delete={scopedResource.delete}
+      getRecordTitle={scopedResource.getRecordTitle}
+      getRecordMeta={scopedResource.getRecordMeta}
+      getRecordDetailHref={scopedResource.getRecordDetailHref}
+      getRecordWorkflowActions={scopedResource.getRecordWorkflowActions}
+      emptyMessage={scopedResource.emptyMessage}
+      buildPayload={scopedResource.buildPayload}
+      validate={scopedResource.validate}
       canCreate={canCreate}
       canEdit={canEdit}
       canDelete={canDelete}
-      readOnlyMessage={resource.readOnlyMessage}
+      readOnlyMessage={scopedResource.readOnlyMessage}
     />
   );
+}
+
+function lockResourceToPortalScope(
+  resource: PortalResourceConfig<any, any>,
+  access: PortalAccess,
+): PortalResourceConfig<any, any> {
+  if (!resource.portalScope) return resource;
+
+  const { typeField, idField } = resource.portalScope;
+  const stampScope = (values: PortalPayload = {}) => ({
+    ...values,
+    [typeField]: access.scope_type,
+    [idField]: access.scope_type === "university" ? null : access.scope_id,
+  });
+  const isLockedField = (field: { name: string; type?: string; entityRecord?: { typeName: string; idName: string } }) =>
+    field.name === typeField ||
+    field.name === idField ||
+    (field.type === "entity-record" &&
+      field.entityRecord?.typeName === typeField &&
+      field.entityRecord?.idName === idField);
+
+  return {
+    ...resource,
+    queryKey: [...resource.queryKey, "portal-scope", access.scope_type, access.scope_id ?? "university"],
+    fields: resource.fields.filter((field) => !isLockedField(field)),
+    listFilters: resource.listFilters?.filter((field) => !isLockedField(field)),
+    list: (filters) => resource.list(stampScope(filters)),
+    create: (payload) => resource.create(stampScope(payload)),
+    update: (id, payload) => resource.update(id, stampScope(payload)),
+    buildPayload: (values, editingRecord) =>
+      resource.buildPayload
+        ? resource.buildPayload(stampScope(values), editingRecord)
+        : stampScope(values),
+    validate: (values, editingRecord) =>
+      resource.validate?.(stampScope(values), editingRecord) ?? {},
+  };
 }
