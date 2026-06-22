@@ -2,7 +2,8 @@ import unittest
 import uuid
 from types import SimpleNamespace
 
-from app.services.auth import _active_permissions
+from app.helpers.jwt import create_access_token, decode_token
+from app.services.auth import _active_permissions, _active_scope_grants
 
 
 def _permission(name):
@@ -62,6 +63,40 @@ class AuthPermissionTests(unittest.TestCase):
         self.assertIn("profile.self_edit", permissions)
         self.assertIn("library:write", permissions)
         self.assertIn("library.manage_resources", permissions)
+
+    def test_active_scope_grants_include_assignment_scope_metadata(self):
+        research_center_id = uuid.uuid4()
+        user = _user(
+            staff_assignments=[
+                _staff_assignment("research", research_center_id, role="director"),
+            ],
+        )
+
+        grants = _active_scope_grants(user)
+
+        self.assertEqual(1, len(grants))
+        self.assertEqual("research", grants[0]["scope_type"])
+        self.assertEqual(str(research_center_id), grants[0]["scope_id"])
+        self.assertEqual("assignment", grants[0]["source"])
+        self.assertIn("research.manage_projects", grants[0]["permissions"])
+
+    def test_access_token_contains_structured_scope_grants(self):
+        grant = {
+            "permissions": ["research.manage_projects"],
+            "scope_type": "research",
+            "scope_id": str(uuid.uuid4()),
+            "source": "assignment",
+        }
+
+        token, _ = create_access_token(
+            str(uuid.uuid4()),
+            ["staff"],
+            permissions=["research.manage_projects"],
+            scope_grants=[grant],
+        )
+
+        payload = decode_token(token)
+        self.assertEqual([grant], payload["scope_grants"])
 
 
 if __name__ == "__main__":

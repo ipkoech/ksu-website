@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
@@ -33,6 +33,7 @@ def create_access_token(
     *,
     permissions: Iterable[str] | None = None,
     scopes: Iterable[str] | None = None,
+    scope_grants: Iterable[Mapping[str, object]] | None = None,
 ) -> tuple[str, str]:
     """Create access token and return (token, jti)."""
     now = datetime.now(timezone.utc)
@@ -52,6 +53,8 @@ def create_access_token(
         payload["permissions"] = permission_claims
     if scope_claims:
         payload["scopes"] = scope_claims
+    if scope_grants:
+        payload["scope_grants"] = list(scope_grants)
     token = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
     return token, jti
 
@@ -76,9 +79,16 @@ def create_token(
     *,
     permissions: Iterable[str] | None = None,
     scopes: Iterable[str] | None = None,
+    scope_grants: Iterable[Mapping[str, object]] | None = None,
 ) -> tuple[str, str, str]:
     """Create access + refresh tokens and return (access, refresh, jti)."""
-    access_token, jti = create_access_token(user_id, roles, permissions=permissions, scopes=scopes)
+    access_token, jti = create_access_token(
+        user_id,
+        roles,
+        permissions=permissions,
+        scopes=scopes,
+        scope_grants=scope_grants,
+    )
     refresh_token = create_refresh_token(user_id, jti)
     return access_token, refresh_token, jti
 
@@ -95,6 +105,7 @@ def refresh_token(
     *,
     permissions: Iterable[str] | None = None,
     scopes: Iterable[str] | None = None,
+    scope_grants: Iterable[Mapping[str, object]] | None = None,
 ) -> tuple[str, str]:
     """Issue a fresh access/refresh pair reusing the session jti."""
     now = datetime.now(timezone.utc)
@@ -113,6 +124,8 @@ def refresh_token(
         access_payload["permissions"] = permission_claims
     if scope_claims:
         access_payload["scopes"] = scope_claims
+    if scope_grants:
+        access_payload["scope_grants"] = list(scope_grants)
     refresh_payload = {
         "sub": user_id,
         "jti": jti,

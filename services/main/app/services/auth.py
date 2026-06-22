@@ -43,6 +43,20 @@ def _active_permissions(user: User) -> list[str]:
     return permissions
 
 
+def _active_scope_grants(user: User) -> list[dict[str, object]]:
+    grants: list[dict[str, object]] = []
+    for grant in user_scoped_grants(user):
+        grants.append(
+            {
+                "permissions": sorted(grant.permissions),
+                "scope_type": grant.scope_type,
+                "scope_id": str(grant.scope_id) if grant.scope_id else None,
+                "source": grant.source,
+            }
+        )
+    return grants
+
+
 class AuthService:
     """Authentication operations."""
 
@@ -61,11 +75,13 @@ class AuthService:
 
         roles = _active_roles(user)
         permissions = _active_permissions(user)
+        scope_grants = _active_scope_grants(user)
         access_token, refresh_token, jti = create_token(
             str(user.id),
             roles,
             permissions=permissions,
             scopes=permissions,
+            scope_grants=scope_grants,
         )
         session = Session(
             user_id=user.id,
@@ -104,12 +120,14 @@ class AuthService:
             raise PermissionError("Session is invalid")
         roles = _active_roles(user)
         permissions = _active_permissions(user)
+        scope_grants = _active_scope_grants(user)
         access_token, new_refresh_token = issue_refreshed_tokens(
             str(user.id),
             roles,
             session.jti,
             permissions=permissions,
             scopes=permissions,
+            scope_grants=scope_grants,
         )
         session.touch()
         await db.flush()

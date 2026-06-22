@@ -10,7 +10,7 @@ from ksu_common import cached_public, rate_limit
 from ksu_common.schemas.responses import success
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...core.auth import get_current_user, require_scope
+from ...core.auth import get_current_user, require_scope, require_scoped_record
 from ...core.database import get_db
 from ._fields import FieldSelection, FieldsDep, build_selector
 
@@ -30,6 +30,7 @@ def build_crud_router(
 ):
     router = APIRouter(prefix=prefix, tags=[tag])
     read_dependencies = [] if public_read else [Depends(require_scope(write_scope))]
+    model_has_center_scope = hasattr(service.model, "center_id")
 
     def maybe_cached_public(*args, **kwargs):
         if public_read:
@@ -134,7 +135,10 @@ def build_crud_router(
         order: str | None = Query(default="desc", pattern="^(asc|desc)$"),
         fields: FieldSelection = FieldsDep,
         db: AsyncSession = Depends(get_db),
+        user=Depends(get_current_user) if not public_read else None,
     ):
+        if not public_read and model_has_center_scope:
+            require_scoped_record(user, write_scope, "research", center_id)
         selector = build_selector(service.model, fields)
         list_method = service.list_public if public_read else service.list
         result = await list_method(
@@ -228,6 +232,9 @@ def build_crud_router(
             db: AsyncSession = Depends(get_db),
             user=Depends(get_current_user),
         ):
+            center_id = getattr(data, "center_id", None)
+            if model_has_center_scope or center_id is not None:
+                require_scoped_record(user, write_scope, "research", center_id)
             try:
                 item = await service.create(db, data, actor_id=user.sub)
             except ValueError as exc:
@@ -244,6 +251,14 @@ def build_crud_router(
         item = await service.get_by_id(db, item_id)
         if item is None:
             raise HTTPException(status_code=404, detail=f"{tag.rstrip('s')} not found")
+        current_center_id = getattr(item, "center_id", None)
+        next_center_id = getattr(data, "center_id", None)
+        center_ids = {current_center_id, next_center_id} if next_center_id is not None else {current_center_id}
+        for center_id in center_ids:
+            if center_id is not None:
+                require_scoped_record(user, write_scope, "research", center_id)
+        if model_has_center_scope and current_center_id is None and next_center_id is None:
+            require_scoped_record(user, write_scope, "research", None)
         try:
             item = await service.update(db, item, data, actor_id=user.sub)
         except ValueError as exc:
@@ -259,6 +274,9 @@ def build_crud_router(
         item = await service.get_by_id(db, item_id)
         if item is None:
             raise HTTPException(status_code=404, detail=f"{tag.rstrip('s')} not found")
+        center_id = getattr(item, "center_id", None)
+        if model_has_center_scope or center_id is not None:
+            require_scoped_record(user, write_scope, "research", center_id)
         await service.soft_delete(db, item, actor_id=user.sub)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
