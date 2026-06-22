@@ -1230,7 +1230,7 @@ const departmentalResources: Record<string, PortalResourceConfig<any, any>> = {
     backHref: "/departments",
     scopeType: "department",
     list: (filters) =>
-      announcementsApi.list({
+      announcementsApi.listAdmin({
         ...pageParams,
         scope_type: "department",
         ...filters,
@@ -1390,7 +1390,7 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     backHref: "/corporate-communication",
     scopeType: "corporate",
     list: (filters) =>
-      announcementsApi.list({ ...pageParams, is_main: true, ...filters }),
+      announcementsApi.listAdmin({ ...pageParams, is_main: true, ...filters }),
     create: (payload) => announcementsApi.create(payload),
     update: (id, payload) => announcementsApi.update(id, payload),
     remove: (id) => announcementsApi.delete(id),
@@ -3715,7 +3715,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
           ["content.view"],
           ["departments", "notices"],
           () =>
-            announcementsApi.list({ ...countParams, scope_type: "department" }),
+            announcementsApi.listAdmin({ ...countParams, scope_type: "department" }),
         ),
         stat(
           "Events",
@@ -3840,7 +3840,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
           Megaphone,
           ["content.view"],
           ["corporate", "notices"],
-          () => announcementsApi.list({ ...countParams, is_main: true }),
+          () => announcementsApi.listAdmin({ ...countParams, is_main: true }),
         ),
         stat(
           "Events",

@@ -1133,6 +1133,21 @@ export const announcementsApi = {
       params,
     ),
 
+  listAdmin: (
+    params?: ListParams<{
+      scope_type?: string;
+      scope_id?: string;
+      is_main?: boolean;
+      is_published?: boolean;
+      status?: string;
+      search?: string;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<Announcement>>(
+      "/api/v1/announcements/admin",
+      params,
+    ),
+
   get: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Announcement }>(
       `/api/v1/announcements/id/${id}`,
