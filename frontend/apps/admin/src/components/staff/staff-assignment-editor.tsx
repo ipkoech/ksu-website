@@ -186,11 +186,18 @@ export function StaffAssignmentEditor({
   const reportingAssignments = useStaffAssignments(
     {
       status: "active",
+      entity_type: form.entity_type || undefined,
+      entity_id: form.entity_type === "university" ? undefined : form.entity_id || undefined,
       fields: "id,person_id,entity_type,entity_id,role,title,hierarchy_level,status,start_date,is_primary,is_acting",
       include: "person:id,title,first_name,last_name,full_name,email",
       limit: 100,
     },
-    { enabled: open }
+    {
+      enabled:
+        open &&
+        Boolean(form.entity_type) &&
+        (form.entity_type === "university" || Boolean(form.entity_id)),
+    }
   );
   const createPerson = useCreatePerson();
   const createAssignment = useCreateStaffAssignment();
@@ -283,8 +290,13 @@ export function StaffAssignmentEditor({
   };
 
   const selectEntity = (entity: StaffEntityOption) => {
-    updateField("entity_id", entity.id || "");
+    setForm((current) => ({
+      ...current,
+      entity_id: entity.id || "",
+      reports_to_id: "",
+    }));
     setEntitySearch(entity.label);
+    setReportsToSearch("");
   };
 
   const selectReportsTo = (selectedAssignment: StaffAssignment) => {
@@ -580,7 +592,20 @@ export function StaffAssignmentEditor({
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Entity type</Label>
-                  <Select value={form.entity_type} onValueChange={(value) => setForm((current) => ({ ...current, entity_type: value, entity_id: "", role: "" }))}>
+                  <Select
+                    value={form.entity_type}
+                    onValueChange={(value) => {
+                      setForm((current) => ({
+                        ...current,
+                        entity_type: value,
+                        entity_id: "",
+                        role: "",
+                        reports_to_id: "",
+                      }));
+                      setEntitySearch("");
+                      setReportsToSearch("");
+                    }}
+                  >
                     <SelectTrigger><SelectValue placeholder="Select entity type" /></SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
