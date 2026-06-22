@@ -55,6 +55,42 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
     );
   }
 
+  if (resource.portalScope && portalAccessQuery.isLoading) {
+    return (
+      <div>
+        <PageHeader title={resource.title} description={resource.description} backHref={resource.backHref} />
+        <div className="p-4 sm:p-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Loading office scope</CardTitle>
+              <CardDescription>
+                Checking which office owns this workspace before loading records.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (resource.portalScope && portalAccessQuery.isError) {
+    return (
+      <div>
+        <PageHeader title={resource.title} description={resource.description} backHref={resource.backHref} />
+        <div className="p-4 sm:p-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Office scope unavailable</CardTitle>
+              <CardDescription>
+                The portal could not confirm your assigned office scope. Retry after the access service is available.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   if (!scopedResource) return null;
 
   const canView = hasAnyScope(scopedResource.viewScopes);
