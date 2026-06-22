@@ -11,6 +11,7 @@ from ksu_common.schemas.responses import success
 from ...deps import CurrentUser, DbSession, require_scope
 from ...models import StaffAssignment
 from ...models.staff import ENTITY_ROLES
+from ...security.scopes import can_access_scope, filter_records_for_scope
 from ...schemas import (
     StaffAssignmentActivate,
     StaffAssignmentConflictCheck,
@@ -26,6 +27,20 @@ router = APIRouter()
 
 
 CONTROL_FIELDS = {"conflict_resolution", "conflict_end_date", "conflict_notes"}
+
+
+async def _require_assignment_scope(
+    db: DbSession,
+    user: CurrentUser,
+    permission: str,
+    entity_type: str,
+    entity_id: uuid.UUID | None,
+) -> None:
+    if not await can_access_scope(db, user, permission, entity_type, entity_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient privileges for this office scope",
+        )
 
 
 async def _prepare_conflict_or_raise(
@@ -79,7 +94,7 @@ async def _prepare_conflict_or_raise(
 @router.get("/assignments")
 async def list_assignments(
     db: DbSession,
-    _: CurrentUser,
+    user: CurrentUser,
     entity_type: str | None = None,
     entity_id: uuid.UUID | None = None,
     person_id: uuid.UUID | None = None,
@@ -95,11 +110,25 @@ async def list_assignments(
         status=status_filter,
         load_options=selector.load_options,
     )
+    items = await filter_records_for_scope(
+        db,
+        user,
+        "staff.view_assignments",
+        items,
+        scope_getter=lambda item: (item.entity_type, item.entity_id),
+    )
     return success(data=selector.apply(items))
 
 
 @router.post("/assignments/check-conflict")
-async def check_conflict(data: StaffAssignmentConflictCheck, db: DbSession, _: CurrentUser):
+async def check_conflict(data: StaffAssignmentConflictCheck, db: DbSession, user: CurrentUser):
+    await _require_assignment_scope(
+        db,
+        user,
+        "staff.view_assignments",
+        data.entity_type,
+        data.entity_id,
+    )
     payload = await StaffService.get_conflict_payload(
         db,
         entity_type=data.entity_type,
@@ -111,11 +140,18 @@ async def check_conflict(data: StaffAssignmentConflictCheck, db: DbSession, _: C
 
 
 @router.get("/assignments/{assignment_id}")
-async def get_assignment(assignment_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+async def get_assignment(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(StaffAssignment, fields)
     assignment = await StaffService.get_by_id(db, assignment_id, load_options=selector.load_options)
     if assignment is None:
         raise HTTPException(status_code=404, detail="Assignment not found")
+    await _require_assignment_scope(
+        db,
+        user,
+        "staff.view_assignments",
+        assignment.entity_type,
+        assignment.entity_id,
+    )
     return success(data=selector.apply(assignment))
 
 
@@ -134,8 +170,15 @@ async def get_direct_reports(assignment_id: uuid.UUID, db: DbSession, _: Current
 
 
 @router.post("/assignments", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("staff:write"))])
-async def create_assignment(data: StaffAssignmentCreate, db: DbSession, _: CurrentUser):
+async def create_assignment(data: StaffAssignmentCreate, db: DbSession, user: CurrentUser):
     payload = data.model_dump()
+    await _require_assignment_scope(
+        db,
+        user,
+        "staff.manage_assignments",
+        payload["entity_type"],
+        payload.get("entity_id"),
+    )
     resolution = payload.pop("conflict_resolution", None)
     conflict_end_date = payload.pop("conflict_end_date", None)
     conflict_notes = payload.pop("conflict_notes", None)
@@ -156,10 +199,17 @@ async def create_assignment(data: StaffAssignmentCreate, db: DbSession, _: Curre
 
 
 @router.patch("/assignments/{assignment_id}", dependencies=[Depends(require_scope("staff:write"))])
-async def update_assignment(assignment_id: uuid.UUID, data: StaffAssignmentUpdate, db: DbSession, _: CurrentUser):
+async def update_assignment(assignment_id: uuid.UUID, data: StaffAssignmentUpdate, db: DbSession, user: CurrentUser):
     assignment = await StaffService.get_by_id(db, assignment_id)
     if assignment is None:
         raise HTTPException(status_code=404, detail="Assignment not found")
+    await _require_assignment_scope(
+        db,
+        user,
+        "staff.manage_assignments",
+        assignment.entity_type,
+        assignment.entity_id,
+    )
 
     payload = data.model_dump(exclude_unset=True)
     resolution = payload.pop("conflict_resolution", None)
@@ -170,6 +220,13 @@ async def update_assignment(assignment_id: uuid.UUID, data: StaffAssignmentUpdat
     next_role = payload.get("role", assignment.role)
     next_is_acting = payload.get("is_acting", assignment.is_acting)
     next_status = payload.get("status", assignment.status)
+    await _require_assignment_scope(
+        db,
+        user,
+        "staff.manage_assignments",
+        next_entity_type,
+        next_entity_id,
+    )
     if next_status == "active":
         force_acting = await _prepare_conflict_or_raise(
             db,
@@ -189,7 +246,17 @@ async def update_assignment(assignment_id: uuid.UUID, data: StaffAssignmentUpdat
 
 
 @router.patch("/assignments/{assignment_id}/end", dependencies=[Depends(require_scope("staff:write"))])
-async def end_assignment(assignment_id: uuid.UUID, data: StaffAssignmentEnd, db: DbSession, _: CurrentUser):
+async def end_assignment(assignment_id: uuid.UUID, data: StaffAssignmentEnd, db: DbSession, user: CurrentUser):
+    assignment = await StaffService.get_by_id(db, assignment_id)
+    if assignment is None:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    await _require_assignment_scope(
+        db,
+        user,
+        "staff.manage_assignments",
+        assignment.entity_type,
+        assignment.entity_id,
+    )
     try:
         assignment = await StaffService.end_assignment(db, assignment_id, end_date=data.end_date, notes=data.notes)
     except ValueError as exc:
@@ -198,10 +265,17 @@ async def end_assignment(assignment_id: uuid.UUID, data: StaffAssignmentEnd, db:
 
 
 @router.patch("/assignments/{assignment_id}/activate", dependencies=[Depends(require_scope("staff:write"))])
-async def activate_assignment(assignment_id: uuid.UUID, data: StaffAssignmentActivate, db: DbSession, _: CurrentUser):
+async def activate_assignment(assignment_id: uuid.UUID, data: StaffAssignmentActivate, db: DbSession, user: CurrentUser):
     assignment = await StaffService.get_by_id(db, assignment_id)
     if assignment is None:
         raise HTTPException(status_code=404, detail="Assignment not found")
+    await _require_assignment_scope(
+        db,
+        user,
+        "staff.manage_assignments",
+        assignment.entity_type,
+        assignment.entity_id,
+    )
     force_acting = await _prepare_conflict_or_raise(
         db,
         entity_type=assignment.entity_type,
@@ -220,10 +294,17 @@ async def activate_assignment(assignment_id: uuid.UUID, data: StaffAssignmentAct
 
 
 @router.post("/assignments/{assignment_id}/reassign", dependencies=[Depends(require_scope("staff:write"))])
-async def reassign_assignment(assignment_id: uuid.UUID, data: StaffAssignmentReassign, db: DbSession, _: CurrentUser):
+async def reassign_assignment(assignment_id: uuid.UUID, data: StaffAssignmentReassign, db: DbSession, user: CurrentUser):
     assignment = await StaffService.get_by_id(db, assignment_id)
     if assignment is None:
         raise HTTPException(status_code=404, detail="Assignment not found")
+    await _require_assignment_scope(
+        db,
+        user,
+        "staff.manage_assignments",
+        assignment.entity_type,
+        assignment.entity_id,
+    )
     force_acting = await _prepare_conflict_or_raise(
         db,
         entity_type=assignment.entity_type,
@@ -250,22 +331,40 @@ async def reassign_assignment(assignment_id: uuid.UUID, data: StaffAssignmentRea
 
 
 @router.delete("/assignments/{assignment_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("staff:delete"))])
-async def delete_assignment(assignment_id: uuid.UUID, db: DbSession, _: CurrentUser):
+async def delete_assignment(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser):
     assignment = await StaffService.get_by_id(db, assignment_id)
     if assignment is None:
         raise HTTPException(status_code=404, detail="Assignment not found")
+    await _require_assignment_scope(
+        db,
+        user,
+        "staff.manage_assignments",
+        assignment.entity_type,
+        assignment.entity_id,
+    )
     await StaffService.delete_assignment(db, assignment)
 
 
 @router.get("/entities")
 async def list_staff_entities(
     db: DbSession,
-    _: CurrentUser,
+    user: CurrentUser,
     entity_type: str,
     search: str | None = None,
     limit: int = Query(20, ge=1, le=100),
 ):
     items = await StaffService.search_entities(db, entity_type=entity_type, search=search, limit=limit)
+    filtered_items = []
+    for item in items:
+        if await can_access_scope(
+            db,
+            user,
+            "staff.view_assignments",
+            item["entity_type"],
+            item["id"],
+        ):
+            filtered_items.append(item)
+    items = filtered_items
     return success(data=items)
 
 
