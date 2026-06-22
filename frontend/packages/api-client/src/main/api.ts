@@ -270,6 +270,9 @@ export const divisionsApi = {
   list: (params?: ListParams<{ is_active?: boolean }>) =>
     mainApi.get<PaginatedResponse<Division>>("/api/v1/divisions", params),
 
+  listAdmin: (params?: ListParams<{ is_active?: boolean }>) =>
+    mainApi.get<PaginatedResponse<Division>>("/api/v1/divisions/admin", params),
+
   get: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Division }>(`/api/v1/divisions/id/${id}`, params),
 
@@ -287,6 +290,13 @@ export const divisionsApi = {
 
 // Wings
 export const wingsApi = {
+  listAdmin: (
+    params?: ListParams<{
+      division_id?: string;
+      is_active?: boolean;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Wing>>("/api/v1/wings/admin", params),
+
   listByDivision: (
     divisionId: string,
     params?: FieldSelectionParams & { is_active?: boolean },

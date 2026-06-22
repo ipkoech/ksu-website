@@ -136,3 +136,22 @@ class WingService:
             query = query.where(Wing.is_active.is_(is_active))
         result = await db.execute(query.order_by(Wing.display_order.asc(), Wing.name.asc()))
         return list(result.scalars().all())
+
+    @staticmethod
+    async def list(
+        db: AsyncSession,
+        *,
+        page: int = 1,
+        per_page: int = 20,
+        division_id: uuid.UUID | None = None,
+        is_active: bool | None = True,
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        query = select(Wing).order_by(Wing.display_order.asc(), Wing.name.asc())
+        if load_options:
+            query = query.options(*load_options)
+        if division_id is not None:
+            query = query.where(Wing.division_id == division_id)
+        if is_active is not None:
+            query = query.where(Wing.is_active.is_(is_active))
+        return await paginate_query(db, query, page=page, per_page=per_page)

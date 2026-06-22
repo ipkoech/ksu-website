@@ -797,6 +797,7 @@ const administrationResources: Record<string, PortalResourceConfig<any, any>> = 
       "Manage DVC divisions, high-level directorates, mandates, contacts, and public office content.",
     backHref: "/institutional-administration",
     queryKey: ["institutional-administration", "divisions"],
+    list: (filters) => divisionsApi.listAdmin({ ...pageParams, ...filters }),
     viewScopes: ["administration.view", "office.view"],
     manageScopes: ["administration.manage_units"],
   },
@@ -808,6 +809,7 @@ const administrationResources: Record<string, PortalResourceConfig<any, any>> = 
       "Manage registrar offices, administrative wings, service units, contacts, and public office details.",
     backHref: "/institutional-administration",
     queryKey: ["institutional-administration", "offices"],
+    list: (filters) => wingsApi.listAdmin({ ...pageParams, ...filters }),
     viewScopes: ["administration.view", "office.view"],
     manageScopes: ["administration.manage_units", "office.manage_content"],
   },
@@ -3358,7 +3360,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
           Building2,
           ["administration.view"],
           ["institutional-administration", "divisions"],
-          () => divisionsApi.list(countParams),
+          () => divisionsApi.listAdmin(countParams),
         ),
         stat(
           "Registrar Offices",
@@ -3367,11 +3369,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
           Landmark,
           ["office.view"],
           ["institutional-administration", "offices"],
-          async () => {
-            const divisionId = await firstDivisionId();
-            if (!divisionId) return statCount(0);
-            return wingsApi.listByDivision(divisionId, countParams);
-          },
+          () => wingsApi.listAdmin(countParams),
         ),
         stat(
           "Assignments",
