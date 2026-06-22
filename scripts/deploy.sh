@@ -27,6 +27,8 @@ VM options:
   --public-host HOST   Public website host or IP. Defaults to dev.kisiiuniversity.ac.ke for dev.
   --api-host HOST      API host. Defaults to api.dev.kisiiuniversity.ac.ke for dev.
   --research-host HOST Research frontend host. Defaults to dev.research.kisiiuniversity.ac.ke for dev.
+  --https             Install host Nginx/Certbot and issue HTTPS certificates.
+  --cert-email EMAIL  Let's Encrypt email. Required with --https.
   --bootstrap          Install Docker packages on an Ubuntu/Debian VM before deploy.
   --no-pull            Do not fetch/pull before deploying.
   --no-backup          Skip the pre-deploy database backup.
@@ -56,6 +58,7 @@ Examples:
   scripts/deploy.sh local --skip-frontend
   scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --branch dev --path /srv/ksu
   scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --path /srv/ksu --bootstrap
+  scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --path /srv/ksu --bootstrap --https --cert-email admin@kisiiuniversity.ac.ke
   scripts/deploy.sh vm-backup --host ubuntu@VM_IP --env production
   scripts/deploy.sh cloud --env dev --project my-gcp-project
   scripts/deploy.sh cloud --env staging --project my-gcp-project --image-tag abc1234 --skip-build
@@ -238,6 +241,8 @@ vm_remote_script() {
   local with_gateway="${14}"
   local skip_frontend="${15}"
   local skip_build="${16}"
+  local enable_https="${17}"
+  local cert_email="${18}"
 
   cat <<REMOTE
 set -euo pipefail
@@ -257,6 +262,8 @@ BACKUP_DIR=$(shell_quote "${backup_dir}")
 WITH_GATEWAY=$(shell_quote "${with_gateway}")
 SKIP_FRONTEND=$(shell_quote "${skip_frontend}")
 SKIP_BUILD=$(shell_quote "${skip_build}")
+ENABLE_HTTPS=$(shell_quote "${enable_https}")
+CERT_EMAIL=$(shell_quote "${cert_email}")
 MODE=$(shell_quote "${mode}")
 
 if [[ "\${BOOTSTRAP}" -eq 1 ]]; then
@@ -316,6 +323,11 @@ if [[ "\${PULL}" -eq 1 ]]; then
 fi
 
 APP_SCHEME="http"
+EDGE_HTTP_PORT="80"
+if [[ "\${ENABLE_HTTPS}" -eq 1 ]]; then
+  APP_SCHEME="https"
+  EDGE_HTTP_PORT="127.0.0.1:8080"
+fi
 PUBLIC_URL="\${APP_SCHEME}://\${PUBLIC_HOST}"
 API_SERVER_NAME="\${API_HOST}"
 if [[ "\${API_HOST}" = "\${PUBLIC_HOST}" ]]; then
@@ -341,7 +353,7 @@ else
 fi
 cat >> "\${COMPOSE_ENV_FILE}" <<EOF
 APP_ENV=\${ENV_NAME}
-EDGE_HTTP_PORT=80
+EDGE_HTTP_PORT=\${EDGE_HTTP_PORT}
 PUBLIC_SERVER_NAME=\${PUBLIC_HOST}
 API_SERVER_NAME=\${API_SERVER_NAME}
 RESEARCH_SERVER_NAME=\${RESEARCH_SERVER_NAME}
@@ -419,6 +431,104 @@ echo "Deploying Docker Compose project \${PROJECT_NAME}: \${services[*]}"
 "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" -f docker-compose.yml -f docker-compose.vm.yml "\${compose_args[@]}"
 echo
 "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" -f docker-compose.yml -f docker-compose.vm.yml ps "\${services[@]}"
+
+configure_https() {
+  if [[ "\${ENABLE_HTTPS}" -ne 1 ]]; then
+    return 0
+  fi
+
+  if [[ -z "\${CERT_EMAIL}" ]]; then
+    echo "error: --cert-email is required with --https" >&2
+    exit 1
+  fi
+
+  echo "Installing host Nginx and Certbot..."
+  sudo apt-get update
+  sudo apt-get install -y nginx certbot python3-certbot-nginx
+  sudo systemctl enable --now nginx
+
+  local site_name="ksu-\${ENV_NAME}"
+  local site_available="/etc/nginx/sites-available/\${site_name}.conf"
+  local site_enabled="/etc/nginx/sites-enabled/\${site_name}.conf"
+
+  echo "Writing host Nginx reverse proxy: \${site_available}"
+  sudo tee "\${site_available}" >/dev/null <<EOF
+server {
+    listen 80;
+    server_name \${PUBLIC_HOST};
+
+    client_max_body_size 25M;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host \\\$host;
+        proxy_set_header X-Real-IP \\\$remote_addr;
+        proxy_set_header X-Forwarded-For \\\$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \\\$scheme;
+        proxy_set_header Upgrade \\\$http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+
+server {
+    listen 80;
+    server_name \${API_HOST};
+
+    client_max_body_size 25M;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host \\\$host;
+        proxy_set_header X-Real-IP \\\$remote_addr;
+        proxy_set_header X-Forwarded-For \\\$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \\\$scheme;
+    }
+}
+
+server {
+    listen 80;
+    server_name \${RESEARCH_HOST};
+
+    client_max_body_size 25M;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host \\\$host;
+        proxy_set_header X-Real-IP \\\$remote_addr;
+        proxy_set_header X-Forwarded-For \\\$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \\\$scheme;
+        proxy_set_header Upgrade \\\$http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+EOF
+
+  sudo ln -sf "\${site_available}" "\${site_enabled}"
+  if [[ -e /etc/nginx/sites-enabled/default ]]; then
+    sudo rm -f /etc/nginx/sites-enabled/default
+  fi
+  sudo nginx -t
+  sudo systemctl reload nginx
+
+  echo "Requesting Let's Encrypt certificates..."
+  sudo certbot --nginx \
+    --non-interactive \
+    --agree-tos \
+    --email "\${CERT_EMAIL}" \
+    --redirect \
+    --keep-until-expiring \
+    -d "\${PUBLIC_HOST}" \
+    -d "\${API_HOST}" \
+    -d "\${RESEARCH_HOST}"
+
+  sudo systemctl reload nginx
+  echo "HTTPS configured for \${PUBLIC_HOST}, \${API_HOST}, and \${RESEARCH_HOST}."
+}
+
+configure_https
 REMOTE
 }
 
@@ -436,6 +546,8 @@ deploy_vm() {
   local public_host=""
   local api_host=""
   local research_host=""
+  local enable_https=0
+  local cert_email=""
   local bootstrap=0
   local pull=1
   local backup=1
@@ -485,6 +597,14 @@ deploy_vm() {
         ;;
       --research-host)
         research_host="${2:-}"
+        shift 2
+        ;;
+      --https)
+        enable_https=1
+        shift
+        ;;
+      --cert-email)
+        cert_email="${2:-}"
         shift 2
         ;;
       --bootstrap)
@@ -550,6 +670,11 @@ deploy_vm() {
     exit 1
   fi
 
+  if [[ "${enable_https}" -eq 1 && -z "${cert_email}" ]]; then
+    echo "error: --cert-email is required when using --https" >&2
+    exit 1
+  fi
+
   if [[ -z "${project_name}" ]]; then
     project_name="ksu-${env_name}"
   fi
@@ -586,7 +711,7 @@ deploy_vm() {
   if [[ "${mode}" = "backup" ]]; then
     backup=1
   fi
-  remote="$(vm_remote_script "${mode}" "${env_name}" "${branch}" "${repo_url}" "${repo_path}" "${project_name}" "${public_host}" "${api_host}" "${research_host}" "${bootstrap}" "${pull}" "${backup}" "${backup_dir}" "${with_gateway}" "${skip_frontend}" "${skip_build}")"
+  remote="$(vm_remote_script "${mode}" "${env_name}" "${branch}" "${repo_url}" "${repo_path}" "${project_name}" "${public_host}" "${api_host}" "${research_host}" "${bootstrap}" "${pull}" "${backup}" "${backup_dir}" "${with_gateway}" "${skip_frontend}" "${skip_build}" "${enable_https}" "${cert_email}")"
 
   if [[ "${DRY_RUN}" -eq 1 ]]; then
     printf '+ ssh %q %q\n' "${host}" "${remote}"
