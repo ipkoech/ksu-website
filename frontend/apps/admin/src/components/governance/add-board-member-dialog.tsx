@@ -1,179 +1,209 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Button, Input, RichTextEditor, richTextToPlainText, Switch, Label, Card, CardContent, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ksu/ui/components";
+import { useEffect, useState } from "react";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
+  RichTextEditor,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Switch,
+  richTextToPlainText,
+} from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
-import { useAddBoardMember, usePersons } from "@ksu/api-client";
+import { useAddBoardMember } from "@ksu/api-client";
+import { PersonPicker } from "@/components/relationships";
 
 interface AddBoardMemberDialogProps {
-    boardSlug: string;
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    onSuccess: () => void;
+  boardSlug: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
 }
 
 const roleOptions = [
-    { value: "chairperson", label: "Chairperson" },
-    { value: "vice_chairperson", label: "Vice Chairperson" },
-    { value: "secretary", label: "Secretary" },
-    { value: "treasurer", label: "Treasurer" },
-    { value: "member", label: "Member" },
-    { value: "observer", label: "Observer" },
+  { value: "chairperson", label: "Chairperson" },
+  { value: "vice_chairperson", label: "Vice Chairperson" },
+  { value: "secretary", label: "Secretary" },
+  { value: "treasurer", label: "Treasurer" },
+  { value: "member", label: "Member" },
+  { value: "observer", label: "Observer" },
 ];
 
-export function AddBoardMemberDialog({ boardSlug, open, onOpenChange, onSuccess }: AddBoardMemberDialogProps) {
-    const [formData, setFormData] = useState({
-        person_id: "",
-        role: "member",
-        title: "",
-        is_acting: false,
-        start_date: "",
-        term_end_date: "",
-        is_ex_officio: false,
-        notes: "",
+const initialFormData = {
+  person_id: "",
+  role: "member",
+  title: "",
+  is_acting: false,
+  start_date: "",
+  term_end_date: "",
+  is_ex_officio: false,
+  notes: "",
+};
+
+export function AddBoardMemberDialog({
+  boardSlug,
+  open,
+  onOpenChange,
+  onSuccess,
+}: AddBoardMemberDialogProps) {
+  const [formData, setFormData] = useState(initialFormData);
+  const addMutation = useAddBoardMember();
+
+  useEffect(() => {
+    if (!open) return;
+    setFormData({
+      ...initialFormData,
+      start_date: new Date().toISOString().split("T")[0],
     });
+  }, [open]);
 
-    const addMutation = useAddBoardMember();
-    const { data: personsData } = usePersons();
+  const handleSubmit = async () => {
+    if (!formData.person_id) {
+      toast.error("Please select a person");
+      return;
+    }
 
-    useEffect(() => {
-        if (open) {
-            setFormData({
-                person_id: "",
-                role: "member",
-                title: "",
-                is_acting: false,
-                start_date: new Date().toISOString().split("T")[0],
-                term_end_date: "",
-                is_ex_officio: false,
-                notes: "",
-            });
-        }
-    }, [open]);
+    try {
+      await addMutation.mutateAsync({
+        id: boardSlug,
+        data: {
+          person_id: formData.person_id,
+          role: formData.is_ex_officio ? "ex_officio" : formData.role,
+          title: formData.title || null,
+          is_acting: formData.is_acting,
+          start_date: formData.start_date || null,
+          end_date: formData.term_end_date || null,
+          notes: richTextToPlainText(formData.notes) || null,
+        },
+      });
+      toast.success("Member added successfully");
+      onSuccess();
+      onOpenChange(false);
+    } catch {
+      toast.error("Failed to add member");
+    }
+  };
 
-    const handleSubmit = async () => {
-        if (!formData.person_id) {
-            toast.error("Please select a person");
-            return;
-        }
-        try {
-            await addMutation.mutateAsync({
-                id: boardSlug,
-                data: {
-                    person_id: formData.person_id,
-                    role: formData.is_ex_officio ? "ex_officio" : formData.role,
-                    title: formData.title || null,
-                    is_acting: formData.is_acting,
-                    start_date: formData.start_date || null,
-                    end_date: formData.term_end_date || null,
-                    notes: richTextToPlainText(formData.notes) || null,
-                }
-            });
-            toast.success("Member added successfully");
-            onSuccess();
-        } catch {
-            toast.error("Failed to add member");
-        }
-    };
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Add Board Member</DialogTitle>
+          <DialogDescription>
+            Attach a person to this board with a public role, term dates, and optional notes.
+          </DialogDescription>
+        </DialogHeader>
 
-    return (
-        <div className={open ? "fixed inset-0 z-50 flex items-center justify-center" : "hidden"}>
-            <div className="fixed inset-0 bg-black/50" onClick={() => onOpenChange(false)} />
-            <div className="relative z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto bg-background rounded-lg p-6">
-                <h2 className="text-xl font-semibold mb-4">Add Board Member</h2>
-                <Card>
-                    <CardContent className="space-y-4 pt-4">
-                        <div>
-                            <Label>Person *</Label>
-                            <Select value={formData.person_id} onValueChange={(v) => setFormData(p => ({ ...p, person_id: v }))}>
-                                <SelectTrigger><SelectValue placeholder="Select person" /></SelectTrigger>
-                                <SelectContent>
-                                    {personsData?.data?.map((p: any) => (
-                                        <SelectItem key={p.id} value={p.id}>
-                                            {p.title} {p.first_name} {p.last_name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+        <div className="flex flex-col gap-4">
+          <PersonPicker
+            label="Person"
+            required
+            value={formData.person_id}
+            filters={{ status: "active" }}
+            onChange={(value) => setFormData((current) => ({ ...current, person_id: value }))}
+            placeholder="Select person"
+          />
 
-                        <div>
-                            <Label>Role *</Label>
-                            <Select value={formData.role} onValueChange={(v) => setFormData(p => ({ ...p, role: v }))}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    {roleOptions.map(opt => (
-                                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+          <div className="flex flex-col gap-2">
+            <Label>Role *</Label>
+            <Select
+              value={formData.role}
+              onValueChange={(value) => setFormData((current) => ({ ...current, role: value }))}
+              disabled={formData.is_ex_officio}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {roleOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
 
-                        <div>
-                            <Label>Title (optional)</Label>
-                            <Input 
-                                value={formData.title}
-                                onChange={(e) => setFormData(p => ({ ...p, title: e.target.value }))}
-                                placeholder="e.g., Dean of Sciences"
-                            />
-                        </div>
+          <div className="flex flex-col gap-2">
+            <Label>Title</Label>
+            <Input
+              value={formData.title}
+              onChange={(event) => setFormData((current) => ({ ...current, title: event.target.value }))}
+              placeholder="e.g. Dean of Sciences"
+            />
+          </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label>Start Date</Label>
-                                <Input 
-                                    type="date"
-                                    value={formData.start_date}
-                                    onChange={(e) => setFormData(p => ({ ...p, start_date: e.target.value }))}
-                                />
-                            </div>
-                            <div>
-                                <Label>Term End Date</Label>
-                                <Input 
-                                    type="date"
-                                    value={formData.term_end_date}
-                                    onChange={(e) => setFormData(p => ({ ...p, term_end_date: e.target.value }))}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-4">
-                            <div className="flex items-center gap-2">
-                                <Switch 
-                                    checked={formData.is_acting}
-                                    onCheckedChange={(v) => setFormData(p => ({ ...p, is_acting: v }))}
-                                />
-                                <Label>Acting/Interim</Label>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Switch 
-                                    checked={formData.is_ex_officio}
-                                    onCheckedChange={(v) => setFormData(p => ({ ...p, is_ex_officio: v }))}
-                                />
-                                <Label>Ex-Officio</Label>
-                            </div>
-                        </div>
-
-                        <div>
-                            <Label>Notes</Label>
-                            <RichTextEditor
-                                value={formData.notes}
-                                onChange={(notes) => setFormData(p => ({ ...p, notes }))}
-                                placeholder="Additional notes..."
-                                toolbar="simple"
-                                minHeight="150px"
-                            />
-                        </div>
-
-                        <div className="flex justify-end gap-2 pt-4">
-                            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                            <Button onClick={handleSubmit} disabled={addMutation.isPending}>
-                                {addMutation.isPending ? "Adding..." : "Add Member"}
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <Label>Start Date</Label>
+              <Input
+                type="date"
+                value={formData.start_date}
+                onChange={(event) => setFormData((current) => ({ ...current, start_date: event.target.value }))}
+              />
             </div>
+            <div className="flex flex-col gap-2">
+              <Label>Term End Date</Label>
+              <Input
+                type="date"
+                value={formData.term_end_date}
+                onChange={(event) => setFormData((current) => ({ ...current, term_end_date: event.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-4">
+            <label className="flex items-center gap-2 text-sm">
+              <Switch
+                checked={formData.is_acting}
+                onCheckedChange={(checked) => setFormData((current) => ({ ...current, is_acting: checked }))}
+              />
+              Acting/Interim
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Switch
+                checked={formData.is_ex_officio}
+                onCheckedChange={(checked) => setFormData((current) => ({ ...current, is_ex_officio: checked }))}
+              />
+              Ex-Officio
+            </label>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label>Notes</Label>
+            <RichTextEditor
+              value={formData.notes}
+              onChange={(notes) => setFormData((current) => ({ ...current, notes }))}
+              placeholder="Additional notes..."
+              toolbar="simple"
+              minHeight="150px"
+            />
+          </div>
         </div>
-    );
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button type="button" onClick={handleSubmit} disabled={addMutation.isPending}>
+            {addMutation.isPending ? "Adding..." : "Add Member"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
