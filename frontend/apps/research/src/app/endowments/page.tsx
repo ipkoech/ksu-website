@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Banknote, Handshake, Lightbulb, Network } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFilterForm } from "../../components/research-listing";
 import { ResearchFact } from "../../components/research-detail";
 import {
   Badge,
@@ -89,7 +90,7 @@ export default async function EndowmentsPage({
       <ResearchSection
         eyebrow="Endowment Funds"
         title="Published endowments"
-        body="Endowment records are backend-backed information pages for long-term research support."
+        body="Endowment pages publish long-term funds, purposes, donors, targets, and impact details."
         tone="white"
       >
         <EndowmentFilters params={params} years={getEndowmentYears(allEndowments.data)} />
@@ -147,76 +148,24 @@ function EndowmentFilters({
   years: string[];
 }) {
   return (
-    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/endowments">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <label className="xl:col-span-2">
-          <span className="text-xs font-semibold uppercase text-slate-500">Search</span>
-          <input
-            name="q"
-            defaultValue={params.q ?? ""}
-            placeholder="Fund name, donor, purpose"
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          />
-        </label>
-        <SelectField name="type" label="Type" value={params.type} options={fundTypes} />
-        <SelectField name="status" label="Status" value={params.status} options={fundStatuses} />
-        <SelectField name="year" label="Year" value={params.year} options={years} />
-        <label>
-          <span className="text-xs font-semibold uppercase text-slate-500">Sort</span>
-          <select
-            name="sort"
-            defaultValue={params.sort ?? "display_order"}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="display_order">Featured order</option>
-            <option value="established_date">Established date</option>
-            <option value="current_value">Current value</option>
-            <option value="name">Name</option>
-          </select>
-        </label>
-        <div className="flex items-end gap-2 md:col-span-2 xl:col-span-6">
-          <button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
-            Apply filters
-          </button>
-          <Link
-            href="/endowments"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary"
-          >
-            Reset
-          </Link>
-        </div>
-      </div>
-    </form>
-  );
-}
-
-function SelectField({
-  name,
-  label,
-  value,
-  options,
-}: {
-  name: string;
-  label: string;
-  value?: string;
-  options: string[];
-}) {
-  return (
-    <label>
-      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
-      <select
-        name={name}
-        defaultValue={value ?? ""}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-      >
-        <option value="">All {label.toLowerCase()}</option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {formatLabel(option)}
-          </option>
-        ))}
-      </select>
-    </label>
+    <ResearchFilterForm
+      action="/endowments"
+      resetHref="/endowments"
+      searchValue={params.q}
+      searchPlaceholder="Fund name, donor, purpose"
+      selects={[
+        { name: "type", label: "Type", value: params.type, options: fundTypes },
+        { name: "status", label: "Status", value: params.status, options: fundStatuses },
+        { name: "year", label: "Year", value: params.year, options: years },
+      ]}
+      sortValue={params.sort}
+      sortOptions={[
+        { value: "display_order", label: "Featured order" },
+        { value: "established_date", label: "Established date" },
+        { value: "current_value", label: "Current value" },
+        { value: "name", label: "Name" },
+      ]}
+    />
   );
 }
 

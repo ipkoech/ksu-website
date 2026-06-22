@@ -88,7 +88,7 @@ export default async function CommunityImpactPage() {
       <ResearchSection
         eyebrow="Economic & Social Impact"
         title="Success stories and initiatives"
-        body="Stories and sustainability records come from the Research service impact endpoints."
+        body="Stories and sustainability work are grouped around community outcomes and public impact."
       >
         <RecordGrid records={[...stories.data, ...sustainability.data, ...donationImpacts.data]} />
         {[stories.error, sustainability.error, donationImpacts.error].filter(Boolean).map((error) => (

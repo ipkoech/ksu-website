@@ -113,7 +113,7 @@ export default async function PartnerDetailPage({
       <ResearchSection
         eyebrow="Partner Activity"
         title="What this partner supports"
-        body="Linked records are shown when they are directly represented in the backend API."
+        body="Linked work is shown when related public records are available."
       >
         <div className="grid gap-5 lg:grid-cols-2">
           <ResearchRecordPanel

@@ -85,7 +85,7 @@ export default async function CenterDetailPage({
       <ResearchSection
         eyebrow="Center Profile"
         title="Mandate and research focus"
-        body="Center profiles are loaded from the Research Centers endpoint and connected records are resolved through their public endpoints."
+        body="Center profiles are presented with related projects, publications, outputs, and leadership information."
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -125,7 +125,7 @@ export default async function CenterDetailPage({
       <ResearchSection
         eyebrow="Center Network"
         title="Programs, projects, outputs, and people"
-        body="Each relationship is shown as a public record, not as backend language."
+        body="Each relationship is shown in language visitors can understand."
       >
         <div className="grid gap-5 lg:grid-cols-2">
           <ResearchRecordPanel

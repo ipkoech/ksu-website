@@ -46,7 +46,7 @@ export default async function SustainabilityPage() {
       <ResearchClusterHero
         eyebrow="Sustainability"
         title="Sustainability initiatives connected to research."
-        body="Explore active climate, conservation, biodiversity, water, food security, and circular-economy work managed through the Research service."
+        body="Explore active climate, conservation, biodiversity, water, food security, and circular-economy work."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Sustainability" }]}
         imageSrc="/images/research/research-workflows.png"
         imageAlt="Sustainability research, climate action, conservation, and community fieldwork"

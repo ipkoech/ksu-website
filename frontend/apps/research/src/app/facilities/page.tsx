@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpenCheck, Building2, FlaskConical, GraduationCap, Sprout } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFilterForm } from "../../components/research-listing";
 import {
   Badge,
   ResearchSection,
@@ -109,7 +110,7 @@ export default async function FacilitiesPage({
       <ResearchSection
         eyebrow="Infrastructure"
         title="Facilities and research farms"
-        body="Facility records are loaded from the Research Farms endpoint and filtered server-side."
+        body="Browse facilities by type, center, availability, location, and activity area."
         tone="white"
       >
         <FacilityFilters params={params} centers={centers.data} />
@@ -179,72 +180,21 @@ function FacilityFilters({
   centers: ResearchGenericRecord[];
 }) {
   return (
-    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/facilities">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <label className="xl:col-span-2">
-          <span className="text-xs font-semibold uppercase text-slate-500">Search</span>
-          <input
-            name="q"
-            defaultValue={params.q ?? ""}
-            placeholder="Facility name, activities, location"
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          />
-        </label>
-        <label>
-          <span className="text-xs font-semibold uppercase text-slate-500">Type</span>
-          <select
-            name="type"
-            defaultValue={params.type ?? ""}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="">All types</option>
-            {farmTypes.map((type) => (
-              <option key={type} value={type}>
-                {formatLabel(type)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="xl:col-span-2">
-          <span className="text-xs font-semibold uppercase text-slate-500">Center</span>
-          <select
-            name="center"
-            defaultValue={params.center ?? ""}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="">All centers</option>
-            {centers.map((center) => (
-              <option key={center.id} value={center.id}>
-                {center.name ?? center.title ?? center.code ?? center.id}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span className="text-xs font-semibold uppercase text-slate-500">Sort</span>
-          <select
-            name="sort"
-            defaultValue={params.sort ?? "display_order"}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="display_order">Featured order</option>
-            <option value="name">Name</option>
-            <option value="created_at">Newest</option>
-          </select>
-        </label>
-        <div className="flex items-end gap-2 md:col-span-2">
-          <button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
-            Apply
-          </button>
-          <Link
-            href="/facilities"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary"
-          >
-            Reset
-          </Link>
-        </div>
-      </div>
-    </form>
+    <ResearchFilterForm
+      action="/facilities"
+      resetHref="/facilities"
+      searchValue={params.q}
+      searchPlaceholder="Facility name, activities, location"
+      selects={[{ name: "type", label: "Type", value: params.type, options: farmTypes }]}
+      centers={centers}
+      centerValue={params.center}
+      sortValue={params.sort}
+      sortOptions={[
+        { value: "display_order", label: "Featured order" },
+        { value: "name", label: "Name" },
+        { value: "created_at", label: "Newest" },
+      ]}
+    />
   );
 }
 

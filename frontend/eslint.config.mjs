@@ -13,6 +13,7 @@ export default [
   {
     ignores: [
       "**/.next/**",
+      "**/.next.docker-owned-*/**",
       "**/.next-codex/**",
       "**/out/**",
       "**/node_modules/**",

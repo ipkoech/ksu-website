@@ -61,7 +61,7 @@ export default async function MentorshipDetailPage({ params }: { params: Promise
           </aside>
         </div>
       </ResearchSection>
-      <ResearchSection eyebrow="Programme Records" title="Applications, matches, and contact" body="Embedded programme records are shown when published by the backend.">
+      <ResearchSection eyebrow="Programme Records" title="Applications, matches, and contact" body="Programme applications, matches, and contact details appear when published.">
         <div className="grid gap-5 lg:grid-cols-3">
           <ResearchRecordPanel title="Applications" records={applications} />
           <ResearchRecordPanel title="Matches" records={matches} />

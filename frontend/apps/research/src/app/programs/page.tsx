@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpenCheck, Building2, FlaskConical, GraduationCap, Sprout } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFilterForm } from "../../components/research-listing";
 import {
   Badge,
   FilledBadge,
@@ -115,7 +116,7 @@ export default async function ProgramsPage({
       <ResearchSection
         eyebrow="Programs"
         title="Program catalogue"
-        body="Program records are loaded from the Research Programs endpoint and can be filtered by status, center, and year."
+        body="Browse programmes by status, center, year, and keyword."
         tone="white"
       >
         <ProgramFilters
@@ -188,89 +189,24 @@ function ProgramFilters({
   years: string[];
 }) {
   return (
-    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/programs">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <label className="xl:col-span-2">
-          <span className="text-xs font-semibold uppercase text-slate-500">Search</span>
-          <input
-            name="q"
-            defaultValue={params.q ?? ""}
-            placeholder="Program name, summary, code"
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          />
-        </label>
-        <SelectField name="status" label="Status" value={params.status} options={programStatuses} />
-        <SelectField name="year" label="Year" value={params.year} options={years} />
-        <label>
-          <span className="text-xs font-semibold uppercase text-slate-500">Sort</span>
-          <select
-            name="sort"
-            defaultValue={params.sort ?? "created_at"}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="created_at">Newest</option>
-            <option value="start_date">Start date</option>
-            <option value="name">Name</option>
-          </select>
-        </label>
-        <label className="md:col-span-2 xl:col-span-3">
-          <span className="text-xs font-semibold uppercase text-slate-500">Center</span>
-          <select
-            name="center"
-            defaultValue={params.center ?? ""}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="">All centers</option>
-            {centers.map((center) => (
-              <option key={center.id} value={center.id}>
-                {center.name ?? center.title ?? center.code ?? center.id}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className="flex items-end gap-2 md:col-span-2 xl:col-span-3">
-          <button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
-            Apply filters
-          </button>
-          <Link
-            href="/programs"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary"
-          >
-            Reset
-          </Link>
-        </div>
-      </div>
-    </form>
-  );
-}
-
-function SelectField({
-  name,
-  label,
-  value,
-  options,
-}: {
-  name: string;
-  label: string;
-  value?: string;
-  options: string[];
-}) {
-  return (
-    <label>
-      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
-      <select
-        name={name}
-        defaultValue={value ?? ""}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-      >
-        <option value="">All {label.toLowerCase()}</option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {formatLabel(option)}
-          </option>
-        ))}
-      </select>
-    </label>
+    <ResearchFilterForm
+      action="/programs"
+      resetHref="/programs"
+      searchValue={params.q}
+      searchPlaceholder="Program name, summary, code"
+      selects={[
+        { name: "status", label: "Status", value: params.status, options: programStatuses },
+        { name: "year", label: "Year", value: params.year, options: years },
+      ]}
+      centers={centers}
+      centerValue={params.center}
+      sortValue={params.sort}
+      sortOptions={[
+        { value: "created_at", label: "Newest" },
+        { value: "start_date", label: "Start date" },
+        { value: "name", label: "Name" },
+      ]}
+    />
   );
 }
 

@@ -54,7 +54,7 @@ const donateLinks = [
   {
     label: "Make a Gift",
     href: "/donate#make-a-gift",
-    description: "Start a backend-shaped donor and gift request.",
+    description: "Start a donor and gift request.",
     icon: HeartHandshake,
   },
   {
@@ -150,7 +150,7 @@ export default async function DonatePage() {
       <ResearchSection
         eyebrow="How Giving Moves"
         title="A clear donation workflow"
-        body="The public page explains the donor journey while admin records continue to manage donors, donation status, receipts, impact reports, and stories."
+        body="The page explains the donor journey from giving priority to confirmation, receipt, impact reporting, and stories."
       >
         <div className="grid gap-4 md:grid-cols-5">
           {workflow.map((step, index) => (
@@ -167,7 +167,7 @@ export default async function DonatePage() {
       <ResearchSection
         eyebrow="Make a Gift"
         title="Start a donation"
-        body="This form follows the backend donor and donation schema. The final payment route is controlled by donation settings, so the public page can point to the approved giving channel."
+        body="This form collects the information needed to prepare a gift request. Approved giving channels are shown from the published donation settings."
         tone="white"
       >
         <div id="make-a-gift" className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_520px]">
@@ -188,7 +188,7 @@ export default async function DonatePage() {
       <ResearchSection
         eyebrow="Impact Published Back"
         title="Impact reports and donor stories"
-        body="Donation impact and story records are published from the backend when they are marked active and public."
+        body="Donation impact and stories appear here when they are published for public view."
       >
         {[impacts.error, stories.error].filter(Boolean).map((error) => (
           <div key={error} className="mb-5">
@@ -483,7 +483,7 @@ function DonationForm({
             name="custom_amount"
             inputMode="decimal"
             placeholder={`${currency} custom amount`}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
         </label>
       </fieldset>
@@ -518,7 +518,7 @@ function DonationForm({
           <select
             name="designation"
             defaultValue={priorities[0]?.value}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             {priorities.map((priority) => (
               <option key={priority.value} value={priority.value}>
@@ -532,7 +532,7 @@ function DonationForm({
           <input
             name="purpose"
             placeholder="Optional purpose, fund, project, or scholarship note"
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
         </label>
       </div>
@@ -548,7 +548,7 @@ function DonationForm({
             <select
               name="donor_type"
               defaultValue="individual"
-              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="individual">Individual</option>
               <option value="alumni">Alumni</option>
@@ -563,7 +563,7 @@ function DonationForm({
             <select
               name="is_public"
               defaultValue="false"
-              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="false">Keep private</option>
               <option value="true">May be recognized publicly</option>
@@ -576,7 +576,7 @@ function DonationForm({
             name="message"
             rows={4}
             placeholder="Optional donor message, dedication, or pledge note"
-            className="mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-3 text-sm outline-none transition focus:border-primary"
+            className="mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
         </label>
       </div>
@@ -613,7 +613,7 @@ function InputField({
         type={type}
         required={required}
         placeholder={placeholder}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       />
     </label>
   );

@@ -23,9 +23,18 @@ type CenterOption = {
   code?: string | null;
 };
 
+type ProjectOption = CenterOption;
+
 type SortOption = {
   value: string;
   label: string;
+};
+
+type TextFilter = {
+  name: string;
+  label: string;
+  value?: string;
+  placeholder: string;
 };
 
 type ListingFact = {
@@ -38,9 +47,12 @@ export function ResearchFilterForm({
   resetHref,
   searchValue,
   searchPlaceholder,
+  textFilters = [],
   selects = [],
   centers,
   centerValue,
+  projects,
+  projectValue,
   sortValue,
   sortOptions = [],
 }: {
@@ -48,9 +60,12 @@ export function ResearchFilterForm({
   resetHref: string;
   searchValue?: string;
   searchPlaceholder: string;
+  textFilters?: TextFilter[];
   selects?: FilterOption[];
   centers?: CenterOption[];
   centerValue?: string;
+  projects?: ProjectOption[];
+  projectValue?: string;
   sortValue?: string;
   sortOptions?: SortOption[];
 }) {
@@ -63,12 +78,24 @@ export function ResearchFilterForm({
             name="q"
             defaultValue={searchValue ?? ""}
             placeholder={searchPlaceholder}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
         </label>
 
         {selects.map((select) => (
           <ResearchSelectField key={select.name} {...select} />
+        ))}
+
+        {textFilters.map((filter) => (
+          <label key={filter.name}>
+            <span className="text-xs font-semibold uppercase text-slate-500">{filter.label}</span>
+            <input
+              name={filter.name}
+              defaultValue={filter.value ?? ""}
+              placeholder={filter.placeholder}
+              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+          </label>
         ))}
 
         {centers ? (
@@ -77,12 +104,30 @@ export function ResearchFilterForm({
             <select
               name="center"
               defaultValue={centerValue ?? ""}
-              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="">All centers</option>
               {centers.map((center) => (
                 <option key={center.id} value={center.id}>
                   {center.name ?? center.title ?? center.code ?? center.id}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+
+        {projects ? (
+          <label className="md:col-span-2 xl:col-span-2">
+            <span className="text-xs font-semibold uppercase text-slate-500">Project</span>
+            <select
+              name="project"
+              defaultValue={projectValue ?? ""}
+              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <option value="">All projects</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.title ?? project.name ?? project.code ?? project.id}
                 </option>
               ))}
             </select>
@@ -95,7 +140,7 @@ export function ResearchFilterForm({
             <select
               name="sort"
               defaultValue={sortValue ?? sortOptions[0]?.value ?? ""}
-              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -134,7 +179,7 @@ export function ResearchSelectField({
       <select
         name={name}
         defaultValue={value ?? ""}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         <option value="">All {label.toLowerCase()}</option>
         {options.map((option) => (

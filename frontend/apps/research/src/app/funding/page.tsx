@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Banknote, ClipboardList, FileText, GraduationCap, LifeBuoy, Wrench } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
 import { ResearchFact } from "../../components/research-detail";
+import { ResearchFilterForm } from "../../components/research-listing";
 import {
   Badge,
   FilledBadge,
@@ -96,7 +97,7 @@ export default async function FundingPage({
       <ResearchSection
         eyebrow="Opportunity Board"
         title="Funding opportunities"
-        body="Grant records come directly from the Research service so public calls stay aligned with administrative records."
+        body="Funding calls are published with deadlines, eligibility, award ranges, and application routes."
         tone="white"
       >
         <FundingFilters params={params} years={getGrantYears(allGrants.data)} />
@@ -142,77 +143,25 @@ function FundingFilters({
   years: string[];
 }) {
   return (
-    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/funding">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <label className="xl:col-span-2">
-          <span className="text-xs font-semibold uppercase text-slate-500">Search</span>
-          <input
-            name="q"
-            defaultValue={params.q ?? ""}
-            placeholder="Grant title, funder, eligibility"
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          />
-        </label>
-        <SelectField name="type" label="Type" value={params.type} options={grantTypes} />
-        <SelectField name="category" label="Category" value={params.category} options={grantCategories} />
-        <SelectField name="status" label="Status" value={params.status} options={grantStatuses} />
-        <SelectField name="year" label="Year" value={params.year} options={years} />
-        <label>
-          <span className="text-xs font-semibold uppercase text-slate-500">Sort</span>
-          <select
-            name="sort"
-            defaultValue={params.sort ?? "deadline"}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="deadline">Deadline</option>
-            <option value="open_date">Open date</option>
-            <option value="created_at">Newest</option>
-            <option value="title">Title</option>
-          </select>
-        </label>
-        <div className="flex items-end gap-2 md:col-span-2 xl:col-span-5">
-          <button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
-            Apply filters
-          </button>
-          <Link
-            href="/funding"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary"
-          >
-            Reset
-          </Link>
-        </div>
-      </div>
-    </form>
-  );
-}
-
-function SelectField({
-  name,
-  label,
-  value,
-  options,
-}: {
-  name: string;
-  label: string;
-  value?: string;
-  options: string[];
-}) {
-  return (
-    <label>
-      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
-      <select
-        name={name}
-        defaultValue={value ?? ""}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-      >
-        <option value="">All {label.toLowerCase()}</option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {formatLabel(option)}
-          </option>
-        ))}
-      </select>
-    </label>
+    <ResearchFilterForm
+      action="/funding"
+      resetHref="/funding"
+      searchValue={params.q}
+      searchPlaceholder="Grant title, funder, eligibility"
+      selects={[
+        { name: "type", label: "Type", value: params.type, options: grantTypes },
+        { name: "category", label: "Category", value: params.category, options: grantCategories },
+        { name: "status", label: "Status", value: params.status, options: grantStatuses },
+        { name: "year", label: "Year", value: params.year, options: years },
+      ]}
+      sortValue={params.sort}
+      sortOptions={[
+        { value: "deadline", label: "Deadline" },
+        { value: "open_date", label: "Open date" },
+        { value: "created_at", label: "Newest" },
+        { value: "title", label: "Title" },
+      ]}
+    />
   );
 }
 

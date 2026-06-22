@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Banknote, Handshake, Lightbulb, Network } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFilterForm } from "../../components/research-listing";
 import { ResearchFact } from "../../components/research-detail";
 import {
   Badge,
@@ -102,7 +103,7 @@ export default async function InnovationsPage({
       <ResearchSection
         eyebrow="Innovation Portfolio"
         title="Innovation portfolio"
-        body="Innovation records are loaded from the Research Innovations endpoint and filtered through backend query parameters."
+        body="Browse innovations by type, stage, IP status, commercialization status, center, and keyword."
         tone="white"
       >
         <InnovationFilters params={params} centers={centers.data} projects={projects.data} />
@@ -167,108 +168,30 @@ function InnovationFilters({
   projects: Array<Record<string, any>>;
 }) {
   return (
-    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/innovations">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <label className="xl:col-span-2">
-          <span className="text-xs font-semibold uppercase text-slate-500">Search</span>
-          <input
-            name="q"
-            defaultValue={params.q ?? ""}
-            placeholder="Title, problem, solution, benefit"
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          />
-        </label>
-        <SelectField name="type" label="Type" value={params.type} options={innovationTypes} />
-        <SelectField name="stage" label="Stage" value={params.stage} options={developmentStages} />
-        <SelectField name="ip" label="IP" value={params.ip} options={ipStatuses} />
-        <SelectField name="commercial" label="Commercial" value={params.commercial} options={commercializationStatuses} />
-        <SelectField name="status" label="Status" value={params.status} options={innovationStatuses} />
-        <label>
-          <span className="text-xs font-semibold uppercase text-slate-500">Sort</span>
-          <select
-            name="sort"
-            defaultValue={params.sort ?? "display_order"}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="display_order">Featured order</option>
-            <option value="created_at">Newest</option>
-            <option value="trl_level">Technology readiness</option>
-            <option value="title">Title</option>
-          </select>
-        </label>
-        <label className="md:col-span-2 xl:col-span-3">
-          <span className="text-xs font-semibold uppercase text-slate-500">Center</span>
-          <select
-            name="center"
-            defaultValue={params.center ?? ""}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="">All centers</option>
-            {centers.map((center) => (
-              <option key={center.id} value={center.id}>
-                {center.name ?? center.title ?? center.code ?? center.id}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="md:col-span-2 xl:col-span-3">
-          <span className="text-xs font-semibold uppercase text-slate-500">Project</span>
-          <select
-            name="project"
-            defaultValue={params.project ?? ""}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="">All projects</option>
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.title ?? project.name ?? project.code ?? project.id}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className="flex items-end gap-2 md:col-span-2 xl:col-span-6">
-          <button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
-            Apply filters
-          </button>
-          <Link
-            href="/innovations"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary"
-          >
-            Reset
-          </Link>
-        </div>
-      </div>
-    </form>
-  );
-}
-
-function SelectField({
-  name,
-  label,
-  value,
-  options,
-}: {
-  name: string;
-  label: string;
-  value?: string;
-  options: string[];
-}) {
-  return (
-    <label>
-      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
-      <select
-        name={name}
-        defaultValue={value ?? ""}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-      >
-        <option value="">All {label.toLowerCase()}</option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {formatLabel(option)}
-          </option>
-        ))}
-      </select>
-    </label>
+    <ResearchFilterForm
+      action="/innovations"
+      resetHref="/innovations"
+      searchValue={params.q}
+      searchPlaceholder="Title, problem, solution, benefit"
+      selects={[
+        { name: "type", label: "Type", value: params.type, options: innovationTypes },
+        { name: "stage", label: "Stage", value: params.stage, options: developmentStages },
+        { name: "ip", label: "IP", value: params.ip, options: ipStatuses },
+        { name: "commercial", label: "Commercial", value: params.commercial, options: commercializationStatuses },
+        { name: "status", label: "Status", value: params.status, options: innovationStatuses },
+      ]}
+      centers={centers}
+      centerValue={params.center}
+      projects={projects}
+      projectValue={params.project}
+      sortValue={params.sort}
+      sortOptions={[
+        { value: "display_order", label: "Featured order" },
+        { value: "created_at", label: "Newest" },
+        { value: "trl_level", label: "Technology readiness" },
+        { value: "title", label: "Title" },
+      ]}
+    />
   );
 }
 

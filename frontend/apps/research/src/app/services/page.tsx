@@ -33,7 +33,7 @@ export default async function ServicesPage({ searchParams }: { searchParams?: Pr
   return (
     <main id="research-main" className="min-h-screen bg-white">
       <ResearchClusterHero eyebrow="Funding / Support" title="Research support services." body="Find services for researchers, students, partners, and public engagement, with process, eligibility, turnaround, deliverables, fees, and request links." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Funding", href: "/funding" }, { label: "Services" }]} imageSrc="/images/research/registrar-reirm-imagegen.png" imageAlt="Research office service desk supporting researchers and partners" links={supportLinks} primaryAction={{ label: "Contact support", href: "/connect" }} stats={[{ label: "Service results", value: services.data.length }, { label: "Published services", value: allServices.data.length }, { label: "Centers", value: centers.data.length }, { label: "Categories", value: categories.length }]} />
-      <ResearchSection eyebrow="Service Catalogue" title="Available research services" body="Filter backend-backed services by type, category, center, and keyword." tone="white">
+      <ResearchSection eyebrow="Service Catalogue" title="Available research services" body="Filter services by type, category, center, and keyword." tone="white">
         <ServiceFilters params={params} categories={categories} centers={centers.data} />
         {[services.error, allServices.error, centers.error].filter(Boolean).map((error) => <div key={error} className="mt-5"><StatusMessage tone="error">{error}</StatusMessage></div>)}
         {services.data.length ? <div className="mt-7 grid gap-5 lg:grid-cols-3">{services.data.map((item) => <ServiceCard key={item.id} item={item} />)}</div> : <div className="mt-7"><StatusMessage>No services match the current filters.</StatusMessage></div>}
@@ -69,7 +69,7 @@ function ServiceCard({ item }: { item: ResearchGenericRecord }) {
   return (
     <ResearchListCard
       href={item.slug ? `/services/${item.slug}` : "/services"}
-      title={item.name ?? "Research service"}
+      title={item.name ?? "Research support service"}
       description={compactText(item.summary) || compactText(item.scope) || compactText(item.description) || "Service details are not published yet."}
       badges={[item.service_type ?? "service", item.category]}
       filledBadges={item.is_free ? ["Free"] : []}

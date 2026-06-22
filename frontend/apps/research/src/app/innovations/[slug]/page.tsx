@@ -132,7 +132,7 @@ export default async function InnovationDetailPage({
       <ResearchSection
         eyebrow="Relationships"
         title="Research context, sponsors, and outputs"
-        body="Relationships are resolved from backend records where the public API exposes linked IDs."
+        body="Related projects, partners, centers, and outputs appear when linked public records are available."
       >
         <div className="grid gap-5 lg:grid-cols-3">
           <ResearchRelationshipCard

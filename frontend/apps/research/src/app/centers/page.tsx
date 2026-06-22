@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpenCheck, Building2, FlaskConical, GraduationCap, Sprout } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFilterForm } from "../../components/research-listing";
 import {
   Badge,
   FilledBadge,
@@ -108,7 +109,7 @@ export default async function CentersPage({
       <ResearchSection
         eyebrow="Directory"
         title="Centers and institutes"
-        body="Center records are backed by the Research Centers endpoint and filtered server-side."
+        body="Browse centers by type, status, location, and research focus."
         tone="white"
       >
         <CenterFilters params={params} />
@@ -167,57 +168,19 @@ export default async function CentersPage({
 
 function CenterFilters({ params }: { params: CenterSearchParams }) {
   return (
-    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/centers">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-        <label className="xl:col-span-2">
-          <span className="text-xs font-semibold uppercase text-slate-500">Search</span>
-          <input
-            name="q"
-            defaultValue={params.q ?? ""}
-            placeholder="Center name, mandate, research area"
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          />
-        </label>
-        <label>
-          <span className="text-xs font-semibold uppercase text-slate-500">Type</span>
-          <select
-            name="type"
-            defaultValue={params.type ?? ""}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="">All types</option>
-            {centerTypes.map((type) => (
-              <option key={type} value={type}>
-                {formatLabel(type)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span className="text-xs font-semibold uppercase text-slate-500">Sort</span>
-          <select
-            name="sort"
-            defaultValue={params.sort ?? "display_order"}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="display_order">Featured order</option>
-            <option value="name">Name</option>
-            <option value="created_at">Newest</option>
-          </select>
-        </label>
-        <div className="flex items-end gap-2">
-          <button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
-            Apply
-          </button>
-          <Link
-            href="/centers"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary"
-          >
-            Reset
-          </Link>
-        </div>
-      </div>
-    </form>
+    <ResearchFilterForm
+      action="/centers"
+      resetHref="/centers"
+      searchValue={params.q}
+      searchPlaceholder="Center name, mandate, research area"
+      selects={[{ name: "type", label: "Type", value: params.type, options: centerTypes }]}
+      sortValue={params.sort}
+      sortOptions={[
+        { value: "display_order", label: "Featured order" },
+        { value: "name", label: "Name" },
+        { value: "created_at", label: "Newest" },
+      ]}
+    />
   );
 }
 

@@ -123,7 +123,7 @@ export default async function ConsultancyDetailPage({
       <ResearchSection
         eyebrow="Relationships"
         title="Partner, center, team, and documents"
-        body="Related records are shown when the public API exposes linked IDs or embedded lists."
+        body="Related work is shown when linked public records are available."
       >
         <div className="grid gap-5 lg:grid-cols-3">
           <ResearchRelationshipCard title="Partner" record={partner} hrefBase="/partners" empty="No public partner is linked." />

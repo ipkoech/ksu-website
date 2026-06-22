@@ -71,7 +71,7 @@ export default async function ProgramDetailPage({
       <ResearchSection
         eyebrow="Program Pathway"
         title="Focus, methods, and outcomes"
-        body="Program information is backed by the Research Programs endpoint and connected projects are loaded through the project registry."
+        body="Programme information is presented with connected projects and delivery details."
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">

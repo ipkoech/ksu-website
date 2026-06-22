@@ -1,18 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { BarChart3, BookOpenCheck, Database, FlaskConical } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
-import { ResearchFact } from "../../components/research-detail";
-import {
-  Badge,
-  FilledBadge,
-  ResearchSection,
-  StatusMessage,
-} from "../../components/research-ui";
+import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
+import { ResearchSection, StatusMessage } from "../../components/research-ui";
 import {
   compactText,
   formatDate,
-  formatLabel,
   getCenters,
   getProjects,
   getPublications,
@@ -123,7 +116,7 @@ export default async function PublicationsPage({
       <ResearchSection
         eyebrow="Research Library"
         title="Publications"
-        body="Publication records are served by the Research API with type, year, access, journal, DOI, project, and center metadata."
+        body="Browse publications by type, year, access, journal, DOI, project, and center."
         tone="white"
       >
         <PublicationFilters
@@ -144,7 +137,27 @@ export default async function PublicationsPage({
         {publications.data.length > 0 ? (
           <div className="mt-7 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
             {publications.data.map((publication) => (
-              <PublicationRow key={publication.id} publication={publication} />
+              <ResearchRecordRow
+                key={publication.id}
+                href={publication.slug ? `/publications/${publication.slug}` : "/publications"}
+                title={publication.title}
+                description={
+                  compactText(publication.abstract) ||
+                  [publication.journal_name, publication.publisher, publication.conference_name]
+                    .map(compactText)
+                    .filter(Boolean)
+                    .join(" · ") ||
+                  "Publication abstract is not published yet."
+                }
+                badges={[publication.publication_type, publication.access_type]}
+                filledBadges={[publication.is_open_access ? "Open access" : null]}
+                facts={[
+                  { label: "Published in", value: publication.journal_name || publication.publisher || publication.conference_name || "" },
+                  { label: "Year", value: compactText(publication.year) },
+                  { label: "Date", value: formatDate(publication.publication_date) },
+                  { label: "DOI", value: compactText(publication.doi) },
+                ]}
+              />
             ))}
           </div>
         ) : (
@@ -169,142 +182,28 @@ function PublicationFilters({
   projects: Array<Record<string, any>>;
 }) {
   return (
-    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/publications">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <label className="xl:col-span-2">
-          <span className="text-xs font-semibold uppercase text-slate-500">Search</span>
-          <input
-            name="q"
-            defaultValue={params.q ?? ""}
-            placeholder="Title, journal, DOI, abstract"
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          />
-        </label>
-        <SelectField name="type" label="Type" value={params.type} options={publicationTypes} />
-        <SelectField name="access" label="Access" value={params.access} options={accessTypes} />
-        <SelectField name="year" label="Year" value={params.year} options={years} />
-        <label>
-          <span className="text-xs font-semibold uppercase text-slate-500">Sort</span>
-          <select
-            name="sort"
-            defaultValue={params.sort ?? "publication_date"}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="publication_date">Publication date</option>
-            <option value="year">Year</option>
-            <option value="title">Title</option>
-            <option value="created_at">Newest</option>
-          </select>
-        </label>
-        <label className="md:col-span-2 xl:col-span-3">
-          <span className="text-xs font-semibold uppercase text-slate-500">Center</span>
-          <select
-            name="center"
-            defaultValue={params.center ?? ""}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="">All centers</option>
-            {centers.map((center) => (
-              <option key={center.id} value={center.id}>
-                {center.name ?? center.title ?? center.code ?? center.id}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="md:col-span-2 xl:col-span-3">
-          <span className="text-xs font-semibold uppercase text-slate-500">Project</span>
-          <select
-            name="project"
-            defaultValue={params.project ?? ""}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="">All projects</option>
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.title ?? project.name ?? project.code ?? project.id}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className="flex items-end gap-2 md:col-span-2 xl:col-span-6">
-          <button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
-            Apply filters
-          </button>
-          <Link
-            href="/publications"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary"
-          >
-            Reset
-          </Link>
-        </div>
-      </div>
-    </form>
-  );
-}
-
-function SelectField({
-  name,
-  label,
-  value,
-  options,
-}: {
-  name: string;
-  label: string;
-  value?: string;
-  options: string[];
-}) {
-  return (
-    <label>
-      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
-      <select
-        name={name}
-        defaultValue={value ?? ""}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-      >
-        <option value="">All {label.toLowerCase()}</option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {formatLabel(option)}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
-function PublicationRow({ publication }: { publication: ResearchPublication }) {
-  return (
-    <article className="grid gap-4 p-5 lg:grid-cols-[1fr_280px]">
-      <div>
-        <div className="flex flex-wrap gap-2">
-          <Badge>{formatLabel(publication.publication_type ?? "publication")}</Badge>
-          {publication.access_type ? <Badge>{formatLabel(publication.access_type)}</Badge> : null}
-          {publication.is_open_access ? <FilledBadge>Open access</FilledBadge> : null}
-        </div>
-        <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-          <Link
-            href={publication.slug ? `/publications/${publication.slug}` : "/publications"}
-            className="transition hover:text-primary"
-          >
-            {publication.title}
-          </Link>
-        </h2>
-        <p className="mt-3 text-sm leading-7 text-slate-600">
-          {compactText(publication.abstract) ||
-            [publication.journal_name, publication.publisher, publication.conference_name]
-              .map(compactText)
-              .filter(Boolean)
-              .join(" · ") ||
-            "Publication abstract is not published yet."}
-        </p>
-      </div>
-      <dl className="grid gap-3 text-sm">
-        <ResearchFact label="Published in" value={publication.journal_name || publication.publisher || publication.conference_name || ""} />
-        <ResearchFact label="Year" value={compactText(publication.year)} />
-        <ResearchFact label="Date" value={formatDate(publication.publication_date)} />
-        <ResearchFact label="DOI" value={compactText(publication.doi)} />
-      </dl>
-    </article>
+    <ResearchFilterForm
+      action="/publications"
+      resetHref="/publications"
+      searchValue={params.q}
+      searchPlaceholder="Title, journal, DOI, abstract"
+      selects={[
+        { name: "type", label: "Type", value: params.type, options: publicationTypes },
+        { name: "access", label: "Access", value: params.access, options: accessTypes },
+        { name: "year", label: "Year", value: params.year, options: years },
+      ]}
+      centers={centers}
+      centerValue={params.center}
+      projects={projects}
+      projectValue={params.project}
+      sortValue={params.sort}
+      sortOptions={[
+        { value: "publication_date", label: "Publication date" },
+        { value: "year", label: "Year" },
+        { value: "title", label: "Title" },
+        { value: "created_at", label: "Newest" },
+      ]}
+    />
   );
 }
 

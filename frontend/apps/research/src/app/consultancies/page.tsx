@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Banknote, Handshake, Lightbulb, Network } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFilterForm } from "../../components/research-listing";
 import { ResearchFact } from "../../components/research-detail";
 import {
   Badge,
@@ -94,7 +95,7 @@ export default async function ConsultanciesPage({
       <ResearchSection
         eyebrow="Expert Services"
         title="Consultancy records"
-        body="Consultancy records are maintained in the Research service and filtered through backend query parameters."
+        body="Browse consultancy work by type, client, status, year, center, and keyword."
         tone="white"
       >
         <ConsultancyFilters
@@ -135,92 +136,27 @@ function ConsultancyFilters({
   centers: ResearchGenericRecord[];
 }) {
   return (
-    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/consultancies">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <label className="xl:col-span-2">
-          <span className="text-xs font-semibold uppercase text-slate-500">Search</span>
-          <input
-            name="q"
-            defaultValue={params.q ?? ""}
-            placeholder="Title, client, outcomes, impact"
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          />
-        </label>
-        <SelectField name="type" label="Type" value={params.type} options={consultancyTypes} />
-        <SelectField name="client" label="Client" value={params.client} options={clientTypes} />
-        <SelectField name="status" label="Status" value={params.status} options={consultancyStatuses} />
-        <SelectField name="year" label="Year" value={params.year} options={years} />
-        <label>
-          <span className="text-xs font-semibold uppercase text-slate-500">Sort</span>
-          <select
-            name="sort"
-            defaultValue={params.sort ?? "start_date"}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="start_date">Start date</option>
-            <option value="created_at">Newest</option>
-            <option value="contract_value">Value</option>
-            <option value="title">Title</option>
-          </select>
-        </label>
-        <label className="md:col-span-2 xl:col-span-3">
-          <span className="text-xs font-semibold uppercase text-slate-500">Center</span>
-          <select
-            name="center"
-            defaultValue={params.center ?? ""}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="">All centers</option>
-            {centers.map((center) => (
-              <option key={center.id} value={center.id}>
-                {center.name ?? center.title ?? center.code ?? center.id}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className="flex items-end gap-2 md:col-span-2 xl:col-span-3">
-          <button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
-            Apply filters
-          </button>
-          <Link
-            href="/consultancies"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary"
-          >
-            Reset
-          </Link>
-        </div>
-      </div>
-    </form>
-  );
-}
-
-function SelectField({
-  name,
-  label,
-  value,
-  options,
-}: {
-  name: string;
-  label: string;
-  value?: string;
-  options: string[];
-}) {
-  return (
-    <label>
-      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
-      <select
-        name={name}
-        defaultValue={value ?? ""}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-      >
-        <option value="">All {label.toLowerCase()}</option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {formatLabel(option)}
-          </option>
-        ))}
-      </select>
-    </label>
+    <ResearchFilterForm
+      action="/consultancies"
+      resetHref="/consultancies"
+      searchValue={params.q}
+      searchPlaceholder="Title, client, outcomes, impact"
+      selects={[
+        { name: "type", label: "Type", value: params.type, options: consultancyTypes },
+        { name: "client", label: "Client", value: params.client, options: clientTypes },
+        { name: "status", label: "Status", value: params.status, options: consultancyStatuses },
+        { name: "year", label: "Year", value: params.year, options: years },
+      ]}
+      centers={centers}
+      centerValue={params.center}
+      sortValue={params.sort}
+      sortOptions={[
+        { value: "start_date", label: "Start date" },
+        { value: "created_at", label: "Newest" },
+        { value: "contract_value", label: "Value" },
+        { value: "title", label: "Title" },
+      ]}
+    />
   );
 }
 

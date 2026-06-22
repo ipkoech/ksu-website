@@ -52,7 +52,7 @@ export default async function FarmPage() {
       <ResearchClusterHero
         eyebrow="University Farm"
         title="Farm-linked research, facilities, and community impact."
-        body="Explore farm facilities, action research projects, community partnerships, activities, impact stories, and focus areas backed by the Research service."
+        body="Explore farm facilities, action research projects, community partnerships, activities, impact stories, and focus areas."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "University Farm" }]}
         imageSrc="/images/research/research-workflows.png"
         imageAlt="University farm research, field demonstration, and community extension work"

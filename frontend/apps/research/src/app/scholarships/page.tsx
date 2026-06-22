@@ -4,6 +4,7 @@ import type { ResearchGenericRecord } from "@ksu/api-client";
 import { Banknote, ClipboardList, FileText, GraduationCap, LifeBuoy, Wrench } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
 import { ResearchFact } from "../../components/research-detail";
+import { ResearchFilterForm } from "../../components/research-listing";
 import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, formatDate, formatLabel, getScholarships, getScholarshipsFiltered } from "../../lib/research-public-data";
 
@@ -46,7 +47,7 @@ export default async function ScholarshipsPage({ searchParams }: { searchParams?
       <ResearchClusterHero
         eyebrow="Funding / Support"
         title="Research scholarships and student funding opportunities."
-        body="Scholarship calls show eligibility, award value, coverage, application deadlines, and direct application links from the Research Scholarships endpoint."
+        body="Scholarship calls show eligibility, award value, coverage, application deadlines, and direct application links."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Funding", href: "/funding" }, { label: "Scholarships" }]}
         imageSrc="/images/research/research-demo-imagegen.png"
         imageAlt="Students and researchers reviewing scholarship support opportunities"
@@ -74,21 +75,26 @@ export default async function ScholarshipsPage({ searchParams }: { searchParams?
 
 function ScholarshipFilters({ params, years }: { params: ScholarshipParams; years: string[] }) {
   return (
-    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/scholarships">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <label className="xl:col-span-2"><span className="text-xs font-semibold uppercase text-slate-500">Search</span><input name="q" defaultValue={params.q ?? ""} placeholder="Scholarship, funder, eligibility" className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary" /></label>
-        <SelectField name="type" label="Type" value={params.type} options={scholarshipTypes} />
-        <SelectField name="status" label="Status" value={params.status} options={statuses} />
-        <SelectField name="year" label="Year" value={params.year} options={years} />
-        <label><span className="text-xs font-semibold uppercase text-slate-500">Sort</span><select name="sort" defaultValue={params.sort ?? "application_deadline"} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="application_deadline">Deadline</option><option value="application_open">Opening date</option><option value="value">Award value</option><option value="name">Name</option><option value="created_at">Newest</option></select></label>
-        <div className="flex items-end gap-2 md:col-span-2 xl:col-span-6"><button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">Apply filters</button><Link href="/scholarships" className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary">Reset</Link></div>
-      </div>
-    </form>
+    <ResearchFilterForm
+      action="/scholarships"
+      resetHref="/scholarships"
+      searchValue={params.q}
+      searchPlaceholder="Scholarship, funder, eligibility"
+      selects={[
+        { name: "type", label: "Type", value: params.type, options: scholarshipTypes },
+        { name: "status", label: "Status", value: params.status, options: statuses },
+        { name: "year", label: "Year", value: params.year, options: years },
+      ]}
+      sortValue={params.sort}
+      sortOptions={[
+        { value: "application_deadline", label: "Deadline" },
+        { value: "application_open", label: "Opening date" },
+        { value: "value", label: "Award value" },
+        { value: "name", label: "Name" },
+        { value: "created_at", label: "Newest" },
+      ]}
+    />
   );
-}
-
-function SelectField({ name, label, value, options }: { name: string; label: string; value?: string; options: string[] }) {
-  return <label><span className="text-xs font-semibold uppercase text-slate-500">{label}</span><select name={name} defaultValue={value ?? ""} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="">All {label.toLowerCase()}</option>{options.map((option) => <option key={option} value={option}>{formatLabel(option)}</option>)}</select></label>;
 }
 
 function ScholarshipCard({ item }: { item: ResearchGenericRecord }) {

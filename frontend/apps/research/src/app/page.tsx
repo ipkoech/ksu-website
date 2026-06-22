@@ -233,9 +233,8 @@ export default async function ResearchPage() {
               Real-time updates from our research ecosystem.
             </h2>
             <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
-              Projects, publications, funding calls, and updates are pulled from
-              the backend service using the same data contracts as the admin
-              interface.
+              Projects, publications, funding calls, and updates are published
+              from the same research records used across the portal.
             </p>
           </div>
 

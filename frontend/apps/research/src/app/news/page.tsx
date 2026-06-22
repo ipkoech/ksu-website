@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
 import { BookOpenCheck, CalendarDays, Newspaper, Users } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFilterForm } from "../../components/research-listing";
 import { ResearchFact } from "../../components/research-detail";
 import {
   Badge,
@@ -120,7 +121,7 @@ export default async function NewsPage({
       <ResearchSection
         eyebrow="Research Desk"
         title="Browse updates and articles"
-        body="The list is filtered through the Research content endpoints using public fields such as type, category, related center, project, year, and publication date."
+        body="Browse updates by type, category, related center, project, year, and publication date."
         tone="white"
       >
         <NewsFilters
@@ -207,89 +208,30 @@ function NewsFilters({
   projects: ResearchProject[];
 }) {
   return (
-    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/news">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <label className="xl:col-span-2">
-          <span className="text-xs font-semibold uppercase text-slate-500">Search</span>
-          <input
-            name="q"
-            defaultValue={params.q ?? ""}
-            placeholder="Title, author, story, announcement"
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          />
-        </label>
-        <label>
-          <span className="text-xs font-semibold uppercase text-slate-500">Content</span>
-          <select
-            name="kind"
-            defaultValue={params.kind ?? ""}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="">Updates and articles</option>
-            <option value="updates">Updates only</option>
-            <option value="articles">Articles only</option>
-          </select>
-        </label>
-        <SelectField name="newsType" label="Update type" value={params.newsType} options={newsTypes} />
-        <SelectField name="articleType" label="Article type" value={params.articleType} options={articleTypes} />
-        <SelectField name="category" label="Category" value={params.category} options={categories} />
-        <SelectField name="year" label="Year" value={params.year} options={years} />
-        <label>
-          <span className="text-xs font-semibold uppercase text-slate-500">Sort</span>
-          <select
-            name="sort"
-            defaultValue={params.sort ?? "published_at"}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="published_at">Published date</option>
-            <option value="created_at">Newest record</option>
-            <option value="title">Title</option>
-            <option value="view_count">Most viewed</option>
-          </select>
-        </label>
-        <label className="md:col-span-2 xl:col-span-3">
-          <span className="text-xs font-semibold uppercase text-slate-500">Center</span>
-          <select
-            name="center"
-            defaultValue={params.center ?? ""}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="">All centers</option>
-            {centers.map((center) => (
-              <option key={center.id} value={center.id}>
-                {center.name ?? center.title ?? center.code ?? center.id}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="md:col-span-2 xl:col-span-3">
-          <span className="text-xs font-semibold uppercase text-slate-500">Project</span>
-          <select
-            name="project"
-            defaultValue={params.project ?? ""}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="">All projects</option>
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.title ?? project.code ?? project.id}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className="flex items-end gap-2 md:col-span-2 xl:col-span-6">
-          <button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
-            Apply filters
-          </button>
-          <Link
-            href="/news"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary"
-          >
-            Reset
-          </Link>
-        </div>
-      </div>
-    </form>
+    <ResearchFilterForm
+      action="/news"
+      resetHref="/news"
+      searchValue={params.q}
+      searchPlaceholder="Title, author, story, announcement"
+      selects={[
+        { name: "kind", label: "Content", value: params.kind, options: ["updates", "articles"] },
+        { name: "newsType", label: "Update type", value: params.newsType, options: newsTypes },
+        { name: "articleType", label: "Article type", value: params.articleType, options: articleTypes },
+        { name: "category", label: "Category", value: params.category, options: categories },
+        { name: "year", label: "Year", value: params.year, options: years },
+      ]}
+      centers={centers}
+      centerValue={params.center}
+      projects={projects}
+      projectValue={params.project}
+      sortValue={params.sort}
+      sortOptions={[
+        { value: "published_at", label: "Published date" },
+        { value: "created_at", label: "Newest record" },
+        { value: "title", label: "Title" },
+        { value: "view_count", label: "Most viewed" },
+      ]}
+    />
   );
 }
 
@@ -365,36 +307,6 @@ function ArticleCard({ record }: { record: ResearchGenericRecord }) {
         </div>
       </div>
     </article>
-  );
-}
-
-function SelectField({
-  name,
-  label,
-  value,
-  options,
-}: {
-  name: string;
-  label: string;
-  value?: string;
-  options: string[];
-}) {
-  return (
-    <label>
-      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
-      <select
-        name={name}
-        defaultValue={value ?? ""}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-      >
-        <option value="">All {label.toLowerCase()}</option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {formatLabel(option)}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }
 

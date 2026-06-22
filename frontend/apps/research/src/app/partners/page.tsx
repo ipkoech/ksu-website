@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Banknote, Handshake, Lightbulb, Network } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFilterForm } from "../../components/research-listing";
 import {
   Badge,
   FilledBadge,
@@ -88,7 +89,7 @@ export default async function PartnersPage({
       <ResearchSection
         eyebrow="Collaboration Network"
         title="Research partners"
-        body="Partner profiles are loaded from the Research Partners endpoint with server-side filters for type, level, and status."
+        body="Browse partner profiles by type, partnership level, status, and collaboration area."
         tone="white"
       >
         <PartnerFilters params={params} />
@@ -146,76 +147,24 @@ export default async function PartnersPage({
 
 function PartnerFilters({ params }: { params: PartnerSearchParams }) {
   return (
-    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/partners">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <label className="xl:col-span-2">
-          <span className="text-xs font-semibold uppercase text-slate-500">Search</span>
-          <input
-            name="q"
-            defaultValue={params.q ?? ""}
-            placeholder="Partner name, collaboration area, country"
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          />
-        </label>
-        <SelectField name="type" label="Type" value={params.type} options={partnerTypes} />
-        <SelectField name="level" label="Level" value={params.level} options={partnershipLevels} />
-        <SelectField name="status" label="Status" value={params.status} options={partnerStatuses} />
-        <label>
-          <span className="text-xs font-semibold uppercase text-slate-500">Sort</span>
-          <select
-            name="sort"
-            defaultValue={params.sort ?? "display_order"}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="display_order">Featured order</option>
-            <option value="created_at">Newest</option>
-            <option value="name">Name</option>
-            <option value="partnership_start">Start date</option>
-          </select>
-        </label>
-        <div className="flex items-end gap-2 md:col-span-2 xl:col-span-6">
-          <button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
-            Apply filters
-          </button>
-          <Link
-            href="/partners"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary"
-          >
-            Reset
-          </Link>
-        </div>
-      </div>
-    </form>
-  );
-}
-
-function SelectField({
-  name,
-  label,
-  value,
-  options,
-}: {
-  name: string;
-  label: string;
-  value?: string;
-  options: string[];
-}) {
-  return (
-    <label>
-      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
-      <select
-        name={name}
-        defaultValue={value ?? ""}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-      >
-        <option value="">All {label.toLowerCase()}</option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {formatLabel(option)}
-          </option>
-        ))}
-      </select>
-    </label>
+    <ResearchFilterForm
+      action="/partners"
+      resetHref="/partners"
+      searchValue={params.q}
+      searchPlaceholder="Partner name, collaboration area, country"
+      selects={[
+        { name: "type", label: "Type", value: params.type, options: partnerTypes },
+        { name: "level", label: "Level", value: params.level, options: partnershipLevels },
+        { name: "status", label: "Status", value: params.status, options: partnerStatuses },
+      ]}
+      sortValue={params.sort}
+      sortOptions={[
+        { value: "display_order", label: "Featured order" },
+        { value: "created_at", label: "Newest" },
+        { value: "name", label: "Name" },
+        { value: "partnership_start", label: "Start date" },
+      ]}
+    />
   );
 }
 

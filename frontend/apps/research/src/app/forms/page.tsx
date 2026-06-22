@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { Banknote, ClipboardList, FileText, GraduationCap, LifeBuoy, Wrench } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchFilterForm } from "../../components/research-listing";
 import { Badge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, formatDate, formatLabel, getGuidelinesFiltered, getResourcesFiltered } from "../../lib/research-public-data";
 
@@ -33,9 +34,17 @@ export default async function FormsPage({ searchParams }: { searchParams?: Promi
   ]);
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchClusterHero eyebrow="Funding / Support" title="Forms, templates, and practical research resources." body="Forms and templates are pulled from the resource and guideline modules, with direct links to access or download the published files." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Funding", href: "/funding" }, { label: "Forms" }]} imageSrc="/images/research/research-workflows.png" imageAlt="Research forms, templates, and support documents for application workflows" links={supportLinks} primaryAction={{ label: "Open resources", href: "/resources-tools" }} stats={[{ label: "Forms", value: forms.data.length }, { label: "Templates", value: templates.data.length }, { label: "Related guidance", value: guidance.data.length }, { label: "Support routes", value: supportLinks.length }]} />
-      <ResearchSection eyebrow="Forms Library" title="Downloadable forms and templates" body="Use keyword and category filters to narrow backend-backed form and template resources." tone="white">
-        <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/forms"><div className="grid gap-3 md:grid-cols-[1fr_260px_auto_auto]"><label><span className="text-xs font-semibold uppercase text-slate-500">Search</span><input name="q" defaultValue={params.q ?? ""} placeholder="Form, template, category" className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary" /></label><label><span className="text-xs font-semibold uppercase text-slate-500">Category</span><input name="category" defaultValue={params.category ?? ""} placeholder="Category" className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary" /></label><button className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">Apply</button><Link href="/forms" className="mt-6 inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary">Reset</Link></div></form>
+      <ResearchClusterHero eyebrow="Funding / Support" title="Forms, templates, and practical research resources." body="Forms and templates are grouped with direct links to access or download published files." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Funding", href: "/funding" }, { label: "Forms" }]} imageSrc="/images/research/research-workflows.png" imageAlt="Research forms, templates, and support documents for application workflows" links={supportLinks} primaryAction={{ label: "Open resources", href: "/resources-tools" }} stats={[{ label: "Forms", value: forms.data.length }, { label: "Templates", value: templates.data.length }, { label: "Related guidance", value: guidance.data.length }, { label: "Support routes", value: supportLinks.length }]} />
+      <ResearchSection eyebrow="Forms Library" title="Downloadable forms and templates" body="Use keyword and category filters to narrow form and template resources." tone="white">
+        <ResearchFilterForm
+          action="/forms"
+          resetHref="/forms"
+          searchValue={params.q}
+          searchPlaceholder="Form, template, category"
+          textFilters={[
+            { name: "category", label: "Category", value: params.category, placeholder: "Category" },
+          ]}
+        />
         {[forms.error, templates.error, guidance.error].filter(Boolean).map((error) => <div key={error} className="mt-5"><StatusMessage tone="error">{error}</StatusMessage></div>)}
         <div className="mt-7 grid gap-5 lg:grid-cols-3"><ResourceColumn title="Forms" records={forms.data} /><ResourceColumn title="Templates" records={templates.data} /><ResourceColumn title="Related guidance" records={guidance.data} /></div>
       </ResearchSection>

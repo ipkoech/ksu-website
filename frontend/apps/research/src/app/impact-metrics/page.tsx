@@ -80,7 +80,7 @@ export default async function ImpactMetricsPage() {
       />
       <ResearchSection
         eyebrow="Impact Dashboard"
-        title="Live metrics from the Research service"
+        title="University research impact metrics"
         body="Impact metric records can represent funding, publications, patents, startups, jobs, community reach, and partner return on investment."
         tone="white"
       >

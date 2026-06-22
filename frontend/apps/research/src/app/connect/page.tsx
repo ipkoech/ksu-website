@@ -15,6 +15,7 @@ import {
   getOfficeStaff,
   getOffices,
 } from "../../lib/research-public-data";
+import type { ResearchGenericRecord } from "@ksu/api-client";
 
 export const dynamic = "force-dynamic";
 
@@ -23,30 +24,34 @@ export const metadata: Metadata = {
   description: "Research contacts, media inquiries, donations, multimedia, and mentorship sign-up.",
 };
 
-const inquiryLinks = [
+const inquiryRequests = [
   {
     id: "research",
     title: "Research inquiry",
     body: "For project collaboration, publications, facilities, and research office support.",
-    href: "mailto:research@kisiiuniversity.ac.ke?subject=Research%20Inquiry",
+    subject: "Research Inquiry",
+    terms: ["research", "reirm", "directorate", "office"],
   },
   {
     id: "partnership",
     title: "Partnership inquiry",
     body: "For industry, foundation, government, community, and international partnership requests.",
-    href: "mailto:partnerships@kisiiuniversity.ac.ke?subject=Research%20Partnership%20Inquiry",
+    subject: "Research Partnership Inquiry",
+    terms: ["partnership", "partner", "resource", "mobilization", "innovation"],
   },
   {
     id: "community",
     title: "Community inquiry",
     body: "For outreach, public forums, community impact, and engagement requests.",
-    href: "mailto:community@kisiiuniversity.ac.ke?subject=Community%20Impact%20Inquiry",
+    subject: "Community Impact Inquiry",
+    terms: ["community", "extension", "outreach", "sustainability", "impact"],
   },
   {
     id: "media",
     title: "Media inquiry",
     body: "For press releases, researcher interviews, expert comments, and multimedia requests.",
-    href: "mailto:communications@kisiiuniversity.ac.ke?subject=Research%20Media%20Inquiry",
+    subject: "Research Media Inquiry",
+    terms: ["communication", "communications", "media", "news", "publicity"],
   },
 ];
 
@@ -83,6 +88,14 @@ export default async function ConnectPage() {
     getOfficeStaff(),
     getMentorship(),
     getDonationStories(),
+  ]);
+  const inquiryLinks = buildInquiryLinks(offices.data, staff.data);
+  const mentorshipContact = findContactEmail(offices.data, staff.data, [
+    "mentorship",
+    "training",
+    "capacity",
+    "research",
+    "reirm",
   ]);
 
   return (
@@ -132,12 +145,18 @@ export default async function ConnectPage() {
             >
               <h2 className="text-lg font-semibold text-slate-950">{item.title}</h2>
               <p className="mt-3 text-sm leading-7 text-slate-600">{item.body}</p>
-              <a
-                href={item.href}
-                className="mt-5 inline-flex min-h-11 items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-              >
-                Start inquiry
-              </a>
+              {item.href ? (
+                <a
+                  href={item.href}
+                  className="mt-5 inline-flex min-h-11 items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                >
+                  Start inquiry
+                </a>
+              ) : (
+                <span className="mt-5 inline-flex min-h-11 items-center rounded-md border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-500">
+                  Contact route not published yet
+                </span>
+              )}
             </article>
           ))}
         </div>
@@ -153,22 +172,30 @@ export default async function ConnectPage() {
           <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-xl font-semibold text-slate-950">Sign up</h2>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              Choose the route that matches your role. Programme managers can use the admin mentorship application records to process submissions.
+              Choose the route that matches your role. Programme coordinators can review the request and guide you to the right mentorship pathway.
             </p>
-            <div className="mt-5 grid gap-3">
-              <a
-                href="mailto:research@kisiiuniversity.ac.ke?subject=Research%20Mentor%20Sign-up"
-                className="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-              >
-                Mentor sign-up
-              </a>
-              <a
-                href="mailto:research@kisiiuniversity.ac.ke?subject=Research%20Mentee%20Sign-up"
-                className="inline-flex min-h-11 items-center justify-center rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
-              >
-                Mentee sign-up
-              </a>
-            </div>
+            {mentorshipContact ? (
+              <div className="mt-5 grid gap-3">
+                <a
+                  href={mailtoHref(mentorshipContact, "Research Mentor Sign-up")}
+                  className="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                >
+                  Mentor sign-up
+                </a>
+                <a
+                  href={mailtoHref(mentorshipContact, "Research Mentee Sign-up")}
+                  className="inline-flex min-h-11 items-center justify-center rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
+                >
+                  Mentee sign-up
+                </a>
+              </div>
+            ) : (
+              <div className="mt-5">
+                <StatusMessage>
+                  Mentorship contact details will appear once a matching office or staff contact is published.
+                </StatusMessage>
+              </div>
+            )}
           </aside>
         </div>
       </ResearchSection>
@@ -275,4 +302,51 @@ function DirectoryPanel({
       </div>
     </section>
   );
+}
+
+function buildInquiryLinks(
+  offices: ResearchGenericRecord[],
+  staff: ResearchGenericRecord[],
+) {
+  return inquiryRequests.map((item) => {
+    const email = findContactEmail(offices, staff, item.terms);
+
+    return {
+      ...item,
+      href: email ? mailtoHref(email, item.subject) : undefined,
+    };
+  });
+}
+
+function findContactEmail(
+  offices: ResearchGenericRecord[],
+  staff: ResearchGenericRecord[],
+  terms: string[],
+) {
+  const records = [...offices, ...staff];
+  const exactMatch = records.find((record) => {
+    const haystack = [
+      record.title,
+      record.name,
+      record.display_name,
+      record.role,
+      record.staff_type,
+      record.office_type,
+      record.summary,
+      record.description,
+      record.responsibilities,
+      record.email,
+    ]
+      .map(compactText)
+      .join(" ")
+      .toLowerCase();
+
+    return terms.some((term) => haystack.includes(term.toLowerCase())) && compactText(record.email);
+  });
+
+  return compactText(exactMatch?.email) || compactText(records.find((record) => compactText(record.email))?.email);
+}
+
+function mailtoHref(email: string, subject: string) {
+  return `mailto:${email}?subject=${encodeURIComponent(subject)}`;
 }

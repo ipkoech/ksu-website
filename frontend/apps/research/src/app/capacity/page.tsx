@@ -88,7 +88,7 @@ export default async function CapacityPage() {
       <ResearchSection
         eyebrow="Training"
         title="Capacity building programmes"
-        body="Upcoming and published programmes are pulled from the Research service."
+        body="Upcoming and published programmes are shown for researchers and students."
         tone="white"
       >
         {training.error ? <StatusMessage tone="error">{training.error}</StatusMessage> : null}
@@ -133,12 +133,12 @@ export default async function CapacityPage() {
       <ResearchSection
         eyebrow="Research Mentorship Programme"
         title="Mentor and mentee sign-up"
-        body="Mentorship programmes are supported by Research service records and the public sign-up entry point in Connect & Engage."
+        body="Mentorship programmes connect researchers, students, and supervisors through the public sign-up route in Connect & Engage."
         tone="white"
       >
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <p className="max-w-3xl text-sm leading-7 text-slate-600">
-            Prospective mentors and mentees can start from the public contact flow while administrators process mentorship applications, matches, and cohorts in the research service.
+            Prospective mentors and mentees can start from the public contact flow while programme coordinators guide applications, matches, and cohorts.
           </p>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <a

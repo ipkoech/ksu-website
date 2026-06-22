@@ -88,7 +88,7 @@ export default async function AboutPage() {
       <ResearchInstitutionalHero
         eyebrow="About REIRM"
         title="The public structure behind Kisii University research support."
-        body="Research, Extension, Innovation and Resource Mobilization is presented here as an institutional service: offices, governance, mandate, leadership, and contact pathways backed by the research service."
+        body="Research, Extension, Innovation and Resource Mobilization is presented here as an institutional service: offices, governance, mandate, leadership, and contact pathways."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "About" }]}
         localLinks={localLinks}
         relatedLinks={relatedLinks}
@@ -119,7 +119,7 @@ export default async function AboutPage() {
       <ResearchSection
         eyebrow="Mandate"
         title="What the research office is responsible for"
-        body="The mandate, mission, vision, priorities, and leadership message are pulled from published Research Office records."
+        body="The mandate, mission, vision, priorities, and leadership message are shown from published Research Office records."
         tone="white"
       >
         <div id="mandate" className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -146,7 +146,7 @@ export default async function AboutPage() {
               </InstitutionalPanel>
             ) : (
               <InstitutionalEmpty>
-                No published research office record is available yet. Once an office is published in the backend, its mandate and leadership information will appear here.
+                No published research office record is available yet. Once an office is published, its mandate and leadership information will appear here.
               </InstitutionalEmpty>
             )}
           </ScrollReveal>
@@ -180,7 +180,7 @@ export default async function AboutPage() {
       <ResearchSection
         eyebrow="Office Structure"
         title="Research offices"
-        body="Offices are displayed as public service units, with their contact routes and functions surfaced before backend labels."
+        body="Offices are displayed as public service units with clear contact routes and functions."
       >
         <div id="offices">
           {offices.data.length > 0 ? (

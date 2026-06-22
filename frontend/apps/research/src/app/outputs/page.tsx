@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { BarChart3, BookOpenCheck, Database, FlaskConical } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
-import {
-  Badge,
-  ResearchSection,
-  StatusMessage,
-} from "../../components/research-ui";
+import { ResearchFilterForm, ResearchListCard } from "../../components/research-listing";
+import { ResearchSection, StatusMessage } from "../../components/research-ui";
 import {
   compactText,
   formatDate,
-  formatLabel,
   getCenters,
   getOutputs,
   getOutputsFiltered,
@@ -113,7 +108,7 @@ export default async function OutputsPage({
       <ResearchSection
         eyebrow="Output Catalogue"
         title="Outputs"
-        body="Output records are loaded from the Research Outputs endpoint and filtered through backend query parameters."
+        body="Browse outputs by type, access, year, center, project, and keyword."
         tone="white"
       >
         <OutputFilters
@@ -159,133 +154,49 @@ function OutputFilters({
   projects: Array<Record<string, any>>;
 }) {
   return (
-    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/outputs">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <label className="xl:col-span-2">
-          <span className="text-xs font-semibold uppercase text-slate-500">Search</span>
-          <input
-            name="q"
-            defaultValue={params.q ?? ""}
-            placeholder="Title, description, DOI, repository"
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          />
-        </label>
-        <SelectField name="type" label="Type" value={params.type} options={outputTypes} />
-        <SelectField name="access" label="Access" value={params.access} options={accessTypes} />
-        <SelectField name="year" label="Year" value={params.year} options={years} />
-        <label>
-          <span className="text-xs font-semibold uppercase text-slate-500">Sort</span>
-          <select
-            name="sort"
-            defaultValue={params.sort ?? "release_date"}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="release_date">Release date</option>
-            <option value="title">Title</option>
-            <option value="created_at">Newest</option>
-          </select>
-        </label>
-        <label className="md:col-span-2 xl:col-span-3">
-          <span className="text-xs font-semibold uppercase text-slate-500">Center</span>
-          <select
-            name="center"
-            defaultValue={params.center ?? ""}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="">All centers</option>
-            {centers.map((center) => (
-              <option key={center.id} value={center.id}>
-                {center.name ?? center.title ?? center.code ?? center.id}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="md:col-span-2 xl:col-span-3">
-          <span className="text-xs font-semibold uppercase text-slate-500">Project</span>
-          <select
-            name="project"
-            defaultValue={params.project ?? ""}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-          >
-            <option value="">All projects</option>
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.title ?? project.name ?? project.code ?? project.id}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className="flex items-end gap-2 md:col-span-2 xl:col-span-6">
-          <button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
-            Apply filters
-          </button>
-          <Link
-            href="/outputs"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary"
-          >
-            Reset
-          </Link>
-        </div>
-      </div>
-    </form>
-  );
-}
-
-function SelectField({
-  name,
-  label,
-  value,
-  options,
-}: {
-  name: string;
-  label: string;
-  value?: string;
-  options: string[];
-}) {
-  return (
-    <label>
-      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
-      <select
-        name={name}
-        defaultValue={value ?? ""}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
-      >
-        <option value="">All {label.toLowerCase()}</option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {formatLabel(option)}
-          </option>
-        ))}
-      </select>
-    </label>
+    <ResearchFilterForm
+      action="/outputs"
+      resetHref="/outputs"
+      searchValue={params.q}
+      searchPlaceholder="Title, description, DOI, repository"
+      selects={[
+        { name: "type", label: "Type", value: params.type, options: outputTypes },
+        { name: "access", label: "Access", value: params.access, options: accessTypes },
+        { name: "year", label: "Year", value: params.year, options: years },
+      ]}
+      centers={centers}
+      centerValue={params.center}
+      projects={projects}
+      projectValue={params.project}
+      sortValue={params.sort}
+      sortOptions={[
+        { value: "release_date", label: "Release date" },
+        { value: "title", label: "Title" },
+        { value: "created_at", label: "Newest" },
+      ]}
+    />
   );
 }
 
 function OutputCard({ output }: { output: ResearchGenericRecord }) {
   return (
-    <Link
+    <ResearchListCard
       href={output.slug ? `/outputs/${output.slug}` : "/outputs"}
-      className="block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
-    >
-      <div className="flex flex-wrap gap-2">
-        <Badge>{formatLabel(output.output_type ?? "output")}</Badge>
-        {output.access_type ? <Badge>{formatLabel(output.access_type)}</Badge> : null}
-      </div>
-      <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-        {output.title ?? output.name}
-      </h2>
-      <p className="mt-3 text-sm leading-7 text-slate-600">
-        {compactText(output.summary) ||
-          compactText(output.description) ||
-          compactText(output.usage_notes) ||
-          "Output summary will appear when published."}
-      </p>
-      <p className="mt-5 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-700">
-        {[formatDate(output.release_date), compactText(output.version), compactText(output.license)]
-          .filter(Boolean)
-          .join(" · ") || "Access details not published"}
-      </p>
-    </Link>
+      title={output.title ?? output.name}
+      description={
+        compactText(output.summary) ||
+        compactText(output.description) ||
+        compactText(output.usage_notes) ||
+        "Output summary will appear when published."
+      }
+      badges={[output.output_type ?? "output", output.access_type]}
+      facts={[
+        { label: "Release", value: formatDate(output.release_date) },
+        { label: "Version", value: compactText(output.version) },
+        { label: "License", value: compactText(output.license) },
+        { label: "DOI", value: compactText(output.doi) },
+      ]}
+    />
   );
 }
 

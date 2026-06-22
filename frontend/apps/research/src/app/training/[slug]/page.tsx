@@ -63,7 +63,7 @@ export default async function TrainingDetailPage({ params }: { params: Promise<{
           </aside>
         </div>
       </ResearchSection>
-      <ResearchSection eyebrow="Support" title="Facilitators, materials, and contact" body="Supporting lists are shown when the backend record publishes them.">
+      <ResearchSection eyebrow="Support" title="Facilitators, materials, and contact" body="Supporting lists appear when facilitators, materials, and contact details are published.">
         <div className="grid gap-5 lg:grid-cols-3">
           <ResearchRecordPanel title="Facilitators" records={facilitators} />
           <ResearchRecordPanel title="Materials" records={materials} />

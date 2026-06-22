@@ -180,7 +180,7 @@ export default async function ExpertisePage({
                 Expertise appears across several published records.
               </h3>
               <p className="mt-3 text-sm leading-7 text-white/72">
-                A search can match a person, focus area, theme, center, project, or expertise tag. The public page avoids backend names and groups results around what visitors are trying to find.
+                Search by person, focus area, theme, center, project, or expertise tag to find the right research contact.
               </p>
               <div className="mt-5 flex flex-wrap gap-2">
                 {expertiseTags.data.slice(0, 10).map((tag) => (
@@ -267,7 +267,7 @@ function ExpertiseFilters({
             name="q"
             defaultValue={params.q ?? ""}
             placeholder="Researcher, skill, theme, project"
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
         </label>
         <RecordSelect name="area" label="Focus area" value={params.area} records={focusAreas} />
@@ -305,7 +305,7 @@ function RecordSelect({
       <select
         name={name}
         defaultValue={value ?? ""}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         <option value="">All {label.toLowerCase()}s</option>
         {records.map((record) => (

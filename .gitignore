@@ -18,6 +18,7 @@ ehthumbs.db
 node_modules/
 .pnpm-store/
 .next/
+.next.docker-owned-*/
 .next-codex/
 .next-build/
 out/

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { BookOpenCheck, CalendarDays, Newspaper, Users } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
 import { ResearchFact } from "../../components/research-detail";
+import { ResearchFilterForm } from "../../components/research-listing";
 import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, formatDate, formatLabel, getCenters, getEvents, getEventsFiltered } from "../../lib/research-public-data";
 import type { ResearchGenericRecord } from "@ksu/api-client";
@@ -45,7 +46,7 @@ export default async function EventsPage({ searchParams }: { searchParams?: Prom
   return (
     <main id="research-main" className="min-h-screen bg-white">
       <ResearchClusterHero eyebrow="Events" title="Research workshops, forums, seminars, and conferences." body="Browse the public research calendar by type, status, center, year, and format cues." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Learning", href: "/training" }, { label: "Events" }]} imageSrc="/images/research/research-workflows.png" imageAlt="Research events, forums, workshops, seminars, and conference activity" links={learningLinks} primaryAction={{ label: "View news", href: "/news" }} stats={[{ label: "Event results", value: events.data.length }, { label: "Published events", value: allEvents.data.length }, { label: "Centers", value: centers.data.length }, { label: "Event types", value: eventTypes.length }]} />
-      <ResearchSection eyebrow="Calendar" title="Research events" body="Events are loaded from the Research Events endpoint and filtered through backend query parameters." tone="white">
+      <ResearchSection eyebrow="Calendar" title="Research events" body="Browse events by type, status, center, year, category, and format." tone="white">
         <EventFilters params={params} years={getYears(allEvents.data)} centers={centers.data} />
         {[events.error, allEvents.error, centers.error].filter(Boolean).map((error) => <div key={error} className="mt-5"><StatusMessage tone="error">{error}</StatusMessage></div>)}
         {events.data.length > 0 ? <div className="mt-7 grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]"><CalendarRail events={events.data} /><div className="grid gap-5 md:grid-cols-2">{events.data.map((event) => <EventCard key={event.id} event={event} />)}</div></div> : <div className="mt-7"><StatusMessage>No events match the current filters.</StatusMessage></div>}
@@ -56,23 +57,29 @@ export default async function EventsPage({ searchParams }: { searchParams?: Prom
 
 function EventFilters({ params, years, centers }: { params: EventSearchParams; years: string[]; centers: ResearchGenericRecord[] }) {
   return (
-    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/events">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <label className="xl:col-span-2"><span className="text-xs font-semibold uppercase text-slate-500">Search</span><input name="q" defaultValue={params.q ?? ""} placeholder="Title, speaker, venue, agenda" className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary" /></label>
-        <SelectField name="type" label="Type" value={params.type} options={eventTypes} />
-        <SelectField name="status" label="Status" value={params.status} options={statuses} />
-        <SelectField name="year" label="Year" value={params.year} options={years} />
-        <label><span className="text-xs font-semibold uppercase text-slate-500">Category</span><input name="category" defaultValue={params.category ?? ""} placeholder="Category" className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary" /></label>
-        <label className="md:col-span-2 xl:col-span-3"><span className="text-xs font-semibold uppercase text-slate-500">Center</span><select name="center" defaultValue={params.center ?? ""} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="">All centers</option>{centers.map((center) => <option key={center.id} value={center.id}>{center.name ?? center.title ?? center.code ?? center.id}</option>)}</select></label>
-        <label><span className="text-xs font-semibold uppercase text-slate-500">Sort</span><select name="sort" defaultValue={params.sort ?? "start_date"} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="start_date">Start date</option><option value="created_at">Newest</option><option value="title">Title</option></select></label>
-        <div className="flex items-end gap-2 md:col-span-2"><button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">Apply filters</button><Link href="/events" className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary">Reset</Link></div>
-      </div>
-    </form>
+    <ResearchFilterForm
+      action="/events"
+      resetHref="/events"
+      searchValue={params.q}
+      searchPlaceholder="Title, speaker, venue, agenda"
+      selects={[
+        { name: "type", label: "Type", value: params.type, options: eventTypes },
+        { name: "status", label: "Status", value: params.status, options: statuses },
+        { name: "year", label: "Year", value: params.year, options: years },
+      ]}
+      textFilters={[
+        { name: "category", label: "Category", value: params.category, placeholder: "Category" },
+      ]}
+      centers={centers}
+      centerValue={params.center}
+      sortValue={params.sort}
+      sortOptions={[
+        { value: "start_date", label: "Start date" },
+        { value: "created_at", label: "Newest" },
+        { value: "title", label: "Title" },
+      ]}
+    />
   );
-}
-
-function SelectField({ name, label, value, options }: { name: string; label: string; value?: string; options: string[] }) {
-  return <label><span className="text-xs font-semibold uppercase text-slate-500">{label}</span><select name={name} defaultValue={value ?? ""} className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"><option value="">All {label.toLowerCase()}</option>{options.map((option) => <option key={option} value={option}>{formatLabel(option)}</option>)}</select></label>;
 }
 
 function CalendarRail({ events }: { events: ResearchGenericRecord[] }) {

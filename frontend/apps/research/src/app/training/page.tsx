@@ -81,7 +81,7 @@ export default async function TrainingPage({ searchParams }: { searchParams?: Pr
       <ResearchSection
         eyebrow="Training Catalogue"
         title="Training programs"
-        body="Training records are loaded from the Research Training endpoint and filtered through backend query parameters."
+        body="Browse training opportunities by type, mode, center, status, year, and keyword."
         tone="white"
       >
         <TrainingFilters params={params} years={getYears(allTraining.data)} centers={centers.data} />

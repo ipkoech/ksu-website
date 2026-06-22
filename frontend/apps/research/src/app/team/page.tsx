@@ -151,7 +151,7 @@ export default async function TeamPage({
       <ResearchSection
         eyebrow="Directory"
         title="Search the research team"
-        body="Filter by name, role, responsibility, and office. Results are generated from the backend staff records already published for the public site."
+        body="Filter by name, role, responsibility, and office to find published research contacts."
       >
         <div id="directory">
           <TeamFilters params={params} offices={offices.data} roles={roles} />
@@ -243,7 +243,7 @@ function TeamFilters({
             name="q"
             defaultValue={params.q ?? ""}
             placeholder="Name, role, responsibility"
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
         </label>
         <FilterSelect name="role" label="Role" value={params.role} options={roles} emptyLabel="All roles" />
@@ -252,7 +252,7 @@ function TeamFilters({
           <select
             name="office"
             defaultValue={params.office ?? ""}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <option value="">All offices</option>
             {offices.map((office) => (
@@ -297,7 +297,7 @@ function FilterSelect({
       <select
         name={name}
         defaultValue={value ?? ""}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary"
+        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         <option value="">{emptyLabel}</option>
         {options.map((option) => (
