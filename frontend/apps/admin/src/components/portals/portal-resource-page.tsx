@@ -1,12 +1,25 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { EditableServiceResourcePage } from "@/components/dashboard/editable-service-resource-page";
 import { getPortalResource } from "@/lib/portals/registry";
 import type { PortalPayload, PortalResourceConfig } from "@/lib/portals/types";
 import { usePortalAccess, type PortalAccess } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ksu/ui/components";
+import {
+  Badge,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@ksu/ui/components";
 import { PageHeader } from "@/components/layout";
 
 interface PortalResourcePageProps {
@@ -18,23 +31,47 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
   const { hasAnyScope } = usePermissions();
   const portalAccessQuery = usePortalAccess();
   const resource = getPortalResource(portalKey, resourceKey);
+  const [selectedScopeKey, setSelectedScopeKey] = useState<string>("");
 
-  const lockedAccess = useMemo(() => {
+  const lockedAccessOptions = useMemo(() => {
     const binding = resource?.portalScope;
-    if (!binding) return null;
+    if (!binding) return [];
 
-    const scoped = (portalAccessQuery.data?.data.portals ?? []).filter((access) => {
+    return (portalAccessQuery.data?.data.portals ?? []).filter((access) => {
       if (access.key !== portalKey || !access.locked_scope) return false;
       if (access.scope_type === "global" || access.scope_type === "profile") return false;
       return !binding.allowedScopeTypes || binding.allowedScopeTypes.includes(access.scope_type);
     });
-
-    return scoped.length === 1 ? scoped[0] : null;
   }, [portalAccessQuery.data?.data.portals, portalKey, resource?.portalScope]);
 
+  const selectedLockedAccess = useMemo(() => {
+    if (lockedAccessOptions.length === 0) return null;
+    return (
+      lockedAccessOptions.find((access) => accessKey(access) === selectedScopeKey) ??
+      lockedAccessOptions[0]
+    );
+  }, [lockedAccessOptions, selectedScopeKey]);
+
+  useEffect(() => {
+    if (!resource?.portalScope || lockedAccessOptions.length === 0) {
+      if (selectedScopeKey) setSelectedScopeKey("");
+      return;
+    }
+
+    const hasSelection = lockedAccessOptions.some(
+      (access) => accessKey(access) === selectedScopeKey,
+    );
+    if (!hasSelection) {
+      setSelectedScopeKey(accessKey(lockedAccessOptions[0]));
+    }
+  }, [lockedAccessOptions, resource?.portalScope, selectedScopeKey]);
+
   const scopedResource = useMemo(
-    () => (resource && lockedAccess ? lockResourceToPortalScope(resource, lockedAccess) : resource),
-    [lockedAccess, resource],
+    () =>
+      resource && selectedLockedAccess
+        ? lockResourceToPortalScope(resource, selectedLockedAccess)
+        : resource,
+    [selectedLockedAccess, resource],
   );
 
   if (!resource) {
@@ -91,6 +128,29 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
     );
   }
 
+  if (resource.portalScope && !selectedLockedAccess) {
+    return (
+      <div>
+        <PageHeader title={resource.title} description={resource.description} backHref={resource.backHref} />
+        <div className="p-4 sm:p-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>No assigned office scope</CardTitle>
+              <CardDescription>
+                This resource is managed through an assigned office, library, research, school, or department scope.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
+                Ask a system administrator to attach your user to the correct unit before managing this section.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   if (!scopedResource) return null;
 
   const canView = hasAnyScope(scopedResource.viewScopes);
@@ -126,10 +186,11 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
 
   return (
     <EditableServiceResourcePage
+      key={selectedLockedAccess ? accessKey(selectedLockedAccess) : "unscoped"}
       title={scopedResource.title}
       description={
-        lockedAccess
-          ? `${scopedResource.description} Showing ${lockedAccess.scope_label}.`
+        selectedLockedAccess
+          ? `${scopedResource.description} Showing ${selectedLockedAccess.scope_label}.`
           : scopedResource.description
       }
       backHref={scopedResource.backHref}
@@ -151,7 +212,53 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
       canEdit={canEdit}
       canDelete={canDelete}
       readOnlyMessage={scopedResource.readOnlyMessage}
+      toolbarSlot={
+        resource.portalScope && lockedAccessOptions.length > 1 ? (
+          <ScopeSelector
+            accessOptions={lockedAccessOptions}
+            value={accessKey(selectedLockedAccess)}
+            onChange={setSelectedScopeKey}
+          />
+        ) : selectedLockedAccess ? (
+          <Badge variant="secondary">{selectedLockedAccess.scope_label}</Badge>
+        ) : null
+      }
     />
+  );
+}
+
+function accessKey(access: PortalAccess | null) {
+  if (!access) return "";
+  return `${access.scope_type}:${access.scope_id ?? "university"}`;
+}
+
+function ScopeSelector({
+  accessOptions,
+  value,
+  onChange,
+}: {
+  accessOptions: PortalAccess[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="flex min-w-0 flex-col gap-2 sm:min-w-72">
+      <p className="text-xs font-medium text-muted-foreground">Active scope</p>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger>
+          <SelectValue placeholder="Choose assigned scope" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            {accessOptions.map((access) => (
+              <SelectItem key={accessKey(access)} value={accessKey(access)}>
+                {access.scope_label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
 

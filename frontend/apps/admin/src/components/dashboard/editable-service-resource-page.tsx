@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit, Eye, FilterX, MoreHorizontal, Plus, Trash2 } from "lucide-react";
@@ -137,6 +137,7 @@ interface EditableServiceResourcePageProps<
   canEdit?: boolean;
   canDelete?: boolean;
   readOnlyMessage?: string;
+  toolbarSlot?: ReactNode;
 }
 
 function defaultValue(field: EditableField) {
@@ -276,6 +277,7 @@ export function EditableServiceResourcePage<
   canEdit = true,
   canDelete = true,
   readOnlyMessage = "You can view these records, but your current permissions do not allow changes.",
+  toolbarSlot,
 }: EditableServiceResourcePageProps<TRecord, TPayload>) {
   const queryClient = useQueryClient();
   const formId = useId();
@@ -557,19 +559,22 @@ export function EditableServiceResourcePage<
           <CardHeader>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <CardTitle>Records</CardTitle>
-              {listFilters.length > 0 ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="w-fit text-muted-foreground"
-                  onClick={() => setFilterValues({})}
-                  disabled={!hasActiveFilters}
-                >
-                  <FilterX data-icon="inline-start" />
-                  Clear Filters
-                </Button>
-              ) : null}
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                {toolbarSlot}
+                {listFilters.length > 0 ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="w-fit text-muted-foreground"
+                    onClick={() => setFilterValues({})}
+                    disabled={!hasActiveFilters}
+                  >
+                    <FilterX data-icon="inline-start" />
+                    Clear Filters
+                  </Button>
+                ) : null}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
