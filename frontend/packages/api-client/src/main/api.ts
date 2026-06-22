@@ -899,6 +899,14 @@ export const intakesApi = {
     params?: ListParams<{ academic_calendar_id?: string; is_open?: boolean }>,
   ) => mainApi.get<PaginatedResponse<Intake>>("/api/v1/intakes", params),
 
+  listAdmin: (
+    params?: ListParams<{
+      academic_calendar_id?: string;
+      is_open?: boolean;
+      is_active?: boolean;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Intake>>("/api/v1/intakes/admin", params),
+
   get: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Intake }>(`/api/v1/intakes/id/${id}`, params),
 
@@ -919,6 +927,14 @@ export const academicCalendarsApi = {
   list: (params?: ListParams<{ academic_year?: string; status?: string }>) =>
     mainApi.get<PaginatedResponse<AcademicCalendar>>(
       "/api/v1/academic-calendars",
+      params,
+    ),
+
+  listAdmin: (
+    params?: ListParams<{ academic_year?: string; status?: string }>,
+  ) =>
+    mainApi.get<PaginatedResponse<AcademicCalendar>>(
+      "/api/v1/academic-calendars/admin",
       params,
     ),
 

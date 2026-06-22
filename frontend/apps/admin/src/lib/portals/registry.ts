@@ -1025,7 +1025,8 @@ const schoolResources: Record<string, PortalResourceConfig<any, any>> = {
         options: statusOptions,
       },
     ],
-    list: (filters) => academicCalendarsApi.list({ ...pageParams, ...filters }),
+    list: (filters) =>
+      academicCalendarsApi.listAdmin({ ...pageParams, ...filters }),
     create: (payload) => academicCalendarsApi.create(payload),
     update: (id, payload) => academicCalendarsApi.update(id, payload),
     delete: (id) => academicCalendarsApi.delete(id),
@@ -1074,7 +1075,7 @@ const schoolResources: Record<string, PortalResourceConfig<any, any>> = {
       },
       { name: "is_open", label: "Open", type: "boolean" },
     ],
-    list: (filters) => intakesApi.list({ ...pageParams, ...filters }),
+    list: (filters) => intakesApi.listAdmin({ ...pageParams, ...filters }),
     create: (payload) => intakesApi.create(payload),
     update: (id, payload) => intakesApi.update(id, payload),
     delete: (id) => intakesApi.delete(id),
