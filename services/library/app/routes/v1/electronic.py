@@ -8,11 +8,11 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ksu_common.auth import TokenPayload, get_current_user
+from ksu_common.auth import TokenPayload, get_optional_user
 from ksu_common.rbac import has_scope, requires_scope
 from ksu_common.schemas.responses import success
 from ksu_common.field_selection import FieldSelection, FieldsQuery, FieldSelector
-from ksu_common.cache import cached_public, cache_response
+from ksu_common.cache import cached_public, cache_response, invalidate_prefix
 from ksu_common.audit import audit_action
 from ksu_common.rate_limit import rate_limit
 
@@ -60,6 +60,10 @@ resources_router = APIRouter(
 )
 
 
+async def invalidate_public_library_cache() -> None:
+    await invalidate_prefix("public")
+
+
 @resources_router.get("/az")
 @cached_public(timeout=3600, vary_on=())
 async def list_resources_az(request: Request, db: AsyncSession = Depends(get_db)):
@@ -73,15 +77,16 @@ async def list_resources_az(request: Request, db: AsyncSession = Depends(get_db)
 
 
 @resources_router.get("/slug/{slug}")
-@cached_public(timeout=300, vary_on=("fields",))
 async def get_resource_by_slug_route(
     request: Request,
     slug: str,
     db: AsyncSession = Depends(get_db),
+    user: TokenPayload | None = Depends(get_optional_user),
     fields: FieldSelection = Depends(FieldsQuery(always_include={"id"})),
 ):
     """Get electronic resource by slug with guides."""
-    resource = await get_resource_by_slug(db, slug)
+    is_writer = user is not None and has_scope(user.roles, "library:write")
+    resource = await get_resource_by_slug(db, slug, public_only=not is_writer)
     guides = await list_guides(db, resource.id)
     detail = ElectronicResourceDetail.model_validate(resource)
     detail.guides = [ElectronicResourceGuideOut.model_validate(g) for g in guides]
@@ -91,15 +96,16 @@ async def get_resource_by_slug_route(
 
 
 @resources_router.get("/{resource_id}")
-@cached_public(timeout=300, vary_on=("fields",))
 async def get_resource_detail(
     request: Request,
     resource_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
+    user: TokenPayload | None = Depends(get_optional_user),
     fields: FieldSelection = Depends(FieldsQuery(always_include={"id"})),
 ):
     """Get electronic resource by ID with guides."""
-    resource = await get_resource(db, resource_id)
+    is_writer = user is not None and has_scope(user.roles, "library:write")
+    resource = await get_resource(db, resource_id, public_only=not is_writer)
     guides = await list_guides(db, resource.id)
     detail = ElectronicResourceDetail.model_validate(resource)
     detail.guides = [ElectronicResourceGuideOut.model_validate(g) for g in guides]
@@ -109,21 +115,6 @@ async def get_resource_detail(
 
 
 @resources_router.get("/")
-@cached_public(
-    timeout=300,
-    vary_on=(
-        "library_id",
-        "section_letter",
-        "resource_type",
-        "access_level",
-        "featured",
-        "q",
-        "page",
-        "per_page",
-        "include_total",
-        "fields",
-    ),
-)
 async def list_resources_route(
     request: Request,
     library_id: Optional[uuid.UUID] = Query(None),
@@ -136,9 +127,11 @@ async def list_resources_route(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
     db: AsyncSession = Depends(get_db),
+    user: TokenPayload | None = Depends(get_optional_user),
     fields: FieldSelection = Depends(FieldsQuery(always_include={"id"})),
 ):
     """List electronic resources with filtering."""
+    is_writer = user is not None and has_scope(user.roles, "library:write")
     selector = FieldSelector(ElectronicResource, fields, always_include={"id"})
     result = await list_resources(
         db,
@@ -152,6 +145,7 @@ async def list_resources_route(
         per_page=per_page,
         include_total=include_total,
         load_options=selector.load_options,
+        public_only=not is_writer,
     )
     return success(
         data=selector.apply(result.items),
@@ -171,6 +165,7 @@ async def create_resource_route(
 ):
     """Create a new electronic resource."""
     resource = await create_resource(db, body)
+    await invalidate_public_library_cache()
     return success(
         data=ElectronicResourceOut.model_validate(resource).model_dump(),
         message="Created",
@@ -192,6 +187,7 @@ async def update_resource_route(
 ):
     """Update an electronic resource."""
     resource = await update_resource(db, resource_id, body)
+    await invalidate_public_library_cache()
     return success(data=ElectronicResourceOut.model_validate(resource).model_dump())
 
 
@@ -209,6 +205,7 @@ async def delete_resource_route(
 ):
     """Delete an electronic resource."""
     await delete_resource(db, resource_id)
+    await invalidate_public_library_cache()
 
 
 # ── Guides sub-router ─────────────────────────────────────────────────────────
@@ -246,6 +243,7 @@ async def create_guide_route(
 ):
     """Create a guide for an electronic resource."""
     guide = await create_guide(db, resource_id, body)
+    await invalidate_public_library_cache()
     return success(
         data=ElectronicResourceGuideOut.model_validate(guide).model_dump(),
         message="Created",
@@ -268,6 +266,7 @@ async def update_guide_route(
 ):
     """Update an electronic resource guide."""
     guide = await update_guide(db, guide_id, body)
+    await invalidate_public_library_cache()
     return success(data=ElectronicResourceGuideOut.model_validate(guide).model_dump())
 
 
@@ -286,6 +285,7 @@ async def delete_guide_route(
 ):
     """Delete an electronic resource guide."""
     await delete_guide(db, guide_id)
+    await invalidate_public_library_cache()
 
 
 # ── Publications router ───────────────────────────────────────────────────────

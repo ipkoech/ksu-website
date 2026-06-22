@@ -483,9 +483,7 @@ export const libraryServiceApi = {
   adminStats: () =>
     libraryApi.get<{ data: PublicStatsResponse }>("/api/v1/stats/admin"),
   branches: {
-    list: (
-      params?: ListParams<{ active_only?: boolean; public_only?: boolean }>,
-    ) =>
+    list: (params?: ListParams<{ active_only?: boolean }>) =>
       libraryApi.get<PaginatedResponse<LibraryBranch>>(
         "/api/v1/library/branches/",
         params,

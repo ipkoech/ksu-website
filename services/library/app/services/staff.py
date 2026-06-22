@@ -24,7 +24,7 @@ except ModuleNotFoundError:  # Local venvs may have an older installed common pa
         }
     )
 
-from ..models import LibraryService, LibraryStaff, LibraryStatistics
+from ..models import Library, LibraryService, LibraryStaff, LibraryStatistics
 from ..schemas import (
     LibraryServiceCreate,
     LibraryServiceOut,
@@ -52,7 +52,11 @@ async def list_staff(
         LibraryStaff.is_active.is_(True),
     )
     if public_only:
-        query = query.where(LibraryStaff.is_public.is_(True))
+        query = query.join(Library, Library.id == LibraryStaff.library_id).where(
+            LibraryStaff.is_public.is_(True),
+            Library.is_active.is_(True),
+            Library.is_public.is_(True),
+        )
     query = query.order_by(LibraryStaff.sort_order, LibraryStaff.created_at)
     result = await db.execute(query)
     return [LibraryStaffOut.model_validate(s) for s in result.scalars().all()]
@@ -72,7 +76,11 @@ async def list_leadership(
     if library_id is not None:
         query = query.where(LibraryStaff.library_id == library_id)
     if public_only:
-        query = query.where(LibraryStaff.is_public.is_(True))
+        query = query.join(Library, Library.id == LibraryStaff.library_id).where(
+            LibraryStaff.is_public.is_(True),
+            Library.is_active.is_(True),
+            Library.is_public.is_(True),
+        )
     query = query.order_by(LibraryStaff.sort_order, LibraryStaff.created_at)
     result = await db.execute(query)
     return [LibraryStaffOut.model_validate(s) for s in result.scalars().all()]
@@ -128,7 +136,11 @@ async def list_services(
         LibraryService.is_active.is_(True),
     )
     if public_only:
-        query = query.where(LibraryService.is_public.is_(True))
+        query = query.join(Library, Library.id == LibraryService.library_id).where(
+            LibraryService.is_public.is_(True),
+            Library.is_active.is_(True),
+            Library.is_public.is_(True),
+        )
     query = query.order_by(LibraryService.sort_order, LibraryService.name)
     result = await db.execute(query)
     return [LibraryServiceOut.model_validate(s) for s in result.scalars().all()]

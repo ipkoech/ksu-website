@@ -37,8 +37,9 @@ class LibraryServiceFilterTests(unittest.IsolatedAsyncioTestCase):
                 public_only=False,
             )
 
-        whereclause = captured["query"].whereclause
-        self.assertIsNone(whereclause)
+        whereclause = str(captured["query"].whereclause)
+        self.assertNotIn("libraries.is_active", whereclause)
+        self.assertNotIn("libraries.is_public", whereclause)
 
 
 if __name__ == "__main__":

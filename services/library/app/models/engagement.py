@@ -198,6 +198,7 @@ class LibraryRegulation(Base):
     status: Mapped[str] = mapped_column(
         sa.String(32), nullable=False, default="active", index=True
     )
+    is_public: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=True)
 
     library: Mapped[Optional["Library"]] = relationship(
         "Library", back_populates="regulation_entries"

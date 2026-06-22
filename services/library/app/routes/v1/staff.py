@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ksu_common.auth import TokenPayload, get_optional_user
 from ksu_common.rbac import has_scope, requires_scope
 from ksu_common.schemas.responses import success
-from ksu_common.cache import cache_response
+from ksu_common.cache import cache_response, invalidate_prefix
 from ksu_common.audit import audit_action
 from ksu_common.field_selection import FieldSelection, FieldsQuery, FieldSelector
 
@@ -29,6 +29,10 @@ from ...services import staff as svc
 # ── Library staff ─────────────────────────────────────────────────────────────
 
 staff_router = APIRouter(prefix="/library/staff", tags=["Library Staff"])
+
+
+async def invalidate_public_library_cache() -> None:
+    await invalidate_prefix("public")
 
 
 @staff_router.get("/")
@@ -74,6 +78,7 @@ async def create_staff(
     user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
 ):
     member = await svc.create_staff(db, data)
+    await invalidate_public_library_cache()
     return success(data=member, message="Staff member created")
 
 
@@ -87,6 +92,7 @@ async def update_staff(
     user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
 ):
     member = await svc.update_staff(db, staff_id, data)
+    await invalidate_public_library_cache()
     return success(data=member)
 
 
@@ -99,6 +105,7 @@ async def delete_staff(
     user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
 ):
     await svc.delete_staff(db, staff_id)
+    await invalidate_public_library_cache()
 
 
 # ── Library services ──────────────────────────────────────────────────────────
@@ -130,6 +137,7 @@ async def create_service(
     user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
 ):
     service = await svc.create_service(db, data)
+    await invalidate_public_library_cache()
     return success(data=service, message="Service created")
 
 
@@ -145,6 +153,7 @@ async def update_service(
     user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
 ):
     service = await svc.update_service(db, service_id, data)
+    await invalidate_public_library_cache()
     return success(data=service)
 
 
@@ -159,6 +168,7 @@ async def delete_service(
     user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
 ):
     await svc.delete_service(db, service_id)
+    await invalidate_public_library_cache()
 
 
 # ── Library statistics ────────────────────────────────────────────────────────
@@ -188,6 +198,7 @@ async def create_statistics(
     user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
 ):
     stats = await svc.create_statistics(db, data)
+    await invalidate_public_library_cache()
     return success(data=stats, message="Statistics snapshot created")
 
 

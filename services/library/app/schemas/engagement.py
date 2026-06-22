@@ -208,6 +208,7 @@ class LibraryRegulationCreate(BaseModel):
     effective_date: Optional[date] = None
     document_id: Optional[uuid.UUID] = None
     status: str = "active"
+    is_public: bool = True
 
     @field_validator("category")
     @classmethod
@@ -235,6 +236,7 @@ class LibraryRegulationUpdate(BaseModel):
     effective_date: Optional[date] = None
     document_id: Optional[uuid.UUID] = None
     status: Optional[str] = None
+    is_public: Optional[bool] = None
 
 
 class LibraryRegulationOut(BaseModel):
@@ -248,6 +250,7 @@ class LibraryRegulationOut(BaseModel):
     effective_date: Optional[date] = None
     document_id: Optional[uuid.UUID] = None
     status: str
+    is_public: bool
     created_at: datetime
     updated_at: datetime
     deleted_at: Optional[datetime] = None

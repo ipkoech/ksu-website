@@ -13,6 +13,7 @@ from sqlalchemy.orm import selectinload
 from ksu_common.pagination import PaginatedResult, paginate
 
 from ..models import (
+    Library,
     LibraryCharge,
     LibraryLoan,
     LibraryResource,
@@ -52,13 +53,16 @@ async def list_resources(
     per_page: int = 20,
     include_total: bool = True,
     load_options: Sequence = (),
+    public_only: bool = True,
 ) -> PaginatedResult:
     """List library resources with optional filtering and eager loading."""
-    query = (
-        LibraryResource.active_query()
-        .where(LibraryResource.library_id == library_id)
-        .order_by(LibraryResource.title)
-    )
+    query = LibraryResource.active_query().where(LibraryResource.library_id == library_id)
+    if public_only:
+        query = query.join(Library, Library.id == LibraryResource.library_id).where(
+            Library.is_active.is_(True),
+            Library.is_public.is_(True),
+        )
+    query = query.order_by(LibraryResource.title)
 
     if load_options:
         query = query.options(*load_options)
@@ -92,9 +96,15 @@ async def get_resource(
     resource_id: uuid.UUID,
     *,
     load_options: Sequence = (),
+    public_only: bool = True,
 ) -> LibraryResource:
     """Get a library resource by ID."""
     query = LibraryResource.active_query().where(LibraryResource.id == resource_id)
+    if public_only:
+        query = query.join(Library, Library.id == LibraryResource.library_id).where(
+            Library.is_active.is_(True),
+            Library.is_public.is_(True),
+        )
     if load_options:
         query = query.options(*load_options)
     result = await db.execute(query)
@@ -390,14 +400,20 @@ async def list_reservations(
 
 
 async def list_charges(
-    db: AsyncSession, library_id: uuid.UUID, *, active_only: bool = True
+    db: AsyncSession,
+    library_id: uuid.UUID,
+    *,
+    active_only: bool = True,
+    public_only: bool = True,
 ) -> list[LibraryChargeOut]:
     """List library charges (fee structures)."""
-    query = (
-        LibraryCharge.active_query()
-        .where(LibraryCharge.library_id == library_id)
-        .order_by(LibraryCharge.charge_type, LibraryCharge.name)
-    )
+    query = LibraryCharge.active_query().where(LibraryCharge.library_id == library_id)
+    if public_only:
+        query = query.join(Library, Library.id == LibraryCharge.library_id).where(
+            Library.is_active.is_(True),
+            Library.is_public.is_(True),
+        )
+    query = query.order_by(LibraryCharge.charge_type, LibraryCharge.name)
 
     if active_only:
         query = query.where(LibraryCharge.is_active.is_(True))

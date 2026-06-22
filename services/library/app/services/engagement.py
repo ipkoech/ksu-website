@@ -332,6 +332,25 @@ async def delete_ticket(db: AsyncSession, ticket_id: uuid.UUID) -> None:
 # ── LibraryRegulation ─────────────────────────────────────────────────────────
 
 
+def public_regulations_query():
+    parent_is_public = sa.or_(
+        LibraryRegulation.library_id.is_(None),
+        sa.select(Library.id)
+        .where(
+            Library.id == LibraryRegulation.library_id,
+            Library.is_active.is_(True),
+            Library.is_public.is_(True),
+            Library.deleted_at.is_(None),
+        )
+        .exists(),
+    )
+    return LibraryRegulation.active_query().where(
+        LibraryRegulation.is_public.is_(True),
+        LibraryRegulation.status == "active",
+        parent_is_public,
+    )
+
+
 async def list_regulations(
     db: AsyncSession,
     *,
@@ -341,14 +360,19 @@ async def list_regulations(
     page: int = 1,
     per_page: int = 20,
     include_total: bool = True,
+    public_only: bool = False,
 ) -> PaginatedResult:
     """List library regulations with filtering."""
-    query = LibraryRegulation.active_query().order_by(LibraryRegulation.title)
+    query = (
+        public_regulations_query()
+        if public_only
+        else LibraryRegulation.active_query()
+    ).order_by(LibraryRegulation.title)
     if library_id is not None:
         query = query.where(LibraryRegulation.library_id == library_id)
     if category is not None:
         query = query.where(LibraryRegulation.category == category)
-    if status is not None:
+    if status is not None and not public_only:
         query = query.where(LibraryRegulation.status == status)
     result = await paginate(
         db,
@@ -368,6 +392,18 @@ async def get_regulation(
     return await LibraryRegulation.get_or_raise(
         db, regulation_id, error_message="Regulation not found"
     )
+
+
+async def get_public_regulation(
+    db: AsyncSession, regulation_id: uuid.UUID
+) -> LibraryRegulation:
+    result = await db.execute(
+        public_regulations_query().where(LibraryRegulation.id == regulation_id)
+    )
+    regulation = result.scalar_one_or_none()
+    if regulation is None:
+        raise ValueError("Regulation not found")
+    return regulation
 
 
 async def create_regulation(

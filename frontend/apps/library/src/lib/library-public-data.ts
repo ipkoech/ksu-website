@@ -325,7 +325,6 @@ export function getPublicBranches() {
     libraryServiceApi.branches.list({
       fields: branchFields,
       active_only: true,
-      public_only: true,
       page: 1,
       per_page: 100,
     }),

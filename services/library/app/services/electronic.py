@@ -9,13 +9,13 @@ from datetime import datetime, timezone
 from typing import Optional, Sequence
 
 import httpx
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common.pagination import PaginatedResult, paginate
 
-from ..models import ElectronicResource, ElectronicResourceGuide, SavedPublication
+from ..models import ElectronicResource, ElectronicResourceGuide, Library, SavedPublication
 from ..schemas import (
     CitationOut,
     ElectronicResourceCreate,
@@ -37,6 +37,20 @@ _HTTPX_TIMEOUT = 5.0
 # ── ElectronicResource ────────────────────────────────────────────────────────
 
 
+def public_resource_parent_filter():
+    return or_(
+        ElectronicResource.library_id.is_(None),
+        select(Library.id)
+        .where(
+            Library.id == ElectronicResource.library_id,
+            Library.is_active.is_(True),
+            Library.is_public.is_(True),
+            Library.deleted_at.is_(None),
+        )
+        .exists(),
+    )
+
+
 async def list_resources(
     db: AsyncSession,
     *,
@@ -50,11 +64,14 @@ async def list_resources(
     per_page: int = 20,
     include_total: bool = True,
     load_options: Sequence = (),
+    public_only: bool = True,
 ) -> PaginatedResult:
     """List electronic resources with filtering."""
     query = ElectronicResource.active_query().where(
         ElectronicResource.is_active.is_(True)
     )
+    if public_only:
+        query = query.where(public_resource_parent_filter())
     if library_id is not None:
         query = query.where(ElectronicResource.library_id == library_id)
     if section_letter is not None:
@@ -85,16 +102,33 @@ async def list_resources(
     return result
 
 
-async def get_resource(db: AsyncSession, resource_id: uuid.UUID) -> ElectronicResource:
+async def get_resource(
+    db: AsyncSession, resource_id: uuid.UUID, *, public_only: bool = True
+) -> ElectronicResource:
     """Get electronic resource entity by ID."""
-    return await ElectronicResource.get_or_raise(
-        db, resource_id, error_message="Electronic resource not found"
+    query = ElectronicResource.active_query().where(
+        ElectronicResource.id == resource_id,
+        ElectronicResource.is_active.is_(True),
     )
+    if public_only:
+        query = query.where(public_resource_parent_filter())
+    result = await db.execute(query)
+    row = result.scalar_one_or_none()
+    if row is None:
+        raise ValueError("Electronic resource not found")
+    return row
 
 
-async def get_resource_by_slug(db: AsyncSession, slug: str) -> ElectronicResource:
+async def get_resource_by_slug(
+    db: AsyncSession, slug: str, *, public_only: bool = True
+) -> ElectronicResource:
     """Get electronic resource entity by slug."""
-    query = ElectronicResource.active_query().where(ElectronicResource.slug == slug)
+    query = ElectronicResource.active_query().where(
+        ElectronicResource.slug == slug,
+        ElectronicResource.is_active.is_(True),
+    )
+    if public_only:
+        query = query.where(public_resource_parent_filter())
     result = await db.execute(query)
     row = result.scalar_one_or_none()
     if row is None:
@@ -106,7 +140,7 @@ async def list_by_letter(db: AsyncSession) -> dict[str, list[ElectronicResource]
     """Returns active resources grouped by section_letter for A-Z page."""
     query = (
         ElectronicResource.active_query()
-        .where(ElectronicResource.is_active.is_(True))
+        .where(ElectronicResource.is_active.is_(True), public_resource_parent_filter())
         .order_by(
             ElectronicResource.section_letter,
             ElectronicResource.sort_order,
@@ -136,7 +170,7 @@ async def update_resource(
     db: AsyncSession, resource_id: uuid.UUID, data: ElectronicResourceUpdate
 ) -> ElectronicResource:
     """Update an electronic resource."""
-    resource = await get_resource(db, resource_id)
+    resource = await get_resource(db, resource_id, public_only=False)
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(resource, field, value)
     await db.commit()
@@ -146,7 +180,7 @@ async def update_resource(
 
 async def delete_resource(db: AsyncSession, resource_id: uuid.UUID) -> None:
     """Soft-delete an electronic resource."""
-    resource = await get_resource(db, resource_id)
+    resource = await get_resource(db, resource_id, public_only=False)
     resource.soft_delete()
     await db.commit()
 
@@ -159,8 +193,18 @@ async def list_guides(
 ) -> list[ElectronicResourceGuide]:
     result = await db.execute(
         select(ElectronicResourceGuide)
+        .join(
+            ElectronicResource,
+            ElectronicResource.id == ElectronicResourceGuide.electronic_resource_id,
+        )
         .where(ElectronicResourceGuide.electronic_resource_id == electronic_resource_id)
-        .where(ElectronicResourceGuide.deleted_at.is_(None))
+        .where(
+            ElectronicResourceGuide.deleted_at.is_(None),
+            ElectronicResourceGuide.is_active.is_(True),
+            ElectronicResource.is_active.is_(True),
+            ElectronicResource.deleted_at.is_(None),
+            public_resource_parent_filter(),
+        )
         .order_by(
             ElectronicResourceGuide.sort_order, ElectronicResourceGuide.created_at
         )

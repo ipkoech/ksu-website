@@ -86,6 +86,10 @@ class LibraryExternalLinkUpdate(BaseModel):
     sort_order: Optional[int] = None
 
 
+class LibraryExternalLinkToggle(BaseModel):
+    is_active: bool
+
+
 class LibraryExternalLinkOut(LibraryExternalLinkBase):
     model_config = ConfigDict(from_attributes=True)
 

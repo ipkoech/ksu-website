@@ -29,6 +29,13 @@ from ..schemas import (
 # ── Library ───────────────────────────────────────────────────────────────────
 
 
+def public_libraries_query():
+    return Library.active_query().where(
+        Library.is_active.is_(True),
+        Library.is_public.is_(True),
+    )
+
+
 async def get_library(
     db: AsyncSession,
     library_id: uuid.UUID,
@@ -40,6 +47,15 @@ async def get_library(
     if load_options:
         query = query.options(*load_options)
     result = await db.execute(query)
+    library = result.scalar_one_or_none()
+    if library is None:
+        raise ValueError(f"Library {library_id} not found")
+    return library
+
+
+async def get_public_library(db: AsyncSession, library_id: uuid.UUID) -> Library:
+    """Get a library only when it is active and public."""
+    result = await db.execute(public_libraries_query().where(Library.id == library_id))
     library = result.scalar_one_or_none()
     if library is None:
         raise ValueError(f"Library {library_id} not found")
@@ -74,11 +90,9 @@ async def list_libraries(
     load_options: Sequence = (),
 ) -> PaginatedResult:
     """List libraries with optional eager loading."""
-    query = Library.active_query()
-    if active_only:
+    query = public_libraries_query() if public_only else Library.active_query()
+    if active_only and not public_only:
         query = query.where(Library.is_active.is_(True))
-    if public_only:
-        query = query.where(Library.is_public.is_(True))
     if load_options:
         query = query.options(*load_options)
     query = query.order_by(Library.sort_order, Library.name)
@@ -152,10 +166,13 @@ async def set_library_hours(
 
 
 async def get_library_hours(
-    db: AsyncSession, library_id: uuid.UUID
+    db: AsyncSession, library_id: uuid.UUID, *, public_only: bool = False
 ) -> list[LibraryHoursOut]:
     """Get all hours for a library."""
-    await get_library_entity(db, library_id)
+    if public_only:
+        await get_public_library(db, library_id)
+    else:
+        await get_library_entity(db, library_id)
     result = await db.execute(
         sa.select(LibraryHours)
         .where(LibraryHours.library_id == library_id)

@@ -8,11 +8,11 @@ from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ksu_common.auth import TokenPayload, get_current_user, get_optional_user
+from ksu_common.auth import TokenPayload, get_optional_user
 from ksu_common.rbac import has_scope, requires_scope
 from ksu_common.schemas.responses import success
 from ksu_common.field_selection import FieldSelection, FieldsQuery, FieldSelector
-from ksu_common.cache import cached_public, cache_response
+from ksu_common.cache import cache_response, invalidate_prefix
 from ksu_common.audit import audit_action
 from ksu_common.rate_limit import rate_limit
 
@@ -35,23 +35,15 @@ from ...services import resources as svc
 resources_router = APIRouter(prefix="/library/resources", tags=["Library Resources"])
 
 
+async def invalidate_public_library_cache() -> None:
+    await invalidate_prefix("public")
+
+
 @resources_router.get("/")
-@cached_public(
-    timeout=300,
-    vary_on=(
-        "library_id",
-        "resource_type",
-        "status",
-        "q",
-        "page",
-        "per_page",
-        "include_total",
-        "fields",
-    ),
-)
 async def list_resources(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
     library_id: uuid.UUID = Query(...),
     resource_type: Optional[str] = Query(None),
@@ -61,6 +53,7 @@ async def list_resources(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
+    is_writer = user is not None and has_scope(user.roles, "library:write")
     selector = FieldSelector(LibraryResource, fields, always_include={"id"})
     result = await svc.list_resources(
         db,
@@ -72,21 +65,26 @@ async def list_resources(
         per_page=per_page,
         include_total=include_total,
         load_options=selector.load_options,
+        public_only=not is_writer,
     )
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
 @resources_router.get("/{resource_id}")
-@cached_public(timeout=60, vary_on=("fields",))
 async def get_resource(
     request: Request,
     resource_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
+    is_writer = user is not None and has_scope(user.roles, "library:write")
     selector = FieldSelector(LibraryResource, fields, always_include={"id"})
     resource = await svc.get_resource(
-        db, resource_id, load_options=selector.load_options
+        db,
+        resource_id,
+        load_options=selector.load_options,
+        public_only=not is_writer,
     )
     return success(data=selector.apply(resource))
 
@@ -100,6 +98,7 @@ async def create_resource(
     user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
 ):
     resource = await svc.create_resource(db, data)
+    await invalidate_public_library_cache()
     return success(data=resource, message="Resource created")
 
 
@@ -115,6 +114,7 @@ async def update_resource(
     user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
 ):
     resource = await svc.update_resource(db, resource_id, data)
+    await invalidate_public_library_cache()
     return success(data=resource)
 
 
@@ -129,6 +129,7 @@ async def delete_resource(
     user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
 ):
     await svc.delete_resource(db, resource_id)
+    await invalidate_public_library_cache()
 
 
 # ── Library loans ─────────────────────────────────────────────────────────────
@@ -186,6 +187,7 @@ async def issue_loan(
     user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
 ):
     loan = await svc.issue_loan(db, data)
+    await invalidate_public_library_cache()
     return success(data=loan, message="Loan issued")
 
 
@@ -199,6 +201,7 @@ async def return_loan(
     user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
 ):
     loan = await svc.return_loan(db, loan_id, data)
+    await invalidate_public_library_cache()
     return success(data=loan)
 
 
@@ -275,6 +278,7 @@ async def create_reservation(
     if not has_scope(user.roles, "library:write"):
         data = data.model_copy(update={"requester_person_id": uuid.UUID(user.sub)})
     reservation = await svc.create_reservation(db, data)
+    await invalidate_public_library_cache()
     return success(data=reservation, message="Reservation created")
 
 
@@ -292,6 +296,7 @@ async def update_reservation(
     user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
 ):
     reservation = await svc.update_reservation(db, reservation_id, data)
+    await invalidate_public_library_cache()
     return success(data=reservation)
 
 
@@ -313,6 +318,7 @@ async def cancel_reservation(
         uuid.UUID(user.sub),
         require_owner=not has_scope(user.roles, "library:write"),
     )
+    await invalidate_public_library_cache()
 
 
 # ── Library charges ───────────────────────────────────────────────────────────
@@ -321,14 +327,20 @@ charges_router = APIRouter(prefix="/library/charges", tags=["Library Charges"])
 
 
 @charges_router.get("/")
-@cached_public(timeout=300, vary_on=("library_id", "active_only"))
 async def list_charges(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     library_id: uuid.UUID = Query(...),
     active_only: bool = Query(True),
 ):
-    charges = await svc.list_charges(db, library_id, active_only=active_only)
+    is_writer = user is not None and has_scope(user.roles, "library:write")
+    charges = await svc.list_charges(
+        db,
+        library_id,
+        active_only=active_only if is_writer else True,
+        public_only=not is_writer,
+    )
     return success(data=charges)
 
 
@@ -341,6 +353,7 @@ async def create_charge(
     user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
 ):
     charge = await svc.create_charge(db, data)
+    await invalidate_public_library_cache()
     return success(data=charge, message="Charge created")
 
 
@@ -354,6 +367,7 @@ async def update_charge(
     user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
 ):
     charge = await svc.update_charge(db, charge_id, data)
+    await invalidate_public_library_cache()
     return success(data=charge)
 
 
@@ -366,6 +380,7 @@ async def delete_charge(
     user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
 ):
     await svc.delete_charge(db, charge_id)
+    await invalidate_public_library_cache()
 
 
 # ── Aggregate router ──────────────────────────────────────────────────────────

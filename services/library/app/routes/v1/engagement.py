@@ -8,10 +8,10 @@ from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ksu_common.auth import TokenPayload, get_current_user, get_optional_user
-from ksu_common.rbac import requires_scope
+from ksu_common.auth import TokenPayload, get_optional_user
+from ksu_common.rbac import has_scope, requires_scope
 from ksu_common.schemas.responses import success
-from ksu_common.cache import cached_public, cache_response
+from ksu_common.cache import cache_response, invalidate_prefix
 from ksu_common.audit import audit_action
 from ksu_common.field_selection import FieldSelection, FieldsQuery, FieldSelector
 from ksu_common.rate_limit import rate_limit
@@ -246,23 +246,15 @@ regulations_router = APIRouter(
 )
 
 
+async def invalidate_public_library_cache() -> None:
+    await invalidate_prefix("public")
+
+
 @regulations_router.get("/")
-@cached_public(
-    timeout=3600,
-    vary_on=(
-        "library_id",
-        "category",
-        "status",
-        "page",
-        "per_page",
-        "include_total",
-        "fields",
-        "include",
-    ),
-)
 async def list_regulations(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
     library_id: Optional[uuid.UUID] = Query(None),
     category: Optional[str] = Query(None),
@@ -271,6 +263,7 @@ async def list_regulations(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
+    is_writer = user is not None and has_scope(user.roles, "library:write")
     result = await svc.list_regulations(
         db,
         library_id=library_id,
@@ -279,6 +272,7 @@ async def list_regulations(
         page=page,
         per_page=per_page,
         include_total=include_total,
+        public_only=not is_writer,
     )
     selector = FieldSelector(LibraryRegulation, fields, always_include={"id"})
     data = [
@@ -292,14 +286,19 @@ async def list_regulations(
 
 
 @regulations_router.get("/{regulation_id}")
-@cached_public(timeout=3600, vary_on=("fields", "include"))
 async def get_regulation(
     request: Request,
     regulation_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
-    regulation = await svc.get_regulation(db, regulation_id)
+    is_writer = user is not None and has_scope(user.roles, "library:write")
+    regulation = (
+        await svc.get_regulation(db, regulation_id)
+        if is_writer
+        else await svc.get_public_regulation(db, regulation_id)
+    )
     selector = FieldSelector(LibraryRegulation, fields, always_include={"id"})
     data = LibraryRegulationOut.model_validate(regulation).model_dump(mode="json")
     return success(data=selector.apply(data))
@@ -314,6 +313,7 @@ async def create_regulation(
     user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
 ):
     regulation = await svc.create_regulation(db, data)
+    await invalidate_public_library_cache()
     return success(
         data=LibraryRegulationOut.model_validate(regulation).model_dump(),
         message="Regulation created",
@@ -334,6 +334,7 @@ async def update_regulation(
     user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
 ):
     regulation = await svc.update_regulation(db, regulation_id, data)
+    await invalidate_public_library_cache()
     return success(data=LibraryRegulationOut.model_validate(regulation).model_dump())
 
 
@@ -350,6 +351,7 @@ async def delete_regulation(
     user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
 ):
     await svc.delete_regulation(db, regulation_id)
+    await invalidate_public_library_cache()
 
 
 # ── Aggregate router ──────────────────────────────────────────────────────────
