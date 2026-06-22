@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { mediaApi, useMyProfile, useUpdateMyProfile } from "@ksu/api-client";
+import { useEffect, useMemo, useState } from "react";
+import { useMyProfile, useUpdateMyProfile } from "@ksu/api-client";
 import type { MyProfile, MyProfileUpdatePayload } from "@ksu/api-client";
 import {
   Alert,
@@ -17,7 +17,8 @@ import {
   Textarea,
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
-import { FileText, Save, UploadCloud } from "lucide-react";
+import { Save } from "lucide-react";
+import { MediaPicker } from "@/components/media/media-picker";
 
 type ProfileFormValues = {
   title: string;
@@ -198,11 +199,8 @@ function payloadFromValues(values: ProfileFormValues): MyProfileUpdatePayload {
 export function ProfileForm() {
   const profileQuery = useMyProfile();
   const updateProfile = useUpdateMyProfile();
-  const photoInputRef = useRef<HTMLInputElement>(null);
-  const cvInputRef = useRef<HTMLInputElement>(null);
   const profile = profileQuery.data?.data;
   const [values, setValues] = useState<ProfileFormValues>(emptyValues);
-  const [uploading, setUploading] = useState<"photo" | "cv" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -224,33 +222,6 @@ export function ProfileForm() {
   const setField = <K extends keyof ProfileFormValues>(key: K, value: ProfileFormValues[K]) => {
     setValues((current) => ({ ...current, [key]: value }));
   };
-
-  async function uploadProfileFile(kind: "photo" | "cv", file?: File | null) {
-    if (!file || !profile) return;
-    setUploading(kind);
-    setError(null);
-    try {
-      const response = await mediaApi.upload(file, {
-        isPublic: kind === "photo",
-        entityType: "person",
-        entityId: profile.id,
-        role: kind === "photo" ? "profile-photo" : "profile-cv",
-      });
-      const id = response.data.id;
-      if (kind === "photo") {
-        setField("photo_id", id);
-      } else {
-        setField("cv_file_id", id);
-      }
-      toast.success(kind === "photo" ? "Photo uploaded" : "CV uploaded");
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Upload failed";
-      setError(message);
-      toast.error(message);
-    } finally {
-      setUploading(null);
-    }
-  }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -301,7 +272,7 @@ export function ProfileForm() {
               </p>
             </div>
           </div>
-          <Button type="submit" disabled={updateProfile.isPending || Boolean(uploading)}>
+          <Button type="submit" disabled={updateProfile.isPending}>
             <Save className="h-4 w-4" />
             {updateProfile.isPending ? "Saving..." : "Save changes"}
           </Button>
@@ -436,35 +407,38 @@ export function ProfileForm() {
         </Section>
 
         <Section title="Files">
-          <div className="space-y-3 rounded-lg border p-4">
-            <Label>Profile photo</Label>
-            <input
-              ref={photoInputRef}
-              type="file"
+          <Field label="Profile photo">
+            <MediaPicker
+              value={values.photo_id}
+              onChange={(value) => setField("photo_id", value)}
+              mediaType="image"
+              label="Profile photo"
+              helperText="Choose or upload a public profile image."
+              placeholder="No profile photo selected"
               accept="image/*"
-              className="hidden"
-              onChange={(event) => void uploadProfileFile("photo", event.target.files?.[0])}
+              maxSize={5 * 1024 * 1024}
+              isPublic
+              uploadEntityType="person"
+              uploadEntityId={profile?.id}
+              uploadRole="profile-photo"
             />
-            <Button type="button" variant="outline" onClick={() => photoInputRef.current?.click()} disabled={uploading === "photo"}>
-              <UploadCloud className="h-4 w-4" />
-              {uploading === "photo" ? "Uploading..." : "Upload photo"}
-            </Button>
-            <Input value={values.photo_id} onChange={(event) => setField("photo_id", event.target.value)} placeholder="Media ID" />
-          </div>
-          <div className="space-y-3 rounded-lg border p-4">
-            <Label>CV file</Label>
-            <input
-              ref={cvInputRef}
-              type="file"
-              className="hidden"
-              onChange={(event) => void uploadProfileFile("cv", event.target.files?.[0])}
+          </Field>
+          <Field label="CV file">
+            <MediaPicker
+              value={values.cv_file_id}
+              onChange={(value) => setField("cv_file_id", value)}
+              mediaType="document"
+              label="CV file"
+              helperText="Choose or upload a PDF or document for your profile."
+              placeholder="No CV file selected"
+              accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              maxSize={20 * 1024 * 1024}
+              isPublic
+              uploadEntityType="person"
+              uploadEntityId={profile?.id}
+              uploadRole="profile-cv"
             />
-            <Button type="button" variant="outline" onClick={() => cvInputRef.current?.click()} disabled={uploading === "cv"}>
-              <FileText className="h-4 w-4" />
-              {uploading === "cv" ? "Uploading..." : "Upload CV"}
-            </Button>
-            <Input value={values.cv_file_id} onChange={(event) => setField("cv_file_id", event.target.value)} placeholder="Media ID" />
-          </div>
+          </Field>
         </Section>
       </form>
     </main>

@@ -28,6 +28,9 @@ export type MediaPickerProps = {
   accept?: string;
   maxSize?: number;
   isPublic?: boolean;
+  uploadEntityType?: string;
+  uploadEntityId?: string;
+  uploadRole?: string;
   allowUpload?: boolean;
   allowClear?: boolean;
   disabled?: boolean;
@@ -63,6 +66,9 @@ export function MediaPicker({
   accept,
   maxSize = 20 * 1024 * 1024,
   isPublic = true,
+  uploadEntityType,
+  uploadEntityId,
+  uploadRole,
   allowUpload = true,
   allowClear = true,
   disabled,
@@ -99,6 +105,9 @@ export function MediaPicker({
         file,
         folderId,
         isPublic,
+        entityType: uploadEntityType,
+        entityId: uploadEntityId,
+        role: uploadRole,
       });
       onChange(response.data.id, response.data);
       toast.success("Media uploaded");
