@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout";
+import { PersonPicker } from "@/components/relationships/relationship-pickers";
 import {
   Badge,
   Button,
@@ -139,7 +140,7 @@ export default function LibraryStaffPage() {
     }
     const nextErrors: Record<string, string> = {};
     if (!editing && !String(values.person_id || "").trim())
-      nextErrors.person_id = "Person ID is required.";
+      nextErrors.person_id = "Choose a person for this staff record.";
     if (values.sort_order !== "" && !Number.isFinite(Number(values.sort_order)))
       nextErrors.sort_order = "Sort order must be a number.";
     setFieldErrors(nextErrors);
@@ -264,7 +265,7 @@ export default function LibraryStaffPage() {
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="break-words font-medium">
-                          {member.job_title || member.role || member.person_id}
+                          {member.person?.full_name || member.job_title || member.role || "Library staff"}
                         </p>
                         <Badge variant="outline">
                           {member.role || "staff"}
@@ -281,7 +282,7 @@ export default function LibraryStaffPage() {
                         {[
                           member.department,
                           member.specialization,
-                          member.person_id,
+                          member.person?.email,
                         ]
                           .filter(Boolean)
                           .join(" · ") || "No staff metadata"}
@@ -326,27 +327,15 @@ export default function LibraryStaffPage() {
           <CardContent className="space-y-4">
             {!editing ? (
               <div className="space-y-2">
-                <label
-                  htmlFor={`${formId}-person_id`}
-                  className="text-sm font-medium"
-                >
-                  Person ID *
+                <label className="text-sm font-medium">
+                  Person *
                 </label>
-                <Input
-                  id={`${formId}-person_id`}
-                  disabled={!canManageStaff}
+                <PersonPicker
                   value={values.person_id ?? ""}
-                  aria-invalid={Boolean(fieldErrors.person_id)}
-                  aria-describedby={
-                    fieldErrors.person_id
-                      ? `${formId}-person_id-error`
-                      : undefined
-                  }
-                  error={Boolean(fieldErrors.person_id)}
-                  onChange={(event) => {
+                  onChange={(value) => {
                     setValues((current) => ({
                       ...current,
-                      person_id: event.target.value,
+                      person_id: value,
                     }));
                     if (fieldErrors.person_id) {
                       setFieldErrors((current) => {
@@ -356,6 +345,10 @@ export default function LibraryStaffPage() {
                       });
                     }
                   }}
+                  filters={{ status: "active" }}
+                  placeholder="Select a staff profile"
+                  disabled={!canManageStaff}
+                  required
                 />
                 {fieldErrors.person_id ? (
                   <p
