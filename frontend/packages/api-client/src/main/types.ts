@@ -158,6 +158,46 @@ export interface PersonCreatePayload {
 
 export type PersonUpdatePayload = Partial<PersonCreatePayload>;
 
+export type MyProfile = Person;
+
+export type MyProfileUpdatePayload = Partial<
+  Pick<
+    PersonCreatePayload,
+    | "title"
+    | "first_name"
+    | "middle_name"
+    | "last_name"
+    | "full_name"
+    | "email"
+    | "phone"
+    | "alternative_email"
+    | "alternative_phone"
+    | "photo_id"
+    | "bio"
+    | "full_bio"
+    | "qualifications"
+    | "specialization"
+    | "research_interests"
+    | "teaching_areas"
+    | "office_location"
+    | "office_hours"
+    | "office_phone"
+    | "courses_taught"
+    | "website_url"
+    | "linkedin_url"
+    | "google_scholar_id"
+    | "google_scholar_url"
+    | "orcid"
+    | "researchgate_url"
+    | "scopus_id"
+    | "education_background"
+    | "professional_memberships"
+    | "awards_honors"
+    | "cv_file_id"
+    | "is_researcher"
+  >
+>;
+
 export type PersonStatusFilter = "active" | "inactive" | "deleted" | "all";
 export type StaffAssignmentStatusFilter = "active" | "ended" | "inactive" | "pending" | "all";
 export type StaffAssignmentConflictResolution = "cancel" | "assign_acting" | "replace_current" | "edit_selection";

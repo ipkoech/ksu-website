@@ -6,6 +6,7 @@ export * from "./use-schools";
 export * from "./use-departments";
 export * from "./use-programmes";
 export * from "./use-persons";
+export * from "./use-my-profile";
 export * from "./use-news";
 export * from "./use-blogs";
 export * from "./use-events";

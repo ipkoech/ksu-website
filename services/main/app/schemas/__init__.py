@@ -142,7 +142,7 @@ from .organization import (
     WingRead,
     WingUpdate,
 )
-from .person import PersonCreate, PersonRead, PersonUpdate, QualificationItem
+from .person import MyProfileUpdate, PersonCreate, PersonRead, PersonUpdate, QualificationItem
 from .rbac import (
     PermissionRead,
     RoleCreate,
@@ -240,6 +240,7 @@ __all__ = [
     "PersonCreate",
     "PersonUpdate",
     "PersonRead",
+    "MyProfileUpdate",
     "StaffAssignmentCreate",
     "StaffAssignmentUpdate",
     "StaffAssignmentEnd",

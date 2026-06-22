@@ -28,6 +28,7 @@ from .governance import router as governance_router
 from .imports import router as imports_router
 from .intakes import router as intakes_router
 from .media import router as media_router
+from .me import router as me_router
 from .news import router as news_router
 from .newsletters import router as newsletters_router
 from .notifications import router as notifications_router
@@ -60,6 +61,7 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(health_router, prefix="/api/v1", tags=["Health"])
     app.include_router(internal_router, prefix="/api/v1/internal", tags=["Internal"])
     app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
+    app.include_router(me_router, prefix="/api/v1/me", tags=["Me"])
     app.include_router(analytics_router, prefix="/api/v1/analytics", tags=["Analytics"])
     app.include_router(news_router, prefix="/api/v1/news", tags=["Content"])
     app.include_router(blogs_router, prefix="/api/v1/blogs", tags=["Content"])

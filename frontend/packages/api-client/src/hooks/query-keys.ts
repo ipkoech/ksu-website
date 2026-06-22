@@ -6,6 +6,11 @@ export const queryKeys = {
     me: ["auth", "me"] as const,
   },
 
+  // Current user profile
+  myProfile: {
+    detail: ["me", "profile"] as const,
+  },
+
   // Users
   users: {
     all: ["users"] as const,

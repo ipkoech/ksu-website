@@ -2,6 +2,8 @@ import { mainApi } from "../client";
 import { getStoredAccessToken } from "../auth-tokens";
 import type {
   User,
+  MyProfile,
+  MyProfileUpdatePayload,
   Person,
   PersonCreatePayload,
   PersonStatusFilter,
@@ -191,6 +193,14 @@ export const usersApi = {
     mainApi.patch<{ data: User }>(`/api/v1/users/${id}`, data),
 
   delete: (id: string) => mainApi.delete<void>(`/api/v1/users/${id}`),
+};
+
+// Current user profile
+export const myProfileApi = {
+  get: () => mainApi.get<{ data: MyProfile }>("/api/v1/me/profile"),
+
+  update: (data: MyProfileUpdatePayload) =>
+    mainApi.patch<{ data: MyProfile }>("/api/v1/me/profile", data),
 };
 
 // Persons

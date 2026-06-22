@@ -6,7 +6,7 @@ import uuid
 from datetime import date
 from typing import Any
 
-from pydantic import EmailStr, Field, field_validator
+from pydantic import ConfigDict, EmailStr, Field, field_validator
 
 from .base import BaseReadSchema, BaseSchema, PhoneStr, UrlStr
 
@@ -134,6 +134,57 @@ class PersonUpdate(BaseSchema):
     is_researcher: bool | None = None
     is_featured: bool | None = None
     show_on_directory: bool | None = None
+
+    @field_validator("email", "alternative_email", mode="before")
+    @classmethod
+    def normalize_emails(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return _normalize_email(value)
+
+
+class MyProfileUpdate(BaseSchema):
+    """Staff self-service update payload for the authenticated user's own profile."""
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        str_strip_whitespace=True,
+        extra="forbid",
+    )
+
+    title: str | None = Field(default=None, max_length=32)
+    first_name: str | None = Field(default=None, min_length=1, max_length=100)
+    middle_name: str | None = Field(default=None, max_length=100)
+    last_name: str | None = Field(default=None, min_length=1, max_length=100)
+    full_name: str | None = Field(default=None, min_length=1, max_length=255)
+    email: EmailStr | None = None
+    phone: PhoneStr | None = None
+    alternative_email: EmailStr | None = None
+    alternative_phone: PhoneStr | None = None
+    photo_id: uuid.UUID | None = None
+    bio: str | None = None
+    full_bio: str | None = None
+    qualifications: list[QualificationItem] | None = None
+    specialization: str | None = None
+    research_interests: list[str] | None = None
+    teaching_areas: list[str] | None = None
+    office_location: str | None = Field(default=None, max_length=255)
+    office_hours: dict[str, Any] | None = None
+    office_phone: PhoneStr | None = None
+    courses_taught: list[str] | None = None
+    website_url: UrlStr | None = None
+    linkedin_url: UrlStr | None = None
+    google_scholar_id: str | None = Field(default=None, max_length=128)
+    google_scholar_url: UrlStr | None = None
+    orcid: str | None = Field(default=None, max_length=32)
+    researchgate_url: UrlStr | None = None
+    scopus_id: str | None = Field(default=None, max_length=128)
+    education_background: list[dict[str, Any]] | None = None
+    professional_memberships: list[dict[str, Any]] | None = None
+    awards_honors: list[dict[str, Any]] | None = None
+    cv_file_id: uuid.UUID | None = None
+    is_researcher: bool | None = None
 
     @field_validator("email", "alternative_email", mode="before")
     @classmethod

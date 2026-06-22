@@ -16,6 +16,8 @@ class RoleDefinition:
 ALL_PERMISSIONS: tuple[str, ...] = (
     # USER MANAGEMENT
     "users.view", "users.create", "users.edit", "users.delete", "users.suspend", "users.invite",
+    # SELF-SERVICE PROFILE
+    "profile.self_edit",
     # ROLES & PERMISSIONS
     "roles.view", "roles.manage", "permissions.view", "permissions.manage",
     # SYSTEM
@@ -145,6 +147,7 @@ ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
             "student_life.manage_services", "student_life.manage_sports",
             "student_life.manage_facilities", "governance.view",
             "staff.manage_assignments", "staff.view_assignments", "media.upload",
+            "profile.self_edit",
             "mentorship.manage_programs", "mentorship.view_programs",
             "mentorship.manage_applications", "mentorship.view_applications",
             "mentorship.manage_matches", "mentorship.view_matches",
@@ -176,7 +179,15 @@ ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
     "library-staff": RoleDefinition(
         name="library-staff",
         description="Staff member for Library operations.",
-        scopes=("library.manage_resources", "library.manage_services", "library.view", "workflow.initiate", "media.upload"),
+        scopes=(
+            "library.manage_resources", "library.manage_services", "library.view",
+            "workflow.initiate", "media.upload", "profile.self_edit",
+        ),
+    ),
+    "staff": RoleDefinition(
+        name="staff",
+        description="General staff member with self-service profile access.",
+        scopes=("profile.self_edit", "media.upload"),
     ),
     "content-admin": RoleDefinition(
         name="content-admin",
@@ -277,6 +288,7 @@ ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
             "research.view_projects", "research.view", "publications.submit", "publications.view",
             "workflow.initiate", "media.upload", "scholarship.view",
             "research_theme.view", "research_program.view", "external_publications.view",
+            "profile.self_edit",
         ),
     ),
     "research-main-admin": RoleDefinition(
@@ -475,7 +487,7 @@ ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
     "researcher": RoleDefinition(
         name="researcher",
         description="Internal researcher with disclosure submission rights.",
-        scopes=("innovation.submit_disclosure", "research.view_internal"),
+        scopes=("innovation.submit_disclosure", "research.view_internal", "profile.self_edit"),
     ),
     "innovation-officer": RoleDefinition(
         name="innovation-officer",
@@ -491,7 +503,7 @@ ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
         description="Academic lecturer.",
         scopes=(
             "publications.submit", "publications.view", "research.submit_reports",
-            "persons.manage", "workflow.initiate", "media.upload",
+            "persons.manage", "workflow.initiate", "media.upload", "profile.self_edit",
         ),
     ),
     "school-admin": RoleDefinition(
@@ -518,7 +530,7 @@ ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
     "dept-staff": RoleDefinition(
         name="dept-staff",
         description="Staff member for a Department.",
-        scopes=("academic.view", "content.manage_news", "workflow.initiate", "media.upload"),
+        scopes=("academic.view", "content.manage_news", "workflow.initiate", "media.upload", "profile.self_edit"),
     ),
 }
 
