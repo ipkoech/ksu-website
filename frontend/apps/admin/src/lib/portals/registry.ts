@@ -339,7 +339,7 @@ function titleOf(record: PortalRecord) {
     record.subject ??
     record.display_name ??
     record.slug ??
-    record.id
+    "Untitled record"
   );
 }
 
@@ -1708,7 +1708,7 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     update: (id, payload) => mediaApi.update(id, payload as any),
     delete: (id) => mediaApi.delete(id),
     getRecordTitle: (record) =>
-      record.title || record.original_filename || record.filename || record.id,
+      record.title || record.original_filename || record.filename || "Media asset",
     getRecordMeta: (record) =>
       metaOf(record, ["media_type", "mime_type", "created_at"]),
     emptyMessage: "No media assets were returned.",
@@ -2377,7 +2377,7 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
     update: async () => {
       throw new Error("Branch hours are read-only in the current API client.");
     },
-    getRecordTitle: (record) => record.day_type ?? record.id,
+    getRecordTitle: (record) => record.day_type ?? "Branch hours",
     getRecordMeta: (record) =>
       metaOf(record, ["opens_at", "closes_at", "note"]),
     emptyMessage: "No branch hours were returned.",
@@ -2415,7 +2415,7 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
     update: async () => {
       throw new Error("Branch links are read-only in the current API client.");
     },
-    getRecordTitle: (record) => record.label ?? record.id,
+    getRecordTitle: (record) => record.label ?? "Branch link",
     getRecordMeta: (record) =>
       metaOf(record, ["link_type", "url", "is_active"]),
     emptyMessage: "No branch links were returned.",
@@ -2492,8 +2492,7 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
     update: async () => {
       throw new Error("Today hours are read-only.");
     },
-    getRecordTitle: (record) =>
-      record.library_name ?? record.library_id ?? record.id,
+    getRecordTitle: (record) => record.library_name ?? "Library hours",
     getRecordMeta: (record) =>
       metaOf(record, ["day_type", "opens_at", "closes_at", "checked_at"]),
     emptyMessage: "No today-hours records were returned.",
@@ -3119,7 +3118,7 @@ function libraryGenericResource<
     delete: api.delete,
     getRecordTitle: titleOf,
     getRecordMeta: (record) =>
-      metaOf(record, ["status", "library_id", "updated_at"]),
+      metaOf(record, ["status", "updated_at"]),
     emptyMessage: `No ${title.toLowerCase()} records were returned.`,
     buildPayload: (values) => ({
       ...values,
