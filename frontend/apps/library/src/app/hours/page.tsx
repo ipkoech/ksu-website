@@ -1,7 +1,7 @@
 import {
   LibraryHero,
-  MockupBand,
-  MockupHeading,
+  LibraryContentBand,
+  LibrarySectionHeading,
   PrimaryLink,
   SecondaryLink,
   SidePanel,
@@ -64,7 +64,7 @@ export default async function LibraryHoursPage() {
         </section>
       ))}
 
-      <MockupBand>
+      <LibraryContentBand>
         <div className="mb-6 rounded-lg border border-primary/20 bg-primary/5 p-5">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
             Today
@@ -73,7 +73,7 @@ export default async function LibraryHoursPage() {
             Check the branch schedule below before visiting.
           </p>
         </div>
-        <MockupHeading
+        <LibrarySectionHeading
           eyebrow="Schedules"
           title="Branch operating hours"
           body="Hours are shown when the library team has published a schedule for the branch."
@@ -141,7 +141,7 @@ export default async function LibraryHoursPage() {
             </div>
           </SidePanel>
         </div>
-      </MockupBand>
+      </LibraryContentBand>
     </main>
   );
 }

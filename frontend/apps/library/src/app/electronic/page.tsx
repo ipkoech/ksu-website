@@ -5,8 +5,8 @@ import {
   LibraryHero,
   LibrarySection,
   MetricStrip,
-  MockupBand,
-  MockupHeading,
+  LibraryContentBand,
+  LibrarySectionHeading,
   PrimaryLink,
   SearchPanel,
   SecondaryLink,
@@ -104,14 +104,14 @@ export default async function ElectronicResourcesPage({
           </p>
           <p className="mt-3 text-4xl font-bold sm:text-5xl">{resources.data.length}</p>
           <p className="mt-2 text-sm leading-6 text-white/75">
-            Active databases and online platforms returned by the Library API.
+            Active databases and online platforms published for library users.
           </p>
         </div>
       </LibraryHero>
 
-      <MockupBand>
+      <LibraryContentBand>
         <SearchPanel>
-          <MockupHeading
+          <LibrarySectionHeading
             eyebrow="Search"
             title="Find an electronic resource"
             body="Search by database name, provider, subject, access level, or platform type."
@@ -215,7 +215,7 @@ export default async function ElectronicResourcesPage({
             <StatusMessage tone="error">{resources.error}</StatusMessage>
           </div>
         ) : null}
-      </MockupBand>
+      </LibraryContentBand>
 
       {featured.length > 0 ? (
         <LibrarySection
@@ -231,8 +231,8 @@ export default async function ElectronicResourcesPage({
         </LibrarySection>
       ) : null}
 
-      <MockupBand tone="soft">
-        <MockupHeading
+      <LibraryContentBand tone="soft">
+        <LibrarySectionHeading
           eyebrow="A-Z Listing"
           title={query ? `Results for "${query}"` : "Browse all e-resources"}
           body={resultSummary({
@@ -303,7 +303,7 @@ export default async function ElectronicResourcesPage({
             </aside>
           </div>
         )}
-      </MockupBand>
+      </LibraryContentBand>
     </main>
   );
 }

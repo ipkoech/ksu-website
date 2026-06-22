@@ -1,8 +1,8 @@
 import {
   LibraryHero,
   MetricStrip,
-  MockupBand,
-  MockupHeading,
+  LibraryContentBand,
+  LibrarySectionHeading,
   PrimaryLink,
   SecondaryLink,
   SidePanel,
@@ -54,7 +54,7 @@ export default async function LibraryAboutPage() {
           </p>
           <p className="mt-3 text-4xl font-bold sm:text-5xl">{branches.data.length}</p>
           <p className="mt-2 text-sm leading-6 text-white/75">
-            Active access points published through the Library API.
+            Active access points published for the university community.
           </p>
         </div>
       </LibraryHero>
@@ -67,10 +67,10 @@ export default async function LibraryAboutPage() {
         </section>
       ))}
 
-      <MockupBand>
+      <LibraryContentBand>
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
           <div>
-            <MockupHeading
+            <LibrarySectionHeading
               eyebrow="Overview"
               title={primaryBranch?.name ?? "Kisii University Library"}
               body={compactText(primaryBranch?.description) || "Library overview content is being updated by the library team."}
@@ -106,9 +106,9 @@ export default async function LibraryAboutPage() {
             </dl>
           </SidePanel>
         </div>
-      </MockupBand>
+      </LibraryContentBand>
 
-      <MockupBand tone="soft">
+      <LibraryContentBand tone="soft">
         <MetricStrip
           items={[
             { label: "Access points", value: branches.data.length },
@@ -116,7 +116,7 @@ export default async function LibraryAboutPage() {
             { label: "Contacts", value: branches.data.filter((branch) => branch.phone || branch.email).length },
           ]}
         />
-        <MockupHeading
+        <LibrarySectionHeading
           eyebrow="Branches"
           title="Library access points"
           body="Each branch record is maintained by the library team and reused across the public pages."
@@ -145,7 +145,7 @@ export default async function LibraryAboutPage() {
             </article>
           ))}
         </div>
-      </MockupBand>
+      </LibraryContentBand>
     </main>
   );
 }

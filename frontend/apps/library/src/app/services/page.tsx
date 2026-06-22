@@ -138,7 +138,7 @@ export default async function LibraryServicesPage() {
       <LibrarySection
         eyebrow="Service Snapshot"
         title="What support is currently published"
-        body="A quick summary of service records, branch contacts, and active regulations available through the Library API."
+        body="A quick summary of service records, branch contacts, and active regulations available to library users."
       >
         <div id="service-snapshot" className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">

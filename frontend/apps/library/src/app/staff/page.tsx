@@ -1,8 +1,8 @@
 import type { LibraryBranch, LibraryStaff } from "@ksu/api-client";
 import {
   LibraryHero,
-  MockupBand,
-  MockupHeading,
+  LibraryContentBand,
+  LibrarySectionHeading,
   PrimaryLink,
   SecondaryLink,
   SidePanel,
@@ -68,7 +68,7 @@ export default async function LibraryStaffPage() {
         </section>
       ))}
 
-      <MockupBand>
+      <LibraryContentBand>
         <form
           action="/staff"
           className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.55)] lg:grid-cols-[minmax(0,1fr)_220px_220px_auto] lg:items-end"
@@ -104,10 +104,10 @@ export default async function LibraryStaffPage() {
             Search
           </button>
         </form>
-      </MockupBand>
+      </LibraryContentBand>
 
-      <MockupBand tone="soft">
-        <MockupHeading
+      <LibraryContentBand tone="soft">
+        <LibrarySectionHeading
           eyebrow="Directory"
           title="Public staff directory"
           body="Staff profile names depend on person records from the main service; library-specific roles and specializations appear here."
@@ -133,7 +133,7 @@ export default async function LibraryStaffPage() {
             </SidePanel>
           </div>
         )}
-      </MockupBand>
+      </LibraryContentBand>
     </main>
   );
 }

@@ -301,7 +301,7 @@ export function LibraryShell({
   return <main id="library-main" className="min-h-screen overflow-hidden bg-white">{children}</main>;
 }
 
-export function MockupBand({
+export function LibraryContentBand({
   children,
   tone = "white",
 }: {
@@ -321,7 +321,7 @@ export function MockupBand({
   );
 }
 
-export function MockupHeading({
+export function LibrarySectionHeading({
   eyebrow,
   title,
   body,

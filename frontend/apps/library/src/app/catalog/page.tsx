@@ -4,8 +4,8 @@ import {
   CompactRecord,
   LibraryHero,
   MetricStrip,
-  MockupBand,
-  MockupHeading,
+  LibraryContentBand,
+  LibrarySectionHeading,
   PrimaryLink,
   SecondaryLink,
   SidePanel,
@@ -110,7 +110,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
         </div>
       </LibraryHero>
 
-      <MockupBand>
+      <LibraryContentBand>
         <form
           action="/catalog"
           className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.55)] xl:grid-cols-[240px_minmax(240px,1fr)_190px_190px_auto] xl:items-end"
@@ -222,10 +222,10 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
             <StatusMessage tone="error">{resources.error}</StatusMessage>
           </div>
         ) : null}
-      </MockupBand>
+      </LibraryContentBand>
 
-      <MockupBand tone="soft">
-        <MockupHeading
+      <LibraryContentBand tone="soft">
+        <LibrarySectionHeading
           eyebrow="Results"
           title={query ? `Catalog results for "${query}"` : "Current catalog records"}
           body={resultSummary({
@@ -283,7 +283,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
             </aside>
           </div>
         )}
-      </MockupBand>
+      </LibraryContentBand>
     </main>
   );
 }

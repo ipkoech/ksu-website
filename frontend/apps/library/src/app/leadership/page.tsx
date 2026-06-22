@@ -1,7 +1,7 @@
 import {
   LibraryHero,
-  MockupBand,
-  MockupHeading,
+  LibraryContentBand,
+  LibrarySectionHeading,
   PrimaryLink,
   SecondaryLink,
   SidePanel,
@@ -49,7 +49,7 @@ export default async function LibraryLeadershipPage() {
           </p>
           <p className="mt-3 text-4xl font-bold sm:text-5xl">{leaders.length}</p>
           <p className="mt-2 text-sm leading-6 text-white/75">
-            Public senior staff records returned by the Library API.
+            Public senior staff records published for library users.
           </p>
         </div>
       </LibraryHero>
@@ -62,8 +62,8 @@ export default async function LibraryLeadershipPage() {
         </section>
       ) : null}
 
-      <MockupBand>
-        <MockupHeading
+      <LibraryContentBand>
+        <LibrarySectionHeading
           eyebrow="Leadership"
           title="Published leadership records"
           body="Names and photos depend on person records from the main service; library role information appears when public staff records are available."
@@ -108,7 +108,7 @@ export default async function LibraryLeadershipPage() {
             </SidePanel>
           </div>
         )}
-      </MockupBand>
+      </LibraryContentBand>
     </main>
   );
 }

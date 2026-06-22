@@ -3,8 +3,8 @@ import {
   ExternalAnchor,
   LibraryHero,
   MetricStrip,
-  MockupBand,
-  MockupHeading,
+  LibraryContentBand,
+  LibrarySectionHeading,
   PrimaryLink,
   SecondaryLink,
   SidePanel,
@@ -72,7 +72,7 @@ export default async function LibraryRepositoriesPage() {
         </section>
       ))}
 
-      <MockupBand>
+      <LibraryContentBand>
         <form
           action="/repositories"
           className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.55)] lg:grid-cols-[minmax(0,1fr)_220px_auto] lg:items-end"
@@ -102,10 +102,10 @@ export default async function LibraryRepositoriesPage() {
             Search
           </button>
         </form>
-      </MockupBand>
+      </LibraryContentBand>
 
-      <MockupBand tone="soft">
-        <MockupHeading
+      <LibraryContentBand tone="soft">
+        <LibrarySectionHeading
           eyebrow="Access Links"
           title="Repository and research platforms"
           body="These links are managed per branch so the public site can reflect current access arrangements."
@@ -152,7 +152,7 @@ export default async function LibraryRepositoriesPage() {
             </aside>
           </div>
         )}
-      </MockupBand>
+      </LibraryContentBand>
     </main>
   );
 }

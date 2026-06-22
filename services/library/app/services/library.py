@@ -67,6 +67,7 @@ async def list_libraries(
     db: AsyncSession,
     *,
     active_only: bool = True,
+    public_only: bool = True,
     page: int = 1,
     per_page: int = 20,
     include_total: bool = True,
@@ -76,6 +77,8 @@ async def list_libraries(
     query = Library.active_query()
     if active_only:
         query = query.where(Library.is_active.is_(True))
+    if public_only:
+        query = query.where(Library.is_public.is_(True))
     if load_options:
         query = query.options(*load_options)
     query = query.order_by(Library.sort_order, Library.name)

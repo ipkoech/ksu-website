@@ -37,13 +37,22 @@ branches_router = APIRouter(prefix="/library/branches", tags=["Library Branches"
 @branches_router.get("/")
 @cached_public(
     timeout=300,
-    vary_on=("active_only", "page", "per_page", "include_total", "fields", "include"),
+    vary_on=(
+        "active_only",
+        "public_only",
+        "page",
+        "per_page",
+        "include_total",
+        "fields",
+        "include",
+    ),
 )
 async def list_libraries(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
     active_only: bool = Query(True),
+    public_only: bool = Query(True),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
@@ -52,6 +61,7 @@ async def list_libraries(
     result = await svc.list_libraries(
         db,
         active_only=active_only,
+        public_only=public_only,
         page=page,
         per_page=per_page,
         include_total=include_total,

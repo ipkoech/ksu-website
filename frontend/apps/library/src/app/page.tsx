@@ -81,8 +81,8 @@ export default async function LibraryPage() {
             </div>
           ) : (
             <p className="text-sm leading-6 text-white/75">
-              Branch, catalog, and e-resource statistics appear here when the
-              Library API is available.
+              Branch, catalog, and e-resource statistics appear here when
+              public library records are available.
             </p>
           )}
         </div>
@@ -148,7 +148,7 @@ export default async function LibraryPage() {
             <IconCard
               icon="book"
               title="New and current records"
-              body="Start with recently published catalog records, active databases, and branch services maintained in the Library API."
+              body="Start with recently published catalog records, active databases, and branch services maintained by the library team."
               href="#latest-records"
               action="View records"
             />
@@ -208,7 +208,7 @@ export default async function LibraryPage() {
       <LibrarySection
         eyebrow="Branches"
         title="Library access points"
-        body="Public branch records are served directly from the Library API."
+        body="Public branch records show the access points available to students, staff, researchers, and visitors."
       >
         {branches.data.length === 0 && !branches.error ? (
           <StatusMessage>No public library branches are available yet.</StatusMessage>
@@ -283,7 +283,7 @@ export default async function LibraryPage() {
       <LibrarySection
         eyebrow="Latest Records"
         title="What is currently published"
-        body="Seeded and API-backed records below help the Library interface stay testable as the service grows."
+        body="Recently published library records help users move from discovery to access without leaving the public portal."
         tone="white"
       >
         <div id="latest-records" className="grid gap-5 xl:grid-cols-3">

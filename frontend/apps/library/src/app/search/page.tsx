@@ -1,8 +1,8 @@
 import { Children } from "react";
 import Link from "next/link";
 import {
-  MockupBand,
-  MockupHeading,
+  LibraryContentBand,
+  LibrarySectionHeading,
   PillNav,
   SearchPanel,
   SidePanel,
@@ -39,7 +39,7 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
 
   return (
     <main id="library-main" className="min-h-screen bg-white">
-      <MockupBand>
+      <LibraryContentBand>
         <div className="mb-6">
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-secondary">
             Library Search
@@ -111,7 +111,7 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
             </button>
           </form>
         </SearchPanel>
-      </MockupBand>
+      </LibraryContentBand>
 
       {errors.map((error) => (
         <section key={error} className="px-4 pt-6 sm:px-6 lg:px-8">
@@ -121,8 +121,8 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
         </section>
       ))}
 
-      <MockupBand tone="soft">
-        <MockupHeading
+      <LibraryContentBand tone="soft">
+        <LibrarySectionHeading
           eyebrow="Results"
           title={query ? `Results for "${query}"` : "Current library records"}
           body={`${total} combined result${total === 1 ? "" : "s"} returned.`}
@@ -167,7 +167,7 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
             </div>
           </SidePanel>
         </div>
-      </MockupBand>
+      </LibraryContentBand>
     </main>
   );
 }
