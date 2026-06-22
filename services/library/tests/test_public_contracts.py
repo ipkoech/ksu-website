@@ -6,6 +6,7 @@ from app.routes.v1 import engagement as engagement_routes
 from app.routes.v1 import library as library_routes
 from app.services import engagement as engagement_service
 from app.services import library as library_service
+from app.services import search as search_service
 
 
 class PublicLibraryContractTests(unittest.TestCase):
@@ -46,6 +47,29 @@ class PublicLibraryContractTests(unittest.TestCase):
     def test_mutations_invalidate_public_cache(self):
         self.assertTrue(hasattr(library_routes, "invalidate_public_library_cache"))
         self.assertTrue(hasattr(engagement_routes, "invalidate_public_library_cache"))
+
+    def test_public_content_routes_are_registered(self):
+        paths = {
+            candidate.path
+            for included_router in engagement_routes.router.routes
+            for candidate in getattr(included_router, "_effective_candidates", [])
+        }
+
+        self.assertIn("/library/guides/", paths)
+        self.assertIn("/library/guides/slug/{slug}", paths)
+        self.assertIn("/library/specialists/", paths)
+        self.assertIn("/library/workflows/slug/{slug}", paths)
+        self.assertIn("/library/policies/slug/{slug}", paths)
+
+    def test_search_accepts_library_public_content_types(self):
+        self.assertTrue(
+            {
+                "guide",
+                "specialist",
+                "workflow",
+                "policy",
+            }.issubset(search_service.SEARCH_TYPES)
+        )
 
 
 if __name__ == "__main__":

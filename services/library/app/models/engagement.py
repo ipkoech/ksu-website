@@ -203,3 +203,271 @@ class LibraryRegulation(Base):
     library: Mapped[Optional["Library"]] = relationship(
         "Library", back_populates="regulation_entries"
     )
+
+
+class LibrarySpecialist(Base):
+    """Subject/support specialist attached to a branch staff profile."""
+
+    __tablename__ = "library_specialists"
+    __table_args__ = (
+        sa.Index(
+            "ix_library_specialists_library_public_active_sort",
+            "library_id",
+            "is_public",
+            "is_active",
+            "sort_order",
+        ),
+        {"schema": "library"},
+    )
+
+    library_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        PGUUID(as_uuid=True),
+        sa.ForeignKey("library.libraries.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    staff_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        PGUUID(as_uuid=True),
+        sa.ForeignKey("library.library_staff.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    subjects: Mapped[Optional[list[str]]] = mapped_column(sa.JSON, nullable=True)
+    schools: Mapped[Optional[list[str]]] = mapped_column(sa.JSON, nullable=True)
+    departments: Mapped[Optional[list[str]]] = mapped_column(sa.JSON, nullable=True)
+    support_areas: Mapped[Optional[list[str]]] = mapped_column(sa.JSON, nullable=True)
+    booking_url: Mapped[Optional[str]] = mapped_column(sa.String(500), nullable=True)
+    is_public: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=True)
+    is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=True)
+    sort_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0)
+
+
+class LibraryGuide(Base):
+    """Public research, subject, course, and database guide."""
+
+    __tablename__ = "library_guides"
+    __table_args__ = (
+        sa.UniqueConstraint("slug", name="uq_library_guides_slug"),
+        sa.Index(
+            "ix_library_guides_library_public_active_type_sort",
+            "library_id",
+            "is_public",
+            "is_active",
+            "guide_type",
+            "sort_order",
+        ),
+        {"schema": "library"},
+    )
+
+    library_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        PGUUID(as_uuid=True),
+        sa.ForeignKey("library.libraries.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    title: Mapped[str] = mapped_column(sa.String(255), nullable=False)
+    slug: Mapped[str] = mapped_column(sa.String(160), nullable=False, index=True)
+    summary: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    guide_type: Mapped[str] = mapped_column(
+        sa.String(32), nullable=False, default="subject", index=True
+    )
+    subject: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    course_code: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True)
+    audience: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
+    school_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        PGUUID(as_uuid=True), nullable=True
+    )
+    department_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        PGUUID(as_uuid=True), nullable=True
+    )
+    owner_staff_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        PGUUID(as_uuid=True),
+        sa.ForeignKey("library.library_staff.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    is_public: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=True)
+    is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=True)
+    sort_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0)
+
+    sections: Mapped[list["LibraryGuideSection"]] = relationship(
+        "LibraryGuideSection", back_populates="guide", cascade="all, delete-orphan"
+    )
+    specialists: Mapped[list["LibraryGuideSpecialist"]] = relationship(
+        "LibraryGuideSpecialist", back_populates="guide", cascade="all, delete-orphan"
+    )
+
+
+class LibraryGuideSection(Base):
+    """Ordered guide content section."""
+
+    __tablename__ = "library_guide_sections"
+    __table_args__ = (
+        sa.Index(
+            "ix_library_guide_sections_guide_active_sort",
+            "guide_id",
+            "is_active",
+            "sort_order",
+        ),
+        {"schema": "library"},
+    )
+
+    guide_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        sa.ForeignKey("library.library_guides.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    heading: Mapped[str] = mapped_column(sa.String(255), nullable=False)
+    content: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    section_type: Mapped[str] = mapped_column(
+        sa.String(32), nullable=False, default="text"
+    )
+    resource_links: Mapped[Optional[list[dict]]] = mapped_column(sa.JSON, nullable=True)
+    file_ids: Mapped[Optional[list[str]]] = mapped_column(sa.JSON, nullable=True)
+    sort_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0)
+    is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=True)
+
+    guide: Mapped[LibraryGuide] = relationship("LibraryGuide", back_populates="sections")
+
+
+class LibraryGuideSpecialist(Base):
+    """Many-to-many link between guides and specialists."""
+
+    __tablename__ = "library_guide_specialists"
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "guide_id",
+            "specialist_id",
+            name="uq_library_guide_specialists_guide_specialist",
+        ),
+        {"schema": "library"},
+    )
+
+    guide_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        sa.ForeignKey("library.library_guides.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    specialist_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        sa.ForeignKey("library.library_specialists.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    guide: Mapped[LibraryGuide] = relationship("LibraryGuide", back_populates="specialists")
+    specialist: Mapped[LibrarySpecialist] = relationship("LibrarySpecialist")
+
+
+class LibraryWorkflow(Base):
+    """Public library workflow such as clearance, borrowing, or repository deposit."""
+
+    __tablename__ = "library_workflows"
+    __table_args__ = (
+        sa.UniqueConstraint("slug", name="uq_library_workflows_slug"),
+        sa.Index(
+            "ix_library_workflows_library_public_active_type_sort",
+            "library_id",
+            "is_public",
+            "is_active",
+            "workflow_type",
+            "sort_order",
+        ),
+        {"schema": "library"},
+    )
+
+    library_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        PGUUID(as_uuid=True),
+        sa.ForeignKey("library.libraries.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    workflow_type: Mapped[str] = mapped_column(
+        sa.String(32), nullable=False, default="other", index=True
+    )
+    title: Mapped[str] = mapped_column(sa.String(255), nullable=False)
+    slug: Mapped[str] = mapped_column(sa.String(160), nullable=False, index=True)
+    summary: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    audience: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
+    is_public: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=True)
+    is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=True)
+    sort_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0)
+
+    steps: Mapped[list["LibraryWorkflowStep"]] = relationship(
+        "LibraryWorkflowStep", back_populates="workflow", cascade="all, delete-orphan"
+    )
+
+
+class LibraryWorkflowStep(Base):
+    """Ordered step in a public library workflow."""
+
+    __tablename__ = "library_workflow_steps"
+    __table_args__ = (
+        sa.Index(
+            "ix_library_workflow_steps_workflow_active_sort",
+            "workflow_id",
+            "is_active",
+            "sort_order",
+        ),
+        {"schema": "library"},
+    )
+
+    workflow_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        sa.ForeignKey("library.library_workflows.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    title: Mapped[str] = mapped_column(sa.String(255), nullable=False)
+    instructions: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    link_url: Mapped[Optional[str]] = mapped_column(sa.String(500), nullable=True)
+    file_id: Mapped[Optional[uuid.UUID]] = mapped_column(PGUUID(as_uuid=True), nullable=True)
+    sort_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0)
+    is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=True)
+
+    workflow: Mapped[LibraryWorkflow] = relationship(
+        "LibraryWorkflow", back_populates="steps"
+    )
+
+
+class LibraryPolicyPage(Base):
+    """Public policy page with optional source regulation or file attachment."""
+
+    __tablename__ = "library_policy_pages"
+    __table_args__ = (
+        sa.UniqueConstraint("slug", name="uq_library_policy_pages_slug"),
+        sa.Index(
+            "ix_library_policy_pages_library_public_status_type_sort",
+            "library_id",
+            "is_public",
+            "status",
+            "policy_type",
+            "sort_order",
+        ),
+        {"schema": "library"},
+    )
+
+    library_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        PGUUID(as_uuid=True),
+        sa.ForeignKey("library.libraries.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    policy_type: Mapped[str] = mapped_column(
+        sa.String(32), nullable=False, default="other", index=True
+    )
+    title: Mapped[str] = mapped_column(sa.String(255), nullable=False)
+    slug: Mapped[str] = mapped_column(sa.String(160), nullable=False, index=True)
+    content: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    related_regulation_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        PGUUID(as_uuid=True),
+        sa.ForeignKey("library.library_regulations.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    file_id: Mapped[Optional[uuid.UUID]] = mapped_column(PGUUID(as_uuid=True), nullable=True)
+    is_public: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=True)
+    status: Mapped[str] = mapped_column(
+        sa.String(32), nullable=False, default="active", index=True
+    )
+    sort_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0)

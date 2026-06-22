@@ -14,10 +14,14 @@ from ..models import (
     Library,
     LibraryExternalLink,
     LibraryFile,
+    LibraryGuide,
+    LibraryPolicyPage,
     LibraryRegulation,
     LibraryResource,
     LibraryService,
+    LibrarySpecialist,
     LibraryStaff,
+    LibraryWorkflow,
 )
 
 SEARCH_TYPES = {
@@ -29,6 +33,10 @@ SEARCH_TYPES = {
     "regulation",
     "service",
     "staff",
+    "guide",
+    "specialist",
+    "workflow",
+    "policy",
 }
 
 
@@ -297,10 +305,191 @@ async def unified_search(
                 "type": "regulation",
                 "title": row.title,
                 "description": _snippet(row.content, row.category),
-                "url": f"/services#regulation-{row.slug}",
+                "url": f"/services#regulation-{row.id}",
                 "library_id": str(row.library_id) if row.library_id else None,
                 "library_name": library_names.get(row.library_id) if row.library_id else None,
                 "metadata": {"category": row.category, "status": row.status},
+            }
+            for row in rows
+        )
+
+    if "guide" in selected:
+        statement = LibraryGuide.active_query().where(
+            LibraryGuide.is_public.is_(True),
+            LibraryGuide.is_active.is_(True),
+            sa.or_(
+                LibraryGuide.title.ilike(term),
+                LibraryGuide.summary.ilike(term),
+                LibraryGuide.subject.ilike(term),
+                LibraryGuide.course_code.ilike(term),
+                LibraryGuide.audience.ilike(term),
+            ),
+        )
+        if library_id:
+            statement = statement.where(LibraryGuide.library_id == library_id)
+        rows = (
+            await db.execute(
+                statement.order_by(LibraryGuide.sort_order, LibraryGuide.title).limit(
+                    per_type
+                )
+            )
+        ).scalars().all()
+        library_names.update(
+            await _library_names(db, [row.library_id for row in rows if row.library_id])
+        )
+        results.extend(
+            {
+                "id": str(row.id),
+                "type": "guide",
+                "title": row.title,
+                "description": _snippet(row.summary, row.subject, row.course_code),
+                "url": f"/guides/{row.slug}",
+                "library_id": str(row.library_id) if row.library_id else None,
+                "library_name": library_names.get(row.library_id) if row.library_id else None,
+                "metadata": {
+                    "guide_type": row.guide_type,
+                    "subject": row.subject,
+                    "course_code": row.course_code,
+                    "audience": row.audience,
+                },
+            }
+            for row in rows
+        )
+
+    if "specialist" in selected:
+        json_text = sa.cast(
+            sa.func.concat(
+                LibrarySpecialist.subjects,
+                " ",
+                LibrarySpecialist.schools,
+                " ",
+                LibrarySpecialist.departments,
+                " ",
+                LibrarySpecialist.support_areas,
+            ),
+            sa.String,
+        )
+        statement = LibrarySpecialist.active_query().where(
+            LibrarySpecialist.is_public.is_(True),
+            LibrarySpecialist.is_active.is_(True),
+            sa.or_(
+                LibrarySpecialist.booking_url.ilike(term),
+                json_text.ilike(term),
+            ),
+        )
+        if library_id:
+            statement = statement.where(LibrarySpecialist.library_id == library_id)
+        rows = (
+            await db.execute(
+                statement.order_by(
+                    LibrarySpecialist.sort_order, LibrarySpecialist.created_at
+                ).limit(per_type)
+            )
+        ).scalars().all()
+        library_names.update(
+            await _library_names(db, [row.library_id for row in rows if row.library_id])
+        )
+        results.extend(
+            {
+                "id": str(row.id),
+                "type": "specialist",
+                "title": _snippet(
+                    ", ".join(row.subjects or []),
+                    ", ".join(row.support_areas or []),
+                    "Library specialist",
+                ),
+                "description": _snippet(
+                    ", ".join(row.schools or []),
+                    ", ".join(row.departments or []),
+                    row.booking_url,
+                ),
+                "url": f"/specialists?specialist={row.id}",
+                "library_id": str(row.library_id) if row.library_id else None,
+                "library_name": library_names.get(row.library_id) if row.library_id else None,
+                "metadata": {
+                    "staff_id": str(row.staff_id) if row.staff_id else None,
+                    "subjects": row.subjects or [],
+                    "support_areas": row.support_areas or [],
+                },
+            }
+            for row in rows
+        )
+
+    if "workflow" in selected:
+        statement = LibraryWorkflow.active_query().where(
+            LibraryWorkflow.is_public.is_(True),
+            LibraryWorkflow.is_active.is_(True),
+            sa.or_(
+                LibraryWorkflow.title.ilike(term),
+                LibraryWorkflow.summary.ilike(term),
+                LibraryWorkflow.audience.ilike(term),
+                LibraryWorkflow.workflow_type.ilike(term),
+            ),
+        )
+        if library_id:
+            statement = statement.where(LibraryWorkflow.library_id == library_id)
+        rows = (
+            await db.execute(
+                statement.order_by(
+                    LibraryWorkflow.sort_order, LibraryWorkflow.title
+                ).limit(per_type)
+            )
+        ).scalars().all()
+        library_names.update(
+            await _library_names(db, [row.library_id for row in rows if row.library_id])
+        )
+        results.extend(
+            {
+                "id": str(row.id),
+                "type": "workflow",
+                "title": row.title,
+                "description": _snippet(row.summary, row.audience),
+                "url": f"/workflows/{row.slug}",
+                "library_id": str(row.library_id) if row.library_id else None,
+                "library_name": library_names.get(row.library_id) if row.library_id else None,
+                "metadata": {
+                    "workflow_type": row.workflow_type,
+                    "audience": row.audience,
+                },
+            }
+            for row in rows
+        )
+
+    if "policy" in selected:
+        statement = LibraryPolicyPage.active_query().where(
+            LibraryPolicyPage.is_public.is_(True),
+            LibraryPolicyPage.status == "active",
+            sa.or_(
+                LibraryPolicyPage.title.ilike(term),
+                LibraryPolicyPage.content.ilike(term),
+                LibraryPolicyPage.policy_type.ilike(term),
+            ),
+        )
+        if library_id:
+            statement = statement.where(LibraryPolicyPage.library_id == library_id)
+        rows = (
+            await db.execute(
+                statement.order_by(
+                    LibraryPolicyPage.sort_order, LibraryPolicyPage.title
+                ).limit(per_type)
+            )
+        ).scalars().all()
+        library_names.update(
+            await _library_names(db, [row.library_id for row in rows if row.library_id])
+        )
+        results.extend(
+            {
+                "id": str(row.id),
+                "type": "policy",
+                "title": row.title,
+                "description": _snippet(row.content, row.policy_type),
+                "url": f"/policies/{row.slug}",
+                "library_id": str(row.library_id) if row.library_id else None,
+                "library_name": library_names.get(row.library_id) if row.library_id else None,
+                "metadata": {
+                    "policy_type": row.policy_type,
+                    "status": row.status,
+                },
             }
             for row in rows
         )

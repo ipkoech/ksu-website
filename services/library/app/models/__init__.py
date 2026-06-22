@@ -14,8 +14,15 @@ from .staff import LibraryStaff
 from .electronic import ElectronicResource, ElectronicResourceGuide
 from .services import LibraryService, LibraryStatistics
 from .engagement import (
+    LibraryGuide,
+    LibraryGuideSection,
+    LibraryGuideSpecialist,
     LibraryInquiry,
+    LibraryPolicyPage,
     LibraryRegulation,
+    LibrarySpecialist,
+    LibraryWorkflow,
+    LibraryWorkflowStep,
     SavedPublication,
     SupportTicket,
 )
@@ -46,4 +53,11 @@ __all__ = [
     "SupportTicket",
     "SavedPublication",
     "LibraryRegulation",
+    "LibrarySpecialist",
+    "LibraryGuide",
+    "LibraryGuideSection",
+    "LibraryGuideSpecialist",
+    "LibraryWorkflow",
+    "LibraryWorkflowStep",
+    "LibraryPolicyPage",
 ]

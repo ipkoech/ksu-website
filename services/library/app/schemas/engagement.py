@@ -254,3 +254,254 @@ class LibraryRegulationOut(BaseModel):
     created_at: datetime
     updated_at: datetime
     deleted_at: Optional[datetime] = None
+
+
+# ── Library Guides, Specialists, Workflows, Policies ──────────────────────────
+
+
+class LibrarySpecialistBase(BaseModel):
+    library_id: Optional[uuid.UUID] = None
+    staff_id: Optional[uuid.UUID] = None
+    subjects: Optional[list[str]] = None
+    schools: Optional[list[str]] = None
+    departments: Optional[list[str]] = None
+    support_areas: Optional[list[str]] = None
+    booking_url: Optional[str] = None
+    is_public: bool = True
+    is_active: bool = True
+    sort_order: int = 0
+
+
+class LibrarySpecialistCreate(LibrarySpecialistBase):
+    pass
+
+
+class LibrarySpecialistUpdate(BaseModel):
+    library_id: Optional[uuid.UUID] = None
+    staff_id: Optional[uuid.UUID] = None
+    subjects: Optional[list[str]] = None
+    schools: Optional[list[str]] = None
+    departments: Optional[list[str]] = None
+    support_areas: Optional[list[str]] = None
+    booking_url: Optional[str] = None
+    is_public: Optional[bool] = None
+    is_active: Optional[bool] = None
+    sort_order: Optional[int] = None
+
+
+class LibrarySpecialistOut(LibrarySpecialistBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    deleted_at: Optional[datetime] = None
+
+
+class LibraryGuideSectionBase(BaseModel):
+    heading: str
+    content: Optional[str] = None
+    section_type: str = "text"
+    resource_links: Optional[list[dict]] = None
+    file_ids: Optional[list[str]] = None
+    sort_order: int = 0
+    is_active: bool = True
+
+
+class LibraryGuideSectionCreate(LibraryGuideSectionBase):
+    pass
+
+
+class LibraryGuideSectionOut(LibraryGuideSectionBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    guide_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    deleted_at: Optional[datetime] = None
+
+
+class LibraryGuideBase(BaseModel):
+    library_id: Optional[uuid.UUID] = None
+    title: str
+    slug: str
+    summary: Optional[str] = None
+    guide_type: str = "subject"
+    subject: Optional[str] = None
+    course_code: Optional[str] = None
+    audience: Optional[str] = None
+    school_id: Optional[uuid.UUID] = None
+    department_id: Optional[uuid.UUID] = None
+    owner_staff_id: Optional[uuid.UUID] = None
+    is_public: bool = True
+    is_active: bool = True
+    sort_order: int = 0
+
+    @field_validator("guide_type")
+    @classmethod
+    def validate_guide_type(cls, v: str) -> str:
+        allowed = {"subject", "course", "database", "research", "other"}
+        if v not in allowed:
+            raise ValueError(f"guide_type must be one of {allowed}")
+        return v
+
+
+class LibraryGuideCreate(LibraryGuideBase):
+    sections: Optional[list[LibraryGuideSectionCreate]] = None
+    specialist_ids: Optional[list[uuid.UUID]] = None
+
+
+class LibraryGuideUpdate(BaseModel):
+    library_id: Optional[uuid.UUID] = None
+    title: Optional[str] = None
+    slug: Optional[str] = None
+    summary: Optional[str] = None
+    guide_type: Optional[str] = None
+    subject: Optional[str] = None
+    course_code: Optional[str] = None
+    audience: Optional[str] = None
+    school_id: Optional[uuid.UUID] = None
+    department_id: Optional[uuid.UUID] = None
+    owner_staff_id: Optional[uuid.UUID] = None
+    is_public: Optional[bool] = None
+    is_active: Optional[bool] = None
+    sort_order: Optional[int] = None
+    sections: Optional[list[LibraryGuideSectionCreate]] = None
+    specialist_ids: Optional[list[uuid.UUID]] = None
+
+
+class LibraryGuideOut(LibraryGuideBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    sections: list[LibraryGuideSectionOut] = []
+    specialists: list[LibrarySpecialistOut] = []
+    created_at: datetime
+    updated_at: datetime
+    deleted_at: Optional[datetime] = None
+
+
+class LibraryWorkflowStepBase(BaseModel):
+    title: str
+    instructions: Optional[str] = None
+    link_url: Optional[str] = None
+    file_id: Optional[uuid.UUID] = None
+    sort_order: int = 0
+    is_active: bool = True
+
+
+class LibraryWorkflowStepCreate(LibraryWorkflowStepBase):
+    pass
+
+
+class LibraryWorkflowStepOut(LibraryWorkflowStepBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    workflow_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    deleted_at: Optional[datetime] = None
+
+
+class LibraryWorkflowBase(BaseModel):
+    library_id: Optional[uuid.UUID] = None
+    workflow_type: str = "other"
+    title: str
+    slug: str
+    summary: Optional[str] = None
+    audience: Optional[str] = None
+    is_public: bool = True
+    is_active: bool = True
+    sort_order: int = 0
+
+    @field_validator("workflow_type")
+    @classmethod
+    def validate_workflow_type(cls, v: str) -> str:
+        allowed = {"borrowing", "clearance", "research", "repository", "other"}
+        if v not in allowed:
+            raise ValueError(f"workflow_type must be one of {allowed}")
+        return v
+
+
+class LibraryWorkflowCreate(LibraryWorkflowBase):
+    steps: Optional[list[LibraryWorkflowStepCreate]] = None
+
+
+class LibraryWorkflowUpdate(BaseModel):
+    library_id: Optional[uuid.UUID] = None
+    workflow_type: Optional[str] = None
+    title: Optional[str] = None
+    slug: Optional[str] = None
+    summary: Optional[str] = None
+    audience: Optional[str] = None
+    is_public: Optional[bool] = None
+    is_active: Optional[bool] = None
+    sort_order: Optional[int] = None
+    steps: Optional[list[LibraryWorkflowStepCreate]] = None
+
+
+class LibraryWorkflowOut(LibraryWorkflowBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    steps: list[LibraryWorkflowStepOut] = []
+    created_at: datetime
+    updated_at: datetime
+    deleted_at: Optional[datetime] = None
+
+
+class LibraryPolicyPageBase(BaseModel):
+    library_id: Optional[uuid.UUID] = None
+    policy_type: str = "other"
+    title: str
+    slug: str
+    content: Optional[str] = None
+    related_regulation_id: Optional[uuid.UUID] = None
+    file_id: Optional[uuid.UUID] = None
+    is_public: bool = True
+    status: str = "active"
+    sort_order: int = 0
+
+    @field_validator("policy_type")
+    @classmethod
+    def validate_policy_type(cls, v: str) -> str:
+        allowed = {"borrowing", "access", "clearance", "repository", "other"}
+        if v not in allowed:
+            raise ValueError(f"policy_type must be one of {allowed}")
+        return v
+
+    @field_validator("status")
+    @classmethod
+    def validate_policy_status(cls, v: str) -> str:
+        allowed = {"draft", "active", "archived"}
+        if v not in allowed:
+            raise ValueError(f"status must be one of {allowed}")
+        return v
+
+
+class LibraryPolicyPageCreate(LibraryPolicyPageBase):
+    pass
+
+
+class LibraryPolicyPageUpdate(BaseModel):
+    library_id: Optional[uuid.UUID] = None
+    policy_type: Optional[str] = None
+    title: Optional[str] = None
+    slug: Optional[str] = None
+    content: Optional[str] = None
+    related_regulation_id: Optional[uuid.UUID] = None
+    file_id: Optional[uuid.UUID] = None
+    is_public: Optional[bool] = None
+    status: Optional[str] = None
+    sort_order: Optional[int] = None
+
+
+class LibraryPolicyPageOut(LibraryPolicyPageBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    deleted_at: Optional[datetime] = None

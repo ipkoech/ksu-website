@@ -15,20 +15,40 @@ from ksu_common.pagination import PaginatedResult, paginate
 from ..models import (
     ElectronicResource,
     Library,
+    LibraryGuide,
+    LibraryGuideSection,
+    LibraryGuideSpecialist,
     LibraryInquiry,
     LibraryLoan,
+    LibraryPolicyPage,
     LibraryRegulation,
     LibraryResource,
+    LibrarySpecialist,
+    LibraryWorkflow,
+    LibraryWorkflowStep,
     SupportTicket,
 )
 from ..schemas import (
+    LibraryGuideCreate,
+    LibraryGuideOut,
+    LibraryGuideSectionOut,
+    LibraryGuideUpdate,
     LibraryInquiryCreate,
     LibraryInquiryOut,
     LibraryInquiryReply,
     LibraryInquiryUpdate,
+    LibraryPolicyPageCreate,
+    LibraryPolicyPageOut,
+    LibraryPolicyPageUpdate,
     LibraryRegulationCreate,
     LibraryRegulationOut,
     LibraryRegulationUpdate,
+    LibrarySpecialistCreate,
+    LibrarySpecialistOut,
+    LibrarySpecialistUpdate,
+    LibraryWorkflowCreate,
+    LibraryWorkflowOut,
+    LibraryWorkflowUpdate,
     SupportTicketCreate,
     SupportTicketOut,
     SupportTicketTargetSummary,
@@ -36,6 +56,69 @@ from ..schemas import (
 )
 
 _INQUIRY_DETAIL_OPTIONS = (selectinload(LibraryInquiry.library),)
+_GUIDE_DETAIL_OPTIONS = (
+    selectinload(LibraryGuide.sections),
+    selectinload(LibraryGuide.specialists).selectinload(
+        LibraryGuideSpecialist.specialist
+    ),
+)
+_WORKFLOW_DETAIL_OPTIONS = (selectinload(LibraryWorkflow.steps),)
+
+
+def _public_library_parent_filter(model):
+    return sa.or_(
+        model.library_id.is_(None),
+        sa.select(Library.id)
+        .where(
+            Library.id == model.library_id,
+            Library.is_active.is_(True),
+            Library.is_public.is_(True),
+            Library.deleted_at.is_(None),
+        )
+        .exists(),
+    )
+
+
+def _guide_out(guide: LibraryGuide) -> LibraryGuideOut:
+    data = {
+        "id": guide.id,
+        "library_id": guide.library_id,
+        "title": guide.title,
+        "slug": guide.slug,
+        "summary": guide.summary,
+        "guide_type": guide.guide_type,
+        "subject": guide.subject,
+        "course_code": guide.course_code,
+        "audience": guide.audience,
+        "school_id": guide.school_id,
+        "department_id": guide.department_id,
+        "owner_staff_id": guide.owner_staff_id,
+        "is_public": guide.is_public,
+        "is_active": guide.is_active,
+        "sort_order": guide.sort_order,
+        "sections": [
+            LibraryGuideSectionOut.model_validate(section).model_dump()
+            for section in guide.sections
+            if section.deleted_at is None
+        ],
+        "specialists": [
+        LibrarySpecialistOut.model_validate(link.specialist).model_dump()
+        for link in guide.specialists
+        if link.specialist is not None and link.specialist.deleted_at is None
+        ],
+        "created_at": guide.created_at,
+        "updated_at": guide.updated_at,
+        "deleted_at": guide.deleted_at,
+    }
+    return LibraryGuideOut.model_validate(data)
+
+
+def _workflow_out(workflow: LibraryWorkflow) -> LibraryWorkflowOut:
+    data = LibraryWorkflowOut.model_validate(workflow).model_dump()
+    data["steps"] = [
+        step for step in data.get("steps", []) if step.get("deleted_at") is None
+    ]
+    return LibraryWorkflowOut.model_validate(data)
 
 
 def _join_summary(parts: list[object | None]) -> str | None:
@@ -433,4 +516,391 @@ async def delete_regulation(db: AsyncSession, regulation_id: uuid.UUID) -> None:
     """Soft-delete a library regulation."""
     regulation = await get_regulation(db, regulation_id)
     regulation.soft_delete()
+    await db.commit()
+
+
+# ── LibrarySpecialist ─────────────────────────────────────────────────────────
+
+
+async def list_specialists(
+    db: AsyncSession,
+    *,
+    library_id: uuid.UUID | None = None,
+    subject: str | None = None,
+    school: str | None = None,
+    department: str | None = None,
+    page: int = 1,
+    per_page: int = 20,
+    include_total: bool = True,
+    public_only: bool = False,
+) -> PaginatedResult:
+    query = LibrarySpecialist.active_query().order_by(
+        LibrarySpecialist.sort_order, LibrarySpecialist.created_at
+    )
+    if public_only:
+        query = query.where(
+            LibrarySpecialist.is_public.is_(True),
+            LibrarySpecialist.is_active.is_(True),
+            _public_library_parent_filter(LibrarySpecialist),
+        )
+    if library_id is not None:
+        query = query.where(LibrarySpecialist.library_id == library_id)
+    if subject:
+        query = query.where(LibrarySpecialist.subjects.contains([subject]))
+    if school:
+        query = query.where(LibrarySpecialist.schools.contains([school]))
+    if department:
+        query = query.where(LibrarySpecialist.departments.contains([department]))
+    result = await paginate(
+        db, query, page=page, per_page=per_page, include_total=include_total
+    )
+    result.items = [LibrarySpecialistOut.model_validate(item) for item in result.items]
+    return result
+
+
+async def get_specialist(db: AsyncSession, specialist_id: uuid.UUID) -> LibrarySpecialist:
+    return await LibrarySpecialist.get_or_raise(
+        db, specialist_id, error_message="Library specialist not found"
+    )
+
+
+async def create_specialist(
+    db: AsyncSession, data: LibrarySpecialistCreate
+) -> LibrarySpecialistOut:
+    specialist = LibrarySpecialist(**data.model_dump())
+    db.add(specialist)
+    await db.commit()
+    await db.refresh(specialist)
+    return LibrarySpecialistOut.model_validate(specialist)
+
+
+async def update_specialist(
+    db: AsyncSession, specialist_id: uuid.UUID, data: LibrarySpecialistUpdate
+) -> LibrarySpecialistOut:
+    specialist = await get_specialist(db, specialist_id)
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(specialist, field, value)
+    await db.commit()
+    await db.refresh(specialist)
+    return LibrarySpecialistOut.model_validate(specialist)
+
+
+async def delete_specialist(db: AsyncSession, specialist_id: uuid.UUID) -> None:
+    specialist = await get_specialist(db, specialist_id)
+    specialist.soft_delete()
+    await db.commit()
+
+
+# ── LibraryGuide ──────────────────────────────────────────────────────────────
+
+
+def _guide_query(*, public_only: bool = False):
+    query = LibraryGuide.active_query().options(*_GUIDE_DETAIL_OPTIONS)
+    if public_only:
+        query = query.where(
+            LibraryGuide.is_public.is_(True),
+            LibraryGuide.is_active.is_(True),
+            _public_library_parent_filter(LibraryGuide),
+        )
+    return query
+
+
+async def _replace_guide_children(
+    db: AsyncSession,
+    guide: LibraryGuide,
+    data: LibraryGuideCreate | LibraryGuideUpdate,
+) -> None:
+    updates = data.model_dump(exclude_unset=True)
+    if "sections" in updates:
+        await db.execute(
+            sa.delete(LibraryGuideSection).where(LibraryGuideSection.guide_id == guide.id)
+        )
+        for section in data.sections or []:
+            db.add(LibraryGuideSection(guide_id=guide.id, **section.model_dump()))
+    if "specialist_ids" in updates:
+        await db.execute(
+            sa.delete(LibraryGuideSpecialist).where(
+                LibraryGuideSpecialist.guide_id == guide.id
+            )
+        )
+        for specialist_id in data.specialist_ids or []:
+            db.add(
+                LibraryGuideSpecialist(
+                    guide_id=guide.id,
+                    specialist_id=specialist_id,
+                )
+            )
+
+
+async def list_guides(
+    db: AsyncSession,
+    *,
+    library_id: uuid.UUID | None = None,
+    guide_type: str | None = None,
+    subject: str | None = None,
+    course_code: str | None = None,
+    audience: str | None = None,
+    page: int = 1,
+    per_page: int = 20,
+    include_total: bool = True,
+    public_only: bool = False,
+) -> PaginatedResult:
+    query = _guide_query(public_only=public_only).order_by(
+        LibraryGuide.sort_order, LibraryGuide.title
+    )
+    if library_id is not None:
+        query = query.where(LibraryGuide.library_id == library_id)
+    if guide_type:
+        query = query.where(LibraryGuide.guide_type == guide_type)
+    if subject:
+        query = query.where(LibraryGuide.subject == subject)
+    if course_code:
+        query = query.where(LibraryGuide.course_code == course_code)
+    if audience:
+        query = query.where(LibraryGuide.audience == audience)
+    result = await paginate(
+        db, query, page=page, per_page=per_page, include_total=include_total
+    )
+    result.items = [_guide_out(item) for item in result.items]
+    return result
+
+
+async def get_guide(db: AsyncSession, guide_id: uuid.UUID) -> LibraryGuide:
+    result = await db.execute(_guide_query().where(LibraryGuide.id == guide_id))
+    guide = result.scalar_one_or_none()
+    if guide is None:
+        raise ValueError("Library guide not found")
+    return guide
+
+
+async def get_guide_by_slug(
+    db: AsyncSession, slug: str, *, public_only: bool = False
+) -> LibraryGuide:
+    result = await db.execute(
+        _guide_query(public_only=public_only).where(LibraryGuide.slug == slug)
+    )
+    guide = result.scalar_one_or_none()
+    if guide is None:
+        raise ValueError("Library guide not found")
+    return guide
+
+
+async def create_guide(db: AsyncSession, data: LibraryGuideCreate) -> LibraryGuideOut:
+    payload = data.model_dump(exclude={"sections", "specialist_ids"})
+    guide = LibraryGuide(**payload)
+    db.add(guide)
+    await db.flush()
+    await _replace_guide_children(db, guide, data)
+    await db.commit()
+    return _guide_out(await get_guide(db, guide.id))
+
+
+async def update_guide(
+    db: AsyncSession, guide_id: uuid.UUID, data: LibraryGuideUpdate
+) -> LibraryGuideOut:
+    guide = await get_guide(db, guide_id)
+    for field, value in data.model_dump(
+        exclude_unset=True, exclude={"sections", "specialist_ids"}
+    ).items():
+        setattr(guide, field, value)
+    await _replace_guide_children(db, guide, data)
+    await db.commit()
+    return _guide_out(await get_guide(db, guide.id))
+
+
+async def delete_guide(db: AsyncSession, guide_id: uuid.UUID) -> None:
+    guide = await get_guide(db, guide_id)
+    guide.soft_delete()
+    await db.commit()
+
+
+# ── LibraryWorkflow ───────────────────────────────────────────────────────────
+
+
+def _workflow_query(*, public_only: bool = False):
+    query = LibraryWorkflow.active_query().options(*_WORKFLOW_DETAIL_OPTIONS)
+    if public_only:
+        query = query.where(
+            LibraryWorkflow.is_public.is_(True),
+            LibraryWorkflow.is_active.is_(True),
+            _public_library_parent_filter(LibraryWorkflow),
+        )
+    return query
+
+
+async def _replace_workflow_steps(
+    db: AsyncSession,
+    workflow: LibraryWorkflow,
+    data: LibraryWorkflowCreate | LibraryWorkflowUpdate,
+) -> None:
+    if "steps" not in data.model_fields_set:
+        return
+    await db.execute(
+        sa.delete(LibraryWorkflowStep).where(
+            LibraryWorkflowStep.workflow_id == workflow.id
+        )
+    )
+    for step in data.steps or []:
+        db.add(LibraryWorkflowStep(workflow_id=workflow.id, **step.model_dump()))
+
+
+async def list_workflows(
+    db: AsyncSession,
+    *,
+    library_id: uuid.UUID | None = None,
+    workflow_type: str | None = None,
+    page: int = 1,
+    per_page: int = 20,
+    include_total: bool = True,
+    public_only: bool = False,
+) -> PaginatedResult:
+    query = _workflow_query(public_only=public_only).order_by(
+        LibraryWorkflow.sort_order, LibraryWorkflow.title
+    )
+    if library_id is not None:
+        query = query.where(LibraryWorkflow.library_id == library_id)
+    if workflow_type:
+        query = query.where(LibraryWorkflow.workflow_type == workflow_type)
+    result = await paginate(
+        db, query, page=page, per_page=per_page, include_total=include_total
+    )
+    result.items = [_workflow_out(item) for item in result.items]
+    return result
+
+
+async def get_workflow(db: AsyncSession, workflow_id: uuid.UUID) -> LibraryWorkflow:
+    result = await db.execute(
+        _workflow_query().where(LibraryWorkflow.id == workflow_id)
+    )
+    workflow = result.scalar_one_or_none()
+    if workflow is None:
+        raise ValueError("Library workflow not found")
+    return workflow
+
+
+async def get_workflow_by_slug(
+    db: AsyncSession, slug: str, *, public_only: bool = False
+) -> LibraryWorkflow:
+    result = await db.execute(
+        _workflow_query(public_only=public_only).where(LibraryWorkflow.slug == slug)
+    )
+    workflow = result.scalar_one_or_none()
+    if workflow is None:
+        raise ValueError("Library workflow not found")
+    return workflow
+
+
+async def create_workflow(
+    db: AsyncSession, data: LibraryWorkflowCreate
+) -> LibraryWorkflowOut:
+    payload = data.model_dump(exclude={"steps"})
+    workflow = LibraryWorkflow(**payload)
+    db.add(workflow)
+    await db.flush()
+    await _replace_workflow_steps(db, workflow, data)
+    await db.commit()
+    return _workflow_out(await get_workflow(db, workflow.id))
+
+
+async def update_workflow(
+    db: AsyncSession, workflow_id: uuid.UUID, data: LibraryWorkflowUpdate
+) -> LibraryWorkflowOut:
+    workflow = await get_workflow(db, workflow_id)
+    for field, value in data.model_dump(exclude_unset=True, exclude={"steps"}).items():
+        setattr(workflow, field, value)
+    await _replace_workflow_steps(db, workflow, data)
+    await db.commit()
+    return _workflow_out(await get_workflow(db, workflow.id))
+
+
+async def delete_workflow(db: AsyncSession, workflow_id: uuid.UUID) -> None:
+    workflow = await get_workflow(db, workflow_id)
+    workflow.soft_delete()
+    await db.commit()
+
+
+# ── LibraryPolicyPage ─────────────────────────────────────────────────────────
+
+
+def _policy_query(*, public_only: bool = False):
+    query = LibraryPolicyPage.active_query()
+    if public_only:
+        query = query.where(
+            LibraryPolicyPage.is_public.is_(True),
+            LibraryPolicyPage.status == "active",
+            _public_library_parent_filter(LibraryPolicyPage),
+        )
+    return query
+
+
+async def list_policies(
+    db: AsyncSession,
+    *,
+    library_id: uuid.UUID | None = None,
+    policy_type: str | None = None,
+    status: str | None = None,
+    page: int = 1,
+    per_page: int = 20,
+    include_total: bool = True,
+    public_only: bool = False,
+) -> PaginatedResult:
+    query = _policy_query(public_only=public_only).order_by(
+        LibraryPolicyPage.sort_order, LibraryPolicyPage.title
+    )
+    if library_id is not None:
+        query = query.where(LibraryPolicyPage.library_id == library_id)
+    if policy_type:
+        query = query.where(LibraryPolicyPage.policy_type == policy_type)
+    if status is not None and not public_only:
+        query = query.where(LibraryPolicyPage.status == status)
+    result = await paginate(
+        db, query, page=page, per_page=per_page, include_total=include_total
+    )
+    result.items = [LibraryPolicyPageOut.model_validate(item) for item in result.items]
+    return result
+
+
+async def get_policy(db: AsyncSession, policy_id: uuid.UUID) -> LibraryPolicyPage:
+    policy = await LibraryPolicyPage.get_or_raise(
+        db, policy_id, error_message="Library policy not found"
+    )
+    return policy
+
+
+async def get_policy_by_slug(
+    db: AsyncSession, slug: str, *, public_only: bool = False
+) -> LibraryPolicyPage:
+    result = await db.execute(
+        _policy_query(public_only=public_only).where(LibraryPolicyPage.slug == slug)
+    )
+    policy = result.scalar_one_or_none()
+    if policy is None:
+        raise ValueError("Library policy not found")
+    return policy
+
+
+async def create_policy(
+    db: AsyncSession, data: LibraryPolicyPageCreate
+) -> LibraryPolicyPageOut:
+    policy = LibraryPolicyPage(**data.model_dump())
+    db.add(policy)
+    await db.commit()
+    await db.refresh(policy)
+    return LibraryPolicyPageOut.model_validate(policy)
+
+
+async def update_policy(
+    db: AsyncSession, policy_id: uuid.UUID, data: LibraryPolicyPageUpdate
+) -> LibraryPolicyPageOut:
+    policy = await get_policy(db, policy_id)
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(policy, field, value)
+    await db.commit()
+    await db.refresh(policy)
+    return LibraryPolicyPageOut.model_validate(policy)
+
+
+async def delete_policy(db: AsyncSession, policy_id: uuid.UUID) -> None:
+    policy = await get_policy(db, policy_id)
+    policy.soft_delete()
     await db.commit()
