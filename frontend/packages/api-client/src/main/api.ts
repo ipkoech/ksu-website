@@ -217,9 +217,22 @@ export const personsApi = {
       school_id?: string;
       academic_rank?: string;
       employment_type?: string;
+      is_researcher?: boolean;
       status?: PersonStatusFilter;
     }>,
   ) => mainApi.get<PaginatedResponse<Person>>("/api/v1/persons", params),
+
+  listAdmin: (
+    params?: ListParams<{
+      search?: string;
+      department_id?: string;
+      school_id?: string;
+      academic_rank?: string;
+      employment_type?: string;
+      is_researcher?: boolean;
+      status?: PersonStatusFilter;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Person>>("/api/v1/persons/admin", params),
 
   get: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Person }>(`/api/v1/persons/${id}`, params),

@@ -94,6 +94,7 @@ class PersonService:
         school_id: uuid.UUID | None = None,
         academic_rank: str | None = None,
         employment_type: str | None = None,
+        is_researcher: bool | None = None,
         status: str = "active",
         load_options: Sequence = (),
     ) -> PaginatedResult:
@@ -135,6 +136,8 @@ class PersonService:
             query = query.where(Person.academic_rank == academic_rank)
         if employment_type:
             query = query.where(Person.employment_type == employment_type)
+        if is_researcher is not None:
+            query = query.where(Person.is_researcher.is_(is_researcher))
         return await paginate_query(db, query, page=page, per_page=per_page)
 
     @staticmethod

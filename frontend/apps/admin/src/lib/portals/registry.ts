@@ -3093,11 +3093,11 @@ const publicationResources: Record<string, PortalResourceConfig<any, any>> = {
       { name: "is_researcher", label: "Researcher", type: "boolean" },
     ],
     list: (filters) =>
-      personsApi.list({
+      personsApi.listAdmin({
         ...pageParams,
         is_researcher: true,
         ...filters,
-      } as any),
+      }),
     create: (payload) => personsApi.create(payload as any),
     update: (id, payload) => personsApi.update(id, payload as any),
     delete: (id) => personsApi.delete(id),
