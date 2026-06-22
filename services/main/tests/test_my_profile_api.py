@@ -126,6 +126,62 @@ class MyProfileApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(["AI", "Education"], person.research_interests)
         self.assertEqual("EMP001", person.employee_number)
 
+    async def test_update_my_profile_rejects_unowned_profile_photo(self):
+        person = _person()
+        user = SimpleNamespace(id=person.user_id)
+        media_id = uuid.uuid4()
+        payload = MyProfileUpdate(photo_id=media_id)
+
+        with (
+            patch.object(me.PersonService, "get_by_user_id", return_value=person),
+            patch.object(me.MediaService, "get_authorized_by_id", return_value=None),
+            patch.object(me.PersonService, "update") as update_person,
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await me.update_my_profile(payload, _FakeDb(), user)
+
+        self.assertEqual(400, context.exception.status_code)
+        self.assertEqual("Choose a profile photo uploaded by your account.", context.exception.detail)
+        update_person.assert_not_called()
+
+    async def test_update_my_profile_rejects_non_image_profile_photo(self):
+        person = _person()
+        user = SimpleNamespace(id=person.user_id)
+        media_id = uuid.uuid4()
+        payload = MyProfileUpdate(photo_id=media_id)
+        media = SimpleNamespace(id=media_id, uploaded_by_id=user.id, media_type="document")
+
+        with (
+            patch.object(me.PersonService, "get_by_user_id", return_value=person),
+            patch.object(me.MediaService, "get_authorized_by_id", return_value=media),
+            patch.object(me.PersonService, "update") as update_person,
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await me.update_my_profile(payload, _FakeDb(), user)
+
+        self.assertEqual(400, context.exception.status_code)
+        self.assertEqual("Profile photo must be an image.", context.exception.detail)
+        update_person.assert_not_called()
+
+    async def test_update_my_profile_rejects_non_document_cv(self):
+        person = _person()
+        user = SimpleNamespace(id=person.user_id)
+        media_id = uuid.uuid4()
+        payload = MyProfileUpdate(cv_file_id=media_id)
+        media = SimpleNamespace(id=media_id, uploaded_by_id=user.id, media_type="image")
+
+        with (
+            patch.object(me.PersonService, "get_by_user_id", return_value=person),
+            patch.object(me.MediaService, "get_authorized_by_id", return_value=media),
+            patch.object(me.PersonService, "update") as update_person,
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await me.update_my_profile(payload, _FakeDb(), user)
+
+        self.assertEqual(400, context.exception.status_code)
+        self.assertEqual("CV file must be a document.", context.exception.detail)
+        update_person.assert_not_called()
+
     async def test_my_profile_requires_linked_person(self):
         user = SimpleNamespace(id=uuid.uuid4())
 
