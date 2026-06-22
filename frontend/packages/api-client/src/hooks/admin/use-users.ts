@@ -17,7 +17,7 @@ export const userKeys = {
 };
 
 const USERS_LIST_FIELDS = "id,email,full_name,is_active,last_login_at";
-const USERS_LIST_INCLUDE = "role_assignments(role(id,name,display_name))";
+const USERS_LIST_INCLUDE = "role_assignments(id,role_id,scope_type,scope_id,is_active,role(id,name,display_name),scope)";
 export function useUsers(params?: UserListParams, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: userKeys.list(params),
@@ -36,7 +36,7 @@ export function useUsers(params?: UserListParams, options?: { enabled?: boolean 
 }
 
 const USER_DETAIL_FIELDS = "id,email,phone,full_name,avatar_url,push_tokens,is_active,is_verified,mfa_enabled,last_login_at,failed_login_attempts,locked_until,email_verified_at,roles,person_id,created_at,updated_at";
-const USER_DETAIL_INCLUDE = "role_assignments(role(id,name,display_name,is_active))";
+const USER_DETAIL_INCLUDE = "role_assignments(id,role_id,scope_type,scope_id,expires_at,note,is_active,role(id,name,display_name,is_active),scope)";
 
 export function useUser(id: string, options?: { enabled?: boolean }) {
   return useQuery({

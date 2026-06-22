@@ -6,6 +6,8 @@ import { useAuth, usePermissions } from "@ksu/auth";
 import { Plus, Trash2 } from "lucide-react";
 import {
   ActivityFeed,
+  Alert,
+  AlertDescription,
   Badge,
   Button,
   Card,
@@ -17,6 +19,12 @@ import {
   Input,
   Label,
   PageHeader,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   StatusBadge,
 } from "@ksu/ui/components";
 import { useAuditLogs, useDeleteUser, useRoles, useUpdateUser, useUpdateUserRoles, useUser } from "@ksu/api-client/hooks/admin";
@@ -39,10 +47,33 @@ function roleAssignmentsToPayload(assignments: RoleAssignmentForm[]): UserRoleAs
     .map((assignment) => ({
       role_id: assignment.role_id,
       scope_type: assignment.scope_type || null,
-      scope_id: assignment.scope_id || null,
+      scope_id:
+        assignment.scope_type === "university" ||
+        assignment.scope_id === "__university__"
+          ? null
+          : assignment.scope_id || null,
       expires_at: assignment.expires_at || null,
       note: assignment.note || null,
     }));
+}
+
+function validateRoleAssignments(assignments: RoleAssignmentForm[]) {
+  for (const assignment of assignments) {
+    if (!assignment.role_id) continue;
+    if (
+      assignment.scope_type &&
+      assignment.scope_type !== "university" &&
+      !assignment.scope_id
+    ) {
+      return "Choose the scoped record for every scoped role assignment.";
+    }
+  }
+  return null;
+}
+
+function scopeSummary(assignment: RoleAssignmentForm, scope?: { name?: string | null; type?: string | null } | null) {
+  if (!assignment.scope_type) return "Global";
+  return scope?.name || assignment.scope_type.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 export default function UserDetailPage() {
@@ -68,6 +99,7 @@ export default function UserDetailPage() {
     is_active: false,
   });
   const [roleAssignmentsForm, setRoleAssignmentsForm] = React.useState<RoleAssignmentForm[]>([]);
+  const [roleError, setRoleError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!user.data) return;
@@ -101,6 +133,12 @@ export default function UserDetailPage() {
   }));
 
   const save = async () => {
+    const nextRoleError = validateRoleAssignments(roleAssignmentsForm);
+    if (nextRoleError) {
+      setRoleError(nextRoleError);
+      return;
+    }
+    setRoleError(null);
     await updateUser.mutateAsync({ id, data: localState });
     if (canAssignRoles) {
       await updateRoles.mutateAsync({ id, roles: roleAssignmentsToPayload(roleAssignmentsForm) });
@@ -115,6 +153,7 @@ export default function UserDetailPage() {
   };
 
   const updateRoleAssignment = (key: string, patch: Partial<RoleAssignmentForm>) => {
+    setRoleError(null);
     setRoleAssignmentsForm((current) =>
       current.map((assignment) => (assignment.key === key ? { ...assignment, ...patch } : assignment))
     );
@@ -181,6 +220,11 @@ export default function UserDetailPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
+              {roleError ? (
+                <Alert variant="destructive">
+                  <AlertDescription>{roleError}</AlertDescription>
+                </Alert>
+              ) : null}
               {roleAssignmentsForm.length === 0 ? (
                 <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
                   No roles are assigned to this user.
@@ -194,19 +238,24 @@ export default function UserDetailPage() {
                     <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
                       <div className="space-y-2">
                         <Label>Role</Label>
-                        <select
-                          className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                        <Select
                           disabled={!canAssignRoles}
                           value={assignment.role_id}
-                          onChange={(event) => updateRoleAssignment(assignment.key, { role_id: event.target.value })}
+                          onValueChange={(nextValue) => updateRoleAssignment(assignment.key, { role_id: nextValue })}
                         >
-                          <option value="">Select role</option>
-                          {(roles.data?.data ?? []).map((item) => (
-                            <option key={item.id} value={item.id}>
-                              {item.display_name ?? item.name}
-                            </option>
-                          ))}
-                        </select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select role" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              {(roles.data?.data ?? []).map((item) => (
+                                <SelectItem key={item.id} value={item.id}>
+                                  {item.display_name ?? item.name}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
                       </div>
                       <Button
                         type="button"
@@ -223,7 +272,7 @@ export default function UserDetailPage() {
 
                     <MainScopePicker
                       label="Scope"
-                      description="Limit the role to a school, department, programme, division, or intake when needed."
+                      description="Limit the role to a university, office, academic unit, intake, or library branch when needed."
                       typeValue={assignment.scope_type}
                       idValue={assignment.scope_id}
                       disabled={!canAssignRoles}
@@ -257,10 +306,11 @@ export default function UserDetailPage() {
               <div className="flex flex-wrap gap-2">
                 {roleAssignmentsForm.filter((assignment) => assignment.role_id).map((assignment) => {
                   const role = (roles.data?.data ?? []).find((item) => item.id === assignment.role_id);
+                  const persistedAssignment = user.data.role_assignments?.find((item) => item.id === assignment.key);
                   return (
                     <Badge key={`${assignment.key}-summary`} variant="outline">
                       {role?.display_name ?? role?.name ?? "Selected role"}
-                      {assignment.scope_type ? ` • ${assignment.scope_type}` : ""}
+                      {` • ${scopeSummary(assignment, persistedAssignment?.scope)}`}
                     </Badge>
                   );
                 })}

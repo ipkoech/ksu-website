@@ -123,11 +123,14 @@ export function MainScopePicker(props: Omit<EntityTypeRecordPickerProps, "config
     <EntityTypeRecordPicker
       {...props}
       configs={[
+        { value: "university", label: "University", adapter: staffEntityRelationshipAdapter as any, filters: { entity_type: "university" }, recordRequired: false },
+        { value: "division", label: "Division / Directorate", adapter: divisionRelationshipAdapter },
+        { value: "wing", label: "Registrar Office / Wing", adapter: staffEntityRelationshipAdapter as any, filters: { entity_type: "wing" } },
         { value: "school", label: "School", adapter: schoolRelationshipAdapter },
         { value: "department", label: "Department", adapter: departmentRelationshipAdapter },
         { value: "programme", label: "Programme", adapter: programmeRelationshipAdapter },
-        { value: "division", label: "Division", adapter: divisionRelationshipAdapter },
         { value: "intake", label: "Intake", adapter: intakeRelationshipAdapter },
+        { value: "library", label: "Library branch", adapter: libraryBranchRelationshipAdapter, filters: { active_only: false } },
       ]}
     />
   );

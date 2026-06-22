@@ -70,4 +70,5 @@ class UserRoleRead(BaseReadSchema):
     assigned_by: dict[str, Any] | None = None
     role: dict[str, Any] | None = None
     user: dict[str, Any] | None = None
+    scope: dict[str, Any] | None = None
     is_active: bool

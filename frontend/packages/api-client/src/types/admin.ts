@@ -43,6 +43,13 @@ export interface UserRole {
   note: string | null;
   is_active: boolean;
   role?: Pick<Role, "id" | "name" | "display_name" | "is_active">;
+  scope?: {
+    id: string | null;
+    name: string;
+    type: string;
+    subtitle?: string | null;
+    is_active?: boolean;
+  } | null;
 }
 
 export interface UserRoleAssignmentPayload {
