@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from .audit import router as audit_router
 from .health import router as health_router
+from .guides import router as guides_router
 from .library import router as library_router
 from .resources import router as resources_router
 from .search import router as search_router
@@ -22,3 +23,4 @@ router.include_router(search_router)
 router.include_router(staff_router)
 router.include_router(electronic_router)
 router.include_router(engagement_router)
+router.include_router(guides_router)

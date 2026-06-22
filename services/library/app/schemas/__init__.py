@@ -69,6 +69,26 @@ from .engagement import (
     SupportTicketTargetSummary,
     SupportTicketUpdate,
 )
+from .guides import (
+    LibraryGuideCreate,
+    LibraryGuideOut,
+    LibraryGuideSectionCreate,
+    LibraryGuideSectionOut,
+    LibraryGuideSectionUpdate,
+    LibraryGuideUpdate,
+    LibraryPolicyPageCreate,
+    LibraryPolicyPageOut,
+    LibraryPolicyPageUpdate,
+    LibrarySpecialistCreate,
+    LibrarySpecialistOut,
+    LibrarySpecialistUpdate,
+    LibraryWorkflowCreate,
+    LibraryWorkflowOut,
+    LibraryWorkflowStepCreate,
+    LibraryWorkflowStepOut,
+    LibraryWorkflowStepUpdate,
+    LibraryWorkflowUpdate,
+)
 from .stats import PublicStatItem, PublicStatsResponse
 from .search import LibrarySearchResponse, LibrarySearchResult
 
@@ -137,6 +157,25 @@ __all__ = [
     "LibraryRegulationCreate",
     "LibraryRegulationUpdate",
     "LibraryRegulationOut",
+    # guides
+    "LibraryGuideCreate",
+    "LibraryGuideUpdate",
+    "LibraryGuideOut",
+    "LibraryGuideSectionCreate",
+    "LibraryGuideSectionUpdate",
+    "LibraryGuideSectionOut",
+    "LibrarySpecialistCreate",
+    "LibrarySpecialistUpdate",
+    "LibrarySpecialistOut",
+    "LibraryWorkflowCreate",
+    "LibraryWorkflowUpdate",
+    "LibraryWorkflowOut",
+    "LibraryWorkflowStepCreate",
+    "LibraryWorkflowStepUpdate",
+    "LibraryWorkflowStepOut",
+    "LibraryPolicyPageCreate",
+    "LibraryPolicyPageUpdate",
+    "LibraryPolicyPageOut",
     # stats
     "PublicStatItem",
     "PublicStatsResponse",

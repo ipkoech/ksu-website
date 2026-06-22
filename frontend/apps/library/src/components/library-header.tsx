@@ -9,6 +9,7 @@ import { ChevronDown, Menu, Search, X } from "lucide-react";
 const primaryNavItems = [
   { label: "Catalog", href: "/catalog" },
   { label: "E-resources", href: "/electronic" },
+  { label: "Guides", href: "/guides" },
   { label: "Services", href: "/services" },
   { label: "Ask", href: "/ask" },
   { label: "Repository", href: "/repositories" },
@@ -17,6 +18,11 @@ const primaryNavItems = [
 ];
 
 const secondaryNavItems = [
+  { label: "Specialists", href: "/specialists" },
+  { label: "Borrowing", href: "/borrowing" },
+  { label: "Remote Access", href: "/remote-access" },
+  { label: "Digital Scholarship", href: "/digital-scholarship" },
+  { label: "Policies", href: "/policies" },
   { label: "Downloads", href: "/downloads" },
   { label: "Staff", href: "/staff" },
   { label: "Leadership", href: "/leadership" },

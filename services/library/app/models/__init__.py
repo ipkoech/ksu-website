@@ -19,6 +19,14 @@ from .engagement import (
     SavedPublication,
     SupportTicket,
 )
+from .guides import (
+    LibraryGuide,
+    LibraryGuideSection,
+    LibraryPolicyPage,
+    LibrarySpecialist,
+    LibraryWorkflow,
+    LibraryWorkflowStep,
+)
 
 __all__ = [
     "Base",
@@ -46,4 +54,11 @@ __all__ = [
     "SupportTicket",
     "SavedPublication",
     "LibraryRegulation",
+    # guides
+    "LibraryGuide",
+    "LibraryGuideSection",
+    "LibrarySpecialist",
+    "LibraryWorkflow",
+    "LibraryWorkflowStep",
+    "LibraryPolicyPage",
 ]

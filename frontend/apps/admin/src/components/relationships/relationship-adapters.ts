@@ -20,7 +20,9 @@ import {
   type Intake,
   type LibraryBranch,
   type LibraryElectronicResource,
+  type LibraryGuide,
   type LibraryResource,
+  type LibraryWorkflow,
   type Media,
   type MediaFolder,
   type Person,
@@ -234,6 +236,33 @@ function libraryElectronicResourceOption(resource: LibraryElectronicResource): R
     label: resource.name,
     description: joinDescription([resource.provider, resource.resource_type, resource.access_level, resource.is_active === false ? "Inactive" : undefined]),
     raw: resource,
+  };
+}
+
+function libraryGuideOption(guide: LibraryGuide): RelationshipOption {
+  return {
+    id: guide.id,
+    label: guide.title,
+    description: joinDescription([
+      guide.guide_type,
+      guide.subject,
+      guide.course_code,
+      guide.is_active === false ? "Inactive" : undefined,
+    ]),
+    raw: guide,
+  };
+}
+
+function libraryWorkflowOption(workflow: LibraryWorkflow): RelationshipOption {
+  return {
+    id: workflow.id,
+    label: workflow.title,
+    description: joinDescription([
+      workflow.workflow_type,
+      workflow.audience,
+      workflow.is_active === false ? "Inactive" : undefined,
+    ]),
+    raw: workflow,
   };
 }
 
@@ -671,6 +700,76 @@ export const libraryElectronicResourceRelationshipAdapter: RelationshipAdapter<{
   },
 };
 
+export const libraryGuideRelationshipAdapter: RelationshipAdapter<{ library_id?: string; guide_type?: string; is_active?: boolean }> = {
+  key: "library-guide",
+  entityType: "library_guide",
+  label: "Library guide",
+  pluralLabel: "Library guides",
+  searchPlaceholder: "Search guides by title, subject, or course",
+  emptyLabel: "No library guides found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await libraryServiceApi.guides.list({
+      page: 1,
+      per_page: 100,
+      library_id: filters?.library_id || undefined,
+      guide_type: (filters?.guide_type as any) || undefined,
+      fields: "id,title,guide_type,subject,course_code,audience,is_active",
+    });
+    const options = (response.data ?? []).map(libraryGuideOption);
+    return limitOptions(
+      options
+        .filter((option) => matches(option, search))
+        .filter((option) =>
+          typeof filters?.is_active === "boolean"
+            ? (option.raw as LibraryGuide).is_active === filters.is_active
+            : true,
+        ),
+      limit,
+    );
+  },
+  async get(id) {
+    const response = await libraryServiceApi.guides.get(id, {
+      fields: "id,title,guide_type,subject,course_code,audience,is_active",
+    });
+    return response.data ? libraryGuideOption(response.data) : null;
+  },
+};
+
+export const libraryWorkflowRelationshipAdapter: RelationshipAdapter<{ library_id?: string; workflow_type?: string; is_active?: boolean }> = {
+  key: "library-workflow",
+  entityType: "library_workflow",
+  label: "Library workflow",
+  pluralLabel: "Library workflows",
+  searchPlaceholder: "Search workflows by title, type, or audience",
+  emptyLabel: "No library workflows found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await libraryServiceApi.workflows.list({
+      page: 1,
+      per_page: 100,
+      library_id: filters?.library_id || undefined,
+      workflow_type: (filters?.workflow_type as any) || undefined,
+      fields: "id,title,workflow_type,audience,is_active",
+    });
+    const options = (response.data ?? []).map(libraryWorkflowOption);
+    return limitOptions(
+      options
+        .filter((option) => matches(option, search))
+        .filter((option) =>
+          typeof filters?.is_active === "boolean"
+            ? (option.raw as LibraryWorkflow).is_active === filters.is_active
+            : true,
+        ),
+      limit,
+    );
+  },
+  async get(id) {
+    const response = await libraryServiceApi.workflows.get(id, {
+      fields: "id,title,workflow_type,audience,is_active",
+    });
+    return response.data ? libraryWorkflowOption(response.data) : null;
+  },
+};
+
 export const researchDonorRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean }> = {
   key: "research-donor",
   entityType: "research_donor",
@@ -1050,6 +1149,8 @@ export const relationshipAdapters = {
   libraryBranch: libraryBranchRelationshipAdapter,
   libraryResource: libraryResourceRelationshipAdapter,
   libraryElectronicResource: libraryElectronicResourceRelationshipAdapter,
+  libraryGuide: libraryGuideRelationshipAdapter,
+  libraryWorkflow: libraryWorkflowRelationshipAdapter,
   researchDonor: researchDonorRelationshipAdapter,
   researchCenter: researchCenterRelationshipAdapter,
   researchProgram: researchProgramRelationshipAdapter,

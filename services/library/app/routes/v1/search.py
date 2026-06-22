@@ -26,7 +26,11 @@ async def search_library(
     q: str = Query(..., min_length=1),
     types: str | None = Query(
         default=None,
-        description="Comma-separated result types: branch,catalog,database,download,external_link,regulation,service,staff",
+        description=(
+            "Comma-separated result types: branch,catalog,database,download,"
+            "external_link,regulation,service,staff,guide,specialist,"
+            "workflow,policy"
+        ),
     ),
     library_id: uuid.UUID | None = Query(default=None),
     limit: int = Query(default=40, ge=1, le=100),
