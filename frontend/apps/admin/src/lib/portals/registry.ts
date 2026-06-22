@@ -2259,6 +2259,11 @@ const libraryBranchPortalScope = {
   allowedScopeTypes: ["library"],
 };
 
+const researchCenterPortalScope = {
+  idField: "center_id",
+  allowedScopeTypes: ["research"],
+};
+
 const researchResources: Record<string, PortalResourceConfig<any, any>> = {
   projects: {
     key: "projects",
@@ -2267,6 +2272,7 @@ const researchResources: Record<string, PortalResourceConfig<any, any>> = {
       "Manage research projects, investigators, status, and publication state.",
     backHref: "/research",
     queryKey: ["research-portal", "projects"],
+    portalScope: researchCenterPortalScope,
     fields: [
       { name: "title", label: "Title", required: true },
       { name: "slug", label: "Slug" },
