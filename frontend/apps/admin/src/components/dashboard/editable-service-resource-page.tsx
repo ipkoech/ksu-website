@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit, Eye, FilterX, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout";
-import { EntityPicker } from "@/components/relationships/entity-picker";
+import { EntityPicker, EntityTypeRecordPicker } from "@/components/relationships/entity-picker";
 import { relationshipAdapters, type RelationshipFilters } from "@/components/relationships/relationship-adapters";
 import {
   Badge,
@@ -45,6 +45,7 @@ type FieldType =
   | "datetime-local"
   | "select"
   | "entity"
+  | "entity-record"
   | "boolean";
 
 export interface EditableField {
@@ -59,6 +60,21 @@ export interface EditableField {
     filters?: RelationshipFilters;
     description?: string;
     allowClear?: boolean;
+  };
+  entityRecord?: {
+    typeName: string;
+    idName: string;
+    configs: Array<{
+      value: string;
+      label: string;
+      adapter: keyof typeof relationshipAdapters;
+      filters?: RelationshipFilters;
+      recordRequired?: boolean;
+    }>;
+    description?: string;
+    typePlaceholder?: string;
+    recordPlaceholder?: string;
+    allowNone?: boolean;
   };
 }
 
@@ -129,22 +145,41 @@ function defaultValue(field: EditableField) {
 }
 
 function recordToValues(fields: EditableField[], record?: RecordShape | null) {
-  return Object.fromEntries(
-    fields.map((field) => {
-      const value = record?.[field.name];
-      if (field.type === "boolean") return [field.name, Boolean(value)];
-      if (field.type === "date" && typeof value === "string")
-        return [field.name, value.split("T")[0]];
-      if (field.type === "datetime-local" && typeof value === "string")
-        return [field.name, value.slice(0, 16)];
-      return [field.name, value ?? defaultValue(field)];
-    }),
-  );
+  const values: RecordShape = {};
+  for (const field of fields) {
+    if (field.type === "entity-record" && field.entityRecord) {
+      values[field.entityRecord.typeName] =
+        record?.[field.entityRecord.typeName] ?? "";
+      values[field.entityRecord.idName] =
+        record?.[field.entityRecord.idName] ?? "";
+      continue;
+    }
+
+    const value = record?.[field.name];
+    if (field.type === "boolean") {
+      values[field.name] = Boolean(value);
+    } else if (field.type === "date" && typeof value === "string") {
+      values[field.name] = value.split("T")[0];
+    } else if (field.type === "datetime-local" && typeof value === "string") {
+      values[field.name] = value.slice(0, 16);
+    } else {
+      values[field.name] = value ?? defaultValue(field);
+    }
+  }
+  return values;
 }
 
 function normalizePayload(fields: EditableField[], values: RecordShape) {
   const payload: RecordShape = {};
   for (const field of fields) {
+    if (field.type === "entity-record" && field.entityRecord) {
+      payload[field.entityRecord.typeName] =
+        values[field.entityRecord.typeName] || null;
+      payload[field.entityRecord.idName] =
+        values[field.entityRecord.idName] || null;
+      continue;
+    }
+
     const value = values[field.name];
     if (field.type === "number") {
       payload[field.name] =
@@ -180,6 +215,16 @@ function validateFields(fields: EditableField[], values: RecordShape) {
 
   for (const field of fields) {
     const value = values[field.name];
+    if (field.type === "entity-record" && field.entityRecord) {
+      if (
+        field.required &&
+        String(values[field.entityRecord.idName] ?? "").trim() === ""
+      ) {
+        errors[field.name] = `${field.label} is required.`;
+      }
+      continue;
+    }
+
     const textValue = String(value ?? "").trim();
 
     if (field.required && textValue === "") {
@@ -734,6 +779,34 @@ export function EditableServiceResourcePage<
                           description={field.relation.description}
                           allowClear={field.relation.allowClear ?? !field.required}
                           required={field.required}
+                        />
+                      ) : field.type === "entity-record" && field.entityRecord ? (
+                        <EntityTypeRecordPicker
+                          typeValue={values[field.entityRecord.typeName] || ""}
+                          idValue={values[field.entityRecord.idName] || ""}
+                          onChange={({ type, id }) => {
+                            setValues((current) => ({
+                              ...current,
+                              [field.entityRecord!.typeName]: type,
+                              [field.entityRecord!.idName]: id,
+                            }));
+                            if (error) {
+                              setFieldErrors((current) => {
+                                const next = { ...current };
+                                delete next[field.name];
+                                return next;
+                              });
+                            }
+                          }}
+                          configs={field.entityRecord.configs.map((config) => ({
+                            ...config,
+                            adapter: relationshipAdapters[config.adapter] as any,
+                          }))}
+                          label={undefined}
+                          description={field.entityRecord.description}
+                          typePlaceholder={field.entityRecord.typePlaceholder}
+                          recordPlaceholder={field.entityRecord.recordPlaceholder}
+                          allowNone={field.entityRecord.allowNone}
                         />
                       ) : field.type === "select" ? (
                         <Select

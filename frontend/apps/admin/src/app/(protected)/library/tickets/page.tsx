@@ -53,8 +53,21 @@ export default function LibraryTicketsPage() {
         { name: "category", label: "Category", type: "select", options: categoryOptions },
         { name: "priority", label: "Priority", type: "select", options: priorityOptions },
         { name: "status", label: "Status", type: "select", options: statusOptions },
-        { name: "target_entity_type", label: "Target Entity Type" },
-        { name: "target_entity_id", label: "Target Entity ID" },
+        {
+          name: "target_entity",
+          label: "Related Library Record",
+          type: "entity-record",
+          entityRecord: {
+            typeName: "target_entity_type",
+            idName: "target_entity_id",
+            typePlaceholder: "Select record type",
+            recordPlaceholder: "Select related record",
+            configs: [
+              { value: "library", label: "Library branch", adapter: "libraryBranch", filters: { active_only: false } },
+              { value: "electronic_resource", label: "Library resource", adapter: "libraryResource" },
+            ],
+          },
+        },
         {
           name: "assigned_to_person_id",
           label: "Assigned Staff",
