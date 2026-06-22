@@ -152,11 +152,11 @@ export default function ImportClientPage() {
                 />
               </div>
               <Button type="button" variant="outline" onClick={handleTemplateDownload}>
-                <Download className="mr-2 h-4 w-4" />
+                <Download data-icon="inline-start" />
                 Template
               </Button>
               <Button type="button" onClick={handlePreview} disabled={!file || previewImport.isPending}>
-                <FileUp className="mr-2 h-4 w-4" />
+                <FileUp data-icon="inline-start" />
                 {previewImport.isPending ? "Previewing..." : "Preview"}
               </Button>
             </CardContent>
@@ -205,7 +205,7 @@ export default function ImportClientPage() {
                 <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <CardTitle>Preview</CardTitle>
                   <Button onClick={handleCommit} disabled={validRows.length === 0 || commitImport.isPending}>
-                    <Play className="mr-2 h-4 w-4" />
+                    <Play data-icon="inline-start" />
                     {commitImport.isPending ? "Importing..." : `Import ${validRows.length} Valid Rows`}
                   </Button>
                 </CardHeader>

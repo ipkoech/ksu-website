@@ -113,13 +113,13 @@ export default function ReportsPage() {
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline" size="sm">
             <a href={adminReportsApi.exportUrl("overview", { days, format: "csv" })}>
-              <Download className="mr-2 h-4 w-4" />
+              <Download data-icon="inline-start" />
               Overview CSV
             </a>
           </Button>
           <Button asChild variant="outline" size="sm">
             <a href={adminReportsApi.exportUrl("content", { days, format: "csv" })}>
-              <Download className="mr-2 h-4 w-4" />
+              <Download data-icon="inline-start" />
               Content CSV
             </a>
           </Button>
