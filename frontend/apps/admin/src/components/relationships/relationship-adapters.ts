@@ -271,7 +271,7 @@ export const personRelationshipAdapter: RelationshipAdapter<{ status?: string; s
   searchPlaceholder: "Search people by name, email, or staff details",
   emptyLabel: "No people found.",
   async search({ search, filters, limit = defaultLimit }) {
-    const response = await personsApi.list({
+    const response = await personsApi.listAdmin({
       per_page: limit,
       search: search?.trim() || undefined,
       status: (filters?.status as any) || "all",
@@ -321,7 +321,7 @@ export const schoolRelationshipAdapter: RelationshipAdapter = {
   searchPlaceholder: "Search schools by name or code",
   emptyLabel: "No schools found.",
   async search({ search, limit = defaultLimit }) {
-    const response = await schoolsApi.list({ per_page: limit, search: search?.trim() || undefined, fields: "id,name,code,slug,school_type,is_active" });
+    const response = await schoolsApi.listAdmin({ per_page: limit, search: search?.trim() || undefined, fields: "id,name,code,slug,school_type,is_active" });
     return (response.data ?? []).map(schoolOption);
   },
   async get(id) {
@@ -338,7 +338,7 @@ export const departmentRelationshipAdapter: RelationshipAdapter<{ school_id?: st
   searchPlaceholder: "Search departments by name or code",
   emptyLabel: "No departments found.",
   async search({ search, filters, limit = defaultLimit }) {
-    const response = await departmentsApi.list({
+    const response = await departmentsApi.listAdmin({
       per_page: limit,
       search: search?.trim() || undefined,
       school_id: filters?.school_id || undefined,
@@ -362,7 +362,7 @@ export const programmeRelationshipAdapter: RelationshipAdapter<{ school_id?: str
   searchPlaceholder: "Search programmes by name or code",
   emptyLabel: "No programmes found.",
   async search({ search, filters, limit = defaultLimit }) {
-    const response = await programmesApi.list({
+    const response = await programmesApi.listAdmin({
       per_page: limit,
       q: search?.trim() || undefined,
       school_id: filters?.school_id || undefined,
@@ -386,7 +386,7 @@ export const divisionRelationshipAdapter: RelationshipAdapter<{ is_active?: bool
   searchPlaceholder: "Search divisions by name or code",
   emptyLabel: "No divisions found.",
   async search({ search, filters, limit = defaultLimit }) {
-    const response = await divisionsApi.list({
+    const response = await divisionsApi.listAdmin({
       per_page: 100,
       is_active: filters?.is_active ?? undefined,
       fields: "id,name,code,slug,division_type,is_active",
@@ -407,7 +407,7 @@ export const intakeRelationshipAdapter: RelationshipAdapter<{ academic_calendar_
   searchPlaceholder: "Search intakes by name or code",
   emptyLabel: "No intakes found.",
   async search({ search, filters, limit = defaultLimit }) {
-    const response = await intakesApi.list({
+    const response = await intakesApi.listAdmin({
       per_page: 100,
       academic_calendar_id: filters?.academic_calendar_id || undefined,
       is_open: filters?.is_open ?? undefined,
@@ -429,7 +429,7 @@ export const academicCalendarRelationshipAdapter: RelationshipAdapter<{ status?:
   searchPlaceholder: "Search calendars by academic year or semester",
   emptyLabel: "No academic calendars found.",
   async search({ search, filters, limit = defaultLimit }) {
-    const response = await academicCalendarsApi.list({
+    const response = await academicCalendarsApi.listAdmin({
       per_page: 100,
       status: filters?.status || undefined,
       academic_year: filters?.academic_year || undefined,
