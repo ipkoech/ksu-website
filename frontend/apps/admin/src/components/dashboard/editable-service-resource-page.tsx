@@ -24,6 +24,7 @@ import {
   Input,
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -474,7 +475,7 @@ export function EditableServiceResourcePage<
         {detailHref ? (
           <Button asChild type="button" variant="outline" size="sm" className="min-w-[118px] justify-start">
             <Link href={detailHref}>
-              <Eye className="mr-2 h-4 w-4" />
+              <Eye data-icon="inline-start" />
               Open Details
             </Link>
           </Button>
@@ -486,7 +487,7 @@ export function EditableServiceResourcePage<
             className="min-w-[118px] justify-start"
             onClick={() => startEdit(record)}
           >
-            <Edit className="mr-2 h-4 w-4" />
+            <Edit data-icon="inline-start" />
             Edit Record
           </Button>
         ) : null}
@@ -499,7 +500,7 @@ export function EditableServiceResourcePage<
               size="icon"
               aria-label={`Actions for ${getRecordTitle(record)}`}
             >
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreHorizontal data-icon="inline-start" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
@@ -519,14 +520,14 @@ export function EditableServiceResourcePage<
             {detailHref ? (
               <DropdownMenuItem asChild>
                 <Link href={detailHref}>
-                  <Eye className="mr-2 h-4 w-4" />
+                  <Eye data-icon="inline-start" />
                   View details
                 </Link>
               </DropdownMenuItem>
             ) : null}
             {canEdit ? (
               <DropdownMenuItem onClick={() => startEdit(record)}>
-                <Edit className="mr-2 h-4 w-4" />
+                <Edit data-icon="inline-start" />
                 Edit record
               </DropdownMenuItem>
             ) : null}
@@ -537,7 +538,7 @@ export function EditableServiceResourcePage<
                   className="text-destructive focus:text-destructive"
                   onClick={() => setDeleteTarget(record)}
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
+                  <Trash2 data-icon="inline-start" />
                   Delete record
                 </DropdownMenuItem>
               </>
@@ -565,7 +566,7 @@ export function EditableServiceResourcePage<
                   onClick={() => setFilterValues({})}
                   disabled={!hasActiveFilters}
                 >
-                  <FilterX className="mr-2 h-4 w-4" />
+                  <FilterX data-icon="inline-start" />
                   Clear Filters
                 </Button>
               ) : null}
@@ -604,9 +605,11 @@ export function EditableServiceResourcePage<
                           <SelectValue placeholder={filter.placeholder ?? filter.label} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All</SelectItem>
-                          <SelectItem value="true">Yes</SelectItem>
-                          <SelectItem value="false">No</SelectItem>
+                          <SelectGroup>
+                            <SelectItem value="all">All</SelectItem>
+                            <SelectItem value="true">Yes</SelectItem>
+                            <SelectItem value="false">No</SelectItem>
+                          </SelectGroup>
                         </SelectContent>
                       </Select>
                     ) : (
@@ -620,12 +623,14 @@ export function EditableServiceResourcePage<
                           <SelectValue placeholder={filter.placeholder ?? filter.label} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All</SelectItem>
-                          {(filter.options ?? []).map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
+                          <SelectGroup>
+                            <SelectItem value="all">All</SelectItem>
+                            {(filter.options ?? []).map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
                         </SelectContent>
                       </Select>
                     )}
@@ -833,11 +838,13 @@ export function EditableServiceResourcePage<
                             <SelectValue placeholder={field.placeholder ?? field.label} />
                           </SelectTrigger>
                           <SelectContent>
-                            {(field.options ?? []).map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
+                            <SelectGroup>
+                              {(field.options ?? []).map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
                           </SelectContent>
                         </Select>
                       ) : field.type === "boolean" ? (
