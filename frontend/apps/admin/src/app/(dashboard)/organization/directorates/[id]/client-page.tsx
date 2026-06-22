@@ -26,6 +26,7 @@ import {
   RichTextEditor,
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -372,11 +373,13 @@ export default function DirectorateEditorPage() {
                       <Select value={field.value || undefined} onValueChange={field.onChange}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Select division" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          {(divisionsQuery.data?.data ?? []).map((division) => (
-                            <SelectItem key={division.id} value={division.id}>
-                              {division.name}
-                            </SelectItem>
-                          ))}
+                          <SelectGroup>
+                            {(divisionsQuery.data?.data ?? []).map((division) => (
+                              <SelectItem key={division.id} value={division.id}>
+                                {division.name}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -397,10 +400,12 @@ export default function DirectorateEditorPage() {
                       <Select value={field.value} onValueChange={field.onChange}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          <SelectItem value="directorate">Directorate</SelectItem>
-                          <SelectItem value="office">Office</SelectItem>
-                          <SelectItem value="unit">Unit</SelectItem>
-                          <SelectItem value="wing">Wing</SelectItem>
+                          <SelectGroup>
+                            <SelectItem value="directorate">Directorate</SelectItem>
+                            <SelectItem value="office">Office</SelectItem>
+                            <SelectItem value="unit">Unit</SelectItem>
+                            <SelectItem value="wing">Wing</SelectItem>
+                          </SelectGroup>
                         </SelectContent>
                       </Select>
                       <FormMessage />

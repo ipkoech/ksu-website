@@ -26,6 +26,7 @@ import {
   RichTextEditor,
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -356,10 +357,12 @@ export default function DivisionEditorPage() {
                       <Select value={field.value} onValueChange={field.onChange}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          <SelectItem value="division">Division</SelectItem>
-                          <SelectItem value="directorate">Directorate</SelectItem>
-                          <SelectItem value="office">Office</SelectItem>
-                          <SelectItem value="unit">Unit</SelectItem>
+                          <SelectGroup>
+                            <SelectItem value="division">Division</SelectItem>
+                            <SelectItem value="directorate">Directorate</SelectItem>
+                            <SelectItem value="office">Office</SelectItem>
+                            <SelectItem value="unit">Unit</SelectItem>
+                          </SelectGroup>
                         </SelectContent>
                       </Select>
                       <FormMessage />
