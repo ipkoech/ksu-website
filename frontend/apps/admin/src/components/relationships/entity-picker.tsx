@@ -15,6 +15,7 @@ import {
   Input,
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -403,12 +404,14 @@ export function EntityTypeRecordPicker({
           <SelectValue placeholder={typePlaceholder} />
         </SelectTrigger>
         <SelectContent>
-          {allowNone ? <SelectItem value={noneValue}>No relationship</SelectItem> : null}
-          {configs.map((config) => (
-            <SelectItem key={config.value} value={config.value}>
-              {config.label}
-            </SelectItem>
-          ))}
+          <SelectGroup>
+            {allowNone ? <SelectItem value={noneValue}>No relationship</SelectItem> : null}
+            {configs.map((config) => (
+              <SelectItem key={config.value} value={config.value}>
+                {config.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
         </SelectContent>
       </Select>
 

@@ -16,6 +16,7 @@ import {
   Label,
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -582,9 +583,11 @@ export function StaffAssignmentEditor({
                   <Select value={form.entity_type} onValueChange={(value) => setForm((current) => ({ ...current, entity_type: value, entity_id: "", role: "" }))}>
                     <SelectTrigger><SelectValue placeholder="Select entity type" /></SelectTrigger>
                     <SelectContent>
-                      {entityTypes.data?.data.map((entityType: { type: string; label: string }) => (
-                        <SelectItem key={entityType.type} value={entityType.type}>{entityType.label}</SelectItem>
-                      ))}
+                      <SelectGroup>
+                        {entityTypes.data?.data.map((entityType: { type: string; label: string }) => (
+                          <SelectItem key={entityType.type} value={entityType.type}>{entityType.label}</SelectItem>
+                        ))}
+                      </SelectGroup>
                     </SelectContent>
                   </Select>
                 </div>
@@ -638,11 +641,13 @@ export function StaffAssignmentEditor({
                 <Select value={form.role} onValueChange={(value) => updateField("role", value)}>
                   <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
                   <SelectContent>
-                    {roles.data?.data.map((role) => (
-                      <SelectItem key={role.role} value={role.role}>
-                        {role.label}{role.is_unique ? " (unique)" : ""}
-                      </SelectItem>
-                    ))}
+                    <SelectGroup>
+                      {roles.data?.data.map((role) => (
+                        <SelectItem key={role.role} value={role.role}>
+                          {role.label}{role.is_unique ? " (unique)" : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
                 <div className="max-h-40 overflow-y-auto rounded-md border bg-background">
