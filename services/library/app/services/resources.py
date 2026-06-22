@@ -8,6 +8,7 @@ from typing import Sequence
 
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from ksu_common.pagination import PaginatedResult, paginate
 
@@ -32,6 +33,9 @@ from ..schemas import (
 )
 
 _DEFAULT_LOAN_DAYS = 14
+
+_LOAN_DETAIL_OPTIONS = (selectinload(LibraryLoan.resource),)
+_RESERVATION_DETAIL_OPTIONS = (selectinload(LibraryResourceReservation.resource),)
 
 
 # ── LibraryResource ───────────────────────────────────────────────────────────
@@ -167,7 +171,7 @@ async def issue_loan(db: AsyncSession, data: LibraryLoanCreate) -> LibraryLoanOu
     loan = LibraryLoan(**data.model_dump())
     db.add(loan)
     await db.commit()
-    await db.refresh(loan)
+    await db.refresh(loan, attribute_names=["resource"])
     return LibraryLoanOut.model_validate(loan)
 
 
@@ -197,7 +201,7 @@ async def return_loan(
             resource.status = "available"
 
     await db.commit()
-    await db.refresh(loan)
+    await db.refresh(loan, attribute_names=["resource"])
     return LibraryLoanOut.model_validate(loan)
 
 
@@ -224,15 +228,20 @@ async def renew_loan(db: AsyncSession, loan_id: uuid.UUID) -> LibraryLoanOut:
     loan.renewals_count += 1
 
     await db.commit()
-    await db.refresh(loan)
+    await db.refresh(loan, attribute_names=["resource"])
     return LibraryLoanOut.model_validate(loan)
 
 
 async def get_loan(db: AsyncSession, loan_id: uuid.UUID) -> LibraryLoanOut:
     """Get a loan by ID."""
-    loan = await LibraryLoan.get_or_raise(
-        db, loan_id, error_message=f"Loan {loan_id} not found"
+    result = await db.execute(
+        sa.select(LibraryLoan)
+        .options(*_LOAN_DETAIL_OPTIONS)
+        .where(LibraryLoan.id == loan_id, LibraryLoan.deleted_at.is_(None))
     )
+    loan = result.scalar_one_or_none()
+    if loan is None:
+        raise ValueError(f"Loan {loan_id} not found")
     return LibraryLoanOut.model_validate(loan)
 
 
@@ -247,7 +256,11 @@ async def list_loans(
     include_total: bool = True,
 ) -> PaginatedResult:
     """List loans with optional filtering."""
-    query = sa.select(LibraryLoan).order_by(LibraryLoan.borrowed_at.desc())
+    query = (
+        sa.select(LibraryLoan)
+        .options(*_LOAN_DETAIL_OPTIONS)
+        .order_by(LibraryLoan.borrowed_at.desc())
+    )
     if person_id is not None:
         query = query.where(LibraryLoan.borrower_person_id == person_id)
     if resource_id is not None:
@@ -294,7 +307,7 @@ async def create_reservation(
     )
     db.add(reservation)
     await db.commit()
-    await db.refresh(reservation)
+    await db.refresh(reservation, attribute_names=["resource"])
     return LibraryReservationOut.model_validate(reservation)
 
 
@@ -335,7 +348,7 @@ async def update_reservation(
         setattr(reservation, field, value)
 
     await db.commit()
-    await db.refresh(reservation)
+    await db.refresh(reservation, attribute_names=["resource"])
     return LibraryReservationOut.model_validate(reservation)
 
 
@@ -350,8 +363,10 @@ async def list_reservations(
     include_total: bool = True,
 ) -> PaginatedResult:
     """List reservations with optional filtering."""
-    query = sa.select(LibraryResourceReservation).order_by(
-        LibraryResourceReservation.reserved_at.desc()
+    query = (
+        sa.select(LibraryResourceReservation)
+        .options(*_RESERVATION_DETAIL_OPTIONS)
+        .order_by(LibraryResourceReservation.reserved_at.desc())
     )
     if person_id is not None:
         query = query.where(LibraryResourceReservation.requester_person_id == person_id)

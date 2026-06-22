@@ -354,6 +354,7 @@ export interface LibraryResourcePayload {
 export interface LibraryLoan {
   id: string;
   resource_id: string;
+  resource?: LibraryResource | null;
   borrower_person_id: string;
   borrowed_at: string;
   due_at: string;
@@ -378,6 +379,7 @@ export interface LibraryLoanPayload {
 export interface LibraryReservation {
   id: string;
   resource_id: string;
+  resource?: LibraryResource | null;
   requester_person_id: string;
   reserved_at: string;
   expires_at?: string | null;

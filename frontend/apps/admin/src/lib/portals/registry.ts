@@ -2647,9 +2647,10 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
       libraryServiceApi.loans.list({ ...pageParams, ...filters }),
     create: (payload) => libraryServiceApi.loans.create(payload as any),
     update: (id, payload) => libraryServiceApi.loans.update(id, payload as any),
-    getRecordTitle: (record) => `Loan ${record.status ?? "record"}`,
+    getRecordTitle: (record) => record.resource?.title ?? `Loan ${record.status ?? "record"}`,
     getRecordMeta: (record) =>
       [
+        record.resource?.authors,
         record.borrowed_at ? `Borrowed ${formatDateTime(record.borrowed_at)}` : null,
         record.due_at ? `Due ${formatDateTime(record.due_at)}` : null,
       ]
@@ -2747,9 +2748,10 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
     update: (id, payload) =>
       libraryServiceApi.reservations.update(id, payload as any),
     delete: (id) => libraryServiceApi.reservations.cancel(id),
-    getRecordTitle: (record) => `Reservation ${record.status ?? "record"}`,
+    getRecordTitle: (record) => record.resource?.title ?? `Reservation ${record.status ?? "record"}`,
     getRecordMeta: (record) =>
       [
+        record.resource?.authors,
         record.queue_position ? `Queue ${record.queue_position}` : null,
         record.expires_at ? `Expires ${formatDateTime(record.expires_at)}` : null,
       ]

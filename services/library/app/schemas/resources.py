@@ -142,6 +142,7 @@ class LibraryLoanOut(BaseModel):
 
     id: uuid.UUID
     resource_id: uuid.UUID
+    resource: Optional[LibraryResourceOut] = None
     borrower_person_id: uuid.UUID
     issued_by_staff_id: Optional[uuid.UUID] = None
     returned_to_staff_id: Optional[uuid.UUID] = None
@@ -181,6 +182,7 @@ class LibraryReservationOut(BaseModel):
 
     id: uuid.UUID
     resource_id: uuid.UUID
+    resource: Optional[LibraryResourceOut] = None
     requester_person_id: uuid.UUID
     reserved_at: datetime
     expires_at: Optional[datetime] = None

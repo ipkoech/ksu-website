@@ -54,9 +54,13 @@ export default function LibraryCirculationPage() {
       update={(id, payload) => libraryServiceApi.loans.update(id, payload)}
       canCreate={canManage}
       canEdit={canManage}
-      getRecordTitle={(record) => `Loan ${record.status ?? "record"}`}
+      getRecordTitle={(record) => record.resource?.title ?? `Loan ${record.status ?? "record"}`}
       getRecordMeta={(record) =>
-        [record.borrowed_at ? `Borrowed ${formatDateTime(record.borrowed_at)}` : null, record.due_at ? `Due ${formatDateTime(record.due_at)}` : null]
+        [
+          record.resource?.authors,
+          record.borrowed_at ? `Borrowed ${formatDateTime(record.borrowed_at)}` : null,
+          record.due_at ? `Due ${formatDateTime(record.due_at)}` : null,
+        ]
           .filter(Boolean)
           .join(" · ")
       }
