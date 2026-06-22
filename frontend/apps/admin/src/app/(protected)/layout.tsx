@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@ksu/auth";
+import { isStaffProfileOnlyUser, staffProfileHref } from "@/lib/auth-routing";
 
 export default function ProtectedLayout({
   children,
@@ -10,6 +11,7 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, isAuthenticated, isLoading, checkAuth } = useAuth();
 
   useEffect(() => {
@@ -23,6 +25,13 @@ export default function ProtectedLayout({
       router.push("/login?reason=session-expired");
     }
   }, [isLoading, isAuthenticated, router]);
+
+  useEffect(() => {
+    if (isLoading || !user) return;
+    if (isStaffProfileOnlyUser(user) && pathname !== staffProfileHref) {
+      router.replace(staffProfileHref);
+    }
+  }, [isLoading, pathname, router, user]);
 
   if (isLoading) {
     return (

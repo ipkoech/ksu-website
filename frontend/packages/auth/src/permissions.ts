@@ -12,6 +12,7 @@ export const SERVICE_ROLES: Record<Service, readonly string[]> = {
     "dept-admin",
     "dept-staff",
     "staff-admin",
+    "staff",
     "lecturer",
   ],
   research: [
@@ -49,6 +50,7 @@ export const ROLE_HIERARCHY: Record<Service, readonly string[]> = {
     "dept-admin",
     "content-staff",
     "dept-staff",
+    "staff",
     "lecturer",
   ],
   research: [
@@ -154,7 +156,7 @@ export const ALL_SCOPES = [
   // Support
   "support.manage_faqs", "support.manage_contacts", "support.view",
   // Staff
-  "staff.manage_assignments", "staff.view_assignments",
+  "staff.manage_assignments", "staff.view_assignments", "profile.self_edit",
   // Persons
   "persons.manage", "persons.view",
   // Alumni

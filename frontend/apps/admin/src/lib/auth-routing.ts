@@ -15,7 +15,17 @@ const roleDestinations: RoleDestination[] = [
   { roles: ["dept-admin", "dept-staff"], href: "/departments", service: "main" },
   { roles: ["content-admin", "content-manager", "content-staff"], href: "/corporate-communication", service: "main" },
   { roles: ["staff-admin"], href: "/governance", service: "main" },
+  { roles: ["staff"], href: "/settings/profile", service: "main" },
 ];
+
+const broadAdminRoles = new Set(["super-admin", "admin"]);
+const broaderPortalRoles = new Set(
+  roleDestinations
+    .filter((destination) => destination.href !== "/settings/profile")
+    .flatMap((destination) => destination.roles),
+);
+
+export const staffProfileHref = "/settings/profile";
 
 const serviceFallbacks: Record<Service, string> = {
   main: "/select-service",
@@ -38,7 +48,7 @@ export function resolvePostLoginDestination(user: User, redirect?: string | null
   }
 
   const roles = new Set(user.roles.map(normalizeRole));
-  const isBroadAdmin = roles.has("super-admin") || roles.has("admin");
+  const isBroadAdmin = Array.from(broadAdminRoles).some((role) => roles.has(role));
 
   if (!isBroadAdmin) {
     const destination = roleDestinations.find((item) =>
@@ -56,4 +66,21 @@ export function resolvePostLoginDestination(user: User, redirect?: string | null
   }
 
   return { href: "/select-service", service: null };
+}
+
+export function isStaffProfileOnlyUser(user: User) {
+  const roles = new Set(user.roles.map(normalizeRole));
+  const permissions = new Set(user.permissions.map((permission) => permission.trim().toLowerCase()));
+  const scopes = new Set(
+    user.services.flatMap((service) => service.scopes.map((scope) => scope.trim().toLowerCase())),
+  );
+  const hasProfileAccess =
+    roles.has("staff") ||
+    permissions.has("profile.self_edit") ||
+    scopes.has("profile.self_edit");
+  const hasBroaderAccess =
+    Array.from(broadAdminRoles).some((role) => roles.has(role)) ||
+    Array.from(broaderPortalRoles).some((role) => roles.has(role));
+
+  return hasProfileAccess && !hasBroaderAccess;
 }
