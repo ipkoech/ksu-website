@@ -149,6 +149,115 @@ export interface LibraryStaff {
   updated_at?: string;
 }
 
+export type LibraryGuideType = "subject" | "course" | "database" | "research" | "other";
+
+export interface LibraryGuideSection {
+  id: string;
+  guide_id: string;
+  heading: string;
+  content?: string | null;
+  section_type?: string | null;
+  resource_links?: Array<Record<string, unknown>> | null;
+  file_ids?: string[] | null;
+  sort_order?: number;
+  is_active?: boolean;
+}
+
+export interface LibrarySpecialist {
+  id: string;
+  library_id?: string | null;
+  staff_id?: string | null;
+  subjects?: string[] | null;
+  schools?: string[] | null;
+  departments?: string[] | null;
+  support_areas?: string[] | null;
+  booking_url?: string | null;
+  is_public?: boolean;
+  is_active?: boolean;
+  sort_order?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LibraryGuide {
+  id: string;
+  library_id?: string | null;
+  title: string;
+  slug: string;
+  summary?: string | null;
+  guide_type?: LibraryGuideType | string;
+  subject?: string | null;
+  course_code?: string | null;
+  audience?: string | null;
+  school_id?: string | null;
+  department_id?: string | null;
+  owner_staff_id?: string | null;
+  is_public?: boolean;
+  is_active?: boolean;
+  sort_order?: number;
+  sections?: LibraryGuideSection[] | null;
+  specialists?: LibrarySpecialist[] | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type LibraryWorkflowType =
+  | "borrowing"
+  | "clearance"
+  | "research"
+  | "repository"
+  | "other";
+
+export interface LibraryWorkflowStep {
+  id: string;
+  workflow_id: string;
+  title: string;
+  instructions?: string | null;
+  link_url?: string | null;
+  file_id?: string | null;
+  sort_order?: number;
+  is_active?: boolean;
+}
+
+export interface LibraryWorkflow {
+  id: string;
+  library_id?: string | null;
+  workflow_type?: LibraryWorkflowType | string;
+  title: string;
+  slug: string;
+  summary?: string | null;
+  audience?: string | null;
+  is_public?: boolean;
+  is_active?: boolean;
+  sort_order?: number;
+  steps?: LibraryWorkflowStep[] | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type LibraryPolicyType =
+  | "borrowing"
+  | "access"
+  | "clearance"
+  | "repository"
+  | "other";
+
+export interface LibraryPolicyPage {
+  id: string;
+  library_id?: string | null;
+  policy_type?: LibraryPolicyType | string;
+  title: string;
+  slug: string;
+  content?: string | null;
+  related_regulation_id?: string | null;
+  file_id?: string | null;
+  is_public?: boolean;
+  status?: string;
+  sort_order?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface LibraryServiceRecord {
   id: string;
   library_id: string;
@@ -478,6 +587,14 @@ function crudApi<TRecord, TPayload>(path: string) {
   };
 }
 
+function publicSlugApi<TRecord, TPayload>(path: string) {
+  return {
+    ...crudApi<TRecord, TPayload>(path),
+    getBySlug: (slug: string, params?: FieldSelectionParams) =>
+      libraryApi.get<{ data: TRecord }>(`${path}slug/${slug}`, params),
+  };
+}
+
 export const libraryServiceApi = {
   stats: () => libraryApi.get<{ data: PublicStatsResponse }>("/api/v1/stats"),
   adminStats: () =>
@@ -646,6 +763,18 @@ export const libraryServiceApi = {
   },
   databases: crudApi<LibraryElectronicResource, LibraryGenericPayload>(
     "/api/v1/library/databases/",
+  ),
+  guides: publicSlugApi<LibraryGuide, LibraryGenericPayload>(
+    "/api/v1/library/guides/",
+  ),
+  specialists: crudApi<LibrarySpecialist, LibraryGenericPayload>(
+    "/api/v1/library/specialists/",
+  ),
+  workflows: publicSlugApi<LibraryWorkflow, LibraryGenericPayload>(
+    "/api/v1/library/workflows/",
+  ),
+  policies: publicSlugApi<LibraryPolicyPage, LibraryGenericPayload>(
+    "/api/v1/library/policies/",
   ),
   inquiries: {
     ...crudApi<LibraryInquiry, LibraryInquiryPayload>(
