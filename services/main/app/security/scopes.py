@@ -51,6 +51,26 @@ DEPARTMENT_LEADERSHIP_SCOPE_ROLES = {
     "deputy_hod",
 }
 
+LIBRARY_LEADERSHIP_SCOPE_ROLES = {
+    "university_librarian",
+    "chief_librarian",
+    "librarian",
+    "deputy_librarian",
+    "head_librarian",
+    "branch_librarian",
+    "manager",
+}
+
+RESEARCH_LEADERSHIP_SCOPE_ROLES = {
+    "director",
+    "deputy_director",
+    "manager",
+    "coordinator",
+    "project_coordinator",
+    "principal_investigator",
+    "project_lead",
+}
+
 ADMINISTRATION_ASSIGNMENT_PERMISSIONS = frozenset(
     {
         "administration.view",
@@ -80,6 +100,31 @@ DEPARTMENT_ASSIGNMENT_PERMISSIONS = frozenset(
     }
 )
 
+LIBRARY_ASSIGNMENT_PERMISSIONS = frozenset(
+    {
+        "library.view",
+        "library:read",
+        "library:write",
+        "library.manage_resources",
+        "library.manage_services",
+        "library.manage_collections",
+        "library.manage_staff",
+        "library.manage_loans",
+    }
+)
+
+RESEARCH_ASSIGNMENT_PERMISSIONS = frozenset(
+    {
+        "research.view",
+        "research.view_projects",
+        "research:read",
+        "research.manage_projects",
+        "research.manage_services",
+        "research.manage_office",
+        "research.manage_reports",
+    }
+)
+
 
 @dataclass(frozen=True)
 class ScopedGrant:
@@ -101,6 +146,10 @@ def normalize_assignment_role(value: str | None) -> str:
 
 
 def assignment_permissions(scope_type: str, role: str) -> frozenset[str]:
+    if scope_type == "library" and role in LIBRARY_LEADERSHIP_SCOPE_ROLES:
+        return LIBRARY_ASSIGNMENT_PERMISSIONS
+    if scope_type == "research" and role in RESEARCH_LEADERSHIP_SCOPE_ROLES:
+        return RESEARCH_ASSIGNMENT_PERMISSIONS
     if role in LEADERSHIP_SCOPE_ROLES:
         if scope_type == "school" and role in SCHOOL_LEADERSHIP_SCOPE_ROLES:
             return SCHOOL_ASSIGNMENT_PERMISSIONS

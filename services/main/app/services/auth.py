@@ -16,6 +16,7 @@ from ..helpers.jwt import create_token, decode_token, refresh_token as issue_ref
 from ..helpers.password import hash_password, verify_password
 from ..core.config import get_settings
 from ..models import Session, User
+from ..security.scopes import user_scoped_grants
 from ..tasks.email import queue_password_reset_email, queue_verification_email
 from .user import UserService
 
@@ -33,14 +34,9 @@ def _active_roles(user: User) -> list[str]:
 def _active_permissions(user: User) -> list[str]:
     permissions: list[str] = []
     seen: set[str] = set()
-    for assignment in user.role_assignments:
-        if not assignment.is_active or assignment.role is None or not assignment.role.is_active:
-            continue
-        for role_permission in assignment.role.role_permissions:
-            permission = role_permission.permission
-            if permission is None or not permission.is_active:
-                continue
-            name = permission.name.strip().lower()
+    for grant in user_scoped_grants(user):
+        for permission in grant.permissions:
+            name = permission.strip().lower()
             if name and name not in seen:
                 seen.add(name)
                 permissions.append(name)

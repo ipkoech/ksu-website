@@ -10,6 +10,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models import Department, Division, School, User, Wing
 from ..schemas.access import PortalAccessRead
+from ..security.scopes import (
+    LIBRARY_LEADERSHIP_SCOPE_ROLES,
+    RESEARCH_LEADERSHIP_SCOPE_ROLES,
+)
 
 ScopeKey = tuple[str, uuid.UUID]
 
@@ -327,6 +331,34 @@ def build_portal_access_records(user: User, scope_labels: Mapping[ScopeKey, str]
                 permissions=[
                     "academic.view",
                     "academic.manage_departments",
+                ],
+                scope_labels=scope_labels,
+                source="assignment",
+            )
+        elif entity_type == "library" and role in LIBRARY_LEADERSHIP_SCOPE_ROLES:
+            _add_or_merge(
+                records,
+                key="library",
+                scope_type=entity_type,
+                scope_id=entity_id,
+                permissions=[
+                    "library.view",
+                    "library.manage_resources",
+                    "library.manage_services",
+                ],
+                scope_labels=scope_labels,
+                source="assignment",
+            )
+        elif entity_type == "research" and role in RESEARCH_LEADERSHIP_SCOPE_ROLES:
+            _add_or_merge(
+                records,
+                key="research",
+                scope_type=entity_type,
+                scope_id=entity_id,
+                permissions=[
+                    "research.view",
+                    "research.view_projects",
+                    "research.manage_projects",
                 ],
                 scope_labels=scope_labels,
                 source="assignment",

@@ -171,6 +171,46 @@ class PortalAccessTests(unittest.TestCase):
         self.assertEqual("Department of Computing Sciences", department.scope_label)
         self.assertIn("academic.manage_departments", department.permissions)
 
+    def test_librarian_assignment_infers_library_portal_access(self):
+        library_id = uuid.uuid4()
+        user = _user(
+            role_assignments=[
+                _assignment("staff", permissions=["profile.self_edit"]),
+            ],
+            staff_assignments=[
+                _staff_assignment("library", library_id, role="university_librarian"),
+            ],
+        )
+
+        records = build_portal_access_records(user, scope_labels={})
+
+        library = next(record for record in records if record.key == "library")
+        self.assertEqual("library", library.scope_type)
+        self.assertEqual(library_id, library.scope_id)
+        self.assertEqual("Library scope", library.scope_label)
+        self.assertNotIn(str(library_id), library.label)
+        self.assertIn("library.manage_resources", library.permissions)
+
+    def test_research_director_assignment_infers_research_portal_access(self):
+        research_unit_id = uuid.uuid4()
+        user = _user(
+            role_assignments=[
+                _assignment("staff", permissions=["profile.self_edit"]),
+            ],
+            staff_assignments=[
+                _staff_assignment("research", research_unit_id, role="director"),
+            ],
+        )
+
+        records = build_portal_access_records(user, scope_labels={})
+
+        research = next(record for record in records if record.key == "research")
+        self.assertEqual("research", research.scope_type)
+        self.assertEqual(research_unit_id, research.scope_id)
+        self.assertEqual("Research scope", research.scope_label)
+        self.assertNotIn(str(research_unit_id), research.label)
+        self.assertIn("research.manage_projects", research.permissions)
+
 
 if __name__ == "__main__":
     unittest.main()

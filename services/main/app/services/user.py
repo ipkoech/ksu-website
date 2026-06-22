@@ -12,7 +12,7 @@ from sqlalchemy.orm import selectinload
 from ksu_common import PaginatedResult
 
 from ..helpers.password import hash_password
-from ..models import Role, RolePermission, User, UserRole
+from ..models import Person, Role, RolePermission, User, UserRole
 from ..tasks.email import queue_account_created_email
 from ._base import apply_updates, ilike_any, paginate_query
 
@@ -23,7 +23,7 @@ class UserService:
     @staticmethod
     def _auth_load_options():
         return (
-            selectinload(User.person),
+            selectinload(User.person).selectinload(Person.assignments),
             selectinload(User.role_assignments)
             .selectinload(UserRole.role)
             .selectinload(Role.role_permissions)
