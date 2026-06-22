@@ -17,7 +17,7 @@ export default function ScholarshipsPage() {
         { name: "scholarship_type", label: "Scholarship Type", placeholder: "research" },
         { name: "funder_name", label: "Funder" },
         { name: "funder_logo_url", label: "Funder Logo URL", type: "url" },
-        { name: "endowment_fund_id", label: "Endowment Fund ID" },
+        { name: "endowment_fund_id", label: "Endowment Fund", type: "entity", relation: { adapter: "researchEndowment", filters: { is_active: true }, allowClear: true } },
         { name: "summary", label: "Summary", type: "textarea" },
         { name: "description", label: "Description", type: "textarea" },
         { name: "eligibility", label: "Eligibility", type: "textarea" },

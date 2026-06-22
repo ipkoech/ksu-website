@@ -770,6 +770,34 @@ export const researchGrantRelationshipAdapter: RelationshipAdapter<{ is_active?:
   },
 };
 
+export const researchEndowmentRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean; status?: string }> = {
+  key: "research-endowment",
+  entityType: "research_endowment",
+  label: "Endowment fund",
+  pluralLabel: "Endowment funds",
+  searchPlaceholder: "Search endowment funds",
+  emptyLabel: "No endowment funds found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await researchServiceApi.endowments.list({
+      page: 1,
+      per_page: limit,
+      search: search?.trim() || undefined,
+      is_active: filters?.is_active ?? undefined,
+      status: filters?.status || undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption);
+  },
+  async get(id, filters) {
+    const response = await researchServiceApi.endowments.list({
+      page: 1,
+      per_page: 100,
+      is_active: filters?.is_active ?? undefined,
+      status: filters?.status || undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
+  },
+};
+
 export const researchGrantApplicationRelationshipAdapter: RelationshipAdapter<{ status?: string }> = {
   key: "research-grant-application",
   entityType: "research_grant_application",
@@ -949,6 +977,7 @@ export const relationshipAdapters = {
   researchProgram: researchProgramRelationshipAdapter,
   researchProject: researchProjectRelationshipAdapter,
   researchGrant: researchGrantRelationshipAdapter,
+  researchEndowment: researchEndowmentRelationshipAdapter,
   researchGrantApplication: researchGrantApplicationRelationshipAdapter,
   researchMentorship: researchMentorshipRelationshipAdapter,
   researchScholarship: researchScholarshipRelationshipAdapter,
