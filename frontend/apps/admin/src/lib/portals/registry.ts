@@ -852,6 +852,83 @@ function contentResource<TRecord extends PortalRecord>({
   };
 }
 
+function administrationContentResource<TRecord extends PortalRecord>({
+  key,
+  title,
+  description,
+  api,
+  manageScopes,
+}: {
+  key: string;
+  title: string;
+  description: string;
+  api: {
+    listAdmin: (filters?: PortalPayload) => Promise<{ data?: TRecord[] }>;
+    create: (payload: PortalPayload) => Promise<unknown>;
+    update: (id: string, payload: PortalPayload) => Promise<unknown>;
+    delete: (id: string) => Promise<unknown>;
+    publish: (id: string) => Promise<unknown>;
+    unpublish: (id: string) => Promise<unknown>;
+  };
+  manageScopes: string[];
+}): PortalResourceConfig<TRecord, PortalPayload> {
+  return {
+    key,
+    title,
+    description,
+    backHref: "/institutional-administration",
+    queryKey: ["institutional-administration", key],
+    portalScope: {
+      typeField: "scope_type",
+      idField: "scope_id",
+      allowedScopeTypes: ["university", "division", "wing", "department"],
+    },
+    fields: [...contentFields(), ...scopeEntityFields("administration")],
+    listFilters: [
+      {
+        name: "status",
+        label: "Status",
+        type: "select",
+        options: contentStatusOptions,
+      },
+      ...scopeEntityFilters("administration"),
+      { name: "is_published", label: "Published", type: "boolean" },
+    ],
+    list: (filters) => api.listAdmin({ ...pageParams, ...filters }),
+    create: (payload) => api.create(payload),
+    update: (id, payload) => api.update(id, payload),
+    delete: (id) => api.delete(id),
+    getRecordWorkflowActions: (record) => [
+      {
+        label: record.is_published ? "Unpublish" : "Publish",
+        variant: record.is_published ? "outline" : undefined,
+        successMessage: record.is_published ? "Unpublished" : "Published",
+        payload: { is_published: !record.is_published },
+        run: record.is_published
+          ? (item) => api.unpublish(item.id)
+          : (item) => api.publish(item.id),
+        confirmTitle: record.is_published ? "Unpublish item?" : "Publish item?",
+        confirmDescription: record.is_published
+          ? `This removes "${titleOf(record)}" from public office pages.`
+          : `This publishes "${titleOf(record)}" to the selected office scope.`,
+      },
+    ],
+    getRecordTitle: titleOf,
+    getRecordMeta: (record) =>
+      metaOf(record, ["scope_type", "status", "is_published", "updated_at"]),
+    emptyMessage: `No ${title.toLowerCase()} records were returned.`,
+    buildPayload: (values) => ({
+      ...commonContentPayload(values),
+      ...normalizeScopePayload(values),
+      is_main: values.is_main ?? values.scope_type === "university",
+    }),
+    validate: validateScopeValues,
+    viewScopes: ["administration.view", "office.view", "content.view"],
+    manageScopes,
+    deleteScopes: ["content.publish", ...manageScopes],
+  };
+}
+
 const governanceResources: Record<string, PortalResourceConfig<any, any>> = {
   council: {
     key: "council",
@@ -1222,6 +1299,34 @@ const administrationResources: Record<string, PortalResourceConfig<any, any>> = 
     viewScopes: ["staff.view_assignments", "office.view", "administration.view"],
     manageScopes: ["staff.manage_assignments", "office.manage_staff", "administration.manage_staff"],
   },
+  news: administrationContentResource<News>({
+    key: "news",
+    title: "Office News",
+    description:
+      "Manage public news updates for VC, DVC, registrar, directorate, and administrative offices.",
+    api: newsApi,
+    manageScopes: ["office.manage_content", "administration.manage_content", "content.manage_news"],
+  }),
+  notices: administrationContentResource<Announcement>({
+    key: "notices",
+    title: "Office Notices",
+    description:
+      "Manage notices and announcements owned by administrative offices.",
+    api: announcementsApi,
+    manageScopes: [
+      "office.manage_content",
+      "administration.manage_content",
+      "content.manage_announcements",
+    ],
+  }),
+  events: administrationContentResource<Event>({
+    key: "events",
+    title: "Office Events",
+    description:
+      "Manage events, deadlines, and public calendars for administrative offices.",
+    api: eventsApi,
+    manageScopes: ["office.manage_content", "administration.manage_content", "content.manage_events"],
+  }),
   documents: {
     ...governanceResources.documents,
     title: "Office Documents & Media",
@@ -4458,6 +4563,24 @@ export const portalConfigs: Record<string, PortalConfig> = {
         scope: ["office.manage_staff", "staff.view_assignments"],
       },
       {
+        title: "Office News",
+        href: "/institutional-administration/news",
+        icon: Newspaper,
+        scope: ["office.manage_content", "content.manage_news"],
+      },
+      {
+        title: "Office Notices",
+        href: "/institutional-administration/notices",
+        icon: Megaphone,
+        scope: ["office.manage_content", "content.manage_announcements"],
+      },
+      {
+        title: "Office Events",
+        href: "/institutional-administration/events",
+        icon: CalendarDays,
+        scope: ["office.manage_content", "content.manage_events"],
+      },
+      {
         title: "Documents & Media",
         href: "/institutional-administration/documents",
         icon: ScrollText,
@@ -4506,6 +4629,33 @@ export const portalConfigs: Record<string, PortalConfig> = {
           ["staff.view_assignments"],
           ["institutional-administration", "staff"],
           () => staffApi.listAssignments({ entity_type: "division" }),
+        ),
+        stat(
+          "Office News",
+          "Scoped updates",
+          "/institutional-administration/news",
+          Newspaper,
+          ["office.view"],
+          ["institutional-administration", "news"],
+          () => newsApi.listAdmin({ ...countParams }),
+        ),
+        stat(
+          "Office Notices",
+          "Scoped announcements",
+          "/institutional-administration/notices",
+          Megaphone,
+          ["office.view"],
+          ["institutional-administration", "notices"],
+          () => announcementsApi.listAdmin({ ...countParams }),
+        ),
+        stat(
+          "Office Events",
+          "Scoped calendar",
+          "/institutional-administration/events",
+          CalendarDays,
+          ["office.view"],
+          ["institutional-administration", "events"],
+          () => eventsApi.listAdmin({ ...countParams }),
         ),
         stat(
           "Documents",
