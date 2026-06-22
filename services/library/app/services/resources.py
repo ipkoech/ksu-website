@@ -309,6 +309,7 @@ async def list_loans(
     db: AsyncSession,
     *,
     person_id: uuid.UUID | None = None,
+    library_id: uuid.UUID | None = None,
     resource_id: uuid.UUID | None = None,
     status: str | None = None,
     page: int = 1,
@@ -323,6 +324,11 @@ async def list_loans(
     )
     if person_id is not None:
         query = query.where(LibraryLoan.borrower_person_id == person_id)
+    if library_id is not None:
+        query = query.join(
+            LibraryResource,
+            LibraryResource.id == LibraryLoan.resource_id,
+        ).where(LibraryResource.library_id == library_id)
     if resource_id is not None:
         query = query.where(LibraryLoan.resource_id == resource_id)
     if status is not None:
@@ -416,6 +422,7 @@ async def list_reservations(
     db: AsyncSession,
     *,
     person_id: uuid.UUID | None = None,
+    library_id: uuid.UUID | None = None,
     resource_id: uuid.UUID | None = None,
     status: str | None = None,
     page: int = 1,
@@ -430,6 +437,11 @@ async def list_reservations(
     )
     if person_id is not None:
         query = query.where(LibraryResourceReservation.requester_person_id == person_id)
+    if library_id is not None:
+        query = query.join(
+            LibraryResource,
+            LibraryResource.id == LibraryResourceReservation.resource_id,
+        ).where(LibraryResource.library_id == library_id)
     if resource_id is not None:
         query = query.where(LibraryResourceReservation.resource_id == resource_id)
     if status is not None:

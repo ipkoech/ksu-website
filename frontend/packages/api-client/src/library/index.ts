@@ -574,7 +574,13 @@ export const libraryServiceApi = {
       libraryApi.delete<void>(`/api/v1/library/resources/${id}`),
   },
   loans: {
-    list: (params?: ListParams<{ resource_id?: string; status?: string }>) =>
+    list: (
+      params?: ListParams<{
+        library_id?: string;
+        resource_id?: string;
+        status?: string;
+      }>,
+    ) =>
       libraryApi.get<PaginatedResponse<LibraryLoan>>(
         "/api/v1/library/loans/",
         params,
@@ -595,7 +601,13 @@ export const libraryServiceApi = {
       ),
   },
   reservations: {
-    list: (params?: ListParams<{ resource_id?: string; status?: string }>) =>
+    list: (
+      params?: ListParams<{
+        library_id?: string;
+        resource_id?: string;
+        status?: string;
+      }>,
+    ) =>
       libraryApi.get<PaginatedResponse<LibraryReservation>>(
         "/api/v1/library/reservations/",
         params,

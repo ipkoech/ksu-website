@@ -3044,6 +3044,7 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
     description: "Manage circulation loan records and renewals.",
     backHref: "/library",
     queryKey: ["library-portal", "loans"],
+    portalScope: libraryBranchPortalScope,
     fields: [
       {
         name: "resource_id",
@@ -3078,6 +3079,12 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
     ],
     listFilters: [
       {
+        name: "library_id",
+        label: "Library Branch",
+        type: "entity",
+        relation: { adapter: "libraryBranch", filters: { active_only: false } },
+      },
+      {
         name: "resource_id",
         label: "Resource",
         type: "entity",
@@ -3094,8 +3101,15 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
         ],
       },
     ],
-    list: (filters) =>
-      libraryServiceApi.loans.list({ ...pageParams, ...filters }),
+    list: async (filters) => {
+      const libraryId = filters?.library_id || (await firstLibraryId());
+      if (!libraryId) return { data: [] };
+      return libraryServiceApi.loans.list({
+        ...pageParams,
+        ...filters,
+        library_id: String(libraryId),
+      });
+    },
     create: (payload) => libraryServiceApi.loans.create(payload as any),
     update: (id, payload) => libraryServiceApi.loans.update(id, payload as any),
     getRecordTitle: (record) => record.resource?.title ?? `Loan ${record.status ?? "record"}`,
@@ -3143,6 +3157,7 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
     description: "Manage resource reservation queue records.",
     backHref: "/library",
     queryKey: ["library-portal", "reservations"],
+    portalScope: libraryBranchPortalScope,
     fields: [
       {
         name: "resource_id",
@@ -3176,6 +3191,12 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
     ],
     listFilters: [
       {
+        name: "library_id",
+        label: "Library Branch",
+        type: "entity",
+        relation: { adapter: "libraryBranch", filters: { active_only: false } },
+      },
+      {
         name: "resource_id",
         label: "Resource",
         type: "entity",
@@ -3193,8 +3214,15 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
         ],
       },
     ],
-    list: (filters) =>
-      libraryServiceApi.reservations.list({ ...pageParams, ...filters }),
+    list: async (filters) => {
+      const libraryId = filters?.library_id || (await firstLibraryId());
+      if (!libraryId) return { data: [] };
+      return libraryServiceApi.reservations.list({
+        ...pageParams,
+        ...filters,
+        library_id: String(libraryId),
+      });
+    },
     create: (payload) => libraryServiceApi.reservations.create(payload as any),
     update: (id, payload) =>
       libraryServiceApi.reservations.update(id, payload as any),

@@ -149,19 +149,23 @@ loans_router = APIRouter(prefix="/library/loans", tags=["Library Loans"])
 
 @loans_router.get("/")
 @cache_response(
-    timeout=60, vary_on=("resource_id", "status", "page", "per_page", "include_total")
+    timeout=60,
+    vary_on=("library_id", "resource_id", "status", "page", "per_page", "include_total"),
 )
 async def list_loans(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[TokenPayload, Depends(requires_scope("library:read"))],
+    library_id: Optional[uuid.UUID] = Query(None),
     resource_id: Optional[uuid.UUID] = Query(None),
     status: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    if resource_id is not None:
+    if library_id is not None:
+        require_library_scope(user, "library:read", library_id)
+    elif resource_id is not None:
         library_id = await svc.get_resource_library_id(db, resource_id)
         require_library_scope(user, "library:read", library_id)
     elif has_scope(user.roles, "library:write"):
@@ -172,6 +176,7 @@ async def list_loans(
     result = await svc.list_loans(
         db,
         person_id=person_id,
+        library_id=library_id,
         resource_id=resource_id,
         status=status,
         page=page,
@@ -260,19 +265,23 @@ reservations_router = APIRouter(
 
 @reservations_router.get("/")
 @cache_response(
-    timeout=60, vary_on=("resource_id", "status", "page", "per_page", "include_total")
+    timeout=60,
+    vary_on=("library_id", "resource_id", "status", "page", "per_page", "include_total"),
 )
 async def list_reservations(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[TokenPayload, Depends(requires_scope("library:read"))],
+    library_id: Optional[uuid.UUID] = Query(None),
     resource_id: Optional[uuid.UUID] = Query(None),
     status: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    if resource_id is not None:
+    if library_id is not None:
+        require_library_scope(user, "library:read", library_id)
+    elif resource_id is not None:
         library_id = await svc.get_resource_library_id(db, resource_id)
         require_library_scope(user, "library:read", library_id)
     elif has_scope(user.roles, "library:write"):
@@ -283,6 +292,7 @@ async def list_reservations(
     result = await svc.list_reservations(
         db,
         person_id=person_id,
+        library_id=library_id,
         resource_id=resource_id,
         status=status,
         page=page,
