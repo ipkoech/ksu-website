@@ -28,6 +28,7 @@ import {
   RichTextEditor,
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -416,13 +417,13 @@ export default function BoardEditorPage() {
         return (
           <div className="flex justify-end gap-1">
             <Button type="button" variant="ghost" size="icon" onClick={() => setAssignmentEditor({ mode: "edit", assignment })} aria-label="Edit assignment">
-              <Pencil className="h-4 w-4" />
+              <Pencil data-icon="inline-start" />
             </Button>
             <Button type="button" variant="ghost" size="icon" onClick={() => setAssignmentEditor({ mode: "reassign", assignment })} aria-label="Reassign">
-              <RotateCcw className="h-4 w-4" />
+              <RotateCcw data-icon="inline-start" />
             </Button>
             <Button type="button" variant="ghost" size="icon" onClick={() => setEndingAssignment(assignment)} aria-label="End assignment">
-              <Trash2 className="h-4 w-4" />
+              <Trash2 data-icon="inline-start" />
             </Button>
           </div>
         );
@@ -495,7 +496,7 @@ export default function BoardEditorPage() {
         actions={
           !isNew && board && canManageGovernance ? (
             <Button type="button" variant="outline" onClick={() => setAssignmentEditor({ mode: "create", assignment: null })}>
-              <Users className="h-4 w-4" />
+              <Users data-icon="inline-start" />
               Attach Member
             </Button>
           ) : undefined
@@ -524,14 +525,16 @@ export default function BoardEditorPage() {
                       <Select value={field.value} onValueChange={field.onChange}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Select board type" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          <SelectItem value="council">Council</SelectItem>
-                          <SelectItem value="senate">Senate</SelectItem>
-                          <SelectItem value="management_board">Management Board</SelectItem>
-                          <SelectItem value="school_board">School Board</SelectItem>
-                          <SelectItem value="department_board">Department Board</SelectItem>
-                          <SelectItem value="board">Board</SelectItem>
-                          <SelectItem value="committee">Committee</SelectItem>
-                          <SelectItem value="taskforce">Taskforce</SelectItem>
+                          <SelectGroup>
+                            <SelectItem value="council">Council</SelectItem>
+                            <SelectItem value="senate">Senate</SelectItem>
+                            <SelectItem value="management_board">Management Board</SelectItem>
+                            <SelectItem value="school_board">School Board</SelectItem>
+                            <SelectItem value="department_board">Department Board</SelectItem>
+                            <SelectItem value="board">Board</SelectItem>
+                            <SelectItem value="committee">Committee</SelectItem>
+                            <SelectItem value="taskforce">Taskforce</SelectItem>
+                          </SelectGroup>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -543,9 +546,11 @@ export default function BoardEditorPage() {
                       <Select value={field.value} onValueChange={field.onChange}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="inactive">Inactive</SelectItem>
-                          <SelectItem value="dissolved">Dissolved</SelectItem>
+                          <SelectGroup>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="inactive">Inactive</SelectItem>
+                            <SelectItem value="dissolved">Dissolved</SelectItem>
+                          </SelectGroup>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -632,7 +637,7 @@ export default function BoardEditorPage() {
                     </div>
                     {canManageGovernance ? (
                       <Button type="button" variant="outline" onClick={() => setAssignmentEditor({ mode: "create", assignment: null })}>
-                        <Users className="h-4 w-4" />
+                        <Users data-icon="inline-start" />
                         Attach Member
                       </Button>
                     ) : null}
