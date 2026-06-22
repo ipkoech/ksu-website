@@ -11,6 +11,7 @@ import { Button, Badge } from "@ksu/ui/components";
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
@@ -85,25 +86,29 @@ const getProgrammeColumns = ({
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
+                        <Button variant="ghost" size="icon-sm">
                             <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
+                            <MoreHorizontal data-icon />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => window.location.href = `/academic/programmes/_static?id=${encodeURIComponent(prog.id)}`}>
-                            Edit
-                        </DropdownMenuItem>
+                        <DropdownMenuGroup>
+                            <DropdownMenuItem onClick={() => window.location.href = `/academic/programmes/_static?id=${encodeURIComponent(prog.id)}`}>
+                                Edit
+                            </DropdownMenuItem>
+                        </DropdownMenuGroup>
                         {canDelete && (
                             <>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                    className="text-destructive" 
-                                    onClick={() => onDelete(prog.id)}
-                                >
-                                    Delete
-                                </DropdownMenuItem>
+                                <DropdownMenuGroup>
+                                    <DropdownMenuItem
+                                        className="text-destructive"
+                                        onClick={() => onDelete(prog.id)}
+                                    >
+                                        Delete
+                                    </DropdownMenuItem>
+                                </DropdownMenuGroup>
                             </>
                         )}
                     </DropdownMenuContent>
@@ -138,7 +143,7 @@ export default function ProgrammesPage() {
                 actions={canCreate("academic") ? (
                     <Button variant="outline" asChild>
                         <Link href="/imports/programmes">
-                            <Upload className="h-4 w-4 mr-2" />
+                            <Upload data-icon="inline-start" />
                             Import
                         </Link>
                     </Button>
