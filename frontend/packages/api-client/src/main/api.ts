@@ -821,6 +821,16 @@ export const documentsApi = {
     }>,
   ) => mainApi.get<PaginatedResponse<Document>>("/api/v1/documents", params),
 
+  listAdmin: (
+    params?: ListParams<{
+      q?: string;
+      document_type?: string;
+      category?: string;
+      scope_type?: string;
+      scope_id?: string;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Document>>("/api/v1/documents/admin", params),
+
   getBySlug: (slug: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Document }>(`/api/v1/documents/${slug}`, params),
 

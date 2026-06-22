@@ -828,6 +828,11 @@ const administrationResources: Record<string, PortalResourceConfig<any, any>> = 
       "Manage public documents, service charters, policy files, and office media for administrative units.",
     backHref: "/institutional-administration",
     queryKey: ["institutional-administration", "documents"],
+    list: (filters) =>
+      documentsApi.listAdmin({
+        ...pageParams,
+        ...filters,
+      }),
     viewScopes: ["administration.view", "office.view", "policy.view"],
     manageScopes: ["office.manage_content", "administration.manage_content", "policy.manage"],
   },
@@ -3384,7 +3389,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
           ScrollText,
           ["office.view"],
           ["institutional-administration", "documents"],
-          () => documentsApi.list({ ...countParams, scope_type: "office" }),
+          () => documentsApi.listAdmin({ ...countParams }),
         ),
       ],
       administrationResources,
