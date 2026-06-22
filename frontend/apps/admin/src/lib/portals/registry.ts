@@ -354,6 +354,15 @@ function metaOf(record: PortalRecord, keys: string[]) {
     .join(" · ");
 }
 
+function libraryLabelOf(record: PortalRecord) {
+  const library = record.library as
+    | { name?: string | null; short_name?: string | null }
+    | null
+    | undefined;
+  if (!library?.name) return null;
+  return [library.name, library.short_name].filter(Boolean).join(" - ");
+}
+
 function formatDateTime(value: unknown) {
   if (!value) return "";
   const date = new Date(String(value));
@@ -2946,8 +2955,8 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
         label: "Status",
         type: "select",
         options: [
-          { label: "New", value: "new" },
           { label: "Open", value: "open" },
+          { label: "In Progress", value: "in_progress" },
           { label: "Replied", value: "replied" },
           { label: "Closed", value: "closed" },
         ],
@@ -2977,6 +2986,16 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
         confirmDescription: `This closes "${titleOf(record)}" in the library inquiry queue.`,
       },
     ],
+    getRecordTitle: (record) => record.subject ?? "Library inquiry",
+    getRecordMeta: (record) =>
+      [
+        record.sender_name,
+        record.sender_email,
+        libraryLabelOf(record),
+        record.status,
+      ]
+        .filter(Boolean)
+        .join(" · "),
   } as PortalResourceConfig<LibraryInquiry, LibraryGenericPayload>,
   tickets: libraryGenericResource(
     "tickets",

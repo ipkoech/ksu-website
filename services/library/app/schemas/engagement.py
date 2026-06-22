@@ -8,6 +8,8 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
+from .library import LibraryOut
+
 
 # ── LibraryInquiry (Ask Librarian) ────────────────────────────────────────────
 
@@ -44,6 +46,7 @@ class LibraryInquiryOut(BaseModel):
 
     id: uuid.UUID
     library_id: Optional[uuid.UUID] = None
+    library: Optional[LibraryOut] = None
     sender_name: str
     sender_email: str
     sender_phone: Optional[str] = None

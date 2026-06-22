@@ -23,11 +23,14 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Label,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Skeleton,
+  Textarea,
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
 import { PageHeader } from "@/components/layout";
@@ -47,7 +50,9 @@ export default function LibraryInquiriesPage() {
     hasScope("library.manage_regulations") ||
     hasScope("library:write");
   const [statusFilter, setStatusFilter] = useState("open");
-  const [selectedInquiryId, setSelectedInquiryId] = useState<string | null>(null);
+  const [selectedInquiryId, setSelectedInquiryId] = useState<string | null>(
+    null,
+  );
   const [replyMessage, setReplyMessage] = useState("");
 
   const inquiriesQuery = useQuery({
@@ -59,28 +64,11 @@ export default function LibraryInquiriesPage() {
         per_page: 100,
       }),
   });
-  const branchesQuery = useQuery({
-    queryKey: ["library", "branches", "inquiry-labels"],
-    queryFn: () =>
-      libraryServiceApi.branches.list({
-        active_only: false,
-        page: 1,
-        per_page: 100,
-        fields: "id,name,short_name,slug,library_type,is_active",
-      }),
-  });
 
   const inquiries = useMemo(
     () => inquiriesQuery.data?.data ?? [],
     [inquiriesQuery.data],
   );
-  const branchById = useMemo(() => {
-    const labels = new Map<string, string>();
-    for (const branch of branchesQuery.data?.data ?? []) {
-      labels.set(branch.id, [branch.name, branch.short_name].filter(Boolean).join(" - "));
-    }
-    return labels;
-  }, [branchesQuery.data]);
   const selectedInquiry = useMemo(
     () =>
       inquiries.find((inquiry) => inquiry.id === selectedInquiryId) ??
@@ -142,7 +130,11 @@ export default function LibraryInquiriesPage() {
             icon={Mail}
           />
           <MetricCard title="Open" value={stats.open} icon={Clock3} />
-          <MetricCard title="Replied" value={stats.replied} icon={CheckCircle2} />
+          <MetricCard
+            title="Replied"
+            value={stats.replied}
+            icon={CheckCircle2}
+          />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(420px,1.05fr)]">
@@ -242,11 +234,7 @@ export default function LibraryInquiriesPage() {
                     <Meta label="Phone" value={selectedInquiry.sender_phone} />
                     <Meta
                       label="Library"
-                      value={
-                        selectedInquiry.library_id
-                          ? branchById.get(selectedInquiry.library_id) ?? "Branch not found"
-                          : "Not assigned"
-                      }
+                      value={formatLibraryLabel(selectedInquiry.library)}
                     />
                   </dl>
 
@@ -272,10 +260,8 @@ export default function LibraryInquiriesPage() {
                   ) : null}
 
                   <div className="grid gap-4 rounded-lg border bg-background p-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium" htmlFor="inquiry-status">
-                        Status
-                      </label>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="inquiry-status">Status</Label>
                       <Select
                         value={selectedInquiry.status}
                         disabled={!canManage || updateStatus.isPending}
@@ -299,17 +285,17 @@ export default function LibraryInquiriesPage() {
                       </Select>
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium" htmlFor="reply-message">
-                        Reply note
-                      </label>
-                      <textarea
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="reply-message">Reply note</Label>
+                      <Textarea
                         id="reply-message"
                         value={replyMessage}
-                        onChange={(event) => setReplyMessage(event.target.value)}
+                        onChange={(event) =>
+                          setReplyMessage(event.target.value)
+                        }
                         disabled={!canManage || reply.isPending}
                         rows={6}
-                        className="min-h-36 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="min-h-36"
                         placeholder="Record the response sent to this requester."
                       />
                     </div>
@@ -323,7 +309,11 @@ export default function LibraryInquiriesPage() {
 
                     <Button
                       type="button"
-                      disabled={!canManage || reply.isPending || replyMessage.trim().length < 2}
+                      disabled={
+                        !canManage ||
+                        reply.isPending ||
+                        replyMessage.trim().length < 2
+                      }
                       onClick={() =>
                         reply.mutate({
                           id: selectedInquiry.id,
@@ -332,7 +322,7 @@ export default function LibraryInquiriesPage() {
                       }
                       className="w-fit"
                     >
-                      <MessageSquareReply className="mr-2 h-4 w-4" />
+                      <MessageSquareReply data-icon="inline-start" />
                       {reply.isPending ? "Saving reply..." : "Save reply"}
                     </Button>
                   </div>
@@ -365,7 +355,7 @@ function MetricCard({
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
         </CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <Icon className="text-muted-foreground" />
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
@@ -385,13 +375,7 @@ function StatusBadge({ status }: { status: string }) {
   return <Badge variant={variant}>{status.replace(/_/g, " ")}</Badge>;
 }
 
-function Meta({
-  label,
-  value,
-}: {
-  label: string;
-  value?: string | null;
-}) {
+function Meta({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
     <div>
@@ -403,12 +387,19 @@ function Meta({
 
 function LoadingRows() {
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       {[1, 2, 3].map((item) => (
-        <div key={item} className="h-24 animate-pulse rounded-lg bg-muted" />
+        <Skeleton key={item} className="h-24 rounded-lg" />
       ))}
     </div>
   );
+}
+
+function formatLibraryLabel(
+  library?: { name?: string | null; short_name?: string | null } | null,
+) {
+  if (!library?.name) return "Not assigned";
+  return [library.name, library.short_name].filter(Boolean).join(" - ");
 }
 
 function formatDate(value?: string | null) {

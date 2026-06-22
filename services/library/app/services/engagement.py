@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from ksu_common.pagination import PaginatedResult, paginate
 
@@ -23,6 +24,8 @@ from ..schemas import (
     SupportTicketOut,
     SupportTicketUpdate,
 )
+
+_INQUIRY_DETAIL_OPTIONS = (selectinload(LibraryInquiry.library),)
 
 
 # ── LibraryInquiry (Ask Librarian) ────────────────────────────────────────────
@@ -45,7 +48,7 @@ async def submit_inquiry(
     )
     db.add(inquiry)
     await db.commit()
-    await db.refresh(inquiry)
+    await db.refresh(inquiry, attribute_names=["library"])
     return LibraryInquiryOut.model_validate(inquiry)
 
 
@@ -59,7 +62,11 @@ async def list_inquiries(
     include_total: bool = True,
 ) -> PaginatedResult:
     """List library inquiries with filtering."""
-    query = LibraryInquiry.active_query().order_by(LibraryInquiry.created_at.desc())
+    query = (
+        LibraryInquiry.active_query()
+        .options(*_INQUIRY_DETAIL_OPTIONS)
+        .order_by(LibraryInquiry.created_at.desc())
+    )
     if library_id is not None:
         query = query.where(LibraryInquiry.library_id == library_id)
     if status is not None:
@@ -77,9 +84,15 @@ async def list_inquiries(
 
 async def get_inquiry(db: AsyncSession, inquiry_id: uuid.UUID) -> LibraryInquiry:
     """Get library inquiry entity by ID."""
-    return await LibraryInquiry.get_or_raise(
-        db, inquiry_id, error_message="Inquiry not found"
+    result = await db.execute(
+        LibraryInquiry.active_query()
+        .options(*_INQUIRY_DETAIL_OPTIONS)
+        .where(LibraryInquiry.id == inquiry_id)
     )
+    inquiry = result.scalar_one_or_none()
+    if inquiry is None:
+        raise ValueError("Inquiry not found")
+    return inquiry
 
 
 async def reply_to_inquiry(
@@ -96,7 +109,7 @@ async def reply_to_inquiry(
     inquiry.reply_message = data.reply_message
     inquiry.replied_by_person_id = replied_by_person_id
     await db.commit()
-    await db.refresh(inquiry)
+    await db.refresh(inquiry, attribute_names=["library"])
     return LibraryInquiryOut.model_validate(inquiry)
 
 
@@ -108,7 +121,7 @@ async def update_inquiry_status(
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(inquiry, field, value)
     await db.commit()
-    await db.refresh(inquiry)
+    await db.refresh(inquiry, attribute_names=["library"])
     return LibraryInquiryOut.model_validate(inquiry)
 
 

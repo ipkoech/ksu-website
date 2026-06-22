@@ -185,6 +185,7 @@ export interface LibraryRegulation {
 export interface LibraryInquiry {
   id: string;
   library_id?: string | null;
+  library?: LibraryBranch | null;
   sender_name: string;
   sender_email: string;
   sender_phone?: string | null;

@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
 
+from app.schemas.engagement import LibraryInquiryOut
 from app.schemas.resources import LibraryLoanOut, LibraryReservationOut
 
 
@@ -30,7 +31,40 @@ def resource_payload():
     }
 
 
+def library_payload():
+    return {
+        "id": LIBRARY_ID,
+        "name": "Main Library",
+        "short_name": "ML",
+        "slug": "main-library",
+        "library_type": "main",
+        "is_active": True,
+        "is_public": True,
+        "sort_order": 0,
+        "created_at": NOW,
+        "updated_at": NOW,
+    }
+
+
 class ResourceRelationshipSchemaTests(unittest.TestCase):
+    def test_inquiry_response_includes_library_summary(self):
+        inquiry = LibraryInquiryOut.model_validate(
+            {
+                "id": uuid.UUID("00000000-0000-4000-8000-000000000006"),
+                "library_id": LIBRARY_ID,
+                "library": library_payload(),
+                "sender_name": "Amina Otieno",
+                "sender_email": "amina@example.com",
+                "subject": "Borrowing hours",
+                "message": "When does the branch close?",
+                "status": "open",
+                "created_at": NOW,
+                "updated_at": NOW,
+            }
+        )
+
+        self.assertEqual(inquiry.library.name, "Main Library")
+
     def test_loan_response_includes_resource_summary(self):
         loan = LibraryLoanOut.model_validate(
             {
