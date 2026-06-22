@@ -10,7 +10,7 @@ import { PageTransition } from "@/lib/animations";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal, Calendar, Clock, FilterX, Upload } from "lucide-react";
 import { AcademicCalendarPicker } from "@/components/relationships";
-import { Button, Badge, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ksu/ui/components";
+import { Button, Badge, Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@ksu/ui/components";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -90,9 +90,9 @@ const getIntakeColumns = ({
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
+                        <Button variant="ghost" size="icon-sm">
                             <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
+                            <MoreHorizontal data-icon />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -154,7 +154,7 @@ export default function IntakesPage() {
                 actions={canCreate("admissions") || canCreate("academic") ? (
                     <Button variant="outline" asChild>
                         <Link href="/imports/intakes">
-                            <Upload className="h-4 w-4 mr-2" />
+                            <Upload data-icon="inline-start" />
                             Import
                         </Link>
                     </Button>
@@ -185,9 +185,11 @@ export default function IntakesPage() {
                                     <SelectValue placeholder="All statuses" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All statuses</SelectItem>
-                                    <SelectItem value="open">Open</SelectItem>
-                                    <SelectItem value="closed">Closed</SelectItem>
+                                    <SelectGroup>
+                                        <SelectItem value="all">All statuses</SelectItem>
+                                        <SelectItem value="open">Open</SelectItem>
+                                        <SelectItem value="closed">Closed</SelectItem>
+                                    </SelectGroup>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -201,7 +203,7 @@ export default function IntakesPage() {
                                 setSearch("");
                             }}
                         >
-                            <FilterX className="h-4 w-4" />
+                            <FilterX data-icon="inline-start" />
                             Clear
                         </Button>
                     </div>

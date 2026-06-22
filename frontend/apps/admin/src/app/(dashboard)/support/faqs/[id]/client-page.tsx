@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
 import { PageHeader } from "@/components/shared/page-header";
-import { Button, Input, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Switch, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Card, CardContent, CardHeader, CardTitle, RichTextEditor, richTextToPlainText } from "@ksu/ui/components";
+import { Button, Input, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Switch, Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue, Card, CardContent, CardHeader, CardTitle, RichTextEditor, richTextToPlainText } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
 import { faqsApi, queryKeys } from "@ksu/api-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -214,14 +214,16 @@ export default function FAQFormPage() {
                                         <FormItem className="w-full">
                                             <FormLabel>Status</FormLabel>
                                             <FormControl>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <Select onValueChange={field.onChange} value={field.value}>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select status" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        <SelectItem value="draft">Draft</SelectItem>
-                                                        <SelectItem value="published">Published</SelectItem>
-                                                        <SelectItem value="archived">Archived</SelectItem>
+                                                        <SelectGroup>
+                                                            <SelectItem value="draft">Draft</SelectItem>
+                                                            <SelectItem value="published">Published</SelectItem>
+                                                            <SelectItem value="archived">Archived</SelectItem>
+                                                        </SelectGroup>
                                                     </SelectContent>
                                                 </Select>
                                             </FormControl>
