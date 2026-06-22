@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
 
-from app.schemas.engagement import LibraryInquiryOut
+from app.schemas.engagement import LibraryInquiryOut, SupportTicketOut
 from app.schemas.resources import LibraryLoanOut, LibraryReservationOut
 
 
@@ -64,6 +64,32 @@ class ResourceRelationshipSchemaTests(unittest.TestCase):
         )
 
         self.assertEqual(inquiry.library.name, "Main Library")
+
+    def test_support_ticket_response_includes_target_summary(self):
+        ticket = SupportTicketOut.model_validate(
+            {
+                "id": uuid.UUID("00000000-0000-4000-8000-000000000007"),
+                "requester_name": "Amina Otieno",
+                "requester_email": "amina@example.com",
+                "subject": "Database access",
+                "description": "Unable to access an e-resource.",
+                "target_entity_type": "electronic_resource",
+                "target_entity_id": RESOURCE_ID,
+                "target": {
+                    "id": RESOURCE_ID,
+                    "type": "electronic_resource",
+                    "label": "EBSCOhost",
+                    "description": "EBSCO · database · all",
+                },
+                "status": "open",
+                "priority": "medium",
+                "category": "access_issue",
+                "created_at": NOW,
+                "updated_at": NOW,
+            }
+        )
+
+        self.assertEqual(ticket.target.label, "EBSCOhost")
 
     def test_loan_response_includes_resource_summary(self):
         loan = LibraryLoanOut.model_validate(

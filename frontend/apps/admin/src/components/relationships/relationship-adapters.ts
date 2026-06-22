@@ -19,6 +19,7 @@ import {
   type Division,
   type Intake,
   type LibraryBranch,
+  type LibraryElectronicResource,
   type LibraryResource,
   type Media,
   type MediaFolder,
@@ -223,6 +224,15 @@ function libraryResourceOption(resource: LibraryResource): RelationshipOption {
     id: resource.id,
     label: resource.title,
     description: joinDescription([resource.authors, resource.resource_type, resource.status, resource.available_copies !== undefined ? `${resource.available_copies} available` : undefined]),
+    raw: resource,
+  };
+}
+
+function libraryElectronicResourceOption(resource: LibraryElectronicResource): RelationshipOption {
+  return {
+    id: resource.id,
+    label: resource.name,
+    description: joinDescription([resource.provider, resource.resource_type, resource.access_level, resource.is_active === false ? "Inactive" : undefined]),
     raw: resource,
   };
 }
@@ -632,6 +642,34 @@ export const libraryResourceRelationshipAdapter: RelationshipAdapter<{ library_i
   },
 };
 
+export const libraryElectronicResourceRelationshipAdapter: RelationshipAdapter<{ library_id?: string; resource_type?: string; access_level?: string; is_active?: boolean }> = {
+  key: "library-electronic-resource",
+  entityType: "library_electronic_resource",
+  label: "Electronic resource",
+  pluralLabel: "Electronic resources",
+  searchPlaceholder: "Search e-resources by name, provider, or subject",
+  emptyLabel: "No electronic resources found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await libraryServiceApi.databases.list({
+      page: 1,
+      per_page: limit,
+      search: search?.trim() || undefined,
+      library_id: filters?.library_id || undefined,
+      resource_type: filters?.resource_type || undefined,
+      access_level: filters?.access_level || undefined,
+      is_active: filters?.is_active ?? undefined,
+      fields: "id,name,provider,resource_type,access_level,is_active",
+    });
+    return (response.data ?? []).map(libraryElectronicResourceOption);
+  },
+  async get(id) {
+    const response = await libraryServiceApi.databases.get(id, {
+      fields: "id,name,provider,resource_type,access_level,is_active",
+    });
+    return response.data ? libraryElectronicResourceOption(response.data) : null;
+  },
+};
+
 export const researchDonorRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean }> = {
   key: "research-donor",
   entityType: "research_donor",
@@ -998,6 +1036,7 @@ export const relationshipAdapters = {
   staffEntity: staffEntityRelationshipAdapter,
   libraryBranch: libraryBranchRelationshipAdapter,
   libraryResource: libraryResourceRelationshipAdapter,
+  libraryElectronicResource: libraryElectronicResourceRelationshipAdapter,
   researchDonor: researchDonorRelationshipAdapter,
   researchCenter: researchCenterRelationshipAdapter,
   researchProgram: researchProgramRelationshipAdapter,

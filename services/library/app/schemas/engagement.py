@@ -117,6 +117,13 @@ class SupportTicketUpdate(BaseModel):
         return v
 
 
+class SupportTicketTargetSummary(BaseModel):
+    id: uuid.UUID
+    type: str
+    label: str
+    description: Optional[str] = None
+
+
 class SupportTicketOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -128,6 +135,7 @@ class SupportTicketOut(BaseModel):
     description: str
     target_entity_type: Optional[str] = None
     target_entity_id: Optional[uuid.UUID] = None
+    target: Optional[SupportTicketTargetSummary] = None
     status: str
     priority: str
     category: str

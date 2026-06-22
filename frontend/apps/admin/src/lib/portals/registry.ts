@@ -67,6 +67,7 @@ import {
   type LibraryResource,
   type LibraryResourcePayload,
   type LibraryStaff,
+  type LibrarySupportTicket,
   type Media,
   type MediaFolder,
   type News,
@@ -2997,13 +2998,110 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
         .filter(Boolean)
         .join(" · "),
   } as PortalResourceConfig<LibraryInquiry, LibraryGenericPayload>,
-  tickets: libraryGenericResource(
-    "tickets",
-    "Support Tickets",
-    "Manage library support tickets.",
-    libraryServiceApi.tickets,
-    ["library.manage_services"],
-  ),
+  tickets: {
+    ...libraryGenericResource(
+      "tickets",
+      "Support Tickets",
+      "Manage library support tickets.",
+      libraryServiceApi.tickets,
+      ["library.manage_services"],
+    ),
+    fields: [
+      { name: "requester_name", label: "Requester Name" },
+      { name: "requester_email", label: "Requester Email", type: "email" },
+      { name: "subject", label: "Subject", required: true },
+      { name: "description", label: "Description", type: "textarea", required: true },
+      {
+        name: "category",
+        label: "Category",
+        type: "select",
+        options: [
+          { label: "Library Service", value: "library_service" },
+          { label: "Access Issue", value: "access_issue" },
+          { label: "Resource Request", value: "resource_request" },
+          { label: "Complaint", value: "complaint" },
+          { label: "Other", value: "other" },
+        ],
+      },
+      {
+        name: "priority",
+        label: "Priority",
+        type: "select",
+        options: [
+          { label: "Low", value: "low" },
+          { label: "Medium", value: "medium" },
+          { label: "High", value: "high" },
+          { label: "Critical", value: "critical" },
+        ],
+      },
+      {
+        name: "status",
+        label: "Status",
+        type: "select",
+        options: [
+          { label: "Open", value: "open" },
+          { label: "In Progress", value: "in_progress" },
+          { label: "Resolved", value: "resolved" },
+          { label: "Closed", value: "closed" },
+          { label: "Rejected", value: "rejected" },
+        ],
+      },
+      {
+        name: "target_entity",
+        label: "Related Library Record",
+        type: "entity-record",
+        entityRecord: {
+          typeName: "target_entity_type",
+          idName: "target_entity_id",
+          typePlaceholder: "Select record type",
+          recordPlaceholder: "Select related record",
+          configs: [
+            { value: "library", label: "Library branch", adapter: "libraryBranch", filters: { active_only: false } },
+            { value: "electronic_resource", label: "Electronic resource", adapter: "libraryElectronicResource" },
+            { value: "library_resource", label: "Catalog resource", adapter: "libraryResource" },
+          ],
+        },
+      },
+      {
+        name: "assigned_to_person_id",
+        label: "Assigned Staff",
+        type: "entity",
+        relation: { adapter: "person", filters: { status: "active" }, allowClear: true },
+      },
+      { name: "resolved_at", label: "Resolved At", type: "datetime-local" },
+      { name: "resolution_notes", label: "Resolution Notes", type: "textarea" },
+    ],
+    getRecordTitle: (record) => record.subject ?? "Support ticket",
+    getRecordMeta: (record) =>
+      [
+        record.requester_name ?? record.requester_email,
+        (record.target as { label?: string } | undefined)?.label,
+        record.category,
+        record.priority,
+        record.status,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    buildPayload: (values, editingRecord) =>
+      editingRecord
+        ? {
+            status: values.status,
+            priority: values.priority,
+            assigned_to_person_id: values.assigned_to_person_id || undefined,
+            resolved_at: values.resolved_at || undefined,
+            resolution_notes: normalizeText(values.resolution_notes),
+          }
+        : {
+            requester_name: normalizeText(values.requester_name),
+            requester_email: normalizeText(values.requester_email),
+            subject: normalizeText(values.subject),
+            description: normalizeText(values.description),
+            category: values.category || "other",
+            priority: values.priority || "medium",
+            target_entity_type: values.target_entity_type || undefined,
+            target_entity_id: values.target_entity_id || undefined,
+          },
+  } as PortalResourceConfig<LibrarySupportTicket, LibraryGenericPayload>,
   statistics: {
     ...libraryGenericResource(
       "statistics",

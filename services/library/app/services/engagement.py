@@ -6,12 +6,21 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
+import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ksu_common.pagination import PaginatedResult, paginate
 
-from ..models import LibraryInquiry, LibraryRegulation, SupportTicket
+from ..models import (
+    ElectronicResource,
+    Library,
+    LibraryInquiry,
+    LibraryLoan,
+    LibraryRegulation,
+    LibraryResource,
+    SupportTicket,
+)
 from ..schemas import (
     LibraryInquiryCreate,
     LibraryInquiryOut,
@@ -22,10 +31,118 @@ from ..schemas import (
     LibraryRegulationUpdate,
     SupportTicketCreate,
     SupportTicketOut,
+    SupportTicketTargetSummary,
     SupportTicketUpdate,
 )
 
 _INQUIRY_DETAIL_OPTIONS = (selectinload(LibraryInquiry.library),)
+
+
+def _join_summary(parts: list[object | None]) -> str | None:
+    values = [str(part) for part in parts if part not in (None, "")]
+    return " · ".join(values) if values else None
+
+
+async def _populate_ticket_targets(
+    db: AsyncSession, tickets: list[SupportTicket]
+) -> None:
+    """Attach display summaries for same-service support ticket targets."""
+    ids_by_type: dict[str, set[uuid.UUID]] = {
+        "library": set(),
+        "electronic_resource": set(),
+        "library_resource": set(),
+        "resource": set(),
+        "loan": set(),
+    }
+    for ticket in tickets:
+        if ticket.target_entity_type in ids_by_type and ticket.target_entity_id:
+            ids_by_type[ticket.target_entity_type].add(ticket.target_entity_id)
+
+    library_targets: dict[uuid.UUID, SupportTicketTargetSummary] = {}
+    if ids_by_type["library"]:
+        result = await db.execute(
+            sa.select(Library).where(Library.id.in_(ids_by_type["library"]))
+        )
+        library_targets = {
+            item.id: SupportTicketTargetSummary(
+                id=item.id,
+                type="library",
+                label=item.name,
+                description=_join_summary([item.short_name, item.library_type]),
+            )
+            for item in result.scalars()
+        }
+
+    electronic_targets: dict[uuid.UUID, SupportTicketTargetSummary] = {}
+    if ids_by_type["electronic_resource"]:
+        result = await db.execute(
+            sa.select(ElectronicResource).where(
+                ElectronicResource.id.in_(ids_by_type["electronic_resource"])
+            )
+        )
+        electronic_targets = {
+            item.id: SupportTicketTargetSummary(
+                id=item.id,
+                type="electronic_resource",
+                label=item.name,
+                description=_join_summary(
+                    [item.provider, item.resource_type, item.access_level]
+                ),
+            )
+            for item in result.scalars()
+        }
+
+    resource_ids = ids_by_type["library_resource"] | ids_by_type["resource"]
+    resource_targets: dict[uuid.UUID, SupportTicketTargetSummary] = {}
+    if resource_ids:
+        result = await db.execute(
+            sa.select(LibraryResource).where(LibraryResource.id.in_(resource_ids))
+        )
+        resource_targets = {
+            item.id: SupportTicketTargetSummary(
+                id=item.id,
+                type="library_resource",
+                label=item.title,
+                description=_join_summary([item.authors, item.resource_type, item.status]),
+            )
+            for item in result.scalars()
+        }
+
+    loan_targets: dict[uuid.UUID, SupportTicketTargetSummary] = {}
+    if ids_by_type["loan"]:
+        result = await db.execute(
+            sa.select(LibraryLoan)
+            .options(selectinload(LibraryLoan.resource))
+            .where(LibraryLoan.id.in_(ids_by_type["loan"]))
+        )
+        loan_targets = {
+            item.id: SupportTicketTargetSummary(
+                id=item.id,
+                type="loan",
+                label=item.resource.title if item.resource else "Library loan",
+                description=_join_summary(
+                    [
+                        "Loan",
+                        item.status,
+                        f"Due {item.due_at.date().isoformat()}" if item.due_at else None,
+                    ]
+                ),
+            )
+            for item in result.scalars()
+        }
+
+    target_maps = {
+        "library": library_targets,
+        "electronic_resource": electronic_targets,
+        "library_resource": resource_targets,
+        "resource": resource_targets,
+        "loan": loan_targets,
+    }
+    for ticket in tickets:
+        target = target_maps.get(ticket.target_entity_type or "", {}).get(
+            ticket.target_entity_id
+        )
+        setattr(ticket, "target", target)
 
 
 # ── LibraryInquiry (Ask Librarian) ────────────────────────────────────────────
@@ -149,6 +266,7 @@ async def create_ticket(
     db.add(ticket)
     await db.commit()
     await db.refresh(ticket)
+    await _populate_ticket_targets(db, [ticket])
     return SupportTicketOut.model_validate(ticket)
 
 
@@ -177,15 +295,18 @@ async def list_tickets(
         per_page=per_page,
         include_total=include_total,
     )
+    await _populate_ticket_targets(db, result.items)
     result.items = [SupportTicketOut.model_validate(t) for t in result.items]
     return result
 
 
 async def get_ticket(db: AsyncSession, ticket_id: uuid.UUID) -> SupportTicket:
     """Get support ticket entity by ID."""
-    return await SupportTicket.get_or_raise(
+    ticket = await SupportTicket.get_or_raise(
         db, ticket_id, error_message="Support ticket not found"
     )
+    await _populate_ticket_targets(db, [ticket])
+    return ticket
 
 
 async def update_ticket(
@@ -197,6 +318,7 @@ async def update_ticket(
         setattr(ticket, field, value)
     await db.commit()
     await db.refresh(ticket)
+    await _populate_ticket_targets(db, [ticket])
     return SupportTicketOut.model_validate(ticket)
 
 

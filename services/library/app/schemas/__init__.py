@@ -65,6 +65,7 @@ from .engagement import (
     SavedPublicationUpdate,
     SupportTicketCreate,
     SupportTicketOut,
+    SupportTicketTargetSummary,
     SupportTicketUpdate,
 )
 from .stats import PublicStatItem, PublicStatsResponse
@@ -126,6 +127,7 @@ __all__ = [
     "LibraryInquiryOut",
     "SupportTicketCreate",
     "SupportTicketUpdate",
+    "SupportTicketTargetSummary",
     "SupportTicketOut",
     "SavedPublicationCreate",
     "SavedPublicationUpdate",

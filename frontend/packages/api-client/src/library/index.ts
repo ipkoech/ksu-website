@@ -227,6 +227,12 @@ export interface LibrarySupportTicket {
   description: string;
   target_entity_type?: string | null;
   target_entity_id?: string | null;
+  target?: {
+    id: string;
+    type: string;
+    label: string;
+    description?: string | null;
+  } | null;
   status: string;
   priority: string;
   category: string;

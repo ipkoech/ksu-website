@@ -64,7 +64,8 @@ export default function LibraryTicketsPage() {
             recordPlaceholder: "Select related record",
             configs: [
               { value: "library", label: "Library branch", adapter: "libraryBranch", filters: { active_only: false } },
-              { value: "electronic_resource", label: "Library resource", adapter: "libraryResource" },
+              { value: "electronic_resource", label: "Electronic resource", adapter: "libraryElectronicResource" },
+              { value: "library_resource", label: "Catalog resource", adapter: "libraryResource" },
             ],
           },
         },
@@ -106,6 +107,7 @@ export default function LibraryTicketsPage() {
       getRecordMeta={(record) =>
         [
           record.requester_name ?? record.requester_email,
+          record.target?.label,
           record.category?.replace(/_/g, " "),
           record.priority,
           record.status?.replace(/_/g, " "),
