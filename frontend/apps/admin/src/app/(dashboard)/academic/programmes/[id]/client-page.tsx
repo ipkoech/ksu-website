@@ -29,6 +29,12 @@ import {
   Input,
   JsonObjectEditor,
   RichTextEditor,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Switch,
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
@@ -81,6 +87,10 @@ type ProgrammeFormValues = z.infer<typeof programmeSchema>;
 
 const levels = ["certificate", "diploma", "bachelor", "master", "doctoral", "postgraduate"];
 const modes = ["full_time", "part_time", "online", "evening", "weekend", "blended"];
+
+function optionLabel(value: string) {
+  return value.replace(/_/g, " ");
+}
 
 const defaultValues: ProgrammeFormValues = {
   name: "",
@@ -359,22 +369,44 @@ export default function ProgrammeFormPage() {
                     <FormField control={form.control} name="level" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Level *</FormLabel>
-                        <FormControl>
-                          <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" {...field}>
-                            {levels.map((level) => <option key={level} value={level}>{level.replace(/_/g, " ")}</option>)}
-                          </select>
-                        </FormControl>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select level" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectGroup>
+                              {levels.map((level) => (
+                                <SelectItem key={level} value={level}>
+                                  {optionLabel(level)}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={form.control} name="mode_of_study" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Mode of Study *</FormLabel>
-                        <FormControl>
-                          <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" {...field}>
-                            {modes.map((mode) => <option key={mode} value={mode}>{mode.replace(/_/g, " ")}</option>)}
-                          </select>
-                        </FormControl>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select mode" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectGroup>
+                              {modes.map((mode) => (
+                                <SelectItem key={mode} value={mode}>
+                                  {optionLabel(mode)}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )} />
