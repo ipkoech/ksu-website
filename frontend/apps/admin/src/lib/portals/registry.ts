@@ -531,7 +531,7 @@ const governanceResources: Record<string, PortalResourceConfig<any, any>> = {
       { name: "is_active", label: "Active", type: "boolean" },
     ],
     listFilters: yesNoFilters,
-    list: (filters) => divisionsApi.list(filters),
+    list: (filters) => divisionsApi.listAdmin(filters),
     create: (payload) => divisionsApi.create(payload),
     update: (id, payload) => divisionsApi.update(id, payload),
     delete: (id) => divisionsApi.delete(id),
@@ -1719,7 +1719,7 @@ async function firstSliderGroupId() {
 }
 
 async function firstDivisionId() {
-  const divisions = await divisionsApi.list({
+  const divisions = await divisionsApi.listAdmin({
     page: 1,
     per_page: 1,
     is_active: true,
@@ -3468,7 +3468,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
           Building2,
           ["governance.view"],
           ["governance", "divisions"],
-          () => divisionsApi.list(countParams),
+          () => divisionsApi.listAdmin(countParams),
         ),
         stat(
           "Documents",
