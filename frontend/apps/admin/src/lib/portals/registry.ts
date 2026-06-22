@@ -733,6 +733,14 @@ function contentResource<TRecord extends PortalRecord>({
     description,
     backHref,
     queryKey: [backHref, key],
+    portalScope:
+      scopeType === "school" || scopeType === "department"
+        ? {
+            typeField: "scope_type",
+            idField: "scope_id",
+            allowedScopeTypes: [scopeType],
+          }
+        : undefined,
     fields: contentFields(scopeType),
     listFilters: [
       {
@@ -1299,6 +1307,11 @@ const schoolResources: Record<string, PortalResourceConfig<any, any>> = {
       "Manage school mini-site profiles, codes, descriptions, and publication state.",
     backHref: "/schools",
     queryKey: ["schools", "profiles"],
+    portalScope: {
+      allowedScopeTypes: ["school"],
+      stampPayload: false,
+      lockedCanCreate: false,
+    },
     fields: [
       { name: "name", label: "School Name", required: true },
       { name: "slug", label: "Slug" },
@@ -1328,6 +1341,10 @@ const schoolResources: Record<string, PortalResourceConfig<any, any>> = {
     description: "Manage departments attached to schools.",
     backHref: "/schools",
     queryKey: ["schools", "departments"],
+    portalScope: {
+      idField: "school_id",
+      allowedScopeTypes: ["school"],
+    },
     fields: [
       { name: "name", label: "Department Name", required: true },
       { name: "slug", label: "Slug" },
@@ -1385,6 +1402,10 @@ const schoolResources: Record<string, PortalResourceConfig<any, any>> = {
     description: "Manage school-scoped programmes.",
     backHref: "/schools",
     queryKey: ["schools", "programmes"],
+    portalScope: {
+      idField: "school_id",
+      allowedScopeTypes: ["school"],
+    },
     fields: [
       { name: "name", label: "Programme Name", required: true },
       { name: "slug", label: "Slug" },
@@ -1537,7 +1558,20 @@ const schoolResources: Record<string, PortalResourceConfig<any, any>> = {
     viewScopes: ["academic.view", "academic.manage_intakes"],
     manageScopes: ["academic.manage_intakes", "academic.manage_programmes"],
   } as PortalResourceConfig<Intake>,
-  staff: governanceResources["staff-assignments"],
+  staff: {
+    ...governanceResources["staff-assignments"],
+    title: "School Staff Assignments",
+    description: "Attach staff to school-level academic and administrative roles.",
+    backHref: "/schools",
+    queryKey: ["schools", "staff-assignments"],
+    portalScope: {
+      typeField: "entity_type",
+      idField: "entity_id",
+      allowedScopeTypes: ["school"],
+    },
+    viewScopes: ["staff.view_assignments", "academic.view"],
+    manageScopes: ["staff.manage_assignments", "academic.manage_schools"],
+  },
   news: contentResource<News>({
     key: "news",
     title: "School News",
@@ -1664,14 +1698,36 @@ const departmentalResources: Record<string, PortalResourceConfig<any, any>> = {
     description: "Manage academic and administrative department profiles.",
     backHref: "/departments",
     queryKey: ["departments", "profiles"],
+    portalScope: {
+      allowedScopeTypes: ["department"],
+      stampPayload: false,
+      lockedCanCreate: false,
+    },
   },
-  staff: governanceResources["staff-assignments"],
+  staff: {
+    ...governanceResources["staff-assignments"],
+    title: "Department Staff Assignments",
+    description: "Attach staff to department academic, technical, and administrative roles.",
+    backHref: "/departments",
+    queryKey: ["departments", "staff-assignments"],
+    portalScope: {
+      typeField: "entity_type",
+      idField: "entity_id",
+      allowedScopeTypes: ["department"],
+    },
+    viewScopes: ["staff.view_assignments", "academic.view"],
+    manageScopes: ["staff.manage_assignments", "academic.manage_departments"],
+  },
   programmes: {
     ...schoolResources.programmes,
     title: "Department Programmes",
     description: "Manage programmes owned by academic departments.",
     backHref: "/departments",
     queryKey: ["departments", "programmes"],
+    portalScope: {
+      idField: "department_id",
+      allowedScopeTypes: ["department"],
+    },
     getRecordDetailHref: (record: Programme) =>
       `/departments/programmes/${record.id}`,
   },
@@ -1724,6 +1780,11 @@ const departmentalResources: Record<string, PortalResourceConfig<any, any>> = {
       "Manage department files, forms, guides, and service documents.",
     backHref: "/departments",
     queryKey: ["departments", "resources"],
+    portalScope: {
+      typeField: "scope_type",
+      idField: "scope_id",
+      allowedScopeTypes: ["department"],
+    },
     fields: documentFields("department"),
     listFilters: [
       {
@@ -1756,6 +1817,11 @@ const departmentalResources: Record<string, PortalResourceConfig<any, any>> = {
     description: "Manage department-scoped frequently asked questions.",
     backHref: "/departments",
     queryKey: ["departments", "faqs"],
+    portalScope: {
+      typeField: "scope_type",
+      idField: "scope_id",
+      allowedScopeTypes: ["department"],
+    },
     fields: faqFields("department"),
     listFilters: [
       ...scopeEntityFilters("department"),
@@ -1784,6 +1850,11 @@ const departmentalResources: Record<string, PortalResourceConfig<any, any>> = {
     description: "Manage department-scoped contact directory entries.",
     backHref: "/departments",
     queryKey: ["departments", "contacts"],
+    portalScope: {
+      typeField: "scope_type",
+      idField: "scope_id",
+      allowedScopeTypes: ["department"],
+    },
     fields: contactFields("department"),
     listFilters: [
       ...scopeEntityFilters("department"),

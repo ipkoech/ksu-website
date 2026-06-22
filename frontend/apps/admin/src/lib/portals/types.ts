@@ -77,9 +77,11 @@ export interface PortalResourceConfig<
   canEdit?: boolean;
   canDelete?: boolean;
   portalScope?: {
-    typeField: string;
-    idField: string;
+    typeField?: string;
+    idField?: string;
     allowedScopeTypes?: string[];
+    stampPayload?: boolean;
+    lockedCanCreate?: boolean;
   };
 }
 

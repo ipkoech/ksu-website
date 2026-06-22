@@ -161,24 +161,27 @@ function lockResourceToPortalScope(
 ): PortalResourceConfig<any, any> {
   if (!resource.portalScope) return resource;
 
-  const { typeField, idField } = resource.portalScope;
+  const { typeField, idField, stampPayload = true } = resource.portalScope;
   const stampScope = (values: PortalPayload = {}) => ({
     ...values,
-    [typeField]: access.scope_type,
-    [idField]: access.scope_type === "university" ? null : access.scope_id,
+    ...(stampPayload && typeField ? { [typeField]: access.scope_type } : {}),
+    ...(stampPayload && idField
+      ? { [idField]: access.scope_type === "university" ? null : access.scope_id }
+      : {}),
   });
   const isLockedField = (field: { name: string; type?: string; entityRecord?: { typeName: string; idName: string } }) =>
-    field.name === typeField ||
-    field.name === idField ||
+    (typeField ? field.name === typeField : false) ||
+    (idField ? field.name === idField : false) ||
     (field.type === "entity-record" &&
-      field.entityRecord?.typeName === typeField &&
-      field.entityRecord?.idName === idField);
+      (!typeField || field.entityRecord?.typeName === typeField) &&
+      (!idField || field.entityRecord?.idName === idField));
 
   return {
     ...resource,
     queryKey: [...resource.queryKey, "portal-scope", access.scope_type, access.scope_id ?? "university"],
     fields: resource.fields.filter((field) => !isLockedField(field)),
     listFilters: resource.listFilters?.filter((field) => !isLockedField(field)),
+    canCreate: resource.portalScope.lockedCanCreate ?? resource.canCreate,
     list: (filters) => resource.list(stampScope(filters)),
     create: (payload) => resource.create(stampScope(payload)),
     update: (id, payload) => resource.update(id, stampScope(payload)),
