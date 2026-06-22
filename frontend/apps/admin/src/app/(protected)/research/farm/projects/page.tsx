@@ -34,7 +34,7 @@ export default function FarmProjectsPage() {
         { name: "end_date", label: "End Date", type: "date" },
         { name: "budget", label: "Budget", type: "number" },
         { name: "currency", label: "Currency", placeholder: "KES" },
-        { name: "grant_id", label: "Grant ID" },
+        { name: "grant_id", label: "Grant", type: "entity", relation: { adapter: "researchGrant", filters: { is_active: true }, allowClear: true } },
         { name: "cover_image_url", label: "Cover Image URL", type: "url" },
         { name: "progress_percentage", label: "Progress %", type: "number" },
         { name: "status", label: "Status", type: "select", placeholder: "Select status", options: [

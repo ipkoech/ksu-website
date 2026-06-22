@@ -77,7 +77,7 @@ export default function ResearchProjectsPage() {
         { name: "deliverables", label: "Deliverables", type: "textarea" },
         { name: "budget", label: "Budget", type: "number" },
         { name: "currency", label: "Currency", placeholder: "KES" },
-        { name: "grant_id", label: "Grant ID" },
+        { name: "grant_id", label: "Grant", type: "entity", relation: { adapter: "researchGrant", filters: { is_active: true }, allowClear: true } },
         { name: "cover_image_url", label: "Cover Image URL", type: "url" },
         { name: "status", label: "Status", type: "select", placeholder: "Select status", options: [
           { label: "Proposal", value: "proposal" },
