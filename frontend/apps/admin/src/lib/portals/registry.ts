@@ -1298,7 +1298,7 @@ const departmentalResources: Record<string, PortalResourceConfig<any, any>> = {
       { name: "is_public", label: "Public", type: "boolean" },
     ],
     list: (filters) =>
-      faqsApi.list({ ...pageParams, scope_type: "department", ...filters }),
+      faqsApi.listAdmin({ ...pageParams, scope_type: "department", ...filters }),
     create: (payload) => faqsApi.create(payload),
     update: (id, payload) => faqsApi.update(id, payload),
     delete: (id) => faqsApi.delete(id),
@@ -1312,7 +1312,7 @@ const departmentalResources: Record<string, PortalResourceConfig<any, any>> = {
       status: values.status || "published",
     }),
     viewScopes: ["content.view", "academic.view"],
-    manageScopes: ["content.manage", "academic.manage_departments"],
+    manageScopes: ["support.manage_faqs", "content.manage_pages", "academic.manage_departments"],
   } as PortalResourceConfig<FAQ>,
   contacts: {
     key: "contacts",
@@ -1331,7 +1331,7 @@ const departmentalResources: Record<string, PortalResourceConfig<any, any>> = {
       { name: "is_public", label: "Public", type: "boolean" },
     ],
     list: (filters) =>
-      contactsApi.list({ ...pageParams, scope_type: "department", ...filters }),
+      contactsApi.listAdmin({ ...pageParams, scope_type: "department", ...filters }),
     create: (payload) => contactsApi.create(payload),
     update: (id, payload) => contactsApi.update(id, payload),
     getRecordTitle: (record) => record.name,
@@ -1345,7 +1345,7 @@ const departmentalResources: Record<string, PortalResourceConfig<any, any>> = {
       status: values.status || "published",
     }),
     viewScopes: ["content.view", "academic.view"],
-    manageScopes: ["content.manage", "academic.manage_departments"],
+    manageScopes: ["support.manage_contacts", "content.manage_pages", "academic.manage_departments"],
     canDelete: false,
   } as PortalResourceConfig<ContactDirectory>,
 };
@@ -1622,7 +1622,7 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       { name: "is_main", label: "Main Site", type: "boolean" },
     ],
     list: (filters) =>
-      faqsApi.list({ ...pageParams, is_main: true, ...filters }),
+      faqsApi.listAdmin({ ...pageParams, is_main: true, ...filters }),
     create: (payload) => faqsApi.create(payload),
     update: (id, payload) => faqsApi.update(id, payload),
     delete: (id) => faqsApi.delete(id),
@@ -1636,7 +1636,7 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       status: values.status || "published",
     }),
     viewScopes: ["content.view"],
-    manageScopes: ["content.manage", "content.publish"],
+    manageScopes: ["support.manage_faqs", "content.manage_pages", "content.publish"],
   } as PortalResourceConfig<FAQ>,
   contacts: {
     key: "contacts",
@@ -1651,7 +1651,7 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       { name: "is_main", label: "Main Site", type: "boolean" },
     ],
     list: (filters) =>
-      contactsApi.list({ ...pageParams, is_main: true, ...filters }),
+      contactsApi.listAdmin({ ...pageParams, is_main: true, ...filters }),
     create: (payload) => contactsApi.create(payload),
     update: (id, payload) => contactsApi.update(id, payload),
     getRecordTitle: (record) => record.name,
@@ -1665,7 +1665,7 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       status: values.status || "published",
     }),
     viewScopes: ["content.view"],
-    manageScopes: ["content.manage", "content.publish"],
+    manageScopes: ["support.manage_contacts", "content.manage_pages", "content.publish"],
     canDelete: false,
   } as PortalResourceConfig<ContactDirectory>,
   testimonials: {

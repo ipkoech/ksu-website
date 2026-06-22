@@ -85,6 +85,18 @@ scripts/deploy.sh vm \
   --bootstrap
 ```
 
+To issue HTTPS certificates during deployment:
+
+```bash
+scripts/deploy.sh vm \
+  --host ubuntu@YOUR_PUBLIC_IP \
+  --env dev \
+  --path /srv/ksu \
+  --bootstrap \
+  --https \
+  --cert-email admin@kisiiuniversity.ac.ke
+```
+
 The script defaults to:
 
 ```text
@@ -94,6 +106,32 @@ public host:   dev.kisiiuniversity.ac.ke
 research host: dev.research.kisiiuniversity.ac.ke
 api host:      api.dev.kisiiuniversity.ac.ke
 ```
+
+## HTTPS and Nginx
+
+When `--https` is used:
+
+1. Docker's edge Nginx binds to `127.0.0.1:8080`.
+2. Host Nginx listens on public ports `80` and `443`.
+3. Certbot issues one Let's Encrypt certificate covering:
+
+```text
+dev.kisiiuniversity.ac.ke
+dev.research.kisiiuniversity.ac.ke
+api.dev.kisiiuniversity.ac.ke
+```
+
+4. Host Nginx forwards all three domains to Docker edge Nginx.
+
+Open these firewall ports before running HTTPS:
+
+```text
+22/tcp   SSH
+80/tcp   HTTP challenge and redirect
+443/tcp  HTTPS
+```
+
+DNS must point to the VM before Certbot can issue certificates. If DNS has not propagated, run the deploy without `--https` first, then rerun with `--https --cert-email ...` after DNS resolves.
 
 ## Database Backup
 
@@ -120,4 +158,14 @@ curl -I http://dev.kisiiuniversity.ac.ke/admin/
 curl -I http://dev.kisiiuniversity.ac.ke/library/
 curl -I http://dev.research.kisiiuniversity.ac.ke
 curl http://api.dev.kisiiuniversity.ac.ke/health
+```
+
+After HTTPS:
+
+```bash
+curl -I https://dev.kisiiuniversity.ac.ke
+curl -I https://dev.kisiiuniversity.ac.ke/admin/
+curl -I https://dev.kisiiuniversity.ac.ke/library/
+curl -I https://dev.research.kisiiuniversity.ac.ke
+curl https://api.dev.kisiiuniversity.ac.ke/health
 ```

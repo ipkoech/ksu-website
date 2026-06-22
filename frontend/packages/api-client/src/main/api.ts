@@ -1299,6 +1299,14 @@ export const faqsApi = {
     }>,
   ) => mainApi.get<PaginatedResponse<FAQ>>("/api/v1/faqs", params),
 
+  listAdmin: (
+    params?: ListParams<{
+      scope_type?: string;
+      scope_id?: string;
+      is_main?: boolean;
+    }>,
+  ) => mainApi.get<PaginatedResponse<FAQ>>("/api/v1/faqs/admin", params),
+
   get: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: FAQ }>(`/api/v1/faqs/${id}`, params),
 
@@ -1321,6 +1329,18 @@ export const contactsApi = {
   ) =>
     mainApi.get<PaginatedResponse<ContactDirectory>>(
       "/api/v1/contacts",
+      params,
+    ),
+
+  listAdmin: (
+    params?: ListParams<{
+      scope_type?: string;
+      scope_id?: string;
+      is_main?: boolean;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<ContactDirectory>>(
+      "/api/v1/contacts/admin",
       params,
     ),
 
