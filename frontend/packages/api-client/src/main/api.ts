@@ -1432,8 +1432,30 @@ export const searchApi = {
 
 // Testimonials
 export const testimonialsApi = {
-  list: (params?: ListParams<{ type?: string; is_featured?: boolean }>) =>
+  list: (
+    params?: ListParams<{
+      testimonial_type?: string;
+      school_id?: string;
+      department_id?: string;
+      programme_id?: string;
+      featured_only?: boolean;
+    }>,
+  ) =>
     mainApi.get<PaginatedResponse<Testimonial>>("/api/v1/testimonials", params),
+
+  listAdmin: (
+    params?: ListParams<{
+      testimonial_type?: string;
+      school_id?: string;
+      department_id?: string;
+      programme_id?: string;
+      featured_only?: boolean;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<Testimonial>>(
+      "/api/v1/testimonials/admin",
+      params,
+    ),
 
   get: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Testimonial }>(`/api/v1/testimonials/${id}`, params),

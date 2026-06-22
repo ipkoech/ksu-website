@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..deps import _has_permission
-from ..models import Department, User, Wing
+from ..models import Department, Programme, User, Wing
 
 
 ScopeResolver = Callable[
@@ -157,6 +157,18 @@ async def default_scope_contains(
         result = await db.execute(select(Department.school_id).where(Department.id == target_scope_id))
         return result.scalar_one_or_none() == grant_scope_id
 
+    if grant_scope_type == "department" and target_scope_type == "programme":
+        result = await db.execute(select(Programme.department_id).where(Programme.id == target_scope_id))
+        return result.scalar_one_or_none() == grant_scope_id
+
+    if grant_scope_type == "school" and target_scope_type == "programme":
+        result = await db.execute(
+            select(Department.school_id)
+            .join(Programme, Programme.department_id == Department.id)
+            .where(Programme.id == target_scope_id)
+        )
+        return result.scalar_one_or_none() == grant_scope_id
+
     return False
 
 
@@ -198,4 +210,3 @@ async def filter_records_for_scope(
         if await can_access_scope(db, user, permission, scope_type, scope_id):
             visible.append(record)
     return visible
-
