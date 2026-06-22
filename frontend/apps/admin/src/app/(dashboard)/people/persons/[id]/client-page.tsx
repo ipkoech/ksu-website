@@ -13,7 +13,7 @@ import { StaffAssignmentEditor } from "@/components/staff/staff-assignment-edito
 import { usePermissions } from "@/hooks/use-permissions";
 import { hasChangedPayload, pickChangedPayload, type PayloadFieldMap } from "@/lib/changed-fields";
 import { richTextToEditorValue, richTextToPayloadValue } from "@/lib/rich-text-form";
-import { Badge, Button, ConfirmDialog, Input, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Switch, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, JsonObjectEditor, RichTextEditor, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, type JsonEditorField } from "@ksu/ui/components";
+import { Badge, Button, ConfirmDialog, Input, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Switch, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, JsonObjectEditor, RichTextEditor, Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue, type JsonEditorField } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
 import { resolveMainMediaUrl, useActivatePerson, useDeactivatePerson, usePerson, useCreatePerson, useUpdatePerson, useRemovePersonPhoto, useStaffAssignments, useUploadPersonPhoto, type Person, type PersonCreatePayload, type PersonUpdatePayload, type StaffAssignment } from "@ksu/api-client";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
@@ -989,9 +989,11 @@ export default function PersonFormPage() {
                                                         <Select value={field.value || ""} onValueChange={field.onChange}>
                                                             <SelectTrigger><SelectValue placeholder="Select employment type" /></SelectTrigger>
                                                             <SelectContent>
-                                                                {EMPLOYMENT_TYPES.map((type) => (
-                                                                    <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
-                                                                ))}
+                                                                <SelectGroup>
+                                                                    {EMPLOYMENT_TYPES.map((type) => (
+                                                                        <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                                                                    ))}
+                                                                </SelectGroup>
                                                             </SelectContent>
                                                         </Select>
                                                     </FormControl>

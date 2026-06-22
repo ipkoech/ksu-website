@@ -26,6 +26,7 @@ import {
   RichTextEditor,
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -218,11 +219,13 @@ export default function AdmissionInfoEditorPage() {
                               <SelectValue placeholder="Select content type" />
                             </SelectTrigger>
                             <SelectContent>
-                              {contentTypes.map((type) => (
-                                <SelectItem key={type} value={type}>
-                                  {type.replace(/_/g, " ")}
-                                </SelectItem>
-                              ))}
+                              <SelectGroup>
+                                {contentTypes.map((type) => (
+                                  <SelectItem key={type} value={type}>
+                                    {type.replace(/_/g, " ")}
+                                  </SelectItem>
+                                ))}
+                              </SelectGroup>
                             </SelectContent>
                           </Select>
                         </FormControl>

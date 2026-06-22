@@ -28,6 +28,7 @@ import {
   RichTextEditor,
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -375,11 +376,13 @@ export default function SchoolFormPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {(divisionsQuery.data?.data ?? []).map((division) => (
-                          <SelectItem key={division.id} value={division.id}>
-                            {division.name}
-                          </SelectItem>
-                        ))}
+                        <SelectGroup>
+                          {(divisionsQuery.data?.data ?? []).map((division) => (
+                            <SelectItem key={division.id} value={division.id}>
+                              {division.name}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -397,11 +400,13 @@ export default function SchoolFormPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {(wingsQuery.data?.data ?? []).map((wing) => (
-                            <SelectItem key={wing.id} value={wing.id}>
-                              {wing.name}
-                            </SelectItem>
-                          ))}
+                          <SelectGroup>
+                            {(wingsQuery.data?.data ?? []).map((wing) => (
+                              <SelectItem key={wing.id} value={wing.id}>
+                                {wing.name}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
                         </SelectContent>
                       </Select>
                       <FormMessage />
