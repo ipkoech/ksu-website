@@ -24,8 +24,8 @@ VM options:
   --repo-url URL       Git repository URL. Defaults to the local origin URL.
   --path PATH          Repository path on the VM. Defaults to this local repo path.
   --project-name NAME  Docker Compose project name. Defaults to ksu-ENV.
-  --public-host HOST   Public website host or IP. Defaults to the SSH host/IP.
-  --api-host HOST      API host. Defaults to api.PUBLIC_HOST for DNS hosts, or PUBLIC_HOST for IP access.
+  --public-host HOST   Public website host or IP. Defaults to dev.kisiiuniversity.ac.ke for dev.
+  --api-host HOST      API host. Defaults to api.dev.kisiiuniversity.ac.ke for dev.
   --research-host HOST Research frontend host. Defaults to dev.research.kisiiuniversity.ac.ke for dev.
   --bootstrap          Install Docker packages on an Ubuntu/Debian VM before deploy.
   --no-pull            Do not fetch/pull before deploying.
@@ -55,6 +55,7 @@ Examples:
   scripts/deploy.sh local
   scripts/deploy.sh local --skip-frontend
   scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --branch dev --path /srv/ksu
+  scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --path /srv/ksu --bootstrap
   scripts/deploy.sh vm-backup --host ubuntu@VM_IP --env production
   scripts/deploy.sh cloud --env dev --project my-gcp-project
   scripts/deploy.sh cloud --env staging --project my-gcp-project --image-tag abc1234 --skip-build
@@ -554,15 +555,19 @@ deploy_vm() {
   fi
 
   if [[ -z "${public_host}" ]]; then
-    public_host="${host##*@}"
+    case "${env_name}" in
+      dev) public_host="dev.kisiiuniversity.ac.ke" ;;
+      staging) public_host="staging.kisiiuniversity.ac.ke" ;;
+      production) public_host="kisiiuniversity.ac.ke" ;;
+    esac
   fi
 
   if [[ -z "${api_host}" ]]; then
-    if [[ "${public_host}" =~ ^[0-9]+(\.[0-9]+){3}$ ]]; then
-      api_host="${public_host}"
-    else
-      api_host="api.${public_host}"
-    fi
+    case "${env_name}" in
+      dev) api_host="api.dev.kisiiuniversity.ac.ke" ;;
+      staging) api_host="api.staging.kisiiuniversity.ac.ke" ;;
+      production) api_host="api.kisiiuniversity.ac.ke" ;;
+    esac
   fi
 
   if [[ -z "${research_host}" ]]; then
