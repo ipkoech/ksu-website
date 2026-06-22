@@ -9,12 +9,14 @@ import {
   Button,
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -105,22 +107,26 @@ const getColumns = ({
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button variant="ghost" size="icon-sm">
               <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreHorizontal data-icon />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => window.location.href = `/admissions/info/_static?id=${encodeURIComponent(item.id)}`}>
-              Edit
-            </DropdownMenuItem>
+            <DropdownMenuGroup>
+              <DropdownMenuItem onClick={() => window.location.href = `/admissions/info/_static?id=${encodeURIComponent(item.id)}`}>
+                Edit
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
             {canDelete ? (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>
-                  Delete
-                </DropdownMenuItem>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
               </>
             ) : null}
           </DropdownMenuContent>
@@ -193,11 +199,13 @@ export default function AdmissionInfoPage() {
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
                 <SelectContent>
-                  {contentTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type === "all" ? "All types" : type.replace(/_/g, " ")}
-                    </SelectItem>
-                  ))}
+                  <SelectGroup>
+                    {contentTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type === "all" ? "All types" : type.replace(/_/g, " ")}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 </SelectContent>
               </Select>
             </div>
@@ -208,9 +216,11 @@ export default function AdmissionInfoPage() {
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All statuses</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectGroup>
+                    <SelectItem value="all">All statuses</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                  </SelectGroup>
                 </SelectContent>
               </Select>
             </div>
@@ -225,7 +235,7 @@ export default function AdmissionInfoPage() {
                 setSearch("");
               }}
             >
-              <FilterX className="h-4 w-4" />
+              <FilterX data-icon="inline-start" />
               Clear
             </Button>
           </div>
