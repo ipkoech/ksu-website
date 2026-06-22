@@ -1904,14 +1904,27 @@ const researchResources: Record<string, PortalResourceConfig<any, any>> = {
       },
     ],
     list: (filters) =>
-      researchServiceApi.projects.list({ ...pageParams, ...filters }),
+      researchServiceApi.projects.list({
+        ...pageParams,
+        fields: "id,title,slug,code,program_id,center_id,project_type,status,is_public,is_featured,is_active",
+        include: "center:id,name,code;program:id,name,code",
+        ...filters,
+      }),
     create: (payload) =>
       researchServiceApi.projects.create(payload as ResearchProjectPayload),
     update: (id, payload) => researchServiceApi.projects.update(id, payload),
     delete: (id) => researchServiceApi.projects.delete(id),
     getRecordTitle: (record) => record.title,
     getRecordMeta: (record) =>
-      metaOf(record, ["code", "project_type", "status"]),
+      [
+        record.code,
+        (record.center as { name?: string } | undefined)?.name,
+        (record.program as { name?: string } | undefined)?.name,
+        record.project_type,
+        record.status,
+      ]
+        .filter(Boolean)
+        .join(" · "),
     emptyMessage: "No research projects were returned.",
     buildPayload: (values) => ({
       ...values,

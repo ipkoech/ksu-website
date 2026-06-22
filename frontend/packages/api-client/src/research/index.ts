@@ -29,6 +29,8 @@ export interface ResearchProject {
   code?: string | null;
   program_id?: string | null;
   center_id?: string | null;
+  program?: ResearchGenericRecord | null;
+  center?: ResearchGenericRecord | null;
   pi_id?: string | null;
   project_type?: string;
   start_date?: string | null;

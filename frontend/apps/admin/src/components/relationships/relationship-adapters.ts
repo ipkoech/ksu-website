@@ -259,6 +259,7 @@ function researchRecordOption(record: ResearchGenericRecord | ResearchProject): 
     label: record.title ?? ("name" in record ? record.name : undefined) ?? record.slug ?? record.id,
     description: joinDescription([
       record.code,
+      "center" in record ? record.center?.name : undefined,
       "category" in record ? record.category : undefined,
       record.project_type,
       record.status,
@@ -765,6 +766,8 @@ export const researchProjectRelationshipAdapter: RelationshipAdapter<{ is_active
       is_active: filters?.is_active ?? undefined,
       is_public: filters?.is_public ?? undefined,
       project_type: filters?.project_type || undefined,
+      fields: "id,title,slug,code,center_id,project_type,status,is_active",
+      include: "center:id,name,code",
     });
     return (response.data ?? []).map(researchRecordOption);
   },
@@ -775,6 +778,8 @@ export const researchProjectRelationshipAdapter: RelationshipAdapter<{ is_active
       is_active: filters?.is_active ?? undefined,
       is_public: filters?.is_public ?? undefined,
       project_type: filters?.project_type || undefined,
+      fields: "id,title,slug,code,center_id,project_type,status,is_active",
+      include: "center:id,name,code",
     });
     return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
   },

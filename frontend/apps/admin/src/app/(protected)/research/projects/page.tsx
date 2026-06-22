@@ -92,7 +92,15 @@ export default function ResearchProjectsPage() {
         { name: "is_featured", label: "Featured", type: "boolean" },
         { name: "is_public", label: "Public", type: "boolean" },
       ]}
-      list={(filters) => researchServiceApi.projects.list({ page: 1, per_page: 50, ...filters })}
+      list={(filters) =>
+        researchServiceApi.projects.list({
+          page: 1,
+          per_page: 50,
+          fields: "id,title,slug,code,program_id,center_id,project_type,status,is_public,is_featured,is_active",
+          include: "center:id,name,code;program:id,name,code",
+          ...filters,
+        })
+      }
       create={(payload) => researchServiceApi.projects.create(payload)}
       update={(id, payload) => researchServiceApi.projects.update(id, payload)}
       delete={(id) => researchServiceApi.projects.delete(id)}
@@ -100,7 +108,17 @@ export default function ResearchProjectsPage() {
       canEdit={canManage}
       canDelete={canManage}
       getRecordTitle={(record) => record.title}
-      getRecordMeta={(record) => [record.code, record.project_type, record.status].filter(Boolean).join(" · ")}
+      getRecordMeta={(record) =>
+        [
+          record.code,
+          record.center?.name,
+          record.program?.name,
+          record.project_type,
+          record.status,
+        ]
+          .filter(Boolean)
+          .join(" · ")
+      }
       getRecordDetailHref={(record) => record.slug ? `/research/projects/${record.slug}` : null}
       emptyMessage="No research projects were returned by the research service."
       buildPayload={(values) => ({
