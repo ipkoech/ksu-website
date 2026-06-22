@@ -7,10 +7,11 @@ import { PageHeader } from "@/components/shared/page-header";
 import { PageTransition } from "@/lib/animations";
 import { ColumnDef } from "@tanstack/react-table";
 import { FilterX, MoreHorizontal, User, GraduationCap, Upload } from "lucide-react";
-import { Button, Badge, ConfirmDialog, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ksu/ui/components";
+import { Button, Badge, ConfirmDialog, Input, Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@ksu/ui/components";
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
@@ -122,30 +123,34 @@ const getPersonColumns = ({
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
+                        <Button variant="ghost" size="icon-sm">
                             <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
+                            <MoreHorizontal data-icon />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => window.location.href = `/people/persons/_static?id=${encodeURIComponent(person.id)}`}>
-                            {canWrite ? "Edit" : "View Profile"}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => window.location.href = `/people/persons/_static/assignments?id=${encodeURIComponent(person.id)}`}>
-                            Manage Assignments
-                        </DropdownMenuItem>
-                        {canWrite ? (
-                            <DropdownMenuItem onClick={() => person.is_active ? onDeactivate(person) : onActivate(person)}>
-                                {person.is_active ? "Deactivate" : "Activate"}
+                        <DropdownMenuGroup>
+                            <DropdownMenuItem onClick={() => window.location.href = `/people/persons/_static?id=${encodeURIComponent(person.id)}`}>
+                                {canWrite ? "Edit" : "View Profile"}
                             </DropdownMenuItem>
-                        ) : null}
+                            <DropdownMenuItem onClick={() => window.location.href = `/people/persons/_static/assignments?id=${encodeURIComponent(person.id)}`}>
+                                Manage Assignments
+                            </DropdownMenuItem>
+                            {canWrite ? (
+                                <DropdownMenuItem onClick={() => person.is_active ? onDeactivate(person) : onActivate(person)}>
+                                    {person.is_active ? "Deactivate" : "Activate"}
+                                </DropdownMenuItem>
+                            ) : null}
+                        </DropdownMenuGroup>
                         {canDelete && (
                             <>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-destructive" onClick={() => onDelete(person)}>
-                                    Delete
-                                </DropdownMenuItem>
+                                <DropdownMenuGroup>
+                                    <DropdownMenuItem className="text-destructive" onClick={() => onDelete(person)}>
+                                        Delete
+                                    </DropdownMenuItem>
+                                </DropdownMenuGroup>
                             </>
                         )}
                     </DropdownMenuContent>
@@ -232,7 +237,7 @@ export default function PersonsPage() {
                 actions={canCreate("staff") ? (
                     <Button variant="outline" asChild>
                         <Link href="/imports/persons">
-                            <Upload className="h-4 w-4 mr-2" />
+                            <Upload data-icon="inline-start" />
                             Import
                         </Link>
                     </Button>
@@ -275,10 +280,12 @@ export default function PersonsPage() {
                             <Select value={status} onValueChange={(value) => setStatus(value as typeof status)}>
                                 <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="active">Active</SelectItem>
-                                    <SelectItem value="inactive">Inactive</SelectItem>
-                                    <SelectItem value="deleted">Deleted</SelectItem>
-                                    <SelectItem value="all">All</SelectItem>
+                                    <SelectGroup>
+                                        <SelectItem value="active">Active</SelectItem>
+                                        <SelectItem value="inactive">Inactive</SelectItem>
+                                        <SelectItem value="deleted">Deleted</SelectItem>
+                                        <SelectItem value="all">All</SelectItem>
+                                    </SelectGroup>
                                 </SelectContent>
                             </Select>
                         </div>

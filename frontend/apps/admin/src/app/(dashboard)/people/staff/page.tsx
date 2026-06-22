@@ -8,10 +8,11 @@ import { PageHeader } from "@/components/shared/page-header";
 import { PageTransition } from "@/lib/animations";
 import { ColumnDef } from "@tanstack/react-table";
 import { FilterX, MoreHorizontal, User, GraduationCap, Upload, UserPlus } from "lucide-react";
-import { Button, Badge, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ksu/ui/components";
+import { Button, Badge, Input, Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@ksu/ui/components";
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuTrigger,
@@ -101,19 +102,21 @@ const getStaffColumns = (): ColumnDef<Person>[] => [
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
+                        <Button variant="ghost" size="icon-sm">
                             <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
+                            <MoreHorizontal data-icon />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => window.location.href = `/people/persons/_static?id=${encodeURIComponent(person.id)}`}>
-                            View Profile
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => window.location.href = `/people/persons/_static/assignments?id=${encodeURIComponent(person.id)}`}>
-                            Manage Assignments
-                        </DropdownMenuItem>
+                        <DropdownMenuGroup>
+                            <DropdownMenuItem onClick={() => window.location.href = `/people/persons/_static?id=${encodeURIComponent(person.id)}`}>
+                                View Profile
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => window.location.href = `/people/persons/_static/assignments?id=${encodeURIComponent(person.id)}`}>
+                                Manage Assignments
+                            </DropdownMenuItem>
+                        </DropdownMenuGroup>
                     </DropdownMenuContent>
                 </DropdownMenu>
             );
@@ -147,13 +150,13 @@ export default function StaffDirectoryPage() {
                     <>
                         <Button variant="outline" asChild>
                             <Link href="/people/persons/new">
-                                <UserPlus className="h-4 w-4 mr-2" />
+                                <UserPlus data-icon="inline-start" />
                                 Add Staff
                             </Link>
                         </Button>
                         <Button variant="outline" asChild>
                             <Link href="/imports/staff-assignments">
-                                <Upload className="h-4 w-4 mr-2" />
+                                <Upload data-icon="inline-start" />
                                 Import Assignments
                             </Link>
                         </Button>
@@ -198,10 +201,12 @@ export default function StaffDirectoryPage() {
                             <Select value={status} onValueChange={(value) => setStatus(value as typeof status)}>
                                 <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="active">Active</SelectItem>
-                                    <SelectItem value="inactive">Inactive</SelectItem>
-                                    <SelectItem value="deleted">Deleted</SelectItem>
-                                    <SelectItem value="all">All</SelectItem>
+                                    <SelectGroup>
+                                        <SelectItem value="active">Active</SelectItem>
+                                        <SelectItem value="inactive">Inactive</SelectItem>
+                                        <SelectItem value="deleted">Deleted</SelectItem>
+                                        <SelectItem value="all">All</SelectItem>
+                                    </SelectGroup>
                                 </SelectContent>
                             </Select>
                         </div>
