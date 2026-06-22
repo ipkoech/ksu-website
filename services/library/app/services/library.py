@@ -88,11 +88,14 @@ async def list_libraries(
     per_page: int = 20,
     include_total: bool = True,
     load_options: Sequence = (),
+    library_ids: Sequence[uuid.UUID | str] = (),
 ) -> PaginatedResult:
     """List libraries with optional eager loading."""
     query = public_libraries_query() if public_only else Library.active_query()
     if active_only and not public_only:
         query = query.where(Library.is_active.is_(True))
+    if library_ids:
+        query = query.where(Library.id.in_([uuid.UUID(str(item)) for item in library_ids]))
     if load_options:
         query = query.options(*load_options)
     query = query.order_by(Library.sort_order, Library.name)
@@ -330,6 +333,13 @@ async def update_external_link(
     return LibraryExternalLinkOut.model_validate(link)
 
 
+async def get_external_link_library_id(db: AsyncSession, link_id: uuid.UUID) -> uuid.UUID:
+    link = await LibraryExternalLink.get_or_raise(
+        db, link_id, error_message=f"External link {link_id} not found"
+    )
+    return link.library_id
+
+
 async def delete_external_link(db: AsyncSession, link_id: uuid.UUID) -> None:
     """Soft-delete an external link."""
     link = await LibraryExternalLink.get_or_raise(
@@ -396,3 +406,10 @@ async def delete_library_file(db: AsyncSession, file_id: uuid.UUID) -> None:
     )
     file.soft_delete()
     await db.commit()
+
+
+async def get_library_file_library_id(db: AsyncSession, file_id: uuid.UUID) -> uuid.UUID:
+    file = await LibraryFile.get_or_raise(
+        db, file_id, error_message=f"Library file {file_id} not found"
+    )
+    return file.library_id

@@ -15,6 +15,7 @@ from ksu_common.field_selection import FieldSelection, FieldsQuery, FieldSelecto
 from ksu_common.cache import cached_public, invalidate_prefix
 from ksu_common.audit import audit_action
 
+from ...core.auth import allowed_library_scope_ids, require_library_scope
 from ...core.database import get_db
 from ...models import Library, LibraryExternalLink, LibraryFile
 from ...schemas import (
@@ -51,6 +52,9 @@ async def list_libraries(
     include_total: bool = Query(True),
 ):
     is_writer = user is not None and has_scope(user.roles, "library:write")
+    allowed_library_ids = (
+        allowed_library_scope_ids(user, "library:read") if is_writer else None
+    )
     selector = FieldSelector(Library, fields, always_include={"id"})
     result = await svc.list_libraries(
         db,
@@ -60,6 +64,7 @@ async def list_libraries(
         per_page=per_page,
         include_total=include_total,
         load_options=selector.load_options,
+        library_ids=tuple(allowed_library_ids or ()),
     )
     return success(data=selector.apply(result.items), meta=result.meta)
 
@@ -74,6 +79,8 @@ async def get_library(
 ):
     selector = FieldSelector(Library, fields, always_include={"id"})
     is_writer = user is not None and has_scope(user.roles, "library:write")
+    if is_writer:
+        require_library_scope(user, "library:read", library_id)
     library = (
         await svc.get_library(db, library_id, load_options=selector.load_options)
         if is_writer
@@ -90,6 +97,7 @@ async def create_library(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
 ):
+    require_library_scope(user, "library:write", None)
     library = await svc.create_library(db, data)
     await invalidate_public_library_cache()
     return success(
@@ -111,6 +119,7 @@ async def update_library(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
 ):
+    require_library_scope(user, "library:write", library_id)
     library = await svc.update_library(db, library_id, data)
     await invalidate_public_library_cache()
     return success(data=LibraryOut.model_validate(library).model_dump())
@@ -124,6 +133,7 @@ async def delete_library(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
 ):
+    require_library_scope(user, "library:admin", library_id)
     await svc.delete_library(db, library_id)
     await invalidate_public_library_cache()
 
@@ -145,6 +155,7 @@ async def set_library_hours(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
 ):
+    require_library_scope(user, "library:write", library_id)
     hours = await svc.set_library_hours(db, library_id, hours_list)
     await invalidate_public_library_cache()
     return success(data=hours)
@@ -211,6 +222,8 @@ async def list_external_links(
     active_only: bool = Query(True),
 ):
     is_writer = user is not None and has_scope(user.roles, "library:write")
+    if is_writer:
+        require_library_scope(user, "library:read", library_id)
     if not is_writer:
         await svc.get_public_library(db, library_id)
     selector = FieldSelector(LibraryExternalLink, fields, always_include={"id"})
@@ -233,6 +246,7 @@ async def create_external_link(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
 ):
+    require_library_scope(user, "library:write", library_id)
     link = await svc.create_external_link(db, library_id, data)
     await invalidate_public_library_cache()
     return success(data=link, message="Link created")
@@ -250,6 +264,8 @@ async def update_external_link(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
 ):
+    target_library_id = await svc.get_external_link_library_id(db, link_id)
+    require_library_scope(user, "library:write", target_library_id)
     link = await svc.update_external_link(db, link_id, data)
     await invalidate_public_library_cache()
     return success(data=link)
@@ -267,6 +283,8 @@ async def toggle_external_link(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
 ):
+    target_library_id = await svc.get_external_link_library_id(db, link_id)
+    require_library_scope(user, "library:write", target_library_id)
     link = await svc.toggle_external_link(db, link_id, body.is_active)
     await invalidate_public_library_cache()
     return success(data=link)
@@ -283,6 +301,8 @@ async def delete_external_link(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
 ):
+    target_library_id = await svc.get_external_link_library_id(db, link_id)
+    require_library_scope(user, "library:admin", target_library_id)
     await svc.delete_external_link(db, link_id)
     await invalidate_public_library_cache()
 
@@ -306,6 +326,8 @@ async def list_library_files(
     if user is None or not has_scope(user.roles, "library:write"):
         await svc.get_public_library(db, library_id)
     is_writer = user is not None and has_scope(user.roles, "library:write")
+    if is_writer:
+        require_library_scope(user, "library:read", library_id)
     selector = FieldSelector(LibraryFile, fields, always_include={"id"})
     files = await svc.list_library_files(db, library_id, public_only=not is_writer)
     data = selector.apply(files)
@@ -321,6 +343,7 @@ async def create_library_file(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
 ):
+    require_library_scope(user, "library:write", library_id)
     file = await svc.create_library_file(db, library_id, data)
     await invalidate_public_library_cache()
     return success(data=file, message="File attached")
@@ -337,6 +360,8 @@ async def delete_library_file(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
 ):
+    target_library_id = await svc.get_library_file_library_id(db, file_id)
+    require_library_scope(user, "library:write", target_library_id)
     await svc.delete_library_file(db, file_id)
     await invalidate_public_library_cache()
 

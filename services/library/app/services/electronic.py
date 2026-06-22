@@ -119,6 +119,13 @@ async def get_resource(
     return row
 
 
+async def get_resource_library_id(
+    db: AsyncSession, resource_id: uuid.UUID
+) -> uuid.UUID | None:
+    resource = await get_resource(db, resource_id, public_only=False)
+    return resource.library_id
+
+
 async def get_resource_by_slug(
     db: AsyncSession, slug: str, *, public_only: bool = True
 ) -> ElectronicResource:
@@ -210,6 +217,32 @@ async def list_guides(
         )
     )
     return list(result.scalars().all())
+
+
+async def get_guide_library_id(db: AsyncSession, guide_id: uuid.UUID) -> uuid.UUID | None:
+    result = await db.execute(
+        select(ElectronicResource.library_id)
+        .join(
+            ElectronicResourceGuide,
+            ElectronicResourceGuide.electronic_resource_id == ElectronicResource.id,
+        )
+        .where(
+            ElectronicResourceGuide.id == guide_id,
+            ElectronicResourceGuide.deleted_at.is_(None),
+            ElectronicResource.deleted_at.is_(None),
+        )
+    )
+    library_id = result.scalar_one_or_none()
+    if library_id is None:
+        guide_result = await db.execute(
+            select(ElectronicResourceGuide.id).where(
+                ElectronicResourceGuide.id == guide_id,
+                ElectronicResourceGuide.deleted_at.is_(None),
+            )
+        )
+        if guide_result.scalar_one_or_none() is None:
+            raise ValueError("Guide not found")
+    return library_id
 
 
 async def create_guide(

@@ -123,6 +123,56 @@ async def get_resource_entity(
     )
 
 
+async def get_resource_library_id(db: AsyncSession, resource_id: uuid.UUID) -> uuid.UUID:
+    resource = await get_resource_entity(db, resource_id)
+    return resource.library_id
+
+
+async def get_loan_library_id(db: AsyncSession, loan_id: uuid.UUID) -> uuid.UUID:
+    result = await db.execute(
+        sa.select(LibraryResource.library_id)
+        .join(LibraryLoan, LibraryLoan.resource_id == LibraryResource.id)
+        .where(LibraryLoan.id == loan_id, LibraryLoan.deleted_at.is_(None))
+    )
+    library_id = result.scalar_one_or_none()
+    if library_id is None:
+        raise ValueError(f"Loan {loan_id} not found")
+    return library_id
+
+
+async def get_reservation_library_id(
+    db: AsyncSession, reservation_id: uuid.UUID
+) -> uuid.UUID:
+    result = await db.execute(
+        sa.select(LibraryResource.library_id)
+        .join(
+            LibraryResourceReservation,
+            LibraryResourceReservation.resource_id == LibraryResource.id,
+        )
+        .where(
+            LibraryResourceReservation.id == reservation_id,
+            LibraryResourceReservation.deleted_at.is_(None),
+        )
+    )
+    library_id = result.scalar_one_or_none()
+    if library_id is None:
+        raise ValueError(f"Reservation {reservation_id} not found")
+    return library_id
+
+
+async def get_charge_library_id(db: AsyncSession, charge_id: uuid.UUID) -> uuid.UUID:
+    result = await db.execute(
+        sa.select(LibraryCharge.library_id).where(
+            LibraryCharge.id == charge_id,
+            LibraryCharge.deleted_at.is_(None),
+        )
+    )
+    library_id = result.scalar_one_or_none()
+    if library_id is None:
+        raise ValueError(f"Library charge {charge_id} not found")
+    return library_id
+
+
 async def create_resource(
     db: AsyncSession, data: LibraryResourceCreate
 ) -> LibraryResourceOut:
