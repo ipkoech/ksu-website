@@ -10,9 +10,9 @@ from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
+from ._scoped import can_access_scoped_record, require_scoped_record
 from ...deps import CurrentUser, DbSession
 from ...models import Announcement
-from ...security.scopes import can_access_scope
 from ...schemas import AnnouncementCreate, AnnouncementUpdate
 from ...services import AnnouncementService
 
@@ -28,38 +28,6 @@ ANNOUNCEMENT_MANAGE_PERMISSIONS = [
     "content.manage_announcements",
     "content.publish",
 ]
-
-
-def _announcement_scope(scope_type: str | None, scope_id: uuid.UUID | None) -> tuple[str, uuid.UUID | None]:
-    return (scope_type or "global", scope_id)
-
-
-async def _can_access_announcement_scope(
-    db: DbSession,
-    user: CurrentUser,
-    permissions: list[str],
-    scope_type: str | None,
-    scope_id: uuid.UUID | None,
-) -> bool:
-    target_scope_type, target_scope_id = _announcement_scope(scope_type, scope_id)
-    for permission in permissions:
-        if await can_access_scope(db, user, permission, target_scope_type, target_scope_id):
-            return True
-    return False
-
-
-async def _require_announcement_scope(
-    db: DbSession,
-    user: CurrentUser,
-    permissions: list[str],
-    scope_type: str | None,
-    scope_id: uuid.UUID | None,
-) -> None:
-    if not await _can_access_announcement_scope(db, user, permissions, scope_type, scope_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient privileges for this announcement scope",
-        )
 
 
 @router.get("")
@@ -119,7 +87,7 @@ async def list_admin_announcements(
     )
     items = []
     for item in result.items:
-        if await _can_access_announcement_scope(
+        if await can_access_scoped_record(
             db,
             user,
             ANNOUNCEMENT_VIEW_PERMISSIONS,
@@ -143,12 +111,13 @@ async def get_announcement_by_id(
     item = await AnnouncementService.get_by_id(db, announcement_id, load_options=selector.load_options)
     if item is None:
         raise HTTPException(status_code=404, detail="Announcement not found")
-    await _require_announcement_scope(
+    await require_scoped_record(
         db,
         user,
         ANNOUNCEMENT_VIEW_PERMISSIONS,
         item.scope_type,
         item.scope_id,
+        resource_name="announcement",
     )
     return success(data=selector.apply(item))
 
@@ -165,12 +134,13 @@ async def get_announcement(slug: str, db: DbSession, fields: FieldSelection = Fi
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_announcement(data: AnnouncementCreate, db: DbSession, user: CurrentUser):
-    await _require_announcement_scope(
+    await require_scoped_record(
         db,
         user,
         ANNOUNCEMENT_MANAGE_PERMISSIONS,
         data.scope_type,
         data.scope_id,
+        resource_name="announcement",
     )
     item = await AnnouncementService.create(db, **data.model_dump())
     return success(data=item, message="Announcement created")
@@ -181,20 +151,22 @@ async def update_announcement(announcement_id: uuid.UUID, data: AnnouncementUpda
     item = await AnnouncementService.get_by_id(db, announcement_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Announcement not found")
-    await _require_announcement_scope(
+    await require_scoped_record(
         db,
         user,
         ANNOUNCEMENT_MANAGE_PERMISSIONS,
         item.scope_type,
         item.scope_id,
+        resource_name="announcement",
     )
     payload = data.model_dump(exclude_unset=True)
-    await _require_announcement_scope(
+    await require_scoped_record(
         db,
         user,
         ANNOUNCEMENT_MANAGE_PERMISSIONS,
         payload.get("scope_type", item.scope_type),
         payload.get("scope_id", item.scope_id),
+        resource_name="announcement",
     )
     item = await AnnouncementService.update(db, item, **payload)
     return success(data=item, message="Announcement updated")
@@ -205,12 +177,13 @@ async def publish_announcement(announcement_id: uuid.UUID, db: DbSession, user: 
     item = await AnnouncementService.get_by_id(db, announcement_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Announcement not found")
-    await _require_announcement_scope(
+    await require_scoped_record(
         db,
         user,
         ANNOUNCEMENT_MANAGE_PERMISSIONS,
         item.scope_type,
         item.scope_id,
+        resource_name="announcement",
     )
     item = await AnnouncementService.publish(db, item)
     return success(data=item, message="Announcement published")
@@ -221,12 +194,13 @@ async def unpublish_announcement(announcement_id: uuid.UUID, db: DbSession, user
     item = await AnnouncementService.get_by_id(db, announcement_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Announcement not found")
-    await _require_announcement_scope(
+    await require_scoped_record(
         db,
         user,
         ANNOUNCEMENT_MANAGE_PERMISSIONS,
         item.scope_type,
         item.scope_id,
+        resource_name="announcement",
     )
     item = await AnnouncementService.unpublish(db, item)
     return success(data=item, message="Announcement unpublished")
@@ -237,11 +211,12 @@ async def delete_announcement(announcement_id: uuid.UUID, db: DbSession, user: C
     item = await AnnouncementService.get_by_id(db, announcement_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Announcement not found")
-    await _require_announcement_scope(
+    await require_scoped_record(
         db,
         user,
         ANNOUNCEMENT_MANAGE_PERMISSIONS,
         item.scope_type,
         item.scope_id,
+        resource_name="announcement",
     )
     await AnnouncementService.delete(db, item)

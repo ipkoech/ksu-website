@@ -10,9 +10,9 @@ from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
+from ._scoped import can_access_scoped_record, require_scoped_record
 from ...deps import CurrentUser, DbSession
 from ...models import Event
-from ...security.scopes import can_access_scope
 from ...schemas import EventCreate, EventUpdate
 from ...services import EventService
 
@@ -28,38 +28,6 @@ EVENT_MANAGE_PERMISSIONS = [
     "content.manage_events",
     "content.publish",
 ]
-
-
-def _event_scope(scope_type: str | None, scope_id: uuid.UUID | None) -> tuple[str, uuid.UUID | None]:
-    return (scope_type or "global", scope_id)
-
-
-async def _can_access_event_scope(
-    db: DbSession,
-    user: CurrentUser,
-    permissions: list[str],
-    scope_type: str | None,
-    scope_id: uuid.UUID | None,
-) -> bool:
-    target_scope_type, target_scope_id = _event_scope(scope_type, scope_id)
-    for permission in permissions:
-        if await can_access_scope(db, user, permission, target_scope_type, target_scope_id):
-            return True
-    return False
-
-
-async def _require_event_scope(
-    db: DbSession,
-    user: CurrentUser,
-    permissions: list[str],
-    scope_type: str | None,
-    scope_id: uuid.UUID | None,
-) -> None:
-    if not await _can_access_event_scope(db, user, permissions, scope_type, scope_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient privileges for this event scope",
-        )
 
 
 @router.get("")
@@ -123,7 +91,7 @@ async def list_admin_events(
     )
     items = []
     for item in result.items:
-        if await _can_access_event_scope(
+        if await can_access_scoped_record(
             db,
             user,
             EVENT_VIEW_PERMISSIONS,
@@ -147,12 +115,13 @@ async def get_event_by_id(
     item = await EventService.get_by_id(db, event_id, load_options=selector.load_options)
     if item is None:
         raise HTTPException(status_code=404, detail="Event not found")
-    await _require_event_scope(
+    await require_scoped_record(
         db,
         user,
         EVENT_VIEW_PERMISSIONS,
         item.scope_type,
         item.scope_id,
+        resource_name="event",
     )
     return success(data=selector.apply(item))
 
@@ -169,12 +138,13 @@ async def get_event(slug: str, db: DbSession, fields: FieldSelection = FieldsDep
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_event(data: EventCreate, db: DbSession, user: CurrentUser):
-    await _require_event_scope(
+    await require_scoped_record(
         db,
         user,
         EVENT_MANAGE_PERMISSIONS,
         data.scope_type,
         data.scope_id,
+        resource_name="event",
     )
     item = await EventService.create(db, **data.model_dump())
     return success(data=item, message="Event created")
@@ -185,20 +155,22 @@ async def update_event(event_id: uuid.UUID, data: EventUpdate, db: DbSession, us
     item = await EventService.get_by_id(db, event_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Event not found")
-    await _require_event_scope(
+    await require_scoped_record(
         db,
         user,
         EVENT_MANAGE_PERMISSIONS,
         item.scope_type,
         item.scope_id,
+        resource_name="event",
     )
     payload = data.model_dump(exclude_unset=True)
-    await _require_event_scope(
+    await require_scoped_record(
         db,
         user,
         EVENT_MANAGE_PERMISSIONS,
         payload.get("scope_type", item.scope_type),
         payload.get("scope_id", item.scope_id),
+        resource_name="event",
     )
     item = await EventService.update(db, item, **payload)
     return success(data=item, message="Event updated")
@@ -209,12 +181,13 @@ async def publish_event(event_id: uuid.UUID, db: DbSession, user: CurrentUser):
     item = await EventService.get_by_id(db, event_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Event not found")
-    await _require_event_scope(
+    await require_scoped_record(
         db,
         user,
         EVENT_MANAGE_PERMISSIONS,
         item.scope_type,
         item.scope_id,
+        resource_name="event",
     )
     item = await EventService.publish(db, item)
     return success(data=item, message="Event published")
@@ -225,12 +198,13 @@ async def unpublish_event(event_id: uuid.UUID, db: DbSession, user: CurrentUser)
     item = await EventService.get_by_id(db, event_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Event not found")
-    await _require_event_scope(
+    await require_scoped_record(
         db,
         user,
         EVENT_MANAGE_PERMISSIONS,
         item.scope_type,
         item.scope_id,
+        resource_name="event",
     )
     item = await EventService.unpublish(db, item)
     return success(data=item, message="Event unpublished")
@@ -241,11 +215,12 @@ async def delete_event(event_id: uuid.UUID, db: DbSession, user: CurrentUser):
     item = await EventService.get_by_id(db, event_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Event not found")
-    await _require_event_scope(
+    await require_scoped_record(
         db,
         user,
         EVENT_MANAGE_PERMISSIONS,
         item.scope_type,
         item.scope_id,
+        resource_name="event",
     )
     await EventService.delete(db, item)

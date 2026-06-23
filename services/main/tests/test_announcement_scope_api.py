@@ -46,7 +46,7 @@ class AnnouncementScopeApiTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(announcements, "build_selector", return_value=_FakeSelector()),
             patch.object(announcements.AnnouncementService, "list_admin", return_value=page),
-            patch.object(announcements, "can_access_scope", side_effect=fake_can_access, create=True),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
         ):
             response = await announcements.list_admin_announcements(db=None, user=user)
 
@@ -62,7 +62,7 @@ class AnnouncementScopeApiTests(unittest.IsolatedAsyncioTestCase):
             scope_id=uuid.uuid4(),
         )
 
-        with patch.object(announcements, "can_access_scope", return_value=False, create=True):
+        with patch("app.api.v1._scoped._can_access_scope", return_value=False):
             with self.assertRaises(HTTPException) as context:
                 await announcements.create_announcement(payload, db=None, user=user)
 
@@ -75,7 +75,7 @@ class AnnouncementScopeApiTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(announcements, "build_selector", return_value=_FakeSelector()),
             patch.object(announcements.AnnouncementService, "get_by_id", return_value=item),
-            patch.object(announcements, "can_access_scope", return_value=False, create=True),
+            patch("app.api.v1._scoped._can_access_scope", return_value=False),
         ):
             with self.assertRaises(HTTPException) as context:
                 await announcements.get_announcement_by_id(item.id, db=None, user=user)
@@ -94,7 +94,7 @@ class AnnouncementScopeApiTests(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch.object(announcements.AnnouncementService, "get_by_id", return_value=item),
-            patch.object(announcements, "can_access_scope", side_effect=fake_can_access, create=True),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
         ):
             with self.assertRaises(HTTPException) as context:
                 await announcements.update_announcement(item.id, payload, db=None, user=user)

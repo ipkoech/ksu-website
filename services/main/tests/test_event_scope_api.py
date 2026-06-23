@@ -47,7 +47,7 @@ class EventScopeApiTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(events, "build_selector", return_value=_FakeSelector()),
             patch.object(events.EventService, "list_admin", return_value=page),
-            patch.object(events, "can_access_scope", side_effect=fake_can_access, create=True),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
         ):
             response = await events.list_admin_events(db=None, user=user)
 
@@ -64,7 +64,7 @@ class EventScopeApiTests(unittest.IsolatedAsyncioTestCase):
             scope_id=uuid.uuid4(),
         )
 
-        with patch.object(events, "can_access_scope", return_value=False, create=True):
+        with patch("app.api.v1._scoped._can_access_scope", return_value=False):
             with self.assertRaises(HTTPException) as context:
                 await events.create_event(payload, db=None, user=user)
 
@@ -77,7 +77,7 @@ class EventScopeApiTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(events, "build_selector", return_value=_FakeSelector()),
             patch.object(events.EventService, "get_by_id", return_value=item),
-            patch.object(events, "can_access_scope", return_value=False, create=True),
+            patch("app.api.v1._scoped._can_access_scope", return_value=False),
         ):
             with self.assertRaises(HTTPException) as context:
                 await events.get_event_by_id(item.id, db=None, user=user)
@@ -96,7 +96,7 @@ class EventScopeApiTests(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch.object(events.EventService, "get_by_id", return_value=item),
-            patch.object(events, "can_access_scope", side_effect=fake_can_access, create=True),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
         ):
             with self.assertRaises(HTTPException) as context:
                 await events.update_event(item.id, payload, db=None, user=user)

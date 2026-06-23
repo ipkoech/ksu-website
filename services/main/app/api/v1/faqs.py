@@ -10,9 +10,9 @@ from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
+from ._scoped import can_access_scoped_record, require_scoped_record
 from ...deps import CurrentUser, DbSession
 from ...models import FAQ
-from ...security.scopes import can_access_scope
 from ...schemas import FAQCreate, FAQUpdate
 from ...services import FAQService
 
@@ -24,38 +24,6 @@ FAQ_MANAGE_PERMISSIONS = [
     "support.manage_faqs",
     "content.manage_pages",
 ]
-
-
-def _faq_scope(scope_type: str | None, scope_id: uuid.UUID | None) -> tuple[str, uuid.UUID | None]:
-    return (scope_type or "global", scope_id)
-
-
-async def _can_access_faq_scope(
-    db: DbSession,
-    user: CurrentUser,
-    permissions: list[str],
-    scope_type: str | None,
-    scope_id: uuid.UUID | None,
-) -> bool:
-    target_scope_type, target_scope_id = _faq_scope(scope_type, scope_id)
-    for permission in permissions:
-        if await can_access_scope(db, user, permission, target_scope_type, target_scope_id):
-            return True
-    return False
-
-
-async def _require_faq_scope(
-    db: DbSession,
-    user: CurrentUser,
-    permissions: list[str],
-    scope_type: str | None,
-    scope_id: uuid.UUID | None,
-) -> None:
-    if not await _can_access_faq_scope(db, user, permissions, scope_type, scope_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient privileges for this FAQ scope",
-        )
 
 
 @router.get("")
@@ -99,7 +67,7 @@ async def list_admin_faqs(
     )
     items = []
     for item in result.items:
-        if await _can_access_faq_scope(
+        if await can_access_scoped_record(
             db,
             user,
             FAQ_VIEW_PERMISSIONS,
@@ -123,12 +91,13 @@ async def get_admin_faq(
     item = await FAQService.get_by_id(db, faq_id, load_options=selector.load_options)
     if item is None:
         raise HTTPException(status_code=404, detail="FAQ not found")
-    await _require_faq_scope(
+    await require_scoped_record(
         db,
         user,
         FAQ_VIEW_PERMISSIONS,
         item.scope_type,
         item.scope_id,
+        resource_name="FAQ",
     )
     return success(data=selector.apply(item))
 
@@ -145,12 +114,13 @@ async def get_faq(faq_id: uuid.UUID, db: DbSession, fields: FieldSelection = Fie
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_faq(data: FAQCreate, db: DbSession, user: CurrentUser):
-    await _require_faq_scope(
+    await require_scoped_record(
         db,
         user,
         FAQ_MANAGE_PERMISSIONS,
         data.scope_type,
         data.scope_id,
+        resource_name="FAQ",
     )
     item = await FAQService.create(db, **data.model_dump())
     return success(data=item, message="FAQ created")
@@ -161,20 +131,22 @@ async def update_faq(faq_id: uuid.UUID, data: FAQUpdate, db: DbSession, user: Cu
     item = await FAQService.get_by_id(db, faq_id)
     if item is None:
         raise HTTPException(status_code=404, detail="FAQ not found")
-    await _require_faq_scope(
+    await require_scoped_record(
         db,
         user,
         FAQ_MANAGE_PERMISSIONS,
         item.scope_type,
         item.scope_id,
+        resource_name="FAQ",
     )
     payload = data.model_dump(exclude_unset=True)
-    await _require_faq_scope(
+    await require_scoped_record(
         db,
         user,
         FAQ_MANAGE_PERMISSIONS,
         payload.get("scope_type", item.scope_type),
         payload.get("scope_id", item.scope_id),
+        resource_name="FAQ",
     )
     item = await FAQService.update(db, item, **payload)
     return success(data=item, message="FAQ updated")
@@ -185,11 +157,12 @@ async def delete_faq(faq_id: uuid.UUID, db: DbSession, user: CurrentUser):
     item = await FAQService.get_by_id(db, faq_id)
     if item is None:
         raise HTTPException(status_code=404, detail="FAQ not found")
-    await _require_faq_scope(
+    await require_scoped_record(
         db,
         user,
         FAQ_MANAGE_PERMISSIONS,
         item.scope_type,
         item.scope_id,
+        resource_name="FAQ",
     )
     await FAQService.delete(db, item)

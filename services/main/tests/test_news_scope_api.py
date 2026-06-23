@@ -46,7 +46,7 @@ class NewsScopeApiTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(news, "build_selector", return_value=_FakeSelector()),
             patch.object(news.NewsService, "list_admin", return_value=page),
-            patch.object(news, "can_access_scope", side_effect=fake_can_access, create=True),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
         ):
             response = await news.list_admin_news(db=None, user=user)
 
@@ -60,7 +60,7 @@ class NewsScopeApiTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(news, "build_selector", return_value=_FakeSelector()),
             patch.object(news.NewsService, "get_by_id", return_value=item),
-            patch.object(news, "can_access_scope", return_value=False, create=True),
+            patch("app.api.v1._scoped._can_access_scope", return_value=False),
         ):
             with self.assertRaises(HTTPException) as context:
                 await news.get_news_by_id(item.id, db=None, user=user)
@@ -76,7 +76,7 @@ class NewsScopeApiTests(unittest.IsolatedAsyncioTestCase):
             scope_id=uuid.uuid4(),
         )
 
-        with patch.object(news, "can_access_scope", return_value=False, create=True):
+        with patch("app.api.v1._scoped._can_access_scope", return_value=False):
             with self.assertRaises(HTTPException) as context:
                 await news.create_news(payload, db=None, user=user)
 
@@ -94,7 +94,7 @@ class NewsScopeApiTests(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch.object(news.NewsService, "get_by_id", return_value=item),
-            patch.object(news, "can_access_scope", side_effect=fake_can_access, create=True),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
         ):
             with self.assertRaises(HTTPException) as context:
                 await news.update_news(item.id, payload, db=None, user=user)

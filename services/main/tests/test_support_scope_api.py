@@ -48,7 +48,7 @@ class SupportScopeApiTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(contacts, "build_selector", return_value=_FakeSelector()),
             patch.object(contacts.ContactService, "list", return_value=page),
-            patch.object(contacts, "can_access_scope", side_effect=fake_can_access, create=True),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
         ):
             response = await contacts.list_admin_contacts(db=None, user=user)
 
@@ -63,7 +63,7 @@ class SupportScopeApiTests(unittest.IsolatedAsyncioTestCase):
             scope_id=uuid.uuid4(),
         )
 
-        with patch.object(contacts, "can_access_scope", return_value=False, create=True):
+        with patch("app.api.v1._scoped._can_access_scope", return_value=False):
             with self.assertRaises(HTTPException) as context:
                 await contacts.create_contact(payload, db=None, user=user)
 
@@ -76,7 +76,7 @@ class SupportScopeApiTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(contacts, "build_selector", return_value=_FakeSelector()),
             patch.object(contacts.ContactService, "get_by_id", return_value=item),
-            patch.object(contacts, "can_access_scope", return_value=False, create=True),
+            patch("app.api.v1._scoped._can_access_scope", return_value=False),
         ):
             with self.assertRaises(HTTPException) as context:
                 await contacts.get_admin_contact(item.id, db=None, user=user)
@@ -111,7 +111,7 @@ class SupportScopeApiTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(faqs, "build_selector", return_value=_FakeSelector()),
             patch.object(faqs.FAQService, "list", return_value=page),
-            patch.object(faqs, "can_access_scope", side_effect=fake_can_access, create=True),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
         ):
             response = await faqs.list_admin_faqs(db=None, user=user)
 
@@ -125,7 +125,7 @@ class SupportScopeApiTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(faqs, "build_selector", return_value=_FakeSelector()),
             patch.object(faqs.FAQService, "get_by_id", return_value=item),
-            patch.object(faqs, "can_access_scope", return_value=False, create=True),
+            patch("app.api.v1._scoped._can_access_scope", return_value=False),
         ):
             with self.assertRaises(HTTPException) as context:
                 await faqs.get_admin_faq(item.id, db=None, user=user)
@@ -157,7 +157,7 @@ class SupportScopeApiTests(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch.object(faqs.FAQService, "get_by_id", return_value=item),
-            patch.object(faqs, "can_access_scope", side_effect=fake_can_access, create=True),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
         ):
             with self.assertRaises(HTTPException) as context:
                 await faqs.update_faq(item.id, payload, db=None, user=user)

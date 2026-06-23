@@ -10,9 +10,9 @@ from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
+from ._scoped import can_access_scoped_record, require_scoped_record
 from ...deps import CurrentUser, DbSession
 from ...models import News
-from ...security.scopes import can_access_scope
 from ...schemas import NewsCreate, NewsUpdate
 from ...services import NewsService
 
@@ -28,38 +28,6 @@ NEWS_MANAGE_PERMISSIONS = [
     "content.manage_news",
     "content.publish",
 ]
-
-
-def _news_scope(scope_type: str | None, scope_id: uuid.UUID | None) -> tuple[str, uuid.UUID | None]:
-    return (scope_type or "global", scope_id)
-
-
-async def _can_access_news_scope(
-    db: DbSession,
-    user: CurrentUser,
-    permissions: list[str],
-    scope_type: str | None,
-    scope_id: uuid.UUID | None,
-) -> bool:
-    target_scope_type, target_scope_id = _news_scope(scope_type, scope_id)
-    for permission in permissions:
-        if await can_access_scope(db, user, permission, target_scope_type, target_scope_id):
-            return True
-    return False
-
-
-async def _require_news_scope(
-    db: DbSession,
-    user: CurrentUser,
-    permissions: list[str],
-    scope_type: str | None,
-    scope_id: uuid.UUID | None,
-) -> None:
-    if not await _can_access_news_scope(db, user, permissions, scope_type, scope_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient privileges for this news scope",
-        )
 
 
 @router.get("")
@@ -119,7 +87,7 @@ async def list_admin_news(
     )
     items = []
     for item in result.items:
-        if await _can_access_news_scope(
+        if await can_access_scoped_record(
             db,
             user,
             NEWS_VIEW_PERMISSIONS,
@@ -138,12 +106,13 @@ async def get_news_by_id(news_id: uuid.UUID, db: DbSession, user: CurrentUser, f
     item = await NewsService.get_by_id(db, news_id, load_options=selector.load_options)
     if item is None:
         raise HTTPException(status_code=404, detail="News item not found")
-    await _require_news_scope(
+    await require_scoped_record(
         db,
         user,
         NEWS_VIEW_PERMISSIONS,
         item.scope_type,
         item.scope_id,
+        resource_name="news",
     )
     return success(data=selector.apply(item))
 
@@ -160,12 +129,13 @@ async def get_news(slug: str, db: DbSession, fields: FieldSelection = FieldsDep)
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_news(data: NewsCreate, db: DbSession, user: CurrentUser):
-    await _require_news_scope(
+    await require_scoped_record(
         db,
         user,
         NEWS_MANAGE_PERMISSIONS,
         data.scope_type,
         data.scope_id,
+        resource_name="news",
     )
     item = await NewsService.create(db, **data.model_dump())
     return success(data=item, message="News created")
@@ -176,20 +146,22 @@ async def update_news(news_id: uuid.UUID, data: NewsUpdate, db: DbSession, user:
     item = await NewsService.get_by_id(db, news_id)
     if item is None:
         raise HTTPException(status_code=404, detail="News item not found")
-    await _require_news_scope(
+    await require_scoped_record(
         db,
         user,
         NEWS_MANAGE_PERMISSIONS,
         item.scope_type,
         item.scope_id,
+        resource_name="news",
     )
     payload = data.model_dump(exclude_unset=True)
-    await _require_news_scope(
+    await require_scoped_record(
         db,
         user,
         NEWS_MANAGE_PERMISSIONS,
         payload.get("scope_type", item.scope_type),
         payload.get("scope_id", item.scope_id),
+        resource_name="news",
     )
     item = await NewsService.update(db, item, **payload)
     return success(data=item, message="News updated")
@@ -200,12 +172,13 @@ async def publish_news(news_id: uuid.UUID, db: DbSession, user: CurrentUser):
     item = await NewsService.get_by_id(db, news_id)
     if item is None:
         raise HTTPException(status_code=404, detail="News item not found")
-    await _require_news_scope(
+    await require_scoped_record(
         db,
         user,
         NEWS_MANAGE_PERMISSIONS,
         item.scope_type,
         item.scope_id,
+        resource_name="news",
     )
     item = await NewsService.publish(db, item)
     return success(data=item, message="News published")
@@ -216,12 +189,13 @@ async def unpublish_news(news_id: uuid.UUID, db: DbSession, user: CurrentUser):
     item = await NewsService.get_by_id(db, news_id)
     if item is None:
         raise HTTPException(status_code=404, detail="News item not found")
-    await _require_news_scope(
+    await require_scoped_record(
         db,
         user,
         NEWS_MANAGE_PERMISSIONS,
         item.scope_type,
         item.scope_id,
+        resource_name="news",
     )
     item = await NewsService.unpublish(db, item)
     return success(data=item, message="News unpublished")
@@ -232,11 +206,12 @@ async def delete_news(news_id: uuid.UUID, db: DbSession, user: CurrentUser):
     item = await NewsService.get_by_id(db, news_id)
     if item is None:
         raise HTTPException(status_code=404, detail="News item not found")
-    await _require_news_scope(
+    await require_scoped_record(
         db,
         user,
         NEWS_MANAGE_PERMISSIONS,
         item.scope_type,
         item.scope_id,
+        resource_name="news",
     )
     await NewsService.delete(db, item)

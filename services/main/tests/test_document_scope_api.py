@@ -46,7 +46,7 @@ class DocumentScopeApiTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(documents, "build_selector", return_value=_FakeSelector()),
             patch.object(documents.DocumentService, "list", return_value=page),
-            patch.object(documents, "can_access_scope", side_effect=fake_can_access),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
         ):
             response = await documents.list_admin_documents(db=None, user=user)
 
@@ -63,7 +63,7 @@ class DocumentScopeApiTests(unittest.IsolatedAsyncioTestCase):
             scope_id=uuid.uuid4(),
         )
 
-        with patch.object(documents, "can_access_scope", return_value=False):
+        with patch("app.api.v1._scoped._can_access_scope", return_value=False):
             with self.assertRaises(HTTPException) as context:
                 await documents.create_document(payload, db=None, user=user)
 
@@ -81,7 +81,7 @@ class DocumentScopeApiTests(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch.object(documents.DocumentService, "get_by_id", return_value=item),
-            patch.object(documents, "can_access_scope", side_effect=fake_can_access),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
         ):
             with self.assertRaises(HTTPException) as context:
                 await documents.update_document(item.id, payload, db=None, user=user)
