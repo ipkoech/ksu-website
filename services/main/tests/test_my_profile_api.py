@@ -103,6 +103,17 @@ class MyProfileApiTests(unittest.IsolatedAsyncioTestCase):
         get_by_user_id.assert_awaited_once()
         self.assertEqual(person.user_id, get_by_user_id.await_args.args[1])
 
+    async def test_get_my_profile_ignores_loaded_user_relationship(self):
+        person = _person(user=SimpleNamespace(id=uuid.uuid4(), email="jane@example.com"))
+        user = SimpleNamespace(id=person.user_id)
+
+        with patch.object(me.PersonService, "get_by_user_id", return_value=person):
+            response = await me.get_my_profile(_FakeDb(), user)
+
+        self.assertEqual("success", response["status"])
+        self.assertEqual(person.id, response["data"]["id"])
+        self.assertNotIn("user", response["data"])
+
     async def test_update_my_profile_updates_allowed_fields_only(self):
         person = _person()
         user = SimpleNamespace(id=person.user_id)

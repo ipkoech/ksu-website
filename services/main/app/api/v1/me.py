@@ -35,7 +35,24 @@ async def _current_profile(db: DbSession, user: CurrentUser) -> Person:
 
 
 def _profile_data(person: Person) -> dict:
-    return with_person_photo_urls(PersonRead.model_validate(person).model_dump(), person)
+    nested_fields = {
+        "user",
+        "photo",
+        "cv_file",
+        "department",
+        "assignments",
+        "programme_tutorships",
+        "alumni_profile",
+    }
+    payload = {
+        field_name: getattr(person, field_name, None)
+        for field_name in PersonRead.model_fields
+        if field_name not in nested_fields
+    }
+    return with_person_photo_urls(
+        PersonRead.model_validate(payload).model_dump(exclude=nested_fields),
+        person,
+    )
 
 
 async def _validate_profile_media(
