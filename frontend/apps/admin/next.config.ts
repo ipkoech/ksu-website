@@ -30,6 +30,6 @@ const baseConfig: NextConfig = {
 export default function nextConfig(phase: string): NextConfig {
   return {
     ...baseConfig,
-    ...(phase === PHASE_DEVELOPMENT_SERVER ? {} : { output: "export" }),
+    ...(phase === PHASE_DEVELOPMENT_SERVER || process.env.NEXT_OUTPUT_EXPORT === "0" ? {} : { output: "export" }),
   };
 }

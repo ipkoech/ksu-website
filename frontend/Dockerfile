@@ -14,6 +14,7 @@ ARG NEXT_PUBLIC_LIBRARY_FRONTEND_URL
 ARG NEXT_PUBLIC_APP_URL
 ARG NEXT_PUBLIC_APP_NAME="KSU Admin"
 ARG NEXT_BASE_PATH
+ARG NEXT_OUTPUT_EXPORT
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV APP_DIR=${APP_DIR}
@@ -28,6 +29,7 @@ ENV NEXT_PUBLIC_LIBRARY_FRONTEND_URL=${NEXT_PUBLIC_LIBRARY_FRONTEND_URL}
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 ENV NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME}
 ENV NEXT_BASE_PATH=${NEXT_BASE_PATH}
+ENV NEXT_OUTPUT_EXPORT=${NEXT_OUTPUT_EXPORT}
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps ./apps
@@ -36,13 +38,9 @@ COPY packages ./packages
 RUN corepack enable \
   && corepack prepare pnpm@9.1.0 --activate \
   && pnpm install --frozen-lockfile \
-  && pnpm --filter "${PACKAGE_NAME}" build \
+  && if [ "${APP_DIR}" = "admin" ]; then NEXT_OUTPUT_EXPORT=0 pnpm --dir apps/admin exec next build; else pnpm --filter "${PACKAGE_NAME}" build; fi \
   && pnpm store prune
 
 EXPOSE 3000
 
-CMD if [ "${APP_DIR}" = "admin" ]; then \
-      node "apps/admin/scripts/serve-export.mjs" "${PORT:-3000}"; \
-    else \
-      pnpm --dir "apps/${APP_DIR}" exec next start -H 0.0.0.0 -p "${PORT:-3000}"; \
-    fi
+CMD pnpm --dir "apps/${APP_DIR}" exec next start -H 0.0.0.0 -p "${PORT:-3000}"
