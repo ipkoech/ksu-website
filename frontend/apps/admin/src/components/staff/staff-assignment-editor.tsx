@@ -7,6 +7,7 @@ import {
   libraryBranchRelationshipAdapter,
   researchCenterRelationshipAdapter,
 } from "@/components/relationships/relationship-adapters";
+import { cn } from "@ksu/ui/lib";
 import {
   Badge,
   Button,
@@ -551,11 +552,11 @@ export function StaffAssignmentEditor({
             </SheetDescription>
           </SheetHeader>
 
-          <form onSubmit={submit} className="flex-1 space-y-5 py-4">
+          <form onSubmit={submit} className="flex flex-1 flex-col gap-5 py-4">
             {mode !== "edit" && !presetPersonId ? (
-              <section className="space-y-3 rounded-md border p-4">
+              <section className="flex flex-col gap-3 rounded-md border p-4">
                 <div className="flex items-center gap-2">
-                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <Search className="size-4 text-muted-foreground" />
                   <Label>Staff member</Label>
                 </div>
                 <Input value={personSearch} onChange={(event) => setPersonSearch(event.target.value)} placeholder="Search by name or email" />
@@ -565,9 +566,10 @@ export function StaffAssignmentEditor({
                       <button
                         key={person.id}
                         type="button"
-                        className={`flex w-full items-start justify-between gap-3 border-b p-3 text-left text-sm last:border-b-0 ${
-                          form.person_id === person.id ? "bg-primary/5" : "hover:bg-muted/60"
-                        }`}
+                        className={cn(
+                          "flex w-full items-start justify-between gap-3 border-b p-3 text-left text-sm last:border-b-0",
+                          form.person_id === person.id ? "bg-primary/5" : "hover:bg-muted/60",
+                        )}
                         onClick={() => selectPerson(person)}
                       >
                         <span>
@@ -599,7 +601,7 @@ export function StaffAssignmentEditor({
                       <Input placeholder="First name" value={newPerson.first_name} onChange={(event) => setNewPerson((current) => ({ ...current, first_name: event.target.value }))} />
                       <Input placeholder="Last name" value={newPerson.last_name} onChange={(event) => setNewPerson((current) => ({ ...current, last_name: event.target.value }))} />
                       <Input type="email" placeholder="Email" value={newPerson.email} onChange={(event) => setNewPerson((current) => ({ ...current, email: event.target.value }))} />
-                      <div className="space-y-2 md:col-span-3">
+                      <div className="flex flex-col gap-2 md:col-span-3">
                         <SchoolPicker
                           value={newPersonSchoolId}
                           onChange={(value) => {
@@ -610,7 +612,7 @@ export function StaffAssignmentEditor({
                           placeholder="Select school"
                         />
                       </div>
-                      <div className="space-y-2 md:col-span-3">
+                      <div className="flex flex-col gap-2 md:col-span-3">
                         <DepartmentPicker
                           value={newPerson.department_id}
                           onChange={(value) => setNewPerson((current) => ({ ...current, department_id: value }))}
@@ -637,7 +639,7 @@ export function StaffAssignmentEditor({
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
+                <div className="flex flex-col gap-2">
                   <Label>Entity type</Label>
                   <Select
                     value={form.entity_type}
@@ -663,7 +665,7 @@ export function StaffAssignmentEditor({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
+                <div className="flex flex-col gap-2">
                   <Label>Entity</Label>
                   {form.entity_type === "university" ? (
                     <div className="flex h-10 items-center rounded-md border bg-muted px-3 text-sm text-muted-foreground">University-level assignment</div>
@@ -676,9 +678,10 @@ export function StaffAssignmentEditor({
                             <button
                               key={entity.id || entity.label}
                               type="button"
-                              className={`flex w-full items-start justify-between gap-3 border-b p-3 text-left text-sm last:border-b-0 ${
-                                form.entity_id === entity.id ? "bg-primary/5" : "hover:bg-muted/60"
-                              }`}
+                              className={cn(
+                                "flex w-full items-start justify-between gap-3 border-b p-3 text-left text-sm last:border-b-0",
+                                form.entity_id === entity.id ? "bg-primary/5" : "hover:bg-muted/60",
+                              )}
                               onClick={() => selectEntity(entity)}
                               disabled={!entity.id}
                             >
@@ -708,7 +711,7 @@ export function StaffAssignmentEditor({
             )}
 
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label>Role</Label>
                 <Select value={form.role} onValueChange={(value) => updateField("role", value)}>
                   <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
@@ -728,9 +731,10 @@ export function StaffAssignmentEditor({
                       <button
                         key={role.role}
                         type="button"
-                        className={`flex w-full items-center justify-between gap-3 border-b p-2 text-left text-sm last:border-b-0 ${
-                          form.role === role.role ? "bg-primary/5" : "hover:bg-muted/60"
-                        }`}
+                        className={cn(
+                          "flex w-full items-center justify-between gap-3 border-b p-2 text-left text-sm last:border-b-0",
+                          form.role === role.role ? "bg-primary/5" : "hover:bg-muted/60",
+                        )}
                         onClick={() => updateField("role", role.role)}
                       >
                         <span>{role.label}</span>
@@ -745,29 +749,29 @@ export function StaffAssignmentEditor({
                   )}
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label>Display title</Label>
                 <Input value={form.title} onChange={(event) => updateField("title", event.target.value)} placeholder="Senior Lecturer" />
               </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label>Hierarchy</Label>
                 <Input type="number" min={1} max={11} value={form.hierarchy_level} onChange={(event) => updateField("hierarchy_level", Number(event.target.value))} />
               </div>
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label>Start date</Label>
                 <Input type="date" value={form.start_date} onChange={(event) => updateField("start_date", event.target.value)} />
               </div>
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label>End date</Label>
                 <Input type="date" value={form.end_date} onChange={(event) => updateField("end_date", event.target.value)} />
               </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label>Reports to</Label>
                 {form.entity_type !== "university" && !form.entity_id ? (
                   <div className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">
@@ -805,9 +809,10 @@ export function StaffAssignmentEditor({
                           <button
                             key={reportingAssignment.id}
                             type="button"
-                            className={`flex w-full items-start justify-between gap-3 border-b p-3 text-left text-sm last:border-b-0 ${
-                              form.reports_to_id === reportingAssignment.id ? "bg-primary/5" : "hover:bg-muted/60"
-                            }`}
+                            className={cn(
+                              "flex w-full items-start justify-between gap-3 border-b p-3 text-left text-sm last:border-b-0",
+                              form.reports_to_id === reportingAssignment.id ? "bg-primary/5" : "hover:bg-muted/60",
+                            )}
                             onClick={() => selectReportsTo(reportingAssignment)}
                           >
                             <span>
@@ -828,7 +833,7 @@ export function StaffAssignmentEditor({
                   </>
                 )}
               </div>
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label>Term years</Label>
                 <Input type="number" min={1} max={10} value={form.term_years} onChange={(event) => updateField("term_years", event.target.value)} placeholder="3" />
               </div>
@@ -849,7 +854,7 @@ export function StaffAssignmentEditor({
               ))}
             </div>
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label>Notes</Label>
               <RichTextEditor toolbar="simple" minHeight="160px" value={form.notes} onChange={(notes) => updateField("notes", notes)} />
             </div>
@@ -877,18 +882,18 @@ export function StaffAssignmentEditor({
               {conflict?.role_label} for {conflict?.entity_label} is already assigned.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4">
             <div className="rounded-md border p-4 text-sm">
               <p className="font-medium">{conflict?.current_holder?.person_name || "Current holder"}</p>
               <p className="text-muted-foreground">Started {conflict?.current_holder?.start_date || "unknown"}</p>
             </div>
             {canReplaceCurrent ? (
               <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-2">
+                <div className="flex flex-col gap-2">
                   <Label>Replacement end date</Label>
                   <Input type="date" value={resolutionEndDate} onChange={(event) => setResolutionEndDate(event.target.value)} />
                 </div>
-                <div className="space-y-2">
+                <div className="flex flex-col gap-2">
                   <Label>Replacement notes</Label>
                   <Input value={resolutionNotes} onChange={(event) => setResolutionNotes(event.target.value)} placeholder="Reason for replacement" />
                 </div>
@@ -914,12 +919,12 @@ export function StaffAssignmentEditor({
             <DialogTitle>End assignment</DialogTitle>
             <DialogDescription>Ending preserves the assignment in staff history.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-2">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               <Label>End date</Label>
               <Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
             </div>
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label>Notes</Label>
               <RichTextEditor toolbar="simple" minHeight="140px" value={endNotes} onChange={setEndNotes} />
             </div>
