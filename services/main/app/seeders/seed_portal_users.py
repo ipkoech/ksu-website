@@ -70,6 +70,13 @@ PORTAL_USER_SPECS = [
         "role": "researcher",
         "institutional_role": "researcher",
     },
+    {
+        "key": "portal_staff_profile_editor",
+        "email": "staff.profile@kisiiuniversity.ac.ke",
+        "full_name": "KSU Staff Profile Editor",
+        "role": "staff",
+        "institutional_role": "staff_profile_editor",
+    },
 ]
 
 PORTAL_USER_PASSWORD = "ChangeMe123!"

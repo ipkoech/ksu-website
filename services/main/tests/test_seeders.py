@@ -8,6 +8,7 @@ from app.seeders.seed_admin_departments import ADMIN_SERVICE_SPECS, MOVED_ADMIN_
 from app.seeders.seed_cover_images import cover_targets_from_specs
 from app.seeders.seed_divisions import DIVISION_SPECS, WING_SPECS
 from app.seeders.programme_catalogue import BROCHURE_PROGRAMMES
+from app.seeders.seed_portal_users import PORTAL_USER_SPECS
 from app.seeders.seed_programmes import programme_code
 from app.seeders.seed_public_records import CONTACT_SPECS, DOWNLOAD_SPECS, FAQ_SPECS
 from app.schemas.base import slugify
@@ -114,6 +115,20 @@ class SeederDataTests(unittest.TestCase):
 
         self.assertEqual([], duplicates(programme_slugs))
         self.assertEqual([], duplicates(programme_codes))
+
+    def test_portal_staff_profile_editor_user_is_seeded(self):
+        portal_emails = [spec["email"] for spec in PORTAL_USER_SPECS]
+        portal_keys = [spec["key"] for spec in PORTAL_USER_SPECS]
+        staff_profile_user = next(
+            spec
+            for spec in PORTAL_USER_SPECS
+            if spec["key"] == "portal_staff_profile_editor"
+        )
+
+        self.assertEqual([], duplicates(portal_emails))
+        self.assertEqual([], duplicates(portal_keys))
+        self.assertEqual("staff.profile@kisiiuniversity.ac.ke", staff_profile_user["email"])
+        self.assertEqual("staff", staff_profile_user["role"])
 
     def test_live_site_programme_department_relationship_overrides(self):
         expected_department_codes = {
