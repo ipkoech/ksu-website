@@ -24,7 +24,7 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { Button, ScrollReveal } from "@ksu/ui/components";
+import { Button, ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 import { MiniHeader, PublicFooter, PublicHeader } from "@ksu/ui/layout/public";
 import { LandingHero } from "@/components/home/landing-hero";
 import { AnimatedStatRow } from "@/components/home/animated-stat-row";
@@ -107,6 +107,13 @@ const campusLife = [
   icon: LucideIcon;
 }>;
 
+const defaultInstitutionalFacts: HomeMetric[] = [
+  { value: "Open", label: "Admissions" },
+  { value: "Live", label: "Programmes" },
+  { value: "Active", label: "Research" },
+  { value: "Public", label: "Services" },
+];
+
 function isExternalHref(href: string) {
   return /^https?:\/\//i.test(href);
 }
@@ -122,11 +129,19 @@ function linkProps(link: { href: string; external?: boolean }) {
 function LandingReveal({
   children,
   className,
+  variant = "fade-up",
+  delay = 0,
 }: {
   children: ReactNode;
   className?: string;
+  variant?: "fade-up" | "fade-down" | "fade-left" | "fade-right" | "zoom-in" | "zoom-out";
+  delay?: number;
 }) {
-  return <ScrollReveal className={className}>{children}</ScrollReveal>;
+  return (
+    <ScrollReveal className={className} variant={variant} delay={delay}>
+      {children}
+    </ScrollReveal>
+  );
 }
 
 export default async function HomePage() {
@@ -166,7 +181,7 @@ export default async function HomePage() {
           <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
             <TrustFactRow facts={homepage.facts} />
             {isContentDegraded ? <ContentDegradedNotice /> : null}
-            <LandingReveal>
+            <LandingReveal variant="fade-right">
               <SchoolsSection
                 schools={homepage.schools}
                 quickLinks={homepage.publicQuickLinks}
@@ -174,20 +189,20 @@ export default async function HomePage() {
                 viceChancellor={homepage.viceChancellor}
               />
             </LandingReveal>
-            <LandingReveal>
+            <LandingReveal variant="zoom-in">
               <ProgrammesAdmissionsSection
                 programmes={homepage.featuredProgrammes}
                 activeIntakes={homepage.activeIntakes}
               />
             </LandingReveal>
-            <LandingReveal>
+            <LandingReveal variant="fade-left">
               <LatestContentSection
                 newsItems={homepage.latestNews}
                 events={homepage.upcomingEvents}
                 blog={homepage.latestBlog}
               />
             </LandingReveal>
-            <LandingReveal>
+            <LandingReveal variant="zoom-out">
               <ResearchSection />
             </LandingReveal>
             <LandingReveal>
@@ -257,9 +272,11 @@ function ContentDegradedNotice() {
 }
 
 function TrustFactRow({ facts }: { facts: HomeMetric[] }) {
+  const visibleFacts = facts.length ? facts : defaultInstitutionalFacts;
+
   return (
     <LandingReveal>
-      <AnimatedStatRow facts={facts} />
+      <AnimatedStatRow facts={visibleFacts} />
     </LandingReveal>
   );
 }
@@ -276,17 +293,60 @@ function SchoolsSection({
   viceChancellor: HomeLeader | null;
 }) {
   return (
-    <section className="border-b border-blue-100 bg-white py-8">
-      <div className="grid gap-6 xl:grid-cols-[minmax(240px,0.78fr)_minmax(0,1.18fr)_minmax(260px,0.86fr)]">
-        <ViceChancellorMessage leader={viceChancellor} />
-        <div className="border-blue-100 xl:border-x xl:px-7">
-          <SectionKicker title="Our Schools" />
+    <section className="border-b border-blue-100 bg-white py-12">
+      <div className="grid gap-8 xl:grid-cols-[minmax(280px,0.82fr)_minmax(0,1.35fr)]">
+        <div className="grid gap-5">
+          <div className="rounded-md bg-primary p-6 text-white shadow-sm shadow-blue-100/70">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/70">
+              Academic gateway
+            </p>
+            <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-bold leading-tight">
+              Find your school, programme, and student service route.
+            </h2>
+            <p className="mt-4 text-sm leading-6 text-white/82">
+              Kisii University brings academic schools, admissions guidance,
+              public services, and institutional leadership into one clear
+              entry point.
+            </p>
+            <Link
+              href="/academics/schools"
+              className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-primary transition hover:bg-white/90"
+            >
+              Explore schools
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          </div>
+          <ViceChancellorMessage leader={viceChancellor} />
+          <QuickPublicLinks links={quickLinks} activeIntakes={activeIntakes} />
+        </div>
+
+        <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <SectionKicker title="Our Schools" />
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+                Browse academic homes for teaching, research, professional
+                training, and community engagement.
+              </p>
+            </div>
+            <Link
+              href="/academics"
+              className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary hover:text-secondary"
+            >
+              View academics
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          </div>
           {schools.length ? (
-            <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <ScrollRevealGroup
+              className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+              variant="fade-up"
+              staggerDelay={55}
+            >
               {schools.slice(0, 8).map((school) => (
                 <SchoolCard key={school.href} school={school} />
               ))}
-            </div>
+            </ScrollRevealGroup>
           ) : (
             <HomeEmptyState
               title="Schools are not available"
@@ -296,7 +356,6 @@ function SchoolsSection({
             />
           )}
         </div>
-        <QuickPublicLinks links={quickLinks} activeIntakes={activeIntakes} />
       </div>
     </section>
   );
@@ -308,7 +367,7 @@ function ViceChancellorMessage({ leader }: { leader: HomeLeader | null }) {
   }
 
   return (
-    <aside>
+    <aside className="rounded-md border border-blue-100 bg-blue-50/60 p-4">
       <SectionKicker title="Message from the Vice Chancellor" />
       <div className="mt-4 grid gap-4">
         {leader.image ? (
@@ -343,7 +402,7 @@ function SchoolCard({ school }: { school: HomeCard }) {
   return (
     <Link
       href={school.href}
-      className="group block h-full overflow-hidden rounded-md border border-blue-100 bg-white shadow-sm shadow-blue-100/60 transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md hover:shadow-blue-200"
+      className="group block h-full overflow-hidden rounded-md border border-blue-100 bg-white shadow-sm shadow-blue-100/60 transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md hover:shadow-blue-200"
     >
       <PublicImage
         src={school.imageUrl}
@@ -355,7 +414,7 @@ function SchoolCard({ school }: { school: HomeCard }) {
         imageClassName="transition duration-500 group-hover:scale-105"
       />
       <div className="flex min-h-16 items-center px-3 py-2">
-        <h3 className="w-full line-clamp-2 text-center text-sm font-bold leading-5 text-slate-950 transition group-hover:text-primary">
+        <h3 className="w-full line-clamp-2 text-sm font-bold leading-5 text-slate-950 transition group-hover:text-primary">
           {school.title}
         </h3>
       </div>
@@ -384,7 +443,7 @@ function QuickPublicLinks({
     : links;
 
   return (
-    <aside>
+    <aside className="rounded-md border border-blue-100 bg-white p-4 shadow-sm shadow-blue-100/60">
       <SectionKicker title="Quick Links" />
       <div className="mt-4 overflow-hidden rounded-md border border-blue-100 bg-white">
         {visibleLinks.slice(0, 8).map((link, index) => {
@@ -457,11 +516,13 @@ function ProgrammesAdmissionsSection({
   const activeIntake = activeIntakes[0] ?? null;
 
   return (
-    <section className="-mx-4 bg-blue-50/70 px-4 py-8 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10 2xl:-mx-12 2xl:px-12">
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.78fr)_minmax(280px,0.92fr)]">
-        <FeaturedProgrammes programmes={programmes} />
-        <AdmissionsGuideCard activeIntake={activeIntake} />
+    <section className="-mx-4 overflow-hidden bg-blue-50/80 px-4 py-12 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10 2xl:-mx-12 2xl:px-12">
+      <div className="grid gap-7 lg:grid-cols-[minmax(300px,0.72fr)_minmax(0,1.28fr)]">
         <ApplyCtaCard activeIntake={activeIntake} />
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.58fr)]">
+          <FeaturedProgrammes programmes={programmes} />
+          <AdmissionsGuideCard activeIntake={activeIntake} />
+        </div>
       </div>
     </section>
   );
@@ -470,13 +531,17 @@ function ProgrammesAdmissionsSection({
 function FeaturedProgrammes({ programmes }: { programmes: HomeCard[] }) {
   return (
     <section className="rounded-md border border-blue-100 bg-white shadow-sm shadow-blue-100/60">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="px-4 pt-4">
+      <div className="mb-3 flex flex-col gap-3 border-b border-blue-50 px-5 pb-4 pt-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
           <SectionKicker title="Featured Programmes" />
+          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
+            Explore selected programmes and move quickly from discovery to
+            application guidance.
+          </p>
         </div>
         <Link
           href="/academics/programmes"
-          className="mr-4 mt-4 inline-flex min-h-11 items-center gap-1.5 text-xs font-semibold text-primary hover:text-secondary"
+          className="inline-flex min-h-11 items-center gap-1.5 text-xs font-semibold text-primary hover:text-secondary"
         >
           View all programmes
           <ArrowRight className="h-3.5 w-3.5" aria-hidden />
@@ -484,7 +549,7 @@ function FeaturedProgrammes({ programmes }: { programmes: HomeCard[] }) {
       </div>
 
       {programmes.length ? (
-        <div className="px-4 pb-4">
+        <div className="px-5 pb-5">
           <FeaturedProgrammeTabs programmes={programmes} />
         </div>
       ) : (
@@ -507,7 +572,7 @@ function AdmissionsGuideCard({
   activeIntake: HomeIntake | null;
 }) {
   return (
-    <section className="border-blue-100 lg:border-x lg:px-6">
+    <section className="rounded-md border border-blue-100 bg-white p-5 shadow-sm shadow-blue-100/60">
       <SectionKicker title="Your Admissions Journey" />
 
       <div className="mt-5 grid gap-4">
@@ -549,24 +614,48 @@ function AdmissionsGuideCard({
 
 function ApplyCtaCard({ activeIntake }: { activeIntake: HomeIntake | null }) {
   return (
-    <aside className="overflow-hidden rounded-md bg-primary text-white shadow-sm shadow-blue-100/70">
-      <div className="p-6">
-        <h3 className="font-[family-name:var(--font-display)] text-2xl font-bold">
-          Apply to Kisii University
-        </h3>
-        <p className="mt-4 max-w-xs text-sm font-medium leading-6 text-white/85">
-          Join a vibrant community of learners and become part of a tradition of
-          excellence and service.
+    <aside className="relative min-h-[430px] overflow-hidden rounded-md bg-primary text-white shadow-sm shadow-blue-100/70">
+      <PublicImage
+        src="/logos/ksu-bck5.jpg"
+        alt=""
+        ratio="fill"
+        sizes="(min-width: 1024px) 36vw, 100vw"
+        className="absolute inset-0 h-full w-full"
+        imageClassName="object-cover"
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,20,49,0.55)_0%,rgba(2,20,49,0.9)_100%)]" />
+      <div className="relative z-10 flex min-h-[430px] flex-col justify-end p-6 sm:p-8">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/70">
+          Start your journey
         </p>
-        <Button
-          asChild
-          className="mt-5 h-11 rounded-md bg-white px-5 text-sm font-semibold text-primary hover:bg-white/90"
-        >
-          <Link href={activeIntake?.href ?? "/admissions/how-to-apply"}>
-            Apply Now
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </Link>
-        </Button>
+        <h3 className="mt-4 max-w-sm font-[family-name:var(--font-display)] text-4xl font-bold leading-tight">
+          Apply to Kisii University with confidence.
+        </h3>
+        <p className="mt-4 max-w-sm text-sm font-medium leading-6 text-white/85">
+          Choose a programme, check the requirements, and complete your
+          application through the active intake route.
+        </p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
+          <Button
+            asChild
+            className="min-h-11 rounded-md bg-secondary px-5 text-sm font-semibold text-white hover:bg-secondary/90"
+          >
+            <Link href={activeIntake?.href ?? "/admissions/how-to-apply"}>
+              Apply Now
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            className="min-h-11 rounded-md border-white/80 bg-white px-5 text-sm font-semibold text-primary hover:bg-white/90"
+          >
+            <Link href="/admissions/requirements">
+              View requirements
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          </Button>
+        </div>
       </div>
       {activeIntake ? (
         <CountdownStrip
@@ -691,11 +780,29 @@ function LatestContentSection({
   blog: HomeCard | null;
 }) {
   return (
-    <section className="border-b border-blue-100 bg-white py-8">
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.78fr)_minmax(280px,0.78fr)]">
-        <div className="border-blue-100 xl:border-r xl:pr-6">
+    <section className="border-b border-blue-100 bg-white py-12">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <SectionKicker title="News, Events and Notices" />
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+            Follow university announcements, academic events, student notices,
+            and public updates from one editorial view.
+          </p>
+        </div>
+        <Link
+          href="/media/news"
+          className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary hover:text-secondary"
+        >
+          View media centre
+          <ArrowRight className="h-4 w-4" aria-hidden />
+        </Link>
+      </div>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.24fr)_minmax(300px,0.76fr)]">
+        <div>
           <div className="mb-4 flex items-center justify-between gap-3">
-            <SectionKicker title="Latest News" />
+            <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
+              Latest News
+            </h3>
             <Link
               href="/media/news"
               className="inline-flex min-h-11 items-center gap-2 text-xs font-semibold text-primary hover:text-secondary"
@@ -722,8 +829,10 @@ function LatestContentSection({
             />
           )}
         </div>
-        <EventsCard events={events} />
-        <LatestBlogCard blog={blog} />
+        <div className="grid gap-5">
+          <EventsCard events={events} />
+          <LatestBlogCard blog={blog} />
+        </div>
       </div>
     </section>
   );
@@ -790,7 +899,7 @@ function NewsMini({ item }: { item: HomeCard }) {
 
 function EventsCard({ events }: { events: HomeCard[] }) {
   return (
-    <aside className="border-blue-100 xl:border-r xl:pr-6">
+    <aside className="rounded-md border border-blue-100 bg-blue-50/60 p-5">
       <div className="mb-3 flex items-center justify-between gap-3">
         <SectionKicker title="Upcoming Events" />
         <Link
@@ -837,7 +946,7 @@ function EventsCard({ events }: { events: HomeCard[] }) {
 function LatestBlogCard({ blog }: { blog: HomeCard | null }) {
   if (!blog) {
     return (
-      <aside>
+      <aside className="rounded-md border border-blue-100 bg-white p-5 shadow-sm shadow-blue-100/60">
         <SectionKicker title="Latest Blog" />
         <HomeEmptyState
           title="Blog updates are being refreshed"
@@ -850,7 +959,7 @@ function LatestBlogCard({ blog }: { blog: HomeCard | null }) {
   }
 
   return (
-    <aside>
+    <aside className="rounded-md border border-blue-100 bg-white p-5 shadow-sm shadow-blue-100/60">
       <div className="mb-3 flex items-center justify-between gap-3">
         <SectionKicker title="Latest Blog" />
         <Link
@@ -867,7 +976,7 @@ function LatestBlogCard({ blog }: { blog: HomeCard | null }) {
 
 function ResearchSection() {
   return (
-    <section className="relative -mx-4 min-h-[360px] overflow-hidden bg-slate-950 px-4 py-12 text-white sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10 2xl:-mx-12 2xl:px-12">
+    <section className="relative -mx-4 min-h-[430px] overflow-hidden bg-slate-950 px-4 py-14 text-white sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10 2xl:-mx-12 2xl:px-12">
       <PublicImage
         src="/images/about/about-strategic-plan-branded.webp"
         alt=""
@@ -877,13 +986,13 @@ function ResearchSection() {
         imageClassName="object-cover"
       />
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.9)_0%,rgba(2,20,49,0.72)_42%,rgba(2,20,49,0.18)_100%)]" />
-      <div className="relative z-10 flex min-h-[280px] max-w-7xl items-center">
-        <div className="max-w-xl">
+      <div className="relative z-10 grid min-h-[320px] max-w-7xl items-center gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(320px,0.65fr)]">
+        <div className="max-w-2xl">
           <SectionKicker
             title="Research and Innovation"
             className="text-white"
           />
-          <h2 className="mt-5 font-[family-name:var(--font-display)] text-4xl font-bold leading-tight">
+          <h2 className="mt-5 font-[family-name:var(--font-display)] text-4xl font-bold leading-tight sm:text-5xl">
             Research that responds to real community and national priorities.
           </h2>
           <p className="mt-4 text-base leading-7 text-white/85">
@@ -900,6 +1009,25 @@ function ResearchSection() {
             <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
         </div>
+        <ScrollRevealGroup
+          className="grid gap-3"
+          variant="fade-left"
+          staggerDelay={80}
+        >
+          {[
+            ["Health and wellbeing", "Applied research for stronger communities."],
+            ["Agriculture and environment", "Knowledge for resilient livelihoods."],
+            ["Technology and society", "Innovation for public service and enterprise."],
+          ].map(([title, body]) => (
+            <div
+              key={title}
+              className="rounded-md border border-white/15 bg-white/10 p-4 backdrop-blur-sm"
+            >
+              <h3 className="text-sm font-bold text-white">{title}</h3>
+              <p className="mt-2 text-xs leading-5 text-white/72">{body}</p>
+            </div>
+          ))}
+        </ScrollRevealGroup>
       </div>
     </section>
   );
@@ -907,7 +1035,7 @@ function ResearchSection() {
 
 function CampusLifeSection() {
   return (
-    <section className="border-b border-blue-100 bg-white py-8">
+    <section className="border-b border-blue-100 bg-white py-12">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <SectionKicker title="Life at Kisii University" />
@@ -924,19 +1052,25 @@ function CampusLifeSection() {
           <ArrowRight className="h-4 w-4" aria-hidden />
         </Link>
       </div>
-      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {campusLife.map((item) => (
+      <ScrollRevealGroup
+        className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        variant="fade-up"
+        staggerDelay={70}
+      >
+        {campusLife.map((item, index) => (
           <Link
             key={item.href}
             href={item.href}
-            className="group min-w-0 overflow-hidden rounded-md border border-blue-100 bg-white shadow-sm shadow-blue-100/60 transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+            className={`group min-w-0 overflow-hidden rounded-md border border-blue-100 bg-white shadow-sm shadow-blue-100/60 transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md ${
+              index === 0 ? "lg:col-span-2" : ""
+            }`}
           >
             <ProgressiveImageCard
               src={item.imageUrl}
               alt=""
               ratio="card"
               sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-              className="h-32"
+              className={index === 0 ? "h-48 lg:h-56" : "h-32"}
             >
               <span className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-md bg-white/90 text-primary shadow-sm">
                 <item.icon className="h-4 w-4" aria-hidden />
@@ -946,6 +1080,11 @@ function CampusLifeSection() {
               </span>
             </ProgressiveImageCard>
             <div className="p-4">
+              {index === 0 ? (
+                <h3 className="mb-2 font-[family-name:var(--font-display)] text-xl font-bold text-slate-950">
+                  {item.title}
+                </h3>
+              ) : null}
               <p className="line-clamp-3 text-sm leading-6 text-slate-600">
                 {item.body}
               </p>
@@ -956,7 +1095,7 @@ function CampusLifeSection() {
             </div>
           </Link>
         ))}
-      </div>
+      </ScrollRevealGroup>
     </section>
   );
 }
@@ -1034,64 +1173,90 @@ function PartnersSection({ partners }: { partners: HomePartner[] }) {
 }
 
 function JourneyCta() {
+  const routes = [
+    {
+      title: "Apply Now",
+      body: "Start your application through the admissions guide and active intake routes.",
+      href: "/admissions/how-to-apply",
+      label: "Apply",
+      image: "/logos/ksu-bck1.jpg",
+      tone: "primary",
+    },
+    {
+      title: "Explore Programmes",
+      body: "Compare academic options across schools before choosing your path.",
+      href: "/academics/programmes",
+      label: "View programmes",
+      image: "/logos/ksu-bck5.jpg",
+      tone: "secondary",
+    },
+    {
+      title: "Contact Admissions",
+      body: "Reach the university for guidance on requirements, deadlines, and next steps.",
+      href: "/contact",
+      label: "Contact us",
+      image: "/images/about/about-service-charter-branded.webp",
+      tone: "primary",
+    },
+  ];
+
   return (
-    <section className="-mx-4 grid text-white sm:-mx-6 lg:-mx-8 lg:grid-cols-2 xl:-mx-10 2xl:-mx-12">
-      <div className="relative overflow-hidden bg-primary p-8 sm:p-10">
-        <PublicImage
-          src="/logos/ksu-bck1.jpg"
-          alt=""
-          ratio="fill"
-          sizes="(min-width: 1024px) 50vw, 100vw"
-          className="absolute inset-0 h-full w-full"
-        />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(59,130,246,0.82),rgba(59,130,246,0.56))]" />
-        <div className="relative z-10">
-          <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold">
-            Ready to start your journey?
-          </h2>
-          <p className="mt-2 max-w-md text-sm leading-6 text-white/85">
-            Apply today and take the first step toward a brighter future at
-            Kisii University.
+    <section className="-mx-4 bg-slate-950 px-4 py-12 text-white sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10 2xl:-mx-12 2xl:px-12">
+      <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/60">
+            Take the next step
           </p>
-          <Button
-            asChild
-            className="mt-5 min-h-11 rounded-md bg-white px-5 text-sm font-semibold text-primary hover:bg-white/90"
-          >
-            <Link href="/admissions/how-to-apply">
-              Apply Now
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
-          </Button>
-        </div>
-      </div>
-      <div className="relative overflow-hidden bg-secondary p-8 sm:p-10">
-        <PublicImage
-          src="/images/about/about-strategic-plan-branded.webp"
-          alt=""
-          ratio="fill"
-          sizes="(min-width: 1024px) 50vw, 100vw"
-          className="absolute inset-0 h-full w-full"
-        />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(249,115,22,0.84),rgba(249,115,22,0.55))]" />
-        <div className="relative z-10">
-          <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold">
-            Partner with Kisii University
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-bold leading-tight">
+            Start with the route that fits your goal.
           </h2>
-          <p className="mt-2 max-w-md text-sm leading-6 text-white/85">
-            Collaborate in research, innovation, and community impact for a
-            better tomorrow.
-          </p>
-          <Button
-            asChild
-            className="mt-5 min-h-11 rounded-md bg-white px-5 text-sm font-semibold text-secondary hover:bg-white/90"
-          >
-            <Link href={researchHref} {...linkProps({ href: researchHref })}>
-              Partner with us
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
-          </Button>
         </div>
+        <p className="max-w-md text-sm leading-6 text-white/72">
+          Clear pathways for applicants, programme explorers, and visitors who
+          need direct admissions support.
+        </p>
       </div>
+      <ScrollRevealGroup
+        className="grid gap-4 lg:grid-cols-3"
+        variant="fade-up"
+        staggerDelay={80}
+      >
+        {routes.map((route) => (
+          <Link
+            key={route.href}
+            href={route.href}
+            className="group relative block min-h-[260px] overflow-hidden rounded-md border border-white/15 bg-white/10 p-6"
+          >
+            <PublicImage
+              src={route.image}
+              alt=""
+              ratio="fill"
+              sizes="(min-width: 1024px) 33vw, 100vw"
+              className="absolute inset-0 h-full w-full"
+              imageClassName="object-cover transition duration-500 group-hover:scale-105"
+            />
+            <div
+              className={`absolute inset-0 ${
+                route.tone === "secondary"
+                  ? "bg-[linear-gradient(180deg,rgba(249,115,22,0.72),rgba(2,20,49,0.9))]"
+                  : "bg-[linear-gradient(180deg,rgba(59,130,246,0.72),rgba(2,20,49,0.92))]"
+              }`}
+            />
+            <div className="relative z-10 flex min-h-[212px] flex-col justify-end">
+              <h3 className="font-[family-name:var(--font-display)] text-3xl font-bold">
+                {route.title}
+              </h3>
+              <p className="mt-3 text-sm leading-6 text-white/82">
+                {route.body}
+              </p>
+              <span className="mt-5 inline-flex min-h-11 w-fit items-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-primary transition group-hover:bg-white/90">
+                {route.label}
+                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" aria-hidden />
+              </span>
+            </div>
+          </Link>
+        ))}
+      </ScrollRevealGroup>
     </section>
   );
 }

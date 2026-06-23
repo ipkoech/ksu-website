@@ -170,7 +170,9 @@ export function LandingHero({
                 ease: "easeOut",
               }}
             >
-              <p className="sr-only">{activeSlide.eyebrow}</p>
+              <p className="mb-4 inline-flex w-fit items-center rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-white/90 backdrop-blur-sm">
+                {activeSlide.eyebrow}
+              </p>
               <h1 className="max-w-[520px] text-balance font-[family-name:var(--font-display)] text-4xl font-bold leading-tight text-white min-[360px]:text-5xl sm:text-6xl lg:max-w-[760px] lg:text-[66px]">
                 {activeSlide.title}
               </h1>
@@ -212,6 +214,25 @@ export function LandingHero({
             </Button>
           </div>
 
+        </div>
+
+        <div className="absolute bottom-10 right-4 hidden max-w-[300px] rounded-md border border-white/20 bg-slate-950/35 p-4 text-white shadow-2xl shadow-slate-950/20 backdrop-blur-md lg:block xl:right-10">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/70">
+            Institutional gateway
+          </p>
+          <div className="mt-3 grid gap-2">
+            {["Admissions", "Academic programmes", "Research & innovation"].map(
+              (item) => (
+                <span
+                  key={item}
+                  className="flex items-center justify-between gap-3 rounded-md bg-white/10 px-3 py-2 text-sm font-semibold"
+                >
+                  {item}
+                  <ArrowRight className="h-3.5 w-3.5 text-secondary" aria-hidden />
+                </span>
+              ),
+            )}
+          </div>
         </div>
       </div>
 
