@@ -18,7 +18,7 @@ _PLACEHOLDER_RE = re.compile(r"{{\s*([a-zA-Z0-9_]+)\s*}}")
 
 def _build_message(*, to_email: str, subject: str, text_body: str, html_body: str | None = None) -> EmailMessage:
     message = EmailMessage()
-    from_email = settings.SMTP_FROM_EMAIL or settings.EMAIL_FROM or settings.SMTP_USERNAME or "no-reply@kisiiuniversity.ac.ke"
+    from_email = settings.SMTP_FROM_EMAIL or settings.EMAIL_FROM or settings.SMTP_USERNAME or "no-reply@example.invalid"
     from_name = settings.SMTP_FROM_NAME
     message["From"] = f"{from_name} <{from_email}>" if from_name else from_email
     message["To"] = to_email

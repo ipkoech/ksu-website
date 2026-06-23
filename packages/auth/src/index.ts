@@ -16,24 +16,13 @@ interface AuthContextType {
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = React.useState<User | null>({
-        id: "1",
-        name: "Admin User",
-        scopes: ["*:*"], // Full access for development
-    });
+    const [user, setUser] = React.useState<User | null>(null);
 
     const login = async (username: string, password: string) => {
-        // Simulate API call
+        void username;
+        void password;
         await new Promise((resolve) => setTimeout(resolve, 500));
-        if (username === "admin" && password === "password") {
-            setUser({
-                id: "1",
-                name: "Admin User",
-                scopes: ["*:*"], // Full access
-            });
-        } else {
-            throw new Error("Invalid credentials");
-        }
+        throw new Error("Mock authentication is disabled. Configure the real auth provider.");
     };
 
     const logout = () => {

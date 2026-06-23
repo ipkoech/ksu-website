@@ -77,5 +77,7 @@ tmp/
 designs/
 design/
 docs/
+deploy/**/*.md
+ADMIN_PORTAL_*.md
 frontend/apps/library/.chrome-visual-profile/
 frontend/apps/library/visual-audit/

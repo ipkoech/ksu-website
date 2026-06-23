@@ -127,7 +127,7 @@ class SeederDataTests(unittest.TestCase):
 
         self.assertEqual([], duplicates(portal_emails))
         self.assertEqual([], duplicates(portal_keys))
-        self.assertEqual("staff.profile@kisiiuniversity.ac.ke", staff_profile_user["email"])
+        self.assertEqual("staff.profile@example.invalid", staff_profile_user["email"])
         self.assertEqual("staff", staff_profile_user["role"])
 
     def test_live_site_programme_department_relationship_overrides(self):

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ._shared import (
@@ -16,70 +18,68 @@ from ._shared import (
 PORTAL_USER_SPECS = [
     {
         "key": "portal_system_admin",
-        "email": "system.admin@kisiiuniversity.ac.ke",
+        "email": "system.admin@example.invalid",
         "full_name": "KSU System Admin",
         "role": "system_admin",
         "institutional_role": "system_admin",
     },
     {
         "key": "portal_governance_admin",
-        "email": "governance.admin@kisiiuniversity.ac.ke",
+        "email": "governance.admin@example.invalid",
         "full_name": "KSU Governance Admin",
         "role": "staff_admin",
         "institutional_role": "governance_admin",
     },
     {
         "key": "portal_school_admin",
-        "email": "school.admin@kisiiuniversity.ac.ke",
+        "email": "school.admin@example.invalid",
         "full_name": "KSU School Admin",
         "role": "school_admin",
         "institutional_role": "school_admin",
     },
     {
         "key": "portal_department_admin",
-        "email": "department.admin@kisiiuniversity.ac.ke",
+        "email": "department.admin@example.invalid",
         "full_name": "KSU Department Admin",
         "role": "dept_admin",
         "institutional_role": "department_admin",
     },
     {
         "key": "portal_corporate_admin",
-        "email": "corporate.admin@kisiiuniversity.ac.ke",
+        "email": "corporate.admin@example.invalid",
         "full_name": "KSU Corporate Communication Admin",
         "role": "content_admin",
         "institutional_role": "corporate_communication_admin",
     },
     {
         "key": "portal_research_admin",
-        "email": "research.admin@kisiiuniversity.ac.ke",
+        "email": "research.admin@example.invalid",
         "full_name": "KSU Research Admin",
         "role": "research_admin",
         "institutional_role": "research_admin",
     },
     {
         "key": "portal_library_admin",
-        "email": "library.admin@kisiiuniversity.ac.ke",
+        "email": "library.admin@example.invalid",
         "full_name": "KSU Library Admin",
         "role": "library_admin",
         "institutional_role": "library_admin",
     },
     {
         "key": "portal_researcher",
-        "email": "researcher@kisiiuniversity.ac.ke",
+        "email": "researcher@example.invalid",
         "full_name": "KSU Researcher",
         "role": "researcher",
         "institutional_role": "researcher",
     },
     {
         "key": "portal_staff_profile_editor",
-        "email": "staff.profile@kisiiuniversity.ac.ke",
+        "email": "staff.profile@example.invalid",
         "full_name": "KSU Staff Profile Editor",
         "role": "staff",
         "institutional_role": "staff_profile_editor",
     },
 ]
-
-PORTAL_USER_PASSWORD = "ChangeMe123!"
 
 PORTAL_ROLE_EXTRA_PERMISSIONS = {
     "school_admin": [
@@ -92,7 +92,17 @@ PORTAL_ROLE_EXTRA_PERMISSIONS = {
 }
 
 
+def portal_user_password() -> str:
+    password = os.getenv("KSU_SEED_PORTAL_USER_PASSWORD")
+    if not password:
+        raise RuntimeError(
+            "KSU_SEED_PORTAL_USER_PASSWORD must be set before seeding portal users"
+        )
+    return password
+
+
 async def seed_portal_users(db: AsyncSession, ctx: SeedContext) -> None:
+    password = portal_user_password()
     for spec in PORTAL_USER_SPECS:
         person = await get_or_create_person(
             db,
@@ -110,7 +120,7 @@ async def seed_portal_users(db: AsyncSession, ctx: SeedContext) -> None:
             ctx,
             spec["key"],
             email=spec["email"],
-            password=PORTAL_USER_PASSWORD,
+            password=password,
             full_name=spec["full_name"],
             phone=None,
             avatar_url=None,

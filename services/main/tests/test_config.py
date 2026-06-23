@@ -22,7 +22,7 @@ def base_settings(**overrides):
         "REDIS_URL": "redis://localhost:6379/0",
         "CELERY_BROKER_URL": "redis://localhost:6379/0",
         "CELERY_RESULT_BACKEND": "redis://localhost:6379/0",
-        "SMTP_HOST": "smtp.gmail.com",
+        "SMTP_HOST": "smtp.example.invalid",
         "SMTP_PORT": 587,
         "SMTP_USERNAME": "",
         "SMTP_PASSWORD": "",
