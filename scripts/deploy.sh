@@ -24,9 +24,9 @@ VM options:
   --repo-url URL       Git repository URL. Defaults to the local origin URL.
   --path PATH          Repository path on the VM. Defaults to this local repo path.
   --project-name NAME  Docker Compose project name. Defaults to ksu-ENV.
-  --public-host HOST   Public website host or IP. Defaults to dev.kisiiuniversity.ac.ke for dev.
-  --api-host HOST      API host. Defaults to api.dev.kisiiuniversity.ac.ke for dev.
-  --research-host HOST Research frontend host. Defaults to dev.research.kisiiuniversity.ac.ke for dev.
+  --public-host HOST   Public website host or IP. Required for VM deploy.
+  --api-host HOST      API host. Required for VM deploy.
+  --research-host HOST Research frontend host. Required for VM deploy.
   --https             Install host Nginx/Certbot and issue HTTPS certificates.
   --cert-email EMAIL  Let's Encrypt email. Required with --https.
   --bootstrap          Install Docker packages on an Ubuntu/Debian VM before deploy.
@@ -58,7 +58,7 @@ Examples:
   scripts/deploy.sh local --skip-frontend
   scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --branch dev --path /srv/ksu
   scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --path /srv/ksu --bootstrap
-  scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --path /srv/ksu --bootstrap --https --cert-email admin@kisiiuniversity.ac.ke
+  scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --path /srv/ksu --bootstrap --https --cert-email ops@example.edu --public-host public.example.edu --api-host api.example.edu --research-host research.example.edu
   scripts/deploy.sh vm-backup --host ubuntu@VM_IP --env production
   scripts/deploy.sh cloud --env dev --project my-gcp-project
   scripts/deploy.sh cloud --env staging --project my-gcp-project --image-tag abc1234 --skip-build
@@ -680,27 +680,18 @@ deploy_vm() {
   fi
 
   if [[ -z "${public_host}" ]]; then
-    case "${env_name}" in
-      dev) public_host="dev.kisiiuniversity.ac.ke" ;;
-      staging) public_host="staging.kisiiuniversity.ac.ke" ;;
-      production) public_host="kisiiuniversity.ac.ke" ;;
-    esac
+    echo "error: --public-host is required for VM deploy" >&2
+    exit 1
   fi
 
   if [[ -z "${api_host}" ]]; then
-    case "${env_name}" in
-      dev) api_host="api.dev.kisiiuniversity.ac.ke" ;;
-      staging) api_host="api.staging.kisiiuniversity.ac.ke" ;;
-      production) api_host="api.kisiiuniversity.ac.ke" ;;
-    esac
+    echo "error: --api-host is required for VM deploy" >&2
+    exit 1
   fi
 
   if [[ -z "${research_host}" ]]; then
-    case "${env_name}" in
-      dev) research_host="dev.research.kisiiuniversity.ac.ke" ;;
-      staging) research_host="staging.research.kisiiuniversity.ac.ke" ;;
-      production) research_host="research.kisiiuniversity.ac.ke" ;;
-    esac
+    echo "error: --research-host is required for VM deploy" >&2
+    exit 1
   fi
 
   if [[ -z "${backup_dir}" ]]; then
