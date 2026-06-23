@@ -68,6 +68,20 @@ class AnnouncementScopeApiTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(403, context.exception.status_code)
 
+    async def test_get_announcement_by_id_rejects_unowned_scope(self):
+        user = SimpleNamespace(id=uuid.uuid4())
+        item = _announcement("department", uuid.uuid4())
+
+        with (
+            patch.object(announcements, "build_selector", return_value=_FakeSelector()),
+            patch.object(announcements.AnnouncementService, "get_by_id", return_value=item),
+            patch.object(announcements, "can_access_scope", return_value=False, create=True),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await announcements.get_announcement_by_id(item.id, db=None, user=user)
+
+        self.assertEqual(403, context.exception.status_code)
+
     async def test_update_announcement_checks_existing_and_next_scope(self):
         own_department_id = uuid.uuid4()
         other_department_id = uuid.uuid4()

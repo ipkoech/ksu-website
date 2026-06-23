@@ -137,11 +137,23 @@ async def list_admin_events(
 
 
 @router.get("/id/{event_id}")
-async def get_event_by_id(event_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+async def get_event_by_id(
+    event_id: uuid.UUID,
+    db: DbSession,
+    user: CurrentUser,
+    fields: FieldSelection = FieldsDep,
+):
     selector = build_selector(Event, fields)
     item = await EventService.get_by_id(db, event_id, load_options=selector.load_options)
     if item is None:
         raise HTTPException(status_code=404, detail="Event not found")
+    await _require_event_scope(
+        db,
+        user,
+        EVENT_VIEW_PERMISSIONS,
+        item.scope_type,
+        item.scope_id,
+    )
     return success(data=selector.apply(item))
 
 

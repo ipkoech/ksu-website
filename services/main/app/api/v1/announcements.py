@@ -133,11 +133,23 @@ async def list_admin_announcements(
 
 
 @router.get("/id/{announcement_id}")
-async def get_announcement_by_id(announcement_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+async def get_announcement_by_id(
+    announcement_id: uuid.UUID,
+    db: DbSession,
+    user: CurrentUser,
+    fields: FieldSelection = FieldsDep,
+):
     selector = build_selector(Announcement, fields)
     item = await AnnouncementService.get_by_id(db, announcement_id, load_options=selector.load_options)
     if item is None:
         raise HTTPException(status_code=404, detail="Announcement not found")
+    await _require_announcement_scope(
+        db,
+        user,
+        ANNOUNCEMENT_VIEW_PERMISSIONS,
+        item.scope_type,
+        item.scope_id,
+    )
     return success(data=selector.apply(item))
 
 

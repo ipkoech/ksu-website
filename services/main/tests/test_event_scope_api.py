@@ -70,6 +70,20 @@ class EventScopeApiTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(403, context.exception.status_code)
 
+    async def test_get_event_by_id_rejects_unowned_scope(self):
+        user = SimpleNamespace(id=uuid.uuid4())
+        item = _event("department", uuid.uuid4())
+
+        with (
+            patch.object(events, "build_selector", return_value=_FakeSelector()),
+            patch.object(events.EventService, "get_by_id", return_value=item),
+            patch.object(events, "can_access_scope", return_value=False, create=True),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await events.get_event_by_id(item.id, db=None, user=user)
+
+        self.assertEqual(403, context.exception.status_code)
+
     async def test_update_event_checks_existing_and_next_scope(self):
         own_department_id = uuid.uuid4()
         other_department_id = uuid.uuid4()
