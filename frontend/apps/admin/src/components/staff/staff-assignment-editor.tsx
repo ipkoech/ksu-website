@@ -1,7 +1,12 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { DepartmentPicker, SchoolPicker } from "@/components/relationships";
+import {
+  libraryBranchRelationshipAdapter,
+  researchCenterRelationshipAdapter,
+} from "@/components/relationships/relationship-adapters";
 import {
   Badge,
   Button,
@@ -54,6 +59,11 @@ import type {
   StaffEntityOption,
 } from "@ksu/api-client";
 import { Plus, Search, UserPlus } from "lucide-react";
+
+type AssignmentEntityOption = Pick<
+  StaffEntityOption,
+  "id" | "entity_type" | "label" | "subtitle" | "is_active"
+>;
 
 type EditorMode = "create" | "edit" | "reassign";
 
@@ -178,10 +188,42 @@ export function StaffAssignmentEditor({
 
   const entityTypes = useEntityTypes();
   const roles = useRoles(form.entity_type);
+  const usesExternalEntityAdapter = form.entity_type === "library" || form.entity_type === "research";
   const entities = useStaffEntities(
     { entity_type: form.entity_type, search: entitySearch, limit: 40 },
-    { enabled: open && !!form.entity_type && form.entity_type !== "university" }
+    {
+      enabled:
+        open &&
+        !!form.entity_type &&
+        form.entity_type !== "university" &&
+        !usesExternalEntityAdapter,
+    }
   );
+  const externalEntities = useQuery({
+    queryKey: ["staff-assignment-entities", form.entity_type, entitySearch],
+    queryFn: async () => {
+      const adapter =
+        form.entity_type === "library"
+          ? libraryBranchRelationshipAdapter
+          : researchCenterRelationshipAdapter;
+      const options = await adapter.search({
+        search: entitySearch,
+        filters:
+          form.entity_type === "library"
+            ? { active_only: false }
+            : { is_active: true },
+        limit: 40,
+      });
+      return options.map((option): AssignmentEntityOption => ({
+        id: option.id,
+        entity_type: form.entity_type,
+        label: option.label,
+        subtitle: option.description,
+        is_active: !option.disabled,
+      }));
+    },
+    enabled: open && usesExternalEntityAdapter,
+  });
   const persons = usePersons({ search: personSearch || undefined, status: "all", per_page: 20 });
   const reportingAssignments = useStaffAssignments(
     {
@@ -259,7 +301,12 @@ export function StaffAssignmentEditor({
   }, [selectedRole, form.hierarchy_level]);
 
   const people = persons.data?.data ?? [];
-  const entityOptions = entities.data?.data ?? [];
+  const entityOptions: AssignmentEntityOption[] = usesExternalEntityAdapter
+    ? externalEntities.data ?? []
+    : entities.data?.data ?? [];
+  const isFetchingEntities = usesExternalEntityAdapter
+    ? externalEntities.isFetching
+    : entities.isFetching;
   const selectedEntity = entityOptions.find((entity) => entity.id === form.entity_id);
   const reportingAssignmentOptions = (reportingAssignments.data?.data ?? [])
     .filter((item) => item.id !== assignment?.id)
@@ -289,7 +336,7 @@ export function StaffAssignmentEditor({
     setPersonSearch(formatPersonName(person) || person.email);
   };
 
-  const selectEntity = (entity: StaffEntityOption) => {
+  const selectEntity = (entity: AssignmentEntityOption) => {
     setForm((current) => ({
       ...current,
       entity_id: entity.id || "",
@@ -644,7 +691,7 @@ export function StaffAssignmentEditor({
                           ))
                         ) : (
                           <p className="p-3 text-sm text-muted-foreground">
-                            {entities.isFetching ? "Searching entities..." : "No matching entities."}
+                            {isFetchingEntities ? "Searching entities..." : "No matching entities."}
                           </p>
                         )}
                       </div>
