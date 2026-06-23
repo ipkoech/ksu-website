@@ -147,8 +147,8 @@ function PortalSidebar({
               collapsed && "justify-center",
             )}
           >
-            <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border", portal.accentClassName)}>
-              <PortalIcon className="h-5 w-5" />
+            <div className={cn("flex size-10 shrink-0 items-center justify-center rounded-lg border [&_svg]:size-5", portal.accentClassName)}>
+              <PortalIcon />
             </div>
             {!collapsed ? (
               <div className="min-w-0">
@@ -165,7 +165,7 @@ function PortalSidebar({
             onClick={onToggle}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {collapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            {collapsed ? <Menu /> : <ChevronLeft />}
           </Button>
         </div>
 
@@ -176,7 +176,9 @@ function PortalSidebar({
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
               const className = cn(
                 "flex items-center gap-3 rounded-lg text-sm font-medium transition-colors",
-                collapsed ? "h-10 w-10 justify-center px-0" : "px-3 py-2",
+                collapsed
+                  ? "size-10 justify-center px-0 [&_svg]:size-5"
+                  : "px-3 py-2 [&_svg]:size-4",
                 active
                   ? "bg-sidebar-primary text-sidebar-primary-foreground"
                   : "text-sidebar-foreground hover:bg-sidebar-accent",
@@ -187,7 +189,7 @@ function PortalSidebar({
                   <Tooltip key={item.href}>
                     <TooltipTrigger asChild>
                       <Link href={item.href} onClick={onMobileClose} className={className}>
-                        <Icon className="h-5 w-5" />
+                        <Icon />
                       </Link>
                     </TooltipTrigger>
                     <TooltipContent side="right">{item.title}</TooltipContent>
@@ -197,7 +199,7 @@ function PortalSidebar({
 
               return (
                 <Link key={item.href} href={item.href} onClick={onMobileClose} className={className}>
-                  <Icon className="h-4 w-4" />
+                  <Icon />
                   <span className="truncate">{item.title}</span>
                 </Link>
               );
@@ -212,7 +214,7 @@ function PortalSidebar({
                 variant="ghost"
                 className={cn("w-full justify-start gap-3", collapsed && "justify-center px-2")}
               >
-                <Avatar className="h-8 w-8">
+                <Avatar className="size-8">
                   <AvatarImage src={user?.avatarUrl} />
                   <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>

@@ -148,7 +148,7 @@ export default function SelectServicePage() {
 
   return (
     <div className="min-h-screen bg-muted/40 p-4 sm:p-8">
-      <div className="mx-auto w-full max-w-6xl space-y-6">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
         <div className="flex flex-col gap-4 rounded-lg border bg-background p-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             <LogoIcon size="lg" priority />
@@ -178,8 +178,8 @@ export default function SelectServicePage() {
               return (
               <Card key={`${portal.baseHref}:${portal.access?.scope_type ?? "derived"}:${portal.access?.scope_id ?? "global"}`} className="flex h-full flex-col">
                 <CardHeader className="flex flex-row items-start gap-4">
-                  <div className={cn("rounded-lg border p-3", portal.accentClassName)}>
-                    <Icon className="h-6 w-6" />
+                  <div className={cn("rounded-lg border p-3 [&_svg]:size-6", portal.accentClassName)}>
+                    <Icon />
                   </div>
                   <div className="min-w-0 flex-1">
                     <CardTitle className="text-lg">{portal.title}</CardTitle>
@@ -196,7 +196,7 @@ export default function SelectServicePage() {
                     onClick={() => handleSelect(portal.service, portal.baseHref)}
                   >
                     Open
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    <ArrowRight data-icon="inline-end" />
                   </Button>
                 </CardContent>
               </Card>

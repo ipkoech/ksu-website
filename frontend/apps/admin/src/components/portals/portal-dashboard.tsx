@@ -39,10 +39,10 @@ export function PortalDashboard({ portalKey }: PortalDashboardProps) {
     <div>
       <PageHeader title={portal.dashboard.title} description={portal.dashboard.description} />
 
-      <div className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col gap-6 p-4 sm:p-6">
         <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-background p-3">
           <div className="mr-2 flex items-center gap-2 text-sm font-medium">
-            <ShieldCheck className="h-4 w-4 text-primary" />
+            <ShieldCheck className="size-4 text-primary" />
             Portal role scopes
           </div>
           {portal.dashboard.scopeBadges.map((scope) => (
@@ -76,10 +76,10 @@ export function PortalDashboard({ portalKey }: PortalDashboardProps) {
                     className="group rounded-lg border bg-background p-4 transition-colors hover:border-primary/50 hover:bg-muted/30"
                   >
                     <div className="mb-3 flex items-center justify-between gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <Icon className="h-5 w-5" />
+                      <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary [&_svg]:size-5">
+                        <Icon />
                       </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                      <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
                     </div>
                     <h3 className="font-semibold">{panel.title}</h3>
                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{panel.description}</p>
@@ -96,7 +96,7 @@ export function PortalDashboard({ portalKey }: PortalDashboardProps) {
                 This portal has its own URL, navigation, dashboard, and scoped operations.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <CardContent className="flex flex-col gap-3 text-sm text-muted-foreground">
               <p className="rounded-lg border bg-background p-3">
                 Shared backend services still provide login, roles, audit logs, media, and workflow state.
               </p>
@@ -106,7 +106,7 @@ export function PortalDashboard({ portalKey }: PortalDashboardProps) {
               <Button asChild variant="outline" className="w-full justify-between">
                 <Link href="/select-service">
                   Portal directory
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight data-icon="inline-end" />
                 </Link>
               </Button>
             </CardContent>
@@ -135,7 +135,7 @@ function PortalStatCard({
           <CardTitle className="text-sm font-medium text-muted-foreground">
             {stat.title}
           </CardTitle>
-          <Icon className="h-4 w-4 text-muted-foreground" />
+          <Icon className="size-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
