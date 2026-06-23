@@ -14,6 +14,8 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  Alert,
+  AlertDescription,
   ConfirmDialog,
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +31,8 @@ import {
   SelectTrigger,
   SelectValue,
   Switch,
+  EmptyState,
+  Skeleton,
   RichTextEditor,
   richTextToPlainText,
 } from "@ksu/ui/components";
@@ -581,7 +585,7 @@ export function EditableServiceResourcePage<
             {listFilters.length > 0 ? (
               <div className="mb-4 grid gap-3 rounded-lg border bg-muted/20 p-3 sm:grid-cols-2 xl:grid-cols-3">
                 {listFilters.map((filter) => (
-                  <div key={filter.name} className="space-y-2">
+                  <div key={filter.name} className="flex flex-col gap-2">
                     <label className="text-sm font-medium">{filter.label}</label>
                     {filter.type === "entity" && filter.relation ? (
                       <EntityPicker
@@ -644,26 +648,21 @@ export function EditableServiceResourcePage<
               </div>
             ) : null}
             {recordsQuery.isLoading ? (
-              <div className="space-y-3">
+              <div className="flex flex-col gap-3">
                 {[1, 2, 3].map((item) => (
-                  <div
-                    key={item}
-                    className="h-16 animate-pulse rounded-lg bg-muted"
-                  />
+                  <Skeleton key={item} className="h-16 rounded-lg" />
                 ))}
               </div>
             ) : recordsQuery.isError ? (
-              <p
-                role="status"
-                className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive"
-              >
-                Failed to load {title.toLowerCase()}. Check the service
-                connection and retry.
-              </p>
+              <Alert variant="destructive">
+                <AlertDescription>
+                  Failed to load {title.toLowerCase()}. Check the service connection and retry.
+                </AlertDescription>
+              </Alert>
             ) : records.length === 0 ? (
-              <p className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">
-                {emptyMessage}
-              </p>
+              <div className="rounded-lg border bg-background p-8">
+                <EmptyState title="No records found" description={emptyMessage} />
+              </div>
             ) : (
               <div className="divide-y rounded-lg border">
                 {records.map((record) => (
@@ -704,12 +703,12 @@ export function EditableServiceResourcePage<
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 [&_svg]:size-5">
+              <Plus />
               {editingRecord ? "Edit Record" : "Create Record"}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="flex flex-col gap-4">
             {!editingRecord && !canCreate ? (
               <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
                 {readOnlyMessage}
@@ -730,7 +729,7 @@ export function EditableServiceResourcePage<
                   const resolvedType = inputType(field);
 
                   return (
-                    <div key={field.name} className="space-y-2">
+                    <div key={field.name} className="flex flex-col gap-2">
                       <label
                         id={labelId}
                         htmlFor={
