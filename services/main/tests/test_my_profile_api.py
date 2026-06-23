@@ -7,7 +7,7 @@ from unittest.mock import patch
 from fastapi import HTTPException
 from pydantic import ValidationError
 
-from app.api.v1 import me
+from app.api.v1 import me, public_people
 from app.schemas import MyProfileUpdate
 
 
@@ -125,6 +125,65 @@ class MyProfileApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(person.is_researcher)
         self.assertEqual(["AI", "Education"], person.research_interests)
         self.assertEqual("EMP001", person.employee_number)
+
+    async def test_update_my_profile_changes_public_profile_payload(self):
+        person = _person(assignments=[])
+        user = SimpleNamespace(id=person.user_id)
+        payload = MyProfileUpdate(
+            bio="Public profile bio from staff portal",
+            full_bio="Detailed public profile from staff portal",
+            qualifications=[
+                {
+                    "degree": "PhD",
+                    "field": "Education Technology",
+                    "institution": "Kisii University",
+                    "year": "2026",
+                }
+            ],
+            research_interests=["Learning analytics", "AI in education"],
+            teaching_areas=["Educational technology"],
+            office_location="Block A, Room 12",
+            office_hours={"Monday": "9:00 AM - 12:00 PM"},
+            office_phone="+254700111222",
+            courses_taught=["EDU 401"],
+            website_url="https://example.edu/staff/jane",
+            linkedin_url="https://www.linkedin.com/in/jane-mwangi",
+            google_scholar_id="abc123",
+            google_scholar_url="https://scholar.google.com/citations?user=abc123",
+            orcid="0000-0002-1825-0097",
+            researchgate_url="https://www.researchgate.net/profile/Jane-Mwangi",
+            scopus_id="12345678900",
+            education_background=[{"title": "PhD", "subtitle": "Kisii University"}],
+            professional_memberships=[{"title": "Member", "subtitle": "Education Society"}],
+            awards_honors=[{"title": "Teaching Award", "year": "2026"}],
+            is_researcher=True,
+        )
+
+        with patch.object(me.PersonService, "get_by_user_id", return_value=person):
+            await me.update_my_profile(payload, _FakeDb(), user)
+
+        public_payload = await public_people._safe_person_payload(_FakeDb(), person)
+
+        self.assertEqual("Public profile bio from staff portal", public_payload["bio"])
+        self.assertEqual("Detailed public profile from staff portal", public_payload["full_bio"])
+        self.assertEqual("PhD", public_payload["qualifications"][0]["degree"])
+        self.assertEqual(["Learning analytics", "AI in education"], public_payload["research_interests"])
+        self.assertEqual(["Educational technology"], public_payload["teaching_areas"])
+        self.assertEqual("Block A, Room 12", public_payload["office_location"])
+        self.assertEqual({"Monday": "9:00 AM - 12:00 PM"}, public_payload["office_hours"])
+        self.assertEqual("+254700111222", public_payload["office_phone"])
+        self.assertEqual(["EDU 401"], public_payload["courses_taught"])
+        self.assertEqual("https://example.edu/staff/jane", public_payload["website_url"])
+        self.assertEqual("https://www.linkedin.com/in/jane-mwangi", public_payload["linkedin_url"])
+        self.assertEqual("abc123", public_payload["google_scholar_id"])
+        self.assertEqual("https://scholar.google.com/citations?user=abc123", public_payload["google_scholar_url"])
+        self.assertEqual("0000-0002-1825-0097", public_payload["orcid"])
+        self.assertEqual("https://www.researchgate.net/profile/Jane-Mwangi", public_payload["researchgate_url"])
+        self.assertEqual("12345678900", public_payload["scopus_id"])
+        self.assertEqual([{"title": "PhD", "subtitle": "Kisii University"}], public_payload["education_background"])
+        self.assertEqual([{"title": "Member", "subtitle": "Education Society"}], public_payload["professional_memberships"])
+        self.assertEqual([{"title": "Teaching Award", "year": "2026"}], public_payload["awards_honors"])
+        self.assertTrue(public_payload["is_researcher"])
 
     async def test_update_my_profile_rejects_unowned_profile_photo(self):
         person = _person()
