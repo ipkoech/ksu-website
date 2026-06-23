@@ -3,7 +3,7 @@
 import { type FocusEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@ksu/ui/components";
 import { ArtDirectedImage } from "@/components/public/art-directed-image";
 import type { LandingHeroData, LandingHeroSlide } from "@/lib/landing-data";
@@ -38,6 +38,7 @@ export function LandingHero({
   autoPlay = fallbackHeroSettings.autoPlay,
   autoPlayDurationMs = fallbackHeroSettings.autoPlayDurationMs,
   showNavigationDots = fallbackHeroSettings.showNavigationDots,
+  showArrows = fallbackHeroSettings.showArrows,
   transitionEffect = fallbackHeroSettings.transitionEffect,
 }: LandingHeroProps) {
   const slides = useMemo(
@@ -57,6 +58,15 @@ export function LandingHero({
   const transitionMode = (transitionEffect ?? "fade").toLowerCase();
   const useSlideTransition = transitionMode.includes("slide");
   const shouldShowControls = hasMultipleSlides && showNavigationDots;
+  const shouldShowArrows = hasMultipleSlides && showArrows;
+
+  const showPreviousSlide = () => {
+    setActiveIndex((index) => (index - 1 + slides.length) % slides.length);
+  };
+
+  const showNextSlide = () => {
+    setActiveIndex((index) => (index + 1) % slides.length);
+  };
 
   useEffect(() => {
     if (!shouldAutoPlay) return;
@@ -186,7 +196,7 @@ export function LandingHero({
                 }
               >
                 {activeSlide.primaryLabel}
-                <ArrowRight className="h-5 w-5" />
+                <ArrowRight className="h-5 w-5" aria-hidden />
               </Link>
             </Button>
             <Button
@@ -197,7 +207,7 @@ export function LandingHero({
             >
               <Link href="/academics/programmes">
                 Explore Programmes
-                <ArrowRight className="h-5 w-5" />
+                <ArrowRight className="h-5 w-5" aria-hidden />
               </Link>
             </Button>
           </div>
@@ -230,6 +240,27 @@ export function LandingHero({
               </button>
             ))}
           </div>
+        </div>
+      ) : null}
+
+      {shouldShowArrows ? (
+        <div className="pointer-events-none absolute inset-y-0 left-0 right-0 z-10 hidden items-center justify-between px-4 sm:flex lg:px-8 xl:px-10 2xl:px-12">
+          <button
+            type="button"
+            onClick={showPreviousSlide}
+            className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-slate-950/35 text-white ring-1 ring-white/30 backdrop-blur-sm transition hover:bg-slate-950/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+            aria-label="Show previous hero slide"
+          >
+            <ChevronLeft className="h-5 w-5" aria-hidden />
+          </button>
+          <button
+            type="button"
+            onClick={showNextSlide}
+            className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-slate-950/35 text-white ring-1 ring-white/30 backdrop-blur-sm transition hover:bg-slate-950/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+            aria-label="Show next hero slide"
+          >
+            <ChevronRight className="h-5 w-5" aria-hidden />
+          </button>
         </div>
       ) : null}
     </section>

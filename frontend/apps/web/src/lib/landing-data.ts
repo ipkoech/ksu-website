@@ -164,7 +164,7 @@ function plainText(value?: string | null) {
 }
 
 function truncate(value: string, length: number) {
-  return value.length > length ? `${value.slice(0, length - 1).trim()}...` : value;
+  return value.length > length ? `${value.slice(0, length - 1).trim()}…` : value;
 }
 
 function mediaUrl(media?: SliderMedia | null) {

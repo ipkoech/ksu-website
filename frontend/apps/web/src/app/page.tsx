@@ -28,6 +28,7 @@ import { Button, ScrollReveal } from "@ksu/ui/components";
 import { MiniHeader, PublicFooter, PublicHeader } from "@ksu/ui/layout/public";
 import { LandingHero } from "@/components/home/landing-hero";
 import { AnimatedStatRow } from "@/components/home/animated-stat-row";
+import { CountdownStrip } from "@/components/home/countdown-strip";
 import { FeaturedProgrammeTabs } from "@/components/home/featured-programme-tabs";
 import { AnnouncementHeader } from "@/components/site-shell";
 import {
@@ -46,7 +47,7 @@ import {
 import { getNavData } from "@/lib/nav-data";
 import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const researchHref = researchFrontendUrl;
 
@@ -166,14 +167,6 @@ export default async function HomePage() {
             <TrustFactRow facts={homepage.facts} />
             {isContentDegraded ? <ContentDegradedNotice /> : null}
             <LandingReveal>
-              <PriorityPathwaysSection
-                actions={homepage.priorityActions}
-                admissionsActions={homepage.admissionsActions}
-                serviceLinks={homepage.serviceLinks}
-                activeIntakes={homepage.activeIntakes}
-              />
-            </LandingReveal>
-            <LandingReveal>
               <SchoolsSection
                 schools={homepage.schools}
                 quickLinks={homepage.publicQuickLinks}
@@ -268,172 +261,6 @@ function TrustFactRow({ facts }: { facts: HomeMetric[] }) {
     <LandingReveal>
       <AnimatedStatRow facts={facts} />
     </LandingReveal>
-  );
-}
-
-const pathwayIcons: Record<string, LucideIcon> = {
-  "Prospective Students": GraduationCap,
-  "Students & Staff": Users,
-  "Partners & Public": Building2,
-};
-
-function PriorityPathwaysSection({
-  actions,
-  admissionsActions,
-  serviceLinks,
-  activeIntakes,
-}: {
-  actions: HomeCard[];
-  admissionsActions: HomeCard[];
-  serviceLinks: HomeLink[];
-  activeIntakes: HomeIntake[];
-}) {
-  const activeIntake = activeIntakes[0] ?? null;
-  const serviceItems = serviceLinks.slice(0, 8);
-
-  return (
-    <section className="border-b border-blue-100 bg-white py-8">
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(300px,0.68fr)] xl:items-start">
-        <div className="min-w-0">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
-                Start here
-              </p>
-              <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-slate-950 sm:text-4xl">
-                Find the university pathway that matches your next step.
-              </h2>
-            </div>
-            <Link
-              href="/search"
-              className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md border border-blue-100 bg-blue-50 px-4 text-sm font-semibold text-primary transition hover:border-primary/30 hover:bg-white"
-            >
-              Search the website
-              <Search className="h-4 w-4" aria-hidden />
-            </Link>
-          </div>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {actions.map((action) => {
-              const Icon = pathwayIcons[action.title] ?? ArrowRight;
-              return (
-                <Link
-                  key={`${action.title}-${action.href}`}
-                  href={action.href}
-                  {...linkProps(action)}
-                  className="group flex min-h-[210px] min-w-0 flex-col rounded-md border border-blue-100 bg-white p-5 shadow-sm shadow-blue-100/60 transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
-                >
-                  <span className="flex h-11 w-11 items-center justify-center rounded-md bg-blue-50 text-primary transition group-hover:bg-primary group-hover:text-white">
-                    <Icon className="h-5 w-5" aria-hidden />
-                  </span>
-                  {action.eyebrow ? (
-                    <span className="mt-5 text-xs font-bold uppercase tracking-[0.12em] text-secondary">
-                      {action.eyebrow}
-                    </span>
-                  ) : null}
-                  <h3 className="mt-2 font-[family-name:var(--font-display)] text-xl font-bold leading-6 text-slate-950 transition group-hover:text-primary">
-                    {action.title}
-                  </h3>
-                  <p className="mt-3 flex-1 text-sm leading-6 text-slate-600">
-                    {action.body}
-                  </p>
-                  <span className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-primary">
-                    {action.action ?? "Open"}
-                    {action.external ? (
-                      <ExternalLink className="h-4 w-4" aria-hidden />
-                    ) : (
-                      <ArrowRight
-                        className="h-4 w-4 transition group-hover:translate-x-1"
-                        aria-hidden
-                      />
-                    )}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-
-          <div className="mt-5 grid gap-3 rounded-md border border-blue-100 bg-blue-50/60 p-3 sm:grid-cols-3">
-            {admissionsActions.map((action) => (
-              <Link
-                key={`${action.title}-${action.href}`}
-                href={action.href}
-                className="group min-w-0 rounded-md bg-white p-4 shadow-sm transition hover:shadow-md"
-              >
-                <h3 className="text-sm font-bold text-slate-950 group-hover:text-primary">
-                  {action.title}
-                </h3>
-                <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600">
-                  {action.body}
-                </p>
-                <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-primary">
-                  {action.action}
-                  <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <aside className="min-w-0 rounded-md bg-primary p-5 text-white shadow-sm shadow-blue-100/70">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
-                Key services
-              </p>
-              <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-bold leading-7">
-                University services in one place.
-              </h2>
-            </div>
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-white/10 text-secondary">
-              <ClipboardCheck className="h-5 w-5" aria-hidden />
-            </span>
-          </div>
-
-          {activeIntake ? (
-            <Link
-              href={activeIntake.href}
-              className="mt-5 block rounded-md bg-white/10 p-4 text-white ring-1 ring-white/10 transition hover:bg-white/15"
-            >
-              <span className="text-xs font-bold uppercase tracking-[0.12em] text-secondary">
-                Active intake
-              </span>
-              <span className="mt-1 block text-lg font-bold">
-                {intakeLabel(activeIntake)}
-              </span>
-              <span className="mt-2 block text-xs font-semibold text-white/78">
-                Deadline:{" "}
-                {formatDate(
-                  activeIntake.lateApplicationEnd ??
-                    activeIntake.applicationEnd,
-                )}
-              </span>
-            </Link>
-          ) : null}
-
-          <div className="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-            {serviceItems.map((link) => {
-              const external = link.external ?? isExternalHref(link.href);
-              return (
-                <Link
-                  key={`${link.label}-${link.href}`}
-                  href={link.href}
-                  {...linkProps(link)}
-                  className="group flex min-h-11 min-w-0 items-center gap-3 rounded-md bg-white/8 px-3 text-sm font-semibold text-white ring-1 ring-white/10 transition hover:bg-white hover:text-primary"
-                >
-                  <span className="min-w-0 flex-1 truncate">{link.label}</span>
-                  {external ? (
-                    <ExternalLink className="h-3.5 w-3.5 shrink-0 text-white/50 transition group-hover:text-primary" />
-                  ) : (
-                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-white/50 transition group-hover:translate-x-1 group-hover:text-primary" />
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        </aside>
-      </div>
-    </section>
   );
 }
 
@@ -585,13 +412,13 @@ function QuickPublicLinks({
                     : "bg-blue-50 text-primary"
                 }`}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-4 w-4" aria-hidden />
               </span>
               <span className="min-w-0 flex-1">{link.label}</span>
               {external ? (
-                <ExternalLink className="h-3.5 w-3.5 text-slate-300 transition group-hover:text-primary" />
+                <ExternalLink className="h-3.5 w-3.5 text-slate-300 transition group-hover:text-primary" aria-hidden />
               ) : (
-                <ChevronRight className="h-3.5 w-3.5 text-slate-300 transition group-hover:translate-x-1 group-hover:text-primary" />
+                <ChevronRight className="h-3.5 w-3.5 text-slate-300 transition group-hover:translate-x-1 group-hover:text-primary" aria-hidden />
               )}
             </Link>
           );
@@ -652,7 +479,7 @@ function FeaturedProgrammes({ programmes }: { programmes: HomeCard[] }) {
           className="mr-4 mt-4 inline-flex min-h-11 items-center gap-1.5 text-xs font-semibold text-primary hover:text-secondary"
         >
           View all programmes
-          <ArrowRight className="h-3.5 w-3.5" />
+          <ArrowRight className="h-3.5 w-3.5" aria-hidden />
         </Link>
       </div>
 
@@ -737,11 +564,17 @@ function ApplyCtaCard({ activeIntake }: { activeIntake: HomeIntake | null }) {
         >
           <Link href={activeIntake?.href ?? "/admissions/how-to-apply"}>
             Apply Now
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
         </Button>
       </div>
-      {activeIntake ? <CountdownStrip intake={activeIntake} /> : null}
+      {activeIntake ? (
+        <CountdownStrip
+          title={`${intakeLabel(activeIntake)} Countdown`}
+          deadline={activeIntake.lateApplicationEnd ?? activeIntake.applicationEnd}
+          deadlineLabel={formatDate(activeIntake.lateApplicationEnd ?? activeIntake.applicationEnd)}
+        />
+      ) : null}
     </aside>
   );
 }
@@ -798,7 +631,11 @@ function _AdmissionsPanel({ activeIntakes }: { activeIntakes: HomeIntake[] }) {
       </div>
 
       {activeIntake ? (
-        <CountdownStrip intake={activeIntake} />
+        <CountdownStrip
+          title={`${intakeLabel(activeIntake)} Countdown`}
+          deadline={activeIntake.lateApplicationEnd ?? activeIntake.applicationEnd}
+          deadlineLabel={formatDate(activeIntake.lateApplicationEnd ?? activeIntake.applicationEnd)}
+        />
       ) : (
         <div className="mt-5 rounded-md border border-dashed border-blue-200 bg-blue-50/50 p-4">
           <p className="text-sm font-bold text-slate-950">
@@ -818,7 +655,7 @@ function _AdmissionsPanel({ activeIntakes }: { activeIntakes: HomeIntake[] }) {
         >
           <Link href={activeIntake?.href ?? "/admissions/how-to-apply"}>
             Start Application
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
         </Button>
         <Button
@@ -828,7 +665,7 @@ function _AdmissionsPanel({ activeIntakes }: { activeIntakes: HomeIntake[] }) {
         >
           <Link href="/admissions/requirements">
             View requirements
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
         </Button>
       </div>
@@ -842,57 +679,6 @@ function intakeLabel(intake: HomeIntake) {
   if (text.includes("school") || text.includes("self"))
     return "School-Based Intake";
   return intake.name;
-}
-
-function CountdownStrip({
-  intake,
-  compact = false,
-}: {
-  intake: HomeIntake;
-  compact?: boolean;
-}) {
-  const target = new Date(intake.lateApplicationEnd ?? intake.applicationEnd);
-  const diff = Math.max(target.getTime() - Date.now(), 0);
-  const seconds = Math.floor(diff / 1000);
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainingSeconds = seconds % 60;
-  const items = [
-    { label: "Days", value: days },
-    { label: "Hours", value: hours },
-    { label: "Minutes", value: minutes },
-    { label: "Seconds", value: remainingSeconds },
-  ];
-
-  return (
-    <div className={`${compact ? "p-3" : "p-5"} bg-secondary text-white`}>
-      <p className="font-[family-name:var(--font-display)] text-xl font-bold">
-        {intakeLabel(intake)} Countdown
-      </p>
-      <div className="mt-3 grid grid-cols-4 gap-2">
-        {items.map((item) => (
-          <div
-            key={item.label}
-            className="border-r border-white/30 text-center last:border-r-0"
-          >
-            <span
-              className={`block font-bold text-white ${compact ? "text-lg" : "text-3xl"}`}
-            >
-              {String(item.value).padStart(2, "0")}
-            </span>
-            <span className="mt-1 block text-[11px] font-semibold text-white/90">
-              {item.label}
-            </span>
-          </div>
-        ))}
-      </div>
-      <p className="mt-4 text-xs font-semibold text-white/90">
-        Application deadline:{" "}
-        {formatDate(intake.lateApplicationEnd ?? intake.applicationEnd)}
-      </p>
-    </div>
-  );
 }
 
 function LatestContentSection({
@@ -915,7 +701,7 @@ function LatestContentSection({
               className="inline-flex min-h-11 items-center gap-2 text-xs font-semibold text-primary hover:text-secondary"
             >
               View all news
-              <ArrowRight className="h-3.5 w-3.5" />
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden />
             </Link>
           </div>
           {newsItems.length ? (
@@ -964,7 +750,7 @@ function NewsLead({ item }: { item: HomeCard }) {
       </h3>
       <span className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-primary">
         Read more
-        <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
+        <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" aria-hidden />
       </span>
     </Link>
   );
@@ -995,7 +781,7 @@ function NewsMini({ item }: { item: HomeCard }) {
           {item.title}
         </span>
         <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-primary">
-          Read more <ArrowRight className="h-3 w-3" />
+          Read more <ArrowRight className="h-3 w-3" aria-hidden />
         </span>
       </span>
     </Link>
@@ -1111,7 +897,7 @@ function ResearchSection() {
             className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-primary transition hover:bg-white/90"
           >
             Explore research areas
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
         </div>
       </div>
@@ -1165,7 +951,7 @@ function CampusLifeSection() {
               </p>
               <span className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-primary">
                 Open section
-                <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
+                <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" aria-hidden />
               </span>
             </div>
           </Link>
@@ -1273,7 +1059,7 @@ function JourneyCta() {
           >
             <Link href="/admissions/how-to-apply">
               Apply Now
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           </Button>
         </div>
@@ -1301,7 +1087,7 @@ function JourneyCta() {
           >
             <Link href={researchHref} {...linkProps({ href: researchHref })}>
               Partner with us
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           </Button>
         </div>
@@ -1331,7 +1117,7 @@ function _ContactStrip({
       {rows.map((row) => (
         <div key={row.label} className="flex gap-3 rounded-md p-2">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-blue-50 text-primary">
-            <row.icon className="h-4 w-4" />
+            <row.icon className="h-4 w-4" aria-hidden />
           </span>
           <span className="min-w-0">
             <span className="block text-xs font-bold text-slate-950">
@@ -1362,7 +1148,7 @@ function HomeEmptyState({
 
   return (
     <div className="rounded-md border border-dashed border-blue-200 bg-white/80 p-6 text-center">
-      <Megaphone className="mx-auto h-7 w-7 text-primary" />
+      <Megaphone className="mx-auto h-7 w-7 text-primary" aria-hidden />
       <h3 className="mt-3 text-sm font-bold text-slate-950">{title}</h3>
       <p className="mt-2 text-xs leading-5 text-slate-600">{body}</p>
       <div className="mt-4 flex flex-col justify-center gap-2 sm:flex-row">
