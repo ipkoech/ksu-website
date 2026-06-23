@@ -17,6 +17,7 @@ import {
   Textarea,
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
+import { cn } from "@ksu/ui/lib";
 import { Save } from "lucide-react";
 import { MediaPicker } from "@/components/media/media-picker";
 
@@ -258,10 +259,10 @@ export function ProfileForm() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-      <form onSubmit={onSubmit} className="space-y-6">
+      <form onSubmit={onSubmit} className="flex flex-col gap-6">
         <div className="flex flex-col gap-4 border-b pb-5 md:flex-row md:items-center md:justify-between">
           <div className="flex min-w-0 items-center gap-4">
-            <Avatar className="h-16 w-16">
+            <Avatar className="size-16">
               <AvatarImage src={profile?.photo_url} />
               <AvatarFallback>{initials || "ST"}</AvatarFallback>
             </Avatar>
@@ -273,7 +274,7 @@ export function ProfileForm() {
             </div>
           </div>
           <Button type="submit" disabled={updateProfile.isPending}>
-            <Save className="h-4 w-4" />
+            <Save data-icon="inline-start" />
             {updateProfile.isPending ? "Saving..." : "Save changes"}
           </Button>
         </div>
@@ -447,7 +448,7 @@ export function ProfileForm() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="space-y-4 rounded-lg border bg-background p-4">
+    <section className="flex flex-col gap-4 rounded-lg border bg-background p-4">
       <h2 className="text-base font-semibold">{title}</h2>
       <div className="grid gap-4 md:grid-cols-2">{children}</div>
     </section>
@@ -456,7 +457,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Field({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
   return (
-    <div className={className ? `space-y-2 ${className}` : "space-y-2"}>
+    <div className={cn("flex flex-col gap-2", className)}>
       <Label>{label}</Label>
       {children}
     </div>
@@ -466,10 +467,10 @@ function Field({ label, className, children }: { label: string; className?: stri
 function ProfileLoading() {
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6">
         <div className="flex items-center gap-4 border-b pb-5">
-          <Skeleton className="h-16 w-16 rounded-full" />
-          <div className="space-y-2">
+          <Skeleton className="size-16 rounded-full" />
+          <div className="flex flex-col gap-2">
             <Skeleton className="h-7 w-56" />
             <Skeleton className="h-4 w-80" />
           </div>
