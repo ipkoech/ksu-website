@@ -138,6 +138,12 @@ const contentStatusOptions = [
   { label: "Archived", value: "archived" },
 ];
 
+const contactStatusOptions = [
+  { label: "Active", value: "active" },
+  { label: "Inactive", value: "inactive" },
+  { label: "Archived", value: "archived" },
+];
+
 const yesNoFilters = [
   { name: "is_active", label: "Active", type: "boolean" as const },
   { name: "is_public", label: "Public", type: "boolean" as const },
@@ -438,7 +444,7 @@ function contactFields(scopeType?: PortalEntityScope): EditableField[] {
     name: "status",
     label: "Status",
     type: "select" as const,
-    options: statusOptions,
+    options: contactStatusOptions,
   },
   { name: "is_main", label: "Main Site", type: "boolean" as const },
   { name: "is_public", label: "Public", type: "boolean" as const },
@@ -1429,7 +1435,7 @@ const administrationResources: Record<string, PortalResourceConfig<any, any>> = 
       ...values,
       ...normalizeScopePayload(values),
       phone: splitList(values.phone),
-      status: values.status || "published",
+      status: values.status || "active",
     }),
     validate: validateScopeValues,
     viewScopes: ["administration.view", "office.view", "content.view"],
@@ -2011,7 +2017,7 @@ const departmentalResources: Record<string, PortalResourceConfig<any, any>> = {
       ...values,
       scope_type: "department",
       phone: splitList(values.phone),
-      status: values.status || "published",
+      status: values.status || "active",
     }),
     viewScopes: ["content.view", "academic.view"],
     manageScopes: ["support.manage_contacts", "content.manage_pages", "academic.manage_departments"],
@@ -2331,7 +2337,7 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       ...values,
       phone: splitList(values.phone),
       is_main: values.is_main ?? true,
-      status: values.status || "published",
+      status: values.status || "active",
     }),
     viewScopes: ["content.view"],
     manageScopes: ["support.manage_contacts", "content.manage_pages", "content.publish"],

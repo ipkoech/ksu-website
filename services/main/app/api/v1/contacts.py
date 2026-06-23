@@ -112,12 +112,33 @@ async def list_admin_contacts(
     return success(data=selector.apply(items), meta=meta)
 
 
+@router.get("/admin/{contact_id}")
+async def get_admin_contact(
+    contact_id: uuid.UUID,
+    db: DbSession,
+    user: CurrentUser,
+    fields: FieldSelection = FieldsDep,
+):
+    selector = build_selector(ContactDirectory, fields)
+    item = await ContactService.get_by_id(db, contact_id, load_options=selector.load_options)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    await _require_contact_scope(
+        db,
+        user,
+        CONTACT_VIEW_PERMISSIONS,
+        item.scope_type,
+        item.scope_id,
+    )
+    return success(data=selector.apply(item))
+
+
 @router.get("/{contact_id}")
 @cached_public(timeout=300, vary_on=("contact_id", "fields", "include"))
 async def get_contact(contact_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(ContactDirectory, fields)
     item = await ContactService.get_by_id(db, contact_id, load_options=selector.load_options)
-    if item is None:
+    if item is None or not item.is_public or item.status != "active":
         raise HTTPException(status_code=404, detail="Contact not found")
     return success(data=selector.apply(item))
 

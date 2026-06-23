@@ -27,6 +27,8 @@ def _scoped_record(scope_type, scope_id):
         id=uuid.uuid4(),
         scope_type=scope_type,
         scope_id=scope_id,
+        is_public=True,
+        status="active",
     )
 
 
@@ -67,6 +69,33 @@ class SupportScopeApiTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(403, context.exception.status_code)
 
+    async def test_get_admin_contact_rejects_unowned_scope(self):
+        user = SimpleNamespace(id=uuid.uuid4())
+        item = _scoped_record("wing", uuid.uuid4())
+
+        with (
+            patch.object(contacts, "build_selector", return_value=_FakeSelector()),
+            patch.object(contacts.ContactService, "get_by_id", return_value=item),
+            patch.object(contacts, "can_access_scope", return_value=False, create=True),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await contacts.get_admin_contact(item.id, db=None, user=user)
+
+        self.assertEqual(403, context.exception.status_code)
+
+    async def test_public_contact_by_id_rejects_private_records(self):
+        item = _scoped_record("wing", uuid.uuid4())
+        item.is_public = False
+
+        with (
+            patch.object(contacts, "build_selector", return_value=_FakeSelector()),
+            patch.object(contacts.ContactService, "get_by_id", return_value=item),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await contacts.get_contact.__wrapped__(item.id, db=None)
+
+        self.assertEqual(404, context.exception.status_code)
+
     async def test_admin_faqs_list_filters_by_user_scope(self):
         own_department_id = uuid.uuid4()
         other_department_id = uuid.uuid4()
@@ -88,6 +117,33 @@ class SupportScopeApiTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual([page.items[0]], response["data"])
         self.assertEqual(1, response["meta"]["total"])
+
+    async def test_get_admin_faq_rejects_unowned_scope(self):
+        user = SimpleNamespace(id=uuid.uuid4())
+        item = _scoped_record("department", uuid.uuid4())
+
+        with (
+            patch.object(faqs, "build_selector", return_value=_FakeSelector()),
+            patch.object(faqs.FAQService, "get_by_id", return_value=item),
+            patch.object(faqs, "can_access_scope", return_value=False, create=True),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await faqs.get_admin_faq(item.id, db=None, user=user)
+
+        self.assertEqual(403, context.exception.status_code)
+
+    async def test_public_faq_by_id_rejects_drafts(self):
+        item = _scoped_record("department", uuid.uuid4())
+        item.status = "draft"
+
+        with (
+            patch.object(faqs, "build_selector", return_value=_FakeSelector()),
+            patch.object(faqs.FAQService, "get_by_id", return_value=item),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await faqs.get_faq.__wrapped__(item.id, db=None)
+
+        self.assertEqual(404, context.exception.status_code)
 
     async def test_update_faq_checks_existing_and_next_scope(self):
         own_department_id = uuid.uuid4()

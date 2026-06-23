@@ -1401,8 +1401,11 @@ export const faqsApi = {
     }>,
   ) => mainApi.get<PaginatedResponse<FAQ>>("/api/v1/faqs/admin", params),
 
-  get: (id: string, params?: FieldSelectionParams) =>
+  getPublic: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: FAQ }>(`/api/v1/faqs/${id}`, params),
+
+  get: (id: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: FAQ }>(`/api/v1/faqs/admin/${id}`, params),
 
   create: (data: Partial<FAQ>) =>
     mainApi.post<{ data: FAQ }>("/api/v1/faqs", data),
@@ -1438,8 +1441,14 @@ export const contactsApi = {
       params,
     ),
 
-  get: (id: string, params?: FieldSelectionParams) =>
+  getPublic: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: ContactDirectory }>(`/api/v1/contacts/${id}`, params),
+
+  get: (id: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: ContactDirectory }>(
+      `/api/v1/contacts/admin/${id}`,
+      params,
+    ),
 
   create: (data: Partial<ContactDirectory>) =>
     mainApi.post<{ data: ContactDirectory }>("/api/v1/contacts", data),

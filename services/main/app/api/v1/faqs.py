@@ -112,12 +112,33 @@ async def list_admin_faqs(
     return success(data=selector.apply(items), meta=meta)
 
 
+@router.get("/admin/{faq_id}")
+async def get_admin_faq(
+    faq_id: uuid.UUID,
+    db: DbSession,
+    user: CurrentUser,
+    fields: FieldSelection = FieldsDep,
+):
+    selector = build_selector(FAQ, fields)
+    item = await FAQService.get_by_id(db, faq_id, load_options=selector.load_options)
+    if item is None:
+        raise HTTPException(status_code=404, detail="FAQ not found")
+    await _require_faq_scope(
+        db,
+        user,
+        FAQ_VIEW_PERMISSIONS,
+        item.scope_type,
+        item.scope_id,
+    )
+    return success(data=selector.apply(item))
+
+
 @router.get("/{faq_id}")
 @cached_public(timeout=300, vary_on=("faq_id", "fields", "include"))
 async def get_faq(faq_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(FAQ, fields)
     item = await FAQService.get_by_id(db, faq_id, load_options=selector.load_options)
-    if item is None:
+    if item is None or not item.is_public or item.status != "published":
         raise HTTPException(status_code=404, detail="FAQ not found")
     return success(data=selector.apply(item))
 
