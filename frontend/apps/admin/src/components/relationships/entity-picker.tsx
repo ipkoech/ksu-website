@@ -2,15 +2,18 @@
 
 import * as React from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { Check, ChevronDown, Loader2, Plus, Search, X } from "lucide-react";
+import { Check, ChevronDown, Plus, Search, X } from "lucide-react";
 import {
   Badge,
   Button,
+  Alert,
+  AlertDescription,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  EmptyState,
   ImageRenderer,
   Input,
   Select,
@@ -19,6 +22,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Skeleton,
 } from "@ksu/ui/components";
 import { cn } from "@ksu/ui";
 import type { RelationshipAdapter, RelationshipFilters, RelationshipOption } from "./relationship-adapters";
@@ -50,14 +54,14 @@ function getRequiredMessage<TFilters extends RelationshipFilters>(
 function OptionAvatar({ option }: { option: RelationshipOption }) {
   if (!option.imageUrl) {
     return (
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border bg-muted text-xs font-semibold text-muted-foreground">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-md border bg-muted text-xs font-semibold text-muted-foreground">
         {option.label.slice(0, 2).toUpperCase()}
       </div>
     );
   }
 
   return (
-    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
+    <div className="size-10 shrink-0 overflow-hidden rounded-md border bg-muted">
       <ImageRenderer src={option.imageUrl} alt={option.label} className="h-full border-0" imageClassName="h-full w-full" />
     </div>
   );
@@ -153,9 +157,9 @@ export function EntityPicker<TFilters extends RelationshipFilters = Relationship
   const selectedLabel = selectedOption?.label ?? "";
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("flex flex-col gap-2", className)}>
       {label ? (
-        <div className="space-y-1">
+        <div className="flex flex-col gap-1">
           <p className="text-sm font-medium">
             {label}
             {required ? <span className="text-destructive"> *</span> : null}
@@ -198,11 +202,11 @@ export function EntityPicker<TFilters extends RelationshipFilters = Relationship
             <DialogDescription>{dialogDescription ?? `Search and choose from available ${adapter.pluralLabel.toLowerCase()}.`}</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4">
             {requiredMessage ? (
-              <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-                {requiredMessage}
-              </div>
+              <Alert>
+                <AlertDescription>{requiredMessage}</AlertDescription>
+              </Alert>
             ) : (
               <>
                 <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
@@ -225,9 +229,10 @@ export function EntityPicker<TFilters extends RelationshipFilters = Relationship
 
                 <div className="max-h-[420px] overflow-y-auto rounded-md border">
                   {optionsQuery.isLoading ? (
-                    <div className="flex items-center justify-center gap-2 p-8 text-sm text-muted-foreground">
-                      <Loader2 className="size-4 animate-spin" />
-                      Loading {adapter.pluralLabel.toLowerCase()}...
+                    <div className="flex flex-col gap-2 p-3">
+                      {[1, 2, 3, 4].map((item) => (
+                        <Skeleton key={item} className="h-14 rounded-md" />
+                      ))}
                     </div>
                   ) : options.length ? (
                     <div className="divide-y">
@@ -254,8 +259,10 @@ export function EntityPicker<TFilters extends RelationshipFilters = Relationship
                     </div>
                   ) : (
                     <div className="p-8 text-center">
-                      <p className="text-sm font-medium">{adapter.emptyLabel}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">Try a different search term.</p>
+                      <EmptyState
+                        title={adapter.emptyLabel}
+                        description="Try a different search term."
+                      />
                     </div>
                   )}
                 </div>
@@ -303,9 +310,9 @@ export function MultiEntityPicker<TFilters extends RelationshipFilters = Relatio
   const selectedOptions = selectedQueries.map((query) => query.data).filter(Boolean) as RelationshipOption[];
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       {label ? (
-        <div className="space-y-1">
+        <div className="flex flex-col gap-1">
           <p className="text-sm font-medium">{label}</p>
           {description ? <p className="text-xs text-muted-foreground">{description}</p> : null}
         </div>
@@ -384,9 +391,9 @@ export function EntityTypeRecordPicker({
   const selectedConfig = configs.find((config) => config.value === typeValue);
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       {label ? (
-        <div className="space-y-1">
+        <div className="flex flex-col gap-1">
           <p className="text-sm font-medium">{label}</p>
           {description ? <p className="text-xs text-muted-foreground">{description}</p> : null}
         </div>
