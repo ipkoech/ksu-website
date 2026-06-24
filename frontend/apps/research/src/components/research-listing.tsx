@@ -280,7 +280,7 @@ export function ResearchListCard({
         {cleanFilledBadges.map((badge) => (
           <span
             key={badge}
-            className="inline-flex items-center rounded-full bg-secondary px-3 py-1 text-xs font-semibold uppercase text-primary"
+            className="inline-flex items-center rounded-md bg-secondary px-3 py-1 text-xs font-semibold uppercase text-primary"
           >
             {badge}
           </span>
@@ -344,7 +344,7 @@ export function ResearchRecordRow({
           {cleanFilledBadges.map((badge) => (
             <span
               key={badge}
-              className="inline-flex items-center rounded-full bg-secondary px-3 py-1 text-xs font-semibold uppercase text-primary"
+              className="inline-flex items-center rounded-md bg-secondary px-3 py-1 text-xs font-semibold uppercase text-primary"
             >
               {badge}
             </span>

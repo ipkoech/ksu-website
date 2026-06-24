@@ -203,7 +203,7 @@ function InstitutionalNav({
       <p className="px-2 text-xs font-semibold uppercase text-secondary">
         Explore {title}
       </p>
-      <ul className="mt-3 space-y-2">
+      <ul className="mt-3 flex flex-col gap-2">
         {links.map((item) => {
           const Icon = item.icon;
 
@@ -211,7 +211,7 @@ function InstitutionalNav({
             <li key={item.href}>
               <Link
                 href={item.href}
-                className="group flex items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
+                className="group flex items-center gap-3 rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
               >
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
                   <Icon aria-hidden className="h-4 w-4" />
@@ -232,7 +232,7 @@ function InstitutionalNav({
 
 function InstitutionalRelated({ links }: { links: InstitutionalLink[] }) {
   return (
-    <aside>
+    <aside className="h-fit min-w-0">
       <nav
         aria-label="Related research pages"
         className="rounded-[1rem] border border-slate-200 bg-white/80 p-3 shadow-sm backdrop-blur"
@@ -240,7 +240,7 @@ function InstitutionalRelated({ links }: { links: InstitutionalLink[] }) {
         <p className="px-2 text-xs font-semibold uppercase text-secondary">
           Related Pages
         </p>
-        <ul className="mt-3 space-y-2">
+        <ul className="mt-3 flex flex-col gap-2">
           {links.map((item) => {
             const Icon = item.icon;
 
@@ -248,7 +248,7 @@ function InstitutionalRelated({ links }: { links: InstitutionalLink[] }) {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="group flex items-start gap-2 rounded-xl border border-transparent px-2 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
+                  className="group flex items-start gap-2 rounded-md border border-transparent px-2 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
                 >
                   <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
                     <Icon aria-hidden className="h-4 w-4" />

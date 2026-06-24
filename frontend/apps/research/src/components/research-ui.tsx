@@ -251,7 +251,7 @@ export function StatusMessage({
 
 export function Badge({ children }: { children: ReactNode }) {
   return (
-    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
+    <span className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
       {children}
     </span>
   );
@@ -259,7 +259,7 @@ export function Badge({ children }: { children: ReactNode }) {
 
 export function FilledBadge({ children }: { children: ReactNode }) {
   return (
-    <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white">
+    <span className="inline-flex items-center rounded-md bg-primary px-3 py-1 text-xs font-semibold text-white">
       {children}
     </span>
   );
