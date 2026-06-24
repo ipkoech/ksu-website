@@ -106,7 +106,7 @@ export default async function NewsPage({
           { label: "Learning / Events / Updates", href: "/training" },
           { label: "News" },
         ]}
-        imageSrc="/images/research/research-hero-imagegen.png"
+        imageSrc="/images/research/research-hero-imagegen.webp"
         imageAlt="Research news desk with updates, stories, and event coverage"
         links={learningLinks}
         primaryAction={{ label: "View events", href: "/events" }}

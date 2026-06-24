@@ -92,7 +92,7 @@ export default async function AboutPage() {
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "About" }]}
         localLinks={localLinks}
         relatedLinks={relatedLinks}
-        imageSrc="/images/research/registrar-reirm-imagegen.png"
+        imageSrc="/images/research/registrar-reirm-imagegen.webp"
         imageAlt="Research office leadership and coordination at Kisii University"
         primaryAction={{ label: "Meet the team", href: "/team" }}
         secondaryAction={{ label: "Find expertise", href: "/expertise" }}

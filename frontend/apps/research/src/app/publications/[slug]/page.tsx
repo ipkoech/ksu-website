@@ -62,7 +62,7 @@ export default async function PublicationDetailPage({
             href: href ?? "#",
           })),
         ]}
-        imageSrc="/images/research/research-hero-imagegen.png"
+        imageSrc="/images/research/research-hero-imagegen.webp"
         imageAlt="Publication record and research evidence"
       />
 

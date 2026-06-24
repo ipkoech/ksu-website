@@ -116,7 +116,7 @@ export default async function DonatePage() {
           { label: "Research", href: "/" },
           { label: "Donate" },
         ]}
-        imageSrc="/images/research/research-hero-imagegen.png"
+        imageSrc="/images/research/research-hero-imagegen.webp"
         imageAlt="Researchers, students, and community partners supported by research giving"
         links={donateLinks}
         primaryAction={{ label: "Give now", href: "/donate#make-a-gift" }}

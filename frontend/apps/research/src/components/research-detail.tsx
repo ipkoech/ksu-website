@@ -36,7 +36,7 @@ export function ResearchDetailHero({
   labels = [],
   facts = [],
   actions = [],
-  imageSrc = "/images/research/research-hero-imagegen.png",
+  imageSrc = "/images/research/research-hero-imagegen.webp",
   imageAlt = "",
 }: {
   eyebrow: string;

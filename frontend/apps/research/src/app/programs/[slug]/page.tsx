@@ -52,7 +52,7 @@ export default async function ProgramDetailPage({
           { label: "Back to programs", href: "/programs", variant: "secondary" },
           ...(center?.slug ? [{ label: "View center", href: `/centers/${center.slug}` }] : []),
         ]}
-        imageSrc="/images/research/research-demo-imagegen.png"
+        imageSrc="/images/research/research-demo-imagegen.webp"
         imageAlt="Research program profile and connected projects"
       />
 

@@ -49,7 +49,7 @@ export default async function ScholarshipsPage({ searchParams }: { searchParams?
         title="Research scholarships and student funding opportunities."
         body="Scholarship calls show eligibility, award value, coverage, application deadlines, and direct application links."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Funding", href: "/funding" }, { label: "Scholarships" }]}
-        imageSrc="/images/research/research-demo-imagegen.png"
+        imageSrc="/images/research/research-demo-imagegen.webp"
         imageAlt="Students and researchers reviewing scholarship support opportunities"
         links={supportLinks}
         primaryAction={{ label: "View funding", href: "/funding" }}

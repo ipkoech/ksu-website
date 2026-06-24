@@ -64,12 +64,12 @@ const ecosystemCards = [
   {
     title: "Centers & Institutes",
     href: "/centers",
-    image: "/images/research/research-hero-imagegen.png",
+    image: "/images/research/research-hero-imagegen.webp",
   },
   {
     title: "Facilities & Labs",
     href: "/facilities",
-    image: "/images/research/research-hero-imagegen.png",
+    image: "/images/research/research-hero-imagegen.webp",
   },
   {
     title: "Expertise Directory",
@@ -79,17 +79,17 @@ const ecosystemCards = [
   {
     title: "Partners & Collaborators",
     href: "/partners",
-    image: "/images/research/research-demo-imagegen.png",
+    image: "/images/research/research-demo-imagegen.webp",
   },
   {
     title: "Consultancy Services",
     href: "/consultancies",
-    image: "/images/research/registrar-reirm-imagegen.png",
+    image: "/images/research/registrar-reirm-imagegen.webp",
   },
   {
     title: "Community Impact",
     href: "/community-impact",
-    image: "/images/research/research-demo-imagegen.png",
+    image: "/images/research/research-demo-imagegen.webp",
   },
 ];
 
@@ -151,7 +151,7 @@ export default async function ResearchPage() {
             eyebrow: "Kisii University Research",
             title: "Research that connects discovery, innovation, and public service.",
             body: "Explore the work of the Directorate of Research, Extension, Innovation and Resource Mobilization: projects, publications, partnerships, grants, outputs, community impact, and the evidence behind Kisii University scholarship.",
-            imageSrc: "/images/research/research-hero-imagegen.png",
+            imageSrc: "/images/research/research-hero-imagegen.webp",
             imageAlt: "University researchers collaborating across laboratory, data, and field research",
             primaryAction: { label: "Explore research", href: "/projects" },
             secondaryAction: { label: "Partner with us", href: "/partners" },
@@ -221,7 +221,7 @@ export default async function ResearchPage() {
         <div className="mx-auto grid max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] lg:items-center">
           <div className="relative min-h-[360px] overflow-hidden rounded-lg bg-slate-200 shadow-sm lg:min-h-[520px]">
             <Image
-              src="/images/research/registrar-reirm-imagegen.png"
+              src="/images/research/registrar-reirm-imagegen.webp"
               alt="Registrar for research, extension, innovation and resource mobilization in a university office"
               fill
               sizes="(min-width: 1024px) 54vw, 100vw"
@@ -273,7 +273,7 @@ export default async function ResearchPage() {
             <RecordPanel
               title="Active Projects"
               href="/projects"
-              image="/images/research/research-demo-imagegen.png"
+              image="/images/research/research-demo-imagegen.webp"
               emptyLabel="No active projects have been published yet."
               tone="green"
               isEmpty={projects.data.length === 0}
@@ -293,7 +293,7 @@ export default async function ResearchPage() {
             <RecordPanel
               title="Recent Publications"
               href="/publications"
-              image="/images/research/research-hero-imagegen.png"
+              image="/images/research/research-hero-imagegen.webp"
               emptyLabel="No publications have been published yet."
               tone="navy"
               isEmpty={publications.data.length === 0}
@@ -313,7 +313,7 @@ export default async function ResearchPage() {
             <RecordPanel
               title="Funding & Opportunities"
               href="/funding"
-              image="/images/research/research-demo-imagegen.png"
+              image="/images/research/research-demo-imagegen.webp"
               emptyLabel="No funding calls or updates have been published yet."
               tone="gold"
               isEmpty={grants.data.length === 0 && updates.data.length === 0}

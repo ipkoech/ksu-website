@@ -103,7 +103,7 @@ export default async function TeamPage({
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Team" }]}
         localLinks={localLinks}
         relatedLinks={relatedLinks}
-        imageSrc="/images/research/research-demo-imagegen.png"
+        imageSrc="/images/research/research-demo-imagegen.webp"
         imageAlt="Kisii University research staff coordinating project support"
         primaryAction={{ label: "Search expertise", href: "/expertise" }}
         secondaryAction={{ label: "Contact REIRM", href: "/connect" }}

@@ -80,7 +80,7 @@ export default async function ConsultanciesPage({
           { label: "Innovation & Partnerships", href: "/innovations" },
           { label: "Consultancies" },
         ]}
-        imageSrc="/images/research/registrar-reirm-imagegen.png"
+        imageSrc="/images/research/registrar-reirm-imagegen.webp"
         imageAlt="Applied research consultancy and expert service engagement"
         links={innovationLinks}
         primaryAction={{ label: "View partners", href: "/partners" }}

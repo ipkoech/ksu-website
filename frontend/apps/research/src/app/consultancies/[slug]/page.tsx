@@ -60,7 +60,7 @@ export default async function ConsultancyDetailPage({
           { label: "Back to consultancies", href: "/consultancies", variant: "secondary" },
           ...(partner?.slug ? [{ label: "View partner", href: `/partners/${partner.slug}` }] : []),
         ]}
-        imageSrc="/images/research/registrar-reirm-imagegen.png"
+        imageSrc="/images/research/registrar-reirm-imagegen.webp"
         imageAlt="Consultancy engagement profile and deliverables"
       />
 

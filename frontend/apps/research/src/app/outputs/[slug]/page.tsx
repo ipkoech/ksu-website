@@ -59,7 +59,7 @@ export default async function OutputDetailPage({
             href: href ?? "#",
           })),
         ]}
-        imageSrc="/images/research/research-demo-imagegen.png"
+        imageSrc="/images/research/research-demo-imagegen.webp"
         imageAlt="Research output, dataset, toolkit, or report detail"
       />
 
