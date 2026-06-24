@@ -124,8 +124,8 @@ export function ResearchSection({
     <section
       className={
         tone === "white"
-          ? "bg-white px-4 py-12 sm:px-6 lg:px-8"
-          : "border-y border-slate-200 bg-slate-50 px-4 py-12 sm:px-6 lg:px-8"
+          ? "bg-white px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
+          : "border-y border-slate-200 bg-slate-50 px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
       }
     >
       <div className="mx-auto w-full max-w-[1680px]">
@@ -133,11 +133,11 @@ export function ResearchSection({
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-secondary">
             {eyebrow}
           </p>
-          <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+          <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
             {title}
           </h2>
           {body ? (
-            <p className="mt-4 text-base leading-7 text-slate-600">{body}</p>
+            <p className="mt-4 text-pretty text-base leading-7 text-slate-600">{body}</p>
           ) : null}
         </div>
         {children}
@@ -181,7 +181,7 @@ export function IconCard({
     </>
   );
   const className =
-    "group flex min-h-[230px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]";
+    "group flex min-h-[230px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20";
 
   return href ? (
     <Link href={href} className={className}>
@@ -202,7 +202,7 @@ export function PrimaryLink({
   return (
     <Link
       href={href}
-      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
+      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
     >
       {children}
       <ArrowRight aria-hidden className="h-4 w-4" />
@@ -220,7 +220,7 @@ export function SecondaryLink({
   return (
     <Link
       href={href}
-      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
+      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
     >
       {children}
       <ArrowRight aria-hidden className="h-4 w-4" />

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { ReactNode } from "react";
 import {
   ArrowRight,
@@ -66,6 +67,8 @@ export function LibraryHero({
   actions,
   breadcrumbs,
   children,
+  imageSrc = "/images/library/library-hero.jpg",
+  imageAlt = "Kisii University campus library and learning environment",
 }: {
   eyebrow: string;
   title: string;
@@ -73,12 +76,22 @@ export function LibraryHero({
   actions?: ReactNode;
   breadcrumbs?: { label: string; href?: string }[];
   children?: ReactNode;
+  imageSrc?: string;
+  imageAlt?: string;
 }) {
   return (
     <LibraryHeroMotion>
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.9)_0%,rgba(2,20,49,0.75)_42%,rgba(16,67,177,0.35)_74%,rgba(193,81,6,0.22)_100%)]" />
-      <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(120deg,rgba(255,255,255,0.16)_0_1px,transparent_1px_100%),linear-gradient(30deg,rgba(255,255,255,0.08)_0_1px,transparent_1px_100%)] [background-size:64px_64px]" />
-      <div className="relative mx-auto grid max-w-[1320px] gap-8 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-end lg:gap-10">
+      <Image
+        src={imageSrc}
+        alt={imageAlt}
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover object-[48%_50%]"
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.94)_0%,rgba(2,20,49,0.82)_42%,rgba(2,20,49,0.32)_78%,rgba(2,20,49,0.12)_100%)]" />
+      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/40 to-transparent" />
+      <div className="relative mx-auto grid min-h-[460px] max-w-[1680px] gap-8 py-8 lg:min-h-[560px] lg:grid-cols-[minmax(0,1fr)_410px] lg:items-end lg:gap-10 lg:py-10">
         <LibraryHeroContentMotion>
           {breadcrumbs?.length ? (
             <BreadcrumbTrail items={breadcrumbs} />
@@ -86,10 +99,10 @@ export function LibraryHero({
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/80 sm:text-sm sm:tracking-[0.24em]">
             {eyebrow}
           </p>
-          <h1 className="mt-4 max-w-3xl text-wrap font-[family-name:var(--font-display)] text-3xl font-bold leading-tight sm:text-5xl lg:text-6xl">
+          <h1 className="mt-4 max-w-4xl text-balance font-[family-name:var(--font-display)] text-3xl font-bold leading-tight sm:text-5xl lg:text-6xl">
             {title}
           </h1>
-          <p className="mt-5 max-w-2xl text-sm leading-7 text-white/80 sm:text-base sm:leading-8 lg:text-lg">
+          <p className="mt-5 max-w-3xl text-pretty text-sm leading-7 text-white/84 sm:text-base sm:leading-8 lg:text-lg">
             {body}
           </p>
           {actions ? (
@@ -152,20 +165,20 @@ export function LibrarySection({
     <section
       className={
         tone === "white"
-          ? "bg-white px-4 py-12 sm:px-6 lg:px-8"
-          : "border-y border-slate-200 bg-slate-50 px-4 py-12 sm:px-6 lg:px-8"
+          ? "bg-white px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
+          : "border-y border-slate-200 bg-slate-50 px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
       }
     >
-      <div className="mx-auto max-w-[1320px]">
+      <div className="mx-auto w-full max-w-[1680px]">
         <div className="mb-7 max-w-3xl">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary sm:text-sm sm:tracking-[0.24em]">
             {eyebrow}
           </p>
-          <h2 className="mt-3 text-wrap font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+          <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-4xl">
             {title}
           </h2>
           {body ? (
-            <p className="mt-4 text-base leading-7 text-slate-600">{body}</p>
+            <p className="mt-4 text-pretty text-base leading-7 text-slate-600">{body}</p>
           ) : null}
         </div>
         {children}
@@ -210,7 +223,7 @@ export function IconCard({
   );
 
   const className =
-    "group flex min-h-[230px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]";
+    "group flex min-h-[230px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20";
 
   return href ? (
     <Link href={href} className={className}>
@@ -231,7 +244,7 @@ export function PrimaryLink({
   return (
     <Link
       href={href}
-      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-center text-sm font-semibold text-primary shadow-sm transition hover:bg-white/90"
+      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-secondary px-5 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-secondary/30"
     >
       {children}
       <ArrowRight aria-hidden className="h-4 w-4" />
@@ -249,7 +262,7 @@ export function SecondaryLink({
   return (
     <Link
       href={href}
-      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/40 bg-white/10 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/20"
+      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/40 bg-white/10 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
     >
       {children}
       <ArrowRight aria-hidden className="h-4 w-4" />
@@ -269,7 +282,7 @@ export function ExternalAnchor({
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-primary/25 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
+      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
     >
       {children}
       <ExternalLink aria-hidden className="h-4 w-4" />
@@ -317,11 +330,11 @@ export function LibraryContentBand({
     <section
       className={
         tone === "soft"
-          ? "border-y border-slate-200 bg-slate-50 px-4 py-10 sm:px-6 lg:px-8"
-          : "bg-white px-4 py-10 sm:px-6 lg:px-8"
+          ? "border-y border-slate-200 bg-slate-50 px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
+          : "bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
       }
     >
-      <div className="mx-auto max-w-[1320px]">{children}</div>
+      <div className="mx-auto w-full max-w-[1680px]">{children}</div>
     </section>
   );
 }
@@ -340,10 +353,10 @@ export function LibrarySectionHeading({
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary sm:text-sm sm:tracking-[0.22em]">
         {eyebrow}
       </p>
-      <h2 className="mt-3 text-wrap font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+      <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-4xl">
         {title}
       </h2>
-      {body ? <p className="mt-4 text-base leading-7 text-slate-600">{body}</p> : null}
+      {body ? <p className="mt-4 text-pretty text-base leading-7 text-slate-600">{body}</p> : null}
     </div>
   );
 }
@@ -416,7 +429,7 @@ export function PillNav({
         <Link
           key={item.href}
           href={item.href}
-          className="inline-flex min-h-11 shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+          className="inline-flex min-h-11 shrink-0 items-center rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
         >
           {item.label}
         </Link>
@@ -477,7 +490,7 @@ export function CompactRecord({
   return href ? (
     <Link
       href={href}
-      className="block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md"
+      className="block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
     >
       {content}
     </Link>
@@ -568,7 +581,7 @@ export function RecordListItem({
   return href ? (
     <Link
       href={href}
-      className="block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md"
+      className="block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
     >
       {content}
     </Link>
