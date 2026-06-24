@@ -68,44 +68,6 @@ export default async function LibraryStaffPage() {
         </section>
       ))}
 
-      <LibraryContentBand>
-        <form
-          action="/staff"
-          className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.55)] lg:grid-cols-[minmax(0,1fr)_220px_220px_auto] lg:items-end"
-        >
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-slate-900">Search staff</span>
-            <input
-              name="q"
-              type="search"
-              placeholder="Name, role, department, specialization"
-              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-          </label>
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-slate-900">Branch</span>
-            <select className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-              <option>All branches</option>
-              {groupedStaff.map(({ branch }) => (
-                <option key={branch.id}>{branch.name}</option>
-              ))}
-            </select>
-          </label>
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-slate-900">Role</span>
-            <select className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-              <option>All roles</option>
-              {Array.from(new Set(staff.map((member) => formatLabel(member.role)))).filter(Boolean).map((role) => (
-                <option key={role}>{role}</option>
-              ))}
-            </select>
-          </label>
-          <button className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90">
-            Search
-          </button>
-        </form>
-      </LibraryContentBand>
-
       <LibraryContentBand tone="soft">
         <LibrarySectionHeading
           eyebrow="Directory"

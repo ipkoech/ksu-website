@@ -72,38 +72,6 @@ export default async function LibraryRepositoriesPage() {
         </section>
       ))}
 
-      <LibraryContentBand>
-        <form
-          action="/repositories"
-          className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.55)] lg:grid-cols-[minmax(0,1fr)_220px_auto] lg:items-end"
-        >
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-slate-900">Search repository links</span>
-            <input
-              name="q"
-              type="search"
-              placeholder="Repository, collection, OPAC, database"
-              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-          </label>
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-slate-900">Collection</span>
-            <select
-              name="type"
-              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              <option value="">All links</option>
-              <option value="repository">Repository</option>
-              <option value="opac">OPAC</option>
-              <option value="database">Databases</option>
-            </select>
-          </label>
-          <button className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90">
-            Search
-          </button>
-        </form>
-      </LibraryContentBand>
-
       <LibraryContentBand tone="soft">
         <LibrarySectionHeading
           eyebrow="Access Links"
