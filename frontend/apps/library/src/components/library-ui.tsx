@@ -285,6 +285,45 @@ export function ExternalAnchor({
   );
 }
 
+export function LibraryActionLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+    >
+      {children}
+      <ArrowRight aria-hidden className="h-4 w-4" />
+    </Link>
+  );
+}
+
+export function LibraryBadge({
+  children,
+  tone = "neutral",
+}: {
+  children: ReactNode;
+  tone?: "neutral" | "primary" | "secondary" | "muted";
+}) {
+  const toneClass = {
+    neutral: "border-slate-200 bg-slate-50 text-slate-700",
+    primary: "border-primary/15 bg-primary/10 text-primary",
+    secondary: "border-secondary/20 bg-secondary text-white",
+    muted: "border-slate-200 bg-slate-200 text-slate-700",
+  }[tone];
+
+  return (
+    <span className={`inline-flex items-center rounded-md border px-3 py-1 text-xs font-semibold ${toneClass}`}>
+      {children}
+    </span>
+  );
+}
+
 export function StatusMessage({
   tone = "neutral",
   children,

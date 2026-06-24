@@ -1,7 +1,8 @@
-import Link from "next/link";
 import type { LibraryElectronicResource } from "@ksu/api-client";
 import {
   ExternalAnchor,
+  LibraryActionLink,
+  LibraryBadge,
   LibraryFilterCheckbox,
   LibraryFilterClearLink,
   LibraryFilterSelect,
@@ -214,7 +215,7 @@ export default async function ElectronicResourcesPage({
           </div>
         ) : (
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="space-y-8">
+            <div className="flex flex-col gap-8">
               {grouped.map(([letter, items]) => (
                 <section key={letter} aria-labelledby={`letter-${letter}`}>
                   <h2
@@ -232,7 +233,7 @@ export default async function ElectronicResourcesPage({
               ))}
             </div>
 
-            <aside className="space-y-5">
+            <aside className="flex flex-col gap-5">
               <MetricStrip
                 items={[
                   { label: "Returned", value: resources.data.length },
@@ -290,29 +291,19 @@ function ResourceCard({
       }
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
+        <LibraryBadge>
           {formatLabel(resource.resource_type ?? "database")}
-        </span>
-        <span
-          className={
-            resource.requires_vpn
-              ? "rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-white"
-              : "rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white"
-          }
-        >
+        </LibraryBadge>
+        <LibraryBadge tone={resource.requires_vpn ? "secondary" : "primary"}>
           {resource.requires_vpn
             ? "VPN required"
             : formatLabel(resource.access_level ?? "library access")}
-        </span>
+        </LibraryBadge>
         {resource.requires_registration ? (
-          <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">
-            Registration
-          </span>
+          <LibraryBadge tone="muted">Registration</LibraryBadge>
         ) : null}
         {featured ? (
-          <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-            Featured
-          </span>
+          <LibraryBadge tone="primary">Featured</LibraryBadge>
         ) : null}
       </div>
       <h3 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
@@ -333,12 +324,7 @@ function ResourceCard({
       {subjects.length > 0 ? (
         <div className="mt-5 flex flex-wrap gap-2">
           {subjects.slice(0, 5).map((subject: string) => (
-            <span
-              key={subject}
-              className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600"
-            >
-              {subject}
-            </span>
+            <LibraryBadge key={subject}>{subject}</LibraryBadge>
           ))}
         </div>
       ) : null}
@@ -364,18 +350,15 @@ function AccessHelp() {
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-lg font-semibold text-slate-950">Access help</h2>
-      <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+      <ul className="mt-4 flex flex-col gap-3 text-sm leading-6 text-slate-600">
         <li>Use your university network or approved off-campus access method.</li>
         <li>Check resource badges for VPN or registration requirements.</li>
         <li>Contact the library team when a subscription link does not open.</li>
       </ul>
       <div className="mt-5">
-        <Link
-          href="/services#services-heading"
-          className="inline-flex min-h-11 items-center rounded-full px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10"
-        >
+        <LibraryActionLink href="/services#services-heading">
           Get access support
-        </Link>
+        </LibraryActionLink>
       </div>
     </section>
   );

@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { LibraryResource } from "@ksu/api-client";
 import {
   CompactRecord,
+  LibraryActionLink,
   LibraryFilterClearLink,
   LibraryFilterSelect,
   LibraryFilterSubmit,
@@ -187,7 +188,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
         ) : (
           <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_320px]">
             <SidePanel title="Refine results" eyebrow="Filters">
-              <div className="space-y-3 text-sm leading-6 text-slate-600">
+              <div className="flex flex-col gap-3 text-sm leading-6 text-slate-600">
                 <p>Branch: {selectedBranch?.name ?? "All branches"}</p>
                 <p>Type: {resourceType ? formatLabel(resourceType) : "All types"}</p>
                 <p>Status: {status ? formatLabel(status) : "All statuses"}</p>
@@ -202,7 +203,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
               ))}
             </div>
 
-            <aside className="space-y-5">
+            <aside className="flex flex-col gap-5">
               <MetricStrip
                 items={[
                   { label: "Available now", value: availableCount },
@@ -254,18 +255,15 @@ function SearchTips() {
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-lg font-semibold text-slate-950">Search tips</h2>
-      <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+      <ul className="mt-4 flex flex-col gap-3 text-sm leading-6 text-slate-600">
         <li>Use shorter phrases when an exact title does not return results.</li>
         <li>Search by author, ISBN, ISSN, call number, publisher, or subject.</li>
         <li>Change the branch selector if the item may be held elsewhere.</li>
       </ul>
       <div className="mt-5">
-        <Link
-          href="/services#services-heading"
-          className="inline-flex min-h-11 items-center rounded-full px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10"
-        >
+        <LibraryActionLink href="/services#services-heading">
           Ask for catalog help
-        </Link>
+        </LibraryActionLink>
       </div>
     </section>
   );
