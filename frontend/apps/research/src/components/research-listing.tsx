@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Search } from "lucide-react";
 import { Badge, StatusMessage } from "./research-ui";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import {
@@ -28,6 +29,18 @@ type ProjectOption = CenterOption;
 type SortOption = {
   value: string;
   label: string;
+};
+
+type SelectChoice = string | { value: string; label: string };
+
+type ResearchSelectFieldProps = {
+  name: string;
+  label: string;
+  value?: string;
+  options: SelectChoice[];
+  allLabel?: string;
+  includeAllOption?: boolean;
+  className?: string;
 };
 
 type TextFilter = {
@@ -69,101 +82,85 @@ export function ResearchFilterForm({
   sortValue?: string;
   sortOptions?: SortOption[];
 }) {
-  const inputClassName =
-    "mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-950 outline-none ring-primary/20 transition placeholder:text-slate-400 focus:border-primary focus:ring-4";
-
   return (
-    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4 shadow-sm" action={action}>
+    <form
+      className="rounded-lg border border-slate-200 bg-slate-50 p-4 shadow-sm"
+      action={action}
+    >
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <label className="xl:col-span-2">
-          <span className="text-xs font-semibold uppercase text-slate-500">Search</span>
-          <input
-            type="search"
-            name="q"
-            defaultValue={searchValue ?? ""}
-            placeholder={searchPlaceholder}
-            className={inputClassName}
-          />
-        </label>
+        <ResearchTextField
+          name="q"
+          label="Search"
+          value={searchValue}
+          placeholder={searchPlaceholder}
+          type="search"
+          className="xl:col-span-2"
+        />
 
         {selects.map((select) => (
           <ResearchSelectField key={select.name} {...select} />
         ))}
 
         {textFilters.map((filter) => (
-          <label key={filter.name}>
-            <span className="text-xs font-semibold uppercase text-slate-500">{filter.label}</span>
-            <input
+          <ResearchTextField
+            key={filter.name}
             name={filter.name}
-            defaultValue={filter.value ?? ""}
+            label={filter.label}
+            value={filter.value}
             placeholder={filter.placeholder}
-            className={inputClassName}
           />
-        </label>
         ))}
 
         {centers ? (
-          <label className="md:col-span-2 xl:col-span-2">
-            <span className="text-xs font-semibold uppercase text-slate-500">Center</span>
-            <select
-              name="center"
-              defaultValue={centerValue ?? ""}
-              className={inputClassName}
-            >
-              <option value="">All centers</option>
-              {centers.map((center) => (
-                <option key={center.id} value={center.id}>
-                  {center.name ?? center.title ?? center.code ?? center.id}
-                </option>
-              ))}
-            </select>
-          </label>
+          <ResearchSelectField
+            name="center"
+            label="Center"
+            value={centerValue}
+            options={centers.map((center) => ({
+              value: center.id ?? center.code ?? center.name ?? center.title ?? "",
+              label: center.name ?? center.title ?? center.code ?? center.id ?? "Unnamed center",
+            }))}
+            allLabel="All centers"
+            className="md:col-span-2 xl:col-span-2"
+          />
         ) : null}
 
         {projects ? (
-          <label className="md:col-span-2 xl:col-span-2">
-            <span className="text-xs font-semibold uppercase text-slate-500">Project</span>
-            <select
-              name="project"
-              defaultValue={projectValue ?? ""}
-              className={inputClassName}
-            >
-              <option value="">All projects</option>
-              {projects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.title ?? project.name ?? project.code ?? project.id}
-                </option>
-              ))}
-            </select>
-          </label>
+          <ResearchSelectField
+            name="project"
+            label="Project"
+            value={projectValue}
+            options={projects.map((project) => ({
+              value: project.id ?? project.code ?? project.title ?? project.name ?? "",
+              label: project.title ?? project.name ?? project.code ?? project.id ?? "Unnamed project",
+            }))}
+            allLabel="All projects"
+            className="md:col-span-2 xl:col-span-2"
+          />
         ) : null}
 
         {sortOptions.length > 0 ? (
-          <label>
-            <span className="text-xs font-semibold uppercase text-slate-500">Sort</span>
-            <select
-              name="sort"
-              defaultValue={sortValue ?? sortOptions[0]?.value ?? ""}
-              className={inputClassName}
-            >
-              {sortOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <ResearchSelectField
+            name="sort"
+            label="Sort"
+            value={sortValue ?? sortOptions[0]?.value}
+            options={sortOptions}
+            includeAllOption={false}
+          />
         ) : null}
 
         <div className="flex items-end gap-2 md:col-span-2 xl:col-span-6">
-          <button className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
-            Apply filters
+          <button
+            type="submit"
+            className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          >
+            Apply Filters
           </button>
           <Link
             href={resetHref}
             className="inline-flex h-11 items-center justify-center rounded-md border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
           >
-            Reset
+            Reset Filters
           </Link>
         </div>
       </div>
@@ -176,24 +173,82 @@ export function ResearchSelectField({
   label,
   value,
   options,
-}: FilterOption) {
+  allLabel,
+  includeAllOption = true,
+  className = "",
+}: ResearchSelectFieldProps) {
   return (
-    <label>
+    <label className={`block min-w-0 ${className}`}>
       <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
       <select
         name={name}
         defaultValue={value ?? ""}
         className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-950 outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
       >
-        <option value="">All {label.toLowerCase()}</option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {formatLabel(option)}
+        {includeAllOption ? <option value="">{allLabel ?? `All ${label.toLowerCase()}`}</option> : null}
+        {normalizeOptions(options).map((option) => (
+          <option key={`${name}-${option.value}-${option.label}`} value={option.value}>
+            {option.label}
           </option>
         ))}
       </select>
     </label>
   );
+}
+
+function ResearchTextField({
+  name,
+  label,
+  value,
+  placeholder,
+  type = "text",
+  className = "",
+}: TextFilter & {
+  type?: "search" | "text";
+  className?: string;
+}) {
+  const isSearch = type === "search";
+
+  return (
+    <label className={`block min-w-0 ${className}`}>
+      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
+      <span className="relative mt-2 block">
+        {isSearch ? (
+          <Search
+            aria-hidden
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+          />
+        ) : null}
+        <input
+          type={type}
+          name={name}
+          defaultValue={value ?? ""}
+          placeholder={placeholder}
+          autoComplete="off"
+          className={`h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-950 outline-none ring-primary/20 transition placeholder:text-slate-400 focus:border-primary focus:ring-4 ${
+            isSearch ? "pl-9" : ""
+          }`}
+        />
+      </span>
+    </label>
+  );
+}
+
+function normalizeOptions(options: SelectChoice[]) {
+  const seen = new Set<string>();
+
+  return options
+    .map((option) =>
+      typeof option === "string"
+        ? { value: option, label: formatLabel(option) }
+        : option,
+    )
+    .filter((option) => {
+      const key = `${option.value}-${option.label}`;
+      if (!option.value || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 }
 
 export function ResearchListCard({
@@ -211,8 +266,10 @@ export function ResearchListCard({
   filledBadges?: Array<string | null | undefined>;
   facts?: ListingFact[];
 }) {
-  const cleanBadges = badges.map((badge) => formatLabel(compactText(badge))).filter(Boolean);
-  const cleanFilledBadges = filledBadges.map((badge) => compactText(badge)).filter(Boolean);
+  const cleanBadges = uniqueDisplayValues(
+    badges.map((badge) => formatLabel(compactText(badge))),
+  );
+  const cleanFilledBadges = uniqueDisplayValues(filledBadges.map((badge) => compactText(badge)));
 
   return (
     <article className="flex min-h-[340px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]">
@@ -272,8 +329,10 @@ export function ResearchRecordRow({
   filledBadges?: Array<string | null | undefined>;
   facts?: ListingFact[];
 }) {
-  const cleanBadges = badges.map((badge) => formatLabel(compactText(badge))).filter(Boolean);
-  const cleanFilledBadges = filledBadges.map((badge) => compactText(badge)).filter(Boolean);
+  const cleanBadges = uniqueDisplayValues(
+    badges.map((badge) => formatLabel(compactText(badge))),
+  );
+  const cleanFilledBadges = uniqueDisplayValues(filledBadges.map((badge) => compactText(badge)));
 
   return (
     <article className="grid gap-4 p-5 lg:grid-cols-[1fr_280px]">
@@ -487,4 +546,8 @@ function getRecordHref(record: ResearchGenericRecord, hrefBase?: string) {
   const slug = compactText(record.slug);
   if (!hrefBase || !slug) return undefined;
   return `${hrefBase}/${slug}`;
+}
+
+function uniqueDisplayValues(values: string[]) {
+  return Array.from(new Set(values.filter(Boolean)));
 }
