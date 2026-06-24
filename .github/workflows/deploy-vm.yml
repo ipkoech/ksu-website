@@ -1,0 +1,202 @@
+name: Deploy VM
+
+on:
+  push:
+    branches:
+      - dev
+      - staging
+      - production
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: Deployment environment
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - production
+        default: dev
+      branch:
+        description: Branch to deploy
+        required: true
+        default: dev
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    name: Resolve deployment target
+    runs-on: ubuntu-latest
+    outputs:
+      should_deploy: ${{ steps.target.outputs.should_deploy }}
+      env_name: ${{ steps.target.outputs.env_name }}
+      branch: ${{ steps.target.outputs.branch }}
+    steps:
+      - name: Resolve branch and commit marker
+        id: target
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          INPUT_ENV: ${{ inputs.target_env }}
+          INPUT_BRANCH: ${{ inputs.branch }}
+        run: |
+          set -euo pipefail
+
+          should_deploy=false
+          env_name=""
+          branch="${REF_NAME}"
+
+          if [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
+            should_deploy=true
+            env_name="${INPUT_ENV}"
+            branch="${INPUT_BRANCH}"
+          else
+            case "${REF_NAME}" in
+              dev)
+                env_name="dev"
+                marker="[deploy dev]"
+                ;;
+              staging)
+                env_name="staging"
+                marker="[deploy staging]"
+                ;;
+              production)
+                env_name="production"
+                marker="[deploy production]"
+                ;;
+              *)
+                env_name=""
+                marker=""
+                ;;
+            esac
+
+            if [[ -n "${marker}" && ( "${COMMIT_MESSAGE}" == *"${marker}"* || "${COMMIT_MESSAGE}" == *"[deploy]"* ) ]]; then
+              should_deploy=true
+            fi
+          fi
+
+          echo "should_deploy=${should_deploy}" >> "${GITHUB_OUTPUT}"
+          echo "env_name=${env_name}" >> "${GITHUB_OUTPUT}"
+          echo "branch=${branch}" >> "${GITHUB_OUTPUT}"
+
+  deploy:
+    name: Deploy ${{ needs.resolve.outputs.env_name }} to VM
+    needs: resolve
+    if: needs.resolve.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+    environment: ${{ needs.resolve.outputs.env_name }}
+    concurrency:
+      group: vm-deploy-${{ needs.resolve.outputs.env_name }}
+      cancel-in-progress: false
+    env:
+      VM_SSH_HOST: ${{ vars.VM_SSH_HOST || '41.220.243.19' }}
+      VM_SSH_PORT: ${{ vars.VM_SSH_PORT || '2222' }}
+      VM_SSH_USER: ${{ vars.VM_SSH_USER || 'ubuntu' }}
+      VM_REPO_PATH: ${{ vars.VM_REPO_PATH || '/srv/ksu' }}
+      CERT_EMAIL: ${{ vars.CERT_EMAIL || 'website@kisiiuniversity.ac.ke' }}
+      DEV_PUBLIC_HOST: ${{ vars.DEV_PUBLIC_HOST || 'dev.kisiiuniversity.ac.ke' }}
+      DEV_API_HOST: ${{ vars.DEV_API_HOST || 'api.dev.kisiiuniversity.ac.ke' }}
+      DEV_RESEARCH_HOST: ${{ vars.DEV_RESEARCH_HOST || 'dev.research.kisiiuniversity.ac.ke' }}
+      STAGING_PUBLIC_HOST: ${{ vars.STAGING_PUBLIC_HOST || 'staging.kisiiuniversity.ac.ke' }}
+      STAGING_API_HOST: ${{ vars.STAGING_API_HOST || 'api.staging.kisiiuniversity.ac.ke' }}
+      STAGING_RESEARCH_HOST: ${{ vars.STAGING_RESEARCH_HOST || 'staging.research.kisiiuniversity.ac.ke' }}
+      PRODUCTION_PUBLIC_HOST: ${{ vars.PRODUCTION_PUBLIC_HOST || 'www.kisiiuniversity.ac.ke' }}
+      PRODUCTION_API_HOST: ${{ vars.PRODUCTION_API_HOST || 'api.kisiiuniversity.ac.ke' }}
+      PRODUCTION_RESEARCH_HOST: ${{ vars.PRODUCTION_RESEARCH_HOST || 'research.kisiiuniversity.ac.ke' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          VM_SSH_PRIVATE_KEY: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          VM_SSH_KNOWN_HOSTS: ${{ secrets.VM_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${VM_SSH_PRIVATE_KEY}" ]]; then
+            echo "VM_SSH_PRIVATE_KEY secret is required" >&2
+            exit 1
+          fi
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${VM_SSH_PRIVATE_KEY}" > ~/.ssh/ksu_vm
+          chmod 600 ~/.ssh/ksu_vm
+
+          if [[ -n "${VM_SSH_KNOWN_HOSTS}" ]]; then
+            printf '%s\n' "${VM_SSH_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+          else
+            ssh-keyscan -p "${VM_SSH_PORT}" "${VM_SSH_HOST}" > ~/.ssh/known_hosts
+          fi
+          chmod 600 ~/.ssh/known_hosts
+
+          cat > ~/.ssh/config <<EOF
+          Host ksu-deploy-vm
+            HostName ${VM_SSH_HOST}
+            User ${VM_SSH_USER}
+            Port ${VM_SSH_PORT}
+            IdentityFile ~/.ssh/ksu_vm
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+            ServerAliveInterval 30
+          EOF
+          chmod 600 ~/.ssh/config
+
+      - name: Resolve environment hosts
+        id: hosts
+        env:
+          TARGET_ENV: ${{ needs.resolve.outputs.env_name }}
+        run: |
+          set -euo pipefail
+          case "${TARGET_ENV}" in
+            dev)
+              public_host="${DEV_PUBLIC_HOST}"
+              api_host="${DEV_API_HOST}"
+              research_host="${DEV_RESEARCH_HOST}"
+              ;;
+            staging)
+              public_host="${STAGING_PUBLIC_HOST}"
+              api_host="${STAGING_API_HOST}"
+              research_host="${STAGING_RESEARCH_HOST}"
+              ;;
+            production)
+              public_host="${PRODUCTION_PUBLIC_HOST}"
+              api_host="${PRODUCTION_API_HOST}"
+              research_host="${PRODUCTION_RESEARCH_HOST}"
+              ;;
+            *)
+              echo "Unsupported environment: ${TARGET_ENV}" >&2
+              exit 1
+              ;;
+          esac
+
+          echo "public_host=${public_host}" >> "${GITHUB_OUTPUT}"
+          echo "api_host=${api_host}" >> "${GITHUB_OUTPUT}"
+          echo "research_host=${research_host}" >> "${GITHUB_OUTPUT}"
+
+      - name: Verify SSH connectivity
+        run: ssh ksu-deploy-vm 'hostname && docker compose version'
+
+      - name: Deploy
+        env:
+          TARGET_ENV: ${{ needs.resolve.outputs.env_name }}
+          DEPLOY_BRANCH: ${{ needs.resolve.outputs.branch }}
+          PUBLIC_HOST: ${{ steps.hosts.outputs.public_host }}
+          API_HOST: ${{ steps.hosts.outputs.api_host }}
+          RESEARCH_HOST: ${{ steps.hosts.outputs.research_host }}
+        run: |
+          set -euo pipefail
+          scripts/deploy.sh vm \
+            --host ksu-deploy-vm \
+            --env "${TARGET_ENV}" \
+            --branch "${DEPLOY_BRANCH}" \
+            --path "${VM_REPO_PATH}" \
+            --project-name "ksu-${TARGET_ENV}" \
+            --public-host "${PUBLIC_HOST}" \
+            --api-host "${API_HOST}" \
+            --research-host "${RESEARCH_HOST}" \
+            --https \
+            --cert-email "${CERT_EMAIL}"
