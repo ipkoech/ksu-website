@@ -380,6 +380,11 @@ if [[ "\${#missing_env[@]}" -gt 0 ]]; then
   exit 1
 fi
 
+compose_files=(-f docker-compose.yml -f docker-compose.vm.yml)
+if [[ -f .deploy/docker-compose.external-data.yml ]]; then
+  compose_files+=(-f .deploy/docker-compose.external-data.yml)
+fi
+
 backup_database() {
   mkdir -p "\${BACKUP_DIR}"
   local stamp
@@ -387,10 +392,8 @@ backup_database() {
   local output="\${BACKUP_DIR}/ksu-\${ENV_NAME}-\${stamp}.sql.gz"
 
   echo "Creating database backup: \${output}"
-  if "\${DOCKER[@]}" compose -p "\${PROJECT_NAME}" ps --status running postgres --format '{{.Service}}' | grep -qx postgres; then
-    "\${DOCKER[@]}" compose -p "\${PROJECT_NAME}" exec -T postgres pg_dump -U ksu -d ksu | gzip -9 > "\${output}"
-  elif "\${DOCKER[@]}" compose ps --status running postgres --format '{{.Service}}' | grep -qx postgres; then
-    "\${DOCKER[@]}" compose exec -T postgres pg_dump -U ksu -d ksu | gzip -9 > "\${output}"
+  if "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps --status running postgres --format '{{.Service}}' | grep -qx postgres; then
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T postgres pg_dump -U ksu -d ksu | gzip -9 > "\${output}"
   else
     echo "warning: postgres container is not running; skipping database backup" >&2
     return 0
@@ -428,9 +431,9 @@ fi
 compose_args+=("\${services[@]}")
 
 echo "Deploying Docker Compose project \${PROJECT_NAME}: \${services[*]}"
-"\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" -f docker-compose.yml -f docker-compose.vm.yml "\${compose_args[@]}"
+"\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" "\${compose_args[@]}"
 echo
-"\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" -f docker-compose.yml -f docker-compose.vm.yml ps "\${services[@]}"
+"\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${services[@]}"
 
 configure_https() {
   if [[ "\${ENABLE_HTTPS}" -ne 1 ]]; then

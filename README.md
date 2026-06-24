@@ -112,6 +112,64 @@ scripts/commit-changes.sh -m "Describe the change" --run-full-checks
 
 Use explicit paths when unrelated local changes exist.
 
+## VM Deployment Pipeline
+
+GitHub Actions can deploy the VM when a push lands on an environment branch with
+`[deploy]` or the matching environment marker in the head commit message:
+
+```text
+dev branch        [deploy dev]
+staging branch    [deploy staging]
+production branch [deploy production]
+```
+
+The workflow can also be run manually from GitHub Actions with `workflow_dispatch`.
+
+Create GitHub environments named `dev`, `staging`, and `production`. Add this
+environment or repository secret:
+
+```text
+VM_SSH_PRIVATE_KEY
+```
+
+Optional environment or repository variables:
+
+```text
+VM_SSH_HOST
+VM_SSH_PORT
+VM_SSH_USER
+VM_REPO_PATH
+CERT_EMAIL
+DEV_PUBLIC_HOST
+DEV_API_HOST
+DEV_RESEARCH_HOST
+STAGING_PUBLIC_HOST
+STAGING_API_HOST
+STAGING_RESEARCH_HOST
+PRODUCTION_PUBLIC_HOST
+PRODUCTION_API_HOST
+PRODUCTION_RESEARCH_HOST
+```
+
+The dev defaults point to the current VM and DNS names:
+
+```text
+VM_SSH_HOST=41.220.243.19
+VM_SSH_PORT=2222
+VM_SSH_USER=ubuntu
+VM_REPO_PATH=/srv/ksu
+CERT_EMAIL=website@kisiiuniversity.ac.ke
+DEV_PUBLIC_HOST=dev.kisiiuniversity.ac.ke
+DEV_API_HOST=api.dev.kisiiuniversity.ac.ke
+DEV_RESEARCH_HOST=dev.research.kisiiuniversity.ac.ke
+```
+
+The deploy job runs `scripts/deploy.sh vm`, takes a pre-deploy database backup
+when the local PostgreSQL container is present, then rebuilds and restarts the
+Compose services. If the VM has `.deploy/docker-compose.external-data.yml`, the
+deploy script includes it automatically so external database, Redis, and upload
+storage wiring is preserved.
+
 ## Repository Hygiene
 
 The repository should not track:
