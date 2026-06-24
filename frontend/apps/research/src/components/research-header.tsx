@@ -352,7 +352,7 @@ const researchNavItems: NavSection[] = [
     ],
   },
   {
-    label: "About & Connect",
+    label: "About",
     href: "/about",
     icon: Mail,
     description: "Research office, team, contacts, inquiries, donations, and multimedia.",
