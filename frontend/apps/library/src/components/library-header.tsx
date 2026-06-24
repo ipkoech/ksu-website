@@ -1,37 +1,124 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, Search, X } from "lucide-react";
 
-const primaryNavItems = [
-  { label: "Catalog", href: "/catalog" },
-  { label: "E-resources", href: "/electronic" },
-  { label: "Services", href: "/services" },
-  { label: "Ask", href: "/ask" },
-  { label: "Repository", href: "/repositories" },
-  { label: "Hours", href: "/hours" },
-  { label: "About", href: "/about" },
-];
+type LibraryNavItem = {
+  label: string;
+  href: string;
+  description?: string;
+};
 
-const secondaryNavItems = [
-  { label: "Downloads", href: "/downloads" },
-  { label: "Staff", href: "/staff" },
-  { label: "Leadership", href: "/leadership" },
-  { label: "News", href: "/news" },
-  { label: "Events", href: "/events" },
-  { label: "Articles", href: "/articles" },
-];
+type LibraryNavGroup = {
+  label: string;
+  href: string;
+  items: LibraryNavItem[];
+};
 
-const libraryNavItems = [...primaryNavItems, ...secondaryNavItems];
+const libraryNavGroups: LibraryNavGroup[] = [
+  {
+    label: "Discovery",
+    href: "/catalog",
+    items: [
+      {
+        label: "Catalog",
+        href: "/catalog",
+        description: "Print, branch, and shelf-held library records.",
+      },
+      {
+        label: "E-resources",
+        href: "/electronic",
+        description: "Databases, e-books, journals, and online platforms.",
+      },
+      {
+        label: "Repository",
+        href: "/repositories",
+        description: "Institutional repository links and digital collections.",
+      },
+      {
+        label: "Downloads",
+        href: "/downloads",
+        description: "Forms, guides, files, and library documents.",
+      },
+    ],
+  },
+  {
+    label: "Services",
+    href: "/services",
+    items: [
+      {
+        label: "Library Services",
+        href: "/services",
+        description: "Borrowing, research support, training, and user services.",
+      },
+      {
+        label: "Ask a Librarian",
+        href: "/ask",
+        description: "Send a question to the library team.",
+      },
+      {
+        label: "Hours",
+        href: "/hours",
+        description: "Opening hours and branch schedules.",
+      },
+    ],
+  },
+  {
+    label: "People & About",
+    href: "/about",
+    items: [
+      {
+        label: "About",
+        href: "/about",
+        description: "Library mandate, branches, and service context.",
+      },
+      {
+        label: "Staff",
+        href: "/staff",
+        description: "Find library staff and subject support contacts.",
+      },
+      {
+        label: "Leadership",
+        href: "/leadership",
+        description: "Library leadership and governance records.",
+      },
+    ],
+  },
+  {
+    label: "Updates",
+    href: "/news",
+    items: [
+      {
+        label: "News",
+        href: "/news",
+        description: "Library notices and service updates.",
+      },
+      {
+        label: "Events",
+        href: "/events",
+        description: "Training, workshops, and library events.",
+      },
+      {
+        label: "Articles",
+        href: "/articles",
+        description: "Learning articles and library guidance.",
+      },
+    ],
+  },
+];
 
 export function LibraryHeader() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const [isMoreOpen, setIsMoreOpen] = useState(false);
-  const moreActive = secondaryNavItems.some((item) => isActive(pathname, item.href));
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIsOpen(false);
+    setOpenGroup(null);
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-50 border-b border-primary/10 bg-white/95 shadow-[0_12px_36px_-32px_rgba(30,64,175,0.55)] backdrop-blur-md">
@@ -60,51 +147,21 @@ export function LibraryHeader() {
             </span>
           </Link>
 
-          <div className="hidden min-w-0 items-center gap-0.5 xl:flex">
-            {primaryNavItems.map((item) => (
-              <HeaderLink
-                key={item.href}
-                href={item.href}
-                label={item.label}
-                active={isActive(pathname, item.href)}
+          <div className="hidden min-w-0 items-center gap-1 xl:flex">
+            {libraryNavGroups.map((group) => (
+              <HeaderGroup
+                key={group.label}
+                group={group}
+                active={isActiveGroup(pathname, group)}
+                open={openGroup === group.label}
+                onToggle={() =>
+                  setOpenGroup((current) =>
+                    current === group.label ? null : group.label,
+                  )
+                }
+                onClose={() => setOpenGroup(null)}
               />
             ))}
-            <div className="relative">
-              <button
-                type="button"
-                className={
-                  moreActive || isMoreOpen
-                    ? "inline-flex min-h-11 items-center gap-1 rounded-full bg-primary/10 px-3 py-2 text-sm font-semibold text-primary"
-                    : "inline-flex min-h-11 items-center gap-1 rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-primary/10 hover:text-primary"
-                }
-                aria-haspopup="menu"
-                aria-expanded={isMoreOpen}
-                onClick={() => setIsMoreOpen((current) => !current)}
-              >
-                More
-                <ChevronDown
-                  aria-hidden
-                  className={`h-4 w-4 transition ${isMoreOpen ? "rotate-180" : ""}`}
-                />
-              </button>
-              {isMoreOpen ? (
-                <div
-                  role="menu"
-                  className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-slate-200 bg-white p-2 shadow-xl"
-                >
-                  {secondaryNavItems.map((item) => (
-                    <HeaderLink
-                      key={item.href}
-                      href={item.href}
-                      label={item.label}
-                      active={isActive(pathname, item.href)}
-                      menu
-                      onClick={() => setIsMoreOpen(false)}
-                    />
-                  ))}
-                </div>
-              ) : null}
-            </div>
           </div>
 
           <Link
@@ -122,7 +179,7 @@ export function LibraryHeader() {
             aria-expanded={isOpen}
             onClick={() => {
               setIsOpen((current) => !current);
-              setIsMoreOpen(false);
+              setOpenGroup(null);
             }}
           >
             {isOpen ? (
@@ -135,16 +192,25 @@ export function LibraryHeader() {
 
         {isOpen ? (
           <div className="max-h-[calc(100dvh-96px)] overflow-y-auto border-t border-primary/10 py-3 xl:hidden">
-            <div className="grid gap-1 sm:grid-cols-2">
-              {libraryNavItems.map((item) => (
-                <HeaderLink
-                  key={item.href}
-                  href={item.href}
-                  label={item.label}
-                  active={isActive(pathname, item.href)}
-                  mobile
-                  onClick={() => setIsOpen(false)}
-                />
+            <div className="grid gap-3 sm:grid-cols-2">
+              {libraryNavGroups.map((group) => (
+                <section key={group.label} className="rounded-lg border border-slate-200 bg-white p-3">
+                  <p className="px-2 text-xs font-semibold uppercase tracking-[0.16em] text-secondary">
+                    {group.label}
+                  </p>
+                  <div className="mt-2 grid gap-1">
+                    {group.items.map((item) => (
+                      <HeaderLink
+                        key={item.href}
+                        href={item.href}
+                        label={item.label}
+                        active={isActive(pathname, item.href)}
+                        mobile
+                        onClick={() => setIsOpen(false)}
+                      />
+                    ))}
+                  </div>
+                </section>
               ))}
             </div>
           </div>
@@ -157,6 +223,73 @@ export function LibraryHeader() {
 function isActive(pathname: string, href: string) {
   const path = href.split("#")[0];
   return path === "/" ? pathname === "/" : pathname.startsWith(path);
+}
+
+function isActiveGroup(pathname: string, group: LibraryNavGroup) {
+  return group.items.some((item) => isActive(pathname, item.href));
+}
+
+function HeaderGroup({
+  group,
+  active,
+  open,
+  onToggle,
+  onClose,
+}: {
+  group: LibraryNavGroup;
+  active: boolean;
+  open: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        className={
+          active || open
+            ? "inline-flex min-h-11 items-center gap-1 rounded-md bg-primary/10 px-3 py-2 text-sm font-semibold text-primary"
+            : "inline-flex min-h-11 items-center gap-1 rounded-md px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-primary/10 hover:text-primary"
+        }
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={onToggle}
+      >
+        {group.label}
+        <ChevronDown
+          aria-hidden
+          className={`h-4 w-4 transition ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open ? (
+        <div
+          role="menu"
+          className="absolute right-0 top-full mt-3 w-[min(26rem,calc(100vw-2rem))] rounded-lg border border-slate-200 bg-white p-2 shadow-xl"
+        >
+          <div className="grid gap-1">
+            {group.items.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                role="menuitem"
+                onClick={onClose}
+                className="block rounded-md px-3 py-3 transition hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+              >
+                <span className="block text-sm font-semibold text-slate-950">
+                  {item.label}
+                </span>
+                {item.description ? (
+                  <span className="mt-1 block text-sm leading-6 text-slate-600">
+                    {item.description}
+                  </span>
+                ) : null}
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function HeaderLink({
@@ -175,7 +308,7 @@ function HeaderLink({
   onClick?: () => void;
 }) {
   const widthClass = mobile || menu ? "w-full" : "";
-  const shapeClass = menu ? "rounded-md" : "rounded-full";
+  const shapeClass = "rounded-md";
 
   return (
     <Link
