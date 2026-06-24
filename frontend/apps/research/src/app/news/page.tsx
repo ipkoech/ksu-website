@@ -262,7 +262,7 @@ function UpdateRow({ record }: { record: ResearchGenericRecord }) {
             "This update is published without a public summary."}
         </p>
       </div>
-      <div className="space-y-3 text-sm">
+      <div className="flex flex-col gap-3 text-sm">
         <ResearchFact label="Author" value={compactText(record.author_name)} />
         <ResearchFact label="Source" value={compactText(record.source)} />
       </div>

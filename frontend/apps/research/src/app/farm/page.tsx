@@ -264,7 +264,7 @@ function ErrorBand({ errors }: { errors: string[] }) {
 
   return (
     <section className="px-4 pt-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-[1680px] space-y-3">
+      <div className="mx-auto flex max-w-[1680px] flex-col gap-3">
         {uniqueErrors.map((error) => (
           <StatusMessage key={error} tone="error">
             {error}

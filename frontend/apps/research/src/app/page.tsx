@@ -185,7 +185,7 @@ export default async function ResearchPage() {
 
       {errors.length > 0 ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="mx-auto max-w-[1680px] space-y-3">
+          <div className="mx-auto flex max-w-[1680px] flex-col gap-3">
             {errors.map((error) => (
               <StatusMessage key={error} tone="error">
                 {error}
@@ -492,14 +492,14 @@ function WorkflowCard({
       href={href}
       className="group flex min-h-[360px] flex-col rounded-lg border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
     >
-      <span className={`inline-flex h-14 w-14 items-center justify-center rounded-full shadow-sm ${toneClass}`}>
+      <span className={`inline-flex h-14 w-14 items-center justify-center rounded-md shadow-sm ${toneClass}`}>
         <Icon aria-hidden className="h-5 w-5" />
       </span>
       <h3 className="mt-5 font-[family-name:var(--font-display)] text-xl font-semibold leading-7 text-slate-950">
         {title}
       </h3>
       <p className="mt-3 text-sm leading-7 text-slate-600">{body}</p>
-      <ul className="mt-5 space-y-3">
+      <ul className="mt-5 flex flex-col gap-3">
         {links.map((item) => (
           <li key={item.href} className="flex items-center gap-2 text-sm font-medium text-slate-700">
             <ArrowRight aria-hidden className="h-3.5 w-3.5 text-primary" />
