@@ -20,6 +20,11 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import {
+  LibraryHeroAsideMotion,
+  LibraryHeroContentMotion,
+  LibraryHeroMotion,
+} from "./library-motion";
 
 type IconName =
   | "book"
@@ -70,11 +75,11 @@ export function LibraryHero({
   children?: ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden border-b border-slate-200 bg-primary px-4 py-10 text-white sm:px-6 sm:py-12 lg:px-8">
+    <LibraryHeroMotion>
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.9)_0%,rgba(2,20,49,0.75)_42%,rgba(16,67,177,0.35)_74%,rgba(193,81,6,0.22)_100%)]" />
       <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(120deg,rgba(255,255,255,0.16)_0_1px,transparent_1px_100%),linear-gradient(30deg,rgba(255,255,255,0.08)_0_1px,transparent_1px_100%)] [background-size:64px_64px]" />
       <div className="relative mx-auto grid max-w-[1320px] gap-8 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-end lg:gap-10">
-        <div className="min-w-0 max-w-4xl">
+        <LibraryHeroContentMotion>
           {breadcrumbs?.length ? (
             <BreadcrumbTrail items={breadcrumbs} />
           ) : null}
@@ -90,14 +95,14 @@ export function LibraryHero({
           {actions ? (
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">{actions}</div>
           ) : null}
-        </div>
+        </LibraryHeroContentMotion>
         {children ? (
-          <div className="min-w-0 rounded-lg border border-white/20 bg-white/10 p-4 shadow-2xl backdrop-blur sm:p-5">
+          <LibraryHeroAsideMotion>
             {children}
-          </div>
+          </LibraryHeroAsideMotion>
         ) : null}
       </div>
-    </section>
+    </LibraryHeroMotion>
   );
 }
 

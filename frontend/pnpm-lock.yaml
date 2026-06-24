@@ -126,6 +126,9 @@ importers:
       '@ksu/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      framer-motion:
+        specifier: ^12.38.0
+        version: 12.38.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       lucide-react:
         specifier: ^0.513.0
         version: 0.513.0(react@19.2.6)
@@ -178,6 +181,9 @@ importers:
       '@ksu/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      framer-motion:
+        specifier: ^12.38.0
+        version: 12.38.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       lucide-react:
         specifier: ^0.513.0
         version: 0.513.0(react@19.2.6)
