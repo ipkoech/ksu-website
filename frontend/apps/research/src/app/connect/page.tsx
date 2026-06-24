@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { HeartHandshake, Mail, Newspaper, Users } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchSidePanel } from "../../components/research-detail";
 import {
   Badge,
   IconCard,
@@ -169,9 +170,8 @@ export default async function ConnectPage() {
       >
         <div id="mentorship" className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <DirectoryPanel title="Available mentorship programmes" records={mentorship.data} error={mentorship.error} />
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-950">Sign up</h2>
-            <p className="mt-3 text-sm leading-7 text-slate-600">
+          <ResearchSidePanel title="Sign up" eyebrow="Mentorship route">
+            <p className="text-sm leading-7 text-slate-600">
               Choose the route that matches your role. Programme coordinators can review the request and guide you to the right mentorship pathway.
             </p>
             {mentorshipContact ? (
@@ -196,7 +196,7 @@ export default async function ConnectPage() {
                 </StatusMessage>
               </div>
             )}
-          </aside>
+          </ResearchSidePanel>
         </div>
       </ResearchSection>
       <ResearchSection
@@ -243,18 +243,17 @@ export default async function ConnectPage() {
       >
         <div id="donate" className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <DirectoryPanel title="Donation stories" records={donationStories.data} error={donationStories.error} />
-          <aside className="rounded-lg border border-secondary/30 bg-secondary/10 p-5 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-950">Donate to research</h2>
-            <p className="mt-3 text-sm leading-7 text-slate-700">
+          <ResearchSidePanel title="Donate to research" eyebrow="Research giving">
+            <p className="text-sm leading-7 text-slate-600">
               Direct donor interest to scholarships, research facilities, innovation funds, community impact work, and endowed programmes.
             </p>
             <a
               href="/donate"
-              className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-secondary px-4 py-2 text-sm font-semibold text-secondary-foreground"
+              className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
             >
               Open donation page
             </a>
-          </aside>
+          </ResearchSidePanel>
         </div>
       </ResearchSection>
     </main>

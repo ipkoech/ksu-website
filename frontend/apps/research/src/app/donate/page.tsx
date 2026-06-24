@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
 import { ResearchClusterHero } from "../../components/research-cluster";
+import { ResearchSidePanel } from "../../components/research-detail";
 import { Badge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import {
   compactText,
@@ -171,7 +172,7 @@ export default async function DonatePage() {
         tone="white"
       >
         <div id="make-a-gift" className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_520px]">
-          <div className="min-w-0 space-y-5">
+          <div className="flex min-w-0 flex-col gap-5">
             <ImpactFeature impact={featuredImpact} />
             <StoryFeature story={featuredStory} />
           </div>
@@ -230,22 +231,19 @@ export default async function DonatePage() {
               </article>
             ))}
           </div>
-          <aside className="rounded-lg border border-secondary/30 bg-secondary/10 p-6 shadow-sm">
+          <ResearchSidePanel title="Discuss a major gift" eyebrow="Major gifts">
             <Landmark aria-hidden className="h-10 w-10 text-secondary" />
-            <h2 className="mt-5 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
-              Discuss a major gift
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-slate-700">
+            <p className="mt-5 text-sm leading-7 text-slate-600">
               For named funds, institutional gifts, equipment support, corporate giving,
               or planned giving, contact the research office before submitting payment.
             </p>
             <a
               href={donationSettings.contactHref}
-              className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-secondary px-5 py-3 text-sm font-semibold text-secondary-foreground"
+              className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
             >
               Contact giving office
             </a>
-          </aside>
+          </ResearchSidePanel>
         </div>
       </ResearchSection>
     </main>
@@ -410,13 +408,13 @@ function PriorityCard({ priority }: { priority: Priority }) {
       <div className="mt-5 flex flex-wrap gap-3">
         <a
           href="#make-a-gift"
-          className="inline-flex min-h-10 items-center rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white"
+          className="inline-flex min-h-10 items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90"
         >
           Support this area
         </a>
         <Link
           href={priority.href}
-          className="inline-flex min-h-10 items-center rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary"
+          className="inline-flex min-h-10 items-center rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
         >
           View details
         </Link>
@@ -581,7 +579,7 @@ function DonationForm({
         </label>
       </div>
 
-      <button className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary/90">
+      <button className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary/90">
         Continue to giving channel
         <ArrowRight aria-hidden className="h-4 w-4" />
       </button>
