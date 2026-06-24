@@ -2,19 +2,14 @@ import { notFound } from "next/navigation";
 import type { ResearchGenericRecord, ResearchPublication } from "@ksu/api-client";
 import {
   ResearchDetailHero,
-  ResearchFact,
+  ResearchDetailSidebar,
   ResearchRelationshipCard,
   ResearchTextPanel,
 } from "../../../components/research-detail";
-import {
-  Badge,
-  ResearchSection,
-  StatusMessage,
-} from "../../../components/research-ui";
+import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import {
   compactText,
   formatDate,
-  formatLabel,
   getPublicationBySlug,
 } from "../../../lib/research-public-data";
 
@@ -86,7 +81,7 @@ export default async function PublicationDetailPage({
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-5">
+          <div className="flex min-w-0 flex-col gap-5">
             <ResearchTextPanel
               title="About this publication"
               fields={[
@@ -106,32 +101,23 @@ export default async function PublicationDetailPage({
               ]}
             />
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap gap-2">
-              <Badge>{formatLabel(publication.publication_type ?? "publication")}</Badge>
-              {publication.access_type ? <Badge>{formatLabel(publication.access_type)}</Badge> : null}
-              {publication.is_open_access ? <Badge>Open access</Badge> : null}
-            </div>
-            <dl className="mt-5 grid gap-3 text-sm">
-              <ResearchFact label="Year" value={compactText(publication.year)} />
-              <ResearchFact label="Published" value={formatDate(publication.publication_date)} />
-              <ResearchFact label="DOI" value={compactText(publication.doi)} />
-              <ResearchFact label="ISSN / ISBN" value={[publication.issn, publication.isbn].map(compactText).filter(Boolean).join(" / ")} />
-            </dl>
-            {accessLinks.length > 0 ? (
-              <div className="mt-5 grid gap-2">
-                {accessLinks.map(([label, href]) => (
-                  <a
-                    key={label}
-                    href={href ?? "#"}
-                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90"
-                  >
-                    {label}
-                  </a>
-                ))}
-              </div>
-            ) : null}
-          </aside>
+          <ResearchDetailSidebar
+            labels={[
+              publication.publication_type ?? "publication",
+              publication.access_type,
+              publication.is_open_access ? "open access" : null,
+            ]}
+            facts={[
+              { label: "Year", value: publication.year },
+              { label: "Published", value: formatDate(publication.publication_date) },
+              { label: "DOI", value: publication.doi },
+              { label: "ISSN / ISBN", value: [publication.issn, publication.isbn].map(compactText).filter(Boolean).join(" / ") },
+            ]}
+            actions={accessLinks.map(([label, href]) => ({
+              label: compactText(label),
+              href: href ?? "#",
+            }))}
+          />
         </div>
       </ResearchSection>
 

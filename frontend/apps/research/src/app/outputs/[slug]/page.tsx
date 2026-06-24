@@ -2,19 +2,14 @@ import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import {
   ResearchDetailHero,
-  ResearchFact,
+  ResearchDetailSidebar,
   ResearchRelationshipCard,
   ResearchTextPanel,
 } from "../../../components/research-detail";
-import {
-  Badge,
-  ResearchSection,
-  StatusMessage,
-} from "../../../components/research-ui";
+import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import {
   compactText,
   formatDate,
-  formatLabel,
   getOutputBySlug,
 } from "../../../lib/research-public-data";
 
@@ -83,7 +78,7 @@ export default async function OutputDetailPage({
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-5">
+          <div className="flex min-w-0 flex-col gap-5">
             <ResearchTextPanel
               title="About this output"
               fields={[
@@ -103,32 +98,19 @@ export default async function OutputDetailPage({
               ]}
             />
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap gap-2">
-              <Badge>{formatLabel(output.output_type ?? "output")}</Badge>
-              {output.access_type ? <Badge>{formatLabel(output.access_type)}</Badge> : null}
-              {output.status ? <Badge>{formatLabel(output.status)}</Badge> : null}
-            </div>
-            <dl className="mt-5 grid gap-3 text-sm">
-              <ResearchFact label="Released" value={formatDate(output.release_date)} />
-              <ResearchFact label="Version" value={compactText(output.version)} />
-              <ResearchFact label="DOI" value={compactText(output.doi)} />
-              <ResearchFact label="Repository" value={compactText(output.repository_url)} />
-            </dl>
-            {accessLinks.length > 0 ? (
-              <div className="mt-5 grid gap-2">
-                {accessLinks.map(([label, href]) => (
-                  <a
-                    key={label}
-                    href={href ?? "#"}
-                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90"
-                  >
-                    {label}
-                  </a>
-                ))}
-              </div>
-            ) : null}
-          </aside>
+          <ResearchDetailSidebar
+            labels={[output.output_type ?? "output", output.access_type, output.status]}
+            facts={[
+              { label: "Released", value: formatDate(output.release_date) },
+              { label: "Version", value: output.version },
+              { label: "DOI", value: output.doi },
+              { label: "Repository", value: output.repository_url },
+            ]}
+            actions={accessLinks.map(([label, href]) => ({
+              label: compactText(label),
+              href: href ?? "#",
+            }))}
+          />
         </div>
       </ResearchSection>
 

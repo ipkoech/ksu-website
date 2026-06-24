@@ -3,7 +3,7 @@ import Image from "next/image";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import {
   ResearchDetailHero,
-  ResearchFact,
+  ResearchDetailSidebar,
   ResearchRecordPanel,
   ResearchRelationshipCard,
   ResearchTextPanel,
@@ -90,7 +90,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-5">
+          <div className="flex min-w-0 flex-col gap-5">
             {imageUrl ? (
               <figure className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
                 <Image
@@ -131,30 +131,20 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
             ) : null}
           </div>
 
-          <aside className="h-fit rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap gap-2">
-              <Badge>{formatLabel(record.article_type ?? record.news_type ?? "update")}</Badge>
-              {record.category ? <Badge>{formatLabel(record.category)}</Badge> : null}
-              {record.status ? <Badge>{formatLabel(record.status)}</Badge> : null}
-            </div>
-            <dl className="mt-5 grid gap-3 text-sm">
-              <ResearchFact label="Published" value={formatDate(record.published_at)} />
-              <ResearchFact label="Author" value={compactText(record.author_name)} />
-              <ResearchFact label="Source" value={compactText(record.source)} />
-              <ResearchFact label="Reading time" value={record.reading_time_minutes ? `${record.reading_time_minutes} minutes` : ""} />
-              <ResearchFact label="Views" value={compactText(record.view_count)} />
-            </dl>
-            {compactText(record.external_url) ? (
-              <a href={record.external_url} className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-primary px-4 text-sm font-semibold text-white">
-                Open source link
-              </a>
-            ) : null}
-            {compactText(record.video_url) ? (
-              <a href={record.video_url} className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-full border border-primary/25 px-4 text-sm font-semibold text-primary">
-                Watch media
-              </a>
-            ) : null}
-          </aside>
+          <ResearchDetailSidebar
+            labels={[record.article_type ?? record.news_type ?? "update", record.category, record.status]}
+            facts={[
+              { label: "Published", value: formatDate(record.published_at) },
+              { label: "Author", value: record.author_name },
+              { label: "Source", value: record.source },
+              { label: "Reading time", value: record.reading_time_minutes ? `${record.reading_time_minutes} minutes` : "" },
+              { label: "Views", value: record.view_count },
+            ]}
+            actions={[
+              ...(compactText(record.external_url) ? [{ label: "Open source link", href: compactText(record.external_url) }] : []),
+              ...(compactText(record.video_url) ? [{ label: "Watch media", href: compactText(record.video_url), variant: "secondary" as const }] : []),
+            ]}
+          />
         </div>
       </ResearchSection>
 
