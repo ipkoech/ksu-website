@@ -57,7 +57,7 @@ export default async function SustainabilityDetailPage({
           ...(compactText(initiative.website) ? [{ label: "Open website", href: compactText(initiative.website) }] : []),
           ...(compactText(initiative.contact_email) ? [{ label: "Contact initiative", href: `mailto:${compactText(initiative.contact_email)}`, variant: "secondary" as const }] : []),
         ]}
-        imageSrc="/images/research/research-workflows.png"
+        imageSrc="/images/research/sustainability-hero-imagegen.webp"
         imageAlt="Sustainability initiative activities, partnerships, and public impact"
       />
 

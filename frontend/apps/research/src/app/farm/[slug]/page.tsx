@@ -57,7 +57,7 @@ export default async function FarmDetailPage({
           ...(center?.slug ? [{ label: "View center", href: `/centers/${center.slug}` }] : []),
           ...(compactText(farm.email) ? [{ label: "Contact farm", href: `mailto:${compactText(farm.email)}`, variant: "secondary" as const }] : []),
         ]}
-        imageSrc="/images/research/research-demo-imagegen.webp"
+        imageSrc="/images/research/university-farm-hero-imagegen.webp"
         imageAlt="University farm research, demonstration, and extension work"
       />
 
