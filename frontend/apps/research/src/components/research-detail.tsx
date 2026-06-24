@@ -208,24 +208,7 @@ export function ResearchRecordDetail({
             ))}
             {children}
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">Details</h2>
-            <dl className="mt-4 grid gap-3 text-sm">
-              {facts.map((fact) => (
-                <div key={fact.label} className="rounded-md bg-slate-50 p-3">
-                  <dt className="text-xs font-semibold uppercase text-slate-500">{fact.label}</dt>
-                  <dd className="mt-1 font-semibold text-slate-950">{fact.value}</dd>
-                </div>
-              ))}
-            </dl>
-            {labels.length > 0 ? (
-              <div className="mt-5 flex flex-wrap gap-2">
-                {Array.from(new Set(labels)).map((label) => (
-                  <Badge key={label}>{label}</Badge>
-                ))}
-              </div>
-            ) : null}
-          </aside>
+          <ResearchDetailSidebar facts={facts} labels={labels} />
         </div>
       </ResearchSection>
     </main>
