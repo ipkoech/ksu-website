@@ -17,13 +17,13 @@ type FactField = {
   format?: "date" | "label";
 };
 
-type DetailAction = {
+export type DetailAction = {
   label: string;
   href: string;
   variant?: "primary" | "secondary";
 };
 
-type DetailFact = {
+export type DetailFact = {
   label: string;
   value?: string | number | null;
 };
@@ -306,6 +306,69 @@ export function ResearchFact({ label, value }: { label: string; value: string })
         {value || "Not published"}
       </dd>
     </div>
+  );
+}
+
+export function ResearchActionLink({ action }: { action: DetailAction }) {
+  return (
+    <a
+      href={action.href}
+      className={
+        action.variant === "secondary"
+          ? "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-4 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          : "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+      }
+    >
+      {action.label}
+      <ArrowRight aria-hidden className="h-4 w-4" />
+    </a>
+  );
+}
+
+export function ResearchDetailSidebar({
+  labels = [],
+  facts = [],
+  actions = [],
+}: {
+  labels?: Array<string | null | undefined>;
+  facts?: DetailFact[];
+  actions?: DetailAction[];
+}) {
+  const cleanLabels = Array.from(
+    new Set(labels.map((label) => formatLabel(compactText(label))).filter(Boolean)),
+  );
+  const cleanFacts = facts
+    .map((fact) => ({ label: fact.label, value: compactText(fact.value) }))
+    .filter((fact) => fact.value);
+
+  if (cleanLabels.length === 0 && cleanFacts.length === 0 && actions.length === 0) {
+    return null;
+  }
+
+  return (
+    <aside className="h-fit min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      {cleanLabels.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {cleanLabels.map((label) => (
+            <Badge key={label}>{label}</Badge>
+          ))}
+        </div>
+      ) : null}
+      {cleanFacts.length > 0 ? (
+        <dl className="mt-5 grid gap-3 text-sm">
+          {cleanFacts.map((fact) => (
+            <ResearchFact key={fact.label} label={fact.label} value={fact.value} />
+          ))}
+        </dl>
+      ) : null}
+      {actions.length > 0 ? (
+        <div className="mt-5 flex flex-col gap-3">
+          {actions.map((action) => (
+            <ResearchActionLink key={`${action.label}-${action.href}`} action={action} />
+          ))}
+        </div>
+      ) : null}
+    </aside>
   );
 }
 

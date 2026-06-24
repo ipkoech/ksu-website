@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { ResearchDetailHero, ResearchFact, ResearchRecordGrid, ResearchTextPanel } from "../../../components/research-detail";
-import { Badge, ResearchSection, StatusMessage } from "../../../components/research-ui";
-import { compactText, formatLabel, getServiceBySlug } from "../../../lib/research-public-data";
+import { ResearchDetailHero, ResearchDetailSidebar, ResearchRecordGrid, ResearchTextPanel } from "../../../components/research-detail";
+import { ResearchSection, StatusMessage } from "../../../components/research-ui";
+import { compactText, getServiceBySlug } from "../../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
 
@@ -18,8 +18,18 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
       {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}
       <ResearchSection eyebrow="Service Detail" title="Scope, process, and access" body="Service detail pages describe how to request the service, who is eligible, what is delivered, timing, fees, and contact." tone="white">
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-5"><ResearchTextPanel title="Overview" fields={[["Summary", service.summary], ["Description", service.description], ["Scope", service.scope]]} /><ResearchTextPanel title="Request process" fields={[["How to access", service.how_to_access], ["Process", service.process], ["Eligibility", service.eligibility]]} /><ResearchTextPanel title="Deliverables" fields={[["Deliverables", service.deliverables], ["Fee structure", service.fee_structure]]} /></div>
-          <aside className="h-fit rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><div className="flex flex-wrap gap-2"><Badge>{formatLabel(service.service_type ?? "service")}</Badge>{service.category ? <Badge>{formatLabel(service.category)}</Badge> : null}{service.is_free ? <Badge>Free</Badge> : null}</div><dl className="mt-5 grid gap-3 text-sm"><ResearchFact label="Turnaround" value={compactText(service.turnaround_time)} /><ResearchFact label="Cost" value={service.is_free ? "Free" : compactText(service.fee_structure)} /><ResearchFact label="Contact name" value={compactText(service.contact_name)} /><ResearchFact label="Email" value={compactText(service.contact_email)} /><ResearchFact label="Phone" value={compactText(service.contact_phone)} /></dl>{compactText(service.request_url) ? <a href={service.request_url} className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-primary px-4 text-sm font-semibold text-white">Request service</a> : null}</aside>
+          <div className="flex min-w-0 flex-col gap-5"><ResearchTextPanel title="Overview" fields={[["Summary", service.summary], ["Description", service.description], ["Scope", service.scope]]} /><ResearchTextPanel title="Request process" fields={[["How to access", service.how_to_access], ["Process", service.process], ["Eligibility", service.eligibility]]} /><ResearchTextPanel title="Deliverables" fields={[["Deliverables", service.deliverables], ["Fee structure", service.fee_structure]]} /></div>
+          <ResearchDetailSidebar
+            labels={[service.service_type ?? "service", service.category, service.is_free ? "free" : null]}
+            facts={[
+              { label: "Turnaround", value: service.turnaround_time },
+              { label: "Cost", value: service.is_free ? "Free" : compactText(service.fee_structure) },
+              { label: "Contact name", value: service.contact_name },
+              { label: "Email", value: service.contact_email },
+              { label: "Phone", value: service.contact_phone },
+            ]}
+            actions={compactText(service.request_url) ? [{ label: "Request service", href: compactText(service.request_url) }] : []}
+          />
         </div>
       </ResearchSection>
       <ResearchSection eyebrow="Resources" title="Service attachments" body="Supporting service files appear when published."><ResearchRecordGrid records={attachments} /></ResearchSection>
