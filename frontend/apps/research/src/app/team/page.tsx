@@ -117,7 +117,7 @@ export default async function TeamPage({
 
       {errors.length > 0 ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="mx-auto max-w-[1680px] space-y-3">
+          <div className="mx-auto flex max-w-[1680px] flex-col gap-3">
             {errors.map((error) => (
               <StatusMessage key={error} tone="error">
                 {error}
@@ -201,7 +201,7 @@ export default async function TeamPage({
             <p className="mt-3 text-sm leading-7 text-white/75">
               Visitors can use office contacts for service questions and staff contacts for person-specific research support where those details are published.
             </p>
-            <div className="mt-5 space-y-3">
+            <div className="mt-5 flex flex-col gap-3">
               {contactableStaff.slice(0, 5).map((person) => (
                 <div key={person.id} className="rounded-lg border border-white/10 bg-white/5 p-3">
                   <p className="text-sm font-semibold text-white">{personName(person)}</p>
@@ -263,12 +263,12 @@ function TeamFilters({
           </select>
         </label>
         <div className="flex items-end gap-2">
-          <button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
+          <button className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
             Search
           </button>
           <Link
             href="/team"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary"
+            className="inline-flex h-11 items-center justify-center rounded-md border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
           >
             Reset
           </Link>
@@ -322,7 +322,7 @@ function PersonCard({
   return (
     <InstitutionalPanel className={prominent ? "border-primary/25" : ""}>
       <div className="flex items-start gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-semibold text-white">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-primary text-lg font-semibold text-white">
           {initials(personName(person))}
         </div>
         <div className="min-w-0 flex-1">
@@ -347,7 +347,7 @@ function PersonCard({
         </p>
       ) : null}
 
-      <div className="mt-5 space-y-2 border-t border-slate-200 pt-4 text-sm text-slate-600">
+      <div className="mt-5 flex flex-col gap-2 border-t border-slate-200 pt-4 text-sm text-slate-600">
         {office ? (
           <p className="flex items-start gap-2">
             <Building2 aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
@@ -392,7 +392,7 @@ function OfficeContact({
           {compactText(office.about || office.services_summary || office.mandate)}
         </p>
       ) : null}
-      <div className="mt-5 space-y-2 text-sm text-slate-600">
+      <div className="mt-5 flex flex-col gap-2 text-sm text-slate-600">
         {compactText(office.email) ? (
           <p className="flex items-start gap-2">
             <Mail aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-primary" />

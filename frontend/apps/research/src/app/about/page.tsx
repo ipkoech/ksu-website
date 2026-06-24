@@ -106,7 +106,7 @@ export default async function AboutPage() {
 
       {errors.length > 0 ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="mx-auto max-w-[1680px] space-y-3">
+          <div className="mx-auto flex max-w-[1680px] flex-col gap-3">
             {errors.map((error) => (
               <StatusMessage key={error} tone="error">
                 {error}
@@ -160,7 +160,7 @@ export default async function AboutPage() {
                 {compactText(leadOffice?.leadership_message) ||
                   "The REIRM office coordinates research support, extension, innovation and resource mobilization across the university."}
               </blockquote>
-              <div className="mt-6 space-y-3 text-sm leading-6 text-white/75">
+              <div className="mt-6 flex flex-col gap-3 text-sm leading-6 text-white/75">
                 {contactRows(leadOffice).map((item) => {
                   const Icon = item.icon;
 
@@ -204,7 +204,7 @@ export default async function AboutPage() {
         tone="white"
       >
         <div id="governance" className="grid gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4">
             {boards.data.length > 0 ? (
               boards.data.map((board) => (
                 <InstitutionalPanel key={board.id}>
@@ -241,7 +241,7 @@ export default async function AboutPage() {
               </div>
               <Link
                 href="/team"
-                className="hidden rounded-full border border-primary/20 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary sm:inline-flex"
+                className="hidden rounded-md border border-primary/20 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5 sm:inline-flex"
               >
                 View team
               </Link>
@@ -278,7 +278,7 @@ function OfficeCard({ office }: { office: ResearchGenericRecord }) {
         {recordSummary(office) ||
           "This office has been published and is awaiting a public summary."}
       </p>
-      <div className="mt-5 space-y-2 text-sm text-slate-600">
+      <div className="mt-5 flex flex-col gap-2 text-sm text-slate-600">
         {contactRows(office).map((item) => {
           const Icon = item.icon;
 

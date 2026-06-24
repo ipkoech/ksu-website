@@ -133,7 +133,7 @@ export default async function ExpertisePage({
 
       {errors.length > 0 ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="mx-auto max-w-[1680px] space-y-3">
+          <div className="mx-auto flex max-w-[1680px] flex-col gap-3">
             {errors.map((error) => (
               <StatusMessage key={error} tone="error">
                 {error}
@@ -187,7 +187,7 @@ export default async function ExpertisePage({
                   <Link
                     key={tag.id}
                     href={`/expertise?q=${encodeURIComponent(recordTitle(tag))}`}
-                    className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white transition hover:bg-white/20"
+                    className="rounded-md border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white transition hover:bg-white/20"
                   >
                     {recordTitle(tag)}
                   </Link>
@@ -273,12 +273,12 @@ function ExpertiseFilters({
         <RecordSelect name="area" label="Focus area" value={params.area} records={focusAreas} />
         <RecordSelect name="theme" label="Theme" value={params.theme} records={themes} />
         <div className="flex items-end gap-2">
-          <button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
+          <button className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
             Search
           </button>
           <Link
             href="/expertise"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary"
+            className="inline-flex h-11 items-center justify-center rounded-md border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
           >
             Reset
           </Link>
@@ -351,7 +351,7 @@ function TaxonomyPanel({
     <section id={id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <SectionHeader label="Directory" title={title} count={records.length} />
       {records.length > 0 ? (
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 flex flex-col gap-3">
           {records.map((record) => (
             <article key={record.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
               <div className="flex flex-wrap gap-2">
@@ -395,7 +395,7 @@ function RelationshipPanel({
         <SectionHeader label="Related" title={title} count={records.length} />
         <Link
           href={href}
-          className="rounded-full border border-primary/20 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary"
+          className="rounded-md border border-primary/20 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
         >
           View all
         </Link>
