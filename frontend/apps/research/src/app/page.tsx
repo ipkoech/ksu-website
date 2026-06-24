@@ -4,7 +4,8 @@ import type { ReactNode } from "react";
 import { ArrowRight, FileText, Handshake, Quote, Search, Send, Sprout } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
-import { ResearchClusterHero } from "../components/research-cluster";
+import { ResearchPathwayNav } from "../components/research-cluster";
+import { ResearchImmersiveHero } from "../components/research-immersive-hero";
 import { Badge, FilledBadge, StatusMessage } from "../components/research-ui";
 import {
   compactText,
@@ -131,26 +132,56 @@ export default async function ResearchPage() {
     errors,
   } = await getResearchOverviewData();
   const topStats = stats?.stats?.slice(0, 4) ?? [];
+  const heroStats = topStats.map((item) => ({
+    label: item.label,
+    value: `${item.value}${item.suffix ?? ""}`,
+  }));
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchClusterHero
-        eyebrow="Kisii University Research"
-        title="Research that connects discovery, innovation, and public service."
-        body="Explore the work of the Directorate of Research, Extension, Innovation and Resource Mobilization: projects, publications, partnerships, grants, outputs, community impact, and the evidence behind Kisii University scholarship."
+      <ResearchImmersiveHero
+        size="landing"
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "Research" },
         ]}
-        imageSrc="/images/research/research-hero-imagegen.png"
-        imageAlt="University researchers collaborating across laboratory, data, and field research"
-        links={homeLinks}
-        primaryAction={{ label: "Explore research", href: "/projects" }}
-        stats={topStats.map((item) => ({
-          label: item.label,
-          value: `${item.value}${item.suffix ?? ""}`,
-        }))}
+        slides={[
+          {
+            id: "research-discovery",
+            eyebrow: "Kisii University Research",
+            title: "Research that connects discovery, innovation, and public service.",
+            body: "Explore the work of the Directorate of Research, Extension, Innovation and Resource Mobilization: projects, publications, partnerships, grants, outputs, community impact, and the evidence behind Kisii University scholarship.",
+            imageSrc: "/images/research/research-hero-imagegen.png",
+            imageAlt: "University researchers collaborating across laboratory, data, and field research",
+            primaryAction: { label: "Explore research", href: "/projects" },
+            secondaryAction: { label: "Partner with us", href: "/partners" },
+            stats: heroStats,
+          },
+          {
+            id: "research-workflows",
+            eyebrow: "Research Workflows",
+            title: "From ideas to funded projects, publications, and public impact.",
+            body: "Follow the university research journey through discovery, support, ethics, funding, outputs, innovation, community extension, and implementation evidence.",
+            imageSrc: "/images/research/research-workflows.png",
+            imageAlt: "Research workflow connecting teams, data, facilities, and community work",
+            primaryAction: { label: "View workflows", href: "/projects" },
+            secondaryAction: { label: "Find support", href: "/services" },
+            stats: heroStats,
+          },
+          {
+            id: "research-partnerships",
+            eyebrow: "Innovation & Partnerships",
+            title: "Work with Kisii University on ideas that need evidence and delivery.",
+            body: "Connect with researchers, centers, facilities, consultancies, endowments, funders, and partner records that show how collaboration translates into outputs.",
+            imageSrc: "/images/research/innovation-partnerships.png",
+            imageAlt: "Research partnership and innovation collaboration in a university setting",
+            primaryAction: { label: "Open partnerships", href: "/partners" },
+            secondaryAction: { label: "Contact REIRM", href: "/connect" },
+            stats: heroStats,
+          },
+        ]}
       />
+      <ResearchPathwayNav eyebrow="Kisii University Research" links={homeLinks} />
 
       {errors.length > 0 ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
