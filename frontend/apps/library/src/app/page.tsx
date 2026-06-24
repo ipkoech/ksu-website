@@ -1,5 +1,6 @@
 import { Children } from "react";
 import {
+  CompactRecord,
   IconCard,
   LibraryHero,
   LibrarySection,
@@ -187,17 +188,13 @@ export default async function LibraryPage() {
         >
           <div className="grid gap-5 lg:grid-cols-3">
             {missionItems.map((item) => (
-              <article
+              <CompactRecord
                 key={item.label}
-                className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-                  {item.label}
-                </p>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  {compactText(item.value)}
-                </p>
-              </article>
+                icon="library"
+                eyebrow={item.label}
+                title={`Library ${item.label.toLowerCase()}`}
+                body={compactText(item.value)}
+              />
             ))}
           </div>
         </LibrarySection>
@@ -213,26 +210,17 @@ export default async function LibraryPage() {
         ) : (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {branches.data.slice(0, 6).map((branch) => (
-              <article
+              <CompactRecord
                 key={branch.id}
-                className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-                  {formatLabel(branch.library_type ?? "library")}
-                </p>
-                <h3 className="mt-3 text-xl font-semibold text-slate-950">
-                  {branch.name}
-                </h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  {compactText(branch.description) ||
-                    "Branch information is being updated by the library team."}
-                </p>
-                <dl className="mt-5 grid gap-2 text-sm text-slate-600">
-                  <Meta label="Location" value={branch.address} />
-                  <Meta label="Phone" value={branch.phone} />
-                  <Meta label="Email" value={branch.email} />
-                </dl>
-              </article>
+                icon="building"
+                eyebrow={formatLabel(branch.library_type ?? "library")}
+                title={branch.name ?? "Library branch"}
+                body={
+                  compactText(branch.description) ||
+                  "Branch information is being updated by the library team."
+                }
+                meta={[branch.address, branch.phone, branch.email]}
+              />
             ))}
           </div>
         )}
