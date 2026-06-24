@@ -11,6 +11,7 @@ const withPath = (baseUrl: string, path: string) =>
   `${baseUrl.replace(/\/$/, "")}${path}`;
 
 const nextConfig: NextConfig = {
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   outputFileTracingRoot: path.join(__dirname, "../.."),
   transpilePackages: ["@ksu/ui", "@ksu/api-client"],
   async redirects() {

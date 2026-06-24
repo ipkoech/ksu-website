@@ -4,6 +4,7 @@ const basePath = process.env.NEXT_BASE_PATH || "";
 
 const nextConfig: NextConfig = {
   ...(basePath ? { basePath } : {}),
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   transpilePackages: ["@ksu/ui", "@ksu/api-client"],
   images: {
     remotePatterns: [
