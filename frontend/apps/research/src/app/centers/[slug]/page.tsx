@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
   ResearchDetailHero,
-  ResearchFact,
+  ResearchDetailSidebar,
   ResearchRecordPanel,
   ResearchTextPanel,
 } from "../../../components/research-detail";
@@ -89,7 +89,7 @@ export default async function CenterDetailPage({
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-5">
+          <div className="flex min-w-0 flex-col gap-5">
             <ResearchTextPanel
               title="Profile"
               fields={[
@@ -107,18 +107,20 @@ export default async function CenterDetailPage({
               ]}
             />
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap gap-2">
-              <Badge>{formatLabel(center.center_type ?? "research center")}</Badge>
-              {center.is_featured ? <Badge>Featured</Badge> : null}
-            </div>
-            <dl className="mt-5 grid gap-3 text-sm">
-              <ResearchFact label="Location" value={compactText(center.location)} />
-              <ResearchFact label="Email" value={compactText(center.email)} />
-              <ResearchFact label="Phone" value={compactText(center.phone)} />
-              <ResearchFact label="Website" value={compactText(center.website)} />
-            </dl>
-          </aside>
+          <ResearchDetailSidebar
+            labels={[center.center_type ?? "research center", center.is_featured ? "Featured" : null]}
+            facts={[
+              { label: "Location", value: compactText(center.location) },
+              { label: "Email", value: compactText(center.email) },
+              { label: "Phone", value: compactText(center.phone) },
+              { label: "Website", value: compactText(center.website) },
+            ]}
+            actions={
+              compactText(center.website)
+                ? [{ label: "Open center website", href: compactText(center.website) }]
+                : []
+            }
+          />
         </div>
       </ResearchSection>
 

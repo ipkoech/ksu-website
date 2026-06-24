@@ -2,14 +2,11 @@ import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import {
   ResearchDetailHero,
+  ResearchDetailSidebar,
   ResearchFact,
   ResearchTextPanel,
 } from "../../../components/research-detail";
-import {
-  Badge,
-  ResearchSection,
-  StatusMessage,
-} from "../../../components/research-ui";
+import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import {
   compactText,
   formatDate,
@@ -85,7 +82,7 @@ export default async function FundingDetailPage({
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-5">
+          <div className="flex min-w-0 flex-col gap-5">
             <ResearchTextPanel
               title="About this opportunity"
               fields={[
@@ -104,28 +101,21 @@ export default async function FundingDetailPage({
             />
             {!isExternal ? <WorkflowDates grant={grant} /> : null}
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap gap-2">
-              <Badge>{formatLabel(grant.grant_type ?? "internal")}</Badge>
-              <Badge>{formatLabel(grant.category ?? "research")}</Badge>
-              {grant.status ? <Badge>{formatLabel(grant.status)}</Badge> : null}
-            </div>
-            <dl className="mt-5 grid gap-3 text-sm">
-              <ResearchFact label="Deadline" value={formatDate(grant.deadline)} />
-              <ResearchFact label="Funder" value={compactText(grant.funder_name)} />
-              <ResearchFact label="Award range" value={formatAwardRange(grant)} />
-              <ResearchFact label="Total budget" value={formatMoney(grant.total_budget, grant.currency)} />
-              <ResearchFact label="Number of awards" value={compactText(grant.number_of_awards)} />
-            </dl>
-            {actionUrl ? (
-              <a
-                href={actionUrl}
-                className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90"
-              >
-                {isExternal ? "Open funder link" : "Apply or submit"}
-              </a>
-            ) : null}
-          </aside>
+          <ResearchDetailSidebar
+            labels={[grant.grant_type ?? "internal", grant.category ?? "research", grant.status]}
+            facts={[
+              { label: "Deadline", value: formatDate(grant.deadline) },
+              { label: "Funder", value: compactText(grant.funder_name) },
+              { label: "Award range", value: formatAwardRange(grant) },
+              { label: "Total budget", value: formatMoney(grant.total_budget, grant.currency) },
+              { label: "Number of awards", value: compactText(grant.number_of_awards) },
+            ]}
+            actions={
+              actionUrl
+                ? [{ label: isExternal ? "Open funder link" : "Apply or submit", href: actionUrl }]
+                : []
+            }
+          />
         </div>
       </ResearchSection>
 

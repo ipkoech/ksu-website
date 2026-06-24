@@ -2,18 +2,13 @@ import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import {
   ResearchDetailHero,
-  ResearchFact,
+  ResearchDetailSidebar,
   ResearchTextPanel,
 } from "../../../components/research-detail";
-import {
-  Badge,
-  ResearchSection,
-  StatusMessage,
-} from "../../../components/research-ui";
+import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import {
   compactText,
   formatDate,
-  formatLabel,
   getEndowmentBySlug,
 } from "../../../lib/research-public-data";
 
@@ -71,7 +66,7 @@ export default async function EndowmentDetailPage({
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-5">
+          <div className="flex min-w-0 flex-col gap-5">
             <ResearchTextPanel
               title="Purpose"
               fields={[
@@ -89,20 +84,21 @@ export default async function EndowmentDetailPage({
               ]}
             />
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap gap-2">
-              <Badge>{formatLabel(fund.fund_type ?? "fund")}</Badge>
-              {fund.status ? <Badge>{formatLabel(fund.status)}</Badge> : null}
-              {fund.is_accepting_contributions ? <Badge>Accepting contributions</Badge> : null}
-            </div>
-            <dl className="mt-5 grid gap-3 text-sm">
-              <ResearchFact label="Principal amount" value={formatMoney(fund.principal_amount, fund.currency)} />
-              <ResearchFact label="Current value" value={formatMoney(fund.current_value, fund.currency)} />
-              <ResearchFact label="Annual distribution" value={formatMoney(fund.annual_distribution, fund.currency)} />
-              <ResearchFact label="Established" value={formatDate(fund.established_date)} />
-              <ResearchFact label="Contact" value={[fund.contact_name, fund.contact_email].map(compactText).filter(Boolean).join(" · ")} />
-            </dl>
-          </aside>
+          <ResearchDetailSidebar
+            labels={[fund.fund_type ?? "fund", fund.status, fund.is_accepting_contributions ? "Accepting contributions" : null]}
+            facts={[
+              { label: "Principal amount", value: formatMoney(fund.principal_amount, fund.currency) },
+              { label: "Current value", value: formatMoney(fund.current_value, fund.currency) },
+              { label: "Annual distribution", value: formatMoney(fund.annual_distribution, fund.currency) },
+              { label: "Established", value: formatDate(fund.established_date) },
+              { label: "Contact", value: [fund.contact_name, fund.contact_email].map(compactText).filter(Boolean).join(" · ") },
+            ]}
+            actions={
+              compactText(fund.contribution_url)
+                ? [{ label: "Contribute", href: compactText(fund.contribution_url) }]
+                : []
+            }
+          />
         </div>
       </ResearchSection>
     </main>

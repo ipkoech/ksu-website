@@ -2,20 +2,15 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
   ResearchDetailHero,
-  ResearchFact,
+  ResearchDetailSidebar,
   ResearchRecordPanel,
   ResearchRelationshipCard,
   ResearchTextPanel,
 } from "../../../components/research-detail";
-import {
-  Badge,
-  ResearchSection,
-  StatusMessage,
-} from "../../../components/research-ui";
+import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import {
   compactText,
   formatDate,
-  formatLabel,
   getProjectBySlug,
   getProjectPublications,
   getRelatedOutputs,
@@ -87,7 +82,7 @@ export default async function ProjectDetailPage({
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-5">
+          <div className="flex min-w-0 flex-col gap-5">
             <ResearchTextPanel
               title="Overview"
               fields={[
@@ -107,19 +102,16 @@ export default async function ProjectDetailPage({
             />
           </div>
 
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap gap-2">
-              <Badge>{formatLabel(project.project_type ?? "research")}</Badge>
-              <Badge>{formatLabel(project.status ?? "ongoing")}</Badge>
-            </div>
-            <dl className="mt-5 grid gap-3 text-sm">
-              <ResearchFact label="Progress" value={`${project.progress_percentage ?? 0}%`} />
-              <ResearchFact label="Start" value={formatDate(project.start_date)} />
-              <ResearchFact label="End" value={formatDate(project.end_date)} />
-              <ResearchFact label="Budget" value={formatMoney(project.budget, project.currency)} />
-              <ResearchFact label="Code" value={compactText(project.code)} />
-            </dl>
-          </aside>
+          <ResearchDetailSidebar
+            labels={[project.project_type ?? "research", project.status ?? "ongoing"]}
+            facts={[
+              { label: "Progress", value: `${project.progress_percentage ?? 0}%` },
+              { label: "Start", value: formatDate(project.start_date) },
+              { label: "End", value: formatDate(project.end_date) },
+              { label: "Budget", value: formatMoney(project.budget, project.currency) },
+              { label: "Code", value: compactText(project.code) },
+            ]}
+          />
         </div>
       </ResearchSection>
 

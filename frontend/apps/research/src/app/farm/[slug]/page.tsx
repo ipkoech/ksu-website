@@ -1,20 +1,14 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import {
   ResearchDetailHero,
-  ResearchFact,
+  ResearchDetailSidebar,
   ResearchRecordPanel,
   ResearchTextPanel,
 } from "../../../components/research-detail";
-import {
-  Badge,
-  ResearchSection,
-  StatusMessage,
-} from "../../../components/research-ui";
+import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import {
   compactText,
-  formatLabel,
   getFarmActivities,
   getFarmBySlug,
   getFarmPartners,
@@ -84,7 +78,7 @@ export default async function FarmDetailPage({
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-5">
+          <div className="flex min-w-0 flex-col gap-5">
             <ResearchTextPanel
               title="About the farm"
               fields={[
@@ -96,30 +90,23 @@ export default async function FarmDetailPage({
               ]}
             />
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap gap-2">
-              <Badge>{formatLabel(farm.farm_type ?? "farm")}</Badge>
-              {farm.status ? <Badge>{formatLabel(farm.status)}</Badge> : null}
-            </div>
-            <dl className="mt-5 grid gap-3 text-sm">
-              <ResearchFact label="Size" value={farm.size_hectares ? `${compactText(farm.size_hectares)} hectares` : ""} />
-              <ResearchFact label="Location" value={compactText(farm.location) || compactText(farm.county)} />
-              <ResearchFact label="Manager" value={compactText(farm.manager_name)} />
-              <ResearchFact label="Email" value={compactText(farm.email)} />
-              <ResearchFact label="Phone" value={compactText(farm.phone)} />
-            </dl>
-            {center ? (
-              <div className="mt-5 rounded-md bg-slate-50 p-3">
-                <p className="text-xs font-semibold uppercase text-slate-500">Connected center</p>
-                <Link
-                  href={center.slug ? `/centers/${center.slug}` : "/centers"}
-                  className="mt-1 block font-semibold text-primary"
-                >
-                  {center.name ?? center.title}
-                </Link>
-              </div>
-            ) : null}
-          </aside>
+          <ResearchDetailSidebar
+            labels={[farm.farm_type ?? "farm", farm.status]}
+            facts={[
+              { label: "Size", value: farm.size_hectares ? `${compactText(farm.size_hectares)} hectares` : "" },
+              { label: "Location", value: compactText(farm.location) || compactText(farm.county) },
+              { label: "Manager", value: compactText(farm.manager_name) },
+              { label: "Email", value: compactText(farm.email) },
+              { label: "Phone", value: compactText(farm.phone) },
+              { label: "Connected center", value: center ? compactText(center.name ?? center.title) : "" },
+            ]}
+            actions={[
+              ...(center?.slug ? [{ label: "View connected center", href: `/centers/${center.slug}` }] : []),
+              ...(compactText(farm.email)
+                ? [{ label: "Contact farm", href: `mailto:${compactText(farm.email)}`, variant: "secondary" as const }]
+                : []),
+            ]}
+          />
         </div>
       </ResearchSection>
 

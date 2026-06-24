@@ -2,16 +2,12 @@ import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import {
   ResearchDetailHero,
-  ResearchFact,
+  ResearchDetailSidebar,
   ResearchRecordPanel,
   ResearchRelationshipCard,
   ResearchTextPanel,
 } from "../../../components/research-detail";
-import {
-  Badge,
-  ResearchSection,
-  StatusMessage,
-} from "../../../components/research-ui";
+import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import {
   compactText,
   formatDate,
@@ -93,7 +89,7 @@ export default async function InnovationDetailPage({
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-5">
+          <div className="flex min-w-0 flex-col gap-5">
             <ResearchTextPanel
               title="Problem and solution"
               fields={[
@@ -112,20 +108,19 @@ export default async function InnovationDetailPage({
               ]}
             />
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap gap-2">
-              <Badge>{formatLabel(innovation.innovation_type ?? "innovation")}</Badge>
-              {innovation.development_stage ? <Badge>{formatLabel(innovation.development_stage)}</Badge> : null}
-              {innovation.status ? <Badge>{formatLabel(innovation.status)}</Badge> : null}
-            </div>
-            <dl className="mt-5 grid gap-3 text-sm">
-              <ResearchFact label="Technology readiness" value={innovation.trl_level ? `TRL ${innovation.trl_level}` : ""} />
-              <ResearchFact label="IP status" value={formatLabel(innovation.ip_status)} />
-              <ResearchFact label="Commercialization" value={formatLabel(innovation.commercialization_status)} />
-              <ResearchFact label="Patent" value={compactText(innovation.patent_number)} />
-              <ResearchFact label="Invention date" value={formatDate(innovation.invention_date)} />
-            </dl>
-          </aside>
+          <ResearchDetailSidebar
+            labels={[innovation.innovation_type ?? "innovation", innovation.development_stage, innovation.status]}
+            facts={[
+              { label: "Technology readiness", value: innovation.trl_level ? `TRL ${innovation.trl_level}` : "" },
+              { label: "IP status", value: formatLabel(innovation.ip_status) },
+              { label: "Commercialization", value: formatLabel(innovation.commercialization_status) },
+              { label: "Patent", value: compactText(innovation.patent_number) },
+              { label: "Invention date", value: formatDate(innovation.invention_date) },
+            ]}
+            actions={
+              project?.slug ? [{ label: "View source project", href: `/projects/${project.slug}` }] : []
+            }
+          />
         </div>
       </ResearchSection>
 

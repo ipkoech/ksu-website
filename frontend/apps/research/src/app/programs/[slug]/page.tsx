@@ -2,14 +2,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
   ResearchDetailHero,
-  ResearchFact,
+  ResearchDetailSidebar,
   ResearchTextPanel,
 } from "../../../components/research-detail";
-import {
-  Badge,
-  ResearchSection,
-  StatusMessage,
-} from "../../../components/research-ui";
+import { Badge, ResearchSection, StatusMessage } from "../../../components/research-ui";
 import {
   compactText,
   formatDate,
@@ -75,7 +71,7 @@ export default async function ProgramDetailPage({
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-5">
+          <div className="flex min-w-0 flex-col gap-5">
             <ResearchTextPanel
               title="Overview"
               fields={[
@@ -92,29 +88,21 @@ export default async function ProgramDetailPage({
               ]}
             />
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap gap-2">
-              <Badge>{formatLabel(program.status ?? "active")}</Badge>
-              {program.is_featured ? <Badge>Featured</Badge> : null}
-            </div>
-            <dl className="mt-5 grid gap-3 text-sm">
-              <ResearchFact label="Start" value={formatDate(program.start_date)} />
-              <ResearchFact label="End" value={formatDate(program.end_date)} />
-              <ResearchFact label="Budget" value={formatMoney(program.budget, program.currency)} />
-              <ResearchFact label="Code" value={compactText(program.code)} />
-            </dl>
-            {center ? (
-              <div className="mt-5 rounded-md bg-slate-50 p-3">
-                <p className="text-xs font-semibold uppercase text-slate-500">Hosted by</p>
-                <Link
-                  href={center.slug ? `/centers/${center.slug}` : "/centers"}
-                  className="mt-1 block font-semibold text-primary"
-                >
-                  {center.name ?? center.title}
-                </Link>
-              </div>
-            ) : null}
-          </aside>
+          <ResearchDetailSidebar
+            labels={[program.status ?? "active", program.is_featured ? "Featured" : null]}
+            facts={[
+              { label: "Start", value: formatDate(program.start_date) },
+              { label: "End", value: formatDate(program.end_date) },
+              { label: "Budget", value: formatMoney(program.budget, program.currency) },
+              { label: "Code", value: compactText(program.code) },
+              { label: "Hosted by", value: center ? compactText(center.name ?? center.title) : "" },
+            ]}
+            actions={
+              center?.slug
+                ? [{ label: "View hosting center", href: `/centers/${center.slug}` }]
+                : []
+            }
+          />
         </div>
       </ResearchSection>
 

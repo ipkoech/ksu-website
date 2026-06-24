@@ -2,20 +2,15 @@ import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import {
   ResearchDetailHero,
-  ResearchFact,
+  ResearchDetailSidebar,
   ResearchRecordPanel,
   ResearchRelationshipCard,
   ResearchTextPanel,
 } from "../../../components/research-detail";
-import {
-  Badge,
-  ResearchSection,
-  StatusMessage,
-} from "../../../components/research-ui";
+import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import {
   compactText,
   formatDate,
-  formatLabel,
   getCenters,
   getConsultancyBySlug,
   getPartners,
@@ -84,7 +79,7 @@ export default async function ConsultancyDetailPage({
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-5">
+          <div className="flex min-w-0 flex-col gap-5">
             <ResearchTextPanel
               title="Summary"
               fields={[
@@ -103,20 +98,19 @@ export default async function ConsultancyDetailPage({
               ]}
             />
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap gap-2">
-              <Badge>{formatLabel(consultancy.consultancy_type ?? "consultancy")}</Badge>
-              {consultancy.client_type ? <Badge>{formatLabel(consultancy.client_type)}</Badge> : null}
-              {consultancy.status ? <Badge>{formatLabel(consultancy.status)}</Badge> : null}
-            </div>
-            <dl className="mt-5 grid gap-3 text-sm">
-              <ResearchFact label="Client" value={compactText(consultancy.client_name)} />
-              <ResearchFact label="Value" value={formatMoney(consultancy.contract_value, consultancy.currency)} />
-              <ResearchFact label="Start" value={formatDate(consultancy.start_date)} />
-              <ResearchFact label="End" value={formatDate(consultancy.end_date)} />
-              <ResearchFact label="Location" value={[consultancy.location, consultancy.country].map(compactText).filter(Boolean).join(" · ")} />
-            </dl>
-          </aside>
+          <ResearchDetailSidebar
+            labels={[consultancy.consultancy_type ?? "consultancy", consultancy.client_type, consultancy.status]}
+            facts={[
+              { label: "Client", value: compactText(consultancy.client_name) },
+              { label: "Value", value: formatMoney(consultancy.contract_value, consultancy.currency) },
+              { label: "Start", value: formatDate(consultancy.start_date) },
+              { label: "End", value: formatDate(consultancy.end_date) },
+              { label: "Location", value: [consultancy.location, consultancy.country].map(compactText).filter(Boolean).join(" · ") },
+            ]}
+            actions={
+              partner?.slug ? [{ label: "View partner", href: `/partners/${partner.slug}` }] : []
+            }
+          />
         </div>
       </ResearchSection>
 

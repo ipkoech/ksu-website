@@ -202,7 +202,7 @@ export function ResearchRecordDetail({
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-5">
+          <div className="flex min-w-0 flex-col gap-5">
             {sections.map((section) => (
               <DetailTextSection key={section.title} record={record} section={section} />
             ))}
@@ -248,7 +248,7 @@ function DetailTextSection({
   return (
     <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">{section.title}</h2>
-      <div className="mt-4 space-y-4">
+      <div className="mt-4 flex flex-col gap-4">
         {entries.map((entry) => (
           <div key={entry.label}>
             <p className="text-xs font-semibold uppercase text-slate-500">{entry.label}</p>
@@ -281,7 +281,7 @@ export function ResearchTextPanel({
         {title}
       </h2>
       {entries.length > 0 ? (
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 flex flex-col gap-4">
           {entries.map(([label, value]) => (
             <div key={label}>
               <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>

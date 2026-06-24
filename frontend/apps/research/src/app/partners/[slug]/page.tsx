@@ -2,19 +2,14 @@ import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import {
   ResearchDetailHero,
-  ResearchFact,
+  ResearchDetailSidebar,
   ResearchRecordPanel,
   ResearchTextPanel,
 } from "../../../components/research-detail";
-import {
-  Badge,
-  ResearchSection,
-  StatusMessage,
-} from "../../../components/research-ui";
+import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import {
   compactText,
   formatDate,
-  formatLabel,
   getConsultanciesFiltered,
   getPartnerBySlug,
 } from "../../../lib/research-public-data";
@@ -74,7 +69,7 @@ export default async function PartnerDetailPage({
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-5">
+          <div className="flex min-w-0 flex-col gap-5">
             <ResearchTextPanel
               title="About"
               fields={[
@@ -93,20 +88,21 @@ export default async function PartnerDetailPage({
               ]}
             />
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap gap-2">
-              <Badge>{formatLabel(partner.partner_type ?? "partner")}</Badge>
-              {partner.partnership_level ? <Badge>{formatLabel(partner.partnership_level)}</Badge> : null}
-              {partner.status ? <Badge>{formatLabel(partner.status)}</Badge> : null}
-            </div>
-            <dl className="mt-5 grid gap-3 text-sm">
-              <ResearchFact label="Country" value={compactText(partner.country)} />
-              <ResearchFact label="Website" value={compactText(partner.website)} />
-              <ResearchFact label="Email" value={compactText(partner.email)} />
-              <ResearchFact label="Phone" value={compactText(partner.phone)} />
-              <ResearchFact label="Contact person" value={[partner.contact_person_name, partner.contact_person_title].map(compactText).filter(Boolean).join(" · ")} />
-            </dl>
-          </aside>
+          <ResearchDetailSidebar
+            labels={[partner.partner_type ?? "partner", partner.partnership_level, partner.status]}
+            facts={[
+              { label: "Country", value: compactText(partner.country) },
+              { label: "Website", value: compactText(partner.website) },
+              { label: "Email", value: compactText(partner.email) },
+              { label: "Phone", value: compactText(partner.phone) },
+              { label: "Contact person", value: [partner.contact_person_name, partner.contact_person_title].map(compactText).filter(Boolean).join(" · ") },
+            ]}
+            actions={
+              compactText(partner.website)
+                ? [{ label: "Open partner website", href: compactText(partner.website) }]
+                : []
+            }
+          />
         </div>
       </ResearchSection>
 
