@@ -69,16 +69,20 @@ export function ResearchFilterForm({
   sortValue?: string;
   sortOptions?: SortOption[];
 }) {
+  const inputClassName =
+    "mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-950 outline-none ring-primary/20 transition placeholder:text-slate-400 focus:border-primary focus:ring-4";
+
   return (
-    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action={action}>
+    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4 shadow-sm" action={action}>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
         <label className="xl:col-span-2">
           <span className="text-xs font-semibold uppercase text-slate-500">Search</span>
           <input
+            type="search"
             name="q"
             defaultValue={searchValue ?? ""}
             placeholder={searchPlaceholder}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className={inputClassName}
           />
         </label>
 
@@ -90,12 +94,12 @@ export function ResearchFilterForm({
           <label key={filter.name}>
             <span className="text-xs font-semibold uppercase text-slate-500">{filter.label}</span>
             <input
-              name={filter.name}
-              defaultValue={filter.value ?? ""}
-              placeholder={filter.placeholder}
-              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-          </label>
+            name={filter.name}
+            defaultValue={filter.value ?? ""}
+            placeholder={filter.placeholder}
+            className={inputClassName}
+          />
+        </label>
         ))}
 
         {centers ? (
@@ -104,7 +108,7 @@ export function ResearchFilterForm({
             <select
               name="center"
               defaultValue={centerValue ?? ""}
-              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className={inputClassName}
             >
               <option value="">All centers</option>
               {centers.map((center) => (
@@ -122,7 +126,7 @@ export function ResearchFilterForm({
             <select
               name="project"
               defaultValue={projectValue ?? ""}
-              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className={inputClassName}
             >
               <option value="">All projects</option>
               {projects.map((project) => (
@@ -140,7 +144,7 @@ export function ResearchFilterForm({
             <select
               name="sort"
               defaultValue={sortValue ?? sortOptions[0]?.value ?? ""}
-              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className={inputClassName}
             >
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -152,12 +156,12 @@ export function ResearchFilterForm({
         ) : null}
 
         <div className="flex items-end gap-2 md:col-span-2 xl:col-span-6">
-          <button className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
+          <button className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
             Apply filters
           </button>
           <Link
             href={resetHref}
-            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary"
+            className="inline-flex h-11 items-center justify-center rounded-md border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
           >
             Reset
           </Link>
@@ -179,7 +183,7 @@ export function ResearchSelectField({
       <select
         name={name}
         defaultValue={value ?? ""}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-950 outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
       >
         <option value="">All {label.toLowerCase()}</option>
         {options.map((option) => (
@@ -211,7 +215,7 @@ export function ResearchListCard({
   const cleanFilledBadges = filledBadges.map((badge) => compactText(badge)).filter(Boolean);
 
   return (
-    <article className="flex min-h-[340px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]">
+    <article className="flex min-h-[340px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]">
       <div className="flex flex-wrap gap-2">
         {cleanBadges.map((badge) => (
           <Badge key={badge}>{badge}</Badge>
@@ -225,12 +229,12 @@ export function ResearchListCard({
           </span>
         ))}
       </div>
-      <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-        <Link href={href} className="transition hover:text-primary">
+      <h2 className="mt-4 text-pretty text-xl font-semibold leading-7 text-slate-950">
+        <Link href={href} className="rounded-sm transition hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
           {title}
         </Link>
       </h2>
-      <p className="mt-3 text-sm leading-7 text-slate-600">{description}</p>
+      <p className="mt-3 text-pretty text-sm leading-7 text-slate-600">{description}</p>
       {facts.length > 0 ? (
         <dl className="mt-auto grid grid-cols-2 gap-3 pt-5 text-sm">
           {facts.map((fact) => (
@@ -287,12 +291,12 @@ export function ResearchRecordRow({
             </span>
           ))}
         </div>
-        <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-          <Link href={href} className="transition hover:text-primary">
+        <h2 className="mt-4 text-pretty text-xl font-semibold leading-7 text-slate-950">
+          <Link href={href} className="rounded-sm transition hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
             {title}
           </Link>
         </h2>
-        <p className="mt-3 text-sm leading-7 text-slate-600">{description}</p>
+        <p className="mt-3 text-pretty text-sm leading-7 text-slate-600">{description}</p>
       </div>
       <dl className="grid gap-3 text-sm">
         {facts.map((fact) => (
@@ -413,11 +417,11 @@ function GenericRecordCard({
           ))}
         </div>
       ) : null}
-      <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
+      <h2 className="mt-4 text-pretty text-xl font-semibold leading-7 text-slate-950">
         {getRecordTitle(record)}
       </h2>
       {getRecordDescription(record, descriptionFields) ? (
-        <p className="mt-3 text-sm leading-7 text-slate-600">
+        <p className="mt-3 text-pretty text-sm leading-7 text-slate-600">
           {getRecordDescription(record, descriptionFields)}
         </p>
       ) : null}
@@ -432,7 +436,7 @@ function GenericRecordCard({
   return href ? (
     <Link
       href={href}
-      className="block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
+      className="block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
     >
       {content}
     </Link>
