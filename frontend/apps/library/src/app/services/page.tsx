@@ -2,6 +2,7 @@ import type { LibraryBranch, LibraryServiceRecord } from "@ksu/api-client";
 import {
   IconCard,
   ExternalAnchor,
+  LibraryBadge,
   LibraryHero,
   LibrarySection,
   PillNav,
@@ -77,7 +78,7 @@ export default async function LibraryServicesPage() {
 
       {errors.length > 0 ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-[1320px] space-y-3">
+          <div className="mx-auto flex max-w-[1680px] flex-col gap-3">
             {errors.map((error) => (
               <StatusMessage key={error} tone="error">
                 {error}
@@ -244,13 +245,11 @@ export default async function LibraryServicesPage() {
                 className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
+                  <LibraryBadge>
                     {formatLabel(branch.library_type ?? "library")}
-                  </span>
+                  </LibraryBadge>
                   {branch.is_public ? (
-                    <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white">
-                      Public
-                    </span>
+                    <LibraryBadge tone="primary">Public</LibraryBadge>
                   ) : null}
                 </div>
                 <h2 className="mt-4 text-2xl font-semibold text-slate-950">
@@ -300,7 +299,7 @@ export default async function LibraryServicesPage() {
         title="Services by branch"
         body="These are branch-scoped service records, including borrowing, printing, scanning, reference support, inter-library loan, and training."
       >
-        <div id="services-heading" className="space-y-8">
+        <div id="services-heading" className="flex flex-col gap-8">
           {groupedServices.length === 0 && !branches.error ? (
             <StatusMessage>No branch services are available yet.</StatusMessage>
           ) : (
@@ -392,12 +391,12 @@ export default async function LibraryServicesPage() {
               ))}
             </div>
           )}
-          <aside className="space-y-5">
+          <aside className="flex flex-col gap-5">
             <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
               <h3 className="text-lg font-semibold text-slate-950">
                 Before you visit
               </h3>
-              <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+              <ul className="mt-4 flex flex-col gap-3 text-sm leading-6 text-slate-600">
                 <li>Confirm the branch that offers the service you need.</li>
                 <li>Check eligibility and access notes on the service card.</li>
                 <li>Use active regulations for borrowing, conduct, and fee guidance.</li>
