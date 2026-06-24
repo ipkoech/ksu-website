@@ -5,6 +5,7 @@ import {
   LibrarySection,
   PrimaryLink,
   SecondaryLink,
+  SidePanel,
   StatusMessage,
 } from "../components/library-ui";
 import {
@@ -160,11 +161,8 @@ export default async function LibraryPage() {
               action="Ask a librarian"
             />
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-              Library contact point
-            </p>
-            <h3 className="mt-3 text-xl font-semibold text-slate-950">
+          <SidePanel title="Library contact point" eyebrow="Support desk">
+            <h3 className="text-xl font-semibold text-slate-950">
               {primaryBranch?.name ?? "Kisii University Library"}
             </h3>
             <p className="mt-3 text-sm leading-7 text-slate-600">
@@ -176,7 +174,7 @@ export default async function LibraryPage() {
               <Meta label="Phone" value={primaryBranch?.phone} />
               <Meta label="Email" value={primaryBranch?.email} />
             </dl>
-          </aside>
+          </SidePanel>
         </div>
       </LibrarySection>
 

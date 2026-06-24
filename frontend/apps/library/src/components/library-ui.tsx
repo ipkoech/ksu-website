@@ -558,7 +558,7 @@ export function SidePanel({
   children: ReactNode;
 }) {
   return (
-    <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <aside className="h-fit min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       {eyebrow ? (
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
           {eyebrow}
@@ -710,13 +710,9 @@ export function InfoPanel({
   children: ReactNode;
 }) {
   return (
-    <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-        {eyebrow}
-      </p>
-      <h3 className="mt-3 text-xl font-semibold text-slate-950">{title}</h3>
-      <div className="mt-4">{children}</div>
-    </aside>
+    <SidePanel eyebrow={eyebrow} title={title}>
+      {children}
+    </SidePanel>
   );
 }
 

@@ -84,7 +84,7 @@ export default async function LibraryStaffPage() {
               ))}
             </div>
             <SidePanel title="Directory groups" eyebrow="Staff">
-              <div className="space-y-3 text-sm leading-6 text-slate-600">
+              <div className="flex flex-col gap-3 text-sm leading-6 text-slate-600">
                 {groupedStaff.map(({ branch, staff: members }) => (
                   <p key={branch.id} className="flex justify-between gap-4">
                     <span>{branch.name}</span>

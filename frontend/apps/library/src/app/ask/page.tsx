@@ -4,6 +4,7 @@ import {
   LibrarySection,
   PrimaryLink,
   SecondaryLink,
+  SidePanel,
   StatusMessage,
 } from "../../components/library-ui";
 import {
@@ -77,28 +78,22 @@ export default async function AskLibrarianPage() {
         >
           <AskLibrarianForm branches={branches.data} />
 
-          <aside className="space-y-5">
-            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-                Good questions include
-              </p>
-              <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+          <aside className="flex flex-col gap-5">
+            <SidePanel title="Good questions include">
+              <ul className="flex flex-col gap-3 text-sm leading-6 text-slate-600">
                 <li>Resource title, database name, ISBN, or call number.</li>
                 <li>The branch or service desk you already contacted.</li>
                 <li>Any deadline, access error, or course context.</li>
               </ul>
-            </section>
+            </SidePanel>
 
-            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-                Response route
-              </p>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
+            <SidePanel title="Response route">
+              <p className="text-sm leading-7 text-slate-600">
                 The library team replies using the email address you submit.
                 Urgent branch-specific requests should also use the published
                 branch contacts below.
               </p>
-            </section>
+            </SidePanel>
           </aside>
         </div>
       </LibrarySection>

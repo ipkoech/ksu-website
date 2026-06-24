@@ -96,7 +96,7 @@ export default async function LibraryRepositoriesPage() {
                 />
               ))}
             </div>
-            <aside className="space-y-5">
+            <aside className="flex flex-col gap-5">
               <MetricStrip
                 items={[
                   { label: "Repository", value: repositoryLinks.filter((link) => link.link_type === "repository").length },

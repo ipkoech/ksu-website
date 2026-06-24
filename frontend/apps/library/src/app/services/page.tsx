@@ -8,6 +8,7 @@ import {
   PillNav,
   PrimaryLink,
   SecondaryLink,
+  SidePanel,
   StatusMessage,
 } from "../../components/library-ui";
 import {
@@ -150,11 +151,8 @@ export default async function LibraryServicesPage() {
               value={regulations.data.length}
             />
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-              Best starting point
-            </p>
-            <h3 className="mt-3 text-lg font-semibold text-slate-950">
+          <SidePanel title="Best starting point" eyebrow="Service route">
+            <h3 className="text-lg font-semibold text-slate-950">
               {supportService?.name ?? "Contact a branch desk"}
             </h3>
             <p className="mt-3 text-sm leading-7 text-slate-600">
@@ -172,7 +170,7 @@ export default async function LibraryServicesPage() {
                 value={supportService?.how_to_access}
               />
             </dl>
-          </aside>
+          </SidePanel>
         </div>
       </LibrarySection>
 
@@ -276,11 +274,8 @@ export default async function LibraryServicesPage() {
             ))
           )}
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-              Branch map
-            </p>
-            <div className="mt-4 aspect-[4/3] rounded-md border border-slate-200 bg-slate-50 p-4">
+          <SidePanel title="Branch map" eyebrow="Library network">
+            <div className="aspect-[4/3] rounded-md border border-slate-200 bg-slate-50 p-4">
               <div className="grid h-full place-items-center text-center">
                 <div>
                   <p className="text-lg font-semibold text-slate-950">Kisii University Library Network</p>
@@ -290,7 +285,7 @@ export default async function LibraryServicesPage() {
                 </div>
               </div>
             </div>
-          </aside>
+          </SidePanel>
         </div>
       </LibrarySection>
 
@@ -392,22 +387,16 @@ export default async function LibraryServicesPage() {
             </div>
           )}
           <aside className="flex flex-col gap-5">
-            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="text-lg font-semibold text-slate-950">
-                Before you visit
-              </h3>
-              <ul className="mt-4 flex flex-col gap-3 text-sm leading-6 text-slate-600">
+            <SidePanel title="Before you visit">
+              <ul className="flex flex-col gap-3 text-sm leading-6 text-slate-600">
                 <li>Confirm the branch that offers the service you need.</li>
                 <li>Check eligibility and access notes on the service card.</li>
                 <li>Use active regulations for borrowing, conduct, and fee guidance.</li>
               </ul>
-            </section>
+            </SidePanel>
             {featuredRegulations.length > 0 ? (
-              <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <h3 className="text-lg font-semibold text-slate-950">
-                  Key regulations
-                </h3>
-                <div className="mt-4 divide-y divide-slate-200">
+              <SidePanel title="Key regulations">
+                <div className="divide-y divide-slate-200">
                   {featuredRegulations.map((regulation) => (
                     <article key={regulation.id} className="py-3 first:pt-0">
                       <p className="text-sm font-semibold text-slate-950">
@@ -419,7 +408,7 @@ export default async function LibraryServicesPage() {
                     </article>
                   ))}
                 </div>
-              </section>
+              </SidePanel>
             ) : null}
           </aside>
         </div>

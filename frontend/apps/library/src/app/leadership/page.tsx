@@ -72,7 +72,7 @@ export default async function LibraryLeadershipPage() {
           <StatusMessage>No public leadership records are available yet.</StatusMessage>
         ) : (
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-            <div className="space-y-6">
+            <div className="flex flex-col gap-6">
               {lead ? (
                 <article className="rounded-lg border border-primary/25 bg-white p-6 shadow-sm">
                   <div className="flex flex-col gap-5 sm:flex-row">
