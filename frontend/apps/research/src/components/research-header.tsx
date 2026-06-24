@@ -72,23 +72,23 @@ const utilityLinks: NavItem[] = [
   },
   { label: "University Farm", href: "/farm", icon: Sprout },
   { label: "Sustainability", href: "/sustainability", icon: Leaf },
-  { label: "Publications", href: "/publications", icon: FileText },
-  { label: "News & Updates", href: "/news", icon: Newspaper },
 ];
 
 const researchNavItems: NavSection[] = [
   {
-    label: "Home",
-    href: "/",
-    icon: BookOpen,
-    description: "Research portal landing page.",
-  },
-  {
-    label: "Research & Innovation",
+    label: "Research",
     href: "/projects",
     icon: FlaskConical,
-    description: "Research programmes, projects, facilities, and experts.",
-    activePaths: ["/projects", "/programs", "/centers", "/facilities", "/expertise"],
+    description: "Research programmes, projects, centers, facilities, expertise, and outputs.",
+    activePaths: [
+      "/projects",
+      "/programs",
+      "/centers",
+      "/facilities",
+      "/expertise",
+      "/publications",
+      "/outputs",
+    ],
     groups: [
       {
         title: "Research & Discovery",
@@ -117,18 +117,31 @@ const researchNavItems: NavSection[] = [
             icon: Users,
             description: "Find research contacts and specialists.",
           },
+          {
+            label: "Publications",
+            href: "/publications",
+            icon: FileText,
+            description: "Articles, journals, papers, and research records.",
+          },
+          {
+            label: "Research Outputs",
+            href: "/outputs",
+            icon: GraduationCap,
+            description: "Repository outputs, reports, briefs, and documents.",
+          },
         ],
       },
     ],
   },
   {
-    label: "Innovation & Commercialization",
+    label: "Innovation & Partnerships",
     href: "/innovations",
     icon: Lightbulb,
-    description: "IP, startups, commercialization, and competitions.",
+    description: "IP, startups, commercialization, partners, donors, and collaborations.",
+    activePaths: ["/innovations", "/partners"],
     groups: [
       {
-        title: "Commercialization",
+        title: "Innovation",
         items: [
           {
             label: "Intellectual Property",
@@ -156,14 +169,6 @@ const researchNavItems: NavSection[] = [
           },
         ],
       },
-    ],
-  },
-  {
-    label: "Partnerships",
-    href: "/partners",
-    icon: Handshake,
-    description: "Industry, funder, academic, and community partnerships.",
-    groups: [
       {
         title: "Partner Engagement",
         items: [
@@ -190,14 +195,22 @@ const researchNavItems: NavSection[] = [
     ],
   },
   {
-    label: "Community Impact",
+    label: "Community & Impact",
     href: "/community-impact",
     icon: HeartHandshake,
-    description: "Community initiatives, outreach, and public events.",
-    activePaths: ["/community-impact", "/events", "/farm", "/sustainability"],
+    description: "Extension, farm, sustainability, impact metrics, consultancies, and mentorship.",
+    activePaths: [
+      "/community-impact",
+      "/events",
+      "/farm",
+      "/sustainability",
+      "/impact-metrics",
+      "/consultancies",
+      "/mentorship",
+    ],
     groups: [
       {
-        title: "Community",
+        title: "Extension & Sustainability",
         items: [
           {
             label: "Community Initiatives",
@@ -217,57 +230,22 @@ const researchNavItems: NavSection[] = [
             icon: HeartHandshake,
             description: "Knowledge transfer and community service.",
           },
-        ],
-      },
-    ],
-  },
-  {
-    label: "Resources & Tools",
-    href: "/resources-tools",
-    icon: ClipboardList,
-    description: "Policies, templates, guides, news, and resources.",
-    activePaths: ["/resources-tools", "/news", "/outputs", "/forms", "/guidelines", "/services"],
-    groups: [
-      {
-        title: "Resources",
-        items: [
           {
-            label: "Resource Library",
-            href: "/resources-tools",
-            icon: BookOpen,
-            description: "Policies, templates, reports, and guides.",
+            label: "University Farm",
+            href: "/farm",
+            icon: Sprout,
+            description: "Field research, demonstrations, and farm partnerships.",
           },
           {
-            label: "News & Media",
-            href: "/news",
-            icon: Newspaper,
-            description: "Latest research news and updates.",
-          },
-          {
-            label: "Repository",
-            href: "/outputs",
-            icon: GraduationCap,
-            description: "Research papers and documents.",
-          },
-          {
-            label: "Forms & Templates",
-            href: "/forms",
-            icon: ClipboardList,
-            description: "Ethics, booking, and collaboration forms.",
+            label: "Sustainability",
+            href: "/sustainability",
+            icon: Leaf,
+            description: "Climate, conservation, and sustainability records.",
           },
         ],
       },
-    ],
-  },
-  {
-    label: "Impact & Metrics",
-    href: "/impact-metrics",
-    icon: BarChart3,
-    description: "Impact dashboard, data, reports, and mentorship links.",
-    activePaths: ["/impact-metrics", "/consultancies", "/mentorship"],
-    groups: [
       {
-        title: "Impact",
+        title: "Impact & Support",
         items: [
           {
             label: "Impact Overview",
@@ -298,7 +276,39 @@ const researchNavItems: NavSection[] = [
     ],
   },
   {
-    label: "Funding",
+    label: "Resources & Tools",
+    href: "/resources-tools",
+    icon: ClipboardList,
+    description: "Policies, templates, guides, news, and resources.",
+    activePaths: ["/resources-tools", "/news", "/outputs", "/forms", "/guidelines", "/services"],
+    groups: [
+      {
+        title: "Resources",
+        items: [
+          {
+            label: "Resource Library",
+            href: "/resources-tools",
+            icon: BookOpen,
+            description: "Policies, templates, reports, and guides.",
+          },
+          {
+            label: "News & Media",
+            href: "/news",
+            icon: Newspaper,
+            description: "Latest research news and updates.",
+          },
+          {
+            label: "Forms & Templates",
+            href: "/forms",
+            icon: ClipboardList,
+            description: "Ethics, booking, and collaboration forms.",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    label: "Funding & Support",
     href: "/funding",
     icon: Rocket,
     description: "Grant calls, scholarships, endowments, and training.",
@@ -342,11 +352,11 @@ const researchNavItems: NavSection[] = [
     ],
   },
   {
-    label: "About",
+    label: "About & Connect",
     href: "/about",
-    icon: Users,
-    description: "Research team, contacts, forms, and multimedia.",
-    activePaths: ["/about", "/team"],
+    icon: Mail,
+    description: "Research office, team, contacts, inquiries, donations, and multimedia.",
+    activePaths: ["/about", "/team", "/connect", "/donate"],
     groups: [
       {
         title: "About REIRM",
@@ -371,15 +381,6 @@ const researchNavItems: NavSection[] = [
           },
         ],
       },
-    ],
-  },
-  {
-    label: "Connect & Engage",
-    href: "/connect",
-    icon: Mail,
-    description: "Contacts, inquiry channels, mentorship, and donations.",
-    activePaths: ["/connect", "/donate"],
-    groups: [
       {
         title: "Engage",
         items: [
@@ -451,7 +452,7 @@ export function ResearchHeader() {
             </span>
           </Link>
 
-          <div className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 2xl:flex">
+          <div className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 xl:flex">
             {researchNavItems.map((item) =>
               item.groups ? (
                 <DesktopMenuItem
@@ -487,7 +488,7 @@ export function ResearchHeader() {
             </Link>
             <button
               type="button"
-              className="flex h-11 w-11 items-center justify-center rounded-full text-primary transition hover:bg-primary/10 hover:text-primary 2xl:hidden"
+              className="flex h-11 w-11 items-center justify-center rounded-full text-primary transition hover:bg-primary/10 hover:text-primary xl:hidden"
               aria-label={isOpen ? "Close research menu" : "Open research menu"}
               aria-expanded={isOpen}
               onClick={() => setIsOpen((current) => !current)}
@@ -502,7 +503,7 @@ export function ResearchHeader() {
         </div>
 
         {isOpen ? (
-          <div className="max-h-[calc(100vh-90px)] overflow-y-auto border-t border-primary/10 bg-white py-2 2xl:hidden">
+          <div className="max-h-[calc(100vh-90px)] overflow-y-auto border-t border-primary/10 bg-white py-2 xl:hidden">
             <div className="pb-4">
               {researchNavItems.map((item) => (
                 <MobileMenuItem
