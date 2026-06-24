@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@ksu/ui/lib/utils";
 
@@ -43,11 +44,11 @@ export function ResearchImmersiveHero({
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
   const activeSlide = slides[activeIndex] ?? slides[0];
   const hasMultipleSlides = slides.length > 1;
 
   useEffect(() => {
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!hasMultipleSlides || isPaused || prefersReducedMotion) return;
 
     const timer = window.setInterval(() => {
@@ -55,7 +56,15 @@ export function ResearchImmersiveHero({
     }, 6500);
 
     return () => window.clearInterval(timer);
-  }, [hasMultipleSlides, isPaused, slides.length]);
+  }, [hasMultipleSlides, isPaused, prefersReducedMotion, slides.length]);
+
+  const showPreviousSlide = () => {
+    setActiveIndex((current) => (current - 1 + slides.length) % slides.length);
+  };
+
+  const showNextSlide = () => {
+    setActiveIndex((current) => (current + 1) % slides.length);
+  };
 
   if (!activeSlide) return null;
 
@@ -74,16 +83,25 @@ export function ResearchImmersiveHero({
       onFocus={() => setIsPaused(true)}
       onBlur={() => setIsPaused(false)}
     >
-      <div key={activeSlide.id} className="absolute inset-0">
-        <Image
-          src={activeSlide.imageSrc}
-          alt={activeSlide.imageAlt}
-          fill
-          priority={activeIndex === 0}
-          sizes="100vw"
-          className="object-cover"
-        />
-      </div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeSlide.id}
+          className="absolute inset-0"
+          initial={prefersReducedMotion ? false : { opacity: 0 }}
+          animate={prefersReducedMotion ? undefined : { opacity: 1 }}
+          exit={prefersReducedMotion ? undefined : { opacity: 0 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.65, ease: "easeOut" }}
+        >
+          <Image
+            src={activeSlide.imageSrc}
+            alt={activeSlide.imageAlt}
+            fill
+            priority={activeIndex === 0}
+            sizes="100vw"
+            className="object-cover"
+          />
+        </motion.div>
+      </AnimatePresence>
 
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.94)_0%,rgba(2,20,49,0.82)_38%,rgba(2,20,49,0.36)_68%,rgba(2,20,49,0.18)_100%)]" />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,20,49,0.28)_0%,rgba(2,20,49,0.1)_46%,rgba(2,20,49,0.55)_100%)]" />
@@ -91,7 +109,15 @@ export function ResearchImmersiveHero({
       <div className="relative z-10 mx-auto flex min-h-[inherit] w-full max-w-[1680px] flex-col justify-end px-4 py-7 sm:px-6 lg:px-8 lg:py-10 xl:px-10 2xl:px-12">
         {breadcrumbs.length > 0 ? <HeroBreadcrumbs items={breadcrumbs} /> : null}
 
-        <div key={`${activeSlide.id}-content`} className="max-w-4xl pb-4 pt-16 sm:pt-20 lg:pb-8">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`${activeSlide.id}-content`}
+            className="max-w-4xl pb-4 pt-16 sm:pt-20 lg:pb-8"
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
+            animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+            exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.36, ease: "easeOut" }}
+          >
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary sm:text-sm">
             {activeSlide.eyebrow}
           </p>
@@ -126,12 +152,20 @@ export function ResearchImmersiveHero({
               ) : null}
             </div>
           ) : null}
-        </div>
+          </motion.div>
+        </AnimatePresence>
 
         {(activeSlide.stats?.length ?? 0) > 0 ? (
-          <div
+          <motion.div
             key={`${activeSlide.id}-stats`}
             className="mb-2 grid max-w-5xl grid-cols-2 overflow-hidden rounded-lg border border-white/15 bg-white/10 backdrop-blur xl:grid-cols-4"
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+            animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+            transition={{
+              delay: prefersReducedMotion ? 0 : 0.08,
+              duration: prefersReducedMotion ? 0 : 0.34,
+              ease: "easeOut",
+            }}
           >
             {activeSlide.stats?.map((stat) => (
               <div key={stat.label} className="border-white/15 p-4 even:border-l xl:border-l first:xl:border-l-0">
@@ -141,7 +175,7 @@ export function ResearchImmersiveHero({
                 <p className="mt-1 text-xs leading-5 text-white/75">{stat.label}</p>
               </div>
             ))}
-          </div>
+          </motion.div>
         ) : null}
 
         {showControls && hasMultipleSlides ? (
@@ -165,9 +199,7 @@ export function ResearchImmersiveHero({
               <button
                 type="button"
                 aria-label="Previous slide"
-                onClick={() =>
-                  setActiveIndex((current) => (current - 1 + slides.length) % slides.length)
-                }
+                onClick={showPreviousSlide}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white backdrop-blur transition hover:bg-white/20"
               >
                 <ChevronLeft aria-hidden className="h-5 w-5" />
@@ -175,7 +207,7 @@ export function ResearchImmersiveHero({
               <button
                 type="button"
                 aria-label="Next slide"
-                onClick={() => setActiveIndex((current) => (current + 1) % slides.length)}
+                onClick={showNextSlide}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white backdrop-blur transition hover:bg-white/20"
               >
                 <ChevronRight aria-hidden className="h-5 w-5" />
