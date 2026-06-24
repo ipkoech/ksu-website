@@ -179,7 +179,7 @@ export default async function ExpertisePage({
               <h3 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-7 text-white">
                 Expertise appears across several published records.
               </h3>
-              <p className="mt-3 text-sm leading-7 text-white/72">
+              <p className="mt-3 text-sm leading-7 text-white/75">
                 Search by person, focus area, theme, center, project, or expertise tag to find the right research contact.
               </p>
               <div className="mt-5 flex flex-wrap gap-2">

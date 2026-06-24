@@ -198,7 +198,7 @@ export default async function TeamPage({
             <h3 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-7 text-white">
               Start with the office record, then the role.
             </h3>
-            <p className="mt-3 text-sm leading-7 text-white/72">
+            <p className="mt-3 text-sm leading-7 text-white/75">
               Visitors can use office contacts for service questions and staff contacts for person-specific research support where those details are published.
             </p>
             <div className="mt-5 space-y-3">
@@ -213,7 +213,7 @@ export default async function TeamPage({
                 </div>
               ))}
               {contactableStaff.length === 0 ? (
-                <p className="text-sm leading-6 text-white/72">
+                <p className="text-sm leading-6 text-white/75">
                   No staff-specific public contacts have been published yet.
                 </p>
               ) : null}

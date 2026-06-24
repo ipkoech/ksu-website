@@ -59,7 +59,7 @@ export function ResearchInstitutionalHero({
               <h1 className="mt-3 max-w-5xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
                 {title}
               </h1>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-white/72 sm:text-base">
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-white/75 sm:text-base">
                 {body}
               </p>
 

@@ -160,7 +160,7 @@ export default async function AboutPage() {
                 {compactText(leadOffice?.leadership_message) ||
                   "The REIRM office coordinates research support, extension, innovation and resource mobilization across the university."}
               </blockquote>
-              <div className="mt-6 space-y-3 text-sm leading-6 text-white/72">
+              <div className="mt-6 space-y-3 text-sm leading-6 text-white/75">
                 {contactRows(leadOffice).map((item) => {
                   const Icon = item.icon;
 

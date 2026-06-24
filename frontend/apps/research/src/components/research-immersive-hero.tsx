@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@ksu/ui/lib/utils";
 
@@ -44,11 +43,11 @@ export function ResearchImmersiveHero({
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const prefersReducedMotion = useReducedMotion();
   const activeSlide = slides[activeIndex] ?? slides[0];
   const hasMultipleSlides = slides.length > 1;
 
   useEffect(() => {
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!hasMultipleSlides || isPaused || prefersReducedMotion) return;
 
     const timer = window.setInterval(() => {
@@ -56,16 +55,16 @@ export function ResearchImmersiveHero({
     }, 6500);
 
     return () => window.clearInterval(timer);
-  }, [hasMultipleSlides, isPaused, prefersReducedMotion, slides.length]);
+  }, [hasMultipleSlides, isPaused, slides.length]);
 
   if (!activeSlide) return null;
 
   const minHeight =
     size === "landing"
-      ? "min-h-[620px] lg:min-h-[720px]"
+      ? "min-h-[540px] sm:min-h-[620px] lg:min-h-[720px]"
       : size === "detail"
-        ? "min-h-[420px] lg:min-h-[500px]"
-        : "min-h-[460px] lg:min-h-[560px]";
+        ? "min-h-[380px] sm:min-h-[420px] lg:min-h-[500px]"
+        : "min-h-[420px] sm:min-h-[460px] lg:min-h-[560px]";
 
   return (
     <section
@@ -75,25 +74,16 @@ export function ResearchImmersiveHero({
       onFocus={() => setIsPaused(true)}
       onBlur={() => setIsPaused(false)}
     >
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeSlide.id}
-          className="absolute inset-0"
-          initial={prefersReducedMotion ? false : { opacity: 0, scale: 1.02 }}
-          animate={prefersReducedMotion ? undefined : { opacity: 1, scale: 1 }}
-          exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 1.01 }}
-          transition={{ duration: prefersReducedMotion ? 0 : 0.7, ease: "easeOut" }}
-        >
-          <Image
-            src={activeSlide.imageSrc}
-            alt={activeSlide.imageAlt}
-            fill
-            priority={activeIndex === 0}
-            sizes="100vw"
-            className="object-cover"
-          />
-        </motion.div>
-      </AnimatePresence>
+      <div key={activeSlide.id} className="absolute inset-0">
+        <Image
+          src={activeSlide.imageSrc}
+          alt={activeSlide.imageAlt}
+          fill
+          priority={activeIndex === 0}
+          sizes="100vw"
+          className="object-cover"
+        />
+      </div>
 
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.94)_0%,rgba(2,20,49,0.82)_38%,rgba(2,20,49,0.36)_68%,rgba(2,20,49,0.18)_100%)]" />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,20,49,0.28)_0%,rgba(2,20,49,0.1)_46%,rgba(2,20,49,0.55)_100%)]" />
@@ -101,69 +91,57 @@ export function ResearchImmersiveHero({
       <div className="relative z-10 mx-auto flex min-h-[inherit] w-full max-w-[1680px] flex-col justify-end px-4 py-7 sm:px-6 lg:px-8 lg:py-10 xl:px-10 2xl:px-12">
         {breadcrumbs.length > 0 ? <HeroBreadcrumbs items={breadcrumbs} /> : null}
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`${activeSlide.id}-content`}
-            className="max-w-4xl pb-4 pt-16 sm:pt-20 lg:pb-8"
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
-            animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-            exit={prefersReducedMotion ? undefined : { opacity: 0, y: -10 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.36, ease: "easeOut" }}
-          >
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary sm:text-sm">
-              {activeSlide.eyebrow}
+        <div key={`${activeSlide.id}-content`} className="max-w-4xl pb-4 pt-16 sm:pt-20 lg:pb-8">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary sm:text-sm">
+            {activeSlide.eyebrow}
+          </p>
+          <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] text-white sm:text-5xl lg:text-6xl">
+            {activeSlide.title}
+          </h1>
+          {activeSlide.body ? (
+            <p className="mt-5 max-w-3xl text-base leading-8 text-white/85 sm:text-lg">
+              {activeSlide.body}
             </p>
-            <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] text-white sm:text-5xl lg:text-6xl">
-              {activeSlide.title}
-            </h1>
-            {activeSlide.body ? (
-              <p className="mt-5 max-w-3xl text-base leading-8 text-white/82 sm:text-lg">
-                {activeSlide.body}
-              </p>
-            ) : null}
+          ) : null}
 
-            {activeSlide.primaryAction || activeSlide.secondaryAction ? (
-              <div className="mt-7 flex flex-wrap gap-3">
-                {activeSlide.primaryAction ? (
-                  <Link
-                    href={activeSlide.primaryAction.href}
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-secondary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90"
-                  >
-                    {activeSlide.primaryAction.label}
-                    <ArrowRight aria-hidden className="h-4 w-4" />
-                  </Link>
-                ) : null}
-                {activeSlide.secondaryAction ? (
-                  <Link
-                    href={activeSlide.secondaryAction.href}
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/35 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
-                  >
-                    {activeSlide.secondaryAction.label}
-                    <ArrowRight aria-hidden className="h-4 w-4" />
-                  </Link>
-                ) : null}
-              </div>
-            ) : null}
-          </motion.div>
-        </AnimatePresence>
+          {activeSlide.primaryAction || activeSlide.secondaryAction ? (
+            <div className="mt-7 flex flex-wrap gap-3">
+              {activeSlide.primaryAction ? (
+                <Link
+                  href={activeSlide.primaryAction.href}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-secondary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90"
+                >
+                  {activeSlide.primaryAction.label}
+                  <ArrowRight aria-hidden className="h-4 w-4" />
+                </Link>
+              ) : null}
+              {activeSlide.secondaryAction ? (
+                <Link
+                  href={activeSlide.secondaryAction.href}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/35 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
+                >
+                  {activeSlide.secondaryAction.label}
+                  <ArrowRight aria-hidden className="h-4 w-4" />
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
 
         {(activeSlide.stats?.length ?? 0) > 0 ? (
-          <motion.div
+          <div
             key={`${activeSlide.id}-stats`}
-            className="mb-2 grid max-w-5xl overflow-hidden rounded-lg border border-white/15 bg-white/10 backdrop-blur md:grid-cols-2 xl:grid-cols-4"
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
-            animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-            transition={{ delay: prefersReducedMotion ? 0 : 0.08, duration: 0.32, ease: "easeOut" }}
+            className="mb-2 grid max-w-5xl grid-cols-2 overflow-hidden rounded-lg border border-white/15 bg-white/10 backdrop-blur xl:grid-cols-4"
           >
             {activeSlide.stats?.map((stat) => (
-              <div key={stat.label} className="border-white/15 p-4 md:border-l first:md:border-l-0">
+              <div key={stat.label} className="border-white/15 p-4 even:border-l xl:border-l first:xl:border-l-0">
                 <p className="font-[family-name:var(--font-display)] text-2xl font-semibold text-white">
                   {stat.value}
                 </p>
-                <p className="mt-1 text-xs leading-5 text-white/72">{stat.label}</p>
+                <p className="mt-1 text-xs leading-5 text-white/75">{stat.label}</p>
               </div>
             ))}
-          </motion.div>
+          </div>
         ) : null}
 
         {showControls && hasMultipleSlides ? (
@@ -218,7 +196,7 @@ function HeroBreadcrumbs({
   return (
     <nav
       aria-label="Breadcrumb"
-      className="mb-auto flex flex-wrap items-center gap-2 pt-2 text-xs font-semibold text-white/68"
+      className="mb-auto flex flex-wrap items-center gap-2 pt-2 text-xs font-semibold text-white/70"
     >
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
