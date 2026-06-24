@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Banknote, ClipboardList, FileText, GraduationCap, LifeBuoy, Wrench } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
-import { ResearchFact } from "../../components/research-detail";
+import { ResearchFact, ResearchSidePanel } from "../../components/research-detail";
 import { ResearchFilterForm } from "../../components/research-listing";
 import {
   Badge,
@@ -35,6 +35,18 @@ type FundingSearchParams = {
   status?: string;
   year?: string;
   sort?: string;
+};
+
+type SupportRecord = {
+  id?: string | number | null;
+  title?: string | null;
+  name?: string | null;
+  guideline_type?: string | null;
+  resource_type?: string | null;
+  category?: string | null;
+  document_url?: string | null;
+  file_url?: string | null;
+  url?: string | null;
 };
 
 const grantTypes = ["internal", "external"];
@@ -117,7 +129,7 @@ export default async function FundingPage({
                 <GrantCard key={grant.id} grant={grant} />
               ))}
             </div>
-            <aside className="space-y-5">
+            <aside className="flex flex-col gap-5">
               <SupportPanel
                 title="Downloadable guidance"
                 records={[...guidelines.data, ...resources.data].slice(0, 6)}
@@ -203,21 +215,20 @@ function SupportPanel({
   records,
 }: {
   title: string;
-  records: Array<Record<string, any>>;
+  records: SupportRecord[];
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
-      <div className="mt-4 divide-y divide-slate-200">
+    <ResearchSidePanel title={title}>
+      <div className="divide-y divide-slate-200">
         {records.map((record) => (
-          <article key={record.id} className="py-4 first:pt-0 last:pb-0">
-            <h3 className="text-sm font-semibold text-slate-950">{record.title ?? record.name}</h3>
+          <article key={compactText(record.id)} className="py-4 first:pt-0 last:pb-0">
+            <h3 className="text-sm font-semibold text-slate-950">{compactText(record.title) || compactText(record.name)}</h3>
             <p className="mt-1 text-xs font-semibold uppercase text-slate-500">
               {formatLabel(record.guideline_type ?? record.resource_type ?? record.category ?? "resource")}
             </p>
             {record.document_url || record.file_url || record.url ? (
               <a
-                href={record.document_url ?? record.file_url ?? record.url}
+                href={compactText(record.document_url) || compactText(record.file_url) || compactText(record.url)}
                 className="mt-2 inline-flex text-sm font-semibold text-primary"
               >
                 Download
@@ -231,22 +242,21 @@ function SupportPanel({
           </p>
         ) : null}
       </div>
-    </section>
+    </ResearchSidePanel>
   );
 }
 
 function WorkflowPanel() {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">Internal funding flow</h2>
-      <ol className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+    <ResearchSidePanel title="Internal funding flow">
+      <ol className="flex flex-col gap-3 text-sm leading-6 text-slate-600">
         {["Check eligibility", "Download requirements", "Submit application", "Review and award", "Report progress"].map((step) => (
           <li key={step} className="rounded-md bg-slate-50 p-3 font-semibold text-slate-800">
             {step}
           </li>
         ))}
       </ol>
-    </section>
+    </ResearchSidePanel>
   );
 }
 

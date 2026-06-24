@@ -372,6 +372,30 @@ export function ResearchDetailSidebar({
   );
 }
 
+export function ResearchSidePanel({
+  eyebrow,
+  title,
+  children,
+}: {
+  eyebrow?: string;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <aside className="h-fit min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      {eyebrow ? (
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
+          {eyebrow}
+        </p>
+      ) : null}
+      <h2 className={eyebrow ? "mt-3 text-xl font-semibold text-slate-950" : "text-xl font-semibold text-slate-950"}>
+        {title}
+      </h2>
+      <div className="mt-4">{children}</div>
+    </aside>
+  );
+}
+
 export function ResearchRecordPanel({
   title,
   records,

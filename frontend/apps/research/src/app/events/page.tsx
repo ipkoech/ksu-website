@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpenCheck, CalendarDays, Newspaper, Users } from "lucide-react";
 import { ResearchClusterHero } from "../../components/research-cluster";
-import { ResearchFact } from "../../components/research-detail";
+import { ResearchFact, ResearchSidePanel } from "../../components/research-detail";
 import { ResearchFilterForm } from "../../components/research-listing";
 import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, formatDate, formatLabel, getCenters, getEvents, getEventsFiltered } from "../../lib/research-public-data";
@@ -83,7 +83,25 @@ function EventFilters({ params, years, centers }: { params: EventSearchParams; y
 }
 
 function CalendarRail({ events }: { events: ResearchGenericRecord[] }) {
-  return <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><h2 className="text-xl font-semibold text-slate-950">Upcoming view</h2><div className="mt-4 divide-y divide-slate-200">{events.slice(0, 8).map((event) => <article key={event.id} className="py-4 first:pt-0 last:pb-0"><p className="text-xs font-semibold uppercase text-secondary">{formatDate(event.start_date)}</p><h3 className="mt-1 text-sm font-semibold leading-6 text-slate-950">{event.title}</h3><p className="mt-1 text-xs font-semibold uppercase text-slate-500">{formatLabel(event.event_type ?? event.status)}</p></article>)}</div></aside>;
+  return (
+    <ResearchSidePanel title="Upcoming view" eyebrow="Calendar">
+      <div className="divide-y divide-slate-200">
+        {events.slice(0, 8).map((event) => (
+          <article key={event.id} className="py-4 first:pt-0 last:pb-0">
+            <p className="text-xs font-semibold uppercase text-secondary">
+              {formatDate(event.start_date)}
+            </p>
+            <h3 className="mt-1 text-sm font-semibold leading-6 text-slate-950">
+              {event.title}
+            </h3>
+            <p className="mt-1 text-xs font-semibold uppercase text-slate-500">
+              {formatLabel(event.event_type ?? event.status)}
+            </p>
+          </article>
+        ))}
+      </div>
+    </ResearchSidePanel>
+  );
 }
 
 function EventCard({ event }: { event: ResearchGenericRecord }) {
