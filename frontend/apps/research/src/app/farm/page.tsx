@@ -54,7 +54,7 @@ export default async function FarmPage() {
         title="Farm-linked research, facilities, and community impact."
         body="Explore farm facilities, action research projects, community partnerships, activities, impact stories, and focus areas."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "University Farm" }]}
-        imageSrc="/images/research/university-farm-hero-imagegen.png"
+        imageSrc="/images/research/university-farm-hero-imagegen.webp"
         imageAlt="University farm research, field demonstration, and community extension work"
         links={extensionLinks}
         primaryAction={{ label: "View sustainability", href: "/sustainability" }}

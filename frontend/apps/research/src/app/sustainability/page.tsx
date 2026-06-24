@@ -48,7 +48,7 @@ export default async function SustainabilityPage() {
         title="Sustainability initiatives connected to research."
         body="Explore active climate, conservation, biodiversity, water, food security, and circular-economy work."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Sustainability" }]}
-        imageSrc="/images/research/sustainability-hero-imagegen.png"
+        imageSrc="/images/research/sustainability-hero-imagegen.webp"
         imageAlt="Sustainability research, climate action, conservation, and community fieldwork"
         links={extensionLinks}
         primaryAction={{ label: "View community impact", href: "/community-impact" }}
