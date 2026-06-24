@@ -364,6 +364,151 @@ export function SearchPanel({ children }: { children: ReactNode }) {
   );
 }
 
+type LibraryFilterOption = {
+  value: string;
+  label: string;
+};
+
+export function LibraryFilterTextInput({
+  name,
+  label,
+  value,
+  placeholder,
+  className = "",
+}: {
+  name: string;
+  label: string;
+  value?: string | null;
+  placeholder: string;
+  className?: string;
+}) {
+  return (
+    <label className={`block min-w-0 ${className}`}>
+      <span className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+        {label}
+      </span>
+      <span className="relative mt-2 block">
+        <Search
+          aria-hidden
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+        />
+        <input
+          type="search"
+          name={name}
+          defaultValue={value?.trim() ?? ""}
+          placeholder={placeholder}
+          autoComplete="off"
+          className="h-11 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm font-medium text-slate-950 outline-none ring-primary/20 transition placeholder:text-slate-400 focus:border-primary focus:ring-4"
+        />
+      </span>
+    </label>
+  );
+}
+
+export function LibraryFilterSelect({
+  name,
+  label,
+  value,
+  options,
+  allLabel,
+  includeAllOption = true,
+  className = "",
+}: {
+  name: string;
+  label: string;
+  value?: string | null;
+  options: LibraryFilterOption[];
+  allLabel?: string;
+  includeAllOption?: boolean;
+  className?: string;
+}) {
+  const normalizedOptions = normalizeFilterOptions(options);
+
+  return (
+    <label className={`block min-w-0 ${className}`}>
+      <span className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+        {label}
+      </span>
+      <select
+        name={name}
+        defaultValue={value?.trim() ?? ""}
+        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
+      >
+        {includeAllOption ? <option value="">{allLabel ?? `All ${label.toLowerCase()}`}</option> : null}
+        {normalizedOptions.map((option) => (
+          <option key={`${name}-${option.value}-${option.label}`} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+export function LibraryFilterCheckbox({
+  name,
+  value,
+  checked,
+  children,
+}: {
+  name: string;
+  value: string;
+  checked?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <label className="inline-flex min-h-11 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/20">
+      <input
+        type="checkbox"
+        name={name}
+        value={value}
+        defaultChecked={checked}
+        className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+      />
+      {children}
+    </label>
+  );
+}
+
+export function LibraryFilterSubmit({ children }: { children: ReactNode }) {
+  return (
+    <button
+      type="submit"
+      className="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+    >
+      {children}
+    </button>
+  );
+}
+
+export function LibraryFilterClearLink({
+  href,
+  children = "Clear Filters",
+}: {
+  href: string;
+  children?: ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex min-h-11 items-center justify-center rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary/25 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+    >
+      {children}
+    </Link>
+  );
+}
+
+function normalizeFilterOptions(options: LibraryFilterOption[]) {
+  const seen = new Set<string>();
+
+  return options.filter((option) => {
+    const key = `${option.value}-${option.label}`;
+    if (!option.value || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export function SidePanel({
   eyebrow,
   title,

@@ -2,6 +2,11 @@ import Link from "next/link";
 import type { LibraryElectronicResource } from "@ksu/api-client";
 import {
   ExternalAnchor,
+  LibraryFilterCheckbox,
+  LibraryFilterClearLink,
+  LibraryFilterSelect,
+  LibraryFilterSubmit,
+  LibraryFilterTextInput,
   LibraryHero,
   LibrarySection,
   MetricStrip,
@@ -120,92 +125,37 @@ export default async function ElectronicResourcesPage({
           action="/electronic"
           className="grid gap-4 xl:grid-cols-[minmax(260px,1fr)_220px_220px_auto_auto] xl:items-end"
         >
-          <div className="space-y-2">
-            <label
-              className="text-sm font-semibold text-slate-900"
-              htmlFor="electronic-query"
-            >
-              Search resources
-            </label>
-            <input
-              id="electronic-query"
-              name="q"
-              type="search"
-              defaultValue={query}
-              placeholder="Database, provider, subject, or access type"
-              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label
-              className="text-sm font-semibold text-slate-900"
-              htmlFor="electronic-type"
-            >
-              Resource type
-            </label>
-            <select
-              id="electronic-type"
-              name="type"
-              defaultValue={resourceType}
-              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              {resourceTypeOptions.map((option) => (
-                <option key={option.value || "all-types"} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label
-              className="text-sm font-semibold text-slate-900"
-              htmlFor="electronic-access"
-            >
-              Audience
-            </label>
-            <select
-              id="electronic-access"
-              name="access"
-              defaultValue={accessLevel}
-              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              {accessLevelOptions.map((option) => (
-                <option key={option.value || "all-access"} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <label className="inline-flex min-h-11 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700">
-            <input
-              type="checkbox"
-              name="featured"
-              value="true"
-              defaultChecked={featuredOnly}
-              className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-ring"
-            />
+          <LibraryFilterTextInput
+            name="q"
+            label="Search Resources"
+            value={query}
+            placeholder="Database, provider, subject, or access type"
+          />
+          <LibraryFilterSelect
+            name="type"
+            label="Resource Type"
+            value={resourceType}
+            options={resourceTypeOptions}
+            allLabel="All types"
+          />
+          <LibraryFilterSelect
+            name="access"
+            label="Audience"
+            value={accessLevel}
+            options={accessLevelOptions}
+            allLabel="All audiences"
+          />
+          <LibraryFilterCheckbox name="featured" value="true" checked={featuredOnly}>
             Featured only
-          </label>
-
-          <button
-            type="submit"
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-          >
-            Search resources
-          </button>
+          </LibraryFilterCheckbox>
+          <LibraryFilterSubmit>Search Resources</LibraryFilterSubmit>
         </form>
 
         {hasFilters ? (
           <div className="mt-4">
-            <Link
-              href="/electronic"
-              className="inline-flex min-h-11 items-center rounded-full px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10"
-            >
-              Clear search and filters
-            </Link>
+            <LibraryFilterClearLink href="/electronic">
+              Clear Search & Filters
+            </LibraryFilterClearLink>
           </div>
         ) : null}
         </SearchPanel>

@@ -2,6 +2,9 @@ import { Children } from "react";
 import Link from "next/link";
 import {
   LibraryContentBand,
+  LibraryFilterSelect,
+  LibraryFilterSubmit,
+  LibraryFilterTextInput,
   LibrarySectionHeading,
   PillNav,
   SearchPanel,
@@ -67,48 +70,20 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
             action="/search"
             className="mt-4 grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)_auto] lg:items-end"
           >
-            <div className="space-y-2">
-              <label
-                className="text-sm font-semibold text-slate-900"
-                htmlFor="search-branch"
-              >
-                Catalog branch
-              </label>
-              <select
-                id="search-branch"
-                name="branch"
-                defaultValue={selectedLibraryId}
-                className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                {branches.data.map((branch) => (
-                  <option key={branch.id} value={branch.id}>
-                    {branch.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label
-                className="text-sm font-semibold text-slate-900"
-                htmlFor="search-query"
-              >
-                Search terms
-              </label>
-              <input
-                id="search-query"
-                name="q"
-                type="search"
-                defaultValue={query}
-                placeholder="Title, author, database, provider, subject"
-                className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              />
-            </div>
-            <button
-              type="submit"
-              className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-            >
-              Search
-            </button>
+            <LibraryFilterSelect
+              name="branch"
+              label="Catalog Branch"
+              value={selectedLibraryId}
+              options={branches.data.map((branch) => ({ value: branch.id, label: branch.name }))}
+              allLabel="All branches"
+            />
+            <LibraryFilterTextInput
+              name="q"
+              label="Search Terms"
+              value={query}
+              placeholder="Title, author, database, provider, subject"
+            />
+            <LibraryFilterSubmit>Search Library</LibraryFilterSubmit>
           </form>
         </SearchPanel>
       </LibraryContentBand>

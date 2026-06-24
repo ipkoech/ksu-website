@@ -1,4 +1,6 @@
 import {
+  LibraryFilterSubmit,
+  LibraryFilterTextInput,
   LibraryHero,
   LibrarySection,
   LibraryShell,
@@ -72,19 +74,13 @@ export default async function LibraryNewsPage({ searchParams }: NewsPageProps) {
           action="/news"
           className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5 shadow-sm lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end"
         >
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-slate-900">Search news</span>
-            <input
-              name="q"
-              type="search"
-              defaultValue={query}
-              placeholder="Resource update, training, repository, access"
-              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-          </label>
-          <button className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90">
-            Search news
-          </button>
+          <LibraryFilterTextInput
+            name="q"
+            label="Search News"
+            value={query}
+            placeholder="Resource update, training, repository, access"
+          />
+          <LibraryFilterSubmit>Search News</LibraryFilterSubmit>
         </form>
       </LibrarySection>
 
