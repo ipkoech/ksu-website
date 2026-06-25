@@ -43,7 +43,6 @@ export function PublicListFilterForm({
   visible,
 }: {
   className?: string;
-  gridClassName?: string;
   searchLabel?: string;
   searchName?: string;
   searchValue?: string;

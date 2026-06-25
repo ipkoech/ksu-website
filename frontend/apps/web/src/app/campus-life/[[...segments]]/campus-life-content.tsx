@@ -388,7 +388,6 @@ function CampusListFilters({
   return (
     <PublicListFilterForm
       className="mb-6 border border-slate-200 bg-white p-4 shadow-sm"
-      gridClassName="grid gap-3 md:grid-cols-2 2xl:grid-cols-[minmax(220px,1fr)_12rem_12rem_auto] 2xl:items-end"
       searchValue={filters?.q}
       searchPlaceholder="Search records"
       selects={[

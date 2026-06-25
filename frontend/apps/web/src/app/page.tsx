@@ -4,14 +4,9 @@ import {
   ArrowRight,
   AlertTriangle,
   BookOpen,
-  BriefcaseBusiness,
   Building2,
   CalendarDays,
-  CheckCircle2,
-  ChevronRight,
   ClipboardCheck,
-  Download,
-  ExternalLink,
   GraduationCap,
   Mail,
   MapPin,
@@ -38,8 +33,6 @@ import {
   getHomepageData,
   type HomeCard,
   type HomeIntake,
-  type HomeLeader,
-  type HomeLink,
   type HomePartner,
 } from "@/lib/homepage-data";
 import { getNavData } from "@/lib/nav-data";
@@ -48,17 +41,6 @@ import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
 export const revalidate = 300;
 
 const researchHref = researchFrontendUrl;
-
-const quickLinkIcons: Record<string, LucideIcon> = {
-  "Admissions Guide": ClipboardCheck,
-  Programmes: BookOpen,
-  "Fees Structure": CheckCircle2,
-  Downloads: Download,
-  Timetables: CalendarDays,
-  "Student Portal": Users,
-  "Staff Portal": BriefcaseBusiness,
-  "Contact Directory": Search,
-};
 
 const intakeSteps = [
   "Choose programme",
@@ -306,12 +288,7 @@ export default async function HomePage() {
         <section className="relative z-10 pb-0">
           <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
             <LandingReveal variant="fade-right">
-              <SchoolsSection
-                schools={homepage.schools}
-                quickLinks={homepage.publicQuickLinks}
-                activeIntakes={homepage.activeIntakes}
-                viceChancellor={homepage.viceChancellor}
-              />
+              <SchoolsSection schools={homepage.schools} />
             </LandingReveal>
             <LandingReveal variant="zoom-in">
               <ProgrammesAdmissionsSection
@@ -397,118 +374,46 @@ function ContentDegradedNotice() {
 
 function SchoolsSection({
   schools,
-  quickLinks,
-  activeIntakes,
-  viceChancellor,
 }: {
   schools: HomeCard[];
-  quickLinks: HomeLink[];
-  activeIntakes: HomeIntake[];
-  viceChancellor: HomeLeader | null;
 }) {
   return (
     <section className="border-b border-blue-100 bg-white py-12">
-      <div className="grid gap-8 xl:grid-cols-[minmax(280px,0.82fr)_minmax(0,1.35fr)]">
-        <div className="grid gap-5">
-          <div className="rounded-md bg-primary p-6 text-white shadow-sm shadow-blue-100/70">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/70">
-              Academic gateway
-            </p>
-            <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-bold leading-tight">
-              Find your school, programme, and student service route.
-            </h2>
-            <p className="mt-4 text-sm leading-6 text-white/82">
-              Kisii University brings academic schools, admissions guidance,
-              public services, and institutional leadership into one clear
-              entry point.
-            </p>
-            <Link
-              href="/academics/schools"
-              className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-primary transition hover:bg-white/90"
-            >
-              Explore schools
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
-          </div>
-          <ViceChancellorMessage leader={viceChancellor} />
-          <QuickPublicLinks links={quickLinks} activeIntakes={activeIntakes} />
-        </div>
-
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <SectionKicker title="Our Schools" />
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-                Browse academic homes for teaching, research, professional
-                training, and community engagement.
-              </p>
-            </div>
-            <Link
-              href="/academics"
-              className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary hover:text-secondary"
-            >
-              View academics
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
-          </div>
-          {schools.length ? (
-            <ScrollRevealGroup
-              className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
-              variant="fade-up"
-              staggerDelay={55}
-            >
-              {schools.slice(0, 8).map((school) => (
-                <SchoolCard key={school.href} school={school} />
-              ))}
-            </ScrollRevealGroup>
-          ) : (
-            <HomeEmptyState
-              title="Schools are not available"
-              body="Published school records could not be loaded right now."
-              actionHref="/academics/schools"
-              actionLabel="Open schools"
-            />
-          )}
+          <SectionKicker title="Our Schools" />
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+            Browse academic homes for teaching, research, professional
+            training, and community engagement.
+          </p>
         </div>
+        <Link
+          href="/academics"
+          className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary hover:text-secondary"
+        >
+          View academics
+          <ArrowRight className="h-4 w-4" aria-hidden />
+        </Link>
       </div>
+      {schools.length ? (
+        <ScrollRevealGroup
+          className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+          variant="fade-up"
+          staggerDelay={55}
+        >
+          {schools.slice(0, 8).map((school) => (
+            <SchoolCard key={school.href} school={school} />
+          ))}
+        </ScrollRevealGroup>
+      ) : (
+        <HomeEmptyState
+          title="Schools are not available"
+          body="Published school records could not be loaded right now."
+          actionHref="/academics/schools"
+          actionLabel="Open schools"
+        />
+      )}
     </section>
-  );
-}
-
-function ViceChancellorMessage({ leader }: { leader: HomeLeader | null }) {
-  if (!leader) {
-    return null;
-  }
-
-  return (
-    <aside className="rounded-md border border-blue-100 bg-blue-50/60 p-4">
-      <SectionKicker title="Message from the Vice Chancellor" />
-      <div className="mt-4 grid gap-4">
-        {leader.image ? (
-          <PublicImage
-            src={leader.image}
-            alt={leader.name}
-            ratio="card"
-            sizes="(min-width: 1280px) 24vw, (min-width: 640px) 40vw, 100vw"
-            className="h-64 rounded-md sm:h-72 xl:h-80"
-            imageClassName="object-top"
-          />
-        ) : null}
-        <div>
-          {leader.message ? (
-            <p className="text-sm leading-6 text-slate-700">
-              {leader.message}
-            </p>
-          ) : null}
-          <div className="mt-4">
-            <h3 className="text-sm font-bold text-primary">{leader.name}</h3>
-            <p className="text-xs font-semibold text-slate-500">
-              {leader.title}
-            </p>
-          </div>
-        </div>
-      </div>
-    </aside>
   );
 }
 
@@ -533,71 +438,6 @@ function SchoolCard({ school }: { school: HomeCard }) {
         </h3>
       </div>
     </Link>
-  );
-}
-
-function QuickPublicLinks({
-  links,
-  activeIntakes,
-}: {
-  links: HomeLink[];
-  activeIntakes: HomeIntake[];
-}) {
-  const kuccpsIntake = activeIntakes.find((intake) =>
-    `${intake.name} ${intake.code}`.toLowerCase().includes("kuccps"),
-  );
-  const visibleLinks = kuccpsIntake
-    ? [
-        {
-          label: `${intakeLabel(kuccpsIntake)} Apply Now`,
-          href: kuccpsIntake.href,
-        },
-        ...links,
-      ]
-    : links;
-
-  return (
-    <aside className="rounded-md border border-blue-100 bg-white p-4 shadow-sm shadow-blue-100/60">
-      <SectionKicker title="Quick Links" />
-      <div className="mt-4 overflow-hidden rounded-md border border-blue-100 bg-white">
-        {visibleLinks.slice(0, 8).map((link, index) => {
-          const external = link.external ?? isExternalHref(link.href);
-          const highlighted = index === 0 && kuccpsIntake;
-          const Icon = highlighted
-            ? Megaphone
-            : (quickLinkIcons[link.label] ?? ArrowRight);
-
-          return (
-            <Link
-              key={`${link.label}-${link.href}`}
-              href={link.href}
-              {...linkProps(link)}
-              className={`group flex min-h-11 items-center gap-3 border-b border-blue-50 px-3 text-sm font-semibold transition last:border-b-0 ${
-                highlighted
-                  ? "bg-orange-50 text-secondary"
-                  : "bg-white text-slate-700 hover:bg-blue-50 hover:text-primary"
-              }`}
-            >
-              <span
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
-                  highlighted
-                    ? "bg-white text-secondary"
-                    : "bg-blue-50 text-primary"
-                }`}
-              >
-                <Icon className="h-4 w-4" aria-hidden />
-              </span>
-              <span className="min-w-0 flex-1">{link.label}</span>
-              {external ? (
-                <ExternalLink className="h-3.5 w-3.5 text-slate-300 transition group-hover:text-primary" aria-hidden />
-              ) : (
-                <ChevronRight className="h-3.5 w-3.5 text-slate-300 transition group-hover:translate-x-1 group-hover:text-primary" aria-hidden />
-              )}
-            </Link>
-          );
-        })}
-      </div>
-    </aside>
   );
 }
 

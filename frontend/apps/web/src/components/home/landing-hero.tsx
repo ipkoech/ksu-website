@@ -174,7 +174,7 @@ export function LandingHero({
 
       {shouldShowControls ? (
         <div
-          className="absolute inset-x-0 bottom-4 z-20 flex justify-center lg:hidden"
+          className="absolute inset-x-0 bottom-4 z-20 flex justify-center md:hidden"
           aria-label="Hero slides"
         >
           <div className="flex items-center gap-2 rounded-full bg-slate-950/25 px-3 py-2 backdrop-blur-sm">
@@ -277,7 +277,7 @@ function HeroArrowControls({
   onNext: () => void;
 }) {
   return (
-    <div className="hidden items-center justify-end gap-2 lg:flex">
+    <div className="hidden items-center justify-end gap-2 md:flex">
       <button
         type="button"
         onClick={onPrevious}

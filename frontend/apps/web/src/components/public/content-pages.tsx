@@ -574,11 +574,6 @@ function ContentFilters({
   return (
     <PublicListFilterForm
       className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-3"
-      gridClassName={
-        typeOptions.length
-          ? "grid gap-3 md:grid-cols-[minmax(220px,1fr)_auto] xl:grid-cols-[minmax(220px,1fr)_12rem_auto] xl:items-end"
-          : "grid gap-3 md:grid-cols-[minmax(220px,1fr)_auto] md:items-end"
-      }
       searchValue={data.filters.q}
       searchPlaceholder={`Search ${kindLabel(data.kind).toLowerCase()}`}
       selects={

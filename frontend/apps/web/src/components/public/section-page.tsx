@@ -7,15 +7,12 @@ import { RichTextRenderer } from "@ksu/ui/rich-text-renderer";
 import {
   PublicActionLink,
   PublicCardSurface,
-  PublicFilterButton,
-  PublicFilterClearLink,
-  PublicFilterSelect,
-  PublicFilterTextInput,
   PublicIconGlyph,
   type PublicAction,
   type PublicCard,
   type PublicIconName,
 } from "@/components/public/public-primitives";
+import { PublicListFilterForm, type ListFilterOption } from "@/components/public/list-filter-form";
 
 export type { PublicAction, PublicCard, PublicIconName };
 
@@ -88,80 +85,70 @@ function SectionFilterBar({
   filters: NonNullable<PublicPageSection["filters"]>;
   dark?: boolean;
 }) {
-  const queryName = filters.queryName ?? "q";
-  const isActive = Boolean(
-    filters.query ||
-      filters.level ||
-      filters.schoolId ||
-      filters.mode ||
-      filters.sort,
-  );
+  const selects: {
+    name: string;
+    label: string;
+    value?: string;
+    allLabel: string;
+    options: ListFilterOption[];
+  }[] = [];
+
+  if (filters.levelOptions?.length) {
+    selects.push({
+      name: "level",
+      label: "Programme level",
+      value: filters.level,
+      allLabel: "All levels",
+      options: filters.levelOptions,
+    });
+  }
+
+  if (filters.schoolOptions?.length) {
+    selects.push({
+      name: "school_id",
+      label: "School",
+      value: filters.schoolId,
+      allLabel: "All schools",
+      options: filters.schoolOptions,
+    });
+  }
+
+  if (filters.modeOptions?.length) {
+    selects.push({
+      name: "mode_of_study",
+      label: "Study mode",
+      value: filters.mode,
+      allLabel: "All modes",
+      options: filters.modeOptions,
+    });
+  }
+
+  if (filters.sortOptions?.length) {
+    selects.push({
+      name: "sort",
+      label: "Sort programmes",
+      value: filters.sort,
+      allLabel: "Default sort",
+      options: filters.sortOptions,
+    });
+  }
 
   return (
-    <form
-      action={filters.action}
+    <PublicListFilterForm
       className={
         dark
-          ? "mb-6 grid gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_repeat(4,minmax(140px,180px))_auto_auto]"
-          : "mb-6 grid gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_repeat(4,minmax(140px,180px))_auto_auto]"
+          ? "mb-6 rounded-lg border border-white/10 bg-white/[0.04] p-3"
+          : "mb-6 rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
       }
-    >
-      <PublicFilterTextInput
-        name={queryName}
-        value={filters.query}
-        placeholder={filters.queryPlaceholder ?? "Search records"}
-        label={filters.queryPlaceholder ?? "Search records"}
-        dark={dark}
-      />
-
-      {filters.levelOptions?.length ? (
-        <PublicFilterSelect
-          name="level"
-          label="Programme level"
-          value={filters.level}
-          options={filters.levelOptions}
-          dark={dark}
-        />
-      ) : null}
-
-      {filters.schoolOptions?.length ? (
-        <PublicFilterSelect
-          name="school_id"
-          label="School"
-          value={filters.schoolId}
-          options={filters.schoolOptions}
-          dark={dark}
-        />
-      ) : null}
-
-      {filters.modeOptions?.length ? (
-        <PublicFilterSelect
-          name="mode_of_study"
-          label="Study mode"
-          value={filters.mode}
-          options={filters.modeOptions}
-          dark={dark}
-        />
-      ) : null}
-
-      {filters.sortOptions?.length ? (
-        <PublicFilterSelect
-          name="sort"
-          label="Sort programmes"
-          value={filters.sort}
-          options={filters.sortOptions}
-          dark={dark}
-        />
-      ) : null}
-
-      <PublicFilterButton dark={dark}>
-        {filters.submitLabel ?? "Filter"}
-      </PublicFilterButton>
-
-      {isActive && filters.clearHref ? (
-        <PublicFilterClearLink href={filters.clearHref} dark={dark} />
-      ) : null}
-    </form>
+      searchName={filters.queryName ?? "q"}
+      searchValue={filters.query}
+      searchPlaceholder={filters.queryPlaceholder ?? "Search records"}
+      searchLabel={filters.queryPlaceholder ?? "Search records"}
+      selects={selects}
+      clearHref={filters.clearHref}
+      total={0}
+      visible={0}
+    />
   );
 }
 
