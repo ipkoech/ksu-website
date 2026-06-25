@@ -255,98 +255,28 @@ function matchesType(value: string | null | undefined, selected?: string) {
   return !type || value === type;
 }
 
-function matchesActiveStatus(isActive: boolean, selected?: string) {
-  const status = filterValue(selected);
+function filterItems<T>(
+  items: T[],
+  filters: CampusLifeFilters | undefined,
+  config: {
+    typeField: (item: T) => string | null | undefined;
+    searchFields: (item: T) => Array<string | number | null | undefined>;
+    statusCheck: (item: T, status?: string) => boolean;
+  },
+) {
+  return items.filter(
+    (item) =>
+      matchesType(config.typeField(item), filters?.type) &&
+      config.statusCheck(item, filters?.status) &&
+      matchesQuery(config.searchFields(item), filters?.q),
+  );
+}
+
+function statusCheck(isActive: boolean, status?: string) {
   if (!status) return true;
   if (status === "active") return isActive;
   if (status === "inactive") return !isActive;
   return true;
-}
-
-function matchesAccommodationStatus(item: Accommodation, selected?: string) {
-  const status = filterValue(selected);
-  if (!status) return true;
-  if (status === "accepting") return item.is_accepting_applications;
-  if (status === "closed") return !item.is_accepting_applications;
-  return matchesActiveStatus(item.is_active, status);
-}
-
-function filterClubs(items: Club[], filters?: CampusLifeFilters) {
-  return items.filter(
-    (item) =>
-      matchesType(item.club_type, filters?.type) &&
-      matchesActiveStatus(item.is_active, filters?.status) &&
-      matchesQuery(
-        [
-          item.name,
-          item.club_type,
-          item.about,
-          item.mission,
-          item.objectives,
-          item.meeting_schedule,
-        ],
-        filters?.q,
-      ),
-  );
-}
-
-function filterSports(items: SportsFacility[], filters?: CampusLifeFilters) {
-  return items.filter(
-    (item) =>
-      matchesType(item.facility_type, filters?.type) &&
-      matchesActiveStatus(item.is_active, filters?.status) &&
-      matchesQuery(
-        [item.name, item.facility_type, item.location, item.about, ...(item.sport_types ?? [])],
-        filters?.q,
-      ),
-  );
-}
-
-function filterAccommodations(items: Accommodation[], filters?: CampusLifeFilters) {
-  return items.filter(
-    (item) =>
-      matchesType(item.accommodation_type, filters?.type) &&
-      matchesAccommodationStatus(item, filters?.status) &&
-      matchesQuery(
-        [
-          item.name,
-          item.accommodation_type,
-          item.gender,
-          item.about,
-          item.rules,
-          ...(item.amenities ?? []),
-        ],
-        filters?.q,
-      ),
-  );
-}
-
-function filterGovernance(items: StudentGovernance[], filters?: CampusLifeFilters) {
-  return items.filter(
-    (item) =>
-      matchesType(item.governance_type, filters?.type) &&
-      matchesActiveStatus(item.is_active, filters?.status) &&
-      matchesQuery(
-        [
-          item.name,
-          item.acronym,
-          item.governance_type,
-          item.about,
-          item.mandate,
-          item.office_location,
-        ],
-        filters?.q,
-      ),
-  );
-}
-
-function filterArts(items: ArtsCulture[], filters?: CampusLifeFilters) {
-  return items.filter(
-    (item) =>
-      matchesType(item.category, filters?.type) &&
-      matchesActiveStatus(item.is_active, filters?.status) &&
-      matchesQuery([item.title, item.category, item.about], filters?.q),
-  );
 }
 
 function ActionLink({
@@ -975,7 +905,11 @@ function ClubsPage({
   data: CampusLifePageData;
   filters?: CampusLifeFilters;
 }) {
-  const records = filterClubs(data.clubs, filters);
+  const records = filterItems(data.clubs, filters, {
+    typeField: (c) => c.club_type,
+    searchFields: (c) => [c.name, c.club_type, c.about, c.mission, c.objectives, c.meeting_schedule],
+    statusCheck: (c, s) => statusCheck(c.is_active, s),
+  });
   const types = uniqueOptions(data.clubs.map((club) => club.club_type));
   const total = data.totals?.clubs ?? data.clubs.length;
   const perPage = 24;
@@ -1092,7 +1026,11 @@ function SportsPage({
   data: CampusLifePageData;
   filters?: CampusLifeFilters;
 }) {
-  const records = filterSports(data.sports, filters);
+  const records = filterItems(data.sports, filters, {
+    typeField: (s) => s.facility_type,
+    searchFields: (s) => [s.name, s.facility_type, s.location, s.about, ...(s.sport_types ?? [])],
+    statusCheck: (s, st) => statusCheck(s.is_active, st),
+  });
   const total = data.totals?.sports ?? data.sports.length;
   const perPage = 16;
   return (
@@ -1167,7 +1105,16 @@ function AccommodationPage({
   data: CampusLifePageData;
   filters?: CampusLifeFilters;
 }) {
-  const records = filterAccommodations(data.accommodations, filters);
+  const records = filterItems(data.accommodations, filters, {
+    typeField: (a) => a.accommodation_type,
+    searchFields: (a) => [a.name, a.accommodation_type, a.gender, a.about, a.rules, ...(a.amenities ?? [])],
+    statusCheck: (a, s) => {
+      if (!s) return true;
+      if (s === "accepting") return a.is_accepting_applications;
+      if (s === "closed") return !a.is_accepting_applications;
+      return statusCheck(a.is_active, s);
+    },
+  });
   const total = data.totals?.accommodations ?? data.accommodations.length;
   const perPage = 16;
   return (
@@ -1290,7 +1237,11 @@ function StudentLifePage({
   data: CampusLifePageData;
   filters?: CampusLifeFilters;
 }) {
-  const records = filterGovernance(data.governance, filters);
+  const records = filterItems(data.governance, filters, {
+    typeField: (g) => g.governance_type,
+    searchFields: (g) => [g.name, g.acronym, g.governance_type, g.about, g.mandate, g.office_location],
+    statusCheck: (g, s) => statusCheck(g.is_active, s),
+  });
   const total = data.totals?.governance ?? data.governance.length;
   const perPage = 12;
   return (
@@ -1518,7 +1469,11 @@ function GalleryPage({
   data: CampusLifePageData;
   filters?: CampusLifeFilters;
 }) {
-  const records = filterArts(data.arts, filters);
+  const records = filterItems(data.arts, filters, {
+    typeField: (a) => a.category,
+    searchFields: (a) => [a.title, a.category, a.about],
+    statusCheck: (a, s) => statusCheck(a.is_active, s),
+  });
   const total = data.totals?.arts ?? data.arts.length;
   const perPage = 16;
   return (
