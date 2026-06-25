@@ -895,6 +895,43 @@ function visibleStructuredEntries(value: Record<string, unknown>) {
   );
 }
 
+function GallerySection({ data }: { data: ContentDetailData }) {
+  if (data.galleryImages.length === 0) return null;
+
+  return (
+    <ScrollReveal
+      as="section"
+      className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+    >
+      <SectionKicker>Gallery</SectionKicker>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {data.galleryImages.map((image, index) => (
+          <a
+            key={index}
+            href={image.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group relative overflow-hidden rounded-lg border border-slate-200 bg-slate-100 shadow-sm transition hover:shadow-md"
+          >
+            <img
+              src={image.url}
+              alt={image.alt || image.title || `Gallery image ${index + 1}`}
+              className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-105"
+            />
+            {image.title ? (
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/70 to-transparent p-3">
+                <p className="line-clamp-1 text-xs font-semibold text-white">
+                  {image.title}
+                </p>
+              </div>
+            ) : null}
+          </a>
+        ))}
+      </div>
+    </ScrollReveal>
+  );
+}
+
 function DetailBody({ data }: { data: ContentDetailData }) {
   if (data.record.contentKind === "media") {
     return (
@@ -1090,6 +1127,7 @@ export function ContentDetailPage({ data }: { data: ContentDetailData }) {
                 <DetailHero data={data} />
                 <main className="grid min-w-0 gap-5">
                   <DetailBody data={data} />
+                  <GallerySection data={data} />
                   <StructuredContentSection data={data} />
                   <RelatedContentSection data={data} />
                 </main>

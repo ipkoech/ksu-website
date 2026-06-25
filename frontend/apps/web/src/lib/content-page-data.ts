@@ -77,6 +77,14 @@ export type ContentListingData = {
   };
 };
 
+export type GalleryImage = {
+  url: string;
+  title: string;
+  alt?: string;
+  width?: number | null;
+  height?: number | null;
+};
+
 export type ContentDetailData = {
   kind: ContentKind;
   mediaDeskSection?: MediaDeskSection;
@@ -92,6 +100,7 @@ export type ContentDetailData = {
   relatedLinks: ContentPageLink[];
   structuredContent: Record<string, unknown> | null;
   jsonLd: Record<string, unknown>;
+  galleryImages: GalleryImage[];
 };
 
 const nav: ContentPageLink[] = [
@@ -814,6 +823,53 @@ function jsonLd(record: ContentRecord, href: string) {
   return { ...base, "@type": "NewsArticle" };
 }
 
+async function fetchGalleryImages(
+  entityType: string,
+  entityId: string,
+): Promise<GalleryImage[]> {
+  try {
+    const response = await mainApi.get<{
+      data: Array<{
+        media: {
+          public_url?: string | null;
+          cdn_url?: string | null;
+          url?: string;
+          title?: string | null;
+          alt_text?: string | null;
+          width?: number | null;
+          height?: number | null;
+          mime_type?: string;
+        } | null;
+      }>;
+    }>("/api/v1/public/media/links", {
+      entity_type: entityType,
+      entity_id: entityId,
+      role: "gallery",
+    });
+
+    return (response.data ?? [])
+      .filter((item) => item.media)
+      .map((item) => {
+        const m = item.media!;
+        const url =
+          resolvePublicMediaUrl(m.cdn_url) ??
+          resolvePublicMediaUrl(m.public_url) ??
+          resolvePublicMediaUrl(m.url) ??
+          "";
+        return {
+          url,
+          title: m.title || "",
+          alt: m.alt_text ?? undefined,
+          width: m.width,
+          height: m.height,
+        };
+      })
+      .filter((item) => item.url);
+  } catch {
+    return [];
+  }
+}
+
 export async function getContentDetailData(
   kind: ContentKind,
   slugOrId: string,
@@ -831,6 +887,12 @@ export async function getContentDetailData(
     )
     .slice(0, 4);
   const href = recordHref(normalized);
+  const entityType = kind === "blogs" ? "blog" : kind === "media" ? "media" : kind;
+
+  const galleryImages =
+    kind !== "media"
+      ? await fetchGalleryImages(entityType, normalized.id)
+      : [];
 
   return {
     kind,
@@ -847,5 +909,6 @@ export async function getContentDetailData(
     relatedLinks: relatedLinks(normalized),
     structuredContent: structuredContent(normalized),
     jsonLd: jsonLd(normalized, href),
+    galleryImages,
   };
 }
