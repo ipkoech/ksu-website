@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { ContentDetailPage, ContentListingPage } from "@/components/public/content-pages";
+import { pageFromSearchParams } from "@ksu/ui/components";
 import {
   getContentDetailData,
   getMediaDeskListingData,
@@ -31,13 +32,11 @@ export default async function MediaRoutePage({
   const { segments = [] } = await params;
   const query = await searchParams;
   const [section, child, grandchild] = segments;
+  const page = pageFromSearchParams(query);
 
   if (!section) {
-    return (
-      <ContentListingPage
-        data={await getMediaDeskListingData("overview", [], query)}
-      />
-    );
+    const data = await getMediaDeskListingData("overview", [], query, page);
+    return <ContentListingPage data={data} />;
   }
 
   if (!mediaSections.has(section)) {
@@ -50,11 +49,8 @@ export default async function MediaRoutePage({
   const listingSection = section as MediaDeskSection;
 
   if (section === "announcements" && child === "category" && grandchild) {
-    return (
-      <ContentListingPage
-        data={await getMediaDeskListingData(listingSection, ["category", grandchild], query)}
-      />
-    );
+    const data = await getMediaDeskListingData(listingSection, ["category", grandchild], query, page);
+    return <ContentListingPage data={data} />;
   }
 
   if (child && child !== "category" && !(section === "events" && child === "past")) {
@@ -63,13 +59,11 @@ export default async function MediaRoutePage({
     return <ContentDetailPage data={data} />;
   }
 
-  return (
-    <ContentListingPage
-      data={await getMediaDeskListingData(
-        listingSection,
-        child ? [child] : [],
-        query,
-      )}
-    />
+  const data = await getMediaDeskListingData(
+    listingSection,
+    child ? [child] : [],
+    query,
+    page,
   );
+  return <ContentListingPage data={data} />;
 }

@@ -11,7 +11,7 @@ import {
   Newspaper,
 } from "lucide-react";
 import { RichTextRenderer } from "@ksu/ui/rich-text-renderer";
-import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
+import { ListPagination, ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import {
   MediaGalleryBento,
@@ -53,6 +53,14 @@ function SectionKicker({ children }: { children: string }) {
       {children}
     </p>
   );
+}
+
+function listingBaseHref(data: ContentListingData) {
+  const sp = new URLSearchParams();
+  if (data.filters.q) sp.set("q", data.filters.q);
+  if (data.filters.type) sp.set("type", data.filters.type);
+  const search = sp.toString();
+  return `${data.href}${search ? `?${search}` : ""}`;
 }
 
 function ContentImage({
@@ -549,6 +557,13 @@ function MediaDeskStack({ data, records }: { data: ContentListingData; records: 
           No {emptyLabel} records are currently published.
         </article>
       )}
+      <ListPagination
+        page={data.page}
+        totalPages={Math.ceil(data.total / data.perPage)}
+        total={data.total}
+        perPage={data.perPage}
+        baseHref={listingBaseHref(data)}
+      />
     </ScrollReveal>
   );
 }
@@ -733,6 +748,13 @@ export function ContentListingPage({ data }: { data: ContentListingData }) {
                   No records are currently published in this section.
                 </article>
               )}
+              <ListPagination
+                page={data.page}
+                totalPages={Math.ceil(data.total / data.perPage)}
+                total={data.total}
+                perPage={data.perPage}
+                baseHref={listingBaseHref(data)}
+              />
             </ScrollReveal>
           </div>
         </section>

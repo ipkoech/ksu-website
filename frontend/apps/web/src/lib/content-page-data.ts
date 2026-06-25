@@ -69,6 +69,8 @@ export type ContentListingData = {
   categories: ContentPageLink[];
   calendarEvents?: EventRecord[];
   total: number;
+  page: number;
+  perPage: number;
   filters: {
     q?: string;
     type?: string;
@@ -555,6 +557,7 @@ export async function getContentListingData(
   kind: ContentKind,
   segments: string[] = [],
   searchParams: Record<string, string | string[] | undefined> = {},
+  page: number = 1,
 ): Promise<ContentListingData> {
   const [area, slug] = segments;
   const mode: ContentListingMode =
@@ -563,8 +566,10 @@ export async function getContentListingData(
     typeof searchParams.type === "string" ? searchParams.type : undefined;
   const search =
     typeof searchParams.q === "string" ? searchParams.q : undefined;
+  const perPage = kind === "media" ? 24 : 18;
   const listParams: Record<string, string | number | boolean | undefined> = {
-    per_page: kind === "media" ? 24 : 18,
+    per_page: perPage,
+    page,
     search,
   };
 
@@ -619,6 +624,8 @@ export async function getContentListingData(
         eventRecords.total +
         articleRecords.total +
         announcementRecords.total,
+      page: 1,
+      perPage: perPage,
       filters: {
         q: search,
         type: mediaType,
@@ -677,6 +684,8 @@ export async function getContentListingData(
     categories: categoryLinks(allForCategories.records, kind),
     calendarEvents: await getCalendarEvents(),
     total: primary.total,
+    page,
+    perPage,
     filters: {
       q: search,
       type: mediaType,
@@ -694,9 +703,10 @@ export async function getMediaDeskListingData(
   section: MediaDeskSection = "overview",
   segments: string[] = [],
   searchParams: Record<string, string | string[] | undefined> = {},
+  page: number = 1,
 ) {
   if (section === "overview") {
-    return getContentListingData("media", [], searchParams);
+    return getContentListingData("media", [], searchParams, page);
   }
 
   const kind: ContentKind =
@@ -705,7 +715,7 @@ export async function getMediaDeskListingData(
       : section === "gallery"
         ? "media"
         : section;
-  const data = await getContentListingData(kind, segments, searchParams);
+  const data = await getContentListingData(kind, segments, searchParams, page);
   return { ...data, mediaDeskSection: section, nav: mediaDeskNav };
 }
 

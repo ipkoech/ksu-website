@@ -9,6 +9,7 @@ import {
   SecondaryLink,
   StatusMessage,
 } from "../../components/library-ui";
+import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
 import {
   formatDate,
   getLibraryNewsData,
@@ -23,15 +24,22 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 type NewsPageProps = {
-  searchParams?: Promise<{ q?: string }>;
+  searchParams?: Promise<{ q?: string; page?: string }>;
 };
 
 export default async function LibraryNewsPage({ searchParams }: NewsPageProps) {
   const params = (await searchParams) ?? {};
+  const page = pageFromSearchParams(params);
   const { records, query, errors } = await getLibraryNewsData({
     query: params.q,
     perPage: 18,
+    page,
   });
+
+  const totalPages = records.meta
+    ? Math.ceil(records.meta.total / records.meta.per_page)
+    : 1;
+  const newsBaseHref = buildBaseHref("/news", params);
 
   return (
     <LibraryShell>
@@ -84,21 +92,43 @@ export default async function LibraryNewsPage({ searchParams }: NewsPageProps) {
         {records.data.length === 0 ? (
           <StatusMessage>No published news records are available yet.</StatusMessage>
         ) : (
-          <div className="grid gap-5 lg:grid-cols-2">
-            {records.data.map((item) => (
-              <RecordListItem
-                key={item.id}
-                eyebrow={item.category ?? "News"}
-                title={item.title}
-                body={shortText(item.summary ?? item.plain_text ?? item.rich_text ?? item.content)}
-                meta={[formatDate(item.published_at ?? item.created_at), item.is_featured ? "Featured" : null]}
-                href={`/news/${item.slug}`}
-                action="Read update"
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-5 lg:grid-cols-2">
+              {records.data.map((item) => (
+                <RecordListItem
+                  key={item.id}
+                  eyebrow={item.category ?? "News"}
+                  title={item.title}
+                  body={shortText(item.summary ?? item.plain_text ?? item.rich_text ?? item.content)}
+                  meta={[formatDate(item.published_at ?? item.created_at), item.is_featured ? "Featured" : null]}
+                  href={`/news/${item.slug}`}
+                  action="Read update"
+                />
+              ))}
+            </div>
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              total={records.meta?.total ?? records.data.length}
+              perPage={records.meta?.per_page ?? 18}
+              baseHref={newsBaseHref}
+            />
+          </>
         )}
       </LibrarySection>
     </LibraryShell>
   );
+}
+
+function buildBaseHref(
+  path: string,
+  params: Record<string, string | string[] | undefined>,
+) {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (key === "page") continue;
+    if (typeof value === "string" && value) search.set(key, value);
+  }
+  const qs = search.toString();
+  return qs ? `${path}?${qs}` : path;
 }

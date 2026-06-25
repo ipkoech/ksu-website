@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
 import { BookOpenCheck, CalendarDays, Newspaper, Users } from "lucide-react";
+import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
 import { ResearchClusterHero } from "../../components/research-cluster";
 import { ResearchFilterForm } from "../../components/research-listing";
 import { ResearchFact } from "../../components/research-detail";
@@ -60,33 +61,40 @@ export default async function NewsPage({
   searchParams?: Promise<NewsSearchParams>;
 }) {
   const params = (await searchParams) ?? {};
+  const page = pageFromSearchParams(params);
   const sort = params.sort || "published_at";
   const order = sort === "title" ? "asc" : "desc";
   const [updates, articles, allUpdates, allArticles, centers, projects] = await Promise.all([
     params.kind === "articles"
-      ? Promise.resolve({ data: [], error: null })
-      : getUpdatesFiltered({
-          search: params.q,
-          newsType: params.newsType,
-          category: params.category,
-          centerId: params.center,
-          projectId: params.project,
-          year: params.year,
-          sort,
-          order,
-        }),
+      ? Promise.resolve({ data: [], total: 0, perPage: 100, error: null })
+      : getUpdatesFiltered(
+          {
+            search: params.q,
+            newsType: params.newsType,
+            category: params.category,
+            centerId: params.center,
+            projectId: params.project,
+            year: params.year,
+            sort,
+            order,
+          },
+          page,
+        ),
     params.kind === "updates"
-      ? Promise.resolve({ data: [], error: null })
-      : getArticlesFiltered({
-          search: params.q,
-          articleType: params.articleType,
-          category: params.category,
-          centerId: params.center,
-          projectId: params.project,
-          year: params.year,
-          sort,
-          order,
-        }),
+      ? Promise.resolve({ data: [], total: 0, perPage: 100, error: null })
+      : getArticlesFiltered(
+          {
+            search: params.q,
+            articleType: params.articleType,
+            category: params.category,
+            centerId: params.center,
+            projectId: params.project,
+            year: params.year,
+            sort,
+            order,
+          },
+          page,
+        ),
     getUpdates(),
     getArticles(),
     getCenters(),
@@ -94,6 +102,8 @@ export default async function NewsPage({
   ]);
   const categories = getCategories([...allUpdates.data, ...allArticles.data]);
   const years = getYears([...allUpdates.data, ...allArticles.data]);
+  const activeList = params.kind === "articles" ? articles : updates;
+  const totalPages = Math.ceil(activeList.total / activeList.perPage);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
@@ -154,11 +164,20 @@ export default async function NewsPage({
               <Badge>{updates.data.length} published</Badge>
             </div>
             {updates.data.length > 0 ? (
-              <div className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
-                {updates.data.map((record) => (
-                  <UpdateRow key={record.id} record={record} />
-                ))}
-              </div>
+              <>
+                <div className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
+                  {updates.data.map((record) => (
+                    <UpdateRow key={record.id} record={record} />
+                  ))}
+                </div>
+                <ListPagination
+                  page={page}
+                  totalPages={totalPages}
+                  total={updates.total}
+                  perPage={updates.perPage}
+                  baseHref="/news"
+                />
+              </>
             ) : (
               <StatusMessage>No research updates match the current filters.</StatusMessage>
             )}
@@ -179,11 +198,20 @@ export default async function NewsPage({
               <Badge>{articles.data.length} published</Badge>
             </div>
             {articles.data.length > 0 ? (
-              <div className="grid gap-5 lg:grid-cols-3">
-                {articles.data.map((record) => (
-                  <ArticleCard key={record.id} record={record} />
-                ))}
-              </div>
+              <>
+                <div className="grid gap-5 lg:grid-cols-3">
+                  {articles.data.map((record) => (
+                    <ArticleCard key={record.id} record={record} />
+                  ))}
+                </div>
+                <ListPagination
+                  page={page}
+                  totalPages={totalPages}
+                  total={articles.total}
+                  perPage={articles.perPage}
+                  baseHref="/news"
+                />
+              </>
             ) : (
               <StatusMessage>No research articles match the current filters.</StatusMessage>
             )}

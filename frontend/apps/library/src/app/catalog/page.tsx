@@ -13,6 +13,7 @@ import {
   StatusMessage,
 } from "../../components/library-ui";
 import { LibraryFilterToolbar } from "../../components/library-filter-toolbar";
+import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
 import {
   compactText,
   formatLabel,
@@ -59,12 +60,14 @@ const statusOptions = [
 
 export default async function CatalogPage({ searchParams }: CatalogPageProps) {
   const params = (await searchParams) ?? {};
+  const page = pageFromSearchParams(params);
   const { branches, resources, selectedLibraryId, query, resourceType, status } =
     await getCatalogSearchData({
       libraryId: params.branch,
       query: params.q,
       resourceType: params.type,
       status: params.status,
+      page,
     });
   const selectedBranch = branches.data.find(
     (branch) => branch.id === selectedLibraryId,
@@ -78,6 +81,11 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
   const loanableCount = resources.data.filter(
     (resource) => resource.is_loanable,
   ).length;
+
+  const totalPages = resources.meta
+    ? Math.ceil(resources.meta.total / resources.meta.per_page)
+    : 1;
+  const catalogBaseHref = buildBaseHref("/catalog", params);
 
   return (
     <main id="library-main" className="min-h-screen bg-white">
@@ -158,43 +166,52 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
             <SearchTips />
           </div>
         ) : (
-          <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_320px]">
-            <SidePanel title="Refine results" eyebrow="Filters">
-              <div className="flex flex-col gap-3 text-sm leading-6 text-slate-600">
-                <p>Branch: {selectedBranch?.name ?? "All branches"}</p>
-                <p>Type: {resourceType ? formatLabel(resourceType) : "All types"}</p>
-                <p>Status: {status ? formatLabel(status) : "All statuses"}</p>
-                <Link href="/ask" className="inline-flex text-sm font-semibold text-primary">
-                  Ask for catalog help
-                </Link>
+          <>
+            <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_320px]">
+              <SidePanel title="Refine results" eyebrow="Filters">
+                <div className="flex flex-col gap-3 text-sm leading-6 text-slate-600">
+                  <p>Branch: {selectedBranch?.name ?? "All branches"}</p>
+                  <p>Type: {resourceType ? formatLabel(resourceType) : "All types"}</p>
+                  <p>Status: {status ? formatLabel(status) : "All statuses"}</p>
+                  <Link href="/ask" className="inline-flex text-sm font-semibold text-primary">
+                    Ask for catalog help
+                  </Link>
+                </div>
+              </SidePanel>
+              <div className="grid gap-4">
+                {resources.data.map((resource) => (
+                  <CatalogCard key={resource.id} resource={resource} />
+                ))}
               </div>
-            </SidePanel>
-            <div className="grid gap-4">
-              {resources.data.map((resource) => (
-                <CatalogCard key={resource.id} resource={resource} />
-              ))}
-            </div>
 
-            <aside className="flex flex-col gap-5">
-              <MetricStrip
-                items={[
-                  { label: "Available now", value: availableCount },
-                  { label: "Loanable", value: loanableCount },
-                  { label: "Reference only", value: referenceCount },
-                ]}
-              />
-              <SearchTips />
-              {selectedBranch ? (
-                <SidePanel title={selectedBranch.name} eyebrow="Selected branch">
-                  <dl className="mt-4 grid gap-3 text-sm text-slate-600">
-                    <Meta label="Location" value={selectedBranch.address} />
-                    <Meta label="Phone" value={selectedBranch.phone} />
-                    <Meta label="Email" value={selectedBranch.email} />
-                  </dl>
-                </SidePanel>
-              ) : null}
-            </aside>
-          </div>
+              <aside className="flex flex-col gap-5">
+                <MetricStrip
+                  items={[
+                    { label: "Available now", value: availableCount },
+                    { label: "Loanable", value: loanableCount },
+                    { label: "Reference only", value: referenceCount },
+                  ]}
+                />
+                <SearchTips />
+                {selectedBranch ? (
+                  <SidePanel title={selectedBranch.name} eyebrow="Selected branch">
+                    <dl className="mt-4 grid gap-3 text-sm text-slate-600">
+                      <Meta label="Location" value={selectedBranch.address} />
+                      <Meta label="Phone" value={selectedBranch.phone} />
+                      <Meta label="Email" value={selectedBranch.email} />
+                    </dl>
+                  </SidePanel>
+                ) : null}
+              </aside>
+            </div>
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              total={resources.meta?.total ?? resources.data.length}
+              perPage={resources.meta?.per_page ?? 100}
+              baseHref={catalogBaseHref}
+            />
+          </>
         )}
       </LibraryContentBand>
     </main>
@@ -278,4 +295,17 @@ function Meta({
       <dd className="mt-1">{value}</dd>
     </div>
   );
+}
+
+function buildBaseHref(
+  path: string,
+  params: Record<string, string | string[] | undefined>,
+) {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (key === "page") continue;
+    if (typeof value === "string" && value) search.set(key, value);
+  }
+  const qs = search.toString();
+  return qs ? `${path}?${qs}` : path;
 }

@@ -22,7 +22,7 @@ import type {
   SportsFacility,
   StudentGovernance,
 } from "@ksu/api-client";
-import { ScrollReveal } from "@ksu/ui/components";
+import { ListPagination, ScrollReveal } from "@ksu/ui/components";
 import type { CampusLifePageData } from "@/lib/get-campus-life";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
@@ -959,6 +959,15 @@ function ExperiencePanel({
   );
 }
 
+function listingBaseHref(path: string, filters?: CampusLifeFilters) {
+  const sp = new URLSearchParams();
+  if (filters?.q) sp.set("q", filters.q);
+  if (filters?.type) sp.set("type", filters.type);
+  if (filters?.status) sp.set("status", filters.status);
+  const search = sp.toString();
+  return `${path}${search ? `?${search}` : ""}`;
+}
+
 function ClubsPage({
   data,
   filters,
@@ -968,6 +977,8 @@ function ClubsPage({
 }) {
   const records = filterClubs(data.clubs, filters);
   const types = uniqueOptions(data.clubs.map((club) => club.club_type));
+  const total = data.totals?.clubs ?? data.clubs.length;
+  const perPage = 24;
   return (
     <>
       <Section
@@ -979,13 +990,20 @@ function ClubsPage({
           filters={filters}
           typeLabel="Type"
           typeOptions={types}
-          total={data.clubs.length}
+          total={total}
           visible={records.length}
         />
         <RecordGrid
           items={records}
           emptyTitle="No club records are currently published"
           render={(club) => <ClubCard key={club.id} club={club} />}
+        />
+        <ListPagination
+          page={data.page ?? 1}
+          totalPages={Math.ceil(total / perPage)}
+          total={total}
+          perPage={perPage}
+          baseHref={listingBaseHref("/campus-life/clubs", filters)}
         />
       </Section>
       <Section
@@ -1075,6 +1093,8 @@ function SportsPage({
   filters?: CampusLifeFilters;
 }) {
   const records = filterSports(data.sports, filters);
+  const total = data.totals?.sports ?? data.sports.length;
+  const perPage = 16;
   return (
     <>
       <Section
@@ -1086,13 +1106,20 @@ function SportsPage({
           filters={filters}
           typeLabel="Facility type"
           typeOptions={uniqueOptions(data.sports.map((item) => item.facility_type))}
-          total={data.sports.length}
+          total={total}
           visible={records.length}
         />
         <RecordGrid
           items={records}
           emptyTitle="No sports facilities are currently published"
           render={(item) => <SportCard key={item.id} item={item} />}
+        />
+        <ListPagination
+          page={data.page ?? 1}
+          totalPages={Math.ceil(total / perPage)}
+          total={total}
+          perPage={perPage}
+          baseHref={listingBaseHref("/campus-life/sports", filters)}
         />
       </Section>
       <Section
@@ -1141,6 +1168,8 @@ function AccommodationPage({
   filters?: CampusLifeFilters;
 }) {
   const records = filterAccommodations(data.accommodations, filters);
+  const total = data.totals?.accommodations ?? data.accommodations.length;
+  const perPage = 16;
   return (
     <>
       <Section
@@ -1160,13 +1189,20 @@ function AccommodationPage({
             { value: "active", label: "Active" },
             { value: "inactive", label: "Inactive" },
           ]}
-          total={data.accommodations.length}
+          total={total}
           visible={records.length}
         />
         <RecordGrid
           items={records}
           emptyTitle="No accommodation records are currently published"
           render={(item) => <HousingCard key={item.id} item={item} />}
+        />
+        <ListPagination
+          page={data.page ?? 1}
+          totalPages={Math.ceil(total / perPage)}
+          total={total}
+          perPage={perPage}
+          baseHref={listingBaseHref("/campus-life/accommodation", filters)}
         />
       </Section>
       <Section
@@ -1255,6 +1291,8 @@ function StudentLifePage({
   filters?: CampusLifeFilters;
 }) {
   const records = filterGovernance(data.governance, filters);
+  const total = data.totals?.governance ?? data.governance.length;
+  const perPage = 12;
   return (
     <>
       <Section
@@ -1268,13 +1306,20 @@ function StudentLifePage({
           typeOptions={uniqueOptions(
             data.governance.map((item) => item.governance_type),
           )}
-          total={data.governance.length}
+          total={total}
           visible={records.length}
         />
         <RecordGrid
           items={records}
           emptyTitle="No student governance records are currently published"
           render={(item) => <GovernanceCard key={item.id} item={item} />}
+        />
+        <ListPagination
+          page={data.page ?? 1}
+          totalPages={Math.ceil(total / perPage)}
+          total={total}
+          perPage={perPage}
+          baseHref={listingBaseHref("/campus-life/student-life", filters)}
         />
       </Section>
       <Section
@@ -1474,6 +1519,8 @@ function GalleryPage({
   filters?: CampusLifeFilters;
 }) {
   const records = filterArts(data.arts, filters);
+  const total = data.totals?.arts ?? data.arts.length;
+  const perPage = 16;
   return (
     <>
       <Section
@@ -1485,13 +1532,20 @@ function GalleryPage({
           filters={filters}
           typeLabel="Category"
           typeOptions={uniqueOptions(data.arts.map((item) => item.category))}
-          total={data.arts.length}
+          total={total}
           visible={records.length}
         />
         <RecordGrid
           items={records}
           emptyTitle="No gallery records are currently published"
           render={(item) => <ArtCard key={item.id} item={item} />}
+        />
+        <ListPagination
+          page={data.page ?? 1}
+          totalPages={Math.ceil(total / perPage)}
+          total={total}
+          perPage={perPage}
+          baseHref={listingBaseHref("/campus-life/gallery", filters)}
         />
       </Section>
       <Section

@@ -31,7 +31,7 @@ export default async function SustainabilityDetailPage({
   const [partners, activities, outputs] = await Promise.all([
     getSustainabilityPartners(),
     getSustainabilityActivities(),
-    initiative.project_id ? getRelatedOutputs({ projectId: initiative.project_id }) : Promise.resolve({ data: [], error: null }),
+    initiative.project_id ? getRelatedOutputs({ projectId: initiative.project_id }) : Promise.resolve({ data: [], total: 0, perPage: 100, error: null }),
   ]);
 
   return (

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpenCheck, Building2, FlaskConical, GraduationCap, Sprout } from "lucide-react";
+import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
 import { ResearchClusterHero } from "../../components/research-cluster";
 import { ResearchFilterForm } from "../../components/research-listing";
 import { ResearchFact } from "../../components/research-detail";
@@ -85,20 +86,25 @@ export default async function ProjectsPage({
   searchParams?: Promise<ProjectSearchParams>;
 }) {
   const params = (await searchParams) ?? {};
+  const page = pageFromSearchParams(params);
   const [projects, allProjects, centers, programs] = await Promise.all([
-    getProjects({
-      search: params.q,
-      projectType: params.type,
-      status: params.status,
-      centerId: params.center,
-      year: params.year,
-      sort: params.sort || "created_at",
-      order: params.sort === "title" ? "asc" : "desc",
-    }),
+    getProjects(
+      {
+        search: params.q,
+        projectType: params.type,
+        status: params.status,
+        centerId: params.center,
+        year: params.year,
+        sort: params.sort || "created_at",
+        order: params.sort === "title" ? "asc" : "desc",
+      },
+      page,
+    ),
     getProjects(),
     getCenters(),
     getPrograms(),
   ]);
+  const totalPages = Math.ceil(projects.total / projects.perPage);
   const years = getProjectYears(allProjects.data);
 
   return (
@@ -145,11 +151,20 @@ export default async function ProjectsPage({
           ))}
 
         {projects.data.length > 0 ? (
-          <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {projects.data.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
-          </div>
+          <>
+            <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {projects.data.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </div>
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              total={projects.total}
+              perPage={projects.perPage}
+              baseHref="/projects"
+            />
+          </>
         ) : (
           <div className="mt-7">
             <StatusMessage>

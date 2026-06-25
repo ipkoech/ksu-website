@@ -35,7 +35,7 @@ export default async function InnovationDetailPage({
     getCenters(),
     innovation.project_id
       ? getRelatedOutputs({ projectId: innovation.project_id })
-      : Promise.resolve({ data: [], error: null }),
+      : Promise.resolve({ data: [], total: 0, perPage: 100, error: null }),
   ]);
   const project = projects.data.find((item) => item.id === innovation.project_id);
   const center = centers.data.find((item) => item.id === innovation.center_id);

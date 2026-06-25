@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { BarChart3, BookOpenCheck, Database, FlaskConical } from "lucide-react";
+import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
 import { ResearchClusterHero } from "../../components/research-cluster";
 import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
 import { ResearchSection, StatusMessage } from "../../components/research-ui";
@@ -74,21 +75,26 @@ export default async function PublicationsPage({
   searchParams?: Promise<PublicationSearchParams>;
 }) {
   const params = (await searchParams) ?? {};
+  const page = pageFromSearchParams(params);
   const [publications, allPublications, centers, projects] = await Promise.all([
-    getPublicationsFiltered({
-      search: params.q,
-      publicationType: params.type,
-      accessType: params.access,
-      centerId: params.center,
-      projectId: params.project,
-      year: params.year,
-      sort: params.sort || "publication_date",
-      order: params.sort === "title" ? "asc" : "desc",
-    }),
+    getPublicationsFiltered(
+      {
+        search: params.q,
+        publicationType: params.type,
+        accessType: params.access,
+        centerId: params.center,
+        projectId: params.project,
+        year: params.year,
+        sort: params.sort || "publication_date",
+        order: params.sort === "title" ? "asc" : "desc",
+      },
+      page,
+    ),
     getPublications(),
     getCenters(),
     getProjects(),
   ]);
+  const totalPages = Math.ceil(publications.total / publications.perPage);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
@@ -135,31 +141,40 @@ export default async function PublicationsPage({
           ))}
 
         {publications.data.length > 0 ? (
-          <div className="mt-7 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
-            {publications.data.map((publication) => (
-              <ResearchRecordRow
-                key={publication.id}
-                href={publication.slug ? `/publications/${publication.slug}` : "/publications"}
-                title={publication.title}
-                description={
-                  compactText(publication.abstract) ||
-                  [publication.journal_name, publication.publisher, publication.conference_name]
-                    .map(compactText)
-                    .filter(Boolean)
-                    .join(" · ") ||
-                  "Publication abstract is not published yet."
-                }
-                badges={[publication.publication_type, publication.access_type]}
-                filledBadges={[publication.is_open_access ? "Open access" : null]}
-                facts={[
-                  { label: "Published in", value: publication.journal_name || publication.publisher || publication.conference_name || "" },
-                  { label: "Year", value: compactText(publication.year) },
-                  { label: "Date", value: formatDate(publication.publication_date) },
-                  { label: "DOI", value: compactText(publication.doi) },
-                ]}
-              />
-            ))}
-          </div>
+          <>
+            <div className="mt-7 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
+              {publications.data.map((publication) => (
+                <ResearchRecordRow
+                  key={publication.id}
+                  href={publication.slug ? `/publications/${publication.slug}` : "/publications"}
+                  title={publication.title}
+                  description={
+                    compactText(publication.abstract) ||
+                    [publication.journal_name, publication.publisher, publication.conference_name]
+                      .map(compactText)
+                      .filter(Boolean)
+                      .join(" · ") ||
+                    "Publication abstract is not published yet."
+                  }
+                  badges={[publication.publication_type, publication.access_type]}
+                  filledBadges={[publication.is_open_access ? "Open access" : null]}
+                  facts={[
+                    { label: "Published in", value: publication.journal_name || publication.publisher || publication.conference_name || "" },
+                    { label: "Year", value: compactText(publication.year) },
+                    { label: "Date", value: formatDate(publication.publication_date) },
+                    { label: "DOI", value: compactText(publication.doi) },
+                  ]}
+                />
+              ))}
+            </div>
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              total={publications.total}
+              perPage={publications.perPage}
+              baseHref="/publications"
+            />
+          </>
         ) : (
           <div className="mt-7">
             <StatusMessage>No publications match the current filters.</StatusMessage>

@@ -15,6 +15,7 @@ import {
   StatusMessage,
 } from "../../components/library-ui";
 import { LibraryFilterToolbar } from "../../components/library-filter-toolbar";
+import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
 import {
   compactText,
   formatLabel,
@@ -66,10 +67,12 @@ export default async function ElectronicResourcesPage({
   const resourceType = params.type?.trim() ?? "";
   const accessLevel = params.access?.trim() ?? "";
   const featuredOnly = params.featured === "true";
+  const page = pageFromSearchParams(params);
   const resources = await getElectronicResources(query, {
     resourceType,
     accessLevel,
     featured: featuredOnly || undefined,
+    page,
   });
   const featured = resources.data.filter((item) => item.is_featured).slice(0, 3);
   const grouped = groupByLetter(resources.data);
@@ -80,6 +83,11 @@ export default async function ElectronicResourcesPage({
   const offCampusCount = resources.data.filter(
     (item) => item.access_type === "off_campus" || item.access_type === "both",
   ).length;
+
+  const totalPages = resources.meta
+    ? Math.ceil(resources.meta.total / resources.meta.per_page)
+    : 1;
+  const electronicBaseHref = buildBaseHref("/electronic", params);
 
   return (
     <main id="library-main" className="min-h-screen bg-white">
@@ -191,45 +199,54 @@ export default async function ElectronicResourcesPage({
             <AccessHelp />
           </div>
         ) : (
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="flex flex-col gap-8">
-              {grouped.map(([letter, items]) => (
-                <section key={letter} aria-labelledby={`letter-${letter}`}>
-                  <h2
-                    id={`letter-${letter}`}
-                    className="mb-4 border-b border-slate-200 pb-2 text-2xl font-semibold text-slate-950"
-                  >
-                    {letter}
-                  </h2>
-                  <div className="grid gap-5 lg:grid-cols-2">
-                    {items.map((resource) => (
-                      <ResourceCard key={resource.id} resource={resource} />
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
+          <>
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="flex flex-col gap-8">
+                {grouped.map(([letter, items]) => (
+                  <section key={letter} aria-labelledby={`letter-${letter}`}>
+                    <h2
+                      id={`letter-${letter}`}
+                      className="mb-4 border-b border-slate-200 pb-2 text-2xl font-semibold text-slate-950"
+                    >
+                      {letter}
+                    </h2>
+                    <div className="grid gap-5 lg:grid-cols-2">
+                      {items.map((resource) => (
+                        <ResourceCard key={resource.id} resource={resource} />
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
 
-            <aside className="flex flex-col gap-5">
-              <MetricStrip
-                items={[
-                  { label: "Returned", value: resources.data.length },
-                  { label: "Off campus", value: offCampusCount },
-                  { label: "VPN required", value: vpnCount },
-                ]}
-              />
-              <SidePanel title="Remote access" eyebrow="Support">
-                <p className="text-sm leading-7 text-slate-600">
-                  Some platforms require campus network access, VPN, or a personal account.
-                  Use the access notes on each record before opening the provider site.
-                </p>
-                <p className="mt-3 text-sm font-semibold text-slate-950">
-                  {registrationCount} resources require registration.
-                </p>
-              </SidePanel>
-              <AccessHelp />
-            </aside>
-          </div>
+              <aside className="flex flex-col gap-5">
+                <MetricStrip
+                  items={[
+                    { label: "Returned", value: resources.data.length },
+                    { label: "Off campus", value: offCampusCount },
+                    { label: "VPN required", value: vpnCount },
+                  ]}
+                />
+                <SidePanel title="Remote access" eyebrow="Support">
+                  <p className="text-sm leading-7 text-slate-600">
+                    Some platforms require campus network access, VPN, or a personal account.
+                    Use the access notes on each record before opening the provider site.
+                  </p>
+                  <p className="mt-3 text-sm font-semibold text-slate-950">
+                    {registrationCount} resources require registration.
+                  </p>
+                </SidePanel>
+                <AccessHelp />
+              </aside>
+            </div>
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              total={resources.meta?.total ?? resources.data.length}
+              perPage={resources.meta?.per_page ?? 100}
+              baseHref={electronicBaseHref}
+            />
+          </>
         )}
       </LibraryContentBand>
     </main>
@@ -378,4 +395,17 @@ function Meta({
       <dd className="mt-1">{value}</dd>
     </div>
   );
+}
+
+function buildBaseHref(
+  path: string,
+  params: Record<string, string | string[] | undefined>,
+) {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (key === "page") continue;
+    if (typeof value === "string" && value) search.set(key, value);
+  }
+  const qs = search.toString();
+  return qs ? `${path}?${qs}` : path;
 }

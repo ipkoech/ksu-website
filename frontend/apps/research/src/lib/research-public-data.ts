@@ -9,6 +9,8 @@ import type { PublicStatsResponse } from "@ksu/api-client";
 
 export type PublicResearchData<T> = {
   data: T[];
+  total: number;
+  perPage: number;
   error: string | null;
 };
 
@@ -92,17 +94,28 @@ const researchPublicListFields =
 const researchPublicDetailFields = `${researchPublicListFields},background,objectives,methodology,expected_outcomes,impact,deliverables,budget,currency,funder_name,journal_name,publisher,volume,issue,pages,article_number,conference_name,conference_location,conference_date,book_title,editors,edition,isbn,issn,doi,pmid,arxiv_id,is_open_access,impact_factor,quartile,h_index,funding_acknowledgment,contact_email,contact_phone,email,phone,address,location,venue,registration_url,application_url,download_url,file_url,eligibility,requirements,benefits,scope,content,body,rich_text,plain_text,mission,vision,mandate,head_message,office_location,social_links`;
 
 async function safeList<T>(
-  load: () => Promise<{ data?: T[] }>,
+  load: () => Promise<{
+    data?: T[];
+    meta?: { total?: number; per_page?: number };
+  }>,
 ): Promise<PublicResearchData<T>> {
+  const defaults = {
+    data: [] as T[],
+    total: 0,
+    perPage: 100,
+    error: unavailableMessage,
+  };
   const request = load()
-    .then((response) => ({ data: response.data ?? [], error: null }))
-    .catch(() => ({ data: [], error: unavailableMessage }));
+    .then((response) => ({
+      data: response.data ?? [],
+      total: response.meta?.total ?? 0,
+      perPage: response.meta?.per_page ?? 100,
+      error: null,
+    }))
+    .catch(() => ({ ...defaults }));
 
   const timeout = new Promise<PublicResearchData<T>>((resolve) => {
-    setTimeout(
-      () => resolve({ data: [], error: unavailableMessage }),
-      PUBLIC_RESEARCH_TIMEOUT_MS,
-    );
+    setTimeout(() => resolve({ ...defaults }), PUBLIC_RESEARCH_TIMEOUT_MS);
   });
 
   return Promise.race([request, timeout]);
@@ -138,7 +151,10 @@ function uniqueErrors(...items: Array<string | null | undefined>) {
   return Array.from(new Set(items.filter(Boolean) as string[]));
 }
 
-export function getProjects(filters: string | ProjectListFilters = {}) {
+export function getProjects(
+  filters: string | ProjectListFilters = {},
+  page = 1,
+) {
   const params = typeof filters === "string" ? { search: filters } : filters;
 
   return safeList<ResearchProject>(() =>
@@ -154,7 +170,7 @@ export function getProjects(filters: string | ProjectListFilters = {}) {
       order: params.order,
       is_active: true,
       is_public: true,
-      page: 1,
+      page,
       per_page: 100,
     }),
   );
@@ -182,7 +198,10 @@ export function getPublications(search?: string) {
   );
 }
 
-export function getPublicationsFiltered(filters: GenericListFilters = {}) {
+export function getPublicationsFiltered(
+  filters: GenericListFilters = {},
+  page = 1,
+) {
   return safeList<ResearchPublication>(() =>
     researchServiceApi.publications.list({
       fields: researchPublicListFields,
@@ -197,7 +216,7 @@ export function getPublicationsFiltered(filters: GenericListFilters = {}) {
       order: filters.order,
       is_active: true,
       is_public: true,
-      page: 1,
+      page,
       per_page: 100,
     }),
   );
@@ -1004,7 +1023,10 @@ export function getArticles() {
   );
 }
 
-export function getArticlesFiltered(filters: GenericListFilters = {}) {
+export function getArticlesFiltered(
+  filters: GenericListFilters = {},
+  page = 1,
+) {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.articles.list({
       fields: researchPublicListFields,
@@ -1019,7 +1041,7 @@ export function getArticlesFiltered(filters: GenericListFilters = {}) {
       order: filters.order,
       is_active: true,
       is_public: true,
-      page: 1,
+      page,
       per_page: 100,
     }),
   );
@@ -1248,7 +1270,10 @@ export function getUpdates() {
   );
 }
 
-export function getUpdatesFiltered(filters: GenericListFilters = {}) {
+export function getUpdatesFiltered(
+  filters: GenericListFilters = {},
+  page = 1,
+) {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.news.list({
       fields: researchPublicListFields,
@@ -1263,7 +1288,7 @@ export function getUpdatesFiltered(filters: GenericListFilters = {}) {
       order: filters.order,
       is_active: true,
       is_public: true,
-      page: 1,
+      page,
       per_page: 100,
     }),
   );
