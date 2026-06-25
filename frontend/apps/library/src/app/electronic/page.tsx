@@ -80,7 +80,6 @@ export default async function ElectronicResourcesPage({
   const offCampusCount = resources.data.filter(
     (item) => item.access_type === "off_campus" || item.access_type === "both",
   ).length;
-  const hasFilters = Boolean(query || resourceType || accessLevel || featuredOnly);
 
   return (
     <main id="library-main" className="min-h-screen bg-white">

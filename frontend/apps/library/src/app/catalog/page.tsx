@@ -78,7 +78,6 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
   const loanableCount = resources.data.filter(
     (resource) => resource.is_loanable,
   ).length;
-  const hasFilters = Boolean(query || resourceType || status);
 
   return (
     <main id="library-main" className="min-h-screen bg-white">
