@@ -83,7 +83,7 @@ export function ResearchImmersiveHero({
       onFocus={() => setIsPaused(true)}
       onBlur={() => setIsPaused(false)}
     >
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={activeSlide.id}
           className="absolute inset-0"
@@ -109,7 +109,7 @@ export function ResearchImmersiveHero({
       <div className="relative z-10 mx-auto flex min-h-[inherit] w-full max-w-[1680px] flex-col justify-end px-4 py-7 sm:px-6 lg:px-8 lg:py-10 xl:px-10 2xl:px-12">
         {breadcrumbs.length > 0 ? <HeroBreadcrumbs items={breadcrumbs} /> : null}
 
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={`${activeSlide.id}-content`}
             className="max-w-4xl pb-4 pt-16 sm:pt-20 lg:pb-8"
@@ -159,7 +159,7 @@ export function ResearchImmersiveHero({
           <motion.div
             key={`${activeSlide.id}-stats`}
             className="mb-2 grid max-w-5xl grid-cols-2 overflow-hidden rounded-lg border border-white/15 bg-white/10 backdrop-blur xl:grid-cols-4"
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+            initial={false}
             animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
             transition={{
               delay: prefersReducedMotion ? 0 : 0.08,
