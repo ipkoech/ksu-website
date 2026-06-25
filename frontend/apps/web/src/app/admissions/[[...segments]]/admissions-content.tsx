@@ -1374,321 +1374,101 @@ function TaskCard({
   );
 }
 
-function UndergraduateSections() {
+type ProgramLevelConfig = {
+  sectionTitle: string; sectionBody: string;
+  tableHeaders: string[]; tableRows: TableRow[];
+  prepTitle: string; prepBody: string; checklistItems: string[];
+  resourceLinks: { title: string; href: string; description: string; icon: LucideIcon }[];
+};
+
+const programLevelConfigs: Record<string, ProgramLevelConfig> = {
+  undergraduate: {
+    sectionTitle: "Undergraduate admission routes", sectionBody: "Undergraduate applicants may enter through certificate, diploma, bachelor's degree, KUCCPS placement, or self-sponsored direct application pathways.",
+    tableHeaders: ["Minimum route", "Who it serves", "Before applying"], tableRows: requirementRows.slice(0, 3),
+    prepTitle: "What undergraduate applicants should have ready", prepBody: "Prepare a complete file before opening the portal so the application is not delayed by missing academic or identity records.",
+    checklistItems: ["KCSE certificate or equivalent qualification records.", "Certificate, diploma, HND, or A-Level evidence for progression routes.", "National ID, passport, or applicant identity details requested by the portal.", "Programme choice checked against the course booklet and programme pages.", "Payment evidence only after confirming official payment instructions.", "KUCCPS placement details where the applicant is government-sponsored."],
+    resourceLinks: [{ title: "Undergraduate admission page", href: officialLinks.undergraduate, description: "General criteria for certificates, diplomas, and bachelor's degrees.", icon: GraduationCap }, { title: "Course booklet", href: officialLinks.brochurePdf, description: "Programme requirements, study modes, duration, and tuition references.", icon: BookOpenCheck }, { title: "Undergraduate form", href: officialLinks.undergraduateForm, description: "Use only when the current route asks for a downloadable form.", icon: FileText }],
+  },
+  diploma: {
+    sectionTitle: "Diploma entry routes and application checks", sectionBody: "Diploma applicants should confirm the exact programme, school, minimum grade, progression route, and intake before submitting an application.",
+    tableHeaders: ["Minimum route", "Progression option", "Before applying"], tableRows: [{ label: "Diploma", cells: ["KCSE C or equivalent", "KCSE C- with a relevant certificate may be considered", "Check course-specific subject requirements and professional rules"] }, { label: "Professional diploma", cells: ["May require higher grades or regulator-specific conditions", "Prior certificate or experiential-learning routes may apply only where published", "Verify against the current course booklet and programme page"] }],
+    prepTitle: "Prepare a complete application file", prepBody: "Diploma applications should be submitted only after the applicant has matched the programme to the current requirements and official intake.",
+    checklistItems: ["KCSE certificate or equivalent academic record.", "Relevant certificate evidence for certificate-to-diploma progression routes.", "Programme requirements checked in the course booklet.", "Identity details requested by the official application portal.", "Payment instructions confirmed from official university records.", "Open intake verified before submission."],
+    resourceLinks: [{ title: "Apply online", href: officialLinks.onlineApplication, description: "Submit or continue a diploma application through the official system.", icon: ClipboardCheck }, { title: "Diploma application page", href: officialLinks.diploma, description: "Open the current official diploma application resource.", icon: FileText }, { title: "Course booklet", href: officialLinks.brochurePdf, description: "Check diploma programme details, duration, study mode, and fees.", icon: BookOpenCheck }],
+  },
+  "certificate-bridging": {
+    sectionTitle: "Certificate courses and bridging pathways", sectionBody: "Certificate and bridging applicants should confirm the approved pathway, minimum academic record, and target progression before applying.",
+    tableHeaders: ["Typical route", "Purpose", "Before applying"], tableRows: [{ label: "Certificate", cells: ["KCSE C- or equivalent for many certificate routes", "Entry into foundational or professional training", "Check the specific certificate course requirements"] }, { label: "Bridging", cells: ["Prior qualification plus a published bridging need", "Qualification upgrade or subject preparation", "Confirm that the bridging pathway is currently advertised"] }],
+    prepTitle: "What certificate and bridging applicants should prepare", prepBody: "These routes are often programme-specific, so the published course record and intake notice matter more than a general summary.",
+    checklistItems: ["KCSE, O-Level, A-Level, or equivalent academic record.", "Prior certificate or diploma evidence where bridging depends on progression.", "Target programme checked against the course booklet.", "Approved bridging pathway confirmed before payment.", "Official intake and deadline verified through the application portal.", "Any school-specific instructions or attachments prepared."],
+    resourceLinks: [{ title: "Apply online", href: officialLinks.onlineApplication, description: "Submit or continue an application through the official system.", icon: ClipboardCheck }, { title: "Certificate/bridging page", href: officialLinks.certificate, description: "Open the legacy official certificate and bridging admission resource.", icon: FileText }, { title: "Course booklet", href: officialLinks.brochurePdf, description: "Check certificate programmes, bridging context, requirements, and duration.", icon: BookOpenCheck }],
+  },
+  postgraduate: {
+    sectionTitle: "Postgraduate study routes and records", sectionBody: "Graduate applicants should match the programme level with academic records, transcripts, research interests, and any programme-specific requirements.",
+    tableHeaders: ["Typical minimum", "Required preparation", "Official check"], tableRows: requirementRows.slice(3),
+    prepTitle: "Prepare certified academic records before applying", prepBody: "Postgraduate applications are more document-heavy than undergraduate routes, especially where transcripts, referee forms, proposals, or foreign qualification checks are required.",
+    checklistItems: ["Certified degree certificates and transcripts.", "KCSE, O-Level, or A-Level certificates where the route asks for them.", "Research proposal for PhD or research-intensive programmes where required.", "Referee forms or professional evidence when requested by the school.", "Accreditation evidence for foreign university qualifications where required.", "English translations and language evidence for non-English records."],
+    resourceLinks: [],
+  },
+  international: {
+    sectionTitle: "Prepare qualifications, identity, and arrival records", sectionBody: "International applicants use the same official application controls but should prepare additional qualification and immigration documentation before submitting.",
+    tableHeaders: [], tableRows: [],
+    prepTitle: "Plan academics and student life together", prepBody: "Before arrival, review the academic school, student support, official portal, and campus-life information so registration and reporting are predictable.",
+    checklistItems: ["Certified academic certificates and transcripts for the intended level of study.", "Evidence that foreign university qualifications come from accredited institutions where required.", "English translations for academic records issued in another language.", "Proof of English proficiency where requested for non-English-speaking education systems.", "Passport details and any immigration documentation requested during admission.", "Programme, fee, reporting, and accommodation planning before travel."],
+    resourceLinks: [{ title: "Academic schools", href: officialLinks.schoolsDepartments, description: "Review the schools and departments that host programmes.", icon: Landmark }, { title: "Campus life", href: "/campus-life", description: "Student support, accommodation context, activities, and services.", icon: Users }, { title: "International admission page", href: officialLinks.international, description: "Open the current official page for international applicants.", icon: Compass }],
+  },
+};
+
+function ProgramLevelSection({ area }: { area: string }) {
+  const config = programLevelConfigs[area];
+  if (!config) return null;
+
+  const isInternational = area === "international";
+  const hasTable = config.tableRows.length > 0;
+  const hasResources = config.resourceLinks.length > 0;
+
+  const resourceEyebrow = area === "undergraduate" ? "Official Undergraduate Resources"
+    : area === "international" ? "Arrival Context"
+    : area === "certificate-bridging" ? "Resources"
+    : `${area.charAt(0).toUpperCase() + area.slice(1)} Resources`;
+
+  const resourceTitle = area === "undergraduate" ? "Forms, booklet, and programme pages"
+    : area === "certificate-bridging" ? "Official certificate and bridging references"
+    : area === "international" ? "Plan academics and student life together"
+    : `Official ${area} references`;
+
+  const resourceBody = area === "certificate-bridging" ? "Use the university application system for live submission and current availability."
+    : "Use the local records and official resources together so applicants do not rely on outdated shared links.";
+
   return (
     <>
-      <Section
-        eyebrow="Entry Pathways"
-        title="Undergraduate admission routes"
-        body="Undergraduate applicants may enter through certificate, diploma, bachelor's degree, KUCCPS placement, or self-sponsored direct application pathways."
-      >
-        <ComparisonTable
-          headers={["Minimum route", "Who it serves", "Before applying"]}
-          rows={requirementRows.slice(0, 3)}
-        />
-      </Section>
+      {hasTable ? (
+        <Section eyebrow="Entry Pathways" title={config.sectionTitle} body={config.sectionBody}>
+          <ComparisonTable headers={config.tableHeaders} rows={config.tableRows} />
+        </Section>
+      ) : (
+        <Section eyebrow={isInternational ? "International Preparation" : "Entry Pathways"} title={config.sectionTitle} body={config.sectionBody}>
+          <CheckList items={config.checklistItems} />
+        </Section>
+      )}
 
-      <Section
-        eyebrow="Preparation"
-        title="What undergraduate applicants should have ready"
-        body="Prepare a complete file before opening the portal so the application is not delayed by missing academic or identity records."
-        dark
-      >
-        <CheckList
-          dark
-          items={[
-            "KCSE certificate or equivalent qualification records.",
-            "Certificate, diploma, HND, or A-Level evidence for progression routes.",
-            "National ID, passport, or applicant identity details requested by the portal.",
-            "Programme choice checked against the course booklet and programme pages.",
-            "Payment evidence only after confirming official payment instructions.",
-            "KUCCPS placement details where the applicant is government-sponsored.",
-          ]}
-        />
-      </Section>
+      {hasTable ? (
+        <Section eyebrow={area === "postgraduate" ? "Documents" : "Preparation"} title={config.prepTitle} body={config.prepBody} dark>
+          <CheckList dark items={config.checklistItems} />
+        </Section>
+      ) : null}
 
-      <Section
-        eyebrow="Official Undergraduate Resources"
-        title="Forms, booklet, and programme pages"
-        body="Use these resources only as official references; requirements and application channels can change by intake."
-      >
-        <LinkPanel
-          links={[
-            {
-              title: "Undergraduate admission page",
-              href: officialLinks.undergraduate,
-              description: "General criteria for certificates, diplomas, and bachelor's degrees.",
-              icon: GraduationCap,
-            },
-            {
-              title: "Course booklet",
-              href: officialLinks.brochurePdf,
-              description: "Programme requirements, study modes, duration, and tuition references.",
-              icon: BookOpenCheck,
-            },
-            {
-              title: "Undergraduate form",
-              href: officialLinks.undergraduateForm,
-              description: "Use only when the current route asks for a downloadable form.",
-              icon: FileText,
-            },
-          ]}
-        />
-      </Section>
-    </>
-  );
-}
+      {hasResources && !isInternational ? (
+        <Section eyebrow={resourceEyebrow} title={resourceTitle} body={resourceBody}>
+          <LinkPanel links={config.resourceLinks.map((l) => ({ ...l }))} />
+        </Section>
+      ) : null}
 
-function DiplomaSections() {
-  return (
-    <>
-      <Section
-        eyebrow="Diploma Applications"
-        title="Diploma entry routes and application checks"
-        body="Diploma applicants should confirm the exact programme, school, minimum grade, progression route, and intake before submitting an application."
-      >
-        <ComparisonTable
-          headers={["Minimum route", "Progression option", "Before applying"]}
-          rows={[
-            {
-              label: "Diploma",
-              cells: [
-                "KCSE C or equivalent",
-                "KCSE C- with a relevant certificate may be considered",
-                "Check course-specific subject requirements and professional rules",
-              ],
-            },
-            {
-              label: "Professional diploma",
-              cells: [
-                "May require higher grades or regulator-specific conditions",
-                "Prior certificate or experiential-learning routes may apply only where published",
-                "Verify against the current course booklet and programme page",
-              ],
-            },
-          ]}
-        />
-      </Section>
-
-      <Section
-        eyebrow="Diploma File"
-        title="Prepare a complete application file"
-        body="Diploma applications should be submitted only after the applicant has matched the programme to the current requirements and official intake."
-        dark
-      >
-        <CheckList
-          dark
-          items={[
-            "KCSE certificate or equivalent academic record.",
-            "Relevant certificate evidence for certificate-to-diploma progression routes.",
-            "Programme requirements checked in the course booklet.",
-            "Identity details requested by the official application portal.",
-            "Payment instructions confirmed from official university records.",
-            "Open intake verified before submission.",
-          ]}
-        />
-      </Section>
-
-      <Section
-        eyebrow="Diploma Resources"
-        title="Official diploma references"
-        body="Use the local records and official resources together so applicants do not rely on outdated shared links."
-      >
-        <LinkPanel
-          links={[
-            {
-              title: "Apply online",
-              href: officialLinks.onlineApplication,
-              description: "Submit or continue a diploma application through the official system.",
-              icon: ClipboardCheck,
-            },
-            {
-              title: "Diploma application page",
-              href: officialLinks.diploma,
-              description: "Open the legacy official diploma admission resource.",
-              icon: FileText,
-            },
-            {
-              title: "Course booklet",
-              href: officialLinks.brochurePdf,
-              description: "Check diploma programmes, requirements, duration, and fee references.",
-              icon: BookOpenCheck,
-            },
-          ]}
-        />
-      </Section>
-    </>
-  );
-}
-
-function CertificateBridgingSections() {
-  return (
-    <>
-      <Section
-        eyebrow="Certificate And Bridging"
-        title="Certificate courses and bridging pathways"
-        body="Certificate and bridging applicants should confirm the approved pathway, minimum academic record, and target progression before applying."
-      >
-        <ComparisonTable
-          headers={["Typical route", "Purpose", "Before applying"]}
-          rows={[
-            {
-              label: "Certificate",
-              cells: [
-                "KCSE C- or equivalent for many certificate routes",
-                "Entry into foundational or professional training",
-                "Check the specific certificate course requirements",
-              ],
-            },
-            {
-              label: "Bridging",
-              cells: [
-                "Prior qualification plus a published bridging need",
-                "Qualification upgrade or subject preparation",
-                "Confirm that the bridging pathway is currently advertised",
-              ],
-            },
-          ]}
-        />
-      </Section>
-
-      <Section
-        eyebrow="Preparation"
-        title="What certificate and bridging applicants should prepare"
-        body="These routes are often programme-specific, so the published course record and intake notice matter more than a general summary."
-        dark
-      >
-        <CheckList
-          dark
-          items={[
-            "KCSE, O-Level, A-Level, or equivalent academic record.",
-            "Prior certificate or diploma evidence where bridging depends on progression.",
-            "Target programme checked against the course booklet.",
-            "Approved bridging pathway confirmed before payment.",
-            "Official intake and deadline verified through the application portal.",
-            "Any school-specific instructions or attachments prepared.",
-          ]}
-        />
-      </Section>
-
-      <Section
-        eyebrow="Resources"
-        title="Official certificate and bridging references"
-        body="Use the university application system for live submission and current availability."
-      >
-        <LinkPanel
-          links={[
-            {
-              title: "Apply online",
-              href: officialLinks.onlineApplication,
-              description: "Submit or continue an application through the official system.",
-              icon: ClipboardCheck,
-            },
-            {
-              title: "Certificate/bridging page",
-              href: officialLinks.certificate,
-              description: "Open the legacy official certificate and bridging admission resource.",
-              icon: FileText,
-            },
-            {
-              title: "Course booklet",
-              href: officialLinks.brochurePdf,
-              description: "Check certificate programmes, bridging context, requirements, and duration.",
-              icon: BookOpenCheck,
-            },
-          ]}
-        />
-      </Section>
-    </>
-  );
-}
-
-function PostgraduateSections() {
-  return (
-    <>
-      <Section
-        eyebrow="Graduate Levels"
-        title="Postgraduate study routes and records"
-        body="Graduate applicants should match the programme level with academic records, transcripts, research interests, and any programme-specific requirements."
-      >
-        <ComparisonTable
-          headers={["Typical minimum", "Required preparation", "Official check"]}
-          rows={requirementRows.slice(3)}
-        />
-      </Section>
-
-      <Section
-        eyebrow="Documents"
-        title="Prepare certified academic records before applying"
-        body="Postgraduate applications are more document-heavy than undergraduate routes, especially where transcripts, referee forms, proposals, or foreign qualification checks are required."
-        dark
-      >
-        <CheckList
-          dark
-          items={[
-            "Certified degree certificates and transcripts.",
-            "KCSE, O-Level, or A-Level certificates where the route asks for them.",
-            "Research proposal for PhD or research-intensive programmes where required.",
-            "Referee forms or professional evidence when requested by the school.",
-            "Accreditation evidence for foreign university qualifications where required.",
-            "English translations and language evidence for non-English records.",
-          ]}
-        />
-      </Section>
-    </>
-  );
-}
-
-function InternationalSections() {
-  return (
-    <>
-      <Section
-        eyebrow="International Preparation"
-        title="Prepare qualifications, identity, and arrival records"
-        body="International applicants use the same official application controls but should prepare additional qualification and immigration documentation before submitting."
-      >
-        <CheckList
-          items={[
-            "Certified academic certificates and transcripts for the intended level of study.",
-            "Evidence that foreign university qualifications come from accredited institutions where required.",
-            "English translations for academic records issued in another language.",
-            "Proof of English proficiency where requested for non-English-speaking education systems.",
-            "Passport details and any immigration documentation requested during admission.",
-            "Programme, fee, reporting, and accommodation planning before travel.",
-          ]}
-        />
-      </Section>
-
-      <Section
-        eyebrow="Arrival Context"
-        title="Plan academics and student life together"
-        body="Before arrival, review the academic school, student support, official portal, and campus-life information so registration and reporting are predictable."
-        dark
-      >
-        <LinkPanel
-          dark
-          links={[
-            {
-              title: "Academic schools",
-              href: officialLinks.schoolsDepartments,
-              description: "Review the schools and departments that host programmes.",
-              icon: Landmark,
-            },
-            {
-              title: "Campus life",
-              href: "/campus-life",
-              description: "Student support, accommodation context, activities, and services.",
-              icon: Users,
-            },
-            {
-              title: "International admission page",
-              href: officialLinks.international,
-              description: "Open the current official page for international applicants.",
-              icon: Compass,
-            },
-          ]}
-        />
-      </Section>
+      {isInternational ? (
+        <Section eyebrow={resourceEyebrow} title={resourceTitle} body={resourceBody} dark>
+          <LinkPanel dark links={config.resourceLinks.map((l) => ({ ...l }))} />
+        </Section>
+      ) : null}
     </>
   );
 }
@@ -1955,97 +1735,41 @@ function ResourceRecords({
   );
 }
 
-function BrochuresSections({ data }: { data: AdmissionsPageData }) {
-  const records = recordsForContentTypes(data, ["brochure"]);
+const resourceSectionConfigs: Record<string, { contentTypes: string[]; darkBody: string; fallbackLinks: RouteLink[] }> = {
+  brochures: {
+    contentTypes: ["brochure"],
+    darkBody: "Brochures are planning references. Applicants should still verify live intakes, requirements, fees, and application status in the official admissions portal.",
+    fallbackLinks: [
+      { title: "Course booklet PDF", href: officialLinks.brochurePdf, description: "Open the official course brochure PDF for programme-level guidance.", icon: BookOpenCheck },
+      { title: "Programmes", href: "/academics/programmes", description: "Browse programme records in the current implementation.", icon: Search },
+      { title: "Downloads", href: "/downloads", description: "Check the public downloads index for forms and documents.", icon: FileText },
+    ],
+  },
+  booklets: {
+    contentTypes: ["booklet", "brochure"],
+    darkBody: "Booklets can summarize many admissions details. Always confirm live deadlines, fee instructions, and programme availability before submitting or paying.",
+    fallbackLinks: [
+      { title: "Course booklet PDF", href: officialLinks.brochurePdf, description: "Open the official course booklet and admissions reference.", icon: Library },
+      { title: "Admissions", href: "/admissions", description: "Return to the admissions overview and application routes.", icon: GraduationCap },
+      { title: "Downloads", href: "/downloads", description: "Check public downloads for additional booklets and forms.", icon: FileText },
+    ],
+  },
+  "graduation-booklets": {
+    contentTypes: ["graduation"],
+    darkBody: "Graduation booklet links and ceremony instructions are time-sensitive. Graduands should verify clearance, names, awards, and ceremony instructions against the latest official notice.",
+    fallbackLinks: [
+      { title: "15th Graduation Booklet 2026", href: "https://kisiiuniversity.ac.ke/admission/kisii-university-15th-graduation-booklet-2026", description: "Open the current live-site booklet reference while local records are populated.", icon: GraduationCap },
+      { title: "Announcements", href: "/media/announcements", description: "Check official notices for graduation updates and deadlines.", icon: FileText },
+      { title: "Events", href: "/media/events", description: "Browse ceremony and university event records.", icon: CalendarDays },
+    ],
+  },
+};
 
-  return (
-    <ResourceRecords
-      records={records}
-      darkBody="Brochures are planning references. Applicants should still verify live intakes, requirements, fees, and application status in the official admissions portal."
-      fallbackLinks={[
-        {
-          title: "Course booklet PDF",
-          href: officialLinks.brochurePdf,
-          description: "Open the official course brochure PDF for programme-level guidance.",
-          icon: BookOpenCheck,
-        },
-        {
-          title: "Programmes",
-          href: "/academics/programmes",
-          description: "Browse programme records in the current implementation.",
-          icon: Search,
-        },
-        {
-          title: "Downloads",
-          href: "/downloads",
-          description: "Check the public downloads index for forms and documents.",
-          icon: FileText,
-        },
-      ]}
-    />
-  );
-}
-
-function BookletsSections({ data }: { data: AdmissionsPageData }) {
-  const records = recordsForContentTypes(data, ["booklet", "brochure"]);
-
-  return (
-    <ResourceRecords
-      records={records}
-      darkBody="Booklets can summarize many admissions details. Always confirm live deadlines, fee instructions, and programme availability before submitting or paying."
-      fallbackLinks={[
-        {
-          title: "Course booklet PDF",
-          href: officialLinks.brochurePdf,
-          description: "Open the official course booklet and admissions reference.",
-          icon: Library,
-        },
-        {
-          title: "Admissions",
-          href: "/admissions",
-          description: "Return to the admissions overview and application routes.",
-          icon: GraduationCap,
-        },
-        {
-          title: "Downloads",
-          href: "/downloads",
-          description: "Check public downloads for additional booklets and forms.",
-          icon: FileText,
-        },
-      ]}
-    />
-  );
-}
-
-function GraduationBookletsSections({ data }: { data: AdmissionsPageData }) {
-  const records = recordsForContentTypes(data, ["graduation"]);
-
-  return (
-    <ResourceRecords
-      records={records}
-      darkBody="Graduation booklet links and ceremony instructions are time-sensitive. Graduands should verify clearance, names, awards, and ceremony instructions against the latest official notice."
-      fallbackLinks={[
-        {
-          title: "15th Graduation Booklet 2026",
-          href: "https://kisiiuniversity.ac.ke/admission/kisii-university-15th-graduation-booklet-2026",
-          description: "Open the current live-site booklet reference while local records are populated.",
-          icon: GraduationCap,
-        },
-        {
-          title: "Announcements",
-          href: "/media/announcements",
-          description: "Check official notices for graduation updates and deadlines.",
-          icon: FileText,
-        },
-        {
-          title: "Events",
-          href: "/media/events",
-          description: "Browse ceremony and university event records.",
-          icon: CalendarDays,
-        },
-      ]}
-    />
-  );
+function ResourceRecordsSection({ area, data }: { area: string; data: AdmissionsPageData }) {
+  const config = resourceSectionConfigs[area];
+  if (!config) return null;
+  const records = recordsForContentTypes(data, config.contentTypes);
+  return <ResourceRecords records={records} darkBody={config.darkBody} fallbackLinks={config.fallbackLinks} />;
 }
 
 function IntakeDetailSections({
@@ -2298,18 +2022,12 @@ function ContentByArea({
   intake?: AdmissionsIntakeSummary;
   record?: AdmissionsInfoSummary;
 }) {
-  if (area === "undergraduate") return <UndergraduateSections />;
-  if (area === "diploma") return <DiplomaSections />;
-  if (area === "certificate-bridging") return <CertificateBridgingSections />;
-  if (area === "postgraduate") return <PostgraduateSections />;
-  if (area === "international") return <InternationalSections />;
+  if (area === "undergraduate" || area === "diploma" || area === "certificate-bridging" || area === "postgraduate" || area === "international") return <ProgramLevelSection area={area} />;
   if (area === "requirements") return <RequirementsSections />;
   if (area === "fees") return <FeesSections />;
   if (area === "scholarships") return <ScholarshipsSections />;
   if (area === "how-to-apply") return <HowToApplySections data={data} />;
-  if (area === "brochures") return <BrochuresSections data={data} />;
-  if (area === "booklets") return <BookletsSections data={data} />;
-  if (area === "graduation-booklets") return <GraduationBookletsSections data={data} />;
+  if (area === "brochures" || area === "booklets" || area === "graduation-booklets") return <ResourceRecordsSection area={area} data={data} />;
   if (area === "intakes") return <IntakesSections data={data} />;
   if (area === "intake-detail") return <IntakeDetailSections intake={intake} />;
   if (area === "record") return <RecordSections record={record} />;
