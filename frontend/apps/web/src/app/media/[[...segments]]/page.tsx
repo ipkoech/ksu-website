@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ContentDetailPage, ContentListingPage } from "@/components/public/content-pages";
 import { pageFromSearchParams } from "@ksu/ui/components";
 import {
@@ -13,12 +13,10 @@ const mediaSections = new Set([
   "events",
   "articles",
   "announcements",
-  "gallery",
 ]);
 
 function kindForSection(section: string): ContentKind {
   if (section === "articles") return "blogs";
-  if (section === "gallery") return "media";
   return section as ContentKind;
 }
 
@@ -33,6 +31,13 @@ export default async function MediaRoutePage({
   const query = await searchParams;
   const [section, child, grandchild] = segments;
   const page = pageFromSearchParams(query);
+
+  if (section === "gallery") {
+    if (child) {
+      redirect(`/media/gallery/${child}`);
+    }
+    throw redirect(`/media/gallery${query.q ? `?q=${encodeURIComponent(String(query.q))}` : ""}`);
+  }
 
   if (!section) {
     const data = await getMediaDeskListingData("overview", [], query, page);
