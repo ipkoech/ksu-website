@@ -18,10 +18,12 @@ from app.models import (
     Partner,
     Publication,
     PublicationAuthor,
+    ResearchBoard,
     Consultancy,
     ResearchCenter,
     ResearchEvent,
     ResearchNews,
+    ResearchOffice,
     ResearchOutput,
     ResearchProgram,
     ResearchProject,
@@ -33,6 +35,89 @@ from app.schemas.base import slugify
 ModelT = TypeVar("ModelT")
 
 NOW = datetime.now(timezone.utc)
+
+REIRM_ABOUT = (
+    "The Department of Research, Extension, Innovation, and Resource Mobilization (REIRM) is the "
+    "engine of knowledge preservation, creation, and societal impact at Kisii University. Its "
+    "identity is borderless and inclusive, grounded in the belief that research and innovation are "
+    "vital bridges connecting scholarly excellence to tangible global progress."
+)
+
+REIRM_PILLARS: list[dict[str, str]] = [
+    {
+        "title": "Research, Innovation & Commercialisation",
+        "description": (
+            "Cultivates curiosity-driven and solution-oriented inquiry across Health, Agriculture, "
+            "Applied Sciences, Environmental Conservation, ICT, Socio-Economics, Law, Education, "
+            "and Culture, while translating discoveries into practical technologies and enterprises."
+        ),
+    },
+    {
+        "title": "Extension & Community Engagement",
+        "description": (
+            "Fosters reciprocal relationships between the university, industry, and communities so "
+            "research is co-created and responsive to local and global challenges. The office also "
+            "champions environmental sustainability through tree planting and reforestation drives, "
+            "climate-smart agriculture demonstrations, biodiversity awareness programs, and local "
+            "capacity building for long-term environmental stewardship."
+        ),
+    },
+    {
+        "title": "Strategic Partnerships & Collaborations",
+        "description": (
+            "Forges robust linkages with international and local universities, industry, and "
+            "development partners to support joint research, exchanges, and shared resources."
+        ),
+    },
+    {
+        "title": "Capacity Building & Knowledge Dissemination",
+        "description": (
+            "Nurtures the next generation of researchers through training, mentorship, and the "
+            "dissemination of high-quality scholarship through publications, seminars, and conferences."
+        ),
+    },
+    {
+        "title": "Grant Management and Resource Mobilization",
+        "description": (
+            "Secures and administers research grants, endowments, and financial or material resources "
+            "for academic programmes and research infrastructure; drafts data-driven research and "
+            "project proposals for donors; and builds relationships with funding bodies, governments, "
+            "international partners, corporate foundations, and philanthropic organizations."
+        ),
+    },
+]
+
+REIRM_ANNUAL_EVENTS = [
+    {
+        "event": "International Multidisciplinary Conference",
+        "description": (
+            "A premier platform for researchers, scholars, and practitioners to exchange knowledge, "
+            "present findings, and discuss emerging trends across disciplines. Recent themes have "
+            "focused on global health, sustainable development, and inclusive knowledge systems."
+        ),
+        "typical_timing": "Annually (June)",
+    },
+    {
+        "event": "Innovation Week",
+        "description": (
+            "The flagship REIRM event bringing together students, researchers, industry leaders, and "
+            "development partners to showcase innovations that matter. It features exhibitions, "
+            "keynote lectures, pitching competitions, workshops, and an awards ceremony celebrating "
+            "SDG-aligned innovations."
+        ),
+        "typical_timing": "Annually (April)",
+    },
+    {
+        "event": "Public Lectures",
+        "description": (
+            "Formal, accessible presentations delivered by experts to a general audience to share "
+            "knowledge, spark public interest, and foster civic awareness on themes including "
+            "societal issues, scientific breakthroughs, economics, politics, culture, and other "
+            "contemporary topics."
+        ),
+        "typical_timing": "Quarterly",
+    },
+]
 
 
 async def upsert_by_slug(
@@ -54,6 +139,107 @@ async def upsert_by_slug(
 
     await db.flush()
     return record
+
+
+async def seed_research_offices(db: AsyncSession) -> dict[str, ResearchOffice]:
+    specs = [
+        {
+            "name": "Department of Research, Extension, Innovation and Resource Mobilization",
+            "code": "REIRM",
+            "about": REIRM_ABOUT,
+            "mandate": (
+                "Empower scholars, students, and partners to generate and apply high-impact "
+                "knowledge through research, innovation and commercialisation, extension and "
+                "community engagement, strategic partnerships, capacity building and knowledge "
+                "dissemination, grant management, and resource mobilization."
+            ),
+            "mission": (
+                "Create an enabling, inclusive, and collaborative research environment where staff, "
+                "students, and partners can excel and contribute to humanity through knowledge, "
+                "innovation, and collaboration."
+            ),
+            "vision": (
+                "Position Kisii University as a globally recognized institution renowned for "
+                "research, consultancy, innovation, and extension."
+            ),
+            "objectives": (
+                "Benchmark against leading global universities, align research practice with "
+                "international standards, and ensure Kisii University's contributions are recognized "
+                "worldwide."
+            ),
+            "functions": (
+                "Research, innovation and commercialisation; extension and community engagement; "
+                "strategic partnerships and collaborations; capacity building and knowledge "
+                "dissemination; grant management and resource mobilization."
+            ),
+            "services_summary": (
+                "Research and innovation coordination, community engagement, partnership development, "
+                "training and mentorship, publications and conferences, grant administration, proposal "
+                "development, donor engagement, and event sponsorship coordination."
+            ),
+            "leadership_message": (
+                "Join us in advancing humanity through the transformative power of knowledge, "
+                "innovation, and collaboration. To partner with us or sponsor an event, email "
+                "research@kisiiuniversity.ac.ke."
+            ),
+            "strategic_priorities": [
+                *REIRM_PILLARS,
+                {"title": "Annual Events", "items": REIRM_ANNUAL_EVENTS},
+            ],
+            "location": "Kisii University Main Campus",
+            "address": "P.O. Box 408-40200, Kisii, Kenya",
+            "email": "research@kisiiuniversity.ac.ke",
+            "website": "https://research.kisiiuniversity.ac.ke/",
+            "status": "active",
+            "is_active": True,
+            "is_featured": True,
+            "display_order": 10,
+            "meta_title": "About Research at Kisii University",
+            "meta_description": (
+                "Research, Extension, Innovation and Resource Mobilization at Kisii University: "
+                "research, innovation, partnerships, capacity building, grants, and annual events."
+            ),
+            "keywords": [
+                "research",
+                "innovation",
+                "commercialisation",
+                "extension",
+                "community engagement",
+                "grant management",
+                "resource mobilization",
+            ],
+        }
+    ]
+    records: dict[str, ResearchOffice] = {}
+    for spec in specs:
+        slug = slugify(spec["name"])
+        records[slug] = await upsert_by_slug(db, ResearchOffice, slug, spec)
+    return records
+
+
+async def seed_research_boards(db: AsyncSession) -> None:
+    specs = [
+        {
+            "name": "REIRM Research and Innovation Coordination",
+            "code": "REIRM-RIC",
+            "acronym": "REIRM",
+            "board_type": "committee",
+            "about": "Coordination structure supporting the REIRM mandate across research, innovation, partnerships, capacity building, and grants.",
+            "mandate": "Provide oversight, advice, and coordination for research support, innovation, community engagement, partnerships, and resource mobilization.",
+            "responsibilities": (
+                "Coordinate annual research events, support proposal and grant processes, strengthen "
+                "partner engagement, promote knowledge dissemination, and align research activities "
+                "with institutional priorities."
+            ),
+            "composition": "Research office leadership, school representatives, innovation leads, and administrative support officers.",
+            "meeting_schedule": "Quarterly and as required by active research programmes and events.",
+            "contact_email": "research@kisiiuniversity.ac.ke",
+            "is_active": True,
+            "display_order": 10,
+        }
+    ]
+    for spec in specs:
+        await upsert_by_slug(db, ResearchBoard, slugify(spec["name"]), spec)
 
 
 async def seed_centers(db: AsyncSession) -> dict[str, ResearchCenter]:
@@ -782,6 +968,8 @@ async def seed_news(db: AsyncSession) -> None:
 async def run() -> None:
     async with AsyncSessionLocal() as db:
         try:
+            await seed_research_offices(db)
+            await seed_research_boards(db)
             centers = await seed_centers(db)
             programs = await seed_programs(db, centers)
             projects = await seed_projects(db, centers, programs)

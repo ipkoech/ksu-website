@@ -141,8 +141,9 @@ export default async function AboutPage() {
                   <StatementCard label="Mission" value={leadOffice.mission} />
                   <StatementCard label="Vision" value={leadOffice.vision} />
                   <StatementCard label="Mandate" value={leadOffice.mandate} />
-                  <StatementCard label="Strategic priorities" value={leadOffice.strategic_priorities} />
+                  <StatementCard label="Services" value={leadOffice.services_summary} />
                 </div>
+                <StrategicPriorities items={leadOffice.strategic_priorities} />
               </InstitutionalPanel>
             ) : (
               <InstitutionalEmpty>
@@ -309,6 +310,71 @@ function StatementCard({
       </p>
     </div>
   );
+}
+
+function StrategicPriorities({ items }: { items?: unknown }) {
+  const records = Array.isArray(items) ? items.filter(isRecord) : [];
+  const pillars = records.filter((item) => Array.isArray(item.items) === false);
+  const annualEvents = records.find((item) => Array.isArray(item.items));
+
+  if (!pillars.length && !annualEvents) return null;
+
+  return (
+    <div className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
+      {pillars.length ? (
+        <div>
+          <p className="text-xs font-semibold uppercase text-secondary">
+            Five interconnected pillars
+          </p>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            {pillars.map((item, index) => (
+              <article key={`${textValue(item.title)}-${index}`} className="rounded-lg bg-slate-50 p-4">
+                <h3 className="text-sm font-semibold text-slate-950">
+                  {textValue(item.title) || `Pillar ${index + 1}`}
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  {textValue(item.description)}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {annualEvents && Array.isArray(annualEvents.items) ? (
+        <div className={pillars.length ? "mt-6 border-t border-slate-200 pt-5" : undefined}>
+          <p className="text-xs font-semibold uppercase text-secondary">
+            Annual events to look out for
+          </p>
+          <div className="mt-4 grid gap-3">
+            {annualEvents.items.filter(isRecord).map((event, index) => (
+              <article key={`${textValue(event.event)}-${index}`} className="rounded-lg border border-slate-200 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="text-sm font-semibold text-slate-950">
+                    {textValue(event.event) || `Event ${index + 1}`}
+                  </h3>
+                  {textValue(event.typical_timing) ? (
+                    <Badge>{textValue(event.typical_timing)}</Badge>
+                  ) : null}
+                </div>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  {textValue(event.description)}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function textValue(value: unknown) {
+  return typeof value === "string" || typeof value === "number" ? compactText(value) : "";
 }
 
 function MemberCard({ member }: { member: ResearchGenericRecord }) {
