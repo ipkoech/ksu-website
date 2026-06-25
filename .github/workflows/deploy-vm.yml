@@ -41,7 +41,7 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           REF_NAME: ${{ github.ref_name }}
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message || '' }}
           INPUT_ENV: ${{ inputs.target_env }}
           INPUT_BRANCH: ${{ inputs.branch }}
         run: |
