@@ -78,18 +78,19 @@ jobs:
             fi
           fi
 
-          echo "should_deploy=${should_deploy}" >> "${GITHUB_OUTPUT}"
-          echo "env_name=${env_name}" >> "${GITHUB_OUTPUT}"
-          echo "branch=${branch}" >> "${GITHUB_OUTPUT}"
+          {
+            echo "should_deploy=${should_deploy}"
+            echo "env_name=${env_name}"
+            echo "branch=${branch}"
+          } >> "${GITHUB_OUTPUT}"
 
   deploy:
-    name: Deploy ${{ needs.resolve.outputs.env_name }} to VM
+    name: Deploy to VM
     needs: resolve
     if: needs.resolve.outputs.should_deploy == 'true'
     runs-on: ubuntu-latest
-    environment: ${{ needs.resolve.outputs.env_name }}
     concurrency:
-      group: vm-deploy-${{ needs.resolve.outputs.env_name }}
+      group: vm-deploy
       cancel-in-progress: false
     env:
       VM_SSH_HOST: ${{ vars.VM_SSH_HOST || '41.220.243.19' }}
@@ -173,9 +174,11 @@ jobs:
               ;;
           esac
 
-          echo "public_host=${public_host}" >> "${GITHUB_OUTPUT}"
-          echo "api_host=${api_host}" >> "${GITHUB_OUTPUT}"
-          echo "research_host=${research_host}" >> "${GITHUB_OUTPUT}"
+          {
+            echo "public_host=${public_host}"
+            echo "api_host=${api_host}"
+            echo "research_host=${research_host}"
+          } >> "${GITHUB_OUTPUT}"
 
       - name: Verify SSH connectivity
         run: ssh ksu-deploy-vm 'hostname && docker compose version'
