@@ -435,15 +435,20 @@ if [[ "\${SKIP_FRONTEND}" -eq 0 && -f frontend/package.json ]]; then
   echo "Frontend apps will be built by Docker Compose."
 fi
 
-services=(main research library celery-main celery-library)
+backend_services=(main research library)
+services=("\${backend_services[@]}" celery-main celery-library)
 if [[ "\${external_data}" -eq 0 ]]; then
   services=(postgres redis "\${services[@]}")
 fi
+frontend_services=()
+proxy_services=()
 if [[ "\${WITH_GATEWAY}" -eq 1 ]]; then
-  services+=(gateway)
+  proxy_services+=(gateway)
 fi
 if [[ "\${SKIP_FRONTEND}" -eq 0 ]]; then
-  services+=(web-prod admin-prod research-web-prod library-web-prod edge)
+  frontend_services+=(web-prod admin-prod research-web-prod library-web-prod)
+  proxy_services+=(edge)
+  services+=("\${frontend_services[@]}")
 fi
 
 compose_args=(up -d --remove-orphans)
@@ -456,6 +461,49 @@ echo "Deploying Docker Compose project \${PROJECT_NAME}: \${services[*]}"
 "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" "\${compose_args[@]}"
 echo
 "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${services[@]}"
+
+wait_for_backend_health() {
+  local timeout_seconds="\${1:-420}"
+  local deadline=\$((SECONDS + timeout_seconds))
+  local pending=()
+
+  while (( SECONDS < deadline )); do
+    pending=()
+    for service in "\${backend_services[@]}"; do
+      local container_id
+      container_id="\$("\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps -q "\${service}")"
+      if [[ -z "\${container_id}" ]]; then
+        pending+=("\${service}:missing")
+        continue
+      fi
+
+      local status
+      status="\$("\${DOCKER[@]}" inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "\${container_id}")"
+      if [[ "\${status}" != "healthy" && "\${status}" != "running" ]]; then
+        pending+=("\${service}:\${status}")
+      fi
+    done
+
+    if [[ "\${#pending[@]}" -eq 0 ]]; then
+      echo "Backend services are healthy: \${backend_services[*]}"
+      return 0
+    fi
+
+    sleep 5
+  done
+
+  echo "error: backend services did not become healthy within \${timeout_seconds}s: \${pending[*]}" >&2
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${backend_services[@]}" >&2 || true
+  return 1
+}
+
+wait_for_backend_health 420
+
+if [[ "\${#proxy_services[@]}" -gt 0 ]]; then
+  echo "Refreshing proxy services to resolve current upstream container IPs: \${proxy_services[*]}"
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" up -d --remove-orphans --force-recreate "\${proxy_services[@]}"
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${proxy_services[@]}"
+fi
 
 configure_https() {
   if [[ "\${ENABLE_HTTPS}" -ne 1 ]]; then
