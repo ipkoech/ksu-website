@@ -632,7 +632,7 @@ async def seed_admin_departments(db: AsyncSession, ctx: SeedContext) -> None:
             service_charter=spec.get("service_charter"),
             guidelines=spec.get("source_url"),
             is_active=True,
-            is_public=True,
+            is_public=bool(spec.get("is_public", True)),
             allows_staff_management=True,
             display_order=100,
         )

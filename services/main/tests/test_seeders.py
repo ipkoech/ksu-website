@@ -1,7 +1,7 @@
 import unittest
 from collections import Counter
 
-from app.seeders._shared import ADMIN_DEPARTMENTS
+from app.seeders._shared import ADMIN_DEPARTMENTS, LEADERSHIP_PEOPLE
 from app.seeders._shared import SCHOOL_SPECS
 from app.seeders._shared import ICT_SECTION_DEPARTMENTS
 from app.seeders.seed_admin_departments import ADMIN_SERVICE_SPECS, MOVED_ADMIN_SERVICE_SLUGS
@@ -50,6 +50,25 @@ class SeederDataTests(unittest.TestCase):
         self.assertEqual(set(), official_department_names - set(seeded_by_name))
         for department_name in official_department_names:
             self.assertIn("https://kisiiuniversity.ac.ke/dpt/", seeded_by_name[department_name]["source_url"])
+
+    def test_internal_public_site_units_are_not_public_admin_departments(self):
+        hidden_units = {
+            "Vice-Chancellor's Office",
+            "Research, Extension, Innovation and Resource Mobilization",
+            "University Library",
+        }
+        seeded_by_name = {spec["name"]: spec for spec in ADMIN_DEPARTMENTS}
+
+        for department_name in hidden_units:
+            self.assertFalse(seeded_by_name[department_name]["is_public"])
+
+    def test_reirm_registrar_is_not_seeded_while_position_is_vacant(self):
+        wings_by_code = {code: head_key for _division_code, _name, code, _wing_type, head_key in WING_SPECS}
+        reirm_department = next(spec for spec in ADMIN_DEPARTMENTS if spec["code"] == "REIRM")
+
+        self.assertNotIn("research_director", LEADERSHIP_PEOPLE)
+        self.assertIsNone(wings_by_code["REIRM"])
+        self.assertIsNone(reirm_department["head_key"])
 
     def test_official_administration_divisions_and_direct_units_are_seeded(self):
         divisions_by_code = {spec["code"]: spec for spec in DIVISION_SPECS}

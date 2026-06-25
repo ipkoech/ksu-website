@@ -113,12 +113,6 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "institutional_role": "registrar_academic_affairs",
         "bio": "Acting Registrar in charge of Academic Affairs.",
     },
-    "research_director": {
-        "full_name": "Christopher Ngacho",
-        "title": "Prof.",
-        "institutional_role": "registrar_research_extension_innovation_resource_mobilization",
-        "bio": "Acting Registrar in charge of Research, Extension, Innovation and Resource Mobilization.",
-    },
     "finance_officer": {
         "full_name": "Charles M. Mwangi",
         "title": "CPA",
@@ -497,11 +491,11 @@ SCHOOL_SPECS: list[dict[str, Any]] = [
 
 
 ADMIN_DEPARTMENTS: list[dict[str, Any]] = [
-    {"name": "Vice-Chancellor's Office", "code": "VCO", "wing_code": None, "head_key": "vice_chancellor", "about": "Executive office that provides strategic leadership and institutional coordination."},
+    {"name": "Vice-Chancellor's Office", "code": "VCO", "wing_code": None, "head_key": "vice_chancellor", "about": "Executive office that provides strategic leadership and institutional coordination.", "is_public": False},
     {"name": "Registrar Academic Affairs", "code": "ACAFFAIRS", "wing_code": "RAA", "head_key": "registrar_academic", "about": "Registrar Academic Affairs is listed as an official administration department headed by the Acting Registrar Academic Affairs. Its current public page publishes academic-affairs navigation, team, news, events, and downloads sections, with no additional mandate text beyond the office listing.", "source_url": "https://kisiiuniversity.ac.ke/dpt/registrar-academic-affairs"},
     {"name": "Dean of Students", "code": "STUAFFAIRS", "wing_code": "STUAFFAIRS", "head_key": "dean_students", "about": "The Dean of Students Department offers support and welfare services to students and coordinates essential academic and non-academic student support services that enhance retention.", "mandate": "Develop, nurture, and promote an enabling environment that supports and enhances students' academic and developmental pursuits, including first-year registration and orientation, student leadership elections, KSUSA induction and budgeting, cultural awareness and integration, student handbook review, clubs and societies, loans and bursaries, student bereavement support, counselling, sports and games, and chaplaincy services.", "source_url": "https://kisiiuniversity.ac.ke/dpt/dean-of-students"},
-    {"name": "Research, Extension, Innovation and Resource Mobilization", "code": "REIRM", "wing_code": "REIRM", "head_key": "research_director", "about": "Official research office responsible for research information, policy, partnerships, grants, and ethics review.", "source_url": "https://research.kisiiuniversity.ac.ke/"},
-    {"name": "University Library", "code": "LIB", "wing_code": "RAA", "head_key": "university_librarian", "about": "Official library support unit serving teaching, learning, and research through print and electronic information services.", "source_url": "https://kisiiuniversity.ac.ke/library/library-website"},
+    {"name": "Research, Extension, Innovation and Resource Mobilization", "code": "REIRM", "wing_code": "REIRM", "head_key": None, "about": "Official research office responsible for research information, policy, partnerships, grants, and ethics review.", "source_url": "https://research.kisiiuniversity.ac.ke/", "is_public": False},
+    {"name": "University Library", "code": "LIB", "wing_code": "RAA", "head_key": "university_librarian", "about": "Official library support unit serving teaching, learning, and research through print and electronic information services.", "source_url": "https://kisiiuniversity.ac.ke/library/library-website", "is_public": False},
     {"name": "Registrar Administration", "code": "AHRCS", "wing_code": "AHRCS", "head_key": "registrar_admin", "about": "Registrar Administration is listed as an official administration department headed by the Acting Registrar Administration, Human Resource and Central Services. Its current public page publishes administration navigation, team, news, events, and downloads sections, with current downloads for university adverts.", "source_url": "https://kisiiuniversity.ac.ke/dpt/registrar-administration"},
     {"name": "Finance", "code": "FIN", "wing_code": "FIN", "head_key": "finance_officer", "about": "Finance is listed as an official administration department headed by the Finance Officer. Its current public page publishes finance navigation, team, news, events, and downloads sections, with no additional mandate text beyond the office listing.", "source_url": "https://kisiiuniversity.ac.ke/dpt/finance"},
     {"name": "Planning", "code": "PLNDEV", "wing_code": "PLANNING", "head_key": "dvc_apf", "about": "Planning is listed as an official administration department on the university website.", "source_url": "https://kisiiuniversity.ac.ke/dpt/planning"},

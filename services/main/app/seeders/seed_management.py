@@ -14,7 +14,6 @@ async def seed_management(db: AsyncSession, ctx: SeedContext) -> None:
         "dvc_arsa",
         "registrar_admin",
         "registrar_academic",
-        "research_director",
         "finance_officer",
     ):
         await get_or_create_person(db, ctx, key, **LEADERSHIP_PEOPLE[key])

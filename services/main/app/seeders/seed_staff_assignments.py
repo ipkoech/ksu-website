@@ -20,7 +20,6 @@ async def seed_staff_assignments(db: AsyncSession, ctx: SeedContext) -> None:
     ahrcs = ctx.wings["AHRCS"]
     finance = ctx.wings["FIN"]
     academic_affairs = ctx.wings["RAA"]
-    reirm = ctx.wings["REIRM"]
     student_affairs = ctx.wings["STUAFFAIRS"]
     ict = ctx.departments["ICT"]
     school_codes = {
@@ -189,7 +188,6 @@ async def seed_staff_assignments(db: AsyncSession, ctx: SeedContext) -> None:
             "dvc_arsa",
             "registrar_admin",
             "registrar_academic",
-            "research_director",
             "finance_officer",
         ),
         start=2,
@@ -250,25 +248,6 @@ async def seed_staff_assignments(db: AsyncSession, ctx: SeedContext) -> None:
         is_public=True,
         status="active",
         display_order=1,
-        notes=None,
-    )
-    research_assignment = await upsert_staff_assignment(
-        db,
-        ctx,
-        "registrar-reirm",
-        person_id=ctx.people["research_director"].id,
-        user_id=None,
-        entity_type="wing",
-        entity_id=reirm.id,
-        role="registrar",
-        title="Ag. Registrar REIRM",
-        hierarchy_level=4,
-        reports_to_id=dvc_arsa_assignment.id,
-        is_primary=True,
-        is_acting=True,
-        is_public=True,
-        status="active",
-        display_order=2,
         notes=None,
     )
     finance_assignment = await upsert_staff_assignment(

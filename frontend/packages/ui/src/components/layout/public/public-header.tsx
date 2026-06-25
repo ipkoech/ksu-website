@@ -82,12 +82,19 @@ interface PublicHeaderProps {
   libraryHref?: string;
 }
 
+const defaultResearchHref =
+  process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL ||
+  "https://research.kisiiuniversity.ac.ke";
+const defaultLibraryHref =
+  process.env.NEXT_PUBLIC_LIBRARY_FRONTEND_URL ||
+  "https://library.kisiiuniversity.ac.ke";
+
 export function PublicHeader({
   megaMenuData,
   transparent = false,
   className,
-  researchHref,
-  libraryHref,
+  researchHref = defaultResearchHref,
+  libraryHref = defaultLibraryHref,
 }: PublicHeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);

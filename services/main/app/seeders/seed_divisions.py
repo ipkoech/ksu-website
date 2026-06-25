@@ -46,7 +46,7 @@ WING_SPECS = [
     ("APF", "Procurement and Supplies", "PROC", "wing", "dvc_apf"),
     ("APF", "Corporate Communication", "CORPCOMM", "wing", "dvc_apf"),
     ("ARSA", "Academic Affairs", "RAA", "wing", "registrar_academic"),
-    ("ARSA", "Research, Extension, Innovation and Resource Mobilization", "REIRM", "wing", "research_director"),
+    ("ARSA", "Research, Extension, Innovation and Resource Mobilization", "REIRM", "wing", None),
     ("ARSA", "E-Learning", "ELEARN", "wing", "director_elearning"),
     ("ARSA", "Student Affairs", "STUAFFAIRS", "wing", "dean_students"),
 ]
@@ -59,7 +59,6 @@ async def seed_divisions(db: AsyncSession, ctx: SeedContext) -> None:
         "dvc_arsa",
         "registrar_admin",
         "registrar_academic",
-        "research_director",
         "finance_officer",
         "dean_students",
         "director_elearning",
@@ -86,7 +85,7 @@ async def seed_divisions(db: AsyncSession, ctx: SeedContext) -> None:
 
     for division_code, name, code, wing_type, head_key in WING_SPECS:
         division = ctx.divisions[division_code]
-        head = ctx.people[head_key]
+        head = ctx.people[head_key] if head_key else None
         await upsert_wing(
             db,
             ctx,
@@ -95,7 +94,7 @@ async def seed_divisions(db: AsyncSession, ctx: SeedContext) -> None:
             slug=slugify(name),
             code=code,
             wing_type=wing_type,
-            head_id=head.id,
+            head_id=head.id if head else None,
             description=f"{name} wing under {division.name}.",
             is_public=True,
             is_active=True,

@@ -179,17 +179,6 @@ export const leadershipFallback: (LeaderCardData & {
     group: "registrar",
   },
   {
-    slug: "ag-registrar-reirm",
-    name: "Prof. Christopher Ngacho, PhD",
-    role: "Ag. Registrar REIRM",
-    summary:
-      "Listed on the University Management Board page as Acting Registrar REIRM.",
-    biography:
-      "Serves on the published management board in the REIRM registrar role.",
-    education: [],
-    group: "registrar",
-  },
-  {
     slug: "finance-officer",
     name: "CPA Charles M. Mwangi",
     role: "Finance Officer",
@@ -276,7 +265,6 @@ export const governanceFallback: (Board & { members: BoardMember[] })[] = [
       { name: "Prof. Nathan Oyaro, PhD", role: "DVC AP&F" },
       { name: "Dr. Stella Omari, PhD", role: "Ag. Registrar AHRCS" },
       { name: "Prof. Kennedy Getange, PhD", role: "Ag. Registrar AA" },
-      { name: "Prof. Christopher Ngacho, PhD", role: "Ag. Registrar REIRM" },
       { name: "CPA Charles M. Mwangi", role: "Finance Officer" },
     ],
   },

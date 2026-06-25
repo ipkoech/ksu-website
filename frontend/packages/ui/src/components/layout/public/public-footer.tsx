@@ -41,6 +41,13 @@ interface PublicFooterProps {
   libraryHref?: string;
 }
 
+const defaultResearchHref =
+  process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL ||
+  "https://research.kisiiuniversity.ac.ke";
+const defaultLibraryHref =
+  process.env.NEXT_PUBLIC_LIBRARY_FRONTEND_URL ||
+  "https://library.kisiiuniversity.ac.ke";
+
 const defaultColumns: FooterColumn[] = [
   {
     title: "Quick Links",
@@ -131,8 +138,8 @@ export function PublicFooter({
   socialLinks = defaultSocialLinks,
   legalLinks = defaultLegalLinks,
   className,
-  researchHref,
-  libraryHref,
+  researchHref = defaultResearchHref,
+  libraryHref = defaultLibraryHref,
 }: PublicFooterProps) {
   const [expandedColumn, setExpandedColumn] = useState<string | null>(null);
   const resolvedColumns = columns.map((column) => ({

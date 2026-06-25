@@ -162,6 +162,16 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/library",
+        destination: libraryFrontendUrl,
+        permanent: true,
+      },
+      {
+        source: "/library/:path*",
+        destination: withPath(libraryFrontendUrl, "/:path*"),
+        permanent: true,
+      },
+      {
         source: "/research",
         destination: researchFrontendUrl,
         permanent: true,

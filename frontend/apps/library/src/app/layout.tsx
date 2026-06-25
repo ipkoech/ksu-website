@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { MiniHeader, PublicFooter } from "@ksu/ui/layout/public";
 import { LibraryHeader } from "../components/library-header";
+import { libraryFrontendUrl, publicFrontendUrl, researchFrontendUrl } from "../lib/service-urls";
 import "./globals.css";
 
 const socialLinks = {
@@ -20,7 +21,7 @@ const contactInfo = {
 const miniQuickLinks = [
   {
     label: "Main Site",
-    href: "https://kisiiuniversity.ac.ke",
+    href: publicFrontendUrl,
     external: true,
   },
   {
@@ -80,7 +81,8 @@ export default function RootLayout({
           {children}
           <PublicFooter
             contactInfo={contactInfo}
-            libraryHref="/"
+            libraryHref={libraryFrontendUrl}
+            researchHref={researchFrontendUrl}
             socialLinks={socialLinks}
           />
         </div>

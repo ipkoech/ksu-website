@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@ksu/ui/lib/utils";
+import { publicFrontendUrl } from "../lib/service-urls";
 import {
   ArrowRight,
   Award,
@@ -63,16 +64,18 @@ type NavSection = {
   groups?: NavGroup[];
 };
 
-const utilityLinks: NavItem[] = [
-  {
-    label: "Main Site",
-    href: "https://kisiiuniversity.ac.ke",
-    external: true,
-    icon: ArrowRight,
-  },
-  { label: "University Farm", href: "/farm", icon: Sprout },
-  { label: "Sustainability", href: "/sustainability", icon: Leaf },
-];
+function utilityLinks(publicHref: string): NavItem[] {
+  return [
+    {
+      label: "Main Site",
+      href: publicHref,
+      external: true,
+      icon: ArrowRight,
+    },
+    { label: "University Farm", href: "/farm", icon: Sprout },
+    { label: "Sustainability", href: "/sustainability", icon: Leaf },
+  ];
+}
 
 const researchNavItems: NavSection[] = [
   {
@@ -420,13 +423,17 @@ const researchNavItems: NavSection[] = [
   },
 ];
 
-export function ResearchHeader() {
+export function ResearchHeader({
+  publicHref = publicFrontendUrl,
+}: {
+  publicHref?: string;
+}) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 border-b border-primary/10 bg-white/95 shadow-[0_12px_36px_-32px_rgba(30,64,175,0.55)] backdrop-blur-md">
-      <ResearchUtilityBar />
+      <ResearchUtilityBar publicHref={publicHref} />
       <nav className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="flex h-[89px] items-center justify-between gap-3 lg:h-[82px]">
           <Link
@@ -529,12 +536,12 @@ export function ResearchHeader() {
   );
 }
 
-function ResearchUtilityBar() {
+function ResearchUtilityBar({ publicHref }: { publicHref: string }) {
   return (
     <div className="hidden border-b border-white/10 bg-secondary text-xs text-white shadow-[inset_0_-1px_rgba(255,255,255,0.08)] xl:block">
       <div className="flex min-h-10 w-full items-center justify-between gap-4 px-4 py-1.5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <nav className="flex min-w-0 items-center gap-5" aria-label="Research utility">
-          {utilityLinks.map((link, index) => {
+          {utilityLinks(publicHref).map((link, index) => {
             const Icon = link.icon;
             return (
               <Link
