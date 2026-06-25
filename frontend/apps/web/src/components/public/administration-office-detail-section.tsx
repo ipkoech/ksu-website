@@ -25,6 +25,11 @@ import { ScrollReveal } from "@ksu/ui/components";
 import { PageShell } from "@/components/site-shell";
 import { PublicImage } from "@/components/public/public-image";
 import { PublicTeamSection } from "@/components/public/public-team-section";
+import {
+  QuickLinksPanel,
+  buildMediaTypeLinks,
+  type EntityQuickLink,
+} from "./entity-quick-links";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import type {
   AdministrationOfficeDetailData,
@@ -63,13 +68,6 @@ export type AdministrationMediaType =
   | "blogs"
   | "announcements"
   | "gallery";
-
-type QuickLink = {
-  section: SectionKey;
-  label: string;
-  href: string;
-  icon: LucideIcon;
-};
 
 type ContactIconLink = {
   label: string;
@@ -460,46 +458,6 @@ function SectionHeading({
         </p>
       ) : null}
     </div>
-  );
-}
-
-function QuickLinksPanel({
-  links,
-  title = "Quick Links",
-  ariaLabel = "Administration page quick links",
-}: {
-  links: QuickLink[];
-  title?: string;
-  ariaLabel?: string;
-}) {
-  if (!links.length) return null;
-
-  return (
-    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
-      <SectionKicker>{title}</SectionKicker>
-      <nav aria-label={ariaLabel} className="mt-3">
-        <ul className="divide-y divide-slate-100">
-          {links.map((item) => {
-            const Icon = item.icon;
-            return (
-              <li key={item.section}>
-                <a
-                  href={item.href}
-                  className="group flex min-h-10 items-center gap-3 py-2 text-sm font-medium text-slate-700 transition hover:text-primary"
-                >
-                  <Icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
-                  <span className="min-w-0 flex-1">{item.label}</span>
-                  <ArrowRight
-                    aria-hidden
-                    className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
-                  />
-                </a>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-    </section>
   );
 }
 
@@ -1422,108 +1380,25 @@ function ContactPanel({ data }: { data: AdministrationOfficeDetailData }) {
   );
 }
 
-function buildQuickLinks(data: AdministrationOfficeDetailData): QuickLink[] {
-  const baseHref = data.baseHref;
-
-  return [
-    {
-      section: "overview",
-      label: "Overview",
-      href: baseHref,
-      icon: UserRound,
-    },
-    data.kind === "division" && (data.childWings.length || data.departments.length)
-      ? {
-        section: "units",
-        label: "Units",
-        href: `${baseHref}/units`,
-        icon: BriefcaseBusiness,
-      }
-      : null,
-    data.kind === "division" && data.schools.length
-      ? {
-        section: "schools",
-        label: "Schools",
-        href: `${baseHref}/schools`,
-        icon: Landmark,
-      }
-      : null,
-    data.counts.team > 0
-      ? {
-        section: "team",
-        label: "Team",
-        href: `${baseHref}/team`,
-        icon: Users,
-      }
-      : null,
-    data.services.length
-      ? {
-        section: "services",
-        label: "Services",
-        href: `${baseHref}/services`,
-        icon: BriefcaseBusiness,
-      }
-      : null,
-    {
-      section: "media",
-      label: "Media",
-      href: `${baseHref}/media`,
-      icon: Newspaper,
-    },
-    data.documents.length
-      ? {
-        section: "downloads",
-        label: "Downloads",
-        href: `${baseHref}/downloads`,
-        icon: Download,
-      }
-      : null,
-    present(data.entity.email) ||
-      present(data.entity.phone) ||
-      present(data.entity.office_location)
-      ? {
-        section: "contact",
-        label: "Contact",
-        href: `${baseHref}/contact`,
-        icon: Phone,
-      }
-      : null,
-  ].filter(Boolean) as QuickLink[];
-}
-
-function buildMediaTypeLinks(baseHref: string): QuickLink[] {
-  return [
-    {
-      section: "news",
-      label: "News",
-      href: `${baseHref}/media/news`,
-      icon: Newspaper,
-    },
-    {
-      section: "events",
-      label: "Events",
-      href: `${baseHref}/media/events`,
-      icon: CalendarDays,
-    },
-    {
-      section: "blogs",
-      label: "Blogs",
-      href: `${baseHref}/media/blogs`,
-      icon: FileText,
-    },
-    {
-      section: "announcements",
-      label: "Announcements",
-      href: `${baseHref}/media/announcements`,
-      icon: Quote,
-    },
-    {
-      section: "gallery",
-      label: "Gallery",
-      href: `${baseHref}/media/gallery`,
-      icon: Download,
-    },
+function quickLinksFor(data: AdministrationOfficeDetailData): EntityQuickLink[] {
+  const h = data.baseHref;
+  const links: EntityQuickLink[] = [
+    { label: "Overview", href: h, icon: UserRound, section: "overview" },
   ];
+  if (data.kind === "division" && (data.childWings.length || data.departments.length))
+    links.push({ label: "Units", href: `${h}/units`, icon: BriefcaseBusiness, section: "units" });
+  if (data.kind === "division" && data.schools.length)
+    links.push({ label: "Schools", href: `${h}/schools`, icon: Landmark, section: "schools" });
+  if (data.counts.team > 0)
+    links.push({ label: "Team", href: `${h}/team`, icon: Users, section: "team" });
+  if (data.services.length)
+    links.push({ label: "Services", href: `${h}/services`, icon: BriefcaseBusiness, section: "services" });
+  links.push({ label: "Media", href: `${h}/media`, icon: Newspaper, section: "media" });
+  if (data.documents.length)
+    links.push({ label: "Downloads", href: `${h}/downloads`, icon: Download, section: "downloads" });
+  if (present(data.entity.email) || present(data.entity.phone) || present(data.entity.office_location))
+    links.push({ label: "Contact", href: `${h}/contact`, icon: Phone, section: "contact" });
+  return links;
 }
 
 function ParentPanel({ data }: { data: AdministrationOfficeDetailData }) {
@@ -1589,7 +1464,7 @@ export function AdministrationOfficeDetailSection({
   mediaType?: AdministrationMediaType;
 }) {
   const sidebarLinks =
-    section === "media" ? buildMediaTypeLinks(data.baseHref) : buildQuickLinks(data);
+    section === "media" ? buildMediaTypeLinks(data.baseHref) : quickLinksFor(data);
   const sidebarTitle = section === "media" ? "Content Types" : "Quick Links";
   const sidebarLabel =
     section === "media"
