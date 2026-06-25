@@ -398,8 +398,10 @@ if [[ -f .deploy/docker-compose.external-data.yml ]]; then
 fi
 
 compose_files=(-f docker-compose.yml -f docker-compose.vm.yml)
+external_data=0
 if [[ -f .deploy/docker-compose.external-data.yml ]]; then
   compose_files+=(-f .deploy/docker-compose.external-data.yml)
+  external_data=1
 fi
 
 backup_database() {
@@ -433,7 +435,10 @@ if [[ "\${SKIP_FRONTEND}" -eq 0 && -f frontend/package.json ]]; then
   echo "Frontend apps will be built by Docker Compose."
 fi
 
-services=(postgres redis main research library celery-main celery-library)
+services=(main research library celery-main celery-library)
+if [[ "\${external_data}" -eq 0 ]]; then
+  services=(postgres redis "\${services[@]}")
+fi
 if [[ "\${WITH_GATEWAY}" -eq 1 ]]; then
   services+=(gateway)
 fi
