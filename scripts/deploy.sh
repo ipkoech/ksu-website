@@ -380,6 +380,23 @@ if [[ "\${#missing_env[@]}" -gt 0 ]]; then
   exit 1
 fi
 
+read_env_value() {
+  local env_file="\$1"
+  local key="\$2"
+  awk -F= -v key="\${key}" '\$1 == key { sub(/^[^=]*=/, ""); print; exit }' "\${env_file}"
+}
+
+if [[ -f .deploy/docker-compose.external-data.yml ]]; then
+  {
+    printf 'MAIN_DATABASE_URL=%s\n' "\$(read_env_value services/main/.env DATABASE_URL)"
+    printf 'MAIN_REDIS_URL=%s\n' "\$(read_env_value services/main/.env REDIS_URL)"
+    printf 'RESEARCH_DATABASE_URL=%s\n' "\$(read_env_value services/research/.env DATABASE_URL)"
+    printf 'RESEARCH_REDIS_URL=%s\n' "\$(read_env_value services/research/.env REDIS_URL)"
+    printf 'LIBRARY_DATABASE_URL=%s\n' "\$(read_env_value services/library/.env DATABASE_URL)"
+    printf 'LIBRARY_REDIS_URL=%s\n' "\$(read_env_value services/library/.env REDIS_URL)"
+  } >> "\${COMPOSE_ENV_FILE}"
+fi
+
 compose_files=(-f docker-compose.yml -f docker-compose.vm.yml)
 if [[ -f .deploy/docker-compose.external-data.yml ]]; then
   compose_files+=(-f .deploy/docker-compose.external-data.yml)
