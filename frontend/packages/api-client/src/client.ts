@@ -1,4 +1,9 @@
 import { getStoredAccessToken, refreshStoredAccessToken } from "./auth-tokens";
+import {
+  getLibraryApiBaseUrl,
+  getMainApiBaseUrl,
+  getResearchApiBaseUrl,
+} from "./service-urls";
 
 export interface ApiConfig {
   baseUrl: string;
@@ -256,13 +261,13 @@ function stringValue(value: unknown) {
 
 // Service-specific clients
 export const mainApi = new ApiClient({
-  baseUrl: process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000",
+  baseUrl: getMainApiBaseUrl(),
 });
 
 export const researchApi = new ApiClient({
-  baseUrl: process.env.NEXT_PUBLIC_RESEARCH_API_URL || "http://localhost:8001",
+  baseUrl: getResearchApiBaseUrl(),
 });
 
 export const libraryApi = new ApiClient({
-  baseUrl: process.env.NEXT_PUBLIC_LIBRARY_API_URL || "http://localhost:8002",
+  baseUrl: getLibraryApiBaseUrl(),
 });

@@ -3,6 +3,7 @@ import {
   blogsApi,
   contactsApi,
   eventsApi,
+  getResearchApiBaseUrl,
   intakesApi,
   libraryServiceApi,
   newsApi,
@@ -152,8 +153,7 @@ const fallbackSocialLinks: HomeSocialLinks = {
   linkedin: "https://linkedin.com/school/kisiiuniversity",
 };
 
-const researchApiBaseUrl =
-  process.env.NEXT_PUBLIC_RESEARCH_API_URL || "http://localhost:8001";
+const researchApiBaseUrl = getResearchApiBaseUrl();
 
 const stablePortalLinks: HomeLink[] = [
   {

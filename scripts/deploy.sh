@@ -6,6 +6,8 @@ usage() {
 Usage:
   scripts/deploy.sh local [options]
   scripts/deploy.sh vm --host HOST --env dev|staging|production [options]
+  scripts/deploy.sh vm-status --host HOST --env dev|staging|production [options]
+  scripts/deploy.sh vm-logs --host HOST --env dev|staging|production [options]
   scripts/deploy.sh vm-backup --host HOST --env dev|staging|production [options]
   scripts/deploy.sh cloud --env dev|staging|production --project PROJECT_ID [options]
 
@@ -38,6 +40,16 @@ VM options:
   --skip-build         Skip Docker image rebuild.
   --dry-run            Print the SSH command without executing it.
 
+VM status/log options:
+  --host HOST          SSH host, for example ubuntu@203.0.113.10. Required.
+  --env ENV            Deployment environment: dev, staging, or production. Required.
+  --path PATH          Repository path on the VM. Defaults to this local repo path.
+  --project-name NAME  Docker Compose project name. Defaults to ksu-ENV.
+  --service SERVICE    Service to inspect. Can be repeated. Defaults to core services.
+  --tail N             Number of log lines for vm-logs. Defaults to 200.
+  --follow             Follow logs for vm-logs.
+  --dry-run            Print the SSH command without executing it.
+
 Cloud options:
   --env ENV            Deployment environment: dev, staging, or production. Required.
   --project PROJECT    GCP project ID. Defaults to GCP_PROJECT if set.
@@ -57,6 +69,9 @@ Examples:
   scripts/deploy.sh local
   scripts/deploy.sh local --skip-frontend
   scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --branch dev --path /srv/ksu
+  scripts/deploy.sh vm-status --host ubuntu@VM_IP --env dev --path /srv/ksu
+  scripts/deploy.sh vm-logs --host ubuntu@VM_IP --env dev --path /srv/ksu --service main --tail 300
+  scripts/deploy.sh vm-logs --host ubuntu@VM_IP --env dev --path /srv/ksu --follow
   scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --path /srv/ksu --bootstrap
   scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --path /srv/ksu --bootstrap --https --cert-email ops@example.edu --public-host public.example.edu --api-host api.example.edu --research-host research.example.edu
   scripts/deploy.sh vm-backup --host ubuntu@VM_IP --env production
@@ -243,6 +258,9 @@ vm_remote_script() {
   local skip_build="${16}"
   local enable_https="${17}"
   local cert_email="${18}"
+  local inspect_services="${19:-}"
+  local log_tail="${20:-200}"
+  local log_follow="${21:-0}"
 
   cat <<REMOTE
 set -euo pipefail
@@ -265,6 +283,9 @@ SKIP_BUILD=$(shell_quote "${skip_build}")
 ENABLE_HTTPS=$(shell_quote "${enable_https}")
 CERT_EMAIL=$(shell_quote "${cert_email}")
 MODE=$(shell_quote "${mode}")
+INSPECT_SERVICES=$(shell_quote "${inspect_services}")
+LOG_TAIL=$(shell_quote "${log_tail}")
+LOG_FOLLOW=$(shell_quote "${log_follow}")
 
 if [[ "\${BOOTSTRAP}" -eq 1 ]]; then
   if ! command -v git >/dev/null 2>&1; then
@@ -322,6 +343,91 @@ if [[ "\${PULL}" -eq 1 ]]; then
   git pull --ff-only origin "\${BRANCH}"
 fi
 
+if [[ "\${MODE}" = "status" || "\${MODE}" = "logs" ]]; then
+  COMPOSE_ENV_FILE=".deploy/\${ENV_NAME}.compose.env"
+  if [[ ! -f "\${COMPOSE_ENV_FILE}" ]]; then
+    echo "error: compose env file not found: \${REPO_PATH}/\${COMPOSE_ENV_FILE}" >&2
+    echo "Run a VM deployment first, or check --env, --path, and --project-name." >&2
+    exit 1
+  fi
+
+  compose_files=(-f docker-compose.yml -f docker-compose.vm.yml)
+  external_data=0
+  if [[ -f .deploy/docker-compose.external-data.yml ]]; then
+    compose_files+=(-f .deploy/docker-compose.external-data.yml)
+    external_data=1
+  fi
+
+  default_services=(main research library celery-main celery-library web-prod admin-prod research-web-prod library-web-prod gateway edge)
+  if [[ "\${external_data}" -eq 0 ]]; then
+    default_services+=(postgres redis)
+  fi
+  if [[ -n "\${INSPECT_SERVICES}" ]]; then
+    read -r -a selected_services <<< "\${INSPECT_SERVICES}"
+  else
+    selected_services=("\${default_services[@]}")
+  fi
+
+  if [[ "\${MODE}" = "status" ]]; then
+    echo "Deployment status"
+    echo "  host:        \$(hostname)"
+    echo "  repo path:   \${REPO_PATH}"
+    echo "  environment: \${ENV_NAME}"
+    echo "  project:     \${PROJECT_NAME}"
+    echo "  git branch:  \$(git branch --show-current 2>/dev/null || true)"
+    echo "  git commit:  \$(git rev-parse --short=12 HEAD 2>/dev/null || true)"
+    echo
+
+    echo "Docker Compose services"
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps || true
+    echo
+
+    echo "Container health"
+    for service in "\${selected_services[@]}"; do
+      container_id="\$("\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps -q "\${service}" 2>/dev/null || true)"
+      if [[ -z "\${container_id}" ]]; then
+        printf '  %-24s %s\n' "\${service}" "missing"
+        continue
+      fi
+      status="\$("\${DOCKER[@]}" inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "\${container_id}" 2>/dev/null || true)"
+      restart_count="\$("\${DOCKER[@]}" inspect --format '{{.RestartCount}}' "\${container_id}" 2>/dev/null || true)"
+      image="\$("\${DOCKER[@]}" inspect --format '{{.Config.Image}}' "\${container_id}" 2>/dev/null || true)"
+      printf '  %-24s %-12s restarts=%-4s image=%s\n' "\${service}" "\${status:-unknown}" "\${restart_count:-?}" "\${image:-unknown}"
+    done
+    echo
+
+    echo "Project containers"
+    "\${DOCKER[@]}" ps -a \
+      --filter "name=\${PROJECT_NAME}" \
+      --format 'table {{.Names}}\t{{.Status}}\t{{.RunningFor}}' | sed -n '1,20p' || true
+    echo
+
+    echo "Docker disk usage"
+    "\${DOCKER[@]}" system df || true
+    echo
+
+    echo "Host disk usage"
+    df -h "\${REPO_PATH}" || true
+    echo
+
+    if command -v systemctl >/dev/null 2>&1; then
+      echo "Host nginx"
+      systemctl is-active nginx 2>/dev/null || true
+    fi
+    exit 0
+  fi
+
+  log_args=(logs "--tail=\${LOG_TAIL}" --timestamps)
+  if [[ "\${LOG_FOLLOW}" -eq 1 ]]; then
+    log_args+=(-f)
+  fi
+  log_args+=("\${selected_services[@]}")
+
+  echo "Showing logs for project \${PROJECT_NAME}: \${selected_services[*]}"
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" "\${log_args[@]}"
+  exit 0
+fi
+
 APP_SCHEME="http"
 EDGE_HTTP_PORT="80"
 if [[ "\${ENABLE_HTTPS}" -eq 1 ]]; then
@@ -365,6 +471,9 @@ NEXT_PUBLIC_PUBLIC_FRONTEND_URL=\${PUBLIC_URL}
 NEXT_PUBLIC_RESEARCH_FRONTEND_URL=\${RESEARCH_URL}
 NEXT_PUBLIC_LIBRARY_FRONTEND_URL=\${LIBRARY_URL}
 NEXT_PUBLIC_APP_URL=\${ADMIN_URL}
+KSU_MAIN_API_URL=http://host.docker.internal:8000
+KSU_RESEARCH_API_URL=http://host.docker.internal:8001
+KSU_LIBRARY_API_URL=http://host.docker.internal:8002
 EOF
 
 missing_env=()
@@ -436,9 +545,9 @@ if [[ "\${SKIP_FRONTEND}" -eq 0 && -f frontend/package.json ]]; then
 fi
 
 backend_services=(main research library)
-services=("\${backend_services[@]}" celery-main celery-library)
+core_services=("\${backend_services[@]}" celery-main celery-library)
 if [[ "\${external_data}" -eq 0 ]]; then
-  services=(postgres redis "\${services[@]}")
+  core_services=(postgres redis "\${core_services[@]}")
 fi
 frontend_services=()
 proxy_services=()
@@ -448,19 +557,18 @@ fi
 if [[ "\${SKIP_FRONTEND}" -eq 0 ]]; then
   frontend_services+=(web-prod admin-prod research-web-prod library-web-prod)
   proxy_services+=(edge)
-  services+=("\${frontend_services[@]}")
 fi
 
 compose_args=(up -d --remove-orphans)
 if [[ "\${SKIP_BUILD}" -eq 0 ]]; then
   compose_args+=(--build)
 fi
-compose_args+=("\${services[@]}")
+compose_args+=("\${core_services[@]}")
 
-echo "Deploying Docker Compose project \${PROJECT_NAME}: \${services[*]}"
+echo "Deploying Docker Compose project \${PROJECT_NAME} core services: \${core_services[*]}"
 "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" "\${compose_args[@]}"
 echo
-"\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${services[@]}"
+"\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${core_services[@]}"
 
 wait_for_backend_health() {
   local timeout_seconds="\${1:-420}"
@@ -498,6 +606,18 @@ wait_for_backend_health() {
 }
 
 wait_for_backend_health 420
+
+if [[ "\${#frontend_services[@]}" -gt 0 ]]; then
+  frontend_compose_args=(up -d --remove-orphans)
+  if [[ "\${SKIP_BUILD}" -eq 0 ]]; then
+    frontend_compose_args+=(--build)
+  fi
+  frontend_compose_args+=("\${frontend_services[@]}")
+
+  echo "Deploying frontend services after backend health checks: \${frontend_services[*]}"
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" "\${frontend_compose_args[@]}"
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${frontend_services[@]}"
+fi
 
 if [[ "\${#proxy_services[@]}" -gt 0 ]]; then
   echo "Refreshing proxy services to resolve current upstream container IPs: \${proxy_services[*]}"
@@ -628,10 +748,14 @@ deploy_vm() {
   local with_gateway=1
   local skip_frontend=0
   local skip_build=0
+  local inspect_services=""
+  local log_tail=200
+  local log_follow=0
   DRY_RUN=0
 
-  if [[ "${mode}" = "backup" ]]; then
+  if [[ "${mode}" = "backup" || "${mode}" = "status" || "${mode}" = "logs" ]]; then
     pull=0
+    backup=0
   fi
 
   while [[ $# -gt 0 ]]; do
@@ -712,6 +836,26 @@ deploy_vm() {
         skip_build=1
         shift
         ;;
+      --service)
+        if [[ -z "${2:-}" ]]; then
+          echo "error: --service requires a service name" >&2
+          exit 1
+        fi
+        inspect_services+="${inspect_services:+ }${2}"
+        shift 2
+        ;;
+      --tail)
+        log_tail="${2:-}"
+        if [[ ! "${log_tail}" =~ ^[0-9]+$ ]]; then
+          echo "error: --tail must be a positive integer" >&2
+          exit 1
+        fi
+        shift 2
+        ;;
+      --follow)
+        log_follow=1
+        shift
+        ;;
       --dry-run)
         DRY_RUN=1
         shift
@@ -752,6 +896,16 @@ deploy_vm() {
     project_name="ksu-${env_name}"
   fi
 
+  if [[ "${mode}" = "logs" && -z "${inspect_services}" ]]; then
+    inspect_services="main research library celery-main celery-library edge gateway"
+  fi
+
+  if [[ "${mode}" != "deploy" && "${mode}" != "backup" ]]; then
+    public_host="${public_host:-_}"
+    api_host="${api_host:-_}"
+    research_host="${research_host:-_}"
+  fi
+
   if [[ -z "${public_host}" ]]; then
     echo "error: --public-host is required for VM deploy" >&2
     exit 1
@@ -775,7 +929,7 @@ deploy_vm() {
   if [[ "${mode}" = "backup" ]]; then
     backup=1
   fi
-  remote="$(vm_remote_script "${mode}" "${env_name}" "${branch}" "${repo_url}" "${repo_path}" "${project_name}" "${public_host}" "${api_host}" "${research_host}" "${bootstrap}" "${pull}" "${backup}" "${backup_dir}" "${with_gateway}" "${skip_frontend}" "${skip_build}" "${enable_https}" "${cert_email}")"
+  remote="$(vm_remote_script "${mode}" "${env_name}" "${branch}" "${repo_url}" "${repo_path}" "${project_name}" "${public_host}" "${api_host}" "${research_host}" "${bootstrap}" "${pull}" "${backup}" "${backup_dir}" "${with_gateway}" "${skip_frontend}" "${skip_build}" "${enable_https}" "${cert_email}" "${inspect_services}" "${log_tail}" "${log_follow}")"
 
   if [[ "${DRY_RUN}" -eq 1 ]]; then
     printf '+ ssh %q %q\n' "${host}" "${remote}"
@@ -1145,6 +1299,14 @@ main() {
     vm)
       shift
       deploy_vm deploy "$@"
+      ;;
+    vm-status)
+      shift
+      deploy_vm status "$@"
+      ;;
+    vm-logs)
+      shift
+      deploy_vm logs "$@"
       ;;
     vm-backup)
       shift

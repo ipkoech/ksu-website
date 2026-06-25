@@ -65,7 +65,8 @@ const LIBRARY_RESOURCES = new Set(["library"]);
 function getMainApiBaseUrl() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   const fallback = apiUrl?.replace(/\/api\/v1\/?$/, "");
-  return (process.env.NEXT_PUBLIC_MAIN_API_URL || fallback || "http://localhost:8000").replace(/\/$/, "");
+  const serverUrl = typeof window === "undefined" ? process.env.KSU_MAIN_API_URL : undefined;
+  return (serverUrl || process.env.NEXT_PUBLIC_MAIN_API_URL || fallback || "http://localhost:8000").replace(/\/$/, "");
 }
 
 function canUseSessionStorage() {

@@ -1,5 +1,6 @@
 import { mainApi } from "../client";
 import { getStoredAccessToken } from "../auth-tokens";
+import { getMainApiBaseUrl } from "../service-urls";
 import type {
   User,
   MyProfile,
@@ -85,8 +86,7 @@ type ListParams<
     string | number | boolean | undefined
   >,
 > = QueryParams & T;
-const MAIN_API_BASE_URL =
-  process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000";
+const MAIN_API_BASE_URL = getMainApiBaseUrl();
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -257,7 +257,7 @@ export const personsApi = {
     formData.append("file", file);
     const token = getStoredAccessToken();
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000"}/api/v1/persons/${id}/photo`,
+      `${MAIN_API_BASE_URL}/api/v1/persons/${id}/photo`,
       {
         method: "POST",
         credentials: "include",
@@ -1329,7 +1329,7 @@ export const mediaApi = {
     const token = getStoredAccessToken();
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000"}/api/v1/media/upload`,
+      `${MAIN_API_BASE_URL}/api/v1/media/upload`,
       {
         method: "POST",
         credentials: "include",
@@ -1649,7 +1649,7 @@ export const adminReportsApi = {
     if (params?.days) query.set("days", String(params.days));
     if (params?.format) query.set("format", params.format);
     const suffix = query.toString();
-    return `${process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000"}/api/v1/admin/reports/exports/${reportName}${suffix ? `?${suffix}` : ""}`;
+    return `${MAIN_API_BASE_URL}/api/v1/admin/reports/exports/${reportName}${suffix ? `?${suffix}` : ""}`;
   },
 };
 

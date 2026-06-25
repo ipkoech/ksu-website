@@ -1,3 +1,5 @@
+import { getMainApiBaseUrl as resolveMainApiBaseUrl } from "./service-urls";
+
 type StoredTokens = {
   accessToken?: string;
   refreshToken?: string;
@@ -45,7 +47,7 @@ export function getStoredAccessToken() {
 }
 
 export function getMainApiBaseUrl() {
-  return (process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000").replace(/\/$/, "");
+  return resolveMainApiBaseUrl();
 }
 
 export async function refreshStoredAccessToken(baseUrl = getMainApiBaseUrl()) {
