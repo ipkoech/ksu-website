@@ -41,20 +41,26 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           REF_NAME: ${{ github.ref_name }}
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message || '' }}
-          INPUT_ENV: ${{ inputs.target_env }}
-          INPUT_BRANCH: ${{ inputs.branch }}
         run: |
           set -euo pipefail
 
           should_deploy=false
           env_name=""
           branch="${REF_NAME}"
+          commit_message=""
+          input_env=""
+          input_branch=""
+
+          if [[ -f "${GITHUB_EVENT_PATH}" ]]; then
+            commit_message="$(jq -r '.head_commit.message // ""' "${GITHUB_EVENT_PATH}")"
+            input_env="$(jq -r '.inputs.target_env // ""' "${GITHUB_EVENT_PATH}")"
+            input_branch="$(jq -r '.inputs.branch // ""' "${GITHUB_EVENT_PATH}")"
+          fi
 
           if [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
             should_deploy=true
-            env_name="${INPUT_ENV}"
-            branch="${INPUT_BRANCH}"
+            env_name="${input_env:-dev}"
+            branch="${input_branch:-dev}"
           else
             case "${REF_NAME}" in
               dev)
@@ -75,7 +81,7 @@ jobs:
                 ;;
             esac
 
-            if [[ -n "${marker}" && ( "${COMMIT_MESSAGE}" == *"${marker}"* || "${COMMIT_MESSAGE}" == *"[deploy]"* ) ]]; then
+            if [[ -n "${marker}" && ( "${commit_message}" == *"${marker}"* || "${commit_message}" == *"[deploy]"* ) ]]; then
               should_deploy=true
             fi
           fi
