@@ -107,7 +107,7 @@ export function LandingHero({
   return (
     <section
       className="relative overflow-hidden bg-primary"
-      style={{ minHeight: "70vh" }}
+      style={{ minHeight: "50vh", maxHeight: "60vh" }}
       aria-roledescription="carousel"
       aria-label="Featured Kisii University updates"
       onMouseEnter={() => setIsPaused(true)}
@@ -219,7 +219,7 @@ function HeroEditorialPanel({
   return (
     <motion.div
       aria-live={isPaused ? "polite" : "off"}
-      className="max-w-[760px] rounded-md border border-white/15 bg-slate-950/42 p-4 text-white shadow-2xl shadow-slate-950/20 backdrop-blur-md sm:p-7 lg:bg-slate-950/32 lg:p-8"
+      className="max-w-[760px] p-4 text-white sm:p-7 lg:p-8"
       initial={
         prefersReducedMotion
           ? false
@@ -247,7 +247,7 @@ function HeroEditorialPanel({
       <p className="mb-4 inline-flex w-fit items-center rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-white/90 backdrop-blur-sm">
         {slide.eyebrow}
       </p>
-      <h1 className="max-w-[720px] text-balance font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-white min-[360px]:text-4xl sm:text-5xl lg:text-[64px]">
+      <h1 className="max-w-[720px] text-balance font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-white min-[360px]:text-4xl sm:text-5xl lg:text-6xl">
         {slide.title}
       </h1>
       <p className="mt-5 line-clamp-4 max-w-2xl text-base font-medium leading-7 text-white/90 sm:text-lg">
