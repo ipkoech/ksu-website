@@ -25,18 +25,35 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
-  resolve:
-    name: Resolve deployment target
+  deploy:
+    name: Deploy to VM
     runs-on: ubuntu-latest
-    outputs:
-      should_deploy: ${{ steps.target.outputs.should_deploy }}
-      env_name: ${{ steps.target.outputs.env_name }}
-      branch: ${{ steps.target.outputs.branch }}
+    timeout-minutes: 60
+    concurrency:
+      group: vm-deploy
+      cancel-in-progress: false
+    env:
+      VM_SSH_HOST: ${{ vars.VM_SSH_HOST }}
+      VM_SSH_PORT: ${{ vars.VM_SSH_PORT }}
+      VM_SSH_USER: ${{ vars.VM_SSH_USER }}
+      VM_REPO_PATH: ${{ vars.VM_REPO_PATH }}
+      CERT_EMAIL: ${{ vars.CERT_EMAIL }}
+      DEV_PUBLIC_HOST: ${{ vars.DEV_PUBLIC_HOST }}
+      DEV_API_HOST: ${{ vars.DEV_API_HOST }}
+      DEV_RESEARCH_HOST: ${{ vars.DEV_RESEARCH_HOST }}
+      STAGING_PUBLIC_HOST: ${{ vars.STAGING_PUBLIC_HOST }}
+      STAGING_API_HOST: ${{ vars.STAGING_API_HOST }}
+      STAGING_RESEARCH_HOST: ${{ vars.STAGING_RESEARCH_HOST }}
+      PRODUCTION_PUBLIC_HOST: ${{ vars.PRODUCTION_PUBLIC_HOST }}
+      PRODUCTION_API_HOST: ${{ vars.PRODUCTION_API_HOST }}
+      PRODUCTION_RESEARCH_HOST: ${{ vars.PRODUCTION_RESEARCH_HOST }}
     steps:
-      - name: Resolve branch and commit marker
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve deployment target
         id: target
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -92,178 +109,12 @@ jobs:
             echo "branch=${branch}"
           } >> "${GITHUB_OUTPUT}"
 
-  build-images:
-    name: Build and publish images
-    needs: resolve
-    if: needs.resolve.outputs.should_deploy == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    permissions:
-      contents: read
-      packages: write
-    env:
-      TARGET_ENV: ${{ needs.resolve.outputs.env_name }}
-      IMAGE_TAG: ${{ github.sha }}
-      DEV_PUBLIC_HOST: ${{ vars.DEV_PUBLIC_HOST }}
-      DEV_API_HOST: ${{ vars.DEV_API_HOST }}
-      DEV_RESEARCH_HOST: ${{ vars.DEV_RESEARCH_HOST }}
-      STAGING_PUBLIC_HOST: ${{ vars.STAGING_PUBLIC_HOST }}
-      STAGING_API_HOST: ${{ vars.STAGING_API_HOST }}
-      STAGING_RESEARCH_HOST: ${{ vars.STAGING_RESEARCH_HOST }}
-      PRODUCTION_PUBLIC_HOST: ${{ vars.PRODUCTION_PUBLIC_HOST }}
-      PRODUCTION_API_HOST: ${{ vars.PRODUCTION_API_HOST }}
-      PRODUCTION_RESEARCH_HOST: ${{ vars.PRODUCTION_RESEARCH_HOST }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Resolve image and frontend URLs
-        id: image
-        run: |
-          set -euo pipefail
-
-          image_namespace="ghcr.io/${GITHUB_REPOSITORY,,}"
-
-          case "${TARGET_ENV}" in
-            dev)
-              public_host="${DEV_PUBLIC_HOST:-dev.kisiiuniversity.ac.ke}"
-              api_host="${DEV_API_HOST:-api.dev.kisiiuniversity.ac.ke}"
-              research_host="${DEV_RESEARCH_HOST:-dev.research.kisiiuniversity.ac.ke}"
-              ;;
-            staging)
-              public_host="${STAGING_PUBLIC_HOST:-staging.kisiiuniversity.ac.ke}"
-              api_host="${STAGING_API_HOST:-api.staging.kisiiuniversity.ac.ke}"
-              research_host="${STAGING_RESEARCH_HOST:-staging.research.kisiiuniversity.ac.ke}"
-              ;;
-            production)
-              public_host="${PRODUCTION_PUBLIC_HOST:-www.kisiiuniversity.ac.ke}"
-              api_host="${PRODUCTION_API_HOST:-api.kisiiuniversity.ac.ke}"
-              research_host="${PRODUCTION_RESEARCH_HOST:-research.kisiiuniversity.ac.ke}"
-              ;;
-            *)
-              echo "Unsupported environment: ${TARGET_ENV}" >&2
-              exit 1
-              ;;
-          esac
-
-          {
-            echo "image_namespace=${image_namespace}"
-            echo "public_url=https://${public_host}"
-            echo "api_url=https://${api_host}"
-            echo "research_url=https://${research_host}"
-            echo "library_url=https://${public_host}/library"
-            echo "admin_url=https://${public_host}/admin"
-          } >> "${GITHUB_OUTPUT}"
-
-      - name: Log in to GHCR
-        run: |
-          set -euo pipefail
-          echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-
-      - name: Set up Docker Buildx
-        run: docker buildx create --use
-
-      - name: Build and push images
-        env:
-          IMAGE_NAMESPACE: ${{ steps.image.outputs.image_namespace }}
-          PUBLIC_URL: ${{ steps.image.outputs.public_url }}
-          API_URL: ${{ steps.image.outputs.api_url }}
-          RESEARCH_URL: ${{ steps.image.outputs.research_url }}
-          LIBRARY_URL: ${{ steps.image.outputs.library_url }}
-          ADMIN_URL: ${{ steps.image.outputs.admin_url }}
-        run: |
-          set -euo pipefail
-
-          build_image() {
-            local name="$1"
-            shift
-            docker buildx build \
-              --push \
-              --cache-from "type=gha,scope=${name}" \
-              --cache-to "type=gha,mode=max,scope=${name}" \
-              -t "${IMAGE_NAMESPACE}/${name}:${IMAGE_TAG}" \
-              -t "${IMAGE_NAMESPACE}/${name}:${TARGET_ENV}" \
-              "$@"
-          }
-
-          build_image main \
-            -f services/main/Dockerfile \
-            services
-
-          build_image research \
-            -f services/research/Dockerfile \
-            services
-
-          build_image library \
-            -f services/library/Dockerfile \
-            services
-
-          build_frontend() {
-            local image_name="$1"
-            local app_dir="$2"
-            local package_name="$3"
-            shift 3
-
-            build_image "${image_name}" \
-              -f frontend/Dockerfile \
-              --build-arg "APP_DIR=${app_dir}" \
-              --build-arg "PACKAGE_NAME=${package_name}" \
-              --build-arg "NEXT_PUBLIC_API_URL=${API_URL}/api/v1" \
-              --build-arg "NEXT_PUBLIC_MAIN_API_URL=${API_URL}" \
-              --build-arg "NEXT_PUBLIC_RESEARCH_API_URL=${API_URL}" \
-              --build-arg "NEXT_PUBLIC_LIBRARY_API_URL=${API_URL}" \
-              --build-arg "NEXT_PUBLIC_PUBLIC_FRONTEND_URL=${PUBLIC_URL}" \
-              --build-arg "NEXT_PUBLIC_RESEARCH_FRONTEND_URL=${RESEARCH_URL}" \
-              --build-arg "NEXT_PUBLIC_LIBRARY_FRONTEND_URL=${LIBRARY_URL}" \
-              --build-arg "NEXT_PUBLIC_APP_URL=${ADMIN_URL}" \
-              "$@" \
-              frontend
-          }
-
-          build_frontend web-prod web "@ksu/web"
-          build_frontend admin-prod admin "@ksu/admin" \
-            --build-arg "NEXT_BASE_PATH=/admin" \
-            --build-arg "NEXT_OUTPUT_EXPORT=0"
-          build_frontend research-web-prod research "@ksu/research"
-          build_frontend library-web-prod library "@ksu/library" \
-            --build-arg "NEXT_BASE_PATH=/library"
-
-  deploy:
-    name: Deploy to VM
-    needs:
-      - resolve
-      - build-images
-    if: needs.resolve.outputs.should_deploy == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-      packages: read
-    concurrency:
-      group: vm-deploy
-      cancel-in-progress: false
-    env:
-      VM_SSH_HOST: ${{ vars.VM_SSH_HOST }}
-      VM_SSH_PORT: ${{ vars.VM_SSH_PORT }}
-      VM_SSH_USER: ${{ vars.VM_SSH_USER }}
-      VM_REPO_PATH: ${{ vars.VM_REPO_PATH }}
-      CERT_EMAIL: ${{ vars.CERT_EMAIL }}
-      DEV_PUBLIC_HOST: ${{ vars.DEV_PUBLIC_HOST }}
-      DEV_API_HOST: ${{ vars.DEV_API_HOST }}
-      DEV_RESEARCH_HOST: ${{ vars.DEV_RESEARCH_HOST }}
-      STAGING_PUBLIC_HOST: ${{ vars.STAGING_PUBLIC_HOST }}
-      STAGING_API_HOST: ${{ vars.STAGING_API_HOST }}
-      STAGING_RESEARCH_HOST: ${{ vars.STAGING_RESEARCH_HOST }}
-      PRODUCTION_PUBLIC_HOST: ${{ vars.PRODUCTION_PUBLIC_HOST }}
-      PRODUCTION_API_HOST: ${{ vars.PRODUCTION_API_HOST }}
-      PRODUCTION_RESEARCH_HOST: ${{ vars.PRODUCTION_RESEARCH_HOST }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Stop when commit has no deploy marker
+        if: steps.target.outputs.should_deploy != 'true'
+        run: echo "No deploy marker found; skipping deployment."
 
       - name: Configure SSH
+        if: steps.target.outputs.should_deploy == 'true'
         env:
           VM_SSH_PRIVATE_KEY: ${{ secrets.VM_SSH_PRIVATE_KEY }}
           VM_SSH_KNOWN_HOSTS: ${{ secrets.VM_SSH_KNOWN_HOSTS }}
@@ -275,7 +126,7 @@ jobs:
           fi
 
           VM_SSH_HOST="${VM_SSH_HOST:-41.220.243.19}"
-          VM_SSH_PORT="${VM_SSH_PORT:-2222}"
+          VM_SSH_PORT="${VM_SSH_PORT:-22}"
           VM_SSH_USER="${VM_SSH_USER:-ubuntu}"
 
           mkdir -p ~/.ssh
@@ -303,11 +154,13 @@ jobs:
           chmod 600 ~/.ssh/config
 
       - name: Resolve environment hosts
+        if: steps.target.outputs.should_deploy == 'true'
         id: hosts
         env:
-          TARGET_ENV: ${{ needs.resolve.outputs.env_name }}
+          TARGET_ENV: ${{ steps.target.outputs.env_name }}
         run: |
           set -euo pipefail
+
           case "${TARGET_ENV}" in
             dev)
               public_host="${DEV_PUBLIC_HOST:-dev.kisiiuniversity.ac.ke}"
@@ -337,54 +190,14 @@ jobs:
           } >> "${GITHUB_OUTPUT}"
 
       - name: Verify SSH connectivity
+        if: steps.target.outputs.should_deploy == 'true'
         run: ssh ksu-deploy-vm 'hostname && docker compose version'
 
-      - name: Pull prebuilt images on VM
-        env:
-          TARGET_ENV: ${{ needs.resolve.outputs.env_name }}
-          IMAGE_TAG: ${{ github.sha }}
-          GHCR_TOKEN: ${{ github.token }}
-          GHCR_USER: ${{ github.actor }}
-        run: |
-          set -euo pipefail
-
-          image_namespace="ghcr.io/${GITHUB_REPOSITORY,,}"
-          ghcr_user="$(printf '%q' "${GHCR_USER}")"
-          remote_env="$(printf 'TARGET_ENV=%q IMAGE_TAG=%q IMAGE_NAMESPACE=%q' "${TARGET_ENV}" "${IMAGE_TAG}" "${image_namespace}")"
-
-          printf '%s\n' "${GHCR_TOKEN}" | ssh ksu-deploy-vm \
-            "docker login ghcr.io -u ${ghcr_user} --password-stdin"
-
-          ssh ksu-deploy-vm "${remote_env} bash -s" <<'REMOTE'
-          set -euo pipefail
-
-          tag_image() {
-            local remote_name="$1"
-            local local_service="$2"
-            local remote_image="${IMAGE_NAMESPACE}/${remote_name}:${IMAGE_TAG}"
-            local local_image="ksu-${TARGET_ENV}-${local_service}:latest"
-
-            docker pull "${remote_image}"
-            docker tag "${remote_image}" "${local_image}"
-          }
-
-          tag_image main main
-          tag_image main celery-main
-          tag_image research research
-          tag_image library library
-          tag_image library celery-library
-          tag_image web-prod web-prod
-          tag_image admin-prod admin-prod
-          tag_image research-web-prod research-web-prod
-          tag_image library-web-prod library-web-prod
-
-          docker logout ghcr.io >/dev/null 2>&1 || true
-          REMOTE
-
       - name: Deploy
+        if: steps.target.outputs.should_deploy == 'true'
         env:
-          TARGET_ENV: ${{ needs.resolve.outputs.env_name }}
-          DEPLOY_BRANCH: ${{ needs.resolve.outputs.branch }}
+          TARGET_ENV: ${{ steps.target.outputs.env_name }}
+          DEPLOY_BRANCH: ${{ steps.target.outputs.branch }}
           PUBLIC_HOST: ${{ steps.hosts.outputs.public_host }}
           API_HOST: ${{ steps.hosts.outputs.api_host }}
           RESEARCH_HOST: ${{ steps.hosts.outputs.research_host }}
@@ -403,5 +216,4 @@ jobs:
             --api-host "${API_HOST}" \
             --research-host "${RESEARCH_HOST}" \
             --https \
-            --cert-email "${CERT_EMAIL}" \
-            --skip-build
+            --cert-email "${CERT_EMAIL}"
