@@ -7,6 +7,20 @@ import { Button } from "./button";
 import { Badge } from "./badge";
 import { cn } from "../../lib/utils";
 
+function useNarrowViewport() {
+  const [isNarrow, setIsNarrow] = React.useState(false);
+
+  React.useEffect(() => {
+    const mql = window.matchMedia("(max-width: 639px)");
+    setIsNarrow(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setIsNarrow(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
+
+  return isNarrow;
+}
+
 type ActiveFilter = {
   key: string;
   label: string;
@@ -37,6 +51,7 @@ export function FilterDrawerSheet({
   className,
 }: FilterDrawerSheetProps) {
   const [open, setOpen] = React.useState(false);
+  const isNarrow = useNarrowViewport();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -59,8 +74,12 @@ export function FilterDrawerSheet({
         </Button>
       </SheetTrigger>
       <SheetContent
-        side="right"
-        className="flex w-full flex-col gap-0 p-0 sm:max-w-md"
+        side={isNarrow ? "bottom" : "right"}
+        className={cn(
+          "flex w-full flex-col gap-0 p-0 sm:max-w-md",
+          isNarrow && "max-h-[85dvh] rounded-t-xl sm:max-w-none",
+          !isNarrow && "sm:max-w-md",
+        )}
       >
         <SheetHeader className="flex-row items-center justify-between border-b border-slate-200 px-6 py-4">
           <SheetTitle className="text-base font-semibold">{title}</SheetTitle>

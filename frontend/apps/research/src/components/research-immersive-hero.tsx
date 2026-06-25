@@ -164,14 +164,6 @@ export function ResearchImmersiveHero({
         </AnimatePresence>
 
         {showControls && hasMultipleSlides ? (
-          <ResearchPreviewRail
-            slides={slides}
-            activeIndex={activeIndex}
-            onSelect={setActiveIndex}
-          />
-        ) : null}
-
-        {showControls && hasMultipleSlides ? (
           <div className="flex items-center justify-between gap-4 pt-3">
             <div className="flex items-center gap-2">
               {slides.map((slide, index) => (
@@ -210,61 +202,6 @@ export function ResearchImmersiveHero({
         ) : null}
       </div>
     </section>
-  );
-}
-
-function ResearchPreviewRail({
-  slides,
-  activeIndex,
-  onSelect,
-}: {
-  slides: ResearchHeroSlide[];
-  activeIndex: number;
-  onSelect: (index: number) => void;
-}) {
-  return (
-    <div className="mt-4 max-w-6xl rounded-md border border-white/15 bg-white/10 p-2 text-white backdrop-blur md:p-3">
-      <div className="flex gap-2 overflow-x-auto pb-1 md:grid md:grid-cols-2 md:overflow-visible md:pb-0 xl:grid-cols-4">
-        {slides.map((slide, index) => {
-          const isActive = index === activeIndex;
-
-          return (
-            <button
-              key={slide.id}
-              type="button"
-              aria-current={isActive}
-              aria-label={`Show research slide ${index + 1}: ${slide.title}`}
-              onClick={() => onSelect(index)}
-              className="group grid min-w-[250px] grid-cols-[76px_minmax(0,1fr)] overflow-hidden rounded-md border border-white/12 bg-slate-950/28 text-left transition hover:bg-slate-950/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white md:min-w-0"
-            >
-              <span
-                aria-hidden
-                className="block h-full min-h-[84px] bg-cover bg-center"
-                style={{ backgroundImage: `url("${slide.imageSrc}")` }}
-              />
-              <span className="flex min-h-[84px] flex-col justify-between p-3">
-                <span>
-                  <span className="block truncate text-[0.68rem] font-bold uppercase tracking-[0.16em] text-secondary">
-                    {slide.eyebrow}
-                  </span>
-                  <span className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-white">
-                    {slide.title}
-                  </span>
-                </span>
-                <span className="mt-2 h-1 overflow-hidden rounded-full bg-white/18">
-                  <span
-                    className={cn(
-                      "block h-full bg-secondary transition-all",
-                      isActive ? "w-full" : "w-0 group-hover:w-1/3",
-                    )}
-                  />
-                </span>
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
   );
 }
 

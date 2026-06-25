@@ -3,10 +3,6 @@ import type { LibraryResource } from "@ksu/api-client";
 import {
   CompactRecord,
   LibraryActionLink,
-  LibraryFilterClearLink,
-  LibraryFilterSelect,
-  LibraryFilterSubmit,
-  LibraryFilterTextInput,
   LibraryHero,
   MetricStrip,
   LibraryContentBand,
@@ -16,6 +12,7 @@ import {
   SidePanel,
   StatusMessage,
 } from "../../components/library-ui";
+import { LibraryFilterToolbar } from "../../components/library-filter-toolbar";
 import {
   compactText,
   formatLabel,
@@ -103,47 +100,36 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
       />
 
       <LibraryContentBand>
-        <form
-          action="/catalog"
-          className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.55)] xl:grid-cols-[240px_minmax(240px,1fr)_190px_190px_auto] xl:items-end"
-        >
-          <LibraryFilterSelect
-            name="branch"
-            label="Library Branch"
-            value={selectedLibraryId}
-            options={branches.data.map((branch) => ({ value: branch.id, label: branch.name }))}
-            allLabel={branches.data.length === 0 ? "No branches available" : "All branches"}
-          />
-          <LibraryFilterTextInput
-            name="q"
-            label="Search Terms"
-            value={query}
-            placeholder="Title, author, ISBN, call number, or subject"
-          />
-          <LibraryFilterSelect
-            name="type"
-            label="Resource Type"
-            value={resourceType}
-            options={resourceTypeOptions}
-            allLabel="All types"
-          />
-          <LibraryFilterSelect
-            name="status"
-            label="Availability"
-            value={status}
-            options={statusOptions}
-            allLabel="All statuses"
-          />
-          <LibraryFilterSubmit>Search Catalog</LibraryFilterSubmit>
-        </form>
-
-        {hasFilters ? (
-          <div className="mt-4">
-            <LibraryFilterClearLink href="/catalog">
-              Clear Search & Filters
-            </LibraryFilterClearLink>
-          </div>
-        ) : null}
+        <LibraryFilterToolbar
+          actionUrl="/catalog"
+          resetHref="/catalog"
+          searchValue={query}
+          searchPlaceholder="Title, author, ISBN, call number, or subject"
+          searchLabel="Search Terms"
+          selects={[
+            {
+              name: "branch",
+              label: "Library Branch",
+              value: selectedLibraryId,
+              options: branches.data.map((branch) => ({ value: branch.id, label: branch.name })),
+              allLabel: branches.data.length === 0 ? "No branches available" : "All branches",
+            },
+            {
+              name: "type",
+              label: "Resource Type",
+              value: resourceType,
+              options: resourceTypeOptions,
+              allLabel: "All types",
+            },
+            {
+              name: "status",
+              label: "Availability",
+              value: status,
+              options: statusOptions,
+              allLabel: "All statuses",
+            },
+          ]}
+        />
 
         {resources.error ? (
           <div className="mt-5">

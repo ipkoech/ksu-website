@@ -3,11 +3,6 @@ import {
   ExternalAnchor,
   LibraryActionLink,
   LibraryBadge,
-  LibraryFilterCheckbox,
-  LibraryFilterClearLink,
-  LibraryFilterSelect,
-  LibraryFilterSubmit,
-  LibraryFilterTextInput,
   LibraryHero,
   LibrarySection,
   MetricStrip,
@@ -19,6 +14,7 @@ import {
   SidePanel,
   StatusMessage,
 } from "../../components/library-ui";
+import { LibraryFilterToolbar } from "../../components/library-filter-toolbar";
 import {
   compactText,
   formatLabel,
@@ -112,43 +108,35 @@ export default async function ElectronicResourcesPage({
             title="Find an electronic resource"
             body="Search by database name, provider, subject, access level, or platform type."
           />
-        <form
-          action="/electronic"
-          className="grid gap-4 xl:grid-cols-[minmax(260px,1fr)_220px_220px_auto_auto] xl:items-end"
-        >
-          <LibraryFilterTextInput
-            name="q"
-            label="Search Resources"
-            value={query}
-            placeholder="Database, provider, subject, or access type"
-          />
-          <LibraryFilterSelect
-            name="type"
-            label="Resource Type"
-            value={resourceType}
-            options={resourceTypeOptions}
-            allLabel="All types"
-          />
-          <LibraryFilterSelect
-            name="access"
-            label="Audience"
-            value={accessLevel}
-            options={accessLevelOptions}
-            allLabel="All audiences"
-          />
-          <LibraryFilterCheckbox name="featured" value="true" checked={featuredOnly}>
-            Featured only
-          </LibraryFilterCheckbox>
-          <LibraryFilterSubmit>Search Resources</LibraryFilterSubmit>
-        </form>
-
-        {hasFilters ? (
-          <div className="mt-4">
-            <LibraryFilterClearLink href="/electronic">
-              Clear Search & Filters
-            </LibraryFilterClearLink>
-          </div>
-        ) : null}
+        <LibraryFilterToolbar
+          actionUrl="/electronic"
+          resetHref="/electronic"
+          searchValue={query}
+          searchPlaceholder="Database, provider, subject, or access type"
+          searchLabel="Search Resources"
+          selects={[
+            {
+              name: "type",
+              label: "Resource Type",
+              value: resourceType,
+              options: resourceTypeOptions,
+              allLabel: "All types",
+            },
+            {
+              name: "access",
+              label: "Audience",
+              value: accessLevel,
+              options: accessLevelOptions,
+              allLabel: "All audiences",
+            },
+          ]}
+          checkbox={{
+            name: "featured",
+            label: "Featured",
+            checked: featuredOnly,
+            filterLabel: "Featured only",
+          }}
+        />
         </SearchPanel>
 
         {resources.error ? (
