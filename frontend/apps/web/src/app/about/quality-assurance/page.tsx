@@ -21,6 +21,7 @@ import {
   AboutIllustration,
   aboutIllustrations,
 } from "@/components/about/AboutIllustration";
+import { AboutSidebarNav } from "@/components/about/about-sidebar-nav";
 import { ScrollReveal } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
@@ -145,29 +146,16 @@ export default function QualityAssurancePage() {
             />
 
             <div className="mt-5 grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_340px] xl:items-start">
-              <nav
-                aria-label="About section links"
-                className="rounded-[1.5rem] border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur xl:sticky xl:top-28"
-              >
-                <p className="px-2 text-xs font-semibold uppercase text-secondary">
-                  Explore About
-                </p>
-                <ul className="mt-3 space-y-2">
-                  {navigationLinks.slice(0, 6).map((item) => (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        className="group flex items-center gap-3 rounded-2xl border border-transparent px-3 py-3 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
-                      >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
-                          <ChevronRight aria-hidden className="h-4 w-4" />
-                        </span>
-                        <span className="min-w-0 flex-1">{item.title}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
+              <AboutSidebarNav
+                items={navigationLinks.slice(0, 6).map((item) => ({
+                  title: item.title,
+                  href: item.href,
+                  icon: ChevronRight,
+                }))}
+                title="Explore About"
+                ariaLabel="About section links"
+                className="xl:sticky xl:top-28"
+              />
 
               <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_70px_-42px_rgba(15,23,42,0.45)]">
                 <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_260px]">
@@ -222,37 +210,15 @@ export default function QualityAssurancePage() {
               </div>
 
               <aside className="space-y-5">
-                <nav
-                  aria-label="Related quality assurance pages"
-                  className="rounded-[1.5rem] border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur"
-                >
-                  <p className="px-2 text-xs font-semibold uppercase text-secondary">
-                    Related Pages
-                  </p>
-                  <ul className="mt-3 space-y-2">
-                    {accountabilityPath.slice(1).map((item) => {
-                      const Icon = item.icon;
-
-                      return (
-                        <li key={item.href}>
-                          <Link
-                            href={item.href}
-                            className="group flex items-center gap-3 rounded-2xl border border-transparent px-3 py-3 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
-                          >
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
-                              <Icon aria-hidden className="h-4 w-4" />
-                            </span>
-                            <span className="min-w-0 flex-1">{item.title}</span>
-                            <ChevronRight
-                              aria-hidden
-                              className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-primary"
-                            />
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </nav>
+                <AboutSidebarNav
+                  items={accountabilityPath.slice(1).map((item) => ({
+                    title: item.title,
+                    href: item.href,
+                    icon: item.icon,
+                  }))}
+                  title="Related Pages"
+                  ariaLabel="Related quality assurance pages"
+                />
               </aside>
             </div>
           </div>

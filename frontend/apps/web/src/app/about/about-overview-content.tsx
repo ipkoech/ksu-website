@@ -1,29 +1,21 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  BookOpenCheck,
-  ChevronRight,
   ClipboardCheck,
   Compass,
   FileText,
   History,
   Landmark,
-  Lightbulb,
-  Scale,
-  Sparkles,
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
   aboutIntro,
-  coreValues,
   getOverviewData,
-  historyTimeline,
-  officialMission,
-  officialPhilosophy,
   officialVision,
   quickNavigation,
 } from "@/lib/about-data";
+import { AboutSidebarNav } from "@/components/about/about-sidebar-nav";
 import { aboutIllustrations } from "@/components/about/AboutIllustration";
 import { ScrollReveal } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
@@ -71,97 +63,21 @@ const navigationMeta: Record<string, NavigationMeta> = {
     action: "View quality",
     icon: ClipboardCheck,
   },
-  "/about/service-charter": {
-    description:
-      "Access the public service charter information and institutional service commitments.",
-    action: "Open charter",
-    icon: ClipboardCheck,
-  },
-  "/about/strategic-plan": {
-    description:
-      "Review the current strategic plan, key result areas, and supporting public references.",
-    action: "View plan",
-    icon: FileText,
-  },
-};
-
-const timelineAccents = [
-  "border-primary/25 bg-primary/10 text-primary",
-  "border-secondary/25 bg-orange-50 text-secondary",
-  "border-slate-300 bg-white text-slate-900",
-  "border-primary/25 bg-blue-50 text-primary",
-  "border-secondary/25 bg-orange-50 text-secondary",
-  "border-slate-300 bg-white text-slate-900",
-];
-
-const mandateCards: {
-  label: string;
-  title: string;
-  icon: LucideIcon;
-  panel: string;
-}[] = [
-  {
-    label: "Mission",
-    title: "Creating a transformative environment",
-    icon: BookOpenCheck,
-    panel: "bg-white",
-  },
-  {
-    label: "Vision",
-    title: "Inclusive, borderless, and change-making",
-    icon: Compass,
-    panel: "bg-blue-50/80",
-  },
-  {
-    label: "Philosophy",
-    title: "Creative and responsive service to humanity",
-    icon: Lightbulb,
-    panel: "bg-orange-50/70",
-  },
-];
-
-const valueIcons: Record<string, LucideIcon> = {
-  "Transformative Thinking": Sparkles,
-  Respect: Scale,
-  Inclusivity: Users,
-  Fairness: Landmark,
 };
 
 export async function AboutOverviewContent({
   breadcrumbItems = [{ label: "Home", href: "/" }, { label: "About" }],
 }: AboutOverviewContentProps) {
   const overview = await getOverviewData();
+  const vision = overview.vision || officialVision;
 
-  const navigationLinks = quickNavigation
+  const navItems = quickNavigation
     .filter((item) => item.href !== "/about")
     .map((item) => ({
-      ...item,
-      ...(navigationMeta[item.href] ?? {
-        description: "Continue to this About section.",
-        action: "Open page",
-        icon: FileText,
-      }),
+      title: item.title,
+      href: item.href,
+      icon: navigationMeta[item.href]?.icon ?? FileText,
     }));
-
-  const leftLinks = navigationLinks.slice(0, 2);
-  const rightLinks = navigationLinks.slice(2);
-  const vision = overview.vision || officialVision;
-  const mission = overview.mission || officialMission;
-
-  const mandateStatements = [
-    {
-      ...mandateCards[0],
-      text: mission,
-    },
-    {
-      ...mandateCards[1],
-      text: vision,
-    },
-    {
-      ...mandateCards[2],
-      text: officialPhilosophy,
-    },
-  ];
 
   return (
     <PageShell>
@@ -171,37 +87,10 @@ export async function AboutOverviewContent({
             <BreadcrumbTrail items={breadcrumbItems} />
 
             <div className="mt-4 grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)_300px] lg:items-start">
-              <nav
-                aria-label="About section links"
-                className="rounded-[1rem] border border-slate-200 bg-white/80 p-3 shadow-sm backdrop-blur lg:sticky lg:top-28"
-              >
-                <p className="px-2 text-xs font-semibold uppercase text-secondary">
-                  Explore About
-                </p>
-                <ul className="mt-3 space-y-2">
-                  {leftLinks.map((item) => {
-                    const Icon = item.icon;
-
-                    return (
-                      <li key={item.href}>
-                        <Link
-                          href={item.href}
-                          className="group flex items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
-                        >
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
-                            <Icon aria-hidden className="h-4 w-4" />
-                          </span>
-                          <span className="min-w-0 flex-1">{item.title}</span>
-                          <ChevronRight
-                            aria-hidden
-                            className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-primary"
-                          />
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </nav>
+              <AboutSidebarNav
+                items={navItems.slice(0, 3)}
+                className="lg:sticky lg:top-28"
+              />
 
               <div className="overflow-hidden rounded-[1.5rem] border border-slate-800 bg-slate-950 text-white shadow-[0_24px_70px_-44px_rgba(15,23,42,0.7)]">
                 <div className="px-5 py-5 sm:px-6 lg:px-7 lg:py-6">
@@ -234,156 +123,92 @@ export async function AboutOverviewContent({
                 </div>
               </div>
 
-              <aside>
-                <nav
-                  aria-label="Related institutional pages"
-                  className="rounded-[1rem] border border-slate-200 bg-white/80 p-3 shadow-sm backdrop-blur"
-                >
-                  <p className="px-2 text-xs font-semibold uppercase text-secondary">
-                    Related Pages
-                  </p>
-                  <ul className="mt-3 space-y-2">
-                    {rightLinks.map((item) => {
-                      const Icon = item.icon;
-
-                      return (
-                        <li key={item.href}>
-                          <Link
-                            href={item.href}
-                            className="group flex items-center gap-2 rounded-xl border border-transparent px-2 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
-                          >
-                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
-                              <Icon aria-hidden className="h-4 w-4" />
-                            </span>
-                            <span className="min-w-0 flex-1">{item.title}</span>
-                            <ChevronRight
-                              aria-hidden
-                              className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-primary"
-                            />
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </nav>
-              </aside>
+              <AboutSidebarNav
+                items={navItems.slice(3)}
+                title="Related Pages"
+                ariaLabel="Related institutional pages"
+              />
             </div>
           </div>
         </section>
 
         <ScrollReveal
           as="section"
-          className="border-b border-slate-200 bg-white px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
+          className="border-b border-slate-200 bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-18"
         >
-          <div className="grid w-full gap-10 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start">
-            <div className="lg:sticky lg:top-28">
-              <p className="text-sm font-semibold uppercase text-secondary">
-                Discover Our Story
-              </p>
-              <h2 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
-                From teacher training roots to a chartered university
-              </h2>
-              <p className="mt-5 text-base leading-8 text-slate-600">
-                Kisii University began as a teacher training college in 1965,
-                grew through Egerton University, and became a chartered
-                university on February 6, 2013.
-              </p>
-              <div className="mt-7 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
-                <p className="text-sm font-semibold text-slate-950">
-                  Overview focus
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Start with the institution's history, mission, vision, core
-                  values, leadership, governance, quality, and service
-                  commitments.
-                </p>
-              </div>
-            </div>
-
-            <div className="relative">
-              <div className="absolute left-5 top-0 hidden h-full w-px bg-slate-200 md:block lg:left-1/2" />
-              <div className="grid gap-5 md:grid-cols-2">
-                {historyTimeline.map((item, index) => (
-                  <article
-                    key={`${item.year}-${item.title}`}
-                    className={`relative rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.38)] ${
-                      index % 2 === 1 ? "md:mt-12" : ""
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <span
-                        className={`inline-flex rounded-full border px-4 py-2 text-sm font-semibold ${
-                          timelineAccents[index % timelineAccents.length]
-                        }`}
-                      >
-                        {item.year}
-                      </span>
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-500">
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-                    </div>
-                    <h3 className="mt-5 text-xl font-semibold leading-7 text-slate-950">
-                      {item.title}
-                    </h3>
-                    <p className="mt-3 text-sm leading-7 text-slate-600">
-                      {item.detail}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            </div>
+          <div className="w-full">
+            <p className="text-sm font-semibold uppercase text-secondary">
+              Discover Our Story
+            </p>
+            <h2 className="mt-4 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
+              From teacher training roots to a chartered university
+            </h2>
+            <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">
+              Kisii University began as a teacher training college in 1965, grew
+              through Egerton University, and became a chartered university on
+              February 6, 2013. The full institutional timeline, milestones, and
+              charter details are published on the history page.
+            </p>
+            <Link
+              href="/about/history"
+              className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-primary shadow-sm transition hover:border-primary/30 hover:bg-primary/5"
+            >
+              View full history
+              <ArrowRight aria-hidden className="h-4 w-4" />
+            </Link>
           </div>
         </ScrollReveal>
 
         <ScrollReveal
           as="section"
-          className="bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
+          className="bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-14 sm:px-6 lg:px-8 lg:py-18"
         >
           <div className="w-full">
-            <div className="grid gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:items-end">
-              <div>
-                <p className="text-sm font-semibold uppercase text-secondary">
-                  Institutional Mandate
-                </p>
-                <h2 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
-                  What guides the university
-                </h2>
-              </div>
-              <p className="text-base leading-8 text-slate-600">
-                These are the official statements that guide institutional
-                purpose, direction, and culture.
-              </p>
-            </div>
-
-            <div className="mt-10 grid gap-5 lg:grid-cols-3">
-              {mandateStatements.map((item, index) => {
-                const Icon = item.icon;
-
-                return (
-                  <article
-                    key={item.label}
-                    className={`rounded-[1.75rem] border border-slate-200 p-7 shadow-[0_20px_55px_-40px_rgba(15,23,42,0.4)] ${item.panel}`}
-                  >
-                    <div className="flex items-center justify-between gap-4">
-                      <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-primary shadow-sm ring-1 ring-slate-200">
-                        <Icon aria-hidden className="h-5 w-5" />
-                      </span>
-                      <span className="text-xs font-semibold uppercase text-slate-400">
-                        0{index + 1}
-                      </span>
-                    </div>
-                    <p className="mt-7 text-xs font-semibold uppercase text-primary">
-                      {item.label}
-                    </p>
-                    <h3 className="mt-3 text-xl font-semibold leading-7 text-slate-950">
-                      {item.title}
-                    </h3>
-                    <p className="mt-5 text-base leading-8 text-slate-700">
-                      {item.text}
-                    </p>
-                  </article>
-                );
-              })}
+            <p className="text-sm font-semibold uppercase text-secondary">
+              Institutional Mandate
+            </p>
+            <h2 className="mt-4 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
+              What guides the university
+            </h2>
+            <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">
+              The mission, vision, philosophy, and core values are published in
+              full with official source text on the mission &amp; vision page.
+            </p>
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              {[
+                {
+                  label: "Mission & Vision",
+                  body: "Read the official institutional statements.",
+                  href: "/about/mission-vision",
+                },
+                {
+                  label: "Philosophy",
+                  body: "Understand the philosophy behind institutional service.",
+                  href: "/about/mission-vision#philosophy",
+                },
+                {
+                  label: "Core Values",
+                  body: "Values that guide how the university works with people.",
+                  href: "/about/mission-vision#core-values",
+                },
+              ].map((card) => (
+                <Link
+                  key={card.label}
+                  href={card.href}
+                  className="group rounded-[1.25rem] border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md"
+                >
+                  <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold text-slate-950">
+                    {card.label}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {card.body}
+                  </p>
+                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                    Read more
+                    <ArrowRight aria-hidden className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+                  </span>
+                </Link>
+              ))}
             </div>
           </div>
         </ScrollReveal>
@@ -393,45 +218,43 @@ export async function AboutOverviewContent({
           className="px-4 pb-16 sm:px-6 lg:px-8 lg:pb-20"
         >
           <div className="w-full overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-[0_28px_80px_-44px_rgba(15,23,42,0.7)]">
-            <div className="grid gap-0 lg:grid-cols-[360px_minmax(0,1fr)]">
-              <div className="border-b border-white/10 bg-white/[0.04] p-7 sm:p-8 lg:border-b-0 lg:border-r">
+            <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_420px]">
+              <div className="p-7 sm:p-8 lg:p-10">
                 <p className="text-sm font-semibold uppercase text-secondary">
-                  Core Values
+                  Find Your Way
                 </p>
                 <h2 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight">
-                  Core values
+                  Explore the About section
                 </h2>
                 <p className="mt-5 text-base leading-8 text-white/70">
-                  The values describe how the university expects people,
-                  ideas, and decisions to be treated.
+                  Each detail page is the primary source for its topic. Start
+                  with history, mission and values, governance, management,
+                  quality assurance, or the service charter.
                 </p>
               </div>
-              <div className="grid gap-0 sm:grid-cols-2">
-                {coreValues.map((value) => {
-                  const Icon = valueIcons[value.title] ?? Sparkles;
-
-                  return (
-                    <article
-                      key={value.title}
-                      className="border-b border-white/10 p-7 last:border-b-0 sm:border-r sm:even:border-r-0 sm:[&:nth-last-child(-n+2)]:border-b-0"
+              <div className="border-t border-white/10 bg-white/[0.04] p-7 sm:p-8 lg:border-l lg:border-t-0">
+                <div className="flex flex-col gap-2">
+                  {navItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="group flex items-center gap-3 rounded-2xl border border-white/10 px-3 py-3 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:bg-white/10 hover:text-white"
                     >
-                      <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-secondary ring-1 ring-white/10">
-                        <Icon aria-hidden className="h-5 w-5" />
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/10 text-secondary">
+                        <item.icon aria-hidden className="h-4 w-4" />
                       </span>
-                      <h3 className="mt-5 text-xl font-semibold text-white">
-                        {value.title}
-                      </h3>
-                      <p className="mt-3 text-sm leading-7 text-white/70">
-                        {value.body}
-                      </p>
-                    </article>
-                  );
-                })}
+                      <span className="min-w-0 flex-1">{item.title}</span>
+                      <ArrowRight
+                        aria-hidden
+                        className="h-4 w-4 shrink-0 text-white/40 transition group-hover:translate-x-0.5 group-hover:text-white"
+                      />
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </ScrollReveal>
-
       </AboutPageLenis>
     </PageShell>
   );
