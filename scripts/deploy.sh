@@ -38,6 +38,7 @@ VM options:
   --no-gateway         Skip the nginx gateway.
   --skip-frontend      Skip pnpm install/build.
   --skip-build         Skip Docker image rebuild.
+  --run-migrations     Run Alembic migrations for main, research, and library before frontend builds.
   --dry-run            Print the SSH command without executing it.
 
 VM status/log options:
@@ -258,9 +259,10 @@ vm_remote_script() {
   local skip_build="${16}"
   local enable_https="${17}"
   local cert_email="${18}"
-  local inspect_services="${19:-}"
-  local log_tail="${20:-200}"
-  local log_follow="${21:-0}"
+  local run_migrations="${19:-0}"
+  local inspect_services="${20:-}"
+  local log_tail="${21:-200}"
+  local log_follow="${22:-0}"
 
   cat <<REMOTE
 set -euo pipefail
@@ -282,6 +284,7 @@ SKIP_FRONTEND=$(shell_quote "${skip_frontend}")
 SKIP_BUILD=$(shell_quote "${skip_build}")
 ENABLE_HTTPS=$(shell_quote "${enable_https}")
 CERT_EMAIL=$(shell_quote "${cert_email}")
+RUN_MIGRATIONS=$(shell_quote "${run_migrations}")
 MODE=$(shell_quote "${mode}")
 INSPECT_SERVICES=$(shell_quote "${inspect_services}")
 LOG_TAIL=$(shell_quote "${log_tail}")
@@ -607,6 +610,14 @@ wait_for_backend_health() {
 
 wait_for_backend_health 420
 
+if [[ "\${RUN_MIGRATIONS}" -eq 1 ]]; then
+  echo "Running Alembic migrations for backend services: \${backend_services[*]}"
+  for service in "\${backend_services[@]}"; do
+    echo "Running migrations for \${service}"
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T "\${service}" alembic upgrade head
+  done
+fi
+
 if [[ "\${#frontend_services[@]}" -gt 0 ]]; then
   frontend_compose_args=(up -d --remove-orphans)
   if [[ "\${SKIP_BUILD}" -eq 0 ]]; then
@@ -748,6 +759,7 @@ deploy_vm() {
   local with_gateway=1
   local skip_frontend=0
   local skip_build=0
+  local run_migrations=0
   local inspect_services=""
   local log_tail=200
   local log_follow=0
@@ -834,6 +846,10 @@ deploy_vm() {
         ;;
       --skip-build)
         skip_build=1
+        shift
+        ;;
+      --run-migrations)
+        run_migrations=1
         shift
         ;;
       --service)
@@ -929,7 +945,7 @@ deploy_vm() {
   if [[ "${mode}" = "backup" ]]; then
     backup=1
   fi
-  remote="$(vm_remote_script "${mode}" "${env_name}" "${branch}" "${repo_url}" "${repo_path}" "${project_name}" "${public_host}" "${api_host}" "${research_host}" "${bootstrap}" "${pull}" "${backup}" "${backup_dir}" "${with_gateway}" "${skip_frontend}" "${skip_build}" "${enable_https}" "${cert_email}" "${inspect_services}" "${log_tail}" "${log_follow}")"
+  remote="$(vm_remote_script "${mode}" "${env_name}" "${branch}" "${repo_url}" "${repo_path}" "${project_name}" "${public_host}" "${api_host}" "${research_host}" "${bootstrap}" "${pull}" "${backup}" "${backup_dir}" "${with_gateway}" "${skip_frontend}" "${skip_build}" "${enable_https}" "${cert_email}" "${run_migrations}" "${inspect_services}" "${log_tail}" "${log_follow}")"
 
   if [[ "${DRY_RUN}" -eq 1 ]]; then
     printf '+ ssh %q %q\n' "${host}" "${remote}"

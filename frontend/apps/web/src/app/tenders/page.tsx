@@ -36,13 +36,17 @@ function formatDate(value?: string | null) {
 }
 
 export default async function TendersPage() {
-  const response = await announcementsApi.list({
-    is_published: true,
-    search: "tender procurement supplier prequalification",
-    per_page: 6,
-  });
-
-  const notices = response.data ?? [];
+  const notices = await announcementsApi
+    .list({
+      is_published: true,
+      search: "tender procurement supplier prequalification",
+      per_page: 6,
+    })
+    .then((response) => response.data ?? [])
+    .catch((error) => {
+      console.error("Failed to fetch tender notices:", error);
+      return [];
+    });
 
   return (
     <PageShell>
