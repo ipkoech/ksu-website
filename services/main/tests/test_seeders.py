@@ -139,7 +139,7 @@ class SeederDataTests(unittest.TestCase):
             "Diploma in Agricultural Economics": "AGEDX",
             "Diploma in Education Arts": "ECDESNEEPSC",
             "Master of Business Administration": "ACCFIN",
-            "PhD in Educational Management": "ECDESNEEPSC",
+            "PhD in Educational Management": "EFAPE",
         }
         programmes_by_name = {str(spec["name"]): spec for spec in BROCHURE_PROGRAMMES}
 
@@ -151,7 +151,6 @@ class SeederDataTests(unittest.TestCase):
             "Department of Agricultural Economics and Agribusiness",
             "Department of Creative and Performing Arts",
             "Department of Economics and Statistics",
-            "Department of Educational Foundations & Educational Administration Planning and Economics of Education",
         }
         department_names = {
             department["name"]

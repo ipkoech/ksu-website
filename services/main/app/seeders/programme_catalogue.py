@@ -75,8 +75,8 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
     *_expand_programmes(
         programmes=(
             ("PhD in Curriculum Studies", "CIM"),
-            ("PhD in Educational Management", "ECDESNEEPSC"),
-            ("PhD in Educational Foundations", "ECDESNEEPSC"),
+            ("PhD in Educational Management", "EFAPE"),
+            ("PhD in Educational Foundations", "EFAPE"),
             ("PhD in Educational Psychology", "ECDESNEEPSC"),
             ("PhD in Early Childhood Development Education", "ECDESNEEPSC"),
             ("PhD in Special Needs Education", "ECDESNEEPSC"),
@@ -91,12 +91,12 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
     *_expand_programmes(
         programmes=(
             ("Master of Education in Curriculum and Instruction", "CIM"),
-            ("Master of Education in Administration", "ECDESNEEPSC"),
-            ("Master of Education in Planning and Economics", "ECDESNEEPSC"),
-            ("Master of Education in Sociology", "ECDESNEEPSC"),
-            ("Master of Education in Philosophy", "ECDESNEEPSC"),
-            ("Master of Education in Comparative Education", "ECDESNEEPSC"),
-            ("Master of Education in History of Education", "ECDESNEEPSC"),
+            ("Master of Education in Administration", "EFAPE"),
+            ("Master of Education in Planning and Economics", "EFAPE"),
+            ("Master of Education in Sociology", "EFAPE"),
+            ("Master of Education in Philosophy", "EFAPE"),
+            ("Master of Education in Comparative Education", "EFAPE"),
+            ("Master of Education in History of Education", "EFAPE"),
             ("Master of Education in Educational Psychology", "ECDESNEEPSC"),
             ("Master of Education in Guidance and Counseling", "ECDESNEEPSC"),
             ("Master of Education in Special Needs Education", "ECDESNEEPSC"),

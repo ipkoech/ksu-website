@@ -144,10 +144,10 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "bio": "Director of eLearning listed on the academic division page.",
     },
     "dean_agriculture": {
-        "full_name": "Judith Odhiambo",
+        "full_name": "Simion Omasaki",
         "title": "Dr.",
         "institutional_role": "dean_agriculture_and_natural_resources_management",
-        "bio": "Dean of the School of Agriculture and Natural Resources Management as listed on the official school page.",
+        "bio": "Dean SANRM as listed on the official Academic Division page.",
         "academic_rank": "dean",
     },
     "dean_business": {
@@ -158,10 +158,10 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "academic_rank": "dean",
     },
     "dean_education": {
-        "full_name": "Justina Ndaita",
-        "title": "Dr.",
+        "full_name": "Benard Nyatuka",
+        "title": "Prof.",
         "institutional_role": "dean_education_and_human_resource_development",
-        "bio": "Dean of the School of Education and Human Resource Development as listed on the official school team page.",
+        "bio": "Dean SEDHURED as listed on the official Academic Division page.",
         "academic_rank": "dean",
     },
     "dean_health": {
@@ -186,10 +186,10 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "academic_rank": "dean",
     },
     "dean_arts": {
-        "full_name": "Peter Nyansera",
+        "full_name": "Oino Gutwa",
         "title": "Dr.",
         "institutional_role": "dean_arts_and_social_sciences",
-        "bio": "Dean of the School of Arts and Social Sciences as listed on the official school page.",
+        "bio": "Dean SASS as listed on the official Academic Division page.",
         "academic_rank": "dean",
     },
     "dean_law": {
@@ -388,6 +388,7 @@ SCHOOL_SPECS: list[dict[str, Any]] = [
         "website": "https://kisiiuniversity.ac.ke/school/school-of-education-and-human-resource-development",
         "office_location": "Sakagwa Building, Kisii University Main Campus",
         "departments": [
+            {"name": "Department of Educational Foundations & Educational Administration Planning and Economics of Education", "code": "EFAPE"},
             {"name": "Department of Curriculum Instruction and Media (CIM)", "code": "CIM"},
             {"name": "Department of Early Childhood Development Education (ECDE), Special Needs Education (SNE) & Educational Psychology (EPSC)", "code": "ECDESNEEPSC"},
         ],
