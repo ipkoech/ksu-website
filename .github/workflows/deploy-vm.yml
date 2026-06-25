@@ -91,6 +91,7 @@ jobs:
     needs: resolve
     if: needs.resolve.outputs.should_deploy == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     permissions:
       contents: read
       packages: write
@@ -230,6 +231,7 @@ jobs:
       - build-images
     if: needs.resolve.outputs.should_deploy == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: read
@@ -341,28 +343,23 @@ jobs:
           set -euo pipefail
 
           image_namespace="ghcr.io/${GITHUB_REPOSITORY,,}"
+          ghcr_user="$(printf '%q' "${GHCR_USER}")"
+          remote_env="$(printf 'TARGET_ENV=%q IMAGE_TAG=%q IMAGE_NAMESPACE=%q' "${TARGET_ENV}" "${IMAGE_TAG}" "${image_namespace}")"
 
-          ssh ksu-deploy-vm \
-            "TARGET_ENV='${TARGET_ENV}' IMAGE_TAG='${IMAGE_TAG}' IMAGE_NAMESPACE='${image_namespace}' GHCR_USER='${GHCR_USER}' bash -s" <<REMOTE
+          printf '%s\n' "${GHCR_TOKEN}" | ssh ksu-deploy-vm \
+            "docker login ghcr.io -u ${ghcr_user} --password-stdin"
+
+          ssh ksu-deploy-vm "${remote_env} bash -s" <<'REMOTE'
           set -euo pipefail
 
-          token_file="\$(mktemp)"
-          chmod 600 "\${token_file}"
-          cat > "\${token_file}" <<'TOKEN'
-          ${GHCR_TOKEN}
-          TOKEN
-
-          docker login ghcr.io -u "\${GHCR_USER}" --password-stdin < "\${token_file}"
-          rm -f "\${token_file}"
-
           tag_image() {
-            local remote_name="\$1"
-            local local_service="\$2"
-            local remote_image="\${IMAGE_NAMESPACE}/\${remote_name}:\${IMAGE_TAG}"
-            local local_image="ksu-\${TARGET_ENV}-\${local_service}:latest"
+            local remote_name="$1"
+            local local_service="$2"
+            local remote_image="${IMAGE_NAMESPACE}/${remote_name}:${IMAGE_TAG}"
+            local local_image="ksu-${TARGET_ENV}-${local_service}:latest"
 
-            docker pull "\${remote_image}"
-            docker tag "\${remote_image}" "\${local_image}"
+            docker pull "${remote_image}"
+            docker tag "${remote_image}" "${local_image}"
           }
 
           tag_image main main
