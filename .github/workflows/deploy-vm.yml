@@ -20,6 +20,7 @@ on:
       branch:
         description: Branch to deploy
         required: true
+        type: string
         default: dev
 
 permissions:
@@ -96,15 +97,15 @@ jobs:
     env:
       TARGET_ENV: ${{ needs.resolve.outputs.env_name }}
       IMAGE_TAG: ${{ github.sha }}
-      DEV_PUBLIC_HOST: ${{ vars.DEV_PUBLIC_HOST || 'dev.kisiiuniversity.ac.ke' }}
-      DEV_API_HOST: ${{ vars.DEV_API_HOST || 'api.dev.kisiiuniversity.ac.ke' }}
-      DEV_RESEARCH_HOST: ${{ vars.DEV_RESEARCH_HOST || 'dev.research.kisiiuniversity.ac.ke' }}
-      STAGING_PUBLIC_HOST: ${{ vars.STAGING_PUBLIC_HOST || 'staging.kisiiuniversity.ac.ke' }}
-      STAGING_API_HOST: ${{ vars.STAGING_API_HOST || 'api.staging.kisiiuniversity.ac.ke' }}
-      STAGING_RESEARCH_HOST: ${{ vars.STAGING_RESEARCH_HOST || 'staging.research.kisiiuniversity.ac.ke' }}
-      PRODUCTION_PUBLIC_HOST: ${{ vars.PRODUCTION_PUBLIC_HOST || 'www.kisiiuniversity.ac.ke' }}
-      PRODUCTION_API_HOST: ${{ vars.PRODUCTION_API_HOST || 'api.kisiiuniversity.ac.ke' }}
-      PRODUCTION_RESEARCH_HOST: ${{ vars.PRODUCTION_RESEARCH_HOST || 'research.kisiiuniversity.ac.ke' }}
+      DEV_PUBLIC_HOST: ${{ vars.DEV_PUBLIC_HOST }}
+      DEV_API_HOST: ${{ vars.DEV_API_HOST }}
+      DEV_RESEARCH_HOST: ${{ vars.DEV_RESEARCH_HOST }}
+      STAGING_PUBLIC_HOST: ${{ vars.STAGING_PUBLIC_HOST }}
+      STAGING_API_HOST: ${{ vars.STAGING_API_HOST }}
+      STAGING_RESEARCH_HOST: ${{ vars.STAGING_RESEARCH_HOST }}
+      PRODUCTION_PUBLIC_HOST: ${{ vars.PRODUCTION_PUBLIC_HOST }}
+      PRODUCTION_API_HOST: ${{ vars.PRODUCTION_API_HOST }}
+      PRODUCTION_RESEARCH_HOST: ${{ vars.PRODUCTION_RESEARCH_HOST }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -118,19 +119,19 @@ jobs:
 
           case "${TARGET_ENV}" in
             dev)
-              public_host="${DEV_PUBLIC_HOST}"
-              api_host="${DEV_API_HOST}"
-              research_host="${DEV_RESEARCH_HOST}"
+              public_host="${DEV_PUBLIC_HOST:-dev.kisiiuniversity.ac.ke}"
+              api_host="${DEV_API_HOST:-api.dev.kisiiuniversity.ac.ke}"
+              research_host="${DEV_RESEARCH_HOST:-dev.research.kisiiuniversity.ac.ke}"
               ;;
             staging)
-              public_host="${STAGING_PUBLIC_HOST}"
-              api_host="${STAGING_API_HOST}"
-              research_host="${STAGING_RESEARCH_HOST}"
+              public_host="${STAGING_PUBLIC_HOST:-staging.kisiiuniversity.ac.ke}"
+              api_host="${STAGING_API_HOST:-api.staging.kisiiuniversity.ac.ke}"
+              research_host="${STAGING_RESEARCH_HOST:-staging.research.kisiiuniversity.ac.ke}"
               ;;
             production)
-              public_host="${PRODUCTION_PUBLIC_HOST}"
-              api_host="${PRODUCTION_API_HOST}"
-              research_host="${PRODUCTION_RESEARCH_HOST}"
+              public_host="${PRODUCTION_PUBLIC_HOST:-www.kisiiuniversity.ac.ke}"
+              api_host="${PRODUCTION_API_HOST:-api.kisiiuniversity.ac.ke}"
+              research_host="${PRODUCTION_RESEARCH_HOST:-research.kisiiuniversity.ac.ke}"
               ;;
             *)
               echo "Unsupported environment: ${TARGET_ENV}" >&2
@@ -236,20 +237,20 @@ jobs:
       group: vm-deploy
       cancel-in-progress: false
     env:
-      VM_SSH_HOST: ${{ vars.VM_SSH_HOST || '41.220.243.19' }}
-      VM_SSH_PORT: ${{ vars.VM_SSH_PORT || '2222' }}
-      VM_SSH_USER: ${{ vars.VM_SSH_USER || 'ubuntu' }}
-      VM_REPO_PATH: ${{ vars.VM_REPO_PATH || '/srv/ksu' }}
-      CERT_EMAIL: ${{ vars.CERT_EMAIL || 'website@kisiiuniversity.ac.ke' }}
-      DEV_PUBLIC_HOST: ${{ vars.DEV_PUBLIC_HOST || 'dev.kisiiuniversity.ac.ke' }}
-      DEV_API_HOST: ${{ vars.DEV_API_HOST || 'api.dev.kisiiuniversity.ac.ke' }}
-      DEV_RESEARCH_HOST: ${{ vars.DEV_RESEARCH_HOST || 'dev.research.kisiiuniversity.ac.ke' }}
-      STAGING_PUBLIC_HOST: ${{ vars.STAGING_PUBLIC_HOST || 'staging.kisiiuniversity.ac.ke' }}
-      STAGING_API_HOST: ${{ vars.STAGING_API_HOST || 'api.staging.kisiiuniversity.ac.ke' }}
-      STAGING_RESEARCH_HOST: ${{ vars.STAGING_RESEARCH_HOST || 'staging.research.kisiiuniversity.ac.ke' }}
-      PRODUCTION_PUBLIC_HOST: ${{ vars.PRODUCTION_PUBLIC_HOST || 'www.kisiiuniversity.ac.ke' }}
-      PRODUCTION_API_HOST: ${{ vars.PRODUCTION_API_HOST || 'api.kisiiuniversity.ac.ke' }}
-      PRODUCTION_RESEARCH_HOST: ${{ vars.PRODUCTION_RESEARCH_HOST || 'research.kisiiuniversity.ac.ke' }}
+      VM_SSH_HOST: ${{ vars.VM_SSH_HOST }}
+      VM_SSH_PORT: ${{ vars.VM_SSH_PORT }}
+      VM_SSH_USER: ${{ vars.VM_SSH_USER }}
+      VM_REPO_PATH: ${{ vars.VM_REPO_PATH }}
+      CERT_EMAIL: ${{ vars.CERT_EMAIL }}
+      DEV_PUBLIC_HOST: ${{ vars.DEV_PUBLIC_HOST }}
+      DEV_API_HOST: ${{ vars.DEV_API_HOST }}
+      DEV_RESEARCH_HOST: ${{ vars.DEV_RESEARCH_HOST }}
+      STAGING_PUBLIC_HOST: ${{ vars.STAGING_PUBLIC_HOST }}
+      STAGING_API_HOST: ${{ vars.STAGING_API_HOST }}
+      STAGING_RESEARCH_HOST: ${{ vars.STAGING_RESEARCH_HOST }}
+      PRODUCTION_PUBLIC_HOST: ${{ vars.PRODUCTION_PUBLIC_HOST }}
+      PRODUCTION_API_HOST: ${{ vars.PRODUCTION_API_HOST }}
+      PRODUCTION_RESEARCH_HOST: ${{ vars.PRODUCTION_RESEARCH_HOST }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -264,6 +265,10 @@ jobs:
             echo "VM_SSH_PRIVATE_KEY secret is required" >&2
             exit 1
           fi
+
+          VM_SSH_HOST="${VM_SSH_HOST:-41.220.243.19}"
+          VM_SSH_PORT="${VM_SSH_PORT:-2222}"
+          VM_SSH_USER="${VM_SSH_USER:-ubuntu}"
 
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
@@ -297,19 +302,19 @@ jobs:
           set -euo pipefail
           case "${TARGET_ENV}" in
             dev)
-              public_host="${DEV_PUBLIC_HOST}"
-              api_host="${DEV_API_HOST}"
-              research_host="${DEV_RESEARCH_HOST}"
+              public_host="${DEV_PUBLIC_HOST:-dev.kisiiuniversity.ac.ke}"
+              api_host="${DEV_API_HOST:-api.dev.kisiiuniversity.ac.ke}"
+              research_host="${DEV_RESEARCH_HOST:-dev.research.kisiiuniversity.ac.ke}"
               ;;
             staging)
-              public_host="${STAGING_PUBLIC_HOST}"
-              api_host="${STAGING_API_HOST}"
-              research_host="${STAGING_RESEARCH_HOST}"
+              public_host="${STAGING_PUBLIC_HOST:-staging.kisiiuniversity.ac.ke}"
+              api_host="${STAGING_API_HOST:-api.staging.kisiiuniversity.ac.ke}"
+              research_host="${STAGING_RESEARCH_HOST:-staging.research.kisiiuniversity.ac.ke}"
               ;;
             production)
-              public_host="${PRODUCTION_PUBLIC_HOST}"
-              api_host="${PRODUCTION_API_HOST}"
-              research_host="${PRODUCTION_RESEARCH_HOST}"
+              public_host="${PRODUCTION_PUBLIC_HOST:-www.kisiiuniversity.ac.ke}"
+              api_host="${PRODUCTION_API_HOST:-api.kisiiuniversity.ac.ke}"
+              research_host="${PRODUCTION_RESEARCH_HOST:-research.kisiiuniversity.ac.ke}"
               ;;
             *)
               echo "Unsupported environment: ${TARGET_ENV}" >&2
@@ -382,6 +387,9 @@ jobs:
           RESEARCH_HOST: ${{ steps.hosts.outputs.research_host }}
         run: |
           set -euo pipefail
+          VM_REPO_PATH="${VM_REPO_PATH:-/srv/ksu}"
+          CERT_EMAIL="${CERT_EMAIL:-website@kisiiuniversity.ac.ke}"
+
           scripts/deploy.sh vm \
             --host ksu-deploy-vm \
             --env "${TARGET_ENV}" \
