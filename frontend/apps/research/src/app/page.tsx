@@ -147,6 +147,20 @@ export default async function ResearchPage() {
         ]}
         slides={[
           {
+            id: "3rd-international-multidisciplinary-conference",
+            eyebrow: "International Multidisciplinary Conference",
+            title: "3rd International Multi-Disciplinary Conference.",
+            body: "Follow Kisii University's global-health conference conversations on inclusive and borderless knowledge, bringing together researchers, policymakers, academics, industry leaders, innovators, students, and development partners.",
+            imageSrc: "/images/research/3rd-international-multidisciplinary-conference.jpg",
+            imageAlt: "3rd International Multi-Disciplinary Conference at Kisii University",
+            primaryAction: {
+              label: "Watch Day 3",
+              href: "https://kisiiuniversity.ac.ke/blog/live-day-3-of-the-3rd-international-multi-disciplinary-conference",
+            },
+            secondaryAction: { label: "Open events", href: "/events" },
+            stats: heroStats,
+          },
+          {
             id: "research-discovery",
             eyebrow: "Kisii University Research",
             title: "Research that connects discovery, innovation, and public service.",

@@ -1,10 +1,12 @@
 import unittest
 from collections import Counter
+from pathlib import Path
 
 from app.seeders._shared import ADMIN_DEPARTMENTS, LEADERSHIP_PEOPLE
 from app.seeders._shared import SCHOOL_SPECS
 from app.seeders._shared import ICT_SECTION_DEPARTMENTS
 from app.seeders.seed_admin_departments import ADMIN_SERVICE_SPECS, MOVED_ADMIN_SERVICE_SLUGS
+from app.seeders.seed_content import HOMEPAGE_SLIDER_GROUP, HOMEPAGE_SLIDER_ITEMS
 from app.seeders.seed_cover_images import cover_targets_from_specs
 from app.seeders.seed_divisions import DIVISION_SPECS, WING_SPECS
 from app.seeders.programme_catalogue import BROCHURE_PROGRAMMES
@@ -19,6 +21,20 @@ def duplicates(values):
 
 
 class SeederDataTests(unittest.TestCase):
+    def test_homepage_slider_specs_are_source_backed(self):
+        asset_root = Path(__file__).resolve().parents[1] / "app" / "seeders" / "assets" / "content"
+
+        self.assertEqual("homepage-hero", HOMEPAGE_SLIDER_GROUP["slug"])
+        self.assertEqual("home.hero", HOMEPAGE_SLIDER_GROUP["location"])
+        self.assertEqual(3, HOMEPAGE_SLIDER_GROUP["max_slides"])
+        self.assertEqual(3, len(HOMEPAGE_SLIDER_ITEMS))
+        self.assertEqual([], duplicates(spec["title"] for spec in HOMEPAGE_SLIDER_ITEMS))
+
+        for spec in HOMEPAGE_SLIDER_ITEMS:
+            self.assertIn("https://kisiiuniversity.ac.ke/blog/", spec["source_url"])
+            self.assertIn("https://kisiiuniversity.ac.ke/storage/public/resources/", spec["source_image_url"])
+            self.assertTrue((asset_root / spec["asset_filename"]).exists())
+
     def test_admin_department_specs_are_unique(self):
         self.assertEqual([], duplicates(spec["code"] for spec in ADMIN_DEPARTMENTS))
         self.assertEqual([], duplicates(spec["name"] for spec in ADMIN_DEPARTMENTS))
