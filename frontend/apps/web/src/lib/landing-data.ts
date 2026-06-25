@@ -137,17 +137,6 @@ const announcementFields = [
   "is_main",
 ].join(",");
 
-const fallbackAnnouncements: LandingAnnouncement[] = [
-  {
-    id: "admissions-guidance",
-    message: "Admissions, programmes, and services are available online.",
-    linkText: "Open",
-    linkHref: "/admissions/how-to-apply",
-    variant: "warning",
-    dismissible: false,
-  },
-];
-
 function plainText(value?: string | null) {
   const decoded = (value ?? "")
     .replace(/&nbsp;/g, " ")
@@ -353,10 +342,9 @@ export async function getLandingAnnouncements(): Promise<LandingAnnouncement[]> 
   try {
     const mainAnnouncements = await listMainAnnouncements();
     const announcements = mainAnnouncements.length ? mainAnnouncements : await listLatestAnnouncements();
-    const normalized = announcements.slice(0, 5).map(normalizeAnnouncement);
-    return normalized.length ? normalized : fallbackAnnouncements;
+    return announcements.slice(0, 5).map(normalizeAnnouncement);
   } catch (error) {
     console.error("Failed to fetch landing announcements:", error);
-    return fallbackAnnouncements;
+    return [];
   }
 }
