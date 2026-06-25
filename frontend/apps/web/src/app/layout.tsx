@@ -1,8 +1,4 @@
 import type { Metadata } from "next";
-import {
-  AnalyticsConsentBanner,
-  AnalyticsTracker,
-} from "@/components/analytics/analytics-tracker";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -61,8 +57,6 @@ export default function RootLayout({
         suppressHydrationWarning
         className="font-sans antialiased"
       >
-        <AnalyticsTracker />
-        <AnalyticsConsentBanner />
         {children}
       </body>
     </html>

@@ -159,10 +159,6 @@ export function PublicFooter({
     setExpandedColumn((prev) => (prev === title ? null : title));
   };
 
-  const openAnalyticsPreferences = () => {
-    window.dispatchEvent(new Event("ksu-open-analytics-preferences"));
-  };
-
   return (
     <footer className={cn("bg-gray-900 text-white", className)}>
       {/* Main Footer */}
@@ -325,13 +321,6 @@ export function PublicFooter({
                   {link.label}
                 </Link>
               ))}
-              <button
-                type="button"
-                onClick={openAnalyticsPreferences}
-                className="inline-flex min-h-11 items-center text-gray-400 transition-colors hover:text-white"
-              >
-                Analytics preferences
-              </button>
             </nav>
 
             {/* Social Links */}
