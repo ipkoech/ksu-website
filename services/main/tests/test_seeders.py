@@ -10,7 +10,7 @@ from app.seeders.seed_divisions import DIVISION_SPECS, WING_SPECS
 from app.seeders.programme_catalogue import BROCHURE_PROGRAMMES
 from app.seeders.seed_portal_users import PORTAL_USER_SPECS
 from app.seeders.seed_programmes import programme_code
-from app.seeders.seed_public_records import CONTACT_SPECS, DOWNLOAD_SPECS, FAQ_SPECS
+from app.seeders.seed_public_records import CLUB_SPECS, CONTACT_SPECS, DOWNLOAD_SPECS, FAQ_SPECS
 from app.schemas.base import slugify
 
 
@@ -279,6 +279,18 @@ class SeederDataTests(unittest.TestCase):
             "Student Life",
             downloads_by_slug["kisii-university-revised-handbook-2019"]["category"],
         )
+
+    def test_club_specs_match_official_clubs_index(self):
+        clubs_by_name = {spec["name"]: spec for spec in CLUB_SPECS}
+
+        self.assertEqual(71, len(CLUB_SPECS))
+        self.assertEqual([], duplicates(spec["slug"] for spec in CLUB_SPECS))
+        self.assertEqual([], duplicates(spec["name"] for spec in CLUB_SPECS))
+        self.assertEqual("professional", clubs_by_name["ACCOUNTING STUDENTS ASSOCIATION"]["club_type"])
+        self.assertEqual("religious", clubs_by_name["CHRISTIAN UNION"]["club_type"])
+        self.assertEqual("edu-service", clubs_by_name["ST.JOHN AMBULANCE"]["club_type"])
+        self.assertEqual("mentorship", clubs_by_name["YOUNG FARMERS ASSOCIATION"]["club_type"])
+        self.assertNotIn("Sports Club", clubs_by_name)
 
     def test_requested_administration_office_downloads_are_seeded(self):
         downloads_by_slug = {spec["slug"]: spec for spec in DOWNLOAD_SPECS}

@@ -11,6 +11,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import AdmissionInfo, Announcement, Club, ContactDirectory, Document, FAQ, Media
+from app.schemas.base import slugify
 
 from ._shared import SeedContext
 
@@ -449,87 +450,100 @@ CONTACT_SPECS = [
 ]
 
 
+CLUB_SOURCE_URL = f"{PUBLIC_SOURCE}/A-ZClubs"
+
+OFFICIAL_CLUB_INDEX: list[tuple[str, str]] = [
+    ("21. KINYAUSA ASSOCIATION", "county"),
+    ("ACCOUNTING STUDENTS ASSOCIATION", "professional"),
+    ("ART AND POETRY", "edu-tainment"),
+    ("BANKING AND FINANCE STUDENTS ASSOCIATION", "professional"),
+    ("BARINGO COUNTY STUDENTS ASSOCIATION", "county"),
+    ("BIODIVERSITY", "edu-service"),
+    ("BOMET COUNTY STUDENTS ASSOCIATION", "county"),
+    ("BUNGOMA COUNTY STUDENTS ASSOCIATION", "county"),
+    ("BUSIA COUNTY STUDENTS ASSOCIATION", "county"),
+    ("CATHOLIC ACTION", "religious"),
+    ("CHRISTIAN UNION", "religious"),
+    ("COMEDY CLUB", "edu-tainment"),
+    ("COOPERATIVE STUDENTS ASSOCIATION", "professional"),
+    ("DRAMA", "edu-tainment"),
+    ("ECONOMICS AND APPLIED STATISTICS STUDENTS ASSOCIATION", "professional"),
+    ("ELGEYOMARAKWET COUNTY STUDENTS ASSOCIATION", "county"),
+    ("EMBU COUNTY STUDENTS ASSOCIATION", "county"),
+    ("HEART ASSOCIATION", "edu-service"),
+    ("HOMABAY COUNTY STUDENTS ASSOCIATION", "county"),
+    ("HUMAN RIGHTS STUDENTS ASSOCIATION", "professional"),
+    ("INFORMATION SCIENCE ASSOCIATION", "professional"),
+    ("INTERNATIONAL YOUTH FELLOWSHIP", "mentorship"),
+    ("KAKAMEGA COUNTY STUDENTS ASSOCIATION", "county"),
+    ("KENPO KARATE", "edu-tainment"),
+    ("KERICHO COUNTY STUDENTS ASSOCIATION", "county"),
+    ("KILIFI COUNTY STUDENTS ASSOCIATION", "county"),
+    ("KIRINYANGA COUNTY STUDENTS ASSOCIATION", "county"),
+    ("KISII UNIVERSITY PUBLIC POLICY RESEARCH ASSOCIATION", "mentorship"),
+    ("KISII UNIVERSITY STUDENTS TEACHERS ASSOCIATION", "professional"),
+    ("KWALE COUNTY STUDENTS ASSOCIATION", "county"),
+    ("LAIKIPIA COUNTY STUDENTS ASSOCIATION", "county"),
+    ("LAW STUDENTS ASSOCIATION", "professional"),
+    ("MAKUENI COUNTY STUDENTS ASSOCIATION", "county"),
+    ("MEDICAL LABARATORY STUDENTS ASSOCIATION OF KISII UNIVERSITY", "professional"),
+    ("MEDICAL STUDENTS ASSOCIATION", "professional"),
+    ("MERU AND THARAKA NITHI STUDENTS ASSOCIATION", "county"),
+    ("MIGORI COUNTY STUDENTS ASSOCIATION", "county"),
+    ("MODELING", "mentorship"),
+    ("MODERN DANCE", "edu-tainment"),
+    ("MURANG'A COUNTY STUDENTS ASSOCIATION", "county"),
+    ("MUSLIM", "religious"),
+    ("NAKURU COUNTY STUDENTS ASSOCIATION", "county"),
+    ("NANDI COUNTY STUDENTS ASSOCIATION", "county"),
+    ("NAROK COUNTY STUDENTS ASSOCIATION", "county"),
+    ("NYANDARUA COUNTY STUDENTS ASSOCIATION", "county"),
+    ("NYERI COUNTY STUDENTS ASSOCIATION", "county"),
+    ("OUTREACH MINISTRIES", "religious"),
+    ("PAK", "mentorship"),
+    ("PANASA", "mentorship"),
+    ("PHARMACY STUDENTS ASSOCIATION", "professional"),
+    ("PRESIDENT AWARDS", "mentorship"),
+    ("PROCUREMENT AND LOGISTICS STUDENTS ASSOCIATION", "professional"),
+    ("PROJECT MANAGEMENT STUDENTS ASSOCIATION", "professional"),
+    ("PSYCHOLOGY STUDENTS ASSOCIATION", "professional"),
+    ("PURE AND APLLIED SCIENCE STUDENTS ASSOCIATION", "professional"),
+    ("ROLLER SKATERS STUDENTS ASSOCIATION", "edu-tainment"),
+    ("SALSA", "edu-tainment"),
+    ("SAMBURU COUNTY STUDENTS ASSOCIATION", "county"),
+    ("SCOUTS", "edu-service"),
+    ("SDA", "religious"),
+    ("SIAYA COUNTY STDENTS ASSOCIATION", "county"),
+    ("ST.JOHN AMBULANCE", "edu-service"),
+    ("TAX SOCIETY", "mentorship"),
+    ("THE ACTUARIAL STUDENTS SOCIETY", "professional"),
+    ("THE KISII UNIVERSITY MATHEMATICS STUDENTS ASSOCIATION", "professional"),
+    ("TRANS-NZOIA COUNTY STUDENTS ASSOCIATION", "county"),
+    ("TURKANA COUNTY STUDENTS ASSOCIATION", "county"),
+    ("UASIN GISHU COUNTY STUDENTS ASSOCIATION", "county"),
+    ("UNIVERSITY CHOIR", "edu-tainment"),
+    ("VIHIGA COUNTY STUDENTS ASSOCIATION", "county"),
+    ("YOUNG FARMERS ASSOCIATION", "mentorship"),
+]
+
+
+def _club_spec(name: str, cohort: str, display_order: int) -> dict[str, object]:
+    cohort_label = f"{cohort.replace('-', ' ')} cohort"
+    return {
+        "slug": slugify(name),
+        "name": name,
+        "club_type": cohort,
+        "about": f"{name} is listed on the official Kisii University Clubs & Societies index under the {cohort_label}.",
+        "mission": f"Official Kisii University club record published under the {cohort_label}.",
+        "objectives": f"Maintain the public club listing from {CLUB_SOURCE_URL}.",
+        "membership_count": 0,
+        "display_order": display_order,
+    }
+
+
 CLUB_SPECS = [
-    {
-        "slug": "kisii-university-students-association",
-        "name": "Kisii University Students Association",
-        "club_type": "governance",
-        "about": "Student representative association supporting student welfare, engagement, and university life.",
-        "mission": "Represent student interests and support constructive engagement across the university.",
-        "objectives": "Promote student welfare, representation, leadership, and responsible participation in campus life.",
-        "membership_count": 0,
-        "display_order": 10,
-    },
-    {
-        "slug": "christian-union",
-        "name": "Christian Union",
-        "club_type": "faith",
-        "about": "A student faith community for fellowship, mentorship, and service.",
-        "mission": "Support spiritual growth and responsible service among students.",
-        "objectives": "Provide fellowship opportunities, mentorship, and service activities for members.",
-        "membership_count": 0,
-        "display_order": 20,
-    },
-    {
-        "slug": "red-cross-club",
-        "name": "Red Cross Club",
-        "club_type": "service",
-        "about": "A student service club focused on humanitarian awareness, first aid, and community outreach.",
-        "mission": "Encourage humanitarian service and emergency preparedness on campus and beyond.",
-        "objectives": "Promote first aid awareness, voluntary service, and community support activities.",
-        "membership_count": 0,
-        "display_order": 30,
-    },
-    {
-        "slug": "environmental-club",
-        "name": "Environmental Club",
-        "club_type": "service",
-        "about": "A club for students interested in environmental stewardship and sustainability.",
-        "mission": "Promote environmental responsibility and practical sustainability action.",
-        "objectives": "Organize environmental awareness, clean-up, tree planting, and conservation activities.",
-        "membership_count": 0,
-        "display_order": 40,
-    },
-    {
-        "slug": "innovation-and-ict-club",
-        "name": "Innovation and ICT Club",
-        "club_type": "academic",
-        "about": "A student club for innovation, technology, entrepreneurship, and digital skills.",
-        "mission": "Build practical technology and innovation capacity among students.",
-        "objectives": "Support peer learning, project showcases, hackathons, and innovation challenges.",
-        "membership_count": 0,
-        "display_order": 50,
-    },
-    {
-        "slug": "debate-club",
-        "name": "Debate Club",
-        "club_type": "academic",
-        "about": "A student forum for public speaking, debate, research, and critical thinking.",
-        "mission": "Develop articulate, evidence-led, and confident student communicators.",
-        "objectives": "Host debates, public speaking sessions, and inter-university engagements.",
-        "membership_count": 0,
-        "display_order": 60,
-    },
-    {
-        "slug": "drama-and-theatre-club",
-        "name": "Drama and Theatre Club",
-        "club_type": "arts",
-        "about": "A creative arts club for drama, theatre, performance, and cultural expression.",
-        "mission": "Nurture student creativity through performance and cultural production.",
-        "objectives": "Support theatre practice, campus performances, and cultural showcases.",
-        "membership_count": 0,
-        "display_order": 70,
-    },
-    {
-        "slug": "sports-club",
-        "name": "Sports Club",
-        "club_type": "sports",
-        "about": "A student club supporting recreational and competitive sport participation.",
-        "mission": "Encourage active, healthy, and team-oriented student life.",
-        "objectives": "Coordinate sporting activities, team participation, and student fitness initiatives.",
-        "membership_count": 0,
-        "display_order": 80,
-    },
+    _club_spec(name, cohort, display_order)
+    for display_order, (name, cohort) in enumerate(OFFICIAL_CLUB_INDEX, start=10)
 ]
 
 
