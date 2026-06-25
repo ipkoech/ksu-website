@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, Building2, CalendarDays, GraduationCap, Home, Landmark, Megaphone, Search } from "lucide-react";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
-import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
 
 export const metadata = {
   title: "Sitemap",
@@ -34,13 +33,6 @@ const utilitySections = [
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms of Use", href: "/terms" },
   { label: "A-Z Index", href: "/az-index" },
-];
-
-const externalSections = [
-  { label: "Research Portal", href: researchFrontendUrl },
-  { label: "Library Portal", href: libraryFrontendUrl },
-  { label: "Student Portal", href: "https://portal.kisiiuniversity.ac.ke" },
-  { label: "E-Learning", href: "https://elearning.kisiiuniversity.ac.ke" },
 ];
 
 export default function SitemapPage() {
@@ -101,26 +93,6 @@ export default function SitemapPage() {
                   <ArrowRight aria-hidden className="h-4 w-4 text-primary/60" />
                   {item.label}
                 </Link>
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-6">
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
-              External portals
-            </h2>
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {externalSections.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex items-center gap-3 rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-primary/30 hover:text-primary"
-                >
-                  <ArrowRight aria-hidden className="h-4 w-4 text-primary/60" />
-                  {item.label}
-                </a>
               ))}
             </div>
           </section>
