@@ -42,17 +42,7 @@ export default async function LibraryLeadershipPage() {
             <SecondaryLink href="/services">View services</SecondaryLink>
           </>
         }
-      >
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-            Leadership records
-          </p>
-          <p className="mt-3 text-4xl font-bold sm:text-5xl">{leaders.length}</p>
-          <p className="mt-2 text-sm leading-6 text-white/75">
-            Public senior staff records published for library users.
-          </p>
-        </div>
-      </LibraryHero>
+      />
 
       {leadership.error ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8">

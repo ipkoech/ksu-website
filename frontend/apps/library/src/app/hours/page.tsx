@@ -43,18 +43,7 @@ export default async function LibraryHoursPage() {
             <SecondaryLink href="/catalog">Search catalog</SecondaryLink>
           </>
         }
-      >
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-            Published schedules
-          </p>
-          <p className="mt-3 text-4xl font-bold sm:text-5xl">{publishedCount}</p>
-          <p className="mt-2 text-sm leading-6 text-white/75">
-            Hour records across {branches.data.length} public branch
-            {branches.data.length === 1 ? "" : "es"}.
-          </p>
-        </div>
-      </LibraryHero>
+      />
 
       {errors.map((error) => (
         <section key={error} className="px-4 pt-6 sm:px-6 lg:px-8">

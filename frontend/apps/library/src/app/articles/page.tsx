@@ -46,15 +46,7 @@ export default async function LibraryArticlesPage({ searchParams }: ArticlesPage
             <SecondaryLink href="/ask">Ask a librarian</SecondaryLink>
           </>
         }
-      >
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-          Published articles
-        </p>
-        <p className="mt-3 text-4xl font-bold sm:text-5xl">{records.data.length}</p>
-        <p className="mt-2 text-sm leading-6 text-white/75">
-          Articles are sourced from public blog records, with library-scoped records prioritized.
-        </p>
-      </LibraryHero>
+      />
 
       {errors.map((error) => (
         <section key={error} className="px-4 pt-6 sm:px-6 lg:px-8">

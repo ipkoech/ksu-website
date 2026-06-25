@@ -18,9 +18,8 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function LibraryPage() {
-  const { branches, catalog, electronic, services, regulations, stats, errors } =
+  const { branches, catalog, electronic, services, regulations, errors } =
     await getLibraryOverviewData();
-  const topStats = stats?.stats?.slice(0, 4) ?? [];
   const primaryBranch = branches.data[0];
   const branchContacts = branches.data
     .filter((branch) => branch.phone || branch.email || branch.address)
@@ -59,36 +58,7 @@ export default async function LibraryPage() {
             <SecondaryLink href="/ask">Ask a librarian</SecondaryLink>
           </>
         }
-      >
-        <div className="grid gap-3 text-white">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-            Library snapshot
-          </p>
-          {topStats.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3">
-              {topStats.map((item) => (
-                <div
-                  key={item.key}
-                  className="rounded-md border border-white/15 bg-white/10 p-4"
-                >
-                  <p className="text-3xl font-bold">
-                    {item.value}
-                    {item.suffix}
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-white/75">
-                    {item.label}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm leading-6 text-white/75">
-              Branch, catalog, and e-resource statistics appear here when
-              public library records are available.
-            </p>
-          )}
-        </div>
-      </LibraryHero>
+      />
 
       {errors.length > 0 ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8">

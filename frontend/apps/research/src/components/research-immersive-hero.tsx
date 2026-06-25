@@ -74,7 +74,7 @@ export function ResearchImmersiveHero({
 
   const minHeight =
     size === "landing"
-      ? "min-h-[540px] sm:min-h-[620px] lg:min-h-[720px]"
+      ? "min-h-[70vh]"
       : size === "detail"
         ? "min-h-[380px] sm:min-h-[420px] lg:min-h-[500px]"
         : "min-h-[420px] sm:min-h-[460px] lg:min-h-[560px]";
@@ -162,29 +162,6 @@ export function ResearchImmersiveHero({
           ) : null}
           </motion.div>
         </AnimatePresence>
-
-        {(activeSlide.stats?.length ?? 0) > 0 ? (
-          <motion.div
-            key={`${activeSlide.id}-stats`}
-            className="mb-2 grid max-w-5xl grid-cols-2 overflow-hidden rounded-lg border border-white/15 bg-white/10 backdrop-blur xl:grid-cols-4"
-            initial={false}
-            animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-            transition={{
-              delay: prefersReducedMotion ? 0 : 0.08,
-              duration: prefersReducedMotion ? 0 : 0.34,
-              ease: "easeOut",
-            }}
-          >
-            {activeSlide.stats?.map((stat) => (
-              <div key={stat.label} className="border-white/15 p-4 even:border-l xl:border-l first:xl:border-l-0">
-                <p className="font-[family-name:var(--font-display)] text-2xl font-semibold text-white">
-                  {stat.value}
-                </p>
-                <p className="mt-1 text-xs leading-5 text-white/75">{stat.label}</p>
-              </div>
-            ))}
-          </motion.div>
-        ) : null}
 
         {showControls && hasMultipleSlides ? (
           <ResearchPreviewRail

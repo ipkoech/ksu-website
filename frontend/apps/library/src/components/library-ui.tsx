@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
-  LibraryHeroAsideMotion,
   LibraryHeroContentMotion,
   LibraryHeroMotion,
 } from "./library-motion";
@@ -66,7 +65,6 @@ export function LibraryHero({
   body,
   actions,
   breadcrumbs,
-  children,
   imageSrc = "/images/library/library-hero-imagegen.webp",
   imageAlt = "Kisii University campus library and learning environment",
 }: {
@@ -75,7 +73,6 @@ export function LibraryHero({
   body: string;
   actions?: ReactNode;
   breadcrumbs?: { label: string; href?: string }[];
-  children?: ReactNode;
   imageSrc?: string;
   imageAlt?: string;
 }) {
@@ -91,7 +88,7 @@ export function LibraryHero({
       />
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.94)_0%,rgba(2,20,49,0.82)_42%,rgba(2,20,49,0.32)_78%,rgba(2,20,49,0.12)_100%)]" />
       <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/40 to-transparent" />
-      <div className="relative mx-auto grid min-h-[460px] max-w-[1680px] gap-8 py-8 lg:min-h-[560px] lg:grid-cols-[minmax(0,1fr)_410px] lg:items-end lg:gap-10 lg:py-10">
+      <div className="relative mx-auto flex min-h-[70vh] max-w-[1680px] flex-col justify-center px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <LibraryHeroContentMotion>
           {breadcrumbs?.length ? (
             <BreadcrumbTrail items={breadcrumbs} />
@@ -99,21 +96,16 @@ export function LibraryHero({
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/80 sm:text-sm sm:tracking-[0.24em]">
             {eyebrow}
           </p>
-          <h1 className="mt-4 max-w-4xl text-balance font-[family-name:var(--font-display)] text-3xl font-bold leading-tight sm:text-5xl lg:text-6xl">
+          <h1 className="mt-4 max-w-3xl text-balance font-[family-name:var(--font-display)] text-3xl font-bold leading-tight sm:text-5xl lg:text-6xl">
             {title}
           </h1>
-          <p className="mt-5 max-w-3xl text-pretty text-sm leading-7 text-white/85 sm:text-base sm:leading-8 lg:text-lg">
+          <p className="mt-5 max-w-2xl text-pretty text-sm leading-7 text-white/85 sm:text-base sm:leading-8 lg:text-lg">
             {body}
           </p>
           {actions ? (
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">{actions}</div>
           ) : null}
         </LibraryHeroContentMotion>
-        {children ? (
-          <LibraryHeroAsideMotion>
-            {children}
-          </LibraryHeroAsideMotion>
-        ) : null}
       </div>
     </LibraryHeroMotion>
   );

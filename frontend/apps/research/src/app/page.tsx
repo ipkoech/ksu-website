@@ -128,14 +128,8 @@ export default async function ResearchPage() {
     innovations,
     partners,
     updates,
-    stats,
     errors,
   } = await getResearchOverviewData();
-  const topStats = stats?.stats?.slice(0, 4) ?? [];
-  const heroStats = topStats.map((item) => ({
-    label: item.label,
-    value: `${item.value}${item.suffix ?? ""}`,
-  }));
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
@@ -158,7 +152,6 @@ export default async function ResearchPage() {
               href: "https://kisiiuniversity.ac.ke/blog/live-day-3-of-the-3rd-international-multi-disciplinary-conference",
             },
             secondaryAction: { label: "Open events", href: "/events" },
-            stats: heroStats,
           },
           {
             id: "research-discovery",
@@ -169,7 +162,6 @@ export default async function ResearchPage() {
             imageAlt: "University researchers collaborating across laboratory, data, and field research",
             primaryAction: { label: "Explore research", href: "/projects" },
             secondaryAction: { label: "Partner with us", href: "/partners" },
-            stats: heroStats,
           },
           {
             id: "research-workflows",
@@ -180,7 +172,6 @@ export default async function ResearchPage() {
             imageAlt: "Research workflow connecting teams, data, facilities, and community work",
             primaryAction: { label: "View workflows", href: "/projects" },
             secondaryAction: { label: "Find support", href: "/services" },
-            stats: heroStats,
           },
           {
             id: "research-partnerships",
@@ -191,7 +182,6 @@ export default async function ResearchPage() {
             imageAlt: "Research partnership and innovation collaboration in a university setting",
             primaryAction: { label: "Open partnerships", href: "/partners" },
             secondaryAction: { label: "Contact REIRM", href: "/connect" },
-            stats: heroStats,
           },
         ]}
       />

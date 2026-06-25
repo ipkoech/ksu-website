@@ -46,15 +46,7 @@ export default async function LibraryNewsPage({ searchParams }: NewsPageProps) {
             <SecondaryLink href="/articles">Read articles</SecondaryLink>
           </>
         }
-      >
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-          Published updates
-        </p>
-        <p className="mt-3 text-4xl font-bold sm:text-5xl">{records.data.length}</p>
-        <p className="mt-2 text-sm leading-6 text-white/75">
-          Library-scoped records are shown first, with university records used as a fallback.
-        </p>
-      </LibraryHero>
+      />
 
       {errors.map((error) => (
         <section key={error} className="px-4 pt-6 sm:px-6 lg:px-8">

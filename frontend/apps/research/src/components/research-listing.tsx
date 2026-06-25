@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Search } from "lucide-react";
 import { Badge, StatusMessage } from "./research-ui";
+import { FilterDrawerSheet, ActiveFilterChips } from "@ksu/ui/components";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import {
   compactText,
@@ -82,89 +83,119 @@ export function ResearchFilterForm({
   sortValue?: string;
   sortOptions?: SortOption[];
 }) {
+  const activeFilterItems: { key: string; label: string; value: string }[] = [];
+
+  if (searchValue) {
+    activeFilterItems.push({ key: "q", label: "Search", value: searchValue });
+  }
+
+  for (const select of selects) {
+    if (select.value) {
+      activeFilterItems.push({ key: select.name, label: select.label, value: select.value });
+    }
+  }
+
+  for (const filter of textFilters) {
+    if (filter.value) {
+      activeFilterItems.push({ key: filter.name, label: filter.label, value: filter.value });
+    }
+  }
+
+  if (centerValue) {
+    activeFilterItems.push({ key: "center", label: "Center", value: centerValue });
+  }
+
+  if (projectValue) {
+    activeFilterItems.push({ key: "project", label: "Project", value: projectValue });
+  }
+
+  if (sortValue) {
+    activeFilterItems.push({ key: "sort", label: "Sort", value: sortValue });
+  }
+
   return (
-    <form
-      className="rounded-lg border border-slate-200 bg-slate-50 p-4 shadow-sm"
-      action={action}
-    >
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <ResearchTextField
-          name="q"
-          label="Search"
-          value={searchValue}
-          placeholder={searchPlaceholder}
-          type="search"
-          className="xl:col-span-2"
-        />
-
-        {selects.map((select) => (
-          <ResearchSelectField key={select.name} {...select} />
-        ))}
-
-        {textFilters.map((filter) => (
+    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-3">
+        <form id="filter-drawer-form" action={action} className="flex gap-2 md:gap-3">
           <ResearchTextField
-            key={filter.name}
-            name={filter.name}
-            label={filter.label}
-            value={filter.value}
-            placeholder={filter.placeholder}
+            name="q"
+            label="Search"
+            value={searchValue}
+            placeholder={searchPlaceholder}
+            type="search"
+            className="flex-1"
           />
-        ))}
-
-        {centers ? (
-          <ResearchSelectField
-            name="center"
-            label="Center"
-            value={centerValue}
-            options={centers.map((center) => ({
-              value: center.id ?? center.code ?? center.name ?? center.title ?? "",
-              label: center.name ?? center.title ?? center.code ?? center.id ?? "Unnamed center",
-            }))}
-            allLabel="All centers"
-            className="md:col-span-2 xl:col-span-2"
-          />
-        ) : null}
-
-        {projects ? (
-          <ResearchSelectField
-            name="project"
-            label="Project"
-            value={projectValue}
-            options={projects.map((project) => ({
-              value: project.id ?? project.code ?? project.title ?? project.name ?? "",
-              label: project.title ?? project.name ?? project.code ?? project.id ?? "Unnamed project",
-            }))}
-            allLabel="All projects"
-            className="md:col-span-2 xl:col-span-2"
-          />
-        ) : null}
-
-        {sortOptions.length > 0 ? (
-          <ResearchSelectField
-            name="sort"
-            label="Sort"
-            value={sortValue ?? sortOptions[0]?.value}
-            options={sortOptions}
-            includeAllOption={false}
-          />
-        ) : null}
-
-        <div className="flex items-end gap-2 md:col-span-2 xl:col-span-6">
-          <button
-            type="submit"
-            className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          <FilterDrawerSheet
+            filterLabel="Filter"
+            filterCount={activeFilterItems.length}
+            activeFilters={activeFilterItems}
+            onRemoveFilter={(_key) => {
+              window.location.href = resetHref;
+            }}
+            showReset={!!resetHref}
+            onReset={
+              resetHref
+                ? () => {
+                    window.location.href = resetHref;
+                  }
+                : undefined
+            }
           >
-            Apply Filters
-          </button>
-          <Link
-            href={resetHref}
-            className="inline-flex h-11 items-center justify-center rounded-md border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
-          >
-            Reset Filters
-          </Link>
-        </div>
+            {selects.map((select) => (
+              <ResearchSelectField key={select.name} {...select} />
+            ))}
+            {textFilters.map((filter) => (
+              <ResearchTextField
+                key={filter.name}
+                name={filter.name}
+                label={filter.label}
+                value={filter.value}
+                placeholder={filter.placeholder}
+              />
+            ))}
+            {centers ? (
+              <ResearchSelectField
+                name="center"
+                label="Center"
+                value={centerValue}
+                options={centers.map((center) => ({
+                  value: center.id ?? center.code ?? center.name ?? center.title ?? "",
+                  label: center.name ?? center.title ?? center.code ?? center.id ?? "Unnamed center",
+                }))}
+                allLabel="All centers"
+              />
+            ) : null}
+            {projects ? (
+              <ResearchSelectField
+                name="project"
+                label="Project"
+                value={projectValue}
+                options={projects.map((project) => ({
+                  value: project.id ?? project.code ?? project.title ?? project.name ?? "",
+                  label: project.title ?? project.name ?? project.code ?? project.id ?? "Unnamed project",
+                }))}
+                allLabel="All projects"
+              />
+            ) : null}
+            {sortOptions.length > 0 ? (
+              <ResearchSelectField
+                name="sort"
+                label="Sort"
+                value={sortValue ?? sortOptions[0]?.value}
+                options={sortOptions}
+                includeAllOption={false}
+              />
+            ) : null}
+          </FilterDrawerSheet>
+        </form>
+        <ActiveFilterChips
+          filters={activeFilterItems}
+          onRemove={(_key) => {
+            window.location.href = resetHref;
+          }}
+        />
       </div>
-    </form>
+    </div>
   );
 }
 

@@ -48,17 +48,7 @@ export default async function LibraryStaffPage() {
             <SecondaryLink href="/leadership">Leadership</SecondaryLink>
           </>
         }
-      >
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-            Public staff
-          </p>
-          <p className="mt-3 text-4xl font-bold sm:text-5xl">{staff.length}</p>
-          <p className="mt-2 text-sm leading-6 text-white/75">
-            Active public staff records across branches.
-          </p>
-        </div>
-      </LibraryHero>
+      />
 
       {errors.map((error) => (
         <section key={error} className="px-4 pt-6 sm:px-6 lg:px-8">

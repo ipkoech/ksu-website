@@ -65,17 +65,7 @@ export default async function LibraryServicesPage() {
             <SecondaryLink href="/ask">Ask a librarian</SecondaryLink>
           </>
         }
-      >
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-            Public branches
-          </p>
-          <p className="mt-3 text-4xl font-bold sm:text-5xl">{branches.data.length}</p>
-          <p className="mt-2 text-sm leading-6 text-white/75">
-            Branch records with contacts and service listings.
-          </p>
-        </div>
-      </LibraryHero>
+      />
 
       {errors.length > 0 ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8">

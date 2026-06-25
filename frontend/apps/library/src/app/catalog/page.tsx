@@ -100,20 +100,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
             <SecondaryLink href="/services">Need help?</SecondaryLink>
           </>
         }
-      >
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-            Current scope
-          </p>
-          <h2 className="mt-3 text-2xl font-semibold text-white">
-            {selectedBranch?.name ?? "No branch selected"}
-          </h2>
-          <p className="mt-3 text-sm leading-6 text-white/75">
-            {selectedBranch?.description ??
-              "Choose a branch below to search branch-held catalog resources."}
-          </p>
-        </div>
-      </LibraryHero>
+      />
 
       <LibraryContentBand>
         <form

@@ -27,7 +27,6 @@ import type { LucideIcon } from "lucide-react";
 import { Button, ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 import { MiniHeader, PublicFooter, PublicHeader } from "@ksu/ui/layout/public";
 import { LandingHero } from "@/components/home/landing-hero";
-import { AnimatedStatRow } from "@/components/home/animated-stat-row";
 import { CountdownStrip } from "@/components/home/countdown-strip";
 import { FeaturedProgrammeTabs } from "@/components/home/featured-programme-tabs";
 import { AnnouncementHeader } from "@/components/site-shell";
@@ -41,7 +40,6 @@ import {
   type HomeIntake,
   type HomeLeader,
   type HomeLink,
-  type HomeMetric,
   type HomePartner,
 } from "@/lib/homepage-data";
 import { getNavData } from "@/lib/nav-data";
@@ -107,13 +105,6 @@ const campusLife = [
   icon: LucideIcon;
 }>;
 
-const defaultInstitutionalFacts: HomeMetric[] = [
-  { value: "Open", label: "Admissions" },
-  { value: "Live", label: "Programmes" },
-  { value: "Active", label: "Research" },
-  { value: "Public", label: "Services" },
-];
-
 function isExternalHref(href: string) {
   return /^https?:\/\//i.test(href);
 }
@@ -177,10 +168,143 @@ export default async function HomePage() {
       <main id="main-content" tabIndex={-1}>
         <LandingHero {...homepage.hero} />
 
+        <section className="border-y border-blue-100 bg-white py-10 lg:py-14">
+          <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+            <div className="grid gap-6 lg:grid-cols-3">
+              <aside className="rounded-lg border border-blue-100 bg-blue-50/60 p-5">
+                <SectionKicker title="Schools & Academics" />
+                {homepage.schools.length > 0 ? (
+                  <div className="mt-4 flex flex-col gap-2">
+                    {homepage.schools.slice(0, 5).map((school) => (
+                      <Link
+                        key={school.href}
+                        href={school.href}
+                        className="flex items-center gap-2 rounded-md px-2 py-2 text-sm font-semibold text-slate-700 hover:bg-blue-100 hover:text-primary"
+                      >
+                        <GraduationCap className="h-4 w-4 shrink-0 text-primary/60" />
+                        <span className="line-clamp-1">{school.title}</span>
+                      </Link>
+                    ))}
+                    <Link
+                      href="/academics/schools"
+                      className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-secondary"
+                    >
+                      View all schools <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </div>
+                ) : (
+                  <HomeEmptyState
+                    title="Schools are not available"
+                    body="Published school records could not be loaded."
+                    actionHref="/academics/schools"
+                    actionLabel="Open schools"
+                  />
+                )}
+              </aside>
+
+              <aside className="rounded-lg border border-blue-100 bg-white p-5 shadow-sm">
+                <SectionKicker title="Vice Chancellor" />
+                {homepage.viceChancellor ? (
+                  <div className="mt-4">
+                    {homepage.viceChancellor.image ? (
+                      <PublicImage
+                        src={homepage.viceChancellor.image}
+                        alt={homepage.viceChancellor.name}
+                        ratio="card"
+                        sizes="(min-width: 1024px) 30vw, 100vw"
+                        className="mb-4 h-48 rounded-md"
+                        imageClassName="object-top"
+                      />
+                    ) : null}
+                    {homepage.viceChancellor.message ? (
+                      <p className="text-sm leading-6 text-slate-600 line-clamp-4">
+                        {homepage.viceChancellor.message}
+                      </p>
+                    ) : null}
+                    <p className="mt-3 text-sm font-bold text-primary">
+                      {homepage.viceChancellor.name}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {homepage.viceChancellor.title}
+                    </p>
+                  </div>
+                ) : (
+                  <HomeEmptyState
+                    title="VC message is being updated"
+                    body="A welcome message will appear here soon."
+                    actionHref="/about/university-management"
+                    actionLabel="View management"
+                  />
+                )}
+              </aside>
+
+              <aside className="rounded-lg border border-blue-100 bg-white p-5 shadow-sm">
+                <SectionKicker title="Quick Actions" />
+                <div className="mt-4 flex flex-col gap-1">
+                  {[
+                    {
+                      label: "Apply Now",
+                      href:
+                        homepage.activeIntakes[0]?.href ??
+                        "/admissions/how-to-apply",
+                      icon: ClipboardCheck,
+                    },
+                    {
+                      label: "Search Programmes",
+                      href: "/academics/programmes",
+                      icon: Search,
+                    },
+                    {
+                      label: "Admissions Guide",
+                      href: "/admissions",
+                      icon: BookOpen,
+                    },
+                    {
+                      label: "Student Portal",
+                      href: "/students",
+                      icon: Users,
+                    },
+                    {
+                      label: "Contact Directory",
+                      href: "/contact",
+                      icon: Phone,
+                    },
+                  ].map((item) => (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      className="flex items-center gap-3 rounded-md px-2 py-2.5 text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-primary"
+                    >
+                      <item.icon className="h-4 w-4 shrink-0 text-primary/60" />
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+                {homepage.activeIntakes[0] ? (
+                  <div className="mt-4 rounded-md bg-secondary/5 p-3">
+                    <p className="text-xs font-bold text-secondary uppercase">
+                      Active Intake
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-950">
+                      {intakeLabel(homepage.activeIntakes[0])}
+                    </p>
+                    <Link
+                      href={homepage.activeIntakes[0].href}
+                      className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-secondary hover:underline"
+                    >
+                      Apply <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </div>
+                ) : null}
+              </aside>
+            </div>
+          </div>
+        </section>
+
+        {isContentDegraded ? <ContentDegradedNotice /> : null}
+
         <section className="relative z-10 pb-0">
           <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-            <TrustFactRow facts={homepage.facts} />
-            {isContentDegraded ? <ContentDegradedNotice /> : null}
             <LandingReveal variant="fade-right">
               <SchoolsSection
                 schools={homepage.schools}
@@ -268,16 +392,6 @@ function ContentDegradedNotice() {
         </div>
       </div>
     </section>
-  );
-}
-
-function TrustFactRow({ facts }: { facts: HomeMetric[] }) {
-  const visibleFacts = facts.length ? facts : defaultInstitutionalFacts;
-
-  return (
-    <LandingReveal>
-      <AnimatedStatRow facts={visibleFacts} />
-    </LandingReveal>
   );
 }
 

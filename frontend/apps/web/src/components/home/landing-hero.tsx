@@ -107,6 +107,7 @@ export function LandingHero({
   return (
     <section
       className="relative overflow-hidden bg-primary"
+      style={{ minHeight: "70vh" }}
       aria-roledescription="carousel"
       aria-label="Featured Kisii University updates"
       onMouseEnter={() => setIsPaused(true)}
@@ -150,8 +151,8 @@ export function LandingHero({
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,20,49,0.18)_0%,rgba(2,20,49,0.04)_48%,rgba(2,20,49,0.72)_100%)]" />
       </div>
 
-      <div className="relative z-10 flex min-h-[520px] w-full items-end px-4 pb-16 pt-24 sm:min-h-[580px] sm:px-6 lg:min-h-[640px] lg:px-8 lg:pb-10 xl:px-10 2xl:px-12">
-        <div className="grid w-full max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,760px)_minmax(320px,1fr)] lg:items-end lg:gap-10">
+      <div className="relative z-10 flex w-full items-end px-4 pb-16 pt-20 sm:px-6 lg:px-8 lg:pb-12 xl:px-10 2xl:px-12">
+        <div className="flex w-full max-w-[1680px] flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
           <AnimatePresence mode="wait">
             <HeroEditorialPanel
               key={activeSlide.id}
@@ -162,19 +163,12 @@ export function LandingHero({
             />
           </AnimatePresence>
 
-          <div className="flex flex-col gap-4">
-            <HeroPreviewRail
-              slides={slides}
-              activeIndex={activeIndex}
-              onSelect={setActiveIndex}
+          {shouldShowArrows ? (
+            <HeroArrowControls
+              onPrevious={showPreviousSlide}
+              onNext={showNextSlide}
             />
-            {shouldShowArrows ? (
-              <HeroArrowControls
-                onPrevious={showPreviousSlide}
-                onNext={showNextSlide}
-              />
-            ) : null}
-          </div>
+          ) : null}
         </div>
       </div>
 
@@ -225,7 +219,7 @@ function HeroEditorialPanel({
   return (
     <motion.div
       aria-live={isPaused ? "polite" : "off"}
-      className="max-w-[760px] rounded-md border border-white/15 bg-slate-950/42 p-5 text-white shadow-2xl shadow-slate-950/20 backdrop-blur-md sm:p-7 lg:bg-slate-950/32 lg:p-8"
+      className="max-w-[760px] rounded-md border border-white/15 bg-slate-950/42 p-4 text-white shadow-2xl shadow-slate-950/20 backdrop-blur-md sm:p-7 lg:bg-slate-950/32 lg:p-8"
       initial={
         prefersReducedMotion
           ? false
@@ -253,7 +247,7 @@ function HeroEditorialPanel({
       <p className="mb-4 inline-flex w-fit items-center rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-white/90 backdrop-blur-sm">
         {slide.eyebrow}
       </p>
-      <h1 className="max-w-[720px] text-balance font-[family-name:var(--font-display)] text-4xl font-bold leading-tight text-white min-[360px]:text-5xl sm:text-6xl lg:text-[64px]">
+      <h1 className="max-w-[720px] text-balance font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-white min-[360px]:text-4xl sm:text-5xl lg:text-[64px]">
         {slide.title}
       </h1>
       <p className="mt-5 line-clamp-4 max-w-2xl text-base font-medium leading-7 text-white/90 sm:text-lg">
@@ -272,65 +266,6 @@ function HeroEditorialPanel({
         </Link>
       ) : null}
     </motion.div>
-  );
-}
-
-function HeroPreviewRail({
-  slides,
-  activeIndex,
-  onSelect,
-}: {
-  slides: LandingHeroSlide[];
-  activeIndex: number;
-  onSelect: (index: number) => void;
-}) {
-  if (slides.length <= 1) return null;
-
-  return (
-    <div className="rounded-md border border-white/15 bg-slate-950/35 p-2 text-white shadow-2xl shadow-slate-950/20 backdrop-blur-md lg:p-3">
-      <div className="flex gap-2 overflow-x-auto pb-1 lg:grid lg:grid-cols-1 lg:overflow-visible lg:pb-0">
-        {slides.map((slide, index) => {
-          const isActive = index === activeIndex;
-          const imageUrl = slide.mobileImageUrl || slide.desktopImageUrl || slide.imageUrl;
-
-          return (
-            <button
-              key={slide.id}
-              type="button"
-              aria-current={isActive}
-              aria-label={`Show slide ${index + 1}: ${slide.title}`}
-              onClick={() => onSelect(index)}
-              className="group grid min-w-[245px] grid-cols-[76px_minmax(0,1fr)] overflow-hidden rounded-md border border-white/12 bg-white/8 text-left transition hover:bg-white/14 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white lg:min-w-0"
-            >
-              <span
-                className="block h-full min-h-[86px] bg-cover bg-center"
-                style={{ backgroundImage: `url("${imageUrl}")` }}
-                aria-hidden
-              />
-              <span className="flex min-h-[86px] flex-col justify-between p-3">
-                <span>
-                  <span className="block truncate text-[0.68rem] font-bold uppercase tracking-[0.16em] text-secondary">
-                    {slide.eyebrow}
-                  </span>
-                  <span className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-white">
-                    {slide.title}
-                  </span>
-                </span>
-                <span className="mt-2 h-1 overflow-hidden rounded-full bg-white/18">
-                  <span
-                    className={
-                      isActive
-                        ? "block h-full w-full bg-secondary"
-                        : "block h-full w-0 bg-secondary transition-all group-hover:w-1/3"
-                    }
-                  />
-                </span>
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
   );
 }
 

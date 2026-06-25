@@ -45,18 +45,7 @@ export default async function AskLibrarianPage() {
             <SecondaryLink href="/services">View services</SecondaryLink>
           </>
         }
-      >
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-            Support channel
-          </p>
-          <p className="mt-3 text-4xl font-bold sm:text-5xl">Ask</p>
-          <p className="mt-2 text-sm leading-6 text-white/75">
-            Questions are routed to library staff through the Library inquiries
-            endpoint.
-          </p>
-        </div>
-      </LibraryHero>
+      />
 
       {branches.error ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8">
