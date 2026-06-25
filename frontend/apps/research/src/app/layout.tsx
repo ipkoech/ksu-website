@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { PublicFooter } from "@ksu/ui/layout/public";
+import { Announcements } from "@ksu/ui/components";
+import { announcementsApi } from "@ksu/api-client";
 import { ResearchHeader } from "../components/research-header";
 import "./globals.css";
 
@@ -36,11 +38,28 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  let announcements: Array<{ id: string; message: string; linkText?: string; linkHref?: string }> = [];
+  try {
+    const response = await announcementsApi.list({
+      is_published: true,
+      per_page: 3,
+      fields: "id,title,slug",
+    });
+    announcements = (response.data ?? []).map((item) => ({
+      id: item.id,
+      message: item.title,
+      linkText: "Read more",
+      linkHref: `/media/announcements/${item.slug}`,
+    }));
+  } catch {
+    // announcements are optional
+  }
+
   return (
     <html lang="en">
       <body className="font-sans antialiased">
@@ -48,6 +67,12 @@ export default function RootLayout({
           <a href="#research-main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-md focus:ring-2 focus:ring-ring">
             Skip to research content
           </a>
+          <Announcements
+            announcements={announcements}
+            rotating={announcements.length > 1}
+            intervalMs={6500}
+            background="secondary"
+          />
           <ResearchHeader />
           {children}
           <PublicFooter contactInfo={contactInfo} socialLinks={socialLinks} />

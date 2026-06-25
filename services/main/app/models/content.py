@@ -76,6 +76,7 @@ class Announcement(Base, SEOMixin, ScopedContentMixin, RichContentMixin):
     priority: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="normal")
     category: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True)
     audience: Mapped[str] = mapped_column(sa.String(64), nullable=False, server_default="all")
+    youtube_url: Mapped[Optional[str]] = mapped_column(sa.String(512), nullable=True)
 
     featured_media: Mapped[Optional["Media"]] = relationship("Media", foreign_keys="Announcement.featured_media_id")
     author: Mapped[Optional["User"]] = relationship("User", foreign_keys="Announcement.author_user_id")

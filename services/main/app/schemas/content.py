@@ -144,12 +144,14 @@ class AnnouncementCreate(RichContentCreate):
     priority: str = Field(default="normal", max_length=32)
     category: str | None = Field(default=None, max_length=64)
     audience: str = Field(default="all", max_length=64)
+    youtube_url: str | None = Field(default=None, max_length=512)
 
 
 class AnnouncementUpdate(RichContentUpdate):
     priority: str | None = Field(default=None, max_length=32)
     category: str | None = Field(default=None, max_length=64)
     audience: str | None = Field(default=None, max_length=64)
+    youtube_url: str | None = Field(default=None, max_length=512)
 
 
 class AnnouncementRead(RichContentRead):
@@ -158,6 +160,7 @@ class AnnouncementRead(RichContentRead):
     author: dict[str, Any] | None = None
     featured_media: dict[str, Any] | None = None
     audience: str
+    youtube_url: str | None = None
 
 
 class EventCreate(ScopedContentCreate):

@@ -134,7 +134,7 @@ export function LibraryHeader() {
               alt="Kisii University"
               width={56}
               height={56}
-              className="h-11 w-auto shrink-0 sm:h-12 lg:h-12"
+              className="h-11 w-11 shrink-0 sm:h-12 sm:w-12 lg:h-12 lg:w-12"
               priority
             />
             <span className="min-w-0">

@@ -1008,6 +1008,7 @@ export interface Announcement {
   priority: string;
   category?: string | null;
   audience?: string;
+  youtube_url?: string | null;
   target_audience?: string[];
   valid_from?: string | null;
   valid_to?: string | null;
