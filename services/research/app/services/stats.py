@@ -19,7 +19,6 @@ from ..models import (
     MentorshipProgram,
     Partner,
     Publication,
-    ResearchBoard,
     ResearchCenter,
     ResearchFarm,
     ResearchGuideline,
@@ -225,7 +224,6 @@ async def admin_research_stats(db: AsyncSession) -> PublicStatsResponse:
         _item("resources", "Resources", await _count(db, ResearchResource), "Research resource records", "/research/resources-tools"),
         _item("services", "Services", await _count(db, ResearchService), "Research service records", "/research/services"),
         _item("guidelines", "Guidelines", await _count(db, ResearchGuideline) + await _count(db, GrantGuideline), "Research and grant guideline records", "/research/guidelines"),
-        _item("boards", "Boards", await _count(db, ResearchBoard), "Research governance board records", "/research/boards"),
         _item("published_updates", "Published Updates", published_updates, "Published research records", "/research/publications"),
         _item("donation_impacts", "Donation Impacts", await _count(db, DonationImpact), "Donation impact records", "/research/donations/impacts"),
     ]

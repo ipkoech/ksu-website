@@ -104,8 +104,6 @@ from .support import (
     ResearchResource,
     ResearchService,
     ResearchGuideline,
-    ResearchBoard,
-    BoardMember,
 )
 
 __all__ = [
@@ -182,6 +180,4 @@ __all__ = [
     "ResearchResource",
     "ResearchService",
     "ResearchGuideline",
-    "ResearchBoard",
-    "BoardMember",
 ]
