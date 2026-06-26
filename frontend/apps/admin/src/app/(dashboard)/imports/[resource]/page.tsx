@@ -39,6 +39,7 @@ export function generateStaticParams() {
     { resource: "research-journals" },
     { resource: "research-grant-guidelines" },
   ];
+}
 
 export default function ImportPage() {
   return (
