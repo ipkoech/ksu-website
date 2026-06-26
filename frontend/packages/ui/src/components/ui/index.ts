@@ -15,6 +15,7 @@ export * from "./password-input";
 export * from "./label";
 export * from "./leader-message";
 export * from "./popover";
+export * from "./popover";
 export * from "./progressive-carousel";
 export * from "./programme-carousel";
 export * from "./progress";

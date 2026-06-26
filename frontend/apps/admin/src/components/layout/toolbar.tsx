@@ -4,12 +4,13 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Bell, Search, Menu, ChevronRight, Home } from "lucide-react";
+import { BellRing, Search, Menu, ChevronRight, Home } from "lucide-react";
 import { Button } from "@ksu/ui/components";
 import { Input } from "@ksu/ui/components";
 import { Avatar, AvatarFallback, AvatarImage } from "@ksu/ui/components";
 import { useAuth } from "@ksu/auth";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { NotificationBell } from "./notification-bell";
 
 export function Toolbar() {
   const pathname = usePathname();
@@ -107,15 +108,7 @@ export function Toolbar() {
       </form>
 
       {/* Notifications */}
-      <Button asChild variant="ghost" size="icon" className="relative h-9 w-9">
-        <Link href="/system/notifications" aria-label="Notifications">
-          <Bell size={20} />
-          <span
-            className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive"
-            aria-hidden
-          />
-        </Link>
-      </Button>
+      <NotificationBell />
 
       {/* User menu */}
       {user && (
