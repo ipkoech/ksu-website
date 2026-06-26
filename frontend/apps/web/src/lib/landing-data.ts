@@ -201,6 +201,9 @@ function normalizeSlider(slider: SliderWithMedia): LandingHeroSlide {
     primaryLabel: slider.link_text || (slider.external_url ? "Learn more" : "View Admissions Guide"),
     primaryHref,
     primaryExternal: slider.open_in_new_tab || isExternalHref(primaryHref),
+    secondaryLabel: (slider as unknown as Record<string, unknown>).secondary_label as string | undefined,
+    secondaryHref: (slider as unknown as Record<string, unknown>).secondary_url as string | undefined,
+    secondaryExternal: (slider as unknown as Record<string, unknown>).secondary_open_in_new_tab as boolean | undefined,
   };
 }
 

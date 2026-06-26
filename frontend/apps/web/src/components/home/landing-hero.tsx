@@ -87,8 +87,7 @@ export function LandingHero({
 
   return (
     <section
-      className="relative overflow-hidden bg-primary"
-      style={{ minHeight: "50vh", maxHeight: "60vh" }}
+      className="relative h-[50vh] min-h-[400px] max-h-[640px] overflow-hidden bg-primary sm:h-[55vh] lg:h-[60vh]"
       aria-roledescription="carousel"
       aria-label="Featured Kisii University updates"
       onMouseEnter={() => setIsPaused(true)}
@@ -127,18 +126,18 @@ export function LandingHero({
           <button
             type="button"
             onClick={showPreviousSlide}
-            className="absolute left-3 top-1/2 z-20 -translate-y-1/2 hidden h-12 w-12 items-center justify-center rounded-full bg-slate-950/30 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-slate-950/50 md:flex"
+            className="absolute left-3 top-1/2 z-20 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-slate-950/30 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-slate-950/50 sm:h-12 sm:w-12"
             aria-label="Show previous hero slide"
           >
-            <ChevronLeft className="h-5 w-5" aria-hidden />
+            <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />
           </button>
           <button
             type="button"
             onClick={showNextSlide}
-            className="absolute right-3 top-1/2 z-20 -translate-y-1/2 hidden h-12 w-12 items-center justify-center rounded-full bg-slate-950/30 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-slate-950/50 md:flex"
+            className="absolute right-3 top-1/2 z-20 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-slate-950/30 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-slate-950/50 sm:h-12 sm:w-12"
             aria-label="Show next hero slide"
           >
-            <ChevronRight className="h-5 w-5" aria-hidden />
+            <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />
           </button>
         </>
       ) : null}
@@ -156,7 +155,7 @@ export function LandingHero({
 
       {shouldShowControls ? (
         <div
-          className="absolute inset-x-0 bottom-3 z-20 flex justify-center gap-2"
+          className="absolute inset-x-0 bottom-3 z-20 flex justify-center gap-2 md:hidden"
           aria-label="Hero slides"
         >
           {slides.map((slide, index) => (
