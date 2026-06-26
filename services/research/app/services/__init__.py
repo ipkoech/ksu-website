@@ -1,7 +1,6 @@
-"""Research service layer — populated in Phase 2."""
+"""Research service layer."""
 from .capacity import *
 from .classification import *
-from .content import *
 from .core import *
 from .donation import *
 from .funding import *

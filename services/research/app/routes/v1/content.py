@@ -7,16 +7,10 @@ from fastapi import APIRouter
 from ...schemas import (
     BoardMemberCreate,
     BoardMemberUpdate,
-    ResearchArticleCreate,
-    ResearchArticleUpdate,
     ResearchBoardCreate,
     ResearchBoardUpdate,
-    ResearchEventCreate,
-    ResearchEventUpdate,
     ResearchGuidelineCreate,
     ResearchGuidelineUpdate,
-    ResearchNewsCreate,
-    ResearchNewsUpdate,
     ResearchOfficeCreate,
     ResearchOfficeStaffCreate,
     ResearchOfficeStaffUpdate,
@@ -25,17 +19,11 @@ from ...schemas import (
     ResearchResourceUpdate,
     ResearchServiceCreate,
     ResearchServiceUpdate,
-    ResearchSliderCreate,
-    ResearchSliderUpdate,
 )
-from ...services import ArticleService, BoardMemberService, BoardService, EventService, GuidelineService, NewsService, OfficeService, OfficeStaffService, ResourceService, SliderService, SupportService
+from ...services import BoardMemberService, BoardService, GuidelineService, OfficeService, OfficeStaffService, ResourceService, SupportService
 from ._crud import build_crud_router
 
 router = APIRouter()
-router.include_router(build_crud_router(prefix="/news", tag="Research News", service=NewsService, create_schema=ResearchNewsCreate, update_schema=ResearchNewsUpdate, write_scope="content.manage_news"))
-router.include_router(build_crud_router(prefix="/articles", tag="Research Articles", service=ArticleService, create_schema=ResearchArticleCreate, update_schema=ResearchArticleUpdate, write_scope="content.manage_news"))
-router.include_router(build_crud_router(prefix="/events", tag="Research Events", service=EventService, create_schema=ResearchEventCreate, update_schema=ResearchEventUpdate, write_scope="content.manage_announcements"))
-router.include_router(build_crud_router(prefix="/sliders", tag="Research Sliders", service=SliderService, create_schema=ResearchSliderCreate, update_schema=ResearchSliderUpdate, write_scope="marketing.manage_sliders"))
 router.include_router(build_crud_router(prefix="/offices", tag="Research Offices", service=OfficeService, create_schema=ResearchOfficeCreate, update_schema=ResearchOfficeUpdate, write_scope="research.manage_office"))
 router.include_router(build_crud_router(prefix="/office-staff", tag="Research Office Staff", service=OfficeStaffService, create_schema=ResearchOfficeStaffCreate, update_schema=ResearchOfficeStaffUpdate, write_scope="research.manage_office"))
 router.include_router(build_crud_router(prefix="/resources", tag="Research Resources", service=ResourceService, create_schema=ResearchResourceCreate, update_schema=ResearchResourceUpdate, write_scope="research.manage_resources"))

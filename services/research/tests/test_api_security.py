@@ -9,7 +9,6 @@ from app.routes.v1.grants import router as grants_router
 from app.routes.v1.scholarships import router as scholarships_router
 from app.routes.v1.training import router as training_router
 from app.schemas import PublicDonationSubmission
-from app.services.content import NewsService
 from app.services.core import ProjectService
 from app.services.donation import DonationService
 
@@ -72,19 +71,18 @@ class PublicVisibilityTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("research_projects.is_active is true", query_text)
         self.assertIn("research_projects.status in", query_text)
 
-    async def test_public_news_slug_requires_active_status_and_publish_window(self):
+    async def test_public_project_slug_filters_by_active_and_publish_window(self):
         db = _StatementDb()
 
-        await NewsService.get_public_by_slug(db, "research-update")
+        await ProjectService.get_public_by_slug(db, "research-project")
 
         self.assertEqual(1, len(db.statements))
         query_text = str(db.statements[0]).lower()
-        self.assertIn("research_news.deleted_at is null", query_text)
-        self.assertIn("research_news.slug", query_text)
-        self.assertIn("research_news.is_active is true", query_text)
-        self.assertIn("research_news.status in", query_text)
-        self.assertIn("research_news.published_at is null", query_text)
-        self.assertIn("research_news.expires_at is null", query_text)
+        self.assertIn("research_projects.slug", query_text)
+        self.assertIn("research_projects.is_public is true", query_text)
+        self.assertIn("research_projects.is_active is true", query_text)
+        self.assertIn("research_projects.deleted_at is null", query_text)
+        self.assertIn("research_projects.status in", query_text)
 
 
 class RouteProtectionTests(unittest.TestCase):

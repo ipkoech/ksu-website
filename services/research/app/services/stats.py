@@ -19,13 +19,10 @@ from ..models import (
     MentorshipProgram,
     Partner,
     Publication,
-    ResearchArticle,
     ResearchBoard,
     ResearchCenter,
-    ResearchEvent,
     ResearchFarm,
     ResearchGuideline,
-    ResearchNews,
     ResearchOffice,
     ResearchOfficeStaff,
     ResearchOutput,
@@ -78,27 +75,8 @@ def _item(
 
 
 async def public_research_stats(db: AsyncSession) -> PublicStatsResponse:
-    published_updates = sum(
-        [
-            await _count(
-                db,
-                ResearchNews,
-                ResearchNews.is_active.is_(True),
-                ResearchNews.status == "published",
-            ),
-            await _count(
-                db,
-                ResearchArticle,
-                ResearchArticle.is_active.is_(True),
-                ResearchArticle.status == "published",
-            ),
-            await _count(
-                db,
-                ResearchEvent,
-                ResearchEvent.is_active.is_(True),
-                ResearchEvent.status.in_(("upcoming", "ongoing", "completed")),
-            ),
-        ]
+    published_updates = await _count(
+        db, Publication, Publication.is_active.is_(True), Publication.is_public.is_(True),
     )
     outputs = sum(
         [
@@ -219,13 +197,7 @@ async def admin_research_stats(db: AsyncSession) -> PublicStatsResponse:
             await _count(db, MentorshipApplication, MentorshipApplication.status.in_(("submitted", "under_review"))),
         ]
     )
-    published_updates = sum(
-        [
-            await _count(db, ResearchNews, ResearchNews.status == "published"),
-            await _count(db, ResearchArticle, ResearchArticle.status == "published"),
-            await _count(db, ResearchEvent, ResearchEvent.status.in_(("upcoming", "ongoing", "completed"))),
-        ]
-    )
+    published_updates = await _count(db, Publication, Publication.is_public.is_(True))
 
     stats = [
         _item("centres", "Research Centres", await _count(db, ResearchCenter), "Research centre records", "/research/centers"),
