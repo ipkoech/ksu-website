@@ -31,6 +31,9 @@ export interface LandingHeroSlide {
   primaryLabel: string;
   primaryHref: string;
   primaryExternal?: boolean;
+  secondaryLabel?: string;
+  secondaryHref?: string;
+  secondaryExternal?: boolean;
 }
 
 export interface LandingHeroData {
