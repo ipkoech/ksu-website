@@ -102,7 +102,6 @@ from .donation import (
 # Support
 from .support import (
     ResearchOffice,
-    ResearchOfficeStaff,
     ResearchResource,
     ResearchService,
     ResearchGuideline,
@@ -182,7 +181,6 @@ __all__ = [
     "DonationStory",
     # Support
     "ResearchOffice",
-    "ResearchOfficeStaff",
     "ResearchResource",
     "ResearchService",
     "ResearchGuideline",
