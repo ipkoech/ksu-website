@@ -14,8 +14,31 @@ export function generateStaticParams() {
     { resource: "persons" },
     { resource: "staff-assignments" },
     { resource: "faqs" },
+    { resource: "research-projects" },
+    { resource: "research-publications" },
+    { resource: "research-grants" },
+    { resource: "research-innovations" },
+    { resource: "research-partners" },
+    { resource: "research-centers" },
+    { resource: "research-outputs" },
+    { resource: "research-training" },
+    { resource: "research-scholarships" },
+    { resource: "research-mentorship" },
+    { resource: "research-consultancies" },
+    { resource: "research-endowments" },
+    { resource: "research-impact-metrics" },
+    { resource: "research-themes" },
+    { resource: "research-focus-areas" },
+    { resource: "research-expertise-tags" },
+    { resource: "research-programs" },
+    { resource: "research-farms" },
+    { resource: "research-sustainability" },
+    { resource: "research-donors" },
+    { resource: "research-donations" },
+    { resource: "research-funders" },
+    { resource: "research-journals" },
+    { resource: "research-grant-guidelines" },
   ];
-}
 
 export default function ImportPage() {
   return (
