@@ -38,6 +38,10 @@ export function generateStaticParams() {
     { resource: "research-funders" },
     { resource: "research-journals" },
     { resource: "research-grant-guidelines" },
+    { resource: "research-articles" },
+    { resource: "research-news" },
+    { resource: "research-sliders" },
+    { resource: "research-stories" },
   ];
 }
 
