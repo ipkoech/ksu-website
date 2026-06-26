@@ -42,6 +42,7 @@ export default function ResearchCentersPage() {
       emptyMessage="No research centers were returned by the research service."
       metaFields={["code", "center_type", "status"]}
       detailBaseHref="/research/centers"
+      importResource="research-centers"
     />
   );
 }

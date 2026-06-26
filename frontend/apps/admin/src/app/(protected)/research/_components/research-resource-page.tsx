@@ -1,11 +1,14 @@
 "use client";
 
+import Link from "next/link";
+import { Upload } from "lucide-react";
 import {
   EditableServiceResourcePage,
   type EditableField,
   type EditableListFilter,
   type EditableRecordWorkflowAction,
 } from "@/components/dashboard/editable-service-resource-page";
+import { Button } from "@ksu/ui/components";
 import { researchServiceApi, type ResearchGenericPayload, type ResearchGenericRecord } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
 
@@ -33,6 +36,7 @@ interface ResearchResourcePageProps {
   getRecordWorkflowActions?: (
     record: ResearchGenericRecord,
   ) => Array<EditableRecordWorkflowAction<ResearchGenericRecord, ResearchGenericPayload>>;
+  importResource?: string;
 }
 
 const FILTERABLE_RELATIONS: Record<string, EditableListFilter["relation"]> = {
@@ -115,6 +119,7 @@ export function ResearchResourcePage({
   detailBaseHref,
   detailHref,
   getRecordWorkflowActions,
+  importResource,
 }: ResearchResourcePageProps) {
   const { hasScope } = usePermissions();
   const canManage = manageScopes.some((scope) => hasScope(scope));
@@ -128,6 +133,16 @@ export function ResearchResourcePage({
       queryKey={queryKey}
       fields={fields}
       listFilters={resolvedListFilters}
+      toolbarSlot={
+        importResource ? (
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/imports/${importResource}`}>
+              <Upload className="mr-1.5 h-4 w-4" />
+              Import
+            </Link>
+          </Button>
+        ) : undefined
+      }
       list={async (filters) => {
         const response = await resource.list({ page: 1, per_page: 50, ...listParams, ...filters });
         return { data: (response.data ?? []) as ResearchGenericRecord[] };

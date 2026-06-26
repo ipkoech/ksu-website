@@ -22,6 +22,7 @@ export default function ResearchThemesPage() {
       ]}
       defaults={{ status: "active" }}
       emptyMessage="No research themes were returned by the research service."
+      importResource="research-themes"
     />
   );
 }

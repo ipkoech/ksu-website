@@ -58,6 +58,7 @@ export default function ResearchConsultanciesPage() {
         is_public: true,
       }}
       emptyMessage="No consultancy engagements were returned by the research service."
+      importResource="research-consultancies"
     />
   );
 }

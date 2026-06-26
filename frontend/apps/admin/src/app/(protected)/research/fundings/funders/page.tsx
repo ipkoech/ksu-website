@@ -23,6 +23,7 @@ export default function ResearchFundersPage() {
       ]}
       defaults={{ funder_type: "government" }}
       emptyMessage="No funder records were returned by the research service."
+      importResource="research-funders"
     />
   );
 }

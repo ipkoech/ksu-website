@@ -56,6 +56,7 @@ export default function ResearchOutputsPage() {
         is_active: true,
       }}
       emptyMessage="No research outputs were returned by the research service."
+      importResource="research-outputs"
     />
   );
 }

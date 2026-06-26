@@ -25,6 +25,7 @@ export default function ResearchJournalsPage() {
       defaults={{ journal_type: "academic" }}
       emptyMessage="No journals were returned by the research service."
       metaFields={["abbreviation", "publisher", "journal_type"]}
+      importResource="research-journals"
     />
   );
 }

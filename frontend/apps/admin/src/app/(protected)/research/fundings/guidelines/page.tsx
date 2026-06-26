@@ -24,6 +24,7 @@ export default function GrantGuidelinesPage() {
       defaults={{ guideline_type: "procedure" }}
       emptyMessage="No grant guidelines were returned by the research service."
       metaFields={["guideline_type", "document_name"]}
+      importResource="research-grant-guidelines"
     />
   );
 }

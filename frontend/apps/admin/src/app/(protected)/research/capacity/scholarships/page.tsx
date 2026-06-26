@@ -50,6 +50,7 @@ export default function ScholarshipsPage() {
       ]}
       defaults={{ scholarship_type: "research", currency: "KES", status: "open" }}
       emptyMessage="No scholarships were returned by the research service."
+      importResource="research-scholarships"
     />
   );
 }

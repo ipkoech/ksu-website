@@ -18,6 +18,7 @@ export default function ResearchExpertiseTagsPage() {
         { name: "is_active", label: "Active", type: "boolean" },
       ]}
       emptyMessage="No expertise tags were returned by the research service."
+      importResource="research-expertise-tags"
     />
   );
 }

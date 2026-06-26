@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import { Upload } from "lucide-react";
+import { Button } from "@ksu/ui/components";
 import { EditableServiceResourcePage, type EditableListFilter } from "@/components/dashboard/editable-service-resource-page";
 import { researchServiceApi, type ResearchPublication, type ResearchPublicationPayload } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
@@ -185,6 +188,14 @@ export default function ResearchPublicationsPage() {
         is_active: values.is_active,
         is_featured: values.is_featured,
       })}
+      toolbarSlot={
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/imports/research-publications">
+            <Upload className="mr-1.5 h-4 w-4" />
+            Import
+          </Link>
+        </Button>
+      }
     />
   );
 }

@@ -43,6 +43,7 @@ export default function MentorshipProgramsPage() {
       ]}
       defaults={{ program_type: "research", status: "active" }}
       emptyMessage="No mentorship programs were returned by the research service."
+      importResource="research-mentorship"
     />
   );
 }

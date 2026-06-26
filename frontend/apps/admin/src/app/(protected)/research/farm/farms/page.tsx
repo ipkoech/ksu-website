@@ -41,6 +41,7 @@ export default function ResearchFarmsPage() {
       emptyMessage="No farm profile records were returned by the research service."
       metaFields={["code", "farm_type", "status"]}
       detailBaseHref="/research/farm/farms"
+      importResource="research-farms"
     />
   );
 }

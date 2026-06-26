@@ -33,6 +33,7 @@ export default function ResearchProgramsPage() {
       defaults={{ currency: "KES", status: "active" }}
       emptyMessage="No research programs were returned by the research service."
       metaFields={["code", "status", "start_date"]}
+      importResource="research-programs"
     />
   );
 }
