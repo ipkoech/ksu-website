@@ -15,44 +15,6 @@ from ksu_common.models.base import AttachmentRefsMixin, CoverImageRefMixin, Docu
 from .base import Base
 
 
-class ResearchOffice(Base, SEOMixin, CoverImageRefMixin, LogoRefMixin, AttachmentRefsMixin):
-    """Research office profile linked to the main-service research department."""
-
-    __tablename__ = "research_offices"
-
-    name: Mapped[str] = mapped_column(sa.String(255), nullable=False)
-    slug: Mapped[str] = mapped_column(sa.String(128), unique=True, nullable=False, index=True)
-    code: Mapped[Optional[str]] = mapped_column(sa.String(32), unique=True, nullable=True, index=True)
-
-    department_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
-    director_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
-
-    about: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
-    mandate: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
-    mission: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
-    vision: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
-    objectives: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
-    functions: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
-    services_summary: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
-    leadership_message: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
-    strategic_priorities: Mapped[Optional[list[dict]]] = mapped_column(JSONB, nullable=True)
-
-    location: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
-    address: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
-    email: Mapped[Optional[str]] = mapped_column(sa.String(320), nullable=True)
-    phone: Mapped[Optional[str]] = mapped_column(sa.String(24), nullable=True)
-    website: Mapped[Optional[str]] = mapped_column(sa.String(512), nullable=True)
-    social_links: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
-
-    status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="active", index=True)
-    is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
-    is_featured: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
-    display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
-
-    def __repr__(self) -> str:
-        return f"<ResearchOffice {self.slug}: {self.name}>"
-
-
 class ResearchResource(Base, SEOMixin, CoverImageRefMixin, AttachmentRefsMixin):
     """
     Research resource/tool/facility available to researchers.
@@ -350,7 +312,7 @@ class BoardMember(Base, PhotoRefMixin):
 
 
 __all__ = [
-    "ResearchOffice",
+    
     "ResearchResource",
     "ResearchService",
     "ResearchGuideline",

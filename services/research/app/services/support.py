@@ -2,19 +2,9 @@
 
 from __future__ import annotations
 
-from ..models import BoardMember, ResearchBoard, ResearchGuideline, ResearchOffice, ResearchResource, ResearchService
+from ..models import BoardMember, ResearchBoard, ResearchGuideline, ResearchResource, ResearchService
 from ._crud import build_simple_service
 
-OfficeService = build_simple_service(
-    ResearchOffice,
-    "name",
-    "code",
-    "about",
-    "mandate",
-    "objectives",
-    "services_summary",
-    reference_fields={"department_id": "departments", "director_id": "persons"},
-)
 ResourceService = build_simple_service(
     ResearchResource,
     "name",
