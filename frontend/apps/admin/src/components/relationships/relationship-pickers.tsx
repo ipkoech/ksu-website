@@ -20,7 +20,6 @@ import {
   personRelationshipAdapter,
   programmeRelationshipAdapter,
   researchCenterRelationshipAdapter,
-  researchOfficeRelationshipAdapter,
   researchProgramRelationshipAdapter,
   researchProjectRelationshipAdapter,
   schoolRelationshipAdapter,
@@ -108,10 +107,6 @@ export function ResearchProgramPicker(props: PickerProps<{ is_active?: boolean; 
 
 export function ResearchProjectPicker(props: PickerProps<{ is_active?: boolean; is_public?: boolean; project_type?: string }>) {
   return <EntityPicker adapter={researchProjectRelationshipAdapter} {...props} />;
-}
-
-export function ResearchOfficePicker(props: PickerProps<{ is_active?: boolean }>) {
-  return <EntityPicker adapter={researchOfficeRelationshipAdapter} {...props} />;
 }
 
 export function StaffAssignmentPicker(props: PickerProps<{ status?: string; entity_type?: string; entity_id?: string }>) {

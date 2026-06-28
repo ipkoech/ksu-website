@@ -3644,13 +3644,6 @@ const researchResources: Record<string, PortalResourceConfig<any, any>> = {
       role: values.role || "member",
     }),
   } as PortalResourceConfig<ResearchGenericRecord, ResearchGenericPayload>,
-  "research-news": genericResearchResource(
-    "research-news",
-    "Research News",
-    "Manage research-scoped news records.",
-    researchServiceApi.news,
-    ["content.manage_news", "research.view"],
-  ),
   "research-articles": genericResearchResource(
     "research-articles",
     "Research Articles",
@@ -3672,63 +3665,6 @@ const researchResources: Record<string, PortalResourceConfig<any, any>> = {
     researchServiceApi.sliders,
     ["marketing.manage_sliders"],
   ),
-  offices: {
-    ...genericResearchResource(
-      "offices",
-      "Research Offices",
-      "Manage research office records.",
-      researchServiceApi.offices,
-      ["research.manage_office"],
-    ),
-    fields: [
-      { name: "name", label: "Name", required: true },
-      { name: "slug", label: "Slug" },
-      { name: "code", label: "Code" },
-      {
-        name: "department_id",
-        label: "Research Department",
-        type: "entity",
-        relation: { adapter: "department", filters: { department_type: "administrative" }, allowClear: true },
-      },
-      {
-        name: "director_id",
-        label: "Director",
-        type: "entity",
-        relation: { adapter: "person", filters: { status: "active" }, allowClear: true },
-      },
-      { name: "about", label: "About", type: "textarea" },
-      { name: "mandate", label: "Mandate", type: "textarea" },
-      { name: "mission", label: "Mission", type: "textarea" },
-      { name: "vision", label: "Vision", type: "textarea" },
-      { name: "objectives", label: "Objectives", type: "textarea" },
-      { name: "functions", label: "Functions", type: "textarea" },
-      { name: "services_summary", label: "Services Summary", type: "textarea" },
-      { name: "leadership_message", label: "Leadership Message", type: "textarea" },
-      { name: "address", label: "Address", type: "textarea" },
-      { name: "email", label: "Email", type: "email" },
-      { name: "phone", label: "Phone" },
-      { name: "location", label: "Location" },
-      { name: "website", label: "Website", type: "url" },
-      { name: "logo_image_url", label: "Logo Image URL", type: "url" },
-      { name: "cover_image_url", label: "Cover Image URL", type: "url" },
-      {
-        name: "status",
-        label: "Status",
-        type: "select",
-        options: [
-          { label: "Active", value: "active" },
-          { label: "Inactive", value: "inactive" },
-          { label: "Draft", value: "draft" },
-        ],
-      },
-      { name: "is_active", label: "Active", type: "boolean" },
-      { name: "is_featured", label: "Featured", type: "boolean" },
-    ],
-    buildPayload: (values) => ({
-      ...values,
-      status: values.status || "active",
-    }),
-  } as PortalResourceConfig<ResearchGenericRecord, ResearchGenericPayload>,
 };
 
 function genericResearchResource(
@@ -6195,7 +6131,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       },
       {
         title: "Research News",
-        href: "/research/research-news",
+        href: "/research/content/news",
         icon: Newspaper,
         scope: "content.manage_news",
       },

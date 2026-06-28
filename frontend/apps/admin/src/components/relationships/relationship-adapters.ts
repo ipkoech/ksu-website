@@ -1038,32 +1038,6 @@ export const researchBoardRelationshipAdapter: RelationshipAdapter<{ is_active?:
   },
 };
 
-export const researchOfficeRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean }> = {
-  key: "research-office",
-  entityType: "research_office",
-  label: "Research office",
-  pluralLabel: "Research offices",
-  searchPlaceholder: "Search research offices",
-  emptyLabel: "No research offices found.",
-  async search({ search, filters, limit = defaultLimit }) {
-    const response = await researchServiceApi.offices.list({
-      page: 1,
-      per_page: limit,
-      search: search?.trim() || undefined,
-      is_active: filters?.is_active ?? undefined,
-    });
-    return (response.data ?? []).map(researchRecordOption);
-  },
-  async get(id, filters) {
-    const response = await researchServiceApi.offices.list({
-      page: 1,
-      per_page: 100,
-      is_active: filters?.is_active ?? undefined,
-    });
-    return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
-  },
-};
-
 export const staffAssignmentRelationshipAdapter: RelationshipAdapter<{ status?: string; entity_type?: string; entity_id?: string }> = {
   key: "staff-assignment",
   entityType: "staff_assignment",
@@ -1125,6 +1099,5 @@ export const relationshipAdapters = {
   researchMentorship: researchMentorshipRelationshipAdapter,
   researchScholarship: researchScholarshipRelationshipAdapter,
   researchBoard: researchBoardRelationshipAdapter,
-  researchOffice: researchOfficeRelationshipAdapter,
   staffAssignment: staffAssignmentRelationshipAdapter,
 };

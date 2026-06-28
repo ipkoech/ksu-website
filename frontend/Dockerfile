@@ -1,8 +1,11 @@
+# syntax=docker/dockerfile:1.7
+
 FROM node:22-alpine AS base
 
 WORKDIR /app
 
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV PNPM_STORE_DIR=/pnpm/store
 
 RUN corepack enable \
   && corepack prepare pnpm@9.1.0 --activate
@@ -18,7 +21,8 @@ COPY packages/api-client/package.json packages/api-client/package.json
 COPY packages/auth/package.json packages/auth/package.json
 COPY packages/ui/package.json packages/ui/package.json
 
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=ksu-frontend-pnpm-store,target=/pnpm/store,sharing=locked \
+  pnpm install --frozen-lockfile --prefer-offline --store-dir "${PNPM_STORE_DIR}"
 
 FROM base AS build
 
