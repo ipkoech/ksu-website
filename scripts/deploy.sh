@@ -619,14 +619,18 @@ if [[ "\${RUN_MIGRATIONS}" -eq 1 ]]; then
 fi
 
 if [[ "\${#frontend_services[@]}" -gt 0 ]]; then
-  frontend_compose_args=(up -d --remove-orphans)
-  if [[ "\${SKIP_BUILD}" -eq 0 ]]; then
-    frontend_compose_args+=(--build)
-  fi
-  frontend_compose_args+=("\${frontend_services[@]}")
+  echo "Deploying frontend services sequentially after backend health checks: \${frontend_services[*]}"
+  echo "Sequential frontend builds avoid overloading low-vCPU VM hosts."
+  for frontend_service in "\${frontend_services[@]}"; do
+    frontend_compose_args=(up -d --remove-orphans)
+    if [[ "\${SKIP_BUILD}" -eq 0 ]]; then
+      frontend_compose_args+=(--build)
+    fi
+    frontend_compose_args+=("\${frontend_service}")
 
-  echo "Deploying frontend services after backend health checks: \${frontend_services[*]}"
-  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" "\${frontend_compose_args[@]}"
+    echo "Deploying frontend service: \${frontend_service}"
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" "\${frontend_compose_args[@]}"
+  done
   "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${frontend_services[@]}"
 fi
 
