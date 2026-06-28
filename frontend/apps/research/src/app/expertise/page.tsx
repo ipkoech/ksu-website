@@ -4,6 +4,7 @@ import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
 import {
   BookOpenCheck,
   Building2,
+  ExternalLink,
   FlaskConical,
   Network,
   Search,
@@ -31,6 +32,7 @@ import {
   getProjects,
   getThemes,
 } from "../../lib/research-public-data";
+import { publicFrontendUrl } from "../../lib/service-urls";
 
 export const dynamic = "force-dynamic";
 
@@ -199,6 +201,58 @@ export default async function ExpertisePage({
           />
         </div>
       </ResearchSection>
+
+      <section className="border-y border-slate-200 bg-primary px-4 py-12 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="mx-auto max-w-[1680px]">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center">
+            <div>
+              <p className="text-sm font-semibold uppercase text-secondary">Find Researchers</p>
+              <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight sm:text-4xl">
+                Browse the university staff directory
+              </h2>
+              <p className="mt-3 max-w-2xl text-base leading-7 text-white/80">
+                Researcher profiles are managed through the main university directory. Search by name, department, academic rank, or research area.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <a
+                  href={`${publicFrontendUrl}/staff`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-md bg-secondary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90"
+                >
+                  Open staff directory
+                  <ExternalLink aria-hidden className="h-4 w-4" />
+                </a>
+                <a
+                  href={`${publicFrontendUrl}/search`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-md border border-white/30 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
+                >
+                  Search main site
+                  <ExternalLink aria-hidden className="h-4 w-4" />
+                </a>
+              </div>
+            </div>
+            <div className="rounded-lg border border-white/15 bg-white/[0.04] p-5 backdrop-blur">
+              <p className="text-xs font-semibold uppercase text-white/50">Quick insight</p>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                {[
+                  { label: "Expertise tags", value: expertiseTags.data.length },
+                  { label: "Focus areas", value: focusAreas.data.length },
+                  { label: "Themes", value: themes.data.length },
+                  { label: "Centers", value: centers.data.length },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-md border border-white/10 p-3">
+                    <p className="font-[family-name:var(--font-display)] text-2xl font-semibold">{item.value}</p>
+                    <p className="mt-1 text-xs text-white/60">{item.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <ResearchSection
         eyebrow="Related Work"
