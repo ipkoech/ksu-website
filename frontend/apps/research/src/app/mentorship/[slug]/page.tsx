@@ -36,7 +36,7 @@ export default async function MentorshipDetailPage({ params }: { params: Promise
           { label: "Back to mentorship", href: "/mentorship", variant: "secondary" },
           ...(compactText(mentorship.brochure_url) ? [{ label: "Download brochure", href: compactText(mentorship.brochure_url) }] : []),
         ]}
-        imageSrc="/images/research/registrar-reirm-imagegen.webp"
+        imageSrc="/images/research/research-about-hero.webp"
         imageAlt="Research mentorship programme and application information"
       />
       {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}

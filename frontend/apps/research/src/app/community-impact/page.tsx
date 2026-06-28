@@ -50,7 +50,7 @@ export default async function CommunityImpactPage() {
           { label: "Research", href: "/" },
           { label: "Community Impact" },
         ]}
-        imageSrc="/images/research/research-workflows.png"
+        imageSrc="/images/research/research-events-hero.webp"
         imageAlt="Community impact, outreach events, sustainability work, and public engagement"
         links={extensionLinks}
         primaryAction={{ label: "View events", href: "/events" }}

@@ -116,7 +116,7 @@ export default async function DonatePage() {
           { label: "Research", href: "/" },
           { label: "Donate" },
         ]}
-        imageSrc="/images/research/research-hero-imagegen.webp"
+        imageSrc="/images/research/research-home-hero.webp"
         imageAlt="Researchers, students, and community partners supported by research giving"
         links={donateLinks}
         primaryAction={{ label: "Give now", href: "/donate#make-a-gift" }}
@@ -622,7 +622,7 @@ function ImpactFeature({ impact }: { impact?: ResearchGenericRecord }) {
     <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="relative aspect-[16/7] min-h-[150px] sm:min-h-[220px]">
         <Image
-          src="/images/research/research-workflows.png"
+          src="/images/research/research-events-hero.webp"
           alt="Donation impact reporting and research outcomes"
           fill
           sizes="(min-width: 1024px) 50vw, 100vw"

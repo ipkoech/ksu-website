@@ -33,7 +33,7 @@ export default async function TrainingDetailPage({ params }: { params: Promise<{
           ...(compactText(training.meeting_link) ? [{ label: "Open meeting", href: compactText(training.meeting_link) }] : []),
           ...(compactText(training.brochure_url) ? [{ label: "Download brochure", href: compactText(training.brochure_url), variant: "secondary" as const }] : []),
         ]}
-        imageSrc="/images/research/research-demo-imagegen.webp"
+        imageSrc="/images/research/research-projects-hero.webp"
         imageAlt="Research training schedule, registration, and learning details"
       />
       {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}

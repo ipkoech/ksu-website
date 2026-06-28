@@ -88,7 +88,7 @@ export default async function InnovationsPage({
           { label: "Innovation & Partnerships", href: "/innovations" },
           { label: "Innovations" },
         ]}
-        imageSrc="/images/research/innovation-partnerships.png"
+        imageSrc="/images/research/research-innovation-hero.webp"
         imageAlt="Innovation, partnerships, prototypes, and applied research collaborations"
         links={innovationLinks}
         primaryAction={{ label: "View partners", href: "/partners" }}

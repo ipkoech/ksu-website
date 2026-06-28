@@ -67,7 +67,7 @@ export default async function TrainingPage({ searchParams }: { searchParams?: Pr
         title="Research training, workshops, seminars, and bootcamps."
         body="Find research methods, writing, ethics, grant writing, data, innovation, and leadership capacity-building programmes."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Learning", href: "/training" }, { label: "Training" }]}
-        imageSrc="/images/research/research-demo-imagegen.webp"
+        imageSrc="/images/research/research-projects-hero.webp"
         imageAlt="Research training workshop with staff and postgraduate students"
         links={learningLinks}
         primaryAction={{ label: "View events", href: "/events" }}

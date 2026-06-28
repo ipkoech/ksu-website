@@ -94,7 +94,7 @@ export default async function FundingPage({
           { label: "Funding & Support", href: "/funding" },
           { label: "Funding" },
         ]}
-        imageSrc="/images/research/research-demo-imagegen.webp"
+        imageSrc="/images/research/research-projects-hero.webp"
         imageAlt="Research funding support workflow with grant calls and application guidance"
         links={supportLinks}
         primaryAction={{ label: "Open guidelines", href: "/guidelines" }}

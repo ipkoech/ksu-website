@@ -75,7 +75,7 @@ export default async function EndowmentsPage({
           { label: "Innovation & Partnerships", href: "/innovations" },
           { label: "Endowments" },
         ]}
-        imageSrc="/images/research/research-demo-imagegen.webp"
+        imageSrc="/images/research/research-projects-hero.webp"
         imageAlt="Research endowment funding and permanent support initiatives"
         links={innovationLinks}
         primaryAction={{ label: "View partners", href: "/partners" }}
