@@ -107,7 +107,7 @@ export default async function PublicationsPage({
           { label: "Publications & Outputs", href: "/publications" },
           { label: "Publications" },
         ]}
-        imageSrc="/images/research/research-home-hero.webp"
+        imageSrc="/images/research/research-home-hero.svg"
         imageAlt="Research publications, reports, datasets, and scholarly evidence"
         links={outputLinks}
         primaryAction={{ label: "View outputs", href: "/outputs" }}

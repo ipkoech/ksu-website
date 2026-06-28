@@ -101,7 +101,7 @@ export default async function ProgramsPage({
           { label: "Discovery", href: "/projects" },
           { label: "Programs" },
         ]}
-        imageSrc="/images/research/research-projects-hero.webp"
+        imageSrc="/images/research/research-projects-hero.svg"
         imageAlt="Research teams reviewing long-term programmes and project pathways"
         links={discoveryLinks}
         primaryAction={{ label: "Browse projects", href: "/projects" }}

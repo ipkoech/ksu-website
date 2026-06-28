@@ -97,7 +97,7 @@ export default async function ConnectPage() {
           { label: "Research", href: "/" },
           { label: "Connect & Engage" },
         ]}
-        imageSrc="/images/research/research-about-hero.webp"
+        imageSrc="/images/research/research-about-hero.svg"
         imageAlt="Research office contacts, engagement channels, mentorship, and donor support"
         links={engageLinks}
         primaryAction={{ label: "Start an inquiry", href: "/connect#get-in-touch" }}

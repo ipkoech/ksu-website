@@ -114,7 +114,7 @@ export default async function ExpertisePage({
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Expertise" }]}
         localLinks={localLinks}
         relatedLinks={relatedLinks}
-        imageSrc="/images/research/research-innovation-hero.webp"
+        imageSrc="/images/research/research-innovation-hero.svg"
         imageAlt="Researchers collaborating across disciplines and partner networks"
         primaryAction={{ label: "Browse projects", href: "/projects" }}
         secondaryAction={{ label: "Meet the team", href: "/team" }}

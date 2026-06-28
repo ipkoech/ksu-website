@@ -61,7 +61,7 @@ export default async function ProjectDetailPage({
           { label: "Back to projects", href: "/projects", variant: "secondary" },
           ...(center?.slug ? [{ label: "View center", href: `/centers/${center.slug}` }] : []),
         ]}
-        imageSrc="/images/research/research-home-hero.webp"
+        imageSrc="/images/research/research-home-hero.svg"
         imageAlt="Research project profile and related outputs"
       />
 

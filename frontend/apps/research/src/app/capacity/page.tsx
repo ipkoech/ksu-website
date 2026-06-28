@@ -74,7 +74,7 @@ export default async function CapacityPage() {
           { label: "Research", href: "/" },
           { label: "Capacity" },
         ]}
-        imageSrc="/images/research/research-projects-hero.webp"
+        imageSrc="/images/research/research-projects-hero.svg"
         imageAlt="Researchers participating in training and mentorship sessions"
         links={discoveryLinks}
         primaryAction={{ label: "Open training", href: "/training" }}

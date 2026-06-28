@@ -94,7 +94,7 @@ export default async function CentersPage({
           { label: "Discovery", href: "/projects" },
           { label: "Centers" },
         ]}
-        imageSrc="/images/research/research-innovation-hero.webp"
+        imageSrc="/images/research/research-innovation-hero.svg"
         imageAlt="Research centers connecting faculty, facilities, and partner networks"
         links={discoveryLinks}
         primaryAction={{ label: "Explore facilities", href: "/facilities" }}

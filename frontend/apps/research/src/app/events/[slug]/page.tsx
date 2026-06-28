@@ -38,7 +38,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
           ...(compactText(event.registration_url) ? [{ label: "Register", href: compactText(event.registration_url) }] : []),
           ...(compactText(event.meeting_url) ? [{ label: "Join online", href: compactText(event.meeting_url), variant: "secondary" as const }] : []),
         ]}
-        imageSrc="/images/research/research-events-hero.webp"
+        imageSrc="/images/research/research-events-hero.svg"
         imageAlt="Research event agenda, speakers, and participation details"
       />
       {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}

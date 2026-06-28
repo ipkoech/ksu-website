@@ -68,7 +68,7 @@ export default async function CenterDetailPage({
           { label: "Back to centers", href: "/centers", variant: "secondary" },
           ...(compactText(center.website) ? [{ label: "Open website", href: compactText(center.website) }] : []),
         ]}
-        imageSrc="/images/research/research-innovation-hero.webp"
+        imageSrc="/images/research/research-innovation-hero.svg"
         imageAlt="Research center profile and connected work"
       />
 

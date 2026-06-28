@@ -18,7 +18,7 @@ export default function PrivacyPage() {
           { label: "Home", href: "/" },
           { label: "Privacy" },
         ]}
-        imageSrc="/images/research/research-about-hero.webp"
+        imageSrc="/images/research/research-about-hero.svg"
         imageAlt="Kisii University Research Portal privacy and legal information"
         links={[]}
         stats={[]}

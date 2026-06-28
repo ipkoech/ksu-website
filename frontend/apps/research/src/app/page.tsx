@@ -64,32 +64,32 @@ const ecosystemCards = [
   {
     title: "Centers & Institutes",
     href: "/centers",
-    image: "/images/research/research-home-hero.webp",
+    image: "/images/research/research-home-hero.svg",
   },
   {
     title: "Facilities & Labs",
     href: "/facilities",
-    image: "/images/research/research-home-hero.webp",
+    image: "/images/research/research-home-hero.svg",
   },
   {
     title: "Expertise Directory",
     href: "/expertise",
-    image: "/images/research/research-innovation-hero.webp",
+    image: "/images/research/research-innovation-hero.svg",
   },
   {
     title: "Partners & Collaborators",
     href: "/partners",
-    image: "/images/research/research-projects-hero.webp",
+    image: "/images/research/research-projects-hero.svg",
   },
   {
     title: "Consultancy Services",
     href: "/consultancies",
-    image: "/images/research/research-about-hero.webp",
+    image: "/images/research/research-about-hero.svg",
   },
   {
     title: "Community Impact",
     href: "/community-impact",
-    image: "/images/research/research-projects-hero.webp",
+    image: "/images/research/research-projects-hero.svg",
   },
 ];
 
@@ -157,7 +157,7 @@ export default async function ResearchPage() {
             eyebrow: "Kisii University Research",
             title: "Research that connects discovery, innovation, and public service.",
             body: "Explore the work of the Directorate of Research, Extension, Innovation and Resource Mobilization: projects, publications, partnerships, grants, outputs, community impact, and the evidence behind Kisii University scholarship.",
-            imageSrc: "/images/research/research-home-hero.webp",
+            imageSrc: "/images/research/research-home-hero.svg",
             imageAlt: "University researchers collaborating across laboratory, data, and field research",
             primaryAction: { label: "Explore research", href: "/projects" },
             secondaryAction: { label: "Partner with us", href: "/partners" },
@@ -167,7 +167,7 @@ export default async function ResearchPage() {
             eyebrow: "Research Workflows",
             title: "From ideas to funded projects, publications, and public impact.",
             body: "Follow the university research journey through discovery, support, ethics, funding, outputs, innovation, community extension, and implementation evidence.",
-            imageSrc: "/images/research/research-events-hero.webp",
+            imageSrc: "/images/research/research-events-hero.svg",
             imageAlt: "Research workflow connecting teams, data, facilities, and community work",
             primaryAction: { label: "View workflows", href: "/projects" },
             secondaryAction: { label: "Find support", href: "/services" },
@@ -177,7 +177,7 @@ export default async function ResearchPage() {
             eyebrow: "Innovation & Partnerships",
             title: "Work with Kisii University on ideas that need evidence and delivery.",
             body: "Connect with researchers, centers, facilities, consultancies, endowments, funders, and partner records that show how collaboration translates into outputs.",
-            imageSrc: "/images/research/research-innovation-hero.webp",
+            imageSrc: "/images/research/research-innovation-hero.svg",
             imageAlt: "Research partnership and innovation collaboration in a university setting",
             primaryAction: { label: "Open partnerships", href: "/partners" },
             secondaryAction: { label: "Contact REIRM", href: "/connect" },
@@ -224,7 +224,7 @@ export default async function ResearchPage() {
         <div className="mx-auto grid max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] lg:items-center">
           <div className="relative min-h-[360px] overflow-hidden rounded-lg bg-slate-200 shadow-sm lg:min-h-[520px]">
             <Image
-              src="/images/research/research-about-hero.webp"
+              src="/images/research/research-about-hero.svg"
               alt="Registrar for research, extension, innovation and resource mobilization in a university office"
               fill
               sizes="(min-width: 1024px) 54vw, 100vw"
@@ -276,7 +276,7 @@ export default async function ResearchPage() {
             <RecordPanel
               title="Active Projects"
               href="/projects"
-              image="/images/research/research-projects-hero.webp"
+              image="/images/research/research-projects-hero.svg"
               emptyLabel="No active projects have been published yet."
               tone="green"
               isEmpty={projects.data.length === 0}
@@ -296,7 +296,7 @@ export default async function ResearchPage() {
             <RecordPanel
               title="Recent Publications"
               href="/publications"
-              image="/images/research/research-home-hero.webp"
+              image="/images/research/research-home-hero.svg"
               emptyLabel="No publications have been published yet."
               tone="navy"
               isEmpty={publications.data.length === 0}
@@ -316,7 +316,7 @@ export default async function ResearchPage() {
             <RecordPanel
               title="Funding & Opportunities"
               href="/funding"
-              image="/images/research/research-projects-hero.webp"
+              image="/images/research/research-projects-hero.svg"
               emptyLabel="No funding calls have been published yet."
               tone="gold"
               isEmpty={grants.data.length === 0}

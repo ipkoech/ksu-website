@@ -59,7 +59,7 @@ export default async function FundingDetailPage({
             ? [{ label: isExternal ? "Open funder link" : "Apply or submit", href: actionUrl }]
             : []),
         ]}
-        imageSrc="/images/research/research-projects-hero.webp"
+        imageSrc="/images/research/research-projects-hero.svg"
         imageAlt="Research funding opportunity and application workflow"
       />
 

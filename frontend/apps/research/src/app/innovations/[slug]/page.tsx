@@ -68,7 +68,7 @@ export default async function InnovationDetailPage({
           { label: "Back to innovations", href: "/innovations", variant: "secondary" },
           ...(project?.slug ? [{ label: "View project", href: `/projects/${project.slug}` }] : []),
         ]}
-        imageSrc="/images/research/research-innovation-hero.webp"
+        imageSrc="/images/research/research-innovation-hero.svg"
         imageAlt="Innovation profile with readiness, intellectual property, and adoption context"
       />
 

@@ -47,7 +47,7 @@ export default async function EndowmentDetailPage({
           { label: "Back to endowments", href: "/endowments", variant: "secondary" },
           ...(compactText(fund.contribution_url) ? [{ label: "Contribute", href: compactText(fund.contribution_url) }] : []),
         ]}
-        imageSrc="/images/research/research-projects-hero.webp"
+        imageSrc="/images/research/research-projects-hero.svg"
         imageAlt="Research endowment fund purpose and contribution information"
       />
 

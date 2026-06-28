@@ -95,7 +95,7 @@ export default async function FacilitiesPage({
           { label: "Discovery", href: "/projects" },
           { label: "Facilities" },
         ]}
-        imageSrc="/images/research/research-events-hero.webp"
+        imageSrc="/images/research/research-events-hero.svg"
         imageAlt="Research farm, laboratory, and field infrastructure supporting discovery"
         links={discoveryLinks}
         primaryAction={{ label: "View centers", href: "/centers" }}

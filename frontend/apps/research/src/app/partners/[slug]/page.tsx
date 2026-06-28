@@ -50,7 +50,7 @@ export default async function PartnerDetailPage({
           { label: "Back to partners", href: "/partners", variant: "secondary" },
           ...(compactText(partner.website) ? [{ label: "Open website", href: compactText(partner.website) }] : []),
         ]}
-        imageSrc="/images/research/research-innovation-hero.webp"
+        imageSrc="/images/research/research-innovation-hero.svg"
         imageAlt="Research partner profile and collaboration context"
       />
 

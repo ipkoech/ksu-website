@@ -18,7 +18,7 @@ export default function TermsPage() {
           { label: "Home", href: "/" },
           { label: "Terms" },
         ]}
-        imageSrc="/images/research/research-about-hero.webp"
+        imageSrc="/images/research/research-about-hero.svg"
         imageAlt="Kisii University Research Portal terms and legal information"
         links={[]}
         stats={[]}

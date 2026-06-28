@@ -69,7 +69,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
           ...(compactText(record.external_url) ? [{ label: "Open source link", href: compactText(record.external_url) }] : []),
           ...(compactText(record.video_url) ? [{ label: "Watch media", href: compactText(record.video_url), variant: "secondary" as const }] : []),
         ]}
-        imageSrc="/images/research/research-home-hero.webp"
+        imageSrc="/images/research/research-home-hero.svg"
         imageAlt="Research news and public update context"
       />
       {error ? (
