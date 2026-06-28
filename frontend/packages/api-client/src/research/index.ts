@@ -356,7 +356,6 @@ export const researchServiceApi = {
     ResearchGenericRecord,
     ResearchGenericPayload
   >("/api/v1/scholarship-applications"),
-  news: crudApi<ResearchGenericRecord, ResearchGenericPayload>("/api/v1/news"),
   articles: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/articles",
   ),
@@ -365,12 +364,6 @@ export const researchServiceApi = {
   ),
   sliders: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/sliders",
-  ),
-  offices: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
-    "/api/v1/offices",
-  ),
-  officeStaff: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
-    "/api/v1/office-staff",
   ),
   resources: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/resources",
@@ -383,8 +376,5 @@ export const researchServiceApi = {
   ),
   boards: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/boards",
-  ),
-  boardMembers: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
-    "/api/v1/board-members",
   ),
 };

@@ -16,7 +16,6 @@ import {
   getArticleBySlug,
   getCenters,
   getInnovations,
-  getNewsBySlug,
   getProjects,
   getPublications,
 } from "../../../lib/research-public-data";
@@ -26,9 +25,7 @@ const passthroughImageLoader = ({ src }: { src: string }) => src;
 
 export default async function NewsDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const article = await getArticleBySlug(slug);
-  const recordResult = article.data ? article : await getNewsBySlug(slug);
-  const { data, error } = recordResult;
+  const { data, error } = await getArticleBySlug(slug);
   if (!data) notFound();
 
   const record = data as ResearchGenericRecord;

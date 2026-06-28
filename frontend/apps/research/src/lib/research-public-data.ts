@@ -25,7 +25,6 @@ export type ResearchOverviewData = {
   grants: PublicResearchData<ResearchGrant>;
   innovations: PublicResearchData<ResearchGenericRecord>;
   partners: PublicResearchData<ResearchGenericRecord>;
-  updates: PublicResearchData<ResearchGenericRecord>;
   stats: PublicStatsResponse | null;
   errors: string[];
 };
@@ -1185,42 +1184,6 @@ export function getBoards() {
   );
 }
 
-export function getBoardMembers() {
-  return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.boardMembers.list({
-      fields: researchPublicListFields,
-      is_active: true,
-      is_public: true,
-      page: 1,
-      per_page: 100,
-    }),
-  );
-}
-
-export function getOffices() {
-  return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.offices.list({
-      fields: researchPublicListFields,
-      is_active: true,
-      is_public: true,
-      page: 1,
-      per_page: 100,
-    }),
-  );
-}
-
-export function getOfficeStaff() {
-  return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.officeStaff.list({
-      fields: researchPublicListFields,
-      is_active: true,
-      is_public: true,
-      page: 1,
-      per_page: 100,
-    }),
-  );
-}
-
 export function getDonationImpacts() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.donationImpacts.list({
@@ -1257,51 +1220,6 @@ export function getDonationSettings() {
   );
 }
 
-export function getUpdates() {
-  return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.news.list({
-      fields: researchPublicListFields,
-      status: "published",
-      is_active: true,
-      is_public: true,
-      page: 1,
-      per_page: 6,
-    }),
-  );
-}
-
-export function getUpdatesFiltered(
-  filters: GenericListFilters = {},
-  page = 1,
-) {
-  return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.news.list({
-      fields: researchPublicListFields,
-      search: filters.search?.trim() || undefined,
-      news_type: filters.newsType || undefined,
-      category: filters.category || undefined,
-      center_id: filters.centerId || undefined,
-      project_id: filters.projectId || undefined,
-      status: filters.status || "published",
-      year: parseYear(filters.year),
-      sort: filters.sort || undefined,
-      order: filters.order,
-      is_active: true,
-      is_public: true,
-      page,
-      per_page: 100,
-    }),
-  );
-}
-
-export function getNewsBySlug(slug: string) {
-  return safeRecord<ResearchGenericRecord>(() =>
-    researchServiceApi.news.getBySlug(slug, {
-      fields: researchPublicDetailFields,
-    }),
-  );
-}
-
 export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
   const [
     projects,
@@ -1309,7 +1227,6 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
     grants,
     innovations,
     partners,
-    updates,
     stats,
   ] = await Promise.all([
     getProjects(),
@@ -1317,7 +1234,6 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
     getGrants(),
     getInnovations(),
     getPartners(),
-    getUpdates(),
     safeStats(),
   ]);
 
@@ -1327,7 +1243,6 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
     grants,
     innovations,
     partners,
-    updates,
     stats,
     errors: uniqueErrors(
       projects.error,
@@ -1335,7 +1250,6 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
       grants.error,
       innovations.error,
       partners.error,
-      updates.error,
     ),
   };
 }

@@ -21,8 +21,6 @@ import {
   getArticlesFiltered,
   getCenters,
   getProjects,
-  getUpdates,
-  getUpdatesFiltered,
 } from "../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
@@ -34,8 +32,6 @@ export const metadata: Metadata = {
 
 type NewsSearchParams = {
   q?: string;
-  kind?: "updates" | "articles";
-  newsType?: string;
   articleType?: string;
   category?: string;
   center?: string;
@@ -44,7 +40,6 @@ type NewsSearchParams = {
   sort?: string;
 };
 
-const newsTypes = ["news", "announcement", "press_release", "notice", "achievement"];
 const articleTypes = ["article", "feature", "opinion", "case_study", "research_story"];
 const passthroughImageLoader = ({ src }: { src: string }) => src;
 
@@ -64,45 +59,27 @@ export default async function NewsPage({
   const page = pageFromSearchParams(params);
   const sort = params.sort || "published_at";
   const order = sort === "title" ? "asc" : "desc";
-  const [updates, articles, allUpdates, allArticles, centers, projects] = await Promise.all([
-    params.kind === "articles"
-      ? Promise.resolve({ data: [], total: 0, perPage: 100, error: null })
-      : getUpdatesFiltered(
-          {
-            search: params.q,
-            newsType: params.newsType,
-            category: params.category,
-            centerId: params.center,
-            projectId: params.project,
-            year: params.year,
-            sort,
-            order,
-          },
-          page,
-        ),
-    params.kind === "updates"
-      ? Promise.resolve({ data: [], total: 0, perPage: 100, error: null })
-      : getArticlesFiltered(
-          {
-            search: params.q,
-            articleType: params.articleType,
-            category: params.category,
-            centerId: params.center,
-            projectId: params.project,
-            year: params.year,
-            sort,
-            order,
-          },
-          page,
-        ),
-    getUpdates(),
+  const [articles, allArticles, centers, projects] = await Promise.all([
+    getArticlesFiltered(
+      {
+        search: params.q,
+        articleType: params.articleType,
+        category: params.category,
+        centerId: params.center,
+        projectId: params.project,
+        year: params.year,
+        sort,
+        order,
+      },
+      page,
+    ),
     getArticles(),
     getCenters(),
     getProjects(),
   ]);
-  const categories = getCategories([...allUpdates.data, ...allArticles.data]);
-  const years = getYears([...allUpdates.data, ...allArticles.data]);
-  const activeList = params.kind === "articles" ? articles : updates;
+  const categories = getCategories([...allArticles.data]);
+  const years = getYears([...allArticles.data]);
+  const activeList = articles;
   const totalPages = Math.ceil(activeList.total / activeList.perPage);
 
   return (
@@ -121,7 +98,6 @@ export default async function NewsPage({
         links={learningLinks}
         primaryAction={{ label: "View events", href: "/events" }}
         stats={[
-          { label: "Update results", value: updates.data.length },
           { label: "Article results", value: articles.data.length },
           { label: "Centers", value: centers.data.length },
           { label: "Projects", value: projects.data.length },
@@ -142,7 +118,7 @@ export default async function NewsPage({
           projects={projects.data}
         />
 
-        {[updates.error, articles.error, centers.error, projects.error]
+        {[articles.error, centers.error, projects.error]
           .filter(Boolean)
           .map((error) => (
             <div key={error} className="mt-5">
@@ -150,73 +126,37 @@ export default async function NewsPage({
             </div>
           ))}
 
-        {params.kind !== "articles" ? (
-          <div className="mt-8">
-            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-secondary">
-                  Updates
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold text-slate-950">
-                  Announcements and research notices
-                </h2>
-              </div>
-              <Badge>{updates.data.length} published</Badge>
+        <div className="mt-8">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-secondary">
+                Articles
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold text-slate-950">
+                Feature stories and explainers
+              </h2>
             </div>
-            {updates.data.length > 0 ? (
-              <>
-                <div className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
-                  {updates.data.map((record) => (
-                    <UpdateRow key={record.id} record={record} />
-                  ))}
-                </div>
-                <ListPagination
-                  page={page}
-                  totalPages={totalPages}
-                  total={updates.total}
-                  perPage={updates.perPage}
-                  baseHref="/news"
-                />
-              </>
-            ) : (
-              <StatusMessage>No research updates match the current filters.</StatusMessage>
-            )}
+            <Badge>{articles.data.length} published</Badge>
           </div>
-        ) : null}
-
-        {params.kind !== "updates" ? (
-          <div className="mt-10">
-            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-secondary">
-                  Articles
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold text-slate-950">
-                  Feature stories and explainers
-                </h2>
+          {articles.data.length > 0 ? (
+            <>
+              <div className="grid gap-5 lg:grid-cols-3">
+                {articles.data.map((record) => (
+                  <ArticleCard key={record.id} record={record} />
+                ))}
               </div>
-              <Badge>{articles.data.length} published</Badge>
-            </div>
-            {articles.data.length > 0 ? (
-              <>
-                <div className="grid gap-5 lg:grid-cols-3">
-                  {articles.data.map((record) => (
-                    <ArticleCard key={record.id} record={record} />
-                  ))}
-                </div>
-                <ListPagination
-                  page={page}
-                  totalPages={totalPages}
-                  total={articles.total}
-                  perPage={articles.perPage}
-                  baseHref="/news"
-                />
-              </>
-            ) : (
-              <StatusMessage>No research articles match the current filters.</StatusMessage>
-            )}
-          </div>
-        ) : null}
+              <ListPagination
+                page={page}
+                totalPages={totalPages}
+                total={articles.total}
+                perPage={articles.perPage}
+                baseHref="/news"
+              />
+            </>
+          ) : (
+            <StatusMessage>No research articles match the current filters.</StatusMessage>
+          )}
+        </div>
       </ResearchSection>
     </main>
   );
@@ -242,8 +182,6 @@ function NewsFilters({
       searchValue={params.q}
       searchPlaceholder="Title, author, story, announcement"
       selects={[
-        { name: "kind", label: "Content", value: params.kind, options: ["updates", "articles"] },
-        { name: "newsType", label: "Update type", value: params.newsType, options: newsTypes },
         { name: "articleType", label: "Article type", value: params.articleType, options: articleTypes },
         { name: "category", label: "Category", value: params.category, options: categories },
         { name: "year", label: "Year", value: params.year, options: years },
@@ -260,41 +198,6 @@ function NewsFilters({
         { value: "view_count", label: "Most viewed" },
       ]}
     />
-  );
-}
-
-function UpdateRow({ record }: { record: ResearchGenericRecord }) {
-  const href = record.slug ? `/news/${record.slug}` : "/news";
-  return (
-    <article className="grid gap-4 p-5 lg:grid-cols-[180px_1fr_220px]">
-      <div className="rounded-md bg-slate-50 p-4">
-        <p className="text-xs font-semibold uppercase text-slate-500">Published</p>
-        <p className="mt-2 text-lg font-semibold text-slate-950">
-          {formatDate(record.published_at) || "Not dated"}
-        </p>
-        {record.is_pinned ? <div className="mt-3"><FilledBadge>Pinned</FilledBadge></div> : null}
-      </div>
-      <div>
-        <div className="flex flex-wrap gap-2">
-          <Badge>{formatLabel(record.news_type ?? "news")}</Badge>
-          {record.category ? <Badge>{formatLabel(record.category)}</Badge> : null}
-        </div>
-        <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-          <Link href={href} className="transition hover:text-primary">
-            {record.title ?? "Research update"}
-          </Link>
-        </h2>
-        <p className="mt-3 text-sm leading-7 text-slate-600">
-          {compactText(record.summary) ||
-            compactText(record.excerpt) ||
-            "This update is published without a public summary."}
-        </p>
-      </div>
-      <div className="flex flex-col gap-3 text-sm">
-        <ResearchFact label="Author" value={compactText(record.author_name)} />
-        <ResearchFact label="Source" value={compactText(record.source)} />
-      </div>
-    </article>
   );
 }
 

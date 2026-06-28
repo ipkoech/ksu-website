@@ -127,7 +127,6 @@ export default async function ResearchPage() {
     grants,
     innovations,
     partners,
-    updates,
     errors,
   } = await getResearchOverviewData();
 
@@ -318,27 +317,20 @@ export default async function ResearchPage() {
               title="Funding & Opportunities"
               href="/funding"
               image="/images/research/research-demo-imagegen.webp"
-              emptyLabel="No funding calls or updates have been published yet."
+              emptyLabel="No funding calls have been published yet."
               tone="gold"
-              isEmpty={grants.data.length === 0 && updates.data.length === 0}
+              isEmpty={grants.data.length === 0}
             >
-              {[...grants.data.slice(0, 2), ...updates.data.slice(0, 2)].map(
+              {grants.data.slice(0, 4).map(
                 (item) => (
                   <RecordRow
                     key={item.id}
                     title={
                       compactText(item.title) ||
-                      compactText("name" in item ? item.name : undefined) ||
                       compactText(item.id)
                     }
                     meta={[
-                      formatLabel(
-                        "category" in item
-                          ? item.category
-                          : "news_type" in item
-                            ? item.news_type
-                            : undefined,
-                      ),
+                      formatLabel(item.category),
                       formatLabel(item.status),
                     ]}
                   />

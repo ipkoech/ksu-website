@@ -11,7 +11,6 @@ import {
   Target,
   Users,
 } from "lucide-react";
-import { ScrollRevealGroup } from "@ksu/ui/components";
 import {
   InstitutionalEmpty,
   InstitutionalPanel,
@@ -29,7 +28,6 @@ import {
   getCenters,
   getExpertiseTags,
   getFocusAreas,
-  getOfficeStaff,
   getProjects,
   getThemes,
 } from "../../lib/research-public-data";
@@ -87,22 +85,19 @@ export default async function ExpertisePage({
   searchParams?: Promise<ExpertiseSearchParams>;
 }) {
   const params = (await searchParams) ?? {};
-  const [staff, expertiseTags, focusAreas, themes, centers, projects] = await Promise.all([
-    getOfficeStaff(),
+  const [expertiseTags, focusAreas, themes, centers, projects] = await Promise.all([
     getExpertiseTags(),
     getFocusAreas(),
     getThemes(),
     getCenters(),
     getProjects(),
   ]);
-  const filteredStaff = staff.data.filter((person) => matchesRecord(person, params));
   const filteredTags = expertiseTags.data.filter((tag) => matchesRecord(tag, params));
   const filteredFocusAreas = focusAreas.data.filter((area) => matchesRecord(area, params));
   const filteredThemes = themes.data.filter((theme) => matchesRecord(theme, params));
   const filteredCenters = centers.data.filter((center) => matchesRecord(center, params));
   const filteredProjects = projects.data.filter((project) => matchesProject(project, params));
   const errors = [
-    staff.error,
     expertiseTags.error,
     focusAreas.error,
     themes.error,
@@ -124,10 +119,10 @@ export default async function ExpertisePage({
         primaryAction={{ label: "Browse projects", href: "/projects" }}
         secondaryAction={{ label: "Meet the team", href: "/team" }}
         facts={[
-          { label: "Team records", value: staff.data.length },
           { label: "Expertise tags", value: expertiseTags.data.length },
           { label: "Focus areas", value: focusAreas.data.length },
           { label: "Themes", value: themes.data.length },
+          { label: "Centers", value: centers.data.length },
         ]}
       />
 
@@ -152,27 +147,8 @@ export default async function ExpertisePage({
         <div id="search">
           <ExpertiseFilters params={params} focusAreas={focusAreas.data} themes={themes.data} />
 
-          <div className="mt-7 grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-            <div>
-              <SectionHeader
-                label="People"
-                title="Researchers and support specialists"
-                count={filteredStaff.length}
-              />
-              {filteredStaff.length > 0 ? (
-                <ScrollRevealGroup className="mt-4 grid gap-4 md:grid-cols-2" staggerDelay={60}>
-                  {filteredStaff.map((person) => (
-                    <ExpertCard key={person.id} person={person} />
-                  ))}
-                </ScrollRevealGroup>
-              ) : (
-                <InstitutionalEmpty>
-                  No people records match the current expertise search.
-                </InstitutionalEmpty>
-              )}
-            </div>
-
-            <InstitutionalPanel className="h-fit bg-slate-950 text-white">
+          <div className="mt-7">
+            <InstitutionalPanel className="bg-slate-950 text-white">
               <p className="text-sm font-semibold uppercase text-secondary">
                 Search Guide
               </p>
@@ -315,24 +291,6 @@ function RecordSelect({
         ))}
       </select>
     </label>
-  );
-}
-
-function ExpertCard({ person }: { person: ResearchGenericRecord }) {
-  return (
-    <InstitutionalPanel>
-      <div className="flex flex-wrap gap-2">
-        {person.staff_type ? <Badge>{formatLabel(person.staff_type)}</Badge> : null}
-        {person.role ? <FilledBadge>{formatLabel(person.role)}</FilledBadge> : null}
-      </div>
-      <h3 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold leading-7 text-slate-950">
-        {personName(person)}
-      </h3>
-      <p className="mt-3 text-sm leading-7 text-slate-600">
-        {compactText(person.responsibilities || person.summary || person.description) ||
-          "This person is published in the research team directory and can be connected to expertise records as more details are added."}
-      </p>
-    </InstitutionalPanel>
   );
 }
 
@@ -495,19 +453,6 @@ function recordSearchText(record: ResearchGenericRecord) {
     .map(compactText)
     .join(" ")
     .toLowerCase();
-}
-
-function personName(person: ResearchGenericRecord) {
-  const nestedStaff = person.staff_assignment?.staff ?? person.staff ?? {};
-  return (
-    compactText(person.title_override) ||
-    compactText(person.display_name) ||
-    compactText(person.name) ||
-    compactText(nestedStaff.full_name) ||
-    compactText(`${nestedStaff.first_name ?? ""} ${nestedStaff.last_name ?? ""}`) ||
-    compactText(person.role) ||
-    "Published researcher"
-  );
 }
 
 function recordTitle(record: ResearchGenericRecord | ResearchProject) {

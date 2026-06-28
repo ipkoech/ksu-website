@@ -6,12 +6,9 @@ import {
   ClipboardList,
   Landmark,
   Mail,
-  MapPin,
-  Phone,
   Scale,
   Users,
 } from "lucide-react";
-import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 import {
   InstitutionalEmpty,
   InstitutionalPanel,
@@ -19,17 +16,13 @@ import {
 } from "../../components/research-institutional";
 import {
   Badge,
-  FilledBadge,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
 import {
   compactText,
   formatLabel,
-  getBoardMembers,
   getBoards,
-  getOfficeStaff,
-  getOffices,
 } from "../../lib/research-public-data";
 
 export const dynamic = "force-dynamic";
@@ -74,14 +67,10 @@ const relatedLinks = [
 ];
 
 export default async function AboutPage() {
-  const [offices, boards, boardMembers, staff] = await Promise.all([
-    getOffices(),
+  const [boards] = await Promise.all([
     getBoards(),
-    getBoardMembers(),
-    getOfficeStaff(),
   ]);
-  const leadOffice = offices.data[0] ?? null;
-  const errors = [offices.error, boards.error, boardMembers.error, staff.error].filter(Boolean);
+  const errors = [boards.error].filter(Boolean);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
@@ -97,10 +86,8 @@ export default async function AboutPage() {
         primaryAction={{ label: "Meet the team", href: "/team" }}
         secondaryAction={{ label: "Find expertise", href: "/expertise" }}
         facts={[
-          { label: "Published offices", value: offices.data.length },
           { label: "Governance boards", value: boards.data.length },
-          { label: "Board members", value: boardMembers.data.length },
-          { label: "Team records", value: staff.data.length },
+          { label: "Department", value: "REIRM" },
         ]}
       />
 
@@ -116,87 +103,13 @@ export default async function AboutPage() {
         </section>
       ) : null}
 
-      <ResearchSection
-        eyebrow="Mandate"
-        title="What the research office is responsible for"
-        body="The mandate, mission, vision, priorities, and leadership message are shown from published Research Office records."
-        tone="white"
-      >
-        <div id="mandate" className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <ScrollReveal>
-            {leadOffice ? (
-              <InstitutionalPanel className="h-full">
-                <div className="flex flex-wrap gap-2">
-                  {leadOffice.code ? <FilledBadge>{leadOffice.code}</FilledBadge> : null}
-                  {leadOffice.status ? <Badge>{formatLabel(leadOffice.status)}</Badge> : null}
-                </div>
-                <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
-                  {recordTitle(leadOffice)}
-                </h2>
-                <p className="mt-4 text-base leading-8 text-slate-700">
-                  {recordSummary(leadOffice) ||
-                    "This office has been published, but its mandate narrative has not been completed yet."}
-                </p>
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  <StatementCard label="Mission" value={leadOffice.mission} />
-                  <StatementCard label="Vision" value={leadOffice.vision} />
-                  <StatementCard label="Mandate" value={leadOffice.mandate} />
-                  <StatementCard label="Services" value={leadOffice.services_summary} />
-                </div>
-                <StrategicPriorities items={leadOffice.strategic_priorities} />
-              </InstitutionalPanel>
-            ) : (
-              <InstitutionalEmpty>
-                No published research office record is available yet. Once an office is published, its mandate and leadership information will appear here.
-              </InstitutionalEmpty>
-            )}
-          </ScrollReveal>
-
-          <ScrollReveal>
-            <InstitutionalPanel className="h-full bg-slate-950 text-white">
-              <p className="text-sm font-semibold uppercase text-secondary">
-                Leadership Message
-              </p>
-              <blockquote className="mt-4 text-lg font-semibold leading-8 text-white">
-                {compactText(leadOffice?.leadership_message) ||
-                  "The REIRM office coordinates research support, extension, innovation and resource mobilization across the university."}
-              </blockquote>
-              <div className="mt-6 flex flex-col gap-3 text-sm leading-6 text-white/75">
-                {contactRows(leadOffice).map((item) => {
-                  const Icon = item.icon;
-
-                  return (
-                    <p key={item.label} className="flex items-start gap-3">
-                      <Icon aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
-                      <span>{item.value}</span>
-                    </p>
-                  );
-                })}
-              </div>
-            </InstitutionalPanel>
-          </ScrollReveal>
+      <section className="px-4 pt-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="mx-auto max-w-[1680px]">
+          <StatusMessage tone="neutral">
+            Research office records and board member details have moved to the main university service. Governance boards remain available below.
+          </StatusMessage>
         </div>
-      </ResearchSection>
-
-      <ResearchSection
-        eyebrow="Office Structure"
-        title="Research offices"
-        body="Offices are displayed as public service units with clear contact routes and functions."
-      >
-        <div id="offices">
-          {offices.data.length > 0 ? (
-            <ScrollRevealGroup className="grid gap-5 md:grid-cols-2 xl:grid-cols-3" staggerDelay={75}>
-              {offices.data.map((office) => (
-                <OfficeCard key={office.id} office={office} />
-              ))}
-            </ScrollRevealGroup>
-          ) : (
-            <InstitutionalEmpty>
-              No research offices have been published yet.
-            </InstitutionalEmpty>
-          )}
-        </div>
-      </ResearchSection>
+      </section>
 
       <ResearchSection
         eyebrow="Governance"
@@ -204,195 +117,32 @@ export default async function AboutPage() {
         body="Governance records explain how oversight, advice, and approvals are organized around the research mandate."
         tone="white"
       >
-        <div id="governance" className="grid gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-          <div className="flex flex-col gap-4">
-            {boards.data.length > 0 ? (
-              boards.data.map((board) => (
-                <InstitutionalPanel key={board.id}>
-                  <div className="flex flex-wrap gap-2">
-                    {board.board_type ? <Badge>{formatLabel(board.board_type)}</Badge> : null}
-                    {board.status ? <Badge>{formatLabel(board.status)}</Badge> : null}
-                  </div>
-                  <h3 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
-                    {recordTitle(board)}
-                  </h3>
-                  {recordSummary(board) ? (
-                    <p className="mt-3 text-sm leading-7 text-slate-600">
-                      {recordSummary(board)}
-                    </p>
-                  ) : null}
-                </InstitutionalPanel>
-              ))
-            ) : (
-              <InstitutionalEmpty>
-                No governance board records have been published yet.
-              </InstitutionalEmpty>
-            )}
-          </div>
-
-          <div id="members" className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <div className="mb-4 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase text-secondary">
-                  Members
-                </p>
-                <h3 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
-                  Board member records
+        <div id="governance" className="flex flex-col gap-4">
+          {boards.data.length > 0 ? (
+            boards.data.map((board) => (
+              <InstitutionalPanel key={board.id}>
+                <div className="flex flex-wrap gap-2">
+                  {board.board_type ? <Badge>{formatLabel(board.board_type)}</Badge> : null}
+                  {board.status ? <Badge>{formatLabel(board.status)}</Badge> : null}
+                </div>
+                <h3 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+                  {recordTitle(board)}
                 </h3>
-              </div>
-              <Link
-                href="/team"
-                className="hidden rounded-md border border-primary/20 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5 sm:inline-flex"
-              >
-                View team
-              </Link>
-            </div>
-            {boardMembers.data.length > 0 ? (
-              <div className="grid gap-3 md:grid-cols-2">
-                {boardMembers.data.map((member) => (
-                  <MemberCard key={member.id} member={member} />
-                ))}
-              </div>
-            ) : (
-              <InstitutionalEmpty>
-                No board member records have been published yet.
-              </InstitutionalEmpty>
-            )}
-          </div>
+                {recordSummary(board) ? (
+                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                    {recordSummary(board)}
+                  </p>
+                ) : null}
+              </InstitutionalPanel>
+            ))
+          ) : (
+            <InstitutionalEmpty>
+              No governance board records have been published yet.
+            </InstitutionalEmpty>
+          )}
         </div>
       </ResearchSection>
     </main>
-  );
-}
-
-function OfficeCard({ office }: { office: ResearchGenericRecord }) {
-  return (
-    <InstitutionalPanel className="flex min-h-[310px] flex-col">
-      <div className="flex flex-wrap gap-2">
-        {office.code ? <FilledBadge>{office.code}</FilledBadge> : null}
-        {office.status ? <Badge>{formatLabel(office.status)}</Badge> : null}
-      </div>
-      <h3 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold leading-7 text-slate-950">
-        {recordTitle(office)}
-      </h3>
-      <p className="mt-3 text-sm leading-7 text-slate-600">
-        {recordSummary(office) ||
-          "This office has been published and is awaiting a public summary."}
-      </p>
-      <div className="mt-5 flex flex-col gap-2 text-sm text-slate-600">
-        {contactRows(office).map((item) => {
-          const Icon = item.icon;
-
-          return (
-            <p key={item.label} className="flex items-start gap-2">
-              <Icon aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <span>{item.value}</span>
-            </p>
-          );
-        })}
-      </div>
-    </InstitutionalPanel>
-  );
-}
-
-function StatementCard({
-  label,
-  value,
-}: {
-  label: string;
-  value?: string | number | null;
-}) {
-  return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-      <p className="text-xs font-semibold uppercase text-secondary">{label}</p>
-      <p className="mt-2 text-sm leading-7 text-slate-700">
-        {compactText(value) || "Not published yet."}
-      </p>
-    </div>
-  );
-}
-
-function StrategicPriorities({ items }: { items?: unknown }) {
-  const records = Array.isArray(items) ? items.filter(isRecord) : [];
-  const pillars = records.filter((item) => Array.isArray(item.items) === false);
-  const annualEvents = records.find((item) => Array.isArray(item.items));
-
-  if (!pillars.length && !annualEvents) return null;
-
-  return (
-    <div className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
-      {pillars.length ? (
-        <div>
-          <p className="text-xs font-semibold uppercase text-secondary">
-            Five interconnected pillars
-          </p>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            {pillars.map((item, index) => (
-              <article key={`${textValue(item.title)}-${index}`} className="rounded-lg bg-slate-50 p-4">
-                <h3 className="text-sm font-semibold text-slate-950">
-                  {textValue(item.title) || `Pillar ${index + 1}`}
-                </h3>
-                <p className="mt-2 text-sm leading-7 text-slate-600">
-                  {textValue(item.description)}
-                </p>
-              </article>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {annualEvents && Array.isArray(annualEvents.items) ? (
-        <div className={pillars.length ? "mt-6 border-t border-slate-200 pt-5" : undefined}>
-          <p className="text-xs font-semibold uppercase text-secondary">
-            Annual events to look out for
-          </p>
-          <div className="mt-4 grid gap-3">
-            {annualEvents.items.filter(isRecord).map((event, index) => (
-              <article key={`${textValue(event.event)}-${index}`} className="rounded-lg border border-slate-200 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h3 className="text-sm font-semibold text-slate-950">
-                    {textValue(event.event) || `Event ${index + 1}`}
-                  </h3>
-                  {textValue(event.typical_timing) ? (
-                    <Badge>{textValue(event.typical_timing)}</Badge>
-                  ) : null}
-                </div>
-                <p className="mt-2 text-sm leading-7 text-slate-600">
-                  {textValue(event.description)}
-                </p>
-              </article>
-            ))}
-          </div>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value && typeof value === "object" && !Array.isArray(value));
-}
-
-function textValue(value: unknown) {
-  return typeof value === "string" || typeof value === "number" ? compactText(value) : "";
-}
-
-function MemberCard({ member }: { member: ResearchGenericRecord }) {
-  return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4">
-      <div className="flex flex-wrap gap-2">
-        {member.role ? <FilledBadge>{formatLabel(member.role)}</FilledBadge> : null}
-        {member.member_type ? <Badge>{formatLabel(member.member_type)}</Badge> : null}
-      </div>
-      <h4 className="mt-3 text-base font-semibold leading-6 text-slate-950">
-        {recordTitle(member)}
-      </h4>
-      {recordSummary(member) ? (
-        <p className="mt-2 text-sm leading-6 text-slate-600">
-          {recordSummary(member)}
-        </p>
-      ) : null}
-    </article>
   );
 }
 
@@ -417,12 +167,3 @@ function recordSummary(record?: ResearchGenericRecord | null) {
   );
 }
 
-function contactRows(record?: ResearchGenericRecord | null) {
-  const rows = [
-    { label: "Email", value: compactText(record?.email), icon: Mail },
-    { label: "Phone", value: compactText(record?.phone), icon: Phone },
-    { label: "Location", value: compactText(record?.location || record?.address), icon: MapPin },
-  ];
-
-  return rows.filter((row) => row.value);
-}

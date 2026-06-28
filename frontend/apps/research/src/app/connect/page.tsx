@@ -13,10 +13,7 @@ import {
   formatLabel,
   getDonationStories,
   getMentorship,
-  getOfficeStaff,
-  getOffices,
 } from "../../lib/research-public-data";
-import type { ResearchGenericRecord } from "@ksu/api-client";
 
 export const dynamic = "force-dynamic";
 
@@ -84,19 +81,9 @@ const engageLinks = [
 ];
 
 export default async function ConnectPage() {
-  const [offices, staff, mentorship, donationStories] = await Promise.all([
-    getOffices(),
-    getOfficeStaff(),
+  const [mentorship, donationStories] = await Promise.all([
     getMentorship(),
     getDonationStories(),
-  ]);
-  const inquiryLinks = buildInquiryLinks(offices.data, staff.data);
-  const mentorshipContact = findContactEmail(offices.data, staff.data, [
-    "mentorship",
-    "training",
-    "capacity",
-    "research",
-    "reirm",
   ]);
 
   return (
@@ -104,7 +91,7 @@ export default async function ConnectPage() {
       <ResearchClusterHero
         eyebrow="Connect & Engage"
         title="Reach research teams, partners, and programmes."
-        body="Find departmental contacts, industry liaisons, community coordinators, media channels, donation entry points, and mentorship sign-up."
+        body="Research office and staff contacts are now managed through the main university directory. Find mentorship, donation, and media channels below."
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "Research", href: "/" },
@@ -115,30 +102,24 @@ export default async function ConnectPage() {
         links={engageLinks}
         primaryAction={{ label: "Start an inquiry", href: "/connect#get-in-touch" }}
         stats={[
-          { label: "Research offices", value: offices.data.length },
-          { label: "Team members", value: staff.data.length },
           { label: "Mentorship programmes", value: mentorship.data.length },
           { label: "Donation stories", value: donationStories.data.length },
         ]}
       />
-      <ResearchSection
-        eyebrow="Our Teams"
-        title="Research offices and contacts"
-        body="Office and staff records provide the departmental contacts, industry liaison, and community coordinator directory."
-        tone="white"
-      >
-        <div className="grid gap-5 lg:grid-cols-2">
-          <DirectoryPanel title="Research offices" records={offices.data} error={offices.error} />
-          <DirectoryPanel title="Research team members" records={staff.data} error={staff.error} />
+      <section className="px-4 pt-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="mx-auto max-w-[1680px]">
+          <StatusMessage tone="neutral">
+            Research office and team contact records have moved to the main university service. For the latest research office contacts, visit the university staff directory.
+          </StatusMessage>
         </div>
-      </ResearchSection>
+      </section>
       <ResearchSection
         eyebrow="Get in Touch"
         title="Clear inquiry channels"
         body="These channels map to the requested research, partnership, community, and media contact forms."
       >
         <div id="get-in-touch" className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          {inquiryLinks.map((item) => (
+          {inquiryRequests.map((item) => (
             <article
               id={item.id}
               key={item.id}
@@ -146,18 +127,9 @@ export default async function ConnectPage() {
             >
               <h2 className="text-lg font-semibold text-slate-950">{item.title}</h2>
               <p className="mt-3 text-sm leading-7 text-slate-600">{item.body}</p>
-              {item.href ? (
-                <a
-                  href={item.href}
-                  className="mt-5 inline-flex min-h-11 items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-                >
-                  Start inquiry
-                </a>
-              ) : (
-                <span className="mt-5 inline-flex min-h-11 items-center rounded-md border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-500">
-                  Contact route not published yet
-                </span>
-              )}
+              <span className="mt-5 inline-flex min-h-11 items-center rounded-md border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-500">
+                Contact via main university directory
+              </span>
             </article>
           ))}
         </div>
@@ -174,28 +146,11 @@ export default async function ConnectPage() {
             <p className="text-sm leading-7 text-slate-600">
               Choose the route that matches your role. Programme coordinators can review the request and guide you to the right mentorship pathway.
             </p>
-            {mentorshipContact ? (
-              <div className="mt-5 grid gap-3">
-                <a
-                  href={mailtoHref(mentorshipContact, "Research Mentor Sign-up")}
-                  className="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-                >
-                  Mentor sign-up
-                </a>
-                <a
-                  href={mailtoHref(mentorshipContact, "Research Mentee Sign-up")}
-                  className="inline-flex min-h-11 items-center justify-center rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
-                >
-                  Mentee sign-up
-                </a>
-              </div>
-            ) : (
-              <div className="mt-5">
-                <StatusMessage>
-                  Mentorship contact details will appear once a matching office or staff contact is published.
-                </StatusMessage>
-              </div>
-            )}
+            <div className="mt-5">
+              <StatusMessage>
+                Mentorship sign-up is available through the main university contacts directory.
+              </StatusMessage>
+            </div>
           </ResearchSidePanel>
         </div>
       </ResearchSection>
@@ -303,49 +258,3 @@ function DirectoryPanel({
   );
 }
 
-function buildInquiryLinks(
-  offices: ResearchGenericRecord[],
-  staff: ResearchGenericRecord[],
-) {
-  return inquiryRequests.map((item) => {
-    const email = findContactEmail(offices, staff, item.terms);
-
-    return {
-      ...item,
-      href: email ? mailtoHref(email, item.subject) : undefined,
-    };
-  });
-}
-
-function findContactEmail(
-  offices: ResearchGenericRecord[],
-  staff: ResearchGenericRecord[],
-  terms: string[],
-) {
-  const records = [...offices, ...staff];
-  const exactMatch = records.find((record) => {
-    const haystack = [
-      record.title,
-      record.name,
-      record.display_name,
-      record.role,
-      record.staff_type,
-      record.office_type,
-      record.summary,
-      record.description,
-      record.responsibilities,
-      record.email,
-    ]
-      .map(compactText)
-      .join(" ")
-      .toLowerCase();
-
-    return terms.some((term) => haystack.includes(term.toLowerCase())) && compactText(record.email);
-  });
-
-  return compactText(exactMatch?.email) || compactText(records.find((record) => compactText(record.email))?.email);
-}
-
-function mailtoHref(email: string, subject: string) {
-  return `mailto:${email}?subject=${encodeURIComponent(subject)}`;
-}
