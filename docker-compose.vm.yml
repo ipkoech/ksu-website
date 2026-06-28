@@ -1,6 +1,17 @@
 # VM deployment overlay. Use with:
 # docker compose --env-file .deploy/dev.compose.env -f docker-compose.yml -f docker-compose.vm.yml up -d
 
+x-frontend-healthcheck: &frontend-healthcheck
+  test:
+    [
+      "CMD-SHELL",
+      "node -e \"const http=require('http');const path=process.env.FRONTEND_HEALTH_PATH||'/';const req=http.get({host:'127.0.0.1',port:Number(process.env.PORT||3000),path},res=>process.exit(res.statusCode<500?0:1));req.on('error',()=>process.exit(1));req.setTimeout(5000,()=>{req.destroy();process.exit(1);});\"",
+    ]
+  start_period: 30s
+  interval: 30s
+  timeout: 10s
+  retries: 3
+
 services:
   edge:
     image: nginx:1.27-alpine
@@ -16,17 +27,18 @@ services:
       gateway:
         condition: service_started
       web-prod:
-        condition: service_started
+        condition: service_healthy
       admin-prod:
-        condition: service_started
+        condition: service_healthy
       research-web-prod:
-        condition: service_started
+        condition: service_healthy
       library-web-prod:
-        condition: service_started
+        condition: service_healthy
     networks: [ksu]
     restart: unless-stopped
 
   web-prod:
+    image: ${FRONTEND_IMAGE_PREFIX:-ksu-frontend}/web-prod:${IMAGE_TAG:-local}
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -48,6 +60,7 @@ services:
         - "host.docker.internal:host-gateway"
     environment:
       PORT: 3000
+      FRONTEND_HEALTH_PATH: /
       NEXT_TELEMETRY_DISABLED: "1"
       KSU_MAIN_API_URL: ${KSU_MAIN_API_URL}
       KSU_RESEARCH_API_URL: ${KSU_RESEARCH_API_URL}
@@ -56,8 +69,10 @@ services:
       - "host.docker.internal:host-gateway"
     networks: [ksu]
     restart: unless-stopped
+    healthcheck: *frontend-healthcheck
 
   admin-prod:
+    image: ${FRONTEND_IMAGE_PREFIX:-ksu-frontend}/admin-prod:${IMAGE_TAG:-local}
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -78,6 +93,7 @@ services:
         - "host.docker.internal:host-gateway"
     environment:
       PORT: 3000
+      FRONTEND_HEALTH_PATH: /admin/
       NEXT_TELEMETRY_DISABLED: "1"
       KSU_MAIN_API_URL: ${KSU_MAIN_API_URL}
       KSU_RESEARCH_API_URL: ${KSU_RESEARCH_API_URL}
@@ -86,8 +102,10 @@ services:
       - "host.docker.internal:host-gateway"
     networks: [ksu]
     restart: unless-stopped
+    healthcheck: *frontend-healthcheck
 
   research-web-prod:
+    image: ${FRONTEND_IMAGE_PREFIX:-ksu-frontend}/research-web-prod:${IMAGE_TAG:-local}
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -108,6 +126,7 @@ services:
         - "host.docker.internal:host-gateway"
     environment:
       PORT: 3000
+      FRONTEND_HEALTH_PATH: /
       NEXT_TELEMETRY_DISABLED: "1"
       KSU_MAIN_API_URL: ${KSU_MAIN_API_URL}
       KSU_RESEARCH_API_URL: ${KSU_RESEARCH_API_URL}
@@ -116,8 +135,10 @@ services:
       - "host.docker.internal:host-gateway"
     networks: [ksu]
     restart: unless-stopped
+    healthcheck: *frontend-healthcheck
 
   library-web-prod:
+    image: ${FRONTEND_IMAGE_PREFIX:-ksu-frontend}/library-web-prod:${IMAGE_TAG:-local}
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -139,6 +160,7 @@ services:
         - "host.docker.internal:host-gateway"
     environment:
       PORT: 3000
+      FRONTEND_HEALTH_PATH: /library/
       NEXT_TELEMETRY_DISABLED: "1"
       KSU_MAIN_API_URL: ${KSU_MAIN_API_URL}
       KSU_RESEARCH_API_URL: ${KSU_RESEARCH_API_URL}
@@ -147,3 +169,4 @@ services:
       - "host.docker.internal:host-gateway"
     networks: [ksu]
     restart: unless-stopped
+    healthcheck: *frontend-healthcheck

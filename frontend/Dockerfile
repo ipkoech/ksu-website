@@ -10,16 +10,19 @@ ENV PNPM_STORE_DIR=/pnpm/store
 RUN corepack enable \
   && corepack prepare pnpm@9.1.0 --activate
 
+FROM base AS pruner
+
+ARG PACKAGE_NAME
+
+COPY . .
+
+RUN --mount=type=cache,id=ksu-frontend-pnpm-dlx,target=/root/.cache/pnpm,sharing=locked \
+  test -n "${PACKAGE_NAME}" \
+  && pnpm dlx turbo@2.9.12 prune "${PACKAGE_NAME}" --docker
+
 FROM base AS deps
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
-COPY apps/admin/package.json apps/admin/package.json
-COPY apps/library/package.json apps/library/package.json
-COPY apps/research/package.json apps/research/package.json
-COPY apps/web/package.json apps/web/package.json
-COPY packages/api-client/package.json packages/api-client/package.json
-COPY packages/auth/package.json packages/auth/package.json
-COPY packages/ui/package.json packages/ui/package.json
+COPY --from=pruner /app/out/json/ ./
 
 RUN --mount=type=cache,id=ksu-frontend-pnpm-store,target=/pnpm/store,sharing=locked \
   pnpm install --frozen-lockfile --prefer-offline --store-dir "${PNPM_STORE_DIR}"
@@ -61,8 +64,7 @@ ENV NEXT_BASE_PATH=${NEXT_BASE_PATH}
 ENV NEXT_OUTPUT_EXPORT=${NEXT_OUTPUT_EXPORT}
 
 COPY --from=deps /app ./
-COPY apps ./apps
-COPY packages ./packages
+COPY --from=pruner /app/out/full/ ./
 
 RUN if [ "${APP_DIR}" = "admin" ]; then NEXT_OUTPUT_EXPORT=0 pnpm --dir apps/admin exec next build; else pnpm --filter "${PACKAGE_NAME}" build; fi
 

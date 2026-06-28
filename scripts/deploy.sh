@@ -38,6 +38,11 @@ VM options:
   --no-gateway         Skip the nginx gateway.
   --skip-frontend      Skip pnpm install/build.
   --skip-build         Skip Docker image rebuild.
+  --image-prefix PREFIX Image prefix for pushed/pulled Compose images, e.g. ghcr.io/org/ksu.
+  --image-tag TAG      Image tag for Compose images. Defaults to deployed git short SHA.
+  --push-images        Push built Compose images after a successful build.
+  --pull-images        Pull Compose images before deployment. Usually used with --skip-build.
+  --no-cleanup-images  Skip Docker image/build-cache cleanup after a successful deployment.
   --run-migrations     Run Alembic migrations for main, research, and library before frontend builds.
   --dry-run            Print the SSH command without executing it.
 
@@ -263,6 +268,11 @@ vm_remote_script() {
   local inspect_services="${20:-}"
   local log_tail="${21:-200}"
   local log_follow="${22:-0}"
+  local image_prefix="${23:-}"
+  local image_tag="${24:-}"
+  local push_images="${25:-0}"
+  local pull_images="${26:-0}"
+  local cleanup_images="${27:-1}"
 
   cat <<REMOTE
 set -euo pipefail
@@ -289,15 +299,29 @@ MODE=$(shell_quote "${mode}")
 INSPECT_SERVICES=$(shell_quote "${inspect_services}")
 LOG_TAIL=$(shell_quote "${log_tail}")
 LOG_FOLLOW=$(shell_quote "${log_follow}")
+IMAGE_PREFIX=$(shell_quote "${image_prefix}")
+REQUESTED_IMAGE_TAG=$(shell_quote "${image_tag}")
+PUSH_IMAGES=$(shell_quote "${push_images}")
+PULL_IMAGES=$(shell_quote "${pull_images}")
+CLEANUP_IMAGES=$(shell_quote "${cleanup_images}")
+
+section() {
+  printf '\n[%s] === %s ===\n' "\$(date -u +%Y-%m-%dT%H:%M:%SZ)" "\$*"
+}
+
+step() {
+  printf '[%s] %s\n' "\$(date -u +%Y-%m-%dT%H:%M:%SZ)" "\$*"
+}
 
 if [[ "\${BOOTSTRAP}" -eq 1 ]]; then
+  section "Bootstrap host packages"
   if ! command -v git >/dev/null 2>&1; then
-    echo "Installing Git..."
+    step "Installing Git"
     sudo apt-get update
     sudo apt-get install -y git
   fi
   if ! command -v docker >/dev/null 2>&1; then
-    echo "Installing Docker..."
+    step "Installing Docker"
     sudo apt-get update
     sudo apt-get install -y docker.io docker-compose-plugin
     sudo systemctl enable --now docker
@@ -364,7 +388,8 @@ if [[ ! -d "\${REPO_PATH}/.git" ]]; then
     echo "error: repository not found at \${REPO_PATH} and no --repo-url was provided" >&2
     exit 1
   fi
-  echo "Cloning \${REPO_URL} into \${REPO_PATH}..."
+  section "Clone repository"
+  step "Cloning \${REPO_URL} into \${REPO_PATH}"
   mkdir -p "\$(dirname "\${REPO_PATH}")"
   git clone --branch "\${BRANCH}" "\${REPO_URL}" "\${REPO_PATH}"
 fi
@@ -372,6 +397,7 @@ fi
 cd "\${REPO_PATH}"
 
 if [[ "\${PULL}" -eq 1 ]]; then
+  section "Update repository"
   if [[ -z "\${BRANCH}" ]]; then
     echo "error: branch is required when pulling" >&2
     exit 1
@@ -380,6 +406,11 @@ if [[ "\${PULL}" -eq 1 ]]; then
   git checkout "\${BRANCH}"
   git pull --ff-only origin "\${BRANCH}"
 fi
+
+DEPLOY_GIT_SHA="\$(git rev-parse --short=12 HEAD)"
+IMAGE_TAG="\${REQUESTED_IMAGE_TAG:-\${DEPLOY_GIT_SHA}}"
+BACKEND_IMAGE_PREFIX="\${IMAGE_PREFIX:-ksu-\${ENV_NAME}-backend}"
+FRONTEND_IMAGE_PREFIX="\${IMAGE_PREFIX:-ksu-\${ENV_NAME}-frontend}"
 
 if [[ "\${MODE}" = "status" || "\${MODE}" = "logs" ]]; then
   COMPOSE_ENV_FILE=".deploy/\${ENV_NAME}.compose.env"
@@ -497,6 +528,9 @@ else
 fi
 cat >> "\${COMPOSE_ENV_FILE}" <<EOF
 APP_ENV=\${ENV_NAME}
+IMAGE_TAG=\${IMAGE_TAG}
+BACKEND_IMAGE_PREFIX=\${BACKEND_IMAGE_PREFIX}
+FRONTEND_IMAGE_PREFIX=\${FRONTEND_IMAGE_PREFIX}
 EDGE_HTTP_PORT=\${EDGE_HTTP_PORT}
 PUBLIC_SERVER_NAME=\${PUBLIC_HOST}
 API_SERVER_NAME=\${API_SERVER_NAME}
@@ -583,7 +617,8 @@ if [[ "\${SKIP_FRONTEND}" -eq 0 && -f frontend/package.json ]]; then
 fi
 
 backend_services=(main research library)
-core_services=("\${backend_services[@]}" celery-main celery-library)
+build_core_services=("\${backend_services[@]}" celery-main celery-library)
+core_services=("\${build_core_services[@]}")
 if [[ "\${external_data}" -eq 0 ]]; then
   core_services=(postgres redis "\${core_services[@]}")
 fi
@@ -597,16 +632,55 @@ if [[ "\${SKIP_FRONTEND}" -eq 0 ]]; then
   proxy_services+=(edge)
 fi
 
+pull_compose_images() {
+  local services=("\$@")
+  if [[ "\${#services[@]}" -eq 0 ]]; then
+    return 0
+  fi
+  section "Pull Docker images"
+  step "Pulling images for: \${services[*]}"
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" pull "\${services[@]}"
+}
+
+push_compose_images() {
+  local services=("\$@")
+  if [[ "\${PUSH_IMAGES}" -ne 1 || "\${SKIP_BUILD}" -eq 1 || "\${#services[@]}" -eq 0 ]]; then
+    return 0
+  fi
+  section "Push Docker images"
+  step "Pushing images for: \${services[*]}"
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" push "\${services[@]}"
+}
+
+cleanup_docker_images() {
+  if [[ "\${CLEANUP_IMAGES}" -ne 1 ]]; then
+    return 0
+  fi
+  section "Docker image cleanup"
+  "\${DOCKER[@]}" image prune -f || true
+  "\${DOCKER[@]}" builder prune -f --filter "until=72h" || true
+  "\${DOCKER[@]}" system df || true
+}
+
+if [[ "\${PULL_IMAGES}" -eq 1 ]]; then
+  pull_compose_images "\${core_services[@]}" "\${frontend_services[@]}" "\${proxy_services[@]}"
+fi
+
 compose_args=(up -d --remove-orphans)
 if [[ "\${SKIP_BUILD}" -eq 0 ]]; then
   compose_args+=(--build)
 fi
 compose_args+=("\${core_services[@]}")
 
-echo "Deploying Docker Compose project \${PROJECT_NAME} core services: \${core_services[*]}"
+section "Deploy core services"
+step "Project: \${PROJECT_NAME}"
+step "Git commit: \${DEPLOY_GIT_SHA}"
+step "Image tag: \${IMAGE_TAG}"
+step "Core services: \${core_services[*]}"
 "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" "\${compose_args[@]}"
 echo
 "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${core_services[@]}"
+push_compose_images "\${build_core_services[@]}"
 
 wait_for_backend_health() {
   local timeout_seconds="\${1:-420}"
@@ -631,7 +705,7 @@ wait_for_backend_health() {
     done
 
     if [[ "\${#pending[@]}" -eq 0 ]]; then
-      echo "Backend services are healthy: \${backend_services[*]}"
+      step "Backend services are healthy: \${backend_services[*]}"
       return 0
     fi
 
@@ -646,9 +720,9 @@ wait_for_backend_health() {
 wait_for_backend_health 420
 
 if [[ "\${RUN_MIGRATIONS}" -eq 1 ]]; then
-  echo "Running Alembic migrations for backend services: \${backend_services[*]}"
+  section "Run backend migrations"
   for service in "\${backend_services[@]}"; do
-    echo "Running migrations for \${service}"
+    step "Running migrations for \${service}"
     "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T "\${service}" alembic upgrade head
   done
 fi
@@ -664,7 +738,8 @@ restart_existing_proxy_services() {
   done
 
   if [[ "\${#existing[@]}" -gt 0 ]]; then
-    echo "Restarting existing gateway/edge services after backend changes: \${existing[*]}"
+    section "Restart existing gateway/edge"
+    step "Restarting: \${existing[*]}"
     "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" restart "\${existing[@]}"
   fi
 }
@@ -672,8 +747,8 @@ restart_existing_proxy_services() {
 restart_existing_proxy_services
 
 if [[ "\${#frontend_services[@]}" -gt 0 ]]; then
-  echo "Deploying frontend services sequentially after backend health checks: \${frontend_services[*]}"
-  echo "Sequential frontend builds avoid overloading low-vCPU VM hosts."
+  section "Deploy frontend services"
+  step "Sequential frontend builds avoid overloading low-vCPU VM hosts."
   for frontend_service in "\${frontend_services[@]}"; do
     frontend_compose_args=(up -d --remove-orphans)
     if [[ "\${SKIP_BUILD}" -eq 0 ]]; then
@@ -681,17 +756,21 @@ if [[ "\${#frontend_services[@]}" -gt 0 ]]; then
     fi
     frontend_compose_args+=("\${frontend_service}")
 
-    echo "Deploying frontend service: \${frontend_service}"
+    step "Deploying frontend service: \${frontend_service}"
     "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" "\${frontend_compose_args[@]}"
+    push_compose_images "\${frontend_service}"
   done
   "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${frontend_services[@]}"
 fi
 
 if [[ "\${#proxy_services[@]}" -gt 0 ]]; then
-  echo "Refreshing proxy services to resolve current upstream container IPs: \${proxy_services[*]}"
+  section "Refresh proxy services"
+  step "Refreshing proxy services to resolve current upstream container IPs: \${proxy_services[*]}"
   "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" up -d --remove-orphans --force-recreate "\${proxy_services[@]}"
   "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${proxy_services[@]}"
 fi
+
+cleanup_docker_images
 
 configure_https() {
   if [[ "\${ENABLE_HTTPS}" -ne 1 ]]; then
@@ -817,6 +896,11 @@ deploy_vm() {
   local skip_frontend=0
   local skip_build=0
   local run_migrations=0
+  local image_prefix=""
+  local image_tag=""
+  local push_images=0
+  local pull_images=0
+  local cleanup_images=1
   local inspect_services=""
   local log_tail=200
   local log_follow=0
@@ -903,6 +987,26 @@ deploy_vm() {
         ;;
       --skip-build)
         skip_build=1
+        shift
+        ;;
+      --image-prefix)
+        image_prefix="${2:-}"
+        shift 2
+        ;;
+      --image-tag)
+        image_tag="${2:-}"
+        shift 2
+        ;;
+      --push-images)
+        push_images=1
+        shift
+        ;;
+      --pull-images)
+        pull_images=1
+        shift
+        ;;
+      --no-cleanup-images)
+        cleanup_images=0
         shift
         ;;
       --run-migrations)
@@ -998,11 +1102,16 @@ deploy_vm() {
     backup_dir="${repo_path}/backups/${env_name}"
   fi
 
+  if [[ "${push_images}" -eq 1 && -z "${image_prefix}" ]]; then
+    echo "error: --push-images requires --image-prefix so Docker knows where to push" >&2
+    exit 1
+  fi
+
   local remote
   if [[ "${mode}" = "backup" ]]; then
     backup=1
   fi
-  remote="$(vm_remote_script "${mode}" "${env_name}" "${branch}" "${repo_url}" "${repo_path}" "${project_name}" "${public_host}" "${api_host}" "${research_host}" "${bootstrap}" "${pull}" "${backup}" "${backup_dir}" "${with_gateway}" "${skip_frontend}" "${skip_build}" "${enable_https}" "${cert_email}" "${run_migrations}" "${inspect_services}" "${log_tail}" "${log_follow}")"
+  remote="$(vm_remote_script "${mode}" "${env_name}" "${branch}" "${repo_url}" "${repo_path}" "${project_name}" "${public_host}" "${api_host}" "${research_host}" "${bootstrap}" "${pull}" "${backup}" "${backup_dir}" "${with_gateway}" "${skip_frontend}" "${skip_build}" "${enable_https}" "${cert_email}" "${run_migrations}" "${inspect_services}" "${log_tail}" "${log_follow}" "${image_prefix}" "${image_tag}" "${push_images}" "${pull_images}" "${cleanup_images}")"
 
   if [[ "${DRY_RUN}" -eq 1 ]]; then
     printf '+ ssh %q %q\n' "${host}" "${remote}"

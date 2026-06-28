@@ -83,6 +83,7 @@ services:
 
   # ── Main Site Service (FastAPI) ────────────────────────────────────────────────
   main:
+    image: ${BACKEND_IMAGE_PREFIX:-ksu-backend}/main:${IMAGE_TAG:-local}
     build:
       context: ./services
       dockerfile: main/Dockerfile
@@ -115,6 +116,7 @@ services:
 
   # ── Research Service (FastAPI) ─────────────────────────────────────────────────
   research:
+    image: ${BACKEND_IMAGE_PREFIX:-ksu-backend}/research:${IMAGE_TAG:-local}
     build:
       context: ./services
       dockerfile: research/Dockerfile
@@ -149,6 +151,7 @@ services:
 
   # ── Library Service (FastAPI) ──────────────────────────────────────────────────
   library:
+    image: ${BACKEND_IMAGE_PREFIX:-ksu-backend}/library:${IMAGE_TAG:-local}
     build:
       context: ./services
       dockerfile: library/Dockerfile
@@ -184,6 +187,7 @@ services:
 
   # ── Celery workers ────────────────────────────────────────────────────────────
   celery-main:
+    image: ${BACKEND_IMAGE_PREFIX:-ksu-backend}/main:${IMAGE_TAG:-local}
     build:
       context: ./services
       dockerfile: main/Dockerfile
@@ -206,6 +210,7 @@ services:
     restart: unless-stopped
 
   celery-library:
+    image: ${BACKEND_IMAGE_PREFIX:-ksu-backend}/library:${IMAGE_TAG:-local}
     build:
       context: ./services
       dockerfile: library/Dockerfile

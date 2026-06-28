@@ -56,6 +56,16 @@ server {
 
     client_max_body_size 25M;
 
+    location ^~ /_next/static/ {
+        proxy_pass         http://research_web;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $forwarded_proto;
+        add_header         Cache-Control "public, max-age=31536000, immutable" always;
+    }
+
     location / {
         proxy_pass         http://research_web;
         proxy_http_version 1.1;
@@ -89,6 +99,16 @@ server {
         proxy_set_header   Connection        $connection_upgrade;
     }
 
+    location ^~ /admin/_next/static/ {
+        proxy_pass         http://admin_web;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $forwarded_proto;
+        add_header         Cache-Control "public, max-age=31536000, immutable" always;
+    }
+
     location = /library {
         proxy_pass         http://library_web;
         proxy_http_version 1.1;
@@ -111,6 +131,16 @@ server {
         proxy_set_header   Connection        $connection_upgrade;
     }
 
+    location ^~ /library/_next/static/ {
+        proxy_pass         http://library_web;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $forwarded_proto;
+        add_header         Cache-Control "public, max-age=31536000, immutable" always;
+    }
+
     location ^~ /api/ {
         proxy_pass         http://api_gateway;
         proxy_http_version 1.1;
@@ -130,5 +160,15 @@ server {
         proxy_set_header   X-Forwarded-Proto $forwarded_proto;
         proxy_set_header   Upgrade           $http_upgrade;
         proxy_set_header   Connection        $connection_upgrade;
+    }
+
+    location ^~ /_next/static/ {
+        proxy_pass         http://public_web;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $forwarded_proto;
+        add_header         Cache-Control "public, max-age=31536000, immutable" always;
     }
 }
