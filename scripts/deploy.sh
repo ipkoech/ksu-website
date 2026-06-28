@@ -324,6 +324,41 @@ if ! "\${DOCKER[@]}" compose version >/dev/null 2>&1; then
   exit 1
 fi
 
+ensure_swap() {
+  local min_swap_mb=4096
+  local swap_file="/swapfile"
+  local current_swap_mb
+
+  current_swap_mb="\$(awk '/^SwapTotal:/ {print int(\$2 / 1024)}' /proc/meminfo)"
+  if (( current_swap_mb >= min_swap_mb )); then
+    echo "Swap is available: \${current_swap_mb} MB"
+    return 0
+  fi
+
+  if ! command -v sudo >/dev/null 2>&1; then
+    echo "warning: sudo is not available; skipping swap setup" >&2
+    return 0
+  fi
+
+  echo "Configuring \${min_swap_mb} MB swap at \${swap_file} for more tolerant Docker builds..."
+  sudo swapoff "\${swap_file}" >/dev/null 2>&1 || true
+  sudo rm -f "\${swap_file}"
+  if command -v fallocate >/dev/null 2>&1; then
+    sudo fallocate -l "\${min_swap_mb}M" "\${swap_file}"
+  else
+    sudo dd if=/dev/zero of="\${swap_file}" bs=1M count="\${min_swap_mb}" status=progress
+  fi
+  sudo chmod 600 "\${swap_file}"
+  sudo mkswap "\${swap_file}"
+  sudo swapon "\${swap_file}"
+
+  if ! grep -q "^\${swap_file}[[:space:]]" /etc/fstab; then
+    echo "\${swap_file} none swap sw 0 0" | sudo tee -a /etc/fstab >/dev/null
+  fi
+}
+
+ensure_swap
+
 if [[ ! -d "\${REPO_PATH}/.git" ]]; then
   if [[ -z "\${REPO_URL}" ]]; then
     echo "error: repository not found at \${REPO_PATH} and no --repo-url was provided" >&2
@@ -617,6 +652,24 @@ if [[ "\${RUN_MIGRATIONS}" -eq 1 ]]; then
     "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T "\${service}" alembic upgrade head
   done
 fi
+
+restart_existing_proxy_services() {
+  local services=(gateway edge)
+  local existing=()
+
+  for service in "\${services[@]}"; do
+    if [[ -n "\$("\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps -q "\${service}" 2>/dev/null)" ]]; then
+      existing+=("\${service}")
+    fi
+  done
+
+  if [[ "\${#existing[@]}" -gt 0 ]]; then
+    echo "Restarting existing gateway/edge services after backend changes: \${existing[*]}"
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" restart "\${existing[@]}"
+  fi
+}
+
+restart_existing_proxy_services
 
 if [[ "\${#frontend_services[@]}" -gt 0 ]]; then
   echo "Deploying frontend services sequentially after backend health checks: \${frontend_services[*]}"

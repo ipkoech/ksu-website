@@ -12,6 +12,7 @@ const withPath = (baseUrl: string, path: string) =>
 
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
+  output: "standalone",
   outputFileTracingRoot: path.join(__dirname, "../.."),
   transpilePackages: ["@ksu/ui", "@ksu/api-client"],
   async redirects() {

@@ -1,4 +1,68 @@
-FROM node:22-alpine
+FROM node:22-alpine AS base
+
+WORKDIR /app
+
+ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN corepack enable \
+  && corepack prepare pnpm@9.1.0 --activate
+
+FROM base AS deps
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY apps/admin/package.json apps/admin/package.json
+COPY apps/library/package.json apps/library/package.json
+COPY apps/research/package.json apps/research/package.json
+COPY apps/web/package.json apps/web/package.json
+COPY packages/api-client/package.json packages/api-client/package.json
+COPY packages/auth/package.json packages/auth/package.json
+COPY packages/ui/package.json packages/ui/package.json
+
+RUN pnpm install --frozen-lockfile
+
+FROM base AS build
+
+ARG APP_DIR
+ARG PACKAGE_NAME
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_MAIN_API_URL
+ARG NEXT_PUBLIC_RESEARCH_API_URL
+ARG NEXT_PUBLIC_LIBRARY_API_URL
+ARG KSU_MAIN_API_URL
+ARG KSU_RESEARCH_API_URL
+ARG KSU_LIBRARY_API_URL
+ARG NEXT_PUBLIC_PUBLIC_FRONTEND_URL
+ARG NEXT_PUBLIC_RESEARCH_FRONTEND_URL
+ARG NEXT_PUBLIC_LIBRARY_FRONTEND_URL
+ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_APP_NAME="KSU Admin"
+ARG NEXT_BASE_PATH
+ARG NEXT_OUTPUT_EXPORT
+
+ENV APP_DIR=${APP_DIR}
+ENV PACKAGE_NAME=${PACKAGE_NAME}
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_MAIN_API_URL=${NEXT_PUBLIC_MAIN_API_URL}
+ENV NEXT_PUBLIC_RESEARCH_API_URL=${NEXT_PUBLIC_RESEARCH_API_URL}
+ENV NEXT_PUBLIC_LIBRARY_API_URL=${NEXT_PUBLIC_LIBRARY_API_URL}
+ENV KSU_MAIN_API_URL=${KSU_MAIN_API_URL}
+ENV KSU_RESEARCH_API_URL=${KSU_RESEARCH_API_URL}
+ENV KSU_LIBRARY_API_URL=${KSU_LIBRARY_API_URL}
+ENV NEXT_PUBLIC_PUBLIC_FRONTEND_URL=${NEXT_PUBLIC_PUBLIC_FRONTEND_URL}
+ENV NEXT_PUBLIC_RESEARCH_FRONTEND_URL=${NEXT_PUBLIC_RESEARCH_FRONTEND_URL}
+ENV NEXT_PUBLIC_LIBRARY_FRONTEND_URL=${NEXT_PUBLIC_LIBRARY_FRONTEND_URL}
+ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+ENV NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME}
+ENV NEXT_BASE_PATH=${NEXT_BASE_PATH}
+ENV NEXT_OUTPUT_EXPORT=${NEXT_OUTPUT_EXPORT}
+
+COPY --from=deps /app ./
+COPY apps ./apps
+COPY packages ./packages
+
+RUN if [ "${APP_DIR}" = "admin" ]; then NEXT_OUTPUT_EXPORT=0 pnpm --dir apps/admin exec next build; else pnpm --filter "${PACKAGE_NAME}" build; fi
+
+FROM node:22-alpine AS runtime
 
 WORKDIR /app
 
@@ -19,7 +83,6 @@ ARG NEXT_PUBLIC_APP_NAME="KSU Admin"
 ARG NEXT_BASE_PATH
 ARG NEXT_OUTPUT_EXPORT
 
-ENV NEXT_TELEMETRY_DISABLED=1
 ENV APP_DIR=${APP_DIR}
 ENV PACKAGE_NAME=${PACKAGE_NAME}
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
@@ -36,17 +99,18 @@ ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 ENV NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME}
 ENV NEXT_BASE_PATH=${NEXT_BASE_PATH}
 ENV NEXT_OUTPUT_EXPORT=${NEXT_OUTPUT_EXPORT}
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV HOSTNAME=0.0.0.0
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
-COPY apps ./apps
-COPY packages ./packages
+RUN addgroup -g 1001 -S nodejs \
+  && adduser -S nextjs -u 1001 -G nodejs
 
-RUN corepack enable \
-  && corepack prepare pnpm@9.1.0 --activate \
-  && pnpm install --frozen-lockfile \
-  && if [ "${APP_DIR}" = "admin" ]; then NEXT_OUTPUT_EXPORT=0 pnpm --dir apps/admin exec next build; else pnpm --filter "${PACKAGE_NAME}" build; fi \
-  && pnpm store prune
+COPY --from=build --chown=nextjs:nodejs /app/apps/${APP_DIR}/.next/standalone ./
+COPY --from=build --chown=nextjs:nodejs /app/apps/${APP_DIR}/.next/static ./apps/${APP_DIR}/.next/static
+COPY --from=build --chown=nextjs:nodejs /app/apps/${APP_DIR}/public ./apps/${APP_DIR}/public
+
+USER nextjs
 
 EXPOSE 3000
 
-CMD pnpm --dir "apps/${APP_DIR}" exec next start -H 0.0.0.0 -p "${PORT:-3000}"
+CMD ["sh", "-c", "node apps/${APP_DIR}/server.js"]
