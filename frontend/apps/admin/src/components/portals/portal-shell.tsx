@@ -75,13 +75,13 @@ function PortalChrome({ portal, children }: { portal: PortalConfig; children: Re
         onMobileClose={() => setMobileOpen(false)}
       />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Toolbar />
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <Toolbar portal={portal} />
         <motion.main
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="flex-1 overflow-y-auto bg-muted/30"
+          className="flex-1 overflow-y-auto overflow-x-hidden bg-muted/30"
         >
           {children}
         </motion.main>
@@ -120,6 +120,19 @@ function PortalSidebar({
 
   const filteredNav = portal.nav.filter(hasItemScope);
 
+  const grouped = filteredNav.reduce<{ group?: string; items: PortalNavItem[] }[]>(
+    (acc, item) => {
+      const last = acc[acc.length - 1];
+      if (last && last.group === item.group) {
+        last.items.push(item);
+      } else {
+        acc.push({ group: item.group, items: [item] });
+      }
+      return acc;
+    },
+    [],
+  );
+
   const initials = (user?.name || "User")
     .split(" ")
     .map((part) => part[0])
@@ -131,7 +144,7 @@ function PortalSidebar({
     <TooltipProvider delayDuration={0}>
       <motion.aside
         initial={false}
-        animate={{ width: collapsed ? 68 : 280 }}
+        animate={{ width: isMobileOpen ? 280 : collapsed ? 68 : 280 }}
         transition={{ duration: 0.2, ease: "easeInOut" }}
         className={cn(
           "fixed left-0 top-0 z-40 flex h-screen flex-col border-r bg-sidebar",
@@ -144,13 +157,13 @@ function PortalSidebar({
             href={portal.baseHref}
             className={cn(
               "flex min-w-0 items-center gap-3 rounded-lg px-2 py-1.5",
-              collapsed && "justify-center",
+              collapsed && !isMobileOpen && "justify-center",
             )}
           >
             <div className={cn("flex size-10 shrink-0 items-center justify-center rounded-lg border [&_svg]:size-5", portal.accentClassName)}>
               <PortalIcon />
             </div>
-            {!collapsed ? (
+            {!collapsed || isMobileOpen ? (
               <div className="min-w-0">
                 <p className="truncate text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Kisii University
@@ -171,39 +184,58 @@ function PortalSidebar({
 
         <ScrollArea className="flex-1 px-2 py-4">
           <nav className="flex flex-col gap-1">
-            {filteredNav.map((item) => {
-              const Icon = item.icon;
-              const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-              const className = cn(
-                "flex items-center gap-3 rounded-lg text-sm font-medium transition-colors",
-                collapsed
-                  ? "size-10 justify-center px-0 [&_svg]:size-5"
-                  : "px-3 py-2 [&_svg]:size-4",
-                active
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent",
-              );
+            {grouped.map((section, sIdx) => (
+              <div key={section.group ?? `_ungrouped_${sIdx}`}>
+                {section.group && (!collapsed || isMobileOpen) ? (
+                  <p className="mb-1 mt-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground first:mt-0">
+                    {section.group}
+                  </p>
+                ) : null}
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const active =
+                    pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  const className = cn(
+                    "flex items-center gap-3 rounded-lg text-sm font-medium transition-colors",
+                    collapsed && !isMobileOpen
+                      ? "size-10 justify-center px-0 [&_svg]:size-5"
+                      : "px-3 py-2 [&_svg]:size-4",
+                    active
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent",
+                  );
 
-              if (collapsed) {
-                return (
-                  <Tooltip key={item.href}>
-                    <TooltipTrigger asChild>
-                      <Link href={item.href} onClick={onMobileClose} className={className}>
-                        <Icon />
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">{item.title}</TooltipContent>
-                  </Tooltip>
-                );
-              }
+                  if (collapsed && !isMobileOpen) {
+                    return (
+                      <Tooltip key={item.href}>
+                        <TooltipTrigger asChild>
+                          <Link
+                            href={item.href}
+                            onClick={onMobileClose}
+                            className={className}
+                          >
+                            <Icon />
+                          </Link>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">{item.title}</TooltipContent>
+                      </Tooltip>
+                    );
+                  }
 
-              return (
-                <Link key={item.href} href={item.href} onClick={onMobileClose} className={className}>
-                  <Icon />
-                  <span className="truncate">{item.title}</span>
-                </Link>
-              );
-            })}
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={onMobileClose}
+                      className={className}
+                    >
+                      <Icon />
+                      <span className="truncate">{item.title}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
           </nav>
         </ScrollArea>
 
@@ -212,13 +244,13 @@ function PortalSidebar({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className={cn("w-full justify-start gap-3", collapsed && "justify-center px-2")}
+                className={cn("w-full justify-start gap-3", collapsed && !isMobileOpen && "justify-center px-2")}
               >
                 <Avatar className="size-8">
                   <AvatarImage src={user?.avatarUrl} />
                   <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
-                {!collapsed ? (
+                {!collapsed || isMobileOpen ? (
                   <div className="min-w-0 flex-1 text-left">
                     <p className="truncate text-sm font-medium">{user?.name}</p>
                     <p className="truncate text-xs text-muted-foreground">{user?.email}</p>

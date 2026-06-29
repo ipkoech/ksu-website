@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit, Eye, FilterX, MoreHorizontal, Plus, Trash2 } from "lucide-react";
@@ -59,6 +59,17 @@ import {
 import { toast } from "@ksu/ui";
 
 type RecordShape = Record<string, any>;
+
+type ListResponse<TRecord extends RecordShape> = {
+  data?: TRecord[];
+  meta?: {
+    page?: number;
+    per_page?: number;
+    total?: number;
+    pages?: number;
+    total_pages?: number;
+  };
+};
 
 type FieldType =
   | "text"
@@ -139,7 +150,7 @@ interface EditableServiceResourcePageProps<
   backHref: string;
   queryKey: readonly unknown[];
   fields: EditableField[];
-  list: (filters?: RecordShape) => Promise<{ data?: TRecord[] }>;
+  list: (filters?: RecordShape) => Promise<ListResponse<TRecord>>;
   listFilters?: EditableListFilter[];
   create: (payload: TPayload) => Promise<unknown>;
   update: (id: string, payload: Partial<TPayload>) => Promise<unknown>;
@@ -318,6 +329,8 @@ export function EditableServiceResourcePage<
     recordToValues(fields),
   );
   const [filterValues, setFilterValues] = useState<RecordShape>({});
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const activeFilters = useMemo(
     () =>
@@ -328,13 +341,27 @@ export function EditableServiceResourcePage<
   );
   const hasActiveFilters = Object.keys(activeFilters).length > 0;
   const recordsQuery = useQuery({
-    queryKey: [...queryKey, "filters", activeFilters],
-    queryFn: () => list(activeFilters),
+    queryKey: [...queryKey, "filters", activeFilters, "page", page, "perPage", perPage],
+    queryFn: () => list({ page, per_page: perPage, ...activeFilters }),
   });
-  const records = useMemo(
+  const allRecords = useMemo(
     () => recordsQuery.data?.data ?? [],
     [recordsQuery.data],
   );
+  const totalRecords = recordsQuery.data?.meta?.total ?? allRecords.length;
+  const totalPages =
+    recordsQuery.data?.meta?.pages ??
+    recordsQuery.data?.meta?.total_pages ??
+    Math.max(1, Math.ceil(allRecords.length / perPage));
+  const records = useMemo(() => {
+    if (recordsQuery.data?.meta?.total !== undefined) return allRecords;
+    const start = (page - 1) * perPage;
+    return allRecords.slice(start, start + perPage);
+  }, [allRecords, page, perPage, recordsQuery.data?.meta?.total]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [activeFilters, perPage]);
 
   const createMutation = useMutation({
     mutationFn: create,
@@ -710,38 +737,93 @@ export function EditableServiceResourcePage<
                 <EmptyState title="No records found" description={emptyMessage} />
               </div>
             ) : (
-              <div className="divide-y rounded-lg border">
-                {records.map((record) => (
-                  <div
-                    key={record.id}
-                    className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between"
-                  >
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="break-words font-medium">
-                          {getRecordTitle(record)}
+              <div className="flex flex-col gap-4">
+                <div className="divide-y rounded-lg border">
+                  {records.map((record) => (
+                    <div
+                      key={record.id}
+                      className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="break-words font-medium">
+                            {getRecordTitle(record)}
+                          </p>
+                          {record.status ? (
+                            <Badge variant="outline">{record.status}</Badge>
+                          ) : null}
+                          {typeof record.is_active === "boolean" ? (
+                            <Badge
+                              variant={record.is_active ? "default" : "secondary"}
+                            >
+                              {record.is_active ? "Active" : "Inactive"}
+                            </Badge>
+                          ) : null}
+                        </div>
+                        <p className="mt-1 break-words text-sm text-muted-foreground">
+                          {getRecordMeta?.(record) ??
+                            record.updated_at ??
+                            record.created_at ??
+                            "No metadata"}
                         </p>
-                        {record.status ? (
-                          <Badge variant="outline">{record.status}</Badge>
-                        ) : null}
-                        {typeof record.is_active === "boolean" ? (
-                          <Badge
-                            variant={record.is_active ? "default" : "secondary"}
-                          >
-                            {record.is_active ? "Active" : "Inactive"}
-                          </Badge>
-                        ) : null}
                       </div>
-                      <p className="mt-1 break-words text-sm text-muted-foreground">
-                        {getRecordMeta?.(record) ??
-                          record.updated_at ??
-                          record.created_at ??
-                          "No metadata"}
-                      </p>
+                      {renderRecordActions(record)}
                     </div>
-                    {renderRecordActions(record)}
+                  ))}
+                </div>
+                <div className="flex flex-col gap-3 rounded-lg border bg-background px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    Showing{" "}
+                    <span className="font-medium text-foreground">
+                      {totalRecords === 0 ? 0 : (page - 1) * perPage + 1}
+                    </span>
+                    {" - "}
+                    <span className="font-medium text-foreground">
+                      {Math.min(page * perPage, totalRecords)}
+                    </span>{" "}
+                    of <span className="font-medium text-foreground">{totalRecords}</span>
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Select
+                      value={String(perPage)}
+                      onValueChange={(value) => setPerPage(Number(value))}
+                    >
+                      <SelectTrigger className="h-9 w-[112px]">
+                        <SelectValue aria-label="Rows per page" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {[10, 25, 50, 100].map((option) => (
+                            <SelectItem key={option} value={String(option)}>
+                              {option} rows
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1 || recordsQuery.isFetching}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      Previous
+                    </Button>
+                    <span className="min-w-[92px] text-center text-sm text-muted-foreground">
+                      Page {page} of {totalPages}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages || recordsQuery.isFetching}
+                      onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                    >
+                      Next
+                    </Button>
                   </div>
-                ))}
+                </div>
               </div>
             )}
           </CardContent>

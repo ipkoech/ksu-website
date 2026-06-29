@@ -28,6 +28,7 @@ interface ResearchContentResourcePageProps {
   fields: EditableField[];
   emptyMessage: string;
   defaults?: Record<string, any>;
+  listParams?: Record<string, string | number | boolean | undefined>;
   manageScopes?: string[];
   metaFields?: string[];
 }
@@ -58,6 +59,7 @@ export function ResearchContentResourcePage({
   fields,
   emptyMessage,
   defaults = {},
+  listParams = {},
   manageScopes = ["content.manage", "content.write", "research:write"],
   metaFields = ["category", "status"],
 }: ResearchContentResourcePageProps) {
@@ -71,7 +73,7 @@ export function ResearchContentResourcePage({
       backHref="/research/content"
       queryKey={queryKey}
       fields={fields}
-      list={async () => resource.list({ page: 1, per_page: 50, scope_type: "research" })}
+      list={async (filters) => resource.list({ page: 1, per_page: 50, scope_type: "research", ...listParams, ...filters })}
       create={(payload) => resource.create({ ...payload, scope_type: "research" })}
       update={(id, payload) => resource.update(id, { ...payload, scope_type: "research" })}
       delete={(id) => resource.delete(id)}
