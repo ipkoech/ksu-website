@@ -18,18 +18,14 @@ export default function ResearchEventsPage() {
         { name: "title", label: "Title", required: true },
         { name: "slug", label: "Slug" },
         { name: "summary", label: "Summary", type: "textarea" },
-        { name: "description", label: "Description", type: "textarea" },
-        { name: "event_type", label: "Event Type", type: "select", options: [
-          { label: "Conference", value: "conference" },
-          { label: "Workshop", value: "workshop" },
-          { label: "Seminar", value: "seminar" },
-          { label: "Training", value: "training" },
-          { label: "Field Day", value: "field_day" },
-        ] },
+        { name: "rich_text", label: "Body", type: "richtext" },
         { name: "start_date", label: "Start Date", type: "datetime-local", required: true },
         { name: "end_date", label: "End Date", type: "datetime-local" },
         { name: "location", label: "Location" },
-        { name: "registration_url", label: "Registration URL", type: "url" },
+        { name: "meeting_link", label: "Registration or Meeting URL", type: "url" },
+        { name: "featured_media_id", label: "Featured Media", type: "media", media: { mediaType: "image", uploadEntityType: "research", uploadRole: "featured" } },
+        { name: "author_user_id", label: "Owner", type: "entity", relation: { adapter: "user", filters: { is_active: true } } },
+        { name: "is_virtual", label: "Virtual", type: "boolean" },
         { name: "status", label: "Status", type: "select", options: [
           { label: "Draft", value: "draft" },
           { label: "Published", value: "published" },
@@ -41,7 +37,7 @@ export default function ResearchEventsPage() {
       ]}
       defaults={{ status: "draft", is_published: false }}
       emptyMessage="No research event records were returned by the main content service."
-      metaFields={["event_type", "start_date", "status"]}
+      metaFields={["location", "start_date", "status"]}
     />
   );
 }

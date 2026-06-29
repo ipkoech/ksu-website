@@ -44,6 +44,10 @@ interface ResearchContentResourcePageProps {
   getRecordWorkflowActions?: (
     record: ContentRecord,
   ) => Array<EditableRecordWorkflowAction<ContentRecord, Record<string, any>>>;
+  buildPayload?: (
+    values: Record<string, any>,
+    editingRecord?: ContentRecord | null,
+  ) => Record<string, any>;
 }
 
 function recordTitle(record: ContentRecord) {
@@ -79,6 +83,7 @@ export function ResearchContentResourcePage({
   manageScopes = ["content.manage", "content.write", "research:write"],
   metaFields = ["category", "status"],
   getRecordWorkflowActions,
+  buildPayload,
 }: ResearchContentResourcePageProps) {
   const { hasScope } = usePermissions();
   const canManage = manageScopes.some((scope) => hasScope(scope));
@@ -104,7 +109,11 @@ export function ResearchContentResourcePage({
       getRecordMeta={(record) => recordMeta(record, metaFields)}
       getRecordWorkflowActions={getRecordWorkflowActions}
       emptyMessage={emptyMessage}
-      buildPayload={(values) => ({ ...defaults, ...values, scope_type: "research" })}
+      buildPayload={(values, editingRecord) => ({
+        ...defaults,
+        ...(buildPayload ? buildPayload(values, editingRecord) : values),
+        scope_type: "research",
+      })}
     />
   );
 }

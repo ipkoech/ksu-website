@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import type { ReactNode } from "react";
 import { PageHeader } from "@/components/layout";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger } from "@ksu/ui/components";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import {
   relationshipAdapters,
@@ -32,6 +32,13 @@ type FactField = {
     adapter: keyof typeof relationshipAdapters;
     filters?: RelationshipFilters;
   };
+};
+
+export type ResearchDetailRelationshipTab = {
+  value: string;
+  label: string;
+  count?: number;
+  content: ReactNode;
 };
 
 export function ResearchAdminDetailPage({
@@ -162,6 +169,41 @@ export function ResearchAdminDetailPage({
         )}
       </div>
     </div>
+  );
+}
+
+export function ResearchDetailRelationshipTabs({
+  tabs,
+  defaultValue = "overview",
+}: {
+  tabs: ResearchDetailRelationshipTab[];
+  defaultValue?: string;
+}) {
+  if (tabs.length === 0) return null;
+  const resolvedDefault = tabs.some((tab) => tab.value === defaultValue) ? defaultValue : tabs[0].value;
+
+  return (
+    <Tabs defaultValue={resolvedDefault} className="space-y-4">
+      <div className="overflow-x-auto rounded-lg border bg-background p-1">
+        <TabsList className="h-auto min-w-max bg-transparent p-0">
+          {tabs.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value} className="gap-2 rounded-md px-3 py-2">
+              {tab.label}
+              {typeof tab.count === "number" ? (
+                <Badge variant="secondary" className="rounded-sm px-1.5 py-0 text-[11px]">
+                  {tab.count}
+                </Badge>
+              ) : null}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </div>
+      {tabs.map((tab) => (
+        <TabsContent key={tab.value} value={tab.value} className="mt-0">
+          {tab.content}
+        </TabsContent>
+      ))}
+    </Tabs>
   );
 }
 

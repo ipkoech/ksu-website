@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { eventsApi, researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
 import type { ReactNode } from "react";
-import { ResearchAdminDetailPage } from "../../../_components/research-admin-detail-page";
+import { ResearchAdminDetailPage, ResearchDetailRelationshipTabs } from "../../../_components/research-admin-detail-page";
 import { DateValue, titleOf } from "../../../_components/research-workspace";
 import { SdgBadges } from "../../_components/sustainability-workspace";
 
@@ -63,7 +63,7 @@ function SustainabilityRelations({ record }: { record: ResearchGenericRecord }) 
   });
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>SDG Alignment</CardTitle>
@@ -76,91 +76,46 @@ function SustainabilityRelations({ record }: { record: ResearchGenericRecord }) 
         </CardContent>
       </Card>
 
-      <AsyncRelationshipCard
-        title="Related Partners"
-        records={partners.data?.data ?? []}
-        isLoading={partners.isLoading}
-        isError={partners.isError}
-        emptyLabel="No partners are linked to this sustainability record."
-        render={(partner) => (
-          <div>
-            <p className="font-medium">{titleOf(partner)}</p>
-            <p className="text-sm text-muted-foreground">{[partner.partner_type, partner.partnership_level, partner.country].filter(Boolean).join(" · ") || "No partner metadata"}</p>
-          </div>
-        )}
-      />
-
-      <AsyncRelationshipCard
-        title="Related Projects"
-        records={projects.data?.data ?? []}
-        isLoading={projects.isLoading}
-        isError={projects.isError}
-        emptyLabel="No research projects are linked to this sustainability record."
-        render={(project) => (
-          <div>
-            <p className="font-medium">{titleOf(project)}</p>
-            <p className="text-sm text-muted-foreground">{[project.code, project.project_type, project.status].filter(Boolean).join(" · ") || "No project metadata"}</p>
-          </div>
-        )}
-      />
-
-      <AsyncRelationshipCard
-        title="Environmental Metrics"
-        records={impactMetrics.data?.data ?? []}
-        isLoading={impactMetrics.isLoading}
-        isError={impactMetrics.isError}
-        emptyLabel="No environmental impact metrics were returned."
-        render={(metric) => (
-          <div>
-            <p className="font-medium">{titleOf(metric)}</p>
-            <p className="text-sm text-muted-foreground">{[metric.value, metric.unit, metric.reporting_year].filter(Boolean).join(" · ")}</p>
-          </div>
-        )}
-      />
-
-      <AsyncRelationshipCard
-        title="Research-Scoped Activities"
-        records={activities.data?.data ?? []}
-        isLoading={activities.isLoading}
-        isError={activities.isError}
-        emptyLabel="No upcoming research-scoped activities were returned."
-        render={(activity) => (
-          <div>
-            <p className="font-medium">{titleOf(activity)}</p>
-            <p className="text-sm text-muted-foreground">
-              {activity.start_date ? <DateValue value={activity.start_date} /> : "No date"}
-              {activity.location ? ` · ${activity.location}` : ""}
-            </p>
-          </div>
-        )}
-      />
-
-      <AsyncRelationshipCard
-        title="Related Training"
-        records={training.data?.data ?? []}
-        isLoading={training.isLoading}
-        isError={training.isError}
-        emptyLabel="No training programs are linked to this sustainability record."
-        render={(program) => (
-          <div>
-            <p className="font-medium">{titleOf(program)}</p>
-            <p className="text-sm text-muted-foreground">{[program.code, program.program_type, program.delivery_mode].filter(Boolean).join(" · ") || "No training metadata"}</p>
-          </div>
-        )}
-      />
-
-      <AsyncRelationshipCard
-        title="Impact Stories"
-        records={stories.data?.data ?? []}
-        isLoading={stories.isLoading}
-        isError={stories.isError}
-        emptyLabel="No impact stories are linked to this sustainability record."
-        render={(story) => (
-          <div>
-            <p className="font-medium">{titleOf(story)}</p>
-            <p className="text-sm text-muted-foreground">{[story.story_type, story.story_date, story.status].filter(Boolean).join(" · ") || "No story metadata"}</p>
-          </div>
-        )}
+      <ResearchDetailRelationshipTabs
+        tabs={[
+          {
+            value: "projects",
+            label: "Projects",
+            count: projects.data?.data?.length,
+            content: <AsyncRelationshipCard title="Related Projects" records={projects.data?.data ?? []} isLoading={projects.isLoading} isError={projects.isError} emptyLabel="No research projects are linked to this sustainability record." render={(project) => <div><p className="font-medium">{titleOf(project)}</p><p className="text-sm text-muted-foreground">{[project.code, project.project_type, project.status].filter(Boolean).join(" · ") || "No project metadata"}</p></div>} />,
+          },
+          {
+            value: "partners",
+            label: "Partners",
+            count: partners.data?.data?.length,
+            content: <AsyncRelationshipCard title="Related Partners" records={partners.data?.data ?? []} isLoading={partners.isLoading} isError={partners.isError} emptyLabel="No partners are linked to this sustainability record." render={(partner) => <div><p className="font-medium">{titleOf(partner)}</p><p className="text-sm text-muted-foreground">{[partner.partner_type, partner.partnership_level, partner.country].filter(Boolean).join(" · ") || "No partner metadata"}</p></div>} />,
+          },
+          {
+            value: "activities",
+            label: "Activities",
+            count: activities.data?.data?.length,
+            content: <AsyncRelationshipCard title="Research-Scoped Activities" records={activities.data?.data ?? []} isLoading={activities.isLoading} isError={activities.isError} emptyLabel="No upcoming research-scoped activities were returned." render={(activity) => <div><p className="font-medium">{titleOf(activity)}</p><p className="text-sm text-muted-foreground">{activity.start_date ? <DateValue value={activity.start_date} /> : "No date"}{activity.location ? ` · ${activity.location}` : ""}</p></div>} />,
+          },
+          {
+            value: "impact",
+            label: "Impact",
+            count: impactMetrics.data?.data?.length,
+            content: <AsyncRelationshipCard title="Environmental Metrics" records={impactMetrics.data?.data ?? []} isLoading={impactMetrics.isLoading} isError={impactMetrics.isError} emptyLabel="No environmental impact metrics were returned." render={(metric) => <div><p className="font-medium">{titleOf(metric)}</p><p className="text-sm text-muted-foreground">{[metric.value, metric.unit, metric.reporting_year].filter(Boolean).join(" · ")}</p></div>} />,
+          },
+          {
+            value: "training",
+            label: "Training",
+            count: training.data?.data?.length,
+            content: <AsyncRelationshipCard title="Related Training" records={training.data?.data ?? []} isLoading={training.isLoading} isError={training.isError} emptyLabel="No training programs are linked to this sustainability record." render={(program) => <div><p className="font-medium">{titleOf(program)}</p><p className="text-sm text-muted-foreground">{[program.code, program.program_type, program.delivery_mode].filter(Boolean).join(" · ") || "No training metadata"}</p></div>} />,
+          },
+          {
+            value: "stories",
+            label: "Stories",
+            count: stories.data?.data?.length,
+            content: <AsyncRelationshipCard title="Impact Stories" records={stories.data?.data ?? []} isLoading={stories.isLoading} isError={stories.isError} emptyLabel="No impact stories are linked to this sustainability record." render={(story) => <div><p className="font-medium">{titleOf(story)}</p><p className="text-sm text-muted-foreground">{[story.story_type, story.story_date, story.status].filter(Boolean).join(" · ") || "No story metadata"}</p></div>} />,
+          },
+        ]}
+        defaultValue="projects"
       />
     </div>
   );

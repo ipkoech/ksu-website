@@ -1,6 +1,7 @@
 "use client";
 
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
+import { donorColumns, DonationsWorkspaceHeader } from "../_components/donations-workspace";
 
 export default function ResearchDonorsPage() {
   return (
@@ -10,8 +11,25 @@ export default function ResearchDonorsPage() {
       queryKey={["research", "donors"]}
       resource={researchServiceApi.donors}
       manageScopes={["donations.manage", "research:write"]}
+      summarySlot={<DonationsWorkspaceHeader />}
+      recordColumns={donorColumns}
+      listFilters={[
+        { name: "search", label: "Search", type: "text", placeholder: "Search donor name, organization, or email" },
+        { name: "donor_type", label: "Donor Type", type: "select", options: [
+          { label: "Individual", value: "individual" },
+          { label: "Organization", value: "organization" },
+          { label: "Corporate", value: "corporate" },
+          { label: "Foundation", value: "foundation" },
+        ] },
+        { name: "is_active", label: "Active", type: "boolean" },
+      ]}
       fields={[
-        { name: "donor_type", label: "Donor Type", placeholder: "individual" },
+        { name: "donor_type", label: "Donor Type", type: "select", placeholder: "Select type", options: [
+          { label: "Individual", value: "individual" },
+          { label: "Organization", value: "organization" },
+          { label: "Corporate", value: "corporate" },
+          { label: "Foundation", value: "foundation" },
+        ] },
         { name: "display_name", label: "Display Name" },
         { name: "first_name", label: "First Name" },
         { name: "last_name", label: "Last Name" },

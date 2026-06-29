@@ -1262,10 +1262,10 @@ export const slidersApi = {
       slider_group_id: groupId,
     }),
 
-  createSlider: (groupId: string, data: Partial<Slider>) =>
+  createSlider: (groupId: string | null | undefined, data: Partial<Slider>) =>
     mainApi.post<{ data: Slider }>("/api/v1/sliders", {
       ...data,
-      slider_group_id: groupId,
+      slider_group_id: groupId || data.slider_group_id || null,
     }),
 
   getSlider: (sliderId: string, params?: FieldSelectionParams) =>

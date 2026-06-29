@@ -18,9 +18,10 @@ export default function ResearchNewsPage() {
         { name: "title", label: "Title", required: true },
         { name: "slug", label: "Slug" },
         { name: "summary", label: "Summary", type: "textarea" },
-        { name: "content", label: "Content", type: "textarea" },
-        { name: "category", label: "Category" },
-        { name: "author_id", label: "Author", type: "entity", relation: { adapter: "person", filters: { status: "active" } } },
+        { name: "rich_text", label: "Body", type: "richtext" },
+        { name: "featured_media_id", label: "Featured Media", type: "media", media: { mediaType: "image", uploadEntityType: "research", uploadRole: "featured" } },
+        { name: "author_user_id", label: "Author", type: "entity", relation: { adapter: "user", filters: { is_active: true } } },
+        { name: "published_at", label: "Publish Date", type: "datetime-local" },
         { name: "status", label: "Status", type: "select", options: [
           { label: "Draft", value: "draft" },
           { label: "Published", value: "published" },

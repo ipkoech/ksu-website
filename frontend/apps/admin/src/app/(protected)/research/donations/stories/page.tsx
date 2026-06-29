@@ -1,6 +1,7 @@
 "use client";
 
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
+import { DonationsWorkspaceHeader } from "../_components/donations-workspace";
 
 export default function DonationStoriesPage() {
   return (
@@ -10,6 +11,7 @@ export default function DonationStoriesPage() {
       queryKey={["research", "donation-stories"]}
       resource={researchServiceApi.donationStories}
       manageScopes={["donations.manage", "research:write"]}
+      summarySlot={<DonationsWorkspaceHeader />}
       fields={[
         { name: "title", label: "Title", required: true },
         { name: "slug", label: "Slug" },
@@ -20,6 +22,7 @@ export default function DonationStoriesPage() {
         { name: "story", label: "Story", type: "textarea" },
         { name: "quote", label: "Quote", type: "textarea" },
         { name: "photo_url", label: "Photo URL", type: "url" },
+        { name: "video_url", label: "Video URL", type: "url" },
         { name: "status", label: "Status", placeholder: "published" },
         { name: "is_active", label: "Active", type: "boolean" },
         { name: "is_featured", label: "Featured", type: "boolean" },

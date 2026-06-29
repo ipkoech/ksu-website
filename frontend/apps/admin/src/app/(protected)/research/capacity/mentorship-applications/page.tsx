@@ -43,6 +43,7 @@ export default function MentorshipApplicationsPage() {
         return [
           { label: "Review", payload: { status: "under_review" }, successMessage: "Application moved to review" },
           { label: "Approve", payload: { status: "approved" }, successMessage: "Application approved" },
+          { label: "Match Mentor", payload: { status: "matched" }, successMessage: "Application marked as matched" },
           { label: "Reject", variant: "outline", className: "text-destructive", payload: { status: "rejected" }, successMessage: "Application rejected" },
         ];
       }}

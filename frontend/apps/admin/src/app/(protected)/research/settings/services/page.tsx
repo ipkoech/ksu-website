@@ -1,6 +1,7 @@
 "use client";
 
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
+import { ResearchSettingsWorkspaceHeader } from "../_components/settings-workspace";
 
 export default function ResearchServicesPage() {
   return (
@@ -10,6 +11,7 @@ export default function ResearchServicesPage() {
       queryKey={["research", "services"]}
       resource={researchServiceApi.services}
       manageScopes={["research.manage_guidelines", "research:write"]}
+      summarySlot={<ResearchSettingsWorkspaceHeader />}
       fields={[
         { name: "name", label: "Name", required: true },
         { name: "slug", label: "Slug" },

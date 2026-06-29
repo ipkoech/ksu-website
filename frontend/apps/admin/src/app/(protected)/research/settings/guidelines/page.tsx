@@ -1,6 +1,7 @@
 "use client";
 
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
+import { ResearchSettingsWorkspaceHeader } from "../_components/settings-workspace";
 
 export default function ResearchGuidelinesPage() {
   return (
@@ -10,6 +11,7 @@ export default function ResearchGuidelinesPage() {
       queryKey={["research", "guidelines"]}
       resource={researchServiceApi.guidelines}
       manageScopes={["research.manage_guidelines", "research:write"]}
+      summarySlot={<ResearchSettingsWorkspaceHeader />}
       fields={[
         { name: "title", label: "Title", required: true },
         { name: "slug", label: "Slug" },

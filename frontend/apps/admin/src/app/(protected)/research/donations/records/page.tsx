@@ -1,6 +1,7 @@
 "use client";
 
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
+import { donationRecordColumns, DonationsWorkspaceHeader } from "../_components/donations-workspace";
 
 const donationStatusOptions = [
   { label: "Pending", value: "pending" },
@@ -18,6 +19,14 @@ export default function ResearchDonationRecordsPage() {
       queryKey={["research", "donations"]}
       resource={researchServiceApi.donations}
       manageScopes={["donations.manage", "donations.confirm", "research:write"]}
+      summarySlot={<DonationsWorkspaceHeader />}
+      recordColumns={donationRecordColumns}
+      listFilters={[
+        { name: "donor_id", label: "Donor", type: "entity", relation: { adapter: "researchDonor", filters: { is_active: true } } },
+        { name: "project_id", label: "Project", type: "entity", relation: { adapter: "researchProject", filters: { is_active: true } } },
+        { name: "status", label: "Status", type: "select", options: donationStatusOptions },
+        { name: "donation_date", label: "Donation Date", type: "date" },
+      ]}
       fields={[
         { name: "donor_id", label: "Donor", type: "entity", required: true, relation: { adapter: "researchDonor", filters: { is_active: true }, allowClear: false } },
         { name: "amount", label: "Amount", type: "number", required: true },
@@ -36,6 +45,8 @@ export default function ResearchDonationRecordsPage() {
           { label: "Endowment", value: "endowment" },
         ] },
         { name: "purpose", label: "Purpose" },
+        { name: "project_id", label: "Linked Project", type: "entity", relation: { adapter: "researchProject", filters: { is_active: true }, allowClear: true } },
+        { name: "scholarship_id", label: "Linked Scholarship", type: "entity", relation: { adapter: "researchScholarship", filters: { is_active: true }, allowClear: true } },
         { name: "donation_date", label: "Donation Date", type: "date", required: true },
         { name: "status", label: "Status", type: "select", placeholder: "Status", options: donationStatusOptions },
       ]}

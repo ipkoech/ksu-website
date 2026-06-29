@@ -19,6 +19,7 @@ async function revalidateResearch(resource: string) {
 }
 
 import { PageHeader } from "@/components/layout";
+import { MediaPicker } from "@/components/media/media-picker";
 import { EntityPicker, EntityTypeRecordPicker } from "@/components/relationships/entity-picker";
 import { relationshipAdapters, type RelationshipFilters } from "@/components/relationships/relationship-adapters";
 import {
@@ -76,12 +77,14 @@ type FieldType =
   | "email"
   | "url"
   | "textarea"
+  | "richtext"
   | "number"
   | "date"
   | "datetime-local"
   | "select"
   | "entity"
   | "entity-record"
+  | "media"
   | "boolean";
 
 export interface EditableField {
@@ -111,6 +114,15 @@ export interface EditableField {
     typePlaceholder?: string;
     recordPlaceholder?: string;
     allowNone?: boolean;
+  };
+  media?: {
+    mediaType?: string;
+    folderId?: string;
+    helperText?: string;
+    accept?: string;
+    uploadEntityType?: string;
+    uploadRole?: string;
+    allowUpload?: boolean;
   };
 }
 
@@ -235,6 +247,8 @@ function normalizePayload(fields: EditableField[], values: RecordShape) {
       payload[field.name] = value ? new Date(value).toISOString() : null;
     } else if (field.type === "textarea") {
       payload[field.name] = richTextToPlainText(value) || null;
+    } else if (field.type === "richtext") {
+      payload[field.name] = value === "" ? null : value;
     } else {
       payload[field.name] = value === "" ? null : value;
     }
@@ -914,7 +928,7 @@ export function EditableServiceResourcePage<
                       <label
                         id={labelId}
                         htmlFor={
-                          field.type === "boolean" || field.type === "textarea"
+                          field.type === "boolean" || field.type === "textarea" || field.type === "richtext"
                             ? undefined
                             : id
                         }
@@ -923,7 +937,7 @@ export function EditableServiceResourcePage<
                         {field.label}
                         {field.required ? " *" : ""}
                       </label>
-                      {field.type === "textarea" ? (
+                      {field.type === "textarea" || field.type === "richtext" ? (
                         <RichTextEditor
                           editorId={id}
                           ariaLabelledby={labelId}
@@ -946,6 +960,33 @@ export function EditableServiceResourcePage<
                               });
                             }
                           }}
+                        />
+                      ) : field.type === "media" ? (
+                        <MediaPicker
+                          value={values[field.name] || ""}
+                          onChange={(nextValue) => {
+                            setValues((current) => ({
+                              ...current,
+                              [field.name]: nextValue,
+                            }));
+                            if (error) {
+                              setFieldErrors((current) => {
+                                const next = { ...current };
+                                delete next[field.name];
+                                return next;
+                              });
+                            }
+                          }}
+                          label={field.label}
+                          mediaType={field.media?.mediaType}
+                          folderId={field.media?.folderId}
+                          helperText={field.media?.helperText}
+                          placeholder={field.placeholder}
+                          accept={field.media?.accept}
+                          uploadEntityType={field.media?.uploadEntityType}
+                          uploadRole={field.media?.uploadRole}
+                          allowUpload={field.media?.allowUpload}
+                          allowClear={!field.required}
                         />
                       ) : field.type === "entity" && field.relation ? (
                         <EntityPicker
