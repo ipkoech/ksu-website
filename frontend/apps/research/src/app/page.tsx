@@ -194,13 +194,15 @@ export default async function ResearchPage() {
           },
         ]}
       />
-      <CountUpMetrics
-        projects={statsMap["research_projects"] ?? 0}
-        publications={statsMap["publications"] ?? 0}
-        grants={statsMap["grant_funding"] ?? 0}
-        innovations={statsMap["patents"] ?? 0}
-        partners={statsMap["partner_count"] ?? 0}
-      />
+      {(statsMap["research_projects"] || statsMap["publications"] || statsMap["grant_funding"] || statsMap["patents"] || statsMap["partner_count"]) ? (
+        <CountUpMetrics
+          projects={statsMap["research_projects"] ?? 0}
+          publications={statsMap["publications"] ?? 0}
+          grants={statsMap["grant_funding"] ?? 0}
+          innovations={statsMap["patents"] ?? 0}
+          partners={statsMap["partner_count"] ?? 0}
+        />
+      ) : null}
       <ResearchPathwayNav eyebrow="Kisii University Research" links={homeLinks} />
 
       {errors.length > 0 ? (
@@ -221,10 +223,6 @@ export default async function ResearchPage() {
           <h2 className="mx-auto mt-3 max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
             Our core research workflows
           </h2>
-          <p className="mx-auto mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-            A seamless journey from discovery to impact, organized around the
-            work researchers, students, funders, and partners come here to do.
-          </p>
         </div>
         <ScrollRevealGroup className="mx-auto mt-8 grid max-w-[1680px] gap-6 md:grid-cols-3" staggerDelay={80}>
           {workflowCards.map((card) => (<WorkflowCard key={card.title} {...card} />))}
@@ -250,17 +248,6 @@ export default async function ResearchPage() {
             <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
               Research is our bridge between knowledge, public service, and resource mobilization.
             </h2>
-            <p className="mt-4 text-base leading-8 text-slate-700">
-              The Directorate of Research, Extension, Innovation and Resource
-              Mobilization exists to make scholarly work easier to discover,
-              easier to support, and easier to translate into practical value
-              for communities, partners, students, and the university.
-            </p>
-            <p className="mt-4 text-sm font-semibold leading-7 text-slate-600">
-              We invite researchers, funders, industry, government, alumni, and
-              community partners to use this portal as the front door to Kisii
-              University research collaboration.
-            </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <ActionLink href="/connect">Contact REIRM</ActionLink>
               <ActionLink href="/services" variant="outline">Our services</ActionLink>
@@ -270,87 +257,41 @@ export default async function ResearchPage() {
         </div>
       </ScrollReveal>
 
-      <ScrollReveal as="section" className="bg-white px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="mx-auto max-w-[1680px]">
-          <div className="mx-auto max-w-3xl text-center">
-            <SectionKicker>Live Research Records</SectionKicker>
-            <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
-              Real-time updates from our research ecosystem.
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
-              Projects, publications, funding calls, and updates are published
-              from the same research records used across the portal.
-            </p>
+      {(projects.data.length > 0 || publications.data.length > 0 || grants.data.length > 0) ? (
+        <ScrollReveal as="section" className="bg-white px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+          <div className="mx-auto max-w-[1680px]">
+            <div className="mx-auto max-w-3xl text-center">
+              <SectionKicker>Live Research Records</SectionKicker>
+              <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+                Real-time updates from our research ecosystem.
+              </h2>
+            </div>
+            <ScrollRevealGroup className="mt-6 grid gap-5 xl:grid-cols-3" staggerDelay={70}>
+              {projects.data.length > 0 ? (
+                <RecordPanel title="Active Projects" href="/projects" image="/images/research/research-projects-hero.svg" emptyLabel="" tone="green" isEmpty={false}>
+                  {projects.data.slice(0, 4).map((item) => (
+                    <RecordRow key={item.id} title={item.title} meta={[formatLabel(item.project_type), formatLabel(item.status), `${item.progress_percentage ?? 0}% complete`]} />
+                  ))}
+                </RecordPanel>
+              ) : null}
+              {publications.data.length > 0 ? (
+                <RecordPanel title="Recent Publications" href="/publications" image="/images/research/research-home-hero.svg" emptyLabel="" tone="navy" isEmpty={false}>
+                  {publications.data.slice(0, 4).map((item) => (
+                    <RecordRow key={item.id} title={item.title} meta={[item.journal_name, item.year, formatLabel(item.publication_type)]} />
+                  ))}
+                </RecordPanel>
+              ) : null}
+              {grants.data.length > 0 ? (
+                <RecordPanel title="Funding & Opportunities" href="/funding" image="/images/research/research-projects-hero.svg" emptyLabel="" tone="gold" isEmpty={false}>
+                  {grants.data.slice(0, 4).map((item) => (
+                    <RecordRow key={item.id} title={compactText(item.title) || compactText(item.id)} meta={[formatLabel(item.category), formatLabel(item.status)]} />
+                  ))}
+                </RecordPanel>
+              ) : null}
+            </ScrollRevealGroup>
           </div>
-
-          <ScrollRevealGroup className="mt-6 grid gap-5 xl:grid-cols-3" staggerDelay={70}>
-            <RecordPanel
-              title="Active Projects"
-              href="/projects"
-              image="/images/research/research-projects-hero.svg"
-              emptyLabel="No active projects have been published yet."
-              tone="green"
-              isEmpty={projects.data.length === 0}
-            >
-              {projects.data.slice(0, 4).map((item) => (
-                <RecordRow
-                  key={item.id}
-                  title={item.title}
-                  meta={[
-                    formatLabel(item.project_type),
-                    formatLabel(item.status),
-                    `${item.progress_percentage ?? 0}% complete`,
-                  ]}
-                />
-              ))}
-            </RecordPanel>
-            <RecordPanel
-              title="Recent Publications"
-              href="/publications"
-              image="/images/research/research-home-hero.svg"
-              emptyLabel="No publications have been published yet."
-              tone="navy"
-              isEmpty={publications.data.length === 0}
-            >
-              {publications.data.slice(0, 4).map((item) => (
-                <RecordRow
-                  key={item.id}
-                  title={item.title}
-                  meta={[
-                    item.journal_name,
-                    item.year,
-                    formatLabel(item.publication_type),
-                  ]}
-                />
-              ))}
-            </RecordPanel>
-            <RecordPanel
-              title="Funding & Opportunities"
-              href="/funding"
-              image="/images/research/research-projects-hero.svg"
-              emptyLabel="No funding calls have been published yet."
-              tone="gold"
-              isEmpty={grants.data.length === 0}
-            >
-              {grants.data.slice(0, 4).map(
-                (item) => (
-                  <RecordRow
-                    key={item.id}
-                    title={
-                      compactText(item.title) ||
-                      compactText(item.id)
-                    }
-                    meta={[
-                      formatLabel(item.category),
-                      formatLabel(item.status),
-                    ]}
-                  />
-                ),
-              )}
-            </RecordPanel>
-          </ScrollRevealGroup>
-        </div>
-      </ScrollReveal>
+        </ScrollReveal>
+      ) : null}
 
       <ScrollReveal as="section" className="border-y border-slate-200 bg-[linear-gradient(180deg,#f7fbf9_0%,#ffffff_100%)] px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mx-auto max-w-[1680px]">
@@ -367,8 +308,9 @@ export default async function ResearchPage() {
             ))}
           </ScrollRevealGroup>
 
-          <ScrollRevealGroup className="mt-8 grid gap-5 lg:grid-cols-2" staggerDelay={70}>
-            {innovations.data.slice(0, 3).map((item) => (
+          {innovations.data.length > 0 || partners.data.length > 0 ? (
+            <ScrollRevealGroup className="mt-8 grid gap-5 lg:grid-cols-2" staggerDelay={70}>
+              {innovations.data.slice(0, 3).map((item) => (
               <article
                 key={item.id}
                 className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
@@ -407,6 +349,7 @@ export default async function ResearchPage() {
               </article>
             ))}
           </ScrollRevealGroup>
+          ) : null}
 
           {partners.data.length > 0 ? (
             <div className="mt-8 overflow-hidden rounded-lg border border-slate-200 bg-white py-4">
