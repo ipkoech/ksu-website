@@ -70,8 +70,8 @@ export default async function ConsultancyDetailPage({
         imageAlt="Consultancy engagement profile and deliverables"
       />
 
-      {[error, partners.error, centers.error].filter(Boolean).map((message) => (
-        <section key={message} className="px-4 pt-4 sm:px-6 lg:px-8">
+      {[error, partners.error, centers.error].filter(Boolean).map((message, i) => (
+        <section key={i} className="px-4 pt-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-[1680px]">
             <StatusMessage tone="error">{message}</StatusMessage>
           </div>

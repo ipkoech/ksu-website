@@ -208,8 +208,8 @@ export default async function ResearchPage() {
       {errors.length > 0 ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="mx-auto flex max-w-[1680px] flex-col gap-3">
-            {errors.map((error) => (
-              <StatusMessage key={error} tone="error">
+            {errors.map((error, i) => (
+              <StatusMessage key={i} tone="error">
                 {error}
               </StatusMessage>
             ))}

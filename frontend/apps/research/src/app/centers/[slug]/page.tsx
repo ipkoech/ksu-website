@@ -80,8 +80,8 @@ export default async function CenterDetailPage({
 
       {[error, programs.error, projects.error, publications.error, outputs.error]
         .filter(Boolean)
-        .map((message) => (
-          <section key={message} className="px-4 pt-4 sm:px-6 lg:px-8">
+        .map((message, i) => (
+          <section key={i} className="px-4 pt-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-[1680px]">
               <StatusMessage tone="error">{message}</StatusMessage>
             </div>

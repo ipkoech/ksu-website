@@ -79,8 +79,8 @@ export default async function ProgramDetailPage({
         imageAlt="Research program profile and connected projects"
       />
 
-      {[error, projects.error].filter(Boolean).map((message) => (
-        <section key={message} className="px-4 pt-4 sm:px-6 lg:px-8">
+      {[error, projects.error].filter(Boolean).map((message, i) => (
+        <section key={i} className="px-4 pt-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-[1680px]">
             <StatusMessage tone="error">{message}</StatusMessage>
           </div>

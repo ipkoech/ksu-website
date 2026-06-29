@@ -45,7 +45,7 @@ export default async function FormsPage({ searchParams }: { searchParams?: Promi
             { name: "category", label: "Category", value: params.category, placeholder: "Category" },
           ]}
         />
-        {[forms.error, templates.error, guidance.error].filter(Boolean).map((error) => <div key={error} className="mt-5"><StatusMessage tone="error">{error}</StatusMessage></div>)}
+        {[forms.error, templates.error, guidance.error].filter(Boolean).map((error, i) => <div key={i} className="mt-5"><StatusMessage tone="error">{error}</StatusMessage></div>)}
         <div className="mt-7 grid gap-5 lg:grid-cols-3"><ResourceColumn title="Forms" records={forms.data} /><ResourceColumn title="Templates" records={templates.data} /><ResourceColumn title="Related guidance" records={guidance.data} /></div>
       </ResearchSection>
     </main>

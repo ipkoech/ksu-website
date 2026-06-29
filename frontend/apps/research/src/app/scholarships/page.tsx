@@ -62,7 +62,7 @@ export default async function ScholarshipsPage({ searchParams }: { searchParams?
       />
       <ResearchSection eyebrow="Scholarship Calls" title="Open and published opportunities" body="Filter research scholarships by type, status, deadline year, and keyword." tone="white">
         <ScholarshipFilters params={params} years={getYears(allScholarships.data)} />
-        {[scholarships.error, allScholarships.error].filter(Boolean).map((error) => <div key={error} className="mt-5"><StatusMessage tone="error">{error}</StatusMessage></div>)}
+        {[scholarships.error, allScholarships.error].filter(Boolean).map((error, i) => <div key={i} className="mt-5"><StatusMessage tone="error">{error}</StatusMessage></div>)}
         {scholarships.data.length > 0 ? (
           <div className="mt-7 grid gap-5 lg:grid-cols-3">
             {scholarships.data.map((item) => <ScholarshipCard key={item.id} item={item} />)}
