@@ -23,6 +23,8 @@ type ListParams<
     project_id?: string;
     partner_id?: string;
     pi_id?: string;
+    journal_id?: string;
+    author_id?: string;
     grant_id?: string;
     has_grant?: boolean;
     missing_pi?: boolean;
@@ -112,6 +114,7 @@ export interface ResearchPublication {
   project?: ResearchProject | null;
   center?: ResearchGenericRecord | null;
   journal?: ResearchGenericRecord | null;
+  authors?: ResearchGenericRecord[] | null;
   abstract?: string | null;
   journal_name?: string | null;
   publisher?: string | null;
@@ -142,7 +145,9 @@ export interface ResearchPublication {
   quartile?: string | null;
   h_index?: number | null;
   funding_acknowledgment?: string | null;
+  grant_numbers?: string[] | null;
   cover_image_url?: string | null;
+  citation_count?: number;
   status?: string;
   is_active?: boolean;
   is_featured?: boolean;

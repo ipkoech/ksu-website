@@ -2,17 +2,25 @@
 
 from __future__ import annotations
 
-from ..models import EditorialBoardMember, Journal, Publication, PublicationAuthor
-from ._crud import build_simple_service
+from typing import Any
 
-PublicationService = build_simple_service(
-    Publication,
-    "title",
-    "journal_name",
-    "publisher",
-    "doi",
-    "abstract",
-)
+from ..models import EditorialBoardMember, Journal, Publication, PublicationAuthor
+from ._crud import CRUDService, build_simple_service
+
+
+class PublicationService(CRUDService[Publication]):
+    model = Publication
+    search_fields = ("title", "journal_name", "publisher", "doi", "abstract")
+
+    @classmethod
+    def _apply_filters(cls, query, filters: dict[str, Any] | None = None):
+        query = super()._apply_filters(query, filters)
+        author_id = (filters or {}).get("author_id")
+        if author_id is not None:
+            query = query.where(Publication.authors.any(PublicationAuthor.person_id == author_id))
+        return query
+
+
 PublicationAuthorService = build_simple_service(
     PublicationAuthor,
     "name",
