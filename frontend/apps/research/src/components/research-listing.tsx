@@ -17,7 +17,7 @@ type FilterOption = {
   name: string;
   label: string;
   value?: string;
-  options: string[];
+  options: SelectChoice[];
 };
 
 type CenterOption = {
