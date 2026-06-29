@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { researchServiceApi } from "@ksu/api-client";
@@ -5,8 +6,6 @@ import {
   ResearchDetailHero,
   ResearchDetailSidebar,
   ResearchRecordPanel,
-  ResearchRelationshipCard,
-  ResearchTextPanel,
 } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import {
@@ -17,6 +16,7 @@ import {
   getConsultancyBySlug,
   getPartners,
 } from "../../../lib/research-public-data";
+import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 
 export const revalidate = 300;
 
@@ -43,19 +43,26 @@ export default async function ConsultancyDetailPage({
   const documents = Array.isArray(consultancy.documents)
     ? (consultancy.documents as ResearchGenericRecord[])
     : [];
+  const title = getRecordTitle(consultancy, "Consultancy");
+  const storySections = getNarrativeSections(consultancy, [
+    { title: "Client challenge", fields: ["summary", "description", "client_need"] },
+    { title: "How the team worked", fields: ["objectives", "methodology", "approach"] },
+    { title: "What was delivered", fields: ["deliverables", "outputs", "outcomes"] },
+    { title: "Public value", fields: ["impact", "public_value", "lessons_learned"] },
+  ]);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
       <ResearchDetailHero
         eyebrow="Consultancy"
-        title={consultancy.title ?? "Consultancy"}
-        body={compactText(consultancy.summary) || compactText(consultancy.description)}
+        title={title}
+        body={getRecordSummary(consultancy)}
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "Consultancies", href: "/consultancies" },
-          { label: consultancy.title ?? "Consultancy" },
+          { label: title },
         ]}
-        labels={[consultancy.consultancy_type, consultancy.client_type, consultancy.status]}
+        labels={[consultancy.consultancy_type, consultancy.client_type, consultancy.status, consultancy.is_featured ? "featured" : null]}
         facts={[
           { label: "Client", value: consultancy.client_name },
           { label: "Value", value: formatMoney(consultancy.contract_value, consultancy.currency) },
@@ -81,28 +88,13 @@ export default async function ConsultancyDetailPage({
       <ResearchSection
         eyebrow="Engagement Profile"
         title="Scope, methods, and public outcomes"
-        body="Consultancy detail focuses on client needs, deliverables, outcomes, impact, and the university units involved."
+        body="Published fields are arranged into a consultancy story from client challenge to delivered public value."
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-5">
-            <ResearchTextPanel
-              title="Summary"
-              fields={[
-                ["Summary", consultancy.summary],
-                ["Description", consultancy.description],
-                ["Objectives", consultancy.objectives],
-              ]}
-            />
-            <ResearchTextPanel
-              title="Method, deliverables, and impact"
-              fields={[
-                ["Methodology", consultancy.methodology],
-                ["Deliverables", consultancy.deliverables],
-                ["Outcomes", consultancy.outcomes],
-                ["Impact", consultancy.impact],
-              ]}
-            />
+            <ConsultancyStory sections={storySections} />
+            <ResearchRecordPanel title="Documents and outputs" records={documents} empty="No public consultancy documents are published yet." />
           </div>
           <ResearchDetailSidebar
             labels={[consultancy.consultancy_type ?? "consultancy", consultancy.client_type, consultancy.status]}
@@ -121,18 +113,74 @@ export default async function ConsultancyDetailPage({
       </ResearchSection>
 
       <ResearchSection
-        eyebrow="Relationships"
-        title="Partner, center, team, and documents"
-        body="Related work is shown when linked public records are available."
+        eyebrow="Delivery Context"
+        title="Partner, host center, team, and files"
+        body="Linked public records appear only when the backend connects them to this consultancy."
       >
-        <div className="grid gap-5 lg:grid-cols-3">
-          <ResearchRelationshipCard title="Partner" record={partner} hrefBase="/partners" empty="No public partner is linked." />
-          <ResearchRelationshipCard title="Center" record={center} hrefBase="/centers" empty="No public center is linked." />
+        <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-4">
+          <ContextCard title="Partner" record={partner} hrefBase="/partners" empty="No public partner is linked." />
+          <ContextCard title="Center" record={center} hrefBase="/centers" empty="No public center is linked." />
           <ResearchRecordPanel title="Team" records={team} />
           <ResearchRecordPanel title="Documents" records={documents} />
         </div>
       </ResearchSection>
     </main>
+  );
+}
+
+function ConsultancyStory({ sections }: { sections: Array<{ title: string; body: string }> }) {
+  if (sections.length === 0) {
+    return <StatusMessage>The consultancy story appears when challenge, method, deliverable, or impact fields are published.</StatusMessage>;
+  }
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      {sections.map((section, index) => (
+        <details key={section.title} className="group border-b border-slate-200 last:border-b-0" open={index === 0}>
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-base font-semibold text-slate-950 transition hover:bg-slate-50">
+            {section.title}
+            <span className="text-primary transition group-open:rotate-45">+</span>
+          </summary>
+          <p className="px-5 pb-5 text-sm leading-7 text-slate-600">{section.body}</p>
+        </details>
+      ))}
+    </section>
+  );
+}
+
+function ContextCard({
+  title,
+  record,
+  hrefBase,
+  empty,
+}: {
+  title: string;
+  record?: ResearchGenericRecord;
+  hrefBase: string;
+  empty: string;
+}) {
+  return (
+    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+      {record ? (
+        <>
+          <h3 className="mt-4 text-base font-semibold text-slate-950">
+            {record.slug ? (
+              <Link href={`${hrefBase}/${record.slug}`} className="transition hover:text-primary">
+                {getRecordTitle(record, title)}
+              </Link>
+            ) : (
+              getRecordTitle(record, title)
+            )}
+          </h3>
+          {getRecordSummary(record) ? (
+            <p className="mt-2 text-sm leading-7 text-slate-600">{getRecordSummary(record)}</p>
+          ) : null}
+        </>
+      ) : (
+        <p className="mt-3 text-sm leading-7 text-slate-600">{empty}</p>
+      )}
+    </section>
   );
 }
 
