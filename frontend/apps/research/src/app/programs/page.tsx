@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpenCheck, Building2, FlaskConical, GraduationCap, Sprout } from "lucide-react";
 import { MotionCard, MotionFadeIn } from "../../components/motion-cards";
+import { SkeletonList } from "../../components/skeleton-ui";
 import { ResearchClusterHero } from "../../components/research-cluster";
 import { ResearchFilterForm } from "../../components/research-listing";
 import {
@@ -77,13 +79,32 @@ export default async function ProgramsPage({
   searchParams?: Promise<ProgramSearchParams>;
 }) {
   const params = (await searchParams) ?? {};
+
+  return (
+    <main id="research-main" className="min-h-screen bg-white">
+      <ResearchClusterHero
+        eyebrow="Discovery"
+        title="Research programs and long-term inquiry pathways."
+        body="Programs organize related projects, centers, themes, and outputs into public research pathways."
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Discovery", href: "/projects" }, { label: "Programs" }]}
+        imageSrc="/images/research/research-projects-hero.svg"
+        imageAlt="Research teams reviewing long-term programmes and project pathways"
+        links={discoveryLinks}
+        primaryAction={{ label: "Browse projects", href: "/projects" }}
+        stats={[{ label: "Live data", value: 0 }, { label: "Published", value: 0 }, { label: "Centers", value: 0 }, { label: "Themes", value: 0 }]}
+      />
+      <Suspense fallback={<div className="px-4 py-8 sm:px-6 lg:px-8 lg:py-12"><SkeletonList /></div>}>
+        <ProgramsDataSection params={params} />
+      </Suspense>
+    </main>
+  );
+}
+
+async function ProgramsDataSection({ params }: { params: ProgramSearchParams }) {
   const [programs, allPrograms, centers, themes] = await Promise.all([
     getProgramsFiltered({
-      search: params.q,
-      status: params.status,
-      centerId: params.center,
-      year: params.year,
-      sort: params.sort || "created_at",
+      search: params.q, status: params.status, centerId: params.center,
+      year: params.year, sort: params.sort || "created_at",
       order: params.sort === "name" ? "asc" : "desc",
     }),
     getPrograms(),
@@ -92,93 +113,41 @@ export default async function ProgramsPage({
   ]);
 
   return (
-    <main id="research-main" className="min-h-screen bg-white">
-      <ResearchClusterHero
-        eyebrow="Discovery"
-        title="Research programs and long-term inquiry pathways."
-        body="Programs organize related projects, centers, themes, and outputs into public research pathways."
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Discovery", href: "/projects" },
-          { label: "Programs" },
-        ]}
-        imageSrc="/images/research/research-projects-hero.svg"
-        imageAlt="Research teams reviewing long-term programmes and project pathways"
-        links={discoveryLinks}
-        primaryAction={{ label: "Browse projects", href: "/projects" }}
-        stats={[
-          { label: "Program results", value: programs.data.length },
-          { label: "Published programs", value: allPrograms.data.length },
-          { label: "Centers", value: centers.data.length },
-          { label: "Themes", value: themes.data.length },
-        ]}
-      />
-
+    <>
       <ResearchSection
         eyebrow="Programs"
         title="Program catalogue"
         body="Browse programmes by status, center, year, and keyword."
         tone="white"
       >
-        <ProgramFilters
-          params={params}
-          centers={centers.data}
-          years={getProgramYears(allPrograms.data)}
-        />
-
-        {[programs.error, centers.error]
-          .filter(Boolean)
-          .map((error) => (
-            <div key={error} className="mt-5">
-              <StatusMessage tone="error">{error}</StatusMessage>
-            </div>
-          ))}
-
+        <ProgramFilters params={params} centers={centers.data} years={getProgramYears(allPrograms.data)} />
+        {[programs.error, centers.error].filter(Boolean).map((error) => (
+          <div key={error} className="mt-5"><StatusMessage tone="error">{error}</StatusMessage></div>
+        ))}
         {programs.data.length > 0 ? (
           <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {programs.data.map((program) => (
-              <MotionCard key={program.id}>
-                <ProgramCard program={program} />
-              </MotionCard>
-            ))}
+            {programs.data.map((program) => (<MotionCard key={program.id}><ProgramCard program={program} /></MotionCard>))}
           </div>
         ) : (
-          <div className="mt-7">
-            <StatusMessage>No research programs match the current filters.</StatusMessage>
-          </div>
+          <div className="mt-7"><StatusMessage>No research programs match the current filters.</StatusMessage></div>
         )}
       </ResearchSection>
-
-      <ResearchSection
-        eyebrow="Focus"
-        title="Themes supporting discovery"
-        body="Theme records provide the public focus-area language that helps visitors understand the research portfolio."
-      >
+      <ResearchSection eyebrow="Focus" title="Themes supporting discovery" body="Theme records provide the public focus-area language that helps visitors understand the research portfolio.">
         {themes.error ? <StatusMessage tone="error">{themes.error}</StatusMessage> : null}
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {themes.data.map((theme) => (
             <article key={theme.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex flex-wrap gap-2">
-                {[theme.theme_type, theme.category, theme.status].map(compactText).filter(Boolean).slice(0, 2).map((label) => (
-                  <Badge key={label}>{formatLabel(label)}</Badge>
-                ))}
+                {[theme.theme_type, theme.category, theme.status].map(compactText).filter(Boolean).slice(0, 2).map((label) => (<Badge key={label}>{formatLabel(label)}</Badge>))}
               </div>
-              <h2 className="mt-4 text-xl font-semibold text-slate-950">
-                {theme.name ?? theme.title}
-              </h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                {compactText(theme.summary) ||
-                  compactText(theme.description) ||
-                  "Additional theme detail will appear when published."}
-              </p>
+              <h2 className="mt-4 text-xl font-semibold text-slate-950">{theme.name ?? theme.title}</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-600">{compactText(theme.summary) || compactText(theme.description) || "Additional theme detail will appear when published."}</p>
             </article>
           ))}
-          {themes.data.length === 0 ? (
-            <StatusMessage>No research themes are currently published.</StatusMessage>
-          ) : null}
+          {themes.data.length === 0 ? <StatusMessage>No research themes are currently published.</StatusMessage> : null}
         </div>
       </ResearchSection>
-    </main>
+    </>
   );
 }
 

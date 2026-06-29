@@ -1,9 +1,11 @@
+import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowRight, FileText, Handshake, Quote, Search, Send, Sprout } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
+import { SkeletonList } from "../components/skeleton-ui";
 import { ResearchPathwayNav } from "../components/research-cluster";
 import { ResearchImmersiveHero } from "../components/research-immersive-hero";
 import { Badge, FilledBadge, StatusMessage } from "../components/research-ui";
@@ -224,14 +226,8 @@ export default async function ResearchPage() {
             work researchers, students, funders, and partners come here to do.
           </p>
         </div>
-
-        <ScrollRevealGroup
-          className="mx-auto mt-8 grid max-w-[1680px] gap-6 md:grid-cols-3"
-          staggerDelay={80}
-        >
-          {workflowCards.map((card) => (
-            <WorkflowCard key={card.title} {...card} />
-          ))}
+        <ScrollRevealGroup className="mx-auto mt-8 grid max-w-[1680px] gap-6 md:grid-cols-3" staggerDelay={80}>
+          {workflowCards.map((card) => (<WorkflowCard key={card.title} {...card} />))}
         </ScrollRevealGroup>
       </ScrollReveal>
 
