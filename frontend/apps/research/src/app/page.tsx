@@ -184,6 +184,7 @@ export default async function ResearchPage() {
           },
         ]}
       />
+      <CountUpMetrics projects={projects} publications={publications} grants={grants} innovations={innovations} partners={partners} />
       <ResearchPathwayNav eyebrow="Kisii University Research" links={homeLinks} />
 
       {errors.length > 0 ? (
@@ -396,6 +397,21 @@ export default async function ResearchPage() {
               </article>
             ))}
           </ScrollRevealGroup>
+
+          {partners.data.length > 0 ? (
+            <div className="mt-8 overflow-hidden rounded-lg border border-slate-200 bg-white py-4">
+              <p className="mb-3 text-center text-xs font-semibold uppercase text-slate-400">Research Partners</p>
+              <div className="flex animate-[marquee_30s_linear_infinite] gap-8 hover:[animation-play-state:paused]">
+                {[...partners.data, ...partners.data].map((partner, i) => (
+                  <span key={`${partner.id}-${i}`} className="flex h-12 shrink-0 items-center gap-2 whitespace-nowrap px-4 text-sm font-semibold text-slate-600">
+                    <span className="h-3 w-3 shrink-0 rounded-full bg-primary/30" />
+                    {partner.name}
+                  </span>
+                ))}
+              </div>
+              <style>{`@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }`}</style>
+            </div>
+          ) : null}
         </div>
       </ScrollReveal>
 
@@ -418,6 +434,8 @@ export default async function ResearchPage() {
     </main>
   );
 }
+
+import { CountUpMetrics } from "../components/count-up-metrics";
 
 function SectionKicker({
   children,
