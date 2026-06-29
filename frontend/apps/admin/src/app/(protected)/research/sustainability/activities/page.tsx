@@ -8,13 +8,7 @@ import { SustainabilityWorkspaceHeader } from "../_components/sustainability-wor
 
 const activityFilters: EditableListFilter[] = [
   { name: "search", label: "Search", type: "text", placeholder: "Search title, venue, or summary" },
-  { name: "event_type", label: "Activity Type", type: "select", options: [
-    { label: "Workshop", value: "workshop" },
-    { label: "Seminar", value: "seminar" },
-    { label: "Conference", value: "conference" },
-    { label: "Webinar", value: "webinar" },
-    { label: "Symposium", value: "symposium" },
-  ] },
+  { name: "upcoming", label: "Upcoming", type: "boolean" },
   { name: "status", label: "Status", type: "select", options: [
     { label: "Upcoming", value: "upcoming" },
     { label: "Ongoing", value: "ongoing" },
@@ -27,7 +21,9 @@ const activityFilters: EditableListFilter[] = [
 const activityColumns: Array<EditableRecordColumn<Record<string, any> & { id: string }>> = [
   { key: "title", label: "Event / Activity", className: "min-w-[260px]", render: (record) => <span className="font-medium">{record.title}</span> },
   { key: "date", label: "Date", className: "w-[150px]", render: (record) => <DateValue value={record.start_date} /> },
-  { key: "location", label: "Location", className: "hidden min-w-[200px] lg:table-cell", render: (record) => <span>{record.venue ?? record.location ?? "No location"}</span> },
+  { key: "location", label: "Location", className: "hidden min-w-[200px] lg:table-cell", render: (record) => <span>{record.location ?? "No location"}</span> },
+  { key: "project", label: "Linked Project", className: "hidden min-w-[170px] xl:table-cell", render: (record) => <span className="text-muted-foreground">{record.project?.title ?? record.project_title ?? "Not exposed by Events API"}</span> },
+  { key: "partner", label: "Partner", className: "hidden min-w-[160px] xl:table-cell", render: (record) => <span className="text-muted-foreground">{record.partner?.name ?? record.partner_name ?? "Not exposed by Events API"}</span> },
   { key: "status", label: "Status", className: "w-[130px]", render: (record) => <StatusBadge value={record.status} /> },
 ];
 
@@ -39,24 +35,18 @@ export default function SustainabilityActivitiesPage() {
       queryKey={["research", "sustainability-activities"]}
       resource={{ list: eventsApi.listAdmin, create: eventsApi.create, update: eventsApi.update, delete: eventsApi.delete }}
       manageScopes={["content.manage_events", "admin:*"]}
-      listParams={{ event_type: "workshop" }}
+      listParams={{ scope_type: "research" }}
       summarySlot={<SustainabilityWorkspaceHeader />}
       listFilters={activityFilters}
       recordColumns={activityColumns}
       fields={[
         { name: "title", label: "Title", required: true },
         { name: "slug", label: "Slug" },
-        { name: "event_type", label: "Activity Type", type: "select", placeholder: "Select activity", options: [
-          { label: "Workshop", value: "workshop" },
-          { label: "Seminar", value: "seminar" },
-          { label: "Conference", value: "conference" },
-          { label: "Webinar", value: "webinar" },
-          { label: "Symposium", value: "symposium" },
-        ] },
         { name: "summary", label: "Summary", type: "textarea" },
-        { name: "start_date", label: "Start Date", type: "date", required: true },
-        { name: "end_date", label: "End Date", type: "date" },
-        { name: "venue", label: "Venue" },
+        { name: "start_date", label: "Start Date", type: "datetime-local", required: true },
+        { name: "end_date", label: "End Date", type: "datetime-local" },
+        { name: "location", label: "Location" },
+        { name: "meeting_link", label: "Registration or Meeting URL", type: "url" },
         { name: "status", label: "Status", type: "select", placeholder: "Select status", options: [
           { label: "Upcoming", value: "upcoming" },
           { label: "Ongoing", value: "ongoing" },
@@ -64,10 +54,11 @@ export default function SustainabilityActivitiesPage() {
           { label: "Postponed", value: "postponed" },
           { label: "Cancelled", value: "cancelled" },
         ] },
-        { name: "is_active", label: "Active", type: "boolean" },
+        { name: "is_public", label: "Public", type: "boolean" },
+        { name: "is_published", label: "Published", type: "boolean" },
         { name: "is_featured", label: "Featured", type: "boolean" },
       ]}
-      defaults={{ event_type: "workshop", status: "upcoming" }}
+      defaults={{ scope_type: "research", status: "upcoming", is_public: true }}
       emptyMessage="No sustainability activities were returned by the main content service."
     />
   );

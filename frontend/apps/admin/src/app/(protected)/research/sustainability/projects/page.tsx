@@ -1,7 +1,7 @@
 "use client";
 
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
-import { SustainabilityWorkspaceHeader, sustainabilityColumns, sustainabilityFilters } from "../_components/sustainability-workspace";
+import { SustainabilityWorkspaceHeader, parseSdgGoals, sustainabilityColumns, sustainabilityFilters } from "../_components/sustainability-workspace";
 
 export default function SustainabilityProjectsPage() {
   return (
@@ -35,6 +35,7 @@ export default function SustainabilityProjectsPage() {
         { name: "approach", label: "Approach", type: "textarea" },
         { name: "activities", label: "Activities", type: "textarea" },
         { name: "impact", label: "Impact", type: "textarea" },
+        { name: "sdg_goals", label: "SDG Goals", placeholder: "Comma-separated goals, e.g. 4, 6, 13" },
         { name: "start_date", label: "Start Date", type: "date" },
         { name: "end_date", label: "End Date", type: "date" },
         { name: "contact_email", label: "Contact Email", type: "email" },
@@ -51,6 +52,10 @@ export default function SustainabilityProjectsPage() {
         { name: "is_featured", label: "Featured", type: "boolean" },
       ]}
       defaults={{ initiative_type: "climate", status: "active" }}
+      buildPayload={(values) => ({
+        ...values,
+        sdg_goals: parseSdgGoals(values.sdg_goals),
+      })}
       emptyMessage="No sustainability projects were returned by the research service."
       detailBaseHref="/research/sustainability/projects"
       importResource="research-sustainability"

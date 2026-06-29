@@ -308,6 +308,23 @@ function mainContentCrudApi<TRecord, TPayload>(path: string, adminPath = `${path
   };
 }
 
+function sustainabilityRelationApi(relation: "projects" | "partners" | "training" | "stories") {
+  return {
+    list: (sustainabilityId: string) =>
+      researchApi.get<{ data: ResearchGenericRecord[] }>(
+        `/api/v1/sustainability/id/${sustainabilityId}/${relation}`,
+      ),
+    add: (sustainabilityId: string, relatedId: string) =>
+      researchApi.put<{ data: ResearchGenericRecord }>(
+        `/api/v1/sustainability/id/${sustainabilityId}/${relation}/${relatedId}`,
+      ),
+    remove: (sustainabilityId: string, relatedId: string) =>
+      researchApi.delete<void>(
+        `/api/v1/sustainability/id/${sustainabilityId}/${relation}/${relatedId}`,
+      ),
+  };
+}
+
 export const researchServiceApi = {
   stats: () => researchApi.get<{ data: PublicStatsResponse }>("/api/v1/stats"),
   adminStats: () =>
@@ -370,6 +387,12 @@ export const researchServiceApi = {
   sustainability: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/sustainability",
   ),
+  sustainabilityRelations: {
+    projects: sustainabilityRelationApi("projects"),
+    partners: sustainabilityRelationApi("partners"),
+    training: sustainabilityRelationApi("training"),
+    stories: sustainabilityRelationApi("stories"),
+  },
   innovations: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/innovations",
   ),

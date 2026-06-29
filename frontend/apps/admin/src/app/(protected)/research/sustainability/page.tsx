@@ -2,7 +2,7 @@
 
 import { Calendar, FlaskConical, HeartHandshake, Newspaper } from "lucide-react";
 import { ResearchSectionIndex } from "../_components/research-section-index";
-import { SustainabilityWorkspaceHeader } from "./_components/sustainability-workspace";
+import { SustainabilityDashboard, SustainabilityWorkspaceHeader } from "./_components/sustainability-workspace";
 
 export default function SustainabilityPage() {
   return (
@@ -20,6 +20,7 @@ export default function SustainabilityPage() {
           { title: "Content", description: "Research-scoped content records.", href: "/research/content", icon: Newspaper },
         ]}
       />
+      <SustainabilityDashboard />
     </div>
   );
 }

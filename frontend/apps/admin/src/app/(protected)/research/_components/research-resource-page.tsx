@@ -44,6 +44,10 @@ interface ResearchResourcePageProps {
     record: ResearchGenericRecord,
   ) => Array<EditableRecordWorkflowAction<ResearchGenericRecord, ResearchGenericPayload>>;
   importResource?: string;
+  buildPayload?: (
+    values: ResearchGenericPayload,
+    editingRecord?: ResearchGenericRecord | null,
+  ) => ResearchGenericPayload;
 }
 
 const FILTERABLE_RELATIONS: Record<string, EditableListFilter["relation"]> = {
@@ -129,6 +133,7 @@ export function ResearchResourcePage({
   detailHref,
   getRecordWorkflowActions,
   importResource,
+  buildPayload,
 }: ResearchResourcePageProps) {
   const { hasScope } = usePermissions();
   const canManage = manageScopes.some((scope) => hasScope(scope));
@@ -173,7 +178,10 @@ export function ResearchResourcePage({
       getRecordWorkflowActions={getRecordWorkflowActions}
       emptyMessage={emptyMessage}
       resourceKey={importResource}
-      buildPayload={(values) => ({ ...defaults, ...values })}
+      buildPayload={(values, editingRecord) => ({
+        ...defaults,
+        ...(buildPayload ? buildPayload(values, editingRecord) : values),
+      })}
     />
   );
 }
