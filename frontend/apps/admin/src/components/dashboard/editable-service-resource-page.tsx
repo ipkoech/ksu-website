@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit, Eye, FilterX, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 
-const RESEARCH_FRONTEND = process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL || "http://localhost:3002";
+const RESEARCH_FRONTEND = process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL;
 
 async function revalidateResearch(resource: string) {
+  if (!RESEARCH_FRONTEND) return;
   try {
     await fetch(`${RESEARCH_FRONTEND}/api/revalidate`, {
       method: "POST",
@@ -30,6 +31,12 @@ import {
   Alert,
   AlertDescription,
   ConfirmDialog,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -300,6 +307,7 @@ export function EditableServiceResourcePage<
 }: EditableServiceResourcePageProps<TRecord, TPayload>) {
   const queryClient = useQueryClient();
   const formId = useId();
+  const [editorOpen, setEditorOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<TRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TRecord | null>(null);
   const [workflowTarget, setWorkflowTarget] = useState<{
@@ -347,12 +355,26 @@ export function EditableServiceResourcePage<
     setEditingRecord(record);
     setValues(recordToValues(fields, record));
     setFieldErrors({});
+    setEditorOpen(true);
+  };
+
+  const startCreate = () => {
+    if (!canCreate) return;
+    setEditingRecord(null);
+    setValues(recordToValues(fields));
+    setFieldErrors({});
+    setEditorOpen(true);
   };
 
   const resetForm = () => {
     setEditingRecord(null);
     setValues(recordToValues(fields));
     setFieldErrors({});
+  };
+
+  const closeEditor = () => {
+    setEditorOpen(false);
+    resetForm();
   };
 
   const updateFilter = (name: string, value: string | boolean | null) => {
@@ -410,6 +432,7 @@ export function EditableServiceResourcePage<
         toast.success(`${title} created successfully`);
       }
       resetForm();
+      setEditorOpen(false);
       if (resourceKey) revalidateResearch(resourceKey);
     } catch {
       toast.error(
@@ -575,13 +598,19 @@ export function EditableServiceResourcePage<
   return (
     <div>
       <PageHeader title={title} description={description} backHref={backHref} />
-      <div className="grid gap-6 p-4 sm:p-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="p-4 sm:p-6">
         <Card>
           <CardHeader>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <CardTitle>Records</CardTitle>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
                 {toolbarSlot}
+                {canCreate ? (
+                  <Button type="button" size="sm" onClick={startCreate}>
+                    <Plus data-icon="inline-start" />
+                    Create Record
+                  </Button>
+                ) : null}
                 {listFilters.length > 0 ? (
                   <Button
                     type="button"
@@ -717,15 +746,24 @@ export function EditableServiceResourcePage<
             )}
           </CardContent>
         </Card>
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 [&_svg]:size-5">
-              <Plus />
-              {editingRecord ? "Edit Record" : "Create Record"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
+      <Dialog
+        open={editorOpen}
+        onOpenChange={(open) => {
+          if (!open) closeEditor();
+        }}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{editingRecord ? "Edit Record" : "Create Record"}</DialogTitle>
+            <DialogDescription>
+              {editingRecord
+                ? `Update ${getRecordTitle(editingRecord)} without leaving this list.`
+                : `Create a ${title.toLowerCase()} record without leaving this list.`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-2">
             {!editingRecord && !canCreate ? (
               <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
                 {readOnlyMessage}
@@ -945,31 +983,31 @@ export function EditableServiceResourcePage<
                     </div>
                   );
                 })}
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Button
-                    type="button"
-                    onClick={submit}
-                    disabled={
-                      createMutation.isPending || updateMutation.isPending
-                    }
-                  >
-                    {createMutation.isPending || updateMutation.isPending
-                      ? "Saving..."
-                      : editingRecord
-                        ? "Save Changes"
-                        : "Create"}
-                  </Button>
-                  {editingRecord ? (
-                    <Button type="button" variant="outline" onClick={resetForm}>
-                      Cancel Edit
-                    </Button>
-                  ) : null}
-                </div>
               </>
             ) : null}
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={closeEditor}>
+              Cancel
+            </Button>
+            {(editingRecord ? canEdit : canCreate) ? (
+              <Button
+                type="button"
+                onClick={submit}
+                disabled={
+                  createMutation.isPending || updateMutation.isPending
+                }
+              >
+                {createMutation.isPending || updateMutation.isPending
+                  ? "Saving..."
+                  : editingRecord
+                    ? "Save Changes"
+                    : "Create"}
+              </Button>
+            ) : null}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={!!deleteTarget}
