@@ -4,6 +4,19 @@ import { useId, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit, Eye, FilterX, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+
+const RESEARCH_FRONTEND = process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL || "http://localhost:3002";
+
+async function revalidateResearch(resource: string) {
+  try {
+    await fetch(`${RESEARCH_FRONTEND}/api/revalidate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resource, secret: "ksu-research-revalidate" }),
+    });
+  } catch { /* fire and forget */ }
+}
+
 import { PageHeader } from "@/components/layout";
 import { EntityPicker, EntityTypeRecordPicker } from "@/components/relationships/entity-picker";
 import { relationshipAdapters, type RelationshipFilters } from "@/components/relationships/relationship-adapters";
@@ -141,6 +154,7 @@ interface EditableServiceResourcePageProps<
   canEdit?: boolean;
   canDelete?: boolean;
   readOnlyMessage?: string;
+  resourceKey?: string;
   toolbarSlot?: ReactNode;
 }
 
@@ -281,6 +295,7 @@ export function EditableServiceResourcePage<
   canEdit = true,
   canDelete = true,
   readOnlyMessage = "You can view these records, but your current permissions do not allow changes.",
+  resourceKey,
   toolbarSlot,
 }: EditableServiceResourcePageProps<TRecord, TPayload>) {
   const queryClient = useQueryClient();
@@ -395,6 +410,7 @@ export function EditableServiceResourcePage<
         toast.success(`${title} created successfully`);
       }
       resetForm();
+      if (resourceKey) revalidateResearch(resourceKey);
     } catch {
       toast.error(
         editingRecord
@@ -416,6 +432,7 @@ export function EditableServiceResourcePage<
       await deleteMutation.mutateAsync(deleteTarget.id);
       toast.success(`${title} deleted successfully`);
       setDeleteTarget(null);
+      if (resourceKey) revalidateResearch(resourceKey);
     } catch {
       toast.error(`Failed to delete ${title.toLowerCase()}`);
     }

@@ -51,6 +51,7 @@ export default function ResearchProjectsPage() {
     <EditableServiceResourcePage<ResearchProject, ResearchProjectPayload>
       title="Research Projects"
       description="Create, edit, and retire research projects from the research service."
+      resourceKey="projects"
       backHref="/research"
       queryKey={["research", "projects"]}
       listFilters={projectListFilters}

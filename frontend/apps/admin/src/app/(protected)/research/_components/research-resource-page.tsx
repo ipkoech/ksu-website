@@ -161,6 +161,7 @@ export function ResearchResourcePage({
       }
       getRecordWorkflowActions={getRecordWorkflowActions}
       emptyMessage={emptyMessage}
+      resourceKey={importResource}
       buildPayload={(values) => ({ ...defaults, ...values })}
     />
   );

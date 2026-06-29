@@ -58,6 +58,7 @@ export default function ResearchPublicationsPage() {
     <EditableServiceResourcePage<ResearchPublication, ResearchPublicationPayload>
       title="Publications"
       description="Create and maintain publication records from the research service."
+      resourceKey="publications"
       backHref="/research"
       queryKey={["research", "publications"]}
       listFilters={publicationListFilters}
