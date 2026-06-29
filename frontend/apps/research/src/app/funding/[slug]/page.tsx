@@ -5,7 +5,6 @@ import {
   ResearchDetailHero,
   ResearchDetailSidebar,
   ResearchFact,
-  ResearchTextPanel,
 } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import {
@@ -89,7 +88,7 @@ export default async function FundingDetailPage({
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-5">
-            <ResearchTextPanel
+            <OpportunityEvidence
               title="About this opportunity"
               fields={[
                 ["Summary", grant.summary],
@@ -98,7 +97,7 @@ export default async function FundingDetailPage({
                 ["Focus areas", grant.focus_areas],
               ]}
             />
-            <ResearchTextPanel
+            <OpportunityEvidence
               title="Eligibility and requirements"
               fields={[
                 ["Eligibility", grant.eligibility],
@@ -152,6 +151,30 @@ export default async function FundingDetailPage({
         </div>
       </ResearchSection>
     </main>
+  );
+}
+
+function OpportunityEvidence({ title, fields }: { title: string; fields: Array<[string, unknown]> }) {
+  const entries = fields
+    .map(([label, value]) => ({ label, value: compactText(value as string | number | null | undefined) }))
+    .filter((entry) => entry.value);
+
+  if (entries.length === 0) {
+    return <StatusMessage>{title} details are not published yet.</StatusMessage>;
+  }
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">{title}</h2>
+      <div className="mt-4 flex flex-col gap-4">
+        {entries.map((entry) => (
+          <div key={entry.label}>
+            <p className="text-xs font-semibold uppercase text-slate-500">{entry.label}</p>
+            <p className="mt-1 break-words whitespace-pre-line text-sm leading-7 text-slate-600">{entry.value}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

@@ -7,7 +7,6 @@ import {
   ResearchDetailHero,
   ResearchDetailSidebar,
   ResearchRecordPanel,
-  ResearchTextPanel,
 } from "../../../components/research-detail";
 import { Badge, ResearchSection, StatusMessage } from "../../../components/research-ui";
 import {
@@ -116,7 +115,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
                 ) : null}
               </figure>
             ) : null}
-            <ResearchTextPanel
+            <NewsEvidencePanel
               title="Story"
               fields={[
                 ["Excerpt", record.excerpt],
@@ -176,11 +175,35 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
       >
         <div className="grid gap-5 lg:grid-cols-3">
           <ResearchRecordPanel title="Attachments" records={attachments} empty="No downloadable resources are linked yet." />
-          <ResearchTextPanel title="Author" fields={[["Name", record.author_name], ["Bio", record.author_bio]]} />
-          <ResearchTextPanel title="Publication Window" fields={[["Published", formatDate(record.published_at)], ["Expires", formatDate(record.expires_at)]]} />
+          <NewsEvidencePanel title="Author" fields={[["Name", record.author_name], ["Bio", record.author_bio]]} />
+          <NewsEvidencePanel title="Publication Window" fields={[["Published", formatDate(record.published_at)], ["Expires", formatDate(record.expires_at)]]} />
         </div>
       </ResearchSection>
     </main>
+  );
+}
+
+function NewsEvidencePanel({ title, fields }: { title: string; fields: Array<[string, unknown]> }) {
+  const entries = fields
+    .map(([label, value]) => ({ label, value: compactText(value as string | number | null | undefined) }))
+    .filter((entry) => entry.value);
+
+  if (entries.length === 0) {
+    return <StatusMessage>{title} details are not published yet.</StatusMessage>;
+  }
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">{title}</h2>
+      <div className="mt-4 flex flex-col gap-4">
+        {entries.map((entry) => (
+          <div key={entry.label}>
+            <p className="text-xs font-semibold uppercase text-slate-500">{entry.label}</p>
+            <p className="mt-1 break-words whitespace-pre-line text-sm leading-7 text-slate-600">{entry.value}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

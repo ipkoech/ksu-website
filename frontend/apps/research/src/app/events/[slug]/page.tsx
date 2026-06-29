@@ -5,7 +5,6 @@ import {
   ResearchDetailHero,
   ResearchDetailSidebar,
   ResearchRecordPanel,
-  ResearchTextPanel,
 } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import {
@@ -120,11 +119,35 @@ export default async function EventDetailPage({
       >
         <div className="grid gap-5 lg:grid-cols-3">
           <ResearchRecordPanel title="Attachments" records={attachments} />
-          <ResearchTextPanel title="Contact" fields={[["Name", event.contact_name], ["Email", event.contact_email], ["Phone", event.contact_phone]]} />
-          <ResearchTextPanel title="Location" fields={[["Address", event.address], ["GPS", [event.gps_latitude, event.gps_longitude].map(compactText).filter(Boolean).join(", ")]]} />
+          <EvidencePanel title="Contact" fields={[["Name", event.contact_name], ["Email", event.contact_email], ["Phone", event.contact_phone]]} />
+          <EvidencePanel title="Location" fields={[["Address", event.address], ["GPS", [event.gps_latitude, event.gps_longitude].map(compactText).filter(Boolean).join(", ")]]} />
         </div>
       </ResearchSection>
     </main>
+  );
+}
+
+function EvidencePanel({ title, fields }: { title: string; fields: Array<[string, unknown]> }) {
+  const entries = fields
+    .map(([label, value]) => ({ label, value: compactText(value as string | number | null | undefined) }))
+    .filter((entry) => entry.value);
+
+  if (entries.length === 0) {
+    return <StatusMessage>{title} details are not published yet.</StatusMessage>;
+  }
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+      <dl className="mt-4 grid gap-3 text-sm">
+        {entries.map((entry) => (
+          <div key={entry.label}>
+            <dt className="text-xs font-semibold uppercase text-slate-500">{entry.label}</dt>
+            <dd className="mt-1 break-words text-slate-700 [overflow-wrap:anywhere]">{entry.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   );
 }
 
