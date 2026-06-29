@@ -1,6 +1,18 @@
 "use client";
 
+import type { EditableRecordColumn } from "@/components/dashboard/editable-service-resource-page";
+import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
+import { DateValue, MoneyValue, StatusBadge, titleOf } from "../../_components/research-workspace";
+import { CapacityWorkspaceHeader, statusFilter } from "../_components/capacity-workspace";
+
+const consultancyColumns: Array<EditableRecordColumn<ResearchGenericRecord>> = [
+  { key: "title", label: "Consultancy", className: "min-w-[260px]", render: (record) => <span className="font-medium">{titleOf(record)}</span> },
+  { key: "client", label: "Client", className: "hidden min-w-[180px] lg:table-cell", render: (record) => <span>{record.client_name ?? "No client"}</span> },
+  { key: "value", label: "Value", className: "hidden w-[150px] xl:table-cell", render: (record) => <MoneyValue amount={record.contract_value} currency={record.currency} /> },
+  { key: "date", label: "Start", className: "hidden w-[150px] xl:table-cell", render: (record) => <DateValue value={record.start_date} /> },
+  { key: "status", label: "Status", className: "w-[130px]", render: (record) => <StatusBadge value={record.status} /> },
+];
 
 export default function ResearchConsultanciesPage() {
   return (
@@ -11,6 +23,16 @@ export default function ResearchConsultanciesPage() {
       resource={researchServiceApi.consultancies}
       manageScopes={["research.manage_consultancies", "partnerships.manage", "research:write"]}
       listParams={{ is_active: true }}
+      summarySlot={<CapacityWorkspaceHeader />}
+      listFilters={[{ name: "search", label: "Search", type: "text", placeholder: "Search consultancies or clients" }, { name: "consultancy_type", label: "Type", type: "select", options: [
+        { label: "Research", value: "research" },
+        { label: "Technical", value: "technical" },
+        { label: "Policy", value: "policy" },
+        { label: "Evaluation", value: "evaluation" },
+        { label: "Training", value: "training" },
+        { label: "Advisory", value: "advisory" },
+      ] }, statusFilter]}
+      recordColumns={consultancyColumns}
       metaFields={["code", "consultancy_type", "client_name", "status"]}
       fields={[
         { name: "title", label: "Title", required: true },

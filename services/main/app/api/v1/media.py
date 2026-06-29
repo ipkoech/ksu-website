@@ -119,9 +119,23 @@ async def upload_media(
 
 
 @router.get("/folders")
-async def list_folders(db: DbSession, user: CurrentUser, parent_id: uuid.UUID | None = None, fields: FieldSelection = FieldsDep):
+async def list_folders(
+    db: DbSession,
+    user: CurrentUser,
+    parent_id: uuid.UUID | None = None,
+    scope_type: str | None = Query(default=None, max_length=32),
+    scope_id: uuid.UUID | None = None,
+    fields: FieldSelection = FieldsDep,
+):
     selector = build_selector(MediaFolder, fields)
-    folders = await MediaService.list_folders(db, user=user, parent_id=parent_id, load_options=selector.load_options)
+    folders = await MediaService.list_folders(
+        db,
+        user=user,
+        parent_id=parent_id,
+        scope_type=scope_type,
+        scope_id=scope_id,
+        load_options=selector.load_options,
+    )
     return success(data=selector.apply(folders))
 
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
+import { CapacityWorkspaceHeader, statusFilter } from "../_components/capacity-workspace";
 
 export default function MentorshipProgramsPage() {
   return (
@@ -10,6 +11,8 @@ export default function MentorshipProgramsPage() {
       queryKey={["research", "mentorship"]}
       resource={researchServiceApi.mentorship}
       manageScopes={["training_program.manage", "research:write"]}
+      summarySlot={<CapacityWorkspaceHeader />}
+      listFilters={[{ name: "search", label: "Search", type: "text", placeholder: "Search mentorship programs" }, statusFilter]}
       fields={[
         { name: "name", label: "Name", required: true },
         { name: "slug", label: "Slug" },

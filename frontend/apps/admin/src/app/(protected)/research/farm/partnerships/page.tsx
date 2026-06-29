@@ -1,6 +1,7 @@
 "use client";
 
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
+import { FarmWorkspaceHeader, partnerColumns } from "../_components/farm-workspace";
 
 export default function FarmPartnershipsPage() {
   return (
@@ -11,6 +12,8 @@ export default function FarmPartnershipsPage() {
       resource={researchServiceApi.partners}
       manageScopes={["partnerships.manage", "research:write"]}
       listParams={{ is_active: true, status: "active", partner_type: "community" }}
+      summarySlot={<FarmWorkspaceHeader />}
+      recordColumns={partnerColumns}
       metaFields={["partner_type", "partnership_level", "country", "status"]}
       fields={[
         { name: "name", label: "Name", required: true },

@@ -1346,7 +1346,13 @@ export const mediaApi = {
     return response.json() as Promise<{ data: Media }>;
   },
 
-  listFolders: (params?: FieldSelectionParams & { parent_id?: string }) =>
+  listFolders: (
+    params?: FieldSelectionParams & {
+      parent_id?: string;
+      scope_type?: string;
+      scope_id?: string;
+    },
+  ) =>
     mainApi.get<{ data: MediaFolder[] }>("/api/v1/media/folders", params),
 
   createFolder: (data: MediaFolderCreatePayload) =>

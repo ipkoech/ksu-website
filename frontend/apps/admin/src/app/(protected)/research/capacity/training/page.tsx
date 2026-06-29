@@ -1,6 +1,7 @@
 "use client";
 
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
+import { CapacityWorkspaceHeader, statusFilter, trainingColumns } from "../_components/capacity-workspace";
 
 export default function TrainingProgramsPage() {
   return (
@@ -10,6 +11,9 @@ export default function TrainingProgramsPage() {
       queryKey={["research", "training"]}
       resource={researchServiceApi.training}
       manageScopes={["training_program.manage", "research:write"]}
+      summarySlot={<CapacityWorkspaceHeader />}
+      listFilters={[{ name: "search", label: "Search", type: "text", placeholder: "Search training programs" }, statusFilter]}
+      recordColumns={trainingColumns}
       fields={[
         { name: "title", label: "Title", required: true },
         { name: "slug", label: "Slug" },

@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Calendar, FileText, ImageIcon, Megaphone, Newspaper } from "lucide-react";
+import { Calendar, FileText, ImageIcon, Megaphone, Newspaper, ShieldCheck, Users } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ksu/ui/components";
 import { PageHeader } from "@/components/layout";
+import { ContentWorkspaceHeader } from "./_components/content-workspace";
 
 const contentLinks = [
   { title: "News", href: "/research/content/news", icon: Newspaper },
@@ -11,6 +12,9 @@ const contentLinks = [
   { title: "Events", href: "/research/content/events", icon: Calendar },
   { title: "Announcements", href: "/research/content/announcements", icon: Megaphone },
   { title: "Sliders", href: "/research/content/sliders", icon: ImageIcon },
+  { title: "Boards", href: "/research/content/boards", icon: ShieldCheck },
+  { title: "Staff", href: "/research/content/staff", icon: Users },
+  { title: "Gallery", href: "/research/content/gallery", icon: ImageIcon },
 ];
 
 export default function ResearchContentPage() {
@@ -20,6 +24,9 @@ export default function ResearchContentPage() {
         title="Research Content"
         description="Research content is managed through the main content service with research scope."
       />
+      <div className="px-6">
+        <ContentWorkspaceHeader />
+      </div>
       <div className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-4">
         {contentLinks.map((link) => {
           const Icon = link.icon;

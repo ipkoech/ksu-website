@@ -1,6 +1,7 @@
 "use client";
 
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
+import { FarmWorkspaceHeader } from "../_components/farm-workspace";
 
 export default function FarmImpactStoriesPage() {
   return (
@@ -10,15 +11,26 @@ export default function FarmImpactStoriesPage() {
       queryKey={["research", "farm-impact-stories"]}
       resource={researchServiceApi.stories}
       manageScopes={["research.manage_impact", "sustainability.manage", "research:write"]}
+      summarySlot={<FarmWorkspaceHeader />}
       fields={[
         { name: "title", label: "Title", required: true },
         { name: "slug", label: "Slug" },
-        { name: "story_type", label: "Story Type", placeholder: "community" },
+        { name: "story_type", label: "Story Type", type: "select", placeholder: "Select type", options: [
+          { label: "Impact", value: "impact" },
+          { label: "Community", value: "community" },
+          { label: "Collaboration", value: "collaboration" },
+          { label: "Innovation", value: "innovation" },
+          { label: "Policy", value: "policy" },
+        ] },
         { name: "summary", label: "Summary", type: "textarea" },
         { name: "impact", label: "Impact", type: "textarea" },
         { name: "location", label: "Location" },
         { name: "story_date", label: "Story Date", type: "date" },
-        { name: "status", label: "Status", placeholder: "published" },
+        { name: "status", label: "Status", type: "select", placeholder: "Select status", options: [
+          { label: "Draft", value: "draft" },
+          { label: "Published", value: "published" },
+          { label: "Archived", value: "archived" },
+        ] },
         { name: "is_active", label: "Active", type: "boolean" },
         { name: "is_featured", label: "Featured", type: "boolean" },
       ]}

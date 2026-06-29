@@ -129,9 +129,25 @@ class ResearchFarmCreate(ResearchFarmBase, StatusMixin):
 class ResearchFarmUpdate(BaseSchema):
     name: str | None = Field(None, max_length=255)
     slug: SlugStr | None = None
+    code: str | None = Field(None, max_length=32)
     center_id: uuid.UUID | None = None
     farm_type: str | None = None
     about: str | None = None
+    activities: str | None = None
+    products: str | None = None
+    facilities: str | None = None
+    size_hectares: Decimal | None = None
+    capacity_info: str | None = None
+    location: str | None = Field(None, max_length=255)
+    county: str | None = Field(None, max_length=128)
+    address: str | None = None
+    gps_latitude: float | None = None
+    gps_longitude: float | None = None
+    manager_name: str | None = Field(None, max_length=255)
+    email: EmailField | None = None
+    phone: PhoneStr | None = None
+    cover_image_url: UrlStr | None = None
+    gallery: list[dict] | None = None
     is_active: bool | None = None
     is_public: bool | None = None
 

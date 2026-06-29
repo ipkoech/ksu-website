@@ -1,6 +1,7 @@
 "use client";
 
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
+import { SustainabilityWorkspaceHeader, partnerColumns } from "../_components/sustainability-workspace";
 
 export default function SustainabilityPartnersPage() {
   return (
@@ -10,6 +11,8 @@ export default function SustainabilityPartnersPage() {
       queryKey={["research", "sustainability-partners"]}
       resource={researchServiceApi.partners}
       manageScopes={["sustainability.manage", "partnerships.manage", "research:write"]}
+      summarySlot={<SustainabilityWorkspaceHeader />}
+      recordColumns={partnerColumns}
       fields={[
         { name: "name", label: "Name", required: true },
         { name: "slug", label: "Slug" },

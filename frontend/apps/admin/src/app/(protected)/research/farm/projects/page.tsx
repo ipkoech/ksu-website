@@ -1,6 +1,7 @@
 "use client";
 
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
+import { FarmWorkspaceHeader, farmProjectColumns, farmProjectFilters } from "../_components/farm-workspace";
 
 export default function FarmProjectsPage() {
   return (
@@ -11,6 +12,9 @@ export default function FarmProjectsPage() {
       resource={researchServiceApi.projects}
       manageScopes={["research.manage_projects", "research:write"]}
       listParams={{ is_active: true, is_public: true, project_type: "action" }}
+      summarySlot={<FarmWorkspaceHeader />}
+      listFilters={farmProjectFilters}
+      recordColumns={farmProjectColumns}
       metaFields={["code", "project_type", "status", "progress_percentage"]}
       fields={[
         { name: "title", label: "Title", required: true },
@@ -22,6 +26,8 @@ export default function FarmProjectsPage() {
           { label: "Collaborative", value: "collaborative" },
           { label: "Commissioned", value: "commissioned" },
         ] },
+        { name: "center_id", label: "Farm Site / Center", type: "entity", relation: { adapter: "researchCenter", filters: { is_active: true } } },
+        { name: "pi_id", label: "PI / Lead", type: "entity", relation: { adapter: "person", filters: { status: "active" } } },
         { name: "summary", label: "Summary", type: "textarea" },
         { name: "abstract", label: "Abstract", type: "textarea" },
         { name: "background", label: "Background", type: "textarea" },

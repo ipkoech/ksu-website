@@ -1,7 +1,14 @@
 "use client";
 
-import { EditableServiceResourcePage, type EditableField } from "@/components/dashboard/editable-service-resource-page";
+import {
+  EditableServiceResourcePage,
+  type EditableField,
+  type EditableListFilter,
+  type EditableRecordColumn,
+  type EditableRecordWorkflowAction,
+} from "@/components/dashboard/editable-service-resource-page";
 import { usePermissions } from "@ksu/auth";
+import type { ReactNode } from "react";
 
 type ContentRecord = Record<string, any> & {
   id: string;
@@ -29,8 +36,14 @@ interface ResearchContentResourcePageProps {
   emptyMessage: string;
   defaults?: Record<string, any>;
   listParams?: Record<string, string | number | boolean | undefined>;
+  listFilters?: EditableListFilter[];
+  recordColumns?: Array<EditableRecordColumn<ContentRecord>>;
+  summarySlot?: ReactNode;
   manageScopes?: string[];
   metaFields?: string[];
+  getRecordWorkflowActions?: (
+    record: ContentRecord,
+  ) => Array<EditableRecordWorkflowAction<ContentRecord, Record<string, any>>>;
 }
 
 function recordTitle(record: ContentRecord) {
@@ -60,8 +73,12 @@ export function ResearchContentResourcePage({
   emptyMessage,
   defaults = {},
   listParams = {},
+  listFilters,
+  recordColumns,
+  summarySlot,
   manageScopes = ["content.manage", "content.write", "research:write"],
   metaFields = ["category", "status"],
+  getRecordWorkflowActions,
 }: ResearchContentResourcePageProps) {
   const { hasScope } = usePermissions();
   const canManage = manageScopes.some((scope) => hasScope(scope));
@@ -73,6 +90,9 @@ export function ResearchContentResourcePage({
       backHref="/research/content"
       queryKey={queryKey}
       fields={fields}
+      listFilters={listFilters}
+      recordColumns={recordColumns}
+      summarySlot={summarySlot}
       list={async (filters) => resource.list({ page: 1, per_page: 50, scope_type: "research", ...listParams, ...filters })}
       create={(payload) => resource.create({ ...payload, scope_type: "research" })}
       update={(id, payload) => resource.update(id, { ...payload, scope_type: "research" })}
@@ -82,6 +102,7 @@ export function ResearchContentResourcePage({
       canDelete={canManage}
       getRecordTitle={recordTitle}
       getRecordMeta={(record) => recordMeta(record, metaFields)}
+      getRecordWorkflowActions={getRecordWorkflowActions}
       emptyMessage={emptyMessage}
       buildPayload={(values) => ({ ...defaults, ...values, scope_type: "research" })}
     />

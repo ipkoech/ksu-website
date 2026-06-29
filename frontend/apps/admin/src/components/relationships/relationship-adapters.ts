@@ -531,7 +531,7 @@ export const sliderGroupRelationshipAdapter: RelationshipAdapter<{ scope_type?: 
   },
 };
 
-export const mediaFolderRelationshipAdapter: RelationshipAdapter<{ parent_id?: string }> = {
+export const mediaFolderRelationshipAdapter: RelationshipAdapter<{ parent_id?: string; scope_type?: string; scope_id?: string }> = {
   key: "media-folder",
   entityType: "media_folder",
   label: "Media folder",
@@ -541,6 +541,8 @@ export const mediaFolderRelationshipAdapter: RelationshipAdapter<{ parent_id?: s
   async search({ search, filters, limit = defaultLimit }) {
     const response = await mediaApi.listFolders({
       parent_id: filters?.parent_id || undefined,
+      scope_type: filters?.scope_type || undefined,
+      scope_id: filters?.scope_id || undefined,
       fields: "id,name,slug,is_public,parent_id,scope_type,scope_id",
     });
     return limitOptions((response.data ?? []).map(mediaFolderOption).filter((option) => matches(option, search)), limit);
@@ -1012,32 +1014,6 @@ export const researchScholarshipRelationshipAdapter: RelationshipAdapter<{ is_ac
   },
 };
 
-export const researchBoardRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean }> = {
-  key: "research-board",
-  entityType: "research_board",
-  label: "Research board",
-  pluralLabel: "Research boards",
-  searchPlaceholder: "Search research boards",
-  emptyLabel: "No research boards found.",
-  async search({ search, filters, limit = defaultLimit }) {
-    const response = await researchServiceApi.boards.list({
-      page: 1,
-      per_page: limit,
-      search: search?.trim() || undefined,
-      is_active: filters?.is_active ?? undefined,
-    });
-    return (response.data ?? []).map(researchRecordOption);
-  },
-  async get(id, filters) {
-    const response = await researchServiceApi.boards.list({
-      page: 1,
-      per_page: 100,
-      is_active: filters?.is_active ?? undefined,
-    });
-    return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
-  },
-};
-
 export const staffAssignmentRelationshipAdapter: RelationshipAdapter<{ status?: string; entity_type?: string; entity_id?: string }> = {
   key: "staff-assignment",
   entityType: "staff_assignment",
@@ -1098,6 +1074,5 @@ export const relationshipAdapters = {
   researchGrantApplication: researchGrantApplicationRelationshipAdapter,
   researchMentorship: researchMentorshipRelationshipAdapter,
   researchScholarship: researchScholarshipRelationshipAdapter,
-  researchBoard: researchBoardRelationshipAdapter,
   staffAssignment: staffAssignmentRelationshipAdapter,
 };

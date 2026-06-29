@@ -219,12 +219,18 @@ class MediaService:
         *,
         user: User,
         parent_id: uuid.UUID | None = None,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
         load_options: Sequence = (),
     ) -> list[MediaFolder]:
         query = MediaFolder.active_query().order_by(MediaFolder.name.asc())
         query = query.where(await MediaService._folder_visibility_filter(user))
         if load_options:
             query = query.options(*load_options)
+        if scope_type is not None:
+            query = query.where(MediaFolder.scope_type == scope_type)
+        if scope_id is not None:
+            query = query.where(MediaFolder.scope_id == scope_id)
         if parent_id is None:
             query = query.where(MediaFolder.parent_id.is_(None))
         else:

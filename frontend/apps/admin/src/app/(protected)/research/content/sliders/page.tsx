@@ -2,6 +2,7 @@
 
 import { slidersApi } from "@ksu/api-client";
 import { ResearchContentResourcePage } from "../../_components/research-content-resource-page";
+import { ContentWorkspaceHeader, contentColumns } from "../_components/content-workspace";
 
 export default function ResearchSlidersPage() {
   return (
@@ -15,6 +16,12 @@ export default function ResearchSlidersPage() {
         update: slidersApi.updateGroup,
         delete: slidersApi.deleteGroup,
       }}
+      summarySlot={<ContentWorkspaceHeader />}
+      listFilters={[
+        { name: "location", label: "Location", type: "text", placeholder: "research_home" },
+        { name: "is_main", label: "Main", type: "boolean" },
+      ]}
+      recordColumns={contentColumns}
       fields={[
         { name: "name", label: "Name", required: true },
         { name: "slug", label: "Slug" },

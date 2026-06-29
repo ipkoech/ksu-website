@@ -1,32 +1,33 @@
 "use client";
 
-import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
+import { slidersApi } from "@ksu/api-client";
+import { ResearchContentResourcePage } from "../../_components/research-content-resource-page";
 
 export default function ResearchSlidersPage() {
   return (
-    <ResearchResourcePage
+    <ResearchContentResourcePage
       title="Research Sliders"
-      description="Manage research service slider records used by research pages."
+      description="Manage main content slider groups scoped to research pages."
       queryKey={["research", "sliders"]}
-      resource={researchServiceApi.sliders}
-      manageScopes={["content.manage", "research:write"]}
+      resource={{
+        list: slidersApi.listGroups,
+        create: slidersApi.createGroup,
+        update: slidersApi.updateGroup,
+        delete: slidersApi.deleteGroup,
+      }}
+      manageScopes={["marketing.manage_sliders", "admin:*"]}
       fields={[
-        { name: "title", label: "Title", required: true },
+        { name: "name", label: "Name", required: true },
         { name: "slug", label: "Slug" },
-        { name: "slider_type", label: "Slider Type", placeholder: "hero" },
-        { name: "placement", label: "Placement", placeholder: "research_home" },
-        { name: "subtitle", label: "Subtitle" },
         { name: "description", label: "Description", type: "textarea" },
-        { name: "image_url", label: "Image URL", type: "url" },
-        { name: "link_url", label: "Link URL", type: "url" },
-        { name: "link_text", label: "Link Text" },
-        { name: "starts_at", label: "Starts At", type: "datetime-local" },
-        { name: "ends_at", label: "Ends At", type: "datetime-local" },
+        { name: "location", label: "Location", placeholder: "research_home" },
+        { name: "is_main", label: "Main", type: "boolean" },
         { name: "is_active", label: "Active", type: "boolean" },
       ]}
-      defaults={{ slider_type: "hero", placement: "research_home" }}
-      emptyMessage="No research sliders were returned by the research service."
-      metaFields={["slider_type", "placement", "is_active"]}
+      defaults={{ location: "research_home", is_active: true }}
+      listParams={{ location: "research_home" }}
+      emptyMessage="No research slider groups were returned by the main content service."
+      metaFields={["location", "is_main", "is_active"]}
     />
   );
 }
