@@ -29,6 +29,7 @@ import {
   SheetTrigger,
 } from "../../ui/sheet";
 import { cn } from "../../../lib/utils";
+import { ThemeToggleSimple } from "../../ui/theme-toggle";
 
 // Minimal data types for navigation
 export interface NavSchool {
@@ -248,6 +249,11 @@ export function PublicHeader({
               >
                 <Link href="/admissions/how-to-apply">Apply Now</Link>
               </Button>
+
+              {/* Dark Mode Toggle */}
+              <div className="hidden xl:flex items-center">
+                <ThemeToggleSimple />
+              </div>
 
               {/* Mobile Menu Trigger */}
               <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>

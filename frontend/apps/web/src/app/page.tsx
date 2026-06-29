@@ -150,140 +150,115 @@ export default async function HomePage() {
       <main id="main-content" tabIndex={-1}>
         <LandingHero {...homepage.hero} />
 
-        <section className="border-y border-blue-100 bg-white py-10 lg:py-14">
+        {/* Hero value proposition + secondary CTAs */}
+        <section className="border-b border-white/10 bg-primary py-3 text-white">
+          <div className="mx-auto flex max-w-[1680px] flex-wrap items-center justify-center gap-2 px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+            <p className="text-center text-xs font-medium text-white/70 sm:text-sm">
+              A public university advancing inclusive education, applied research, and community transformation in Kenya.
+            </p>
+            <span className="hidden text-white/30 sm:inline">|</span>
+            <div className="flex flex-wrap justify-center gap-2">
+              <Link href={homepage.activeIntakes[0]?.href ?? "/admissions/how-to-apply"} className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full bg-secondary px-3 text-xs font-semibold text-white transition hover:bg-secondary/90">
+                Apply Now <ArrowRight className="h-3 w-3" aria-hidden />
+              </Link>
+              <Link href="/academics/programmes" className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-semibold text-white transition hover:bg-white/20">
+                Explore Programmes <ArrowRight className="h-3 w-3" aria-hidden />
+              </Link>
+              <Link href="/campus-life" className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-semibold text-white transition hover:bg-white/20">
+                Explore Campus Life <ArrowRight className="h-3 w-3" aria-hidden />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Audience / Action Band */}
+        <section className="border-y border-blue-100 bg-white py-8 lg:py-12">
           <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-            <div className="grid gap-6 lg:grid-cols-3">
-              <aside className="rounded-lg border border-blue-100 bg-blue-50/60 p-5">
-                <SectionKicker title="Schools & Academics" />
-                {homepage.schools.length > 0 ? (
-                  <div className="mt-4 flex flex-col gap-2">
-                    {homepage.schools.slice(0, 5).map((school) => (
-                      <Link
-                        key={school.href}
-                        href={school.href}
-                        className="flex items-center gap-2 rounded-md px-2 py-2 text-sm font-semibold text-slate-700 hover:bg-blue-100 hover:text-primary"
-                      >
-                        <GraduationCap className="h-4 w-4 shrink-0 text-primary/60" />
-                        <span className="line-clamp-1">{school.title}</span>
-                      </Link>
-                    ))}
-                    <Link
-                      href="/academics/schools"
-                      className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-secondary"
-                    >
-                      View all schools <ArrowRight className="h-3 w-3" />
-                    </Link>
-                  </div>
-                ) : (
-                  <HomeEmptyState
-                    title="Schools are not available"
-                    body="Published school records could not be loaded."
-                    actionHref="/academics/schools"
-                    actionLabel="Open schools"
-                  />
-                )}
-              </aside>
-
-              <aside className="rounded-lg border border-blue-100 bg-white p-5 shadow-sm">
-                <SectionKicker title="Vice Chancellor" />
-                {homepage.viceChancellor ? (
-                  <div className="mt-4">
-                    {homepage.viceChancellor.image ? (
-                      <PublicImage
-                        src={homepage.viceChancellor.image}
-                        alt={homepage.viceChancellor.name}
-                        ratio="card"
-                        sizes="(min-width: 1024px) 30vw, 100vw"
-                        className="mb-4 h-48 rounded-md"
-                        imageClassName="object-top"
-                      />
-                    ) : null}
-                    {homepage.viceChancellor.message ? (
-                      <p className="text-sm leading-6 text-slate-600 line-clamp-4">
-                        {homepage.viceChancellor.message}
-                      </p>
-                    ) : null}
-                    <p className="mt-3 text-sm font-bold text-primary">
-                      {homepage.viceChancellor.name}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {homepage.viceChancellor.title}
-                    </p>
-                  </div>
-                ) : (
-                  <HomeEmptyState
-                    title="VC message is being updated"
-                    body="A welcome message will appear here soon."
-                    actionHref="/about/university-management"
-                    actionLabel="View management"
-                  />
-                )}
-              </aside>
-
-              <aside className="rounded-lg border border-blue-100 bg-white p-5 shadow-sm">
-                <SectionKicker title="Quick Actions" />
-                <div className="mt-4 flex flex-col gap-1">
+            <div className="grid gap-5 sm:grid-cols-3">
+              {/* Prospective Students */}
+              <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-5">
+                <p className="text-xs font-bold uppercase tracking-[0.1em] text-primary">Prospective Students</p>
+                <div className="mt-4 space-y-1">
                   {[
-                    {
-                      label: "Apply Now",
-                      href:
-                        homepage.activeIntakes[0]?.href ??
-                        "/admissions/how-to-apply",
-                      icon: ClipboardCheck,
-                    },
-                    {
-                      label: "Search Programmes",
-                      href: "/academics/programmes",
-                      icon: Search,
-                    },
-                    {
-                      label: "Admissions Guide",
-                      href: "/admissions",
-                      icon: BookOpen,
-                    },
-                    {
-                      label: "Student Portal",
-                      href: "/students",
-                      icon: Users,
-                    },
-                    {
-                      label: "Contact Directory",
-                      href: "/contact",
-                      icon: Phone,
-                    },
+                    { label: "Apply Now", href: homepage.activeIntakes[0]?.href ?? "/admissions/how-to-apply", icon: ClipboardCheck, accent: true },
+                    { label: "Explore Programmes", href: "/academics/programmes", icon: GraduationCap },
+                    { label: "Entry Requirements", href: "/admissions/requirements", icon: BookOpen },
                   ].map((item) => (
-                    <Link
-                      key={item.label}
-                      href={item.href}
-                      className="flex items-center gap-3 rounded-md px-2 py-2.5 text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-primary"
-                    >
-                      <item.icon className="h-4 w-4 shrink-0 text-primary/60" />
+                    <Link key={item.label} href={item.href}
+                      className={`flex min-h-[44px] items-center gap-3 rounded-md px-2.5 py-2.5 text-sm font-semibold transition ${item.accent ? "bg-secondary/10 text-secondary hover:bg-secondary/20" : "text-slate-700 hover:bg-blue-100 hover:text-primary"}`}>
+                      <item.icon className="h-4 w-4 shrink-0" />
                       {item.label}
                     </Link>
                   ))}
                 </div>
-                {homepage.activeIntakes[0] ? (
-                  <div className="mt-4 rounded-md bg-secondary/5 p-3">
-                    <p className="text-xs font-bold text-secondary uppercase">
-                      Active Intake
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-slate-950">
-                      {intakeLabel(homepage.activeIntakes[0])}
-                    </p>
-                    <Link
-                      href={homepage.activeIntakes[0].href}
-                      className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-secondary hover:underline"
-                    >
-                      Apply <ArrowRight className="h-3 w-3" />
+              </div>
+
+              {/* Current Students & Staff */}
+              <div className="rounded-xl border border-blue-100 bg-white p-5 shadow-sm">
+                <p className="text-xs font-bold uppercase tracking-[0.1em] text-primary">Students & Staff</p>
+                <div className="mt-4 space-y-1">
+                  {[
+                    { label: "Student Portal", href: "https://portal.kisiiuniversity.ac.ke", icon: Users, external: true },
+                    { label: "Staff Portal", href: "https://digital.kisiiuniversity.ac.ke/staff/services/login", icon: Building2, external: true },
+                    { label: "Library", href: libraryFrontendUrl, icon: BookOpen, external: true },
+                  ].map((item) => (
+                    <a key={item.label} href={item.href} target="_blank" rel="noopener noreferrer"
+                      className="flex min-h-[44px] items-center gap-3 rounded-md px-2.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-primary">
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {item.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              {/* Parents & Guardians */}
+              <div className="rounded-xl border border-blue-100 bg-white p-5 shadow-sm">
+                <p className="text-xs font-bold uppercase tracking-[0.1em] text-primary">Parents & Guardians</p>
+                <div className="mt-4 space-y-1">
+                  {[
+                    { label: "Safety & Wellbeing", href: "/campus-life/support", icon: ShieldCheck },
+                    { label: "Fees & Scholarships", href: "/admissions/fees", icon: CalendarDays },
+                    { label: "Contact Admissions", href: "/contact", icon: Phone },
+                  ].map((item) => (
+                    <Link key={item.label} href={item.href}
+                      className="flex min-h-[44px] items-center gap-3 rounded-md px-2.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-primary">
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {item.label}
                     </Link>
-                  </div>
-                ) : null}
-              </aside>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
         {isContentDegraded ? <ContentDegradedNotice /> : null}
+
+        {/* Why Choose Kisii University */}
+        <section className="bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+          <div className="mx-auto max-w-[1680px]">
+            <div className="text-center">
+              <p className="text-sm font-semibold uppercase text-secondary">Why Choose KSU</p>
+              <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950 sm:text-4xl">
+                Why choose Kisii University
+              </h2>
+            </div>
+            <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                { title: "Accredited Public University", body: "Chartered in 2013 under the Universities Act 2012, delivering regulated, quality-assured higher education.", icon: Building2 },
+                { title: "Diverse Programmes", body: "Academic programmes across multiple schools from certificates to doctoral research.", icon: GraduationCap },
+                { title: "Research with Community Impact", body: "Research connected to agriculture, health, education, technology, and public service priorities.", icon: Sparkles },
+                { title: "Student Support Services", body: "Accommodation, health services, clubs, sports, counselling, and career guidance.", icon: ShieldCheck },
+              ].map((item) => (
+                <div key={item.title} className="rounded-xl border border-blue-100 bg-white p-5 shadow-sm">
+                  <item.icon className="h-8 w-8 text-primary" aria-hidden />
+                  <h3 className="mt-4 font-[family-name:var(--font-display)] text-lg font-semibold text-slate-950">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
         <section className="relative z-10 pb-0">
           <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
@@ -291,7 +266,7 @@ export default async function HomePage() {
               <SchoolsSection schools={homepage.schools} />
             </LandingReveal>
             <LandingReveal variant="zoom-in">
-              <ProgrammesAdmissionsSection
+              <AdmissionsFunnel
                 programmes={homepage.featuredProgrammes}
                 activeIntakes={homepage.activeIntakes}
               />
@@ -318,6 +293,20 @@ export default async function HomePage() {
           </div>
         </section>
       </main>
+
+      {/* Mobile Sticky CTA Bar */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex items-stretch gap-1 border-t border-blue-100 bg-white/95 px-2 py-2 backdrop-blur sm:hidden" aria-label="Quick actions" style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}>
+        {[
+          { label: "Apply", href: homepage.activeIntakes[0]?.href ?? "/admissions/how-to-apply" },
+          { label: "Programmes", href: "/academics/programmes" },
+          { label: "Contact", href: "/contact" },
+        ].map((item) => (
+          <Link key={item.label} href={item.href}
+            className="flex flex-1 items-center justify-center rounded-md bg-primary px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-primary/90">
+            {item.label}
+          </Link>
+        ))}
+      </nav>
 
       <PublicFooter
         contactInfo={homepage.contactInfo}
@@ -460,7 +449,7 @@ function SectionKicker({
   );
 }
 
-function ProgrammesAdmissionsSection({
+function AdmissionsFunnel({
   programmes,
   activeIntakes,
 }: {
@@ -470,247 +459,62 @@ function ProgrammesAdmissionsSection({
   const activeIntake = activeIntakes[0] ?? null;
 
   return (
-    <section className="-mx-4 overflow-hidden bg-blue-50/80 px-4 py-12 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10 2xl:-mx-12 2xl:px-12">
-      <div className="grid gap-7 lg:grid-cols-[minmax(300px,0.72fr)_minmax(0,1.28fr)]">
-        <ApplyCtaCard activeIntake={activeIntake} />
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.58fr)]">
-          <FeaturedProgrammes programmes={programmes} />
-          <AdmissionsGuideCard activeIntake={activeIntake} />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FeaturedProgrammes({ programmes }: { programmes: HomeCard[] }) {
-  return (
-    <section className="rounded-md border border-blue-100 bg-white shadow-sm shadow-blue-100/60">
-      <div className="mb-3 flex flex-col gap-3 border-b border-blue-50 px-5 pb-4 pt-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <SectionKicker title="Featured Programmes" />
-          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
-            Explore selected programmes and move quickly from discovery to
-            application guidance.
-          </p>
-        </div>
-        <Link
-          href="/academics/programmes"
-          className="inline-flex min-h-11 items-center gap-1.5 text-xs font-semibold text-primary hover:text-secondary"
-        >
-          View all programmes
-          <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-        </Link>
-      </div>
-
-      {programmes.length ? (
-        <div className="px-5 pb-5">
-          <FeaturedProgrammeTabs programmes={programmes} />
-        </div>
-      ) : (
-        <div className="p-4">
-          <HomeEmptyState
-            title="Programmes are not available"
-            body="Featured programme records could not be loaded right now."
-            actionHref="/academics/programmes"
-            actionLabel="Open programmes"
-          />
-        </div>
-      )}
-    </section>
-  );
-}
-
-function AdmissionsGuideCard({
-  activeIntake: _activeIntake,
-}: {
-  activeIntake: HomeIntake | null;
-}) {
-  return (
-    <section className="rounded-md border border-blue-100 bg-white p-5 shadow-sm shadow-blue-100/60">
-      <SectionKicker title="Your Admissions Journey" />
-
-      <div className="mt-5 grid gap-4">
-        {[
-          [
-            "Choose Your Programme",
-            "Explore and select the programme that matches your passion.",
-          ],
-          [
-            "Apply",
-            "Apply via KUCCPS or Direct Entry and submit required documents.",
-          ],
-          [
-            "Pay Application Fee",
-            "Make payment through the available university channels.",
-          ],
-          ["Upload Documents", "Upload academic and supporting documents."],
-          [
-            "Track Application",
-            "Track application status and receive updates.",
-          ],
-        ].map(([title, body], index) => (
-          <div key={title} className="grid grid-cols-[34px_1fr] gap-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
-              {index + 1}
-            </span>
-            <p className="pt-0.5 text-xs leading-5 text-slate-600">
-              <span className="block text-sm font-bold text-slate-950">
-                {title}
-              </span>
-              {body}
-            </p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function ApplyCtaCard({ activeIntake }: { activeIntake: HomeIntake | null }) {
-  return (
-    <aside className="relative min-h-[430px] overflow-hidden rounded-md bg-primary text-white shadow-sm shadow-blue-100/70">
-      <PublicImage
-        src="/logos/ksu-bck5.jpg"
-        alt=""
-        ratio="fill"
-        sizes="(min-width: 1024px) 36vw, 100vw"
-        className="absolute inset-0 h-full w-full"
-        imageClassName="object-cover"
-      />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,20,49,0.55)_0%,rgba(2,20,49,0.9)_100%)]" />
-      <div className="relative z-10 flex min-h-[430px] flex-col justify-end p-6 sm:p-8">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/70">
-          Start your journey
-        </p>
-        <h3 className="mt-4 max-w-sm font-[family-name:var(--font-display)] text-4xl font-bold leading-tight">
-          Apply to Kisii University with confidence.
-        </h3>
-        <p className="mt-4 max-w-sm text-sm font-medium leading-6 text-white/85">
-          Choose a programme, check the requirements, and complete your
-          application through the active intake route.
-        </p>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
-          <Button
-            asChild
-            className="min-h-11 rounded-md bg-secondary px-5 text-sm font-semibold text-white hover:bg-secondary/90"
-          >
-            <Link href={activeIntake?.href ?? "/admissions/how-to-apply"}>
-              Apply Now
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
-          </Button>
-          <Button
-            asChild
-            variant="outline"
-            className="min-h-11 rounded-md border-white/80 bg-white px-5 text-sm font-semibold text-primary hover:bg-white/90"
-          >
-            <Link href="/admissions/requirements">
-              View requirements
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
-          </Button>
-        </div>
-      </div>
-      {activeIntake ? (
-        <CountdownStrip
-          title={`${intakeLabel(activeIntake)} Countdown`}
-          deadline={activeIntake.lateApplicationEnd ?? activeIntake.applicationEnd}
-          deadlineLabel={formatDate(activeIntake.lateApplicationEnd ?? activeIntake.applicationEnd)}
-        />
-      ) : null}
-    </aside>
-  );
-}
-
-function _AdmissionsPanel({ activeIntakes }: { activeIntakes: HomeIntake[] }) {
-  const activeIntake = activeIntakes[0] ?? null;
-
-  return (
-    <section className="rounded-md border border-blue-100 bg-white p-4 shadow-sm shadow-blue-100/60">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold text-slate-950">
-            Admissions
+    <section className="border-b border-blue-100 bg-white py-12">
+      <div className="mx-auto max-w-[1680px]">
+        <div className="text-center">
+          <p className="text-sm font-semibold uppercase text-secondary">Your Application Journey</p>
+          <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950 sm:text-4xl">
+            From interest to admission
           </h2>
-          <p className="mt-1 text-sm leading-6 text-slate-600">
-            {activeIntake
-              ? "Follow the active intake process and complete the application before the deadline."
-              : "Review application guidance, requirements, and intake records before applying."}
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+            Follow the four steps below to move from programme discovery through to application submission.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {activeIntakes.length ? (
-            activeIntakes.slice(0, 2).map((intake) => (
-              <Link
-                key={intake.id}
-                href={intake.href}
-                className="rounded-md bg-primary px-3 py-1.5 text-xs font-bold text-white"
-              >
-                {intakeLabel(intake)}
-              </Link>
-            ))
-          ) : (
-            <span className="rounded-md bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-600">
-              No active intake
-            </span>
-          )}
-        </div>
-      </div>
 
-      <div className="mt-5 grid gap-2 sm:grid-cols-5">
-        {intakeSteps.map((step, index) => (
-          <div
-            key={step}
-            className="rounded-md border border-blue-100 bg-blue-50/60 p-3"
-          >
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
-              {index + 1}
-            </span>
-            <p className="mt-2 text-xs font-semibold leading-4 text-slate-700">
-              {step}
-            </p>
+        {/* Funnel steps */}
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { step: 1, title: "Explore Programmes", body: "Browse academic programmes across schools and levels.", href: "/academics/programmes" },
+            { step: 2, title: "Check Requirements", body: "Confirm entry criteria, subject clusters, and intake eligibility.", href: "/admissions/requirements" },
+            { step: 3, title: "Confirm Intake", body: activeIntake ? `Apply for the ${intakeLabel(activeIntake)} before the deadline.` : "Verify the open intake and deadline before submitting.", href: activeIntake?.href ?? "/admissions/intakes" },
+            { step: 4, title: "Apply Now", body: "Complete and submit your application through the official portal.", href: activeIntake?.href ?? "/admissions/how-to-apply", accent: true },
+          ].map((item) => (
+            <Link key={item.step} href={item.href}
+              className={`group rounded-xl border p-5 shadow-sm transition hover:shadow-md ${item.accent ? "border-secondary/30 bg-secondary/5 hover:border-secondary/50" : "border-blue-100 bg-white hover:border-primary/30"}`}>
+              <span className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold ${item.accent ? "bg-secondary text-white" : "bg-primary/10 text-primary"}`}>
+                {item.step}
+              </span>
+              <h3 className="mt-4 font-[family-name:var(--font-display)] text-lg font-semibold text-slate-950">{item.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+              <span className={`mt-3 inline-flex items-center gap-1 text-xs font-semibold ${item.accent ? "text-secondary" : "text-primary"}`}>
+                {item.step === 4 ? "Apply" : item.step === 3 ? "View intake" : "Open"}
+                <ArrowRight className="h-3 w-3 transition group-hover:translate-x-0.5" aria-hidden />
+              </span>
+            </Link>
+          ))}
+        </div>
+
+        {/* Active intake countdown */}
+        {activeIntake ? (
+          <div className="mt-6">
+            <CountdownStrip
+              title={`${intakeLabel(activeIntake)} Countdown`}
+              deadline={activeIntake.lateApplicationEnd ?? activeIntake.applicationEnd}
+              deadlineLabel={formatDate(activeIntake.lateApplicationEnd ?? activeIntake.applicationEnd)}
+            />
           </div>
-        ))}
-      </div>
+        ) : null}
 
-      {activeIntake ? (
-        <CountdownStrip
-          title={`${intakeLabel(activeIntake)} Countdown`}
-          deadline={activeIntake.lateApplicationEnd ?? activeIntake.applicationEnd}
-          deadlineLabel={formatDate(activeIntake.lateApplicationEnd ?? activeIntake.applicationEnd)}
-        />
-      ) : (
-        <div className="mt-5 rounded-md border border-dashed border-blue-200 bg-blue-50/50 p-4">
-          <p className="text-sm font-bold text-slate-950">
-            Active intake countdown will appear here.
-          </p>
-          <p className="mt-1 text-xs leading-5 text-slate-600">
-            The panel uses backend intake records and hides deadline counters
-            when no active intake is open.
-          </p>
-        </div>
-      )}
-
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-        <Button
-          asChild
-          className="h-10 rounded-md bg-secondary px-5 text-sm font-semibold text-white hover:bg-secondary/90"
-        >
-          <Link href={activeIntake?.href ?? "/admissions/how-to-apply"}>
-            Start Application
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </Link>
-        </Button>
-        <Button
-          asChild
-          variant="outline"
-          className="h-10 rounded-md border-blue-200 bg-white px-5 text-sm font-semibold text-primary hover:bg-blue-50"
-        >
-          <Link href="/admissions/requirements">
-            View requirements
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </Link>
-        </Button>
+        {/* Featured programmes grid */}
+        {programmes.length > 0 ? (
+          <div className="mt-10">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">Featured Programmes</h3>
+              <Link href="/academics/programmes" className="text-xs font-semibold text-primary hover:text-secondary">View all</Link>
+            </div>
+            <FeaturedProgrammeTabs programmes={programmes} />
+          </div>
+        ) : null}
       </div>
     </section>
   );
