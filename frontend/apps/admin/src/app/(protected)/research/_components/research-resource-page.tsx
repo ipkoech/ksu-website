@@ -6,14 +6,19 @@ import {
   EditableServiceResourcePage,
   type EditableField,
   type EditableListFilter,
+  type EditableRecordColumn,
   type EditableRecordWorkflowAction,
 } from "@/components/dashboard/editable-service-resource-page";
 import { Button } from "@ksu/ui/components";
 import { researchServiceApi, type ResearchGenericPayload, type ResearchGenericRecord } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
+import type { ReactNode } from "react";
 
 type ResourceApi = {
-  list: (params?: Record<string, string | number | boolean | undefined>) => Promise<{ data?: Record<string, any>[] }>;
+  list: (params?: Record<string, string | number | boolean | undefined>) => Promise<{
+    data?: Record<string, any>[];
+    meta?: { page?: number; per_page?: number; total?: number; pages?: number; total_pages?: number };
+  }>;
   create: (data: any) => Promise<unknown>;
   update: (id: string, data: any) => Promise<unknown>;
   delete: (id: string) => Promise<unknown>;
@@ -30,6 +35,8 @@ interface ResearchResourcePageProps {
   defaults?: ResearchGenericPayload;
   listParams?: Record<string, string | number | boolean | undefined>;
   listFilters?: EditableListFilter[];
+  recordColumns?: Array<EditableRecordColumn<ResearchGenericRecord>>;
+  summarySlot?: ReactNode;
   metaFields?: string[];
   detailBaseHref?: string;
   detailHref?: (record: ResearchGenericRecord) => string | null | undefined;
@@ -115,6 +122,8 @@ export function ResearchResourcePage({
   defaults = {},
   listParams = {},
   listFilters,
+  recordColumns,
+  summarySlot,
   metaFields = ["code", "category", "status"],
   detailBaseHref,
   detailHref,
@@ -133,6 +142,8 @@ export function ResearchResourcePage({
       queryKey={queryKey}
       fields={fields}
       listFilters={resolvedListFilters}
+      recordColumns={recordColumns}
+      summarySlot={summarySlot}
       toolbarSlot={
         importResource ? (
           <Button variant="outline" size="sm" asChild>
@@ -145,7 +156,7 @@ export function ResearchResourcePage({
       }
       list={async (filters) => {
         const response = await resource.list({ page: 1, per_page: 50, ...listParams, ...filters });
-        return { data: (response.data ?? []) as ResearchGenericRecord[] };
+        return { data: (response.data ?? []) as ResearchGenericRecord[], meta: response.meta };
       }}
       create={(payload) => resource.create(payload)}
       update={(id, payload) => resource.update(id, payload)}

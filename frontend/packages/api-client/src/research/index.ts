@@ -28,6 +28,14 @@ type ListParams<
     missing_pi?: boolean;
     start_date_from?: string;
     end_date_to?: string;
+    application_id?: string;
+    applicant_id?: string;
+    reviewer_id?: string;
+    submitter_id?: string;
+    report_type?: string;
+    funder_type?: string;
+    is_required?: boolean;
+    is_accepting_contributions?: boolean;
   };
 
 export interface ResearchProject {
@@ -194,6 +202,16 @@ export interface ResearchGrant {
   category?: string;
   funder_name?: string | null;
   summary?: string | null;
+  description?: string | null;
+  eligibility?: string | null;
+  requirements?: string | null;
+  total_budget?: number | string | null;
+  min_award?: number | string | null;
+  max_award?: number | string | null;
+  currency?: string | null;
+  open_date?: string | null;
+  external_url?: string | null;
+  application_url?: string | null;
   deadline?: string | null;
   status?: string;
   is_active?: boolean;
@@ -209,6 +227,16 @@ export interface ResearchGrantPayload {
   grant_type?: string;
   category?: string;
   funder_name?: string | null;
+  description?: string | null;
+  eligibility?: string | null;
+  requirements?: string | null;
+  total_budget?: number | string | null;
+  min_award?: number | string | null;
+  max_award?: number | string | null;
+  currency?: string | null;
+  open_date?: string | null;
+  external_url?: string | null;
+  application_url?: string | null;
   summary?: string | null;
   deadline?: string | null;
   status?: string;
