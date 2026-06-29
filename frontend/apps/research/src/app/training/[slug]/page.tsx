@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { researchServiceApi } from "@ksu/api-client";
-import { ResearchDetailHero, ResearchDetailSidebar, ResearchRecordPanel, ResearchTextPanel } from "../../../components/research-detail";
+import { ResearchDetailHero, ResearchDetailSidebar, ResearchRecordPanel } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { compactText, formatDate, formatLabel, generateSlugParams, getTrainingBySlug } from "../../../lib/research-public-data";
+import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 
 export const revalidate = 300;
 
@@ -18,15 +19,22 @@ export default async function TrainingDetailPage({ params }: { params: Promise<{
   const training = data as ResearchGenericRecord;
   const facilitators = Array.isArray(training.facilitators) ? (training.facilitators as ResearchGenericRecord[]) : [];
   const materials = Array.isArray(training.materials) ? (training.materials as ResearchGenericRecord[]) : [];
+  const title = getRecordTitle(training, "Training program");
+  const storySections = getNarrativeSections(training, [
+    { title: "What this training covers", fields: ["summary", "description", "objectives"] },
+    { title: "Who should attend", fields: ["target_audience", "prerequisites"] },
+    { title: "What participants learn", fields: ["curriculum", "outcomes"] },
+    { title: "Schedule and participation", fields: ["schedule", "venue", "platform"] },
+  ]);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
       <ResearchDetailHero
         eyebrow="Training"
-        title={training.title ?? "Training program"}
-        body={compactText(training.summary) || compactText(training.description)}
-        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Training", href: "/training" }, { label: training.title ?? "Training" }]}
-        labels={[training.program_type, training.delivery_mode, training.offers_certificate ? "certificate" : null]}
+        title={title}
+        body={getRecordSummary(training)}
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Training", href: "/training" }, { label: title }]}
+        labels={[training.program_type, training.delivery_mode, training.status, training.offers_certificate ? "certificate" : null, training.is_featured ? "featured" : null]}
         facts={[
           { label: "Starts", value: formatDate(training.start_date) },
           { label: "Registration", value: formatDate(training.registration_deadline) },
@@ -42,11 +50,11 @@ export default async function TrainingDetailPage({ params }: { params: Promise<{
         imageAlt="Research training schedule, registration, and learning details"
       />
       {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}
-      <ResearchSection eyebrow="Learning Details" title="Programme, audience, and registration" body="Training detail uses the public training record for schedule, curriculum, facilitators, fees, certification, and materials." tone="white">
+      <ResearchSection eyebrow="Learning Story" title="Programme, audience, and registration" body="The public training record is grouped around coverage, audience, learning outcomes, and participation details." tone="white">
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-5">
-            <ResearchTextPanel title="Overview" fields={[["Summary", training.summary], ["Description", training.description], ["Objectives", training.objectives], ["Target audience", training.target_audience]]} />
-            <ResearchTextPanel title="Curriculum and outcomes" fields={[["Prerequisites", training.prerequisites], ["Curriculum", training.curriculum], ["Outcomes", training.outcomes], ["Schedule", training.schedule]]} />
+            <TrainingStory sections={storySections} />
+            <ResearchRecordPanel title="Materials" records={materials} empty="No training materials are published yet." />
           </div>
           <ResearchDetailSidebar
             labels={[training.program_type ?? "training", training.delivery_mode ?? training.status, training.offers_certificate ? "certificate" : null]}
@@ -70,10 +78,47 @@ export default async function TrainingDetailPage({ params }: { params: Promise<{
         <div className="grid gap-5 lg:grid-cols-3">
           <ResearchRecordPanel title="Facilitators" records={facilitators} />
           <ResearchRecordPanel title="Materials" records={materials} />
-          <ResearchTextPanel title="Contact" fields={[["Name", training.contact_name], ["Email", training.contact_email], ["Phone", training.contact_phone]]} />
+          <ContactPanel record={training} />
         </div>
       </ResearchSection>
     </main>
+  );
+}
+
+function TrainingStory({ sections }: { sections: Array<{ title: string; body: string }> }) {
+  if (sections.length === 0) return <StatusMessage>The training story appears when coverage, audience, curriculum, or schedule fields are published.</StatusMessage>;
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      {sections.map((section, index) => (
+        <details key={section.title} className="group border-b border-slate-200 last:border-b-0" open={index === 0}>
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-base font-semibold text-slate-950 transition hover:bg-slate-50">
+            {section.title}
+            <span className="text-primary transition group-open:rotate-45">+</span>
+          </summary>
+          <p className="px-5 pb-5 text-sm leading-7 text-slate-600">{section.body}</p>
+        </details>
+      ))}
+    </section>
+  );
+}
+
+function ContactPanel({ record }: { record: ResearchGenericRecord }) {
+  const items = [
+    ["Name", compactText(record.contact_name)],
+    ["Email", compactText(record.contact_email)],
+    ["Phone", compactText(record.contact_phone)],
+  ].filter(([, value]) => value);
+
+  return (
+    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-slate-950">Contact</h2>
+      {items.length ? (
+        <dl className="mt-4 grid gap-3 text-sm">
+          {items.map(([label, value]) => <div key={label} className="rounded-md bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt><dd className="mt-1 break-words font-semibold text-slate-950">{value}</dd></div>)}
+        </dl>
+      ) : <p className="mt-3 text-sm leading-7 text-slate-600">Contact details are not published yet.</p>}
+    </section>
   );
 }
 

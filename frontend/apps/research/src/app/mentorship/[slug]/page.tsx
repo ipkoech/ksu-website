@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { researchServiceApi } from "@ksu/api-client";
-import { ResearchDetailHero, ResearchDetailSidebar, ResearchRecordPanel, ResearchTextPanel } from "../../../components/research-detail";
+import { ResearchDetailHero, ResearchDetailSidebar, ResearchRecordPanel } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { compactText, formatDate, generateSlugParams, getMentorshipBySlug } from "../../../lib/research-public-data";
+import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 
 export const revalidate = 300;
 
@@ -18,19 +19,26 @@ export default async function MentorshipDetailPage({ params }: { params: Promise
   const mentorship = data as ResearchGenericRecord;
   const applications = Array.isArray(mentorship.applications) ? (mentorship.applications as ResearchGenericRecord[]) : [];
   const matches = Array.isArray(mentorship.matches) ? (mentorship.matches as ResearchGenericRecord[]) : [];
+  const title = getRecordTitle(mentorship, "Mentorship programme");
+  const storySections = getNarrativeSections(mentorship, [
+    { title: "Programme fit", fields: ["summary", "description", "objectives"] },
+    { title: "Who can participate", fields: ["mentor_requirements", "mentee_requirements"] },
+    { title: "What participants gain", fields: ["benefits", "outcomes"] },
+    { title: "Expectations and guidance", fields: ["expectations", "guidelines"] },
+  ]);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
       <ResearchDetailHero
         eyebrow="Mentorship"
-        title={mentorship.name ?? mentorship.title ?? "Mentorship programme"}
-        body={compactText(mentorship.summary) || compactText(mentorship.description)}
+        title={title}
+        body={getRecordSummary(mentorship)}
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "Mentorship", href: "/mentorship" },
-          { label: mentorship.name ?? mentorship.title ?? "Mentorship" },
+          { label: title },
         ]}
-        labels={[mentorship.program_type ?? "mentorship", mentorship.status]}
+        labels={[mentorship.program_type ?? "mentorship", mentorship.status, mentorship.is_featured ? "featured" : null]}
         facts={[
           { label: "Deadline", value: formatDate(mentorship.application_deadline) },
           { label: "Cohort starts", value: formatDate(mentorship.cohort_start_date) },
@@ -45,11 +53,11 @@ export default async function MentorshipDetailPage({ params }: { params: Promise
         imageAlt="Research mentorship programme and application information"
       />
       {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}
-      <ResearchSection eyebrow="Mentorship Pathway" title="Programme fit, expectations, and application window" body="Mentorship detail explains who the pathway serves, how it works, what applicants need, and how cohorts are organized." tone="white">
+      <ResearchSection eyebrow="Mentorship Story" title="Programme fit, expectations, and application window" body="The mentorship record is grouped around fit, participation requirements, benefits, and cohort expectations." tone="white">
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-5">
-            <ResearchTextPanel title="Overview" fields={[["Summary", mentorship.summary], ["Description", mentorship.description], ["Objectives", mentorship.objectives], ["Benefits", mentorship.benefits]]} />
-            <ResearchTextPanel title="Requirements and expectations" fields={[["Mentor requirements", mentorship.mentor_requirements], ["Mentee requirements", mentorship.mentee_requirements], ["Expectations", mentorship.expectations], ["Guidelines", mentorship.guidelines]]} />
+            <MentorshipStory sections={storySections} />
+            <ResearchRecordPanel title="Matches" records={matches} empty="No public matches are published yet." />
           </div>
           <ResearchDetailSidebar
             labels={[mentorship.program_type ?? "mentorship", mentorship.status]}
@@ -70,9 +78,45 @@ export default async function MentorshipDetailPage({ params }: { params: Promise
         <div className="grid gap-5 lg:grid-cols-3">
           <ResearchRecordPanel title="Applications" records={applications} />
           <ResearchRecordPanel title="Matches" records={matches} />
-          <ResearchTextPanel title="Contact" fields={[["Email", mentorship.contact_email], ["Phone", mentorship.contact_phone]]} />
+          <ContactPanel record={mentorship} />
         </div>
       </ResearchSection>
     </main>
+  );
+}
+
+function MentorshipStory({ sections }: { sections: Array<{ title: string; body: string }> }) {
+  if (sections.length === 0) return <StatusMessage>The mentorship story appears when fit, requirements, benefits, or expectations fields are published.</StatusMessage>;
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      {sections.map((section, index) => (
+        <details key={section.title} className="group border-b border-slate-200 last:border-b-0" open={index === 0}>
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-base font-semibold text-slate-950 transition hover:bg-slate-50">
+            {section.title}
+            <span className="text-primary transition group-open:rotate-45">+</span>
+          </summary>
+          <p className="px-5 pb-5 text-sm leading-7 text-slate-600">{section.body}</p>
+        </details>
+      ))}
+    </section>
+  );
+}
+
+function ContactPanel({ record }: { record: ResearchGenericRecord }) {
+  const items = [
+    ["Email", compactText(record.contact_email)],
+    ["Phone", compactText(record.contact_phone)],
+  ].filter(([, value]) => value);
+
+  return (
+    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-slate-950">Contact</h2>
+      {items.length ? (
+        <dl className="mt-4 grid gap-3 text-sm">
+          {items.map(([label, value]) => <div key={label} className="rounded-md bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt><dd className="mt-1 break-words font-semibold text-slate-950">{value}</dd></div>)}
+        </dl>
+      ) : <p className="mt-3 text-sm leading-7 text-slate-600">Contact details are not published yet.</p>}
+    </section>
   );
 }
