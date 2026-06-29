@@ -12,9 +12,8 @@ import {
   Sprout,
 } from "lucide-react";
 import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
-import { ResearchClusterHero } from "../../components/research-cluster";
 import { ResearchSidePanel } from "../../components/research-detail";
-import { Badge, ResearchSection, StatusMessage } from "../../components/research-ui";
+import { Badge, PrimaryLink, ResearchSection, SecondaryLink, StatusMessage } from "../../components/research-ui";
 import {
   compactText,
   formatDate,
@@ -43,33 +42,6 @@ const workflow = [
   "Share donor details",
   "Continue through the configured giving channel",
   "Receive acknowledgement and follow published impact",
-];
-
-const donateLinks = [
-  {
-    label: "Giving Priorities",
-    href: "/donate#priorities",
-    description: "Choose projects, scholarships, centers, sustainability, or endowments.",
-    icon: HandHeart,
-  },
-  {
-    label: "Make a Gift",
-    href: "/donate#make-a-gift",
-    description: "Start a donor and gift request.",
-    icon: HeartHandshake,
-  },
-  {
-    label: "Endowments",
-    href: "/endowments",
-    description: "Explore permanent funds and long-term giving pathways.",
-    icon: Banknote,
-  },
-  {
-    label: "Contact",
-    href: "/connect#get-in-touch",
-    description: "Reach the research office for major gifts or assistance.",
-    icon: Landmark,
-  },
 ];
 
 export default async function DonatePage() {
@@ -107,25 +79,11 @@ export default async function DonatePage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchClusterHero
-        eyebrow="Research Giving"
-        title="Support research that serves communities."
-        body="Give to research projects, student discovery, innovation, community extension, sustainability work, facilities, or permanent endowment funds."
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Research", href: "/" },
-          { label: "Donate" },
-        ]}
-        imageSrc="/images/research/research-home-hero.svg"
-        imageAlt="Researchers, students, and community partners supported by research giving"
-        links={donateLinks}
-        primaryAction={{ label: "Give now", href: "/donate#make-a-gift" }}
-        stats={[
-          { label: "Giving priorities", value: priorities.length },
-          { label: "Impact reports", value: impacts.data.length },
-          { label: "Donor stories", value: stories.data.length },
-          { label: "Currency", value: donationSettings.currency },
-        ]}
+      <DonateMasthead
+        priorityCount={priorities.length}
+        impactCount={impacts.data.length}
+        storyCount={stories.data.length}
+        currency={donationSettings.currency}
       />
 
       <ResearchSection
@@ -247,6 +205,54 @@ export default async function DonatePage() {
         </div>
       </ResearchSection>
     </main>
+  );
+}
+
+function DonateMasthead({
+  priorityCount,
+  impactCount,
+  storyCount,
+  currency,
+}: {
+  priorityCount: number;
+  impactCount: number;
+  storyCount: number;
+  currency: string;
+}) {
+  const stats = [
+    { label: "Giving priorities", value: priorityCount },
+    { label: "Impact reports", value: impactCount },
+    { label: "Donor stories", value: storyCount },
+    { label: "Currency", value: currency },
+  ];
+
+  return (
+    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
+        <div>
+          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
+            <Link href="/" className="transition hover:text-primary">Home</Link>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-900">Donate</span>
+          </nav>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Research Giving</p>
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">Support research that serves communities</h1>
+          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">Give to published projects, student discovery, innovation, community extension, sustainability work, facilities, or endowment funds.</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <PrimaryLink href="/donate#make-a-gift">Give now</PrimaryLink>
+            <SecondaryLink href="/endowments">Endowments</SecondaryLink>
+          </div>
+        </div>
+        <dl className="grid gap-2 sm:grid-cols-2">
+          {stats.map((stat) => (
+            <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+              <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
+              <dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
   );
 }
 

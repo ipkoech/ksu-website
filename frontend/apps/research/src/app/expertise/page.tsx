@@ -261,13 +261,13 @@ export default async function ExpertisePage({
         tone="white"
       >
         <div id="related-work" className="grid gap-5 xl:grid-cols-2">
-          <RelationshipPanel
+          <EvidencePanel
             title="Related projects"
             href="/projects"
             records={filteredProjects}
             empty="No published projects match the current expertise search."
           />
-          <RelationshipPanel
+          <EvidencePanel
             title="Related centers"
             href="/centers"
             records={filteredCenters}
@@ -390,7 +390,7 @@ function TaxonomyPanel({
   );
 }
 
-function RelationshipPanel({
+function EvidencePanel({
   title,
   href,
   records,

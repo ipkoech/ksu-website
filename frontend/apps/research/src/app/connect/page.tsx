@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { HeartHandshake, Mail, Newspaper, Users } from "lucide-react";
-import { ResearchClusterHero } from "../../components/research-cluster";
+import Link from "next/link";
 import { ResearchSidePanel } from "../../components/research-detail";
 import {
   Badge,
   IconCard,
+  PrimaryLink,
   ResearchSection,
+  SecondaryLink,
   StatusMessage,
 } from "../../components/research-ui";
 import {
@@ -53,33 +54,6 @@ const inquiryRequests = [
   },
 ];
 
-const engageLinks = [
-  {
-    label: "Research Inquiry",
-    href: "/connect#get-in-touch",
-    description: "Project collaboration, research support, and office help.",
-    icon: Mail,
-  },
-  {
-    label: "Mentorship",
-    href: "/connect#mentorship",
-    description: "Mentor and mentee pathways connected to published programmes.",
-    icon: Users,
-  },
-  {
-    label: "Media",
-    href: "/connect#media",
-    description: "Research interviews, expert comments, multimedia, and press routes.",
-    icon: Newspaper,
-  },
-  {
-    label: "Donate",
-    href: "/donate",
-    description: "Support research projects, scholarships, endowments, and impact.",
-    icon: HeartHandshake,
-  },
-];
-
 export default async function ConnectPage() {
   const [mentorship, donationStories] = await Promise.all([
     getMentorship(),
@@ -88,23 +62,9 @@ export default async function ConnectPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchClusterHero
-        eyebrow="Connect & Engage"
-        title="Reach research teams, partners, and programmes."
-        body="Research office and staff contacts are now managed through the main university directory. Find mentorship, donation, and media channels below."
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Research", href: "/" },
-          { label: "Connect & Engage" },
-        ]}
-        imageSrc="/images/research/research-about-hero.svg"
-        imageAlt="Research office contacts, engagement channels, mentorship, and donor support"
-        links={engageLinks}
-        primaryAction={{ label: "Start an inquiry", href: "/connect#get-in-touch" }}
-        stats={[
-          { label: "Mentorship programmes", value: mentorship.data.length },
-          { label: "Donation stories", value: donationStories.data.length },
-        ]}
+      <ConnectMasthead
+        mentorshipCount={mentorship.data.length}
+        donationStoryCount={donationStories.data.length}
       />
       <section className="px-4 pt-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mx-auto max-w-[1680px]">
@@ -215,6 +175,48 @@ export default async function ConnectPage() {
   );
 }
 
+function ConnectMasthead({
+  mentorshipCount,
+  donationStoryCount,
+}: {
+  mentorshipCount: number;
+  donationStoryCount: number;
+}) {
+  const stats = [
+    { label: "Mentorship programmes", value: mentorshipCount },
+    { label: "Donation stories", value: donationStoryCount },
+  ];
+
+  return (
+    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-end">
+        <div>
+          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
+            <Link href="/" className="transition hover:text-primary">Home</Link>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-900">Connect & Engage</span>
+          </nav>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Connect & Engage</p>
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">Reach research teams, partners, and programmes</h1>
+          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">Find inquiry routes, mentorship records, donation stories, media channels, and cross-service research pathways.</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <PrimaryLink href="/connect#get-in-touch">Start an inquiry</PrimaryLink>
+            <SecondaryLink href="/donate">Donate</SecondaryLink>
+          </div>
+        </div>
+        <dl className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+          {stats.map((stat) => (
+            <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+              <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
+              <dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
+  );
+}
+
 function DirectoryPanel({
   title,
   records,
@@ -257,4 +259,3 @@ function DirectoryPanel({
     </section>
   );
 }
-
