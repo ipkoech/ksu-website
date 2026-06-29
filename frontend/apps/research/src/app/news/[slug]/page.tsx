@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { researchServiceApi } from "@ksu/api-client";
 import {
   ResearchDetailHero,
   ResearchDetailSidebar,
   ResearchRecordPanel,
-  ResearchRelationshipCard,
   ResearchTextPanel,
 } from "../../../components/research-detail";
 import { Badge, ResearchSection, StatusMessage } from "../../../components/research-ui";
@@ -21,6 +21,10 @@ import {
   getProjects,
   getPublications,
 } from "../../../lib/research-public-data";
+import {
+  getRecordSummary,
+  getRecordTitle,
+} from "../../../lib/research-page-model";
 
 export const revalidate = 300;
 const passthroughImageLoader = ({ src }: { src: string }) => src;
@@ -153,15 +157,15 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
 
       <ResearchSection
         eyebrow="Research Context"
-        title="Connected research records"
-        body="When the update is linked to a research project, center, publication, or innovation, those relationships are shown as public context rather than internal database fields."
+        title="Source records and next paths"
+        body="When the update is linked to a project, center, publication, or innovation, those public records are shown as useful context."
       >
-        <div className="grid gap-5 lg:grid-cols-4">
-          <ResearchRelationshipCard title="Research project" record={project} hrefBase="/projects" empty="No public related record is linked yet." />
-          <ResearchRelationshipCard title="Research center" record={center} hrefBase="/centers" empty="No public related record is linked yet." />
-          <ResearchRelationshipCard title="Publication or output" record={publication} hrefBase="/publications" empty="No public related record is linked yet." />
-          <ResearchRelationshipCard title="Innovation" record={innovation} hrefBase="/innovations" empty="No public related record is linked yet." />
-        </div>
+        <SourceContext
+          project={project}
+          center={center}
+          publication={publication}
+          innovation={innovation}
+        />
       </ResearchSection>
 
       <ResearchSection
@@ -183,4 +187,73 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
 function findById<T extends { id?: string }>(records: T[], id: unknown) {
   const recordId = compactText(id as string | number | null | undefined);
   return recordId ? records.find((record) => record.id === recordId) : undefined;
+}
+
+function SourceContext({
+  project,
+  center,
+  publication,
+  innovation,
+}: {
+  project?: ResearchGenericRecord;
+  center?: ResearchGenericRecord;
+  publication?: ResearchGenericRecord;
+  innovation?: ResearchGenericRecord;
+}) {
+  const cards = [
+    project
+      ? {
+          label: "Research project",
+          title: getRecordTitle(project, "Research project"),
+          href: project.slug ? `/projects/${project.slug}` : "/projects",
+          body: getRecordSummary(project),
+        }
+      : null,
+    center
+      ? {
+          label: "Research center",
+          title: getRecordTitle(center, "Research center"),
+          href: center.slug ? `/centers/${center.slug}` : "/centers",
+          body: getRecordSummary(center),
+        }
+      : null,
+    publication
+      ? {
+          label: "Publication or output",
+          title: getRecordTitle(publication, "Publication"),
+          href: publication.slug ? `/publications/${publication.slug}` : "/publications",
+          body: getRecordSummary(publication),
+        }
+      : null,
+    innovation
+      ? {
+          label: "Innovation",
+          title: getRecordTitle(innovation, "Innovation"),
+          href: innovation.slug ? `/innovations/${innovation.slug}` : "/innovations",
+          body: getRecordSummary(innovation),
+        }
+      : null,
+  ].filter(Boolean) as Array<{ label: string; title: string; href: string; body: string }>;
+
+  if (cards.length === 0) {
+    return <StatusMessage>No public source records are linked yet.</StatusMessage>;
+  }
+
+  return (
+    <div className="grid gap-5 lg:grid-cols-4">
+      {cards.map((card) => (
+        <Link
+          key={card.href}
+          href={card.href}
+          className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:bg-primary/5"
+        >
+          <p className="text-xs font-semibold uppercase text-secondary">{card.label}</p>
+          <h2 className="mt-3 text-base font-semibold leading-6 text-slate-950">{card.title}</h2>
+          {card.body ? (
+            <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{card.body}</p>
+          ) : null}
+        </Link>
+      ))}
+    </div>
+  );
 }

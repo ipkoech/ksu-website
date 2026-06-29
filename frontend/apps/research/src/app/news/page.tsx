@@ -1,16 +1,14 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
-import { BookOpenCheck, CalendarDays, Newspaper, Users } from "lucide-react";
 import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
-import { ResearchClusterHero } from "../../components/research-cluster";
-import { ResearchFilterForm } from "../../components/research-listing";
-import { ResearchFact } from "../../components/research-detail";
+import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
 import {
   Badge,
   FilledBadge,
+  PrimaryLink,
   ResearchSection,
+  SecondaryLink,
   StatusMessage,
 } from "../../components/research-ui";
 import {
@@ -22,6 +20,13 @@ import {
   getCenters,
   getProjects,
 } from "../../lib/research-public-data";
+import {
+  filterRecordsByMonth,
+  getRecordMonths,
+  getRecordSummary,
+  getRecordTitle,
+  getRecordYears,
+} from "../../lib/research-page-model";
 
 export const revalidate = 300;
 
@@ -34,20 +39,29 @@ type NewsSearchParams = {
   q?: string;
   articleType?: string;
   category?: string;
+  status?: string;
+  active?: string;
   center?: string;
   project?: string;
   year?: string;
+  month?: string;
   sort?: string;
 };
 
 const articleTypes = ["article", "feature", "opinion", "case_study", "research_story"];
-const passthroughImageLoader = ({ src }: { src: string }) => src;
-
-const learningLinks = [
-  { label: "Training", href: "/training", description: "Workshops, courses, bootcamps, and seminars.", icon: BookOpenCheck },
-  { label: "Mentorship", href: "/mentorship", description: "Mentor and mentee pathways for research growth.", icon: Users },
-  { label: "Events", href: "/events", description: "Public calendar for forums, workshops, and conferences.", icon: CalendarDays },
-  { label: "News", href: "/news", description: "Research updates, notices, stories, and articles.", icon: Newspaper },
+const articleStatuses = ["published", "draft", "archived"];
+const activeStates = [
+  { label: "Active", value: "active" },
+  { label: "Inactive", value: "inactive" },
+  { label: "Featured", value: "featured" },
+];
+const sortOptions = [
+  { value: "published_at", label: "Published date" },
+  { value: "created_at", label: "Newest record" },
+  { value: "updated_at", label: "Recently updated" },
+  { value: "view_count", label: "Most viewed" },
+  { value: "title", label: "Title A-Z" },
+  { value: "title_desc", label: "Title Z-A" },
 ];
 
 export default async function NewsPage({
@@ -58,18 +72,22 @@ export default async function NewsPage({
   const params = (await searchParams) ?? {};
   const page = pageFromSearchParams(params);
   const sort = params.sort || "published_at";
+  const sortField = sort === "title_desc" ? "title" : sort;
   const order = sort === "title" ? "asc" : "desc";
+  const activeFlags = getActiveFlags(params.active);
   const [articles, allArticles, centers, projects] = await Promise.all([
     getArticlesFiltered(
       {
         search: params.q,
         articleType: params.articleType,
         category: params.category,
+        status: params.status,
         centerId: params.center,
         projectId: params.project,
         year: params.year,
-        sort,
+        sort: sortField,
         order,
+        ...activeFlags,
       },
       page,
     ),
@@ -78,42 +96,37 @@ export default async function NewsPage({
     getProjects(),
   ]);
   const categories = getCategories([...allArticles.data]);
-  const years = getYears([...allArticles.data]);
-  const activeList = articles;
-  const totalPages = Math.ceil(activeList.total / activeList.perPage);
+  const years = getRecordYears(allArticles.data);
+  const months = getRecordMonths(allArticles.data, params.year);
+  const visibleArticles = filterRecordsByMonth(articles.data, params.year, params.month);
+  const featuredArticle = visibleArticles.find((record) => record.is_featured);
+  const rowArticles = featuredArticle
+    ? visibleArticles.filter((record) => record.id !== featuredArticle.id)
+    : visibleArticles;
+  const totalPages = Math.ceil(
+    (params.month ? visibleArticles.length : articles.total) / articles.perPage,
+  );
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchClusterHero
-        eyebrow="Learning / Events / Updates"
-        title="Research news, updates, and feature articles."
-        body="Follow public research announcements, stories, milestones, and explanatory articles from the Research Directorate and connected research units."
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Learning / Events / Updates", href: "/training" },
-          { label: "News" },
-        ]}
-        imageSrc="/images/research/research-home-hero.svg"
-        imageAlt="Research news desk with updates, stories, and event coverage"
-        links={learningLinks}
-        primaryAction={{ label: "View events", href: "/events" }}
-        stats={[
-          { label: "Article results", value: articles.data.length },
-          { label: "Centers", value: centers.data.length },
-          { label: "Projects", value: projects.data.length },
-        ]}
+      <NewsMasthead
+        resultCount={visibleArticles.length}
+        publishedCount={allArticles.data.length}
+        centersCount={centers.data.length}
+        projectsCount={projects.data.length}
       />
 
       <ResearchSection
         eyebrow="Research Desk"
-        title="Browse updates and articles"
-        body="Browse updates by type, category, related center, project, year, and publication date."
+        title="News, updates, and feature articles"
+        body="Search public research updates and use the filter menu for type, category, status, active state, center, project, year, month, and sort order."
         tone="white"
       >
         <NewsFilters
           params={params}
           categories={categories}
           years={years}
+          months={months}
           centers={centers.data}
           projects={projects.data}
         />
@@ -126,39 +139,89 @@ export default async function NewsPage({
             </div>
           ))}
 
-        <div className="mt-8">
-          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-secondary">
-                Articles
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold text-slate-950">
-                Feature stories and explainers
-              </h2>
-            </div>
-            <Badge>{articles.data.length} published</Badge>
-          </div>
-          {articles.data.length > 0 ? (
-            <>
-              <div className="grid gap-5 lg:grid-cols-3">
-                {articles.data.map((record) => (
-                  <ArticleCard key={record.id} record={record} />
-                ))}
+        {visibleArticles.length > 0 ? (
+          <>
+            {featuredArticle ? (
+              <div className="mt-6">
+                <FeaturedArticle record={featuredArticle} />
               </div>
-              <ListPagination
-                page={page}
-                totalPages={totalPages}
-                total={articles.total}
-                perPage={articles.perPage}
-                baseHref="/news"
-              />
-            </>
-          ) : (
-            <StatusMessage>No research articles match the current filters.</StatusMessage>
-          )}
-        </div>
+            ) : null}
+            <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
+              {rowArticles.map((record) => (
+                <ArticleRow key={record.id} record={record} />
+              ))}
+            </div>
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              total={articles.total}
+              perPage={articles.perPage}
+              baseHref="/news"
+            />
+          </>
+        ) : (
+          <div className="mt-7">
+            <StatusMessage>No published research articles match the current filters.</StatusMessage>
+          </div>
+        )}
       </ResearchSection>
     </main>
+  );
+}
+
+function NewsMasthead({
+  resultCount,
+  publishedCount,
+  centersCount,
+  projectsCount,
+}: {
+  resultCount: number;
+  publishedCount: number;
+  centersCount: number;
+  projectsCount: number;
+}) {
+  const stats = [
+    { label: "Article results", value: resultCount },
+    { label: "Published articles", value: publishedCount },
+    { label: "Centers", value: centersCount },
+    { label: "Projects", value: projectsCount },
+  ];
+
+  return (
+    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
+        <div>
+          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
+            <Link href="/" className="transition hover:text-primary">Home</Link>
+            <span className="text-slate-300">/</span>
+            <Link href="/training" className="transition hover:text-primary">Learning</Link>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-900">News</span>
+          </nav>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
+            Learning / Events / Updates
+          </p>
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+            Research news, updates, and feature articles
+          </h1>
+          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">
+            Follow public research announcements, stories, milestones, and explanatory articles from published records.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <PrimaryLink href="/events">View events</PrimaryLink>
+            <SecondaryLink href="/community-impact">Impact stories</SecondaryLink>
+          </div>
+        </div>
+        <dl className="grid gap-2 sm:grid-cols-2">
+          {stats.map((stat) => (
+            <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+              <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
+              <dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
   );
 }
 
@@ -166,12 +229,14 @@ function NewsFilters({
   params,
   categories,
   years,
+  months,
   centers,
   projects,
 }: {
   params: NewsSearchParams;
   categories: string[];
   years: string[];
+  months: Array<{ value: string; label: string }>;
   centers: ResearchGenericRecord[];
   projects: ResearchProject[];
 }) {
@@ -184,60 +249,91 @@ function NewsFilters({
       selects={[
         { name: "articleType", label: "Article type", value: params.articleType, options: articleTypes },
         { name: "category", label: "Category", value: params.category, options: categories },
+        { name: "active", label: "Active state", value: params.active, options: activeStates },
+        { name: "status", label: "Status", value: params.status, options: articleStatuses },
         { name: "year", label: "Year", value: params.year, options: years },
+        { name: "month", label: "Month", value: params.month, options: months },
       ]}
       centers={centers}
       centerValue={params.center}
       projects={projects}
       projectValue={params.project}
       sortValue={params.sort}
-      sortOptions={[
-        { value: "published_at", label: "Published date" },
-        { value: "created_at", label: "Newest record" },
-        { value: "title", label: "Title" },
-        { value: "view_count", label: "Most viewed" },
+      sortOptions={sortOptions}
+    />
+  );
+}
+
+function FeaturedArticle({ record }: { record: ResearchGenericRecord }) {
+  return (
+    <Link
+      href={record.slug ? `/news/${record.slug}` : "/news"}
+      className="group grid gap-4 rounded-lg border border-primary/20 bg-primary/[0.03] p-4 shadow-sm transition hover:border-primary/40 lg:grid-cols-[minmax(0,1fr)_260px_auto] lg:items-center"
+    >
+      <ArticleRowContent record={record} featured />
+    </Link>
+  );
+}
+
+function ArticleRow({ record }: { record: ResearchGenericRecord }) {
+  return (
+    <ResearchRecordRow
+      href={record.slug ? `/news/${record.slug}` : "/news"}
+      title={getRecordTitle(record, "Research article")}
+      description={
+        getRecordSummary(record) ||
+        compactText(record.excerpt) ||
+        "This article is published without a public summary."
+      }
+      badges={[record.article_type ?? record.news_type, record.category, record.status]}
+      filledBadges={[record.is_featured ? "Featured" : null]}
+      facts={[
+        { label: "Published", value: formatDate(record.published_at) },
+        { label: "Author", value: compactText(record.author_name) },
+        { label: "Reading", value: record.reading_time_minutes ? `${record.reading_time_minutes} min` : "" },
       ]}
     />
   );
 }
 
-function ArticleCard({ record }: { record: ResearchGenericRecord }) {
-  const href = record.slug ? `/news/${record.slug}` : "/news";
-  const imageUrl = compactText(record.cover_image_url) || compactText(record.photo_url);
+function ArticleRowContent({
+  record,
+  featured = false,
+}: {
+  record: ResearchGenericRecord;
+  featured?: boolean;
+}) {
   return (
-    <article className="flex min-h-[360px] flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]">
-      {imageUrl ? (
-        <Image
-          loader={passthroughImageLoader}
-          unoptimized
-          src={imageUrl}
-          alt=""
-          width={1200}
-          height={675}
-          className="aspect-[16/9] w-full object-cover"
-        />
-      ) : null}
-      <div className="flex flex-1 flex-col p-5">
+    <>
+      <div>
         <div className="flex flex-wrap gap-2">
-          <Badge>{formatLabel(record.article_type ?? "article")}</Badge>
+          <Badge>{formatLabel(compactText(record.article_type ?? record.news_type) || "article")}</Badge>
           {record.reading_time_minutes ? <Badge>{record.reading_time_minutes} min read</Badge> : null}
+          {featured || record.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
         </div>
-        <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-          <Link href={href} className="transition hover:text-primary">
-            {record.title ?? "Research article"}
-          </Link>
+        <h2 className="mt-3 text-lg font-semibold leading-7 text-slate-950">
+          {getRecordTitle(record, "Research article")}
         </h2>
-        <p className="mt-3 text-sm leading-7 text-slate-600">
-          {compactText(record.summary) ||
+        <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+          {getRecordSummary(record) ||
             compactText(record.excerpt) ||
             "This article is published without a public summary."}
         </p>
-        <div className="mt-auto grid gap-2 pt-5 text-sm sm:grid-cols-2">
-          <ResearchFact label="Published" value={formatDate(record.published_at)} />
-          <ResearchFact label="Author" value={compactText(record.author_name)} />
-        </div>
       </div>
-    </article>
+      <dl className="grid gap-2 text-sm">
+        <div className="rounded-md bg-white p-2.5">
+          <dt className="text-xs font-semibold uppercase text-slate-500">Published</dt>
+          <dd className="mt-1 font-semibold text-slate-950">{formatDate(record.published_at) || "Not published"}</dd>
+        </div>
+        <div className="rounded-md bg-white p-2.5">
+          <dt className="text-xs font-semibold uppercase text-slate-500">Author</dt>
+          <dd className="mt-1 font-semibold text-slate-950">{compactText(record.author_name) || "Not published"}</dd>
+        </div>
+      </dl>
+      <span className="inline-flex min-h-10 items-center justify-center rounded-md border border-primary/20 px-3 text-sm font-semibold text-primary transition group-hover:bg-primary group-hover:text-white">
+        Read update
+      </span>
+    </>
   );
 }
 
@@ -247,12 +343,8 @@ function getCategories(records: ResearchGenericRecord[]) {
   ).sort();
 }
 
-function getYears(records: ResearchGenericRecord[]) {
-  return Array.from(
-    new Set(
-      records
-        .map((record) => compactText(record.published_at ?? record.created_at).slice(0, 4))
-        .filter((year) => /^\d{4}$/.test(year)),
-    ),
-  ).sort((a, b) => Number(b) - Number(a));
+function getActiveFlags(value?: string) {
+  if (value === "inactive") return { isActive: false };
+  if (value === "featured") return { isActive: true, isFeatured: true };
+  return { isActive: true };
 }
