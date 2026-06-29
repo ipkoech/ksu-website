@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import { BarChart3, BookOpenCheck, Database, FlaskConical } from "lucide-react";
+import Link from "next/link";
 import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
-import { ResearchClusterHero } from "../../components/research-cluster";
 import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
-import { ResearchSection, StatusMessage } from "../../components/research-ui";
+import { PrimaryLink, ResearchSection, SecondaryLink, StatusMessage } from "../../components/research-ui";
 import {
   compactText,
   formatDate,
@@ -12,7 +11,12 @@ import {
   getPublications,
   getPublicationsFiltered,
 } from "../../lib/research-public-data";
-import type { ResearchPublication } from "@ksu/api-client";
+import {
+  filterRecordsByMonth,
+  getRecordMonths,
+  getRecordTimelineLabel,
+  getRecordYears,
+} from "../../lib/research-page-model";
 
 export const revalidate = 300;
 
@@ -27,7 +31,9 @@ type PublicationSearchParams = {
   access?: string;
   center?: string;
   project?: string;
+  active?: string;
   year?: string;
+  month?: string;
   sort?: string;
 };
 
@@ -41,32 +47,16 @@ const publicationTypes = [
   "policy_brief",
 ];
 const accessTypes = ["open", "restricted", "subscription", "embargoed"];
-
-const outputLinks = [
-  {
-    label: "Publications",
-    href: "/publications",
-    description: "Articles, books, conference papers, reports, and policy briefs.",
-    icon: BookOpenCheck,
-  },
-  {
-    label: "Outputs",
-    href: "/outputs",
-    description: "Datasets, software, toolkits, prototypes, and deliverables.",
-    icon: Database,
-  },
-  {
-    label: "Impact Metrics",
-    href: "/impact-metrics",
-    description: "Public outcomes, reach, and performance indicators.",
-    icon: BarChart3,
-  },
-  {
-    label: "Projects",
-    href: "/projects",
-    description: "Trace outputs back to the work that produced them.",
-    icon: FlaskConical,
-  },
+const activeStates = [
+  { label: "Active", value: "active" },
+  { label: "Inactive", value: "inactive" },
+  { label: "Featured", value: "featured" },
+];
+const sortOptions = [
+  { value: "publication_date", label: "Publication date" },
+  { value: "year", label: "Year" },
+  { value: "created_at", label: "Newest" },
+  { value: "title", label: "Title A-Z" },
 ];
 
 export default async function PublicationsPage({
@@ -76,6 +66,9 @@ export default async function PublicationsPage({
 }) {
   const params = (await searchParams) ?? {};
   const page = pageFromSearchParams(params);
+  const sort = params.sort || "publication_date";
+  const order = sort === "title" ? "asc" : "desc";
+  const activeFlags = getActiveFlags(params.active);
   const [publications, allPublications, centers, projects] = await Promise.all([
     getPublicationsFiltered(
       {
@@ -85,8 +78,9 @@ export default async function PublicationsPage({
         centerId: params.center,
         projectId: params.project,
         year: params.year,
-        sort: params.sort || "publication_date",
-        order: params.sort === "title" ? "asc" : "desc",
+        sort,
+        order,
+        ...activeFlags,
       },
       page,
     ),
@@ -95,39 +89,29 @@ export default async function PublicationsPage({
     getProjects(),
   ]);
   const totalPages = Math.ceil(publications.total / publications.perPage);
+  const years = getRecordYears(allPublications.data);
+  const months = getRecordMonths(allPublications.data, params.year);
+  const visiblePublications = filterRecordsByMonth(publications.data, params.year, params.month);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchClusterHero
-        eyebrow="Publications & Outputs"
-        title="Scholarly publications and public research evidence."
-        body="Find journal articles, conference papers, reports, books, policy briefs, and open access records."
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Publications & Outputs", href: "/publications" },
-          { label: "Publications" },
-        ]}
-        imageSrc="/images/research/research-home-hero.svg"
-        imageAlt="Research publications, reports, datasets, and scholarly evidence"
-        links={outputLinks}
-        primaryAction={{ label: "View outputs", href: "/outputs" }}
-        stats={[
-          { label: "Publication results", value: publications.data.length },
-          { label: "Published publications", value: allPublications.data.length },
-          { label: "Centers", value: centers.data.length },
-          { label: "Projects", value: projects.data.length },
-        ]}
+      <PublicationsMasthead
+        resultCount={visiblePublications.length}
+        publishedCount={allPublications.data.length}
+        centersCount={centers.data.length}
+        projectsCount={projects.data.length}
       />
 
       <ResearchSection
         eyebrow="Research Library"
         title="Publications"
-        body="Browse publications by type, year, access, journal, DOI, project, and center."
+        body="Search first, then use the filter menu for type, access, active state, year, month, project, center, and sort order."
         tone="white"
       >
         <PublicationFilters
           params={params}
-          years={getPublicationYears(allPublications.data)}
+          years={years}
+          months={months}
           centers={centers.data}
           projects={projects.data}
         />
@@ -140,10 +124,10 @@ export default async function PublicationsPage({
             </div>
           ))}
 
-        {publications.data.length > 0 ? (
+        {visiblePublications.length > 0 ? (
           <>
             <div className="mt-7 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
-              {publications.data.map((publication) => (
+              {visiblePublications.map((publication) => (
                 <ResearchRecordRow
                   key={publication.id}
                   href={publication.slug ? `/publications/${publication.slug}` : "/publications"}
@@ -161,7 +145,7 @@ export default async function PublicationsPage({
                   facts={[
                     { label: "Published in", value: publication.journal_name || publication.publisher || publication.conference_name || "" },
                     { label: "Year", value: compactText(publication.year) },
-                    { label: "Date", value: formatDate(publication.publication_date) },
+                    { label: "Date", value: formatDate(publication.publication_date) || getRecordTimelineLabel(publication) },
                     { label: "DOI", value: compactText(publication.doi) },
                   ]}
                 />
@@ -185,14 +169,64 @@ export default async function PublicationsPage({
   );
 }
 
+function PublicationsMasthead({
+  resultCount,
+  publishedCount,
+  centersCount,
+  projectsCount,
+}: {
+  resultCount: number;
+  publishedCount: number;
+  centersCount: number;
+  projectsCount: number;
+}) {
+  const stats = [
+    { label: "Publication results", value: resultCount },
+    { label: "Published publications", value: publishedCount },
+    { label: "Centers", value: centersCount },
+    { label: "Projects", value: projectsCount },
+  ];
+
+  return (
+    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
+        <div>
+          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
+            <Link href="/" className="transition hover:text-primary">Home</Link>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-900">Publications</span>
+          </nav>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Publications & Outputs</p>
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">Scholarly publications, reports, policy briefs, books, and public research evidence</h1>
+          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">Browse publication records by type, access, DOI, journal, project, center, and publication window.</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <PrimaryLink href="/outputs">View outputs</PrimaryLink>
+            <SecondaryLink href="/projects">Trace to projects</SecondaryLink>
+          </div>
+        </div>
+        <dl className="grid gap-2 sm:grid-cols-2">
+          {stats.map((stat) => (
+            <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+              <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
+              <dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
+  );
+}
+
 function PublicationFilters({
   params,
   years,
+  months,
   centers,
   projects,
 }: {
   params: PublicationSearchParams;
   years: string[];
+  months: Array<{ value: string; label: string }>;
   centers: Array<Record<string, any>>;
   projects: Array<Record<string, any>>;
 }) {
@@ -205,28 +239,22 @@ function PublicationFilters({
       selects={[
         { name: "type", label: "Type", value: params.type, options: publicationTypes },
         { name: "access", label: "Access", value: params.access, options: accessTypes },
+        { name: "active", label: "Active state", value: params.active, options: activeStates },
         { name: "year", label: "Year", value: params.year, options: years },
+        { name: "month", label: "Month", value: params.month, options: months },
       ]}
       centers={centers}
       centerValue={params.center}
       projects={projects}
       projectValue={params.project}
       sortValue={params.sort}
-      sortOptions={[
-        { value: "publication_date", label: "Publication date" },
-        { value: "year", label: "Year" },
-        { value: "title", label: "Title" },
-        { value: "created_at", label: "Newest" },
-      ]}
+      sortOptions={sortOptions}
     />
   );
 }
 
-function getPublicationYears(publications: ResearchPublication[]) {
-  const years = publications
-    .map((publication) => publication.year ?? (publication.publication_date ? new Date(publication.publication_date).getFullYear() : null))
-    .filter((year): year is number => Boolean(year) && !Number.isNaN(year));
-  return Array.from(new Set(years))
-    .sort((a, b) => b - a)
-    .map(String);
+function getActiveFlags(value?: string) {
+  if (value === "inactive") return { isActive: false };
+  if (value === "featured") return { isActive: true, isFeatured: true };
+  return { isActive: true };
 }
