@@ -14,6 +14,7 @@ export default [
     ignores: [
       "**/.next/**",
       "**/.next.docker-owned-*/**",
+      "**/.next-root-owned-backup-*/**",
       "**/.next-codex/**",
       "**/.next-codex-*/**",
       "**/tmp/ksu-*-next/**",

@@ -3,7 +3,6 @@ import Link from "next/link";
 import { ResearchSidePanel } from "../../components/research-detail";
 import {
   Badge,
-  IconCard,
   PrimaryLink,
   ResearchSection,
   SecondaryLink,
@@ -112,42 +111,6 @@ export default async function ConnectPage() {
               </StatusMessage>
             </div>
           </ResearchSidePanel>
-        </div>
-      </ResearchSection>
-      <ResearchSection
-        eyebrow="Multimedia & Integration Links"
-        title="Tours, media, and cross-service pathways"
-        body="This section gives the portal the requested virtual tours, interviews, galleries, academic links, alumni links, career links, and cross-promoted events."
-      >
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          <IconCard
-            icon="news"
-            title="Research multimedia"
-            body="Feature virtual tours, explainer videos, researcher interview podcasts, and photo galleries."
-            href="/resources-tools"
-            action="Open media"
-          />
-          <IconCard
-            icon="book"
-            title="Academic programs"
-            body="Connect research themes and projects to relevant academic programmes."
-            href="/m/programmes"
-            action="View programs"
-          />
-          <IconCard
-            icon="users"
-            title="Alumni network"
-            body="Cross-promote alumni expertise, mentors, founders, and research ambassadors."
-            href="/m/alumni"
-            action="Open alumni"
-          />
-          <IconCard
-            icon="target"
-            title="Career services"
-            body="Connect partner demand, research talent pipelines, internships, and graduate opportunities."
-            href="/m/careers"
-            action="Open careers"
-          />
         </div>
       </ResearchSection>
       <ResearchSection
