@@ -3,6 +3,7 @@ import { test } from "node:test";
 
 import {
   RESEARCH_SEARCH_GROUPS,
+  buildBackendSearchResult,
   buildSearchResult,
   getSelectedSearchGroups,
   pickTopMatch,
@@ -56,4 +57,24 @@ test("pickTopMatch prefers featured records", () => {
   ];
 
   assert.equal(pickTopMatch(results)?.id, "b");
+});
+
+test("buildBackendSearchResult maps unified backend results to frontend groups", () => {
+  const result = buildBackendSearchResult({
+    id: "project-1",
+    type: "projects",
+    title: "Climate-smart agriculture",
+    description: "A research project on food security.",
+    url: "/projects/climate-smart-agriculture",
+    date: "2026-06-01",
+    status: "published",
+    is_featured: true,
+    metadata: { center_id: "center-1", label: "Project" },
+  });
+
+  assert.ok(result);
+  assert.equal(result.groupKey, "projects");
+  assert.equal(result.href, "/projects/climate-smart-agriculture");
+  assert.equal(result.isFeatured, true);
+  assert.equal(result.chips.includes("Published"), true);
 });

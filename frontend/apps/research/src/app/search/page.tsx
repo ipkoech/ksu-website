@@ -14,11 +14,11 @@ import {
   SlidersHorizontal,
   TrendingUp,
 } from "lucide-react";
-import type { PaginatedResponse } from "@ksu/api-client";
-import { researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
+import { researchServiceApi } from "@ksu/api-client";
 import {
   RESEARCH_SEARCH_GROUPS,
   SEARCH_TABS,
+  buildBackendSearchResult,
   buildSearchResult,
   filterResultsByTab,
   getSelectedSearchGroups,
@@ -28,7 +28,6 @@ import {
   sortSearchResults,
   suggestedSearches,
   type ResearchSearchGroup,
-  type ResearchSearchGroupKey,
   type ResearchSearchResult,
   type SearchRecord,
   type SearchTabKey,
@@ -626,87 +625,85 @@ async function runResearchSearch(
   query: string,
   groups: ResearchSearchGroup[],
 ): Promise<SearchGroupResponse[]> {
-  const responses = await Promise.all(
-    groups.map(async (group) => {
+  const researchGroups = groups.filter((group) => group.key !== "news" && group.key !== "events");
+  const contentGroups = groups.filter((group) => group.key === "news" || group.key === "events");
+  const responses = new Map<string, SearchGroupResponse>();
+
+  try {
+    if (researchGroups.length > 0) {
+      const response = await researchServiceApi.search({
+        q: query,
+        types: researchGroups.map((group) => group.key).join(","),
+        limit: Math.max(PER_GROUP, PER_GROUP * researchGroups.length),
+      });
+      const results = (response.data?.results ?? [])
+        .map((record) => buildBackendSearchResult(record))
+        .filter((result): result is ResearchSearchResult => Boolean(result));
+
+      for (const group of researchGroups) {
+        const groupResults = results.filter((result) => result.groupKey === group.key);
+        responses.set(group.key, {
+          group,
+          results: groupResults,
+          total: response.data?.by_type?.[group.key] ?? groupResults.length,
+          error: null,
+        });
+      }
+    }
+  } catch {
+    for (const group of researchGroups) {
+      responses.set(group.key, {
+        group,
+        results: [],
+        total: 0,
+        error: "Research search is temporarily unavailable.",
+      });
+    }
+  }
+
+  await Promise.all(
+    contentGroups.map(async (group) => {
       try {
-        const response = await fetchGroup(group.key, query);
+        const response =
+          group.key === "news"
+            ? await researchServiceApi.articles.list({
+                search: query,
+                is_published: true,
+                per_page: PER_GROUP,
+              })
+            : await researchServiceApi.events.list({
+                search: query,
+                is_published: true,
+                per_page: PER_GROUP,
+              });
         const data = (response.data ?? []) as SearchRecord[];
-        return {
+        responses.set(group.key, {
           group,
           results: data.map((record) => buildSearchResult(record, group)),
           total: response.meta?.total ?? data.length,
           error: null,
-        };
+        });
       } catch {
-        return {
+        responses.set(group.key, {
           group,
           results: [],
           total: 0,
           error: `${group.label} are temporarily unavailable.`,
-        };
+        });
       }
     }),
   );
-  return responses;
+
+  return groups.map(
+    (group) =>
+      responses.get(group.key) ?? {
+        group,
+        results: [],
+        total: 0,
+        error: null,
+      },
+  );
 }
-
-function fetchGroup(
-  key: ResearchSearchGroupKey,
-  query: string,
-): Promise<PaginatedResponse<ResearchGenericRecord>> {
-  const params = {
-    search: query,
-    is_active: true,
-    is_public: true,
-    per_page: PER_GROUP,
-    fields:
-      "id,title,name,slug,summary,abstract,description,about,status,year,start_date,end_date,deadline,event_date,published_at,publication_date,cover_image_url,logo_url,is_featured,is_open_access,access_type,center_name,location,venue",
-  };
-
-  switch (key) {
-    case "projects":
-      return researchServiceApi.projects.list(params);
-    case "publications":
-      return researchServiceApi.publications.list(params);
-    case "grants":
-      return researchServiceApi.grants.list(params);
-    case "innovations":
-      return researchServiceApi.innovations.list(params);
-    case "partners":
-      return researchServiceApi.partners.list(params);
-    case "centers":
-      return researchServiceApi.centers.list(params);
-    case "facilities":
-      return researchServiceApi.farms.list(params);
-    case "outputs":
-      return researchServiceApi.outputs.list(params);
-    case "resources":
-      return researchServiceApi.resources.list(params);
-    case "services":
-      return researchServiceApi.services.list(params);
-    case "guidelines":
-      return researchServiceApi.guidelines.list(params);
-    case "training":
-      return researchServiceApi.training.list(params);
-    case "scholarships":
-      return researchServiceApi.scholarships.list(params);
-    case "news":
-      return researchServiceApi.articles.list({
-        search: query,
-        is_published: true,
-        per_page: PER_GROUP,
-        fields: params.fields,
-      });
-    case "events":
-      return researchServiceApi.events.list({
-        search: query,
-        is_published: true,
-        per_page: PER_GROUP,
-        fields: params.fields,
-      });
-  }
-}
-
 async function loadCenterOptions() {
   try {
     const response = await researchServiceApi.centers.list({

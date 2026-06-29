@@ -43,6 +43,7 @@ type ListParams<
 export interface ResearchProject {
   id: string;
   title: string;
+  name?: string | null;
   slug: string;
   code?: string | null;
   program_id?: string | null;
@@ -70,6 +71,7 @@ export interface ResearchProject {
   is_active?: boolean;
   is_featured?: boolean;
   is_public?: boolean;
+  published_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -268,7 +270,7 @@ export interface ResearchDonor {
 export type ResearchGenericRecord = Record<string, any> & {
   id: string;
   title?: string;
-  name?: string;
+  name?: string | null;
   slug?: string;
   code?: string | null;
   status?: string;
@@ -279,6 +281,25 @@ export type ResearchGenericRecord = Record<string, any> & {
 };
 
 export type ResearchGenericPayload = Record<string, any>;
+
+export interface ResearchSearchResult {
+  id: string;
+  type: string;
+  title: string;
+  description?: string | null;
+  url?: string | null;
+  date?: string | null;
+  status?: string | null;
+  is_featured: boolean;
+  metadata: Record<string, any>;
+}
+
+export interface ResearchSearchResponse {
+  query: string;
+  total: number;
+  results: ResearchSearchResult[];
+  by_type: Record<string, number>;
+}
 
 function crudApi<TRecord, TPayload>(path: string) {
   return {
@@ -329,6 +350,8 @@ export const researchServiceApi = {
   stats: () => researchApi.get<{ data: PublicStatsResponse }>("/api/v1/stats"),
   adminStats: () =>
     researchApi.get<{ data: PublicStatsResponse }>("/api/v1/stats/admin"),
+  search: (params: { q: string; types?: string; limit?: number }) =>
+    researchApi.get<{ data: ResearchSearchResponse }>("/api/v1/search", params),
   projects: crudApi<ResearchProject, ResearchProjectPayload>(
     "/api/v1/projects",
   ),

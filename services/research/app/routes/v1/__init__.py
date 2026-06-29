@@ -13,6 +13,7 @@ from .partners import router as partners_router
 from .projects import router as projects_router
 from .publications import router as publications_router
 from .scholarships import router as scholarships_router
+from .search import router as search_router
 from .stats import router as stats_router
 from .stories import router as stories_router
 from .training import router as training_router
@@ -21,6 +22,7 @@ router = APIRouter()
 router.include_router(health_router)
 router.include_router(audit_router)
 router.include_router(stats_router)
+router.include_router(search_router)
 router.include_router(centers_router)
 router.include_router(projects_router)
 router.include_router(grants_router)

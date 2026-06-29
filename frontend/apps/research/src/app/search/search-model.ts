@@ -78,6 +78,18 @@ export type ResearchSearchResult = {
   chips: string[];
 };
 
+export type BackendResearchSearchResult = {
+  id: string;
+  type: string;
+  title: string;
+  description?: string | null;
+  url?: string | null;
+  date?: string | null;
+  status?: string | null;
+  is_featured?: boolean;
+  metadata?: Record<string, unknown>;
+};
+
 export const RESEARCH_SEARCH_GROUPS: ResearchSearchGroup[] = [
   {
     key: "projects",
@@ -347,6 +359,41 @@ export function buildSearchResult(
     isFeatured: Boolean(record.is_featured),
     isOpenAccess,
     chips: [formatLabel(status), year, center].filter(Boolean).slice(0, 4),
+  };
+}
+
+export function buildBackendSearchResult(
+  record: BackendResearchSearchResult,
+): ResearchSearchResult | null {
+  const group = groupByKey.get(record.type as ResearchSearchGroupKey);
+  if (!group) return null;
+
+  const title = compactText(record.title) || group.singular;
+  const description = compactText(record.description);
+  const rawDate = compactText(record.date);
+  const status = compactText(record.status);
+  const metadata = record.metadata ?? {};
+  const metadataChips = ["year", "center_id", "category", "publication_type", "grant_type"]
+    .map((field) => formatLabel(compactText(metadata[field])))
+    .filter(Boolean);
+
+  return {
+    id: compactText(record.id) || `${group.key}-${title}`,
+    groupKey: group.key,
+    tab: group.tab,
+    label: compactText(metadata.label) || group.singular,
+    title,
+    description,
+    href: compactText(record.url) || group.route,
+    image: group.defaultImage,
+    date: formatDate(rawDate),
+    timestamp: timestampFromDate(rawDate),
+    status,
+    isFeatured: Boolean(record.is_featured),
+    isOpenAccess:
+      Boolean(metadata.is_open_access) ||
+      compactText(metadata.access_type).toLowerCase() === "open",
+    chips: [formatLabel(status), ...metadataChips].filter(Boolean).slice(0, 4),
   };
 }
 
