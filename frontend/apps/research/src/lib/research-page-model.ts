@@ -23,8 +23,12 @@ const recordDateFields = [
   "end_date",
   "deadline",
   "event_date",
+  "effective_date",
+  "review_date",
+  "approval_date",
   "published_at",
   "publication_date",
+  "release_date",
   "created_at",
   "updated_at",
 ] as const;

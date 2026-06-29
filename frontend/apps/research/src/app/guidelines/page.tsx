@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { Banknote, ClipboardList, FileText, GraduationCap, LifeBuoy, Wrench } from "lucide-react";
-import { ResearchClusterHero } from "../../components/research-cluster";
 import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
-import { Badge, ResearchSection, StatusMessage } from "../../components/research-ui";
+import { Badge, FilledBadge, PrimaryLink, ResearchSection, SecondaryLink, StatusMessage } from "../../components/research-ui";
 import { compactText, formatDate, formatLabel, getGrantGuidelines, getGuidelines, getGuidelinesFiltered } from "../../lib/research-public-data";
+import { filterRecordsByMonth, getRecordMonths, getRecordSummary, getRecordTimelineLabel, getRecordTitle, getRecordYears } from "../../lib/research-page-model";
 
 export const revalidate = 300;
 
@@ -13,35 +13,51 @@ export const metadata: Metadata = {
   description: "Research guidelines, grant guidance, policies, and procedures.",
 };
 
-type GuidelineParams = { q?: string; type?: string; category?: string; status?: string; year?: string; sort?: string };
+type GuidelineParams = { q?: string; type?: string; category?: string; active?: string; status?: string; year?: string; month?: string; sort?: string };
 const guidelineTypes = ["guideline", "policy", "procedure", "manual", "sop", "template", "checklist"];
 const statuses = ["active", "draft", "archived", "superseded"];
-
-const supportLinks = [
-  { label: "Funding", href: "/funding", description: "Grant calls, internal funding, and deadlines.", icon: Banknote },
-  { label: "Scholarships", href: "/scholarships", description: "Student research funding and fellowship calls.", icon: GraduationCap },
-  { label: "Guidelines", href: "/guidelines", description: "Policies, procedures, templates, and grant guidance.", icon: FileText },
-  { label: "Forms", href: "/forms", description: "Downloadable forms and research templates.", icon: ClipboardList },
-  { label: "Resources", href: "/resources-tools", description: "Tools, platforms, equipment, and access routes.", icon: Wrench },
-  { label: "Services", href: "/services", description: "Support services and request pathways.", icon: LifeBuoy },
+const activeStates = [
+  { label: "Active", value: "active" },
+  { label: "Inactive", value: "inactive" },
+  { label: "Featured", value: "featured" },
+];
+const sortOptions = [
+  { value: "effective_date", label: "Effective date" },
+  { value: "review_date", label: "Review date" },
+  { value: "approval_date", label: "Approval date" },
+  { value: "created_at", label: "Newest" },
+  { value: "title", label: "Title A-Z" },
 ];
 
 export default async function GuidelinesPage({ searchParams }: { searchParams?: Promise<GuidelineParams> }) {
   const params = (await searchParams) ?? {};
+  const sort = params.sort || "effective_date";
+  const order = sort === "title" ? "asc" : "desc";
+  const activeFlags = getActiveFlags(params.active);
   const [guidelines, allGuidelines, grantGuidelines] = await Promise.all([
-    getGuidelinesFiltered({ search: params.q, guidelineType: params.type, category: params.category, status: params.status, year: params.year, sort: params.sort || "effective_date", order: params.sort === "title" ? "asc" : "desc" }),
+    getGuidelinesFiltered({ search: params.q, guidelineType: params.type, category: params.category, status: params.status, year: params.year, sort, order, ...activeFlags }),
     getGuidelines(),
     getGrantGuidelines(),
   ]);
   const categories = Array.from(new Set(allGuidelines.data.map((item) => compactText(item.category)).filter(Boolean))).sort();
+  const years = getRecordYears(allGuidelines.data);
+  const months = getRecordMonths(allGuidelines.data, params.year);
+  const visibleGuidelines = filterRecordsByMonth(guidelines.data, params.year, params.month);
+  const featuredGuideline = visibleGuidelines.find((item) => item.is_featured || item.is_mandatory);
+  const rowGuidelines = featuredGuideline ? visibleGuidelines.filter((item) => item.id !== featuredGuideline.id) : visibleGuidelines;
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchClusterHero eyebrow="Funding / Support" title="Research guidelines, policies, procedures, and grant guidance." body="Guidelines are presented as controlled documents with version, approval, effective date, review date, mandatory status, and download links." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Funding", href: "/funding" }, { label: "Guidelines" }]} imageSrc="/images/research/research-events-hero.svg" imageAlt="Research support documents, policy guidance, and application procedures" links={supportLinks} primaryAction={{ label: "Open forms", href: "/forms" }} stats={[{ label: "Guideline results", value: guidelines.data.length }, { label: "Published guidelines", value: allGuidelines.data.length }, { label: "Grant guidance", value: grantGuidelines.data.length }, { label: "Categories", value: categories.length }]} />
-      <ResearchSection eyebrow="Document Control" title="Research guidelines" body="Filter by document type, category, status, effective year, and keyword." tone="white">
-        <GuidelineFilters params={params} categories={categories} years={getYears(allGuidelines.data)} />
+      <GuidelinesMasthead resultCount={visibleGuidelines.length} publishedCount={allGuidelines.data.length} grantGuidanceCount={grantGuidelines.data.length} categoriesCount={categories.length} />
+      <ResearchSection eyebrow="Document Control" title="Research guidelines" body="Search first, then use the filter menu for document type, active state, status, year, month, category, and sort order." tone="white">
+        <GuidelineFilters params={params} categories={categories} years={years} months={months} />
         {[guidelines.error, allGuidelines.error, grantGuidelines.error].filter(Boolean).map((error, i) => <div key={i} className="mt-5"><StatusMessage tone="error">{error}</StatusMessage></div>)}
-        {guidelines.data.length ? <div className="mt-7 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">{guidelines.data.map((item) => <GuidelineRow key={item.id} item={item} hrefBase="/guidelines" />)}</div> : <div className="mt-7"><StatusMessage>No guidelines match the current filters.</StatusMessage></div>}
+        {visibleGuidelines.length ? (
+          <>
+            {featuredGuideline ? <div className="mt-6"><FeaturedGuideline item={featuredGuideline} /></div> : null}
+            <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">{rowGuidelines.map((item) => <GuidelineRow key={item.id} item={item} hrefBase="/guidelines" />)}</div>
+          </>
+        ) : <div className="mt-7"><StatusMessage>No guidelines match the current filters.</StatusMessage></div>}
       </ResearchSection>
       <ResearchSection eyebrow="Grant Guidance" title="Funding-specific guidance" body="Grant guideline records remain connected to the grant module and are shown separately from general research policy.">
         <div className="grid gap-5 lg:grid-cols-3">{grantGuidelines.data.map((item) => <GuidelineCard key={item.id} item={item} />)}{grantGuidelines.data.length === 0 ? <StatusMessage>No grant guidance is published yet.</StatusMessage> : null}</div>
@@ -50,7 +66,42 @@ export default async function GuidelinesPage({ searchParams }: { searchParams?: 
   );
 }
 
-function GuidelineFilters({ params, categories, years }: { params: GuidelineParams; categories: string[]; years: string[] }) {
+function GuidelinesMasthead({ resultCount, publishedCount, grantGuidanceCount, categoriesCount }: { resultCount: number; publishedCount: number; grantGuidanceCount: number; categoriesCount: number }) {
+  const stats = [
+    { label: "Guideline results", value: resultCount },
+    { label: "Published guidelines", value: publishedCount },
+    { label: "Grant guidance", value: grantGuidanceCount },
+    { label: "Categories", value: categoriesCount },
+  ];
+
+  return (
+    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
+        <div>
+          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
+            <Link href="/" className="transition hover:text-primary">Home</Link>
+            <span className="text-slate-300">/</span>
+            <Link href="/funding" className="transition hover:text-primary">Funding</Link>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-900">Guidelines</span>
+          </nav>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Research Support</p>
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">Controlled documents for research policy, procedure, grant work, and compliance</h1>
+          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">Scan active guidance by version, effective date, review window, status, and mandatory flag.</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <PrimaryLink href="/forms">Open forms</PrimaryLink>
+            <SecondaryLink href="/funding">View funding</SecondaryLink>
+          </div>
+        </div>
+        <dl className="grid gap-2 sm:grid-cols-2">
+          {stats.map((stat) => <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2"><dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt><dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd></div>)}
+        </dl>
+      </div>
+    </section>
+  );
+}
+
+function GuidelineFilters({ params, categories, years, months }: { params: GuidelineParams; categories: string[]; years: string[]; months: Array<{ value: string; label: string }> }) {
   return (
     <ResearchFilterForm
       action="/guidelines"
@@ -60,18 +111,36 @@ function GuidelineFilters({ params, categories, years }: { params: GuidelinePara
       selects={[
         { name: "type", label: "Type", value: params.type, options: guidelineTypes },
         { name: "category", label: "Category", value: params.category, options: categories },
+        { name: "active", label: "Active state", value: params.active, options: activeStates },
         { name: "status", label: "Status", value: params.status, options: statuses },
         { name: "year", label: "Year", value: params.year, options: years },
+        { name: "month", label: "Month", value: params.month, options: months },
       ]}
-      sortValue={params.sort ?? "effective_date"}
-      sortOptions={[
-        { value: "effective_date", label: "Effective date" },
-        { value: "review_date", label: "Review date" },
-        { value: "approval_date", label: "Approval date" },
-        { value: "title", label: "Title" },
-        { value: "created_at", label: "Newest" },
-      ]}
+      sortValue={params.sort}
+      sortOptions={sortOptions}
     />
+  );
+}
+
+function FeaturedGuideline({ item }: { item: ResearchGenericRecord }) {
+  return (
+    <Link href={item.slug ? `/guidelines/${item.slug}` : "/guidelines"} className="group grid gap-4 rounded-lg border border-primary/20 bg-primary/[0.03] p-4 shadow-sm transition hover:border-primary/40 lg:grid-cols-[minmax(0,1fr)_260px_auto] lg:items-center">
+      <div>
+        <div className="flex flex-wrap gap-2">
+          <Badge>{formatLabel(compactText(item.guideline_type) || "guideline")}</Badge>
+          {item.status ? <Badge>{formatLabel(item.status)}</Badge> : null}
+          {item.is_mandatory ? <FilledBadge>Mandatory</FilledBadge> : null}
+          {item.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
+        </div>
+        <h2 className="mt-3 text-lg font-semibold leading-7 text-slate-950">{getRecordTitle(item, "Research guideline")}</h2>
+        <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{getRecordSummary(item) || compactText(item.scope) || "Guideline summary has not been published yet."}</p>
+      </div>
+      <dl className="grid gap-2 text-sm">
+        <div className="rounded-md bg-white p-2.5"><dt className="text-xs font-semibold uppercase text-slate-500">Effective</dt><dd className="mt-1 font-semibold text-slate-950">{formatDate(item.effective_date) || "Not published"}</dd></div>
+        <div className="rounded-md bg-white p-2.5"><dt className="text-xs font-semibold uppercase text-slate-500">Review</dt><dd className="mt-1 font-semibold text-slate-950">{formatDate(item.review_date) || "Not published"}</dd></div>
+      </dl>
+      <span className="inline-flex min-h-10 items-center justify-center rounded-md border border-primary/20 px-3 text-sm font-semibold text-primary transition group-hover:bg-primary group-hover:text-white">Open guideline</span>
+    </Link>
   );
 }
 
@@ -79,14 +148,14 @@ function GuidelineRow({ item, hrefBase }: { item: ResearchGenericRecord; hrefBas
   return (
     <ResearchRecordRow
       href={item.slug ? `${hrefBase}/${item.slug}` : hrefBase}
-      title={item.title ?? "Research guideline"}
-      description={compactText(item.summary) || compactText(item.scope) || "Guideline summary is not published yet."}
+      title={getRecordTitle(item, "Research guideline")}
+      description={getRecordSummary(item) || compactText(item.scope) || "Guideline summary has not been published yet."}
       badges={[item.guideline_type ?? item.category ?? "guideline", item.status]}
-      filledBadges={item.is_mandatory ? ["Mandatory"] : []}
+      filledBadges={[item.is_mandatory ? "Mandatory" : null, item.is_featured ? "Featured" : null]}
       facts={[
         { label: "Version", value: compactText(item.version) },
         { label: "Effective", value: formatDate(item.effective_date) },
-        { label: "Review", value: formatDate(item.review_date) },
+        { label: "Review", value: formatDate(item.review_date) || getRecordTimelineLabel(item) },
       ]}
     />
   );
@@ -96,6 +165,8 @@ function GuidelineCard({ item }: { item: ResearchGenericRecord }) {
   return <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><Badge>{formatLabel(item.guideline_type ?? "grant guidance")}</Badge><h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">{item.title ?? "Grant guideline"}</h2><p className="mt-3 text-sm leading-7 text-slate-600">{compactText(item.summary) || compactText(item.description) || "Grant guidance details are not published yet."}</p>{compactText(item.document_url) ? <a href={item.document_url} className="mt-4 inline-flex text-sm font-semibold text-primary">Download document</a> : null}</article>;
 }
 
-function getYears(records: ResearchGenericRecord[]) {
-  return Array.from(new Set(records.flatMap((record) => [record.effective_date, record.review_date, record.approval_date, record.created_at]).map((value) => compactText(value).slice(0, 4)).filter((year) => /^\d{4}$/.test(year)))).sort((a, b) => Number(b) - Number(a));
+function getActiveFlags(value?: string) {
+  if (value === "inactive") return { isActive: false };
+  if (value === "featured") return { isActive: true, isFeatured: true };
+  return { isActive: true };
 }
