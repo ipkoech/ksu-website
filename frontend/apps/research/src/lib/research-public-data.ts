@@ -34,8 +34,11 @@ export type ProjectListFilters = {
   projectType?: string;
   status?: string;
   centerId?: string;
+  programId?: string;
   projectId?: string;
   partnerId?: string;
+  isActive?: boolean;
+  isFeatured?: boolean;
   year?: string;
   sort?: string;
   order?: "asc" | "desc";
@@ -163,11 +166,13 @@ export function getProjects(
       project_type: params.projectType || undefined,
       status: params.status || undefined,
       center_id: params.centerId || undefined,
+      program_id: params.programId || undefined,
       project_id: params.projectId || undefined,
       year: parseYear(params.year),
       sort: params.sort || undefined,
       order: params.order,
-      is_active: true,
+      is_active: params.isActive ?? true,
+      is_featured: params.isFeatured,
       is_public: true,
       page,
       per_page: 100,

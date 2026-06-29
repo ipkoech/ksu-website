@@ -4,8 +4,6 @@ import {
   ResearchDetailHero,
   ResearchDetailSidebar,
   ResearchRecordPanel,
-  ResearchRelationshipCard,
-  ResearchTextPanel,
 } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import {
@@ -18,6 +16,10 @@ import {
 } from "../../../lib/research-public-data";
 import type { ResearchGenericRecord, ResearchProject, ResearchPublication } from "@ksu/api-client";
 import { researchServiceApi } from "@ksu/api-client";
+import {
+  getProjectTimelineLabel,
+  getVisibleProjectStorySections,
+} from "../project-page-model";
 
 export const revalidate = 300;
 
@@ -44,6 +46,16 @@ export default async function ProjectDetailPage({
   const teamMembers = Array.isArray(project.team_members)
     ? (project.team_members as ResearchGenericRecord[])
     : [];
+  const partners = Array.isArray(project.partners)
+    ? (project.partners as ResearchGenericRecord[])
+    : [];
+  const storySections = getVisibleProjectStorySections(project);
+  const milestones = getProjectMilestones(project, publications.data, outputs.data);
+  const leadName = compactText(project.principal_investigator_name) ||
+    compactText(project.project_lead_name) ||
+    compactText(project.lead_researcher_name);
+  const contactEmail = compactText(project.contact_email) || compactText(project.email);
+  const briefUrl = compactText(project.pdf_url) || compactText(project.file_url) || compactText(project.url);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
@@ -58,17 +70,19 @@ export default async function ProjectDetailPage({
         ]}
         labels={[project.project_type, project.status, project.is_featured ? "featured" : null]}
         facts={[
-          { label: "Progress", value: `${project.progress_percentage ?? 0}%` },
-          { label: "Start", value: formatDate(project.start_date) },
-          { label: "End", value: formatDate(project.end_date) },
-          { label: "Budget", value: formatMoney(project.budget, project.currency) },
+          { label: "Timeline", value: getProjectTimelineLabel(project) },
+          { label: "Lead center", value: center ? compactText(center.name ?? center.title) : "" },
+          { label: "Project lead", value: leadName },
+          { label: "Funding", value: formatMoney(project.budget, project.currency) || compactText(project.funder_name) },
+          { label: "Status", value: compactText(project.status) || `${project.progress_percentage ?? 0}%` },
         ]}
         actions={[
           { label: "Back to projects", href: "/projects", variant: "secondary" },
-          ...(center?.slug ? [{ label: "View center", href: `/centers/${center.slug}` }] : []),
+          ...(contactEmail ? [{ label: "Contact project lead", href: `mailto:${contactEmail}` }] : []),
+          ...(briefUrl ? [{ label: "Download brief", href: briefUrl, variant: "secondary" as const }] : []),
         ]}
-        imageSrc="/images/research/research-home-hero.svg"
-        imageAlt="Research project profile and related outputs"
+        imageSrc={compactText(project.cover_image_url) || "/images/research/research-home-hero.svg"}
+        imageAlt="Research project story, outputs, and public impact"
       />
 
       {[error, publications.error, outputs.error]
@@ -82,85 +96,113 @@ export default async function ProjectDetailPage({
         ))}
 
       <ResearchSection
-        eyebrow="Project Profile"
-        title="Research design and public value"
-        body="Project details are presented with related publications, outputs, team members, and partnerships."
+        eyebrow="The Project Story"
+        title="From research question to public value"
+        body="This page presents the challenge, idea, field work, evidence, and public outcomes behind the project."
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-5">
-            <ResearchTextPanel
-              title="Overview"
-              fields={[
-                ["Background", project.background],
-                ["Abstract", project.abstract],
-                ["Objectives", project.objectives],
-              ]}
-            />
-            <ResearchTextPanel
-              title="Method and Outputs"
-              fields={[
-                ["Methodology", project.methodology],
-                ["Expected outcomes", project.expected_outcomes],
-                ["Deliverables", project.deliverables],
-                ["Impact", project.impact],
-              ]}
-            />
+            <ProjectStory sections={storySections} />
           </div>
 
           <ResearchDetailSidebar
             labels={[project.project_type ?? "research", project.status ?? "ongoing"]}
             facts={[
+              { label: "Timeline", value: getProjectTimelineLabel(project) },
+              { label: "Lead center", value: center ? compactText(center.name ?? center.title) : "" },
+              { label: "Project lead", value: leadName },
+              { label: "Funding", value: formatMoney(project.budget, project.currency) || compactText(project.funder_name) },
               { label: "Progress", value: `${project.progress_percentage ?? 0}%` },
-              { label: "Start", value: formatDate(project.start_date) },
-              { label: "End", value: formatDate(project.end_date) },
-              { label: "Budget", value: formatMoney(project.budget, project.currency) },
               { label: "Code", value: compactText(project.code) },
+            ]}
+            actions={[
+              ...(contactEmail ? [{ label: "Contact project lead", href: `mailto:${contactEmail}` }] : []),
+              ...(briefUrl ? [{ label: "Download brief", href: briefUrl, variant: "secondary" as const }] : []),
+              ...(center?.slug ? [{ label: "Hosted by this center", href: `/centers/${center.slug}`, variant: "secondary" as const }] : []),
+              ...(program?.slug ? [{ label: "Part of this programme", href: `/programs/${program.slug}`, variant: "secondary" as const }] : []),
             ]}
           />
         </div>
       </ResearchSection>
 
       <ResearchSection
-        eyebrow="Relationships"
-        title="How this project connects"
-        body="Relationships are shown in public language: hosted by, part of, produced outputs, publications, and team."
+        eyebrow="Evidence & Outputs"
+        title="What this project produced"
+        body="Publications, outputs, tools, and project materials appear here when they are published by the research office."
       >
         <div className="grid gap-5 lg:grid-cols-2">
-          <ResearchRelationshipCard
-            title="Part of this program"
-            record={program}
-            hrefBase="/programs"
-            empty="No parent program has been published for this project."
-          />
-          <ResearchRelationshipCard
-            title="Hosted by this center"
-            record={center}
-            hrefBase="/centers"
-            empty="No hosting center has been published for this project."
-          />
           <PublicationPanel records={publications.data} />
           <ResearchRecordPanel
-            title="Research outputs"
+            title="Data, tools, and reports"
             records={outputs.data}
             hrefBase="/outputs"
             empty="No public outputs are linked to this project yet."
           />
+        </div>
+      </ResearchSection>
+
+      <ResearchSection
+        eyebrow="Research Journey"
+        title="Milestones and public impact"
+        body="Known dates, outputs, and impact notes are shown without inventing project events."
+        tone="white"
+      >
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
+          <Milestones milestones={milestones} />
+          <ImpactStories project={project} />
+        </div>
+      </ResearchSection>
+
+      <ResearchSection
+        eyebrow="People & Public Pathways"
+        title="Partners in the work and where to go next"
+        body="The project is presented through its programme, center, team, contributors, and next useful public paths."
+      >
+        <div className="grid gap-5 lg:grid-cols-2">
           <ResearchRecordPanel
-            title="Project team"
-            records={teamMembers}
-            empty="No public team members are linked to this project yet."
+            title="Partners in the work"
+            records={partners.length > 0 ? partners : teamMembers}
+            hrefBase="/partners"
+            empty="No public partners or team contributors are linked to this project yet."
           />
+          <ExploreNext center={center} program={program} project={project} />
         </div>
       </ResearchSection>
     </main>
   );
 }
 
+function ProjectStory({ sections }: { sections: Array<{ title: string; body: string }> }) {
+  if (sections.length === 0) {
+    return (
+      <StatusMessage>
+        The project story will appear here when the research office publishes the challenge, field work, and outcomes.
+      </StatusMessage>
+    );
+  }
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      {sections.map((section, index) => (
+        <details key={section.title} className="group border-b border-slate-200 last:border-b-0" open={index === 0}>
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-base font-semibold text-slate-950 transition hover:bg-slate-50">
+            {section.title}
+            <span className="text-primary transition group-open:rotate-45">+</span>
+          </summary>
+          <p className="px-5 pb-5 text-sm leading-7 text-slate-600">
+            {section.body}
+          </p>
+        </details>
+      ))}
+    </section>
+  );
+}
+
 function PublicationPanel({ records }: { records: ResearchPublication[] }) {
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">Related publications</h2>
+      <h2 className="text-xl font-semibold text-slate-950">Publications</h2>
       <div className="mt-4 divide-y divide-slate-200">
         {records.slice(0, 5).map((record) => (
           <article key={record.id} className="py-4 first:pt-0 last:pb-0">
@@ -186,6 +228,120 @@ function PublicationPanel({ records }: { records: ResearchPublication[] }) {
       </div>
     </section>
   );
+}
+
+function Milestones({
+  milestones,
+}: {
+  milestones: Array<{ label: string; value: string }>;
+}) {
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-slate-950">Milestones</h2>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {milestones.map((milestone) => (
+          <div key={`${milestone.label}-${milestone.value}`} className="rounded-md bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase text-secondary">{milestone.label}</p>
+            <p className="mt-1 text-sm font-semibold text-slate-950">{milestone.value}</p>
+          </div>
+        ))}
+        {milestones.length === 0 ? (
+          <p className="text-sm leading-6 text-slate-600">
+            Project milestones will appear here when dates or outputs are published.
+          </p>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function ImpactStories({
+  project,
+}: {
+  project: ResearchProject & ResearchGenericRecord;
+}) {
+  const impact = compactText(project.impact) || compactText(project.expected_outcomes);
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-slate-950">Impact stories</h2>
+      {impact ? (
+        <p className="mt-3 text-sm leading-7 text-slate-600">{impact}</p>
+      ) : (
+        <p className="mt-3 text-sm leading-7 text-slate-600">
+          Impact stories will appear here when published by the research office.
+        </p>
+      )}
+    </section>
+  );
+}
+
+function ExploreNext({
+  center,
+  program,
+  project,
+}: {
+  center?: ResearchGenericRecord;
+  program?: ResearchGenericRecord;
+  project: ResearchProject & ResearchGenericRecord;
+}) {
+  const links = [
+    program?.slug
+      ? {
+          label: "More projects in this programme",
+          href: `/programs/${program.slug}`,
+        }
+      : null,
+    center?.slug
+      ? {
+          label: "More work from this center",
+          href: `/centers/${center.slug}`,
+        }
+      : null,
+    {
+      label: "Publications from this theme",
+      href: `/publications?project=${project.id}`,
+    },
+    {
+      label: "Partner with this research team",
+      href: "/partners",
+    },
+  ].filter(Boolean) as Array<{ label: string; href: string }>;
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-slate-950">Explore next</h2>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {links.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className="rounded-md border border-slate-200 p-3 text-sm font-semibold text-primary transition hover:border-primary/30 hover:bg-primary/5"
+          >
+            {link.label}
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function getProjectMilestones(
+  project: ResearchProject,
+  publications: ResearchPublication[],
+  outputs: ResearchGenericRecord[],
+) {
+  return [
+    { label: "Project opened", value: formatDate(project.start_date) },
+    { label: "Last updated", value: formatDate(project.updated_at) },
+    publications[0]
+      ? { label: "First publication", value: formatDate(publications[0].publication_date) || compactText(publications[0].year) }
+      : null,
+    outputs[0]
+      ? { label: "First output", value: formatDate(outputs[0].published_at) || formatDate(outputs[0].created_at) }
+      : null,
+    { label: "Project closes", value: formatDate(project.end_date) },
+  ].filter((item): item is { label: string; value: string } => Boolean(item?.value));
 }
 
 function formatMoney(value?: string | number | null, currency?: string | null) {
