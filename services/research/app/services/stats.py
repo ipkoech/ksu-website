@@ -22,6 +22,7 @@ from ..models import (
     ResearchCenter,
     ResearchFarm,
     ResearchGuideline,
+    ResearchOutput,
     ResearchProgram,
     ResearchProject,
     ResearchResource,
@@ -55,7 +56,7 @@ async def _sum(db: AsyncSession, column, model, *conditions) -> float:
 def _item(
     key: str,
     label: str,
-    value: int,
+    value: int | float,
     description: str,
     href: str | None = None,
     suffix: str = "",
@@ -91,93 +92,73 @@ async def public_research_stats(db: AsyncSession) -> PublicStatsResponse:
             ),
         ]
     )
+    # Grant funding total (sum of total_budget for active grants)
+    grant_total = await _sum(
+        db,
+        Grant.total_budget,
+        Grant,
+        Grant.is_active.is_(True),
+        # Grant model does not have is_public
+    )
+    # Partner count (active partners)
+    partner_count = await _count(
+        db,
+        Partner,
+        Partner.is_active.is_(True)
+    )
 
     return PublicStatsResponse(
         scope="research",
         title="Research at a glance",
         stats=[
             _item(
-                "research_centres",
-                "Research Centres",
-                await _count(db, ResearchCenter, ResearchCenter.is_active.is_(True)),
-                "Active research centres and institutes",
-                "/research/centres",
+                key="research_centres",
+                label="Research Centres",
+                value=await _count(db, ResearchCenter, ResearchCenter.is_active.is_(True)),
+                description="Active research centres and institutes",
+                href="/research/centres",
             ),
             _item(
-                "research_projects",
-                "Research Projects",
-                await _count(
+                key="research_projects",
+                label="Research Projects",
+                value=await _count(
                     db,
                     ResearchProject,
                     ResearchProject.is_active.is_(True),
                     ResearchProject.is_public.is_(True),
                     ResearchProject.status.in_(("approved", "ongoing", "completed")),
                 ),
-                "Active public research projects",
-                "/research/projects",
+                description="Active public research projects",
+                href="/research/projects",
             ),
             _item(
-                "publications",
-                "Publications",
-                await _count(
-                    db,
-                    Publication,
-                    Publication.is_active.is_(True),
-                    Publication.status == "published",
-                ),
-                "Published research publications",
-                "/research/publications",
+                key="publications",
+                label="Publications",
+                value=published_updates,
+                description="Published research publications",
+                href="/research/publications",
             ),
             _item(
-                "open_access_publications",
-                "Open Access",
-                await _count(
-                    db,
-                    Publication,
-                    Publication.is_active.is_(True),
-                    Publication.status == "published",
-                    Publication.is_open_access.is_(True),
-                ),
-                "Published open-access publications",
-                "/research/publications?access=open",
+                key="outputs",
+                label="Outputs",
+                value=outputs,
+                description="Public innovations and published research outputs",
+                href="/research/outputs",
             ),
             _item(
-                "partners",
-                "Research Partners",
-                await _count(
-                    db,
-                    Partner,
-                    Partner.is_active.is_(True),
-                    Partner.status == "active",
-                ),
-                "Active research partners",
-                "/research/partners",
+                key="grant_funding",
+                label="Grant Funding",
+                value=int(grant_total),  # or keep as float if fractional currency matters
+                suffix="KES",            # adjust to actual currency; assuming KES from seed data
+                description="Total value of active research grants",
+                href="/research/grants",
             ),
             _item(
-                "funding_opportunities",
-                "Funding Opportunities",
-                await _count(
-                    db,
-                    Grant,
-                    Grant.is_active.is_(True),
-                    Grant.status == "open",
-                ),
-                "Active public grant and funding opportunities",
-                "/research/grants",
-            ),
-            _item(
-                "research_outputs",
-                "Research Outputs",
-                outputs,
-                "Public innovations and published research outputs",
-                "/research/outputs",
-            ),
-            _item(
-                "research_updates",
-                "Research Updates",
-                published_updates,
-                "Published research news, articles, and events",
-                "/research/news",
+                key="partner_count",
+                label="Partners",
+                value=partner_count,
+                description="Number of active institutional and industry partners",
+                href="/research/partners",
             ),
         ],
     )
