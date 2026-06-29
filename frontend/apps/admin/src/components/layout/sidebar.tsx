@@ -344,6 +344,9 @@ const researchNavigation: NavItem[] = [
       { title: "Events", href: "/research/content/events", icon: Calendar, scope: ["research.view", "content.manage_events"] },
       { title: "Announcements", href: "/research/content/announcements", icon: Megaphone, scope: ["research.view", "content.manage_announcements"] },
       { title: "Sliders", href: "/research/content/sliders", icon: Image, scope: ["research.view", "marketing.manage_sliders"] },
+      { title: "Boards", href: "/research/content/boards", icon: Shield, scope: ["research.view", "governance.manage"] },
+      { title: "Staff", href: "/research/content/staff", icon: Users, scope: ["research.view", "staff.manage", "people.manage"] },
+      { title: "Gallery", href: "/research/content/gallery", icon: Image, scope: ["research.view", "media.manage", "media.upload"] },
     ],
   },
   {
