@@ -117,7 +117,7 @@ export interface EditableField {
 export interface EditableListFilter {
   name: string;
   label: string;
-  type?: "select" | "entity" | "boolean";
+  type?: "select" | "entity" | "boolean" | "text" | "date";
   placeholder?: string;
   options?: Array<{ label: string; value: string }>;
   relation?: {
@@ -141,6 +141,13 @@ export interface EditableRecordWorkflowAction<
   confirmLabel?: string;
 }
 
+export interface EditableRecordColumn<TRecord extends RecordShape> {
+  key: string;
+  label: string;
+  className?: string;
+  render: (record: TRecord) => ReactNode;
+}
+
 interface EditableServiceResourcePageProps<
   TRecord extends RecordShape,
   TPayload extends RecordShape,
@@ -159,6 +166,7 @@ interface EditableServiceResourcePageProps<
   getRecordMeta?: (record: TRecord) => string;
   getRecordDetailHref?: (record: TRecord) => string | null | undefined;
   getRecordWorkflowActions?: (record: TRecord) => Array<EditableRecordWorkflowAction<TRecord, TPayload>>;
+  recordColumns?: Array<EditableRecordColumn<TRecord>>;
   emptyMessage: string;
   buildPayload?: (
     values: RecordShape,
@@ -174,6 +182,7 @@ interface EditableServiceResourcePageProps<
   readOnlyMessage?: string;
   resourceKey?: string;
   toolbarSlot?: ReactNode;
+  summarySlot?: ReactNode;
 }
 
 function defaultValue(field: EditableField) {
@@ -306,6 +315,7 @@ export function EditableServiceResourcePage<
   getRecordMeta,
   getRecordDetailHref,
   getRecordWorkflowActions,
+  recordColumns = [],
   emptyMessage,
   buildPayload,
   validate,
@@ -315,6 +325,7 @@ export function EditableServiceResourcePage<
   readOnlyMessage = "You can view these records, but your current permissions do not allow changes.",
   resourceKey,
   toolbarSlot,
+  summarySlot,
 }: EditableServiceResourcePageProps<TRecord, TPayload>) {
   const queryClient = useQueryClient();
   const formId = useId();
@@ -625,7 +636,8 @@ export function EditableServiceResourcePage<
   return (
     <div>
       <PageHeader title={title} description={description} backHref={backHref} />
-      <div className="p-4 sm:p-6">
+      <div className="space-y-4 p-4 sm:p-6">
+        {summarySlot}
         <Card>
           <CardHeader>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -694,6 +706,18 @@ export function EditableServiceResourcePage<
                           </SelectGroup>
                         </SelectContent>
                       </Select>
+                    ) : filter.type === "text" ? (
+                      <Input
+                        value={filterValues[filter.name] ?? ""}
+                        placeholder={filter.placeholder ?? filter.label}
+                        onChange={(event) => updateFilter(filter.name, event.target.value || null)}
+                      />
+                    ) : filter.type === "date" ? (
+                      <Input
+                        type="date"
+                        value={filterValues[filter.name] ?? ""}
+                        onChange={(event) => updateFilter(filter.name, event.target.value || null)}
+                      />
                     ) : (
                       <Select
                         value={filterValues[filter.name] || "all"}
@@ -738,39 +762,59 @@ export function EditableServiceResourcePage<
               </div>
             ) : (
               <div className="flex flex-col gap-4">
-                <div className="divide-y rounded-lg border">
-                  {records.map((record) => (
-                    <div
-                      key={record.id}
-                      className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between"
-                    >
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="break-words font-medium">
-                            {getRecordTitle(record)}
-                          </p>
-                          {record.status ? (
-                            <Badge variant="outline">{record.status}</Badge>
-                          ) : null}
-                          {typeof record.is_active === "boolean" ? (
-                            <Badge
-                              variant={record.is_active ? "default" : "secondary"}
-                            >
-                              {record.is_active ? "Active" : "Inactive"}
-                            </Badge>
-                          ) : null}
-                        </div>
-                        <p className="mt-1 break-words text-sm text-muted-foreground">
-                          {getRecordMeta?.(record) ??
-                            record.updated_at ??
-                            record.created_at ??
-                            "No metadata"}
-                        </p>
-                      </div>
-                      {renderRecordActions(record)}
+                {recordColumns.length > 0 ? (
+                  <div className="overflow-x-auto rounded-lg border">
+                    <table className="hidden w-full min-w-[960px] text-sm md:table">
+                      <thead className="border-b bg-muted/40 text-left text-xs uppercase text-muted-foreground">
+                        <tr>
+                          {recordColumns.map((column) => (
+                            <th key={column.key} className={`px-4 py-3 font-semibold ${column.className ?? ""}`}>
+                              {column.label}
+                            </th>
+                          ))}
+                          <th className="w-[170px] px-4 py-3 text-right font-semibold">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y bg-background">
+                        {records.map((record) => (
+                          <tr key={record.id} className="align-top">
+                            {recordColumns.map((column) => (
+                              <td key={column.key} className={`px-4 py-3 ${column.className ?? ""}`}>
+                                {column.render(record)}
+                              </td>
+                            ))}
+                            <td className="px-4 py-3">
+                              <div className="flex justify-end">{renderRecordActions(record)}</div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div className="divide-y md:hidden">
+                      {records.map((record) => (
+                        <RecordListRow
+                          key={`mobile-${record.id}`}
+                          record={record}
+                          getRecordTitle={getRecordTitle}
+                          getRecordMeta={getRecordMeta}
+                          actions={renderRecordActions(record)}
+                        />
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ) : (
+                  <div className="divide-y rounded-lg border">
+                    {records.map((record) => (
+                      <RecordListRow
+                        key={record.id}
+                        record={record}
+                        getRecordTitle={getRecordTitle}
+                        getRecordMeta={getRecordMeta}
+                        actions={renderRecordActions(record)}
+                      />
+                    ))}
+                  </div>
+                )}
                 <div className="flex flex-col gap-3 rounded-lg border bg-background px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm text-muted-foreground">
                     Showing{" "}
@@ -1132,6 +1176,41 @@ export function EditableServiceResourcePage<
         }}
         isLoading={updateMutation.isPending}
       />
+    </div>
+  );
+}
+
+function RecordListRow<TRecord extends RecordShape>({
+  record,
+  getRecordTitle,
+  getRecordMeta,
+  actions,
+}: {
+  record: TRecord;
+  getRecordTitle: (record: TRecord) => string;
+  getRecordMeta?: (record: TRecord) => string;
+  actions: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="break-words font-medium">{getRecordTitle(record)}</p>
+          {record.status ? <Badge variant="outline">{record.status}</Badge> : null}
+          {typeof record.is_active === "boolean" ? (
+            <Badge variant={record.is_active ? "default" : "secondary"}>
+              {record.is_active ? "Active" : "Inactive"}
+            </Badge>
+          ) : null}
+        </div>
+        <p className="mt-1 break-words text-sm text-muted-foreground">
+          {getRecordMeta?.(record) ??
+            record.updated_at ??
+            record.created_at ??
+            "No metadata"}
+        </p>
+      </div>
+      {actions}
     </div>
   );
 }

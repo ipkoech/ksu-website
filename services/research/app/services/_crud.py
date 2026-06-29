@@ -50,7 +50,21 @@ class CRUDService(Generic[M]):
     @classmethod
     def _apply_filters(cls, query, filters: dict[str, Any] | None = None):
         for key, value in (filters or {}).items():
-            if value is None or not hasattr(cls.model, key):
+            if value is None:
+                continue
+            if key == "has_grant" and hasattr(cls.model, "grant_id"):
+                query = query.where(getattr(cls.model, "grant_id").is_not(None) if value else getattr(cls.model, "grant_id").is_(None))
+                continue
+            if key == "missing_pi" and hasattr(cls.model, "pi_id"):
+                query = query.where(getattr(cls.model, "pi_id").is_(None) if value else getattr(cls.model, "pi_id").is_not(None))
+                continue
+            if key == "start_date_from" and hasattr(cls.model, "start_date"):
+                query = query.where(getattr(cls.model, "start_date") >= value)
+                continue
+            if key == "end_date_to" and hasattr(cls.model, "end_date"):
+                query = query.where(getattr(cls.model, "end_date") <= value)
+                continue
+            if not hasattr(cls.model, key):
                 continue
             query = query.where(getattr(cls.model, key) == value)
         return query

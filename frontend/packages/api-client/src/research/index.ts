@@ -1,4 +1,4 @@
-import { researchApi } from "../client";
+import { mainApi, researchApi } from "../client";
 import type { FieldSelectionParams, QueryParams } from "../client";
 import type { PaginatedResponse } from "../main/types";
 import type { PublicStatsResponse } from "../main/types";
@@ -19,7 +19,15 @@ type ListParams<
     scholarship_type?: string;
     initiative_type?: string;
     center_id?: string;
+    program_id?: string;
     project_id?: string;
+    partner_id?: string;
+    pi_id?: string;
+    grant_id?: string;
+    has_grant?: boolean;
+    missing_pi?: boolean;
+    start_date_from?: string;
+    end_date_to?: string;
   };
 
 export interface ResearchProject {
@@ -252,6 +260,21 @@ function crudApi<TRecord, TPayload>(path: string) {
   };
 }
 
+function mainContentCrudApi<TRecord, TPayload>(path: string, adminPath = `${path}/admin`) {
+  return {
+    list: (params?: ListParams) =>
+      mainApi.get<PaginatedResponse<TRecord>>(path, params),
+    listAdmin: (params?: ListParams) =>
+      mainApi.get<PaginatedResponse<TRecord>>(adminPath, params),
+    getBySlug: (slug: string, params?: FieldSelectionParams) =>
+      mainApi.get<{ data: TRecord }>(`${path}/${slug}`, params),
+    create: (data: TPayload) => mainApi.post<{ data: TRecord }>(path, data),
+    update: (id: string, data: Partial<TPayload>) =>
+      mainApi.patch<{ data: TRecord }>(`${path}/${id}`, data),
+    delete: (id: string) => mainApi.delete<void>(`${path}/${id}`),
+  };
+}
+
 export const researchServiceApi = {
   stats: () => researchApi.get<{ data: PublicStatsResponse }>("/api/v1/stats"),
   adminStats: () =>
@@ -356,14 +379,11 @@ export const researchServiceApi = {
     ResearchGenericRecord,
     ResearchGenericPayload
   >("/api/v1/scholarship-applications"),
-  articles: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
-    "/api/v1/articles",
+  articles: mainContentCrudApi<ResearchGenericRecord, ResearchGenericPayload>(
+    "/api/v1/news",
   ),
-  events: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
+  events: mainContentCrudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/events",
-  ),
-  sliders: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
-    "/api/v1/sliders",
   ),
   resources: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/resources",
@@ -373,8 +393,5 @@ export const researchServiceApi = {
   ),
   guidelines: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/guidelines",
-  ),
-  boards: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
-    "/api/v1/boards",
   ),
 };

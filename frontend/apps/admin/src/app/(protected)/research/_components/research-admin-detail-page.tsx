@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ExternalLink } from "lucide-react";
+import type { ReactNode } from "react";
 import { PageHeader } from "@/components/layout";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
 import type { ResearchGenericRecord } from "@ksu/api-client";
@@ -45,6 +46,7 @@ export function ResearchAdminDetailPage({
   labelFields = ["status"],
   factFields = [],
   sections = [],
+  renderAfter,
 }: {
   title: string;
   description: string;
@@ -57,6 +59,7 @@ export function ResearchAdminDetailPage({
   labelFields?: string[];
   factFields?: FactField[];
   sections?: DetailSection[];
+  renderAfter?: (record: ResearchGenericRecord) => ReactNode;
 }) {
   const params = useParams<Record<string, string>>();
   const value = params[slugParam];
@@ -126,6 +129,7 @@ export function ResearchAdminDetailPage({
               {sections.map((section) => (
                 <DetailSectionCard key={section.title} record={record} section={section} />
               ))}
+              {renderAfter?.(record)}
             </div>
             <aside className="space-y-6">
               <Card>
