@@ -212,7 +212,7 @@ export function ResearchHeader({
                                 </h4>
                                 {col.items.map((sub, sIdx) => (
                                   <motion.div
-                                    key={sub.href}
+                                    key={`${col.heading}-${sub.href}`}
                                     initial={{ opacity: 0, x: -10 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{
@@ -385,12 +385,12 @@ export function ResearchHeader({
                               {item.title}
                             </Link>
 
-                            {hasSub && (
-                              <div className="mt-1 space-y-1 pl-6 pr-4">
-                                {item.columns.flatMap((c) => c.items).map(
-                                  (sub) => (
-                                    <Link
-                                      key={sub.href}
+                              {hasSub && (
+                                <div className="mt-1 space-y-1 pl-6 pr-4">
+                                  {item.columns.flatMap((c) => c.items).map(
+                                    (sub) => (
+                                      <Link
+                                        key={`${item.title}-${sub.href}`}
                                       href={sub.href}
                                       onClick={() => setMobileOpen(false)}
                                       className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-slate-500 transition-colors hover:bg-slate-50 hover:text-primary"
