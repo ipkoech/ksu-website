@@ -5,7 +5,6 @@ import {
   ResearchDetailHero,
   ResearchDetailSidebar,
   ResearchRecordPanel,
-  ResearchTextPanel,
 } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import {
@@ -15,6 +14,7 @@ import {
   getConsultanciesFiltered,
   getPartnerBySlug,
 } from "../../../lib/research-public-data";
+import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 
 export const revalidate = 300;
 
@@ -33,19 +33,26 @@ export default async function PartnerDetailPage({
 
   const partner = data as ResearchGenericRecord;
   const consultancies = await getConsultanciesFiltered({ partnerId: partner.id });
+  const title = getRecordTitle(partner, "Research partner");
+  const storySections = getNarrativeSections(partner, [
+    { title: "Who they are", fields: ["about", "description", "summary"] },
+    { title: "Where collaboration happens", fields: ["collaboration_areas", "focus_areas"] },
+    { title: "What has changed", fields: ["key_achievements", "impact", "outcomes"] },
+    { title: "Engagement window", fields: ["partnership_start", "partnership_end", "mou_expiry_date"] },
+  ]);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
       <ResearchDetailHero
         eyebrow="Research Partner"
-        title={partner.name ?? "Research partner"}
-        body={compactText(partner.about) || compactText(partner.collaboration_areas)}
+        title={title}
+        body={getRecordSummary(partner) || compactText(partner.collaboration_areas)}
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "Partners", href: "/partners" },
-          { label: partner.name ?? "Partner" },
+          { label: title },
         ]}
-        labels={[partner.partner_type, partner.partnership_level, partner.status]}
+        labels={[partner.partner_type, partner.partnership_level, partner.status, partner.is_featured ? "featured" : null]}
         facts={[
           { label: "Country", value: partner.country },
           { label: "Start", value: formatDate(partner.partnership_start) },
@@ -71,28 +78,13 @@ export default async function PartnerDetailPage({
       <ResearchSection
         eyebrow="Partner Profile"
         title="Collaboration profile"
-        body="Partner profiles show what the organization supports, how they collaborate, and where public engagement records exist."
+        body="Published partner fields are grouped into a profile story about identity, collaboration areas, achievements, and engagement window."
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-5">
-            <ResearchTextPanel
-              title="About"
-              fields={[
-                ["About", partner.about],
-                ["Collaboration areas", partner.collaboration_areas],
-                ["Key achievements", partner.key_achievements],
-              ]}
-            />
-            <ResearchTextPanel
-              title="Partnership timeline"
-              fields={[
-                ["Partnership start", formatDate(partner.partnership_start)],
-                ["Partnership end", formatDate(partner.partnership_end)],
-                ["MOU signed", formatDate(partner.mou_signed_date)],
-                ["MOU expiry", formatDate(partner.mou_expiry_date)],
-              ]}
-            />
+            <PartnerStory sections={storySections} />
+            <ResearchRecordPanel title="Consultancies and engagements" records={consultancies.data} hrefBase="/consultancies" empty="No public consultancy records are linked to this partner yet." />
           </div>
           <ResearchDetailSidebar
             labels={[partner.partner_type ?? "partner", partner.partnership_level, partner.status]}
@@ -124,16 +116,42 @@ export default async function PartnerDetailPage({
             hrefBase="/consultancies"
             empty="No public consultancy records are linked to this partner yet."
           />
-          <ResearchTextPanel
-            title="Documents and links"
-            fields={[
-              ["Partner document", partner.document_url],
-              ["Website", partner.website],
-              ["Address", partner.address],
-            ]}
-          />
+          <InfoPanel title="Documents and links" fields={[["Partner document", partner.document_url], ["Website", partner.website], ["Address", partner.address]]} />
         </div>
       </ResearchSection>
     </main>
+  );
+}
+
+function PartnerStory({ sections }: { sections: Array<{ title: string; body: string }> }) {
+  if (sections.length === 0) return <StatusMessage>The partner story appears when profile, collaboration, achievement, or timeline fields are published.</StatusMessage>;
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      {sections.map((section, index) => (
+        <details key={section.title} className="group border-b border-slate-200 last:border-b-0" open={index === 0}>
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-base font-semibold text-slate-950 transition hover:bg-slate-50">
+            {section.title}
+            <span className="text-primary transition group-open:rotate-45">+</span>
+          </summary>
+          <p className="px-5 pb-5 text-sm leading-7 text-slate-600">{section.body}</p>
+        </details>
+      ))}
+    </section>
+  );
+}
+
+function InfoPanel({ title, fields }: { title: string; fields: Array<[string, unknown]> }) {
+  const entries = fields.map(([label, value]) => [label, compactText(value as string | number | null | undefined)] as const).filter(([, value]) => value);
+
+  return (
+    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+      {entries.length ? (
+        <dl className="mt-4 grid gap-3 text-sm">
+          {entries.map(([label, value]) => <div key={label} className="rounded-md bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt><dd className="mt-1 break-words font-semibold text-slate-950">{value}</dd></div>)}
+        </dl>
+      ) : <p className="mt-3 text-sm leading-7 text-slate-600">No public details are published yet.</p>}
+    </section>
   );
 }
