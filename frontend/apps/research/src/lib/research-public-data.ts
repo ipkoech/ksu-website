@@ -75,6 +75,8 @@ export type GenericListFilters = {
   centerId?: string;
   projectId?: string;
   partnerId?: string;
+  isActive?: boolean;
+  isFeatured?: boolean;
   year?: string;
   sort?: string;
   order?: "asc" | "desc";
@@ -218,7 +220,8 @@ export function getPublicationsFiltered(
       year: parseYear(filters.year),
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
       page,
       per_page: 100,
@@ -407,7 +410,8 @@ export function getCentersFiltered(filters: GenericListFilters = {}) {
       status: filters.status || undefined,
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
       page: 1,
       per_page: 100,
@@ -536,7 +540,8 @@ export function getProgramsFiltered(filters: GenericListFilters = {}) {
       year: parseYear(filters.year),
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
       page: 1,
       per_page: 100,

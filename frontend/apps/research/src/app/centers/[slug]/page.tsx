@@ -4,7 +4,6 @@ import {
   ResearchDetailHero,
   ResearchDetailSidebar,
   ResearchRecordPanel,
-  ResearchTextPanel,
 } from "../../../components/research-detail";
 import {
   Badge,
@@ -22,6 +21,11 @@ import {
   getProgramsFiltered,
   getRelatedOutputs,
 } from "../../../lib/research-public-data";
+import {
+  getNarrativeSections,
+  getRecordSummary,
+  getRecordTitle,
+} from "../../../lib/research-page-model";
 import type { ResearchGenericRecord, ResearchProject, ResearchPublication } from "@ksu/api-client";
 import { researchServiceApi } from "@ksu/api-client";
 
@@ -47,21 +51,28 @@ export default async function CenterDetailPage({
     getCenterPublications(center.id),
     getRelatedOutputs({ centerId: center.id }),
   ]);
-  const farms = Array.isArray(center.farms) ? (center.farms as ResearchGenericRecord[]) : [];
-  const teamMembers = Array.isArray(center.team_members)
-    ? (center.team_members as ResearchGenericRecord[])
-    : [];
+  const farms = getChildRecords(center, ["farms", "facilities"]);
+  const teamMembers = getChildRecords(center, ["team_members", "people", "staff"]);
+  const title = getRecordTitle(center, "Research center");
+  const contactEmail = compactText(center.contact_email) || compactText(center.email);
+  const website = compactText(center.website) || compactText(center.url);
+  const storySections = getNarrativeSections(center, [
+    { title: "Center mandate", fields: ["mandate", "about", "summary", "description"] },
+    { title: "Research focus", fields: ["research_areas", "focus_areas", "objectives"] },
+    { title: "How the center works", fields: ["functions", "services_summary", "activities"] },
+    { title: "Public value", fields: ["impact", "strategic_priorities", "benefits"] },
+  ]);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
       <ResearchDetailHero
         eyebrow="Research Center"
-        title={center.name ?? center.title ?? "Research center"}
-        body={compactText(center.about) || compactText(center.mandate)}
+        title={title}
+        body={compactText(center.about) || compactText(center.mandate) || getRecordSummary(center)}
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "Centers", href: "/centers" },
-          { label: center.name ?? center.title ?? "Center" },
+          { label: title },
         ]}
         labels={[center.center_type, center.status, center.is_featured ? "featured" : null]}
         facts={[
@@ -69,13 +80,15 @@ export default async function CenterDetailPage({
           { label: "Projects", value: projects.data.length },
           { label: "Publications", value: publications.data.length },
           { label: "Outputs", value: outputs.data.length },
+          { label: "Location", value: compactText(center.location) },
         ]}
         actions={[
           { label: "Back to centers", href: "/centers", variant: "secondary" },
-          ...(compactText(center.website) ? [{ label: "Open website", href: compactText(center.website) }] : []),
+          ...(contactEmail ? [{ label: "Contact center", href: `mailto:${contactEmail}` }] : []),
+          ...(website ? [{ label: "Open website", href: website, variant: "secondary" as const }] : []),
         ]}
-        imageSrc="/images/research/research-innovation-hero.svg"
-        imageAlt="Research center profile and connected work"
+        imageSrc={compactText(center.cover_image_url) || "/images/research/research-innovation-hero.svg"}
+        imageAlt="Research center profile, work, and public outputs"
       />
 
       {[error, programs.error, projects.error, publications.error, outputs.error]
@@ -89,81 +102,91 @@ export default async function CenterDetailPage({
         ))}
 
       <ResearchSection
-        eyebrow="Center Profile"
-        title="Mandate and research focus"
-        body="Center profiles are presented with related projects, publications, outputs, and leadership information."
+        eyebrow="Center Story"
+        title="Mandate, focus, and public value"
+        body="Center profile fields are shown directly from the published backend record."
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-5">
-            <ResearchTextPanel
-              title="Profile"
-              fields={[
-                ["About", center.about],
-                ["Mandate", center.mandate],
-                ["Mission", center.mission],
-                ["Vision", center.vision],
-              ]}
-            />
-            <ResearchTextPanel
-              title="Research areas"
-              fields={[
-                ["Focus areas", center.research_areas],
-                ["Objectives", center.objectives],
-              ]}
+            <CenterStory sections={storySections} />
+            <ResearchRecordPanel
+              title="Facilities and farms"
+              records={farms}
+              hrefBase="/farm"
+              empty="No public facilities are currently linked to this center."
             />
           </div>
           <ResearchDetailSidebar
-            labels={[center.center_type ?? "research center", center.is_featured ? "Featured" : null]}
+            labels={[center.center_type ?? "research center", center.status ?? "active", center.is_featured ? "Featured" : null]}
             facts={[
               { label: "Location", value: compactText(center.location) },
-              { label: "Email", value: compactText(center.email) },
+              { label: "Email", value: contactEmail },
               { label: "Phone", value: compactText(center.phone) },
-              { label: "Website", value: compactText(center.website) },
+              { label: "Website", value: website },
+              { label: "Code", value: compactText(center.code) },
             ]}
-            actions={
-              compactText(center.website)
-                ? [{ label: "Open center website", href: compactText(center.website) }]
-                : []
-            }
+            actions={[
+              ...(contactEmail ? [{ label: "Contact center", href: `mailto:${contactEmail}` }] : []),
+              ...(website ? [{ label: "Open center website", href: website, variant: "secondary" as const }] : []),
+            ]}
           />
         </div>
       </ResearchSection>
 
       <ResearchSection
-        eyebrow="Center Network"
-        title="Programs, projects, outputs, and people"
-        body="Each relationship is shown in language visitors can understand."
+        eyebrow="Work From This Center"
+        title="Programmes, projects, outputs, and people"
+        body="Linked backend records show the center's public work without placeholder entries."
       >
         <div className="grid gap-5 lg:grid-cols-2">
           <ResearchRecordPanel
-            title="Research programs"
+            title="Research programmes"
             records={programs.data}
             hrefBase="/programs"
-            empty="No public programs are currently linked to this center."
+            empty="No public programmes are currently linked to this center."
           />
           <ProjectPanel records={projects.data} />
           <PublicationPanel records={publications.data} />
           <ResearchRecordPanel
-            title="Research outputs"
+            title="Data, tools, and reports"
             records={outputs.data}
             hrefBase="/outputs"
             empty="No public outputs are currently linked to this center."
-          />
-          <ResearchRecordPanel
-            title="Facilities and farms"
-            records={farms}
-            hrefBase="/farm"
-            empty="No public facilities are currently linked to this center."
           />
           <ResearchRecordPanel
             title="People"
             records={teamMembers}
             empty="No public team members are currently linked to this center."
           />
+          <ExploreCenter center={center} />
         </div>
       </ResearchSection>
     </main>
+  );
+}
+
+function CenterStory({ sections }: { sections: Array<{ title: string; body: string }> }) {
+  if (sections.length === 0) {
+    return (
+      <StatusMessage>
+        The center story will appear when mandate, focus, activities, or impact fields are published.
+      </StatusMessage>
+    );
+  }
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      {sections.map((section, index) => (
+        <details key={section.title} className="group border-b border-slate-200 last:border-b-0" open={index === 0}>
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-base font-semibold text-slate-950 transition hover:bg-slate-50">
+            {section.title}
+            <span className="text-primary transition group-open:rotate-45">+</span>
+          </summary>
+          <p className="px-5 pb-5 text-sm leading-7 text-slate-600">{section.body}</p>
+        </details>
+      ))}
+    </section>
   );
 }
 
@@ -172,7 +195,7 @@ function ProjectPanel({ records }: { records: ResearchProject[] }) {
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-xl font-semibold text-slate-950">Research projects</h2>
       <div className="mt-4 divide-y divide-slate-200">
-        {records.slice(0, 5).map((record) => (
+        {records.slice(0, 6).map((record) => (
           <article key={record.id} className="py-4 first:pt-0 last:pb-0">
             <div className="flex flex-wrap gap-2">
               <Badge>{formatLabel(record.project_type ?? "research")}</Badge>
@@ -184,7 +207,7 @@ function ProjectPanel({ records }: { records: ResearchProject[] }) {
               </Link>
             </h3>
             <p className="mt-1 text-sm leading-6 text-slate-600">
-              {compactText(record.summary) || `${record.progress_percentage ?? 0}% complete`}
+              {compactText(record.summary) || compactText(record.abstract) || `${record.progress_percentage ?? 0}% complete`}
             </p>
           </article>
         ))}
@@ -203,7 +226,7 @@ function PublicationPanel({ records }: { records: ResearchPublication[] }) {
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-xl font-semibold text-slate-950">Publications</h2>
       <div className="mt-4 divide-y divide-slate-200">
-        {records.slice(0, 5).map((record) => (
+        {records.slice(0, 6).map((record) => (
           <article key={record.id} className="py-4 first:pt-0 last:pb-0">
             <h3 className="text-base font-semibold text-slate-950">
               <Link href={record.slug ? `/publications/${record.slug}` : "/publications"} className="transition hover:text-primary">
@@ -226,4 +249,37 @@ function PublicationPanel({ records }: { records: ResearchPublication[] }) {
       </div>
     </section>
   );
+}
+
+function ExploreCenter({ center }: { center: ResearchGenericRecord }) {
+  const links = [
+    { label: "View center projects", href: `/projects?center=${center.id}` },
+    { label: "Browse programmes", href: `/programs?center=${center.id}` },
+    { label: "Browse publications", href: "/publications" },
+    { label: "Partner with research", href: "/partners" },
+  ];
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-slate-950">Explore next</h2>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {links.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className="rounded-md border border-slate-200 p-3 text-sm font-semibold text-primary transition hover:border-primary/30 hover:bg-primary/5"
+          >
+            {link.label}
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function getChildRecords(record: ResearchGenericRecord, fields: string[]) {
+  for (const field of fields) {
+    if (Array.isArray(record[field])) return record[field] as ResearchGenericRecord[];
+  }
+  return [];
 }
