@@ -75,9 +75,7 @@ export function ResearchImmersiveHero({
   const minHeight =
     size === "landing"
       ? "min-h-[70vh]"
-      : size === "detail"
-        ? "min-h-[380px] sm:min-h-[420px] lg:min-h-[500px]"
-        : "min-h-[420px] sm:min-h-[460px] lg:min-h-[560px]";
+      : "min-h-[20vh] min-h-[280px] max-h-[400px]";
 
   return (
     <section

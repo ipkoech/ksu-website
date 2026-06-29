@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpenCheck, Building2, FlaskConical, GraduationCap, Sprout } from "lucide-react";
+import { MotionCard, MotionFadeIn } from "../../components/motion-cards";
 import { ResearchClusterHero } from "../../components/research-cluster";
 import { ResearchFilterForm } from "../../components/research-listing";
 import {
@@ -20,7 +21,7 @@ import {
 } from "../../lib/research-public-data";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Research Programs",
@@ -136,7 +137,9 @@ export default async function ProgramsPage({
         {programs.data.length > 0 ? (
           <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {programs.data.map((program) => (
-              <ProgramCard key={program.id} program={program} />
+              <MotionCard key={program.id}>
+                <ProgramCard program={program} />
+              </MotionCard>
             ))}
           </div>
         ) : (

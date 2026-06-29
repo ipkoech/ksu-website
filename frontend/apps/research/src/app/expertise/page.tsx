@@ -34,7 +34,7 @@ import {
 } from "../../lib/research-public-data";
 import { publicFrontendUrl } from "../../lib/service-urls";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Researchers & Expertise",

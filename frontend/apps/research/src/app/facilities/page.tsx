@@ -17,7 +17,7 @@ import {
 } from "../../lib/research-public-data";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Facilities & Labs",

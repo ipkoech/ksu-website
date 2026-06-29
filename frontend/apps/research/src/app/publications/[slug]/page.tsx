@@ -13,7 +13,7 @@ import {
   getPublicationBySlug,
 } from "../../../lib/research-public-data";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export default async function PublicationDetailPage({
   params,

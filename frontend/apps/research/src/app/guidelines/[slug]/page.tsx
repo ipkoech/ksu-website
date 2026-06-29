@@ -4,7 +4,7 @@ import { ResearchDetailHero, ResearchDetailSidebar, ResearchTextPanel } from "..
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { compactText, formatDate, getGuidelineBySlug } from "../../../lib/research-public-data";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export default async function GuidelineDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

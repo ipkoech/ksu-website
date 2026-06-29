@@ -7,7 +7,7 @@ export const metadata = {
   description: "Research impact metrics, statistics, and performance indicators.",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type StatItem = {
   key: string;

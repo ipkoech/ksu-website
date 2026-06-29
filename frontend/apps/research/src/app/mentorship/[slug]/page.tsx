@@ -4,7 +4,7 @@ import { ResearchDetailHero, ResearchDetailSidebar, ResearchRecordPanel, Researc
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { compactText, formatDate, getMentorshipBySlug } from "../../../lib/research-public-data";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export default async function MentorshipDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

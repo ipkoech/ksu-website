@@ -8,7 +8,7 @@ import { ResearchFilterForm } from "../../components/research-listing";
 import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, formatDate, formatLabel, getScholarships, getScholarshipsFiltered } from "../../lib/research-public-data";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Research Scholarships",

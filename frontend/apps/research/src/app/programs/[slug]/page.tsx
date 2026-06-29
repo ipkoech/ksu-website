@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ResearchDetailHero,
@@ -13,9 +14,24 @@ import {
   getProgramBySlug,
   getProgramProjects,
 } from "../../../lib/research-public-data";
+import { MotionCard } from "../../../components/motion-cards";
 import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const { data } = await getProgramBySlug(slug);
+  if (!data) return { title: "Program Not Found" };
+  const program = data as ResearchGenericRecord;
+  const title = compactText(program.name ?? program.title) || "Research Program";
+  const desc = compactText(program.summary) || compactText(program.description) || `Overview of the ${title} research program.`;
+  return { title: `${title} | KSU Research`, description: desc };
+}
 
 export default async function ProgramDetailPage({
   params,
@@ -114,7 +130,9 @@ export default async function ProgramDetailPage({
         {projects.data.length > 0 ? (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {projects.data.map((project) => (
-              <ProjectCard key={project.id} project={project} />
+              <MotionCard key={project.id}>
+                <ProjectCard project={project} />
+              </MotionCard>
             ))}
           </div>
         ) : (

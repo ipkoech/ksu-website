@@ -14,7 +14,7 @@ import {
 } from "../../lib/research-public-data";
 import type { ResearchPublication } from "@ksu/api-client";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Publications",

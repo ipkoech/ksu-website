@@ -6,7 +6,7 @@ import { ResearchFilterForm, ResearchListCard } from "../../components/research-
 import { ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, getCenters, getServices, getServicesFiltered } from "../../lib/research-public-data";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = { title: "Research Services", description: "Research support services available through Kisii University." };
 

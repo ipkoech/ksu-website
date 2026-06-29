@@ -20,7 +20,7 @@ import {
   getPublications,
 } from "../../../lib/research-public-data";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 const passthroughImageLoader = ({ src }: { src: string }) => src;
 
 export default async function NewsDetailPage({ params }: { params: Promise<{ slug: string }> }) {

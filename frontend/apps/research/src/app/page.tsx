@@ -14,7 +14,7 @@ import {
 } from "../lib/research-public-data";
 import { researchServiceApi } from "@ksu/api-client";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const workflowCards = [
   {

@@ -4,7 +4,7 @@ import { ResearchDetailHero, ResearchDetailSidebar, ResearchRecordGrid, Research
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { compactText, formatLabel, getResourceBySlug } from "../../../lib/research-public-data";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export default async function ResourceDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

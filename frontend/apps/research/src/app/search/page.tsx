@@ -8,7 +8,7 @@ export const metadata = {
   description: "Search across research projects, publications, innovations, partners, and more.",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const PER_PAGE = 10;
 const routeMap: Record<string, string> = {

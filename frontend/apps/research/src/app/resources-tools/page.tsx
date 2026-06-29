@@ -6,7 +6,7 @@ import { ResearchFilterForm, ResearchListCard } from "../../components/research-
 import { ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, formatLabel, getCenters, getResources, getResourcesFiltered } from "../../lib/research-public-data";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = { title: "Resources & Tools", description: "Research equipment, tools, templates, platforms, and support resources." };
 
