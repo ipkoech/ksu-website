@@ -12,6 +12,7 @@ import {
   formatLabel,
   getResearchOverviewData,
 } from "../lib/research-public-data";
+import { researchServiceApi } from "@ksu/api-client";
 
 export const dynamic = "force-dynamic";
 
@@ -130,6 +131,13 @@ export default async function ResearchPage() {
     errors,
   } = await getResearchOverviewData();
 
+  let statsMap: Record<string, number> = {};
+  try {
+    const statsResponse = await researchServiceApi.stats();
+    const statsArr = ((statsResponse as any).data?.stats ?? []) as Array<{ key: string; value: number }>;
+    for (const s of statsArr) { statsMap[s.key] = s.value; }
+  } catch { /* stats are optional */ }
+
   return (
     <main id="research-main" className="min-h-screen bg-white">
       <ResearchImmersiveHero
@@ -184,7 +192,13 @@ export default async function ResearchPage() {
           },
         ]}
       />
-      <CountUpMetrics projects={projects} publications={publications} grants={grants} innovations={innovations} partners={partners} />
+      <CountUpMetrics
+        projects={statsMap["research_projects"] ?? 0}
+        publications={statsMap["publications"] ?? 0}
+        grants={statsMap["grant_funding"] ?? 0}
+        innovations={statsMap["patents"] ?? 0}
+        partners={statsMap["partner_count"] ?? 0}
+      />
       <ResearchPathwayNav eyebrow="Kisii University Research" links={homeLinks} />
 
       {errors.length > 0 ? (

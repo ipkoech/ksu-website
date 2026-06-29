@@ -63,11 +63,11 @@ export function CountUpMetrics({
   innovations,
   partners,
 }: {
-  projects: { data: any[] };
-  publications: { data: any[] };
-  grants: { data: any[] };
-  innovations: { data: any[] };
-  partners: { data: any[] };
+  projects: number;
+  publications: number;
+  grants: number;
+  innovations: number;
+  partners: number;
 }) {
   return (
     <section className="bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
@@ -79,11 +79,11 @@ export function CountUpMetrics({
           </p>
         </div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <CountUpMetricCard value={projects.data.length} label="Active Projects" href="/projects" />
-          <CountUpMetricCard value={publications.data.length} label="Publications" href="/publications" />
-          <CountUpMetricCard value={grants.data.length} label="Funding Calls" href="/funding" />
-          <CountUpMetricCard value={innovations.data.length} label="Innovations" href="/innovations" />
-          <CountUpMetricCard value={partners.data.length} label="Partners" href="/partners" />
+          <CountUpMetricCard value={projects} label="Active Projects" href="/projects" />
+          <CountUpMetricCard value={publications} label="Publications" href="/publications" />
+          <CountUpMetricCard value={grants} label="Grant Funding" href="/funding" suffix=" KES" />
+          <CountUpMetricCard value={innovations} label="Patents & IP" href="/innovations" />
+          <CountUpMetricCard value={partners} label="Partners" href="/partners" />
         </div>
       </div>
     </section>
