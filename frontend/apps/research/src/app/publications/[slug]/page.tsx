@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord, ResearchPublication } from "@ksu/api-client";
+import { researchServiceApi } from "@ksu/api-client";
 import {
   ResearchDetailHero,
   ResearchDetailSidebar,
@@ -10,10 +11,15 @@ import { ResearchSection, StatusMessage } from "../../../components/research-ui"
 import {
   compactText,
   formatDate,
+  generateSlugParams,
   getPublicationBySlug,
 } from "../../../lib/research-public-data";
 
 export const revalidate = 300;
+
+export async function generateStaticParams() {
+  return generateSlugParams(researchServiceApi.publications.list);
+}
 
 export default async function PublicationDetailPage({
   params,

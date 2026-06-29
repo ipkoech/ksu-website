@@ -1271,6 +1271,17 @@ export function formatLabel(value?: string | null) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+type ListFn = (params?: Record<string, string | number | boolean | undefined>) => Promise<{ data?: Array<{ slug?: string }> }>;
+
+export async function generateSlugParams(listFn: ListFn, filterExtra: Record<string, string | number | boolean | undefined> = {}): Promise<{ slug: string }[]> {
+  try {
+    const response = await listFn({ per_page: 50, fields: "slug", is_public: true, is_active: true, ...filterExtra });
+    return (response.data ?? []).filter((item) => item.slug).map((item) => ({ slug: item.slug! }));
+  } catch {
+    return [];
+  }
+}
+
 export function formatDate(value?: string | null) {
   if (!value) return "";
   const date = new Date(value);

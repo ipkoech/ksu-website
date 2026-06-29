@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { researchServiceApi } from "@ksu/api-client";
 import {
   ResearchDetailHero,
   ResearchDetailSidebar,
@@ -13,6 +14,7 @@ import {
   compactText,
   formatDate,
   formatLabel,
+  generateSlugParams,
   getArticleBySlug,
   getCenters,
   getInnovations,
@@ -22,6 +24,10 @@ import {
 
 export const revalidate = 300;
 const passthroughImageLoader = ({ src }: { src: string }) => src;
+
+export async function generateStaticParams() {
+  return generateSlugParams(researchServiceApi.articles.list);
+}
 
 export default async function NewsDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

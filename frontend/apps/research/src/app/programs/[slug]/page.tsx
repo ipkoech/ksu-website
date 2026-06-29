@@ -11,13 +11,19 @@ import {
   compactText,
   formatDate,
   formatLabel,
+  generateSlugParams,
   getProgramBySlug,
   getProgramProjects,
 } from "../../../lib/research-public-data";
 import { MotionCard } from "../../../components/motion-cards";
 import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
+import { researchServiceApi } from "@ksu/api-client";
 
 export const revalidate = 300;
+
+export async function generateStaticParams() {
+  return generateSlugParams(researchServiceApi.programs.list);
+}
 
 export async function generateMetadata({
   params,

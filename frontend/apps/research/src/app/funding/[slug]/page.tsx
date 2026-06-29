@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { researchServiceApi } from "@ksu/api-client";
 import {
   ResearchDetailHero,
   ResearchDetailSidebar,
@@ -11,10 +12,15 @@ import {
   compactText,
   formatDate,
   formatLabel,
+  generateSlugParams,
   getGrantBySlug,
 } from "../../../lib/research-public-data";
 
 export const revalidate = 300;
+
+export async function generateStaticParams() {
+  return generateSlugParams(researchServiceApi.grants.list);
+}
 
 export default async function FundingDetailPage({
   params,

@@ -11,13 +11,19 @@ import { ResearchSection, StatusMessage } from "../../../components/research-ui"
 import {
   compactText,
   formatDate,
+  generateSlugParams,
   getProjectBySlug,
   getProjectPublications,
   getRelatedOutputs,
 } from "../../../lib/research-public-data";
 import type { ResearchGenericRecord, ResearchProject, ResearchPublication } from "@ksu/api-client";
+import { researchServiceApi } from "@ksu/api-client";
 
 export const revalidate = 300;
+
+export async function generateStaticParams() {
+  return generateSlugParams(researchServiceApi.projects.list);
+}
 
 export default async function ProjectDetailPage({
   params,

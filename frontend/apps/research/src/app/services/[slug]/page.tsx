@@ -1,10 +1,15 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { researchServiceApi } from "@ksu/api-client";
 import { ResearchDetailHero, ResearchDetailSidebar, ResearchRecordGrid, ResearchTextPanel } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
-import { compactText, getServiceBySlug } from "../../../lib/research-public-data";
+import { compactText, generateSlugParams, getServiceBySlug } from "../../../lib/research-public-data";
 
 export const revalidate = 300;
+
+export async function generateStaticParams() {
+  return generateSlugParams(researchServiceApi.services.list);
+}
 
 export default async function ServiceDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

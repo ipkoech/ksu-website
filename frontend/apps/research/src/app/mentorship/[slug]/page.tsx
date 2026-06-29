@@ -1,10 +1,15 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { researchServiceApi } from "@ksu/api-client";
 import { ResearchDetailHero, ResearchDetailSidebar, ResearchRecordPanel, ResearchTextPanel } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
-import { compactText, formatDate, getMentorshipBySlug } from "../../../lib/research-public-data";
+import { compactText, formatDate, generateSlugParams, getMentorshipBySlug } from "../../../lib/research-public-data";
 
 export const revalidate = 300;
+
+export async function generateStaticParams() {
+  return generateSlugParams(researchServiceApi.mentorship.list);
+}
 
 export default async function MentorshipDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

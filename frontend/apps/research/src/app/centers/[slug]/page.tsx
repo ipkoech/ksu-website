@@ -15,6 +15,7 @@ import {
   compactText,
   formatDate,
   formatLabel,
+  generateSlugParams,
   getCenterBySlug,
   getCenterProjects,
   getCenterPublications,
@@ -22,8 +23,13 @@ import {
   getRelatedOutputs,
 } from "../../../lib/research-public-data";
 import type { ResearchGenericRecord, ResearchProject, ResearchPublication } from "@ksu/api-client";
+import { researchServiceApi } from "@ksu/api-client";
 
 export const revalidate = 300;
+
+export async function generateStaticParams() {
+  return generateSlugParams(researchServiceApi.centers.list);
+}
 
 export default async function CenterDetailPage({
   params,
