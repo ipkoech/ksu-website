@@ -2,7 +2,34 @@
 
 from __future__ import annotations
 
-from ..models import CenterTeamMember, ProjectTeamMember, ResearchCenter, ResearchFarm, ResearchProgram, ResearchProject
+import uuid
+from typing import Any
+
+from ksu_common.models import AuditLog
+from sqlalchemy import delete, func, insert, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from ..models import (
+    CenterTeamMember,
+    FocusArea,
+    Funding,
+    Grant,
+    ImpactMetric,
+    Partner,
+    ProjectTeamMember,
+    Publication,
+    ResearchCenter,
+    ResearchFarm,
+    ResearchProgram,
+    ResearchProject,
+    SuccessStory,
+    Sustainability,
+    project_focus_areas,
+    project_funders,
+    project_partners,
+    sustainability_projects,
+)
 from ._crud import build_simple_service
 
 CenterService = build_simple_service(
@@ -35,3 +62,198 @@ ProjectService = build_simple_service(
 )
 ProjectTeamMemberService = build_simple_service(ProjectTeamMember, "role", reference_fields={"person_id": "persons"})
 CenterTeamMemberService = build_simple_service(CenterTeamMember, "role", reference_fields={"person_id": "persons"})
+
+
+def _brief(item: Any, *extra_fields: str) -> dict[str, Any]:
+    payload = {
+        "id": item.id,
+        "title": getattr(item, "title", None),
+        "name": getattr(item, "name", None),
+        "slug": getattr(item, "slug", None),
+        "status": getattr(item, "status", None),
+        "created_at": getattr(item, "created_at", None),
+        "updated_at": getattr(item, "updated_at", None),
+    }
+    for field in extra_fields:
+        payload[field] = getattr(item, field, None)
+    return {key: value for key, value in payload.items() if value is not None}
+
+
+def _model_payload(item: Any) -> dict[str, Any]:
+    return {
+        column.name: getattr(item, column.name)
+        for column in item.__table__.columns
+        if hasattr(item, column.name)
+    }
+
+
+async def _related_many(db: AsyncSession, statement, *extra_fields: str) -> list[dict[str, Any]]:
+    result = await db.execute(statement)
+    return [_brief(item, *extra_fields) for item in result.scalars().all()]
+
+
+class ProjectDetailService:
+    """Admin-oriented aggregate payloads for research project detail screens."""
+
+    @staticmethod
+    async def get_by_slug(db: AsyncSession, slug: str) -> dict[str, Any] | None:
+        project = await ProjectService.get_by_slug(
+            db,
+            slug,
+            load_options=(selectinload(ResearchProject.center), selectinload(ResearchProject.program), selectinload(ResearchProject.farm)),
+        )
+        if project is None:
+            return None
+
+        grants = []
+        if project.grant_id:
+            result = await db.execute(Grant.active_query().where(Grant.id == project.grant_id))
+            grant = result.scalar_one_or_none()
+            if grant is not None:
+                grants.append(_brief(grant, "deadline", "currency", "total_budget"))
+
+        return {
+            "record": {
+                **_model_payload(project),
+                "center": _brief(project.center) if project.center else None,
+                "program": _brief(project.program) if project.program else None,
+                "farm": _brief(project.farm) if project.farm else None,
+            },
+            "relationships": {
+                "publications": await _related_many(
+                    db,
+                    Publication.active_query().where(Publication.project_id == project.id).order_by(Publication.year.desc().nullslast(), Publication.created_at.desc()),
+                    "publication_type",
+                    "year",
+                    "doi",
+                    "url",
+                ),
+                "grants": grants,
+                "funders": await ProjectRelationshipService.list_funders(db, project.id),
+                "partners": await ProjectRelationshipService.list_partners(db, project.id),
+                "focus_areas": await ProjectRelationshipService.list_focus_areas(db, project.id),
+                "impact": await _related_many(
+                    db,
+                    SuccessStory.active_query().where(SuccessStory.project_id == project.id).order_by(SuccessStory.story_date.desc().nullslast(), SuccessStory.created_at.desc()),
+                    "story_type",
+                    "story_date",
+                ),
+                "metrics": await _related_many(
+                    db,
+                    ImpactMetric.active_query().where(ImpactMetric.project_id == project.id).order_by(ImpactMetric.display_order.asc(), ImpactMetric.created_at.desc()),
+                    "metric_type",
+                    "category",
+                    "value",
+                    "unit",
+                ),
+                "sustainability": await _related_many(
+                    db,
+                    Sustainability.active_query()
+                    .join(sustainability_projects, Sustainability.id == sustainability_projects.c.sustainability_id)
+                    .where(sustainability_projects.c.project_id == project.id)
+                    .order_by(Sustainability.display_order.asc(), Sustainability.created_at.desc()),
+                    "initiative_type",
+                ),
+                "audit": await _related_many(
+                    db,
+                    AuditLog.active_query()
+                    .where(AuditLog.resource_type.in_(("research_project", "projects", "project")))
+                    .where(AuditLog.resource_id == str(project.id))
+                    .order_by(AuditLog.happened_at.desc())
+                    .limit(20),
+                    "action",
+                    "status",
+                    "happened_at",
+                ),
+            },
+        }
+
+
+class ProjectRelationshipService:
+    """Manage existing M:N project relationship tables."""
+
+    @staticmethod
+    async def _ensure_project(db: AsyncSession, project_id: uuid.UUID) -> ResearchProject:
+        return await ResearchProject.get_or_raise(db, project_id, error_message="Project not found")
+
+    @staticmethod
+    async def list_partners(db: AsyncSession, project_id: uuid.UUID) -> list[dict[str, Any]]:
+        await ProjectRelationshipService._ensure_project(db, project_id)
+        return await _related_many(
+            db,
+            Partner.active_query()
+            .join(project_partners, Partner.id == project_partners.c.partner_id)
+            .where(project_partners.c.project_id == project_id)
+            .order_by(Partner.display_order.asc(), Partner.name.asc()),
+            "partner_type",
+            "partnership_level",
+        )
+
+    @staticmethod
+    async def add_partner(db: AsyncSession, project_id: uuid.UUID, partner_id: uuid.UUID) -> None:
+        await ProjectRelationshipService._ensure_project(db, project_id)
+        await Partner.get_or_raise(db, partner_id, error_message="Partner not found")
+        exists = await db.scalar(select(func.count()).select_from(project_partners).where(project_partners.c.project_id == project_id, project_partners.c.partner_id == partner_id))
+        if not exists:
+            await db.execute(insert(project_partners).values(project_id=project_id, partner_id=partner_id))
+            await db.flush()
+
+    @staticmethod
+    async def remove_partner(db: AsyncSession, project_id: uuid.UUID, partner_id: uuid.UUID) -> None:
+        await ProjectRelationshipService._ensure_project(db, project_id)
+        await db.execute(delete(project_partners).where(project_partners.c.project_id == project_id, project_partners.c.partner_id == partner_id))
+        await db.flush()
+
+    @staticmethod
+    async def list_funders(db: AsyncSession, project_id: uuid.UUID) -> list[dict[str, Any]]:
+        await ProjectRelationshipService._ensure_project(db, project_id)
+        return await _related_many(
+            db,
+            Funding.active_query()
+            .join(project_funders, Funding.id == project_funders.c.funding_id)
+            .where(project_funders.c.project_id == project_id)
+            .order_by(Funding.display_order.asc(), Funding.name.asc()),
+            "funder_type",
+        )
+
+    @staticmethod
+    async def add_funder(db: AsyncSession, project_id: uuid.UUID, funder_id: uuid.UUID) -> None:
+        await ProjectRelationshipService._ensure_project(db, project_id)
+        await Funding.get_or_raise(db, funder_id, error_message="Funder not found")
+        exists = await db.scalar(select(func.count()).select_from(project_funders).where(project_funders.c.project_id == project_id, project_funders.c.funding_id == funder_id))
+        if not exists:
+            await db.execute(insert(project_funders).values(project_id=project_id, funding_id=funder_id))
+            await db.flush()
+
+    @staticmethod
+    async def remove_funder(db: AsyncSession, project_id: uuid.UUID, funder_id: uuid.UUID) -> None:
+        await ProjectRelationshipService._ensure_project(db, project_id)
+        await db.execute(delete(project_funders).where(project_funders.c.project_id == project_id, project_funders.c.funding_id == funder_id))
+        await db.flush()
+
+    @staticmethod
+    async def list_focus_areas(db: AsyncSession, project_id: uuid.UUID) -> list[dict[str, Any]]:
+        await ProjectRelationshipService._ensure_project(db, project_id)
+        return await _related_many(
+            db,
+            FocusArea.active_query()
+            .join(project_focus_areas, FocusArea.id == project_focus_areas.c.focus_area_id)
+            .where(project_focus_areas.c.project_id == project_id)
+            .order_by(FocusArea.display_order.asc(), FocusArea.name.asc()),
+            "code",
+        )
+
+    @staticmethod
+    async def add_focus_area(db: AsyncSession, project_id: uuid.UUID, focus_area_id: uuid.UUID) -> None:
+        await ProjectRelationshipService._ensure_project(db, project_id)
+        await FocusArea.get_or_raise(db, focus_area_id, error_message="Focus area not found")
+        exists = await db.scalar(select(func.count()).select_from(project_focus_areas).where(project_focus_areas.c.project_id == project_id, project_focus_areas.c.focus_area_id == focus_area_id))
+        if not exists:
+            await db.execute(insert(project_focus_areas).values(project_id=project_id, focus_area_id=focus_area_id))
+            await db.flush()
+
+    @staticmethod
+    async def remove_focus_area(db: AsyncSession, project_id: uuid.UUID, focus_area_id: uuid.UUID) -> None:
+        await ProjectRelationshipService._ensure_project(db, project_id)
+        await db.execute(delete(project_focus_areas).where(project_focus_areas.c.project_id == project_id, project_focus_areas.c.focus_area_id == focus_area_id))
+        await db.flush()

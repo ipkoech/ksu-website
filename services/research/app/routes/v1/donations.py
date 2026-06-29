@@ -8,6 +8,7 @@ from ksu_common.schemas.responses import success
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.database import get_db
+from ...core.auth import require_scope
 from ...schemas import (
     DonationCreate,
     DonationImpactCreate,
@@ -49,6 +50,11 @@ async def submit_public_donation(
         ),
         message="Donation submission received",
     )
+
+
+@router.get("/donations/summary", tags=["Donations"], dependencies=[Depends(require_scope("donations.manage"))])
+async def get_donation_summary(db: AsyncSession = Depends(get_db)):
+    return success(data=await DonationService.summary(db))
 
 
 router.include_router(

@@ -168,6 +168,11 @@ class ResearchFarm(Base, SEOMixin, CoverImageRefMixin, AttachmentRefsMixin):
         "ResearchCenter",
         back_populates="farms",
     )
+    projects: Mapped[list["ResearchProject"]] = relationship(
+        "ResearchProject",
+        back_populates="farm",
+        lazy="selectin",
+    )
 
     def __repr__(self) -> str:
         return f"<ResearchFarm {self.slug}: {self.name}>"
@@ -193,7 +198,6 @@ class ResearchProgram(Base, SEOMixin, CoverImageRefMixin):
         nullable=True,
         index=True,
     )
-
     # Leadership
     lead_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
 
@@ -262,6 +266,11 @@ class ResearchProject(Base, SEOMixin, CoverImageRefMixin, AttachmentRefsMixin):
         nullable=True,
         index=True,
     )
+    farm_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("research_farms.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     # Principal investigator
     pi_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
@@ -312,6 +321,10 @@ class ResearchProject(Base, SEOMixin, CoverImageRefMixin, AttachmentRefsMixin):
     )
     center: Mapped[Optional["ResearchCenter"]] = relationship(
         "ResearchCenter",
+        back_populates="projects",
+    )
+    farm: Mapped[Optional["ResearchFarm"]] = relationship(
+        "ResearchFarm",
         back_populates="projects",
     )
     team_members: Mapped[list["ProjectTeamMember"]] = relationship(

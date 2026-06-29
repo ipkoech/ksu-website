@@ -21,6 +21,54 @@ class DonationService(CRUDService):
     search_fields = ("donation_number", "purpose", "payment_reference", "status")
     default_order = ("created_at",)
 
+    @classmethod
+    async def summary(cls, db: AsyncSession) -> dict:
+        donation_totals = await db.execute(
+            select(
+                func.coalesce(func.sum(Donation.amount), 0),
+                func.count(Donation.id),
+            ).where(
+                Donation.deleted_at.is_(None),
+                Donation.status == "completed",
+            )
+        )
+        total_donations, donation_count = donation_totals.one()
+
+        donor_count = await db.scalar(
+            select(func.count(Donor.id)).where(
+                Donor.deleted_at.is_(None),
+                Donor.is_active.is_(True),
+            )
+        )
+        impact_count = await db.scalar(
+            select(func.count(DonationImpact.id)).where(
+                DonationImpact.deleted_at.is_(None),
+                DonationImpact.is_active.is_(True),
+            )
+        )
+        story_count = await db.scalar(
+            select(func.count(DonationStory.id)).where(
+                DonationStory.deleted_at.is_(None),
+                DonationStory.is_active.is_(True),
+                DonationStory.status == "published",
+            )
+        )
+        pending_count = await db.scalar(
+            select(func.count(Donation.id)).where(
+                Donation.deleted_at.is_(None),
+                Donation.status == "pending",
+            )
+        )
+
+        return {
+            "total_donations": total_donations,
+            "donation_count": donation_count or 0,
+            "donors": donor_count or 0,
+            "impact_records": impact_count or 0,
+            "stories_published": story_count or 0,
+            "pending_donations": pending_count or 0,
+        }
+
     @staticmethod
     def _public_display_name(payload: dict) -> str | None:
         if payload.get("is_anonymous"):

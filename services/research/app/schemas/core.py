@@ -230,6 +230,7 @@ class ResearchProjectBase(BaseSchema, SlugMixin, SEOFieldsMixin):
     code: str | None = Field(None, max_length=32)
     program_id: uuid.UUID | None = None
     center_id: uuid.UUID | None = None
+    farm_id: uuid.UUID | None = None
     pi_id: uuid.UUID | None = None
     project_type: str = Field(default="applied", max_length=32)
     start_date: date | None = None
@@ -259,7 +260,27 @@ class ResearchProjectCreate(ResearchProjectBase, StatusMixin):
 class ResearchProjectUpdate(BaseSchema):
     title: str | None = Field(None, max_length=500)
     slug: SlugStr | None = None
+    program_id: uuid.UUID | None = None
+    center_id: uuid.UUID | None = None
+    farm_id: uuid.UUID | None = None
     pi_id: uuid.UUID | None = None
+    project_type: str | None = Field(None, max_length=32)
+    start_date: date | None = None
+    end_date: date | None = None
+    summary: str | None = None
+    abstract: str | None = None
+    background: str | None = None
+    objectives: str | None = None
+    methodology: str | None = None
+    expected_outcomes: str | None = None
+    impact: str | None = None
+    deliverables: str | None = None
+    budget: Decimal | None = None
+    currency: str | None = Field(None, max_length=3)
+    grant_id: uuid.UUID | None = None
+    cover_image_url: UrlStr | None = None
+    gallery: list[dict] | None = None
+    documents: list[dict] | None = None
     status: str | None = None
     progress_percentage: int | None = Field(None, ge=0, le=100)
     is_active: bool | None = None
@@ -271,6 +292,7 @@ class ResearchProjectRead(ResearchProjectBase, BaseReadSchema, StatusMixin):
     is_public: bool
     program: dict[str, Any] | None = None
     center: dict[str, Any] | None = None
+    farm: dict[str, Any] | None = None
     team_members: list[dict[str, Any]] | None = None
 
 

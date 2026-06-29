@@ -174,6 +174,9 @@ class MediaService:
         folder_id: uuid.UUID | None = None,
         media_type: str | None = None,
         uploaded_by_id: uuid.UUID | None = None,
+        entity_type: str | None = None,
+        entity_id: uuid.UUID | None = None,
+        role: str | None = None,
         search: str | None = None,
         load_options: Sequence = (),
     ) -> PaginatedResult:
@@ -187,6 +190,14 @@ class MediaService:
             query = query.where(Media.media_type == media_type)
         if uploaded_by_id:
             query = query.where(Media.uploaded_by_id == uploaded_by_id)
+        if entity_type or entity_id or role:
+            query = query.join(MediaLink, MediaLink.media_id == Media.id).where(MediaLink.deleted_at.is_(None))
+            if entity_type:
+                query = query.where(MediaLink.entity_type == entity_type)
+            if entity_id:
+                query = query.where(MediaLink.entity_id == entity_id)
+            if role:
+                query = query.where(MediaLink.role == role)
         if search:
             query = query.where(ilike_any(search, Media.title, Media.original_filename, Media.filename, Media.alt_text, Media.description))
         return await paginate_query(db, query, page=page, per_page=per_page)

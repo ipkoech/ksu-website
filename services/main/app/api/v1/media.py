@@ -62,6 +62,9 @@ async def list_media(
     folder_id: uuid.UUID | None = None,
     media_type: str | None = None,
     uploaded_by_id: uuid.UUID | None = None,
+    entity_type: str | None = Query(default=None, max_length=64),
+    entity_id: uuid.UUID | None = None,
+    role: str | None = Query(default=None, max_length=64),
     search: str | None = None,
     fields: FieldSelection = FieldsDep,
 ):
@@ -74,6 +77,9 @@ async def list_media(
         folder_id=folder_id,
         media_type=media_type,
         uploaded_by_id=uploaded_by_id,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        role=role,
         search=search,
         load_options=selector.load_options,
     )

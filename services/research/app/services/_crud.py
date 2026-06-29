@@ -64,6 +64,14 @@ class CRUDService(Generic[M]):
             if key == "end_date_to" and hasattr(cls.model, "end_date"):
                 query = query.where(getattr(cls.model, "end_date") <= value)
                 continue
+            if key == "focus_area_id" and getattr(cls.model, "__tablename__", None) == "research_projects":
+                from ..models import project_focus_areas
+
+                query = query.join(
+                    project_focus_areas,
+                    getattr(cls.model, "id") == project_focus_areas.c.project_id,
+                ).where(project_focus_areas.c.focus_area_id == value)
+                continue
             if not hasattr(cls.model, key):
                 continue
             query = query.where(getattr(cls.model, key) == value)
