@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpenCheck, Building2, FlaskConical, GraduationCap, Sprout } from "lucide-react";
-import { ResearchClusterHero } from "../../components/research-cluster";
-import { ResearchFilterForm } from "../../components/research-listing";
+import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
 import {
   Badge,
+  PrimaryLink,
   ResearchSection,
+  SecondaryLink,
   StatusMessage,
 } from "../../components/research-ui";
 import {
@@ -16,6 +16,7 @@ import {
   getServices,
 } from "../../lib/research-public-data";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { getRecordSummary, getRecordTimelineLabel, getRecordTitle } from "../../lib/research-page-model";
 
 export const revalidate = 300;
 
@@ -32,39 +33,6 @@ type FacilitySearchParams = {
 };
 
 const farmTypes = ["crop", "livestock", "aquaculture", "mixed", "demonstration", "experimental"];
-
-const discoveryLinks = [
-  {
-    label: "Projects",
-    href: "/projects",
-    description: "Browse funded, applied, action, and collaborative work.",
-    icon: FlaskConical,
-  },
-  {
-    label: "Programs",
-    href: "/programs",
-    description: "See long-term research pathways and related projects.",
-    icon: BookOpenCheck,
-  },
-  {
-    label: "Centers",
-    href: "/centers",
-    description: "Find the institutional homes for research activity.",
-    icon: Building2,
-  },
-  {
-    label: "Facilities",
-    href: "/facilities",
-    description: "Explore farms, labs, and practical research infrastructure.",
-    icon: Sprout,
-  },
-  {
-    label: "Capacity",
-    href: "/capacity",
-    description: "Training, mentorship, and scholarship support.",
-    icon: GraduationCap,
-  },
-];
 
 export default async function FacilitiesPage({
   searchParams,
@@ -86,25 +54,10 @@ export default async function FacilitiesPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchClusterHero
-        eyebrow="Discovery"
-        title="Facilities, labs, farms, and research infrastructure."
-        body="Find research infrastructure, access points, services, and facilities that support discovery and extension."
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Discovery", href: "/projects" },
-          { label: "Facilities" },
-        ]}
-        imageSrc="/images/research/research-events-hero.svg"
-        imageAlt="Research farm, laboratory, and field infrastructure supporting discovery"
-        links={discoveryLinks}
-        primaryAction={{ label: "View centers", href: "/centers" }}
-        stats={[
-          { label: "Facility results", value: facilities.data.length },
-          { label: "Centers", value: centers.data.length },
-          { label: "Support services", value: services.data.length },
-          { label: "Facility types", value: farmTypes.length },
-        ]}
+      <FacilitiesMasthead
+        facilityCount={facilities.data.length}
+        centerCount={centers.data.length}
+        serviceCount={services.data.length}
       />
 
       <ResearchSection
@@ -124,9 +77,9 @@ export default async function FacilitiesPage({
           ))}
 
         {facilities.data.length > 0 ? (
-          <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-7 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
             {facilities.data.map((facility) => (
-              <FacilityCard key={facility.id} facility={facility} />
+              <FacilityRow key={facility.id} facility={facility} />
             ))}
           </div>
         ) : (
@@ -172,6 +125,51 @@ export default async function FacilitiesPage({
   );
 }
 
+function FacilitiesMasthead({
+  facilityCount,
+  centerCount,
+  serviceCount,
+}: {
+  facilityCount: number;
+  centerCount: number;
+  serviceCount: number;
+}) {
+  const stats = [
+    { label: "Facility results", value: facilityCount },
+    { label: "Centers", value: centerCount },
+    { label: "Support services", value: serviceCount },
+  ];
+
+  return (
+    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(300px,460px)] lg:items-end">
+        <div>
+          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
+            <Link href="/" className="transition hover:text-primary">Home</Link>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-900">Facilities</span>
+          </nav>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Facilities</p>
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">Facilities, farms, labs, and research infrastructure</h1>
+          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">Search backend facility records by name, type, center, location, activity area, and service access.</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <PrimaryLink href="/centers">View centers</PrimaryLink>
+            <SecondaryLink href="/services">Support services</SecondaryLink>
+          </div>
+        </div>
+        <dl className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
+          {stats.map((stat) => (
+            <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+              <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
+              <dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
+  );
+}
+
 function FacilityFilters({
   params,
   centers,
@@ -198,30 +196,19 @@ function FacilityFilters({
   );
 }
 
-function FacilityCard({ facility }: { facility: ResearchGenericRecord }) {
+function FacilityRow({ facility }: { facility: ResearchGenericRecord }) {
   return (
-    <Link
+    <ResearchRecordRow
       href={facility.slug ? `/farm/${facility.slug}` : "/farm"}
-      className="group block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
-    >
-      <div className="flex flex-wrap gap-2">
-        <Badge>{formatLabel(facility.farm_type ?? "facility")}</Badge>
-        {facility.county ? <Badge>{facility.county}</Badge> : null}
-      </div>
-      <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-        {facility.name ?? facility.title}
-      </h2>
-      <p className="mt-3 text-sm leading-7 text-slate-600">
-        {compactText(facility.about) ||
-          compactText(facility.activities) ||
-          compactText(facility.facilities) ||
-          "Facility profile will appear when published by the research office."}
-      </p>
-      <p className="mt-5 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-700">
-        {compactText(facility.location) ||
-          compactText(facility.manager_name) ||
-          "Location details not published"}
-      </p>
-    </Link>
+      title={getRecordTitle(facility, "Research facility")}
+      description={getRecordSummary(facility) || compactText(facility.activities) || compactText(facility.facilities) || "Facility profile will appear when published by the research office."}
+      badges={[facility.farm_type ?? "facility", facility.county]}
+      filledBadges={[facility.is_featured ? "Featured" : null]}
+      facts={[
+        { label: "Location", value: compactText(facility.location) || compactText(facility.manager_name) },
+        { label: "Size", value: facility.size_hectares ? `${compactText(facility.size_hectares)} hectares` : "" },
+        { label: "Updated", value: getRecordTimelineLabel(facility) },
+      ]}
+    />
   );
 }

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { CalendarDays, Handshake, Sprout, Target } from "lucide-react";
-import { ResearchClusterHero } from "../../components/research-cluster";
+import Link from "next/link";
 import {
   Badge,
-  IconCard,
+  PrimaryLink,
   ResearchSection,
+  SecondaryLink,
   StatusMessage,
 } from "../../components/research-ui";
 import {
@@ -24,13 +24,6 @@ export const metadata: Metadata = {
   description: "Research community impact, outreach, public engagement, and success stories.",
 };
 
-const extensionLinks = [
-  { label: "University Farm", href: "/farm", description: "Farm facilities, field research, demonstrations, and partners.", icon: Sprout },
-  { label: "Sustainability", href: "/sustainability", description: "Climate, biodiversity, water, and circular-economy initiatives.", icon: Target },
-  { label: "Community Impact", href: "/community-impact", description: "Outreach, social value, events, and public stories.", icon: Handshake },
-  { label: "Events", href: "/events", description: "Public engagement and research activity calendar.", icon: CalendarDays },
-];
-
 export default async function CommunityImpactPage() {
   const [stories, sustainability, events, donationImpacts] = await Promise.all([
     getStories(),
@@ -41,50 +34,12 @@ export default async function CommunityImpactPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchClusterHero
-        eyebrow="Community Impact"
-        title="Research that creates local and regional value."
-        body="Track community-facing research, sustainability initiatives, outreach events, and social impact stories connected to Kisii University."
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Research", href: "/" },
-          { label: "Community Impact" },
-        ]}
-        imageSrc="/images/research/research-events-hero.svg"
-        imageAlt="Community impact, outreach events, sustainability work, and public engagement"
-        links={extensionLinks}
-        primaryAction={{ label: "View events", href: "/events" }}
-        stats={[
-          { label: "Impact stories", value: stories.data.length },
-          { label: "Sustainability records", value: sustainability.data.length },
-          { label: "Events", value: events.data.length },
-          { label: "Donation impacts", value: donationImpacts.data.length },
-        ]}
+      <CommunityMasthead
+        storyCount={stories.data.length}
+        sustainabilityCount={sustainability.data.length}
+        eventCount={events.data.length}
+        donationImpactCount={donationImpacts.data.length}
       />
-      <ResearchSection
-        eyebrow="Overview & Mission"
-        title="Community impact priorities"
-        body="The public impact surface groups local mission, economic and social value, and engagement activities in one place."
-        tone="white"
-      >
-        <div className="grid gap-5 md:grid-cols-3">
-          <IconCard
-            icon="target"
-            title="Regional mission"
-            body="Show the local and regional priorities shaped by Kisii University's research agenda."
-          />
-          <IconCard
-            icon="users"
-            title="Economic and social impact"
-            body="Present community initiatives, social value, and donor-funded impact records."
-          />
-          <IconCard
-            icon="calendar"
-            title="Events and engagement"
-            body="Surface public forums, outreach programmes, and community-facing research events."
-          />
-        </div>
-      </ResearchSection>
       <ResearchSection
         eyebrow="Economic & Social Impact"
         title="Success stories and initiatives"
@@ -126,6 +81,54 @@ export default async function CommunityImpactPage() {
         </div>
       </ResearchSection>
     </main>
+  );
+}
+
+function CommunityMasthead({
+  storyCount,
+  sustainabilityCount,
+  eventCount,
+  donationImpactCount,
+}: {
+  storyCount: number;
+  sustainabilityCount: number;
+  eventCount: number;
+  donationImpactCount: number;
+}) {
+  const stats = [
+    { label: "Impact stories", value: storyCount },
+    { label: "Sustainability records", value: sustainabilityCount },
+    { label: "Events", value: eventCount },
+    { label: "Donation impacts", value: donationImpactCount },
+  ];
+
+  return (
+    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
+        <div>
+          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
+            <Link href="/" className="transition hover:text-primary">Home</Link>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-900">Community Impact</span>
+          </nav>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Community Impact</p>
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">Research that creates local and regional value</h1>
+          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">Track published community-facing stories, sustainability records, public events, and donor impact evidence.</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <PrimaryLink href="/events">View events</PrimaryLink>
+            <SecondaryLink href="/sustainability">Sustainability</SecondaryLink>
+          </div>
+        </div>
+        <dl className="grid gap-2 sm:grid-cols-2">
+          {stats.map((stat) => (
+            <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+              <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
+              <dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
   );
 }
 

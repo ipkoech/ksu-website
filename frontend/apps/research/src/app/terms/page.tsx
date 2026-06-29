@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { ResearchClusterHero } from "../../components/research-cluster";
-import { ResearchSection, StatusMessage } from "../../components/research-ui";
+import Link from "next/link";
+import { PrimaryLink, ResearchSection, StatusMessage } from "../../components/research-ui";
 
 export const metadata: Metadata = {
   title: "Terms of Use",
@@ -10,19 +10,10 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchClusterHero
-        eyebrow="Legal"
+      <LegalMasthead
         title="Terms of use"
-        body="The terms that govern your use of the Kisii University Research Portal."
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Terms" },
-        ]}
-        imageSrc="/images/research/research-about-hero.svg"
-        imageAlt="Kisii University Research Portal terms and legal information"
-        links={[]}
-        stats={[]}
-        primaryAction={{ label: "Return home", href: "/" }}
+        body="The terms that govern use of the Kisii University Research Portal."
+        current="Terms"
       />
 
       <ResearchSection
@@ -64,5 +55,25 @@ export default function TermsPage() {
         </div>
       </ResearchSection>
     </main>
+  );
+}
+
+function LegalMasthead({ title, body, current }: { title: string; body: string; current: string }) {
+  return (
+    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto max-w-[1680px]">
+        <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
+          <Link href="/" className="transition hover:text-primary">Home</Link>
+          <span className="text-slate-300">/</span>
+          <span className="text-slate-900">{current}</span>
+        </nav>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Legal</p>
+        <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">{title}</h1>
+        <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">{body}</p>
+        <div className="mt-4">
+          <PrimaryLink href="/">Return home</PrimaryLink>
+        </div>
+      </div>
+    </section>
   );
 }
