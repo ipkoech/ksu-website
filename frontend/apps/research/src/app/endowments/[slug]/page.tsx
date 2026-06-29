@@ -4,7 +4,6 @@ import { researchServiceApi } from "@ksu/api-client";
 import {
   ResearchDetailHero,
   ResearchDetailSidebar,
-  ResearchTextPanel,
 } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import {
@@ -13,6 +12,7 @@ import {
   generateSlugParams,
   getEndowmentBySlug,
 } from "../../../lib/research-public-data";
+import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 
 export const revalidate = 300;
 
@@ -30,19 +30,26 @@ export default async function EndowmentDetailPage({
   if (!data) notFound();
 
   const fund = data as ResearchGenericRecord;
+  const title = getRecordTitle(fund, "Endowment fund");
+  const storySections = getNarrativeSections(fund, [
+    { title: "Purpose of the fund", fields: ["purpose", "description", "summary"] },
+    { title: "Who it supports", fields: ["eligibility", "beneficiaries", "target_beneficiaries"] },
+    { title: "How funds are used", fields: ["use_guidelines", "distribution_policy", "annual_distribution_notes"] },
+    { title: "Donor story", fields: ["donor_message", "donor_background", "recognition_notes"] },
+  ]);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
       <ResearchDetailHero
         eyebrow="Endowment"
-        title={fund.name ?? fund.title ?? "Endowment fund"}
-        body={compactText(fund.purpose) || compactText(fund.description)}
+        title={title}
+        body={compactText(fund.purpose) || getRecordSummary(fund)}
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "Endowments", href: "/endowments" },
-          { label: fund.name ?? fund.title ?? "Endowment" },
+          { label: title },
         ]}
-        labels={[fund.fund_type, fund.status, fund.is_accepting_contributions ? "accepting contributions" : null]}
+        labels={[fund.fund_type, fund.status, fund.is_accepting_contributions ? "accepting contributions" : null, fund.is_featured ? "featured" : null]}
         facts={[
           { label: "Current value", value: formatMoney(fund.current_value, fund.currency) },
           { label: "Annual distribution", value: formatMoney(fund.annual_distribution, fund.currency) },
@@ -68,27 +75,12 @@ export default async function EndowmentDetailPage({
       <ResearchSection
         eyebrow="Fund Information"
         title="Purpose, eligibility, and contribution status"
-        body="Endowment pages publish information clearly without workflow complexity."
+        body="Published fund fields are arranged into a compact story about purpose, beneficiaries, fund use, and donor context."
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-5">
-            <ResearchTextPanel
-              title="Purpose"
-              fields={[
-                ["Purpose", fund.purpose],
-                ["Description", fund.description],
-                ["Eligibility", fund.eligibility],
-                ["Use guidelines", fund.use_guidelines],
-              ]}
-            />
-            <ResearchTextPanel
-              title="Donor message"
-              fields={[
-                ["Donor", fund.donor_name],
-                ["Message", fund.donor_message],
-              ]}
-            />
+            <EndowmentStory sections={storySections} />
           </div>
           <ResearchDetailSidebar
             labels={[fund.fund_type ?? "fund", fund.status, fund.is_accepting_contributions ? "Accepting contributions" : null]}
@@ -108,6 +100,26 @@ export default async function EndowmentDetailPage({
         </div>
       </ResearchSection>
     </main>
+  );
+}
+
+function EndowmentStory({ sections }: { sections: Array<{ title: string; body: string }> }) {
+  if (sections.length === 0) {
+    return <StatusMessage>The fund story appears when purpose, eligibility, use, or donor fields are published.</StatusMessage>;
+  }
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      {sections.map((section, index) => (
+        <details key={section.title} className="group border-b border-slate-200 last:border-b-0" open={index === 0}>
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-base font-semibold text-slate-950 transition hover:bg-slate-50">
+            {section.title}
+            <span className="text-primary transition group-open:rotate-45">+</span>
+          </summary>
+          <p className="px-5 pb-5 text-sm leading-7 text-slate-600">{section.body}</p>
+        </details>
+      ))}
+    </section>
   );
 }
 

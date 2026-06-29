@@ -26,6 +26,7 @@ const recordDateFields = [
   "effective_date",
   "review_date",
   "approval_date",
+  "established_date",
   "published_at",
   "publication_date",
   "release_date",
