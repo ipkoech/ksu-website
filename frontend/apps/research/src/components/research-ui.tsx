@@ -17,6 +17,10 @@ import {
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import {
+  getResearchSectionSpacing,
+  type ResearchSectionDensity,
+} from "../lib/research-page-design";
 
 type IconName =
   | "award"
@@ -59,8 +63,8 @@ export function ResearchPageIntro({
   breadcrumbs?: { label: string; href?: string }[];
 }) {
   return (
-    <section className="bg-white px-4 pb-5 pt-7 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto w-full max-w-[1680px] border-b border-slate-200 pb-6">
+    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto w-full max-w-[1680px]">
         {breadcrumbs?.length ? <BreadcrumbTrail items={breadcrumbs} /> : null}
         <p className="text-sm font-semibold uppercase tracking-[0.24em] text-secondary">
           {eyebrow}
@@ -113,31 +117,34 @@ export function ResearchSection({
   body,
   children,
   tone = "light",
+  density = "compact",
 }: {
   eyebrow: string;
   title: string;
   body?: string;
   children: ReactNode;
   tone?: "light" | "white";
+  density?: ResearchSectionDensity;
 }) {
+  const spacing = getResearchSectionSpacing(density);
   return (
     <section
       className={
         tone === "white"
-          ? "bg-white px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
-          : "border-y border-slate-200 bg-slate-50 px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
+          ? `bg-white px-4 ${spacing} sm:px-6 lg:px-8 xl:px-10 2xl:px-12`
+          : `border-y border-slate-200 bg-slate-50 px-4 ${spacing} sm:px-6 lg:px-8 xl:px-10 2xl:px-12`
       }
     >
       <div className="mx-auto w-full max-w-[1680px]">
-        <div className="mb-7 max-w-3xl">
+        <div className="mb-5 max-w-3xl">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-secondary">
             {eyebrow}
           </p>
-          <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+          <h2 className="mt-2 text-balance font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
             {title}
           </h2>
           {body ? (
-            <p className="mt-4 text-pretty text-base leading-7 text-slate-600">{body}</p>
+            <p className="mt-3 text-pretty text-sm leading-7 text-slate-600 sm:text-base">{body}</p>
           ) : null}
         </div>
         {children}

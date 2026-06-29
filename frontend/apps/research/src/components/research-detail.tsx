@@ -1,9 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ArrowRight } from "lucide-react";
 import { Badge, ResearchSection, StatusMessage } from "./research-ui";
-import { ResearchImmersiveHero } from "./research-immersive-hero";
 import { compactText, formatDate, formatLabel } from "../lib/research-public-data";
 
 type DetailSection = {
@@ -55,36 +55,24 @@ export function ResearchDetailHero({
   const cleanFacts = facts
     .map((fact) => ({ label: fact.label, value: compactText(fact.value) }))
     .filter((fact) => fact.value);
-  const primaryAction = actions.find((action) => action.variant !== "secondary");
-  const secondaryAction =
-    actions.find((action) => action.variant === "secondary") ??
-    actions.find((action) => action !== primaryAction);
-
   return (
     <>
-      <ResearchImmersiveHero
-        size="detail"
-        breadcrumbs={breadcrumbs}
-        showControls={false}
-        slides={[
-          {
-            id: "detail",
-            eyebrow,
-            title,
-            body,
-            imageSrc,
-            imageAlt: imageAlt || title,
-            primaryAction,
-            secondaryAction,
-            stats: cleanFacts.slice(0, 4),
-          },
-        ]}
-      />
-
-      {cleanLabels.length > 0 || cleanFacts.length > 0 || actions.length > 0 ? (
-        <section className="border-b border-slate-200 bg-white px-4 py-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="mx-auto grid w-full max-w-[1680px] gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-            <div className="min-w-0">
+      <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="mx-auto grid w-full max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-stretch">
+          <div className="min-w-0">
+            <DetailBreadcrumbs items={breadcrumbs} />
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
+              {eyebrow}
+            </p>
+            <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+              {title}
+            </h1>
+            {body ? (
+              <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">
+                {body}
+              </p>
+            ) : null}
+            <div className="mt-5 flex flex-wrap items-center gap-3">
               {cleanLabels.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {cleanLabels.map((label) => (
@@ -92,23 +80,8 @@ export function ResearchDetailHero({
                   ))}
                 </div>
               ) : null}
-              {cleanFacts.length > 0 ? (
-                <dl className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  {cleanFacts.map((fact) => (
-                    <div key={fact.label} className="min-w-0 rounded-md bg-slate-50 p-3">
-                      <dt className="text-xs font-semibold uppercase text-slate-500">
-                        {fact.label}
-                      </dt>
-                      <dd className="mt-1 break-words text-sm font-semibold leading-6 text-slate-950 [overflow-wrap:anywhere]">
-                        {fact.value}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              ) : null}
-            </div>
-            {actions.length > 0 ? (
-              <div className="flex flex-wrap gap-2 lg:justify-end">
+              {actions.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
                 {actions.map((action) => (
                   <a
                     key={`${action.label}-${action.href}`}
@@ -123,9 +96,37 @@ export function ResearchDetailHero({
                     <ArrowRight aria-hidden className="h-4 w-4" />
                   </a>
                 ))}
-              </div>
-            ) : null}
+                </div>
+              ) : null}
+            </div>
           </div>
+
+          <div className="relative hidden min-h-[220px] overflow-hidden rounded-lg border border-slate-200 bg-slate-100 shadow-sm lg:block">
+            <Image
+              src={imageSrc}
+              alt={imageAlt || title}
+              fill
+              sizes="320px"
+              className="object-cover"
+            />
+          </div>
+        </div>
+      </section>
+
+      {cleanFacts.length > 0 ? (
+        <section className="border-b border-slate-200 bg-slate-50 px-4 py-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+          <dl className="mx-auto grid w-full max-w-[1680px] gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {cleanFacts.slice(0, 6).map((fact) => (
+              <div key={fact.label} className="min-w-0 rounded-md border border-slate-200 bg-white px-3 py-2">
+                <dt className="text-[11px] font-semibold uppercase text-slate-500">
+                  {fact.label}
+                </dt>
+                <dd className="mt-1 break-words text-sm font-semibold leading-6 text-slate-950 [overflow-wrap:anywhere]">
+                  {fact.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
         </section>
       ) : null}
     </>
@@ -196,7 +197,7 @@ export function ResearchRecordDetail({
       ) : null}
 
       <ResearchSection
-        eyebrow="Record"
+        eyebrow="Research Journey"
         title={title}
         body={compactText(record.code) ? `Code: ${compactText(record.code)}` : undefined}
         tone="white"
@@ -242,6 +243,37 @@ function DetailTextSection({
         ))}
       </div>
     </section>
+  );
+}
+
+function DetailBreadcrumbs({
+  items,
+}: {
+  items: { label: string; href?: string }[];
+}) {
+  if (items.length === 0) return null;
+
+  return (
+    <nav
+      aria-label="Breadcrumb"
+      className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500"
+    >
+      {items.map((item, index) => {
+        const isLast = index === items.length - 1;
+        return (
+          <span key={`${item.label}-${index}`} className="inline-flex items-center gap-2">
+            {item.href && !isLast ? (
+              <Link href={item.href} className="transition hover:text-primary">
+                {item.label}
+              </Link>
+            ) : (
+              <span className={isLast ? "text-slate-900" : undefined}>{item.label}</span>
+            )}
+            {!isLast ? <span className="text-slate-300">/</span> : null}
+          </span>
+        );
+      })}
+    </nav>
   );
 }
 

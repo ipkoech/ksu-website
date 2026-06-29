@@ -15,6 +15,7 @@ export default [
       "**/.next/**",
       "**/.next.docker-owned-*/**",
       "**/.next-codex/**",
+      "**/.next-codex-*/**",
       "**/tmp/ksu-*-next/**",
       "**/out/**",
       "**/node_modules/**",
