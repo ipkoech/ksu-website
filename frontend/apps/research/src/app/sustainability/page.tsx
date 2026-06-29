@@ -1,19 +1,26 @@
 import type { Metadata } from "next";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { CalendarDays, Handshake, Sprout, Target } from "lucide-react";
-import { ResearchClusterHero } from "../../components/research-cluster";
-import { ResearchFact } from "../../components/research-detail";
-import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
+import Link from "next/link";
+import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
+import { Badge, PrimaryLink, ResearchSection, SecondaryLink, StatusMessage } from "../../components/research-ui";
 import {
   compactText,
   formatDate,
   formatLabel,
   getImpactMetrics,
   getStories,
-  getSustainability,
+  getSustainabilityFiltered,
   getSustainabilityActivities,
   getSustainabilityPartners,
 } from "../../lib/research-public-data";
+import {
+  filterRecordsByMonth,
+  getRecordMonths,
+  getRecordSummary,
+  getRecordTimelineLabel,
+  getRecordTitle,
+  getRecordYears,
+} from "../../lib/research-page-model";
 
 export const revalidate = 300;
 
@@ -22,60 +29,81 @@ export const metadata: Metadata = {
   description: "Sustainability initiatives and impact records.",
 };
 
-const extensionLinks = [
-  { label: "University Farm", href: "/farm", description: "Farm facilities, field research, demonstrations, and partners.", icon: Sprout },
-  { label: "Sustainability", href: "/sustainability", description: "Climate, biodiversity, water, and circular-economy initiatives.", icon: Target },
-  { label: "Community Impact", href: "/community-impact", description: "Outreach, social value, events, and public stories.", icon: Handshake },
-  { label: "Events", href: "/events", description: "Public engagement and research activity calendar.", icon: CalendarDays },
+type SustainabilitySearchParams = { q?: string; type?: string; active?: string; status?: string; year?: string; month?: string; sort?: string };
+
+const sustainabilityTypes = ["climate", "conservation", "biodiversity", "water", "food_security", "circular_economy", "energy"];
+const sustainabilityStatuses = ["active", "planned", "completed", "paused"];
+const activeStates = [
+  { label: "Active", value: "active" },
+  { label: "Inactive", value: "inactive" },
+  { label: "Featured", value: "featured" },
+];
+const sortOptions = [
+  { value: "name", label: "Name A-Z" },
+  { value: "created_at", label: "Newest" },
+  { value: "updated_at", label: "Recently updated" },
+  { value: "start_date", label: "Start date" },
 ];
 
-export default async function SustainabilityPage() {
+export default async function SustainabilityPage({ searchParams }: { searchParams?: Promise<SustainabilitySearchParams> }) {
+  const params = (await searchParams) ?? {};
+  const sort = params.sort || "updated_at";
+  const order = sort === "name" ? "asc" : "desc";
+  const activeFlags = getActiveFlags(params.active);
   const [initiatives, partners, activities, stories, metrics] = await Promise.all([
-    getSustainability(),
+    getSustainabilityFiltered({
+      search: params.q,
+      sustainabilityType: params.type,
+      status: params.status,
+      year: params.year,
+      sort,
+      order,
+      ...activeFlags,
+    }),
     getSustainabilityPartners(),
     getSustainabilityActivities(),
     getStories(),
     getImpactMetrics(),
   ]);
+  const visibleInitiatives = filterRecordsByMonth(initiatives.data, params.year, params.month);
   const errors = [initiatives, partners, activities, stories, metrics].flatMap((item) =>
     item.error ? [item.error] : [],
   );
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchClusterHero
-        eyebrow="Sustainability"
-        title="Sustainability initiatives connected to research."
-        body="Explore active climate, conservation, biodiversity, water, food security, and circular-economy work."
-        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Sustainability" }]}
-        imageSrc="/images/research/sustainability-hero-imagegen.webp"
-        imageAlt="Sustainability research, climate action, conservation, and community fieldwork"
-        links={extensionLinks}
-        primaryAction={{ label: "View community impact", href: "/community-impact" }}
-        stats={[
-          { label: "Initiatives", value: initiatives.data.length },
-          { label: "Partners", value: partners.data.length },
-          { label: "Activities", value: activities.data.length },
-          { label: "Metrics", value: metrics.data.length },
-        ]}
-       />
+      <SustainabilityMasthead
+        initiativeCount={visibleInitiatives.length}
+        partnerCount={partners.data.length}
+        activityCount={activities.data.length}
+        metricCount={metrics.data.length}
+      />
 
       {errors.length > 0 ? <ErrorBand errors={errors} /> : null}
 
-      {initiatives.data.length > 0 ? (
-        <ResearchSection
-          eyebrow="Initiatives"
-          title="Sustainability and climate records"
-          body="Active sustainability records bring together objectives, approach, activities, impact, dates, SDG alignment, and public contact points."
-          tone="white"
-        >
-          <div className="grid gap-5 lg:grid-cols-2">
-            {initiatives.data.map((initiative) => (
-              <InitiativeCard key={initiative.id} initiative={initiative} />
+      <ResearchSection
+        eyebrow="Initiatives"
+        title="Sustainability and climate records"
+        body="Search first, then use the filter menu for initiative type, active state, status, year, month, and sort order."
+        tone="white"
+      >
+        <SustainabilityFilters
+          params={params}
+          years={getRecordYears(initiatives.data)}
+          months={getRecordMonths(initiatives.data, params.year)}
+        />
+        {visibleInitiatives.length > 0 ? (
+          <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
+            {visibleInitiatives.map((initiative) => (
+              <InitiativeRow key={initiative.id} initiative={initiative} />
             ))}
           </div>
-        </ResearchSection>
-      ) : null}
+        ) : (
+          <div className="mt-7">
+            <StatusMessage>No sustainability records match the current filters.</StatusMessage>
+          </div>
+        )}
+      </ResearchSection>
 
       {metrics.data.length > 0 || stories.data.length > 0 ? (
         <ResearchSection
@@ -111,51 +139,105 @@ export default async function SustainabilityPage() {
   );
 }
 
-function InitiativeCard({ initiative }: { initiative: ResearchGenericRecord }) {
-  const dateRange = [formatDate(initiative.start_date), formatDate(initiative.end_date)]
-    .filter(Boolean)
-    .join(" - ");
-  const textBlocks = [
-    ["Summary", initiative.summary],
-    ["Objectives", initiative.objectives],
-    ["Approach", initiative.approach],
-    ["Activities", initiative.activities],
-    ["Impact", initiative.impact],
-  ].filter(([, value]) => compactText(value));
+function SustainabilityMasthead({
+  initiativeCount,
+  partnerCount,
+  activityCount,
+  metricCount,
+}: {
+  initiativeCount: number;
+  partnerCount: number;
+  activityCount: number;
+  metricCount: number;
+}) {
+  const stats = [
+    { label: "Initiatives", value: initiativeCount },
+    { label: "Partners", value: partnerCount },
+    { label: "Activities", value: activityCount },
+    { label: "Metrics", value: metricCount },
+  ];
+
+  return (
+    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
+        <div>
+          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
+            <Link href="/" className="transition hover:text-primary">Home</Link>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-900">Sustainability</span>
+          </nav>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Sustainability</p>
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">Climate, conservation, water, food systems, and public impact initiatives</h1>
+          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">Browse sustainability records with partner, activity, story, and metric evidence from the backend.</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <PrimaryLink href="/community-impact">Community impact</PrimaryLink>
+            <SecondaryLink href="/farm">University farm</SecondaryLink>
+          </div>
+        </div>
+        <dl className="grid gap-2 sm:grid-cols-2">
+          {stats.map((stat) => (
+            <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+              <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
+              <dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
+  );
+}
+
+function SustainabilityFilters({
+  params,
+  years,
+  months,
+}: {
+  params: SustainabilitySearchParams;
+  years: string[];
+  months: Array<{ value: string; label: string }>;
+}) {
+  return (
+    <ResearchFilterForm
+      action="/sustainability"
+      resetHref="/sustainability"
+      searchValue={params.q}
+      searchPlaceholder="Initiative name, climate theme, public impact"
+      selects={[
+        { name: "type", label: "Type", value: params.type, options: sustainabilityTypes },
+        { name: "active", label: "Active state", value: params.active, options: activeStates },
+        { name: "status", label: "Status", value: params.status, options: sustainabilityStatuses },
+        { name: "year", label: "Year", value: params.year, options: years },
+        { name: "month", label: "Month", value: params.month, options: months },
+      ]}
+      sortValue={params.sort}
+      sortOptions={sortOptions}
+    />
+  );
+}
+
+function InitiativeRow({ initiative }: { initiative: ResearchGenericRecord }) {
   const sdgGoals = Array.isArray(initiative.sdg_goals) ? initiative.sdg_goals : [];
 
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap gap-2">
-        <Badge>{formatLabel(initiative.initiative_type ?? "sustainability")}</Badge>
-        {initiative.status ? <Badge>{formatLabel(initiative.status)}</Badge> : null}
-        {initiative.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
-      </div>
-      <h2 className="mt-4 font-[family-name:var(--font-display)] text-xl font-semibold leading-7 text-slate-950">
-        {initiative.slug ? (
-          <a href={`/sustainability/${initiative.slug}`} className="transition hover:text-primary">
-            {compactText(initiative.name) || compactText(initiative.title) || compactText(initiative.code)}
-          </a>
-        ) : (
-          compactText(initiative.name) || compactText(initiative.title) || compactText(initiative.code)
-        )}
-      </h2>
-      {textBlocks.map(([label, value]) => (
-        <div key={label} className="mt-4">
-          <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
-          <p className="mt-1 text-sm leading-7 text-slate-600">{compactText(value)}</p>
-        </div>
-      ))}
-      {sdgGoals.length > 0 || dateRange || initiative.contact_email || initiative.website ? (
-        <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
-          {dateRange ? <ResearchFact label="Timeline" value={dateRange} /> : null}
-          {sdgGoals.length > 0 ? <ResearchFact label="SDGs" value={sdgGoals.join(", ")} /> : null}
-          {initiative.contact_email ? <ResearchFact label="Contact" value={compactText(initiative.contact_email)} /> : null}
-          {initiative.website ? <ResearchFact label="Website" value={compactText(initiative.website)} /> : null}
-        </dl>
-      ) : null}
-    </article>
+    <ResearchRecordRow
+      href={initiative.slug ? `/sustainability/${initiative.slug}` : "/sustainability"}
+      title={getRecordTitle(initiative, "Sustainability initiative")}
+      description={getRecordSummary(initiative) || compactText(initiative.objectives) || compactText(initiative.impact) || "Sustainability profile has not been published yet."}
+      badges={[initiative.initiative_type ?? "sustainability", initiative.status]}
+      filledBadges={[initiative.is_featured ? "Featured" : null]}
+      facts={[
+        { label: "Timeline", value: getRecordTimelineLabel(initiative) },
+        { label: "SDGs", value: sdgGoals.join(", ") },
+        { label: "Contact", value: compactText(initiative.contact_email) },
+      ]}
+    />
   );
+}
+
+function getActiveFlags(value?: string) {
+  if (value === "inactive") return { isActive: false };
+  if (value === "featured") return { isActive: true, isFeatured: true };
+  return { isActive: true };
 }
 
 function MetricPanel({ records }: { records: ResearchGenericRecord[] }) {

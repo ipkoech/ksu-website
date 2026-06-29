@@ -51,6 +51,7 @@ export type GenericListFilters = {
   grantType?: string;
   centerType?: string;
   farmType?: string;
+  sustainabilityType?: string;
   publicationType?: string;
   outputType?: string;
   accessType?: string;
@@ -463,9 +464,12 @@ export function getFacilitiesFiltered(filters: GenericListFilters = {}) {
       search: filters.search?.trim() || undefined,
       farm_type: filters.farmType || undefined,
       center_id: filters.centerId || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
       page: 1,
       per_page: 100,
@@ -828,6 +832,25 @@ export function getSustainability() {
     researchServiceApi.sustainability.list({
       fields: researchPublicListFields,
       is_active: true,
+      is_public: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getSustainabilityFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.sustainability.list({
+      fields: researchPublicListFields,
+      search: filters.search?.trim() || undefined,
+      initiative_type: filters.sustainabilityType || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
       page: 1,
       per_page: 100,

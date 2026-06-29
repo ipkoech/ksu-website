@@ -5,7 +5,6 @@ import {
   ResearchDetailHero,
   ResearchDetailSidebar,
   ResearchRecordPanel,
-  ResearchTextPanel,
 } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import {
@@ -17,6 +16,7 @@ import {
   getSustainabilityBySlug,
   getSustainabilityPartners,
 } from "../../../lib/research-public-data";
+import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 
 export const revalidate = 300;
 
@@ -34,6 +34,13 @@ export default async function SustainabilityDetailPage({
   if (!data) notFound();
 
   const initiative = data as ResearchGenericRecord;
+  const title = getRecordTitle(initiative, "Sustainability initiative");
+  const storySections = getNarrativeSections(initiative, [
+    { title: "Why This Matters", fields: ["summary", "description", "objectives"] },
+    { title: "How The Work Happens", fields: ["approach", "activities", "methodology"] },
+    { title: "Public Value", fields: ["impact", "outcomes", "community_impact"] },
+    { title: "Signals And Goals", fields: ["sdg_goals", "targets", "indicators"] },
+  ]);
   const [partners, activities, outputs] = await Promise.all([
     getSustainabilityPartners(),
     getSustainabilityActivities(),
@@ -44,12 +51,12 @@ export default async function SustainabilityDetailPage({
     <main id="research-main" className="min-h-screen bg-white">
       <ResearchDetailHero
         eyebrow="Sustainability"
-        title={initiative.name ?? initiative.title ?? "Sustainability initiative"}
-        body={compactText(initiative.summary) || compactText(initiative.description)}
+        title={title}
+        body={getRecordSummary(initiative)}
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "Sustainability", href: "/sustainability" },
-          { label: initiative.name ?? initiative.title ?? "Initiative" },
+          { label: title },
         ]}
         labels={[initiative.initiative_type ?? "sustainability", initiative.status]}
         facts={[
@@ -85,23 +92,7 @@ export default async function SustainabilityDetailPage({
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-5">
-            <ResearchTextPanel
-              title="Overview"
-              fields={[
-                ["Summary", initiative.summary],
-                ["Description", initiative.description],
-                ["Objectives", initiative.objectives],
-              ]}
-            />
-            <ResearchTextPanel
-              title="Approach and impact"
-              fields={[
-                ["Approach", initiative.approach],
-                ["Activities", initiative.activities],
-                ["Impact", initiative.impact],
-                ["SDG goals", Array.isArray(initiative.sdg_goals) ? initiative.sdg_goals.join(", ") : initiative.sdg_goals],
-              ]}
-            />
+            <SustainabilityStory sections={storySections} />
           </div>
           <ResearchDetailSidebar
             labels={[initiative.initiative_type ?? "sustainability", initiative.status]}
@@ -135,5 +126,25 @@ export default async function SustainabilityDetailPage({
         </div>
       </ResearchSection>
     </main>
+  );
+}
+
+function SustainabilityStory({ sections }: { sections: Array<{ title: string; body: string }> }) {
+  if (sections.length === 0) {
+    return <StatusMessage>The sustainability story appears when objectives, approach, activity, impact, or SDG fields are published.</StatusMessage>;
+  }
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      {sections.map((section, index) => (
+        <details key={section.title} className="group border-b border-slate-200 last:border-b-0" open={index === 0}>
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-base font-semibold text-slate-950 transition hover:bg-slate-50">
+            {section.title}
+            <span className="text-primary transition group-open:rotate-45">+</span>
+          </summary>
+          <p className="px-5 pb-5 text-sm leading-7 text-slate-600">{section.body}</p>
+        </details>
+      ))}
+    </section>
   );
 }
