@@ -48,6 +48,7 @@ export default function ResearchInnovationsPage() {
       defaults={{ innovation_type: "invention", currency: "KES", development_stage: "research", status: "draft", is_public: true }}
       emptyMessage="No innovations were returned by the research service."
       importResource="research-innovations"
+      detailHref={(record) => `/research/innovations/${record.id}`}
     />
   );
 }

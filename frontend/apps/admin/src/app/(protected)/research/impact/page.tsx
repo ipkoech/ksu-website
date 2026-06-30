@@ -26,6 +26,7 @@ export default function ResearchImpactPage() {
       defaults={{ metric_type: "output", category: "research", value: 0 }}
       emptyMessage="No impact metrics were returned by the research service."
       importResource="research-impact-metrics"
+      detailHref={(record) => `/research/impact/${record.id}`}
     />
   );
 }

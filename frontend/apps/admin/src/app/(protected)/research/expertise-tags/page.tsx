@@ -19,6 +19,7 @@ export default function ResearchExpertiseTagsPage() {
       ]}
       emptyMessage="No expertise tags were returned by the research service."
       importResource="research-expertise-tags"
+      detailHref={(record) => `/research/expertise-tags/${record.id}`}
     />
   );
 }

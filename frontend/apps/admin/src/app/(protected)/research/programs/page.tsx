@@ -34,6 +34,7 @@ export default function ResearchProgramsPage() {
       emptyMessage="No research programs were returned by the research service."
       metaFields={["code", "status", "start_date"]}
       importResource="research-programs"
+      detailHref={(record) => `/research/programs/${record.id}`}
     />
   );
 }

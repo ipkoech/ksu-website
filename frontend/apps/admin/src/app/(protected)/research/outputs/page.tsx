@@ -187,6 +187,7 @@ export default function ResearchOutputsPage() {
       }}
       emptyMessage="No research outputs were returned by the research service."
       importResource="research-outputs"
+      detailHref={(record) => `/research/outputs/${record.id}`}
     />
   );
 }
