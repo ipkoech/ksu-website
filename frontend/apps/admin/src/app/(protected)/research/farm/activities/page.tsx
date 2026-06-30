@@ -69,6 +69,7 @@ export default function FarmActivitiesPage() {
           recordPlaceholder: "Select linked record",
           configs: [
             { value: "research", label: "Research Portal", adapter: "researchCenter", recordRequired: false },
+            { value: "research_farm", label: "Research Farm", adapter: "researchFarm", filters: { is_active: true } },
             { value: "research_project", label: "Research Project", adapter: "researchProject", filters: { is_active: true } },
             { value: "research_center", label: "Research Center", adapter: "researchCenter", filters: { is_active: true } },
             { value: "research_grant", label: "Research Grant", adapter: "researchGrant", filters: { is_active: true } },

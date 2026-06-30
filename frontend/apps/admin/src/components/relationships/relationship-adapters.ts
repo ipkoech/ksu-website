@@ -850,6 +850,38 @@ export const researchProjectRelationshipAdapter: RelationshipAdapter<{ is_active
   },
 };
 
+export const researchFarmRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean; is_public?: boolean; farm_type?: string }> = {
+  key: "research-farm",
+  entityType: "research_farm",
+  label: "Research farm",
+  pluralLabel: "Research farms",
+  searchPlaceholder: "Search research farms",
+  emptyLabel: "No research farms found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await researchServiceApi.farms.list({
+      page: 1,
+      per_page: limit,
+      search: search?.trim() || undefined,
+      is_active: filters?.is_active ?? undefined,
+      is_public: filters?.is_public ?? undefined,
+      farm_type: filters?.farm_type || undefined,
+      fields: "id,name,slug,code,farm_type,county,is_active,is_public",
+    });
+    return (response.data ?? []).map(researchRecordOption);
+  },
+  async get(id, filters) {
+    const response = await researchServiceApi.farms.list({
+      page: 1,
+      per_page: 100,
+      is_active: filters?.is_active ?? undefined,
+      is_public: filters?.is_public ?? undefined,
+      farm_type: filters?.farm_type || undefined,
+      fields: "id,name,slug,code,farm_type,county,is_active,is_public",
+    });
+    return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
+  },
+};
+
 export const researchGrantRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean; status?: string }> = {
   key: "research-grant",
   entityType: "research_grant",
@@ -873,6 +905,38 @@ export const researchGrantRelationshipAdapter: RelationshipAdapter<{ is_active?:
       per_page: 100,
       is_active: filters?.is_active ?? undefined,
       status: filters?.status || undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
+  },
+};
+
+export const researchSustainabilityRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean; status?: string; initiative_type?: string }> = {
+  key: "research-sustainability",
+  entityType: "research_sustainability",
+  label: "Sustainability initiative",
+  pluralLabel: "Sustainability initiatives",
+  searchPlaceholder: "Search sustainability initiatives",
+  emptyLabel: "No sustainability initiatives found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await researchServiceApi.sustainability.list({
+      page: 1,
+      per_page: limit,
+      search: search?.trim() || undefined,
+      is_active: filters?.is_active ?? undefined,
+      status: filters?.status || undefined,
+      initiative_type: filters?.initiative_type || undefined,
+      fields: "id,name,slug,code,initiative_type,status,is_active",
+    });
+    return (response.data ?? []).map(researchRecordOption);
+  },
+  async get(id, filters) {
+    const response = await researchServiceApi.sustainability.list({
+      page: 1,
+      per_page: 100,
+      is_active: filters?.is_active ?? undefined,
+      status: filters?.status || undefined,
+      initiative_type: filters?.initiative_type || undefined,
+      fields: "id,name,slug,code,initiative_type,status,is_active",
     });
     return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
   },
@@ -1068,7 +1132,9 @@ export const relationshipAdapters = {
   researchCenter: researchCenterRelationshipAdapter,
   researchProgram: researchProgramRelationshipAdapter,
   researchProject: researchProjectRelationshipAdapter,
+  researchFarm: researchFarmRelationshipAdapter,
   researchGrant: researchGrantRelationshipAdapter,
+  researchSustainability: researchSustainabilityRelationshipAdapter,
   researchEndowment: researchEndowmentRelationshipAdapter,
   researchJournal: researchJournalRelationshipAdapter,
   researchGrantApplication: researchGrantApplicationRelationshipAdapter,

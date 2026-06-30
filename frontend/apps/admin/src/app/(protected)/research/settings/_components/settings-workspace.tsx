@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Activity, FileText, ImageIcon, MessageSquare, Settings, Wifi } from "lucide-react";
-import { auditLogsApi, slidersApi } from "@ksu/api-client";
+import { auditLogsApi, realtimeApi, slidersApi } from "@ksu/api-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
 import {
   labelize,
@@ -41,7 +41,12 @@ function ResearchSettingsOperationsPanel() {
     queryKey: ["research", "settings", "audit-preview"],
     queryFn: () => auditLogsApi.list({ service_name: "research", per_page: 4 }),
   });
+  const realtimeQuery = useQuery({
+    queryKey: ["research", "settings", "realtime-config"],
+    queryFn: () => realtimeApi.researchConfig(),
+  });
   const audits = auditQuery.data?.data ?? [];
+  const realtimeConfig = realtimeQuery.data?.data;
 
   return (
     <div className="grid gap-3 lg:grid-cols-2">
@@ -78,13 +83,28 @@ function ResearchSettingsOperationsPanel() {
             Realtime Configuration
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           <div className="rounded-md border p-3 text-sm">
-            <p className="font-medium">Shell-level websocket channel</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Research pages use the global admin realtime provider for notifications and live status. No separate research settings endpoint is exposed for websocket tuning.
-            </p>
+            <p className="font-medium">{realtimeConfig?.websocket_path ?? "/api/v1/realtime"}</p>
+            {realtimeQuery.isLoading ? (
+              <p className="mt-1 text-xs text-muted-foreground">Loading research realtime configuration...</p>
+            ) : realtimeQuery.isError ? (
+              <p className="mt-1 text-xs text-destructive">Research realtime configuration could not be loaded.</p>
+            ) : (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Research uses the authenticated websocket with {realtimeConfig?.heartbeat_seconds ?? 25}s heartbeat and explicit research channels.
+              </p>
+            )}
           </div>
+          {realtimeConfig?.channels?.length ? (
+            <div className="flex flex-wrap gap-2">
+              {realtimeConfig.channels.map((channel) => (
+                <span key={channel} className="rounded-md border px-2 py-1 text-xs text-muted-foreground">
+                  {channel}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </CardContent>
       </Card>
     </div>

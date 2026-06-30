@@ -406,6 +406,24 @@ function farmProjectBindingApi() {
   };
 }
 
+function readonlyPartnerRelationApi(
+  relation:
+    | "projects"
+    | "farms"
+    | "activities"
+    | "impact-stories"
+    | "impact-metrics"
+    | "consultancies"
+    | "sustainability",
+) {
+  return {
+    list: (partnerId: string) =>
+      researchApi.get<{ data: ResearchGenericRecord[] }>(
+        `/api/v1/partners/id/${partnerId}/${relation}`,
+      ),
+  };
+}
+
 export const researchServiceApi = {
   stats: () => researchApi.get<{ data: PublicStatsResponse }>("/api/v1/stats"),
   adminStats: () =>
@@ -514,6 +532,15 @@ export const researchServiceApi = {
   partners: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/partners",
   ),
+  partnerRelations: {
+    projects: readonlyPartnerRelationApi("projects"),
+    farms: readonlyPartnerRelationApi("farms"),
+    activities: readonlyPartnerRelationApi("activities"),
+    impactStories: readonlyPartnerRelationApi("impact-stories"),
+    impactMetrics: readonlyPartnerRelationApi("impact-metrics"),
+    consultancies: readonlyPartnerRelationApi("consultancies"),
+    sustainability: readonlyPartnerRelationApi("sustainability"),
+  },
   consultancies: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/consultancies",
   ),

@@ -4,13 +4,27 @@ from fastapi.routing import APIRoute
 
 from app.routes.v1.centers import router as centers_router
 from app.routes.v1.donations import router as donations_router
+from app.routes.v1.partners import router as partners_router
 from app.routes.v1.projects import router as projects_router
 from app.routes.v1.stories import router as stories_router
 
 
-def _route(router, path: str, method: str) -> APIRoute:
+def _iter_routes(router, prefix: str = ""):
     for route in router.routes:
-        if isinstance(route, APIRoute) and route.path == path and method in route.methods:
+        if isinstance(route, APIRoute):
+            yield prefix + route.path, route
+            continue
+
+        original_router = getattr(route, "original_router", None)
+        include_context = getattr(route, "include_context", None)
+        if original_router is not None:
+            nested_prefix = prefix + getattr(include_context, "prefix", "")
+            yield from _iter_routes(original_router, nested_prefix)
+
+
+def _route(router, path: str, method: str) -> APIRoute:
+    for route_path, route in _iter_routes(router):
+        if route_path == path and method in route.methods:
             return route
     raise AssertionError(f"{method} {path} route not found")
 
@@ -77,6 +91,21 @@ class ResearchAdminWorkspaceContractTests(unittest.TestCase):
         for path, method in expected_routes:
             with self.subTest(path=path, method=method):
                 self.assertIsNotNone(_route(stories_router, path, method))
+
+    def test_partner_reverse_relationship_routes_exist(self):
+        expected_routes = (
+            ("/partners/id/{partner_id}/projects", "GET"),
+            ("/partners/id/{partner_id}/farms", "GET"),
+            ("/partners/id/{partner_id}/activities", "GET"),
+            ("/partners/id/{partner_id}/impact-stories", "GET"),
+            ("/partners/id/{partner_id}/impact-metrics", "GET"),
+            ("/partners/id/{partner_id}/consultancies", "GET"),
+            ("/partners/id/{partner_id}/sustainability", "GET"),
+        )
+
+        for path, method in expected_routes:
+            with self.subTest(path=path, method=method):
+                self.assertIsNotNone(_route(partners_router, path, method))
 
     def test_donation_summary_route_exists_and_is_protected(self):
         route = _route(donations_router, "/donations/summary", "GET")

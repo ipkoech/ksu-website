@@ -39,6 +39,7 @@ from .public_media import router as public_media_router
 from .public_leadership import router as public_leadership_router
 from .public_people import router as public_people_router
 from .public_team import router as public_team_router
+from .realtime import router as realtime_router
 from .programmes import router as programmes_router
 from .search import router as search_router
 from .schools import router as schools_router
@@ -78,6 +79,7 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(settings_router, prefix="/api/v1/settings", tags=["System"])
     app.include_router(university_info_router, prefix="/api/v1/university-info", tags=["University"])
     app.include_router(notifications_router, prefix="/api/v1/notifications", tags=["Users"])
+    app.include_router(realtime_router, prefix="/api/v1", tags=["Realtime"])
     app.include_router(persons_router, prefix="/api/v1/persons", tags=["Persons"])
     app.include_router(staff_router, prefix="/api/v1/staff", tags=["Staff"])
     app.include_router(governance_router, prefix="/api/v1/governance", tags=["Governance"])

@@ -1,7 +1,12 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { eventsApi } from "@ksu/api-client";
 import type { EditableListFilter, EditableRecordColumn } from "@/components/dashboard/editable-service-resource-page";
+import {
+  relationshipAdapters,
+  type RelationshipAdapter,
+} from "@/components/relationships/relationship-adapters";
 import { ResearchContentResourcePage } from "../../_components/research-content-resource-page";
 import { DateValue, StatusBadge } from "../../_components/research-workspace";
 import { SustainabilityWorkspaceHeader } from "../_components/sustainability-workspace";
@@ -22,10 +27,45 @@ const activityColumns: Array<EditableRecordColumn<Record<string, any> & { id: st
   { key: "title", label: "Event / Activity", className: "min-w-[260px]", render: (record) => <span className="font-medium">{record.title}</span> },
   { key: "date", label: "Date", className: "w-[150px]", render: (record) => <DateValue value={record.start_date} /> },
   { key: "location", label: "Location", className: "hidden min-w-[200px] lg:table-cell", render: (record) => <span>{record.location ?? "No location"}</span> },
-  { key: "project", label: "Linked Project", className: "hidden min-w-[170px] xl:table-cell", render: (record) => <span className="text-muted-foreground">{record.project?.title ?? record.project_title ?? "Not exposed by Events API"}</span> },
-  { key: "partner", label: "Partner", className: "hidden min-w-[160px] xl:table-cell", render: (record) => <span className="text-muted-foreground">{record.partner?.name ?? record.partner_name ?? "Not exposed by Events API"}</span> },
+  { key: "binding", label: "Research Binding", className: "hidden min-w-[220px] xl:table-cell", render: (record) => <ScopedResearchBinding record={record} /> },
   { key: "status", label: "Status", className: "w-[130px]", render: (record) => <StatusBadge value={record.status} /> },
 ];
+
+const scopeAdapters: Record<string, keyof typeof relationshipAdapters> = {
+  research_project: "researchProject",
+  research_farm: "researchFarm",
+  research_center: "researchCenter",
+  research_grant: "researchGrant",
+  research_sustainability: "researchSustainability",
+};
+
+function ScopedResearchBinding({ record }: { record: Record<string, any> }) {
+  const scopeType = String(record.scope_type ?? "");
+  const scopeId = record.scope_id ? String(record.scope_id) : "";
+  const adapterKey = scopeAdapters[scopeType];
+  const adapter = adapterKey ? (relationshipAdapters[adapterKey] as RelationshipAdapter) : null;
+  const relationQuery = useQuery({
+    queryKey: ["research", "activities", "scope", scopeType, scopeId],
+    queryFn: () => adapter!.get(scopeId),
+    enabled: Boolean(adapter && scopeId),
+  });
+
+  if (!scopeType || scopeType === "research") {
+    return <span className="text-muted-foreground">Research portal</span>;
+  }
+  if (!adapter || !scopeId) {
+    return <span className="text-muted-foreground">{scopeType.replace(/_/g, " ")}</span>;
+  }
+  if (relationQuery.isLoading) {
+    return <span className="text-muted-foreground">Loading binding...</span>;
+  }
+  return (
+    <div className="space-y-1">
+      <p className="font-medium">{relationQuery.data?.label ?? "Linked record unavailable"}</p>
+      <p className="text-xs text-muted-foreground">{scopeType.replace(/_/g, " ")}</p>
+    </div>
+  );
+}
 
 export default function SustainabilityActivitiesPage() {
   return (
@@ -56,8 +96,10 @@ export default function SustainabilityActivitiesPage() {
           configs: [
             { value: "research", label: "Research Portal", adapter: "researchCenter", recordRequired: false },
             { value: "research_project", label: "Research Project", adapter: "researchProject", filters: { is_active: true } },
+            { value: "research_farm", label: "Research Farm", adapter: "researchFarm", filters: { is_active: true } },
             { value: "research_center", label: "Research Center", adapter: "researchCenter", filters: { is_active: true } },
             { value: "research_grant", label: "Research Grant", adapter: "researchGrant", filters: { is_active: true } },
+            { value: "research_sustainability", label: "Sustainability Initiative", adapter: "researchSustainability", filters: { is_active: true } },
           ],
           allowNone: false,
         } },
