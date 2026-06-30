@@ -26,6 +26,8 @@ VM options:
   --repo-url URL       Git repository URL. Defaults to the local origin URL.
   --path PATH          Repository path on the VM. Defaults to this local repo path.
   --project-name NAME  Docker Compose project name. Defaults to ksu-ENV.
+  --scope SCOPE        VM deployment scope: full or research. Defaults to full.
+                       research deploys all APIs but only research/admin frontends.
   --public-host HOST   Public website host or IP. Required for VM deploy.
   --api-host HOST      API host. Required for VM deploy.
   --research-host HOST Research frontend host. Required for VM deploy.
@@ -43,7 +45,7 @@ VM options:
   --push-images        Push built Compose images after a successful build.
   --pull-images        Pull Compose images before deployment. Usually used with --skip-build.
   --no-cleanup-images  Skip Docker image/build-cache cleanup after a successful deployment.
-  --run-migrations     Run Alembic migrations for main, research, and library before frontend builds.
+  --run-migrations     Run Alembic migrations for deployed backend services before frontend builds.
   --dry-run            Print the SSH command without executing it.
 
 VM status/log options:
@@ -80,6 +82,7 @@ Examples:
   scripts/deploy.sh vm-logs --host ubuntu@VM_IP --env dev --path /srv/ksu --follow
   scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --path /srv/ksu --bootstrap
   scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --path /srv/ksu --bootstrap --https --cert-email ops@example.edu --public-host public.example.edu --api-host api.example.edu --research-host research.example.edu
+  scripts/deploy.sh vm --host ubuntu@VM_IP --env staging --scope research --path /srv/ksu-research --research-host research.example.edu --https --cert-email ops@example.edu
   scripts/deploy.sh vm-backup --host ubuntu@VM_IP --env production
   scripts/deploy.sh cloud --env dev --project my-gcp-project
   scripts/deploy.sh cloud --env staging --project my-gcp-project --image-tag abc1234 --skip-build
@@ -273,6 +276,7 @@ vm_remote_script() {
   local push_images="${25:-0}"
   local pull_images="${26:-0}"
   local cleanup_images="${27:-1}"
+  local deploy_scope="${28:-full}"
 
   cat <<REMOTE
 set -euo pipefail
@@ -304,6 +308,7 @@ REQUESTED_IMAGE_TAG=$(shell_quote "${image_tag}")
 PUSH_IMAGES=$(shell_quote "${push_images}")
 PULL_IMAGES=$(shell_quote "${pull_images}")
 CLEANUP_IMAGES=$(shell_quote "${cleanup_images}")
+DEPLOY_SCOPE=$(shell_quote "${deploy_scope}")
 
 section() {
   printf '\n[%s] === %s ===\n' "\$(date -u +%Y-%m-%dT%H:%M:%SZ)" "\$*"
@@ -421,15 +426,25 @@ if [[ "\${MODE}" = "status" || "\${MODE}" = "logs" ]]; then
   fi
 
   compose_files=(-f docker-compose.yml -f docker-compose.vm.yml)
+  if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
+    compose_files+=(-f docker-compose.research-vm.yml)
+  fi
   external_data=0
   if [[ -f .deploy/docker-compose.external-data.yml ]]; then
     compose_files+=(-f .deploy/docker-compose.external-data.yml)
     external_data=1
   fi
 
-  default_services=(main research library celery-main celery-library web-prod admin-prod research-web-prod library-web-prod gateway edge)
-  if [[ "\${external_data}" -eq 0 ]]; then
-    default_services+=(postgres redis)
+  if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
+    default_services=(main research library celery-main celery-research celery-library admin-prod research-web-prod research-gateway research-edge)
+    if [[ "\${external_data}" -eq 0 ]]; then
+      default_services=(postgres redis "\${default_services[@]}")
+    fi
+  else
+    default_services=(main research library celery-main celery-research celery-library web-prod admin-prod research-web-prod library-web-prod gateway edge)
+    if [[ "\${external_data}" -eq 0 ]]; then
+      default_services+=(postgres redis)
+    fi
   fi
   if [[ -n "\${INSPECT_SERVICES}" ]]; then
     read -r -a selected_services <<< "\${INSPECT_SERVICES}"
@@ -512,7 +527,7 @@ else
   API_URL="\${APP_SCHEME}://\${API_HOST}"
 fi
 RESEARCH_SERVER_NAME="\${RESEARCH_HOST}"
-if [[ "\${RESEARCH_HOST}" = "\${PUBLIC_HOST}" ]]; then
+if [[ "\${DEPLOY_SCOPE}" != "research" && "\${RESEARCH_HOST}" = "\${PUBLIC_HOST}" ]]; then
   RESEARCH_SERVER_NAME="research.invalid.local"
 fi
 RESEARCH_URL="\${APP_SCHEME}://\${RESEARCH_HOST}"
@@ -548,8 +563,10 @@ KSU_RESEARCH_API_URL=http://host.docker.internal:8001
 KSU_LIBRARY_API_URL=http://host.docker.internal:8002
 EOF
 
+required_env_files=(services/main/.env services/research/.env services/library/.env)
+
 missing_env=()
-for env_file in services/main/.env services/research/.env services/library/.env; do
+for env_file in "\${required_env_files[@]}"; do
   if [[ ! -f "\${env_file}" ]]; then
     missing_env+=("\${env_file}")
   fi
@@ -579,6 +596,9 @@ if [[ -f .deploy/docker-compose.external-data.yml ]]; then
 fi
 
 compose_files=(-f docker-compose.yml -f docker-compose.vm.yml)
+if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
+  compose_files+=(-f docker-compose.research-vm.yml)
+fi
 external_data=0
 if [[ -f .deploy/docker-compose.external-data.yml ]]; then
   compose_files+=(-f .deploy/docker-compose.external-data.yml)
@@ -616,8 +636,13 @@ if [[ "\${SKIP_FRONTEND}" -eq 0 && -f frontend/package.json ]]; then
   echo "Frontend apps will be built by Docker Compose."
 fi
 
-backend_services=(main research library)
-build_core_services=("\${backend_services[@]}" celery-main celery-library)
+if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
+  backend_services=(main research library)
+  build_core_services=("\${backend_services[@]}" celery-main celery-research celery-library)
+else
+  backend_services=(main research library)
+  build_core_services=("\${backend_services[@]}" celery-main celery-research celery-library)
+fi
 core_services=("\${build_core_services[@]}")
 if [[ "\${external_data}" -eq 0 ]]; then
   core_services=(postgres redis "\${core_services[@]}")
@@ -625,11 +650,20 @@ fi
 frontend_services=()
 proxy_services=()
 if [[ "\${WITH_GATEWAY}" -eq 1 ]]; then
-  proxy_services+=(gateway)
+  if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
+    proxy_services+=(research-gateway)
+  else
+    proxy_services+=(gateway)
+  fi
 fi
 if [[ "\${SKIP_FRONTEND}" -eq 0 ]]; then
-  frontend_services+=(web-prod admin-prod research-web-prod library-web-prod)
-  proxy_services+=(edge)
+  if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
+    frontend_services+=(admin-prod research-web-prod)
+    proxy_services+=(research-edge)
+  else
+    frontend_services+=(web-prod admin-prod research-web-prod library-web-prod)
+    proxy_services+=(edge)
+  fi
 fi
 
 pull_compose_images() {
@@ -728,7 +762,7 @@ if [[ "\${RUN_MIGRATIONS}" -eq 1 ]]; then
 fi
 
 restart_existing_proxy_services() {
-  local services=(gateway edge)
+  local services=(gateway research-gateway edge research-edge)
   local existing=()
 
   for service in "\${services[@]}"; do
@@ -792,7 +826,28 @@ configure_https() {
   local site_enabled="/etc/nginx/sites-enabled/\${site_name}.conf"
 
   echo "Writing host Nginx reverse proxy: \${site_available}"
-  sudo tee "\${site_available}" >/dev/null <<EOF
+  if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
+    sudo tee "\${site_available}" >/dev/null <<EOF
+server {
+    listen 80;
+    server_name \${RESEARCH_HOST};
+
+    client_max_body_size 25M;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host \\\$host;
+        proxy_set_header X-Real-IP \\\$remote_addr;
+        proxy_set_header X-Forwarded-For \\\$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \\\$scheme;
+        proxy_set_header Upgrade \\\$http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+EOF
+  else
+    sudo tee "\${site_available}" >/dev/null <<EOF
 server {
     listen 80;
     server_name \${PUBLIC_HOST};
@@ -845,6 +900,7 @@ server {
     }
 }
 EOF
+  fi
 
   sudo ln -sf "\${site_available}" "\${site_enabled}"
   if [[ -e /etc/nginx/sites-enabled/default ]]; then
@@ -854,18 +910,45 @@ EOF
   sudo systemctl reload nginx
 
   echo "Requesting Let's Encrypt certificates..."
+  cert_domains=()
+  add_cert_domain() {
+    local domain="\$1"
+    local existing
+    [[ -z "\${domain}" || "\${domain}" = "_" || "\${domain}" = *.invalid.local ]] && return 0
+    for existing in "\${cert_domains[@]}"; do
+      [[ "\${existing}" = "\${domain}" ]] && return 0
+    done
+    cert_domains+=("\${domain}")
+  }
+
+  if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
+    add_cert_domain "\${RESEARCH_HOST}"
+  else
+    add_cert_domain "\${PUBLIC_HOST}"
+    add_cert_domain "\${API_HOST}"
+    add_cert_domain "\${RESEARCH_HOST}"
+  fi
+
+  if [[ "\${#cert_domains[@]}" -eq 0 ]]; then
+    echo "error: no valid certificate domains were resolved" >&2
+    exit 1
+  fi
+
+  certbot_domain_args=()
+  for domain in "\${cert_domains[@]}"; do
+    certbot_domain_args+=(-d "\${domain}")
+  done
+
   sudo certbot --nginx \
     --non-interactive \
     --agree-tos \
     --email "\${CERT_EMAIL}" \
     --redirect \
     --keep-until-expiring \
-    -d "\${PUBLIC_HOST}" \
-    -d "\${API_HOST}" \
-    -d "\${RESEARCH_HOST}"
+    "\${certbot_domain_args[@]}"
 
   sudo systemctl reload nginx
-  echo "HTTPS configured for \${PUBLIC_HOST}, \${API_HOST}, and \${RESEARCH_HOST}."
+  echo "HTTPS configured for: \${cert_domains[*]}."
 }
 
 configure_https
@@ -883,6 +966,7 @@ deploy_vm() {
   repo_url="$(git -C "${ROOT}" remote get-url origin 2>/dev/null || true)"
   local repo_path="${ROOT}"
   local project_name=""
+  local deploy_scope="full"
   local public_host=""
   local api_host=""
   local research_host=""
@@ -935,6 +1019,10 @@ deploy_vm() {
         ;;
       --project-name)
         project_name="${2:-}"
+        shift 2
+        ;;
+      --scope)
+        deploy_scope="${2:-}"
         shift 2
         ;;
       --public-host)
@@ -1058,6 +1146,13 @@ deploy_vm() {
     exit 1
   fi
   validate_env_name "${env_name}"
+  case "${deploy_scope}" in
+    full|research) ;;
+    *)
+      echo "error: --scope must be one of: full, research" >&2
+      exit 1
+      ;;
+  esac
 
   if [[ -z "${branch}" && "${pull}" -eq 1 ]]; then
     echo "error: cannot determine current branch; pass --branch or --no-pull" >&2
@@ -1074,13 +1169,25 @@ deploy_vm() {
   fi
 
   if [[ "${mode}" = "logs" && -z "${inspect_services}" ]]; then
-    inspect_services="main research library celery-main celery-library edge gateway"
+    if [[ "${deploy_scope}" = "research" ]]; then
+      inspect_services="main research library celery-main celery-research celery-library admin-prod research-web-prod research-gateway research-edge"
+    else
+      inspect_services="main research library celery-main celery-research celery-library edge gateway"
+    fi
   fi
 
   if [[ "${mode}" != "deploy" && "${mode}" != "backup" ]]; then
     public_host="${public_host:-_}"
     api_host="${api_host:-_}"
     research_host="${research_host:-_}"
+  fi
+
+  if [[ "${deploy_scope}" = "research" && -z "${public_host}" ]]; then
+    public_host="${research_host}"
+  fi
+
+  if [[ "${deploy_scope}" = "research" && -z "${api_host}" ]]; then
+    api_host="${research_host}"
   fi
 
   if [[ -z "${public_host}" ]]; then
@@ -1111,7 +1218,7 @@ deploy_vm() {
   if [[ "${mode}" = "backup" ]]; then
     backup=1
   fi
-  remote="$(vm_remote_script "${mode}" "${env_name}" "${branch}" "${repo_url}" "${repo_path}" "${project_name}" "${public_host}" "${api_host}" "${research_host}" "${bootstrap}" "${pull}" "${backup}" "${backup_dir}" "${with_gateway}" "${skip_frontend}" "${skip_build}" "${enable_https}" "${cert_email}" "${run_migrations}" "${inspect_services}" "${log_tail}" "${log_follow}" "${image_prefix}" "${image_tag}" "${push_images}" "${pull_images}" "${cleanup_images}")"
+  remote="$(vm_remote_script "${mode}" "${env_name}" "${branch}" "${repo_url}" "${repo_path}" "${project_name}" "${public_host}" "${api_host}" "${research_host}" "${bootstrap}" "${pull}" "${backup}" "${backup_dir}" "${with_gateway}" "${skip_frontend}" "${skip_build}" "${enable_https}" "${cert_email}" "${run_migrations}" "${inspect_services}" "${log_tail}" "${log_follow}" "${image_prefix}" "${image_tag}" "${push_images}" "${pull_images}" "${cleanup_images}" "${deploy_scope}")"
 
   if [[ "${DRY_RUN}" -eq 1 ]]; then
     printf '+ ssh %q %q\n' "${host}" "${remote}"
