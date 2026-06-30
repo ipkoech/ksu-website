@@ -470,33 +470,31 @@ function NewsEventsArticlesSection({ items }: { items: NewsItem[] }) {
     return null;
   }
 
-  const [featured, ...rest] = items;
-  const medium = rest.slice(0, 2);
-  const compact = rest.slice(2, 5);
+  const latest = items.slice(0, 5);
 
   return (
     <ScrollReveal as="section" className="research-surface-grid relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
       <ResearchAnimatedBackdrop />
-      <div className="relative mx-auto max-w-[1680px] rounded-xl border border-white bg-white px-4 py-12 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:px-6 lg:px-10">
-        <SectionHeader
-          eyebrow="News, events & articles"
-          title="Latest updates from the research ecosystem."
-          action={{ href: "/news", label: "All news & events" }}
-        />
-        <div className="mt-8 grid gap-5 xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
-          {featured ? <EditorialFeature item={featured} /> : null}
-          <div className="grid gap-5">
-            <div className="grid gap-5 md:grid-cols-2">
-              {medium.map((item) => (
-                <EditorialCard key={`${item.kind}-${item.id}`} item={item} />
-              ))}
-            </div>
-            <div className="grid gap-3">
-              {compact.map((item) => (
-                <EditorialRow key={`${item.kind}-${item.id}`} item={item} />
-              ))}
-            </div>
+      <div className="relative mx-auto max-w-[1680px] rounded-lg border border-white bg-white px-4 py-6 shadow-[0_14px_50px_rgba(15,23,42,0.05)] sm:px-6 lg:px-8">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+          <div>
+            <SectionKicker>News, events & articles</SectionKicker>
+            <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
+              Latest research updates.
+            </h2>
           </div>
+          <Link
+            href="/news"
+            className="inline-flex min-h-9 items-center gap-2 rounded-md border border-primary/20 px-3 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
+          >
+            All updates
+            <ArrowRight aria-hidden className="h-4 w-4" />
+          </Link>
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          {latest.map((item) => (
+            <EditorialUpdateCard key={`${item.kind}-${item.id}`} item={item} />
+          ))}
         </div>
       </div>
     </ScrollReveal>
@@ -772,64 +770,35 @@ function FeaturedWorkCard({ item }: { item: FeaturedWorkItem }) {
   );
 }
 
-function EditorialFeature({ item }: { item: NewsItem }) {
+function EditorialUpdateCard({ item }: { item: NewsItem }) {
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="research-image-fallback relative aspect-[16/10]">
-        <Image src={item.image} alt="" fill sizes="(min-width: 1280px) 52vw, 100vw" className="object-cover" />
+    <Link
+      href={item.href}
+      className="group grid min-h-[92px] gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 transition hover:border-primary/30 hover:bg-white hover:shadow-sm sm:min-h-[118px] sm:grid-cols-[92px_minmax(0,1fr)] xl:block xl:min-h-[190px]"
+    >
+      <div className="research-image-fallback relative hidden min-h-24 overflow-hidden rounded-md sm:block xl:aspect-[16/7] xl:min-h-0">
+        <Image
+          src={item.image}
+          alt=""
+          fill
+          sizes="(min-width: 1280px) 18vw, 92px"
+          className="object-cover"
+        />
       </div>
-      <div className="p-5 lg:p-6">
-        <div className="flex flex-wrap gap-2">
+      <div className="min-w-0 xl:mt-3">
+        <div className="flex flex-wrap gap-1.5">
           <Badge>{item.kind}</Badge>
           {item.date ? <Badge>{item.date}</Badge> : null}
         </div>
-        <h3 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
+        <h3 className="mt-2 line-clamp-2 font-[family-name:var(--font-display)] text-base font-semibold leading-5 text-slate-950">
           {item.title}
         </h3>
-        {item.summary ? (
-          <p className="mt-3 line-clamp-3 text-sm leading-7 text-slate-600">
-            {item.summary}
-          </p>
-        ) : null}
-        <TextLink href={item.href}>{item.kind === "Event" ? "View event" : "Read article"}</TextLink>
+        <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary">
+          {item.kind === "Event" ? "View event" : "Read article"}
+          <ArrowRight aria-hidden className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
+        </span>
       </div>
-    </article>
-  );
-}
-
-function EditorialCard({ item }: { item: NewsItem }) {
-  return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap gap-2">
-        <Badge>{item.kind}</Badge>
-        {item.date ? <Badge>{item.date}</Badge> : null}
-      </div>
-      <h3 className="mt-4 font-[family-name:var(--font-display)] text-xl font-semibold leading-7 text-slate-950">
-        {item.title}
-      </h3>
-      <p className="mt-3 line-clamp-3 text-sm leading-7 text-slate-600">{item.summary}</p>
-      <TextLink href={item.href}>{item.kind === "Event" ? "View event" : "Read article"}</TextLink>
-    </article>
-  );
-}
-
-function EditorialRow({ item }: { item: NewsItem }) {
-  return (
-    <article className="grid gap-4 rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:grid-cols-[148px_minmax(0,1fr)]">
-      <div className="research-image-fallback relative min-h-28 overflow-hidden rounded-md">
-        <Image src={item.image} alt="" fill sizes="148px" className="object-cover" />
-      </div>
-      <div className="min-w-0 py-1">
-        <div className="flex flex-wrap gap-2">
-          <Badge>{item.kind}</Badge>
-          {item.date ? <Badge>{item.date}</Badge> : null}
-        </div>
-        <h3 className="mt-2 line-clamp-2 font-[family-name:var(--font-display)] text-lg font-semibold leading-6 text-slate-950">
-          {item.title}
-        </h3>
-        <TextLink href={item.href}>{item.kind === "Event" ? "View event" : "Read article"}</TextLink>
-      </div>
-    </article>
+    </Link>
   );
 }
 
