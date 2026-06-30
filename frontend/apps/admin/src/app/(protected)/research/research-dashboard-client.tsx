@@ -3,6 +3,23 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
+  ArcElement,
+  BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Filler,
+  Legend,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Tooltip,
+  type ActiveElement,
+  type ChartData,
+  type ChartEvent,
+  type ChartOptions,
+} from "chart.js";
+import { Bar, Doughnut, Line } from "react-chartjs-2";
+import {
   AlertTriangle,
   BarChart3,
   CalendarDays,
@@ -39,6 +56,18 @@ import {
   ResearchFirstLoginTour,
   ResearchSectionGuide,
 } from "./_components/research-guidance";
+
+ChartJS.register(
+  ArcElement,
+  BarElement,
+  CategoryScale,
+  Filler,
+  Legend,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Tooltip,
+);
 
 const quickActions = [
   { label: "Projects", href: "/research/projects", icon: Plus },
@@ -341,7 +370,7 @@ function AnalyticsZone({
 
 function AnalyticsChartCard({ chart }: { chart: ResearchAnalyticsChart }) {
   return (
-    <Card className="min-h-[290px]">
+    <Card className="min-h-[380px]">
       <CardHeader className="pb-3">
         <CardTitle className="text-base">{chart.title}</CardTitle>
         {chart.description ? <CardDescription>{chart.description}</CardDescription> : null}
@@ -355,114 +384,264 @@ function AnalyticsChartCard({ chart }: { chart: ResearchAnalyticsChart }) {
 
 function ChartRenderer({ chart }: { chart: ResearchAnalyticsChart }) {
   if (!chart.data.length) {
-    return <div className="flex h-44 items-center justify-center text-sm text-muted-foreground">No data available</div>;
+    return <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">No data available</div>;
   }
-  if (chart.chart_type === "donut") return <DonutChart data={chart.data} />;
-  if (chart.chart_type === "stacked") return <StackedChart data={chart.data} />;
-  return <HorizontalBarChart data={chart.data} />;
+  if (chart.chart_type === "donut") return <DoughnutAnalyticsChart chart={chart} />;
+  if (chart.chart_type === "line" || shouldRenderAsLineChart(chart)) return <LineAnalyticsChart chart={chart} />;
+  if (chart.chart_type === "stacked") return <StackedBarAnalyticsChart chart={chart} />;
+  return <BarAnalyticsChart chart={chart} />;
 }
 
-function HorizontalBarChart({ data }: { data: ResearchAnalyticsPoint[] }) {
-  const max = Math.max(1, ...data.map((item) => Number(item.value || 0)));
+function shouldRenderAsLineChart(chart: ResearchAnalyticsChart) {
+  return ["project_progress", "funding_value", "audit_actions"].includes(chart.key);
+}
+
+function BarAnalyticsChart({ chart }: { chart: ResearchAnalyticsChart }) {
+  const data: ChartData<"bar"> = {
+    labels: chart.data.map((item) => item.label),
+    datasets: [
+      {
+        label: chart.title,
+        data: chart.data.map((item) => Number(item.value || 0)),
+        backgroundColor: chart.data.map((_, index) => chartStroke(index, 0.78)),
+        borderColor: chart.data.map((_, index) => chartStroke(index)),
+        borderRadius: 6,
+        borderWidth: 1,
+        maxBarThickness: 34,
+      },
+    ],
+  };
+
   return (
-    <div className="space-y-3">
+    <ChartPanel chart={chart}>
+      <Bar data={data} options={buildChartOptions("bar", chart)} />
+    </ChartPanel>
+  );
+}
+
+function StackedBarAnalyticsChart({ chart }: { chart: ResearchAnalyticsChart }) {
+  const hasSecondary = chart.data.some((item) => Number(item.secondary_value || 0) > 0);
+  const data: ChartData<"bar"> = {
+    labels: chart.data.map((item) => item.label),
+    datasets: [
+      {
+        label: "Primary",
+        data: chart.data.map((item) => Number(item.value || 0)),
+        backgroundColor: chartStroke(0, 0.78),
+        borderColor: chartStroke(0),
+        borderRadius: 6,
+        borderWidth: 1,
+        maxBarThickness: 34,
+      },
+      ...(hasSecondary
+        ? [
+            {
+              label: "Secondary",
+              data: chart.data.map((item) => Number(item.secondary_value || 0)),
+              backgroundColor: chartStroke(1, 0.78),
+              borderColor: chartStroke(1),
+              borderRadius: 6,
+              borderWidth: 1,
+              maxBarThickness: 34,
+            },
+          ]
+        : []),
+    ],
+  };
+
+  return (
+    <ChartPanel chart={chart}>
+      <Bar data={data} options={buildChartOptions("bar", chart, { stacked: true })} />
+    </ChartPanel>
+  );
+}
+
+function LineAnalyticsChart({ chart }: { chart: ResearchAnalyticsChart }) {
+  const data: ChartData<"line"> = {
+    labels: chart.data.map((item) => item.label),
+    datasets: [
+      {
+        label: chart.title,
+        data: chart.data.map((item) => Number(item.value || 0)),
+        backgroundColor: chartStroke(0, 0.16),
+        borderColor: chartStroke(0),
+        borderWidth: 2,
+        fill: true,
+        pointBackgroundColor: chart.data.map((_, index) => chartStroke(index)),
+        pointBorderColor: "#ffffff",
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        tension: 0.35,
+      },
+    ],
+  };
+
+  return (
+    <ChartPanel chart={chart}>
+      <Line data={data} options={buildChartOptions("line", chart)} />
+    </ChartPanel>
+  );
+}
+
+function DoughnutAnalyticsChart({ chart }: { chart: ResearchAnalyticsChart }) {
+  const data: ChartData<"doughnut"> = {
+    labels: chart.data.map((item) => item.label),
+    datasets: [
+      {
+        label: chart.title,
+        data: chart.data.map((item) => Number(item.value || 0)),
+        backgroundColor: chart.data.map((_, index) => chartStroke(index, 0.78)),
+        borderColor: "hsl(var(--background))",
+        borderWidth: 3,
+        hoverOffset: 8,
+      },
+    ],
+  };
+
+  return (
+    <ChartPanel chart={chart} compact>
+      <Doughnut data={data} options={buildChartOptions("doughnut", chart)} />
+    </ChartPanel>
+  );
+}
+
+function ChartPanel({
+  chart,
+  children,
+  compact = false,
+}: {
+  chart: ResearchAnalyticsChart;
+  children: React.ReactNode;
+  compact?: boolean;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className={cn("relative h-64", compact && "mx-auto max-w-[280px]")}>
+        {children}
+      </div>
+      <ChartLegend data={chart.data} />
+    </div>
+  );
+}
+
+function ChartLegend({ data }: { data: ResearchAnalyticsPoint[] }) {
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
       {data.map((item, index) => (
-        <Link key={item.key} href={item.href ?? "#"} className="block rounded-md p-1 transition-colors hover:bg-muted/50">
-          <div className="mb-1 flex items-center justify-between gap-3 text-xs">
-            <span className="truncate font-medium">{item.label}</span>
-            <span className="font-semibold">{formatMetric(item.value, item.suffix)}</span>
-          </div>
-          <div className="h-2.5 overflow-hidden rounded-full bg-muted">
-            <div
-              className={cn("h-full rounded-full", chartColorClass(index))}
-              style={{ width: `${Math.max(4, (Number(item.value || 0) / max) * 100)}%` }}
-            />
-          </div>
+        <Link
+          key={item.key}
+          href={item.href ?? "#"}
+          className="flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm transition-colors hover:bg-muted/40"
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="size-2 shrink-0 rounded-full" style={{ background: chartStroke(index) }} />
+            <span className="truncate">{item.label}</span>
+          </span>
+          <span className="shrink-0 font-semibold">{formatMetric(item.value, item.suffix)}</span>
         </Link>
       ))}
     </div>
   );
 }
 
-function StackedChart({ data }: { data: ResearchAnalyticsPoint[] }) {
-  const total = data.reduce((sum, item) => sum + Number(item.value || 0), 0);
-  return (
-    <div className="space-y-4">
-      <div className="flex h-5 overflow-hidden rounded-full bg-muted">
-        {data.map((item, index) => (
-          <div
-            key={item.key}
-            className={chartColorClass(index)}
-            style={{ width: `${total ? (Number(item.value || 0) / total) * 100 : 0}%` }}
-            title={`${item.label}: ${formatMetric(item.value, item.suffix)}`}
-          />
-        ))}
-      </div>
-      <div className="grid gap-2 sm:grid-cols-2">
-        {data.map((item, index) => (
-          <Link key={item.key} href={item.href ?? "#"} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors hover:bg-muted/40">
-            <span className="flex min-w-0 items-center gap-2">
-              <span className={cn("size-2 shrink-0 rounded-full", chartColorClass(index))} />
-              <span className="truncate">{item.label}</span>
-            </span>
-            <span className="font-semibold">{formatMetric(item.value, item.suffix)}</span>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
+function buildChartOptions<TType extends "bar" | "line" | "doughnut">(
+  type: TType,
+  chart: ResearchAnalyticsChart,
+  options: { stacked?: boolean } = {},
+): ChartOptions<TType> {
+  const base = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: {
+      duration: 350,
+    },
+    interaction: {
+      intersect: false,
+      mode: "index" as const,
+    },
+    onClick: (_event: ChartEvent, elements: ActiveElement[]) => {
+      const index = elements[0]?.index;
+      const href = typeof index === "number" ? chart.data[index]?.href : undefined;
+      if (href) {
+        window.location.assign(href);
+      }
+    },
+    plugins: {
+      legend: {
+        display: type !== "doughnut" && options.stacked === true,
+        position: "bottom" as const,
+        labels: {
+          boxWidth: 10,
+          boxHeight: 10,
+          color: "hsl(var(--muted-foreground))",
+          usePointStyle: true,
+        },
+      },
+      tooltip: {
+        backgroundColor: "hsl(var(--popover))",
+        borderColor: "hsl(var(--border))",
+        borderWidth: 1,
+        bodyColor: "hsl(var(--popover-foreground))",
+        displayColors: true,
+        padding: 12,
+        titleColor: "hsl(var(--foreground))",
+        callbacks: {
+          label: (context: any) => {
+            const point = chart.data[context.dataIndex];
+            const value = Number(context.parsed?.y ?? context.parsed?.x ?? context.raw ?? 0);
+            return `${context.dataset.label}: ${formatMetric(value, point?.suffix)}`;
+          },
+          afterLabel: (context: any) => chart.data[context.dataIndex]?.description ?? "",
+        },
+      },
+    },
+  };
 
-function DonutChart({ data }: { data: ResearchAnalyticsPoint[] }) {
-  const total = data.reduce((sum, item) => sum + Number(item.value || 0), 0);
-  let cursor = 0;
-  const segments = data.map((item, index) => {
-    const percent = total ? Number(item.value || 0) / total : 0;
-    const start = cursor;
-    cursor += percent;
-    return { item, index, start, end: cursor };
-  });
+  if (type === "doughnut") {
+    return {
+      ...base,
+      cutout: "62%",
+      interaction: {
+        intersect: true,
+      },
+      plugins: {
+        ...base.plugins,
+        legend: {
+          ...base.plugins.legend,
+          display: false,
+        },
+      },
+    } as unknown as ChartOptions<TType>;
+  }
 
-  return (
-    <div className="grid gap-4 sm:grid-cols-[160px_minmax(0,1fr)]">
-      <div className="relative mx-auto size-40">
-        <svg viewBox="0 0 120 120" className="size-40 -rotate-90">
-          <circle cx="60" cy="60" r="42" fill="none" stroke="hsl(var(--muted))" strokeWidth="18" />
-          {segments.map(({ item, index, start, end }) => {
-            const circumference = 2 * Math.PI * 42;
-            return (
-              <circle
-                key={item.key}
-                cx="60"
-                cy="60"
-                r="42"
-                fill="none"
-                stroke={chartStroke(index)}
-                strokeWidth="18"
-                strokeDasharray={`${Math.max(0, end - start) * circumference} ${circumference}`}
-                strokeDashoffset={-start * circumference}
-              />
-            );
-          })}
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-semibold">{formatMetric(total)}</span>
-          <span className="text-xs text-muted-foreground">total</span>
-        </div>
-      </div>
-      <div className="space-y-2">
-        {data.map((item, index) => (
-          <Link key={item.key} href={item.href ?? "#"} className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-muted/50">
-            <span className="flex min-w-0 items-center gap-2">
-              <span className="size-2 shrink-0 rounded-full" style={{ background: chartStroke(index) }} />
-              <span className="truncate">{item.label}</span>
-            </span>
-            <span className="font-semibold">{formatMetric(item.value, item.suffix)}</span>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
+  return {
+    ...base,
+    scales: {
+      x: {
+        stacked: options.stacked,
+        grid: {
+          color: "hsl(var(--border) / 0.45)",
+        },
+        ticks: {
+          color: "hsl(var(--muted-foreground))",
+          maxRotation: 0,
+          autoSkip: true,
+        },
+      },
+      y: {
+        beginAtZero: true,
+        stacked: options.stacked,
+        grid: {
+          color: "hsl(var(--border) / 0.45)",
+        },
+        ticks: {
+          color: "hsl(var(--muted-foreground))",
+          precision: 0,
+        },
+      },
+    },
+  } as unknown as ChartOptions<TType>;
 }
 
 function RecentActivity({ loading, items }: { loading: boolean; items: any[] }) {
@@ -567,28 +746,16 @@ function formatMetric(value: number, suffix = "") {
   return suffix ? `${formatted} ${suffix}` : formatted;
 }
 
-function chartColorClass(index: number) {
-  return [
-    "bg-blue-600",
-    "bg-emerald-600",
-    "bg-amber-500",
-    "bg-rose-500",
-    "bg-violet-600",
-    "bg-cyan-600",
-    "bg-slate-500",
-    "bg-lime-600",
+function chartStroke(index: number, alpha = 1) {
+  const [r, g, b] = [
+    [37, 99, 235],
+    [5, 150, 105],
+    [245, 158, 11],
+    [244, 63, 94],
+    [124, 58, 237],
+    [8, 145, 178],
+    [100, 116, 139],
+    [101, 163, 13],
   ][index % 8];
-}
-
-function chartStroke(index: number) {
-  return [
-    "#2563eb",
-    "#059669",
-    "#f59e0b",
-    "#f43f5e",
-    "#7c3aed",
-    "#0891b2",
-    "#64748b",
-    "#65a30d",
-  ][index % 8];
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
