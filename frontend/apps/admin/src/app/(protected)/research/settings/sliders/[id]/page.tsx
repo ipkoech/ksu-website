@@ -2,6 +2,7 @@
 
 import { slidersApi } from "@ksu/api-client";
 import { ResearchAdminDetailPage } from "../../../_components/research-admin-detail-page";
+import { SettingsOperationalDetail } from "../../_components/settings-operational-detail";
 
 export default function ResearchSliderDetailPage() {
   return (
@@ -29,6 +30,7 @@ export default function ResearchSliderDetailPage() {
       ]}
       auditServiceName="main"
       auditResourceTypes={["slider", "marketing_slider", "sliders"]}
+      renderAfter={(record) => <SettingsOperationalDetail record={record} kind="slider" />}
     />
   );
 }

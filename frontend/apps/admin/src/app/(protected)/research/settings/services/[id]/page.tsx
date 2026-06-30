@@ -2,6 +2,7 @@
 
 import { researchServiceApi } from "@ksu/api-client";
 import { ResearchAdminDetailPage } from "../../../_components/research-admin-detail-page";
+import { SettingsOperationalDetail } from "../../_components/settings-operational-detail";
 
 export default function ResearchServiceDetailPage() {
   return (
@@ -27,6 +28,7 @@ export default function ResearchServiceDetailPage() {
         { title: "Contact", fields: ["contact_name", "contact_email", "contact_phone", "fee_structure"] },
       ]}
       auditResourceTypes={["service", "research_service", "services"]}
+      renderAfter={(record) => <SettingsOperationalDetail record={record} kind="service" />}
     />
   );
 }

@@ -2,6 +2,7 @@
 
 import { researchServiceApi } from "@ksu/api-client";
 import { ResearchAdminDetailPage } from "../../../_components/research-admin-detail-page";
+import { SettingsOperationalDetail } from "../../_components/settings-operational-detail";
 
 export default function ResearchGuidelineDetailPage() {
   return (
@@ -26,6 +27,7 @@ export default function ResearchGuidelineDetailPage() {
         { title: "Document", fields: ["document_name", "document_url", "approval_date", "contact_email"] },
       ]}
       auditResourceTypes={["guideline", "research_guideline", "guidelines"]}
+      renderAfter={(record) => <SettingsOperationalDetail record={record} kind="guideline" />}
     />
   );
 }
