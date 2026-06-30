@@ -14,6 +14,7 @@ from .innovations import router as innovations_router
 from .partners import router as partners_router
 from .projects import router as projects_router
 from .publications import router as publications_router
+from .realtime import router as realtime_router
 from .scholarships import router as scholarships_router
 from .search import router as search_router
 from .stats import router as stats_router
@@ -27,6 +28,7 @@ router.include_router(ask_ai_router)
 router.include_router(stats_router)
 router.include_router(search_router)
 router.include_router(exports_router)
+router.include_router(realtime_router)
 router.include_router(centers_router)
 router.include_router(projects_router)
 router.include_router(grants_router)

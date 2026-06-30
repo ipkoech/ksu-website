@@ -1,5 +1,5 @@
 import { getStoredAccessToken } from "./auth-tokens";
-import { getMainApiBaseUrl } from "./service-urls";
+import { getMainApiBaseUrl, getResearchApiBaseUrl } from "./service-urls";
 
 export type RealtimeNotification = {
   id: string;
@@ -55,7 +55,7 @@ export type ResearchRealtimeConfig = {
 export const realtimeApi = {
   researchConfig: () => {
     const token = getStoredAccessToken();
-    return fetch(new URL("/api/v1/realtime/research/config", getMainApiBaseUrl()), {
+    return fetch(new URL("/api/v1/realtime/research/config", getResearchApiBaseUrl()), {
       credentials: "include",
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     }).then(async (response) => {
