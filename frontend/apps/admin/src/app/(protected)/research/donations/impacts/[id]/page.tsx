@@ -72,10 +72,10 @@ function DonationImpactRelations({ impact }: { impact: ResearchGenericRecord }) 
           content: (
             <RelatedRecordsGrid>
               <RelatedRecordsCard
-                title="Published Stories"
-                queryKey={["research", "donation-impacts", impact.id, "published-stories"]}
-                queryFn={() => researchServiceApi.donationStories.list({ page: 1, per_page: 8, status: "published" })}
-                emptyLabel="No published donation stories were returned."
+                title="Donor Stories From Matching Donations"
+                queryKey={["research", "donation-impacts", impactId, "stories"]}
+                queryFn={() => impactStoryRecords(impactId)}
+                emptyLabel="No donor stories matched this impact record's donation sources."
                 metaFields={["donor_name", "donor_organization", "status"]}
               />
               <RelatedRecordsCard
@@ -95,4 +95,8 @@ function DonationImpactRelations({ impact }: { impact: ResearchGenericRecord }) 
 
 function impactDonationRecords(impactId: string) {
   return researchApi.get<{ data: ResearchGenericRecord[] }>(`/api/v1/donation-impacts/id/${impactId}/donations`);
+}
+
+function impactStoryRecords(impactId: string) {
+  return researchApi.get<{ data: ResearchGenericRecord[] }>(`/api/v1/donation-impacts/id/${impactId}/stories`);
 }

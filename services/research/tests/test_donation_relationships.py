@@ -62,12 +62,44 @@ class _Impact:
         self.updated_at = None
         self.impact_type = values.get("impact_type", "project")
         self.reporting_year = values.get("reporting_year", 2026)
+        self.project_id = values.get("project_id")
+        self.center_id = values.get("center_id")
+        self.scholarship_id = values.get("scholarship_id")
+        self.fund_id = values.get("fund_id")
+
+
+class _Story:
+    def __init__(self, **values):
+        self.id = values.get("id", uuid.uuid4())
+        self.title = values.get("title", "Story")
+        self.name = None
+        self.slug = values.get("slug", "story")
+        self.status = values.get("status", "published")
+        self.created_at = None
+        self.updated_at = None
+        self.donor_id = values.get("donor_id")
+        self.donor_name = values.get("donor_name", "Donor")
+        self.donor_organization = values.get("donor_organization")
+
+
+class _ImpactStoriesDb:
+    def __init__(self, donor_rows, story_rows):
+        self.donor_rows = donor_rows
+        self.story_rows = story_rows
+        self.statements = []
+
+    async def execute(self, statement):
+        self.statements.append(statement)
+        if len(self.statements) == 1:
+            return _RowsResult(self.donor_rows)
+        return _ScalarsResult(self.story_rows)
 
 
 class DonationRelationshipTests(unittest.IsolatedAsyncioTestCase):
     def test_donation_relationship_routes_exist(self):
         self.assertIsNotNone(_route(donations_router, "/donors/id/{donor_id}/impacts", "GET"))
         self.assertIsNotNone(_route(donations_router, "/donation-impacts/id/{impact_id}/donations", "GET"))
+        self.assertIsNotNone(_route(donations_router, "/donation-impacts/id/{impact_id}/stories", "GET"))
 
     async def test_donor_impacts_are_resolved_from_donor_donation_source_bindings(self):
         donor_id = uuid.uuid4()
@@ -85,6 +117,21 @@ class DonationRelationshipTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(2, len(db.statements))
         self.assertIn("donations.donor_id", str(db.statements[0]).lower())
         self.assertIn("donation_impacts.project_id", str(db.statements[1]).lower())
+
+    async def test_impact_stories_are_resolved_from_matching_donation_donors(self):
+        donor_id = uuid.uuid4()
+        project_id = uuid.uuid4()
+        impact = _Impact(project_id=project_id)
+        story = _Story(donor_id=donor_id)
+        db = _ImpactStoriesDb(donor_rows=[(donor_id,)], story_rows=[story])
+
+        with patch.object(DonationRelationshipService, "_ensure_impact", new=AsyncMock(return_value=impact)):
+            stories = await DonationRelationshipService.list_impact_stories(db, impact.id)
+
+        self.assertEqual([story.id], [item["id"] for item in stories])
+        self.assertEqual(2, len(db.statements))
+        self.assertIn("donations.project_id", str(db.statements[0]).lower())
+        self.assertIn("donation_stories.donor_id", str(db.statements[1]).lower())
 
 
 if __name__ == "__main__":

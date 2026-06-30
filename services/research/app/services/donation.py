@@ -130,6 +130,45 @@ class DonationRelationshipService:
             "donation_date",
         )
 
+    @staticmethod
+    async def list_impact_stories(db: AsyncSession, impact_id: uuid.UUID) -> list[dict[str, Any]]:
+        impact = await DonationRelationshipService._ensure_impact(db, impact_id)
+        conditions = _source_conditions(
+            Donation,
+            {
+                "project_id": impact.project_id,
+                "center_id": impact.center_id,
+                "scholarship_id": impact.scholarship_id,
+                "fund_id": impact.fund_id,
+            },
+        )
+        if not conditions:
+            return []
+
+        donor_result = await db.execute(
+            select(Donation.donor_id)
+            .where(
+                Donation.deleted_at.is_(None),
+                Donation.status == "completed",
+                or_(*conditions),
+            )
+            .distinct()
+        )
+        donor_ids = [row[0] for row in donor_result.all() if row[0]]
+        if not donor_ids:
+            return []
+
+        return await _related_many(
+            db,
+            DonationStory.active_query()
+            .where(DonationStory.donor_id.in_(donor_ids))
+            .order_by(DonationStory.is_featured.desc(), DonationStory.created_at.desc()),
+            "donor_id",
+            "donor_name",
+            "donor_organization",
+            "is_featured",
+        )
+
 
 class DonationService(CRUDService):
     model = Donation

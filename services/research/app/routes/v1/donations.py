@@ -47,6 +47,7 @@ async def submit_public_donation(
             amount=donation.amount,
             currency=donation.currency,
             donation_type=donation.donation_type,
+            recurring_frequency=donation.recurring_frequency,
             designation=donation.designation,
             payment_method=donation.payment_method,
         ),
@@ -67,6 +68,11 @@ async def list_donor_impacts(donor_id: uuid.UUID, db: AsyncSession = Depends(get
 @router.get("/donation-impacts/id/{impact_id}/donations", tags=["Donation Impacts"], dependencies=[Depends(require_scope("donations.manage"))])
 async def list_impact_donations(impact_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await DonationRelationshipService.list_impact_donations(db, impact_id))
+
+
+@router.get("/donation-impacts/id/{impact_id}/stories", tags=["Donation Impacts"], dependencies=[Depends(require_scope("donations.manage"))])
+async def list_impact_stories(impact_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return success(data=await DonationRelationshipService.list_impact_stories(db, impact_id))
 
 
 router.include_router(

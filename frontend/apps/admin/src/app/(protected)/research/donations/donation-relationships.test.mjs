@@ -28,3 +28,11 @@ assert(
   impactDetail.includes("/api/v1/donation-impacts/id/${impactId}/donations"),
   "Impact detail must use the explicit impact donations relationship endpoint.",
 );
+assert(
+  impactDetail.includes("/api/v1/donation-impacts/id/${impactId}/stories"),
+  "Impact detail must use the explicit impact donor stories relationship endpoint.",
+);
+assert(
+  !impactDetail.includes("donationStories.list({ page: 1, per_page: 8, status: \"published\" })"),
+  "Impact detail must not infer related stories by listing all published donation stories.",
+);
