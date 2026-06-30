@@ -431,21 +431,23 @@ function SelectedReferenceChips({ references }: { references: ResearchAskAIRefer
   if (!references.length) {
     return <p className="min-w-0 text-xs text-muted-foreground">No references selected</p>;
   }
+  const visibleReferences = uniqueReferences(references);
   return (
     <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
-      {references.map((reference) => (
-        <ReferenceChip key={`${reference.href}-${reference.resource_key ?? reference.label}`} reference={reference} />
+      {visibleReferences.map((reference) => (
+        <ReferenceChip key={referenceKey(reference)} reference={reference} />
       ))}
     </div>
   );
 }
 
 function UserReferenceChips({ references }: { references: ResearchAskAIReference[] }) {
+  const visibleReferences = uniqueReferences(references).slice(0, 4);
   return (
     <div className="mt-2 flex flex-wrap justify-end gap-1">
-      {references.slice(0, 4).map((reference) => (
+      {visibleReferences.map((reference) => (
         <span
-          key={`${reference.href}-${reference.resource_key ?? reference.label}`}
+          key={referenceKey(reference)}
           className="rounded bg-primary-foreground/15 px-1.5 py-0.5 text-[10px] leading-4 text-primary-foreground/90"
         >
           {reference.label}
@@ -457,10 +459,11 @@ function UserReferenceChips({ references }: { references: ResearchAskAIReference
 
 function SourceChips({ references }: { references: ResearchAskAIReference[] }) {
   if (!references.length) return null;
+  const visibleReferences = uniqueReferences(references).slice(0, 4);
   return (
     <div className="mt-3 flex flex-wrap gap-1.5 border-t pt-2">
-      {references.slice(0, 4).map((reference) => (
-        <ReferenceChip key={`${reference.href}-${reference.resource_key ?? reference.label}`} reference={reference} />
+      {visibleReferences.map((reference) => (
+        <ReferenceChip key={referenceKey(reference)} reference={reference} />
       ))}
     </div>
   );
@@ -598,6 +601,22 @@ function toReference(reference: ResearchAskAIReference): ResearchAskAIReference 
     href: reference.href,
     resource_key: reference.resource_key,
   };
+}
+
+function uniqueReferences(references: ResearchAskAIReference[]) {
+  const seen = new Set<string>();
+  const unique: ResearchAskAIReference[] = [];
+  for (const reference of references) {
+    const key = referenceKey(reference);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(reference);
+  }
+  return unique;
+}
+
+function referenceKey(reference: ResearchAskAIReference) {
+  return `${reference.href}-${reference.resource_key ?? reference.label}`;
 }
 
 function resourceKeyForPath(parts: string[]) {

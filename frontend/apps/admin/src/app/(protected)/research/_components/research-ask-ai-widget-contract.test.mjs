@@ -70,3 +70,9 @@ assert(
     source.includes("<UserReferenceChips references={message.references} />"),
   "Selected references should render as small chips on the user message",
 );
+assert(
+  source.includes("uniqueReferences(references)") &&
+    source.includes("referenceKey(reference)") &&
+    !source.includes("key={`${reference.href}-${reference.resource_key ?? reference.label}`}"),
+  "Reference chips should dedupe references and use stable unique keys",
+);
