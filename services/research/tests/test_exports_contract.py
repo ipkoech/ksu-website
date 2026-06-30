@@ -1,0 +1,80 @@
+import unittest
+
+from fastapi.routing import APIRoute
+
+from app.main import create_app
+from app.routes.v1.exports import router as exports_router
+from app.services.exports import (
+    EXPORT_RESOURCE_CONFIGS,
+    ResearchExportService,
+)
+
+
+def _route(router, path: str, method: str) -> APIRoute:
+    for route in router.routes:
+        if isinstance(route, APIRoute) and route.path == path and method in route.methods:
+            return route
+    raise AssertionError(f"{method} {path} route not found")
+
+
+def _paths(router, method: str, prefix: str = "") -> set[str]:
+    paths: set[str] = set()
+    for route in router.routes:
+        if isinstance(route, APIRoute) and method in route.methods:
+            paths.add(f"{prefix}{route.path}")
+            continue
+        original_router = getattr(route, "original_router", None)
+        include_context = getattr(route, "include_context", None)
+        if original_router is not None and include_context is not None:
+            paths.update(_paths(original_router, method, f"{prefix}{include_context.prefix}"))
+    return paths
+
+
+class ResearchExportContractTests(unittest.TestCase):
+    def test_export_route_is_registered_and_protected(self):
+        route = _route(exports_router, "/exports/{resource_key}", "GET")
+        query_param_names = {param.name for param in route.dependant.query_params}
+
+        self.assertTrue(route.dependencies)
+        self.assertIn("format", query_param_names)
+        self.assertIn("search", query_param_names)
+        self.assertIn("status", query_param_names)
+        self.assertIn("year", query_param_names)
+
+    def test_research_v1_router_includes_export_route(self):
+        paths = _paths(create_app(), "GET")
+
+        self.assertIn("/api/v1/exports/{resource_key}", paths)
+
+    def test_supported_export_resources_cover_bulk_import_resources(self):
+        keys = set(EXPORT_RESOURCE_CONFIGS)
+
+        self.assertGreaterEqual(len(keys), 20)
+        self.assertIn("research-projects", keys)
+        self.assertIn("research-publications", keys)
+        self.assertIn("research-grants", keys)
+        self.assertIn("research-donations", keys)
+        self.assertIn("research-stories", keys)
+
+    def test_csv_export_uses_stable_configured_columns(self):
+        config = EXPORT_RESOURCE_CONFIGS["research-projects"]
+
+        csv_text = ResearchExportService.to_csv(
+            config,
+            [
+                {
+                    "title": "Climate Resilience",
+                    "status": "ongoing",
+                    "budget": 1000,
+                    "internal_note": "not exported",
+                }
+            ],
+        )
+
+        self.assertTrue(csv_text.startswith("id,title,slug,code,project_type,status"))
+        self.assertIn("Climate Resilience", csv_text)
+        self.assertNotIn("internal_note", csv_text)
+
+
+if __name__ == "__main__":
+    unittest.main()

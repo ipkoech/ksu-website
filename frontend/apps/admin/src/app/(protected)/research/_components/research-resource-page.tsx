@@ -14,6 +14,11 @@ import { importsApi, researchServiceApi, type ResearchGenericPayload, type Resea
 import { usePermissions } from "@ksu/auth";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
+import {
+  getResearchFieldHelp,
+  getResearchGuidance,
+  ResearchSectionGuide,
+} from "./research-guidance";
 
 type ResourceApi = {
   list: (params?: Record<string, string | number | boolean | undefined>) => Promise<{
@@ -45,6 +50,7 @@ interface ResearchResourcePageProps {
     record: ResearchGenericRecord,
   ) => Array<EditableRecordWorkflowAction<ResearchGenericRecord, ResearchGenericPayload>>;
   importResource?: string;
+  exportResource?: string;
   editorMode?: "dialog" | "sheet" | "auto";
   renderMobileRecord?: (record: ResearchGenericRecord, actions: ReactNode) => ReactNode;
   buildPayload?: (
@@ -127,28 +133,67 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export function ResearchBulkActions({ resourceKey }: { resourceKey: string }) {
+export function withResearchFieldHelp(fields: EditableField[]) {
+  return fields.map((field) => ({
+    ...field,
+    helpText: field.helpText ?? getResearchFieldHelp(field.name),
+  }));
+}
+
+export function ResearchBulkActions({
+  resourceKey,
+  importResource,
+  exportResource,
+}: {
+  resourceKey?: string;
+  importResource?: string;
+  exportResource?: string;
+}) {
+  const resolvedImportResource = importResource ?? resourceKey;
+  const resolvedExportResource = exportResource ?? resourceKey;
+
   const handleTemplateDownload = async () => {
+    if (!resolvedImportResource) return;
     try {
-      const blob = await importsApi.downloadTemplate(resourceKey);
-      downloadBlob(blob, `${resourceKey}-import-template.csv`);
+      const blob = await importsApi.downloadTemplate(resolvedImportResource);
+      downloadBlob(blob, `${resolvedImportResource}-import-template.csv`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Template download failed");
     }
   };
 
+  const handleExportDownload = async () => {
+    if (!resolvedExportResource) return;
+    try {
+      const blob = await researchServiceApi.downloadExport(resolvedExportResource, { format: "csv" });
+      downloadBlob(blob, `${resolvedExportResource}-export.csv`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Research export failed");
+    }
+  };
+
   return (
     <>
-      <Button variant="outline" size="sm" asChild>
-        <Link href={`/imports/${resourceKey}`}>
-          <Upload className="mr-1.5 h-4 w-4" />
-          Import
-        </Link>
-      </Button>
-      <Button variant="outline" size="sm" type="button" onClick={handleTemplateDownload}>
-        <Download data-icon="inline-start" />
-        Template
-      </Button>
+      {resolvedImportResource ? (
+        <>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/imports/${resolvedImportResource}`}>
+              <Upload className="mr-1.5 h-4 w-4" />
+              Import
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" type="button" onClick={handleTemplateDownload}>
+            <Download data-icon="inline-start" />
+            Template
+          </Button>
+        </>
+      ) : null}
+      {resolvedExportResource ? (
+        <Button variant="outline" size="sm" type="button" onClick={handleExportDownload}>
+          <Download data-icon="inline-start" />
+          Export CSV
+        </Button>
+      ) : null}
     </>
   );
 }
@@ -201,6 +246,7 @@ export function ResearchResourcePage({
   detailHref,
   getRecordWorkflowActions,
   importResource,
+  exportResource,
   editorMode = "auto",
   renderMobileRecord,
   buildPayload,
@@ -208,6 +254,13 @@ export function ResearchResourcePage({
   const { hasScope } = usePermissions();
   const canManage = manageScopes.some((scope) => hasScope(scope));
   const resolvedListFilters = listFilters ?? deriveListFilters(fields);
+  const guidance = getResearchGuidance(title);
+  const resolvedSummarySlot = (
+    <div className="space-y-4">
+      <ResearchSectionGuide title={title} />
+      {summarySlot}
+    </div>
+  );
 
   return (
     <EditableServiceResourcePage<ResearchGenericRecord, ResearchGenericPayload>
@@ -215,11 +268,15 @@ export function ResearchResourcePage({
       description={description}
       backHref="/research"
       queryKey={queryKey}
-      fields={fields}
+      fields={withResearchFieldHelp(fields)}
       listFilters={resolvedListFilters}
       recordColumns={recordColumns}
-      summarySlot={summarySlot}
-      toolbarSlot={importResource ? <ResearchBulkActions resourceKey={importResource} /> : undefined}
+      summarySlot={resolvedSummarySlot}
+      toolbarSlot={
+        importResource || exportResource ? (
+          <ResearchBulkActions importResource={importResource} exportResource={exportResource} />
+        ) : undefined
+      }
       list={async (filters) => {
         const response = await resource.list({ page: 1, per_page: 50, ...listParams, ...filters });
         return { data: (response.data ?? []) as ResearchGenericRecord[], meta: response.meta };
@@ -245,6 +302,7 @@ export function ResearchResourcePage({
         ))
       }
       emptyMessage={emptyMessage}
+      emptyState={guidance?.emptyState}
       resourceKey={importResource}
       buildPayload={(values, editingRecord) => ({
         ...defaults,

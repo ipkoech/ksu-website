@@ -6,6 +6,7 @@ from .audit import router as audit_router
 from .centers import router as centers_router
 from .content import router as content_router
 from .donations import router as donations_router
+from .exports import router as exports_router
 from .grants import router as grants_router
 from .health import router as health_router
 from .innovations import router as innovations_router
@@ -23,6 +24,7 @@ router.include_router(health_router)
 router.include_router(audit_router)
 router.include_router(stats_router)
 router.include_router(search_router)
+router.include_router(exports_router)
 router.include_router(centers_router)
 router.include_router(projects_router)
 router.include_router(grants_router)

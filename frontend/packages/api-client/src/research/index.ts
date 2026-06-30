@@ -1,7 +1,9 @@
+import { getStoredAccessToken } from "../auth-tokens";
 import { mainApi, researchApi } from "../client";
 import type { FieldSelectionParams, QueryParams } from "../client";
 import type { PaginatedResponse } from "../main/types";
 import type { PublicStatsResponse } from "../main/types";
+import { getResearchApiBaseUrl } from "../service-urls";
 
 type ListParams<
   T extends Record<string, string | number | boolean | undefined> = Record<
@@ -39,6 +41,12 @@ type ListParams<
     is_required?: boolean;
     is_accepting_contributions?: boolean;
   };
+
+export type ResearchExportFormat = "csv" | "json";
+export type ResearchExportParams = ListParams & {
+  format?: ResearchExportFormat;
+  limit?: number;
+};
 
 export interface ResearchProject {
   id: string;
@@ -404,6 +412,20 @@ export const researchServiceApi = {
     researchApi.get<{ data: PublicStatsResponse }>("/api/v1/stats/admin"),
   search: (params: { q: string; types?: string; limit?: number }) =>
     researchApi.get<{ data: ResearchSearchResponse }>("/api/v1/search", params),
+  exportResourceUrl: (resource: string, params?: ResearchExportParams) =>
+    buildResearchExportUrl(resource, params),
+  downloadExport: async (resource: string, params?: ResearchExportParams) => {
+    const token = getStoredAccessToken();
+    const response = await fetch(buildResearchExportUrl(resource, params), {
+      credentials: "include",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || error.message || "Research export failed");
+    }
+    return response.blob();
+  },
   projects: crudApi<ResearchProject, ResearchProjectPayload>(
     "/api/v1/projects",
   ),
@@ -544,3 +566,13 @@ export const researchServiceApi = {
     "/api/v1/guidelines",
   ),
 };
+
+function buildResearchExportUrl(resource: string, params?: ResearchExportParams) {
+  const url = new URL(`/api/v1/exports/${resource}`, getResearchApiBaseUrl());
+  Object.entries(params ?? {}).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      url.searchParams.append(key, String(value));
+    }
+  });
+  return url.toString();
+}
