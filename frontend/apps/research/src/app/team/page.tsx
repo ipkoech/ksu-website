@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Building2, Contact, ExternalLink, Mail, Search, UserRound } from "lucide-react";
+import { ArrowRight, Building2, ExternalLink, UserRound } from "lucide-react";
 import type { Person } from "@ksu/api-client";
 import { personsApi } from "@ksu/api-client";
-import type { InstitutionalLink } from "../../components/research-institutional";
-import { ResearchInstitutionalHero } from "../../components/research-institutional";
-import { StatusMessage } from "../../components/research-ui";
+import { PrimaryLink, SecondaryLink, StatusMessage } from "../../components/research-ui";
 import { publicFrontendUrl } from "../../lib/service-urls";
 import { compactText } from "../../lib/research-public-data";
 
@@ -15,14 +13,6 @@ export const metadata: Metadata = {
   title: "Research Team",
   description: "Research staff, leadership, and contact directory.",
 };
-
-const localLinks: InstitutionalLink[] = [];
-const relatedLinks = [
-  { label: "Expertise Directory", href: "/expertise", description: "Search specialists by skill, focus area, and theme.", icon: Search },
-  { label: "Research Services", href: "/services", description: "Find support routes for research work.", icon: Contact },
-  { label: "Contact REIRM", href: "/connect", description: "Send a public enquiry to the research office.", icon: Mail },
-  { label: "About Research", href: "/about", description: "Understand office structure and governance.", icon: Building2 },
-];
 
 const MAIN_SITE = publicFrontendUrl;
 
@@ -44,25 +34,9 @@ export default async function TeamPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchInstitutionalHero
-        eyebrow="Research Team"
-        title="Find the people and offices that support research work."
-        body="Research staff profiles are managed through the main university directory. Browse leadership, academic staff, and support personnel below."
-        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Team" }]}
-        localLinks={localLinks}
-        relatedLinks={relatedLinks}
-        imageSrc="/images/research/research-about-hero.svg"
-        imageAlt="Kisii University research staff and team collaboration"
-        primaryAction={{ label: "Search expertise", href: "/expertise" }}
-        secondaryAction={{ label: "Contact REIRM", href: "/connect" }}
-        facts={[
-          { label: "Research staff", value: people.length },
-          { label: "Department", value: "REIRM" },
-          { label: "Managed by", value: "Main service" },
-        ]}
-      />
+      <TeamMasthead staffCount={people.length} />
 
-      <section className="border-y border-slate-200 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <section className="border-b border-slate-200 bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mx-auto max-w-[1680px]">
           <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -147,6 +121,47 @@ export default async function TeamPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+function TeamMasthead({ staffCount }: { staffCount: number }) {
+  const stats = [
+    { label: "Research staff", value: staffCount },
+    { label: "Department", value: "REIRM" },
+    { label: "Profiles", value: "Main web" },
+  ];
+
+  return (
+    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
+        <div>
+          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
+            <Link href="/" className="transition hover:text-primary">Home</Link>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-900">Team</span>
+          </nav>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Research Team</p>
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+            Staff and leadership profiles that support research work
+          </h1>
+          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">
+            Browse researcher records from the main university people service. Staff detail pages open on the main web profile design.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <PrimaryLink href="/expertise">Search expertise</PrimaryLink>
+            <SecondaryLink href="/connect">Contact REIRM</SecondaryLink>
+          </div>
+        </div>
+        <dl className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
+          {stats.map((stat) => (
+            <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+              <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
+              <dd className="mt-1 text-sm font-semibold text-slate-950">{stat.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
   );
 }
 

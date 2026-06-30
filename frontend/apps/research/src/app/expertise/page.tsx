@@ -2,26 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { Person, ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
 import { personsApi } from "@ksu/api-client";
-import {
-  BookOpenCheck,
-  Building2,
-  ExternalLink,
-  FlaskConical,
-  Network,
-  Search,
-  Tags,
-  Target,
-  Users,
-} from "lucide-react";
-import {
-  InstitutionalEmpty,
-  InstitutionalPanel,
-  ResearchInstitutionalHero,
-} from "../../components/research-institutional";
+import { ExternalLink } from "lucide-react";
 import {
   Badge,
   FilledBadge,
+  PrimaryLink,
   ResearchSection,
+  SecondaryLink,
   StatusMessage,
 } from "../../components/research-ui";
 import {
@@ -47,41 +34,6 @@ type ExpertiseSearchParams = {
   area?: string;
   theme?: string;
 };
-
-const localLinks = [
-  { label: "Type to Search", href: "#search", icon: Search },
-  { label: "Researchers", href: "#researchers", icon: Users },
-  { label: "Focus Areas", href: "#focus-areas", icon: Target },
-  { label: "Expertise Tags", href: "#expertise-tags", icon: Tags },
-  { label: "Related Work", href: "#related-work", icon: Network },
-];
-
-const relatedLinks = [
-  {
-    label: "Research Projects",
-    href: "/projects",
-    description: "Explore published projects by year, type, and status.",
-    icon: FlaskConical,
-  },
-  {
-    label: "Centers & Institutes",
-    href: "/centers",
-    description: "Find the institutional homes behind research activity.",
-    icon: Building2,
-  },
-  {
-    label: "Publications",
-    href: "/publications",
-    description: "Review publications and outputs tied to research work.",
-    icon: BookOpenCheck,
-  },
-  {
-    label: "Research Team",
-    href: "/team",
-    description: "Open the staff and office contact directory.",
-    icon: Users,
-  },
-];
 
 export default async function ExpertisePage({
   searchParams,
@@ -114,23 +66,11 @@ export default async function ExpertisePage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchInstitutionalHero
-        eyebrow="Expertise Directory"
-        title="Search skills, research areas, people, and related work."
-        body="Expertise is shown as a public discovery layer over published staff, tags, focus areas, themes, centers, and projects."
-        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Expertise" }]}
-        localLinks={localLinks}
-        relatedLinks={relatedLinks}
-        imageSrc="/images/research/research-innovation-hero.svg"
-        imageAlt="Researchers collaborating across disciplines and partner networks"
-        primaryAction={{ label: "Browse projects", href: "/projects" }}
-        secondaryAction={{ label: "Meet the team", href: "/team" }}
-        facts={[
-          { label: "Expertise tags", value: expertiseTags.data.length },
-          { label: "Researchers", value: people.data.length },
-          { label: "Focus areas", value: focusAreas.data.length },
-          { label: "Themes", value: themes.data.length },
-        ]}
+      <ExpertiseMasthead
+        tagCount={expertiseTags.data.length}
+        researcherCount={people.data.length}
+        focusAreaCount={focusAreas.data.length}
+        themeCount={themes.data.length}
       />
 
       {errors.length > 0 ? (
@@ -153,31 +93,6 @@ export default async function ExpertisePage({
       >
         <div id="search">
           <ExpertiseFilters params={params} focusAreas={focusAreas.data} themes={themes.data} />
-
-          <div className="mt-7">
-            <InstitutionalPanel className="bg-slate-950 text-white">
-              <p className="text-sm font-semibold uppercase text-secondary">
-                Search Guide
-              </p>
-              <h3 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-7 text-white">
-                Expertise appears across several published records.
-              </h3>
-              <p className="mt-3 text-sm leading-7 text-white/75">
-                Search by person, focus area, theme, center, project, or expertise tag to find the right research contact.
-              </p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                {expertiseTags.data.slice(0, 10).map((tag) => (
-                  <Link
-                    key={tag.id}
-                    href={`/expertise?q=${encodeURIComponent(recordTitle(tag))}`}
-                    className="rounded-md border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white transition hover:bg-white/20"
-                  >
-                    {recordTitle(tag)}
-                  </Link>
-                ))}
-              </div>
-            </InstitutionalPanel>
-          </div>
         </div>
       </ResearchSection>
 
@@ -241,6 +156,58 @@ export default async function ExpertisePage({
   );
 }
 
+function ExpertiseMasthead({
+  tagCount,
+  researcherCount,
+  focusAreaCount,
+  themeCount,
+}: {
+  tagCount: number;
+  researcherCount: number;
+  focusAreaCount: number;
+  themeCount: number;
+}) {
+  const stats = [
+    { label: "Researchers", value: researcherCount },
+    { label: "Expertise tags", value: tagCount },
+    { label: "Focus areas", value: focusAreaCount },
+    { label: "Themes", value: themeCount },
+  ];
+
+  return (
+    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
+        <div>
+          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
+            <Link href="/" className="transition hover:text-primary">Home</Link>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-900">Expertise</span>
+          </nav>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Expertise Directory</p>
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+            Search skills, research areas, people, and related work
+          </h1>
+          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">
+            Expertise is shown as a backend-backed discovery layer over researcher profiles, tags, focus areas, themes, centers, and projects.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <PrimaryLink href="/projects">Browse projects</PrimaryLink>
+            <SecondaryLink href="/team">Meet the team</SecondaryLink>
+          </div>
+        </div>
+        <dl className="grid gap-2 sm:grid-cols-2">
+          {stats.map((stat) => (
+            <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+              <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
+              <dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
+  );
+}
+
 async function getResearchPeople() {
   try {
     const response = await personsApi.list({
@@ -261,7 +228,7 @@ async function getResearchPeople() {
 
 function StaffPanel({ people }: { people: Person[] }) {
   if (people.length === 0) {
-    return <InstitutionalEmpty>No published researcher profiles match the current search.</InstitutionalEmpty>;
+    return <StatusMessage>No published researcher profiles match the current search.</StatusMessage>;
   }
 
   return (
@@ -407,7 +374,7 @@ function TaxonomyPanel({
         </div>
       ) : (
         <div className="mt-4">
-          <InstitutionalEmpty>{empty}</InstitutionalEmpty>
+          <StatusMessage>{empty}</StatusMessage>
         </div>
       )}
     </section>
@@ -459,7 +426,7 @@ function EvidencePanel({
         </div>
       ) : (
         <div className="mt-4">
-          <InstitutionalEmpty>{empty}</InstitutionalEmpty>
+          <StatusMessage>{empty}</StatusMessage>
         </div>
       )}
     </section>
