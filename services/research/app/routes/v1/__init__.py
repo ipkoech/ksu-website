@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from .audit import router as audit_router
+from .ask_ai import router as ask_ai_router
 from .centers import router as centers_router
 from .content import router as content_router
 from .donations import router as donations_router
@@ -22,6 +23,7 @@ from .training import router as training_router
 router = APIRouter()
 router.include_router(health_router)
 router.include_router(audit_router)
+router.include_router(ask_ai_router)
 router.include_router(stats_router)
 router.include_router(search_router)
 router.include_router(exports_router)
