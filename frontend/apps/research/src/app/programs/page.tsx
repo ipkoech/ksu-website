@@ -56,6 +56,13 @@ const sortOptions = [
   { label: "Name Z-A", value: "name_desc" },
 ];
 
+const quickLinks = [
+  { label: "Projects", href: "/projects", body: "Active research workstreams" },
+  { label: "Publications", href: "/publications", body: "Evidence and scholarly output" },
+  { label: "Funding", href: "/funding", body: "Grants and opportunities" },
+  { label: "Centers", href: "/centers", body: "Institutional research anchors" },
+];
+
 export default async function ProgramsPage({
   searchParams,
 }: {
@@ -100,49 +107,53 @@ export default async function ProgramsPage({
         id="program-portfolio"
         className="bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
       >
-        <div className="mx-auto max-w-[1680px]">
-          <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
-            <div className="pt-1">
-              <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 lg:whitespace-nowrap">
-                Program Portfolio
-              </h1>
-              <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
-                Search, filter, sort, and open published research programs.
-              </p>
+        <div className="mx-auto grid max-w-[1680px] gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+          <div className="min-w-0">
+            <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
+              <div className="pt-1">
+                <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 lg:whitespace-nowrap">
+                  Program Portfolio
+                </h1>
+                <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
+                  Search, filter, sort, and open published research programs.
+                </p>
+              </div>
+              <div className="w-full">
+                <ProgramFilters
+                  params={params}
+                  centers={centers.data}
+                  years={years}
+                  months={months}
+                />
+              </div>
             </div>
-            <div className="w-full">
-              <ProgramFilters
-                params={params}
-                centers={centers.data}
-                years={years}
-                months={months}
-              />
-            </div>
+
+            {errors.length && visiblePrograms.length === 0 ? (
+              <div className="mt-5">
+                <StatusMessage tone="error">{errors[0]}</StatusMessage>
+              </div>
+            ) : null}
+
+            {visiblePrograms.length > 0 ? (
+              <div className="mt-5">
+                <ProgramsTable programs={visiblePrograms} />
+                <ListPagination
+                  page={page}
+                  totalPages={totalPages}
+                  total={params.month ? visiblePrograms.length : programs.total}
+                  perPage={programs.perPage}
+                  baseHref={baseHref}
+                  className="mt-5"
+                />
+              </div>
+            ) : !errors.length ? (
+              <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-5 text-sm font-medium text-slate-600">
+                No published research programs match the current filters.
+              </div>
+            ) : null}
           </div>
 
-          {errors.length && visiblePrograms.length === 0 ? (
-            <div className="mt-5">
-              <StatusMessage tone="error">{errors[0]}</StatusMessage>
-            </div>
-          ) : null}
-
-          {visiblePrograms.length > 0 ? (
-            <div className="mt-5">
-              <ProgramsTable programs={visiblePrograms} />
-              <ListPagination
-                page={page}
-                totalPages={totalPages}
-                total={params.month ? visiblePrograms.length : programs.total}
-                perPage={programs.perPage}
-                baseHref={baseHref}
-                className="mt-5"
-              />
-            </div>
-          ) : !errors.length ? (
-            <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-5 text-sm font-medium text-slate-600">
-              No published research programs match the current filters.
-            </div>
-          ) : null}
+          <ProgramQuickLinks />
         </div>
       </section>
     </main>
@@ -226,12 +237,11 @@ function ProgramFilters({
 function ProgramsTable({ programs }: { programs: ResearchGenericRecord[] }) {
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="hidden grid-cols-[minmax(320px,1fr)_150px_190px_160px_110px] gap-4 border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 lg:grid">
+      <div className="hidden grid-cols-[minmax(360px,1fr)_150px_210px_170px] gap-4 border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 lg:grid">
         <span>Program</span>
         <span>Status</span>
         <span>Center</span>
         <span>Timeline</span>
-        <span className="text-right">Action</span>
       </div>
       <div className="divide-y divide-slate-200">
         {programs.map((program) => (
@@ -258,7 +268,10 @@ function ProgramTableRow({ program }: { program: ResearchGenericRecord }) {
     .slice(0, 2);
 
   return (
-    <article className="grid gap-3 px-4 py-4 transition hover:bg-slate-50/80 lg:grid-cols-[minmax(320px,1fr)_150px_190px_160px_110px] lg:items-center">
+    <Link
+      href={href}
+      className="group grid gap-3 px-4 py-4 transition hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 lg:grid-cols-[minmax(360px,1fr)_150px_210px_170px] lg:items-center"
+    >
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           {badges.map((badge) => (
@@ -267,10 +280,13 @@ function ProgramTableRow({ program }: { program: ResearchGenericRecord }) {
           {program.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
         </div>
         <h2 className="mt-2 flex items-start gap-2 text-base font-semibold leading-6 text-slate-950">
-          <Link href={href} className="transition hover:text-primary">
+          <span className="transition group-hover:text-primary">
             {title}
-          </Link>
-          <ExternalLink aria-hidden className="mt-1 h-3.5 w-3.5 shrink-0 text-primary" />
+          </span>
+          <ExternalLink
+            aria-hidden
+            className="mt-1 h-3.5 w-3.5 shrink-0 text-primary transition group-hover:translate-x-0.5"
+          />
         </h2>
         {summary ? (
           <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{summary}</p>
@@ -292,16 +308,37 @@ function ProgramTableRow({ program }: { program: ResearchGenericRecord }) {
       </div>
       <div className="hidden text-sm text-slate-600 lg:block">{center || "-"}</div>
       <div className="hidden text-sm text-slate-600 lg:block">{timeline || "-"}</div>
-      <div className="flex justify-start lg:justify-end">
-        <Link
-          href={href}
-          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-primary/30 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary hover:text-white"
-        >
-          Open
-          <ArrowRight aria-hidden className="h-4 w-4" />
-        </Link>
+    </Link>
+  );
+}
+
+function ProgramQuickLinks() {
+  return (
+    <aside className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm xl:sticky xl:top-24">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
+        Quick links
+      </p>
+      <div className="mt-3 divide-y divide-slate-200">
+        {quickLinks.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className="group flex items-start justify-between gap-4 py-3 text-sm transition first:pt-0 last:pb-0"
+          >
+            <span>
+              <span className="block font-semibold text-primary group-hover:text-secondary">
+                {link.label}
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-slate-500">{link.body}</span>
+            </span>
+            <ArrowRight
+              aria-hidden
+              className="mt-1 h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-1 group-hover:text-secondary"
+            />
+          </Link>
+        ))}
       </div>
-    </article>
+    </aside>
   );
 }
 
