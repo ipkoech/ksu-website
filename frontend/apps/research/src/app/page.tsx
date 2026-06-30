@@ -5,18 +5,13 @@ import {
   ArrowRight,
   Award,
   BookOpen,
-  Building2,
-  CalendarDays,
   FileText,
   FlaskConical,
   GraduationCap,
   Handshake,
   Lightbulb,
-  Mail,
-  Newspaper,
   Search,
   Sprout,
-  Target,
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -45,19 +40,19 @@ const heroActions = [
 ];
 
 const quickLinks = [
-  { label: "Projects", href: "/projects", icon: FlaskConical },
-  { label: "Publications", href: "/publications", icon: BookOpen },
-  { label: "Centers", href: "/centers", icon: Building2 },
-  { label: "Facilities", href: "/facilities", icon: Target },
-  { label: "Expertise", href: "/expertise", icon: Users },
-  { label: "Funding", href: "/funding", icon: Award },
-  { label: "Innovations", href: "/innovations", icon: Lightbulb },
-  { label: "Partners", href: "/partners", icon: Handshake },
-  { label: "News", href: "/news", icon: Newspaper },
-  { label: "Events", href: "/events", icon: CalendarDays },
-  { label: "Articles", href: "/news", icon: FileText },
-  { label: "Resources", href: "/resources-tools", icon: BookOpen },
-  { label: "Contact", href: "/connect", icon: Mail },
+  { label: "Projects", href: "/projects" },
+  { label: "Publications", href: "/publications" },
+  { label: "Centers", href: "/centers" },
+  { label: "Facilities", href: "/facilities" },
+  { label: "Expertise", href: "/expertise" },
+  { label: "Funding", href: "/funding" },
+  { label: "Innovations", href: "/innovations" },
+  { label: "Partners", href: "/partners" },
+  { label: "News", href: "/news" },
+  { label: "Events", href: "/events" },
+  { label: "Articles", href: "/news" },
+  { label: "Resources", href: "/resources-tools" },
+  { label: "Contact", href: "/connect" },
 ];
 
 const pillars = [
@@ -145,8 +140,7 @@ export default async function ResearchPage() {
   return (
     <main id="research-main" className="min-h-screen bg-white text-slate-950">
       <ResearchLandingHero />
-      <QuickLinkBand />
-      <StatsBand
+      <PortfolioQuickAccessSection
         projects={statsMap.research_projects || projects.total || projects.data.length}
         publications={statsMap.publications || publications.total || publications.data.length}
         partners={statsMap.partner_count || partners.total || partners.data.length}
@@ -184,14 +178,24 @@ export default async function ResearchPage() {
 
 function ResearchLandingHero() {
   return (
-    <section className="relative isolate overflow-hidden border-b border-slate-200 bg-white">
-      <div className="mx-auto grid min-h-[680px] max-w-[1920px] lg:grid-cols-[minmax(0,0.9fr)_minmax(560px,1.1fr)]">
-        <div className="flex min-h-[560px] flex-col justify-center px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <section className="relative isolate min-h-[640px] overflow-hidden border-b border-slate-200 bg-slate-950">
+      <Image
+        src="/images/research/research-hero-imagegen.webp"
+        alt="Kisii University researchers collaborating across laboratory, field, data, and community research"
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover"
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.94)_0%,rgba(255,255,255,0.84)_30%,rgba(255,255,255,0.32)_58%,rgba(255,255,255,0.08)_100%)]" />
+      <div className="absolute inset-y-0 left-0 w-full bg-[radial-gradient(circle_at_18%_48%,rgba(255,255,255,0.62)_0%,rgba(255,255,255,0)_38%)]" />
+      <div className="relative mx-auto flex min-h-[640px] max-w-[1920px] items-center px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="max-w-4xl">
           <ScrollReveal>
             <p className="text-sm font-semibold text-primary">
               Kisii University Research Portal
             </p>
-            <h1 className="mt-5 max-w-4xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.04] text-slate-950 sm:text-5xl xl:text-6xl">
+            <h1 className="mt-5 max-w-4xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.04] text-slate-950 sm:text-5xl xl:text-6xl 2xl:text-7xl">
               Research, Extension, Innovation and Resource Mobilization
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-8 text-slate-700 sm:text-lg">
@@ -215,50 +219,12 @@ function ResearchLandingHero() {
             </div>
           </ScrollReveal>
         </div>
-
-        <div className="relative min-h-[440px] overflow-hidden bg-slate-100 lg:min-h-[680px]">
-          <Image
-            src="/images/research/research-hero-imagegen.webp"
-            alt="Kisii University researchers collaborating across laboratory, field, data, and community research"
-            fill
-            priority
-            sizes="(min-width: 1024px) 58vw, 100vw"
-            className="object-cover"
-          />
-          <div className="absolute inset-y-0 left-0 hidden w-32 bg-gradient-to-r from-white to-transparent lg:block" />
-          <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/30 to-transparent" />
-        </div>
       </div>
     </section>
   );
 }
 
-function QuickLinkBand() {
-  return (
-    <section className="border-b border-slate-200 bg-white px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <nav
-        aria-label="Research quick links"
-        className="mx-auto grid max-w-[1680px] grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-[repeat(13,minmax(0,1fr))]"
-      >
-        {quickLinks.map((link) => {
-          const Icon = link.icon;
-          return (
-            <Link
-              key={link.href + link.label}
-              href={link.href}
-              className="group flex min-h-20 flex-col items-center justify-center rounded-md border border-slate-200 bg-white px-3 py-3 text-center text-xs font-semibold text-slate-700 transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
-            >
-              <Icon aria-hidden className="mb-2 h-5 w-5 text-primary" />
-              {link.label}
-            </Link>
-          );
-        })}
-      </nav>
-    </section>
-  );
-}
-
-function StatsBand({
+function PortfolioQuickAccessSection({
   projects,
   publications,
   partners,
@@ -280,19 +246,21 @@ function StatsBand({
   ];
 
   return (
-    <ScrollReveal as="section" className="border-b border-slate-200 bg-slate-50 px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto max-w-[1680px]">
-        <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-stretch">
-          <div className="rounded-lg border border-slate-200 bg-white p-5">
-            <SectionKicker>Research portfolio</SectionKicker>
-            <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
-              At a glance
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
+    <ScrollReveal as="section" className="border-b border-slate-200 bg-[linear-gradient(180deg,#f4f8f6_0%,#ffffff_100%)] px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto grid max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.55fr)]">
+        <article className="rounded-lg border border-primary/15 bg-white p-5 shadow-sm lg:p-6">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+              <SectionKicker>Research portfolio</SectionKicker>
+              <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
+                At a glance
+              </h2>
+            </div>
+            <p className="max-w-md text-sm leading-6 text-slate-600">
               Live counts from published research records.
             </p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <ScrollRevealGroup className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5" staggerDelay={55}>
             {metrics.map((metric) => {
               const Icon = metric.icon;
               return (
@@ -315,8 +283,23 @@ function StatsBand({
                 </Link>
               );
             })}
-          </div>
-        </div>
+          </ScrollRevealGroup>
+        </article>
+        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
+          <SectionKicker>Quick links</SectionKicker>
+          <nav aria-label="Research quick links" className="mt-4 divide-y divide-slate-200">
+            {quickLinks.map((link) => (
+              <Link
+                key={link.href + link.label}
+                href={link.href}
+                className="group flex items-center justify-between gap-4 py-3 text-sm font-semibold text-slate-700 transition first:pt-0 last:pb-0 hover:text-primary"
+              >
+                <span>{link.label}</span>
+                <ArrowRight aria-hidden className="h-4 w-4 text-slate-300 transition group-hover:translate-x-1 group-hover:text-primary" />
+              </Link>
+            ))}
+          </nav>
+        </article>
       </div>
     </ScrollReveal>
   );
@@ -396,7 +379,7 @@ function AboutResearchSection({ headProfile }: { headProfile: ResearchHeadProfil
 
 function PillarsSection() {
   return (
-    <ScrollReveal as="section" className="border-y border-slate-200 bg-slate-50 px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <ScrollReveal as="section" className="border-y border-primary/10 bg-[linear-gradient(180deg,#eef7f2_0%,#f8fafc_100%)] px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
         <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
           <div className="max-w-3xl">
@@ -419,7 +402,7 @@ function PillarsSection() {
 
 function FeaturedWorkSection({ items }: { items: FeaturedWorkItem[] }) {
   return (
-    <ScrollReveal as="section" className="bg-white px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <ScrollReveal as="section" className="bg-white px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
         <SectionHeader
           eyebrow="Featured research work"
@@ -446,7 +429,7 @@ function NewsEventsArticlesSection({ items }: { items: NewsItem[] }) {
   const compact = rest.slice(2, 5);
 
   return (
-    <ScrollReveal as="section" className="border-y border-slate-200 bg-[linear-gradient(180deg,#f8fafc_0%,#ffffff_100%)] px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <ScrollReveal as="section" className="border-y border-slate-200 bg-[linear-gradient(180deg,#f6f8fc_0%,#ffffff_48%,#f4f8f6_100%)] px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
         <SectionHeader
           eyebrow="News, events & articles"
@@ -479,7 +462,7 @@ function NewsEventsArticlesSection({ items }: { items: NewsItem[] }) {
 
 function DirectorySection({ items }: { items: DirectoryItem[] }) {
   return (
-    <ScrollReveal as="section" className="bg-white px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <ScrollReveal as="section" className="bg-white px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
         <SectionHeader
           eyebrow="Centers, facilities & expertise"
@@ -554,7 +537,7 @@ function PartnersImpactSection({
   const metrics = impactMetrics.slice(0, 4);
 
   return (
-    <ScrollReveal as="section" className="overflow-hidden border-y border-slate-200 bg-slate-50 px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <ScrollReveal as="section" className="overflow-hidden border-y border-primary/10 bg-[linear-gradient(180deg,#eef7f2_0%,#f8fafc_100%)] px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
         <SectionHeader
           eyebrow="Partners & public impact"
@@ -632,7 +615,7 @@ function PartnersImpactSection({
 
 function FundingResourcesSection({ items }: { items: SupportItem[] }) {
   return (
-    <ScrollReveal as="section" className="bg-white px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <ScrollReveal as="section" className="bg-white px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
         <SectionHeader
           eyebrow="Funding, training & resources"
