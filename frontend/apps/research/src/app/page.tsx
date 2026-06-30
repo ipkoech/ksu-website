@@ -158,11 +158,11 @@ export default async function ResearchPage() {
       <FeaturedWorkSection items={featuredWork} />
       <DirectorySection items={directoryItems} />
       <PartnersImpactSection
-        partners={partnerItems}
         impactMetrics={impactMetrics.data}
         story={story}
       />
       <NewsEventsArticlesSection items={newsItems} />
+      <ResearchPartnersSection partners={partnerItems} />
       <FundingResourcesSection items={supportItems} />
       <ResearchConversationSection />
     </main>
@@ -470,7 +470,33 @@ function NewsEventsArticlesSection({ items }: { items: NewsItem[] }) {
     return null;
   }
 
-  const latest = items.slice(0, 5);
+  const groups = [
+    {
+      kind: "Event" as const,
+      eyebrow: "Events",
+      title: "Research events",
+      href: "/events",
+      items: items.filter((item) => item.kind === "Event").slice(0, 3),
+    },
+    {
+      kind: "Article" as const,
+      eyebrow: "Blogs",
+      title: "Ideas & articles",
+      href: "/news",
+      items: items.filter((item) => item.kind === "Article").slice(0, 3),
+    },
+    {
+      kind: "News" as const,
+      eyebrow: "News",
+      title: "Latest news",
+      href: "/news",
+      items: items.filter((item) => item.kind === "News").slice(0, 3),
+    },
+  ].filter((group) => group.items.length > 0);
+
+  if (groups.length === 0) {
+    return null;
+  }
 
   return (
     <ScrollReveal as="section" className="research-surface-grid relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
@@ -491,13 +517,54 @@ function NewsEventsArticlesSection({ items }: { items: NewsItem[] }) {
             <ArrowRight aria-hidden className="h-4 w-4" />
           </Link>
         </div>
-        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          {latest.map((item) => (
-            <EditorialUpdateCard key={`${item.kind}-${item.id}`} item={item} />
+        <div className={`mt-5 grid gap-3 ${groups.length === 1 ? "lg:grid-cols-1" : groups.length === 2 ? "lg:grid-cols-2" : "lg:grid-cols-3"}`}>
+          {groups.map((group) => (
+            <UpdateGroupCard key={group.kind} group={group} wide={groups.length === 1} />
           ))}
         </div>
       </div>
     </ScrollReveal>
+  );
+}
+
+function UpdateGroupCard({
+  group,
+  wide = false,
+}: {
+  group: {
+    kind: NewsItem["kind"];
+    eyebrow: string;
+    title: string;
+    href: string;
+    items: NewsItem[];
+  };
+  wide?: boolean;
+}) {
+  return (
+    <section className="rounded-md border border-slate-200 bg-slate-50 p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
+            {group.eyebrow}
+          </p>
+          <h3 className="mt-1 font-[family-name:var(--font-display)] text-lg font-semibold leading-6 text-slate-950">
+            {group.title}
+          </h3>
+        </div>
+        <Link
+          href={group.href}
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/20 text-primary transition hover:border-primary hover:bg-primary/5"
+          aria-label={`View all ${group.eyebrow.toLowerCase()}`}
+        >
+          <ArrowRight aria-hidden className="h-4 w-4" />
+        </Link>
+      </div>
+      <div className={`mt-3 grid gap-2 ${wide ? "md:grid-cols-2 xl:grid-cols-3" : ""}`}>
+        {group.items.map((item) => (
+          <EditorialUpdateCard key={`${item.kind}-${item.id}`} item={item} compact />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -565,11 +632,9 @@ function DirectorySection({ items }: { items: DirectoryItem[] }) {
 }
 
 function PartnersImpactSection({
-  partners,
   impactMetrics,
   story,
 }: {
-  partners: ResearchGenericRecord[];
   impactMetrics: ResearchGenericRecord[];
   story?: ResearchGenericRecord;
 }) {
@@ -642,14 +707,34 @@ function PartnersImpactSection({
             <ArrowRight aria-hidden className="h-5 w-5" />
           </Link>
         </div>
-        {partners.length > 0 ? (
-          <div className="research-marquee-frame relative mt-8 overflow-hidden rounded-lg border border-slate-200 bg-white py-5">
-            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-white to-transparent" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-white to-transparent" />
-            <PartnerMarquee partners={partners} />
-            <PartnerMarquee partners={[...partners].reverse()} reverse />
+      </div>
+    </ScrollReveal>
+  );
+}
+
+function ResearchPartnersSection({ partners }: { partners: ResearchGenericRecord[] }) {
+  if (partners.length === 0) {
+    return null;
+  }
+
+  return (
+    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
+      <div className="relative mx-auto max-w-[1680px] rounded-lg border border-slate-200 bg-white py-5 shadow-[0_14px_50px_rgba(15,23,42,0.05)]">
+        <div className="flex flex-col justify-between gap-3 px-4 sm:flex-row sm:items-end sm:px-6 lg:px-8">
+          <div>
+            <SectionKicker>Partners</SectionKicker>
+            <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
+              Collaboration network.
+            </h2>
           </div>
-        ) : null}
+          <TextLink href="/partners">View all partners</TextLink>
+        </div>
+        <div className="research-marquee-frame relative mt-5 overflow-hidden border-y border-slate-100 bg-white py-4">
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-white to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-white to-transparent" />
+          <PartnerMarquee partners={partners} />
+          <PartnerMarquee partners={[...partners].reverse()} reverse />
+        </div>
       </div>
     </ScrollReveal>
   );
@@ -770,31 +855,51 @@ function FeaturedWorkCard({ item }: { item: FeaturedWorkItem }) {
   );
 }
 
-function EditorialUpdateCard({ item }: { item: NewsItem }) {
+function EditorialUpdateCard({
+  item,
+  compact = false,
+}: {
+  item: NewsItem;
+  compact?: boolean;
+}) {
+  const label = item.kind === "Article" ? "Blog" : item.kind;
+  const tone =
+    item.kind === "Event"
+      ? "border-secondary/20 bg-secondary/5"
+      : item.kind === "Article"
+        ? "border-primary/20 bg-primary/5"
+        : "border-slate-200 bg-slate-50";
+
   return (
     <Link
       href={item.href}
-      className="group grid min-h-[92px] gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 transition hover:border-primary/30 hover:bg-white hover:shadow-sm sm:min-h-[118px] sm:grid-cols-[92px_minmax(0,1fr)] xl:block xl:min-h-[190px]"
+      className={`group grid gap-3 rounded-md border p-3 transition hover:border-primary/30 hover:bg-white hover:shadow-sm ${
+        compact
+          ? `min-h-[88px] ${tone}`
+          : "min-h-[92px] border-slate-200 bg-slate-50 sm:min-h-[118px] sm:grid-cols-[92px_minmax(0,1fr)] xl:block xl:min-h-[190px]"
+      }`}
     >
-      <div className="research-image-fallback relative hidden min-h-24 overflow-hidden rounded-md sm:block xl:aspect-[16/7] xl:min-h-0">
-        <Image
-          src={item.image}
-          alt=""
-          fill
-          sizes="(min-width: 1280px) 18vw, 92px"
-          className="object-cover"
-        />
-      </div>
+      {!compact ? (
+        <div className="research-image-fallback relative hidden min-h-24 overflow-hidden rounded-md sm:block xl:aspect-[16/7] xl:min-h-0">
+          <Image
+            src={item.image}
+            alt=""
+            fill
+            sizes="(min-width: 1280px) 18vw, 92px"
+            className="object-cover"
+          />
+        </div>
+      ) : null}
       <div className="min-w-0 xl:mt-3">
         <div className="flex flex-wrap gap-1.5">
-          <Badge>{item.kind}</Badge>
+          <Badge>{label}</Badge>
           {item.date ? <Badge>{item.date}</Badge> : null}
         </div>
         <h3 className="mt-2 line-clamp-2 font-[family-name:var(--font-display)] text-base font-semibold leading-5 text-slate-950">
           {item.title}
         </h3>
         <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary">
-          {item.kind === "Event" ? "View event" : "Read article"}
+          {item.kind === "Event" ? "View event" : item.kind === "Article" ? "Read blog" : "Read news"}
           <ArrowRight aria-hidden className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
         </span>
       </div>
