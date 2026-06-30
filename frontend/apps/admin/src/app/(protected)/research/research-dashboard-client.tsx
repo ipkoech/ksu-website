@@ -24,7 +24,6 @@ import {
   BarChart3,
   CalendarDays,
   CheckCircle2,
-  ExternalLink,
   FlaskConical,
   HandCoins,
   Leaf,
@@ -205,7 +204,6 @@ export function ResearchDashboardClient() {
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="min-w-0 space-y-6">
             <KpiStrip kpis={data?.kpis} loading={analytics.isLoading} />
-            <AttentionStrip items={data?.attention} loading={analytics.isLoading} />
 
             <Card>
               <CardHeader className="pb-3">
@@ -241,22 +239,7 @@ export function ResearchDashboardClient() {
           <div className="flex min-w-0 flex-col gap-6">
             <ResearchSectionGuide title="Research Dashboard" />
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Public research portal</CardTitle>
-                <CardDescription>
-                  Manage what visitors see on the research website.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full justify-between" asChild>
-                  <Link href={researchFrontendHref} target="_blank" rel="noopener noreferrer">
-                    Visit research site
-                    <ExternalLink className="size-3" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+            <AttentionStrip items={data?.attention} loading={analytics.isLoading} compact />
 
             <RecentActivity loading={auditLogs.isLoading} items={recentItems} />
           </div>
@@ -290,25 +273,35 @@ function KpiStrip({ kpis, loading }: { kpis?: ResearchAnalyticsKpi[]; loading: b
   );
 }
 
-function AttentionStrip({ items, loading }: { items?: ResearchAnalyticsAttentionItem[]; loading: boolean }) {
+function AttentionStrip({
+  items,
+  loading,
+  compact = false,
+}: {
+  items?: ResearchAnalyticsAttentionItem[];
+  loading: boolean;
+  compact?: boolean;
+}) {
+  const gridClassName = compact ? "grid gap-2" : "grid gap-2 md:grid-cols-5";
+
   return (
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <AlertTriangle className="size-4 text-amber-600" />
-          <CardTitle className="text-base">Attention needed</CardTitle>
+          <CardTitle className={compact ? "text-sm" : "text-base"}>Attention needed</CardTitle>
         </div>
         <CardDescription>Operational queues and data-quality risks to review first.</CardDescription>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="grid gap-2 md:grid-cols-5">
+          <div className={gridClassName}>
             {Array.from({ length: 5 }).map((_, index) => (
-              <div key={index} className="h-20 rounded-lg bg-muted" />
+              <div key={index} className={cn("rounded-lg bg-muted", compact ? "h-16" : "h-20")} />
             ))}
           </div>
         ) : (
-          <div className="grid gap-2 md:grid-cols-5">
+          <div className={gridClassName}>
             {(items ?? []).map((item) => (
               <Link
                 key={item.key}
@@ -321,7 +314,9 @@ function AttentionStrip({ items, loading }: { items?: ResearchAnalyticsAttention
               >
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-xs font-medium">{item.label}</p>
-                  <p className="text-lg font-semibold">{formatMetric(item.value)}</p>
+                  <p className={cn("font-semibold", compact ? "text-base" : "text-lg")}>
+                    {formatMetric(item.value)}
+                  </p>
                 </div>
                 <p className="mt-1 line-clamp-2 text-xs leading-5 opacity-75">{item.description}</p>
               </Link>
