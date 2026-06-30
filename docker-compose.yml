@@ -53,16 +53,16 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: ksu
-      POSTGRES_USER: ksu
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-local-postgres-password}
+      POSTGRES_DB: ${POSTGRES_DB:-ksu_services_db}
+      POSTGRES_USER: ${POSTGRES_USER:-ksu_service_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-schemas.sql:/docker-entrypoint-initdb.d/init-schemas.sql:ro
     networks: [ksu]
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ksu -d ksu"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ksu_service_user} -d ${POSTGRES_DB:-ksu_services_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -91,7 +91,7 @@ services:
       - "${MAIN_SERVICE_PORT:-8000}:8000"
     env_file: ./services/main/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://ksu:${POSTGRES_PASSWORD:-change-me-local-postgres-password}@postgres:5432/ksu
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
@@ -124,7 +124,7 @@ services:
       - "${RESEARCH_SERVICE_PORT:-8001}:8001"
     env_file: ./services/research/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://ksu:${POSTGRES_PASSWORD:-change-me-local-postgres-password}@postgres:5432/ksu
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/2
       MAIN_SERVICE_URL: http://main:8000
       REFERENCE_VALIDATION_MODE: strict
@@ -161,7 +161,7 @@ services:
       - "${LIBRARY_SERVICE_PORT:-8002}:8002"
     env_file: ./services/library/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://ksu:${POSTGRES_PASSWORD:-change-me-local-postgres-password}@postgres:5432/ksu
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/1
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/1
@@ -196,7 +196,7 @@ services:
     command: ./scripts/start-celery-worker.sh
     env_file: ./services/main/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://ksu:${POSTGRES_PASSWORD:-change-me-local-postgres-password}@postgres:5432/ksu
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
@@ -219,7 +219,7 @@ services:
     command: ./scripts/start-celery-worker.sh
     env_file: ./services/library/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://ksu:${POSTGRES_PASSWORD:-change-me-local-postgres-password}@postgres:5432/ksu
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/1
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/1
