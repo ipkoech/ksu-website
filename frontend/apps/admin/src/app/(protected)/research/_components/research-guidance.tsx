@@ -9,15 +9,15 @@ import {
   Info,
   ListChecks,
   Sparkles,
-  X,
 } from "lucide-react";
 import {
   Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   Sheet,
   SheetContent,
   SheetDescription,
@@ -485,26 +485,21 @@ export function ResearchFirstLoginTour({
   if (!visible) return null;
 
   return (
-    <Card className={cn("border-primary/25 bg-primary/5 shadow-sm", className)}>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex gap-3">
+    <Dialog open={visible} onOpenChange={(nextOpen) => !nextOpen && dismiss()}>
+      <DialogContent className={cn("max-h-[85vh] overflow-y-auto sm:max-w-2xl", className)}>
+        <DialogHeader>
+          <div className="flex items-start gap-3 pr-8">
             <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <Sparkles className="size-4" />
             </div>
-            <div>
-              <CardTitle className="text-base">Start here</CardTitle>
-              <CardDescription>
+            <div className="min-w-0">
+              <DialogTitle>Start here</DialogTitle>
+              <DialogDescription>
                 Review drafts, publish updates, and preview the public portal.
-              </CardDescription>
+              </DialogDescription>
             </div>
           </div>
-          <Button type="button" variant="ghost" size="icon" aria-label="Skip research guide" onClick={dismiss}>
-            <X className="size-4" />
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+        </DialogHeader>
         <ol className="grid gap-2 sm:grid-cols-2">
           {researchFirstLoginTour.map((step, index) => (
             <li key={step} className="flex gap-2 rounded-md border bg-background/80 p-3 text-sm">
@@ -515,17 +510,17 @@ export function ResearchFirstLoginTour({
             </li>
           ))}
         </ol>
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" size="sm" onClick={dismiss}>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={dismiss}>
+            Skip
+          </Button>
+          <Button type="button" onClick={dismiss}>
             Next
             <ArrowRight className="ml-2 size-4" />
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={dismiss}>
-            Skip
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

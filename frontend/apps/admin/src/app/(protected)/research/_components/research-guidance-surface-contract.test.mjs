@@ -15,6 +15,12 @@ assert(
   "research guides should render through a compact reusable info trigger",
 );
 assert(
+  source.includes("<Dialog open={visible} onOpenChange={(nextOpen) => !nextOpen && dismiss()}>") &&
+    source.includes("<DialogContent") &&
+    !source.includes("<Card className={cn(\"border-primary/25 bg-primary/5 shadow-sm\", className)}>"),
+  "first-login tour should render as a dialog instead of an inline dashboard card",
+);
+assert(
   source.includes("<TooltipProvider") &&
     source.includes("<TooltipTrigger asChild>") &&
     source.includes("<TooltipContent"),
