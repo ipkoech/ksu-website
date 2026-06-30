@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Download, Upload } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Activity, Download, Upload } from "lucide-react";
 import {
   EditableServiceResourcePage,
   type EditableField,
@@ -10,7 +11,7 @@ import {
   type EditableRecordWorkflowAction,
 } from "@/components/dashboard/editable-service-resource-page";
 import { Button } from "@ksu/ui/components";
-import { importsApi, researchServiceApi, type ResearchGenericPayload, type ResearchGenericRecord } from "@ksu/api-client";
+import { auditLogsApi, importsApi, researchServiceApi, type ResearchGenericPayload, type ResearchGenericRecord } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -51,6 +52,8 @@ interface ResearchResourcePageProps {
   ) => Array<EditableRecordWorkflowAction<ResearchGenericRecord, ResearchGenericPayload>>;
   importResource?: string;
   exportResource?: string;
+  auditServiceName?: string;
+  auditResourceType?: string;
   editorMode?: "dialog" | "sheet" | "auto";
   renderMobileRecord?: (record: ResearchGenericRecord, actions: ReactNode) => ReactNode;
   buildPayload?: (
@@ -122,6 +125,33 @@ function recordMeta(record: ResearchGenericRecord, fields: string[]) {
     .concat(record.is_active === false ? ["Inactive"] : [])
     .filter(Boolean)
     .join(" · ");
+}
+
+function formatAuditLabel(value: unknown) {
+  if (value === null || value === undefined || value === "") return "";
+  return String(value).replace(/[_-]/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatAuditDate(value: unknown) {
+  if (typeof value !== "string" || !value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString();
+}
+
+function deriveAuditResourceType({
+  auditResourceType,
+  importResource,
+  exportResource,
+  queryKey,
+}: {
+  auditResourceType?: string;
+  importResource?: string;
+  exportResource?: string;
+  queryKey: readonly unknown[];
+}) {
+  const queryResource = [...queryKey].reverse().find((part) => typeof part === "string");
+  return auditResourceType ?? importResource ?? exportResource ?? (typeof queryResource === "string" ? queryResource : undefined);
 }
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -208,6 +238,61 @@ export function ResearchBulkActions({
   );
 }
 
+export function ResearchResourceAuditPreview({
+  serviceName,
+  resourceType,
+}: {
+  serviceName: string;
+  resourceType?: string;
+}) {
+  const auditQuery = useQuery({
+    queryKey: ["research", "resource", "audit-preview", serviceName, resourceType],
+    queryFn: () =>
+      auditLogsApi.list({
+        service_name: serviceName,
+        resource_type: resourceType,
+        per_page: 3,
+      }),
+    enabled: Boolean(resourceType),
+  });
+  const logs = auditQuery.data?.data ?? [];
+
+  return (
+    <section className="rounded-lg border bg-background p-3">
+      <div className="flex items-center gap-2 text-sm font-medium">
+        <Activity className="h-4 w-4 text-muted-foreground" />
+        Audit Preview
+      </div>
+      <div className="mt-3 space-y-2">
+        {!resourceType ? (
+          <p className="text-sm text-muted-foreground">Audit preview needs a backend resource type.</p>
+        ) : auditQuery.isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading recent audit entries...</p>
+        ) : auditQuery.isError ? (
+          <p className="text-sm text-muted-foreground">Audit entries are not available for this resource.</p>
+        ) : logs.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No recent audit entries were returned.</p>
+        ) : (
+          logs.map((log: any) => (
+            <div key={log.id} className="rounded-md border px-3 py-2 text-sm">
+              <p className="font-medium">{formatAuditLabel(log.action ?? "activity")}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {[
+                  formatAuditLabel(log.service_name ?? serviceName),
+                  formatAuditLabel(log.resource_type ?? resourceType),
+                  formatAuditDate(log.created_at ?? log.happened_at),
+                ]
+                  .filter(Boolean)
+                  .join(" - ")}
+              </p>
+            </div>
+          ))
+        )}
+      </div>
+    </section>
+  );
+}
+
 async function waitForExportJob(jobId: string) {
   for (let attempt = 0; attempt < 180; attempt += 1) {
     const response = await researchServiceApi.getExportJob(jobId);
@@ -268,6 +353,8 @@ export function ResearchResourcePage({
   getRecordWorkflowActions,
   importResource,
   exportResource,
+  auditServiceName = "research",
+  auditResourceType,
   editorMode = "auto",
   renderMobileRecord,
   buildPayload,
@@ -276,9 +363,19 @@ export function ResearchResourcePage({
   const canManage = manageScopes.some((scope) => hasScope(scope));
   const resolvedListFilters = listFilters ?? deriveListFilters(fields);
   const guidance = getResearchGuidance(title);
+  const resolvedAuditResourceType = deriveAuditResourceType({
+    auditResourceType,
+    importResource,
+    exportResource,
+    queryKey,
+  });
   const resolvedSummarySlot = (
     <div className="space-y-4">
       <ResearchSectionGuide title={title} />
+      <ResearchResourceAuditPreview
+        serviceName={auditServiceName}
+        resourceType={resolvedAuditResourceType}
+      />
       {summarySlot}
     </div>
   );
