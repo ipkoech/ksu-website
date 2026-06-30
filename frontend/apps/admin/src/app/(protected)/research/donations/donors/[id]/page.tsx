@@ -1,6 +1,6 @@
 "use client";
 
-import { researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
+import { researchApi, researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchAdminDetailPage, ResearchDetailRelationshipTabs } from "../../../_components/research-admin-detail-page";
 import { RelatedRecordsCard, RelatedRecordsGrid } from "../../../_components/research-detail-relationships";
 
@@ -67,8 +67,8 @@ function DonorRelations({ donor }: { donor: ResearchGenericRecord }) {
               <RelatedRecordsCard
                 title="Impact Records"
                 queryKey={["research", "donors", donorId, "impact-records"]}
-                queryFn={() => researchServiceApi.donationImpacts.list({ page: 1, per_page: 8, search: String(donor.display_name ?? donor.organization_name ?? "") })}
-                emptyLabel="No impact records matched this donor name. The backend does not expose a direct donor_id on impact records."
+                queryFn={() => donorImpactRecords(donorId)}
+                emptyLabel="No impact records match this donor's completed donation source bindings."
                 metaFields={["impact_type", "reporting_year", "status"]}
               />
             </RelatedRecordsGrid>
@@ -77,4 +77,8 @@ function DonorRelations({ donor }: { donor: ResearchGenericRecord }) {
       ]}
     />
   );
+}
+
+function donorImpactRecords(donorId: string) {
+  return researchApi.get<{ data: ResearchGenericRecord[] }>(`/api/v1/donors/id/${donorId}/impacts`);
 }

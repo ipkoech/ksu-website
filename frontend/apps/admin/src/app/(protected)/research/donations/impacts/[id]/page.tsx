@@ -1,6 +1,6 @@
 "use client";
 
-import { researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
+import { researchApi, researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchAdminDetailPage, ResearchDetailRelationshipTabs } from "../../../_components/research-admin-detail-page";
 import { RelatedRecordsCard, RelatedRecordsGrid } from "../../../_components/research-detail-relationships";
 
@@ -33,6 +33,7 @@ export default function DonationImpactDetailPage() {
 }
 
 function DonationImpactRelations({ impact }: { impact: ResearchGenericRecord }) {
+  const impactId = String(impact.id);
   const sourceFilters = {
     project_id: impact.project_id ? String(impact.project_id) : undefined,
     center_id: impact.center_id ? String(impact.center_id) : undefined,
@@ -51,8 +52,8 @@ function DonationImpactRelations({ impact }: { impact: ResearchGenericRecord }) 
           content: hasSource ? (
             <RelatedRecordsCard
               title="Donations With Matching Source"
-              queryKey={["research", "donation-impacts", impact.id, "donations", sourceFilters]}
-              queryFn={() => researchServiceApi.donations.list({ page: 1, per_page: 12, ...sourceFilters })}
+              queryKey={["research", "donation-impacts", impactId, "donations"]}
+              queryFn={() => impactDonationRecords(impactId)}
               emptyLabel="No donations matched this impact record's project, center, scholarship, or fund."
               metaFields={["amount", "currency", "status", "donation_date"]}
             />
@@ -90,4 +91,8 @@ function DonationImpactRelations({ impact }: { impact: ResearchGenericRecord }) 
       ]}
     />
   );
+}
+
+function impactDonationRecords(impactId: string) {
+  return researchApi.get<{ data: ResearchGenericRecord[] }>(`/api/v1/donation-impacts/id/${impactId}/donations`);
 }

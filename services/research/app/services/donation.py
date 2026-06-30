@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import uuid
 from datetime import date
+from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models import Donation, DonationImpact, DonationSettings, DonationStory, Donor
@@ -14,6 +16,119 @@ DonorService = build_simple_service(Donor, "display_name", "organization_name", 
 DonationSettingsService = build_simple_service(DonationSettings, "key", "setting_type", "description", default_order=("created_at",))
 DonationImpactService = build_simple_service(DonationImpact, "title", "summary", "description", "impact_type")
 DonationStoryService = build_simple_service(DonationStory, "title", "donor_name", "donor_organization", "summary")
+
+
+def _brief(item: Any, *extra_fields: str) -> dict[str, Any]:
+    payload = {
+        "id": item.id,
+        "title": getattr(item, "title", None),
+        "name": getattr(item, "name", None),
+        "slug": getattr(item, "slug", None),
+        "status": getattr(item, "status", None),
+        "created_at": getattr(item, "created_at", None),
+        "updated_at": getattr(item, "updated_at", None),
+    }
+    for field in extra_fields:
+        payload[field] = getattr(item, field, None)
+    return {key: value for key, value in payload.items() if value is not None}
+
+
+async def _related_many(db: AsyncSession, statement, *extra_fields: str) -> list[dict[str, Any]]:
+    result = await db.execute(statement)
+    return [_brief(item, *extra_fields) for item in result.scalars().all()]
+
+
+def _source_conditions(model, source: dict[str, uuid.UUID | None]):
+    conditions = []
+    for field, value in source.items():
+        if value is not None and hasattr(model, field):
+            conditions.append(getattr(model, field) == value)
+    return conditions
+
+
+class DonationRelationshipService:
+    """Read donation relationships backed by source binding fields."""
+
+    @staticmethod
+    async def _ensure_donor(db: AsyncSession, donor_id: uuid.UUID) -> Donor:
+        return await Donor.get_or_raise(db, donor_id, error_message="Donor not found")
+
+    @staticmethod
+    async def _ensure_impact(db: AsyncSession, impact_id: uuid.UUID) -> DonationImpact:
+        return await DonationImpact.get_or_raise(db, impact_id, error_message="Donation impact not found")
+
+    @staticmethod
+    async def list_donor_impacts(db: AsyncSession, donor_id: uuid.UUID) -> list[dict[str, Any]]:
+        await DonationRelationshipService._ensure_donor(db, donor_id)
+        source_result = await db.execute(
+            select(
+                Donation.project_id,
+                Donation.center_id,
+                Donation.scholarship_id,
+                Donation.fund_id,
+            )
+            .where(
+                Donation.deleted_at.is_(None),
+                Donation.donor_id == donor_id,
+                Donation.status == "completed",
+            )
+            .distinct()
+        )
+        conditions = []
+        for project_id, center_id, scholarship_id, fund_id in source_result.all():
+            conditions.extend(
+                _source_conditions(
+                    DonationImpact,
+                    {
+                        "project_id": project_id,
+                        "center_id": center_id,
+                        "scholarship_id": scholarship_id,
+                        "fund_id": fund_id,
+                    },
+                )
+            )
+        if not conditions:
+            return []
+
+        return await _related_many(
+            db,
+            DonationImpact.active_query()
+            .where(or_(*conditions))
+            .order_by(DonationImpact.reporting_year.desc().nullslast(), DonationImpact.created_at.desc()),
+            "impact_type",
+            "reporting_year",
+            "total_raised",
+            "currency",
+        )
+
+    @staticmethod
+    async def list_impact_donations(db: AsyncSession, impact_id: uuid.UUID) -> list[dict[str, Any]]:
+        impact = await DonationRelationshipService._ensure_impact(db, impact_id)
+        conditions = _source_conditions(
+            Donation,
+            {
+                "project_id": impact.project_id,
+                "center_id": impact.center_id,
+                "scholarship_id": impact.scholarship_id,
+                "fund_id": impact.fund_id,
+            },
+        )
+        if not conditions:
+            return []
+
+        return await _related_many(
+            db,
+            Donation.active_query()
+            .where(or_(*conditions))
+            .order_by(Donation.donation_date.desc(), Donation.created_at.desc()),
+            "donor_id",
+            "amount",
+            "currency",
+            "donation_type",
+            "designation",
+            "purpose",
+            "donation_date",
+        )
 
 
 class DonationService(CRUDService):
