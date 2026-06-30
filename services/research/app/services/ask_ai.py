@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 import uuid
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..core.config import get_settings
 from ..models import ResearchAIConversation, ResearchAIMessage
 from ..schemas.ask_ai import (
     ResearchAIConversationRead,
@@ -31,6 +33,91 @@ class SectionAdvisorConfig:
     focus: str
     prompts: tuple[ResearchAskAIPrompt, ...]
     related: tuple[ResearchAskAIReference, ...] = ()
+
+
+class GeminiResearchAIProvider:
+    """Gemini-backed read-only research advisor provider."""
+
+    def __init__(self, api_key: str | None, model: str, timeout_seconds: float = 30.0) -> None:
+        self.api_key = api_key or ""
+        self.model = model
+        self.timeout_seconds = timeout_seconds
+
+    @property
+    def is_configured(self) -> bool:
+        return bool(self.api_key.strip())
+
+    async def generate_markdown(
+        self,
+        *,
+        message: str,
+        context: ResearchAskAIContext,
+        service_exposure: dict,
+    ) -> str | None:
+        if not self.is_configured:
+            return None
+
+        try:
+            from google import genai
+            from google.genai import types
+        except Exception:
+            return None
+
+        prompt = self.build_prompt(message=message, context=context, service_exposure=service_exposure)
+
+        def _generate() -> str | None:
+            client = genai.Client(api_key=self.api_key)
+            response = client.models.generate_content(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.2,
+                    max_output_tokens=1200,
+                    response_mime_type="text/plain",
+                ),
+            )
+            text = getattr(response, "text", None)
+            return text.strip() if isinstance(text, str) and text.strip() else None
+
+        import asyncio
+
+        try:
+            return await asyncio.wait_for(asyncio.to_thread(_generate), timeout=self.timeout_seconds)
+        except Exception:
+            return None
+
+    def build_prompt(
+        self,
+        *,
+        message: str,
+        context: ResearchAskAIContext,
+        service_exposure: dict,
+    ) -> str:
+        compact_exposure = {
+            "mode": service_exposure.get("mode", "read_only"),
+            "section": context.model_dump(mode="json"),
+            "resources": service_exposure.get("resources", [])[:30],
+            "exports": service_exposure.get("exports", [])[:30],
+            "admin_stats": service_exposure.get("admin_stats", [])[:40],
+        }
+        return "\n".join(
+            [
+                "You are the Kisii University Research admin Ask AI assistant.",
+                "You must answer as a read-only advisor. Never claim that you created, updated, deleted, approved, published, imported, exported, or queued anything.",
+                "Use Markdown. Keep the answer practical, section-aware, and grounded in the provided research backend context.",
+                "If the question asks for a write action, refuse that action and suggest a read-only review path.",
+                "",
+                f"Current section: {context.section_label} ({context.section_key})",
+                f"Current path: {context.path}",
+                f"Resource key: {context.resource_key or 'none'}",
+                "",
+                "Research service exposure:",
+                json.dumps(compact_exposure, ensure_ascii=False, default=str),
+                "",
+                "User question:",
+                message.strip(),
+            ]
+        )
 
 
 def _prompt(id: str, label: str, text: str, intent: str) -> ResearchAskAIPrompt:
@@ -187,6 +274,11 @@ class ResearchAskAIService:
     ) -> ResearchAskAIResponse:
         context = ResearchAskAIService.resolve_context(path, section, resource_key, record_id)
         exposure = await ResearchAskAIService.build_service_exposure(db)
+        provider_answer = await ResearchAskAIService._generate_provider_answer(
+            message=message,
+            context=context,
+            service_exposure=exposure,
+        )
         response = ResearchAskAIService.respond(
             message=message,
             path=path,
@@ -194,6 +286,7 @@ class ResearchAskAIService:
             resource_key=resource_key,
             record_id=record_id,
             service_exposure=exposure,
+            provider_answer=provider_answer,
         )
         conversation = await ResearchAskAIService._get_or_create_conversation(
             db,
@@ -221,6 +314,7 @@ class ResearchAskAIService:
             message_metadata={
                 "mode": "read_only",
                 "service_exposure_keys": list(exposure.keys()),
+                "provider": "gemini" if provider_answer else "deterministic",
             },
         )
         db.add_all([user_message, assistant_message])
@@ -265,10 +359,11 @@ class ResearchAskAIService:
         resource_key: str | None,
         record_id: str | None = None,
         service_exposure: dict | None = None,
+        provider_answer: str | None = None,
     ) -> ResearchAskAIResponse:
         context = ResearchAskAIService.resolve_context(path, section, resource_key, record_id)
         exposure = service_exposure or ResearchAskAIService.service_exposure_catalog()
-        answer = "\n".join(
+        answer = provider_answer or "\n".join(
             [
                 f"## {context.section_label} advisor",
                 "",
@@ -296,6 +391,27 @@ class ResearchAskAIService:
             context=context,
             references=context.references,
             suggested_prompts=context.guided_prompts,
+        )
+
+    @staticmethod
+    async def _generate_provider_answer(
+        *,
+        message: str,
+        context: ResearchAskAIContext,
+        service_exposure: dict,
+    ) -> str | None:
+        settings = get_settings()
+        if settings.ASK_AI_PROVIDER != "gemini":
+            return None
+        provider = GeminiResearchAIProvider(
+            api_key=settings.GEMINI_API_KEY or settings.GOOGLE_API_KEY,
+            model=settings.GEMINI_MODEL,
+            timeout_seconds=settings.GEMINI_TIMEOUT_SECONDS,
+        )
+        return await provider.generate_markdown(
+            message=message,
+            context=context,
+            service_exposure=service_exposure,
         )
 
     @staticmethod

@@ -5,7 +5,7 @@ from fastapi.routing import APIRoute
 from app.main import create_app
 from app.models.ask_ai import ResearchAIConversation, ResearchAIMessage
 from app.routes.v1.ask_ai import router as ask_ai_router
-from app.services.ask_ai import ResearchAskAIService
+from app.services.ask_ai import GeminiResearchAIProvider, ResearchAskAIService
 
 
 def _route(router, path: str, method: str) -> APIRoute:
@@ -100,6 +100,25 @@ class ResearchAskAIContractTests(unittest.TestCase):
         self.assertIn("sustainability", keys)
         self.assertGreaterEqual(len(keys), 20)
         self.assertIn("exports", exposure)
+
+    def test_gemini_provider_is_configured_for_markdown_read_only_answers(self):
+        provider = GeminiResearchAIProvider(api_key="test-key", model="gemini-2.5-flash")
+
+        prompt = provider.build_prompt(
+            message="Summarize project risks",
+            context=ResearchAskAIService.resolve_context("/research/projects", "projects", None),
+            service_exposure=ResearchAskAIService.service_exposure_catalog(),
+        )
+
+        self.assertIn("read-only", prompt.lower())
+        self.assertIn("markdown", prompt.lower())
+        self.assertIn("Research service exposure", prompt)
+        self.assertEqual(provider.model, "gemini-2.5-flash")
+
+    def test_gemini_provider_reports_disabled_without_key(self):
+        provider = GeminiResearchAIProvider(api_key="", model="gemini-2.5-flash")
+
+        self.assertFalse(provider.is_configured)
 
 
 if __name__ == "__main__":
