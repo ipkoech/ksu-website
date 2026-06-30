@@ -104,6 +104,7 @@ export type GenericListFilters = {
   serviceType?: string;
   guidelineType?: string;
   centerId?: string;
+  programId?: string;
   projectId?: string;
   partnerId?: string;
   isActive?: boolean;
@@ -118,6 +119,7 @@ export type GenericListFilters = {
 export type RelationshipFilters = {
   projectId?: string;
   centerId?: string;
+  programId?: string;
 };
 
 const PUBLIC_RESEARCH_TIMEOUT_MS = 3000;
@@ -288,6 +290,7 @@ export function getPublicationsFiltered(
       publication_type: filters.publicationType || undefined,
       access_type: filters.accessType || undefined,
       center_id: filters.centerId || undefined,
+      program_id: filters.programId || undefined,
       project_id: filters.projectId || undefined,
       year: parseYear(filters.year),
       sort: filters.sort || undefined,
@@ -737,6 +740,7 @@ export function getRelatedOutputs(filters: RelationshipFilters) {
       fields: researchPublicListFields,
       project_id: filters.projectId || undefined,
       center_id: filters.centerId || undefined,
+      program_id: filters.programId || undefined,
       is_active: true,
       is_public: true,
       page: 1,
