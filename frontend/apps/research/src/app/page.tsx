@@ -42,17 +42,8 @@ const heroActions = [
 const quickLinks = [
   { label: "Projects", href: "/projects" },
   { label: "Publications", href: "/publications" },
-  { label: "Centers", href: "/centers" },
-  { label: "Facilities", href: "/facilities" },
-  { label: "Expertise", href: "/expertise" },
   { label: "Funding", href: "/funding" },
-  { label: "Innovations", href: "/innovations" },
   { label: "Partners", href: "/partners" },
-  { label: "News", href: "/news" },
-  { label: "Events", href: "/events" },
-  { label: "Articles", href: "/news" },
-  { label: "Resources", href: "/resources-tools" },
-  { label: "Contact", href: "/connect" },
 ];
 
 const pillars = [
