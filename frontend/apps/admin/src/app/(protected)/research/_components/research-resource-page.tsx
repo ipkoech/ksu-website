@@ -17,6 +17,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   Input,
@@ -397,7 +398,7 @@ function ResearchImportDialog({
         if (!nextOpen) resetImport();
       }}
     >
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl">
+      <DialogContent className="flex max-h-[90vh] flex-col overflow-hidden sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>{resource ? `Import ${resource.label}` : "Import records"}</DialogTitle>
           <DialogDescription>
@@ -405,7 +406,7 @@ function ResearchImportDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className={isSubmitting ? "pointer-events-none space-y-4 opacity-70" : "space-y-4"}>
+        <div className={isSubmitting ? "pointer-events-none min-h-0 flex-1 space-y-4 overflow-hidden opacity-70" : "min-h-0 flex-1 space-y-4 overflow-hidden"}>
           <div className="grid gap-3 rounded-lg border bg-background p-3 lg:grid-cols-[1fr_auto] lg:items-end">
             <div className="space-y-2">
               <Label htmlFor={`research-import-${resourceKey}`}>CSV or JSON file</Label>
@@ -454,18 +455,9 @@ function ResearchImportDialog({
                     >
                       <Activity className="size-4" />
                     </IconTooltipButton>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={handleCommit}
-                      disabled={stagedRows.length === 0 || issueCount > 0 || isSubmitting}
-                    >
-                      <Play data-icon="inline-start" />
-                      {isSubmitting ? "Submitting..." : `Submit ${stagedRows.length}`}
-                    </Button>
                   </div>
                 </div>
-                <div className="max-h-[52vh] overflow-auto">
+                <div className="overflow-x-auto">
                   <div
                     className="grid min-w-max border-b bg-muted/40 text-xs font-medium uppercase text-muted-foreground"
                     style={{ gridTemplateColumns: `72px repeat(${resource?.columns.length ?? 1}, minmax(180px, 1fr)) 260px` }}
@@ -476,7 +468,7 @@ function ResearchImportDialog({
                     ))}
                     <div className="px-3 py-2">Issues</div>
                   </div>
-                  <div className="divide-y">
+                  <div className="max-h-[48vh] min-w-max divide-y overflow-y-auto">
                     {stagedRows.map((row, rowIndex) => {
                       const issues = rowIssues[rowIndex] ?? [];
                       return (
@@ -543,6 +535,27 @@ function ResearchImportDialog({
             </Alert>
           ) : null}
         </div>
+        <DialogFooter className="border-t pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isSubmitting}
+            onClick={() => {
+              onOpenChange(false);
+              resetImport();
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleCommit}
+            disabled={stagedRows.length === 0 || issueCount > 0 || isSubmitting}
+          >
+            <Play data-icon="inline-start" />
+            {isSubmitting ? "Submitting..." : `Submit ${stagedRows.length || ""}`.trim()}
+          </Button>
+        </DialogFooter>
       </DialogContent>
       <ImportFieldsDialog
         open={fieldsOpen}
