@@ -178,7 +178,7 @@ export default async function ResearchPage() {
 
 function ResearchLandingHero() {
   return (
-    <section className="relative isolate min-h-[640px] overflow-hidden border-b border-slate-200 bg-slate-950">
+    <section className="relative isolate min-h-[680px] overflow-hidden border-b border-slate-200 bg-slate-950">
       <Image
         src="/images/research/research-hero-imagegen.webp"
         alt="Kisii University researchers collaborating across laboratory, field, data, and community research"
@@ -187,12 +187,14 @@ function ResearchLandingHero() {
         sizes="100vw"
         className="object-cover"
       />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.94)_0%,rgba(255,255,255,0.84)_30%,rgba(255,255,255,0.32)_58%,rgba(255,255,255,0.08)_100%)]" />
-      <div className="absolute inset-y-0 left-0 w-full bg-[radial-gradient(circle_at_18%_48%,rgba(255,255,255,0.62)_0%,rgba(255,255,255,0)_38%)]" />
-      <div className="relative mx-auto flex min-h-[640px] max-w-[1920px] items-center px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.88)_0%,rgba(255,255,255,0.74)_32%,rgba(255,255,255,0.22)_62%,rgba(255,255,255,0.04)_100%)]" />
+      <div className="absolute inset-y-0 left-0 w-full bg-[radial-gradient(circle_at_20%_48%,rgba(255,255,255,0.5)_0%,rgba(255,255,255,0)_36%)]" />
+      <ResearchAnimatedBackdrop />
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white via-white/50 to-transparent" />
+      <div className="relative mx-auto flex min-h-[680px] max-w-[1920px] items-center px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="max-w-4xl">
           <ScrollReveal>
-            <p className="text-sm font-semibold text-primary">
+            <p className="inline-flex rounded-full border border-primary/20 bg-white/70 px-3 py-1 text-sm font-semibold text-primary">
               Kisii University Research Portal
             </p>
             <h1 className="mt-5 max-w-4xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.04] text-slate-950 sm:text-5xl xl:text-6xl 2xl:text-7xl">
@@ -224,6 +226,20 @@ function ResearchLandingHero() {
   );
 }
 
+function ResearchAnimatedBackdrop({ dark = false }: { dark?: boolean }) {
+  const tone = dark ? "research-animated-backdrop-dark" : "";
+
+  return (
+    <div aria-hidden className={`research-animated-backdrop ${tone}`}>
+      <span className="research-signal-dot left-[12%] top-[22%]" />
+      <span className="research-signal-dot left-[42%] top-[16%]" style={{ animationDelay: "1.4s" }} />
+      <span className="research-signal-dot right-[18%] top-[34%]" style={{ animationDelay: "2.1s" }} />
+      <span className="research-signal-dot bottom-[22%] left-[32%]" style={{ animationDelay: "3s" }} />
+      <span className="research-signal-dot bottom-[18%] right-[28%]" style={{ animationDelay: "4.2s" }} />
+    </div>
+  );
+}
+
 function PortfolioQuickAccessSection({
   projects,
   publications,
@@ -246,56 +262,66 @@ function PortfolioQuickAccessSection({
   ];
 
   return (
-    <ScrollReveal as="section" className="min-h-[20vh] border-b border-slate-200 bg-[linear-gradient(180deg,#f4f8f6_0%,#ffffff_100%)] px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid min-h-[calc(20vh-4rem)] max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.55fr)] lg:items-center">
-        <article className="rounded-lg border border-primary/15 bg-white p-5 shadow-sm lg:p-6">
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-            <div>
-              <SectionKicker>Research portfolio</SectionKicker>
-              <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
-                At a glance
-              </h2>
+    <ScrollReveal as="section" className="research-surface-grid relative isolate min-h-[20vh] overflow-hidden border-b border-slate-200 bg-[linear-gradient(135deg,#eef7f2_0%,#ffffff_48%,#f6faf8_100%)] px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <ResearchAnimatedBackdrop />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+      <div className="relative mx-auto grid min-h-[calc(20vh-4rem)] max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.55fr)] lg:items-stretch">
+        <article className="research-glass-panel research-border-sheen flex min-h-[calc(20vh-4rem)] flex-col justify-between rounded-lg p-5 lg:p-6">
+          <div>
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+              <div>
+                <SectionKicker>Research portfolio</SectionKicker>
+                <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
+                  At a glance
+                </h2>
+              </div>
+              <p className="max-w-md text-sm leading-6 text-slate-600">
+                Live counts from published research records.
+              </p>
             </div>
-            <p className="max-w-md text-sm leading-6 text-slate-600">
-              Live counts from published research records.
-            </p>
+            <ScrollRevealGroup className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5" staggerDelay={55}>
+              {metrics.map((metric) => {
+                const Icon = metric.icon;
+                return (
+                  <Link
+                    key={metric.label}
+                    href={metric.href}
+                    className="group flex min-h-28 items-center gap-4 rounded-lg border border-white/70 bg-white/80 p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:bg-white hover:shadow-md"
+                  >
+                    <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                      <Icon aria-hidden className="h-5 w-5" />
+                    </span>
+                    <span>
+                      <span className="block font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950">
+                        {metric.value}
+                      </span>
+                      <span className="mt-1 block text-xs font-semibold uppercase text-slate-500">
+                        {metric.label}
+                      </span>
+                    </span>
+                  </Link>
+                );
+              })}
+            </ScrollRevealGroup>
           </div>
-          <ScrollRevealGroup className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5" staggerDelay={55}>
-            {metrics.map((metric) => {
-              const Icon = metric.icon;
-              return (
-                <Link
-                  key={metric.label}
-                  href={metric.href}
-                  className="group flex min-h-28 items-center gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md"
-                >
-                  <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                    <Icon aria-hidden className="h-5 w-5" />
-                  </span>
-                  <span>
-                    <span className="block font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950">
-                      {metric.value}
-                    </span>
-                    <span className="mt-1 block text-xs font-semibold uppercase text-slate-500">
-                      {metric.label}
-                    </span>
-                  </span>
-                </Link>
-              );
-            })}
-          </ScrollRevealGroup>
+          <Link
+            href="/impact-metrics"
+            className="mt-8 inline-flex w-fit items-center gap-2 text-sm font-semibold text-primary transition hover:text-secondary"
+          >
+            View research impact metrics
+            <ArrowRight aria-hidden className="h-4 w-4" />
+          </Link>
         </article>
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
+        <article className="research-glass-panel research-border-sheen rounded-lg p-5 lg:p-6">
           <SectionKicker>Quick links</SectionKicker>
           <nav aria-label="Research quick links" className="mt-4 divide-y divide-slate-200">
             {quickLinks.map((link) => (
               <Link
                 key={link.href + link.label}
                 href={link.href}
-                className="group flex items-center justify-between gap-4 py-3 text-sm font-semibold text-slate-700 transition first:pt-0 last:pb-0 hover:text-primary"
+                className="block py-3 text-sm font-semibold text-slate-700 transition first:pt-0 last:pb-0 hover:text-primary"
               >
-                <span>{link.label}</span>
-                <ArrowRight aria-hidden className="h-4 w-4 text-slate-300 transition group-hover:translate-x-1 group-hover:text-primary" />
+                {link.label}
               </Link>
             ))}
           </nav>
@@ -314,8 +340,9 @@ function AboutResearchSection({ headProfile }: { headProfile: ResearchHeadProfil
   const headHref = headProfile?.href || "/about";
 
   return (
-    <ScrollReveal as="section" className="bg-white px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.86fr)]">
+    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-white px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="absolute inset-y-0 right-0 w-1/2 bg-[linear-gradient(120deg,transparent_0%,rgba(0,78,56,0.055)_100%)]" />
+      <div className="relative mx-auto grid max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.86fr)]">
         <article className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm lg:p-8">
           <SectionKicker>About research at Kisii University</SectionKicker>
           <h2 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
@@ -342,7 +369,7 @@ function AboutResearchSection({ headProfile }: { headProfile: ResearchHeadProfil
           </div>
         </article>
 
-        <article className="relative overflow-hidden rounded-lg border border-primary/15 bg-[linear-gradient(135deg,#f4fbf7_0%,#ffffff_70%)] p-6 shadow-sm lg:p-8">
+        <article className="research-glass-panel research-border-sheen rounded-lg p-6 lg:p-8">
           <div className="absolute right-5 top-5 h-[20%] min-h-24 w-[20%] min-w-24 overflow-hidden rounded-md border border-white bg-slate-100 shadow-sm">
             <Image
               src={headProfile?.photoUrl || "/images/research/registrar-reirm-imagegen.webp"}
@@ -379,8 +406,9 @@ function AboutResearchSection({ headProfile }: { headProfile: ResearchHeadProfil
 
 function PillarsSection() {
   return (
-    <ScrollReveal as="section" className="border-y border-primary/10 bg-[linear-gradient(180deg,#eef7f2_0%,#f8fafc_100%)] px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto max-w-[1680px]">
+    <ScrollReveal as="section" className="research-surface-grid relative isolate overflow-hidden border-y border-primary/10 bg-[linear-gradient(180deg,#e8f4ee_0%,#f8fafc_100%)] px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <ResearchAnimatedBackdrop />
+      <div className="relative mx-auto max-w-[1680px]">
         <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
           <div className="max-w-3xl">
             <SectionKicker>Our five pillars</SectionKicker>
@@ -402,8 +430,9 @@ function PillarsSection() {
 
 function FeaturedWorkSection({ items }: { items: FeaturedWorkItem[] }) {
   return (
-    <ScrollReveal as="section" className="bg-white px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto max-w-[1680px]">
+    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-white px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[rgba(0,78,56,0.045)] to-transparent" />
+      <div className="relative mx-auto max-w-[1680px]">
         <SectionHeader
           eyebrow="Featured research work"
           title="Published records from projects, publications, grants, and innovations."
@@ -429,8 +458,9 @@ function NewsEventsArticlesSection({ items }: { items: NewsItem[] }) {
   const compact = rest.slice(2, 5);
 
   return (
-    <ScrollReveal as="section" className="border-y border-slate-200 bg-[linear-gradient(180deg,#f6f8fc_0%,#ffffff_48%,#f4f8f6_100%)] px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto max-w-[1680px]">
+    <ScrollReveal as="section" className="research-surface-grid relative isolate overflow-hidden border-y border-slate-200 bg-[linear-gradient(180deg,#f4f7fb_0%,#ffffff_46%,#eef7f2_100%)] px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <ResearchAnimatedBackdrop />
+      <div className="relative mx-auto max-w-[1680px]">
         <SectionHeader
           eyebrow="News, events & articles"
           title="Latest updates from the research ecosystem."
@@ -462,8 +492,9 @@ function NewsEventsArticlesSection({ items }: { items: NewsItem[] }) {
 
 function DirectorySection({ items }: { items: DirectoryItem[] }) {
   return (
-    <ScrollReveal as="section" className="bg-white px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto max-w-[1680px]">
+    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-white px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="absolute inset-y-0 left-0 w-[42%] bg-[linear-gradient(90deg,rgba(226,165,35,0.075)_0%,transparent_100%)]" />
+      <div className="relative mx-auto max-w-[1680px]">
         <SectionHeader
           eyebrow="Centers, facilities & expertise"
           title="Find capabilities, infrastructure, and research contacts."
@@ -537,8 +568,9 @@ function PartnersImpactSection({
   const metrics = impactMetrics.slice(0, 4);
 
   return (
-    <ScrollReveal as="section" className="overflow-hidden border-y border-primary/10 bg-[linear-gradient(180deg,#eef7f2_0%,#f8fafc_100%)] px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto max-w-[1680px]">
+    <ScrollReveal as="section" className="research-surface-grid relative isolate overflow-hidden border-y border-primary/10 bg-[linear-gradient(180deg,#e8f4ee_0%,#f8fafc_100%)] px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <ResearchAnimatedBackdrop />
+      <div className="relative mx-auto max-w-[1680px]">
         <SectionHeader
           eyebrow="Partners & public impact"
           title="Collaboration that translates knowledge into shared value."
@@ -615,8 +647,9 @@ function PartnersImpactSection({
 
 function FundingResourcesSection({ items }: { items: SupportItem[] }) {
   return (
-    <ScrollReveal as="section" className="bg-white px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto max-w-[1680px]">
+    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-white px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[rgba(0,78,56,0.055)] to-transparent" />
+      <div className="relative mx-auto max-w-[1680px]">
         <SectionHeader
           eyebrow="Funding, training & resources"
           title="Support for proposals, grants, mentorship, publications, and resource mobilization."
@@ -638,8 +671,10 @@ function FundingResourcesSection({ items }: { items: SupportItem[] }) {
 
 function ResearchConversationSection() {
   return (
-    <ScrollReveal as="section" className="bg-primary px-4 py-12 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto max-w-[1680px] text-center">
+    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-primary px-4 py-12 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <ResearchAnimatedBackdrop dark />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.14),transparent,rgba(0,0,0,0.1))]" />
+      <div className="relative mx-auto max-w-[1680px] text-center">
         <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight sm:text-4xl">
           Join us in advancing humanity through knowledge, innovation, and collaboration.
         </h2>
