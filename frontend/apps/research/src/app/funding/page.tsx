@@ -107,12 +107,16 @@ export default async function FundingPage({
   const rowGrants = featuredGrant
     ? visibleGrants.filter((grant) => grant.id !== featuredGrant.id)
     : visibleGrants;
+  const internalGrants = visibleGrants.filter((grant) => grant.grant_type === "internal");
+  const externalGrants = visibleGrants.filter((grant) => grant.grant_type === "external");
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
       <FundingMasthead
         resultCount={visibleGrants.length}
         publishedCount={allGrants.data.length}
+        internalCount={internalGrants.length}
+        externalCount={externalGrants.length}
         guidanceCount={guidelines.data.length}
         resourcesCount={resources.data.length}
       />
@@ -123,6 +127,11 @@ export default async function FundingPage({
         body="Search public funding calls and use the filter menu for type, category, status, active state, year, month, and sort order."
         tone="white"
       >
+        <GrantTypeSplit
+          internalCount={internalGrants.length}
+          externalCount={externalGrants.length}
+          activeType={params.type}
+        />
         <FundingFilters params={params} years={years} months={months} />
 
         {[grants.error, guidelines.error, resources.error]
@@ -167,19 +176,23 @@ export default async function FundingPage({
 function FundingMasthead({
   resultCount,
   publishedCount,
+  internalCount,
+  externalCount,
   guidanceCount,
   resourcesCount,
 }: {
   resultCount: number;
   publishedCount: number;
+  internalCount: number;
+  externalCount: number;
   guidanceCount: number;
   resourcesCount: number;
 }) {
   const stats = [
     { label: "Funding results", value: resultCount },
     { label: "Published grants", value: publishedCount },
-    { label: "Guidance records", value: guidanceCount },
-    { label: "Resources", value: resourcesCount },
+    { label: "Internal grants", value: internalCount },
+    { label: "External calls", value: externalCount },
   ];
 
   return (
@@ -200,7 +213,7 @@ function FundingMasthead({
             Grant calls, internal funding, and research support opportunities
           </h1>
           <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">
-            Review published opportunities with deadlines, eligibility notes, funders, documents, and application routes.
+            Review internal grants administered through Kisii University and external funder calls with deadlines, eligibility notes, documents, and application routes.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <PrimaryLink href="/guidelines">Open guidelines</PrimaryLink>
@@ -215,8 +228,81 @@ function FundingMasthead({
             </div>
           ))}
         </dl>
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Support records</p>
+          <dl className="mt-3 grid gap-2 sm:grid-cols-2">
+            <div className="rounded-md bg-white px-3 py-2">
+              <dt className="text-[11px] font-semibold uppercase text-slate-500">Guidance</dt>
+              <dd className="mt-1 text-lg font-semibold text-slate-950">{guidanceCount}</dd>
+            </div>
+            <div className="rounded-md bg-white px-3 py-2">
+              <dt className="text-[11px] font-semibold uppercase text-slate-500">Resources</dt>
+              <dd className="mt-1 text-lg font-semibold text-slate-950">{resourcesCount}</dd>
+            </div>
+          </dl>
+        </div>
       </div>
     </section>
+  );
+}
+
+function GrantTypeSplit({
+  internalCount,
+  externalCount,
+  activeType,
+}: {
+  internalCount: number;
+  externalCount: number;
+  activeType?: string;
+}) {
+  const items = [
+    {
+      href: "/funding",
+      label: "All funding",
+      body: "Internal and external records together.",
+      count: internalCount + externalCount,
+      active: !activeType,
+    },
+    {
+      href: "/funding?type=internal",
+      label: "Internal grants",
+      body: "University-administered calls with prominent deadline status and application flow.",
+      count: internalCount,
+      active: activeType === "internal",
+    },
+    {
+      href: "/funding?type=external",
+      label: "External calls",
+      body: "Funder opportunities, official links, eligibility, and deadline tracking.",
+      count: externalCount,
+      active: activeType === "external",
+    },
+  ];
+
+  return (
+    <div className="mb-5 grid gap-3 lg:grid-cols-3">
+      {items.map((item) => (
+        <Link
+          key={item.label}
+          href={item.href}
+          className={
+            item.active
+              ? "rounded-lg border border-primary bg-primary/[0.04] p-4 shadow-sm"
+              : "rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30"
+          }
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-slate-950">{item.label}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+            </div>
+            <span className={item.active ? "rounded-md bg-primary px-3 py-1 text-sm font-semibold text-white" : "rounded-md bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700"}>
+              {item.count}
+            </span>
+          </div>
+        </Link>
+      ))}
+    </div>
   );
 }
 
@@ -250,10 +336,16 @@ function FundingFilters({
 }
 
 function FeaturedGrant({ grant }: { grant: ResearchGrant }) {
+  const isInternal = grant.grant_type === "internal";
+
   return (
     <Link
       href={grant.slug ? `/funding/${grant.slug}` : "/funding"}
-      className="group grid gap-4 rounded-lg border border-primary/20 bg-primary/[0.03] p-4 shadow-sm transition hover:border-primary/40 lg:grid-cols-[minmax(0,1fr)_260px_auto] lg:items-center"
+      className={
+        isInternal
+          ? "group grid gap-4 rounded-lg border-2 border-primary bg-primary/[0.04] p-4 shadow-sm transition hover:bg-primary/[0.07] lg:grid-cols-[minmax(0,1fr)_260px_auto] lg:items-center"
+          : "group grid gap-4 rounded-lg border border-amber-300 bg-amber-50/50 p-4 shadow-sm transition hover:border-amber-400 lg:grid-cols-[minmax(0,1fr)_260px_auto] lg:items-center"
+      }
     >
       <GrantRowContent grant={grant} featured />
     </Link>
@@ -262,6 +354,7 @@ function FeaturedGrant({ grant }: { grant: ResearchGrant }) {
 
 function GrantRow({ grant }: { grant: ResearchGrant }) {
   const deadline = getDeadlineState(grant.deadline, grant.status);
+  const isInternal = grant.grant_type === "internal";
 
   return (
     <ResearchRecordRow
@@ -273,7 +366,7 @@ function GrantRow({ grant }: { grant: ResearchGrant }) {
         "Funding details have not been published yet."
       }
       badges={[grant.grant_type, grant.category, grant.status]}
-      filledBadges={[grant.is_featured ? "Featured" : null]}
+      filledBadges={[isInternal ? deadline.label : null, grant.is_featured ? "Featured" : null]}
       facts={[
         { label: "Funder", value: compactText(grant.funder_name) },
         { label: deadline.label, value: deadline.value },
@@ -291,6 +384,7 @@ function GrantRowContent({
   featured?: boolean;
 }) {
   const deadline = getDeadlineState(grant.deadline, grant.status);
+  const isInternal = grant.grant_type === "internal";
 
   return (
     <>
@@ -298,6 +392,7 @@ function GrantRowContent({
         <div className="flex flex-wrap gap-2">
           <Badge>{formatLabel(grant.grant_type ?? "internal")}</Badge>
           <Badge>{formatLabel(grant.category ?? "research")}</Badge>
+          {isInternal ? <DeadlineStatusBadge deadline={deadline} size="large" /> : null}
           {featured || grant.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
         </div>
         <h2 className="mt-3 text-lg font-semibold leading-7 text-slate-950">{grant.title}</h2>
@@ -308,19 +403,49 @@ function GrantRowContent({
         </p>
       </div>
       <dl className="grid gap-2 text-sm">
+        {isInternal ? (
+          <div className="rounded-md border border-primary/25 bg-white p-3">
+            <dt className="text-xs font-semibold uppercase text-primary">{deadline.label}</dt>
+            <dd className="mt-1 text-lg font-semibold text-slate-950">{deadline.value}</dd>
+          </div>
+        ) : null}
         <div className="rounded-md bg-white p-2.5">
           <dt className="text-xs font-semibold uppercase text-slate-500">Funder</dt>
           <dd className="mt-1 font-semibold text-slate-950">{compactText(grant.funder_name) || "Not published"}</dd>
         </div>
-        <div className="rounded-md bg-white p-2.5">
+        {!isInternal ? <div className="rounded-md bg-white p-2.5">
           <dt className="text-xs font-semibold uppercase text-slate-500">{deadline.label}</dt>
           <dd className="mt-1 font-semibold text-slate-950">{deadline.value}</dd>
-        </div>
+        </div> : null}
       </dl>
       <span className="inline-flex min-h-10 items-center justify-center rounded-md border border-primary/20 px-3 text-sm font-semibold text-primary transition group-hover:bg-primary group-hover:text-white">
         View funding
       </span>
     </>
+  );
+}
+
+function DeadlineStatusBadge({
+  deadline,
+  size = "normal",
+}: {
+  deadline: ReturnType<typeof getDeadlineState>;
+  size?: "normal" | "large";
+}) {
+  const tone = deadline.tone;
+  const className =
+    tone === "closed"
+      ? "border-slate-300 bg-slate-100 text-slate-700"
+      : tone === "urgent"
+        ? "border-red-300 bg-red-50 text-red-700"
+        : tone === "soon"
+          ? "border-amber-300 bg-amber-50 text-amber-800"
+          : "border-primary/30 bg-primary/[0.08] text-primary";
+
+  return (
+    <span className={`inline-flex items-center rounded-md border font-semibold ${className} ${size === "large" ? "px-3 py-1.5 text-sm" : "px-2.5 py-1 text-xs"}`}>
+      {deadline.label}
+    </span>
   );
 }
 
@@ -367,6 +492,7 @@ function getDeadlineState(deadline?: string | null, status?: string) {
     return {
       label: "Deadline",
       value: "No deadline published",
+      tone: "open" as const,
     };
   }
   const date = new Date(deadline);
@@ -376,23 +502,27 @@ function getDeadlineState(deadline?: string | null, status?: string) {
     return {
       label: "Closed",
       value: formatDate(deadline),
+      tone: "closed" as const,
     };
   }
   if (days === 0) {
     return {
       label: "Due today",
       value: formatDate(deadline),
+      tone: "urgent" as const,
     };
   }
   if (days <= 14) {
     return {
       label: "Closing soon",
       value: `${formatDate(deadline)} · ${days} days left`,
+      tone: "soon" as const,
     };
   }
   return {
     label: "Open",
     value: `${formatDate(deadline)} · ${days} days left`,
+    tone: "open" as const,
   };
 }
 
