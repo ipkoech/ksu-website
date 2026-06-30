@@ -19,6 +19,7 @@ export default function ResearchDonationRecordsPage() {
       queryKey={["research", "donations"]}
       resource={researchServiceApi.donations}
       manageScopes={["donations.manage", "donations.confirm", "research:write"]}
+      importResource="research-donations"
       summarySlot={<DonationsWorkspaceHeader />}
       recordColumns={donationRecordColumns}
       listFilters={[

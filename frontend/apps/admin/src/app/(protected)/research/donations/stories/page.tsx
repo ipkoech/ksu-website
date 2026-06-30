@@ -11,6 +11,7 @@ export default function DonationStoriesPage() {
       queryKey={["research", "donation-stories"]}
       resource={researchServiceApi.donationStories}
       manageScopes={["donations.manage", "research:write"]}
+      importResource="research-stories"
       summarySlot={<DonationsWorkspaceHeader />}
       fields={[
         { name: "title", label: "Title", required: true },

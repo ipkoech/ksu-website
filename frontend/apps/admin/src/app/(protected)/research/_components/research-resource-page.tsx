@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Upload } from "lucide-react";
+import { Download, Upload } from "lucide-react";
 import {
   EditableServiceResourcePage,
   type EditableField,
@@ -10,9 +10,10 @@ import {
   type EditableRecordWorkflowAction,
 } from "@/components/dashboard/editable-service-resource-page";
 import { Button } from "@ksu/ui/components";
-import { researchServiceApi, type ResearchGenericPayload, type ResearchGenericRecord } from "@ksu/api-client";
+import { importsApi, researchServiceApi, type ResearchGenericPayload, type ResearchGenericRecord } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
 import type { ReactNode } from "react";
+import { toast } from "sonner";
 
 type ResourceApi = {
   list: (params?: Record<string, string | number | boolean | undefined>) => Promise<{
@@ -115,6 +116,41 @@ function recordMeta(record: ResearchGenericRecord, fields: string[]) {
     .join(" · ");
 }
 
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+export function ResearchBulkActions({ resourceKey }: { resourceKey: string }) {
+  const handleTemplateDownload = async () => {
+    try {
+      const blob = await importsApi.downloadTemplate(resourceKey);
+      downloadBlob(blob, `${resourceKey}-import-template.csv`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Template download failed");
+    }
+  };
+
+  return (
+    <>
+      <Button variant="outline" size="sm" asChild>
+        <Link href={`/imports/${resourceKey}`}>
+          <Upload className="mr-1.5 h-4 w-4" />
+          Import
+        </Link>
+      </Button>
+      <Button variant="outline" size="sm" type="button" onClick={handleTemplateDownload}>
+        <Download data-icon="inline-start" />
+        Template
+      </Button>
+    </>
+  );
+}
+
 export function ResearchResourcePage({
   title,
   description,
@@ -149,16 +185,7 @@ export function ResearchResourcePage({
       listFilters={resolvedListFilters}
       recordColumns={recordColumns}
       summarySlot={summarySlot}
-      toolbarSlot={
-        importResource ? (
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/imports/${importResource}`}>
-              <Upload className="mr-1.5 h-4 w-4" />
-              Import
-            </Link>
-          </Button>
-        ) : undefined
-      }
+      toolbarSlot={importResource ? <ResearchBulkActions resourceKey={importResource} /> : undefined}
       list={async (filters) => {
         const response = await resource.list({ page: 1, per_page: 50, ...listParams, ...filters });
         return { data: (response.data ?? []) as ResearchGenericRecord[], meta: response.meta };

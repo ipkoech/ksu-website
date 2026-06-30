@@ -11,6 +11,7 @@ export default function FarmFocusAreasPage() {
       queryKey={["research", "farm-focus-areas"]}
       resource={researchServiceApi.focusAreas}
       manageScopes={["research_theme.manage", "research.manage_projects", "research:write"]}
+      importResource="research-focus-areas"
       summarySlot={<FarmWorkspaceHeader />}
       fields={[
         { name: "name", label: "Name", required: true },

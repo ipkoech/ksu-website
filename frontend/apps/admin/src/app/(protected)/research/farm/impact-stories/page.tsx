@@ -11,6 +11,7 @@ export default function FarmImpactStoriesPage() {
       queryKey={["research", "farm-impact-stories"]}
       resource={researchServiceApi.stories}
       manageScopes={["research.manage_impact", "sustainability.manage", "research:write"]}
+      importResource="research-stories"
       summarySlot={<FarmWorkspaceHeader />}
       fields={[
         { name: "title", label: "Title", required: true },

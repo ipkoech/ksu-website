@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarDays, FolderKanban, Upload, UsersRound, WalletCards } from "lucide-react";
+import { CalendarDays, FolderKanban, UsersRound, WalletCards } from "lucide-react";
 import {
   Badge,
-  Button,
   Card,
   CardContent,
 } from "@ksu/ui/components";
@@ -18,6 +17,7 @@ import {
   relationshipAdapters,
   type RelationshipAdapter,
 } from "@/components/relationships/relationship-adapters";
+import { ResearchBulkActions } from "../_components/research-resource-page";
 import { researchServiceApi, type ResearchProject, type ResearchProjectPayload } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
 
@@ -304,14 +304,7 @@ export default function ResearchProjectsPage() {
         is_featured: values.is_featured,
         is_public: values.is_public,
       })}
-      toolbarSlot={
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/imports/research-projects">
-            <Upload className="mr-1.5 h-4 w-4" />
-            Import
-          </Link>
-        </Button>
-      }
+      toolbarSlot={<ResearchBulkActions resourceKey="research-projects" />}
     />
   );
 }
