@@ -347,8 +347,8 @@ export default function ResearchProjectsPage() {
       })}
       toolbarSlot={
         <>
+          <ResearchSectionGuide title="Projects" className="mr-auto" />
           <ResearchBulkActions resourceKey="research-projects" />
-          <ResearchSectionGuide title="Projects" />
         </>
       }
     />

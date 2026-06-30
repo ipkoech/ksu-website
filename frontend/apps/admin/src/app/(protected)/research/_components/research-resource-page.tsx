@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { Activity, Download, Upload } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Activity, CheckCircle2, Download, FileUp, Play, Upload } from "lucide-react";
 import {
   EditableServiceResourcePage,
   type EditableField,
@@ -10,10 +9,35 @@ import {
   type EditableRecordColumn,
   type EditableRecordWorkflowAction,
 } from "@/components/dashboard/editable-service-resource-page";
-import { Button } from "@ksu/ui/components";
-import { auditLogsApi, importsApi, researchServiceApi, type ResearchGenericPayload, type ResearchGenericRecord } from "@ksu/api-client";
+import {
+  Alert,
+  AlertDescription,
+  Badge,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
+} from "@ksu/ui/components";
+import {
+  auditLogsApi,
+  importsApi,
+  researchServiceApi,
+  useImportJob,
+  useImportResource,
+  usePreviewImport,
+  useStartImportCommit,
+  type ImportCommitResult,
+  type ImportPreview,
+  type ImportPreviewRow,
+  type ResearchGenericPayload,
+  type ResearchGenericRecord,
+} from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
-import { useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import {
   getResearchFieldHelp,
@@ -182,6 +206,7 @@ export function ResearchBulkActions({
   const resolvedImportResource = importResource ?? resourceKey;
   const resolvedExportResource = exportResource ?? resourceKey;
   const [isExporting, setIsExporting] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const handleTemplateDownload = async () => {
     if (!resolvedImportResource) return;
@@ -216,16 +241,19 @@ export function ResearchBulkActions({
     <>
       {resolvedImportResource ? (
         <>
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/imports/${resolvedImportResource}`}>
-              <Upload className="mr-1.5 h-4 w-4" />
-              Import
-            </Link>
+          <Button variant="outline" size="sm" type="button" onClick={() => setImportOpen(true)}>
+            <Upload data-icon="inline-start" />
+            Import
           </Button>
           <Button variant="outline" size="sm" type="button" onClick={handleTemplateDownload}>
             <Download data-icon="inline-start" />
             Template
           </Button>
+          <ResearchImportDialog
+            resourceKey={resolvedImportResource}
+            open={importOpen}
+            onOpenChange={setImportOpen}
+          />
         </>
       ) : null}
       {resolvedExportResource ? (
@@ -236,6 +264,246 @@ export function ResearchBulkActions({
       ) : null}
     </>
   );
+}
+
+function ResearchImportDialog({
+  resourceKey,
+  open,
+  onOpenChange,
+}: {
+  resourceKey: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const queryClient = useQueryClient();
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<ImportPreview | null>(null);
+  const [commitResult, setCommitResult] = useState<ImportCommitResult | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [handledJobId, setHandledJobId] = useState<string | null>(null);
+
+  const resourceQuery = useImportResource(resourceKey, { enabled: open });
+  const previewImport = usePreviewImport();
+  const startImportCommit = useStartImportCommit();
+  const importJob = useImportJob(jobId, { enabled: open && Boolean(jobId) });
+  const resource = resourceQuery.data?.data;
+  const validRows = useMemo(
+    () => preview?.rows.filter((row) => row.status === "valid") ?? [],
+    [preview],
+  );
+
+  const resetImport = () => {
+    setFile(null);
+    setPreview(null);
+    setCommitResult(null);
+    setJobId(null);
+    setHandledJobId(null);
+  };
+
+  const handleTemplateDownload = async () => {
+    try {
+      const blob = await importsApi.downloadTemplate(resourceKey);
+      downloadBlob(blob, `${resourceKey}-import-template.csv`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Template download failed");
+    }
+  };
+
+  const handlePreview = async () => {
+    if (!file) {
+      toast.error("Choose a CSV or JSON file first");
+      return;
+    }
+    setCommitResult(null);
+    setJobId(null);
+    setHandledJobId(null);
+    try {
+      const response = await previewImport.mutateAsync({ resource: resourceKey, file });
+      setPreview(response.data);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Preview failed");
+    }
+  };
+
+  const handleCommit = async () => {
+    if (validRows.length === 0) {
+      toast.error("No valid rows to import");
+      return;
+    }
+    try {
+      const response = await startImportCommit.mutateAsync({
+        resource: resourceKey,
+        data: { rows: validRows.map((row) => row.raw), mode: "partial" },
+      });
+      setCommitResult(null);
+      setJobId(response.data.job_id);
+      setHandledJobId(null);
+      toast.success("Import queued. Keep this dialog open while it processes.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Import failed");
+    }
+  };
+
+  useEffect(() => {
+    const job = importJob.data?.data;
+    if (!job || !jobId || handledJobId === jobId) return;
+
+    if (job.status === "SUCCESS" && job.result) {
+      setCommitResult(job.result);
+      setHandledJobId(jobId);
+      queryClient.invalidateQueries({ queryKey: ["research"] });
+      toast.success(`Created ${job.result.created_rows} record${job.result.created_rows === 1 ? "" : "s"}`);
+    }
+
+    if (job.status === "FAILURE") {
+      setHandledJobId(jobId);
+      toast.error(job.error || "Import failed");
+    }
+  }, [handledJobId, importJob.data, jobId, queryClient]);
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        onOpenChange(nextOpen);
+        if (!nextOpen) resetImport();
+      }}
+    >
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>{resource ? `Import ${resource.label}` : "Import records"}</DialogTitle>
+          <DialogDescription>
+            Upload a CSV or JSON file, preview the rows, then import only valid records.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="grid gap-3 rounded-lg border bg-background p-3 lg:grid-cols-[1fr_auto_auto] lg:items-end">
+            <div className="space-y-2">
+              <Label htmlFor={`research-import-${resourceKey}`}>CSV or JSON file</Label>
+              <Input
+                id={`research-import-${resourceKey}`}
+                type="file"
+                accept=".csv,.json,text/csv,application/json"
+                onChange={(event) => {
+                  setFile(event.target.files?.[0] ?? null);
+                  setPreview(null);
+                  setCommitResult(null);
+                  setJobId(null);
+                }}
+              />
+            </div>
+            <Button type="button" variant="outline" onClick={handleTemplateDownload}>
+              <Download data-icon="inline-start" />
+              Template
+            </Button>
+            <Button type="button" onClick={handlePreview} disabled={!file || previewImport.isPending}>
+              <FileUp data-icon="inline-start" />
+              {previewImport.isPending ? "Previewing..." : "Preview"}
+            </Button>
+          </div>
+
+          {resourceQuery.isLoading ? (
+            <p className="rounded-lg border bg-muted/20 p-3 text-sm text-muted-foreground">Loading import template details...</p>
+          ) : resource?.columns?.length ? (
+            <div className="rounded-lg border">
+              <div className="grid max-h-48 divide-y overflow-y-auto text-sm">
+                {resource.columns.map((column) => (
+                  <div key={column.key} className="grid gap-2 px-3 py-2 sm:grid-cols-[160px_90px_1fr]">
+                    <span className="font-medium">{column.key}</span>
+                    <span>
+                      <Badge variant={column.required ? "default" : "outline"}>
+                        {column.required ? "Required" : "Optional"}
+                      </Badge>
+                    </span>
+                    <span className="text-muted-foreground">{column.description || "No notes"}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {preview ? (
+            <div className="space-y-3">
+              <div className="grid gap-2 sm:grid-cols-4">
+                <ImportStat label="Rows" value={preview.total_rows} />
+                <ImportStat label="Valid" value={preview.valid_rows} />
+                <ImportStat label="Invalid" value={preview.invalid_rows} />
+                <ImportStat label="Duplicates" value={preview.duplicate_rows} />
+              </div>
+              <div className="rounded-lg border">
+                <div className="flex items-center justify-between gap-3 border-b px-3 py-2">
+                  <p className="text-sm font-semibold">Preview</p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleCommit}
+                    disabled={validRows.length === 0 || startImportCommit.isPending || importJob.isFetching}
+                  >
+                    <Play data-icon="inline-start" />
+                    {startImportCommit.isPending || importJob.isFetching ? "Processing..." : `Import ${validRows.length}`}
+                  </Button>
+                </div>
+                <div className="grid max-h-56 divide-y overflow-y-auto text-sm">
+                  {preview.rows.slice(0, 25).map((row) => (
+                    <div key={row.row_number} className="grid gap-2 px-3 py-2 sm:grid-cols-[70px_110px_1fr]">
+                      <span>Row {row.row_number}</span>
+                      <span>
+                        <Badge variant={importStatusVariant(row.status)}>{row.status}</Badge>
+                      </span>
+                      <span className="text-muted-foreground">
+                        {[...row.errors, ...row.warnings].length > 0
+                          ? [...row.errors, ...row.warnings].join("; ")
+                          : "Ready"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {preview.rows.length > 25 ? (
+                  <p className="border-t px-3 py-2 text-xs text-muted-foreground">
+                    Showing first 25 rows of {preview.rows.length}.
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+
+          {jobId && !commitResult ? (
+            <Alert>
+              <CheckCircle2 className="h-4 w-4" />
+              <AlertDescription>
+                Import job {importJob.data?.data.status?.toLowerCase() || "queued"}. Results will appear here.
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
+          {commitResult ? (
+            <Alert>
+              <CheckCircle2 className="h-4 w-4" />
+              <AlertDescription>
+                Created {commitResult.created_rows}, skipped {commitResult.skipped_rows}, failed {commitResult.failed_rows}.
+              </AlertDescription>
+            </Alert>
+          ) : null}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ImportStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-md border bg-background px-3 py-2">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-lg font-semibold">{value.toLocaleString()}</p>
+    </div>
+  );
+}
+
+function importStatusVariant(status: ImportPreviewRow["status"]) {
+  if (status === "valid") return "default";
+  if (status === "duplicate") return "outline";
+  return "destructive";
 }
 
 export function ResearchResourceAuditPreview({

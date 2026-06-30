@@ -801,7 +801,7 @@ export function EditableServiceResourcePage<
     <div
       className={cn(
         "flex flex-col gap-2 sm:flex-row sm:items-end",
-        tableLayout === "compact" && "flex-wrap rounded-lg border bg-background p-3 sm:items-center sm:justify-end",
+        tableLayout === "compact" && "flex-wrap rounded-lg border bg-background p-3 sm:items-center",
       )}
     >
       {toolbarSlot}
@@ -942,7 +942,12 @@ export function EditableServiceResourcePage<
                           ) : null}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent align="end" className="w-[min(92vw,420px)] p-4">
+                      <PopoverContent
+                        align="end"
+                        sideOffset={8}
+                        collisionPadding={16}
+                        className="max-h-[min(72vh,560px)] w-[min(92vw,420px)] overflow-y-auto p-4"
+                      >
                         <div className="mb-3 flex items-center justify-between gap-3">
                           <div>
                             <p className="text-sm font-semibold">Filter projects</p>
@@ -960,7 +965,7 @@ export function EditableServiceResourcePage<
                             Clear
                           </Button>
                         </div>
-                        <div className="grid max-h-[60vh] gap-3 overflow-y-auto pr-1">
+                        <div className="grid gap-3 pr-1">
                           {menuFilters.map(renderFilterControl)}
                         </div>
                       </PopoverContent>
