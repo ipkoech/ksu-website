@@ -7,21 +7,17 @@ from typing import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, selectinload
 
 from ksu_common import PaginatedResult
 from ksu_common.models import AuditLog
 
-from ..models import User
 from ._base import paginate_query
 
 
 class AuditService:
     @staticmethod
     def _default_load_options():
-        return (
-            selectinload(AuditLog.user).joinedload(User.person),
-        )
+        return ()
 
     @staticmethod
     async def get_by_id(db: AsyncSession, audit_id: uuid.UUID, load_options: Sequence = ()) -> AuditLog | None:
