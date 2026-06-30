@@ -94,12 +94,25 @@ class PartnerRelationshipService:
     @staticmethod
     async def list_activities(db: AsyncSession, partner_id: uuid.UUID) -> list[dict[str, Any]]:
         await PartnerRelationshipService._ensure_partner(db, partner_id)
-        return await MainScopedEventService.list("research_partner", partner_id)
+        activities = await MainScopedEventService.list("research_partner", partner_id)
+
+        scoped_relations = [
+            ("research_project", await PartnerRelationshipService.list_projects(db, partner_id)),
+            ("research_farm", await PartnerRelationshipService.list_farms(db, partner_id)),
+            ("research_sustainability", await PartnerRelationshipService.list_sustainability(db, partner_id)),
+        ]
+        for scope_type, records in scoped_relations:
+            for record in records:
+                related_id = record.get("id")
+                if related_id:
+                    activities.extend(await MainScopedEventService.list(scope_type, related_id))
+
+        return _dedupe_by_id(activities)
 
     @staticmethod
     async def list_impact_stories(db: AsyncSession, partner_id: uuid.UUID) -> list[dict[str, Any]]:
         await PartnerRelationshipService._ensure_partner(db, partner_id)
-        return await _related_many(
+        stories = await _related_many(
             db,
             SuccessStory.active_query()
             .join(project_partners, SuccessStory.project_id == project_partners.c.project_id)
@@ -109,6 +122,14 @@ class PartnerRelationshipService:
             "story_date",
             "project_id",
         )
+        from .impact import SustainabilityRelationshipService
+
+        for sustainability in await PartnerRelationshipService.list_sustainability(db, partner_id):
+            sustainability_id = sustainability.get("id")
+            if sustainability_id:
+                stories.extend(await SustainabilityRelationshipService.list_stories(db, sustainability_id))
+
+        return _dedupe_by_id(stories)
 
     @staticmethod
     async def list_impact_metrics(db: AsyncSession, partner_id: uuid.UUID) -> list[dict[str, Any]]:
@@ -153,3 +174,16 @@ class PartnerRelationshipService:
             "code",
             "initiative_type",
         )
+
+
+def _dedupe_by_id(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    seen: set[str] = set()
+    deduped: list[dict[str, Any]] = []
+    for record in records:
+        record_id = record.get("id")
+        key = str(record_id) if record_id is not None else repr(sorted(record.items()))
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(record)
+    return deduped
