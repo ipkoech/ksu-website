@@ -15,6 +15,7 @@ export default function FarmPartnershipsPage() {
       summarySlot={<FarmWorkspaceHeader />}
       recordColumns={partnerColumns}
       metaFields={["partner_type", "partnership_level", "country", "status"]}
+      detailBaseHref="/research/farm/partnerships"
       fields={[
         { name: "name", label: "Name", required: true },
         { name: "slug", label: "Slug" },

@@ -13,6 +13,7 @@ export default function FarmImpactStoriesPage() {
       manageScopes={["research.manage_impact", "sustainability.manage", "research:write"]}
       importResource="research-stories"
       summarySlot={<FarmWorkspaceHeader />}
+      detailBaseHref="/research/farm/impact-stories"
       fields={[
         { name: "title", label: "Title", required: true },
         { name: "slug", label: "Slug" },

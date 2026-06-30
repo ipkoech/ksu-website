@@ -13,6 +13,7 @@ export default function FarmFocusAreasPage() {
       manageScopes={["research_theme.manage", "research.manage_projects", "research:write"]}
       importResource="research-focus-areas"
       summarySlot={<FarmWorkspaceHeader />}
+      detailBaseHref="/research/farm/focus-areas"
       fields={[
         { name: "name", label: "Name", required: true },
         { name: "slug", label: "Slug" },

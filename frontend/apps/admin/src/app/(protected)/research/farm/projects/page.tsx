@@ -16,6 +16,7 @@ export default function FarmProjectsPage() {
       listFilters={farmProjectFilters}
       recordColumns={farmProjectColumns}
       metaFields={["code", "project_type", "status", "progress_percentage"]}
+      detailBaseHref="/research/farm/projects"
       fields={[
         { name: "title", label: "Title", required: true },
         { name: "slug", label: "Slug" },

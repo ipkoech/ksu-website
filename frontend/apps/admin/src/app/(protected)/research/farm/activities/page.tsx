@@ -45,6 +45,7 @@ export default function FarmActivitiesPage() {
       listFilters={activityFilters}
       recordColumns={activityColumns}
       metaFields={["event_type", "start_date", "venue", "status"]}
+      getRecordDetailHref={(record) => `/research/farm/activities/${record.id}`}
       fields={[
         { name: "title", label: "Title", required: true },
         { name: "slug", label: "Slug" },
