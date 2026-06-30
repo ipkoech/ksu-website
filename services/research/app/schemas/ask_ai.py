@@ -17,10 +17,20 @@ class ResearchAskAIContextRequest(BaseSchema):
     record_id: str | None = Field(default=None, max_length=96)
 
 
+class ResearchAskAIReference(BaseSchema):
+    label: str
+    type: str
+    href: str
+    resource_key: str | None = None
+
+
 class ResearchAskAIRequest(BaseSchema):
     conversation_id: UUID | None = None
     message: str = Field(min_length=1, max_length=2000)
     context: ResearchAskAIContextRequest = Field(default_factory=ResearchAskAIContextRequest)
+    scope: str = Field(default="page", max_length=24)
+    intent_mode: str = Field(default="summarize", max_length=32)
+    references: list[ResearchAskAIReference] = Field(default_factory=list)
 
 
 class ResearchAskAIPrompt(BaseSchema):
@@ -30,19 +40,14 @@ class ResearchAskAIPrompt(BaseSchema):
     intent: str
 
 
-class ResearchAskAIReference(BaseSchema):
-    label: str
-    type: str
-    href: str
-    resource_key: str | None = None
-
-
 class ResearchAskAIContext(BaseSchema):
     section_key: str
     section_label: str
     path: str
     resource_key: str | None = None
     record_id: str | None = None
+    scope: str = "page"
+    intent_mode: str = "summarize"
     capabilities: list[str] = Field(default_factory=list)
     guided_prompts: list[ResearchAskAIPrompt] = Field(default_factory=list)
     references: list[ResearchAskAIReference] = Field(default_factory=list)

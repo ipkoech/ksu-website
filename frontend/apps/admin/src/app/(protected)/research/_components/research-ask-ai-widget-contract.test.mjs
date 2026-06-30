@@ -30,3 +30,27 @@ assert(
   source.includes("stripEchoedQuestion") && source.includes("/\\n#{2,3}\\s*Your question[\\s\\S]*$/i"),
   "Ask AI should hide legacy assistant echoes of the user's question",
 );
+assert(
+  source.includes("const SCOPE_OPTIONS") &&
+    source.includes("This page") &&
+    source.includes("All research") &&
+    source.includes("Mixed"),
+  "Ask AI should expose page, global, and mixed research scope controls",
+);
+assert(
+  source.includes("REFERENCE_OPTIONS") &&
+    source.includes("/projects") &&
+    source.includes("/grants") &&
+    source.includes("/publications"),
+  "Ask AI should expose slash-style research references",
+);
+assert(
+  source.includes("scope: selectedScope") &&
+    source.includes("intent_mode: selectedMode") &&
+    source.includes("references: selectedReferences"),
+  "Ask AI should send scope, intent mode, and selected references to the backend",
+);
+assert(
+  source.includes("Using {scopeLabel}") && source.includes("SourceChips"),
+  "Ask AI should show the active grounding scope and source chips in the chat UI",
+);

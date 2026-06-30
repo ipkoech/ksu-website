@@ -84,6 +84,52 @@ class ResearchAskAIContractTests(unittest.TestCase):
         self.assertEqual(context.section_key, "overview")
         self.assertTrue(any("research portfolio" in prompt.text.lower() for prompt in context.guided_prompts))
 
+    def test_context_supports_global_scope_modes_and_explicit_references(self):
+        references = [
+            {
+                "label": "Projects",
+                "type": "resource",
+                "href": "/research/projects",
+                "resource_key": "research-projects",
+            },
+            {
+                "label": "Grants",
+                "type": "resource",
+                "href": "/research/grants",
+                "resource_key": "research-grants",
+            },
+        ]
+
+        response = ResearchAskAIService.respond(
+            message="Compare /projects and /grants for funding gaps",
+            path="/research/projects",
+            section="projects",
+            resource_key="research-projects",
+            scope="mixed",
+            intent_mode="compare",
+            request_references=references,
+            service_exposure={
+                "mode": "read_only",
+                "resources": [],
+                "exports": [],
+                "admin_stats": [],
+                "record_samples": [],
+            },
+        )
+        prompt = GeminiResearchAIProvider(api_key="test-key", model="gemini-2.5-flash").build_prompt(
+            message="Compare /projects and /grants for funding gaps",
+            context=response.context,
+            service_exposure=response.service_exposure,
+        )
+
+        self.assertEqual(response.context.scope, "mixed")
+        self.assertEqual(response.context.intent_mode, "compare")
+        self.assertTrue(any(reference.resource_key == "research-projects" for reference in response.references))
+        self.assertTrue(any(reference.resource_key == "research-grants" for reference in response.references))
+        self.assertIn("page context and explicit references", response.answer.lower())
+        self.assertIn("Scope: mixed", prompt)
+        self.assertIn("Intent mode: compare", prompt)
+
     def test_advisor_response_is_read_only_and_section_aware(self):
         response = ResearchAskAIService.respond(
             message="What should I check before exporting?",

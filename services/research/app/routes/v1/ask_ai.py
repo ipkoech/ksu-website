@@ -34,6 +34,9 @@ async def ask_research_ai(
         section=context.section,
         resource_key=context.resource_key,
         record_id=context.record_id,
+        scope=request.scope,
+        intent_mode=request.intent_mode,
+        request_references=[reference.model_dump(mode="json") for reference in request.references],
         conversation_id=request.conversation_id,
     )
     return success(data=response.model_dump(mode="json"))
@@ -55,6 +58,9 @@ async def stream_research_ai(
             section=context.section,
             resource_key=context.resource_key,
             record_id=context.record_id,
+            scope=request.scope,
+            intent_mode=request.intent_mode,
+            request_references=[reference.model_dump(mode="json") for reference in request.references],
             conversation_id=request.conversation_id,
         )
         payload = response.model_dump(mode="json")

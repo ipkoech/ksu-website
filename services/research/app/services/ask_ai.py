@@ -116,6 +116,8 @@ class GeminiResearchAIProvider:
                 f"Current section: {context.section_label} ({context.section_key})",
                 f"Current path: {context.path}",
                 f"Resource key: {context.resource_key or 'none'}",
+                f"Scope: {context.scope}",
+                f"Intent mode: {context.intent_mode}",
                 "",
                 "Research service exposure:",
                 json.dumps(compact_exposure, ensure_ascii=False, default=str),
@@ -276,9 +278,12 @@ class ResearchAskAIService:
         section: str | None,
         resource_key: str | None,
         record_id: str | None = None,
+        scope: str = "page",
+        intent_mode: str = "summarize",
+        request_references: list[dict[str, Any]] | None = None,
         conversation_id: uuid.UUID | None = None,
     ) -> ResearchAskAIResponse:
-        context = ResearchAskAIService.resolve_context(path, section, resource_key, record_id)
+        context = ResearchAskAIService.resolve_context(path, section, resource_key, record_id, scope, intent_mode, request_references)
         exposure = await ResearchAskAIService.build_service_exposure(db)
         provider_answer = await ResearchAskAIService._generate_provider_answer(
             message=message,
@@ -291,6 +296,9 @@ class ResearchAskAIService:
             section=section,
             resource_key=resource_key,
             record_id=record_id,
+            scope=scope,
+            intent_mode=intent_mode,
+            request_references=request_references,
             service_exposure=exposure,
             provider_answer=provider_answer,
         )
@@ -332,13 +340,22 @@ class ResearchAskAIService:
         return response
 
     @staticmethod
-    def resolve_context(path: str, section: str | None, resource_key: str | None, record_id: str | None = None) -> ResearchAskAIContext:
+    def resolve_context(
+        path: str,
+        section: str | None,
+        resource_key: str | None,
+        record_id: str | None = None,
+        scope: str = "page",
+        intent_mode: str = "summarize",
+        request_references: list[dict[str, Any]] | None = None,
+    ) -> ResearchAskAIContext:
         section_key = _normalize_section(section) or _section_from_path(path)
         config = SECTION_CONFIGS.get(section_key) or SECTION_CONFIGS["overview"]
         resolved_resource_key = resource_key or config.resource_key
-        references = (
+        references = _dedupe_references(
             _reference(config.label, config.href, resolved_resource_key, "section"),
             *config.related,
+            *_request_references(request_references),
         )
 
         return ResearchAskAIContext(
@@ -347,14 +364,18 @@ class ResearchAskAIService:
             path=path or config.href,
             resource_key=resolved_resource_key,
             record_id=record_id,
+            scope=_normalize_scope(scope),
+            intent_mode=_normalize_intent_mode(intent_mode),
             capabilities=[
                 "answer read-only research admin questions",
+                "answer globally across the research domain while prioritizing page context",
+                "ground answers in slash references such as /projects, /grants, and /publications",
                 "summarize section context and data quality checks",
                 "suggest relevant pages, exports, and report preparation steps",
                 "refuse create, update, delete, approval, or publishing actions",
             ],
             guided_prompts=list(config.prompts),
-            references=list(references),
+            references=references,
         )
 
     @staticmethod
@@ -364,10 +385,13 @@ class ResearchAskAIService:
         section: str | None,
         resource_key: str | None,
         record_id: str | None = None,
+        scope: str = "page",
+        intent_mode: str = "summarize",
+        request_references: list[dict[str, Any]] | None = None,
         service_exposure: dict | None = None,
         provider_answer: str | None = None,
     ) -> ResearchAskAIResponse:
-        context = ResearchAskAIService.resolve_context(path, section, resource_key, record_id)
+        context = ResearchAskAIService.resolve_context(path, section, resource_key, record_id, scope, intent_mode, request_references)
         exposure = _sanitize_service_exposure(service_exposure or ResearchAskAIService.service_exposure_catalog())
         answer = provider_answer or ResearchAskAIService._deterministic_answer(
             message=message,
@@ -399,6 +423,11 @@ class ResearchAskAIService:
                 f"## {context.section_label} advisor",
                 "",
                 "I can help as a **read-only** research advisor across projects, grants, publications, centers, outputs, partners, impact, sustainability, capacity, donations, and research settings.",
+                "",
+                "### Active grounding",
+                f"- Scope: {_scope_description(context.scope)}.",
+                f"- Mode: {context.intent_mode.replace('_', ' ')}.",
+                f"- References: {_reference_summary(context.references)}.",
                 "",
                 "### What I can answer from the backend context",
                 "- Summaries of research records, portfolio health, funding, publications, outputs, impact, and admin reporting readiness.",
@@ -655,6 +684,64 @@ def _normalize_section(section: str | None) -> str | None:
         return None
     normalized = section.strip().lower().replace("_", "-")
     return SECTION_ALIASES.get(normalized, normalized)
+
+
+def _normalize_scope(scope: str | None) -> str:
+    normalized = (scope or "page").strip().lower().replace("_", "-")
+    if normalized in {"global", "all", "all-research"}:
+        return "global"
+    if normalized in {"mixed", "page-global", "page-and-global"}:
+        return "mixed"
+    return "page"
+
+
+def _normalize_intent_mode(intent_mode: str | None) -> str:
+    normalized = (intent_mode or "summarize").strip().lower().replace("-", "_")
+    allowed = {"summarize", "find_gaps", "compare", "report", "explain", "navigate", "next_actions"}
+    return normalized if normalized in allowed else "summarize"
+
+
+def _request_references(references: list[dict[str, Any]] | None) -> list[ResearchAskAIReference]:
+    normalized: list[ResearchAskAIReference] = []
+    for reference in references or []:
+        label = str(reference.get("label") or "").strip()
+        href = str(reference.get("href") or "").strip()
+        if not label or not href.startswith("/research"):
+            continue
+        normalized.append(
+            _reference(
+                label=label,
+                href=href,
+                resource_key=reference.get("resource_key"),
+                type=str(reference.get("type") or "resource"),
+            )
+        )
+    return normalized
+
+
+def _dedupe_references(*references: ResearchAskAIReference) -> list[ResearchAskAIReference]:
+    seen: set[tuple[str | None, str]] = set()
+    deduped: list[ResearchAskAIReference] = []
+    for reference in references:
+        key = (reference.resource_key, reference.href)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(reference)
+    return deduped
+
+
+def _scope_description(scope: str) -> str:
+    if scope == "global":
+        return "all research domain context"
+    if scope == "mixed":
+        return "page context and explicit references"
+    return "current page context first"
+
+
+def _reference_summary(references: list[ResearchAskAIReference]) -> str:
+    labels = [reference.label for reference in references[:5]]
+    return ", ".join(labels) if labels else "current research workspace"
 
 
 def _section_from_path(path: str) -> str:

@@ -20,11 +20,40 @@ import {
   type ResearchAIMessage,
   type ResearchAskAIContextRequest,
   type ResearchAskAIPrompt,
+  type ResearchAskAIReference,
 } from "@ksu/api-client";
 
 type ChatMessage = Pick<ResearchAIMessage, "id" | "role" | "content" | "content_format" | "created_at"> & {
   pending?: boolean;
+  references?: ResearchAskAIReference[];
 };
+
+type AskAIScope = "page" | "global" | "mixed";
+type AskAIMode = "summarize" | "find_gaps" | "compare" | "report" | "explain" | "navigate";
+
+const SCOPE_OPTIONS: Array<{ label: string; value: AskAIScope }> = [
+  { label: "This page", value: "page" },
+  { label: "All research", value: "global" },
+  { label: "Mixed", value: "mixed" },
+];
+
+const MODE_OPTIONS: Array<{ label: string; value: AskAIMode }> = [
+  { label: "Summarize", value: "summarize" },
+  { label: "Find gaps", value: "find_gaps" },
+  { label: "Compare", value: "compare" },
+  { label: "Report", value: "report" },
+  { label: "Explain", value: "explain" },
+  { label: "Navigate", value: "navigate" },
+];
+
+const REFERENCE_OPTIONS: Array<ResearchAskAIReference & { token: string }> = [
+  { token: "/projects", label: "/projects", type: "resource", href: "/research/projects", resource_key: "research-projects" },
+  { token: "/grants", label: "/grants", type: "resource", href: "/research/grants", resource_key: "research-grants" },
+  { token: "/publications", label: "/publications", type: "resource", href: "/research/publications", resource_key: "research-publications" },
+  { token: "/centers", label: "/centers", type: "resource", href: "/research/centers", resource_key: "research-centers" },
+  { token: "/reports", label: "/reports", type: "page", href: "/research/reports", resource_key: null },
+  { token: "/sustainability", label: "/sustainability", type: "resource", href: "/research/sustainability", resource_key: "research-sustainability" },
+];
 
 const DEFAULT_PROMPTS: ResearchAskAIPrompt[] = [
   {
@@ -54,11 +83,19 @@ export function ResearchAskAIWidget() {
   const [conversationId, setConversationId] = React.useState<string | null>(null);
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const [prompt, setPrompt] = React.useState("");
+  const [selectedScope, setSelectedScope] = React.useState<AskAIScope>("page");
+  const [selectedMode, setSelectedMode] = React.useState<AskAIMode>("summarize");
+  const [manualReferences, setManualReferences] = React.useState<ResearchAskAIReference[]>([]);
   const [suggestedPrompts, setSuggestedPrompts] = React.useState<ResearchAskAIPrompt[]>(DEFAULT_PROMPTS);
   const [isStreaming, setIsStreaming] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const context = React.useMemo(() => buildAskAIContext(pathname), [pathname]);
+  const selectedReferences = React.useMemo(
+    () => mergeReferences(manualReferences, referencesFromPrompt(prompt)),
+    [manualReferences, prompt],
+  );
+  const scopeLabel = SCOPE_OPTIONS.find((item) => item.value === selectedScope)?.label ?? "This page";
 
   const conversationsQuery = useQuery({
     queryKey: ["research", "ask-ai", "conversations"],
@@ -84,7 +121,7 @@ export function ResearchAskAIWidget() {
 
   React.useEffect(() => {
     if (messagesQuery.data?.data && !isStreaming) {
-      setMessages(messagesQuery.data.data);
+      setMessages(messagesQuery.data.data.map(toChatMessage));
     }
   }, [isStreaming, messagesQuery.data?.data]);
 
@@ -122,6 +159,7 @@ export function ResearchAskAIWidget() {
           content_format: "markdown",
           created_at: now,
           pending: true,
+          references: selectedReferences,
         },
       ]);
 
@@ -131,6 +169,9 @@ export function ResearchAskAIWidget() {
             conversation_id: activeConversationId,
             message,
             context,
+            scope: selectedScope,
+            intent_mode: selectedMode,
+            references: selectedReferences,
           },
           (event) => {
             if (event.event === "metadata") {
@@ -176,6 +217,7 @@ export function ResearchAskAIWidget() {
                         id: event.data.assistant_message_id ?? item.id,
                         content: event.data.answer || assistantDraft,
                         pending: false,
+                        references: event.data.references ?? selectedReferences,
                       }
                     : item,
                 ),
@@ -191,7 +233,7 @@ export function ResearchAskAIWidget() {
         setIsStreaming(false);
       }
     },
-    [activeConversationId, context, isStreaming, queryClient],
+    [activeConversationId, context, isStreaming, queryClient, selectedMode, selectedReferences, selectedScope],
   );
 
   return (
@@ -214,8 +256,56 @@ export function ResearchAskAIWidget() {
             <div className="min-w-0">
               <SheetTitle>Research Ask AI</SheetTitle>
               <SheetDescription className="truncate">
-                Read-only advisor for {sectionLabelFromContext(context)}
+                Using {scopeLabel} for {sectionLabelFromContext(context)}
               </SheetDescription>
+            </div>
+          </div>
+          <div className="mt-4 space-y-3">
+            <div className="flex flex-wrap gap-1.5">
+              {SCOPE_OPTIONS.map((item) => (
+                <Button
+                  key={item.value}
+                  type="button"
+                  size="sm"
+                  variant={selectedScope === item.value ? "default" : "outline"}
+                  className="h-8 px-3 text-xs"
+                  onClick={() => setSelectedScope(item.value)}
+                >
+                  {item.label}
+                </Button>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {MODE_OPTIONS.map((item) => (
+                <Button
+                  key={item.value}
+                  type="button"
+                  size="sm"
+                  variant={selectedMode === item.value ? "secondary" : "ghost"}
+                  className="h-7 px-2 text-xs"
+                  onClick={() => setSelectedMode(item.value)}
+                >
+                  {item.label}
+                </Button>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {REFERENCE_OPTIONS.map((item) => {
+                const selected = manualReferences.some((reference) => reference.href === item.href);
+                return (
+                  <button
+                    key={item.token}
+                    type="button"
+                    className={cn(
+                      "rounded-md border px-2 py-1 text-xs transition-colors",
+                      selected ? "border-primary bg-primary/10 text-primary" : "bg-background hover:bg-muted",
+                    )}
+                    onClick={() => setManualReferences((current) => toggleReference(current, item))}
+                  >
+                    {item.token}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </SheetHeader>
@@ -297,7 +387,21 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         )}
       >
         {message.pending ? <TypingIndicator /> : <MarkdownMessage content={content} />}
+        {!isUser && !message.pending ? <SourceChips references={message.references ?? []} /> : null}
       </div>
+    </div>
+  );
+}
+
+function SourceChips({ references }: { references: ResearchAskAIReference[] }) {
+  if (!references.length) return null;
+  return (
+    <div className="mt-3 flex flex-wrap gap-1.5 border-t pt-2">
+      {references.slice(0, 4).map((reference) => (
+        <span key={`${reference.href}-${reference.resource_key ?? reference.label}`} className="rounded-md bg-muted px-2 py-1 text-[11px] text-muted-foreground">
+          {reference.label}
+        </span>
+      ))}
     </div>
   );
 }
@@ -362,6 +466,69 @@ function buildAskAIContext(pathname: string): ResearchAskAIContextRequest {
     path: pathname || "/research",
     section,
     resource_key: resourceKeyForPath(parts),
+  };
+}
+
+function referencesFromPrompt(prompt: string): ResearchAskAIReference[] {
+  const normalized = prompt.toLowerCase();
+  return REFERENCE_OPTIONS.filter((item) => normalized.includes(item.token)).map(toReference);
+}
+
+function toChatMessage(message: ResearchAIMessage): ChatMessage {
+  return {
+    id: message.id,
+    role: message.role,
+    content: message.content,
+    content_format: message.content_format,
+    created_at: message.created_at,
+    references: normalizeReferences(message.references),
+  };
+}
+
+function normalizeReferences(references: ResearchAIMessage["references"]): ResearchAskAIReference[] {
+  const rawReferences: unknown[] = references ? [...references] : [];
+  const safeReferences: ResearchAskAIReference[] = rawReferences
+    .filter(isResearchAskAIReference);
+  return safeReferences.map(toReference);
+}
+
+function isResearchAskAIReference(reference: unknown): reference is ResearchAskAIReference {
+  if (typeof reference !== "object" || reference === null) return false;
+  const candidate = reference as Record<string, unknown>;
+  return (
+    typeof candidate.label === "string" &&
+    typeof candidate.type === "string" &&
+    typeof candidate.href === "string"
+  );
+}
+
+function toggleReference(current: ResearchAskAIReference[], option: ResearchAskAIReference & { token: string }) {
+  if (current.some((reference) => reference.href === option.href)) {
+    return current.filter((reference) => reference.href !== option.href);
+  }
+  return [...current, toReference(option)];
+}
+
+function mergeReferences(...groups: ResearchAskAIReference[][]) {
+  const seen = new Set<string>();
+  const merged: ResearchAskAIReference[] = [];
+  for (const group of groups) {
+    for (const reference of group) {
+      const key = `${reference.resource_key ?? ""}:${reference.href}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      merged.push(reference);
+    }
+  }
+  return merged;
+}
+
+function toReference(reference: ResearchAskAIReference): ResearchAskAIReference {
+  return {
+    label: reference.label,
+    type: reference.type,
+    href: reference.href,
+    resource_key: reference.resource_key,
   };
 }
 

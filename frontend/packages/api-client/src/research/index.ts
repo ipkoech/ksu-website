@@ -385,6 +385,8 @@ export interface ResearchAskAIContext {
   path: string;
   resource_key?: string | null;
   record_id?: string | null;
+  scope: "page" | "global" | "mixed" | string;
+  intent_mode: "summarize" | "find_gaps" | "compare" | "report" | "explain" | "navigate" | "next_actions" | string;
   capabilities: string[];
   guided_prompts: ResearchAskAIPrompt[];
   references: ResearchAskAIReference[];
@@ -394,6 +396,9 @@ export interface ResearchAskAIRequest {
   conversation_id?: string | null;
   message: string;
   context?: ResearchAskAIContextRequest;
+  scope?: "page" | "global" | "mixed" | string;
+  intent_mode?: "summarize" | "find_gaps" | "compare" | "report" | "explain" | "navigate" | "next_actions" | string;
+  references?: ResearchAskAIReference[];
 }
 
 export interface ResearchAskAIResponse {
