@@ -45,6 +45,14 @@ class ScopedContentRead(BaseReadSchema):
     deleted_at: datetime | None = None
 
 
+class ScopeSummary(BaseSchema):
+    type: str
+    id: uuid.UUID
+    label: str
+    status: str | None = None
+    slug: str | None = None
+
+
 class RichContentCreate(ScopedContentCreate):
     title: str = Field(min_length=1, max_length=255)
     slug: SlugStr
@@ -243,6 +251,7 @@ class EventRead(ScopedContentRead):
     meta_title: str | None = None
     meta_description: str | None = None
     keywords: dict[str, Any] | None = None
+    scope: ScopeSummary | None = None
 
 
 class SliderGroupCreate(BaseSchema):

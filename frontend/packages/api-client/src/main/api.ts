@@ -87,6 +87,9 @@ type ListParams<
     string | number | boolean | undefined
   >,
 > = QueryParams & T;
+type EventFieldSelectionParams = FieldSelectionParams & {
+  include_scope?: boolean;
+};
 const MAIN_API_BASE_URL = getMainApiBaseUrl();
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -1111,6 +1114,7 @@ export const eventsApi = {
       is_published?: boolean;
       upcoming?: boolean;
       search?: string;
+      include_scope?: boolean;
     }>,
   ) => mainApi.get<PaginatedResponse<Event>>("/api/v1/events", params),
 
@@ -1123,13 +1127,14 @@ export const eventsApi = {
       upcoming?: boolean;
       status?: string;
       search?: string;
+      include_scope?: boolean;
     }>,
   ) => mainApi.get<PaginatedResponse<Event>>("/api/v1/events/admin", params),
 
-  get: (id: string, params?: FieldSelectionParams) =>
+  get: (id: string, params?: EventFieldSelectionParams) =>
     mainApi.get<{ data: Event }>(`/api/v1/events/id/${id}`, params),
 
-  getBySlug: (slug: string, params?: FieldSelectionParams) =>
+  getBySlug: (slug: string, params?: EventFieldSelectionParams) =>
     mainApi.get<{ data: Event }>(`/api/v1/events/${slug}`, params),
 
   create: (data: Partial<Event>) =>

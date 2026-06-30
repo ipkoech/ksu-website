@@ -948,6 +948,14 @@ export interface Blog {
   updated_at: string;
 }
 
+export interface ScopeSummary {
+  type: string;
+  id: string;
+  label: string;
+  status?: string | null;
+  slug?: string | null;
+}
+
 export interface Event {
   id: string;
   title: string;
@@ -963,6 +971,7 @@ export interface Event {
   author_user_id?: string | null;
   scope_type?: string | null;
   scope_id?: string | null;
+  scope?: ScopeSummary | null;
   event_type?: string;
   start_date: string;
   end_date?: string | null;
