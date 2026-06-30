@@ -31,6 +31,7 @@ export default function DonationStoriesPage() {
       defaults={{ status: "published" }}
       emptyMessage="No donation stories were returned by the research service."
       metaFields={["donor_name", "donor_organization", "status"]}
+      detailHref={(record) => `/research/donations/stories/${record.id}`}
     />
   );
 }

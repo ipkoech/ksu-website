@@ -31,6 +31,7 @@ export default function DonationImpactsPage() {
       defaults={{ impact_type: "project", currency: "KES", status: "published" }}
       emptyMessage="No donation impacts were returned by the research service."
       metaFields={["impact_type", "reporting_year", "status"]}
+      detailHref={(record) => `/research/donations/impacts/${record.id}`}
     />
   );
 }

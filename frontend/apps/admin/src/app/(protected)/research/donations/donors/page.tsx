@@ -46,6 +46,7 @@ export default function ResearchDonorsPage() {
       defaults={{ donor_type: "individual" }}
       emptyMessage="No donors were returned by the research service."
       metaFields={["donor_type", "tier", "donation_count"]}
+      detailHref={(record) => `/research/donations/donors/${record.id}`}
     />
   );
 }
