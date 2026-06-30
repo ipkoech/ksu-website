@@ -96,6 +96,7 @@ export default function EndowmentsPage() {
       defaults={{ fund_type: "general", currency: "KES", status: "active" }}
       emptyMessage="No endowment funds were returned by the research service."
       importResource="research-endowments"
+      detailHref={(record) => `/research/fundings/endowments/${record.id}`}
     />
   );
 }

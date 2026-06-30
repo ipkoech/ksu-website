@@ -82,6 +82,7 @@ export default function GrantReviewsPage() {
       defaults={{ status: "pending" }}
       emptyMessage="No grant reviews were returned by the research service."
       metaFields={["overall_score", "recommendation", "status"]}
+      detailHref={(record) => `/research/fundings/reviews/${record.id}`}
     />
   );
 }

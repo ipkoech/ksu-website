@@ -108,6 +108,7 @@ export default function GrantReportsPage() {
       defaults={{ report_type: "progress", status: "draft" }}
       emptyMessage="No grant reports were returned by the research service."
       metaFields={["report_type", "status", "submitted_at"]}
+      detailHref={(record) => `/research/fundings/reports/${record.id}`}
     />
   );
 }

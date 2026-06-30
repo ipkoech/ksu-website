@@ -104,6 +104,7 @@ export default function GrantApplicationsPage() {
       defaults={{ currency: "KES", status: "draft" }}
       emptyMessage="No grant applications were returned by the research service."
       metaFields={["application_number", "requested_amount", "status"]}
+      detailHref={(record) => `/research/fundings/applications/${record.id}`}
     />
   );
 }
