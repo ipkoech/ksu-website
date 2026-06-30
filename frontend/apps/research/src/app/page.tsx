@@ -127,6 +127,27 @@ export default async function ResearchPage() {
   );
   const partnerItems = partners.data.slice(0, 16);
   const story = stories.data[0];
+  const hasHomepageRecords =
+    [
+      projects,
+      publications,
+      grants,
+      innovations,
+      partners,
+      articles,
+      events,
+      centers,
+      facilities,
+      expertiseTags,
+      impactMetrics,
+      stories,
+      training,
+      resources,
+      services,
+      guidelines,
+    ].some((collection) => collection.total > 0 || collection.data.length > 0) ||
+    Boolean(headProfile) ||
+    Boolean(stats);
 
   return (
     <main id="research-main" className="min-h-screen bg-[#f4f6f4] text-slate-950">
@@ -141,7 +162,7 @@ export default async function ResearchPage() {
         innovations={statsMap.patents || innovations.total || innovations.data.length}
       />
 
-      {errors.length > 0 ? (
+      {errors.length > 0 && !hasHomepageRecords ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="mx-auto flex max-w-[1680px] flex-col gap-3">
             {errors.slice(0, 3).map((error, i) => (
