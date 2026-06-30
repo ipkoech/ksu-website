@@ -13,6 +13,7 @@ export default function SustainabilityPartnersPage() {
       manageScopes={["sustainability.manage", "partnerships.manage", "research:write"]}
       summarySlot={<SustainabilityWorkspaceHeader />}
       recordColumns={partnerColumns}
+      detailBaseHref="/research/sustainability/partners"
       listFilters={[
         { name: "search", label: "Search", type: "text", placeholder: "Search partner name, country, or collaboration area" },
         { name: "partner_type", label: "Partner Type", type: "select", options: [

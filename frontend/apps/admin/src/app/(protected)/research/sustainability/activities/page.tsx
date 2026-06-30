@@ -79,6 +79,7 @@ export default function SustainabilityActivitiesPage() {
       summarySlot={<SustainabilityWorkspaceHeader />}
       listFilters={activityFilters}
       recordColumns={activityColumns}
+      getRecordDetailHref={(record) => `/research/sustainability/activities/${record.id}`}
       fields={[
         { name: "title", label: "Title", required: true },
         { name: "slug", label: "Slug" },
