@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity, AlertCircle, CheckCircle2, Download, Play, Upload } from "lucide-react";
+import { Activity, AlertCircle, CheckCircle2, Download, Info, Play, Upload } from "lucide-react";
 import {
   EditableServiceResourcePage,
   type EditableField,
@@ -21,6 +21,10 @@ import {
   DialogTitle,
   Input,
   Label,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@ksu/ui/components";
 import {
   auditLogsApi,
@@ -279,6 +283,8 @@ function ResearchImportDialog({
   const [commitResult, setCommitResult] = useState<ImportCommitResult | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const [handledJobId, setHandledJobId] = useState<string | null>(null);
+  const [fieldsOpen, setFieldsOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
 
   const resourceQuery = useImportResource(resourceKey, { enabled: open });
   const previewImport = usePreviewImport();
@@ -419,49 +425,45 @@ function ResearchImportDialog({
 
           {resourceQuery.isLoading ? (
             <p className="rounded-lg border bg-muted/20 p-3 text-sm text-muted-foreground">Loading import template details...</p>
-          ) : resource?.columns?.length ? (
-            <div className="rounded-lg border">
-              <div className="grid max-h-48 divide-y overflow-y-auto text-sm">
-                {resource.columns.map((column) => (
-                  <div key={column.key} className="grid gap-2 px-3 py-2 sm:grid-cols-[160px_90px_1fr]">
-                    <span className="font-medium">{column.key}</span>
-                    <span>
-                      <Badge variant={column.required ? "default" : "outline"}>
-                        {column.required ? "Required" : "Optional"}
-                      </Badge>
-                    </span>
-                    <span className="text-muted-foreground">{column.description || "No notes"}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
           ) : null}
 
           {previewImport.isPending ? (
             <p className="rounded-lg border bg-muted/20 p-3 text-sm text-muted-foreground">Loading records from file...</p>
           ) : stagedRows.length > 0 ? (
             <div className="space-y-3">
-              <div className="grid gap-2 sm:grid-cols-4">
-                <ImportStat label="Rows" value={stagedRows.length} />
-                <ImportStat label="Ready" value={validRowCount} />
-                <ImportStat label="Need fixes" value={stagedRows.length - validRowCount} />
-                <ImportStat label="Issues" value={issueCount} />
-              </div>
               <div className="rounded-lg border">
-                <div className="flex items-center justify-between gap-3 border-b px-3 py-2">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b px-3 py-2">
                   <div>
                     <p className="text-sm font-semibold">Imported records</p>
                     <p className="text-xs text-muted-foreground">Edit cells before submitting. Required and invalid values are marked inline.</p>
                   </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={handleCommit}
-                    disabled={stagedRows.length === 0 || issueCount > 0 || isSubmitting}
-                  >
-                    <Play data-icon="inline-start" />
-                    {isSubmitting ? "Submitting..." : `Submit ${stagedRows.length}`}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {resource?.columns?.length ? (
+                      <IconTooltipButton
+                        label="Field details"
+                        tooltip="View field notes and required columns"
+                        onClick={() => setFieldsOpen(true)}
+                      >
+                        <Info className="size-4" />
+                      </IconTooltipButton>
+                    ) : null}
+                    <IconTooltipButton
+                      label="Import stats"
+                      tooltip="View import row counts and issue totals"
+                      onClick={() => setStatsOpen(true)}
+                    >
+                      <Activity className="size-4" />
+                    </IconTooltipButton>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleCommit}
+                      disabled={stagedRows.length === 0 || issueCount > 0 || isSubmitting}
+                    >
+                      <Play data-icon="inline-start" />
+                      {isSubmitting ? "Submitting..." : `Submit ${stagedRows.length}`}
+                    </Button>
+                  </div>
                 </div>
                 <div className="max-h-[52vh] overflow-auto">
                   <div
@@ -470,10 +472,7 @@ function ResearchImportDialog({
                   >
                     <div className="px-3 py-2">Row</div>
                     {(resource?.columns ?? []).map((column) => (
-                      <div key={column.key} className="px-3 py-2">
-                        {column.key}
-                        {column.required ? <span className="ml-1 text-destructive">*</span> : null}
-                      </div>
+                      <div key={column.key} className="px-3 py-2">{column.key}</div>
                     ))}
                     <div className="px-3 py-2">Issues</div>
                   </div>
@@ -543,6 +542,110 @@ function ResearchImportDialog({
               </AlertDescription>
             </Alert>
           ) : null}
+        </div>
+      </DialogContent>
+      <ImportFieldsDialog
+        open={fieldsOpen}
+        onOpenChange={setFieldsOpen}
+        columns={resource?.columns ?? []}
+      />
+      <ImportStatsDialog
+        open={statsOpen}
+        onOpenChange={setStatsOpen}
+        totalRows={stagedRows.length}
+        validRows={validRowCount}
+        issueCount={issueCount}
+      />
+    </Dialog>
+  );
+}
+
+function IconTooltipButton({
+  label,
+  tooltip,
+  onClick,
+  children,
+}: {
+  label: string;
+  tooltip: string;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button type="button" variant="outline" size="icon" aria-label={label} onClick={onClick}>
+            {children}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="top">{tooltip}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+function ImportFieldsDialog({
+  open,
+  onOpenChange,
+  columns,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  columns: Array<{ key: string; required: boolean; description?: string | null }>;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Import fields</DialogTitle>
+          <DialogDescription>Reference for required columns and field notes.</DialogDescription>
+        </DialogHeader>
+        <div className="rounded-lg border">
+          <div className="grid divide-y text-sm">
+            {columns.map((column) => (
+              <div key={column.key} className="grid gap-2 px-3 py-2 sm:grid-cols-[180px_100px_1fr]">
+                <span className="font-medium">{column.key}</span>
+                <span>
+                  <Badge variant={column.required ? "default" : "outline"}>
+                    {column.required ? "Required" : "Optional"}
+                  </Badge>
+                </span>
+                <span className="text-muted-foreground">{column.description || "No notes"}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ImportStatsDialog({
+  open,
+  onOpenChange,
+  totalRows,
+  validRows,
+  issueCount,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  totalRows: number;
+  validRows: number;
+  issueCount: number;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Import stats</DialogTitle>
+          <DialogDescription>Current status of the records staged for import.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <ImportStat label="Rows" value={totalRows} />
+          <ImportStat label="Ready" value={validRows} />
+          <ImportStat label="Need fixes" value={totalRows - validRows} />
+          <ImportStat label="Issues" value={issueCount} />
         </div>
       </DialogContent>
     </Dialog>
