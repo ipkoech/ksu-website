@@ -245,64 +245,18 @@ function PortfolioQuickAccessSection({
   innovations: number;
 }) {
   const metrics = [
-    { label: "Projects", value: formatNumber(projects), href: "/projects", icon: FlaskConical },
-    { label: "Publications", value: formatNumber(publications), href: "/publications", icon: BookOpen },
-    { label: "Partners", value: formatNumber(partners), href: "/partners", icon: Handshake },
-    { label: "Grants", value: formatGrantValue(grants), href: "/funding", icon: Award },
-    { label: "Innovations", value: formatNumber(innovations), href: "/innovations", icon: Lightbulb },
+    { label: "Projects", value: formatNumber(projects), rawValue: projects, href: "/projects", icon: FlaskConical },
+    { label: "Publications", value: formatNumber(publications), rawValue: publications, href: "/publications", icon: BookOpen },
+    { label: "Partners", value: formatNumber(partners), rawValue: partners, href: "/partners", icon: Handshake },
+    { label: "Grants", value: formatGrantValue(grants), rawValue: grants, href: "/funding", icon: Award },
+    { label: "Innovations", value: formatNumber(innovations), rawValue: innovations, href: "/innovations", icon: Lightbulb },
   ];
 
   return (
     <ScrollReveal as="section" className="research-surface-grid relative isolate min-h-[20vh] overflow-hidden border-b border-slate-200 bg-[linear-gradient(135deg,#eef7f2_0%,#ffffff_48%,#f6faf8_100%)] px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <ResearchAnimatedBackdrop />
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-      <div className="relative mx-auto grid min-h-[calc(20vh-4rem)] max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.55fr)] lg:items-stretch">
-        <article className="research-glass-panel research-border-sheen flex min-h-[calc(20vh-4rem)] flex-col justify-between rounded-lg p-5 lg:p-6">
-          <div>
-            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-              <div>
-                <SectionKicker>Research portfolio</SectionKicker>
-                <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
-                  At a glance
-                </h2>
-              </div>
-              <p className="max-w-md text-sm leading-6 text-slate-600">
-                Live counts from published research records.
-              </p>
-            </div>
-            <ScrollRevealGroup className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5" staggerDelay={55}>
-              {metrics.map((metric) => {
-                const Icon = metric.icon;
-                return (
-                  <Link
-                    key={metric.label}
-                    href={metric.href}
-                    className="group flex min-h-28 items-center gap-4 rounded-lg border border-white/70 bg-white/80 p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:bg-white hover:shadow-md"
-                  >
-                    <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                      <Icon aria-hidden className="h-5 w-5" />
-                    </span>
-                    <span>
-                      <span className="block font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950">
-                        {metric.value}
-                      </span>
-                      <span className="mt-1 block text-xs font-semibold uppercase text-slate-500">
-                        {metric.label}
-                      </span>
-                    </span>
-                  </Link>
-                );
-              })}
-            </ScrollRevealGroup>
-          </div>
-          <Link
-            href="/impact-metrics"
-            className="mt-8 inline-flex w-fit items-center gap-2 text-sm font-semibold text-primary transition hover:text-secondary"
-          >
-            View research impact metrics
-            <ArrowRight aria-hidden className="h-4 w-4" />
-          </Link>
-        </article>
+      <div className="relative mx-auto grid min-h-[calc(20vh-4rem)] max-w-[1680px] gap-6 lg:grid-cols-[minmax(320px,0.55fr)_minmax(0,1.15fr)] lg:items-stretch">
         <article className="research-glass-panel research-border-sheen rounded-lg p-5 lg:p-6">
           <SectionKicker>Quick links</SectionKicker>
           <nav aria-label="Research quick links" className="mt-4 divide-y divide-slate-200">
@@ -316,6 +270,60 @@ function PortfolioQuickAccessSection({
               </Link>
             ))}
           </nav>
+        </article>
+        <article className="research-glass-panel research-border-sheen flex min-h-[calc(20vh-4rem)] flex-col justify-between rounded-lg p-5 lg:p-6">
+          <div>
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+              <div>
+                <SectionKicker>Research portfolio</SectionKicker>
+                <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
+                  At a glance
+                </h2>
+              </div>
+              <p className="max-w-md text-sm leading-6 text-slate-600">
+                Published counts appear automatically as records are approved.
+              </p>
+            </div>
+            <ScrollRevealGroup className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5" staggerDelay={55}>
+              {metrics.map((metric) => {
+                const Icon = metric.icon;
+                const hasPublishedCount = metric.rawValue > 0;
+
+                return (
+                  <Link
+                    key={metric.label}
+                    href={metric.href}
+                    className="group flex min-h-28 items-center gap-4 rounded-lg border border-white/70 bg-white/80 p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:bg-white hover:shadow-md"
+                  >
+                    <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                      <Icon aria-hidden className="h-5 w-5" />
+                    </span>
+                    <span>
+                      <span className={`block font-[family-name:var(--font-display)] font-semibold text-slate-950 ${hasPublishedCount ? "text-3xl" : "text-xl"}`}>
+                        {hasPublishedCount ? metric.value : "Explore"}
+                      </span>
+                      <span className="mt-1 block text-xs font-semibold uppercase text-slate-500">
+                        {metric.label}
+                      </span>
+                      {!hasPublishedCount ? (
+                        <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                          Browse
+                          <ArrowRight aria-hidden className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
+                        </span>
+                      ) : null}
+                    </span>
+                  </Link>
+                );
+              })}
+            </ScrollRevealGroup>
+          </div>
+          <Link
+            href="/impact-metrics"
+            className="mt-8 inline-flex w-fit items-center gap-2 text-sm font-semibold text-primary transition hover:text-secondary"
+          >
+            View research impact metrics
+            <ArrowRight aria-hidden className="h-4 w-4" />
+          </Link>
         </article>
       </div>
     </ScrollReveal>
@@ -628,7 +636,12 @@ function PartnersImpactSection({
               Partner with Kisii University
               <ArrowRight aria-hidden className="h-4 w-4" />
             </Link>
-            <p className="mt-4 text-xs text-white/75">Email: research@kisiiuniversity.ac.ke</p>
+            <a
+              href="mailto:research@kisiiuniversity.ac.ke"
+              className="mt-4 inline-flex text-xs font-semibold text-white/80 transition hover:text-white"
+            >
+              research@kisiiuniversity.ac.ke
+            </a>
           </article>
         </div>
       </div>
@@ -695,7 +708,7 @@ function PillarCard({
   icon: LucideIcon;
 }) {
   return (
-    <article className="group flex min-h-[270px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md">
+    <article className="flex min-h-[270px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <span className="inline-flex h-12 w-12 items-center justify-center rounded-md bg-primary/10 text-primary">
           <Icon aria-hidden className="h-5 w-5" />
@@ -708,7 +721,6 @@ function PillarCard({
         {title}
       </h3>
       <p className="mt-3 text-sm leading-7 text-slate-600">{body}</p>
-      <ArrowRight aria-hidden className="mt-auto h-4 w-4 text-primary transition group-hover:translate-x-1" />
     </article>
   );
 }
