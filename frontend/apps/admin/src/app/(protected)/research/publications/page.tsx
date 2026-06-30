@@ -6,7 +6,14 @@ import {
   type EditableListFilter,
   type EditableRecordColumn,
 } from "@/components/dashboard/editable-service-resource-page";
-import { ResearchBulkActions } from "../_components/research-resource-page";
+import {
+  ResearchBulkActions,
+  withResearchFieldHelp,
+} from "../_components/research-resource-page";
+import {
+  getResearchGuidance,
+  ResearchSectionGuide,
+} from "../_components/research-guidance";
 import { researchServiceApi, type ResearchPublication, type ResearchPublicationPayload } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
 import {
@@ -158,6 +165,7 @@ function PublicationMobileRecord(record: ResearchPublication, actions: ReactNode
 export default function ResearchPublicationsPage() {
   const { hasScope } = usePermissions();
   const canManage = hasScope("research.manage_publications") || hasScope("publications.manage") || hasScope("research:write") || hasScope("publications:write");
+  const guidance = getResearchGuidance("Publications");
 
   return (
     <EditableServiceResourcePage<ResearchPublication, ResearchPublicationPayload>
@@ -166,12 +174,17 @@ export default function ResearchPublicationsPage() {
       resourceKey="publications"
       backHref="/research"
       queryKey={["research", "publications"]}
-      summarySlot={<PublicationWorkspaceHeader />}
+      summarySlot={
+        <div className="space-y-4">
+          <ResearchSectionGuide title="Publications" />
+          <PublicationWorkspaceHeader />
+        </div>
+      }
       listFilters={publicationListFilters}
       recordColumns={publicationColumns}
       editorMode="sheet"
       renderMobileRecord={PublicationMobileRecord}
-      fields={[
+      fields={withResearchFieldHelp([
         { name: "title", label: "Title", required: true, placeholder: "Publication title" },
         { name: "slug", label: "Slug", placeholder: "publication-slug" },
         { name: "abstract", label: "Abstract / Summary", type: "textarea" },
@@ -234,7 +247,7 @@ export default function ResearchPublicationsPage() {
         { name: "cover_image_url", label: "Cover Image URL", type: "url" },
         { name: "is_active", label: "Active", type: "boolean" },
         { name: "is_featured", label: "Featured", type: "boolean" },
-      ]}
+      ])}
       list={(filters) =>
         researchServiceApi.publications.list({
           page: 1,
@@ -265,6 +278,7 @@ export default function ResearchPublicationsPage() {
       }
       getRecordDetailHref={(record) => record.slug ? `/research/publications/${record.slug}` : null}
       emptyMessage="No publications were returned by the research service."
+      emptyState={guidance?.emptyState}
       buildPayload={(values) => ({
         title: values.title,
         slug: values.slug,

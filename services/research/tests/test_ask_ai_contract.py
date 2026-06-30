@@ -43,10 +43,18 @@ class ResearchAskAIContractTests(unittest.TestCase):
         self.assertTrue(conversations.dependencies)
         self.assertTrue(messages.dependencies)
 
+    def test_ask_ai_stream_route_is_registered_and_read_protected(self):
+        route = _route(ask_ai_router, "/ask-ai/stream", "POST")
+
+        self.assertTrue(route.dependencies)
+        self.assertTrue(any(param.name == "db" for param in route.dependant.dependencies))
+        self.assertTrue(any(param.name == "user" for param in route.dependant.dependencies))
+
     def test_research_v1_router_includes_ask_ai_route(self):
         paths = _paths(create_app(), "POST")
 
         self.assertIn("/api/v1/ask-ai", paths)
+        self.assertIn("/api/v1/ask-ai/stream", paths)
 
     def test_research_v1_router_includes_ask_ai_read_routes(self):
         paths = _paths(create_app(), "GET")
@@ -89,6 +97,14 @@ class ResearchAskAIContractTests(unittest.TestCase):
         self.assertIn("##", response.answer)
         self.assertIn("read-only", response.answer.lower())
         self.assertTrue(response.suggested_prompts)
+
+    def test_markdown_chunking_preserves_complete_answer(self):
+        answer = "## Heading\n\n- First point\n- Second point"
+
+        chunks = list(ResearchAskAIService.markdown_chunks(answer, chunk_size=9))
+
+        self.assertEqual("".join(chunks), answer)
+        self.assertTrue(all(len(chunk) <= 9 for chunk in chunks))
 
     def test_service_exposure_covers_research_backend_surfaces(self):
         exposure = ResearchAskAIService.service_exposure_catalog()

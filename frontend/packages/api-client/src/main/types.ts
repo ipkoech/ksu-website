@@ -30,6 +30,30 @@ export interface PublicStatsResponse {
   stats: PublicStatItem[];
 }
 
+export interface UserPreference {
+  id?: string | null;
+  user_id: string;
+  namespace: string;
+  key: string;
+  value: unknown;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface UserPreferencesResponse {
+  preferences: UserPreference[];
+}
+
+export interface UserPreferenceInput {
+  namespace: string;
+  key: string;
+  value: unknown;
+}
+
+export interface UserPreferencesUpdatePayload {
+  preferences: UserPreferenceInput[];
+}
+
 export interface Person {
   id: string;
   user_id?: string | null;

@@ -394,6 +394,12 @@ class ResearchAskAIService:
         )
 
     @staticmethod
+    def markdown_chunks(answer: str, chunk_size: int = 96):
+        normalized_size = max(1, chunk_size)
+        for index in range(0, len(answer), normalized_size):
+            yield answer[index : index + normalized_size]
+
+    @staticmethod
     async def _generate_provider_answer(
         *,
         message: str,

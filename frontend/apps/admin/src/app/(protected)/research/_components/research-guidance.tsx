@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight,
   CheckCircle2,
@@ -23,6 +24,10 @@ import {
   TooltipTrigger,
 } from "@ksu/ui/components";
 import { cn } from "@ksu/ui/lib";
+import { userPreferencesApi } from "@ksu/api-client";
+
+const RESEARCH_TOUR_PREFERENCE_NAMESPACE = "onboarding";
+const RESEARCH_TOUR_PREFERENCE_KEY = "research-admin:v1";
 
 export interface ResearchGuidanceConfig {
   title: string;
@@ -414,14 +419,62 @@ export function ResearchFirstLoginTour({
   storageKey?: string;
 }) {
   const [visible, setVisible] = useState(false);
+  const queryClient = useQueryClient();
+
+  const preferencesQuery = useQuery({
+    queryKey: ["me", "preferences"],
+    queryFn: () => userPreferencesApi.get(),
+    retry: false,
+  });
+
+  const dismissPreference = useMutation({
+    mutationFn: () =>
+      userPreferencesApi.update({
+        preferences: [
+          {
+            namespace: RESEARCH_TOUR_PREFERENCE_NAMESPACE,
+            key: RESEARCH_TOUR_PREFERENCE_KEY,
+            value: {
+              completed: true,
+              completed_at: new Date().toISOString(),
+            },
+          },
+        ],
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["me", "preferences"] });
+    },
+  });
 
   useEffect(() => {
-    setVisible(window.localStorage.getItem(storageKey) !== "true");
-  }, [storageKey]);
+    if (preferencesQuery.isLoading) return;
+
+    const storedDismissed = window.localStorage.getItem(storageKey) === "true";
+    if (preferencesQuery.isError) {
+      setVisible(!storedDismissed);
+      return;
+    }
+
+    const completed = preferencesQuery.data?.data.preferences.some(
+      (preference) =>
+        preference.namespace === RESEARCH_TOUR_PREFERENCE_NAMESPACE &&
+        preference.key === RESEARCH_TOUR_PREFERENCE_KEY &&
+        isCompletedPreference(preference.value),
+    );
+
+    if (completed) {
+      window.localStorage.setItem(storageKey, "true");
+      setVisible(false);
+      return;
+    }
+
+    setVisible(!storedDismissed);
+  }, [preferencesQuery.data, preferencesQuery.isError, preferencesQuery.isLoading, storageKey]);
 
   const dismiss = () => {
     window.localStorage.setItem(storageKey, "true");
     setVisible(false);
+    dismissPreference.mutate();
   };
 
   if (!visible) return null;
@@ -468,6 +521,15 @@ export function ResearchFirstLoginTour({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function isCompletedPreference(value: unknown) {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      "completed" in value &&
+      (value as { completed?: unknown }).completed === true,
   );
 }
 

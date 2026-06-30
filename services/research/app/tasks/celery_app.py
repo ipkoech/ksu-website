@@ -25,8 +25,9 @@ celery_app.conf.update(
     task_default_queue="research.default",
     task_routes={
         "research.exports.generate": {"queue": "research.exports"},
+        "research.donations.*": {"queue": "research.donations"},
     },
 )
 
 celery_app.autodiscover_tasks(["app.tasks"])
-celery_app.conf.imports = ("app.tasks.exports",)
+celery_app.conf.imports = ("app.tasks.exports", "app.tasks.donations")

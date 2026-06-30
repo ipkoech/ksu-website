@@ -77,8 +77,8 @@ async def public_research_stats(db: AsyncSession) -> PublicStatsResponse:
     farm_hectares_val = await _sum(db, ResearchFarm.size_hectares, ResearchFarm, ResearchFarm.is_active.is_(True), ResearchFarm.is_public.is_(True))
     project_count = await _count(db, ResearchProject, ResearchProject.is_active.is_(True), ResearchProject.is_public.is_(True), ResearchProject.status.in_(("approved", "ongoing", "completed")))
     project_budget_total = await _sum(db, ResearchProject.budget, ResearchProject, ResearchProject.is_active.is_(True), ResearchProject.is_public.is_(True))
-    published_updates = await _count(db, Publication, Publication.is_active.is_(True), Publication.is_public.is_(True))
-    citation_total = await _sum(db, Publication.citation_count, Publication, Publication.is_active.is_(True), Publication.is_public.is_(True))
+    published_updates = await _count(db, Publication, Publication.is_active.is_(True), Publication.status == "published")
+    citation_total = await _sum(db, Publication.citation_count, Publication, Publication.is_active.is_(True), Publication.status == "published")
     outputs = sum(
         [
             await _count(db, Innovation, Innovation.is_active.is_(True), Innovation.is_public.is_(True), Innovation.status == "active"),
@@ -272,7 +272,7 @@ async def admin_research_stats(db: AsyncSession) -> PublicStatsResponse:
             await _count(db, MentorshipApplication, MentorshipApplication.status.in_(("submitted", "under_review"))),
         ]
     )
-    published_updates = await _count(db, Publication, Publication.is_public.is_(True))
+    published_updates = await _count(db, Publication, Publication.status == "published")
 
     stats = [
         _item("centres", "Research Centres", await _count(db, ResearchCenter), "Research centre records", "/research/centers"),

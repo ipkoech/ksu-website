@@ -14,7 +14,15 @@ branch_labels = None
 depends_on = None
 
 
+def _columns(table_name: str) -> set[str]:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    return {column["name"] for column in inspector.get_columns(table_name)}
+
+
 def upgrade() -> None:
+    if "youtube_url" in _columns("announcements"):
+        return
     op.add_column(
         "announcements",
         sa.Column("youtube_url", sa.String(512), nullable=True),

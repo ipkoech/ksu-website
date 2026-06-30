@@ -82,6 +82,7 @@ async def run_migrations_online() -> None:
         async with conn.begin():
             if version_schema:
                 await conn.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{version_schema}"'))
+                await conn.execute(text(f'SET search_path TO "{version_schema}", public'))
             await conn.run_sync(
                 lambda sync_conn: context.configure(
                     connection=sync_conn,

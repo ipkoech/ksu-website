@@ -21,7 +21,8 @@ export default function MainResearchPage() {
         { title: "Partnerships", description: "Partner organizations.", href: "/research/partnerships", icon: HeartHandshake },
         { title: "Donations", description: "Donation records.", href: "/research/donations", icon: HandCoins },
         { title: "Innovation", description: "Innovation and disclosure records.", href: "/research/innovations", icon: Lightbulb },
-        { title: "Output", description: "Research outputs and reports.", href: "/research/outputs", icon: FileText },
+        { title: "Outputs", description: "Research outputs, datasets, tools, and publications support records.", href: "/research/outputs", icon: FileText },
+        { title: "Reports", description: "Research report exports, standard reports, and report output workflows.", href: "/research/reports", icon: FileText },
       ]}
     />
   );

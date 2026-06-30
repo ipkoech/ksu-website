@@ -1,8 +1,8 @@
 export const publicFrontendUrl =
-  process.env.NEXT_PUBLIC_PUBLIC_FRONTEND_URL || "http://localhost:3000";
+  process.env.NEXT_PUBLIC_PUBLIC_FRONTEND_URL || "/";
 
 export const researchFrontendUrl =
-  process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL || "http://localhost:3002";
+  process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL || "/";
 
 export const libraryFrontendUrl =
-  process.env.NEXT_PUBLIC_LIBRARY_FRONTEND_URL || "http://localhost:3003";
+  process.env.NEXT_PUBLIC_LIBRARY_FRONTEND_URL || "/";

@@ -10,6 +10,9 @@ type RoleDestination = {
 const roleDestinations: RoleDestination[] = [
   { roles: ["system-admin"], href: "/system", service: "system" },
   { roles: ["library-admin", "library-manager", "library-staff"], href: "/library", service: "library" },
+  { roles: ["research-content"], href: "/research/content", service: "research" },
+  { roles: ["research-farm"], href: "/research/farm", service: "research" },
+  { roles: ["research-sustainability"], href: "/research/sustainability", service: "research" },
   { roles: ["research-admin", "research-manager", "research-staff", "innovation-officer"], href: "/research", service: "research" },
   { roles: ["researcher", "lecturer"], href: "/publications/submissions", service: "research" },
   { roles: ["school-admin", "academic-admin"], href: "/schools", service: "main" },
@@ -96,6 +99,13 @@ export function resolvePortalAccessDestination(
   }
 
   if (nonProfilePortals.length > 1) {
+    const roleDestination = resolvePostLoginDestination(user, null);
+    const matchingPortal = nonProfilePortals.find(
+      (portal) => portal.href === roleDestination.href,
+    );
+    if (matchingPortal) {
+      return { href: matchingPortal.href, service: matchingPortal.service };
+    }
     return { href: "/select-service", service: null };
   }
 

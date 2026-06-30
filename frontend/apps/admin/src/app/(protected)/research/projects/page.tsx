@@ -18,7 +18,14 @@ import {
   relationshipAdapters,
   type RelationshipAdapter,
 } from "@/components/relationships/relationship-adapters";
-import { ResearchBulkActions } from "../_components/research-resource-page";
+import {
+  ResearchBulkActions,
+  withResearchFieldHelp,
+} from "../_components/research-resource-page";
+import {
+  getResearchGuidance,
+  ResearchSectionGuide,
+} from "../_components/research-guidance";
 import { researchServiceApi, type ResearchProject, type ResearchProjectPayload } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
 
@@ -219,6 +226,7 @@ function ProjectMobileRecord(record: ResearchProject, actions: ReactNode) {
 export default function ResearchProjectsPage() {
   const { hasScope } = usePermissions();
   const canManage = hasScope("research.manage_projects") || hasScope("research:write");
+  const guidance = getResearchGuidance("Projects");
 
   return (
     <EditableServiceResourcePage<ResearchProject, ResearchProjectPayload>
@@ -227,10 +235,15 @@ export default function ResearchProjectsPage() {
       resourceKey="projects"
       backHref="/research"
       queryKey={["research", "projects"]}
-      summarySlot={<ProjectsSummaryStrip />}
+      summarySlot={
+        <div className="space-y-4">
+          <ResearchSectionGuide title="Projects" />
+          <ProjectsSummaryStrip />
+        </div>
+      }
       listFilters={projectListFilters}
       recordColumns={projectColumns}
-      fields={projectFields}
+      fields={withResearchFieldHelp(projectFields)}
       editorMode="sheet"
       renderMobileRecord={ProjectMobileRecord}
       list={(filters) =>
@@ -300,6 +313,7 @@ export default function ResearchProjectsPage() {
             ]
       }
       emptyMessage="No research projects were returned by the research service."
+      emptyState={guidance?.emptyState}
       buildPayload={(values) => ({
         title: values.title,
         slug: values.slug,

@@ -57,7 +57,7 @@ from .exchange import ExchangeProgramme
 from .university import UniversityInfo
 
 # System
-from .system import ApiKey, Setting, Webhook
+from .system import ApiKey, Setting, UserPreference, Webhook
 from .analytics import AnalyticsEvent
 
 # Media
@@ -131,6 +131,7 @@ __all__ = [
     "ExchangeProgramme",
     "UniversityInfo",
     "Setting",
+    "UserPreference",
     "ApiKey",
     "Webhook",
     "AnalyticsEvent",

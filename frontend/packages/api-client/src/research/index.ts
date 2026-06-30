@@ -59,6 +59,44 @@ export interface ResearchExportJob {
   error?: string | null;
 }
 
+export interface PublicDonationSubmission {
+  donor_type?: string;
+  display_name?: string | null;
+  organization_name?: string | null;
+  is_anonymous?: boolean;
+  email?: string | null;
+  phone?: string | null;
+  amount: number;
+  currency?: string;
+  donation_type?: string;
+  recurring_frequency?: string | null;
+  designation?: string;
+  purpose?: string | null;
+  fund_id?: string | null;
+  project_id?: string | null;
+  center_id?: string | null;
+  scholarship_id?: string | null;
+  preferred_payment_method?: string | null;
+  message?: string | null;
+  dedication?: string | null;
+  is_tribute?: boolean;
+  tribute_type?: string | null;
+  tribute_name?: string | null;
+  recognition_public?: boolean;
+}
+
+export interface PublicDonationSubmissionRead {
+  donation_id: string;
+  donor_id: string;
+  status: string;
+  amount: number;
+  currency: string;
+  donation_type: string;
+  recurring_frequency?: string | null;
+  designation: string;
+  payment_method?: string | null;
+}
+
 export interface ResearchProject {
   id: string;
   title: string;
@@ -320,6 +358,136 @@ export interface ResearchSearchResponse {
   by_type: Record<string, number>;
 }
 
+export interface ResearchAskAIPrompt {
+  id: string;
+  label: string;
+  text: string;
+  intent: string;
+}
+
+export interface ResearchAskAIReference {
+  label: string;
+  type: string;
+  href: string;
+  resource_key?: string | null;
+}
+
+export interface ResearchAskAIContextRequest {
+  path?: string;
+  section?: string | null;
+  resource_key?: string | null;
+  record_id?: string | null;
+}
+
+export interface ResearchAskAIContext {
+  section_key: string;
+  section_label: string;
+  path: string;
+  resource_key?: string | null;
+  record_id?: string | null;
+  capabilities: string[];
+  guided_prompts: ResearchAskAIPrompt[];
+  references: ResearchAskAIReference[];
+}
+
+export interface ResearchAskAIRequest {
+  conversation_id?: string | null;
+  message: string;
+  context?: ResearchAskAIContextRequest;
+}
+
+export interface ResearchAskAIResponse {
+  mode: "read_only" | string;
+  conversation_id?: string | null;
+  user_message_id?: string | null;
+  assistant_message_id?: string | null;
+  answer: string;
+  content_format: "markdown" | string;
+  context: ResearchAskAIContext;
+  service_exposure: Record<string, any>;
+  references: ResearchAskAIReference[];
+  suggested_prompts: ResearchAskAIPrompt[];
+}
+
+export interface ResearchAIConversation {
+  id: string;
+  title: string;
+  section_key?: string | null;
+  resource_key?: string | null;
+  record_id?: string | null;
+  context?: Record<string, any> | null;
+  is_archived: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ResearchAIMessage {
+  id: string;
+  conversation_id: string;
+  role: "user" | "assistant" | string;
+  content: string;
+  content_format: "markdown" | string;
+  context_snapshot?: Record<string, any> | null;
+  references?: ResearchAskAIReference[] | Record<string, any>[] | null;
+  metadata?: Record<string, any> | null;
+  created_at: string;
+}
+
+export type ResearchAskAIStreamEvent =
+  | { event: "metadata"; data: Partial<ResearchAskAIResponse> }
+  | { event: "delta"; data: { text?: string } }
+  | { event: "done"; data: ResearchAskAIResponse }
+  | { event: "error"; data: { message?: string } };
+
+export interface ResearchAnalyticsPoint {
+  key: string;
+  label: string;
+  value: number;
+  secondary_value?: number | null;
+  suffix?: string;
+  href?: string | null;
+  description?: string | null;
+}
+
+export interface ResearchAnalyticsChart {
+  key: string;
+  title: string;
+  chart_type: "bar" | "donut" | "stacked" | "line" | string;
+  description?: string | null;
+  data: ResearchAnalyticsPoint[];
+}
+
+export interface ResearchAnalyticsKpi {
+  key: string;
+  label: string;
+  value: number;
+  suffix?: string;
+  description: string;
+  href?: string | null;
+}
+
+export interface ResearchAnalyticsAttentionItem {
+  key: string;
+  label: string;
+  value: number;
+  severity: "info" | "warning" | "danger" | string;
+  description: string;
+  href?: string | null;
+}
+
+export interface ResearchDashboardAnalytics {
+  scope: string;
+  title: string;
+  kpis: ResearchAnalyticsKpi[];
+  attention: ResearchAnalyticsAttentionItem[];
+  portfolio_health: ResearchAnalyticsChart[];
+  funding_pipeline: ResearchAnalyticsChart[];
+  outputs_publications: ResearchAnalyticsChart[];
+  partnerships_sustainability: ResearchAnalyticsChart[];
+  applications_reviews: ResearchAnalyticsChart[];
+  admin_activity: ResearchAnalyticsChart[];
+}
+
 function crudApi<TRecord, TPayload>(path: string) {
   return {
     list: (params?: ListParams) =>
@@ -439,8 +607,23 @@ export const researchServiceApi = {
   stats: () => researchApi.get<{ data: PublicStatsResponse }>("/api/v1/stats"),
   adminStats: () =>
     researchApi.get<{ data: PublicStatsResponse }>("/api/v1/stats/admin"),
+  dashboardAnalytics: () =>
+    researchApi.get<{ data: ResearchDashboardAnalytics }>("/api/v1/analytics/dashboard"),
   search: (params: { q: string; types?: string; limit?: number }) =>
     researchApi.get<{ data: ResearchSearchResponse }>("/api/v1/search", params),
+  askAI: (data: ResearchAskAIRequest) =>
+    researchApi.post<{ data: ResearchAskAIResponse }>("/api/v1/ask-ai", data),
+  submitDonation: (data: PublicDonationSubmission) =>
+    researchApi.post<{ data: PublicDonationSubmissionRead; message?: string }>(
+      "/api/v1/donations/submit",
+      data,
+    ),
+  streamAskAI: (data: ResearchAskAIRequest, onEvent: (event: ResearchAskAIStreamEvent) => void) =>
+    streamResearchAskAI(data, onEvent),
+  listAskAIConversations: () =>
+    researchApi.get<{ data: ResearchAIConversation[] }>("/api/v1/ask-ai/conversations"),
+  listAskAIMessages: (conversationId: string) =>
+    researchApi.get<{ data: ResearchAIMessage[] }>(`/api/v1/ask-ai/conversations/${conversationId}/messages`),
   exportResourceUrl: (resource: string, params?: ResearchExportParams) =>
     buildResearchExportUrl(resource, params),
   startExport: (resource: string, params?: ResearchExportParams) =>
@@ -632,4 +815,68 @@ function buildResearchExportUrl(resource: string, params?: ResearchExportParams)
     }
   });
   return url.toString();
+}
+
+async function streamResearchAskAI(
+  data: ResearchAskAIRequest,
+  onEvent: (event: ResearchAskAIStreamEvent) => void,
+) {
+  const token = getStoredAccessToken();
+  const response = await fetch(`${getResearchApiBaseUrl()}/api/v1/ask-ai/stream`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok || !response.body) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || error.message || "Ask AI stream failed");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const records = buffer.split("\n\n");
+    buffer = records.pop() ?? "";
+    for (const record of records) {
+      dispatchResearchAskAIStreamRecord(record, onEvent);
+    }
+  }
+
+  if (buffer.trim()) {
+    dispatchResearchAskAIStreamRecord(buffer, onEvent);
+  }
+};
+
+function dispatchResearchAskAIStreamRecord(
+  record: string,
+  onEvent: (event: ResearchAskAIStreamEvent) => void,
+) {
+  const event = record
+    .split("\n")
+    .find((line) => line.startsWith("event:"))
+    ?.slice("event:".length)
+    .trim();
+  const dataText = record
+    .split("\n")
+    .filter((line) => line.startsWith("data:"))
+    .map((line) => line.slice("data:".length).trim())
+    .join("\n");
+
+  if (!event || !dataText) return;
+
+  try {
+    onEvent({ event, data: JSON.parse(dataText) } as ResearchAskAIStreamEvent);
+  } catch {
+    onEvent({ event: "error", data: { message: "Ask AI stream returned invalid data." } });
+  }
 }

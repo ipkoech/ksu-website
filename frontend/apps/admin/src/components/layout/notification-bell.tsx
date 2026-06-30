@@ -11,6 +11,8 @@ import {
   PopoverTrigger,
 } from "@ksu/ui/components";
 import { cn } from "@ksu/ui/lib/utils";
+import { getMainApiBaseUrl, getStoredAccessToken } from "@ksu/api-client";
+import { useRealtime } from "@/components/realtime/realtime-provider";
 
 type NotificationItem = {
   id: string;
@@ -31,9 +33,10 @@ function useNotifications() {
   return useQuery({
     queryKey: ["current-user", "notifications", "unread"],
     queryFn: async () => {
-      const token = localStorage.getItem("access_token") || sessionStorage.getItem("access_token");
-      const baseUrl = process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000";
-      const response = await fetch(`${baseUrl}/api/v1/notifications?per_page=5&is_read=false`, {
+      const token = getStoredAccessToken();
+      if (!token) return { data: [], meta: { total: 0 } };
+      const baseUrl = getMainApiBaseUrl();
+      const response = await fetch(`${baseUrl}/api/v1/notifications?per_page=5&unread_only=true`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) return { data: [], meta: { total: 0 } };
@@ -55,8 +58,9 @@ function formatTime(dateStr: string) {
 }
 
 async function markAsRead(notificationId: string) {
-  const token = localStorage.getItem("access_token") || sessionStorage.getItem("access_token");
-  const baseUrl = process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000";
+  const token = getStoredAccessToken();
+  if (!token) return;
+  const baseUrl = getMainApiBaseUrl();
   await fetch(`${baseUrl}/api/v1/notifications/${notificationId}/read`, {
     method: "PATCH",
     headers: { Authorization: `Bearer ${token}` },
@@ -66,8 +70,9 @@ async function markAsRead(notificationId: string) {
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { notifications: liveNotifications, status } = useRealtime();
   const { data, isLoading } = useNotifications();
-  const notifications = data?.data ?? [];
+  const notifications = mergeNotifications(liveNotifications, data?.data ?? []).slice(0, 5);
   const unreadCount = notifications.filter((n) => !n.is_read).length;
   const hasUnread = unreadCount > 0;
 
@@ -95,6 +100,8 @@ export function NotificationBell() {
             <span className="text-xs text-muted-foreground">
               {unreadCount} unread
             </span>
+          ) : status === "connected" ? (
+            <span className="text-xs text-emerald-600">Live</span>
           ) : null}
         </div>
 
@@ -179,4 +186,14 @@ export function NotificationBell() {
       </PopoverContent>
     </Popover>
   );
+}
+
+function mergeNotifications(primary: NotificationItem[], fallback: NotificationItem[]) {
+  const byId = new Map<string, NotificationItem>();
+  for (const item of [...primary, ...fallback]) {
+    byId.set(item.id, item);
+  }
+  return Array.from(byId.values()).sort((a, b) => {
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
 }

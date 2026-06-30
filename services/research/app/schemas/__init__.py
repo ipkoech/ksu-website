@@ -1,6 +1,7 @@
 """Research Pydantic schemas."""
 
 from .base import *
+from .analytics import *
 from .ask_ai import *
 from .capacity import *
 from .classification import *

@@ -11,6 +11,12 @@ const donationStatusOptions = [
   { label: "Refunded", value: "refunded" },
 ];
 
+const recurringFrequencyOptions = [
+  { label: "Monthly", value: "monthly" },
+  { label: "Quarterly", value: "quarterly" },
+  { label: "Yearly", value: "yearly" },
+];
+
 export default function ResearchDonationRecordsPage() {
   return (
     <ResearchResourcePage
@@ -26,6 +32,7 @@ export default function ResearchDonationRecordsPage() {
         { name: "donor_id", label: "Donor", type: "entity", relation: { adapter: "researchDonor", filters: { is_active: true } } },
         { name: "project_id", label: "Project", type: "entity", relation: { adapter: "researchProject", filters: { is_active: true } } },
         { name: "status", label: "Status", type: "select", options: donationStatusOptions },
+        { name: "recurring_frequency", label: "Recurring Frequency", type: "select", options: recurringFrequencyOptions },
         { name: "donation_date", label: "Donation Date", type: "date" },
       ]}
       fields={[
@@ -38,6 +45,7 @@ export default function ResearchDonationRecordsPage() {
           { label: "Pledge", value: "pledge" },
           { label: "In Kind", value: "in_kind" },
         ] },
+        { name: "recurring_frequency", label: "Recurring Frequency", type: "select", placeholder: "Recurring frequency", options: recurringFrequencyOptions },
         { name: "designation", label: "Designation", type: "select", placeholder: "Designation", options: [
           { label: "Unrestricted", value: "unrestricted" },
           { label: "Research Project", value: "research_project" },

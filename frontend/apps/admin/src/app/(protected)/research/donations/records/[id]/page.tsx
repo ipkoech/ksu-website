@@ -17,6 +17,8 @@ export default function ResearchDonationDetailPage() {
       factFields={[
         { label: "Amount", field: "amount" },
         { label: "Currency", field: "currency" },
+        { label: "Gift Type", field: "donation_type" },
+        { label: "Recurring Frequency", field: "recurring_frequency" },
         { label: "Date", field: "donation_date", format: "date" },
         { label: "Donor", field: "donor_id", relation: { adapter: "researchDonor" } },
       ]}

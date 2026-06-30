@@ -6,6 +6,8 @@ import type {
   MyProfile,
   MyProfileUpdatePayload,
   PortalAccessResponse,
+  UserPreferencesResponse,
+  UserPreferencesUpdatePayload,
   Person,
   PersonCreatePayload,
   PersonStatusFilter,
@@ -210,6 +212,13 @@ export const myProfileApi = {
 
 export const portalAccessApi = {
   get: () => mainApi.get<{ data: PortalAccessResponse }>("/api/v1/me/portal-access"),
+};
+
+export const userPreferencesApi = {
+  get: () => mainApi.get<{ data: UserPreferencesResponse }>("/api/v1/me/preferences"),
+
+  update: (data: UserPreferencesUpdatePayload) =>
+    mainApi.patch<{ data: UserPreferencesResponse }>("/api/v1/me/preferences", data),
 };
 
 // Persons

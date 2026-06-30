@@ -62,6 +62,7 @@ export class ApiClient {
   private headers: Record<string, string>;
   private timeoutMs: number;
   private refreshPromise: Promise<void> | null = null;
+  private refreshFailed = false;
 
   constructor(config: ApiConfig) {
     this.baseUrl = config.baseUrl;
@@ -118,9 +119,11 @@ export class ApiClient {
     }
 
     if (response.status === 401) {
-      const refreshed = await this.tryRefresh();
-      if (refreshed) {
-        return this.request(method, path, options);
+      if (!this.refreshFailed) {
+        const refreshed = await this.tryRefresh();
+        if (refreshed) {
+          return this.request(method, path, options);
+        }
       }
       throw new ApiClientError("Session expired", 401);
     }
@@ -144,9 +147,12 @@ export class ApiClient {
   }
 
   private async tryRefresh(): Promise<boolean> {
+    if (this.refreshFailed) {
+      return false;
+    }
     if (this.refreshPromise) {
       await this.refreshPromise;
-      return true;
+      return !this.refreshFailed;
     }
 
     this.refreshPromise = (async () => {
@@ -160,6 +166,10 @@ export class ApiClient {
       await this.refreshPromise;
       return true;
     } catch {
+      this.refreshFailed = true;
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("ksu:session-expired"));
+      }
       return false;
     } finally {
       this.refreshPromise = null;

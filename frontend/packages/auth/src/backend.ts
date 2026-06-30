@@ -357,6 +357,51 @@ function inferServiceScopes(service: Service, roles: string[], permissions: stri
   if (service === "research" && roles.includes("research-admin")) {
     return ["research.*"];
   }
+  if (service === "research" && roles.includes("research-content")) {
+    return [
+      "research.view",
+      "content.view",
+      "content.view_drafts",
+      "content.manage_news",
+      "content.manage_blogs",
+      "content.manage_events",
+      "content.manage_announcements",
+      "content.publish",
+      "marketing.manage_sliders",
+      "media.upload",
+    ];
+  }
+  if (service === "research" && roles.includes("research-farm")) {
+    return [
+      "research.view",
+      "research.view_projects",
+      "research.manage_projects",
+      "research.manage_centers",
+      "research_theme.manage",
+      "research_program.manage",
+      "partnerships.manage_partners",
+      "sustainability.manage",
+      "content.manage_news",
+      "content.manage_events",
+      "media.upload",
+    ];
+  }
+  if (service === "research" && roles.includes("research-sustainability")) {
+    return [
+      "research.view",
+      "research.view_projects",
+      "research.manage_projects",
+      "research.manage_reports",
+      "sustainability.view",
+      "sustainability.manage",
+      "partnerships.manage_partners",
+      "content.manage_news",
+      "content.manage_events",
+      "content.manage_announcements",
+      "training_program.manage",
+      "media.upload",
+    ];
+  }
   if (service === "library" && roles.includes("library-admin")) {
     return ["library.*"];
   }

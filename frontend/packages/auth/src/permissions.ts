@@ -22,6 +22,9 @@ export const SERVICE_ROLES: Record<Service, readonly string[]> = {
   research: [
     "super-admin",
     "research-admin",
+    "research-content",
+    "research-farm",
+    "research-sustainability",
     "research-manager",
     "research-staff",
     "researcher",
@@ -64,6 +67,9 @@ export const ROLE_HIERARCHY: Record<Service, readonly string[]> = {
   research: [
     "super-admin",
     "research-admin",
+    "research-content",
+    "research-farm",
+    "research-sustainability",
     "research-manager",
     "innovation-officer",
     "research-staff",

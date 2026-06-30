@@ -59,6 +59,27 @@ PORTAL_USER_SPECS = [
         "institutional_role": "research_admin",
     },
     {
+        "key": "portal_research_content",
+        "email": "research.content@example.invalid",
+        "full_name": "KSU Research Content",
+        "role": "research_content",
+        "institutional_role": "research_content",
+    },
+    {
+        "key": "portal_research_farm",
+        "email": "research.farm@example.invalid",
+        "full_name": "KSU Research Farm",
+        "role": "research_farm",
+        "institutional_role": "research_farm",
+    },
+    {
+        "key": "portal_research_sustainability",
+        "email": "research.sustainability@example.invalid",
+        "full_name": "KSU Research Sustainability",
+        "role": "research_sustainability",
+        "institutional_role": "research_sustainability",
+    },
+    {
         "key": "portal_library_admin",
         "email": "library.admin@example.invalid",
         "full_name": "KSU Library Admin",

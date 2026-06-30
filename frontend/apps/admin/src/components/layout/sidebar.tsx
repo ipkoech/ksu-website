@@ -320,8 +320,14 @@ const researchNavigation: NavItem[] = [
         scope: ["research.view", "innovation.review_disclosure"],
       },
       {
-        title: "Output",
+        title: "Outputs",
         href: "/research/outputs",
+        icon: FileText,
+        scope: ["research.view", "research.manage_reports", "research.submit_reports"],
+      },
+      {
+        title: "Reports",
+        href: "/research/reports",
         icon: FileText,
         scope: ["research.view", "research.manage_reports", "research.submit_reports"],
       },

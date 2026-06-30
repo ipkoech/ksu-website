@@ -42,6 +42,7 @@ export function ResearchHeader({
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [openDesktopMenu, setOpenDesktopMenu] = useState<string | null>(null);
   const isScrolled = useScrollState();
   const pathname = usePathname();
 
@@ -99,10 +100,10 @@ export function ResearchHeader({
       {/* Main Header */}
       <header
         className={cn(
-          "sticky top-0 z-[100] w-full transition-all duration-300 ease-out",
+          "sticky top-0 z-[100] w-full border-b border-slate-200 transition-all duration-300 ease-out",
           isScrolled
-            ? "bg-primary shadow-lg shadow-primary/20"
-            : "bg-primary",
+            ? "bg-white/95 shadow-lg shadow-slate-900/10 backdrop-blur"
+            : "bg-white",
         )}
       >
         <nav
@@ -120,14 +121,14 @@ export function ResearchHeader({
                 alt="Kisii University"
                 width={42}
                 height={42}
-                className="object-contain brightness-0 invert"
+                className="object-contain"
               />
             </motion.div>
             <div className="flex flex-col">
-              <p className="font-[family-name:var(--font-display)] text-sm font-black uppercase tracking-[0.12em] text-white sm:text-base">
+              <p className="font-[family-name:var(--font-display)] text-sm font-black uppercase tracking-[0.12em] text-slate-950 sm:text-base">
                 Kisii University
               </p>
-              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/75 sm:text-[10px]">
+              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary sm:text-[10px]">
                 Research & Innovation
               </p>
             </div>
@@ -150,8 +151,8 @@ export function ResearchHeader({
                       className={cn(
                         "relative rounded-lg px-4 py-2 text-sm font-bold uppercase tracking-tight whitespace-nowrap transition-all",
                         isActive
-                          ? "bg-white/10 text-white"
-                          : "text-white/90 hover:bg-white/10 hover:text-white",
+                          ? "bg-primary/10 text-primary"
+                          : "text-slate-700 hover:bg-primary/5 hover:text-primary",
                       )}
                     >
                       {item.title}
@@ -159,23 +160,50 @@ export function ResearchHeader({
                   );
                 }
 
+                const isOpen = openDesktopMenu === item.title;
+
                 return (
-                  <div key={item.title} className="group relative">
+                  <div
+                    key={item.title}
+                    className="group relative"
+                    onMouseEnter={() => setOpenDesktopMenu(item.title)}
+                    onMouseLeave={() => setOpenDesktopMenu(null)}
+                    onFocus={() => setOpenDesktopMenu(item.title)}
+                    onBlur={(event) => {
+                      if (!event.currentTarget.contains(event.relatedTarget)) {
+                        setOpenDesktopMenu(null);
+                      }
+                    }}
+                  >
                     <button
+                      type="button"
+                      aria-haspopup="true"
+                      aria-expanded={isOpen}
+                      onClick={() =>
+                        setOpenDesktopMenu((current) =>
+                          current === item.title ? null : item.title,
+                        )
+                      }
                       className={cn(
                         "flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-bold uppercase tracking-tight whitespace-nowrap transition-all",
                         isActive
-                          ? "bg-white/10 text-white"
-                          : "text-white/90 hover:bg-white/10 hover:text-white",
+                          ? "bg-primary/10 text-primary"
+                          : "text-slate-700 hover:bg-primary/5 hover:text-primary",
                       )}
                     >
                       {item.title}
-                      <ChevronDown className="h-4 w-4 opacity-50 transition-transform duration-300 group-hover:rotate-180 group-hover:opacity-100" />
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 opacity-50 transition-transform duration-300 group-hover:rotate-180 group-hover:opacity-100",
+                          isOpen ? "rotate-180 opacity-100" : undefined,
+                        )}
+                      />
                     </button>
 
                     <div
                       className={cn(
-                        "absolute top-full pt-3 opacity-0 invisible -translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-300 z-50",
+                        "invisible absolute top-full z-50 -translate-y-2 pt-3 opacity-0 transition-all duration-300 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100",
+                        isOpen ? "visible translate-y-0 opacity-100" : undefined,
                         index > 2 ? "right-0" : "left-1/2 -translate-x-1/2",
                       )}
                     >
@@ -248,7 +276,7 @@ export function ResearchHeader({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSearchOpen(true)}
-              className="hidden h-10 w-10 items-center justify-center rounded-full text-white transition hover:bg-white/10 xl:flex"
+              className="hidden h-10 w-10 items-center justify-center rounded-full text-slate-700 transition hover:bg-primary/5 hover:text-primary xl:flex"
               aria-label="Search"
             >
               <Search className="h-5 w-5" />
@@ -277,7 +305,7 @@ export function ResearchHeader({
               </Button>
               <button
                 onClick={() => setSearchOpen(true)}
-                className="flex h-10 w-10 items-center justify-center rounded-full text-white transition hover:bg-white/10 sm:hidden"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-slate-700 transition hover:bg-primary/5 hover:text-primary sm:hidden"
                 aria-label="Search"
               >
                 <Search className="h-5 w-5" />
@@ -285,7 +313,7 @@ export function ResearchHeader({
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild>
                   <button
-                    className="flex h-10 w-10 items-center justify-center rounded-full text-white transition hover:bg-white/10"
+                    className="flex h-10 w-10 items-center justify-center rounded-full text-slate-700 transition hover:bg-primary/5 hover:text-primary"
                     aria-label={mobileOpen ? "Close menu" : "Open menu"}
                   >
                     <AnimatePresence mode="wait">

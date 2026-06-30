@@ -3,10 +3,16 @@
 import { EditableServiceResourcePage } from "@/components/dashboard/editable-service-resource-page";
 import { researchServiceApi, type ResearchGenericPayload, type ResearchGenericRecord } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
+import { withResearchFieldHelp } from "../_components/research-resource-page";
+import {
+  getResearchGuidance,
+  ResearchSectionGuide,
+} from "../_components/research-guidance";
 
 export default function ResearchInquiriesPage() {
   const { hasScope } = usePermissions();
   const canManage = hasScope("research.manage_inquiries") || hasScope("research:write");
+  const guidance = getResearchGuidance("Research Capacity");
 
   return (
     <EditableServiceResourcePage<ResearchGenericRecord, ResearchGenericPayload>
@@ -14,7 +20,8 @@ export default function ResearchInquiriesPage() {
       description="Manage consultancy inquiries, clients, and engagement records."
       backHref="/research"
       queryKey={["research", "consultancies"]}
-      fields={[
+      summarySlot={<ResearchSectionGuide title="Research Capacity" />}
+      fields={withResearchFieldHelp([
         { name: "title", label: "Title", required: true },
         { name: "slug", label: "Slug" },
         { name: "code", label: "Code" },
@@ -26,7 +33,7 @@ export default function ResearchInquiriesPage() {
         { name: "is_public", label: "Public", type: "boolean" },
         { name: "is_active", label: "Active", type: "boolean" },
         { name: "is_featured", label: "Featured", type: "boolean" },
-      ]}
+      ])}
       list={() => researchServiceApi.consultancies.list({ page: 1, per_page: 50 })}
       create={(payload) => researchServiceApi.consultancies.create(payload)}
       update={(id, payload) => researchServiceApi.consultancies.update(id, payload)}
@@ -37,6 +44,7 @@ export default function ResearchInquiriesPage() {
       getRecordTitle={(record) => record.title ?? "Untitled consultancy"}
       getRecordMeta={(record) => [record.code, record.client_name, record.status].filter(Boolean).join(" · ")}
       emptyMessage="No consultancy records were returned by the research service."
+      emptyState={guidance?.emptyState}
       buildPayload={(values) => ({
         title: values.title,
         slug: values.slug,

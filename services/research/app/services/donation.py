@@ -175,6 +175,112 @@ class DonationService(CRUDService):
     search_fields = ("donation_number", "purpose", "payment_reference", "status")
     default_order = ("created_at",)
 
+    @staticmethod
+    async def _donation_setting_value(db: AsyncSession, keys: tuple[str, ...], fallback: str = "") -> str:
+        result = await db.execute(
+            select(DonationSettings)
+            .where(
+                DonationSettings.deleted_at.is_(None),
+                DonationSettings.is_active.is_(True),
+                DonationSettings.key.in_(keys),
+            )
+        )
+        settings_by_key = {setting.key: setting for setting in result.scalars().all()}
+        for key in keys:
+            setting = settings_by_key.get(key)
+            if setting and setting.value:
+                return setting.value
+        return fallback
+
+    @staticmethod
+    def _donation_reference(donation: Donation) -> str:
+        return donation.donation_number or str(donation.id)
+
+    @staticmethod
+    def _donor_name(donor: Donor | None) -> str:
+        if donor is None:
+            return "A donor"
+        return donor.name
+
+    @classmethod
+    async def _queue_submission_side_effects(cls, db: AsyncSession, donation: Donation, donor: Donor) -> None:
+        research_email = await cls._donation_setting_value(
+            db,
+            ("contact_email", "giving_email", "research_email"),
+            "research@kisiiuniversity.ac.ke",
+        )
+        donor_name = cls._donor_name(donor)
+        amount = str(donation.amount)
+        reference = cls._donation_reference(donation)
+
+        from ..tasks.donations import (
+            notify_research_admins_of_donation,
+            send_donation_submission_email,
+            send_research_donation_request_email,
+        )
+
+        notify_research_admins_of_donation.delay(
+            donation_id=str(donation.id),
+            donor_name=donor_name,
+            amount=amount,
+            currency=donation.currency,
+            reference=reference,
+        )
+        send_research_donation_request_email.delay(
+            research_email=research_email,
+            donor_name=donor_name,
+            donor_email=donor.email,
+            amount=amount,
+            currency=donation.currency,
+            reference=reference,
+            designation=donation.designation,
+        )
+        if donor.email:
+            send_donation_submission_email.delay(
+                donor_email=donor.email,
+                donor_name=donor_name,
+                amount=amount,
+                currency=donation.currency,
+                reference=reference,
+                research_email=research_email,
+            )
+
+    @classmethod
+    async def _queue_confirmation_side_effects(cls, db: AsyncSession, donation: Donation) -> None:
+        donor = await Donor.get_or_raise(db, donation.donor_id, error_message="Donor not found")
+        if not donor.email:
+            return
+
+        donor_name = cls._donor_name(donor)
+        amount = str(donation.amount)
+        reference = cls._donation_reference(donation)
+
+        from ..tasks.donations import (
+            send_donation_appreciation_email,
+            send_recurring_donation_reminder,
+            _next_reminder_eta,
+        )
+
+        send_donation_appreciation_email.delay(
+            donor_email=donor.email,
+            donor_name=donor_name,
+            amount=amount,
+            currency=donation.currency,
+            reference=reference,
+        )
+        if donation.donation_type == "recurring" and donation.recurring_frequency:
+            send_recurring_donation_reminder.apply_async(
+                kwargs={
+                    "donor_email": donor.email,
+                    "donor_name": donor_name,
+                    "amount": amount,
+                    "currency": donation.currency,
+                    "reference": reference,
+                    "recurring_frequency": donation.recurring_frequency,
+                },
+                eta=_next_reminder_eta(donation.recurring_frequency),
+            )
+
     @classmethod
     async def summary(cls, db: AsyncSession) -> dict:
         donation_totals = await db.execute(
@@ -262,6 +368,7 @@ class DonationService(CRUDService):
             amount=payload["amount"],
             currency=payload.get("currency", "KES"),
             donation_type=payload.get("donation_type", "one_time"),
+            recurring_frequency=payload.get("recurring_frequency"),
             designation=payload.get("designation", "unrestricted"),
             purpose=payload.get("purpose"),
             fund_id=payload.get("fund_id"),
@@ -282,6 +389,7 @@ class DonationService(CRUDService):
         await db.flush()
         await db.refresh(donor)
         await db.refresh(donation)
+        await cls._queue_submission_side_effects(db, donation, donor)
         return donation
 
     @classmethod
@@ -314,9 +422,12 @@ class DonationService(CRUDService):
 
     @classmethod
     async def update(cls, db: AsyncSession, item, data, *, actor_id=None):
+        previous_status = item.status
         donation = await super().update(db, item, data, actor_id=actor_id)
         await cls._sync_donor_stats(db, donation.donor_id)
         await db.refresh(donation)
+        if previous_status != "completed" and donation.status == "completed":
+            await cls._queue_confirmation_side_effects(db, donation)
         return donation
 
     @classmethod

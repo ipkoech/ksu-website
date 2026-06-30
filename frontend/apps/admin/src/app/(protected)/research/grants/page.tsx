@@ -7,7 +7,14 @@ import {
   type EditableListFilter,
   type EditableRecordColumn,
 } from "@/components/dashboard/editable-service-resource-page";
-import { ResearchBulkActions } from "../_components/research-resource-page";
+import {
+  ResearchBulkActions,
+  withResearchFieldHelp,
+} from "../_components/research-resource-page";
+import {
+  getResearchGuidance,
+  ResearchSectionGuide,
+} from "../_components/research-guidance";
 import { researchServiceApi, type ResearchGrant, type ResearchGrantPayload } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
 import {
@@ -127,6 +134,7 @@ function GrantMobileRecord(record: ResearchGrant, actions: ReactNode) {
 export default function ResearchGrantsPage() {
   const { hasScope } = usePermissions();
   const canManage = hasScope("research.manage_projects") || hasScope("funding.manage") || hasScope("research:write") || hasScope("funding:write");
+  const guidance = getResearchGuidance("Grants");
 
   return (
     <EditableServiceResourcePage<ResearchGrant, ResearchGrantPayload>
@@ -134,12 +142,17 @@ export default function ResearchGrantsPage() {
       description="Create, edit, and close grant records from the research service."
       backHref="/research"
       queryKey={["research", "grants"]}
-      summarySlot={<FundingWorkspaceHeader />}
+      summarySlot={
+        <div className="space-y-4">
+          <ResearchSectionGuide title="Grants" />
+          <FundingWorkspaceHeader />
+        </div>
+      }
       listFilters={grantListFilters}
       recordColumns={grantColumns}
       editorMode="sheet"
       renderMobileRecord={GrantMobileRecord}
-      fields={[
+      fields={withResearchFieldHelp([
         { name: "title", label: "Title", required: true, placeholder: "Grant title" },
         { name: "slug", label: "Slug", placeholder: "grant-slug" },
         { name: "code", label: "Code" },
@@ -178,7 +191,7 @@ export default function ResearchGrantsPage() {
         ] },
         { name: "is_active", label: "Active", type: "boolean" },
         { name: "is_featured", label: "Featured", type: "boolean" },
-      ]}
+      ])}
       list={(filters) => researchServiceApi.grants.list({ page: 1, per_page: 25, ...filters })}
       create={(payload) => researchServiceApi.grants.create(payload)}
       update={(id, payload) => researchServiceApi.grants.update(id, payload)}
@@ -190,6 +203,7 @@ export default function ResearchGrantsPage() {
       getRecordMeta={(record) => [record.code, record.funder_name, record.status].filter(Boolean).join(" · ")}
       getRecordDetailHref={(record) => record.slug ? `/research/grants/${record.slug}` : null}
       emptyMessage="No grants were returned by the research service."
+      emptyState={guidance?.emptyState}
       buildPayload={(values) => ({
         title: values.title,
         slug: values.slug,

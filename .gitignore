@@ -20,6 +20,7 @@ node_modules/
 .next/
 .next.docker-owned-*/
 .next-codex/
+.next-codex-*/
 .next-build/
 **/tmp/ksu-*-next/
 out/
