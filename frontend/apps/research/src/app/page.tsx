@@ -129,7 +129,7 @@ export default async function ResearchPage() {
   const story = stories.data[0];
 
   return (
-    <main id="research-main" className="min-h-screen bg-white text-slate-950">
+    <main id="research-main" className="min-h-screen bg-[#f4f6f4] text-slate-950">
       <ResearchLandingHero />
       <PortfolioQuickAccessSection
         projects={statsMap.research_projects || projects.total || projects.data.length}
@@ -169,7 +169,7 @@ export default async function ResearchPage() {
 
 function ResearchLandingHero() {
   return (
-    <section className="relative isolate min-h-[544px] overflow-hidden border-b border-slate-200 bg-slate-950">
+    <section className="relative isolate min-h-[560px] overflow-hidden bg-slate-950">
       <Image
         src="/images/research/research-hero-imagegen.webp"
         alt="Kisii University researchers collaborating across laboratory, field, data, and community research"
@@ -178,17 +178,17 @@ function ResearchLandingHero() {
         sizes="100vw"
         className="object-cover"
       />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.76)_0%,rgba(255,255,255,0.58)_32%,rgba(255,255,255,0.14)_62%,rgba(255,255,255,0)_100%)]" />
-      <div className="absolute inset-y-0 left-0 w-full bg-[radial-gradient(circle_at_20%_48%,rgba(255,255,255,0.28)_0%,rgba(255,255,255,0)_34%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.78)_0%,rgba(255,255,255,0.52)_34%,rgba(255,255,255,0.1)_64%,rgba(255,255,255,0)_100%)]" />
+      <div className="absolute inset-y-0 left-0 w-full bg-[radial-gradient(circle_at_18%_46%,rgba(255,255,255,0.22)_0%,rgba(255,255,255,0)_34%)]" />
       <ResearchAnimatedBackdrop />
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white via-white/50 to-transparent" />
-      <div className="relative mx-auto flex min-h-[544px] max-w-[1920px] items-center px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#f4f6f4] via-[#f4f6f4]/60 to-transparent" />
+      <div className="relative mx-auto grid min-h-[560px] max-w-[1920px] items-center gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:px-8 xl:px-10 2xl:px-12">
         <div className="max-w-4xl">
           <ScrollReveal>
-            <p className="inline-flex rounded-full border border-primary/20 bg-white/70 px-3 py-1 text-sm font-semibold text-primary">
+            <p className="inline-flex rounded-full border border-primary/20 bg-white/75 px-3 py-1 text-sm font-semibold text-primary shadow-sm backdrop-blur">
               Kisii University Research Portal
             </p>
-            <h1 className="mt-5 max-w-4xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.04] text-slate-950 sm:text-5xl xl:text-6xl 2xl:text-7xl">
+            <h1 className="mt-5 max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-[1.04] text-slate-950 sm:text-5xl xl:text-6xl 2xl:text-7xl">
               Research, Extension, Innovation and Resource Mobilization
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-8 text-slate-700 sm:text-lg">
@@ -212,6 +212,35 @@ function ResearchLandingHero() {
             </div>
           </ScrollReveal>
         </div>
+        <ScrollReveal className="hidden lg:block">
+          <div className="relative ml-auto w-full max-w-[420px] rounded-xl border border-white/55 bg-white/42 p-4 shadow-[0_30px_90px_rgba(15,23,42,0.16)] backdrop-blur-xl">
+            <div className="rounded-lg border border-white/60 bg-white/78 p-5">
+              <SectionKicker>Research pathways</SectionKicker>
+              <div className="mt-5 space-y-3">
+                {quickLinks.map((link) => (
+                  <Link
+                    key={`hero-${link.href}`}
+                    href={link.href}
+                    className="group flex items-center justify-between rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:border-primary/30 hover:text-primary"
+                  >
+                    {link.label}
+                    <ArrowRight aria-hidden className="h-4 w-4 transition group-hover:translate-x-1" />
+                  </Link>
+                ))}
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <Link href="/impact-metrics" className="rounded-lg border border-white/60 bg-primary p-4 text-white shadow-sm transition hover:bg-primary/90">
+                <span className="block text-xs font-semibold uppercase text-white/70">Impact</span>
+                <span className="mt-2 block font-[family-name:var(--font-display)] text-2xl font-semibold">Metrics</span>
+              </Link>
+              <Link href="/centers" className="rounded-lg border border-white/60 bg-white/80 p-4 text-slate-950 shadow-sm transition hover:border-primary/30 hover:text-primary">
+                <span className="block text-xs font-semibold uppercase text-slate-500">Find</span>
+                <span className="mt-2 block font-[family-name:var(--font-display)] text-2xl font-semibold">Centers</span>
+              </Link>
+            </div>
+          </div>
+        </ScrollReveal>
       </div>
     </section>
   );
@@ -253,38 +282,36 @@ function PortfolioQuickAccessSection({
   ];
 
   return (
-    <ScrollReveal as="section" className="research-surface-grid relative isolate min-h-[20vh] overflow-hidden border-b border-slate-200 bg-[linear-gradient(135deg,#eef7f2_0%,#ffffff_48%,#f6faf8_100%)] px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
       <ResearchAnimatedBackdrop />
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-      <div className="relative mx-auto grid min-h-[calc(20vh-4rem)] max-w-[1680px] gap-6 lg:grid-cols-[minmax(320px,0.55fr)_minmax(0,1.15fr)] lg:items-stretch">
-        <article className="research-glass-panel research-border-sheen rounded-lg p-5 lg:p-6">
-          <SectionKicker>Quick links</SectionKicker>
-          <nav aria-label="Research quick links" className="mt-4 divide-y divide-slate-200">
-            {quickLinks.map((link) => (
-              <Link
-                key={link.href + link.label}
-                href={link.href}
-                className="block py-3 text-sm font-semibold text-slate-700 transition first:pt-0 last:pb-0 hover:text-primary"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        </article>
-        <article className="research-glass-panel research-border-sheen flex min-h-[calc(20vh-4rem)] flex-col justify-between rounded-lg p-5 lg:p-6">
+      <div className="relative mx-auto max-w-[1680px] rounded-xl border border-white bg-white/92 p-4 shadow-[0_20px_80px_rgba(15,23,42,0.08)] backdrop-blur sm:p-5 lg:p-6">
+        <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-center">
           <div>
-            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <SectionKicker>Direct access</SectionKicker>
+            <nav aria-label="Research quick links" className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+              {quickLinks.map((link) => (
+                <Link
+                  key={link.href + link.label}
+                  href={link.href}
+                  className="group flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-primary/30 hover:bg-white hover:text-primary"
+                >
+                  {link.label}
+                  <ArrowRight aria-hidden className="h-4 w-4 text-slate-300 transition group-hover:translate-x-1 group-hover:text-primary" />
+                </Link>
+              ))}
+            </nav>
+          </div>
+          <div>
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
               <div>
                 <SectionKicker>Research portfolio</SectionKicker>
                 <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
-                  At a glance
+                  Public proof of work
                 </h2>
               </div>
-              <p className="max-w-md text-sm leading-6 text-slate-600">
-                Published counts appear automatically as records are approved.
-              </p>
+              <TextLink href="/impact-metrics">View impact metrics</TextLink>
             </div>
-            <ScrollRevealGroup className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5" staggerDelay={55}>
+            <ScrollRevealGroup className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5" staggerDelay={55}>
               {metrics.map((metric) => {
                 const Icon = metric.icon;
                 const hasPublishedCount = metric.rawValue > 0;
@@ -293,7 +320,7 @@ function PortfolioQuickAccessSection({
                   <Link
                     key={metric.label}
                     href={metric.href}
-                    className="group flex min-h-28 items-center gap-4 rounded-lg border border-white/70 bg-white/80 p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:bg-white hover:shadow-md"
+                    className="group flex min-h-28 items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md"
                   >
                     <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                       <Icon aria-hidden className="h-5 w-5" />
@@ -317,14 +344,7 @@ function PortfolioQuickAccessSection({
               })}
             </ScrollRevealGroup>
           </div>
-          <Link
-            href="/impact-metrics"
-            className="mt-8 inline-flex w-fit items-center gap-2 text-sm font-semibold text-primary transition hover:text-secondary"
-          >
-            View research impact metrics
-            <ArrowRight aria-hidden className="h-4 w-4" />
-          </Link>
-        </article>
+        </div>
       </div>
     </ScrollReveal>
   );
@@ -339,10 +359,9 @@ function AboutResearchSection({ headProfile }: { headProfile: ResearchHeadProfil
   const headHref = headProfile?.href || "/about";
 
   return (
-    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-white px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="absolute inset-y-0 right-0 w-1/2 bg-[linear-gradient(120deg,transparent_0%,rgba(0,78,56,0.055)_100%)]" />
-      <div className="relative mx-auto grid max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.86fr)]">
-        <article className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm lg:p-8">
+    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
+      <div className="relative mx-auto grid max-w-[1680px] gap-3 rounded-xl border border-white bg-white p-4 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:p-5 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.78fr)] lg:p-8">
+        <article className="rounded-lg bg-[linear-gradient(135deg,#f7faf8_0%,#ffffff_100%)] p-6 lg:p-8">
           <SectionKicker>About research at Kisii University</SectionKicker>
           <h2 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
             An inclusive engine for knowledge, innovation, and societal impact.
@@ -405,19 +424,19 @@ function AboutResearchSection({ headProfile }: { headProfile: ResearchHeadProfil
 
 function PillarsSection() {
   return (
-    <ScrollReveal as="section" className="research-surface-grid relative isolate overflow-hidden border-y border-primary/10 bg-[linear-gradient(180deg,#e8f4ee_0%,#f8fafc_100%)] px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <ScrollReveal as="section" className="research-surface-grid relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
       <ResearchAnimatedBackdrop />
-      <div className="relative mx-auto max-w-[1680px]">
-        <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
-          <div className="max-w-3xl">
+      <div className="relative mx-auto max-w-[1680px] rounded-xl border border-white bg-white px-4 py-12 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:px-6 lg:px-10">
+        <div className="mx-auto max-w-4xl text-center">
             <SectionKicker>Our five pillars</SectionKicker>
-            <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+            <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-5xl">
               The REIRM model for research that reaches people.
             </h2>
-          </div>
-          <ActionLink href="/about" variant="outline">How REIRM works</ActionLink>
+            <div className="mt-6 flex justify-center">
+              <ActionLink href="/about" variant="outline">How REIRM works</ActionLink>
+            </div>
         </div>
-        <ScrollRevealGroup className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5" staggerDelay={70}>
+        <ScrollRevealGroup className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-5" staggerDelay={70}>
           {pillars.map((pillar) => (
             <PillarCard key={pillar.title} {...pillar} />
           ))}
@@ -428,62 +447,61 @@ function PillarsSection() {
 }
 
 function FeaturedWorkSection({ items }: { items: FeaturedWorkItem[] }) {
+  if (items.length === 0) {
+    return null;
+  }
+
   return (
-    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-white px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[rgba(0,78,56,0.045)] to-transparent" />
-      <div className="relative mx-auto max-w-[1680px]">
+    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
+      <div className="relative mx-auto max-w-[1680px] rounded-xl border border-white bg-white px-4 py-12 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:px-6 lg:px-10">
         <SectionHeader
           eyebrow="Featured research work"
-          title="Published records from projects, publications, grants, and innovations."
+          title="Selected projects, publications, grants, and innovations."
           action={{ href: "/projects", label: "View all" }}
         />
-        {items.length > 0 ? (
-          <ScrollRevealGroup className="mt-8 grid gap-5 lg:grid-cols-2 2xl:grid-cols-4" staggerDelay={65}>
-            {items.map((item) => (
-              <FeaturedWorkCard key={`${item.type}-${item.id}`} item={item} />
-            ))}
-          </ScrollRevealGroup>
-        ) : (
-          <EmptyState>Featured research records will appear here when published by the research office.</EmptyState>
-        )}
+        <ScrollRevealGroup className="mt-8 grid gap-5 lg:grid-cols-2 2xl:grid-cols-4" staggerDelay={65}>
+          {items.map((item) => (
+            <FeaturedWorkCard key={`${item.type}-${item.id}`} item={item} />
+          ))}
+        </ScrollRevealGroup>
       </div>
     </ScrollReveal>
   );
 }
 
 function NewsEventsArticlesSection({ items }: { items: NewsItem[] }) {
+  if (items.length === 0) {
+    return null;
+  }
+
   const [featured, ...rest] = items;
   const medium = rest.slice(0, 2);
   const compact = rest.slice(2, 5);
 
   return (
-    <ScrollReveal as="section" className="research-surface-grid relative isolate overflow-hidden border-y border-slate-200 bg-[linear-gradient(180deg,#f4f7fb_0%,#ffffff_46%,#eef7f2_100%)] px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <ScrollReveal as="section" className="research-surface-grid relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
       <ResearchAnimatedBackdrop />
-      <div className="relative mx-auto max-w-[1680px]">
+      <div className="relative mx-auto max-w-[1680px] rounded-xl border border-white bg-white px-4 py-12 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:px-6 lg:px-10">
         <SectionHeader
           eyebrow="News, events & articles"
           title="Latest updates from the research ecosystem."
           action={{ href: "/news", label: "All news & events" }}
         />
-        {items.length > 0 ? (
-          <div className="mt-8 grid gap-5 xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
-            {featured ? <EditorialFeature item={featured} /> : null}
-            <div className="grid gap-5">
-              <div className="grid gap-5 md:grid-cols-2">
-                {medium.map((item) => (
-                  <EditorialCard key={`${item.kind}-${item.id}`} item={item} />
-                ))}
-              </div>
-              <div className="grid gap-3">
-                {compact.map((item) => (
-                  <EditorialRow key={`${item.kind}-${item.id}`} item={item} />
-                ))}
-              </div>
+        <div className="mt-8 grid gap-5 xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
+          {featured ? <EditorialFeature item={featured} /> : null}
+          <div className="grid gap-5">
+            <div className="grid gap-5 md:grid-cols-2">
+              {medium.map((item) => (
+                <EditorialCard key={`${item.kind}-${item.id}`} item={item} />
+              ))}
+            </div>
+            <div className="grid gap-3">
+              {compact.map((item) => (
+                <EditorialRow key={`${item.kind}-${item.id}`} item={item} />
+              ))}
             </div>
           </div>
-        ) : (
-          <EmptyState>News, events, and articles will appear here when current records are available.</EmptyState>
-        )}
+        </div>
       </div>
     </ScrollReveal>
   );
@@ -491,9 +509,8 @@ function NewsEventsArticlesSection({ items }: { items: NewsItem[] }) {
 
 function DirectorySection({ items }: { items: DirectoryItem[] }) {
   return (
-    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-white px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="absolute inset-y-0 left-0 w-[42%] bg-[linear-gradient(90deg,rgba(226,165,35,0.075)_0%,transparent_100%)]" />
-      <div className="relative mx-auto max-w-[1680px]">
+    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
+      <div className="relative mx-auto max-w-[1680px] rounded-xl border border-white bg-white px-4 py-12 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:px-6 lg:px-10">
         <SectionHeader
           eyebrow="Centers, facilities & expertise"
           title="Find capabilities, infrastructure, and research contacts."
@@ -546,9 +563,7 @@ function DirectorySection({ items }: { items: DirectoryItem[] }) {
                 <DirectoryRow key={`${item.kind}-${item.id}`} item={item} />
               ))}
             </div>
-          ) : (
-            <EmptyState>Centers, facilities, and expertise tags will appear here as records are published.</EmptyState>
-          )}
+          ) : null}
         </div>
       </div>
     </ScrollReveal>
@@ -567,9 +582,9 @@ function PartnersImpactSection({
   const metrics = impactMetrics.slice(0, 4);
 
   return (
-    <ScrollReveal as="section" className="research-surface-grid relative isolate overflow-hidden border-y border-primary/10 bg-[linear-gradient(180deg,#e8f4ee_0%,#f8fafc_100%)] px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <ScrollReveal as="section" className="research-surface-grid relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
       <ResearchAnimatedBackdrop />
-      <div className="relative mx-auto max-w-[1680px]">
+      <div className="relative mx-auto max-w-[1680px] rounded-xl border border-white bg-white px-4 py-12 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:px-6 lg:px-10">
         <SectionHeader
           eyebrow="Partners & public impact"
           title="Collaboration that translates knowledge into shared value."
@@ -583,12 +598,10 @@ function PartnersImpactSection({
             <PartnerMarquee partners={partners} />
             <PartnerMarquee partners={[...partners].reverse()} reverse />
           </div>
-        ) : (
-          <EmptyState>Partner records will appear here when published.</EmptyState>
-        )}
+        ) : null}
 
         <div className="mt-6 grid gap-5 lg:grid-cols-3">
-          <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <article className="rounded-lg border border-slate-200 bg-slate-50 p-5 shadow-sm">
             <SectionKicker>Impact at a glance</SectionKicker>
             {metrics.length > 0 ? (
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -603,23 +616,22 @@ function PartnersImpactSection({
                   </div>
                 ))}
               </div>
-            ) : (
-              <p className="mt-4 text-sm leading-7 text-slate-600">
-                Public impact metrics will appear when published.
-              </p>
-            )}
+            ) : null}
           </article>
-          <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <SectionKicker>Community story</SectionKicker>
-            <h3 className="mt-3 font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
-              {compactText(story?.title ?? story?.name) || "Community impact story"}
-            </h3>
-            <p className="mt-3 text-sm leading-7 text-slate-600">
-              {compactText(story?.summary ?? story?.description ?? story?.body) ||
-                "Community stories will appear here as public impact records are published."}
-            </p>
-            {story?.slug ? <TextLink href={`/community-impact/${story.slug}`}>Read more stories</TextLink> : null}
-          </article>
+          {story ? (
+            <article className="rounded-lg border border-slate-200 bg-slate-50 p-5 shadow-sm">
+              <SectionKicker>Community story</SectionKicker>
+              <h3 className="mt-3 font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
+                {compactText(story.title ?? story.name)}
+              </h3>
+              {compactText(story.summary ?? story.description ?? story.body) ? (
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {compactText(story.summary ?? story.description ?? story.body)}
+                </p>
+              ) : null}
+              {story.slug ? <TextLink href={`/community-impact/${story.slug}`}>Read more stories</TextLink> : null}
+            </article>
+          ) : null}
           <article className="rounded-lg border border-primary/20 bg-primary p-5 text-white shadow-sm">
             <Handshake aria-hidden className="h-9 w-9 text-secondary" />
             <h3 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold">
@@ -650,24 +662,23 @@ function PartnersImpactSection({
 }
 
 function FundingResourcesSection({ items }: { items: SupportItem[] }) {
+  if (items.length === 0) {
+    return null;
+  }
+
   return (
-    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-white px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[rgba(0,78,56,0.055)] to-transparent" />
-      <div className="relative mx-auto max-w-[1680px]">
+    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
+      <div className="relative mx-auto max-w-[1680px] rounded-xl border border-white bg-white px-4 py-12 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:px-6 lg:px-10">
         <SectionHeader
           eyebrow="Funding, training & resources"
           title="Support for proposals, grants, mentorship, publications, and resource mobilization."
           action={{ href: "/resources-tools", label: "View all resources" }}
         />
-        {items.length > 0 ? (
-          <ScrollRevealGroup className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3" staggerDelay={70}>
-            {items.slice(0, 6).map((item) => (
-              <SupportCard key={`${item.kind}-${item.id}`} item={item} />
-            ))}
-          </ScrollRevealGroup>
-        ) : (
-          <EmptyState>Funding, training, and resource records will appear here when published.</EmptyState>
-        )}
+        <ScrollRevealGroup className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3" staggerDelay={70}>
+          {items.slice(0, 6).map((item) => (
+            <SupportCard key={`${item.kind}-${item.id}`} item={item} />
+          ))}
+        </ScrollRevealGroup>
       </div>
     </ScrollReveal>
   );
@@ -675,10 +686,11 @@ function FundingResourcesSection({ items }: { items: SupportItem[] }) {
 
 function ResearchConversationSection() {
   return (
-    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-primary px-4 py-12 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-[#f4f6f4] px-3 pb-3 pt-3 text-white sm:px-4">
       <ResearchAnimatedBackdrop dark />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.14),transparent,rgba(0,0,0,0.1))]" />
-      <div className="relative mx-auto max-w-[1680px] text-center">
+      <div className="relative mx-auto max-w-[1680px] overflow-hidden rounded-xl bg-primary px-4 py-14 text-center shadow-[0_20px_70px_rgba(15,23,42,0.16)] sm:px-6 lg:px-10">
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.14),transparent,rgba(0,0,0,0.1))]" />
+        <div className="relative">
         <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight sm:text-4xl">
           Join us in advancing humanity through knowledge, innovation, and collaboration.
         </h2>
@@ -690,6 +702,7 @@ function ResearchConversationSection() {
           <ActionLink href="/connect" variant="light">Contact REIRM</ActionLink>
           <ActionLink href="/partners" variant="light">Explore partnerships</ActionLink>
           <ActionLink href="/funding" variant="light">Support research</ActionLink>
+        </div>
         </div>
       </div>
     </ScrollReveal>
@@ -708,7 +721,7 @@ function PillarCard({
   icon: LucideIcon;
 }) {
   return (
-    <article className="flex min-h-[270px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="flex min-h-[270px] flex-col rounded-lg border border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f5faf7_100%)] p-5 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <span className="inline-flex h-12 w-12 items-center justify-center rounded-md bg-primary/10 text-primary">
           <Icon aria-hidden className="h-5 w-5" />
@@ -747,9 +760,11 @@ function FeaturedWorkCard({ item }: { item: FeaturedWorkItem }) {
         <h3 className="mt-4 font-[family-name:var(--font-display)] text-xl font-semibold leading-7 text-slate-950">
           {item.title}
         </h3>
-        <p className="mt-3 line-clamp-3 text-sm leading-7 text-slate-600">
-          {item.summary || "Details will appear when published by the research office."}
-        </p>
+        {item.summary ? (
+          <p className="mt-3 line-clamp-3 text-sm leading-7 text-slate-600">
+            {item.summary}
+          </p>
+        ) : null}
         <TextLink href={item.href}>{item.action}</TextLink>
       </div>
     </article>
@@ -770,9 +785,11 @@ function EditorialFeature({ item }: { item: NewsItem }) {
         <h3 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
           {item.title}
         </h3>
-        <p className="mt-3 line-clamp-3 text-sm leading-7 text-slate-600">
-          {item.summary || "Read the latest published update from the research ecosystem."}
-        </p>
+        {item.summary ? (
+          <p className="mt-3 line-clamp-3 text-sm leading-7 text-slate-600">
+            {item.summary}
+          </p>
+        ) : null}
         <TextLink href={item.href}>{item.kind === "Event" ? "View event" : "Read article"}</TextLink>
       </div>
     </article>
@@ -956,14 +973,6 @@ function TextLink({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
-function EmptyState({ children }: { children: ReactNode }) {
-  return (
-    <div className="mt-8 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-sm leading-7 text-slate-600">
-      {children}
-    </div>
-  );
-}
-
 type FeaturedWorkItem = {
   id: string;
   type: string;
@@ -1111,7 +1120,7 @@ function buildDirectoryItems(
       id: item.id,
       kind: "Expertise",
       title: compactText(item.title ?? item.name),
-      summary: compactText(item.summary ?? item.description ?? "Research expertise tag used across public project and profile records."),
+      summary: compactText(item.summary ?? item.description),
       href: "/expertise",
       image: "/images/research/research-about-hero.webp",
     })),
