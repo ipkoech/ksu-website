@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Response
 
 from ksu_common.schemas.responses import success
 
+from ...core.config import get_settings
 from ...deps import CurrentToken, CurrentUser, DbSession
 from ...models import User
 from ...schemas import (
@@ -21,6 +22,39 @@ from ...services import AuthService
 from ._fields import FieldSelection, FieldsDep, build_selector
 
 router = APIRouter()
+settings = get_settings()
+ACCESS_COOKIE_NAME = "ksu_access"
+REFRESH_COOKIE_NAME = "ksu_refresh"
+
+
+def _cookie_secure() -> bool:
+    return settings.APP_ENV.lower() in {"production", "prod"}
+
+
+def _set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
+    response.set_cookie(
+        ACCESS_COOKIE_NAME,
+        access_token,
+        max_age=settings.JWT_ACCESS_TTL_MINUTES * 60,
+        httponly=True,
+        secure=_cookie_secure(),
+        samesite="lax",
+        path="/",
+    )
+    response.set_cookie(
+        REFRESH_COOKIE_NAME,
+        refresh_token,
+        max_age=settings.JWT_REFRESH_TTL_DAYS * 24 * 60 * 60,
+        httponly=True,
+        secure=_cookie_secure(),
+        samesite="lax",
+        path="/",
+    )
+
+
+def _clear_auth_cookies(response: Response) -> None:
+    response.delete_cookie(ACCESS_COOKIE_NAME, path="/")
+    response.delete_cookie(REFRESH_COOKIE_NAME, path="/")
 
 
 def _serialize_auth_user(user: User) -> dict:
@@ -56,24 +90,27 @@ def _serialize_auth_user(user: User) -> dict:
 
 
 @router.post("/login")
-async def login(data: UserLogin, db: DbSession):
+async def login(data: UserLogin, db: DbSession, response: Response):
     user, access_token, refresh_token = await AuthService.login(db, data.email, data.password)
+    _set_auth_cookies(response, access_token, refresh_token)
     return success(
         data=TokenResponse(access_token=access_token, refresh_token=refresh_token).model_dump()
     )
 
 
 @router.post("/refresh")
-async def refresh(data: RefreshRequest, db: DbSession):
+async def refresh(data: RefreshRequest, db: DbSession, response: Response):
     access_token, refresh_token = await AuthService.refresh_token(db, data.refresh_token)
+    _set_auth_cookies(response, access_token, refresh_token)
     return success(
         data=TokenResponse(access_token=access_token, refresh_token=refresh_token).model_dump()
     )
 
 
 @router.post("/logout")
-async def logout(db: DbSession, user: CurrentUser, token: CurrentToken):
+async def logout(db: DbSession, user: CurrentUser, token: CurrentToken, response: Response):
     await AuthService.logout(db, user.id, token.jti)
+    _clear_auth_cookies(response)
     return success(message="Logged out")
 
 

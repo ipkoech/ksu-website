@@ -129,16 +129,15 @@ async def realtime(websocket: WebSocket):
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
-    await websocket.accept()
-    await websocket.send_json(
-        {
-            "type": "connected",
-            "user_id": str(user.id),
-            "notifications": await _latest_unread_notifications(user.id),
-        }
-    )
-
     try:
+        await websocket.accept()
+        await websocket.send_json(
+            {
+                "type": "connected",
+                "user_id": str(user.id),
+                "notifications": await _latest_unread_notifications(user.id),
+            }
+        )
         while True:
             await asyncio.sleep(HEARTBEAT_SECONDS)
             await websocket.send_json(

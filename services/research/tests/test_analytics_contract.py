@@ -1,6 +1,9 @@
 import unittest
+import os
 
 from fastapi.routing import APIRoute
+
+os.environ.setdefault("LOG_DIR", "/tmp/ksu-research-test-logs")
 
 from app.main import create_app
 from app.routes.v1.analytics import router as analytics_router
@@ -9,6 +12,7 @@ from app.schemas.analytics import (
     ResearchAnalyticsPoint,
     ResearchDashboardAnalytics,
 )
+from ksu_common.models import AuditLog
 
 
 def _route(router, path: str, method: str) -> APIRoute:
@@ -43,6 +47,9 @@ class ResearchAnalyticsContractTests(unittest.TestCase):
         paths = _paths(create_app(), "GET")
 
         self.assertIn("/api/v1/analytics/dashboard", paths)
+
+    def test_shared_audit_log_queries_target_public_schema(self):
+        self.assertEqual("main", AuditLog.__table__.schema)
 
     def test_dashboard_schema_exposes_operational_zones(self):
         point = ResearchAnalyticsPoint(label="Open", value=3, key="open")

@@ -80,6 +80,17 @@ class AuthPermissionTests(unittest.TestCase):
         self.assertEqual("assignment", grants[0]["source"])
         self.assertIn("research.manage_projects", grants[0]["permissions"])
 
+    def test_token_scope_grants_omit_global_role_assignments(self):
+        user = _user(
+            role_assignments=[
+                _role_assignment("research-admin", ["research.view", "research.manage_projects"]),
+            ],
+        )
+
+        grants = _active_scope_grants(user)
+
+        self.assertEqual([], grants)
+
     def test_access_token_contains_structured_scope_grants(self):
         grant = {
             "permissions": ["research.manage_projects"],
@@ -97,6 +108,18 @@ class AuthPermissionTests(unittest.TestCase):
 
         payload = decode_token(token)
         self.assertEqual([grant], payload["scope_grants"])
+
+    def test_access_token_does_not_duplicate_permissions_into_scopes_by_default(self):
+        token, _ = create_access_token(
+            str(uuid.uuid4()),
+            ["research-admin"],
+            permissions=["research.view", "research.manage_projects"],
+        )
+
+        payload = decode_token(token)
+
+        self.assertEqual(["research.view", "research.manage_projects"], payload["permissions"])
+        self.assertNotIn("scopes", payload)
 
 
 if __name__ == "__main__":

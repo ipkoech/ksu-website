@@ -20,3 +20,11 @@ assert(
   !source.includes('new URL("/api/v1/realtime/research/config", getMainApiBaseUrl())'),
   "Realtime research config should not be coupled to the main service base URL.",
 );
+assert(
+  source.includes("MAX_WEBSOCKET_QUERY_TOKEN_LENGTH"),
+  "Realtime websocket client must cap query-token size and rely on the auth cookie for oversized JWTs.",
+);
+assert(
+  source.includes("token.length <= MAX_WEBSOCKET_QUERY_TOKEN_LENGTH"),
+  "Realtime websocket client must not append oversized JWTs to the websocket URL.",
+);

@@ -153,6 +153,19 @@ export function ResearchAskAIWidget() {
               return;
             }
 
+            if (event.event === "error") {
+              const message = event.data.message || "Ask AI could not answer right now.";
+              setError(message);
+              setMessages((current) =>
+                current.map((item) =>
+                  item.id === assistantId
+                    ? { ...item, content: message, pending: false }
+                    : item,
+                ),
+              );
+              return;
+            }
+
             if (event.event === "done") {
               setConversationId(event.data.conversation_id ?? activeConversationId);
               if (event.data.suggested_prompts?.length) {
@@ -189,7 +202,7 @@ export function ResearchAskAIWidget() {
       <Button
         type="button"
         size="lg"
-        className="fixed bottom-6 right-6 z-50 h-12 gap-2 rounded-full px-5 shadow-lg shadow-primary/20"
+        className="fixed right-4 top-24 z-50 h-12 gap-2 rounded-full px-5 shadow-lg shadow-primary/20 sm:right-6"
         onClick={() => setOpen(true)}
       >
         <MessageSquareText className="size-4" />

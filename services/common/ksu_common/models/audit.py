@@ -17,6 +17,7 @@ class AuditLog(Base):
     """Persisted audit event for request/activity tracking."""
 
     __tablename__ = "audit_logs"
+    __table_args__ = {"schema": "main"}
 
     service_name: Mapped[str] = mapped_column(sa.String(64), nullable=False, index=True)
     action: Mapped[str] = mapped_column(sa.String(128), nullable=False, index=True)

@@ -70,6 +70,7 @@ export const realtimeApi = {
 
 type Listener = (event: RealtimeEvent) => void;
 type StatusListener = (status: RealtimeStatus) => void;
+const MAX_WEBSOCKET_QUERY_TOKEN_LENGTH = 2048;
 
 export class RealtimeClient {
   private socket: WebSocket | null = null;
@@ -155,7 +156,9 @@ export class RealtimeClient {
     const baseUrl = this.options.baseUrl ?? getMainApiBaseUrl();
     const url = new URL("/api/v1/realtime", baseUrl);
     url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-    url.searchParams.set("access_token", token);
+    if (token.length <= MAX_WEBSOCKET_QUERY_TOKEN_LENGTH) {
+      url.searchParams.set("access_token", token);
+    }
     return url.toString();
   }
 

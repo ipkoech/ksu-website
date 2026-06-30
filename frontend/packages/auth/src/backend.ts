@@ -443,6 +443,7 @@ export async function refreshStoredAuthTokens() {
 
   const response = await fetch(`${getMainApiBaseUrl()}/api/v1/auth/refresh`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refresh_token: refreshToken }),
   });
@@ -465,6 +466,7 @@ export async function fetchCurrentUser(accessToken = getStoredAccessToken()) {
   if (!accessToken) return null;
 
   const response = await fetch(`${getMainApiBaseUrl()}/api/v1/auth/me?fields=id,email,full_name,avatar_url,roles,permissions`, {
+    credentials: "include",
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
@@ -479,6 +481,7 @@ export async function fetchCurrentUser(accessToken = getStoredAccessToken()) {
 export async function loginWithPassword(credentials: LoginCredentials): Promise<AuthResponse> {
   const response = await fetch(`${getMainApiBaseUrl()}/api/v1/auth/login`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(credentials),
   });
@@ -514,6 +517,7 @@ export async function logoutCurrentSession() {
   if (!accessToken) return;
   await fetch(`${getMainApiBaseUrl()}/api/v1/auth/logout`, {
     method: "POST",
+    credentials: "include",
     headers: { Authorization: `Bearer ${accessToken}` },
   }).catch(() => undefined);
 }

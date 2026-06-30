@@ -56,6 +56,7 @@ export async function refreshStoredAccessToken(baseUrl = getAuthRefreshBaseUrl()
 
   const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/v1/auth/refresh`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refresh_token: refreshToken }),
   });
