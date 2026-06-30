@@ -169,7 +169,7 @@ export default async function ResearchPage() {
 
 function ResearchLandingHero() {
   return (
-    <section className="relative isolate min-h-[680px] overflow-hidden border-b border-slate-200 bg-slate-950">
+    <section className="relative isolate min-h-[544px] overflow-hidden border-b border-slate-200 bg-slate-950">
       <Image
         src="/images/research/research-hero-imagegen.webp"
         alt="Kisii University researchers collaborating across laboratory, field, data, and community research"
@@ -178,11 +178,11 @@ function ResearchLandingHero() {
         sizes="100vw"
         className="object-cover"
       />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.88)_0%,rgba(255,255,255,0.74)_32%,rgba(255,255,255,0.22)_62%,rgba(255,255,255,0.04)_100%)]" />
-      <div className="absolute inset-y-0 left-0 w-full bg-[radial-gradient(circle_at_20%_48%,rgba(255,255,255,0.5)_0%,rgba(255,255,255,0)_36%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.76)_0%,rgba(255,255,255,0.58)_32%,rgba(255,255,255,0.14)_62%,rgba(255,255,255,0)_100%)]" />
+      <div className="absolute inset-y-0 left-0 w-full bg-[radial-gradient(circle_at_20%_48%,rgba(255,255,255,0.28)_0%,rgba(255,255,255,0)_34%)]" />
       <ResearchAnimatedBackdrop />
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white via-white/50 to-transparent" />
-      <div className="relative mx-auto flex min-h-[680px] max-w-[1920px] items-center px-4 py-16 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="relative mx-auto flex min-h-[544px] max-w-[1920px] items-center px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="max-w-4xl">
           <ScrollReveal>
             <p className="inline-flex rounded-full border border-primary/20 bg-white/70 px-3 py-1 text-sm font-semibold text-primary">
