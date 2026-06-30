@@ -1,6 +1,18 @@
 # Research-only VM deployment overlay. Use after docker-compose.yml and docker-compose.vm.yml.
 
 services:
+  main:
+    ports: !reset []
+
+  research:
+    ports: !reset []
+
+  library:
+    ports: !reset []
+
+  celery-research:
+    depends_on: !reset []
+
   research-gateway:
     image: nginx:1.27-alpine
     volumes:
