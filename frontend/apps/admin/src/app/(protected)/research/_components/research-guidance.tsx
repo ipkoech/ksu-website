@@ -18,6 +18,11 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -546,27 +551,25 @@ export function ResearchSectionGuide({
   if (!guide) return null;
 
   return (
-    <Card className={cn("border-dashed bg-muted/20", className)}>
-      <CardHeader className="pb-3">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-md border bg-background text-primary">
-            <ListChecks className="size-4" />
-          </div>
-          <div className="min-w-0">
-            <CardTitle className="text-base">{guide.title}</CardTitle>
-            <CardDescription>{guide.description}</CardDescription>
+    <ResearchGuideTrigger
+      title={guide.title}
+      description={guide.description}
+      tooltip={`${guide.title}: ${guide.description}`}
+      className={className}
+    >
+      <div className="space-y-5">
+        <div className="space-y-3">
+          <p className="text-xs font-semibold uppercase text-muted-foreground">What to do here</p>
+          <div className="grid gap-2">
+            {guide.steps.map((step) => (
+              <div key={step} className="flex gap-2 text-sm">
+                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+                <span className="text-muted-foreground">{step}</span>
+              </div>
+            ))}
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid gap-2 md:grid-cols-2">
-          {guide.steps.map((step) => (
-            <div key={step} className="flex gap-2 text-sm">
-              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
-              <span className="text-muted-foreground">{step}</span>
-            </div>
-          ))}
-        </div>
+
         {guide.publicPortalNote ? (
           <div className="flex gap-2 rounded-md border bg-background p-3 text-sm text-muted-foreground">
             <Info className="mt-0.5 size-4 shrink-0 text-primary" />
@@ -574,8 +577,8 @@ export function ResearchSectionGuide({
           </div>
         ) : null}
         {actions}
-      </CardContent>
-    </Card>
+      </div>
+    </ResearchGuideTrigger>
   );
 }
 
@@ -597,19 +600,13 @@ export function ResearchDetailGuide({
     typeof isPublic === "boolean" ? (isPublic ? "Public" : "Private") : "Visibility not set";
 
   return (
-    <Card className={cn("border-dashed bg-muted/20", className)}>
-      <CardHeader className="pb-3">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-md border bg-background text-primary">
-            <ListChecks className="size-4" />
-          </div>
-          <div className="min-w-0">
-            <CardTitle className="text-base">{guide.title}</CardTitle>
-            <CardDescription>{guide.description}</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <ResearchGuideTrigger
+      title={guide.title}
+      description={guide.description}
+      tooltip={`${guide.title}: ${guide.description}`}
+      className={className}
+    >
+      <div className="space-y-5">
         <div className="flex flex-wrap gap-2 text-xs">
           <span className="rounded-md border bg-background px-2 py-1 capitalize text-muted-foreground">
             {statusLabel}
@@ -649,8 +646,63 @@ export function ResearchDetailGuide({
             <span>{guide.publicPortalNote}</span>
           </div>
         ) : null}
-      </CardContent>
-    </Card>
+      </div>
+    </ResearchGuideTrigger>
+  );
+}
+
+function ResearchGuideTrigger({
+  title,
+  description,
+  tooltip,
+  className,
+  children,
+}: {
+  title: string;
+  description: string;
+  tooltip: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <TooltipProvider delayDuration={150}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className={cn(
+                "inline-flex size-9 items-center justify-center rounded-md border bg-background text-primary shadow-sm transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                className,
+              )}
+              aria-label={`Open ${title} guidance`}
+              onClick={() => setOpen(true)}
+            >
+              <Info className="size-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-72 text-sm" side="top" align="start">
+            {tooltip}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-md">
+        <SheetHeader className="border-b px-6 py-5">
+          <div className="flex items-start gap-3 pr-8">
+            <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-md border bg-primary/10 text-primary">
+              <ListChecks className="size-4" />
+            </div>
+            <div className="min-w-0">
+              <SheetTitle>{title}</SheetTitle>
+              <SheetDescription>{description}</SheetDescription>
+            </div>
+          </div>
+        </SheetHeader>
+        <div className="px-6 py-5">{children}</div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
