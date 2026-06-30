@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity, AlertCircle, CheckCircle2, Download, Info, Play, Upload } from "lucide-react";
+import { Activity, AlertCircle, Download, Info, Play, Upload } from "lucide-react";
 import {
   EditableServiceResourcePage,
   type EditableField,
@@ -10,8 +10,6 @@ import {
   type EditableRecordWorkflowAction,
 } from "@/components/dashboard/editable-service-resource-page";
 import {
-  Alert,
-  AlertDescription,
   Badge,
   Button,
   Dialog,
@@ -31,17 +29,15 @@ import {
   auditLogsApi,
   importsApi,
   researchServiceApi,
-  useImportJob,
   useImportResource,
   usePreviewImport,
-  useStartImportCommit,
-  type ImportCommitResult,
+  useCommitImport,
   type ImportPreviewRow,
   type ResearchGenericPayload,
   type ResearchGenericRecord,
 } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import {
   getResearchFieldHelp,
@@ -281,21 +277,14 @@ function ResearchImportDialog({
 }) {
   const queryClient = useQueryClient();
   const [stagedRows, setStagedRows] = useState<StagedImportRow[]>([]);
-  const [commitResult, setCommitResult] = useState<ImportCommitResult | null>(null);
-  const [jobId, setJobId] = useState<string | null>(null);
-  const [handledJobId, setHandledJobId] = useState<string | null>(null);
   const [fieldsOpen, setFieldsOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
 
   const resourceQuery = useImportResource(resourceKey, { enabled: open });
   const previewImport = usePreviewImport();
-  const startImportCommit = useStartImportCommit();
-  const importJob = useImportJob(jobId, { enabled: open && Boolean(jobId) });
+  const commitImport = useCommitImport();
   const resource = resourceQuery.data?.data;
-  const isSubmitting =
-    startImportCommit.isPending ||
-    importJob.isFetching ||
-    Boolean(jobId && !commitResult && handledJobId !== jobId);
+  const isSubmitting = commitImport.isPending;
   const rowIssues = useMemo(
     () => stagedRows.map((row) => getStagedRowIssues(row, resource?.columns ?? [])),
     [resource?.columns, stagedRows],
@@ -305,9 +294,6 @@ function ResearchImportDialog({
 
   const resetImport = () => {
     setStagedRows([]);
-    setCommitResult(null);
-    setJobId(null);
-    setHandledJobId(null);
   };
 
   const handleTemplateDownload = async () => {
@@ -321,9 +307,6 @@ function ResearchImportDialog({
 
   const loadFile = async (nextFile: File | null) => {
     setStagedRows([]);
-    setCommitResult(null);
-    setJobId(null);
-    setHandledJobId(null);
 
     if (!nextFile) return;
 
@@ -359,35 +342,18 @@ function ResearchImportDialog({
       return;
     }
     try {
-      const response = await startImportCommit.mutateAsync({
+      const response = await commitImport.mutateAsync({
         resource: resourceKey,
         data: { rows: stagedRows.map((row) => normalizeImportRow(row.values)), mode: "partial" },
       });
-      setCommitResult(null);
-      setJobId(response.data.job_id);
-      setHandledJobId(null);
-      toast.success("Import queued. Keep this dialog open while it processes.");
+      await queryClient.invalidateQueries({ queryKey: ["research"] });
+      toast.success(`Created ${response.data.created_rows} record${response.data.created_rows === 1 ? "" : "s"}`);
+      resetImport();
+      onOpenChange(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Import failed");
     }
   };
-
-  useEffect(() => {
-    const job = importJob.data?.data;
-    if (!job || !jobId || handledJobId === jobId) return;
-
-    if (job.status === "SUCCESS" && job.result) {
-      setCommitResult(job.result);
-      setHandledJobId(jobId);
-      queryClient.invalidateQueries({ queryKey: ["research"] });
-      toast.success(`Created ${job.result.created_rows} record${job.result.created_rows === 1 ? "" : "s"}`);
-    }
-
-    if (job.status === "FAILURE") {
-      setHandledJobId(jobId);
-      toast.error(job.error || "Import failed");
-    }
-  }, [handledJobId, importJob.data, jobId, queryClient]);
 
   return (
     <Dialog
@@ -515,24 +481,6 @@ function ResearchImportDialog({
                 </div>
               </div>
             </div>
-          ) : null}
-
-          {jobId && !commitResult ? (
-            <Alert>
-              <CheckCircle2 className="h-4 w-4" />
-              <AlertDescription>
-                Import job {importJob.data?.data.status?.toLowerCase() || "queued"}. Results will appear here.
-              </AlertDescription>
-            </Alert>
-          ) : null}
-
-          {commitResult ? (
-            <Alert>
-              <CheckCircle2 className="h-4 w-4" />
-              <AlertDescription>
-                Created {commitResult.created_rows}, skipped {commitResult.skipped_rows}, failed {commitResult.failed_rows}.
-              </AlertDescription>
-            </Alert>
           ) : null}
         </div>
         <DialogFooter className="border-t pt-4">
