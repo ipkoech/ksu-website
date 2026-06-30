@@ -1454,6 +1454,14 @@ export interface ImportCommitResult {
   rows: ImportCommitRow[];
 }
 
+export interface ImportJob {
+  job_id: string;
+  status: "PENDING" | "STARTED" | "SUCCESS" | "FAILURE" | "RETRY" | string;
+  resource?: string | null;
+  result?: ImportCommitResult | null;
+  error?: string | null;
+}
+
 // Request/Response types
 export interface LoginRequest {
   email: string;

@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+from celery.result import AsyncResult
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 from fastapi.responses import Response
 
 from ksu_common.schemas.responses import success
 
 from ...deps import CurrentUser, DbSession, _has_permission
-from ...schemas.imports import ImportCommitRequest
+from ...schemas.imports import ImportCommitRead, ImportCommitRequest, ImportJobRead
 from ...services.imports import ImportService
+from ...tasks.celery_app import celery_app
 
 router = APIRouter()
 
@@ -91,3 +93,51 @@ async def commit_import(
     _ensure_scope(user, config.scope)
     result = await ImportService.commit(db, config, data)
     return success(data=result, message="Import processed")
+
+
+@router.post("/{resource_key}/commit-async", status_code=status.HTTP_202_ACCEPTED)
+async def queue_import_commit(
+    resource_key: str,
+    data: ImportCommitRequest,
+    user: CurrentUser,
+):
+    config = ImportService.get_resource(resource_key)
+    if config is None:
+        raise HTTPException(status_code=404, detail="Import resource not found")
+    _ensure_scope(user, config.scope)
+    task = celery_app.send_task(
+        "main.imports.commit",
+        kwargs={
+            "resource_key": resource_key,
+            "payload": data.model_dump(mode="json"),
+        },
+    )
+    return success(
+        data=ImportJobRead(job_id=task.id, status="PENDING", resource=resource_key),
+        message="Import queued",
+    )
+
+
+@router.get("/jobs/{job_id}")
+async def get_import_job(job_id: str, user: CurrentUser):
+    result = AsyncResult(job_id, app=celery_app)
+    payload: ImportCommitRead | None = None
+    error: str | None = None
+    resource: str | None = None
+
+    if result.successful():
+        result_data = result.result or {}
+        payload = ImportCommitRead.model_validate(result_data)
+        resource = payload.resource
+    elif result.failed():
+        error = str(result.result)
+
+    return success(
+        data=ImportJobRead(
+            job_id=job_id,
+            status=result.status,
+            resource=resource,
+            result=payload,
+            error=error,
+        )
+    )

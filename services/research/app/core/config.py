@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: Literal["json", "text"] = "json"
     LOG_DIR: str = "/app/logs"
+    EXPORT_DIR: str = "/app/exports"
 
     CORS_ORIGINS: list[str] = [
         "http://localhost:3000",

@@ -12,7 +12,7 @@ import {
 import { Button } from "@ksu/ui/components";
 import { importsApi, researchServiceApi, type ResearchGenericPayload, type ResearchGenericRecord } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import {
   getResearchFieldHelp,
@@ -151,6 +151,7 @@ export function ResearchBulkActions({
 }) {
   const resolvedImportResource = importResource ?? resourceKey;
   const resolvedExportResource = exportResource ?? resourceKey;
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleTemplateDownload = async () => {
     if (!resolvedImportResource) return;
@@ -164,11 +165,20 @@ export function ResearchBulkActions({
 
   const handleExportDownload = async () => {
     if (!resolvedExportResource) return;
+    setIsExporting(true);
     try {
-      const blob = await researchServiceApi.downloadExport(resolvedExportResource, { format: "csv" });
+      const queued = await researchServiceApi.startExport(resolvedExportResource, { format: "csv" });
+      toast.success("Export queued. Download will start when the file is ready.");
+      const job = await waitForExportJob(queued.data.job_id);
+      if (job.status !== "SUCCESS") {
+        throw new Error(job.error || "Research export failed");
+      }
+      const blob = await researchServiceApi.downloadExportJob(queued.data.job_id);
       downloadBlob(blob, `${resolvedExportResource}-export.csv`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Research export failed");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -189,13 +199,24 @@ export function ResearchBulkActions({
         </>
       ) : null}
       {resolvedExportResource ? (
-        <Button variant="outline" size="sm" type="button" onClick={handleExportDownload}>
+        <Button variant="outline" size="sm" type="button" onClick={handleExportDownload} disabled={isExporting}>
           <Download data-icon="inline-start" />
-          Export CSV
+          {isExporting ? "Preparing..." : "Export CSV"}
         </Button>
       ) : null}
     </>
   );
+}
+
+async function waitForExportJob(jobId: string) {
+  for (let attempt = 0; attempt < 180; attempt += 1) {
+    const response = await researchServiceApi.getExportJob(jobId);
+    if (!["PENDING", "STARTED", "RETRY"].includes(response.data.status)) {
+      return response.data;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+  throw new Error("Export is still processing. Check again shortly.");
 }
 
 export function ResearchMobileRecordCard({

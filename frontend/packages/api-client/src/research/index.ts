@@ -48,6 +48,17 @@ export type ResearchExportParams = ListParams & {
   limit?: number;
 };
 
+export interface ResearchExportJob {
+  job_id: string;
+  status: "PENDING" | "STARTED" | "SUCCESS" | "FAILURE" | "RETRY" | string;
+  resource?: string | null;
+  download_url?: string | null;
+  filename?: string | null;
+  format?: ResearchExportFormat | string | null;
+  total_rows?: number | null;
+  error?: string | null;
+}
+
 export interface ResearchProject {
   id: string;
   title: string;
@@ -432,6 +443,25 @@ export const researchServiceApi = {
     researchApi.get<{ data: ResearchSearchResponse }>("/api/v1/search", params),
   exportResourceUrl: (resource: string, params?: ResearchExportParams) =>
     buildResearchExportUrl(resource, params),
+  startExport: (resource: string, params?: ResearchExportParams) =>
+    researchApi.request<{ data: ResearchExportJob }>("POST", `/api/v1/exports/${resource}/jobs`, { params }),
+  getExportJob: (jobId: string) =>
+    researchApi.get<{ data: ResearchExportJob }>(`/api/v1/exports/jobs/${jobId}`),
+  downloadExportJob: async (jobId: string) => {
+    const token = getStoredAccessToken();
+    const response = await fetch(
+      `${getResearchApiBaseUrl()}/api/v1/exports/jobs/${jobId}/download`,
+      {
+        credentials: "include",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      },
+    );
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || error.message || "Research export download failed");
+    }
+    return response.blob();
+  },
   downloadExport: async (resource: string, params?: ResearchExportParams) => {
     const token = getStoredAccessToken();
     const response = await fetch(buildResearchExportUrl(resource, params), {

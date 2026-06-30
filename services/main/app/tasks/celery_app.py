@@ -32,6 +32,7 @@ celery_app.conf.update(
         "main.email.send_account_created": {"queue": "main.email"},
         "main.email.send_password_reset": {"queue": "main.email"},
         "main.email.send_verification": {"queue": "main.email"},
+        "main.imports.commit": {"queue": "main.imports"},
     },
     beat_schedule={
         "expire-notifications-every-15-minutes": {
@@ -48,6 +49,7 @@ celery_app.conf.update(
 celery_app.autodiscover_tasks(["app.tasks"])
 celery_app.conf.imports = (
     "app.tasks.email",
+    "app.tasks.imports",
     "app.tasks.notifications",
     "app.tasks.social_posts",
 )

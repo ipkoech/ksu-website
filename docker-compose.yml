@@ -131,8 +131,10 @@ services:
       LOG_LEVEL: ${RESEARCH_LOG_LEVEL:-INFO}
       LOG_FORMAT: ${RESEARCH_LOG_FORMAT:-json}
       LOG_DIR: /app/logs
+      EXPORT_DIR: /app/exports
     volumes:
       - ./logs/research:/app/logs
+      - ./uploads/research-exports:/app/exports
     depends_on:
       postgres:
         condition: service_healthy
@@ -228,6 +230,35 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+    networks: [ksu]
+    restart: unless-stopped
+
+  celery-research:
+    image: ${BACKEND_IMAGE_PREFIX:-ksu-backend}/research:${IMAGE_TAG:-local}
+    build:
+      context: ./services
+      dockerfile: research/Dockerfile
+    command: ./scripts/start-celery-worker.sh
+    env_file: ./services/research/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
+      REDIS_URL: redis://redis:6379/2
+      CELERY_BROKER_URL: redis://redis:6379/2
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      MAIN_SERVICE_URL: http://main:8000
+      REFERENCE_VALIDATION_MODE: strict
+      LOG_DIR: /app/logs
+      EXPORT_DIR: /app/exports
+    volumes:
+      - ./logs/research:/app/logs
+      - ./uploads/research-exports:/app/exports
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      main:
         condition: service_healthy
     networks: [ksu]
     restart: unless-stopped

@@ -212,6 +212,7 @@ export const queryKeys = {
     all: ["imports"] as const,
     resources: ["imports", "resources"] as const,
     resource: (resource: string) => ["imports", "resources", resource] as const,
+    job: (jobId: string) => ["imports", "jobs", jobId] as const,
   },
 
   // API Keys

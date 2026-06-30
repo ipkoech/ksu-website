@@ -61,6 +61,7 @@ import type {
   ContentReport,
   ImportCommitRequest,
   ImportCommitResult,
+  ImportJob,
   ImportPreview,
   ImportResource,
   Setting,
@@ -1602,6 +1603,15 @@ export const importsApi = {
       `/api/v1/imports/${resource}/commit`,
       data,
     ),
+
+  commitAsync: (resource: string, data: ImportCommitRequest) =>
+    mainApi.post<{ data: ImportJob }>(
+      `/api/v1/imports/${resource}/commit-async`,
+      data,
+    ),
+
+  getJob: (jobId: string) =>
+    mainApi.get<{ data: ImportJob }>(`/api/v1/imports/jobs/${jobId}`),
 
   downloadTemplate: async (resource: string) => {
     const token = getStoredAccessToken();

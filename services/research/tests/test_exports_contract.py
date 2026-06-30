@@ -8,6 +8,7 @@ from app.services.exports import (
     EXPORT_RESOURCE_CONFIGS,
     ResearchExportService,
 )
+from app.tasks.celery_app import celery_app
 
 
 def _route(router, path: str, method: str) -> APIRoute:
@@ -41,10 +42,27 @@ class ResearchExportContractTests(unittest.TestCase):
         self.assertIn("status", query_param_names)
         self.assertIn("year", query_param_names)
 
+    def test_export_job_routes_are_registered_and_protected(self):
+        start_route = _route(exports_router, "/exports/{resource_key}/jobs", "POST")
+        status_route = _route(exports_router, "/exports/jobs/{job_id}", "GET")
+        download_route = _route(exports_router, "/exports/jobs/{job_id}/download", "GET")
+
+        self.assertEqual(start_route.status_code, 202)
+        self.assertTrue(start_route.dependencies)
+        self.assertTrue(status_route.dependencies)
+        self.assertTrue(download_route.dependencies)
+
     def test_research_v1_router_includes_export_route(self):
         paths = _paths(create_app(), "GET")
 
         self.assertIn("/api/v1/exports/{resource_key}", paths)
+        self.assertIn("/api/v1/exports/jobs/{job_id}", paths)
+        self.assertIn("/api/v1/exports/jobs/{job_id}/download", paths)
+
+    def test_research_export_task_is_registered_with_celery_worker(self):
+        imports = set(celery_app.conf.imports)
+
+        self.assertIn("app.tasks.exports", imports)
 
     def test_supported_export_resources_cover_bulk_import_resources(self):
         keys = set(EXPORT_RESOURCE_CONFIGS)
