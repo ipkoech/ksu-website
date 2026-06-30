@@ -22,6 +22,8 @@ export type NarrativeSectionSpec = {
 };
 
 const monthFormatter = new Intl.DateTimeFormat("en", { month: "long" });
+const defaultListPageSize = 12;
+const maxListPageSize = 50;
 
 const recordDateFields = [
   "start_date",
@@ -134,6 +136,11 @@ export function getPublishedFactItems(items: PublishedFactItem[]) {
       value: compactText(item.value),
     }))
     .filter((item): item is { label: string; value: string } => Boolean(item.value));
+}
+
+export function getListPageSize(value?: number) {
+  if (!Number.isInteger(value) || !value || value < 1) return defaultListPageSize;
+  return Math.min(value, maxListPageSize);
 }
 
 export function getNarrativeSections(

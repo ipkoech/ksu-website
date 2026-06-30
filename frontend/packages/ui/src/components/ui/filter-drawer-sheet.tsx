@@ -31,6 +31,7 @@ export type FilterDrawerSheetProps = {
   filterLabel: string;
   filterCount?: number;
   title?: string;
+  triggerIcon?: React.ReactNode;
   children: React.ReactNode;
   activeFilters?: ActiveFilter[];
   onRemoveFilter?: (key: string) => void;
@@ -43,6 +44,7 @@ export function FilterDrawerSheet({
   filterLabel,
   filterCount,
   title = "Filters",
+  triggerIcon,
   children,
   activeFilters = [],
   onRemoveFilter,
@@ -64,7 +66,7 @@ export function FilterDrawerSheet({
             className,
           )}
         >
-          <SlidersHorizontal aria-hidden className="h-4 w-4" />
+          {triggerIcon ?? <SlidersHorizontal aria-hidden className="h-4 w-4" />}
           {filterLabel}
           {filterCount ? (
             <Badge variant="default" className="ml-1 h-5 min-w-5 px-1 text-[11px]">

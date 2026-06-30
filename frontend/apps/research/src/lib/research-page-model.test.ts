@@ -3,6 +3,7 @@ import { test } from "node:test";
 
 import {
   filterRecordsByMonth,
+  getListPageSize,
   getPublishedFactItems,
   getNarrativeSections,
   getRecordMonths,
@@ -62,6 +63,13 @@ test("published fact items omit missing backend values", () => {
       { label: "Status", value: "Active" },
     ],
   );
+});
+
+test("list page size uses valid request size and falls back safely", () => {
+  assert.equal(getListPageSize(12), 12);
+  assert.equal(getListPageSize(undefined), 12);
+  assert.equal(getListPageSize(0), 12);
+  assert.equal(getListPageSize(80), 50);
 });
 
 test("narrative sections use configured public labels", () => {
