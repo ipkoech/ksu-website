@@ -31,6 +31,7 @@ VM options:
   --public-host HOST   Public website host or IP. Required for VM deploy.
   --api-host HOST      API host. Required for VM deploy.
   --research-host HOST Research frontend host. Required for VM deploy.
+  --edge-http-port PORT Host bind for the in-container edge. Defaults to 80, or 127.0.0.1:8080 with --https.
   --https             Install host Nginx/Certbot and issue HTTPS certificates.
   --cert-email EMAIL  Let's Encrypt email. Required with --https.
   --bootstrap          Install Docker packages on an Ubuntu/Debian VM before deploy.
@@ -82,7 +83,7 @@ Examples:
   scripts/deploy.sh vm-logs --host ubuntu@VM_IP --env dev --path /srv/ksu --follow
   scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --path /srv/ksu --bootstrap
   scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --path /srv/ksu --bootstrap --https --cert-email ops@example.edu --public-host public.example.edu --api-host api.example.edu --research-host research.example.edu
-  scripts/deploy.sh vm --host ubuntu@VM_IP --env staging --scope research --path /srv/ksu-research --research-host research.example.edu --https --cert-email ops@example.edu
+  scripts/deploy.sh vm --host ubuntu@VM_IP --env staging --scope research --path /srv/ksu --project-name ksu-research-staging --research-host research.example.edu --edge-http-port 127.0.0.1:8081 --https --cert-email ops@example.edu
   scripts/deploy.sh vm-backup --host ubuntu@VM_IP --env production
   scripts/deploy.sh cloud --env dev --project my-gcp-project
   scripts/deploy.sh cloud --env staging --project my-gcp-project --image-tag abc1234 --skip-build
@@ -277,6 +278,7 @@ vm_remote_script() {
   local pull_images="${26:-0}"
   local cleanup_images="${27:-1}"
   local deploy_scope="${28:-full}"
+  local edge_http_port="${29:-}"
 
   cat <<REMOTE
 set -euo pipefail
@@ -309,6 +311,7 @@ PUSH_IMAGES=$(shell_quote "${push_images}")
 PULL_IMAGES=$(shell_quote "${pull_images}")
 CLEANUP_IMAGES=$(shell_quote "${cleanup_images}")
 DEPLOY_SCOPE=$(shell_quote "${deploy_scope}")
+REQUESTED_EDGE_HTTP_PORT=$(shell_quote "${edge_http_port}")
 
 section() {
   printf '\n[%s] === %s ===\n' "\$(date -u +%Y-%m-%dT%H:%M:%SZ)" "\$*"
@@ -513,10 +516,17 @@ if [[ "\${MODE}" = "status" || "\${MODE}" = "logs" ]]; then
 fi
 
 APP_SCHEME="http"
-EDGE_HTTP_PORT="80"
+EDGE_HTTP_PORT="\${REQUESTED_EDGE_HTTP_PORT:-80}"
 if [[ "\${ENABLE_HTTPS}" -eq 1 ]]; then
   APP_SCHEME="https"
-  EDGE_HTTP_PORT="127.0.0.1:8080"
+  EDGE_HTTP_PORT="\${REQUESTED_EDGE_HTTP_PORT:-127.0.0.1:8080}"
+fi
+EDGE_PROXY_TARGET="\${EDGE_HTTP_PORT}"
+if [[ "\${EDGE_PROXY_TARGET}" != *:* ]]; then
+  EDGE_PROXY_TARGET="127.0.0.1:\${EDGE_PROXY_TARGET}"
+fi
+if [[ "\${EDGE_PROXY_TARGET}" = 0.0.0.0:* ]]; then
+  EDGE_PROXY_TARGET="127.0.0.1:\${EDGE_PROXY_TARGET##*:}"
 fi
 PUBLIC_URL="\${APP_SCHEME}://\${PUBLIC_HOST}"
 API_SERVER_NAME="\${API_HOST}"
@@ -835,7 +845,7 @@ server {
     client_max_body_size 25M;
 
     location / {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://\${EDGE_PROXY_TARGET};
         proxy_http_version 1.1;
         proxy_set_header Host \\\$host;
         proxy_set_header X-Real-IP \\\$remote_addr;
@@ -855,7 +865,7 @@ server {
     client_max_body_size 25M;
 
     location / {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://\${EDGE_PROXY_TARGET};
         proxy_http_version 1.1;
         proxy_set_header Host \\\$host;
         proxy_set_header X-Real-IP \\\$remote_addr;
@@ -873,7 +883,7 @@ server {
     client_max_body_size 25M;
 
     location / {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://\${EDGE_PROXY_TARGET};
         proxy_http_version 1.1;
         proxy_set_header Host \\\$host;
         proxy_set_header X-Real-IP \\\$remote_addr;
@@ -889,7 +899,7 @@ server {
     client_max_body_size 25M;
 
     location / {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://\${EDGE_PROXY_TARGET};
         proxy_http_version 1.1;
         proxy_set_header Host \\\$host;
         proxy_set_header X-Real-IP \\\$remote_addr;
@@ -970,6 +980,7 @@ deploy_vm() {
   local public_host=""
   local api_host=""
   local research_host=""
+  local edge_http_port=""
   local enable_https=0
   local cert_email=""
   local bootstrap=0
@@ -1035,6 +1046,10 @@ deploy_vm() {
         ;;
       --research-host)
         research_host="${2:-}"
+        shift 2
+        ;;
+      --edge-http-port)
+        edge_http_port="${2:-}"
         shift 2
         ;;
       --https)
@@ -1218,7 +1233,7 @@ deploy_vm() {
   if [[ "${mode}" = "backup" ]]; then
     backup=1
   fi
-  remote="$(vm_remote_script "${mode}" "${env_name}" "${branch}" "${repo_url}" "${repo_path}" "${project_name}" "${public_host}" "${api_host}" "${research_host}" "${bootstrap}" "${pull}" "${backup}" "${backup_dir}" "${with_gateway}" "${skip_frontend}" "${skip_build}" "${enable_https}" "${cert_email}" "${run_migrations}" "${inspect_services}" "${log_tail}" "${log_follow}" "${image_prefix}" "${image_tag}" "${push_images}" "${pull_images}" "${cleanup_images}" "${deploy_scope}")"
+  remote="$(vm_remote_script "${mode}" "${env_name}" "${branch}" "${repo_url}" "${repo_path}" "${project_name}" "${public_host}" "${api_host}" "${research_host}" "${bootstrap}" "${pull}" "${backup}" "${backup_dir}" "${with_gateway}" "${skip_frontend}" "${skip_build}" "${enable_https}" "${cert_email}" "${run_migrations}" "${inspect_services}" "${log_tail}" "${log_follow}" "${image_prefix}" "${image_tag}" "${push_images}" "${pull_images}" "${cleanup_images}" "${deploy_scope}" "${edge_http_port}")"
 
   if [[ "${DRY_RUN}" -eq 1 ]]; then
     printf '+ ssh %q %q\n' "${host}" "${remote}"
