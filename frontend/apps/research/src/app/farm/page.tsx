@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
+import Image from "next/image";
 import Link from "next/link";
 import { ResearchFact } from "../../components/research-detail";
 import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
@@ -75,20 +76,41 @@ export default async function FarmPage({ searchParams }: { searchParams?: Promis
   const errors = [farms, projects, partners, activities, stories, focusAreas].flatMap((item) =>
     item.error ? [item.error] : [],
   );
+  const years = getRecordYears(farms.data);
+  const months = getRecordMonths(farms.data, params.year);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <FarmMasthead farmCount={visibleFarms.length} projectCount={projects.data.length} partnerCount={partners.data.length} activityCount={activities.data.length} />
+      <FarmHero farmCount={visibleFarms.length} projectCount={projects.data.length} partnerCount={partners.data.length} activityCount={activities.data.length} />
+      <LandingTabs
+        items={[
+          { href: "#overview", label: "Overview" },
+          { href: "#facilities", label: "Facilities" },
+          { href: "#projects", label: "Projects" },
+          { href: "#demonstrations", label: "Demonstrations" },
+          { href: "#stories", label: "Stories" },
+        ]}
+      />
 
       {errors.length > 0 ? <ErrorBand errors={errors} /> : null}
 
       <ResearchSection
-        eyebrow="Facilities"
-        title="University farm facilities"
-        body="Search first, then use the filter menu for farm type, active state, status, year, and sort order."
+        id="overview"
+        eyebrow="At The Farm"
+        title="A living site for research, demonstrations, and community learning"
+        body="Published facility, project, activity, partner, story, and focus-area records shape the farm page without invented content."
         tone="white"
       >
-        <FarmFilters params={params} years={getRecordYears(farms.data)} months={getRecordMonths(farms.data, params.year)} />
+        <FarmOverview farms={visibleFarms} projects={projects.data} activities={activities.data} focusAreas={focusAreas.data} />
+      </ResearchSection>
+
+      <ResearchSection
+        id="facilities"
+        eyebrow="Facilities"
+        title="Find farm facilities"
+        body="Search first, then use the filter menu for farm type, active state, status, year, and sort order."
+      >
+        <FarmFilters params={params} years={years} months={months} />
         {visibleFarms.length > 0 ? (
           <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
             {visibleFarms.map((farm) => <FarmRow key={farm.id} farm={farm} />)}
@@ -96,59 +118,59 @@ export default async function FarmPage({ searchParams }: { searchParams?: Promis
         ) : <div className="mt-7"><StatusMessage>No farm records match the current filters.</StatusMessage></div>}
       </ResearchSection>
 
-      {projects.data.length > 0 ? (
-        <ResearchSection
-          eyebrow="Action Research"
-          title="Farm-linked projects"
-          body="Action and applied projects show how the farm supports field trials, demonstrations, and practical research outcomes."
-        >
+      <ResearchSection
+        id="projects"
+        eyebrow="Action Research"
+        title="Farm-linked projects"
+        body="Action and applied projects show how the farm supports field trials, demonstrations, and practical research outcomes."
+        tone="white"
+      >
+        {projects.data.length > 0 ? (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {projects.data.map((project) => (
               <ProjectCard key={project.id} project={project} />
             ))}
           </div>
-        </ResearchSection>
-      ) : null}
+        ) : <StatusMessage>Farm-linked project records are not published yet.</StatusMessage>}
+      </ResearchSection>
 
-      {partners.data.length > 0 || activities.data.length > 0 ? (
-        <ResearchSection
-          eyebrow="Engagement"
-          title="Partnerships and activities"
-          body="Community partners and public activities show how farm work moves beyond the campus."
-          tone="white"
-        >
-          <div className="grid gap-5 lg:grid-cols-2">
-            {partners.data.length > 0 ? (
-              <RecordListPanel title="Farm partnerships" records={partners.data} />
-            ) : null}
-            {activities.data.length > 0 ? (
-              <RecordListPanel title="Farm activities" records={activities.data} dateField="start_date" />
-            ) : null}
-          </div>
-        </ResearchSection>
-      ) : null}
+      <ResearchSection
+        id="demonstrations"
+        eyebrow="Engagement"
+        title="Partnerships and activities"
+        body="Community partners and public activities show how farm work moves beyond the campus."
+      >
+        <div className="grid gap-5 lg:grid-cols-2">
+          {partners.data.length > 0 ? (
+            <RecordListPanel title="Farm partnerships" records={partners.data} />
+          ) : <StatusMessage>Farm partnership records are not published yet.</StatusMessage>}
+          {activities.data.length > 0 ? (
+            <RecordListPanel title="Farm activities" records={activities.data} dateField="start_date" />
+          ) : <StatusMessage>Farm activity records are not published yet.</StatusMessage>}
+        </div>
+      </ResearchSection>
 
-      {farmStories.length > 0 || focusAreas.data.length > 0 ? (
-        <ResearchSection
-          eyebrow="Impact"
-          title="Stories and focus areas"
-          body="Impact stories and focus areas describe the farm's research priorities and community outcomes."
-        >
-          <div className="grid gap-5 lg:grid-cols-2">
-            {farmStories.length > 0 ? (
-              <RecordListPanel title="Impact stories" records={farmStories} />
-            ) : null}
-            {focusAreas.data.length > 0 ? (
-              <RecordListPanel title="Focus areas" records={focusAreas.data} />
-            ) : null}
-          </div>
-        </ResearchSection>
-      ) : null}
+      <ResearchSection
+        id="stories"
+        eyebrow="Impact"
+        title="Stories and focus areas"
+        body="Impact stories and focus areas describe the farm's research priorities and community outcomes."
+        tone="white"
+      >
+        <div className="grid gap-5 lg:grid-cols-2">
+          {farmStories.length > 0 ? (
+            <RecordListPanel title="Impact stories" records={farmStories} />
+          ) : <StatusMessage>Farm impact stories are not published yet.</StatusMessage>}
+          {focusAreas.data.length > 0 ? (
+            <RecordListPanel title="Focus areas" records={focusAreas.data} />
+          ) : <StatusMessage>Farm focus area records are not published yet.</StatusMessage>}
+        </div>
+      </ResearchSection>
     </main>
   );
 }
 
-function FarmMasthead({ farmCount, projectCount, partnerCount, activityCount }: { farmCount: number; projectCount: number; partnerCount: number; activityCount: number }) {
+function FarmHero({ farmCount, projectCount, partnerCount, activityCount }: { farmCount: number; projectCount: number; partnerCount: number; activityCount: number }) {
   const stats = [
     { label: "Farm records", value: farmCount },
     { label: "Farm projects", value: projectCount },
@@ -156,29 +178,133 @@ function FarmMasthead({ farmCount, projectCount, partnerCount, activityCount }: 
     { label: "Activities", value: activityCount },
   ];
   return (
-    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
-        <div>
-          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
+    <section className="border-b border-slate-200 bg-white">
+      <div className="mx-auto grid min-h-[560px] max-w-[1680px] lg:grid-cols-[minmax(0,0.95fr)_minmax(420px,0.75fr)]">
+        <div className="flex flex-col justify-center px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+          <nav className="mb-5 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
             <Link href="/" className="transition hover:text-primary">Home</Link>
             <span className="text-slate-300">/</span>
             <span className="text-slate-900">University Farm</span>
           </nav>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">University Farm</p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">Farm-linked research, facilities, field demonstrations, and public engagement</h1>
-          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">Browse farm records with project, partner, activity, story, and focus-area evidence from the backend.</p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <PrimaryLink href="/sustainability">View sustainability</PrimaryLink>
-            <SecondaryLink href="/community-impact">Community impact</SecondaryLink>
+          <h1 className="mt-4 max-w-5xl text-balance font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950 sm:text-5xl lg:text-6xl">University Farm: Field Research in Practice</h1>
+          <p className="mt-5 max-w-3xl text-pretty text-base leading-8 text-slate-700 sm:text-lg">Farm facilities, demonstrations, action research, training, partners, and community engagement organized as a living research destination.</p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <PrimaryLink href="#facilities">Explore farm facilities</PrimaryLink>
+            <SecondaryLink href="#projects">View farm projects</SecondaryLink>
+            <SecondaryLink href="#demonstrations">Plan a visit</SecondaryLink>
+          </div>
+          <dl className="mt-8 grid gap-2 sm:grid-cols-4">
+            {stats.map((stat) => (
+              <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-3">
+                <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
+                <dd className="mt-1 text-xl font-semibold text-slate-950">{stat.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+        <div className="relative min-h-[320px] overflow-hidden border-t border-slate-200 lg:min-h-full lg:border-l lg:border-t-0">
+          <Image
+            src="/images/research/university-farm-hero-imagegen.webp"
+            alt="University farm research demonstration field"
+            fill
+            priority
+            sizes="(min-width: 1024px) 42vw, 100vw"
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.02)_0%,rgba(15,23,42,0.62)_100%)]" />
+          <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+            <p className="max-w-md text-sm font-semibold leading-6">Backend records surface facilities, field projects, demonstrations, partners, and public outcomes.</p>
           </div>
         </div>
-        <dl className="grid gap-2 sm:grid-cols-2">
-          {stats.map((stat) => (
-            <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2"><dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt><dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd></div>
-          ))}
-        </dl>
       </div>
     </section>
+  );
+}
+
+function LandingTabs({ items }: { items: { href: string; label: string }[] }) {
+  return (
+    <nav className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-8 xl:px-10 2xl:px-12" aria-label="Farm sections">
+      <div className="mx-auto flex max-w-[1680px] gap-2 overflow-x-auto">
+        {items.map((item) => (
+          <a key={item.href} href={item.href} className="shrink-0 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary/30 hover:text-primary">
+            {item.label}
+          </a>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
+function FarmOverview({
+  farms,
+  projects,
+  activities,
+  focusAreas,
+}: {
+  farms: ResearchGenericRecord[];
+  projects: ResearchProject[];
+  activities: ResearchGenericRecord[];
+  focusAreas: ResearchGenericRecord[];
+}) {
+  const leadFarm = farms[0];
+  const leadProject = projects[0];
+  const leadActivity = activities[0];
+  const displayFocusAreas = focusAreas.slice(0, 4);
+
+  return (
+    <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+      <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Featured facility</p>
+        {leadFarm ? (
+          <>
+            <h2 className="mt-3 text-2xl font-semibold leading-tight text-slate-950">
+              {leadFarm.slug ? <Link href={`/farm/${leadFarm.slug}`} className="transition hover:text-primary">{getRecordTitle(leadFarm, "University farm")}</Link> : getRecordTitle(leadFarm, "University farm")}
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-slate-600">{getRecordSummary(leadFarm) || compactText(leadFarm.activities) || compactText(leadFarm.products) || "Published farm details will appear when available."}</p>
+            <dl className="mt-5 grid gap-3 sm:grid-cols-3">
+              <ResearchFact label="Type" value={formatLabel(leadFarm.farm_type ?? "farm")} />
+              <ResearchFact label="Location" value={compactText(leadFarm.location) || compactText(leadFarm.county)} />
+              <ResearchFact label="Updated" value={getRecordTimelineLabel(leadFarm)} />
+            </dl>
+          </>
+        ) : (
+          <StatusMessage>No farm facilities are published yet.</StatusMessage>
+        )}
+      </article>
+      <div className="grid gap-4">
+        <FeatureTile eyebrow="Project in the field" title={leadProject?.title} body={compactText(leadProject?.summary) || "Project details will appear when farm-linked records are published."} href={leadProject?.slug ? `/projects/${leadProject.slug}` : undefined} />
+        <FeatureTile eyebrow="Demonstration or activity" title={compactText(leadActivity?.title) || compactText(leadActivity?.name)} body={compactText(leadActivity?.summary) || compactText(leadActivity?.description) || "Activity records will appear when published."} />
+        {displayFocusAreas.length > 0 ? (
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Focus areas</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {displayFocusAreas.map((area) => (
+                <Badge key={area.id}>{compactText(area.name) || compactText(area.title)}</Badge>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function FeatureTile({ eyebrow, title, body, href }: { eyebrow: string; title?: string | null; body?: string; href?: string }) {
+  const content = (
+    <>
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">{eyebrow}</p>
+      <h3 className="mt-3 text-lg font-semibold leading-7 text-slate-950">{title || "Published record"}</h3>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{body}</p>
+    </>
+  );
+
+  return href ? (
+    <Link href={href} className="block rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30">
+      {content}
+    </Link>
+  ) : (
+    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">{content}</article>
   );
 }
 

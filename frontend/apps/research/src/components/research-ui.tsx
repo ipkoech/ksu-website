@@ -112,6 +112,7 @@ function BreadcrumbTrail({
 }
 
 export function ResearchSection({
+  id,
   eyebrow,
   title,
   body,
@@ -119,6 +120,7 @@ export function ResearchSection({
   tone = "light",
   density = "compact",
 }: {
+  id?: string;
   eyebrow: string;
   title: string;
   body?: string;
@@ -129,6 +131,7 @@ export function ResearchSection({
   const spacing = getResearchSectionSpacing(density);
   return (
     <section
+      id={id}
       className={
         tone === "white"
           ? `bg-white px-4 ${spacing} sm:px-6 lg:px-8 xl:px-10 2xl:px-12`
