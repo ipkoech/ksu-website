@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Building2, Contact, ExternalLink, Mail, Search, UserRound } from "lucide-react";
+import type { Person } from "@ksu/api-client";
+import { personsApi } from "@ksu/api-client";
 import type { InstitutionalLink } from "../../components/research-institutional";
 import { ResearchInstitutionalHero } from "../../components/research-institutional";
 import { StatusMessage } from "../../components/research-ui";
-import { mainApi } from "@ksu/api-client";
 import { publicFrontendUrl } from "../../lib/service-urls";
 import { compactText } from "../../lib/research-public-data";
 
@@ -25,36 +26,20 @@ const relatedLinks = [
 
 const MAIN_SITE = publicFrontendUrl;
 
-type PersonRecord = {
-  id: string;
-  full_name?: string;
-  title?: string;
-  academic_rank?: string;
-  department_name?: string;
-  email?: string;
-};
-
 export default async function TeamPage() {
-  let people: PersonRecord[] = [];
+  let people: Person[] = [];
+  let peopleError: string | null = null;
 
   try {
-    const response = await mainApi.get<{ data: PersonRecord[] }>("/api/v1/public/people", {
+    const response = await personsApi.list({
       per_page: 24,
-      fields: "id,full_name,title,academic_rank,email",
-      include: "department",
-      is_active: true,
-      is_public: true,
+      fields: "id,slug,full_name,first_name,last_name,title,academic_rank,email,department_name,department,institutional_role,bio,specialization,research_interests,is_researcher,is_featured",
+      is_researcher: true,
+      status: "active",
     });
-    people = (response.data ?? []).map((p: any) => ({
-      id: p.id,
-      full_name: p.full_name,
-      title: p.title,
-      academic_rank: p.academic_rank,
-      department_name: p.department?.name,
-      email: p.email,
-    }));
-  } catch {
-    // people are optional
+    people = response.data ?? [];
+  } catch (error) {
+    peopleError = error instanceof Error ? error.message : "Unable to load research team records.";
   }
 
   return (
@@ -71,7 +56,7 @@ export default async function TeamPage() {
         primaryAction={{ label: "Search expertise", href: "/expertise" }}
         secondaryAction={{ label: "Contact REIRM", href: "/connect" }}
         facts={[
-          { label: "Research staff", value: "Directory" },
+          { label: "Research staff", value: people.length },
           { label: "Department", value: "REIRM" },
           { label: "Managed by", value: "Main service" },
         ]}
@@ -100,7 +85,9 @@ export default async function TeamPage() {
             </Link>
           </div>
 
-          {people.length === 0 ? (
+          {peopleError ? (
+            <StatusMessage tone="error">{peopleError}</StatusMessage>
+          ) : people.length === 0 ? (
             <StatusMessage tone="neutral">
               Staff records are temporarily unavailable. Visit the main university directory for the latest research team information.
             </StatusMessage>
@@ -109,7 +96,7 @@ export default async function TeamPage() {
               {people.map((person) => (
                 <a
                   key={person.id}
-                  href={`${MAIN_SITE}/staff/${person.id}`}
+                  href={`${MAIN_SITE}/staff/${person.slug || person.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md"
@@ -118,16 +105,19 @@ export default async function TeamPage() {
                     <UserRound aria-hidden className="h-6 w-6" />
                   </div>
                   <h3 className="mt-4 font-[family-name:var(--font-display)] text-lg font-semibold text-slate-950 group-hover:text-primary">
-                    {compactText(person.full_name) || person.id}
+                    {personName(person)}
                   </h3>
-                  {person.title ? (
-                    <p className="mt-1 text-sm font-medium text-primary">{person.title}</p>
+                  {compactText(person.institutional_role) || compactText(person.title) ? (
+                    <p className="mt-1 text-sm font-medium text-primary">{compactText(person.institutional_role) || compactText(person.title)}</p>
                   ) : null}
                   {person.academic_rank ? (
                     <p className="mt-0.5 text-xs capitalize text-slate-500">{person.academic_rank}</p>
                   ) : null}
-                  {person.department_name ? (
-                    <p className="mt-2 text-xs leading-5 text-slate-600 line-clamp-1">{person.department_name}</p>
+                  {person.department_name || person.department?.name ? (
+                    <p className="mt-2 text-xs leading-5 text-slate-600 line-clamp-1">{person.department_name || person.department?.name}</p>
+                  ) : null}
+                  {person.specialization || person.bio ? (
+                    <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{compactText(person.specialization) || compactText(person.bio)}</p>
                   ) : null}
                   <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary">
                     View profile
@@ -158,4 +148,8 @@ export default async function TeamPage() {
       </section>
     </main>
   );
+}
+
+function personName(person: Person) {
+  return compactText(person.full_name) || [person.first_name, person.last_name].map(compactText).filter(Boolean).join(" ") || person.id;
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
+import type { Person, ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
+import { personsApi } from "@ksu/api-client";
 import {
   BookOpenCheck,
   Building2,
@@ -49,6 +50,7 @@ type ExpertiseSearchParams = {
 
 const localLinks = [
   { label: "Type to Search", href: "#search", icon: Search },
+  { label: "Researchers", href: "#researchers", icon: Users },
   { label: "Focus Areas", href: "#focus-areas", icon: Target },
   { label: "Expertise Tags", href: "#expertise-tags", icon: Tags },
   { label: "Related Work", href: "#related-work", icon: Network },
@@ -87,7 +89,8 @@ export default async function ExpertisePage({
   searchParams?: Promise<ExpertiseSearchParams>;
 }) {
   const params = (await searchParams) ?? {};
-  const [expertiseTags, focusAreas, themes, centers, projects] = await Promise.all([
+  const [people, expertiseTags, focusAreas, themes, centers, projects] = await Promise.all([
+    getResearchPeople(),
     getExpertiseTags(),
     getFocusAreas(),
     getThemes(),
@@ -99,7 +102,9 @@ export default async function ExpertisePage({
   const filteredThemes = themes.data.filter((theme) => matchesRecord(theme, params));
   const filteredCenters = centers.data.filter((center) => matchesRecord(center, params));
   const filteredProjects = projects.data.filter((project) => matchesProject(project, params));
+  const filteredPeople = people.data.filter((person) => matchesPerson(person, params));
   const errors = [
+    people.error,
     expertiseTags.error,
     focusAreas.error,
     themes.error,
@@ -122,9 +127,9 @@ export default async function ExpertisePage({
         secondaryAction={{ label: "Meet the team", href: "/team" }}
         facts={[
           { label: "Expertise tags", value: expertiseTags.data.length },
+          { label: "Researchers", value: people.data.length },
           { label: "Focus areas", value: focusAreas.data.length },
           { label: "Themes", value: themes.data.length },
-          { label: "Centers", value: centers.data.length },
         ]}
       />
 
@@ -177,6 +182,15 @@ export default async function ExpertisePage({
       </ResearchSection>
 
       <ResearchSection
+        eyebrow="Researchers"
+        title="People behind the expertise"
+        body="Published researcher profiles from the main university people service appear here when they match the current expertise search."
+        tone="white"
+      >
+        <StaffPanel people={filteredPeople} />
+      </ResearchSection>
+
+      <ResearchSection
         eyebrow="Research Areas"
         title="Themes, focus areas, and expertise tags"
         body="These records create the public taxonomy that helps visitors understand what Kisii University researchers work on."
@@ -202,58 +216,6 @@ export default async function ExpertisePage({
         </div>
       </ResearchSection>
 
-      <section className="border-y border-slate-200 bg-primary px-4 py-12 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="mx-auto max-w-[1680px]">
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center">
-            <div>
-              <p className="text-sm font-semibold uppercase text-secondary">Find Researchers</p>
-              <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight sm:text-4xl">
-                Browse the university staff directory
-              </h2>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-white/80">
-                Researcher profiles are managed through the main university directory. Search by name, department, academic rank, or research area.
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <a
-                  href={`${publicFrontendUrl}/staff`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-h-11 items-center gap-2 rounded-md bg-secondary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90"
-                >
-                  Open staff directory
-                  <ExternalLink aria-hidden className="h-4 w-4" />
-                </a>
-                <a
-                  href={`${publicFrontendUrl}/search`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-h-11 items-center gap-2 rounded-md border border-white/30 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
-                >
-                  Search main site
-                  <ExternalLink aria-hidden className="h-4 w-4" />
-                </a>
-              </div>
-            </div>
-            <div className="rounded-lg border border-white/15 bg-white/[0.04] p-5 backdrop-blur">
-              <p className="text-xs font-semibold uppercase text-white/50">Quick insight</p>
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                {[
-                  { label: "Expertise tags", value: expertiseTags.data.length },
-                  { label: "Focus areas", value: focusAreas.data.length },
-                  { label: "Themes", value: themes.data.length },
-                  { label: "Centers", value: centers.data.length },
-                ].map((item) => (
-                  <div key={item.label} className="rounded-md border border-white/10 p-3">
-                    <p className="font-[family-name:var(--font-display)] text-2xl font-semibold">{item.value}</p>
-                    <p className="mt-1 text-xs text-white/60">{item.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <ResearchSection
         eyebrow="Related Work"
         title="Where this expertise shows up"
@@ -276,6 +238,68 @@ export default async function ExpertisePage({
         </div>
       </ResearchSection>
     </main>
+  );
+}
+
+async function getResearchPeople() {
+  try {
+    const response = await personsApi.list({
+      fields: "id,slug,full_name,first_name,last_name,title,academic_rank,institutional_role,bio,specialization,research_interests,department_name,department,is_featured",
+      is_researcher: true,
+      status: "active",
+      page: 1,
+      per_page: 100,
+    });
+    return { data: response.data ?? [], error: null as string | null };
+  } catch (error) {
+    return {
+      data: [] as Person[],
+      error: error instanceof Error ? error.message : "Unable to load researcher profiles.",
+    };
+  }
+}
+
+function StaffPanel({ people }: { people: Person[] }) {
+  if (people.length === 0) {
+    return <InstitutionalEmpty>No published researcher profiles match the current search.</InstitutionalEmpty>;
+  }
+
+  return (
+    <div id="researchers" className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {people.slice(0, 8).map((person) => (
+        <article key={person.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap gap-2">
+            <Badge>{formatLabel(person.academic_rank ?? person.title ?? "researcher")}</Badge>
+            {person.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
+          </div>
+          <h3 className="mt-4 text-lg font-semibold leading-6 text-slate-950">{personName(person)}</h3>
+          {compactText(person.institutional_role) || compactText(person.department_name ?? person.department?.name) ? (
+            <p className="mt-2 text-sm font-semibold text-primary">
+              {compactText(person.institutional_role) || compactText(person.department_name ?? person.department?.name)}
+            </p>
+          ) : null}
+          {personSummary(person) ? (
+            <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{personSummary(person)}</p>
+          ) : null}
+          {Array.isArray(person.research_interests) && person.research_interests.length > 0 ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {person.research_interests.slice(0, 3).map((interest) => (
+                <Badge key={interest}>{interest}</Badge>
+              ))}
+            </div>
+          ) : null}
+          <a
+            href={`${publicFrontendUrl}/staff/${person.slug || person.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary"
+          >
+            View profile
+            <ExternalLink aria-hidden className="h-3.5 w-3.5" />
+          </a>
+        </article>
+      ))}
+    </div>
   );
 }
 
@@ -491,6 +515,27 @@ function matchesProject(project: ResearchProject, params: ExpertiseSearchParams)
     .includes(query);
 }
 
+function matchesPerson(person: Person, params: ExpertiseSearchParams) {
+  const query = compactText(params.q).toLowerCase();
+  if (!query) return true;
+  const interests = Array.isArray(person.research_interests) ? person.research_interests.join(" ") : "";
+  return [
+    personName(person),
+    person.title,
+    person.academic_rank,
+    person.institutional_role,
+    person.department_name,
+    person.department?.name,
+    person.specialization,
+    person.bio,
+    interests,
+  ]
+    .map(compactText)
+    .join(" ")
+    .toLowerCase()
+    .includes(query);
+}
+
 function recordSearchText(record: ResearchGenericRecord) {
   const nestedStaff = record.staff_assignment?.staff ?? record.staff ?? {};
 
@@ -529,4 +574,12 @@ function recordSummary(record: ResearchGenericRecord | ResearchProject) {
     compactText(generic.mandate) ||
     compactText(generic.objectives)
   );
+}
+
+function personName(person: Person) {
+  return compactText(person.full_name) || [person.first_name, person.last_name].map(compactText).filter(Boolean).join(" ") || "Researcher";
+}
+
+function personSummary(person: Person) {
+  return compactText(person.specialization) || compactText(person.bio) || compactText(person.institutional_role);
 }
