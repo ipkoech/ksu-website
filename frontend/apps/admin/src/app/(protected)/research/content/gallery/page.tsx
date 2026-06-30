@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { LinkIcon } from "lucide-react";
+import { LinkIcon, Trash2 } from "lucide-react";
 import {
   mediaApi,
   useCreateMediaLink,
+  useDeleteMediaLink,
   useMedia,
   useMediaLinks,
   type Media,
@@ -17,6 +18,11 @@ import { EntityTypeRecordPicker } from "@/components/relationships/entity-picker
 import { relationshipAdapters } from "@/components/relationships/relationship-adapters";
 import { DateValue, StatusBadge, titleOf } from "../../_components/research-workspace";
 import { ContentWorkspaceHeader } from "../_components/content-workspace";
+import {
+  getResearchGuidance,
+  ResearchSectionGuide,
+} from "../../_components/research-guidance";
+import { withResearchFieldHelp } from "../../_components/research-resource-page";
 import {
   Button,
   Card,
@@ -88,6 +94,7 @@ function GalleryAssetWorkflow() {
     { enabled: Boolean(target.type && target.id) },
   );
   const createLink = useCreateMediaLink();
+  const deleteLink = useDeleteMediaLink();
   const canAttach = Boolean(mediaId && target.type && target.id);
 
   const handleAttach = async () => {
@@ -161,9 +168,24 @@ function GalleryAssetWorkflow() {
             {target.id && linkedItems.length ? (
               <div className="space-y-2">
                 {linkedItems.map((link) => (
-                  <div key={link.id} className="rounded-md border bg-background p-2 text-sm">
-                    <p className="font-medium">{getMediaLabel(link.media ?? undefined)}</p>
-                    <p className="text-xs text-muted-foreground">{link.role || "gallery"}</p>
+                  <div key={link.id} className="flex items-center justify-between gap-3 rounded-md border bg-background p-2 text-sm">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{getMediaLabel(link.media ?? undefined)}</p>
+                      <p className="text-xs text-muted-foreground">{link.role || "gallery"}</p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      disabled={deleteLink.isPending}
+                      aria-label="Unlink media"
+                      onClick={async () => {
+                        await deleteLink.mutateAsync(link.id);
+                        toast.success("Media unlinked from research record");
+                      }}
+                    >
+                      <Trash2 data-icon />
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -182,6 +204,7 @@ function GalleryAssetWorkflow() {
 export default function ResearchGalleryPage() {
   const { hasScope } = usePermissions();
   const canManage = ["media.manage", "media.upload", "content.manage", "research:write"].some((scope) => hasScope(scope));
+  const guidance = getResearchGuidance("Research Content");
 
   return (
     <EditableServiceResourcePage<GalleryRecord, Record<string, any>>
@@ -189,18 +212,24 @@ export default function ResearchGalleryPage() {
       description="Manage research-scoped media folders used by the main media service."
       backHref="/research/content"
       queryKey={["research", "content", "gallery"]}
-      summarySlot={<div className="space-y-4"><ContentWorkspaceHeader /><GalleryAssetWorkflow /></div>}
+      summarySlot={
+        <div className="space-y-4">
+          <ResearchSectionGuide title="Research Content" />
+          <ContentWorkspaceHeader />
+          <GalleryAssetWorkflow />
+        </div>
+      }
       listFilters={galleryFilters}
       recordColumns={galleryColumns}
       editorMode="sheet"
       renderMobileRecord={GalleryMobileRecord}
-      fields={[
+      fields={withResearchFieldHelp([
         { name: "name", label: "Name", required: true },
         { name: "slug", label: "Slug" },
         { name: "parent_id", label: "Parent Folder", type: "entity", relation: { adapter: "mediaFolder", filters: { scope_type: "research" }, allowClear: true } },
         { name: "description", label: "Description", type: "textarea" },
         { name: "is_public", label: "Public", type: "boolean" },
-      ]}
+      ])}
       list={(filters) => mediaApi.listFolders({ scope_type: "research", fields: "id,name,slug,parent_id,description,is_public,scope_type,scope_id,created_at,updated_at", ...filters })}
       create={(payload) => mediaApi.createFolder({ ...payload, scope_type: "research", scope_id: null } as any)}
       update={(id, payload) => mediaApi.updateFolder(id, { ...payload, scope_type: "research", scope_id: null } as any)}
@@ -208,7 +237,9 @@ export default function ResearchGalleryPage() {
       getRecordTitle={(record) => record.name}
       getRecordMeta={(record) => [record.scope_type, record.is_public ? "public" : "private"].filter(Boolean).join(" · ")}
       emptyMessage="No research gallery folders were returned by the media service."
+      emptyState={guidance?.emptyState}
       buildPayload={(values) => ({ is_public: true, ...values, scope_type: "research", scope_id: null })}
+      getRecordDetailHref={(record) => `/research/content/gallery/${record.id}`}
       canCreate={canManage}
       canEdit={canManage}
       canDelete={canManage}

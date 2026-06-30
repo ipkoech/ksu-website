@@ -6,6 +6,11 @@ import { usePermissions } from "@ksu/auth";
 import { EditableServiceResourcePage, type EditableListFilter, type EditableRecordColumn } from "@/components/dashboard/editable-service-resource-page";
 import { DateValue, StatusBadge, titleOf } from "../../_components/research-workspace";
 import { ContentWorkspaceHeader } from "../_components/content-workspace";
+import {
+  getResearchGuidance,
+  ResearchSectionGuide,
+} from "../../_components/research-guidance";
+import { withResearchFieldHelp } from "../../_components/research-resource-page";
 
 const boardFilters: EditableListFilter[] = [
   { name: "board_type", label: "Board Type", type: "select", options: [
@@ -50,6 +55,7 @@ function BoardMobileRecord(record: BoardRecord, actions: ReactNode) {
 export default function ResearchBoardsPage() {
   const { hasScope } = usePermissions();
   const canManage = ["governance.manage", "content.manage", "research:write"].some((scope) => hasScope(scope));
+  const guidance = getResearchGuidance("Research Content");
 
   return (
     <EditableServiceResourcePage<BoardRecord, Record<string, any>>
@@ -57,12 +63,17 @@ export default function ResearchBoardsPage() {
       description="Manage governance boards attached to the research portal."
       backHref="/research/content"
       queryKey={["research", "content", "boards"]}
-      summarySlot={<ContentWorkspaceHeader />}
+      summarySlot={
+        <div className="space-y-4">
+          <ResearchSectionGuide title="Research Content" />
+          <ContentWorkspaceHeader />
+        </div>
+      }
       listFilters={boardFilters}
       recordColumns={boardColumns}
       editorMode="sheet"
       renderMobileRecord={BoardMobileRecord}
-      fields={[
+      fields={withResearchFieldHelp([
         { name: "name", label: "Name", required: true },
         { name: "slug", label: "Slug" },
         { name: "board_type", label: "Board Type", type: "select", options: [
@@ -89,7 +100,7 @@ export default function ResearchBoardsPage() {
         { name: "is_public", label: "Public", type: "boolean" },
         { name: "is_active", label: "Active", type: "boolean" },
         { name: "display_order", label: "Display Order", type: "number" },
-      ]}
+      ])}
       list={(filters) => governanceApi.listBoards({ page: 1, per_page: 50, parent_entity_type: "research", ...filters })}
       create={(payload) => governanceApi.createBoard({ ...payload, parent_entity_type: "research" })}
       update={(id, payload) => governanceApi.updateBoard(id, { ...payload, parent_entity_type: "research" })}
@@ -97,7 +108,9 @@ export default function ResearchBoardsPage() {
       getRecordTitle={(record) => record.name}
       getRecordMeta={(record) => [record.board_type, record.status, record.parent_entity_type].filter(Boolean).join(" · ")}
       emptyMessage="No research boards were returned by the governance service."
+      emptyState={guidance?.emptyState}
       buildPayload={(values) => ({ board_type: "committee", status: "active", is_public: true, is_active: true, display_order: 100, ...values, parent_entity_type: "research" })}
+      getRecordDetailHref={(record) => `/research/content/boards/${record.id}`}
       canCreate={canManage}
       canEdit={canManage}
       canDelete={canManage}

@@ -6,6 +6,11 @@ import { usePermissions } from "@ksu/auth";
 import { EditableServiceResourcePage, type EditableListFilter, type EditableRecordColumn, type EditableRecordWorkflowAction } from "@/components/dashboard/editable-service-resource-page";
 import { DateValue, StatusBadge, titleOf } from "../../_components/research-workspace";
 import { ContentWorkspaceHeader } from "../_components/content-workspace";
+import {
+  getResearchGuidance,
+  ResearchSectionGuide,
+} from "../../_components/research-guidance";
+import { withResearchFieldHelp } from "../../_components/research-resource-page";
 
 const staffFilters: EditableListFilter[] = [
   { name: "status", label: "Status", type: "select", options: [
@@ -71,6 +76,7 @@ function StaffMobileRecord(record: StaffRecord, actions: ReactNode) {
 export default function ResearchStaffPage() {
   const { hasScope } = usePermissions();
   const canManage = ["people.manage", "staff.manage", "content.manage", "research:write"].some((scope) => hasScope(scope));
+  const guidance = getResearchGuidance("Research Content");
 
   return (
     <EditableServiceResourcePage<StaffRecord, Record<string, any>>
@@ -78,12 +84,17 @@ export default function ResearchStaffPage() {
       description="Manage staff assignments attached to the research portal."
       backHref="/research/content"
       queryKey={["research", "content", "staff"]}
-      summarySlot={<ContentWorkspaceHeader />}
+      summarySlot={
+        <div className="space-y-4">
+          <ResearchSectionGuide title="Research Content" />
+          <ContentWorkspaceHeader />
+        </div>
+      }
       listFilters={staffFilters}
       recordColumns={staffColumns}
       editorMode="sheet"
       renderMobileRecord={StaffMobileRecord}
-      fields={[
+      fields={withResearchFieldHelp([
         { name: "person_id", label: "Person", type: "entity", required: true, relation: { adapter: "person", filters: { status: "active" } } },
         { name: "role", label: "Role", required: true, type: "select", options: [
           { label: "Director", value: "director" },
@@ -111,7 +122,7 @@ export default function ResearchStaffPage() {
         ] },
         { name: "display_order", label: "Display Order", type: "number" },
         { name: "notes", label: "Notes", type: "textarea" },
-      ]}
+      ])}
       list={(filters) => staffApi.listAssignments({ page: 1, per_page: 50, status: "all", entity_type: "research", ...filters })}
       create={(payload) => staffApi.createAssignment({ hierarchy_level: 100, status: "active", display_order: 100, ...payload, entity_type: "research", entity_id: null } as any)}
       update={(id, payload) => {
@@ -123,7 +134,9 @@ export default function ResearchStaffPage() {
       getRecordMeta={(record) => [record.role_display ?? record.role, record.status, record.entity_type].filter(Boolean).join(" · ")}
       getRecordWorkflowActions={staffWorkflowActions}
       emptyMessage="No research staff assignments were returned by the staff service."
+      emptyState={guidance?.emptyState}
       buildPayload={(values) => ({ hierarchy_level: 100, status: "active", display_order: 100, ...values, entity_type: "research", entity_id: null })}
+      getRecordDetailHref={(record) => `/research/content/staff/${record.id}`}
       canCreate={canManage}
       canEdit={canManage}
       canDelete={canManage}

@@ -13,6 +13,7 @@ import {
   type RelationshipAdapter,
   type RelationshipFilters,
 } from "@/components/relationships/relationship-adapters";
+import { ResearchDetailGuide } from "./research-guidance";
 
 type ResourceApi = {
   getBySlug?: (slug: string) => Promise<{ data?: ResearchGenericRecord }>;
@@ -55,6 +56,7 @@ export function ResearchAdminDetailPage({
   sections = [],
   renderAfter,
   auditResourceTypes = [],
+  auditServiceName = "research",
 }: {
   title: string;
   description: string;
@@ -69,6 +71,7 @@ export function ResearchAdminDetailPage({
   sections?: DetailSection[];
   renderAfter?: (record: ResearchGenericRecord) => ReactNode;
   auditResourceTypes?: string[];
+  auditServiceName?: string;
 }) {
   const params = useParams<Record<string, string>>();
   const value = params[slugParam];
@@ -141,6 +144,11 @@ export function ResearchAdminDetailPage({
               {renderAfter?.(record)}
             </div>
             <aside className="space-y-6">
+              <ResearchDetailGuide
+                title={title}
+                status={record.status}
+                isPublic={record.is_public}
+              />
               <Card>
                 <CardHeader>
                   <CardTitle>Record Details</CardTitle>
@@ -170,6 +178,7 @@ export function ResearchAdminDetailPage({
                 <AuditHistoryCard
                   recordId={String(record.id)}
                   resourceTypes={auditResourceTypes}
+                  serviceName={auditServiceName}
                 />
               ) : null}
             </aside>
@@ -183,9 +192,11 @@ export function ResearchAdminDetailPage({
 function AuditHistoryCard({
   recordId,
   resourceTypes,
+  serviceName,
 }: {
   recordId: string;
   resourceTypes: string[];
+  serviceName: string;
 }) {
   const auditQuery = useQuery({
     queryKey: ["research", "detail", "audit", recordId, resourceTypes],
@@ -193,7 +204,7 @@ function AuditHistoryCard({
       const results = await Promise.all(
         resourceTypes.map((resourceType) =>
           auditLogsApi.list({
-            service_name: "research",
+            service_name: serviceName,
             resource_type: resourceType,
             resource_id: recordId,
             per_page: 6,
