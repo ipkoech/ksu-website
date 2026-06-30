@@ -285,7 +285,7 @@ ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
             "partnerships.manage_agreements", "partnerships.view_inquiries", "partnerships.view_requests",
             "innovation.manage_competitions", "innovation.manage_transfers", "innovation.manage_startups",
             "innovation.review_disclosure", "innovation.manage_ecosystem", "innovation.view_sensitive",
-            "settings.manage", "analytics.view", "media.upload",
+            "settings.manage", "analytics.view", "audit:read", "media.upload",
             "workflow.initiate", "workflow.approve", "workflow.view_all", "users.view",
             "content.manage_announcements", "content.manage_news", "content.manage_events",
             "content.manage_blogs", "content.view_drafts", "content.view",
