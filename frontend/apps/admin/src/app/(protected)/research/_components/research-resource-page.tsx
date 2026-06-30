@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity, CheckCircle2, Download, FileUp, Play, Upload } from "lucide-react";
+import { Activity, AlertCircle, CheckCircle2, Download, Play, Upload } from "lucide-react";
 import {
   EditableServiceResourcePage,
   type EditableField,
@@ -31,7 +31,6 @@ import {
   usePreviewImport,
   useStartImportCommit,
   type ImportCommitResult,
-  type ImportPreview,
   type ImportPreviewRow,
   type ResearchGenericPayload,
   type ResearchGenericRecord,
@@ -276,8 +275,7 @@ function ResearchImportDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const queryClient = useQueryClient();
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<ImportPreview | null>(null);
+  const [stagedRows, setStagedRows] = useState<StagedImportRow[]>([]);
   const [commitResult, setCommitResult] = useState<ImportCommitResult | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const [handledJobId, setHandledJobId] = useState<string | null>(null);
@@ -287,14 +285,19 @@ function ResearchImportDialog({
   const startImportCommit = useStartImportCommit();
   const importJob = useImportJob(jobId, { enabled: open && Boolean(jobId) });
   const resource = resourceQuery.data?.data;
-  const validRows = useMemo(
-    () => preview?.rows.filter((row) => row.status === "valid") ?? [],
-    [preview],
+  const isSubmitting =
+    startImportCommit.isPending ||
+    importJob.isFetching ||
+    Boolean(jobId && !commitResult && handledJobId !== jobId);
+  const rowIssues = useMemo(
+    () => stagedRows.map((row) => getStagedRowIssues(row, resource?.columns ?? [])),
+    [resource?.columns, stagedRows],
   );
+  const issueCount = rowIssues.reduce((total, issues) => total + issues.length, 0);
+  const validRowCount = stagedRows.length - rowIssues.filter((issues) => issues.length > 0).length;
 
   const resetImport = () => {
-    setFile(null);
-    setPreview(null);
+    setStagedRows([]);
     setCommitResult(null);
     setJobId(null);
     setHandledJobId(null);
@@ -309,31 +312,49 @@ function ResearchImportDialog({
     }
   };
 
-  const handlePreview = async () => {
-    if (!file) {
-      toast.error("Choose a CSV or JSON file first");
-      return;
-    }
+  const loadFile = async (nextFile: File | null) => {
+    setStagedRows([]);
     setCommitResult(null);
     setJobId(null);
     setHandledJobId(null);
+
+    if (!nextFile) return;
+
     try {
-      const response = await previewImport.mutateAsync({ resource: resourceKey, file });
-      setPreview(response.data);
+      const response = await previewImport.mutateAsync({ resource: resourceKey, file: nextFile });
+      setStagedRows(response.data.rows.map(toStagedImportRow));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Preview failed");
+      toast.error(error instanceof Error ? error.message : "File load failed");
     }
   };
 
+  const updateStagedValue = (rowNumber: number, key: string, value: string) => {
+    setStagedRows((current) =>
+      current.map((row) =>
+        row.rowNumber === rowNumber
+          ? {
+              ...row,
+              values: { ...row.values, [key]: value },
+              importedErrors: [],
+            }
+          : row,
+      ),
+    );
+  };
+
   const handleCommit = async () => {
-    if (validRows.length === 0) {
-      toast.error("No valid rows to import");
+    if (stagedRows.length === 0) {
+      toast.error("Choose a CSV or JSON file first");
+      return;
+    }
+    if (issueCount > 0) {
+      toast.error("Fix required or invalid fields before submitting");
       return;
     }
     try {
       const response = await startImportCommit.mutateAsync({
         resource: resourceKey,
-        data: { rows: validRows.map((row) => row.raw), mode: "partial" },
+        data: { rows: stagedRows.map((row) => normalizeImportRow(row.values)), mode: "partial" },
       });
       setCommitResult(null);
       setJobId(response.data.job_id);
@@ -365,41 +386,34 @@ function ResearchImportDialog({
     <Dialog
       open={open}
       onOpenChange={(nextOpen) => {
+        if (isSubmitting && !nextOpen) return;
         onOpenChange(nextOpen);
         if (!nextOpen) resetImport();
       }}
     >
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>{resource ? `Import ${resource.label}` : "Import records"}</DialogTitle>
           <DialogDescription>
-            Upload a CSV or JSON file, preview the rows, then import only valid records.
+            Upload a CSV or JSON file, review and edit imported records, then submit valid data.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="grid gap-3 rounded-lg border bg-background p-3 lg:grid-cols-[1fr_auto_auto] lg:items-end">
+        <div className={isSubmitting ? "pointer-events-none space-y-4 opacity-70" : "space-y-4"}>
+          <div className="grid gap-3 rounded-lg border bg-background p-3 lg:grid-cols-[1fr_auto] lg:items-end">
             <div className="space-y-2">
               <Label htmlFor={`research-import-${resourceKey}`}>CSV or JSON file</Label>
               <Input
                 id={`research-import-${resourceKey}`}
                 type="file"
                 accept=".csv,.json,text/csv,application/json"
-                onChange={(event) => {
-                  setFile(event.target.files?.[0] ?? null);
-                  setPreview(null);
-                  setCommitResult(null);
-                  setJobId(null);
-                }}
+                disabled={isSubmitting || previewImport.isPending}
+                onChange={(event) => void loadFile(event.target.files?.[0] ?? null)}
               />
             </div>
-            <Button type="button" variant="outline" onClick={handleTemplateDownload}>
+            <Button type="button" variant="outline" onClick={handleTemplateDownload} disabled={isSubmitting}>
               <Download data-icon="inline-start" />
               Template
-            </Button>
-            <Button type="button" onClick={handlePreview} disabled={!file || previewImport.isPending}>
-              <FileUp data-icon="inline-start" />
-              {previewImport.isPending ? "Previewing..." : "Preview"}
             </Button>
           </div>
 
@@ -423,47 +437,91 @@ function ResearchImportDialog({
             </div>
           ) : null}
 
-          {preview ? (
+          {previewImport.isPending ? (
+            <p className="rounded-lg border bg-muted/20 p-3 text-sm text-muted-foreground">Loading records from file...</p>
+          ) : stagedRows.length > 0 ? (
             <div className="space-y-3">
               <div className="grid gap-2 sm:grid-cols-4">
-                <ImportStat label="Rows" value={preview.total_rows} />
-                <ImportStat label="Valid" value={preview.valid_rows} />
-                <ImportStat label="Invalid" value={preview.invalid_rows} />
-                <ImportStat label="Duplicates" value={preview.duplicate_rows} />
+                <ImportStat label="Rows" value={stagedRows.length} />
+                <ImportStat label="Ready" value={validRowCount} />
+                <ImportStat label="Need fixes" value={stagedRows.length - validRowCount} />
+                <ImportStat label="Issues" value={issueCount} />
               </div>
               <div className="rounded-lg border">
                 <div className="flex items-center justify-between gap-3 border-b px-3 py-2">
-                  <p className="text-sm font-semibold">Preview</p>
+                  <div>
+                    <p className="text-sm font-semibold">Imported records</p>
+                    <p className="text-xs text-muted-foreground">Edit cells before submitting. Required and invalid values are marked inline.</p>
+                  </div>
                   <Button
                     type="button"
                     size="sm"
                     onClick={handleCommit}
-                    disabled={validRows.length === 0 || startImportCommit.isPending || importJob.isFetching}
+                    disabled={stagedRows.length === 0 || issueCount > 0 || isSubmitting}
                   >
                     <Play data-icon="inline-start" />
-                    {startImportCommit.isPending || importJob.isFetching ? "Processing..." : `Import ${validRows.length}`}
+                    {isSubmitting ? "Submitting..." : `Submit ${stagedRows.length}`}
                   </Button>
                 </div>
-                <div className="grid max-h-56 divide-y overflow-y-auto text-sm">
-                  {preview.rows.slice(0, 25).map((row) => (
-                    <div key={row.row_number} className="grid gap-2 px-3 py-2 sm:grid-cols-[70px_110px_1fr]">
-                      <span>Row {row.row_number}</span>
-                      <span>
-                        <Badge variant={importStatusVariant(row.status)}>{row.status}</Badge>
-                      </span>
-                      <span className="text-muted-foreground">
-                        {[...row.errors, ...row.warnings].length > 0
-                          ? [...row.errors, ...row.warnings].join("; ")
-                          : "Ready"}
-                      </span>
-                    </div>
-                  ))}
+                <div className="max-h-[52vh] overflow-auto">
+                  <div
+                    className="grid min-w-max border-b bg-muted/40 text-xs font-medium uppercase text-muted-foreground"
+                    style={{ gridTemplateColumns: `72px repeat(${resource?.columns.length ?? 1}, minmax(180px, 1fr)) 260px` }}
+                  >
+                    <div className="px-3 py-2">Row</div>
+                    {(resource?.columns ?? []).map((column) => (
+                      <div key={column.key} className="px-3 py-2">
+                        {column.key}
+                        {column.required ? <span className="ml-1 text-destructive">*</span> : null}
+                      </div>
+                    ))}
+                    <div className="px-3 py-2">Issues</div>
+                  </div>
+                  <div className="divide-y">
+                    {stagedRows.map((row, rowIndex) => {
+                      const issues = rowIssues[rowIndex] ?? [];
+                      return (
+                        <div
+                          key={row.rowNumber}
+                          className="grid min-w-max text-sm"
+                          style={{ gridTemplateColumns: `72px repeat(${resource?.columns.length ?? 1}, minmax(180px, 1fr)) 260px` }}
+                        >
+                          <div className="px-3 py-2 text-muted-foreground">#{row.rowNumber}</div>
+                          {(resource?.columns ?? []).map((column) => {
+                            const value = row.values[column.key] ?? "";
+                            const hasRequiredIssue = column.required && !String(value).trim();
+                            return (
+                              <div key={column.key} className="space-y-1 px-3 py-2">
+                                <Input
+                                  value={String(value)}
+                                  disabled={isSubmitting}
+                                  aria-invalid={hasRequiredIssue}
+                                  className={hasRequiredIssue ? "border-destructive focus-visible:ring-destructive" : ""}
+                                  onChange={(event) => updateStagedValue(row.rowNumber, column.key, event.target.value)}
+                                />
+                                {hasRequiredIssue ? (
+                                  <p className="text-xs text-destructive">Required field is empty</p>
+                                ) : null}
+                              </div>
+                            );
+                          })}
+                          <div className="space-y-1 px-3 py-2">
+                            {issues.length > 0 ? (
+                              issues.map((issue) => (
+                                <div key={issue} className="flex gap-1.5 text-xs text-destructive">
+                                  <AlertCircle className="mt-0.5 size-3 shrink-0" />
+                                  <span>{issue}</span>
+                                </div>
+                              ))
+                            ) : (
+                              <Badge variant="outline">Ready</Badge>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                {preview.rows.length > 25 ? (
-                  <p className="border-t px-3 py-2 text-xs text-muted-foreground">
-                    Showing first 25 rows of {preview.rows.length}.
-                  </p>
-                ) : null}
               </div>
             </div>
           ) : null}
@@ -491,6 +549,41 @@ function ResearchImportDialog({
   );
 }
 
+type StagedImportRow = {
+  rowNumber: number;
+  values: Record<string, string>;
+  importedErrors: string[];
+  warnings: string[];
+};
+
+function toStagedImportRow(row: ImportPreviewRow): StagedImportRow {
+  return {
+    rowNumber: row.row_number,
+    values: Object.fromEntries(
+      Object.entries(row.raw).map(([key, value]) => [key, value == null ? "" : String(value)]),
+    ),
+    importedErrors: row.errors,
+    warnings: row.warnings,
+  };
+}
+
+function getStagedRowIssues(
+  row: StagedImportRow,
+  columns: Array<{ key: string; required: boolean }>,
+) {
+  const requiredIssues = columns
+    .filter((column) => column.required && !String(row.values[column.key] ?? "").trim())
+    .map((column) => `${column.key} is required`);
+
+  return [...requiredIssues, ...row.importedErrors];
+}
+
+function normalizeImportRow(values: Record<string, string>) {
+  return Object.fromEntries(
+    Object.entries(values).map(([key, value]) => [key, value.trim() === "" ? null : value]),
+  );
+}
+
 function ImportStat({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-md border bg-background px-3 py-2">
@@ -498,12 +591,6 @@ function ImportStat({ label, value }: { label: string; value: number }) {
       <p className="text-lg font-semibold">{value.toLocaleString()}</p>
     </div>
   );
-}
-
-function importStatusVariant(status: ImportPreviewRow["status"]) {
-  if (status === "valid") return "default";
-  if (status === "duplicate") return "outline";
-  return "destructive";
 }
 
 export function ResearchResourceAuditPreview({
