@@ -14,6 +14,7 @@ export default function MentorshipApplicationsPage() {
       summarySlot={<CapacityWorkspaceHeader />}
       listFilters={[{ name: "search", label: "Search", type: "text", placeholder: "Search mentorship applications" }, statusFilter]}
       recordColumns={applicationColumns}
+      editorMode="sheet"
       fields={[
         { name: "program_id", label: "Mentorship Program", type: "entity", required: true, relation: { adapter: "researchMentorship", filters: { is_active: true }, allowClear: false } },
         { name: "applicant_id", label: "Applicant", type: "entity", required: true, relation: { adapter: "person", filters: { status: "active" }, allowClear: false } },

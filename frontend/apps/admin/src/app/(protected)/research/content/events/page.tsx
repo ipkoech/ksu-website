@@ -23,6 +23,20 @@ export default function ResearchEventsPage() {
         { name: "end_date", label: "End Date", type: "datetime-local" },
         { name: "location", label: "Location" },
         { name: "meeting_link", label: "Registration or Meeting URL", type: "url" },
+        { name: "scope_id", label: "Research Binding", type: "entity-record", entityRecord: {
+          typeName: "scope_type",
+          idName: "scope_id",
+          description: "Attach the event to a real research record when the content service supports the selected scope.",
+          typePlaceholder: "Select research scope",
+          recordPlaceholder: "Select linked record",
+          configs: [
+            { value: "research", label: "Research Portal", adapter: "researchCenter", recordRequired: false },
+            { value: "research_project", label: "Research Project", adapter: "researchProject", filters: { is_active: true } },
+            { value: "research_center", label: "Research Center", adapter: "researchCenter", filters: { is_active: true } },
+            { value: "research_grant", label: "Research Grant", adapter: "researchGrant", filters: { is_active: true } },
+          ],
+          allowNone: false,
+        } },
         { name: "featured_media_id", label: "Featured Media", type: "media", media: { mediaType: "image", uploadEntityType: "research", uploadRole: "featured" } },
         { name: "author_user_id", label: "Owner", type: "entity", relation: { adapter: "user", filters: { is_active: true } } },
         { name: "is_virtual", label: "Virtual", type: "boolean" },
@@ -35,7 +49,7 @@ export default function ResearchEventsPage() {
         { name: "is_published", label: "Published", type: "boolean" },
         { name: "is_featured", label: "Featured", type: "boolean" },
       ]}
-      defaults={{ status: "draft", is_published: false }}
+      defaults={{ scope_type: "research", status: "draft", is_published: false }}
       emptyMessage="No research event records were returned by the main content service."
       metaFields={["location", "start_date", "status"]}
     />

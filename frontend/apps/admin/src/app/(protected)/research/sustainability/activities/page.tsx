@@ -47,6 +47,20 @@ export default function SustainabilityActivitiesPage() {
         { name: "end_date", label: "End Date", type: "datetime-local" },
         { name: "location", label: "Location" },
         { name: "meeting_link", label: "Registration or Meeting URL", type: "url" },
+        { name: "scope_id", label: "Research Binding", type: "entity-record", entityRecord: {
+          typeName: "scope_type",
+          idName: "scope_id",
+          description: "Attach this activity to a real research project, center, or grant when applicable.",
+          typePlaceholder: "Select research scope",
+          recordPlaceholder: "Select linked record",
+          configs: [
+            { value: "research", label: "Research Portal", adapter: "researchCenter", recordRequired: false },
+            { value: "research_project", label: "Research Project", adapter: "researchProject", filters: { is_active: true } },
+            { value: "research_center", label: "Research Center", adapter: "researchCenter", filters: { is_active: true } },
+            { value: "research_grant", label: "Research Grant", adapter: "researchGrant", filters: { is_active: true } },
+          ],
+          allowNone: false,
+        } },
         { name: "status", label: "Status", type: "select", placeholder: "Select status", options: [
           { label: "Upcoming", value: "upcoming" },
           { label: "Ongoing", value: "ongoing" },

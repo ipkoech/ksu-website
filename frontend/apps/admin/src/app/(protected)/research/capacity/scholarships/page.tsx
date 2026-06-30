@@ -19,6 +19,7 @@ export default function ScholarshipsPage() {
         { label: "Equipment", value: "equipment" },
       ] }, statusFilter]}
       recordColumns={scholarshipColumns}
+      editorMode="sheet"
       fields={[
         { name: "name", label: "Name", required: true },
         { name: "slug", label: "Slug" },

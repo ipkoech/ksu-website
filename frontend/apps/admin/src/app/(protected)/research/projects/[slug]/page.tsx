@@ -1,10 +1,8 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
 import { researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchAdminDetailPage, ResearchDetailRelationshipTabs } from "../../_components/research-admin-detail-page";
+import { RelatedRecordsCard, RelatedRecordsGrid } from "../../_components/research-detail-relationships";
 
 export default function ResearchProjectDetailPage() {
   return (
@@ -29,6 +27,7 @@ export default function ResearchProjectDetailPage() {
         { title: "Research Design", fields: ["objectives", "methodology", "expected_outcomes", "deliverables"] },
         { title: "Impact and Funding", fields: ["impact", "budget", "currency"] },
       ]}
+      auditResourceTypes={["research_project", "projects", "project"]}
       renderAfter={(record) => <ProjectRelations project={record} />}
     />
   );
@@ -147,52 +146,5 @@ function ProjectRelations({ project }: { project: ResearchGenericRecord }) {
         },
       ]}
     />
-  );
-}
-
-function RelatedRecordsGrid({ children }: { children: ReactNode }) {
-  return <div className="grid gap-4 lg:grid-cols-2">{children}</div>;
-}
-
-function RelatedRecordsCard({
-  title,
-  queryKey,
-  queryFn,
-  emptyLabel,
-}: {
-  title: string;
-  queryKey: readonly unknown[];
-  queryFn: () => Promise<{ data?: ResearchGenericRecord[] }>;
-  emptyLabel: string;
-}) {
-  const query = useQuery({ queryKey, queryFn });
-  const records = query.data?.data ?? [];
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {query.isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading related records...</p>
-        ) : query.isError ? (
-          <p className="text-sm text-destructive">Unable to load related records.</p>
-        ) : records.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{emptyLabel}</p>
-        ) : (
-          <div className="divide-y rounded-md border">
-            {records.map((record) => (
-              <div key={record.id} className="p-3">
-                <p className="font-medium">{record.title ?? record.name ?? record.code ?? "Untitled related record"}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {[record.status, record.updated_at].filter(Boolean).join(" · ") || "Related research record"}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
   );
 }

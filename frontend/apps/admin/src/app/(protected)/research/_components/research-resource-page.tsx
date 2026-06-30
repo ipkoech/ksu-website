@@ -45,6 +45,8 @@ interface ResearchResourcePageProps {
     record: ResearchGenericRecord,
   ) => Array<EditableRecordWorkflowAction<ResearchGenericRecord, ResearchGenericPayload>>;
   importResource?: string;
+  editorMode?: "dialog" | "sheet" | "auto";
+  renderMobileRecord?: (record: ResearchGenericRecord, actions: ReactNode) => ReactNode;
   buildPayload?: (
     values: ResearchGenericPayload,
     editingRecord?: ResearchGenericRecord | null,
@@ -151,6 +153,36 @@ export function ResearchBulkActions({ resourceKey }: { resourceKey: string }) {
   );
 }
 
+export function ResearchMobileRecordCard({
+  record,
+  actions,
+  metaFields = ["code", "category", "status"],
+}: {
+  record: ResearchGenericRecord;
+  actions: ReactNode;
+  metaFields?: string[];
+}) {
+  const title = recordTitle(record);
+  const meta = recordMeta(record, metaFields);
+  const status = labelValue(record.status ?? record.is_active ?? record.is_public);
+
+  return (
+    <div className="rounded-lg border bg-background p-3 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{title}</p>
+          {meta ? <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{meta}</p> : null}
+        </div>
+        <div className="shrink-0">{actions}</div>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+        {status ? <span className="rounded-md border px-2 py-1 capitalize">{status}</span> : null}
+        {record.updated_at ? <span className="rounded-md border px-2 py-1">Updated {String(record.updated_at).slice(0, 10)}</span> : null}
+      </div>
+    </div>
+  );
+}
+
 export function ResearchResourcePage({
   title,
   description,
@@ -169,6 +201,8 @@ export function ResearchResourcePage({
   detailHref,
   getRecordWorkflowActions,
   importResource,
+  editorMode = "auto",
+  renderMobileRecord,
   buildPayload,
 }: ResearchResourcePageProps) {
   const { hasScope } = usePermissions();
@@ -203,6 +237,13 @@ export function ResearchResourcePage({
         (detailBaseHref && record.slug ? `${detailBaseHref}/${record.slug}` : null)
       }
       getRecordWorkflowActions={getRecordWorkflowActions}
+      editorMode={editorMode}
+      renderMobileRecord={
+        renderMobileRecord ??
+        ((record, actions) => (
+          <ResearchMobileRecordCard record={record} actions={actions} metaFields={metaFields} />
+        ))
+      }
       emptyMessage={emptyMessage}
       resourceKey={importResource}
       buildPayload={(values, editingRecord) => ({

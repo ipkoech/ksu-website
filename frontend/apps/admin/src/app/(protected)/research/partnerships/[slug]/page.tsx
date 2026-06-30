@@ -11,6 +11,7 @@ export default function ResearchPartnerDetailPage() {
       resource={researchServiceApi.partners}
       backHref="/research/partnerships"
       publicHrefBase="/partners"
+      auditResourceTypes={["partner", "partners", "research_partner"]}
       labelFields={["partner_type", "partnership_level", "status"]}
       factFields={[
         { label: "Acronym", field: "acronym" },

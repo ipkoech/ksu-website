@@ -5,7 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ExternalLink } from "lucide-react";
 import { researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
-import { ResearchAdminDetailPage } from "../../_components/research-admin-detail-page";
+import { ResearchAdminDetailPage, ResearchDetailRelationshipTabs } from "../../_components/research-admin-detail-page";
+import { RelatedRecordsCard, RelatedRecordsGrid } from "../../_components/research-detail-relationships";
 import { formatPublicationDate, labelize } from "../_components/publication-workspace";
 
 export default function ResearchPublicationDetailPage() {
@@ -33,6 +34,7 @@ export default function ResearchPublicationDetailPage() {
         { title: "Access and Indexing", fields: ["url", "pdf_url", "pmid", "arxiv_id", "issn", "impact_factor", "quartile", "h_index"] },
         { title: "Funding", fields: ["funding_acknowledgment", "grant_numbers"] },
       ]}
+      auditResourceTypes={["publication", "publications", "research_publication"]}
       renderAfter={(record) => <PublicationRelations record={record} />}
     />
   );
@@ -52,15 +54,48 @@ function PublicationRelations({ record }: { record: ResearchGenericRecord }) {
   });
 
   return (
-    <div className="space-y-6">
-      <AuthorsCard record={record} />
-      <ExternalLinksCard record={record} />
-      <RelatedOutputsCard
-        loading={relatedOutputs.isLoading}
-        records={relatedOutputs.data?.data ?? []}
-        enabled={Boolean(record.project_id)}
-      />
-    </div>
+    <ResearchDetailRelationshipTabs
+      defaultValue="overview"
+      tabs={[
+        {
+          value: "overview",
+          label: "Overview",
+          content: (
+            <RelatedRecordsGrid>
+              <AuthorsCard record={record} />
+              <ExternalLinksCard record={record} />
+            </RelatedRecordsGrid>
+          ),
+        },
+        {
+          value: "outputs",
+          label: "Outputs",
+          content: (
+            <RelatedOutputsCard
+              loading={relatedOutputs.isLoading}
+              records={relatedOutputs.data?.data ?? []}
+              enabled={Boolean(record.project_id)}
+            />
+          ),
+        },
+        {
+          value: "grants",
+          label: "Grants",
+          content: record.project_id ? (
+            <RelatedRecordsCard
+              title="Related Grant Reports"
+              queryKey={["research", "publication-detail", "grant-reports", record.project_id]}
+              queryFn={() => researchServiceApi.grantReports.list({ page: 1, per_page: 6, project_id: String(record.project_id) })}
+              emptyLabel="No grant reports are linked through this publication's project."
+            />
+          ) : (
+            <Card>
+              <CardContent className="p-6 text-sm text-muted-foreground">No linked project is available for grant relationships.</CardContent>
+            </Card>
+          ),
+        },
+      ]}
+    />
   );
 }
 

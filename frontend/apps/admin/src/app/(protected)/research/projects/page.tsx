@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, FolderKanban, UsersRound, WalletCards } from "lucide-react";
 import {
@@ -194,6 +195,27 @@ const projectColumns: EditableRecordColumn<ResearchProject>[] = [
   },
 ];
 
+function ProjectMobileRecord(record: ResearchProject, actions: ReactNode) {
+  return (
+    <div className="rounded-lg border bg-background p-3 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{record.title}</p>
+          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+            {[record.code, record.center?.name, record.program?.name].filter(Boolean).join(" · ")}
+          </p>
+        </div>
+        <div className="shrink-0">{actions}</div>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+        <span className="rounded-md border px-2 py-1">{labelize(record.status) || "Unspecified"}</span>
+        <span className="rounded-md border px-2 py-1">{record.grant_id ? "Funded" : "Unfunded"}</span>
+        {typeof record.progress_percentage === "number" ? <span className="rounded-md border px-2 py-1">{record.progress_percentage}%</span> : null}
+      </div>
+    </div>
+  );
+}
+
 export default function ResearchProjectsPage() {
   const { hasScope } = usePermissions();
   const canManage = hasScope("research.manage_projects") || hasScope("research:write");
@@ -209,6 +231,8 @@ export default function ResearchProjectsPage() {
       listFilters={projectListFilters}
       recordColumns={projectColumns}
       fields={projectFields}
+      editorMode="sheet"
+      renderMobileRecord={ProjectMobileRecord}
       list={(filters) =>
         researchServiceApi.projects.list({
           page: 1,
@@ -345,7 +369,7 @@ function ProjectMetricCard({
 }: {
   title: string;
   value: number;
-  icon: React.ReactNode;
+  icon: ReactNode;
   loading: boolean;
 }) {
   return (

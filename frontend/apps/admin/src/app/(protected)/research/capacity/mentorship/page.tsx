@@ -13,6 +13,7 @@ export default function MentorshipProgramsPage() {
       manageScopes={["training_program.manage", "research:write"]}
       summarySlot={<CapacityWorkspaceHeader />}
       listFilters={[{ name: "search", label: "Search", type: "text", placeholder: "Search mentorship programs" }, statusFilter]}
+      editorMode="sheet"
       fields={[
         { name: "name", label: "Name", required: true },
         { name: "slug", label: "Slug" },

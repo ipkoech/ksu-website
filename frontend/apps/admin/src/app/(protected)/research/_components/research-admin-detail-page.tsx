@@ -7,7 +7,7 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import type { ReactNode } from "react";
 import { PageHeader } from "@/components/layout";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger } from "@ksu/ui/components";
-import type { ResearchGenericRecord } from "@ksu/api-client";
+import { auditLogsApi, type ResearchGenericRecord } from "@ksu/api-client";
 import {
   relationshipAdapters,
   type RelationshipAdapter,
@@ -54,6 +54,7 @@ export function ResearchAdminDetailPage({
   factFields = [],
   sections = [],
   renderAfter,
+  auditResourceTypes = [],
 }: {
   title: string;
   description: string;
@@ -67,6 +68,7 @@ export function ResearchAdminDetailPage({
   factFields?: FactField[];
   sections?: DetailSection[];
   renderAfter?: (record: ResearchGenericRecord) => ReactNode;
+  auditResourceTypes?: string[];
 }) {
   const params = useParams<Record<string, string>>();
   const value = params[slugParam];
@@ -164,11 +166,74 @@ export function ResearchAdminDetailPage({
                   </dl>
                 </CardContent>
               </Card>
+              {auditResourceTypes.length > 0 ? (
+                <AuditHistoryCard
+                  recordId={String(record.id)}
+                  resourceTypes={auditResourceTypes}
+                />
+              ) : null}
             </aside>
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+function AuditHistoryCard({
+  recordId,
+  resourceTypes,
+}: {
+  recordId: string;
+  resourceTypes: string[];
+}) {
+  const auditQuery = useQuery({
+    queryKey: ["research", "detail", "audit", recordId, resourceTypes],
+    queryFn: async () => {
+      const results = await Promise.all(
+        resourceTypes.map((resourceType) =>
+          auditLogsApi.list({
+            service_name: "research",
+            resource_type: resourceType,
+            resource_id: recordId,
+            per_page: 6,
+          }),
+        ),
+      );
+      return results.flatMap((result) => result.data ?? []);
+    },
+    enabled: Boolean(recordId) && resourceTypes.length > 0,
+  });
+  const logs = auditQuery.data ?? [];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Audit History</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {auditQuery.isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading audit history...</p>
+        ) : auditQuery.isError ? (
+          <p className="text-sm text-muted-foreground">Audit history is not available for this record.</p>
+        ) : logs.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No audit entries were returned for this record.</p>
+        ) : (
+          <div className="space-y-3">
+            {logs.map((log: any) => (
+              <div key={log.id} className="rounded-md border p-3">
+                <p className="text-sm font-medium">{formatLabel(log.action ?? "activity")}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {[formatValue(log.status, "label"), formatValue(log.happened_at ?? log.created_at, "datetime")]
+                    .filter(Boolean)
+                    .join(" - ")}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

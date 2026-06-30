@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import {
   EditableServiceResourcePage,
   type EditableListFilter,
@@ -103,6 +104,26 @@ const grantColumns: EditableRecordColumn<ResearchGrant>[] = [
   },
 ];
 
+function GrantMobileRecord(record: ResearchGrant, actions: ReactNode) {
+  return (
+    <div className="rounded-lg border bg-background p-3 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{record.title}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {[record.code, record.funder_name || "No funder", labelize(record.grant_type)].filter(Boolean).join(" · ")}
+          </p>
+        </div>
+        <div className="shrink-0">{actions}</div>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+        <span className="rounded-md border px-2 py-1">{labelize(record.status) || "Unspecified"}</span>
+        {record.deadline ? <span className="rounded-md border px-2 py-1">Due {formatFundingDate(record.deadline)}</span> : null}
+      </div>
+    </div>
+  );
+}
+
 export default function ResearchGrantsPage() {
   const { hasScope } = usePermissions();
   const canManage = hasScope("research.manage_projects") || hasScope("funding.manage") || hasScope("research:write") || hasScope("funding:write");
@@ -116,6 +137,8 @@ export default function ResearchGrantsPage() {
       summarySlot={<FundingWorkspaceHeader />}
       listFilters={grantListFilters}
       recordColumns={grantColumns}
+      editorMode="sheet"
+      renderMobileRecord={GrantMobileRecord}
       fields={[
         { name: "title", label: "Title", required: true, placeholder: "Grant title" },
         { name: "slug", label: "Slug", placeholder: "grant-slug" },

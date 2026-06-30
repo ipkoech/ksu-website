@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import {
   EditableServiceResourcePage,
   type EditableListFilter,
@@ -134,6 +135,26 @@ const publicationColumns: Array<EditableRecordColumn<ResearchPublication>> = [
   },
 ];
 
+function PublicationMobileRecord(record: ResearchPublication, actions: ReactNode) {
+  return (
+    <div className="rounded-lg border bg-background p-3 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="line-clamp-2 text-sm font-semibold">{record.title}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {[labelize(record.publication_type), record.journal?.name ?? record.journal_name ?? record.publisher, record.year].filter(Boolean).join(" · ")}
+          </p>
+        </div>
+        <div className="shrink-0">{actions}</div>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+        <span className="rounded-md border px-2 py-1">{labelize(record.status) || "Unspecified"}</span>
+        {record.is_open_access ? <span className="rounded-md border px-2 py-1">Open access</span> : null}
+      </div>
+    </div>
+  );
+}
+
 export default function ResearchPublicationsPage() {
   const { hasScope } = usePermissions();
   const canManage = hasScope("research.manage_publications") || hasScope("publications.manage") || hasScope("research:write") || hasScope("publications:write");
@@ -148,6 +169,8 @@ export default function ResearchPublicationsPage() {
       summarySlot={<PublicationWorkspaceHeader />}
       listFilters={publicationListFilters}
       recordColumns={publicationColumns}
+      editorMode="sheet"
+      renderMobileRecord={PublicationMobileRecord}
       fields={[
         { name: "title", label: "Title", required: true, placeholder: "Publication title" },
         { name: "slug", label: "Slug", placeholder: "publication-slug" },

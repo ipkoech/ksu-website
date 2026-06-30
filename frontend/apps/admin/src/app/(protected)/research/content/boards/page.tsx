@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { governanceApi, type Board } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
 import { EditableServiceResourcePage, type EditableListFilter, type EditableRecordColumn } from "@/components/dashboard/editable-service-resource-page";
@@ -26,6 +27,26 @@ const boardColumns: Array<EditableRecordColumn<BoardRecord>> = [
   { key: "updated", label: "Updated", className: "hidden w-[150px] xl:table-cell", render: (record) => <DateValue value={record.updated_at} /> },
 ];
 
+function BoardMobileRecord(record: BoardRecord, actions: ReactNode) {
+  return (
+    <div className="rounded-lg border bg-background p-3 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{titleOf(record)}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {[record.board_type?.replace(/_/g, " "), record.chairperson?.full_name ?? "No chair"].filter(Boolean).join(" · ")}
+          </p>
+        </div>
+        <div className="shrink-0">{actions}</div>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+        <span className="rounded-md border px-2 py-1">{record.current_members ?? record.member_count ?? 0} members</span>
+        <span className="rounded-md border px-2 py-1 capitalize">{record.status ?? (record.is_active ? "active" : "inactive")}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function ResearchBoardsPage() {
   const { hasScope } = usePermissions();
   const canManage = ["governance.manage", "content.manage", "research:write"].some((scope) => hasScope(scope));
@@ -39,6 +60,8 @@ export default function ResearchBoardsPage() {
       summarySlot={<ContentWorkspaceHeader />}
       listFilters={boardFilters}
       recordColumns={boardColumns}
+      editorMode="sheet"
+      renderMobileRecord={BoardMobileRecord}
       fields={[
         { name: "name", label: "Name", required: true },
         { name: "slug", label: "Slug" },

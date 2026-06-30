@@ -61,6 +61,20 @@ export default function FarmActivitiesPage() {
         { name: "start_date", label: "Start Date", type: "date", required: true },
         { name: "end_date", label: "End Date", type: "date" },
         { name: "venue", label: "Venue" },
+        { name: "scope_id", label: "Research Binding", type: "entity-record", entityRecord: {
+          typeName: "scope_type",
+          idName: "scope_id",
+          description: "Attach this activity to a supported research record exposed by the main events API.",
+          typePlaceholder: "Select research scope",
+          recordPlaceholder: "Select linked record",
+          configs: [
+            { value: "research", label: "Research Portal", adapter: "researchCenter", recordRequired: false },
+            { value: "research_project", label: "Research Project", adapter: "researchProject", filters: { is_active: true } },
+            { value: "research_center", label: "Research Center", adapter: "researchCenter", filters: { is_active: true } },
+            { value: "research_grant", label: "Research Grant", adapter: "researchGrant", filters: { is_active: true } },
+          ],
+          allowNone: false,
+        } },
         { name: "is_virtual", label: "Virtual", type: "boolean" },
         { name: "is_hybrid", label: "Hybrid", type: "boolean" },
         { name: "status", label: "Status", type: "select", placeholder: "Select status", options: [
@@ -75,6 +89,7 @@ export default function FarmActivitiesPage() {
       ]}
       defaults={{
         event_type: "workshop",
+        scope_type: "research",
         status: "upcoming",
         is_active: true,
         is_virtual: false,

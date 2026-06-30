@@ -34,6 +34,7 @@ export default function ResearchConsultanciesPage() {
       ] }, statusFilter]}
       recordColumns={consultancyColumns}
       metaFields={["code", "consultancy_type", "client_name", "status"]}
+      editorMode="sheet"
       fields={[
         { name: "title", label: "Title", required: true },
         { name: "slug", label: "Slug" },

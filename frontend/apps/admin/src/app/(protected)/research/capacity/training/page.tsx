@@ -14,6 +14,7 @@ export default function TrainingProgramsPage() {
       summarySlot={<CapacityWorkspaceHeader />}
       listFilters={[{ name: "search", label: "Search", type: "text", placeholder: "Search training programs" }, statusFilter]}
       recordColumns={trainingColumns}
+      editorMode="sheet"
       fields={[
         { name: "title", label: "Title", required: true },
         { name: "slug", label: "Slug" },

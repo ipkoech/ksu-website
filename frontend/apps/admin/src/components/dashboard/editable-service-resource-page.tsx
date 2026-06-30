@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit, Eye, FilterX, MoreHorizontal, Plus, Trash2 } from "lucide-react";
@@ -55,6 +55,12 @@ import {
   EmptyState,
   Skeleton,
   RichTextEditor,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
   richTextToPlainText,
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
@@ -195,6 +201,8 @@ interface EditableServiceResourcePageProps<
   resourceKey?: string;
   toolbarSlot?: ReactNode;
   summarySlot?: ReactNode;
+  editorMode?: "dialog" | "sheet" | "auto";
+  renderMobileRecord?: (record: TRecord, actions: ReactNode) => ReactNode;
 }
 
 function defaultValue(field: EditableField) {
@@ -340,6 +348,8 @@ export function EditableServiceResourcePage<
   resourceKey,
   toolbarSlot,
   summarySlot,
+  editorMode = "auto",
+  renderMobileRecord,
 }: EditableServiceResourcePageProps<TRecord, TPayload>) {
   const queryClient = useQueryClient();
   const formId = useId();
@@ -383,6 +393,7 @@ export function EditableServiceResourcePage<
     const start = (page - 1) * perPage;
     return allRecords.slice(start, start + perPage);
   }, [allRecords, page, perPage, recordsQuery.data?.meta?.total]);
+  const resolvedEditorMode = editorMode === "auto" ? (fields.length > 10 ? "sheet" : "dialog") : editorMode;
 
   useEffect(() => {
     setPage(1);
@@ -806,26 +817,38 @@ export function EditableServiceResourcePage<
                     </table>
                     <div className="divide-y md:hidden">
                       {records.map((record) => (
-                        <RecordListRow
-                          key={`mobile-${record.id}`}
-                          record={record}
-                          getRecordTitle={getRecordTitle}
-                          getRecordMeta={getRecordMeta}
-                          actions={renderRecordActions(record)}
-                        />
+                        renderMobileRecord ? (
+                          <div key={`mobile-${record.id}`} className="p-3">
+                            {renderMobileRecord(record, renderRecordActions(record))}
+                          </div>
+                        ) : (
+                          <RecordListRow
+                            key={`mobile-${record.id}`}
+                            record={record}
+                            getRecordTitle={getRecordTitle}
+                            getRecordMeta={getRecordMeta}
+                            actions={renderRecordActions(record)}
+                          />
+                        )
                       ))}
                     </div>
                   </div>
                 ) : (
                   <div className="divide-y rounded-lg border">
                     {records.map((record) => (
-                      <RecordListRow
-                        key={record.id}
-                        record={record}
-                        getRecordTitle={getRecordTitle}
-                        getRecordMeta={getRecordMeta}
-                        actions={renderRecordActions(record)}
-                      />
+                      renderMobileRecord ? (
+                        <div key={record.id} className="p-3">
+                          {renderMobileRecord(record, renderRecordActions(record))}
+                        </div>
+                      ) : (
+                        <RecordListRow
+                          key={record.id}
+                          record={record}
+                          getRecordTitle={getRecordTitle}
+                          getRecordMeta={getRecordMeta}
+                          actions={renderRecordActions(record)}
+                        />
+                      )
                     ))}
                   </div>
                 )}
@@ -888,293 +911,79 @@ export function EditableServiceResourcePage<
         </Card>
       </div>
 
-      <Dialog
-        open={editorOpen}
-        onOpenChange={(open) => {
-          if (!open) closeEditor();
-        }}
-      >
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>{editingRecord ? "Edit Record" : "Create Record"}</DialogTitle>
-            <DialogDescription>
-              {editingRecord
-                ? `Update ${getRecordTitle(editingRecord)} without leaving this list.`
-                : `Create a ${title.toLowerCase()} record without leaving this list.`}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-4 py-2">
-            {!editingRecord && !canCreate ? (
-              <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                {readOnlyMessage}
-              </p>
-            ) : null}
-            {editingRecord && !canEdit ? (
-              <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                {readOnlyMessage}
-              </p>
-            ) : null}
-            {(editingRecord ? canEdit : canCreate) ? (
-              <>
-                {fields.map((field) => {
-                  const id = `${formId}-${field.name}`;
-                  const labelId = `${id}-label`;
-                  const error = fieldErrors[field.name];
-                  const describedBy = error ? `${id}-error` : undefined;
-                  const resolvedType = inputType(field);
-
-                  return (
-                    <div key={field.name} className="flex flex-col gap-2">
-                      <label
-                        id={labelId}
-                        htmlFor={
-                          field.type === "boolean" || field.type === "textarea" || field.type === "richtext"
-                            ? undefined
-                            : id
-                        }
-                        className="text-sm font-medium"
-                      >
-                        {field.label}
-                        {field.required ? " *" : ""}
-                      </label>
-                      {field.type === "textarea" || field.type === "richtext" ? (
-                        <RichTextEditor
-                          editorId={id}
-                          ariaLabelledby={labelId}
-                          ariaDescribedby={describedBy}
-                          ariaInvalid={Boolean(error)}
-                          toolbar="simple"
-                          minHeight="180px"
-                          placeholder={field.placeholder}
-                          value={values[field.name] ?? ""}
-                          onChange={(html) => {
-                            setValues((current) => ({
-                              ...current,
-                              [field.name]: html,
-                            }));
-                            if (error) {
-                              setFieldErrors((current) => {
-                                const next = { ...current };
-                                delete next[field.name];
-                                return next;
-                              });
-                            }
-                          }}
-                        />
-                      ) : field.type === "media" ? (
-                        <MediaPicker
-                          value={values[field.name] || ""}
-                          onChange={(nextValue) => {
-                            setValues((current) => ({
-                              ...current,
-                              [field.name]: nextValue,
-                            }));
-                            if (error) {
-                              setFieldErrors((current) => {
-                                const next = { ...current };
-                                delete next[field.name];
-                                return next;
-                              });
-                            }
-                          }}
-                          label={field.label}
-                          mediaType={field.media?.mediaType}
-                          folderId={field.media?.folderId}
-                          helperText={field.media?.helperText}
-                          placeholder={field.placeholder}
-                          accept={field.media?.accept}
-                          uploadEntityType={field.media?.uploadEntityType}
-                          uploadRole={field.media?.uploadRole}
-                          allowUpload={field.media?.allowUpload}
-                          allowClear={!field.required}
-                        />
-                      ) : field.type === "entity" && field.relation ? (
-                        <EntityPicker
-                          adapter={relationshipAdapters[field.relation.adapter] as any}
-                          value={values[field.name] || ""}
-                          onChange={(nextValue) => {
-                            setValues((current) => ({
-                              ...current,
-                              [field.name]: nextValue,
-                            }));
-                            if (error) {
-                              setFieldErrors((current) => {
-                                const next = { ...current };
-                                delete next[field.name];
-                                return next;
-                              });
-                            }
-                          }}
-                          filters={field.relation.filters}
-                          placeholder={field.placeholder ?? `Select ${field.label.toLowerCase()}`}
-                          description={field.relation.description}
-                          allowClear={field.relation.allowClear ?? !field.required}
-                          required={field.required}
-                        />
-                      ) : field.type === "entity-record" && field.entityRecord ? (
-                        <EntityTypeRecordPicker
-                          typeValue={values[field.entityRecord.typeName] || ""}
-                          idValue={values[field.entityRecord.idName] || ""}
-                          onChange={({ type, id }) => {
-                            setValues((current) => ({
-                              ...current,
-                              [field.entityRecord!.typeName]: type,
-                              [field.entityRecord!.idName]: id,
-                            }));
-                            if (error) {
-                              setFieldErrors((current) => {
-                                const next = { ...current };
-                                delete next[field.name];
-                                return next;
-                              });
-                            }
-                          }}
-                          configs={field.entityRecord.configs.map((config) => ({
-                            ...config,
-                            adapter: relationshipAdapters[config.adapter] as any,
-                          }))}
-                          label={undefined}
-                          description={field.entityRecord.description}
-                          typePlaceholder={field.entityRecord.typePlaceholder}
-                          recordPlaceholder={field.entityRecord.recordPlaceholder}
-                          allowNone={field.entityRecord.allowNone}
-                        />
-                      ) : field.type === "select" ? (
-                        <Select
-                          value={values[field.name] || undefined}
-                          onValueChange={(nextValue) => {
-                            setValues((current) => ({
-                              ...current,
-                              [field.name]: nextValue,
-                            }));
-                            if (error) {
-                              setFieldErrors((current) => {
-                                const next = { ...current };
-                                delete next[field.name];
-                                return next;
-                              });
-                            }
-                          }}
-                        >
-                          <SelectTrigger
-                            id={id}
-                            aria-invalid={Boolean(error)}
-                            aria-describedby={describedBy}
-                          >
-                            <SelectValue placeholder={field.placeholder ?? field.label} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              {(field.options ?? []).map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      ) : field.type === "boolean" ? (
-                        <div className="flex items-center justify-between rounded-lg border p-3">
-                          <span
-                            id={`${id}-label`}
-                            className="text-sm text-muted-foreground"
-                          >
-                            {field.placeholder ?? field.label}
-                          </span>
-                          <Switch
-                            aria-labelledby={`${id}-label`}
-                            checked={Boolean(values[field.name])}
-                            onCheckedChange={(checked) =>
-                              setValues((current) => ({
-                                ...current,
-                                [field.name]: checked,
-                              }))
-                            }
-                          />
-                        </div>
-                      ) : (
-                        <Input
-                          id={id}
-                          type={
-                            resolvedType === "number"
-                              ? "number"
-                              : resolvedType === "date"
-                                ? "date"
-                                : resolvedType === "datetime-local"
-                                  ? "datetime-local"
-                                  : resolvedType === "email"
-                                    ? "email"
-                                    : resolvedType === "url"
-                                      ? "url"
-                                      : "text"
-                          }
-                          inputMode={
-                            resolvedType === "number" ? "numeric" : undefined
-                          }
-                          placeholder={field.placeholder}
-                          value={values[field.name] ?? ""}
-                          aria-invalid={Boolean(error)}
-                          aria-describedby={describedBy}
-                          error={Boolean(error)}
-                          autoComplete={
-                            resolvedType === "email"
-                              ? "email"
-                              : resolvedType === "url"
-                                ? "url"
-                                : undefined
-                          }
-                          onChange={(event) => {
-                            const nextValue = event.target.value;
-                            setValues((current) => ({
-                              ...current,
-                              [field.name]: nextValue,
-                            }));
-                            if (error) {
-                              setFieldErrors((current) => {
-                                const next = { ...current };
-                                delete next[field.name];
-                                return next;
-                              });
-                            }
-                          }}
-                        />
-                      )}
-                      {error ? (
-                        <p
-                          id={`${id}-error`}
-                          className="text-sm text-destructive"
-                        >
-                          {error}
-                        </p>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </>
-            ) : null}
-          </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="button" variant="outline" onClick={closeEditor}>
-              Cancel
-            </Button>
-            {(editingRecord ? canEdit : canCreate) ? (
-              <Button
-                type="button"
-                onClick={submit}
-                disabled={
-                  createMutation.isPending || updateMutation.isPending
-                }
-              >
-                {createMutation.isPending || updateMutation.isPending
-                  ? "Saving..."
-                  : editingRecord
-                    ? "Save Changes"
-                    : "Create"}
-              </Button>
-            ) : null}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {resolvedEditorMode === "sheet" ? (
+        <Sheet
+          open={editorOpen}
+          onOpenChange={(open) => {
+            if (!open) closeEditor();
+          }}
+        >
+          <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-3xl">
+            <SheetHeader>
+              <SheetTitle>{editingRecord ? "Edit Record" : "Create Record"}</SheetTitle>
+              <SheetDescription>{editorDescription(title, editingRecord, getRecordTitle)}</SheetDescription>
+            </SheetHeader>
+            <EditorFormBody
+              formId={formId}
+              fields={fields}
+              values={values}
+              setValues={setValues}
+              fieldErrors={fieldErrors}
+              setFieldErrors={setFieldErrors}
+              editingRecord={editingRecord}
+              canCreate={canCreate}
+              canEdit={canEdit}
+              readOnlyMessage={readOnlyMessage}
+            />
+            <SheetFooter className="sticky bottom-0 mt-auto gap-2 border-t bg-background pt-4 sm:gap-0">
+              <EditorFooter
+                editingRecord={editingRecord}
+                canCreate={canCreate}
+                canEdit={canEdit}
+                isSaving={createMutation.isPending || updateMutation.isPending}
+                onCancel={closeEditor}
+                onSubmit={submit}
+              />
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Dialog
+          open={editorOpen}
+          onOpenChange={(open) => {
+            if (!open) closeEditor();
+          }}
+        >
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>{editingRecord ? "Edit Record" : "Create Record"}</DialogTitle>
+              <DialogDescription>{editorDescription(title, editingRecord, getRecordTitle)}</DialogDescription>
+            </DialogHeader>
+            <EditorFormBody
+              formId={formId}
+              fields={fields}
+              values={values}
+              setValues={setValues}
+              fieldErrors={fieldErrors}
+              setFieldErrors={setFieldErrors}
+              editingRecord={editingRecord}
+              canCreate={canCreate}
+              canEdit={canEdit}
+              readOnlyMessage={readOnlyMessage}
+            />
+            <DialogFooter className="gap-2 sm:gap-0">
+              <EditorFooter
+                editingRecord={editingRecord}
+                canCreate={canCreate}
+                canEdit={canEdit}
+                isSaving={createMutation.isPending || updateMutation.isPending}
+                onCancel={closeEditor}
+                onSubmit={submit}
+              />
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       <ConfirmDialog
         open={!!deleteTarget}
@@ -1253,5 +1062,280 @@ function RecordListRow<TRecord extends RecordShape>({
       </div>
       {actions}
     </div>
+  );
+}
+
+function editorDescription<TRecord extends RecordShape>(
+  title: string,
+  editingRecord: TRecord | null,
+  getRecordTitle: (record: TRecord) => string,
+) {
+  return editingRecord
+    ? `Update ${getRecordTitle(editingRecord)} without leaving this list.`
+    : `Create a ${title.toLowerCase()} record without leaving this list.`;
+}
+
+function EditorFormBody<TRecord extends RecordShape>({
+  formId,
+  fields,
+  values,
+  setValues,
+  fieldErrors,
+  setFieldErrors,
+  editingRecord,
+  canCreate,
+  canEdit,
+  readOnlyMessage,
+}: {
+  formId: string;
+  fields: EditableField[];
+  values: RecordShape;
+  setValues: Dispatch<SetStateAction<RecordShape>>;
+  fieldErrors: Record<string, string>;
+  setFieldErrors: Dispatch<SetStateAction<Record<string, string>>>;
+  editingRecord: TRecord | null;
+  canCreate: boolean;
+  canEdit: boolean;
+  readOnlyMessage: string;
+}) {
+  const isEditable = editingRecord ? canEdit : canCreate;
+
+  return (
+    <div className="flex flex-col gap-4 py-2">
+      {!editingRecord && !canCreate ? (
+        <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+          {readOnlyMessage}
+        </p>
+      ) : null}
+      {editingRecord && !canEdit ? (
+        <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+          {readOnlyMessage}
+        </p>
+      ) : null}
+      {isEditable
+        ? fields.map((field) => (
+            <EditableFieldControl
+              key={field.name}
+              field={field}
+              id={`${formId}-${field.name}`}
+              value={values[field.name]}
+              values={values}
+              error={fieldErrors[field.name]}
+              setValues={setValues}
+              setFieldErrors={setFieldErrors}
+            />
+          ))
+        : null}
+    </div>
+  );
+}
+
+function EditableFieldControl({
+  field,
+  id,
+  value,
+  values,
+  error,
+  setValues,
+  setFieldErrors,
+}: {
+  field: EditableField;
+  id: string;
+  value: unknown;
+  values: RecordShape;
+  error?: string;
+  setValues: Dispatch<SetStateAction<RecordShape>>;
+  setFieldErrors: Dispatch<SetStateAction<Record<string, string>>>;
+}) {
+  const labelId = `${id}-label`;
+  const describedBy = error ? `${id}-error` : undefined;
+  const resolvedType = inputType(field);
+  const stringValue = value === null || value === undefined ? "" : String(value);
+  const clearError = () => {
+    if (!error) return;
+    setFieldErrors((current) => {
+      const next = { ...current };
+      delete next[field.name];
+      return next;
+    });
+  };
+  const setFieldValue = (nextValue: unknown) => {
+    setValues((current) => ({
+      ...current,
+      [field.name]: nextValue,
+    }));
+    clearError();
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <label
+        id={labelId}
+        htmlFor={
+          field.type === "boolean" || field.type === "textarea" || field.type === "richtext"
+            ? undefined
+            : id
+        }
+        className="text-sm font-medium"
+      >
+        {field.label}
+        {field.required ? " *" : ""}
+      </label>
+      {field.type === "textarea" || field.type === "richtext" ? (
+        <RichTextEditor
+          editorId={id}
+          ariaLabelledby={labelId}
+          ariaDescribedby={describedBy}
+          ariaInvalid={Boolean(error)}
+          toolbar="simple"
+          minHeight="180px"
+          placeholder={field.placeholder}
+          value={stringValue}
+          onChange={setFieldValue}
+        />
+      ) : field.type === "media" ? (
+        <MediaPicker
+          value={stringValue}
+          onChange={setFieldValue}
+          label={field.label}
+          mediaType={field.media?.mediaType}
+          folderId={field.media?.folderId}
+          helperText={field.media?.helperText}
+          placeholder={field.placeholder}
+          accept={field.media?.accept}
+          uploadEntityType={field.media?.uploadEntityType}
+          uploadRole={field.media?.uploadRole}
+          allowUpload={field.media?.allowUpload}
+          allowClear={!field.required}
+        />
+      ) : field.type === "entity" && field.relation ? (
+        <EntityPicker
+          adapter={relationshipAdapters[field.relation.adapter] as any}
+          value={stringValue}
+          onChange={(nextValue) => setFieldValue(nextValue || "")}
+          filters={field.relation.filters}
+          placeholder={field.placeholder ?? `Select ${field.label.toLowerCase()}`}
+          description={field.relation.description}
+          allowClear={field.relation.allowClear ?? !field.required}
+          required={field.required}
+        />
+      ) : field.type === "entity-record" && field.entityRecord ? (
+        <EntityTypeRecordPicker
+          typeValue={String(values[field.entityRecord.typeName] ?? "")}
+          idValue={String(values[field.entityRecord.idName] ?? "")}
+          onChange={({ type, id: recordId }) => {
+            setValues((current) => ({
+              ...current,
+              [field.entityRecord!.typeName]: type,
+              [field.entityRecord!.idName]: recordId,
+            }));
+            clearError();
+          }}
+          configs={field.entityRecord.configs.map((config) => ({
+            ...config,
+            adapter: relationshipAdapters[config.adapter] as any,
+          }))}
+          label={undefined}
+          description={field.entityRecord.description}
+          typePlaceholder={field.entityRecord.typePlaceholder}
+          recordPlaceholder={field.entityRecord.recordPlaceholder}
+          allowNone={field.entityRecord.allowNone}
+        />
+      ) : field.type === "select" ? (
+        <Select
+          value={stringValue || undefined}
+          onValueChange={setFieldValue}
+        >
+          <SelectTrigger
+            id={id}
+            aria-invalid={Boolean(error)}
+            aria-describedby={describedBy}
+          >
+            <SelectValue placeholder={field.placeholder ?? field.label} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {(field.options ?? []).map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      ) : field.type === "boolean" ? (
+        <div className="flex items-center justify-between rounded-lg border p-3">
+          <span id={`${id}-label`} className="text-sm text-muted-foreground">
+            {field.placeholder ?? field.label}
+          </span>
+          <Switch
+            aria-labelledby={`${id}-label`}
+            checked={Boolean(value)}
+            onCheckedChange={setFieldValue}
+          />
+        </div>
+      ) : (
+        <Input
+          id={id}
+          type={
+            resolvedType === "number"
+              ? "number"
+              : resolvedType === "date"
+                ? "date"
+                : resolvedType === "datetime-local"
+                  ? "datetime-local"
+                  : resolvedType === "email"
+                    ? "email"
+                    : resolvedType === "url"
+                      ? "url"
+                      : "text"
+          }
+          inputMode={resolvedType === "number" ? "numeric" : undefined}
+          placeholder={field.placeholder}
+          value={stringValue}
+          aria-invalid={Boolean(error)}
+          aria-describedby={describedBy}
+          error={Boolean(error)}
+          autoComplete={
+            resolvedType === "email" ? "email" : resolvedType === "url" ? "url" : undefined
+          }
+          onChange={(event) => setFieldValue(event.target.value)}
+        />
+      )}
+      {error ? (
+        <p id={`${id}-error`} className="text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function EditorFooter<TRecord extends RecordShape>({
+  editingRecord,
+  canCreate,
+  canEdit,
+  isSaving,
+  onCancel,
+  onSubmit,
+}: {
+  editingRecord: TRecord | null;
+  canCreate: boolean;
+  canEdit: boolean;
+  isSaving: boolean;
+  onCancel: () => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <>
+      <Button type="button" variant="outline" onClick={onCancel}>
+        Cancel
+      </Button>
+      {(editingRecord ? canEdit : canCreate) ? (
+        <Button type="button" onClick={onSubmit} disabled={isSaving}>
+          {isSaving ? "Saving..." : editingRecord ? "Save Changes" : "Create"}
+        </Button>
+      ) : null}
+    </>
   );
 }

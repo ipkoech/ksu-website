@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { staffApi, type StaffAssignment } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
 import { EditableServiceResourcePage, type EditableListFilter, type EditableRecordColumn, type EditableRecordWorkflowAction } from "@/components/dashboard/editable-service-resource-page";
@@ -47,6 +48,26 @@ function staffWorkflowActions(record: StaffRecord): Array<EditableRecordWorkflow
   ];
 }
 
+function StaffMobileRecord(record: StaffRecord, actions: ReactNode) {
+  return (
+    <div className="rounded-lg border bg-background p-3 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{record.person?.full_name ?? titleOf(record)}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {[record.role_display ?? record.title ?? record.role, record.term_display].filter(Boolean).join(" · ")}
+          </p>
+        </div>
+        <div className="shrink-0">{actions}</div>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+        <span className="rounded-md border px-2 py-1 capitalize">{record.status ?? "unknown"}</span>
+        {record.start_date ? <span className="rounded-md border px-2 py-1">Since {record.start_date.slice(0, 10)}</span> : null}
+      </div>
+    </div>
+  );
+}
+
 export default function ResearchStaffPage() {
   const { hasScope } = usePermissions();
   const canManage = ["people.manage", "staff.manage", "content.manage", "research:write"].some((scope) => hasScope(scope));
@@ -60,6 +81,8 @@ export default function ResearchStaffPage() {
       summarySlot={<ContentWorkspaceHeader />}
       listFilters={staffFilters}
       recordColumns={staffColumns}
+      editorMode="sheet"
+      renderMobileRecord={StaffMobileRecord}
       fields={[
         { name: "person_id", label: "Person", type: "entity", required: true, relation: { adapter: "person", filters: { status: "active" } } },
         { name: "role", label: "Role", required: true, type: "select", options: [

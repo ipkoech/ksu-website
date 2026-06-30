@@ -14,6 +14,7 @@ export default function ScholarshipApplicationsPage() {
       summarySlot={<CapacityWorkspaceHeader />}
       listFilters={[{ name: "scholarship_id", label: "Scholarship", type: "entity", relation: { adapter: "researchScholarship", filters: { is_active: true } } }, statusFilter]}
       recordColumns={applicationColumns}
+      editorMode="sheet"
       fields={[
         { name: "scholarship_id", label: "Scholarship", type: "entity", required: true, relation: { adapter: "researchScholarship", filters: { is_active: true }, allowClear: false } },
         { name: "applicant_id", label: "Applicant", type: "entity", required: true, relation: { adapter: "person", filters: { status: "active" }, allowClear: false } },

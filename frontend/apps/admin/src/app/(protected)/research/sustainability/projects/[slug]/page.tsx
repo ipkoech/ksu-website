@@ -16,6 +16,7 @@ export default function SustainabilityInitiativeDetailPage() {
       resource={researchServiceApi.sustainability}
       backHref="/research/sustainability/projects"
       publicHrefBase="/sustainability"
+      auditResourceTypes={["sustainability", "sustainability_project", "research_sustainability"]}
       labelFields={["initiative_type", "status"]}
       factFields={[
         { label: "Code", field: "code" },
