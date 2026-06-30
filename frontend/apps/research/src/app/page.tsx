@@ -35,15 +35,15 @@ export const revalidate = 300;
 
 const heroActions = [
   { label: "Explore Research", href: "/projects", variant: "primary" as const },
-  { label: "Partner With Us", href: "/partners", variant: "outline" as const },
-  { label: "Contact REIRM", href: "/connect", variant: "gold" as const },
+  { label: "Our Impact", href: "/impact-metrics", variant: "impact" as const },
+  { label: "Partner With Us", href: "/partners", variant: "glass" as const },
 ];
 
 const quickLinks = [
-  { label: "Projects", href: "/projects" },
-  { label: "Publications", href: "/publications" },
-  { label: "Funding", href: "/funding" },
-  { label: "Partners", href: "/partners" },
+  { label: "Projects", href: "/projects", description: "Explore active research projects", icon: FlaskConical, tone: "blue" },
+  { label: "Publications", href: "/publications", description: "Browse our research output", icon: FileText, tone: "green" },
+  { label: "Funding", href: "/funding", description: "Grants and funding opportunities", icon: Handshake, tone: "gold" },
+  { label: "Partners", href: "/partners", description: "Collaborate with us for greater impact", icon: Users, tone: "blue" },
 ];
 
 const pillars = [
@@ -130,7 +130,9 @@ export default async function ResearchPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-[#f4f6f4] text-slate-950">
-      <ResearchLandingHero />
+      <ResearchLandingHero
+        activeProjects={statsMap.research_projects || projects.total || projects.data.length}
+      />
       <PortfolioQuickAccessSection
         projects={statsMap.research_projects || projects.total || projects.data.length}
         publications={statsMap.publications || publications.total || publications.data.length}
@@ -154,22 +156,22 @@ export default async function ResearchPage() {
       <AboutResearchSection headProfile={headProfile} />
       <PillarsSection />
       <FeaturedWorkSection items={featuredWork} />
-      <NewsEventsArticlesSection items={newsItems} />
       <DirectorySection items={directoryItems} />
       <PartnersImpactSection
         partners={partnerItems}
         impactMetrics={impactMetrics.data}
         story={story}
       />
+      <NewsEventsArticlesSection items={newsItems} />
       <FundingResourcesSection items={supportItems} />
       <ResearchConversationSection />
     </main>
   );
 }
 
-function ResearchLandingHero() {
+function ResearchLandingHero({ activeProjects }: { activeProjects: number }) {
   return (
-    <section className="relative isolate min-h-[560px] overflow-hidden bg-slate-950">
+    <section className="relative isolate min-h-[520px] overflow-hidden bg-primary">
       <Image
         src="/images/research/research-hero-imagegen.webp"
         alt="Kisii University researchers collaborating across laboratory, field, data, and community research"
@@ -178,26 +180,21 @@ function ResearchLandingHero() {
         sizes="100vw"
         className="object-cover"
       />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.78)_0%,rgba(255,255,255,0.52)_34%,rgba(255,255,255,0.1)_64%,rgba(255,255,255,0)_100%)]" />
-      <div className="absolute inset-y-0 left-0 w-full bg-[radial-gradient(circle_at_18%_46%,rgba(255,255,255,0.22)_0%,rgba(255,255,255,0)_34%)]" />
-      <ResearchAnimatedBackdrop />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,35,80,0.98)_0%,rgba(0,53,99,0.88)_30%,rgba(0,62,73,0.45)_58%,rgba(0,27,54,0.12)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_38%_20%,rgba(226,165,35,0.16)_0%,rgba(226,165,35,0)_32%)]" />
+      <ResearchAnimatedBackdrop dark />
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#f4f6f4] via-[#f4f6f4]/60 to-transparent" />
-      <div className="relative mx-auto grid min-h-[560px] max-w-[1920px] items-center gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:px-8 xl:px-10 2xl:px-12">
+      <div className="relative mx-auto grid min-h-[520px] max-w-[1920px] items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_520px] lg:px-8 xl:px-10 2xl:px-12">
         <div className="max-w-4xl">
           <ScrollReveal>
-            <p className="inline-flex rounded-full border border-primary/20 bg-white/75 px-3 py-1 text-sm font-semibold text-primary shadow-sm backdrop-blur">
-              Kisii University Research Portal
-            </p>
-            <h1 className="mt-5 max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-[1.04] text-slate-950 sm:text-5xl xl:text-6xl 2xl:text-7xl">
-              Research, Extension, Innovation and Resource Mobilization
+            <h1 className="max-w-4xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.03] text-white sm:text-5xl xl:text-6xl 2xl:text-7xl">
+              Research. Innovation.
+              <span className="block text-secondary">Impact for a Better Future.</span>
             </h1>
-            <p className="mt-6 max-w-2xl text-base leading-8 text-slate-700 sm:text-lg">
-              The engine of knowledge preservation, creation, innovation, and
-              societal impact at Kisii University.
-            </p>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-              Borderless, inclusive research connecting scholarly excellence to
-              tangible global progress.
+            <p className="mt-6 max-w-2xl text-base leading-8 text-white/90 sm:text-lg">
+              Advancing knowledge, solving real-world challenges, and building
+              partnerships that create lasting impact for communities and the
+              environment.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               {heroActions.map((action) => (
@@ -213,33 +210,27 @@ function ResearchLandingHero() {
           </ScrollReveal>
         </div>
         <ScrollReveal className="hidden lg:block">
-          <div className="relative ml-auto w-full max-w-[420px] rounded-xl border border-white/55 bg-white/42 p-4 shadow-[0_30px_90px_rgba(15,23,42,0.16)] backdrop-blur-xl">
-            <div className="rounded-lg border border-white/60 bg-white/78 p-5">
-              <SectionKicker>Research pathways</SectionKicker>
-              <div className="mt-5 space-y-3">
-                {quickLinks.map((link) => (
-                  <Link
-                    key={`hero-${link.href}`}
-                    href={link.href}
-                    className="group flex items-center justify-between rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:border-primary/30 hover:text-primary"
-                  >
-                    {link.label}
-                    <ArrowRight aria-hidden className="h-4 w-4 transition group-hover:translate-x-1" />
-                  </Link>
-                ))}
-              </div>
+          <div className="relative min-h-[360px]">
+            <div className="absolute left-4 top-24 w-44 rounded-lg border border-white/35 bg-white/18 p-4 text-white shadow-[0_20px_70px_rgba(0,0,0,0.18)] backdrop-blur-md">
+              <p className="text-xs font-semibold">Evidence to Impact</p>
+              <p className="mt-2 text-xs leading-5 text-white/80">
+                Turning discovery into solutions that matter.
+              </p>
+              <div className="mt-5 h-12 rounded-md border border-lime-200/30 bg-[linear-gradient(135deg,rgba(132,204,22,0.18),rgba(255,255,255,0.05))]" />
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-3">
-              <Link href="/impact-metrics" className="rounded-lg border border-white/60 bg-primary p-4 text-white shadow-sm transition hover:bg-primary/90">
-                <span className="block text-xs font-semibold uppercase text-white/70">Impact</span>
-                <span className="mt-2 block font-[family-name:var(--font-display)] text-2xl font-semibold">Metrics</span>
-              </Link>
-              <Link href="/centers" className="rounded-lg border border-white/60 bg-white/80 p-4 text-slate-950 shadow-sm transition hover:border-primary/30 hover:text-primary">
-                <span className="block text-xs font-semibold uppercase text-slate-500">Find</span>
-                <span className="mt-2 block font-[family-name:var(--font-display)] text-2xl font-semibold">Centers</span>
-              </Link>
+            <Link
+              href="/projects"
+              className="absolute bottom-8 right-2 w-56 rounded-lg border border-white/35 bg-white/24 p-4 text-white shadow-[0_20px_70px_rgba(0,0,0,0.18)] backdrop-blur-md transition hover:bg-white/30"
+            >
+              <span className="block text-xs font-semibold">Active Projects</span>
+              <span className="mt-3 block font-[family-name:var(--font-display)] text-4xl font-semibold">
+                {activeProjects > 0 ? formatNumber(activeProjects) : "Explore"}
+              </span>
+              <span className="mt-1 block text-xs text-white/75">Across research themes</span>
+            </Link>
+            <div className="absolute right-28 top-6 h-3 w-3 rounded-full bg-lime-200 shadow-[0_0_0_12px_rgba(217,249,157,0.14),0_0_34px_rgba(217,249,157,0.9)]" />
+            <div className="absolute left-10 top-2 h-2 w-2 rounded-full bg-blue-200 shadow-[0_0_0_10px_rgba(191,219,254,0.12),0_0_24px_rgba(191,219,254,0.9)]" />
             </div>
-          </div>
         </ScrollReveal>
       </div>
     </section>
@@ -284,34 +275,37 @@ function PortfolioQuickAccessSection({
   return (
     <ScrollReveal as="section" className="relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
       <ResearchAnimatedBackdrop />
-      <div className="relative mx-auto max-w-[1680px] rounded-xl border border-white bg-white/92 p-4 shadow-[0_20px_80px_rgba(15,23,42,0.08)] backdrop-blur sm:p-5 lg:p-6">
-        <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-center">
-          <div>
+      <div className="relative mx-auto max-w-[1680px] rounded-lg border border-slate-200 bg-white p-5 shadow-[0_20px_80px_rgba(15,23,42,0.08)] backdrop-blur lg:p-7">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-stretch lg:divide-x lg:divide-slate-200">
+          <div className="hidden lg:block lg:pr-8">
             <SectionKicker>Direct access</SectionKicker>
-            <nav aria-label="Research quick links" className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-              {quickLinks.map((link) => (
-                <Link
-                  key={link.href + link.label}
-                  href={link.href}
-                  className="group flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-primary/30 hover:bg-white hover:text-primary"
-                >
-                  {link.label}
-                  <ArrowRight aria-hidden className="h-4 w-4 text-slate-300 transition group-hover:translate-x-1 group-hover:text-primary" />
-                </Link>
-              ))}
+            <nav aria-label="Research quick links" className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {quickLinks.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <Link key={link.href + link.label} href={link.href} className="group block border-r border-slate-200 pr-5 last:border-r-0">
+                    <span className={`inline-flex h-14 w-14 items-center justify-center rounded-md ${link.tone === "gold" ? "bg-secondary/12 text-secondary" : link.tone === "green" ? "bg-primary/10 text-primary" : "bg-blue-600/10 text-blue-700"}`}>
+                      <Icon aria-hidden className="h-6 w-6" />
+                    </span>
+                    <span className="mt-4 block text-sm font-bold text-slate-950 transition group-hover:text-primary">
+                      {link.label}
+                    </span>
+                    <span className="mt-1 block min-h-10 text-xs leading-5 text-slate-500">
+                      {link.description}
+                    </span>
+                    <ArrowRight aria-hidden className="mt-3 h-4 w-4 text-primary transition group-hover:translate-x-1" />
+                  </Link>
+                );
+              })}
             </nav>
           </div>
-          <div>
+          <div className="lg:pl-8">
             <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
               <div>
-                <SectionKicker>Research portfolio</SectionKicker>
-                <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
-                  Public proof of work
-                </h2>
+                <SectionKicker>Research portfolio at a glance</SectionKicker>
               </div>
-              <TextLink href="/impact-metrics">View impact metrics</TextLink>
             </div>
-            <ScrollRevealGroup className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5" staggerDelay={55}>
+            <ScrollRevealGroup className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-4 lg:mt-6 xl:grid-cols-5" staggerDelay={55}>
               {metrics.map((metric) => {
                 const Icon = metric.icon;
                 const hasPublishedCount = metric.rawValue > 0;
@@ -320,24 +314,18 @@ function PortfolioQuickAccessSection({
                   <Link
                     key={metric.label}
                     href={metric.href}
-                    className="group flex min-h-28 items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md"
+                    className="group flex min-h-[56px] flex-col items-start justify-center rounded-full border border-slate-200 bg-slate-50 px-3 py-2 transition hover:border-primary/30 hover:bg-white sm:min-h-[74px] sm:rounded-md sm:gap-2"
                   >
-                    <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                      <Icon aria-hidden className="h-5 w-5" />
+                    <span className={`hidden h-7 w-7 shrink-0 items-center justify-center rounded-md sm:inline-flex ${metric.label === "Grants" ? "bg-secondary/10 text-secondary" : "bg-primary/10 text-primary"}`}>
+                      <Icon aria-hidden className="h-3.5 w-3.5" />
                     </span>
-                    <span>
-                      <span className={`block font-[family-name:var(--font-display)] font-semibold text-slate-950 ${hasPublishedCount ? "text-3xl" : "text-xl"}`}>
+                    <span className="block min-w-0">
+                      <span className={`block font-[family-name:var(--font-display)] font-semibold leading-none text-slate-950 ${hasPublishedCount ? "text-sm sm:text-base" : "text-xs sm:text-sm"}`}>
                         {hasPublishedCount ? metric.value : "Explore"}
                       </span>
-                      <span className="mt-1 block text-xs font-semibold uppercase text-slate-500">
+                      <span className="mt-0.5 block text-[9px] leading-3 text-slate-500 sm:mt-1 sm:text-[10px]">
                         {metric.label}
                       </span>
-                      {!hasPublishedCount ? (
-                        <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary">
-                          Browse
-                          <ArrowRight aria-hidden className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
-                        </span>
-                      ) : null}
                     </span>
                   </Link>
                 );
@@ -388,7 +376,7 @@ function AboutResearchSection({ headProfile }: { headProfile: ResearchHeadProfil
         </article>
 
         <article className="research-glass-panel research-border-sheen rounded-lg p-6 lg:p-8">
-          <div className="absolute right-5 top-5 h-[20%] min-h-24 w-[20%] min-w-24 overflow-hidden rounded-md border border-white bg-slate-100 shadow-sm">
+          <div className="research-image-fallback absolute right-5 top-5 h-[20%] min-h-24 w-[20%] min-w-24 overflow-hidden rounded-md border border-white shadow-sm">
             <Image
               src={headProfile?.photoUrl || "/images/research/registrar-reirm-imagegen.webp"}
               alt={headName}
@@ -453,17 +441,25 @@ function FeaturedWorkSection({ items }: { items: FeaturedWorkItem[] }) {
 
   return (
     <ScrollReveal as="section" className="relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
-      <div className="relative mx-auto max-w-[1680px] rounded-xl border border-white bg-white px-4 py-12 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:px-6 lg:px-10">
-        <SectionHeader
-          eyebrow="Featured research work"
-          title="Selected projects, publications, grants, and innovations."
-          action={{ href: "/projects", label: "View all" }}
-        />
-        <ScrollRevealGroup className="mt-8 grid gap-5 lg:grid-cols-2 2xl:grid-cols-4" staggerDelay={65}>
-          {items.map((item) => (
-            <FeaturedWorkCard key={`${item.type}-${item.id}`} item={item} />
-          ))}
-        </ScrollRevealGroup>
+      <div className="relative mx-auto max-w-[1680px] px-4 py-8 sm:px-6 lg:px-10">
+        <div className="grid gap-8 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start">
+          <div>
+            <SectionKicker>Research in motion</SectionKicker>
+            <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+              Driving Discovery. Creating Solutions.
+            </h2>
+            <p className="mt-5 text-sm leading-7 text-slate-600">
+              Our researchers are addressing pressing challenges through
+              collaborative, interdisciplinary, and solution-oriented research.
+            </p>
+            <TextLink href="/projects">View all projects</TextLink>
+          </div>
+          <ScrollRevealGroup className="grid gap-5 md:grid-cols-2 xl:grid-cols-3" staggerDelay={65}>
+            {items.slice(0, 3).map((item) => (
+              <FeaturedWorkCard key={`${item.type}-${item.id}`} item={item} />
+            ))}
+          </ScrollRevealGroup>
+        </div>
       </div>
     </ScrollReveal>
   );
@@ -580,17 +576,74 @@ function PartnersImpactSection({
   story?: ResearchGenericRecord;
 }) {
   const metrics = impactMetrics.slice(0, 4);
+  const storyImage = story?.cover_image_url || story?.image_url || "/images/research/research-projects-hero.webp";
 
   return (
     <ScrollReveal as="section" className="research-surface-grid relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
       <ResearchAnimatedBackdrop />
-      <div className="relative mx-auto max-w-[1680px] rounded-xl border border-white bg-white px-4 py-12 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:px-6 lg:px-10">
-        <SectionHeader
-          eyebrow="Partners & public impact"
-          title="Collaboration that translates knowledge into shared value."
-          action={{ href: "/partners", label: "Partner with Kisii University" }}
-        />
-
+      <div className="relative mx-auto max-w-[1680px] space-y-5">
+        <div className="relative overflow-hidden rounded-lg border border-primary/20 bg-white p-5 shadow-[0_20px_70px_rgba(15,23,42,0.06)] lg:p-6">
+          <div className="grid gap-6 lg:grid-cols-[300px_minmax(280px,360px)_minmax(0,1fr)] lg:items-center">
+            <div>
+              <SectionKicker>Public impact</SectionKicker>
+              <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
+                Research that improves lives and livelihoods
+              </h2>
+              <TextLink href="/community-impact">View all impact stories</TextLink>
+            </div>
+            <div className="research-image-fallback relative aspect-[16/7] overflow-hidden rounded-md lg:aspect-[16/8]">
+              <Image
+                src={storyImage}
+                alt=""
+                fill
+                sizes="(min-width: 1024px) 360px, 100vw"
+                className="object-cover"
+              />
+            </div>
+            <div>
+              <SectionKicker>Impact story</SectionKicker>
+              {story ? (
+                <>
+                  <h3 className="mt-3 font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
+                    {compactText(story.title ?? story.name)}
+                  </h3>
+                  {compactText(story.summary ?? story.description ?? story.body) ? (
+                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+                      {compactText(story.summary ?? story.description ?? story.body)}
+                    </p>
+                  ) : null}
+                  {story.slug ? <TextLink href={`/community-impact/${story.slug}`}>Read story</TextLink> : null}
+                </>
+              ) : (
+                <Link href="/community-impact" className="mt-3 inline-flex items-center gap-2 font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950 transition hover:text-primary">
+                  Explore community impact
+                  <ArrowRight aria-hidden className="h-4 w-4" />
+                </Link>
+              )}
+            </div>
+          </div>
+          {metrics.length > 0 ? (
+            <div className="mt-6 grid gap-3 border-t border-slate-200 pt-5 sm:grid-cols-2 lg:grid-cols-4">
+              {metrics.map((metric) => (
+                <div key={metric.id} className="border-slate-200 lg:border-r lg:pr-5 lg:last:border-r-0">
+                  <p className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+                    {compactText(metric.value ?? metric.metric_value ?? metric.count ?? "—")}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {compactText(metric.title ?? metric.name ?? metric.label)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          <Link
+            href="/impact-metrics"
+            aria-label="View impact metrics"
+            className="absolute right-4 top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white text-primary shadow-lg transition hover:translate-x-1 lg:flex"
+          >
+            <ArrowRight aria-hidden className="h-5 w-5" />
+          </Link>
+        </div>
         {partners.length > 0 ? (
           <div className="research-marquee-frame relative mt-8 overflow-hidden rounded-lg border border-slate-200 bg-white py-5">
             <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-white to-transparent" />
@@ -599,63 +652,6 @@ function PartnersImpactSection({
             <PartnerMarquee partners={[...partners].reverse()} reverse />
           </div>
         ) : null}
-
-        <div className="mt-6 grid gap-5 lg:grid-cols-3">
-          <article className="rounded-lg border border-slate-200 bg-slate-50 p-5 shadow-sm">
-            <SectionKicker>Impact at a glance</SectionKicker>
-            {metrics.length > 0 ? (
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                {metrics.map((metric) => (
-                  <div key={metric.id} className="rounded-md border border-slate-200 bg-slate-50 p-4">
-                    <p className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
-                      {compactText(metric.value ?? metric.metric_value ?? metric.count ?? "—")}
-                    </p>
-                    <p className="mt-1 text-xs font-semibold uppercase text-slate-500">
-                      {compactText(metric.title ?? metric.name ?? metric.label)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </article>
-          {story ? (
-            <article className="rounded-lg border border-slate-200 bg-slate-50 p-5 shadow-sm">
-              <SectionKicker>Community story</SectionKicker>
-              <h3 className="mt-3 font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
-                {compactText(story.title ?? story.name)}
-              </h3>
-              {compactText(story.summary ?? story.description ?? story.body) ? (
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  {compactText(story.summary ?? story.description ?? story.body)}
-                </p>
-              ) : null}
-              {story.slug ? <TextLink href={`/community-impact/${story.slug}`}>Read more stories</TextLink> : null}
-            </article>
-          ) : null}
-          <article className="rounded-lg border border-primary/20 bg-primary p-5 text-white shadow-sm">
-            <Handshake aria-hidden className="h-9 w-9 text-secondary" />
-            <h3 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold">
-              Let’s build impact together
-            </h3>
-            <p className="mt-3 text-sm leading-7 text-white/80">
-              We collaborate with governments, industry, NGOs, communities, and
-              scholars to create sustainable solutions and lasting impact.
-            </p>
-            <Link
-              href="/connect"
-              className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-secondary px-5 py-3 text-sm font-semibold text-white transition hover:bg-secondary/90"
-            >
-              Partner with Kisii University
-              <ArrowRight aria-hidden className="h-4 w-4" />
-            </Link>
-            <a
-              href="mailto:research@kisiiuniversity.ac.ke"
-              className="mt-4 inline-flex text-xs font-semibold text-white/80 transition hover:text-white"
-            >
-              research@kisiiuniversity.ac.ke
-            </a>
-          </article>
-        </div>
       </div>
     </ScrollReveal>
   );
@@ -740,8 +736,11 @@ function PillarCard({
 
 function FeaturedWorkCard({ item }: { item: FeaturedWorkItem }) {
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md">
-      <div className="relative aspect-[16/9] bg-slate-100">
+    <Link
+      href={item.href}
+      className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md"
+    >
+      <div className="research-image-fallback relative aspect-[16/8.5]">
         <Image
           src={item.image}
           alt=""
@@ -750,13 +749,10 @@ function FeaturedWorkCard({ item }: { item: FeaturedWorkItem }) {
           className="object-cover"
         />
         <div className="absolute left-3 top-3">
-          <FilledBadge>{item.type}</FilledBadge>
+          <FilledBadge>Featured {item.type}</FilledBadge>
         </div>
       </div>
       <div className="p-5">
-        <div className="flex flex-wrap gap-2">
-          {item.tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}
-        </div>
         <h3 className="mt-4 font-[family-name:var(--font-display)] text-xl font-semibold leading-7 text-slate-950">
           {item.title}
         </h3>
@@ -765,16 +761,21 @@ function FeaturedWorkCard({ item }: { item: FeaturedWorkItem }) {
             {item.summary}
           </p>
         ) : null}
-        <TextLink href={item.href}>{item.action}</TextLink>
+        <div className="mt-5 flex items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap gap-2">
+            {item.tags.slice(0, 2).map((tag) => <Badge key={tag}>{tag}</Badge>)}
+          </div>
+          <ArrowRight aria-hidden className="h-4 w-4 shrink-0 text-primary transition group-hover:translate-x-1" />
+        </div>
       </div>
-    </article>
+    </Link>
   );
 }
 
 function EditorialFeature({ item }: { item: NewsItem }) {
   return (
     <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="relative aspect-[16/10] bg-slate-100">
+      <div className="research-image-fallback relative aspect-[16/10]">
         <Image src={item.image} alt="" fill sizes="(min-width: 1280px) 52vw, 100vw" className="object-cover" />
       </div>
       <div className="p-5 lg:p-6">
@@ -815,7 +816,7 @@ function EditorialCard({ item }: { item: NewsItem }) {
 function EditorialRow({ item }: { item: NewsItem }) {
   return (
     <article className="grid gap-4 rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:grid-cols-[148px_minmax(0,1fr)]">
-      <div className="relative min-h-28 overflow-hidden rounded-md bg-slate-100">
+      <div className="research-image-fallback relative min-h-28 overflow-hidden rounded-md">
         <Image src={item.image} alt="" fill sizes="148px" className="object-cover" />
       </div>
       <div className="min-w-0 py-1">
@@ -838,7 +839,7 @@ function DirectoryRow({ item }: { item: DirectoryItem }) {
       href={item.href}
       className="grid gap-4 border-b border-slate-200 p-4 transition last:border-b-0 hover:bg-primary/5 sm:grid-cols-[92px_minmax(0,1fr)_auto]"
     >
-      <div className="relative h-20 overflow-hidden rounded-md bg-slate-100">
+      <div className="research-image-fallback relative h-20 overflow-hidden rounded-md">
         <Image src={item.image} alt="" fill sizes="92px" className="object-cover" />
       </div>
       <div className="min-w-0">
@@ -865,16 +866,43 @@ function PartnerMarquee({
     <div className="flex overflow-hidden py-2">
       <div className={`flex min-w-full shrink-0 gap-3 ${reverse ? "animate-research-marquee-reverse" : "animate-research-marquee"}`}>
         {row.map((partner, index) => (
-          <Link
+          <PartnerMarqueeItem
             key={`${partner.id}-${index}-${reverse ? "reverse" : "forward"}`}
-            href={partner.slug ? `/partners/${partner.slug}` : "/partners"}
-            className="flex h-16 min-w-[210px] shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white px-5 text-center text-sm font-semibold text-slate-700 transition hover:border-primary/30 hover:text-primary"
-          >
-            {compactText(partner.name ?? partner.title) || "Research partner"}
-          </Link>
+            partner={partner}
+          />
         ))}
       </div>
     </div>
+  );
+}
+
+function PartnerMarqueeItem({ partner }: { partner: ResearchGenericRecord }) {
+  const logo = compactText(
+    partner.logo_url ??
+      partner.logo ??
+      partner.image_url ??
+      partner.cover_image_url,
+  );
+  const name = compactText(partner.name ?? partner.title) || "Research partner";
+
+  return (
+    <Link
+      href={partner.slug ? `/partners/${partner.slug}` : "/partners"}
+      className="flex h-16 min-w-[210px] shrink-0 items-center justify-center gap-3 rounded-md border border-slate-200 bg-white px-5 text-center text-sm font-semibold text-slate-700 transition hover:border-primary/30 hover:text-primary"
+    >
+      {logo ? (
+        <span className="relative h-9 w-16 shrink-0 overflow-hidden rounded bg-white">
+          <Image
+            src={logo}
+            alt=""
+            fill
+            sizes="64px"
+            className="object-contain"
+          />
+        </span>
+      ) : null}
+      <span className="line-clamp-2">{name}</span>
+    </Link>
   );
 }
 
@@ -945,11 +973,15 @@ function ActionLink({
 }: {
   href: string;
   children: ReactNode;
-  variant?: "primary" | "outline" | "light" | "gold";
+  variant?: "primary" | "outline" | "light" | "gold" | "impact" | "glass";
 }) {
   const className =
     variant === "light"
       ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/40 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+      : variant === "glass"
+        ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/45 bg-white/10 px-5 py-3 text-sm font-semibold text-white shadow-sm backdrop-blur transition hover:bg-white/18"
+        : variant === "impact"
+          ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-secondary/60 bg-emerald-900/85 px-5 py-3 text-sm font-semibold text-white shadow-sm backdrop-blur transition hover:bg-emerald-900"
       : variant === "gold"
         ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-secondary/20 bg-white px-5 py-3 text-sm font-semibold text-secondary transition hover:border-secondary hover:bg-secondary/5"
         : variant === "outline"

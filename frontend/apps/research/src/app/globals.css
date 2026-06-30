@@ -255,6 +255,13 @@
     background-size: 56px 56px;
   }
 
+  .research-image-fallback {
+    background:
+      radial-gradient(circle at 18% 18%, rgba(226, 165, 35, 0.18), transparent 32%),
+      radial-gradient(circle at 82% 22%, rgba(0, 78, 56, 0.14), transparent 30%),
+      linear-gradient(135deg, #edf3f6 0%, #f8fafc 52%, #eef5f0 100%);
+  }
+
   .animate-research-marquee:hover,
   .animate-research-marquee-reverse:hover,
   .research-marquee-frame:focus-within .animate-research-marquee,

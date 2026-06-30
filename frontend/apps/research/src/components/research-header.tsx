@@ -11,20 +11,23 @@ import {
   ArrowRight,
   ChevronDown,
   Heart,
-  Leaf,
+  Linkedin,
+  Mail,
   Menu,
+  MapPin,
+  Phone,
   Search,
-  Sprout,
   X,
+  Youtube,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@ksu/ui/components";
 import { Dialog, DialogContent, DialogTitle } from "@ksu/ui/components";
 import { Input } from "@ksu/ui/components";
 import { Button } from "@ksu/ui/components";
 
 function useScrollState() {
-  const [isScrolled, setIsScrolled] = useState(false);
+const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     const handler = () => setIsScrolled(window.scrollY > 50);
@@ -34,6 +37,13 @@ function useScrollState() {
 
   return isScrolled;
 }
+
+const mobileQuickLinks = [
+  { label: "Projects", href: "/projects" },
+  { label: "Publications", href: "/publications" },
+  { label: "Funding", href: "/funding" },
+  { label: "Partners", href: "/partners" },
+];
 
 export function ResearchHeader({
   publicHref = publicFrontendUrl,
@@ -55,40 +65,60 @@ export function ResearchHeader({
         Skip to research content
       </a>
 
-      {/* Utility Bar */}
       <div
         className={cn(
-          "hidden border-b border-white/10 bg-secondary text-xs text-white transition-all duration-300 xl:block",
+          "hidden border-b border-white/10 bg-primary text-xs text-white transition-all duration-300 xl:block",
           isScrolled ? "h-0 overflow-hidden py-0" : "h-auto",
         )}
       >
-        <div className="flex min-h-10 w-full items-center justify-between gap-4 px-4 py-1.5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <nav className="flex items-center gap-5" aria-label="Research utility">
-            <Link
-              href={publicHref}
-              className="text-[11px] font-bold tracking-wide transition-colors hover:text-white/90"
-            >
-              ← MAIN SITE
-            </Link>
-            <Link
-              href="/farm"
-              className="flex items-center gap-1.5 text-[11px] font-bold tracking-wide transition-colors hover:text-white/90"
-            >
-              <Sprout className="h-3.5 w-3.5" />
-              UNIVERSITY FARM
-            </Link>
-            <Link
-              href="/sustainability"
-              className="flex items-center gap-1.5 text-[11px] font-bold tracking-wide transition-colors hover:text-white/90"
-            >
-              <Leaf className="h-3.5 w-3.5" />
-              SUSTAINABILITY
-            </Link>
-          </nav>
-          <div className="flex items-center gap-4">
+        <div className="flex min-h-9 w-full items-center justify-between gap-4 px-4 py-1.5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+          <div className="flex items-center gap-5 text-[11px] font-medium">
+            <span className="flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5" />
+              Main Campus, Kisii, Kenya
+            </span>
+            <a href="mailto:research@kisiiuniversity.ac.ke" className="flex items-center gap-1.5 transition hover:text-white/80">
+              <Mail className="h-3.5 w-3.5" />
+              research@kisiiuniversity.ac.ke
+            </a>
+            <a href="tel:+254720875082" className="flex items-center gap-1.5 transition hover:text-white/80">
+              <Phone className="h-3.5 w-3.5" />
+              +254 720 875 082
+            </a>
+          </div>
+          <div className="flex items-center gap-5">
+            <nav className="flex items-center gap-5" aria-label="Research utility">
+              <Link href="/training" className="text-[11px] font-semibold transition-colors hover:text-white/80">
+                Student Portal
+              </Link>
+              <Link href="/team" className="text-[11px] font-semibold transition-colors hover:text-white/80">
+                Staff Portal
+              </Link>
+              <Link href="/resources-tools" className="text-[11px] font-semibold transition-colors hover:text-white/80">
+                Library
+              </Link>
+              <Link href="/news" className="text-[11px] font-semibold transition-colors hover:text-white/80">
+                News & Events
+              </Link>
+            </nav>
+            <span className="h-5 w-px bg-white/25" />
+            <div className="flex items-center gap-3">
+              <Link href="https://linkedin.com/school/kisiiuniversity" aria-label="Kisii University LinkedIn" className="transition hover:text-white/80">
+                <Linkedin className="h-3.5 w-3.5" />
+              </Link>
+              <Link href="https://twitter.com/kisiiuniversity" aria-label="Kisii University X" className="text-[11px] font-bold transition hover:text-white/80">
+                X
+              </Link>
+              <Link href="https://youtube.com/@kisiiuniversity" aria-label="Kisii University YouTube" className="transition hover:text-white/80">
+                <Youtube className="h-3.5 w-3.5" />
+              </Link>
+              <Link href="https://facebook.com/kisiiuniversity" aria-label="Kisii University Facebook" className="text-[11px] font-bold transition hover:text-white/80">
+                f
+              </Link>
+            </div>
             <button
               onClick={() => setSearchOpen(true)}
-              className="p-1.5 rounded-md transition-colors hover:bg-white/10"
+              className="hidden p-1.5 rounded-md transition-colors hover:bg-white/10"
               aria-label="Search research"
             >
               <Search className="h-4 w-4" />
@@ -107,29 +137,30 @@ export function ResearchHeader({
         )}
       >
         <nav
-          className="mx-auto flex h-[84px] max-w-[1920px] items-center justify-between gap-2 px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
+          className="mx-auto flex h-[92px] max-w-[1920px] items-center justify-between gap-2 px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
           aria-label="Research navigation"
         >
           {/* Logo & Brand */}
-          <Link href="/" className="flex shrink-0 items-center gap-3 group">
+          <Link href="/" className="group flex max-w-[250px] min-w-0 shrink items-center gap-2 sm:max-w-none sm:gap-3">
             <motion.div
+              className="shrink-0"
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
               <Image
                 src="/logos/ksu-logo.png"
                 alt="Kisii University"
-                width={42}
-                height={42}
-                className="object-contain"
+                width={58}
+                height={58}
+                className="h-12 w-12 object-contain sm:h-[58px] sm:w-[58px]"
               />
             </motion.div>
-            <div className="flex flex-col">
-              <p className="font-[family-name:var(--font-display)] text-sm font-black uppercase tracking-[0.12em] text-slate-950 sm:text-base">
+            <div className="flex min-w-0 flex-col">
+              <p className="truncate font-[family-name:var(--font-display)] text-base font-black uppercase tracking-[0.08em] text-slate-950 sm:text-xl sm:tracking-[0.1em]">
                 Kisii University
               </p>
-              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary sm:text-[10px]">
-                Research & Innovation
+              <p className="hidden max-w-[230px] text-[8px] font-bold uppercase leading-4 tracking-[0.1em] text-primary sm:block sm:text-[9px]">
+                Research, Extension, Innovation & Resource Mobilization
               </p>
             </div>
           </Link>
@@ -149,7 +180,7 @@ export function ResearchHeader({
                       key={item.href}
                       href={item.href}
                       className={cn(
-                        "relative rounded-lg px-4 py-2 text-sm font-bold uppercase tracking-tight whitespace-nowrap transition-all",
+                        "relative rounded-lg px-3 py-2 text-xs font-bold tracking-tight whitespace-nowrap transition-all 2xl:px-4 2xl:text-sm",
                         isActive
                           ? "bg-primary/10 text-primary"
                           : "text-slate-700 hover:bg-primary/5 hover:text-primary",
@@ -185,7 +216,7 @@ export function ResearchHeader({
                         )
                       }
                       className={cn(
-                        "flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-bold uppercase tracking-tight whitespace-nowrap transition-all",
+                        "flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold tracking-tight whitespace-nowrap transition-all 2xl:px-4 2xl:text-sm",
                         isActive
                           ? "bg-primary/10 text-primary"
                           : "text-slate-700 hover:bg-primary/5 hover:text-primary",
@@ -273,21 +304,21 @@ export function ResearchHeader({
           </div>
 
           {/* Desktop Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <button
               onClick={() => setSearchOpen(true)}
-              className="hidden h-10 w-10 items-center justify-center rounded-full text-slate-700 transition hover:bg-primary/5 hover:text-primary xl:flex"
+              className="hidden h-11 w-11 items-center justify-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-primary/5 hover:text-primary xl:flex"
               aria-label="Search"
             >
               <Search className="h-5 w-5" />
             </button>
             <Button
               asChild
-              className="hidden h-10 rounded-lg px-5 text-sm font-black uppercase tracking-widest bg-secondary hover:bg-secondary/90 text-white sm:inline-flex"
+              className="hidden h-11 rounded-md px-6 text-sm font-bold normal-case tracking-normal bg-secondary hover:bg-secondary/90 text-white sm:inline-flex"
             >
               <Link href="/donate" className="flex items-center gap-2">
                 <Heart className="h-4 w-4" />
-                Donate
+                Support Research
               </Link>
             </Button>
 
@@ -296,16 +327,16 @@ export function ResearchHeader({
               <Button
                 asChild
                 size="sm"
-                className="h-8 rounded-lg px-3 text-[10px] font-black uppercase tracking-widest bg-secondary hover:bg-secondary/90 text-white sm:hidden"
+                className="hidden h-9 w-9 rounded-lg bg-secondary p-0 text-white hover:bg-secondary/90 sm:inline-flex"
               >
-                <Link href="/donate" className="flex items-center gap-1.5">
+                <Link href="/donate" aria-label="Support research">
                   <Heart className="h-3.5 w-3.5" />
-                  Donate
+                  <span className="sr-only">Support research</span>
                 </Link>
               </Button>
               <button
                 onClick={() => setSearchOpen(true)}
-                className="flex h-10 w-10 items-center justify-center rounded-full text-slate-700 transition hover:bg-primary/5 hover:text-primary sm:hidden"
+                className="hidden h-10 w-10 items-center justify-center rounded-full text-slate-700 transition hover:bg-primary/5 hover:text-primary sm:flex xl:hidden"
                 aria-label="Search"
               >
                 <Search className="h-5 w-5" />
@@ -316,29 +347,7 @@ export function ResearchHeader({
                     className="flex h-10 w-10 items-center justify-center rounded-full text-slate-700 transition hover:bg-primary/5 hover:text-primary"
                     aria-label={mobileOpen ? "Close menu" : "Open menu"}
                   >
-                    <AnimatePresence mode="wait">
-                      {mobileOpen ? (
-                        <motion.div
-                          key="close"
-                          initial={{ rotate: -90, opacity: 0 }}
-                          animate={{ rotate: 0, opacity: 1 }}
-                          exit={{ rotate: 90, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <X className="h-6 w-6" />
-                        </motion.div>
-                      ) : (
-                        <motion.div
-                          key="menu"
-                          initial={{ rotate: 90, opacity: 0 }}
-                          animate={{ rotate: 0, opacity: 1 }}
-                          exit={{ rotate: -90, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <Menu className="h-6 w-6" />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                    {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                   </button>
                 </SheetTrigger>
                 <SheetContent
@@ -363,7 +372,7 @@ export function ResearchHeader({
                         Kisii University
                       </p>
                       <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/70">
-                        Research & Innovation
+                        Research, Extension, Innovation & Resource Mobilization
                       </p>
                     </div>
                   </div>
@@ -379,6 +388,25 @@ export function ResearchHeader({
                         placeholder="Search publications, projects..."
                         className="h-9 border-slate-200 bg-slate-50 pl-9 text-sm text-slate-900 placeholder:text-slate-400"
                       />
+                    </div>
+
+                    <div>
+                      <p className="mb-3 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                        Quick access
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {mobileQuickLinks.map((link) => (
+                          <Link
+                            key={link.href}
+                            href={link.href}
+                            onClick={() => setMobileOpen(false)}
+                            className="flex min-h-12 items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-bold text-slate-700 transition hover:border-primary/30 hover:bg-white hover:text-primary"
+                          >
+                            {link.label}
+                            <ArrowRight className="h-3.5 w-3.5" />
+                          </Link>
+                        ))}
+                      </div>
                     </div>
 
                     {/* Mobile Nav Links */}
@@ -451,7 +479,7 @@ export function ResearchHeader({
                       >
                         <Link href="/donate">
                           <Heart className="mr-2 h-4 w-4" />
-                          Donate
+                          Support Research
                         </Link>
                       </Button>
                     </div>
