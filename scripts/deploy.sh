@@ -864,6 +864,26 @@ server {
     }
 }
 EOF
+    if [[ "\${API_HOST}" != "\${RESEARCH_HOST}" ]]; then
+      sudo tee -a "\${site_available}" >/dev/null <<EOF
+
+server {
+    listen 80;
+    server_name \${API_HOST};
+
+    client_max_body_size 25M;
+
+    location / {
+        proxy_pass http://\${EDGE_PROXY_TARGET};
+        proxy_http_version 1.1;
+        proxy_set_header Host \\\$host;
+        proxy_set_header X-Real-IP \\\$remote_addr;
+        proxy_set_header X-Forwarded-For \\\$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \\\$scheme;
+    }
+}
+EOF
+    fi
   else
     sudo tee "\${site_available}" >/dev/null <<EOF
 server {
@@ -941,6 +961,7 @@ EOF
 
   if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
     add_cert_domain "\${RESEARCH_HOST}"
+    add_cert_domain "\${API_HOST}"
   else
     add_cert_domain "\${PUBLIC_HOST}"
     add_cert_domain "\${API_HOST}"

@@ -25,6 +25,7 @@ export interface PortalNavItem {
   href: string;
   icon: LucideIcon;
   scope?: string | string[];
+  group?: string;
 }
 
 export interface PortalDashboardStat {
