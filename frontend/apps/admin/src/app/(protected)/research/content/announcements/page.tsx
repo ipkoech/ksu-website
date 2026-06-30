@@ -14,6 +14,7 @@ export default function ResearchAnnouncementsPage() {
       summarySlot={<ContentWorkspaceHeader />}
       listFilters={contentFilters}
       recordColumns={contentColumns}
+      getRecordDetailHref={(record) => `/research/content/announcements/${record.id}`}
       fields={[
         { name: "title", label: "Title", required: true },
         { name: "slug", label: "Slug" },

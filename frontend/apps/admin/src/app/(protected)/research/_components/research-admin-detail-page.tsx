@@ -16,6 +16,7 @@ import {
 import { ResearchDetailGuide } from "./research-guidance";
 
 type ResourceApi = {
+  get?: (id: string) => Promise<{ data?: ResearchGenericRecord }>;
   getBySlug?: (slug: string) => Promise<{ data?: ResearchGenericRecord }>;
   list?: (params?: Record<string, string | number | boolean | undefined>) => Promise<{ data?: ResearchGenericRecord[] }>;
 };
@@ -81,6 +82,10 @@ export function ResearchAdminDetailPage({
       if (lookup === "slug") {
         if (!resource.getBySlug) throw new Error("This resource does not support slug lookup.");
         const response = await resource.getBySlug(value);
+        return response.data ?? null;
+      }
+      if (resource.get) {
+        const response = await resource.get(value);
         return response.data ?? null;
       }
       if (!resource.list) throw new Error("This resource does not support list lookup.");

@@ -14,6 +14,7 @@ export default function ResearchBlogsPage() {
       summarySlot={<ContentWorkspaceHeader />}
       listFilters={contentFilters}
       recordColumns={contentColumns}
+      getRecordDetailHref={(record) => `/research/content/blogs/${record.id}`}
       fields={[
         { name: "title", label: "Title", required: true },
         { name: "slug", label: "Slug" },

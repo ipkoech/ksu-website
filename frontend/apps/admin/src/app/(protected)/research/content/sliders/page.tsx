@@ -22,6 +22,7 @@ export default function ResearchSlidersPage() {
         { name: "is_main", label: "Main", type: "boolean" },
       ]}
       recordColumns={contentColumns}
+      getRecordDetailHref={(record) => `/research/content/sliders/${record.id}`}
       fields={[
         { name: "title", label: "Title", required: true },
         { name: "subtitle", label: "Subtitle" },
