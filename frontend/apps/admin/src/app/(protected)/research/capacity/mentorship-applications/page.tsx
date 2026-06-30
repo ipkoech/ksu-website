@@ -42,11 +42,62 @@ export default function MentorshipApplicationsPage() {
       getRecordWorkflowActions={(record) => {
         const status = String(record.status ?? "").toLowerCase();
         if (status === "approved" || status === "matched") return [];
+        const reviewFields = [
+          { name: "review_notes", label: "Review Notes", type: "textarea" as const, required: true },
+          { name: "reviewed_by_id", label: "Reviewer", type: "entity" as const, relation: { adapter: "person" as const, filters: { status: "active" }, allowClear: false }, required: true },
+        ];
         return [
-          { label: "Review", payload: { status: "under_review" }, successMessage: "Application moved to review" },
-          { label: "Approve", payload: { status: "approved" }, successMessage: "Application approved" },
-          { label: "Match Mentor", payload: { status: "matched" }, successMessage: "Application marked as matched" },
-          { label: "Reject", variant: "outline", className: "text-destructive", payload: { status: "rejected" }, successMessage: "Application rejected" },
+          {
+            label: "Review",
+            mode: "sheet",
+            fields: reviewFields,
+            payload: { status: "under_review" },
+            buildPayload: (values) => ({ ...values, reviewed_at: new Date().toISOString() }),
+            successMessage: "Application moved to review",
+          },
+          {
+            label: "Approve",
+            mode: "sheet",
+            fields: reviewFields,
+            payload: { status: "approved" },
+            buildPayload: (values) => ({ ...values, reviewed_at: new Date().toISOString() }),
+            successMessage: "Application approved",
+          },
+          {
+            label: "Match Mentor",
+            mode: "sheet",
+            fields: [
+              { name: "mentor_id", label: "Mentor", type: "entity" as const, relation: { adapter: "person" as const, filters: { status: "active" }, allowClear: false }, required: true },
+              { name: "match_date", label: "Match Date", type: "date" as const, required: true },
+              { name: "goals", label: "Match Goals", type: "textarea" as const },
+              { name: "meeting_schedule", label: "Meeting Schedule", type: "textarea" as const },
+            ],
+            defaults: { match_date: new Date().toISOString().slice(0, 10) },
+            payload: { status: "matched" },
+            run: async (application, values) => {
+              await researchServiceApi.mentorshipMatches.create({
+                program_id: application.program_id,
+                mentor_id: values?.mentor_id,
+                mentee_id: application.applicant_id,
+                match_date: values?.match_date,
+                goals: values?.goals,
+                meeting_schedule: values?.meeting_schedule,
+                status: "active",
+              });
+              await researchServiceApi.mentorshipApplications.update(application.id, { status: "matched" });
+            },
+            successMessage: "Mentor matched to application",
+          },
+          {
+            label: "Reject",
+            mode: "sheet",
+            variant: "outline",
+            className: "text-destructive",
+            fields: reviewFields,
+            payload: { status: "rejected" },
+            buildPayload: (values) => ({ ...values, reviewed_at: new Date().toISOString() }),
+            successMessage: "Application rejected",
+          },
         ];
       }}
     />

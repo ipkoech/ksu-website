@@ -3,7 +3,7 @@
 import { useEffect, useId, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit, Eye, FilterX, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { Edit, Eye, FilterX, HelpCircle, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 
 const RESEARCH_FRONTEND = process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL;
 
@@ -61,6 +61,10 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
   richTextToPlainText,
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
@@ -98,6 +102,7 @@ export interface EditableField {
   label: string;
   type?: FieldType;
   required?: boolean;
+  helpText?: string;
   placeholder?: string;
   options?: Array<{ label: string; value: string }>;
   relation?: {
@@ -152,8 +157,19 @@ export interface EditableRecordWorkflowAction<
   successMessage?: string;
   variant?: "default" | "outline" | "secondary" | "destructive" | "ghost";
   className?: string;
+  mode?: "confirm" | "sheet";
+  fields?: EditableField[];
+  defaults?: RecordShape | ((record: TRecord) => RecordShape);
+  buildPayload?: (
+    values: RecordShape,
+    record: TRecord,
+  ) => Partial<TPayload>;
+  validate?: (
+    values: RecordShape,
+    record: TRecord,
+  ) => Record<string, string>;
   payload: Partial<TPayload> | ((record: TRecord) => Partial<TPayload>);
-  run?: (record: TRecord) => Promise<unknown>;
+  run?: (record: TRecord, payload?: Partial<TPayload>) => Promise<unknown>;
   confirmTitle?: string | ((record: TRecord) => string);
   confirmDescription?: string | ((record: TRecord) => string);
   confirmLabel?: string;
@@ -203,6 +219,12 @@ interface EditableServiceResourcePageProps<
   summarySlot?: ReactNode;
   editorMode?: "dialog" | "sheet" | "auto";
   renderMobileRecord?: (record: TRecord, actions: ReactNode) => ReactNode;
+  emptyState?: {
+    title?: string;
+    description?: string;
+    primaryActionLabel?: string;
+    secondaryAction?: ReactNode;
+  };
 }
 
 function defaultValue(field: EditableField) {
@@ -350,9 +372,11 @@ export function EditableServiceResourcePage<
   summarySlot,
   editorMode = "auto",
   renderMobileRecord,
+  emptyState,
 }: EditableServiceResourcePageProps<TRecord, TPayload>) {
   const queryClient = useQueryClient();
   const formId = useId();
+  const workflowFormId = useId();
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<TRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TRecord | null>(null);
@@ -360,13 +384,19 @@ export function EditableServiceResourcePage<
     record: TRecord;
     action: EditableRecordWorkflowAction<TRecord, TPayload>;
   } | null>(null);
+  const [workflowEditorTarget, setWorkflowEditorTarget] = useState<{
+    record: TRecord;
+    action: EditableRecordWorkflowAction<TRecord, TPayload>;
+  } | null>(null);
   const [values, setValues] = useState<RecordShape>(() =>
     recordToValues(fields),
   );
+  const [workflowValues, setWorkflowValues] = useState<RecordShape>({});
   const [filterValues, setFilterValues] = useState<RecordShape>({});
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [workflowFieldErrors, setWorkflowFieldErrors] = useState<Record<string, string>>({});
   const activeFilters = useMemo(
     () =>
       Object.fromEntries(
@@ -527,6 +557,7 @@ export function EditableServiceResourcePage<
   const runWorkflowAction = async (
     record: TRecord,
     action: EditableRecordWorkflowAction<TRecord, TPayload>,
+    overridePayload?: Partial<TPayload>,
   ) => {
     if (!canEdit) {
       toast.error(`You do not have permission to update ${title.toLowerCase()}`);
@@ -538,8 +569,8 @@ export function EditableServiceResourcePage<
         await action.run(record);
         await queryClient.invalidateQueries({ queryKey });
       } else {
-        const payload =
-          typeof action.payload === "function" ? action.payload(record) : action.payload;
+        const payload = overridePayload ??
+          (typeof action.payload === "function" ? action.payload(record) : action.payload);
         await updateMutation.mutateAsync({ id: record.id, payload });
       }
       toast.success(action.successMessage ?? `${title} updated successfully`);
@@ -552,7 +583,55 @@ export function EditableServiceResourcePage<
     record: TRecord,
     action: EditableRecordWorkflowAction<TRecord, TPayload>,
   ) => {
+    if (action.mode === "sheet" && action.fields?.length) {
+      const defaults =
+        typeof action.defaults === "function"
+          ? action.defaults(record)
+          : action.defaults ?? {};
+      setWorkflowEditorTarget({ record, action });
+      setWorkflowValues({
+        ...recordToValues(action.fields, record),
+        ...defaults,
+      });
+      setWorkflowFieldErrors({});
+      return;
+    }
     setWorkflowTarget({ record, action });
+  };
+
+  const closeWorkflowEditor = () => {
+    setWorkflowEditorTarget(null);
+    setWorkflowValues({});
+    setWorkflowFieldErrors({});
+  };
+
+  const submitWorkflowEditor = async () => {
+    if (!workflowEditorTarget) return;
+    const { record, action } = workflowEditorTarget;
+    const workflowFields = action.fields ?? [];
+    const nextErrors = {
+      ...validateFields(workflowFields, workflowValues),
+      ...(action.validate?.(workflowValues, record) ?? {}),
+    };
+    setWorkflowFieldErrors(nextErrors);
+    const firstError = Object.values(nextErrors)[0];
+    if (firstError) {
+      toast.error(firstError);
+      return;
+    }
+
+    const normalized = normalizePayload(workflowFields, workflowValues);
+    const basePayload =
+      typeof action.payload === "function" ? action.payload(record) : action.payload;
+    const buildWorkflowPayload = action.buildPayload;
+    const payload = {
+      ...basePayload,
+      ...(buildWorkflowPayload
+        ? buildWorkflowPayload(normalized, record)
+        : normalized),
+    } as Partial<TPayload>;
+    await runWorkflowAction(record, action, payload);
+    closeWorkflowEditor();
   };
 
   const renderRecordActions = (record: TRecord) => {
@@ -783,7 +862,21 @@ export function EditableServiceResourcePage<
               </Alert>
             ) : records.length === 0 ? (
               <div className="rounded-lg border bg-background p-8">
-                <EmptyState title="No records found" description={emptyMessage} />
+                <EmptyState
+                  title={emptyState?.title ?? "No records found"}
+                  description={emptyState?.description ?? emptyMessage}
+                />
+                {canCreate || emptyState?.secondaryAction ? (
+                  <div className="mt-4 flex flex-wrap justify-center gap-2">
+                    {canCreate ? (
+                      <Button type="button" size="sm" onClick={startCreate}>
+                        <Plus data-icon="inline-start" />
+                        {emptyState?.primaryActionLabel ?? "Create Record"}
+                      </Button>
+                    ) : null}
+                    {emptyState?.secondaryAction}
+                  </div>
+                ) : null}
               </div>
             ) : (
               <div className="flex flex-col gap-4">
@@ -997,6 +1090,49 @@ export function EditableServiceResourcePage<
         onConfirm={confirmDelete}
         isLoading={deleteMutation.isPending}
       />
+      <Sheet
+        open={!!workflowEditorTarget}
+        onOpenChange={(open) => {
+          if (!open) closeWorkflowEditor();
+        }}
+      >
+        <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-2xl">
+          <SheetHeader>
+            <SheetTitle>{workflowEditorTarget ? workflowEditorTarget.action.label : "Workflow Action"}</SheetTitle>
+            <SheetDescription>
+              {workflowEditorTarget
+                ? workflowEditorTarget.action.confirmDescription
+                  ? typeof workflowEditorTarget.action.confirmDescription === "function"
+                    ? workflowEditorTarget.action.confirmDescription(workflowEditorTarget.record)
+                    : workflowEditorTarget.action.confirmDescription
+                  : `Update workflow details for "${getRecordTitle(workflowEditorTarget.record)}".`
+                : "Update workflow details."}
+            </SheetDescription>
+          </SheetHeader>
+          <EditorFormBody
+            formId={workflowFormId}
+            fields={workflowEditorTarget?.action.fields ?? []}
+            values={workflowValues}
+            setValues={setWorkflowValues}
+            fieldErrors={workflowFieldErrors}
+            setFieldErrors={setWorkflowFieldErrors}
+            editingRecord={workflowEditorTarget?.record ?? null}
+            canCreate={false}
+            canEdit={canEdit}
+            readOnlyMessage={readOnlyMessage}
+          />
+          <SheetFooter className="sticky bottom-0 mt-auto gap-2 border-t bg-background pt-4 sm:gap-0">
+            <Button type="button" variant="outline" onClick={closeWorkflowEditor}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={submitWorkflowEditor} disabled={updateMutation.isPending}>
+              {updateMutation.isPending
+                ? "Saving..."
+                : workflowEditorTarget?.action.confirmLabel ?? workflowEditorTarget?.action.label ?? "Save"}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
       <ConfirmDialog
         open={!!workflowTarget}
         onOpenChange={(open) => {
@@ -1169,18 +1305,21 @@ function EditableFieldControl({
 
   return (
     <div className="flex flex-col gap-2">
-      <label
-        id={labelId}
-        htmlFor={
-          field.type === "boolean" || field.type === "textarea" || field.type === "richtext"
-            ? undefined
-            : id
-        }
-        className="text-sm font-medium"
-      >
-        {field.label}
-        {field.required ? " *" : ""}
-      </label>
+      <div className="flex items-center gap-1.5">
+        <label
+          id={labelId}
+          htmlFor={
+            field.type === "boolean" || field.type === "textarea" || field.type === "richtext"
+              ? undefined
+              : id
+          }
+          className="text-sm font-medium"
+        >
+          {field.label}
+          {field.required ? " *" : ""}
+        </label>
+        {field.helpText ? <FieldHelp label={field.label} text={field.helpText} /> : null}
+      </div>
       {field.type === "textarea" || field.type === "richtext" ? (
         <RichTextEditor
           editorId={id}
@@ -1308,6 +1447,27 @@ function EditableFieldControl({
         </p>
       ) : null}
     </div>
+  );
+}
+
+function FieldHelp({ label, text }: { label: string; text: string }) {
+  return (
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex size-5 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={`Help for ${label}`}
+          >
+            <HelpCircle className="size-3.5" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-64 text-sm" align="start">
+          {text}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 

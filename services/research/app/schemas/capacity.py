@@ -187,6 +187,9 @@ class MentorshipApplicationCreate(MentorshipApplicationBase):
 class MentorshipApplicationUpdate(BaseSchema):
     motivation: str | None = None
     status: str | None = None
+    review_notes: str | None = None
+    reviewed_at: datetime | None = None
+    reviewed_by_id: uuid.UUID | None = None
 
 
 class MentorshipApplicationRead(MentorshipApplicationBase, BaseReadSchema):
@@ -328,6 +331,9 @@ class ScholarshipApplicationCreate(ScholarshipApplicationBase):
 class ScholarshipApplicationUpdate(BaseSchema):
     research_proposal: str | None = None
     status: str | None = None
+    review_score: int | None = None
+    decision_date: date | None = None
+    awarded_amount: Decimal | None = None
 
 
 class ScholarshipApplicationRead(ScholarshipApplicationBase, BaseReadSchema):

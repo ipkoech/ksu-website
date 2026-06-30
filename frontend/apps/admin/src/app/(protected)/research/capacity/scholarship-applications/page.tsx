@@ -41,11 +41,48 @@ export default function ScholarshipApplicationsPage() {
       getRecordWorkflowActions={(record) => {
         const status = String(record.status ?? "").toLowerCase();
         if (status === "awarded") return [];
+        const reviewFields = [
+          { name: "review_score", label: "Review Score", type: "number" as const, required: true },
+          { name: "decision_date", label: "Decision Date", type: "date" as const, required: true },
+        ];
         return [
-          { label: "Review", payload: { status: "under_review" }, successMessage: "Application moved to review" },
-          { label: "Shortlist", payload: { status: "shortlisted" }, successMessage: "Application shortlisted" },
-          { label: "Award", payload: { status: "awarded" }, successMessage: "Scholarship awarded" },
-          { label: "Reject", variant: "outline", className: "text-destructive", payload: { status: "rejected" }, successMessage: "Application rejected" },
+          {
+            label: "Review",
+            mode: "sheet",
+            fields: reviewFields,
+            defaults: { decision_date: new Date().toISOString().slice(0, 10) },
+            payload: { status: "under_review" },
+            successMessage: "Application moved to review",
+          },
+          {
+            label: "Shortlist",
+            mode: "sheet",
+            fields: reviewFields,
+            defaults: { decision_date: new Date().toISOString().slice(0, 10) },
+            payload: { status: "shortlisted" },
+            successMessage: "Application shortlisted",
+          },
+          {
+            label: "Award",
+            mode: "sheet",
+            fields: [
+              ...reviewFields,
+              { name: "awarded_amount", label: "Awarded Amount", type: "number" as const, required: true },
+            ],
+            defaults: { decision_date: new Date().toISOString().slice(0, 10) },
+            payload: { status: "awarded" },
+            successMessage: "Scholarship awarded",
+          },
+          {
+            label: "Reject",
+            mode: "sheet",
+            variant: "outline",
+            className: "text-destructive",
+            fields: reviewFields,
+            defaults: { decision_date: new Date().toISOString().slice(0, 10) },
+            payload: { status: "rejected" },
+            successMessage: "Application rejected",
+          },
         ];
       }}
     />
