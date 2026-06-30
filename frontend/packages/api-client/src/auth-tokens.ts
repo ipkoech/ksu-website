@@ -46,11 +46,11 @@ export function getStoredAccessToken() {
   return getStoredAuthTokens().accessToken;
 }
 
-export function getMainApiBaseUrl() {
+function getAuthRefreshBaseUrl() {
   return resolveMainApiBaseUrl();
 }
 
-export async function refreshStoredAccessToken(baseUrl = getMainApiBaseUrl()) {
+export async function refreshStoredAccessToken(baseUrl = getAuthRefreshBaseUrl()) {
   const { refreshToken } = getStoredAuthTokens();
   if (!refreshToken) return false;
 
