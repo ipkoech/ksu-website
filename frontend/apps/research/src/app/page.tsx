@@ -89,8 +89,11 @@ export default async function ResearchPage() {
     grants,
     innovations,
     partners,
-    articles,
+    news,
+    blogs,
+    announcements,
     events,
+    heroSliders,
     centers,
     facilities,
     expertiseTags,
@@ -112,7 +115,12 @@ export default async function ResearchPage() {
     grants.data,
     innovations.data,
   );
-  const newsItems = buildNewsItems(articles.data, events.data);
+  const newsItems = buildNewsItems(
+    news.data,
+    blogs.data,
+    announcements.data,
+    events.data,
+  );
   const directoryItems = buildDirectoryItems(
     centers.data,
     facilities.data,
@@ -134,8 +142,11 @@ export default async function ResearchPage() {
       grants,
       innovations,
       partners,
-      articles,
+      news,
+      blogs,
+      announcements,
       events,
+      heroSliders,
       centers,
       facilities,
       expertiseTags,
@@ -153,6 +164,7 @@ export default async function ResearchPage() {
     <main id="research-main" className="min-h-screen bg-[#f4f6f4] text-slate-950">
       <ResearchLandingHero
         activeProjects={statsMap.research_projects || projects.total || projects.data.length}
+        slides={heroSliders.data}
       />
       <PortfolioQuickAccessSection
         projects={statsMap.research_projects || projects.total || projects.data.length}
@@ -190,12 +202,33 @@ export default async function ResearchPage() {
   );
 }
 
-function ResearchLandingHero({ activeProjects }: { activeProjects: number }) {
+function ResearchLandingHero({
+  activeProjects,
+  slides,
+}: {
+  activeProjects: number;
+  slides: ResearchGenericRecord[];
+}) {
+  const slide = slides
+    .filter((item) => item.is_active !== false)
+    .sort((a, b) => Number(a.display_order ?? 100) - Number(b.display_order ?? 100))[0];
+  const heroTitle = compactText(slide?.title) || "Research. Innovation.";
+  const heroAccent = compactText(slide?.subtitle) || "Impact for a Better Future.";
+  const heroBody =
+    compactText(slide?.plain_text ?? slide?.summary ?? slide?.description) ||
+    "Advancing knowledge, solving real-world challenges, and building partnerships that create lasting impact for communities and the environment.";
+  const heroImage = getRecordImage(slide, "desktop_media") || "/images/research/research-hero-imagegen.webp";
+  const slideActionHref = compactText(slide?.external_url);
+  const slideActionLabel = compactText(slide?.link_text) || "Explore Research";
+  const actions = slideActionHref
+    ? [{ label: slideActionLabel, href: slideActionHref, variant: "primary" as const }, ...heroActions.slice(1)]
+    : heroActions;
+
   return (
     <section className="relative isolate min-h-[520px] overflow-hidden bg-primary">
       <Image
-        src="/images/research/research-hero-imagegen.webp"
-        alt="Kisii University researchers collaborating across laboratory, field, data, and community research"
+        src={heroImage}
+        alt=""
         fill
         priority
         sizes="100vw"
@@ -209,16 +242,14 @@ function ResearchLandingHero({ activeProjects }: { activeProjects: number }) {
         <div className="max-w-4xl">
           <ScrollReveal>
             <h1 className="max-w-4xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.03] text-white sm:text-5xl xl:text-6xl 2xl:text-7xl">
-              Research. Innovation.
-              <span className="block text-secondary">Impact for a Better Future.</span>
+              {heroTitle}
+              <span className="block text-secondary">{heroAccent}</span>
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-8 text-white/90 sm:text-lg">
-              Advancing knowledge, solving real-world challenges, and building
-              partnerships that create lasting impact for communities and the
-              environment.
+              {heroBody}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              {heroActions.map((action) => (
+              {actions.map((action) => (
                 <ActionLink
                   key={action.href}
                   href={action.href}
@@ -505,6 +536,13 @@ function NewsEventsArticlesSection({ items }: { items: NewsItem[] }) {
       title: "Ideas & articles",
       href: "/news",
       items: items.filter((item) => item.kind === "Article").slice(0, 3),
+    },
+    {
+      kind: "Announcement" as const,
+      eyebrow: "Announcements",
+      title: "Research notices",
+      href: "/news",
+      items: items.filter((item) => item.kind === "Announcement").slice(0, 3),
     },
     {
       kind: "News" as const,
@@ -887,9 +925,11 @@ function EditorialUpdateCard({
   const tone =
     item.kind === "Event"
       ? "border-secondary/20 bg-secondary/5"
-      : item.kind === "Article"
+        : item.kind === "Article"
         ? "border-primary/20 bg-primary/5"
-        : "border-slate-200 bg-slate-50";
+        : item.kind === "Announcement"
+          ? "border-amber-200 bg-amber-50/60"
+          : "border-slate-200 bg-slate-50";
 
   return (
     <Link
@@ -920,7 +960,13 @@ function EditorialUpdateCard({
           {item.title}
         </h3>
         <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary">
-          {item.kind === "Event" ? "View event" : item.kind === "Article" ? "Read blog" : "Read news"}
+          {item.kind === "Event"
+            ? "View event"
+            : item.kind === "Article"
+              ? "Read blog"
+              : item.kind === "Announcement"
+                ? "Read notice"
+                : "Read news"}
           <ArrowRight aria-hidden className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
         </span>
       </div>
@@ -1113,7 +1159,7 @@ type FeaturedWorkItem = {
 
 type NewsItem = {
   id: string;
-  kind: "News" | "Event" | "Article";
+  kind: "News" | "Event" | "Article" | "Announcement";
   title: string;
   summary: string;
   href: string;
@@ -1191,34 +1237,56 @@ function buildFeaturedWork(
 }
 
 function buildNewsItems(
-  articles: ResearchGenericRecord[],
+  news: ResearchGenericRecord[],
+  blogs: ResearchGenericRecord[],
+  announcements: ResearchGenericRecord[],
   events: ResearchGenericRecord[],
 ): NewsItem[] {
-  const articleItems = articles.slice(0, 4).map((item) => ({
+  const newsItems = news.slice(0, 4).map((item) => ({
     id: item.id,
-    kind: (compactText(item.article_type ?? item.news_type).toLowerCase() === "article" ? "Article" : "News") as "News" | "Article",
+    kind: "News" as const,
     title: compactText(item.title ?? item.name),
-    summary: compactText(item.summary ?? item.excerpt ?? item.description ?? item.body),
+    summary: compactText(item.summary ?? item.excerpt ?? item.description ?? item.plain_text ?? item.content),
     href: item.slug ? `/news/${item.slug}` : "/news",
-    image: item.cover_image_url || item.image_url || "/images/research/research-events-hero.webp",
+    image: getRecordImage(item, "featured_media") || "/images/research/research-events-hero.webp",
     date: formatDate(item.published_at ?? item.created_at),
     timestamp: getTimestamp(item.published_at ?? item.created_at),
+  }));
+  const blogItems = blogs.slice(0, 4).map((item) => ({
+    id: item.id,
+    kind: "Article" as const,
+    title: compactText(item.title ?? item.name),
+    summary: compactText(item.summary ?? item.excerpt ?? item.description ?? item.plain_text ?? item.content),
+    href: item.slug ? `/news/${item.slug}` : "/news",
+    image: getRecordImage(item, "featured_media") || "/images/research/research-events-hero.webp",
+    date: formatDate(item.published_at ?? item.created_at),
+    timestamp: getTimestamp(item.published_at ?? item.created_at),
+  }));
+  const announcementItems = announcements.slice(0, 4).map((item) => ({
+    id: item.id,
+    kind: "Announcement" as const,
+    title: compactText(item.title ?? item.name),
+    summary: compactText(item.summary ?? item.description ?? item.plain_text ?? item.content),
+    href: item.slug ? `/news/${item.slug}` : "/news",
+    image: getRecordImage(item, "featured_media") || "/images/research/research-events-hero.webp",
+    date: formatDate(item.published_at ?? item.valid_from ?? item.created_at),
+    timestamp: getTimestamp(item.published_at ?? item.valid_from ?? item.created_at),
   }));
   const eventItems = events.slice(0, 3).map((item) => ({
     id: item.id,
     kind: "Event" as const,
     title: compactText(item.title ?? item.name),
-    summary: compactText(item.summary ?? item.description ?? item.about),
+    summary: compactText(item.summary ?? item.description ?? item.plain_text ?? item.content),
     href: item.slug ? `/events/${item.slug}` : "/events",
-    image: item.cover_image_url || item.image_url || "/images/research/research-events-hero.webp",
+    image: getRecordImage(item, "featured_media") || "/images/research/research-events-hero.webp",
     date: formatDate(item.event_date ?? item.start_date ?? item.published_at ?? item.created_at),
     timestamp: getTimestamp(item.event_date ?? item.start_date ?? item.published_at ?? item.created_at),
   }));
 
-  return [...articleItems, ...eventItems]
+  return [...eventItems, ...newsItems, ...blogItems, ...announcementItems]
     .filter((item) => item.title)
     .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, 6);
+    .slice(0, 12);
 }
 
 function buildDirectoryItems(
@@ -1327,6 +1395,41 @@ function formatGrantValue(value: number) {
     return `KES ${Math.round(value / 1_000_000)}M`;
   }
   return formatNumber(value);
+}
+
+function getRecordImage(record?: ResearchGenericRecord, mediaField?: string) {
+  if (!record) return "";
+  const direct = compactText(
+    record.cover_image_url ??
+      record.image_url ??
+      record.logo_url ??
+      record.thumbnail_url,
+  );
+  if (direct) return direct;
+
+  const fields = mediaField
+    ? [mediaField]
+    : ["featured_media", "desktop_media", "mobile_media"];
+  for (const field of fields) {
+    const media = (record as Record<string, unknown>)[field];
+    if (!media || typeof media !== "object") continue;
+    const mediaRecord = media as Record<string, unknown>;
+    const url = compactText(
+      stringish(
+        mediaRecord.public_url ??
+          mediaRecord.cdn_url ??
+          mediaRecord.url ??
+          mediaRecord.thumbnail_url,
+      ),
+    );
+    if (url) return url;
+  }
+
+  return "";
+}
+
+function stringish(value: unknown) {
+  return typeof value === "string" || typeof value === "number" ? value : undefined;
 }
 
 function getTimestamp(value?: string | null) {

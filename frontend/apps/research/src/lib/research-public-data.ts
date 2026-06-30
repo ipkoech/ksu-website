@@ -1,6 +1,11 @@
 import {
+  announcementsApi,
+  blogsApi,
+  eventsApi,
+  newsApi,
   personsApi,
   researchServiceApi,
+  slidersApi,
   type Person,
   type ResearchGenericRecord,
   type ResearchGrant,
@@ -35,8 +40,11 @@ export type ResearchOverviewData = {
   grants: PublicResearchData<ResearchGrant>;
   innovations: PublicResearchData<ResearchGenericRecord>;
   partners: PublicResearchData<ResearchGenericRecord>;
-  articles: PublicResearchData<ResearchGenericRecord>;
+  news: PublicResearchData<ResearchGenericRecord>;
+  blogs: PublicResearchData<ResearchGenericRecord>;
+  announcements: PublicResearchData<ResearchGenericRecord>;
   events: PublicResearchData<ResearchGenericRecord>;
+  heroSliders: PublicResearchData<ResearchGenericRecord>;
   centers: PublicResearchData<ResearchGenericRecord>;
   facilities: PublicResearchData<ResearchGenericRecord>;
   expertiseTags: PublicResearchData<ResearchGenericRecord>;
@@ -119,6 +127,10 @@ const researchPublicListFields =
   "id,title,name,slug,code,summary,abstract,description,about,mission,vision,mandate,objectives,functions,services_summary,leadership_message,strategic_priorities,category,status,is_active,is_public,is_featured,project_type,publication_type,grant_type,center_type,farm_type,program_type,output_type,innovation_type,partner_type,consultancy_type,fund_type,event_type,article_type,news_type,resource_type,service_type,guideline_type,scholarship_type,delivery_mode,access_type,development_stage,ip_status,commercialization_status,partnership_level,client_type,center_id,program_id,project_id,partner_id,year,start_date,end_date,deadline,event_date,published_at,publication_date,cover_image_url,logo_url,url,pdf_url,website";
 
 const researchPublicDetailFields = `${researchPublicListFields},background,objectives,methodology,expected_outcomes,impact,deliverables,budget,currency,funder_name,journal_name,publisher,volume,issue,pages,article_number,conference_name,conference_location,conference_date,book_title,editors,edition,isbn,issn,doi,pmid,arxiv_id,is_open_access,impact_factor,quartile,h_index,funding_acknowledgment,contact_email,contact_phone,email,phone,address,location,venue,registration_url,application_url,download_url,file_url,eligibility,requirements,benefits,scope,content,body,rich_text,plain_text,mission,vision,mandate,head_message,office_location,social_links`;
+const researchMainContentFields =
+  "id,title,slug,summary,excerpt,plain_text,content,category,status,scope_type,scope_id,is_featured,is_main,is_public,is_published,published_at,valid_from,valid_to,start_date,end_date,location,venue,event_type,priority,display_order,featured_media,cover_image,cover_image_url,created_at,updated_at";
+const researchHeroSliderFields =
+  "id,title,subtitle,plain_text,rich_text,structured_content,desktop_media,mobile_media,external_url,link_text,open_in_new_tab,scope_type,scope_id,is_main,is_public,is_active,display_order,start_datetime,end_datetime,created_at,updated_at";
 
 async function safeList<T>(
   load: () => Promise<{
@@ -1071,10 +1083,12 @@ export function getScholarshipBySlug(slug: string) {
 
 export function getEvents() {
   return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.events.list({
-      fields: researchPublicListFields,
-      is_active: true,
-      is_public: true,
+    eventsApi.list({
+      fields: researchMainContentFields,
+      include: "featured_media",
+      scope_type: "research",
+      is_published: true,
+      is_main: false,
       page: 1,
       per_page: 100,
     }),
@@ -1083,19 +1097,14 @@ export function getEvents() {
 
 export function getEventsFiltered(filters: GenericListFilters = {}) {
   return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.events.list({
-      fields: researchPublicListFields,
+    eventsApi.list({
+      fields: researchMainContentFields,
+      include: "featured_media",
+      scope_type: "research",
       search: filters.search?.trim() || undefined,
       event_type: filters.eventType || undefined,
-      category: filters.category || undefined,
-      center_id: filters.centerId || undefined,
-      status: filters.status || undefined,
-      year: parseYear(filters.year),
-      sort: filters.sort || undefined,
-      order: filters.order,
-      is_active: filters.isActive ?? true,
-      is_featured: filters.isFeatured,
-      is_public: true,
+      is_published: true,
+      is_main: false,
       page: 1,
       per_page: 100,
     }),
@@ -1104,7 +1113,7 @@ export function getEventsFiltered(filters: GenericListFilters = {}) {
 
 export function getEventBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
-    researchServiceApi.events.getBySlug(slug, {
+    eventsApi.getBySlug(slug, {
       fields: researchPublicDetailFields,
     }),
   );
@@ -1112,11 +1121,12 @@ export function getEventBySlug(slug: string) {
 
 export function getArticles() {
   return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.articles.list({
-      fields: researchPublicListFields,
-      status: "published",
-      is_active: true,
-      is_public: true,
+    newsApi.list({
+      fields: researchMainContentFields,
+      include: "featured_media",
+      scope_type: "research",
+      is_published: true,
+      is_main: false,
       page: 1,
       per_page: 100,
     }),
@@ -1128,20 +1138,13 @@ export function getArticlesFiltered(
   page = 1,
 ) {
   return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.articles.list({
-      fields: researchPublicListFields,
+    newsApi.list({
+      fields: researchMainContentFields,
+      include: "featured_media",
+      scope_type: "research",
       search: filters.search?.trim() || undefined,
-      article_type: filters.articleType || undefined,
-      category: filters.category || undefined,
-      center_id: filters.centerId || undefined,
-      project_id: filters.projectId || undefined,
-      status: filters.status || "published",
-      year: parseYear(filters.year),
-      sort: filters.sort || undefined,
-      order: filters.order,
-      is_active: filters.isActive ?? true,
-      is_featured: filters.isFeatured,
-      is_public: true,
+      is_published: true,
+      is_main: false,
       page,
       per_page: 100,
     }),
@@ -1150,8 +1153,47 @@ export function getArticlesFiltered(
 
 export function getArticleBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
-    researchServiceApi.articles.getBySlug(slug, {
+    newsApi.getBySlug(slug, {
       fields: researchPublicDetailFields,
+    }),
+  );
+}
+
+export function getBlogs() {
+  return safeList<ResearchGenericRecord>(() =>
+    blogsApi.list({
+      fields: researchMainContentFields,
+      include: "featured_media",
+      scope_type: "research",
+      is_published: true,
+      is_main: false,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getAnnouncements() {
+  return safeList<ResearchGenericRecord>(() =>
+    announcementsApi.list({
+      fields: researchMainContentFields,
+      include: "featured_media",
+      scope_type: "research",
+      is_published: true,
+      is_main: false,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getHeroSliders() {
+  return safeList<ResearchGenericRecord>(() =>
+    slidersApi.listSliders({
+      fields: researchHeroSliderFields,
+      include: "desktop_media,mobile_media",
+      scope_type: "research",
+      is_main: false,
     }),
   );
 }
@@ -1322,8 +1364,11 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
     grants,
     innovations,
     partners,
-    articles,
+    news,
+    blogs,
+    announcements,
     events,
+    heroSliders,
     centers,
     facilities,
     expertiseTags,
@@ -1342,7 +1387,10 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
     getInnovations(),
     getPartners(),
     getArticles(),
+    getBlogs(),
+    getAnnouncements(),
     getEvents(),
+    getHeroSliders(),
     getCenters(),
     getFacilities(),
     getExpertiseTags(),
@@ -1362,8 +1410,11 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
     grants,
     innovations,
     partners,
-    articles,
+    news,
+    blogs,
+    announcements,
     events,
+    heroSliders,
     centers,
     facilities,
     expertiseTags,
@@ -1381,8 +1432,11 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
       grants.error,
       innovations.error,
       partners.error,
-      articles.error,
+      news.error,
+      blogs.error,
+      announcements.error,
       events.error,
+      heroSliders.error,
       centers.error,
       facilities.error,
       expertiseTags.error,
