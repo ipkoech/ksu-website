@@ -648,12 +648,12 @@ fi
 
 if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
   backend_services=(main research library)
-  build_core_services=("\${backend_services[@]}" celery-main celery-research celery-library)
+  worker_services=(celery-main celery-research celery-library)
 else
   backend_services=(main research library)
-  build_core_services=("\${backend_services[@]}" celery-main celery-research celery-library)
+  worker_services=(celery-main celery-research celery-library)
 fi
-core_services=("\${build_core_services[@]}")
+core_services=("\${backend_services[@]}" "\${worker_services[@]}")
 if [[ "\${external_data}" -eq 0 ]]; then
   core_services=(postgres redis "\${core_services[@]}")
 fi
@@ -710,21 +710,29 @@ if [[ "\${PULL_IMAGES}" -eq 1 ]]; then
   pull_compose_images "\${core_services[@]}" "\${frontend_services[@]}" "\${proxy_services[@]}"
 fi
 
-compose_args=(up -d --remove-orphans)
-if [[ "\${SKIP_BUILD}" -eq 0 ]]; then
-  compose_args+=(--build)
-fi
-compose_args+=("\${core_services[@]}")
-
 section "Deploy core services"
 step "Project: \${PROJECT_NAME}"
 step "Git commit: \${DEPLOY_GIT_SHA}"
 step "Image tag: \${IMAGE_TAG}"
 step "Core services: \${core_services[*]}"
-"\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" "\${compose_args[@]}"
+
+if [[ "\${SKIP_BUILD}" -eq 0 ]]; then
+  section "Build backend images"
+  step "Building backend images sequentially to avoid duplicate API/Celery image exports."
+  for backend_service in "\${backend_services[@]}"; do
+    step "Building backend image: \${backend_service}"
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" build "\${backend_service}"
+    push_compose_images "\${backend_service}"
+  done
+fi
+
+if [[ "\${external_data}" -eq 0 ]]; then
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" up -d --remove-orphans postgres redis
+fi
+
+"\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" up -d --remove-orphans --no-build "\${backend_services[@]}" "\${worker_services[@]}"
 echo
 "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${core_services[@]}"
-push_compose_images "\${build_core_services[@]}"
 
 wait_for_backend_health() {
   local timeout_seconds="\${1:-420}"
