@@ -16,6 +16,7 @@ from ...services import SliderGroupService, SliderService
 from ._fields import FieldSelection, FieldsDep, build_selector
 
 router = APIRouter()
+SLIDER_ADMIN_SCOPE = "marketing.manage_sliders"
 
 
 @router.get("/groups")
@@ -73,7 +74,7 @@ async def list_sliders(
     return success(data=selector.apply(items))
 
 
-@router.get("/admin", dependencies=[Depends(require_scope("admin:*"))])
+@router.get("/admin", dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
 async def list_admin_sliders(
     db: DbSession,
     _: CurrentUser,
@@ -97,13 +98,13 @@ async def list_admin_sliders(
     return success(data=selector.apply(items))
 
 
-@router.post("/groups", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admin:*"))])
+@router.post("/groups", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
 async def create_slider_group(data: SliderGroupCreate, db: DbSession, _: CurrentUser):
     item = await SliderGroupService.create(db, **data.model_dump())
     return success(data=item, message="Slider group created")
 
 
-@router.patch("/groups/{group_id}", dependencies=[Depends(require_scope("admin:*"))])
+@router.patch("/groups/{group_id}", dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
 async def update_slider_group(group_id: uuid.UUID, data: SliderGroupUpdate, db: DbSession, _: CurrentUser):
     item = await SliderGroupService.get_by_id(db, group_id)
     if item is None:
@@ -112,7 +113,7 @@ async def update_slider_group(group_id: uuid.UUID, data: SliderGroupUpdate, db: 
     return success(data=item, message="Slider group updated")
 
 
-@router.delete("/groups/{group_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+@router.delete("/groups/{group_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
 async def delete_slider_group(group_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await SliderGroupService.get_by_id(db, group_id)
     if item is None:
@@ -120,7 +121,7 @@ async def delete_slider_group(group_id: uuid.UUID, db: DbSession, _: CurrentUser
     await SliderGroupService.delete(db, item)
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admin:*"))])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
 async def create_slider(data: SliderCreate, db: DbSession, _: CurrentUser):
     item = await SliderService.create(db, **data.model_dump())
     return success(data=item, message="Slider created")
@@ -135,7 +136,7 @@ async def get_slider(slider_id: uuid.UUID, db: DbSession, _: CurrentUser, fields
     return success(data=selector.apply(item))
 
 
-@router.patch("/{slider_id}", dependencies=[Depends(require_scope("admin:*"))])
+@router.patch("/{slider_id}", dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
 async def update_slider(slider_id: uuid.UUID, data: SliderUpdate, db: DbSession, _: CurrentUser):
     item = await SliderService.get_by_id(db, slider_id)
     if item is None:
@@ -144,7 +145,7 @@ async def update_slider(slider_id: uuid.UUID, data: SliderUpdate, db: DbSession,
     return success(data=item, message="Slider updated")
 
 
-@router.delete("/{slider_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+@router.delete("/{slider_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
 async def delete_slider(slider_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await SliderService.get_by_id(db, slider_id)
     if item is None:
