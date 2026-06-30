@@ -3,6 +3,7 @@ import unittest
 from fastapi.routing import APIRoute
 
 from app.main import create_app
+from app.models.ask_ai import ResearchAIConversation, ResearchAIMessage
 from app.routes.v1.ask_ai import router as ask_ai_router
 from app.services.ask_ai import ResearchAskAIService
 
@@ -32,11 +33,32 @@ class ResearchAskAIContractTests(unittest.TestCase):
         route = _route(ask_ai_router, "/ask-ai", "POST")
 
         self.assertTrue(route.dependencies)
+        self.assertTrue(any(param.name == "db" for param in route.dependant.dependencies))
+        self.assertTrue(any(param.name == "user" for param in route.dependant.dependencies))
+
+    def test_conversation_read_routes_are_registered_and_read_protected(self):
+        conversations = _route(ask_ai_router, "/ask-ai/conversations", "GET")
+        messages = _route(ask_ai_router, "/ask-ai/conversations/{conversation_id}/messages", "GET")
+
+        self.assertTrue(conversations.dependencies)
+        self.assertTrue(messages.dependencies)
 
     def test_research_v1_router_includes_ask_ai_route(self):
         paths = _paths(create_app(), "POST")
 
         self.assertIn("/api/v1/ask-ai", paths)
+
+    def test_research_v1_router_includes_ask_ai_read_routes(self):
+        paths = _paths(create_app(), "GET")
+
+        self.assertIn("/api/v1/ask-ai/conversations", paths)
+        self.assertIn("/api/v1/ask-ai/conversations/{conversation_id}/messages", paths)
+
+    def test_ask_ai_persistence_models_use_research_schema(self):
+        self.assertEqual(ResearchAIConversation.__tablename__, "ai_conversations")
+        self.assertEqual(ResearchAIMessage.__tablename__, "ai_messages")
+        self.assertEqual(ResearchAIConversation.__table__.schema, "research")
+        self.assertEqual(ResearchAIMessage.__table__.schema, "research")
 
     def test_section_context_resolves_guided_prompts_and_references(self):
         context = ResearchAskAIService.resolve_context("/research/projects", "projects", None)
@@ -62,9 +84,22 @@ class ResearchAskAIContractTests(unittest.TestCase):
         )
 
         self.assertEqual(response.mode, "read_only")
+        self.assertEqual(response.content_format, "markdown")
         self.assertEqual(response.context.section_key, "reports")
+        self.assertIn("##", response.answer)
         self.assertIn("read-only", response.answer.lower())
         self.assertTrue(response.suggested_prompts)
+
+    def test_service_exposure_covers_research_backend_surfaces(self):
+        exposure = ResearchAskAIService.service_exposure_catalog()
+
+        keys = {item["key"] for item in exposure["resources"]}
+        self.assertIn("projects", keys)
+        self.assertIn("publications", keys)
+        self.assertIn("grants", keys)
+        self.assertIn("sustainability", keys)
+        self.assertGreaterEqual(len(keys), 20)
+        self.assertIn("exports", exposure)
 
 
 if __name__ == "__main__":

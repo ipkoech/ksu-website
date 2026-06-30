@@ -3,13 +3,23 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import uuid
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from ..models import ResearchAIConversation, ResearchAIMessage
 from ..schemas.ask_ai import (
+    ResearchAIConversationRead,
     ResearchAskAIContext,
     ResearchAskAIPrompt,
     ResearchAskAIReference,
     ResearchAskAIResponse,
+    ResearchAIMessageRead,
 )
+from .exports import EXPORT_RESOURCE_CONFIGS
+from .search import RESEARCH_SEARCH_AREAS
+from .stats import admin_research_stats
 
 
 @dataclass(frozen=True)
@@ -164,6 +174,64 @@ class ResearchAskAIService:
     """Build safe, read-only advisor context for the research portal."""
 
     @staticmethod
+    async def ask(
+        db: AsyncSession,
+        *,
+        user_id: uuid.UUID,
+        message: str,
+        path: str,
+        section: str | None,
+        resource_key: str | None,
+        record_id: str | None = None,
+        conversation_id: uuid.UUID | None = None,
+    ) -> ResearchAskAIResponse:
+        context = ResearchAskAIService.resolve_context(path, section, resource_key, record_id)
+        exposure = await ResearchAskAIService.build_service_exposure(db)
+        response = ResearchAskAIService.respond(
+            message=message,
+            path=path,
+            section=section,
+            resource_key=resource_key,
+            record_id=record_id,
+            service_exposure=exposure,
+        )
+        conversation = await ResearchAskAIService._get_or_create_conversation(
+            db,
+            user_id=user_id,
+            conversation_id=conversation_id,
+            context=context,
+            message=message,
+        )
+        user_message = ResearchAIMessage(
+            conversation_id=conversation.id,
+            role="user",
+            content=message,
+            content_format="markdown",
+            context_snapshot=context.model_dump(mode="json"),
+            references=[reference.model_dump(mode="json") for reference in context.references],
+            message_metadata={"mode": "read_only"},
+        )
+        assistant_message = ResearchAIMessage(
+            conversation_id=conversation.id,
+            role="assistant",
+            content=response.answer,
+            content_format="markdown",
+            context_snapshot=context.model_dump(mode="json"),
+            references=[reference.model_dump(mode="json") for reference in response.references],
+            message_metadata={
+                "mode": "read_only",
+                "service_exposure_keys": list(exposure.keys()),
+            },
+        )
+        db.add_all([user_message, assistant_message])
+        await db.flush()
+
+        response.conversation_id = conversation.id
+        response.user_message_id = user_message.id
+        response.assistant_message_id = assistant_message.id
+        return response
+
+    @staticmethod
     def resolve_context(path: str, section: str | None, resource_key: str | None, record_id: str | None = None) -> ResearchAskAIContext:
         section_key = _normalize_section(section) or _section_from_path(path)
         config = SECTION_CONFIGS.get(section_key) or SECTION_CONFIGS["overview"]
@@ -190,23 +258,183 @@ class ResearchAskAIService:
         )
 
     @staticmethod
-    def respond(message: str, path: str, section: str | None, resource_key: str | None, record_id: str | None = None) -> ResearchAskAIResponse:
+    def respond(
+        message: str,
+        path: str,
+        section: str | None,
+        resource_key: str | None,
+        record_id: str | None = None,
+        service_exposure: dict | None = None,
+    ) -> ResearchAskAIResponse:
         context = ResearchAskAIService.resolve_context(path, section, resource_key, record_id)
-        answer = (
-            f"I can help as a read-only research advisor for {context.section_label}. "
-            "I can explain records, identify review areas, suggest relevant exports, and help structure reports. "
-            "I cannot create, update, delete, approve, publish, or otherwise modify research data. "
-            f"For this section, focus on {SECTION_CONFIGS[context.section_key].focus}."
+        exposure = service_exposure or ResearchAskAIService.service_exposure_catalog()
+        answer = "\n".join(
+            [
+                f"## {context.section_label} advisor",
+                "",
+                "I can help as a **read-only** research advisor. I can explain records, identify review areas, suggest relevant exports, and help structure reports.",
+                "",
+                "### Guardrails",
+                "- I cannot create, update, delete, approve, publish, or otherwise modify research data.",
+                "- I can only refer to research service areas and references available through this backend context.",
+                "",
+                "### Section focus",
+                f"- {SECTION_CONFIGS[context.section_key].focus}.",
+                "",
+                "### Backend context available",
+                f"- Search/resource areas exposed: {len(exposure.get('resources', []))}.",
+                f"- Export datasets exposed: {len(exposure.get('exports', []))}.",
+                f"- Guided prompts available: {len(context.guided_prompts)}.",
+            ]
         )
         if message.strip():
-            answer = f"{answer} Your question was: {message.strip()}"
+            answer = f"{answer}\n\n### Your question\n{message.strip()}"
 
         return ResearchAskAIResponse(
             answer=answer,
+            service_exposure=exposure,
             context=context,
             references=context.references,
             suggested_prompts=context.guided_prompts,
         )
+
+    @staticmethod
+    def service_exposure_catalog() -> dict:
+        export_keys = set(EXPORT_RESOURCE_CONFIGS)
+        resources = [
+            {
+                "key": area.key,
+                "label": area.label,
+                "route": area.route,
+                "search_fields": list(area.search_fields),
+                "metadata_fields": list(area.metadata_fields),
+                "exportable": f"research-{area.key.replace('_', '-')}" in export_keys,
+            }
+            for area in RESEARCH_SEARCH_AREAS
+        ]
+        return {
+            "mode": "read_only",
+            "resources": resources,
+            "exports": [
+                {
+                    "key": config.key,
+                    "label": config.label,
+                    "columns": list(config.columns),
+                    "filename": config.filename,
+                }
+                for config in EXPORT_RESOURCE_CONFIGS.values()
+            ],
+            "sections": [
+                {
+                    "key": config.key,
+                    "label": config.label,
+                    "href": config.href,
+                    "resource_key": config.resource_key,
+                    "focus": config.focus,
+                }
+                for config in SECTION_CONFIGS.values()
+            ],
+        }
+
+    @staticmethod
+    async def build_service_exposure(db: AsyncSession) -> dict:
+        exposure = ResearchAskAIService.service_exposure_catalog()
+        stats = await admin_research_stats(db)
+        exposure["admin_stats"] = [
+            {
+                "key": item.key,
+                "label": item.label,
+                "value": item.value,
+                "suffix": item.suffix,
+                "description": item.description,
+                "href": item.href,
+            }
+            for item in stats.stats
+        ]
+        return exposure
+
+    @staticmethod
+    async def list_conversations(db: AsyncSession, user_id: uuid.UUID) -> list[ResearchAIConversationRead]:
+        result = await db.execute(
+            select(ResearchAIConversation)
+            .where(
+                ResearchAIConversation.user_id == user_id,
+                ResearchAIConversation.deleted_at.is_(None),
+                ResearchAIConversation.is_archived.is_(False),
+            )
+            .order_by(ResearchAIConversation.updated_at.desc())
+        )
+        return [ResearchAIConversationRead.model_validate(item) for item in result.scalars().all()]
+
+    @staticmethod
+    async def list_messages(db: AsyncSession, user_id: uuid.UUID, conversation_id: uuid.UUID) -> list[ResearchAIMessageRead]:
+        conversation = await ResearchAskAIService._get_owned_conversation(db, user_id, conversation_id)
+        if conversation is None:
+            return []
+        result = await db.execute(
+            select(ResearchAIMessage)
+            .where(
+                ResearchAIMessage.conversation_id == conversation.id,
+                ResearchAIMessage.deleted_at.is_(None),
+            )
+            .order_by(ResearchAIMessage.created_at.asc())
+        )
+        return [
+            ResearchAIMessageRead(
+                id=item.id,
+                conversation_id=item.conversation_id,
+                role=item.role,
+                content=item.content,
+                content_format=item.content_format,
+                context_snapshot=item.context_snapshot,
+                references=item.references,
+                metadata=item.message_metadata,
+                created_at=item.created_at,
+            )
+            for item in result.scalars().all()
+        ]
+
+    @staticmethod
+    async def _get_or_create_conversation(
+        db: AsyncSession,
+        *,
+        user_id: uuid.UUID,
+        conversation_id: uuid.UUID | None,
+        context: ResearchAskAIContext,
+        message: str,
+    ) -> ResearchAIConversation:
+        if conversation_id is not None:
+            conversation = await ResearchAskAIService._get_owned_conversation(db, user_id, conversation_id)
+            if conversation is not None:
+                conversation.context = context.model_dump(mode="json")
+                conversation.section_key = context.section_key
+                conversation.resource_key = context.resource_key
+                conversation.record_id = context.record_id
+                return conversation
+
+        title = _conversation_title(message, context.section_label)
+        conversation = ResearchAIConversation(
+            user_id=user_id,
+            title=title,
+            section_key=context.section_key,
+            resource_key=context.resource_key,
+            record_id=context.record_id,
+            context=context.model_dump(mode="json"),
+        )
+        db.add(conversation)
+        await db.flush()
+        return conversation
+
+    @staticmethod
+    async def _get_owned_conversation(db: AsyncSession, user_id: uuid.UUID, conversation_id: uuid.UUID) -> ResearchAIConversation | None:
+        result = await db.execute(
+            select(ResearchAIConversation).where(
+                ResearchAIConversation.id == conversation_id,
+                ResearchAIConversation.user_id == user_id,
+                ResearchAIConversation.deleted_at.is_(None),
+            )
+        )
+        return result.scalar_one_or_none()
 
 
 def _normalize_section(section: str | None) -> str | None:
@@ -222,3 +450,10 @@ def _section_from_path(path: str) -> str:
         return "overview"
     raw = parts[1] if len(parts) > 1 else "overview"
     return SECTION_ALIASES.get(raw, raw if raw in SECTION_CONFIGS else "overview")
+
+
+def _conversation_title(message: str, section_label: str) -> str:
+    normalized = " ".join(message.strip().split())
+    if not normalized:
+        return f"{section_label} Ask AI"
+    return normalized[:80]
