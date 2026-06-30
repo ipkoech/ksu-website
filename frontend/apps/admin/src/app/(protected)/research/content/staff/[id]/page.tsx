@@ -1,6 +1,7 @@
 "use client";
 
 import { staffApi, type ResearchGenericRecord } from "@ksu/api-client";
+import { Badge, Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
 import { ResearchAdminDetailPage, ResearchDetailRelationshipTabs } from "../../../_components/research-admin-detail-page";
 import { RelatedRecordsCard, RelatedRecordsGrid } from "../../../_components/research-detail-relationships";
 
@@ -74,7 +75,76 @@ function StaffRelations({ assignment }: { assignment: ResearchGenericRecord }) {
             </RelatedRecordsGrid>
           ),
         },
+        {
+          value: "term",
+          label: "Term",
+          content: <StaffTermPanel assignment={assignment} />,
+        },
       ]}
     />
   );
+}
+
+function StaffTermPanel({ assignment }: { assignment: ResearchGenericRecord }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Assignment Term</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-3 rounded-lg border p-4">
+          <div>
+            <p className="font-medium">{assignment.title ?? assignment.role_display ?? "Research staff assignment"}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {[formatLabel(assignment.role), assignment.term_display].filter(Boolean).join(" - ") || "Assignment metadata"}
+            </p>
+          </div>
+          {assignment.status ? <Badge variant="outline">{formatLabel(assignment.status)}</Badge> : null}
+        </div>
+        <dl className="grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
+          <TermFact label="Start" value={formatDate(assignment.start_date)} />
+          <TermFact label="End" value={formatDate(assignment.end_date) || "Current"} />
+          <TermFact label="Term Length" value={termLength(assignment)} />
+          <TermFact label="Renewable" value={renewableLabel(assignment.term_renewable)} />
+        </dl>
+        {assignment.notes ? (
+          <div className="rounded-lg border p-4">
+            <p className="text-xs font-medium uppercase text-muted-foreground">Notes</p>
+            <p className="mt-2 text-sm leading-6">{String(assignment.notes)}</p>
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+function TermFact({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div className="rounded-md bg-muted/40 p-3">
+      <dt className="text-xs font-medium uppercase text-muted-foreground">{label}</dt>
+      <dd className="mt-1 font-medium">{value || "Not set"}</dd>
+    </div>
+  );
+}
+
+function termLength(record: ResearchGenericRecord) {
+  if (!record.term_years) return record.term_display ? String(record.term_display) : "Not set";
+  return `${record.term_years} year${Number(record.term_years) === 1 ? "" : "s"}`;
+}
+
+function renewableLabel(value: unknown) {
+  if (typeof value !== "boolean") return "Not set";
+  return value ? "Renewable" : "Not renewable";
+}
+
+function formatDate(value: unknown) {
+  if (!value || typeof value !== "string") return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString();
+}
+
+function formatLabel(value: unknown) {
+  if (value === null || value === undefined || value === "") return "";
+  return String(value).replace(/[_-]+/g, " ").replace(/\b\w/g, (match) => match.toUpperCase());
 }
