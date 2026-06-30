@@ -26,3 +26,7 @@ assert(
     !source.includes("content: `${item.content}${delta}`"),
   "Ask AI should buffer streamed deltas and only render the final assistant response",
 );
+assert(
+  source.includes("stripEchoedQuestion") && source.includes("/\\n#{2,3}\\s*Your question[\\s\\S]*$/i"),
+  "Ask AI should hide legacy assistant echoes of the user's question",
+);

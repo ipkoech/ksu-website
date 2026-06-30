@@ -286,6 +286,7 @@ export function ResearchAskAIWidget() {
 
 function MessageBubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === "user";
+  const content = isUser ? message.content : stripEchoedQuestion(message.content);
   return (
     <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
       <div
@@ -295,10 +296,14 @@ function MessageBubble({ message }: { message: ChatMessage }) {
           message.pending && "opacity-80",
         )}
       >
-        {message.pending ? <TypingIndicator /> : <MarkdownMessage content={message.content} />}
+        {message.pending ? <TypingIndicator /> : <MarkdownMessage content={content} />}
       </div>
     </div>
   );
+}
+
+function stripEchoedQuestion(content: string) {
+  return content.replace(/\n#{2,3}\s*Your question[\s\S]*$/i, "").trim();
 }
 
 function TypingIndicator() {

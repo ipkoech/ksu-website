@@ -98,6 +98,63 @@ class ResearchAskAIContractTests(unittest.TestCase):
         self.assertIn("read-only", response.answer.lower())
         self.assertTrue(response.suggested_prompts)
 
+    def test_advisor_response_does_not_echo_user_question(self):
+        response = ResearchAskAIService.respond(
+            message="Whats the 1st project all about?",
+            path="/research/projects",
+            section="projects",
+            resource_key="research-projects",
+            service_exposure={
+                "mode": "read_only",
+                "resources": [],
+                "exports": [],
+                "admin_stats": [],
+                "record_samples": [],
+            },
+        )
+
+        self.assertNotIn("Your question", response.answer)
+        self.assertNotIn("Whats the 1st project all about?", response.answer)
+
+    def test_advisor_uses_project_record_samples_for_first_project_questions(self):
+        response = ResearchAskAIService.respond(
+            message="Whats the 1st project all about?",
+            path="/research/projects",
+            section="projects",
+            resource_key="research-projects",
+            service_exposure={
+                "mode": "read_only",
+                "resources": [],
+                "exports": [],
+                "admin_stats": [],
+                "record_samples": [
+                    {
+                        "key": "research-projects",
+                        "label": "Research Projects",
+                        "href": "/research/projects",
+                        "records": [
+                            {
+                                "title": "Carbon Literacy for Youth Employability",
+                                "summary": "A project on carbon literacy, youth employability, and green jobs.",
+                                "status": "ongoing",
+                                "project_type": "collaborative",
+                                "progress_percentage": 65,
+                                "start_date": "2026-01-01",
+                                "end_date": "2026-12-31",
+                                "currency": "KES",
+                                "budget": 1200000,
+                            }
+                        ],
+                    }
+                ],
+            },
+        )
+
+        self.assertIn("Carbon Literacy for Youth Employability", response.answer)
+        self.assertIn("carbon literacy", response.answer.lower())
+        self.assertIn("ongoing", response.answer.lower())
+        self.assertNotIn("Your question", response.answer)
+
     def test_markdown_chunking_preserves_complete_answer(self):
         answer = "## Heading\n\n- First point\n- Second point"
 

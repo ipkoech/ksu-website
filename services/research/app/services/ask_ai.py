@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from decimal import Decimal
 import json
 import uuid
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +21,7 @@ from ..schemas.ask_ai import (
     ResearchAskAIResponse,
     ResearchAIMessageRead,
 )
-from .exports import EXPORT_RESOURCE_CONFIGS
+from .exports import EXPORT_RESOURCE_CONFIGS, ResearchExportService
 from .search import RESEARCH_SEARCH_AREAS
 from .stats import admin_research_stats
 
@@ -99,12 +101,15 @@ class GeminiResearchAIProvider:
             "resources": service_exposure.get("resources", [])[:30],
             "exports": service_exposure.get("exports", [])[:30],
             "admin_stats": service_exposure.get("admin_stats", [])[:40],
+            "record_samples": service_exposure.get("record_samples", [])[:30],
         }
         return "\n".join(
             [
                 "You are the Kisii University Research admin Ask AI assistant.",
                 "You must answer as a read-only advisor. Never claim that you created, updated, deleted, approved, published, imported, exported, or queued anything.",
                 "Use Markdown. Keep the answer practical, section-aware, and grounded in the provided research backend context.",
+                "Answer research-domain questions directly from the provided stats, resources, exports, and record samples when possible. Do not merely point to pages if relevant data is present.",
+                "Do not repeat or quote the user question back in the answer.",
                 "If the question asks for a write action, refuse that action and suggest a read-only review path.",
                 "",
                 f"Current section: {context.section_label} ({context.section_key})",
@@ -363,27 +368,11 @@ class ResearchAskAIService:
     ) -> ResearchAskAIResponse:
         context = ResearchAskAIService.resolve_context(path, section, resource_key, record_id)
         exposure = service_exposure or ResearchAskAIService.service_exposure_catalog()
-        answer = provider_answer or "\n".join(
-            [
-                f"## {context.section_label} advisor",
-                "",
-                "I can help as a **read-only** research advisor. I can explain records, identify review areas, suggest relevant exports, and help structure reports.",
-                "",
-                "### Guardrails",
-                "- I cannot create, update, delete, approve, publish, or otherwise modify research data.",
-                "- I can only refer to research service areas and references available through this backend context.",
-                "",
-                "### Section focus",
-                f"- {SECTION_CONFIGS[context.section_key].focus}.",
-                "",
-                "### Backend context available",
-                f"- Search/resource areas exposed: {len(exposure.get('resources', []))}.",
-                f"- Export datasets exposed: {len(exposure.get('exports', []))}.",
-                f"- Guided prompts available: {len(context.guided_prompts)}.",
-            ]
+        answer = provider_answer or ResearchAskAIService._deterministic_answer(
+            message=message,
+            context=context,
+            service_exposure=exposure,
         )
-        if message.strip():
-            answer = f"{answer}\n\n### Your question\n{message.strip()}"
 
         return ResearchAskAIResponse(
             answer=answer,
@@ -392,6 +381,74 @@ class ResearchAskAIService:
             references=context.references,
             suggested_prompts=context.guided_prompts,
         )
+
+    @staticmethod
+    def _deterministic_answer(
+        *,
+        message: str,
+        context: ResearchAskAIContext,
+        service_exposure: dict,
+    ) -> str:
+        record_answer = ResearchAskAIService._answer_from_record_samples(message, service_exposure)
+        if record_answer:
+            return record_answer
+
+        return "\n".join(
+            [
+                f"## {context.section_label} advisor",
+                "",
+                "I can help as a **read-only** research advisor across projects, grants, publications, centers, outputs, partners, impact, sustainability, capacity, donations, and research settings.",
+                "",
+                "### What I can answer from the backend context",
+                "- Summaries of research records, portfolio health, funding, publications, outputs, impact, and admin reporting readiness.",
+                "- Data-quality gaps such as missing PI, status, dates, public visibility, metadata, or relationship links.",
+                "- Which read-only page, export, or record set supports a research question.",
+                "",
+                "### Section focus",
+                f"- {SECTION_CONFIGS[context.section_key].focus}.",
+                "",
+                "### Backend context available",
+                f"- Search/resource areas exposed: {len(service_exposure.get('resources', []))}.",
+                f"- Export datasets exposed: {len(service_exposure.get('exports', []))}.",
+                f"- Guided prompts available: {len(context.guided_prompts)}.",
+                f"- Record sample groups available: {len(service_exposure.get('record_samples', []))}.",
+            ]
+        )
+
+    @staticmethod
+    def _answer_from_record_samples(message: str, service_exposure: dict) -> str | None:
+        normalized = message.lower()
+        if not any(term in normalized for term in ("project", "projects")):
+            return None
+
+        project_group = _record_sample_group(service_exposure, "research-projects")
+        records = project_group.get("records", []) if project_group else []
+        if not records:
+            return None
+
+        index = min(_requested_ordinal_index(normalized), len(records) - 1)
+        record = records[index]
+        title = _record_title(record, fallback="Selected research project")
+        details = _project_detail_lines(record)
+        summary = _first_non_empty(record, "summary", "abstract", "description", "objectives")
+
+        lines = [
+            f"## {title}",
+            "",
+            f"This is the {index + 1}{_ordinal_suffix(index + 1)} project in the current research project sample.",
+        ]
+        if summary:
+            lines.extend(["", summary])
+        if details:
+            lines.extend(["", "### Key details", *details])
+        lines.extend(
+            [
+                "",
+                "### Where to review it",
+                "- Open **Projects** to inspect the full record, relationships, audit activity, and public visibility.",
+            ]
+        )
+        return "\n".join(lines)
 
     @staticmethod
     def markdown_chunks(answer: str, chunk_size: int = 96):
@@ -473,7 +530,40 @@ class ResearchAskAIService:
             }
             for item in stats.stats
         ]
+        exposure["record_samples"] = await ResearchAskAIService._record_samples(db)
         return exposure
+
+    @staticmethod
+    async def _record_samples(db: AsyncSession) -> list[dict[str, Any]]:
+        priority_keys = (
+            "research-projects",
+            "research-grants",
+            "research-publications",
+            "research-centers",
+            "research-outputs",
+            "research-partners",
+            "research-impact-metrics",
+            "research-sustainability",
+        )
+        samples: list[dict[str, Any]] = []
+        for key in priority_keys:
+            config = EXPORT_RESOURCE_CONFIGS.get(key)
+            if config is None:
+                continue
+            try:
+                rows = await ResearchExportService.rows(db, config, limit=5)
+            except Exception:
+                rows = []
+            samples.append(
+                {
+                    "key": config.key,
+                    "label": config.label,
+                    "href": _admin_href_for_resource(config.key),
+                    "columns": list(config.columns),
+                    "records": [_compact_record(row) for row in rows],
+                }
+            )
+        return samples
 
     @staticmethod
     async def list_conversations(db: AsyncSession, user_id: uuid.UUID) -> list[ResearchAIConversationRead]:
@@ -579,3 +669,109 @@ def _conversation_title(message: str, section_label: str) -> str:
     if not normalized:
         return f"{section_label} Ask AI"
     return normalized[:80]
+
+
+def _record_sample_group(service_exposure: dict, key: str) -> dict | None:
+    for group in service_exposure.get("record_samples", []):
+        if group.get("key") == key:
+            return group
+    return None
+
+
+def _requested_ordinal_index(message: str) -> int:
+    ordinal_markers = {
+        "1st": 0,
+        "first": 0,
+        "top": 0,
+        "2nd": 1,
+        "second": 1,
+        "3rd": 2,
+        "third": 2,
+        "4th": 3,
+        "fourth": 3,
+        "5th": 4,
+        "fifth": 4,
+    }
+    for marker, index in ordinal_markers.items():
+        if marker in message:
+            return index
+    return 0
+
+
+def _ordinal_suffix(value: int) -> str:
+    if 10 <= value % 100 <= 20:
+        return "th"
+    return {1: "st", 2: "nd", 3: "rd"}.get(value % 10, "th")
+
+
+def _record_title(record: dict, fallback: str) -> str:
+    return str(record.get("title") or record.get("name") or fallback)
+
+
+def _first_non_empty(record: dict, *keys: str) -> str | None:
+    for key in keys:
+        value = record.get(key)
+        if value not in (None, ""):
+            return str(value)
+    return None
+
+
+def _project_detail_lines(record: dict) -> list[str]:
+    fields = (
+        ("Status", "status"),
+        ("Type", "project_type"),
+        ("Progress", "progress_percentage"),
+        ("Start date", "start_date"),
+        ("End date", "end_date"),
+        ("Budget", "budget"),
+    )
+    lines: list[str] = []
+    for label, key in fields:
+        value = record.get(key)
+        if value in (None, ""):
+            continue
+        if key == "progress_percentage":
+            value = f"{value}%"
+        if key == "budget":
+            value = _format_budget(value, record.get("currency"))
+        lines.append(f"- **{label}:** {value}")
+    return lines
+
+
+def _format_budget(value: Any, currency: Any) -> str:
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    prefix = f"{currency} " if currency else ""
+    return f"{prefix}{numeric:,.0f}"
+
+
+def _compact_record(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: _jsonable_value(value)
+        for key, value in row.items()
+        if value not in (None, "")
+    }
+
+
+def _jsonable_value(value: Any) -> Any:
+    if isinstance(value, Decimal):
+        return float(value)
+    if isinstance(value, uuid.UUID):
+        return str(value)
+    return value
+
+
+def _admin_href_for_resource(key: str) -> str:
+    mappings = {
+        "research-projects": "/research/projects",
+        "research-grants": "/research/grants",
+        "research-publications": "/research/publications",
+        "research-centers": "/research/centers",
+        "research-outputs": "/research/outputs",
+        "research-partners": "/research/partnerships",
+        "research-impact-metrics": "/research/impact",
+        "research-sustainability": "/research/sustainability",
+    }
+    return mappings.get(key, "/research")
