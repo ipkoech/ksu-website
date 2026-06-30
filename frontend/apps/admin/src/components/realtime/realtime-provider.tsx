@@ -34,19 +34,33 @@ export function RealtimeProvider({
   const client = useMemo(() => new RealtimeClient(), []);
 
   useEffect(() => {
+    const invalidateResearchForNotification = (notification: RealtimeNotification) => {
+      const payload = notification.payload;
+      if (
+        payload?.event === "import.completed" &&
+        typeof payload.resource === "string" &&
+        payload.resource.startsWith("research-")
+      ) {
+        queryClient.invalidateQueries({ queryKey: ["research"] });
+      }
+    };
+
     const unsubscribeStatus = client.subscribeStatus(setStatus);
     const unsubscribeEvents = client.subscribe((event) => {
       if (event.type === "connected") {
         setNotifications(event.notifications);
         queryClient.invalidateQueries({ queryKey: ["current-user", "notifications"] });
+        event.notifications.forEach(invalidateResearchForNotification);
       }
       if (event.type === "notification.created") {
         setNotifications((current) => [event.notification, ...current.filter((item) => item.id !== event.notification.id)]);
         queryClient.invalidateQueries({ queryKey: ["current-user", "notifications"] });
+        invalidateResearchForNotification(event.notification);
       }
       if (event.type === "heartbeat" && event.unread_notifications) {
         setNotifications(event.unread_notifications);
         queryClient.invalidateQueries({ queryKey: ["current-user", "notifications"] });
+        event.unread_notifications.forEach(invalidateResearchForNotification);
       }
     });
 

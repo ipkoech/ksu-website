@@ -110,6 +110,7 @@ async def queue_import_commit(
         kwargs={
             "resource_key": resource_key,
             "payload": data.model_dump(mode="json"),
+            "user_id": str(user.id),
         },
     )
     return success(

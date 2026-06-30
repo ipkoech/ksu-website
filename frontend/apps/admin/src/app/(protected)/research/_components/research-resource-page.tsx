@@ -31,7 +31,7 @@ import {
   researchServiceApi,
   useImportResource,
   usePreviewImport,
-  useCommitImport,
+  useStartImportCommit,
   type ImportPreviewRow,
   type ResearchGenericPayload,
   type ResearchGenericRecord,
@@ -282,9 +282,9 @@ function ResearchImportDialog({
 
   const resourceQuery = useImportResource(resourceKey, { enabled: open });
   const previewImport = usePreviewImport();
-  const commitImport = useCommitImport();
+  const startImportCommit = useStartImportCommit();
   const resource = resourceQuery.data?.data;
-  const isSubmitting = commitImport.isPending;
+  const isSubmitting = startImportCommit.isPending;
   const rowIssues = useMemo(
     () => stagedRows.map((row) => getStagedRowIssues(row, resource?.columns ?? [])),
     [resource?.columns, stagedRows],
@@ -342,12 +342,12 @@ function ResearchImportDialog({
       return;
     }
     try {
-      const response = await commitImport.mutateAsync({
+      const response = await startImportCommit.mutateAsync({
         resource: resourceKey,
         data: { rows: stagedRows.map((row) => normalizeImportRow(row.values)), mode: "partial" },
       });
-      await queryClient.invalidateQueries({ queryKey: ["research"] });
-      toast.success(`Created ${response.data.created_rows} record${response.data.created_rows === 1 ? "" : "s"}`);
+      queryClient.invalidateQueries({ queryKey: ["research"] });
+      toast.success(`Import job queued (${response.data.job_id.slice(0, 8)}). The list will refresh when it completes.`);
       resetImport();
       onOpenChange(false);
     } catch (error) {
