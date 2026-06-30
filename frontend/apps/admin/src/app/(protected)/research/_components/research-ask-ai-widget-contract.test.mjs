@@ -54,3 +54,19 @@ assert(
   source.includes("Using {scopeLabel}") && source.includes("SourceChips"),
   "Ask AI should show the active grounding scope and source chips in the chat UI",
 );
+assert(
+  source.includes("MoreVertical") &&
+    source.includes("DropdownMenu") &&
+    source.includes("ReferenceMenu"),
+  "Ask AI references should be expanded from a more-vertical menu in the composer",
+);
+assert(
+  source.includes("<SelectedReferenceChips references={selectedReferences}") &&
+    source.indexOf("<SelectedReferenceChips references={selectedReferences}") < source.indexOf("<Textarea"),
+  "Selected references should appear directly above the Ask AI textarea",
+);
+assert(
+  source.includes("isUser && message.references?.length") &&
+    source.includes("<UserReferenceChips references={message.references} />"),
+  "Selected references should render as small chips on the user message",
+);

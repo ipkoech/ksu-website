@@ -3,9 +3,12 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bot, MessageSquareText, Send, Sparkles } from "lucide-react";
+import { Bot, MessageSquareText, MoreVertical, Send, Sparkles } from "lucide-react";
 import {
   Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
   ScrollArea,
   Sheet,
   SheetContent,
@@ -151,6 +154,7 @@ export function ResearchAskAIWidget() {
           content: message,
           content_format: "markdown",
           created_at: now,
+          references: selectedReferences,
         },
         {
           id: assistantId,
@@ -289,24 +293,6 @@ export function ResearchAskAIWidget() {
                 </Button>
               ))}
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              {REFERENCE_OPTIONS.map((item) => {
-                const selected = manualReferences.some((reference) => reference.href === item.href);
-                return (
-                  <button
-                    key={item.token}
-                    type="button"
-                    className={cn(
-                      "rounded-md border px-2 py-1 text-xs transition-colors",
-                      selected ? "border-primary bg-primary/10 text-primary" : "bg-background hover:bg-muted",
-                    )}
-                    onClick={() => setManualReferences((current) => toggleReference(current, item))}
-                  >
-                    {item.token}
-                  </button>
-                );
-              })}
-            </div>
           </div>
         </SheetHeader>
 
@@ -343,6 +329,13 @@ export function ResearchAskAIWidget() {
 
         <div className="border-t bg-background px-5 py-4">
           {error ? <p className="mb-2 text-sm text-destructive">{error}</p> : null}
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <SelectedReferenceChips references={selectedReferences} />
+            <ReferenceMenu
+              references={manualReferences}
+              onToggle={(reference) => setManualReferences((current) => toggleReference(current, reference))}
+            />
+          </div>
           <form
             className="flex items-end gap-2"
             onSubmit={(event) => {
@@ -387,8 +380,77 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         )}
       >
         {message.pending ? <TypingIndicator /> : <MarkdownMessage content={content} />}
+        {isUser && message.references?.length ? <UserReferenceChips references={message.references} /> : null}
         {!isUser && !message.pending ? <SourceChips references={message.references ?? []} /> : null}
       </div>
+    </div>
+  );
+}
+
+function ReferenceMenu({
+  references,
+  onToggle,
+}: {
+  references: ResearchAskAIReference[];
+  onToggle: (reference: ResearchAskAIReference & { token: string }) => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button type="button" size="icon" variant="outline" className="size-9 shrink-0" aria-label="Choose Ask AI references">
+          <MoreVertical className="size-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56 p-2">
+        <div className="mb-2 px-2 text-xs font-medium text-muted-foreground">References</div>
+        <div className="grid gap-1">
+          {REFERENCE_OPTIONS.map((item) => {
+            const selected = references.some((reference) => reference.href === item.href);
+            return (
+              <button
+                key={item.token}
+                type="button"
+                className={cn(
+                  "flex items-center justify-between rounded-md px-2 py-1.5 text-left text-xs transition-colors",
+                  selected ? "bg-primary/10 text-primary" : "hover:bg-muted",
+                )}
+                onClick={() => onToggle(item)}
+              >
+                <span>{item.token}</span>
+                {selected ? <span className="text-[10px] uppercase">On</span> : null}
+              </button>
+            );
+          })}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function SelectedReferenceChips({ references }: { references: ResearchAskAIReference[] }) {
+  if (!references.length) {
+    return <p className="min-w-0 text-xs text-muted-foreground">No references selected</p>;
+  }
+  return (
+    <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+      {references.map((reference) => (
+        <ReferenceChip key={`${reference.href}-${reference.resource_key ?? reference.label}`} reference={reference} />
+      ))}
+    </div>
+  );
+}
+
+function UserReferenceChips({ references }: { references: ResearchAskAIReference[] }) {
+  return (
+    <div className="mt-2 flex flex-wrap justify-end gap-1">
+      {references.slice(0, 4).map((reference) => (
+        <span
+          key={`${reference.href}-${reference.resource_key ?? reference.label}`}
+          className="rounded bg-primary-foreground/15 px-1.5 py-0.5 text-[10px] leading-4 text-primary-foreground/90"
+        >
+          {reference.label}
+        </span>
+      ))}
     </div>
   );
 }
@@ -398,11 +460,17 @@ function SourceChips({ references }: { references: ResearchAskAIReference[] }) {
   return (
     <div className="mt-3 flex flex-wrap gap-1.5 border-t pt-2">
       {references.slice(0, 4).map((reference) => (
-        <span key={`${reference.href}-${reference.resource_key ?? reference.label}`} className="rounded-md bg-muted px-2 py-1 text-[11px] text-muted-foreground">
-          {reference.label}
-        </span>
+        <ReferenceChip key={`${reference.href}-${reference.resource_key ?? reference.label}`} reference={reference} />
       ))}
     </div>
+  );
+}
+
+function ReferenceChip({ reference }: { reference: ResearchAskAIReference }) {
+  return (
+    <span className="rounded-md bg-muted px-2 py-1 text-[11px] leading-4 text-muted-foreground">
+      {reference.label}
+    </span>
   );
 }
 
