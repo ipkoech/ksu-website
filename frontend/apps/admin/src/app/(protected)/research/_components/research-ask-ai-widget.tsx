@@ -3,7 +3,7 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bot, Loader2, MessageSquareText, Send, Sparkles } from "lucide-react";
+import { Bot, MessageSquareText, Send, Sparkles } from "lucide-react";
 import {
   Button,
   ScrollArea,
@@ -102,6 +102,7 @@ export function ResearchAskAIWidget() {
 
       const now = new Date().toISOString();
       const assistantId = `assistant-${Date.now()}`;
+      let assistantDraft = "";
       setPrompt("");
       setError(null);
       setIsStreaming(true);
@@ -145,11 +146,7 @@ export function ResearchAskAIWidget() {
             if (event.event === "delta") {
               const delta = event.data.text ?? "";
               if (!delta) return;
-              setMessages((current) =>
-                current.map((item) =>
-                  item.id === assistantId ? { ...item, content: `${item.content}${delta}` } : item,
-                ),
-              );
+              assistantDraft += delta;
               return;
             }
 
@@ -177,7 +174,7 @@ export function ResearchAskAIWidget() {
                     ? {
                         ...item,
                         id: event.data.assistant_message_id ?? item.id,
-                        content: event.data.answer || item.content,
+                        content: event.data.answer || assistantDraft,
                         pending: false,
                       }
                     : item,
@@ -202,7 +199,7 @@ export function ResearchAskAIWidget() {
       <Button
         type="button"
         size="lg"
-        className="fixed right-4 top-24 z-50 h-12 gap-2 rounded-full px-5 shadow-lg shadow-primary/20 sm:right-6"
+        className="fixed bottom-4 right-4 z-50 h-12 gap-2 rounded-full px-5 shadow-lg shadow-primary/20 sm:bottom-6 sm:right-6"
         onClick={() => setOpen(true)}
       >
         <MessageSquareText className="size-4" />
@@ -251,12 +248,6 @@ export function ResearchAskAIWidget() {
               <MessageBubble key={message.id} message={message} />
             ))}
 
-            {isStreaming ? (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Loader2 className="size-3 animate-spin" />
-                Streaming response
-              </div>
-            ) : null}
           </div>
         </ScrollArea>
 
@@ -284,7 +275,7 @@ export function ResearchAskAIWidget() {
               disabled={isStreaming}
             />
             <Button type="submit" size="icon" disabled={isStreaming || !prompt.trim()} aria-label="Send Ask AI message">
-              {isStreaming ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+              <Send className="size-4" />
             </Button>
           </form>
         </div>
@@ -304,8 +295,23 @@ function MessageBubble({ message }: { message: ChatMessage }) {
           message.pending && "opacity-80",
         )}
       >
-        {message.content ? <MarkdownMessage content={message.content} /> : <span className="text-muted-foreground">Preparing answer...</span>}
+        {message.pending ? <TypingIndicator /> : <MarkdownMessage content={message.content} />}
       </div>
+    </div>
+  );
+}
+
+function TypingIndicator() {
+  return (
+    <div className="flex min-h-6 items-center gap-1.5" aria-label="Ask AI is preparing an answer">
+      {/* motion dots */}
+      {[0, 1, 2].map((dot) => (
+        <span
+          key={dot}
+          className="size-1.5 rounded-full bg-muted-foreground/70 motion-safe:animate-bounce"
+          style={{ animationDelay: `${dot * 120}ms` }}
+        />
+      ))}
     </div>
   );
 }
