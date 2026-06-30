@@ -246,8 +246,8 @@ function PortfolioQuickAccessSection({
   ];
 
   return (
-    <ScrollReveal as="section" className="border-b border-slate-200 bg-[linear-gradient(180deg,#f4f8f6_0%,#ffffff_100%)] px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.55fr)]">
+    <ScrollReveal as="section" className="min-h-[20vh] border-b border-slate-200 bg-[linear-gradient(180deg,#f4f8f6_0%,#ffffff_100%)] px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto grid min-h-[calc(20vh-4rem)] max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.55fr)] lg:items-center">
         <article className="rounded-lg border border-primary/15 bg-white p-5 shadow-sm lg:p-6">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
