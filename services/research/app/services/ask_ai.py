@@ -95,13 +95,14 @@ class GeminiResearchAIProvider:
         context: ResearchAskAIContext,
         service_exposure: dict,
     ) -> str:
+        safe_exposure = _sanitize_service_exposure(service_exposure)
         compact_exposure = {
-            "mode": service_exposure.get("mode", "read_only"),
+            "mode": safe_exposure.get("mode", "read_only"),
             "section": context.model_dump(mode="json"),
-            "resources": service_exposure.get("resources", [])[:30],
-            "exports": service_exposure.get("exports", [])[:30],
-            "admin_stats": service_exposure.get("admin_stats", [])[:40],
-            "record_samples": service_exposure.get("record_samples", [])[:30],
+            "resources": safe_exposure.get("resources", [])[:30],
+            "exports": safe_exposure.get("exports", [])[:30],
+            "admin_stats": safe_exposure.get("admin_stats", [])[:40],
+            "record_samples": safe_exposure.get("record_samples", [])[:30],
         }
         return "\n".join(
             [
@@ -367,7 +368,7 @@ class ResearchAskAIService:
         provider_answer: str | None = None,
     ) -> ResearchAskAIResponse:
         context = ResearchAskAIService.resolve_context(path, section, resource_key, record_id)
-        exposure = service_exposure or ResearchAskAIService.service_exposure_catalog()
+        exposure = _sanitize_service_exposure(service_exposure or ResearchAskAIService.service_exposure_catalog())
         answer = provider_answer or ResearchAskAIService._deterministic_answer(
             message=message,
             context=context,
@@ -751,7 +752,7 @@ def _compact_record(row: dict[str, Any]) -> dict[str, Any]:
     return {
         key: _jsonable_value(value)
         for key, value in row.items()
-        if value not in (None, "")
+        if value not in (None, "") and not _is_internal_record_field(key)
     }
 
 
@@ -761,6 +762,44 @@ def _jsonable_value(value: Any) -> Any:
     if isinstance(value, uuid.UUID):
         return str(value)
     return value
+
+
+def _sanitize_service_exposure(service_exposure: dict) -> dict:
+    safe_exposure = dict(service_exposure)
+    safe_exposure["record_samples"] = [
+        _sanitize_record_sample_group(group)
+        for group in service_exposure.get("record_samples", [])
+        if isinstance(group, dict)
+    ]
+    return safe_exposure
+
+
+def _sanitize_record_sample_group(group: dict[str, Any]) -> dict[str, Any]:
+    safe_group = {
+        key: value
+        for key, value in group.items()
+        if key != "records" and not _is_internal_record_field(key)
+    }
+    safe_group["columns"] = [
+        column
+        for column in group.get("columns", [])
+        if isinstance(column, str) and not _is_internal_record_field(column)
+    ]
+    safe_group["records"] = [
+        _compact_record(record)
+        for record in group.get("records", [])
+        if isinstance(record, dict)
+    ]
+    return safe_group
+
+
+def _is_internal_record_field(key: str) -> bool:
+    normalized = key.lower()
+    return (
+        normalized == "id"
+        or normalized.endswith("_id")
+        or normalized in {"created_at", "updated_at", "deleted_at", "created_by", "updated_by"}
+    )
 
 
 def _admin_href_for_resource(key: str) -> str:

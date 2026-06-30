@@ -1,4 +1,5 @@
 import unittest
+import json
 
 from fastapi.routing import APIRoute
 
@@ -154,6 +155,62 @@ class ResearchAskAIContractTests(unittest.TestCase):
         self.assertIn("carbon literacy", response.answer.lower())
         self.assertIn("ongoing", response.answer.lower())
         self.assertNotIn("Your question", response.answer)
+
+    def test_advisor_removes_internal_project_metadata_from_answers_and_context(self):
+        service_exposure = {
+            "mode": "read_only",
+            "resources": [],
+            "exports": [],
+            "admin_stats": [],
+            "record_samples": [
+                {
+                    "key": "research-projects",
+                    "label": "Research Projects",
+                    "href": "/research/projects",
+                    "records": [
+                        {
+                            "id": "79669500-24e4-4c4e-8c63-93d062fa24f1",
+                            "title": "Carbon Literacy for Youth Employability",
+                            "code": "CL4YE",
+                            "summary": "A project on carbon literacy and youth employability.",
+                            "center_id": "8168cb6e-0446-4703-aa29-2dc3957a21be",
+                            "program_id": "3bf57aee-f60b-4cd9-a438-bf9be65a6427",
+                            "status": "ongoing",
+                            "project_type": "collaborative",
+                            "progress_percentage": 35,
+                            "start_date": "2026-01-01",
+                            "budget": 1250000,
+                            "currency": "KES",
+                            "created_at": "2026-06-29T11:51:53.368357+00:00",
+                            "updated_at": "2026-06-29T11:51:53.368357+00:00",
+                        }
+                    ],
+                }
+            ],
+        }
+
+        response = ResearchAskAIService.respond(
+            message="Explain what the first project",
+            path="/research/projects",
+            section="projects",
+            resource_key="research-projects",
+            service_exposure=service_exposure,
+        )
+        prompt = GeminiResearchAIProvider(api_key="test-key", model="gemini-2.5-flash").build_prompt(
+            message="Explain what the first project",
+            context=response.context,
+            service_exposure=response.service_exposure,
+        )
+        serialized_exposure = json.dumps(response.service_exposure)
+        combined_output = "\n".join([response.answer, prompt, serialized_exposure])
+
+        self.assertIn("Carbon Literacy for Youth Employability", response.answer)
+        self.assertNotIn("79669500-24e4-4c4e-8c63-93d062fa24f1", combined_output)
+        self.assertNotIn("8168cb6e-0446-4703-aa29-2dc3957a21be", combined_output)
+        self.assertNotIn("3bf57aee-f60b-4cd9-a438-bf9be65a6427", combined_output)
+        self.assertNotIn("created_at", combined_output)
+        self.assertNotIn("updated_at", combined_output)
+        self.assertNotIn("2026-06-29T11:51:53.368357+00:00", combined_output)
 
     def test_markdown_chunking_preserves_complete_answer(self):
         answer = "## Heading\n\n- First point\n- Second point"
