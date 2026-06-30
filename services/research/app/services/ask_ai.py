@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal
 import json
+import re
 import uuid
 from typing import Any
 
@@ -264,6 +265,15 @@ SECTION_ALIASES = {
     "content": "overview",
 }
 
+SLASH_REFERENCE_CONFIGS: dict[str, tuple[str, str, str, str]] = {
+    "/projects": ("Projects", "/research/projects", "research-projects", "projects"),
+    "/grants": ("Grants", "/research/grants", "research-grants", "grants"),
+    "/publications": ("Publications", "/research/publications", "research-publications", "publications"),
+    "/centers": ("Centers", "/research/centers", "research-centers", "projects"),
+    "/reports": ("Reports", "/research/reports", "research-reports", "reports"),
+    "/sustainability": ("Sustainability", "/research/sustainability", "research-sustainability", "sustainability"),
+}
+
 
 class ResearchAskAIService:
     """Build safe, read-only advisor context for the research portal."""
@@ -283,7 +293,8 @@ class ResearchAskAIService:
         request_references: list[dict[str, Any]] | None = None,
         conversation_id: uuid.UUID | None = None,
     ) -> ResearchAskAIResponse:
-        context = ResearchAskAIService.resolve_context(path, section, resource_key, record_id, scope, intent_mode, request_references)
+        effective_references = _merge_reference_payloads(request_references, _slash_reference_payloads(message))
+        context = ResearchAskAIService.resolve_context(path, section, resource_key, record_id, scope, intent_mode, effective_references)
         exposure = await ResearchAskAIService.build_service_exposure(db)
         provider_answer = await ResearchAskAIService._generate_provider_answer(
             message=message,
@@ -298,7 +309,7 @@ class ResearchAskAIService:
             record_id=record_id,
             scope=scope,
             intent_mode=intent_mode,
-            request_references=request_references,
+            request_references=effective_references,
             service_exposure=exposure,
             provider_answer=provider_answer,
         )
@@ -349,13 +360,16 @@ class ResearchAskAIService:
         intent_mode: str = "summarize",
         request_references: list[dict[str, Any]] | None = None,
     ) -> ResearchAskAIContext:
-        section_key = _normalize_section(section) or _section_from_path(path)
+        normalized_scope = _normalize_scope(scope)
+        explicit_references = _request_references(request_references)
+        referenced_section = _section_from_reference(explicit_references[0]) if normalized_scope == "page" and len(explicit_references) == 1 else None
+        section_key = referenced_section or _normalize_section(section) or _section_from_path(path)
         config = SECTION_CONFIGS.get(section_key) or SECTION_CONFIGS["overview"]
-        resolved_resource_key = resource_key or config.resource_key
+        resolved_resource_key = explicit_references[0].resource_key if referenced_section and explicit_references else resource_key or config.resource_key
         references = _dedupe_references(
             _reference(config.label, config.href, resolved_resource_key, "section"),
             *config.related,
-            *_request_references(request_references),
+            *explicit_references,
         )
 
         return ResearchAskAIContext(
@@ -364,7 +378,7 @@ class ResearchAskAIService:
             path=path or config.href,
             resource_key=resolved_resource_key,
             record_id=record_id,
-            scope=_normalize_scope(scope),
+            scope=normalized_scope,
             intent_mode=_normalize_intent_mode(intent_mode),
             capabilities=[
                 "answer read-only research admin questions",
@@ -391,7 +405,8 @@ class ResearchAskAIService:
         service_exposure: dict | None = None,
         provider_answer: str | None = None,
     ) -> ResearchAskAIResponse:
-        context = ResearchAskAIService.resolve_context(path, section, resource_key, record_id, scope, intent_mode, request_references)
+        effective_references = _merge_reference_payloads(request_references, _slash_reference_payloads(message))
+        context = ResearchAskAIService.resolve_context(path, section, resource_key, record_id, scope, intent_mode, effective_references)
         exposure = _sanitize_service_exposure(service_exposure or ResearchAskAIService.service_exposure_catalog())
         answer = provider_answer or ResearchAskAIService._deterministic_answer(
             message=message,
@@ -717,6 +732,45 @@ def _request_references(references: list[dict[str, Any]] | None) -> list[Researc
             )
         )
     return normalized
+
+
+def _slash_reference_payloads(message: str) -> list[dict[str, Any]]:
+    tokens = {match.group(0).lower() for match in re.finditer(r"/[a-z][a-z-]*", message or "")}
+    payloads: list[dict[str, Any]] = []
+    for token in sorted(tokens):
+        config = SLASH_REFERENCE_CONFIGS.get(token)
+        if config is None:
+            continue
+        label, href, resource_key, _section_key = config
+        payloads.append(
+            {
+                "label": label,
+                "type": "resource",
+                "href": href,
+                "resource_key": resource_key,
+            }
+        )
+    return payloads
+
+
+def _merge_reference_payloads(*groups: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    seen: set[tuple[Any, Any]] = set()
+    merged: list[dict[str, Any]] = []
+    for group in groups:
+        for reference in group or []:
+            key = (reference.get("resource_key"), reference.get("href"))
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(reference)
+    return merged
+
+
+def _section_from_reference(reference: ResearchAskAIReference) -> str | None:
+    for _token, (_label, href, resource_key, section_key) in SLASH_REFERENCE_CONFIGS.items():
+        if reference.href == href or (reference.resource_key and reference.resource_key == resource_key):
+            return section_key
+    return None
 
 
 def _dedupe_references(*references: ResearchAskAIReference) -> list[ResearchAskAIReference]:

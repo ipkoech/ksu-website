@@ -130,6 +130,28 @@ class ResearchAskAIContractTests(unittest.TestCase):
         self.assertIn("Scope: mixed", prompt)
         self.assertIn("Intent mode: compare", prompt)
 
+    def test_single_slash_reference_sets_page_context(self):
+        response = ResearchAskAIService.respond(
+            message="Give me a report on /projects",
+            path="/research/grants",
+            section="grants",
+            resource_key="research-grants",
+            scope="page",
+            intent_mode="report",
+            service_exposure={
+                "mode": "read_only",
+                "resources": [],
+                "exports": [],
+                "admin_stats": [],
+                "record_samples": [],
+            },
+        )
+
+        self.assertEqual(response.context.section_key, "projects")
+        self.assertEqual(response.context.resource_key, "research-projects")
+        self.assertTrue(any(reference.href == "/research/projects" for reference in response.references))
+        self.assertIn("Research Projects advisor", response.answer)
+
     def test_advisor_response_is_read_only_and_section_aware(self):
         response = ResearchAskAIService.respond(
             message="What should I check before exporting?",
