@@ -3,6 +3,7 @@ import { test } from "node:test";
 
 import {
   filterRecordsByMonth,
+  getPublishedFactItems,
   getNarrativeSections,
   getRecordMonths,
   getRecordTimelineLabel,
@@ -46,6 +47,21 @@ test("record month filtering uses backend dates", () => {
 test("record titles and timeline labels do not invent content", () => {
   assert.equal(getRecordTitle(records[0], "Fallback"), "Climate Initiative");
   assert.equal(getRecordTimelineLabel(records[1]), "Sep 4, 2025");
+});
+
+test("published fact items omit missing backend values", () => {
+  assert.deepEqual(
+    getPublishedFactItems([
+      { label: "Timeline", value: "2024 - 2028" },
+      { label: "Center", value: "" },
+      { label: "Outputs", value: null },
+      { label: "Status", value: "Active" },
+    ]),
+    [
+      { label: "Timeline", value: "2024 - 2028" },
+      { label: "Status", value: "Active" },
+    ],
+  );
 });
 
 test("narrative sections use configured public labels", () => {

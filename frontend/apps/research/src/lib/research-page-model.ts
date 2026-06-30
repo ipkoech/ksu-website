@@ -11,6 +11,11 @@ export type NarrativeSection = {
   body: string;
 };
 
+export type PublishedFactItem = {
+  label: string;
+  value?: string | number | null;
+};
+
 export type NarrativeSectionSpec = {
   title: string;
   fields: string[];
@@ -120,6 +125,15 @@ export function getRecordTimelineLabel(record: Partial<ResearchGenericRecord>) {
     formatDate(record.updated_at) ||
     formatDate(record.created_at)
   );
+}
+
+export function getPublishedFactItems(items: PublishedFactItem[]) {
+  return items
+    .map((item) => ({
+      label: item.label,
+      value: compactText(item.value),
+    }))
+    .filter((item): item is { label: string; value: string } => Boolean(item.value));
 }
 
 export function getNarrativeSections(
