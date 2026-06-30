@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import uuid
+import logging
 from typing import Any
 
+import httpx
 from ksu_common.models import AuditLog
 from sqlalchemy import delete, func, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from ..core.config import get_settings
 from ..models import (
     CenterTeamMember,
     FocusArea,
@@ -63,6 +66,8 @@ ProjectService = build_simple_service(
 ProjectTeamMemberService = build_simple_service(ProjectTeamMember, "role", reference_fields={"person_id": "persons"})
 CenterTeamMemberService = build_simple_service(CenterTeamMember, "role", reference_fields={"person_id": "persons"})
 
+logger = logging.getLogger(__name__)
+
 
 def _brief(item: Any, *extra_fields: str) -> dict[str, Any]:
     payload = {
@@ -90,6 +95,37 @@ def _model_payload(item: Any) -> dict[str, Any]:
 async def _related_many(db: AsyncSession, statement, *extra_fields: str) -> list[dict[str, Any]]:
     result = await db.execute(statement)
     return [_brief(item, *extra_fields) for item in result.scalars().all()]
+
+
+class MainScopedEventService:
+    """Read real main-service events scoped to research records."""
+
+    @staticmethod
+    async def list(scope_type: str, scope_id: uuid.UUID, *, per_page: int = 20) -> list[dict[str, Any]]:
+        settings = get_settings()
+        try:
+            async with httpx.AsyncClient(
+                base_url=settings.MAIN_SERVICE_URL.rstrip("/"),
+                timeout=httpx.Timeout(settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS),
+            ) as client:
+                response = await client.get(
+                    "/api/v1/events",
+                    params={
+                        "scope_type": scope_type,
+                        "scope_id": str(scope_id),
+                        "page": 1,
+                        "per_page": per_page,
+                        "fields": "id,title,slug,summary,start_date,end_date,location,status,scope_type,scope_id,updated_at",
+                    },
+                )
+                response.raise_for_status()
+        except Exception as exc:
+            logger.warning("Could not load main-service events for %s=%s: %s", scope_type, scope_id, exc)
+            return []
+
+        payload = response.json()
+        data = payload.get("data", payload)
+        return data if isinstance(data, list) else []
 
 
 class ProjectDetailService:
@@ -138,6 +174,7 @@ class ProjectDetailService:
                     "story_type",
                     "story_date",
                 ),
+                "activities": await MainScopedEventService.list("research_project", project.id),
                 "metrics": await _related_many(
                     db,
                     ImpactMetric.active_query().where(ImpactMetric.project_id == project.id).order_by(ImpactMetric.display_order.asc(), ImpactMetric.created_at.desc()),
@@ -175,6 +212,37 @@ class ProjectRelationshipService:
     @staticmethod
     async def _ensure_project(db: AsyncSession, project_id: uuid.UUID) -> ResearchProject:
         return await ResearchProject.get_or_raise(db, project_id, error_message="Project not found")
+
+    @staticmethod
+    async def list_activities(db: AsyncSession, project_id: uuid.UUID) -> list[dict[str, Any]]:
+        await ProjectRelationshipService._ensure_project(db, project_id)
+        return await MainScopedEventService.list("research_project", project_id)
+
+    @staticmethod
+    async def list_impact_stories(db: AsyncSession, project_id: uuid.UUID) -> list[dict[str, Any]]:
+        await ProjectRelationshipService._ensure_project(db, project_id)
+        return await _related_many(
+            db,
+            SuccessStory.active_query()
+            .where(SuccessStory.project_id == project_id)
+            .order_by(SuccessStory.story_date.desc().nullslast(), SuccessStory.created_at.desc()),
+            "story_type",
+            "story_date",
+        )
+
+    @staticmethod
+    async def list_impact_metrics(db: AsyncSession, project_id: uuid.UUID) -> list[dict[str, Any]]:
+        await ProjectRelationshipService._ensure_project(db, project_id)
+        return await _related_many(
+            db,
+            ImpactMetric.active_query()
+            .where(ImpactMetric.project_id == project_id)
+            .order_by(ImpactMetric.display_order.asc(), ImpactMetric.created_at.desc()),
+            "metric_type",
+            "category",
+            "value",
+            "unit",
+        )
 
     @staticmethod
     async def list_partners(db: AsyncSession, project_id: uuid.UUID) -> list[dict[str, Any]]:
@@ -257,3 +325,126 @@ class ProjectRelationshipService:
         await ProjectRelationshipService._ensure_project(db, project_id)
         await db.execute(delete(project_focus_areas).where(project_focus_areas.c.project_id == project_id, project_focus_areas.c.focus_area_id == focus_area_id))
         await db.flush()
+
+
+class FarmDetailService:
+    """Admin-oriented aggregate payloads for research farm detail screens."""
+
+    @staticmethod
+    async def get_by_slug(db: AsyncSession, slug: str) -> dict[str, Any] | None:
+        farm = await FarmService.get_by_slug(
+            db,
+            slug,
+            load_options=(selectinload(ResearchFarm.center), selectinload(ResearchFarm.projects)),
+        )
+        if farm is None:
+            return None
+
+        return {
+            "record": {
+                **_model_payload(farm),
+                "center": _brief(farm.center) if farm.center else None,
+            },
+            "relationships": {
+                "projects": await FarmRelationshipService.list_projects(db, farm.id),
+                "partners": await FarmRelationshipService.list_partners(db, farm.id),
+                "activities": await FarmRelationshipService.list_activities(db, farm.id),
+                "impact": await FarmRelationshipService.list_impact_stories(db, farm.id),
+                "metrics": await FarmRelationshipService.list_impact_metrics(db, farm.id),
+                "audit": await _related_many(
+                    db,
+                    AuditLog.active_query()
+                    .where(AuditLog.resource_type.in_(("research_farm", "farms", "farm")))
+                    .where(AuditLog.resource_id == str(farm.id))
+                    .order_by(AuditLog.happened_at.desc())
+                    .limit(20),
+                    "action",
+                    "status",
+                    "happened_at",
+                ),
+            },
+        }
+
+
+class FarmRelationshipService:
+    """Manage farm relationships backed by existing project farm_id fields."""
+
+    @staticmethod
+    async def _ensure_farm(db: AsyncSession, farm_id: uuid.UUID) -> ResearchFarm:
+        return await ResearchFarm.get_or_raise(db, farm_id, error_message="Farm not found")
+
+    @staticmethod
+    async def list_projects(db: AsyncSession, farm_id: uuid.UUID) -> list[dict[str, Any]]:
+        await FarmRelationshipService._ensure_farm(db, farm_id)
+        return await _related_many(
+            db,
+            ResearchProject.active_query()
+            .where(ResearchProject.farm_id == farm_id)
+            .order_by(ResearchProject.start_date.desc().nullslast(), ResearchProject.title.asc()),
+            "code",
+            "project_type",
+            "start_date",
+            "end_date",
+        )
+
+    @staticmethod
+    async def add_project(db: AsyncSession, farm_id: uuid.UUID, project_id: uuid.UUID) -> None:
+        await FarmRelationshipService._ensure_farm(db, farm_id)
+        project = await ResearchProject.get_or_raise(db, project_id, error_message="Project not found")
+        project.farm_id = farm_id
+        await db.flush()
+
+    @staticmethod
+    async def remove_project(db: AsyncSession, farm_id: uuid.UUID, project_id: uuid.UUID) -> None:
+        await FarmRelationshipService._ensure_farm(db, farm_id)
+        project = await ResearchProject.get_or_raise(db, project_id, error_message="Project not found")
+        if project.farm_id == farm_id:
+            project.farm_id = None
+            await db.flush()
+
+    @staticmethod
+    async def list_partners(db: AsyncSession, farm_id: uuid.UUID) -> list[dict[str, Any]]:
+        await FarmRelationshipService._ensure_farm(db, farm_id)
+        return await _related_many(
+            db,
+            Partner.active_query()
+            .join(project_partners, Partner.id == project_partners.c.partner_id)
+            .join(ResearchProject, ResearchProject.id == project_partners.c.project_id)
+            .where(ResearchProject.farm_id == farm_id)
+            .order_by(Partner.display_order.asc(), Partner.name.asc()),
+            "partner_type",
+            "partnership_level",
+        )
+
+    @staticmethod
+    async def list_activities(db: AsyncSession, farm_id: uuid.UUID) -> list[dict[str, Any]]:
+        await FarmRelationshipService._ensure_farm(db, farm_id)
+        return await MainScopedEventService.list("research_farm", farm_id)
+
+    @staticmethod
+    async def list_impact_stories(db: AsyncSession, farm_id: uuid.UUID) -> list[dict[str, Any]]:
+        await FarmRelationshipService._ensure_farm(db, farm_id)
+        return await _related_many(
+            db,
+            SuccessStory.active_query()
+            .join(ResearchProject, ResearchProject.id == SuccessStory.project_id)
+            .where(ResearchProject.farm_id == farm_id)
+            .order_by(SuccessStory.story_date.desc().nullslast(), SuccessStory.created_at.desc()),
+            "story_type",
+            "story_date",
+        )
+
+    @staticmethod
+    async def list_impact_metrics(db: AsyncSession, farm_id: uuid.UUID) -> list[dict[str, Any]]:
+        await FarmRelationshipService._ensure_farm(db, farm_id)
+        return await _related_many(
+            db,
+            ImpactMetric.active_query()
+            .join(ResearchProject, ResearchProject.id == ImpactMetric.project_id)
+            .where(ResearchProject.farm_id == farm_id)
+            .order_by(ImpactMetric.display_order.asc(), ImpactMetric.created_at.desc()),
+            "metric_type",
+            "category",
+            "value",
+            "unit",
+        )

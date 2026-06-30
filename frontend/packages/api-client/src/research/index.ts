@@ -346,6 +346,58 @@ function sustainabilityRelationApi(relation: "projects" | "partners" | "training
   };
 }
 
+function readonlyProjectRelationApi(relation: "activities" | "impact-stories" | "impact-metrics") {
+  return {
+    list: (projectId: string) =>
+      researchApi.get<{ data: ResearchGenericRecord[] }>(
+        `/api/v1/projects/id/${projectId}/${relation}`,
+      ),
+  };
+}
+
+function projectBindingApi(relation: "partners" | "funders" | "focus-areas") {
+  return {
+    list: (projectId: string) =>
+      researchApi.get<{ data: ResearchGenericRecord[] }>(
+        `/api/v1/projects/id/${projectId}/${relation}`,
+      ),
+    add: (projectId: string, relatedId: string) =>
+      researchApi.put<{ data: ResearchGenericRecord }>(
+        `/api/v1/projects/id/${projectId}/${relation}/${relatedId}`,
+      ),
+    remove: (projectId: string, relatedId: string) =>
+      researchApi.delete<void>(
+        `/api/v1/projects/id/${projectId}/${relation}/${relatedId}`,
+      ),
+  };
+}
+
+function readonlyFarmRelationApi(relation: "partners" | "activities" | "impact-stories") {
+  return {
+    list: (farmId: string) =>
+      researchApi.get<{ data: ResearchGenericRecord[] }>(
+        `/api/v1/farms/id/${farmId}/${relation}`,
+      ),
+  };
+}
+
+function farmProjectBindingApi() {
+  return {
+    list: (farmId: string) =>
+      researchApi.get<{ data: ResearchGenericRecord[] }>(
+        `/api/v1/farms/id/${farmId}/projects`,
+      ),
+    add: (farmId: string, relatedId: string) =>
+      researchApi.put<{ data: ResearchGenericRecord }>(
+        `/api/v1/farms/id/${farmId}/projects/${relatedId}`,
+      ),
+    remove: (farmId: string, relatedId: string) =>
+      researchApi.delete<void>(
+        `/api/v1/farms/id/${farmId}/projects/${relatedId}`,
+      ),
+  };
+}
+
 export const researchServiceApi = {
   stats: () => researchApi.get<{ data: PublicStatsResponse }>("/api/v1/stats"),
   adminStats: () =>
@@ -355,6 +407,16 @@ export const researchServiceApi = {
   projects: crudApi<ResearchProject, ResearchProjectPayload>(
     "/api/v1/projects",
   ),
+  projectDetail: (slug: string) =>
+    researchApi.get<{ data: ResearchGenericRecord }>(`/api/v1/projects/${slug}/detail`),
+  projectRelations: {
+    activities: readonlyProjectRelationApi("activities"),
+    impactStories: readonlyProjectRelationApi("impact-stories"),
+    impactMetrics: readonlyProjectRelationApi("impact-metrics"),
+    partners: projectBindingApi("partners"),
+    funders: projectBindingApi("funders"),
+    focusAreas: projectBindingApi("focus-areas"),
+  },
   publications: crudApi<ResearchPublication, ResearchPublicationPayload>(
     "/api/v1/publications",
   ),
@@ -365,6 +427,14 @@ export const researchServiceApi = {
   farms: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/farms",
   ),
+  farmDetail: (slug: string) =>
+    researchApi.get<{ data: ResearchGenericRecord }>(`/api/v1/farms/${slug}/detail`),
+  farmRelations: {
+    projects: farmProjectBindingApi(),
+    partners: readonlyFarmRelationApi("partners"),
+    activities: readonlyFarmRelationApi("activities"),
+    impactStories: readonlyFarmRelationApi("impact-stories"),
+  },
   programs: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/programs",
   ),

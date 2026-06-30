@@ -37,6 +37,21 @@ async def get_project_detail(
     return success(data=detail)
 
 
+@router.get("/projects/id/{project_id}/activities", tags=["Research Projects"])
+async def list_project_activities(project_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return success(data=await ProjectRelationshipService.list_activities(db, project_id))
+
+
+@router.get("/projects/id/{project_id}/impact-stories", tags=["Research Projects"])
+async def list_project_impact_stories(project_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return success(data=await ProjectRelationshipService.list_impact_stories(db, project_id))
+
+
+@router.get("/projects/id/{project_id}/impact-metrics", tags=["Research Projects"])
+async def list_project_impact_metrics(project_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return success(data=await ProjectRelationshipService.list_impact_metrics(db, project_id))
+
+
 @router.get("/projects/id/{project_id}/partners", tags=["Research Projects"])
 async def list_project_partners(project_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await ProjectRelationshipService.list_partners(db, project_id))

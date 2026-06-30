@@ -2,6 +2,7 @@ import unittest
 
 from fastapi.routing import APIRoute
 
+from app.routes.v1.centers import router as centers_router
 from app.routes.v1.donations import router as donations_router
 from app.routes.v1.projects import router as projects_router
 from app.routes.v1.stories import router as stories_router
@@ -18,6 +19,9 @@ class ResearchAdminWorkspaceContractTests(unittest.TestCase):
     def test_project_detail_and_relationship_binding_routes_exist(self):
         expected_routes = (
             ("/projects/{slug}/detail", "GET"),
+            ("/projects/id/{project_id}/activities", "GET"),
+            ("/projects/id/{project_id}/impact-stories", "GET"),
+            ("/projects/id/{project_id}/impact-metrics", "GET"),
             ("/projects/id/{project_id}/partners", "GET"),
             ("/projects/id/{project_id}/partners/{partner_id}", "PUT"),
             ("/projects/id/{project_id}/partners/{partner_id}", "DELETE"),
@@ -38,6 +42,21 @@ class ResearchAdminWorkspaceContractTests(unittest.TestCase):
         query_param_names = {param.name for param in route.dependant.query_params}
 
         self.assertIn("farm_id", query_param_names)
+
+    def test_farm_detail_and_project_binding_routes_exist(self):
+        expected_routes = (
+            ("/farms/{slug}/detail", "GET"),
+            ("/farms/id/{farm_id}/projects", "GET"),
+            ("/farms/id/{farm_id}/projects/{project_id}", "PUT"),
+            ("/farms/id/{farm_id}/projects/{project_id}", "DELETE"),
+            ("/farms/id/{farm_id}/partners", "GET"),
+            ("/farms/id/{farm_id}/activities", "GET"),
+            ("/farms/id/{farm_id}/impact-stories", "GET"),
+        )
+
+        for path, method in expected_routes:
+            with self.subTest(path=path, method=method):
+                self.assertIsNotNone(_route(centers_router, path, method))
 
     def test_sustainability_relationship_binding_routes_exist(self):
         expected_routes = (
