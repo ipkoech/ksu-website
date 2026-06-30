@@ -1078,6 +1078,36 @@ export const researchScholarshipRelationshipAdapter: RelationshipAdapter<{ is_ac
   },
 };
 
+export const researchPartnerRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean; partner_type?: string; status?: string }> = {
+  key: "research-partner",
+  entityType: "research_partner",
+  label: "Research partner",
+  pluralLabel: "Research partners",
+  searchPlaceholder: "Search research partners",
+  emptyLabel: "No research partners found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await researchServiceApi.partners.list({
+      page: 1,
+      per_page: limit,
+      search: search?.trim() || undefined,
+      is_active: filters?.is_active ?? undefined,
+      partner_type: filters?.partner_type || undefined,
+      status: filters?.status || undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption);
+  },
+  async get(id, filters) {
+    const response = await researchServiceApi.partners.list({
+      page: 1,
+      per_page: 100,
+      is_active: filters?.is_active ?? undefined,
+      partner_type: filters?.partner_type || undefined,
+      status: filters?.status || undefined,
+    });
+    return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
+  },
+};
+
 export const staffAssignmentRelationshipAdapter: RelationshipAdapter<{ status?: string; entity_type?: string; entity_id?: string }> = {
   key: "staff-assignment",
   entityType: "staff_assignment",
@@ -1140,5 +1170,6 @@ export const relationshipAdapters = {
   researchGrantApplication: researchGrantApplicationRelationshipAdapter,
   researchMentorship: researchMentorshipRelationshipAdapter,
   researchScholarship: researchScholarshipRelationshipAdapter,
+  researchPartner: researchPartnerRelationshipAdapter,
   staffAssignment: staffAssignmentRelationshipAdapter,
 };

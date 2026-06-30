@@ -38,6 +38,7 @@ export default function MentorshipApplicationsPage() {
       defaults={{ status: "draft" }}
       emptyMessage="No mentorship applications were returned by the research service."
       metaFields={["application_type", "status", "submitted_at"]}
+      detailHref={(record) => `/research/capacity/mentorship-applications/${record.id}`}
       getRecordWorkflowActions={(record) => {
         const status = String(record.status ?? "").toLowerCase();
         if (status === "approved" || status === "matched") return [];

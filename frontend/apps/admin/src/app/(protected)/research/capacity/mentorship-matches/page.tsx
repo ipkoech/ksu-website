@@ -34,6 +34,7 @@ export default function MentorshipMatchesPage() {
       defaults={{ status: "active" }}
       emptyMessage="No mentorship matches were returned by the research service."
       metaFields={["status", "match_date", "meeting_schedule"]}
+      detailHref={(record) => `/research/capacity/mentorship-matches/${record.id}`}
     />
   );
 }

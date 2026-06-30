@@ -57,6 +57,7 @@ export default function TrainingProgramsPage() {
       defaults={{ program_type: "workshop", delivery_mode: "in_person", currency: "KES", is_free: true, status: "draft" }}
       emptyMessage="No training programs were returned by the research service."
       importResource="research-training"
+      detailHref={(record) => `/research/capacity/training/${record.id}`}
     />
   );
 }

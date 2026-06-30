@@ -82,6 +82,7 @@ export default function ResearchConsultanciesPage() {
       }}
       emptyMessage="No consultancy engagements were returned by the research service."
       importResource="research-consultancies"
+      detailHref={(record) => `/research/capacity/consultancies/${record.id}`}
     />
   );
 }

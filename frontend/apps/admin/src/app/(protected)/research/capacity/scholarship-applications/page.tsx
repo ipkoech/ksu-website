@@ -37,6 +37,7 @@ export default function ScholarshipApplicationsPage() {
       defaults={{ status: "draft" }}
       emptyMessage="No scholarship applications were returned by the research service."
       metaFields={["application_number", "status", "submitted_at"]}
+      detailHref={(record) => `/research/capacity/scholarship-applications/${record.id}`}
       getRecordWorkflowActions={(record) => {
         const status = String(record.status ?? "").toLowerCase();
         if (status === "awarded") return [];
