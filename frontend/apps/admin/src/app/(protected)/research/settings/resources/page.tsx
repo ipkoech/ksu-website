@@ -46,6 +46,7 @@ export default function ResearchResourcesPage() {
       defaults={{ resource_type: "equipment", access_type: "internal", status: "available", is_free: true }}
       emptyMessage="No research resources were returned by the research service."
       metaFields={["resource_type", "location", "status"]}
+      detailHref={(record) => `/research/settings/resources/${record.id}`}
     />
   );
 }

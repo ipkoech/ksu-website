@@ -21,6 +21,7 @@ export default function ResearchGeneralSettingsPage() {
       ]}
       defaults={{ setting_type: "general" }}
       emptyMessage="No research settings were returned by the research service."
+      detailHref={(record) => `/research/settings/general/${record.id}`}
     />
   );
 }

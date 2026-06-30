@@ -41,6 +41,7 @@ export default function ResearchServicesPage() {
       defaults={{ service_type: "support", is_free: true }}
       emptyMessage="No research services were returned by the research service."
       metaFields={["service_type", "category", "is_free"]}
+      detailHref={(record) => `/research/settings/services/${record.id}`}
     />
   );
 }

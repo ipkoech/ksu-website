@@ -37,6 +37,7 @@ export default function ResearchGuidelinesPage() {
       defaults={{ guideline_type: "guideline", category: "general", status: "active" }}
       emptyMessage="No research guidelines were returned by the research service."
       metaFields={["guideline_type", "category", "status"]}
+      detailHref={(record) => `/research/settings/guidelines/${record.id}`}
     />
   );
 }

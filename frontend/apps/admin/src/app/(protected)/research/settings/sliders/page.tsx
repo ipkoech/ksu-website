@@ -34,6 +34,7 @@ export default function ResearchSlidersPage() {
       defaults={{ is_active: true, is_public: true, display_order: 100 }}
       emptyMessage="No research slider records were returned by the main content service."
       metaFields={["link_text", "is_main", "is_active"]}
+      getRecordDetailHref={(record) => `/research/settings/sliders/${record.id}`}
     />
   );
 }
