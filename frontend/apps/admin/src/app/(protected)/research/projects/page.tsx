@@ -6,8 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, FolderKanban, UsersRound, WalletCards } from "lucide-react";
 import {
   Badge,
-  Card,
-  CardContent,
 } from "@ksu/ui/components";
 import {
   EditableServiceResourcePage,
@@ -235,12 +233,10 @@ export default function ResearchProjectsPage() {
       resourceKey="projects"
       backHref="/research"
       queryKey={["research", "projects"]}
-      summarySlot={
-        <div className="space-y-4">
-          <ResearchSectionGuide title="Projects" />
-          <ProjectsSummaryStrip />
-        </div>
-      }
+      hideHeader
+      tableLayout="compact"
+      actionsInMenuOnly
+      summarySlot={<ProjectsSummaryStrip />}
       listFilters={projectListFilters}
       recordColumns={projectColumns}
       fields={withResearchFieldHelp(projectFields)}
@@ -272,11 +268,18 @@ export default function ResearchProjectsPage() {
             "updated_at",
           ].join(","),
           include: "center:id,name,code;program:id,name,code",
-          sort: "updated_at",
-          order: "desc",
           ...filters,
         })
       }
+      defaultSort={{ label: "Recently updated", sort: "updated_at", order: "desc" }}
+      sortOptions={[
+        { label: "Recently updated", sort: "updated_at", order: "desc" },
+        { label: "Oldest updated", sort: "updated_at", order: "asc" },
+        { label: "Project title A-Z", sort: "title", order: "asc" },
+        { label: "Project title Z-A", sort: "title", order: "desc" },
+        { label: "Start date newest", sort: "start_date", order: "desc" },
+        { label: "Start date oldest", sort: "start_date", order: "asc" },
+      ]}
       create={(payload) => researchServiceApi.projects.create(payload)}
       update={(id, payload) => researchServiceApi.projects.update(id, payload)}
       delete={(id) => researchServiceApi.projects.delete(id)}
@@ -342,7 +345,12 @@ export default function ResearchProjectsPage() {
         is_featured: values.is_featured,
         is_public: values.is_public,
       })}
-      toolbarSlot={<ResearchBulkActions resourceKey="research-projects" />}
+      toolbarSlot={
+        <>
+          <ResearchBulkActions resourceKey="research-projects" />
+          <ResearchSectionGuide title="Projects" />
+        </>
+      }
     />
   );
 }
@@ -365,7 +373,7 @@ function ProjectsSummaryStrip() {
   const withoutPi = records.filter((record) => !record.pi_id).length;
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+    <div className="flex flex-wrap gap-2">
       <ProjectMetricCard title="Projects" value={total} icon={<FolderKanban className="h-4 w-4" />} loading={projectsQuery.isLoading} />
       <ProjectMetricCard title="Active" value={active} icon={<CalendarDays className="h-4 w-4" />} loading={projectsQuery.isLoading} />
       <ProjectMetricCard title="Completed" value={completed} icon={<FolderKanban className="h-4 w-4" />} loading={projectsQuery.isLoading} />
@@ -387,17 +395,13 @@ function ProjectMetricCard({
   loading: boolean;
 }) {
   return (
-    <Card>
-      <CardContent className="flex items-center justify-between p-4">
-        <div>
-          <p className="text-xs font-medium uppercase text-muted-foreground">{title}</p>
-          <p className="mt-1 text-2xl font-semibold">{loading ? "--" : value.toLocaleString()}</p>
-        </div>
-        <div className="flex size-9 items-center justify-center rounded-md border bg-muted/30 text-muted-foreground">
-          {icon}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="inline-flex min-h-10 items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm shadow-sm">
+      <span className="flex size-7 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
+        {icon}
+      </span>
+      <span className="text-muted-foreground">{title}</span>
+      <span className="font-semibold">{loading ? "--" : value.toLocaleString()}</span>
+    </div>
   );
 }
 

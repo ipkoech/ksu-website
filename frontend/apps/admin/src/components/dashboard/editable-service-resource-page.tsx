@@ -3,7 +3,7 @@
 import { useEffect, useId, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit, Eye, FilterX, HelpCircle, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { ArrowUpDown, Edit, Eye, FilterX, HelpCircle, MoreHorizontal, Plus, Search, SlidersHorizontal, Trash2 } from "lucide-react";
 
 const RESEARCH_FRONTEND = process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL;
 
@@ -45,6 +45,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Input,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   Select,
   SelectContent,
   SelectGroup,
@@ -68,6 +71,7 @@ import {
   richTextToPlainText,
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
+import { cn } from "@ksu/ui/lib";
 
 type RecordShape = Record<string, any>;
 
@@ -149,6 +153,12 @@ export interface EditableListFilter {
   };
 }
 
+export interface EditableSortOption {
+  label: string;
+  sort: string;
+  order?: "asc" | "desc";
+}
+
 export interface EditableRecordWorkflowAction<
   TRecord extends RecordShape,
   TPayload extends RecordShape,
@@ -219,6 +229,11 @@ interface EditableServiceResourcePageProps<
   summarySlot?: ReactNode;
   editorMode?: "dialog" | "sheet" | "auto";
   renderMobileRecord?: (record: TRecord, actions: ReactNode) => ReactNode;
+  hideHeader?: boolean;
+  tableLayout?: "default" | "compact";
+  actionsInMenuOnly?: boolean;
+  sortOptions?: EditableSortOption[];
+  defaultSort?: EditableSortOption;
   emptyState?: {
     title?: string;
     description?: string;
@@ -292,6 +307,22 @@ function slugify(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function serializeSort(option?: Pick<EditableSortOption, "sort" | "order"> | null) {
+  if (!option?.sort) return "";
+  return `${option.sort}:${option.order ?? "desc"}`;
+}
+
+function deserializeSort(value: string, fallback?: EditableSortOption) {
+  const serialized = value || serializeSort(fallback);
+  if (!serialized) return null;
+  const [sort, order] = serialized.split(":");
+  if (!sort) return null;
+  return {
+    sort,
+    order: order === "asc" ? ("asc" as const) : ("desc" as const),
+  };
 }
 
 function inputType(field: EditableField) {
@@ -372,6 +403,11 @@ export function EditableServiceResourcePage<
   summarySlot,
   editorMode = "auto",
   renderMobileRecord,
+  hideHeader = false,
+  tableLayout = "default",
+  actionsInMenuOnly = false,
+  sortOptions = [],
+  defaultSort,
   emptyState,
 }: EditableServiceResourcePageProps<TRecord, TPayload>) {
   const queryClient = useQueryClient();
@@ -393,6 +429,7 @@ export function EditableServiceResourcePage<
   );
   const [workflowValues, setWorkflowValues] = useState<RecordShape>({});
   const [filterValues, setFilterValues] = useState<RecordShape>({});
+  const [sortValue, setSortValue] = useState(() => serializeSort(defaultSort ?? sortOptions[0]));
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -405,9 +442,19 @@ export function EditableServiceResourcePage<
     [filterValues],
   );
   const hasActiveFilters = Object.keys(activeFilters).length > 0;
+  const activeSort = useMemo(
+    () => deserializeSort(sortValue, defaultSort ?? sortOptions[0]),
+    [defaultSort, sortOptions, sortValue],
+  );
   const recordsQuery = useQuery({
-    queryKey: [...queryKey, "filters", activeFilters, "page", page, "perPage", perPage],
-    queryFn: () => list({ page, per_page: perPage, ...activeFilters }),
+    queryKey: [...queryKey, "filters", activeFilters, "sort", activeSort, "page", page, "perPage", perPage],
+    queryFn: () =>
+      list({
+        page,
+        per_page: perPage,
+        ...(activeSort ? { sort: activeSort.sort, order: activeSort.order } : {}),
+        ...activeFilters,
+      }),
   });
   const allRecords = useMemo(
     () => recordsQuery.data?.data ?? [],
@@ -647,37 +694,41 @@ export function EditableServiceResourcePage<
 
     return (
       <div className="flex shrink-0 items-center gap-2">
-        {workflowActions.slice(0, 2).map((action) => (
-          <Button
-            key={action.label}
-            type="button"
-            variant={action.variant ?? "secondary"}
-            size="sm"
-            className={action.className}
-            disabled={updateMutation.isPending}
-            onClick={() => requestWorkflowAction(record, action)}
-          >
-            {action.label}
-          </Button>
-        ))}
-        {detailHref ? (
-          <Button asChild type="button" variant="outline" size="sm" className="min-w-[118px] justify-start">
-            <Link href={detailHref}>
-              <Eye data-icon="inline-start" />
-              Open Details
-            </Link>
-          </Button>
-        ) : canEdit ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="min-w-[118px] justify-start"
-            onClick={() => startEdit(record)}
-          >
-            <Edit data-icon="inline-start" />
-            Edit Record
-          </Button>
+        {!actionsInMenuOnly ? (
+          <>
+            {workflowActions.slice(0, 2).map((action) => (
+              <Button
+                key={action.label}
+                type="button"
+                variant={action.variant ?? "secondary"}
+                size="sm"
+                className={action.className}
+                disabled={updateMutation.isPending}
+                onClick={() => requestWorkflowAction(record, action)}
+              >
+                {action.label}
+              </Button>
+            ))}
+            {detailHref ? (
+              <Button asChild type="button" variant="outline" size="sm" className="min-w-[118px] justify-start">
+                <Link href={detailHref}>
+                  <Eye data-icon="inline-start" />
+                  Open Details
+                </Link>
+              </Button>
+            ) : canEdit ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="min-w-[118px] justify-start"
+                onClick={() => startEdit(record)}
+              >
+                <Edit data-icon="inline-start" />
+                Edit Record
+              </Button>
+            ) : null}
+          </>
         ) : null}
 
         <DropdownMenu>
@@ -737,115 +788,218 @@ export function EditableServiceResourcePage<
     );
   };
 
+  const searchFilter = listFilters.find((filter) => filter.name === "search" && filter.type === "text");
+  const menuFilters = tableLayout === "compact"
+    ? listFilters.filter((filter) => filter.name !== searchFilter?.name)
+    : listFilters;
+  const hasMenuFilters = menuFilters.length > 0;
+  const selectedSortLabel = activeSort
+    ? sortOptions.find((option) => serializeSort(option) === serializeSort(activeSort))?.label ?? "Custom sort"
+    : "Sort";
+
+  const actionToolbar = (
+    <div
+      className={cn(
+        "flex flex-col gap-2 sm:flex-row sm:items-end",
+        tableLayout === "compact" && "flex-wrap rounded-lg border bg-background p-3 sm:items-center sm:justify-end",
+      )}
+    >
+      {toolbarSlot}
+      {canCreate ? (
+        <Button type="button" size="sm" onClick={startCreate}>
+          <Plus data-icon="inline-start" />
+          Create Record
+        </Button>
+      ) : null}
+      {tableLayout !== "compact" && listFilters.length > 0 ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="w-fit text-muted-foreground"
+          onClick={() => setFilterValues({})}
+          disabled={!hasActiveFilters}
+        >
+          <FilterX data-icon="inline-start" />
+          Clear Filters
+        </Button>
+      ) : null}
+    </div>
+  );
+
+  const renderFilterControl = (filter: EditableListFilter) => (
+    <div key={filter.name} className="flex flex-col gap-2">
+      <label className="text-sm font-medium">{filter.label}</label>
+      {filter.type === "entity" && filter.relation ? (
+        <EntityPicker
+          adapter={relationshipAdapters[filter.relation.adapter] as any}
+          value={filterValues[filter.name] || ""}
+          onChange={(nextValue) => updateFilter(filter.name, nextValue || null)}
+          filters={filter.relation.filters}
+          placeholder={filter.placeholder ?? `Filter by ${filter.label.toLowerCase()}`}
+          allowClear
+        />
+      ) : filter.type === "boolean" ? (
+        <Select
+          value={
+            typeof filterValues[filter.name] === "boolean"
+              ? String(filterValues[filter.name])
+              : "all"
+          }
+          onValueChange={(nextValue) =>
+            updateFilter(
+              filter.name,
+              nextValue === "all" ? null : nextValue === "true",
+            )
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder={filter.placeholder ?? filter.label} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="true">Yes</SelectItem>
+              <SelectItem value="false">No</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      ) : filter.type === "text" ? (
+        <Input
+          value={filterValues[filter.name] ?? ""}
+          placeholder={filter.placeholder ?? filter.label}
+          onChange={(event) => updateFilter(filter.name, event.target.value || null)}
+        />
+      ) : filter.type === "date" ? (
+        <Input
+          type="date"
+          value={filterValues[filter.name] ?? ""}
+          onChange={(event) => updateFilter(filter.name, event.target.value || null)}
+        />
+      ) : (
+        <Select
+          value={filterValues[filter.name] || "all"}
+          onValueChange={(nextValue) =>
+            updateFilter(filter.name, nextValue === "all" ? null : nextValue)
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder={filter.placeholder ?? filter.label} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="all">All</SelectItem>
+              {(filter.options ?? []).map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      )}
+    </div>
+  );
+
   return (
     <div>
-      <PageHeader title={title} description={description} backHref={backHref} />
-      <div className="space-y-4 p-4 sm:p-6">
+      {!hideHeader ? <PageHeader title={title} description={description} backHref={backHref} /> : null}
+      <div className={cn("space-y-4 p-4 sm:p-6", hideHeader && "pt-3")}>
+        {tableLayout === "compact" ? actionToolbar : null}
         {summarySlot}
         <Card>
-          <CardHeader>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <CardTitle>Records</CardTitle>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-                {toolbarSlot}
-                {canCreate ? (
-                  <Button type="button" size="sm" onClick={startCreate}>
-                    <Plus data-icon="inline-start" />
-                    Create Record
-                  </Button>
-                ) : null}
-                {listFilters.length > 0 ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="w-fit text-muted-foreground"
-                    onClick={() => setFilterValues({})}
-                    disabled={!hasActiveFilters}
-                  >
-                    <FilterX data-icon="inline-start" />
-                    Clear Filters
-                  </Button>
-                ) : null}
+          {tableLayout !== "compact" ? (
+            <CardHeader>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <CardTitle>Records</CardTitle>
+                {actionToolbar}
               </div>
-            </div>
-          </CardHeader>
+            </CardHeader>
+          ) : null}
           <CardContent>
-            {listFilters.length > 0 ? (
+            {tableLayout === "compact" ? (
+              <div className="mb-4 flex flex-col gap-3 rounded-lg border bg-background p-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="relative min-w-0 flex-1">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={searchFilter ? filterValues[searchFilter.name] ?? "" : ""}
+                    placeholder={searchFilter?.placeholder ?? "Search records"}
+                    className="pl-9"
+                    onChange={(event) => searchFilter ? updateFilter(searchFilter.name, event.target.value || null) : undefined}
+                  />
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {hasMenuFilters ? (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button type="button" variant="outline" size="sm">
+                          <SlidersHorizontal data-icon="inline-start" />
+                          Filters
+                          {hasActiveFilters ? (
+                            <Badge variant="secondary" className="ml-1 rounded-sm px-1.5">
+                              {Object.keys(activeFilters).length}
+                            </Badge>
+                          ) : null}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="end" className="w-[min(92vw,420px)] p-4">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold">Filter projects</p>
+                            <p className="text-xs text-muted-foreground">Narrow the table by project metadata.</p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-muted-foreground"
+                            onClick={() => setFilterValues(searchFilter && filterValues[searchFilter.name] ? { [searchFilter.name]: filterValues[searchFilter.name] } : {})}
+                            disabled={!hasActiveFilters}
+                          >
+                            <FilterX data-icon="inline-start" />
+                            Clear
+                          </Button>
+                        </div>
+                        <div className="grid max-h-[60vh] gap-3 overflow-y-auto pr-1">
+                          {menuFilters.map(renderFilterControl)}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  ) : null}
+                  {sortOptions.length > 0 ? (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button type="button" variant="outline" size="sm">
+                          <ArrowUpDown data-icon="inline-start" />
+                          {selectedSortLabel}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="end" className="w-64 p-2">
+                        <div className="px-2 py-1.5">
+                          <p className="text-sm font-semibold">Sort projects</p>
+                        </div>
+                        <div className="grid gap-1">
+                          {sortOptions.map((option) => (
+                            <Button
+                              key={serializeSort(option)}
+                              type="button"
+                              variant={serializeSort(option) === sortValue ? "secondary" : "ghost"}
+                              size="sm"
+                              className="justify-start"
+                              onClick={() => setSortValue(serializeSort(option))}
+                            >
+                              {option.label}
+                            </Button>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  ) : null}
+                </div>
+              </div>
+            ) : listFilters.length > 0 ? (
               <div className="mb-4 grid gap-3 rounded-lg border bg-muted/20 p-3 sm:grid-cols-2 xl:grid-cols-3">
-                {listFilters.map((filter) => (
-                  <div key={filter.name} className="flex flex-col gap-2">
-                    <label className="text-sm font-medium">{filter.label}</label>
-                    {filter.type === "entity" && filter.relation ? (
-                      <EntityPicker
-                        adapter={relationshipAdapters[filter.relation.adapter] as any}
-                        value={filterValues[filter.name] || ""}
-                        onChange={(nextValue) => updateFilter(filter.name, nextValue || null)}
-                        filters={filter.relation.filters}
-                        placeholder={filter.placeholder ?? `Filter by ${filter.label.toLowerCase()}`}
-                        allowClear
-                      />
-                    ) : filter.type === "boolean" ? (
-                      <Select
-                        value={
-                          typeof filterValues[filter.name] === "boolean"
-                            ? String(filterValues[filter.name])
-                            : "all"
-                        }
-                        onValueChange={(nextValue) =>
-                          updateFilter(
-                            filter.name,
-                            nextValue === "all" ? null : nextValue === "true",
-                          )
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={filter.placeholder ?? filter.label} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectItem value="all">All</SelectItem>
-                            <SelectItem value="true">Yes</SelectItem>
-                            <SelectItem value="false">No</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    ) : filter.type === "text" ? (
-                      <Input
-                        value={filterValues[filter.name] ?? ""}
-                        placeholder={filter.placeholder ?? filter.label}
-                        onChange={(event) => updateFilter(filter.name, event.target.value || null)}
-                      />
-                    ) : filter.type === "date" ? (
-                      <Input
-                        type="date"
-                        value={filterValues[filter.name] ?? ""}
-                        onChange={(event) => updateFilter(filter.name, event.target.value || null)}
-                      />
-                    ) : (
-                      <Select
-                        value={filterValues[filter.name] || "all"}
-                        onValueChange={(nextValue) =>
-                          updateFilter(filter.name, nextValue === "all" ? null : nextValue)
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={filter.placeholder ?? filter.label} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectItem value="all">All</SelectItem>
-                            {(filter.options ?? []).map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-                ))}
+                {listFilters.map(renderFilterControl)}
               </div>
             ) : null}
             {recordsQuery.isLoading ? (
