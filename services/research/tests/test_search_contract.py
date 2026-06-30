@@ -7,9 +7,17 @@ from app.routes.v1.search import router as search_router
 from app.services.search import RESEARCH_SEARCH_AREAS
 
 
-def _route(router, path: str, method: str) -> APIRoute:
+def _iter_routes(router):
     for route in router.routes:
-        if isinstance(route, APIRoute) and route.path == path and method in route.methods:
+        if isinstance(route, APIRoute):
+            yield route
+        elif hasattr(route, "original_router"):
+            yield from _iter_routes(route.original_router)
+
+
+def _route(router, path: str, method: str) -> APIRoute:
+    for route in _iter_routes(router):
+        if route.path == path and method in route.methods:
             return route
     raise AssertionError(f"{method} {path} route not found")
 
@@ -27,8 +35,8 @@ class ResearchSearchContractTests(unittest.TestCase):
     def test_research_v1_router_includes_search_route(self):
         paths = {
             route.path
-            for route in v1_router.routes
-            if isinstance(route, APIRoute) and "GET" in route.methods
+            for route in _iter_routes(v1_router)
+            if "GET" in route.methods
         }
 
         self.assertIn("/search", paths)

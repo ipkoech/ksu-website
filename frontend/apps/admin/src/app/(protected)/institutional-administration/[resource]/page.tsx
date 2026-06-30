@@ -1,5 +1,19 @@
 import { PortalResourcePage } from "@/components/portals/portal-resource-page";
 
+export function generateStaticParams() {
+  return [
+    { resource: "divisions" },
+    { resource: "offices" },
+    { resource: "staff-assignments" },
+    { resource: "news" },
+    { resource: "notices" },
+    { resource: "events" },
+    { resource: "documents" },
+    { resource: "faqs" },
+    { resource: "contacts" },
+  ];
+}
+
 export default async function InstitutionalAdministrationResourcePage({
   params,
 }: {
@@ -13,4 +27,3 @@ export default async function InstitutionalAdministrationResourcePage({
     />
   );
 }
-

@@ -46,9 +46,17 @@ class _DonationDb:
         self.refreshes.append(item)
 
 
-def _route(router, path: str, method: str) -> APIRoute:
+def _iter_routes(router):
     for route in router.routes:
-        if isinstance(route, APIRoute) and route.path == path and method in route.methods:
+        if isinstance(route, APIRoute):
+            yield route
+        elif hasattr(route, "original_router"):
+            yield from _iter_routes(route.original_router)
+
+
+def _route(router, path: str, method: str) -> APIRoute:
+    for route in _iter_routes(router):
+        if route.path == path and method in route.methods:
             return route
     raise AssertionError(f"{method} {path} route not found")
 
@@ -120,6 +128,8 @@ class RouteProtectionTests(unittest.TestCase):
 class PublicDonationSubmissionTests(unittest.IsolatedAsyncioTestCase):
     async def test_public_submission_creates_pending_intent_without_server_owned_fields(self):
         db = _DonationDb()
+        original_side_effects = DonationService._queue_submission_side_effects
+        DonationService._queue_submission_side_effects = classmethod(lambda cls, db, donation, donor: _noop())
         submission = PublicDonationSubmission.model_validate(
             {
                 "first_name": "Ada",
@@ -135,7 +145,10 @@ class PublicDonationSubmissionTests(unittest.IsolatedAsyncioTestCase):
             }
         )
 
-        donation = await DonationService.create_public_submission(db, submission)
+        try:
+            donation = await DonationService.create_public_submission(db, submission)
+        finally:
+            DonationService._queue_submission_side_effects = original_side_effects
         donor = db.added[0]
 
         self.assertEqual("Ada Lovelace", donor.display_name)
@@ -164,6 +177,10 @@ class PublicDonationSubmissionTests(unittest.IsolatedAsyncioTestCase):
         }
 
         self.assertFalse(forbidden_fields & set(PublicDonationSubmission.model_fields))
+
+
+async def _noop():
+    return None
 
 
 if __name__ == "__main__":
