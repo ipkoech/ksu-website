@@ -16,3 +16,9 @@ assert(source.includes("AssetUsageDrawer"), "Gallery workflow must expose a usag
 assert(source.includes("handleUpdateMedia"), "Gallery workflow must submit explicit media update payloads.");
 assert(source.includes("handleDeleteMedia"), "Gallery workflow must call the real media delete endpoint for asset removal.");
 assert(source.includes("useMediaLinks"), "Gallery workflow must use the real media links endpoint for usage preview.");
+assert(source.includes("ConfirmDialog"), "Gallery workflow must confirm destructive asset delete actions.");
+assert(source.includes("setDeleteTarget"), "Gallery workflow must stage asset deletes before calling the media delete endpoint.");
+assert(source.includes("Research Asset Library"), "Gallery workflow must label the browse/upload affordance as the research asset library.");
+assert(source.includes("Upload research asset"), "Gallery workflow must expose an explicit research asset upload action label.");
+assert(source.includes("formatResearchEntityType"), "Gallery workflow must format research usage entity labels instead of exposing relationship IDs.");
+assert(!source.includes("link.entity_id"), "Usage preview must not render raw relationship UUIDs.");

@@ -31,6 +31,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  ConfirmDialog,
   ImageRenderer,
   Input,
   Sheet,
@@ -46,6 +47,20 @@ const galleryFilters: EditableListFilter[] = [
 ];
 
 type GalleryRecord = MediaFolder & Record<string, any>;
+
+function formatResearchEntityType(entityType?: string | null) {
+  const labels: Record<string, string> = {
+    research: "Research",
+    research_project: "Research Project",
+    research_center: "Research Center",
+    research_grant: "Research Grant",
+    research_donor: "Research Donor",
+    research_gallery_folder: "Research Gallery Folder",
+  };
+
+  if (!entityType) return "Research record";
+  return labels[entityType] ?? entityType.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
 
 const galleryColumns: Array<EditableRecordColumn<GalleryRecord>> = [
   { key: "name", label: "Folder", className: "min-w-[240px]", render: (record) => <span className="font-medium">{titleOf(record)}</span> },
@@ -77,8 +92,8 @@ function MediaTile({ media, onInspect }: { media: Media; onInspect: (media: Medi
   const url = getMediaUrl(media);
 
   return (
-    <div className="rounded-lg border bg-background p-2">
-      <div className="flex h-24 items-center justify-center overflow-hidden rounded-md border bg-muted">
+    <div className="min-w-0 rounded-lg border bg-background p-2">
+      <div className="flex aspect-[4/3] min-h-28 items-center justify-center overflow-hidden rounded-md border bg-muted">
         {url && isImageMedia(media) ? (
           <ImageRenderer src={url} alt={getMediaLabel(media)} className="h-full border-0" imageClassName="h-full w-full" />
         ) : (
@@ -149,11 +164,14 @@ function GalleryAssetWorkflow() {
             onChange={(value) => setMediaId(value)}
             label="Research media"
             helperText="Browse or upload media through the main media service with entity_type: research."
+            dialogTitle="Research Asset Library"
+            dialogDescription="Browse existing research-scoped assets or upload a new media file through the main media service."
+            uploadLabel="Upload research asset"
             uploadEntityType="research"
             uploadRole={role}
             allowClear
           />
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
             {mediaItems.map((media) => (
               <MediaTile
                 key={media.id}
@@ -241,6 +259,7 @@ function AssetUsageDrawer({
   media: Media | null;
   onOpenChange: (open: boolean) => void;
 }) {
+  const [deleteTarget, setDeleteTarget] = useState<Media | null>(null);
   const [title, setTitle] = useState(media?.title ?? "");
   const [altText, setAltText] = useState(media?.alt_text ?? "");
   const [caption, setCaption] = useState(media?.caption ?? "");
@@ -275,10 +294,11 @@ function AssetUsageDrawer({
   };
 
   const handleDeleteMedia = async () => {
-    if (!media) return;
+    if (!deleteTarget) return;
     try {
-      await deleteMedia.mutateAsync(media.id);
+      await deleteMedia.mutateAsync(deleteTarget.id);
       toast.success("Media asset removed");
+      setDeleteTarget(null);
       onOpenChange(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Media delete failed");
@@ -286,68 +306,80 @@ function AssetUsageDrawer({
   };
 
   return (
-    <Sheet open={Boolean(media)} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
-        <SheetHeader>
-          <SheetTitle>Asset Usage</SheetTitle>
-        </SheetHeader>
-        {media ? (
-          <div className="mt-6 space-y-5">
-            <MediaTile media={media} onInspect={() => undefined} />
-            <div className="space-y-3">
-              <label className="space-y-2">
-                <span className="text-sm font-medium">Title</span>
-                <Input value={title} onChange={(event) => setTitle(event.target.value)} />
-              </label>
-              <label className="space-y-2">
-                <span className="text-sm font-medium">Alt text</span>
-                <Input value={altText} onChange={(event) => setAltText(event.target.value)} />
-              </label>
-              <label className="space-y-2">
-                <span className="text-sm font-medium">Caption</span>
-                <Textarea value={caption} onChange={(event) => setCaption(event.target.value)} rows={3} />
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={isPublic}
-                  onChange={(event) => setIsPublic(event.target.checked)}
-                  className="h-4 w-4 rounded border-muted-foreground"
-                />
-                Public asset
-              </label>
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" onClick={handleUpdateMedia} disabled={updateMedia.isPending}>
-                  <Save data-icon="inline-start" />
-                  {updateMedia.isPending ? "Saving..." : "Save Metadata"}
-                </Button>
-                <Button type="button" variant="destructive" onClick={handleDeleteMedia} disabled={deleteMedia.isPending}>
-                  <Trash2 data-icon="inline-start" />
-                  {deleteMedia.isPending ? "Removing..." : "Delete Asset"}
-                </Button>
+    <>
+      <Sheet open={Boolean(media)} onOpenChange={onOpenChange}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+          <SheetHeader>
+            <SheetTitle>Asset Usage</SheetTitle>
+          </SheetHeader>
+          {media ? (
+            <div className="mt-6 space-y-5">
+              <MediaTile media={media} onInspect={() => undefined} />
+              <div className="space-y-3">
+                <label className="space-y-2">
+                  <span className="text-sm font-medium">Title</span>
+                  <Input value={title} onChange={(event) => setTitle(event.target.value)} />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-medium">Alt text</span>
+                  <Input value={altText} onChange={(event) => setAltText(event.target.value)} />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-medium">Caption</span>
+                  <Textarea value={caption} onChange={(event) => setCaption(event.target.value)} rows={3} />
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={isPublic}
+                    onChange={(event) => setIsPublic(event.target.checked)}
+                    className="h-4 w-4 rounded border-muted-foreground"
+                  />
+                  Public asset
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" onClick={handleUpdateMedia} disabled={updateMedia.isPending}>
+                    <Save data-icon="inline-start" />
+                    {updateMedia.isPending ? "Saving..." : "Save Metadata"}
+                  </Button>
+                  <Button type="button" variant="destructive" onClick={() => setDeleteTarget(media)} disabled={deleteMedia.isPending}>
+                    <Trash2 data-icon="inline-start" />
+                    {deleteMedia.isPending ? "Removing..." : "Delete / Archive Asset"}
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Usage Links</p>
+                {usageLinks.length ? (
+                  <div className="space-y-2">
+                    {usageLinks.map((link) => (
+                      <div key={link.id} className="rounded-md border p-3 text-sm">
+                        <p className="font-medium">{formatResearchEntityType(link.entity_type)}</p>
+                        <p className="text-xs text-muted-foreground">{link.role || "gallery"}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+                    No usage records were returned for this asset.
+                  </p>
+                )}
               </div>
             </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Usage Links</p>
-              {usageLinks.length ? (
-                <div className="space-y-2">
-                  {usageLinks.map((link) => (
-                    <div key={link.id} className="rounded-md border p-3 text-sm">
-                      <p className="font-medium">{link.entity_type}</p>
-                      <p className="text-xs text-muted-foreground">{[link.entity_id, link.role].filter(Boolean).join(" - ")}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-                  No usage records were returned for this asset.
-                </p>
-              )}
-            </div>
-          </div>
-        ) : null}
-      </SheetContent>
-    </Sheet>
+          ) : null}
+        </SheetContent>
+      </Sheet>
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete or archive asset?"
+        description={`This removes ${deleteTarget ? getMediaLabel(deleteTarget) : "the selected asset"} through the main media service. Existing usage links may stop resolving if the API deletes the file.`}
+        confirmLabel="Delete / Archive"
+        variant="destructive"
+        isLoading={deleteMedia.isPending}
+        onConfirm={handleDeleteMedia}
+      />
+    </>
   );
 }
 

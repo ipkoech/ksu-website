@@ -1,7 +1,57 @@
 "use client";
 
+import type { EditableListFilter, EditableRecordColumn } from "@/components/dashboard/editable-service-resource-page";
+import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
+import { formatPublicationDate, labelize, StatusBadge } from "../../publications/_components/publication-workspace";
 import { ResearchSettingsWorkspaceHeader } from "../_components/settings-workspace";
+
+const guidelineFilters: EditableListFilter[] = [
+  { name: "search", label: "Search", type: "text", placeholder: "Search titles, codes, document names" },
+  { name: "guideline_type", label: "Guideline Type", type: "text", placeholder: "guideline, policy, form" },
+  { name: "category", label: "Category", type: "text", placeholder: "general, grants, ethics" },
+  { name: "status", label: "Status", type: "text", placeholder: "active, draft, retired" },
+  { name: "is_mandatory", label: "Mandatory", type: "boolean" },
+  { name: "is_active", label: "Active", type: "boolean" },
+];
+
+const guidelineColumns: EditableRecordColumn<ResearchGenericRecord>[] = [
+  {
+    key: "guideline",
+    label: "Guideline",
+    className: "min-w-[280px]",
+    render: (record) => (
+      <div className="space-y-1">
+        <p className="font-medium">{record.title}</p>
+        <p className="text-xs text-muted-foreground">{[record.code, labelize(record.guideline_type), record.version].filter(Boolean).join(" · ")}</p>
+      </div>
+    ),
+  },
+  {
+    key: "document",
+    label: "Document",
+    className: "hidden min-w-[220px] lg:table-cell",
+    render: (record) => <span>{record.document_name || record.document_url || "No document"}</span>,
+  },
+  {
+    key: "dates",
+    label: "Effective / Review",
+    className: "hidden min-w-[180px] xl:table-cell",
+    render: (record) => <span>{[formatPublicationDate(record.effective_date), formatPublicationDate(record.review_date)].filter(Boolean).join(" - ") || "No dates"}</span>,
+  },
+  {
+    key: "required",
+    label: "Required",
+    className: "hidden w-[120px] xl:table-cell",
+    render: (record) => <span>{record.is_mandatory ? "Mandatory" : "Optional"}</span>,
+  },
+  {
+    key: "status",
+    label: "Status",
+    className: "w-[120px]",
+    render: (record) => <StatusBadge value={record.status ?? (record.is_active ? "active" : "inactive")} />,
+  },
+];
 
 export default function ResearchGuidelinesPage() {
   return (
@@ -35,9 +85,12 @@ export default function ResearchGuidelinesPage() {
         { name: "is_active", label: "Active", type: "boolean" },
       ]}
       defaults={{ guideline_type: "guideline", category: "general", status: "active" }}
+      listFilters={guidelineFilters}
+      recordColumns={guidelineColumns}
       emptyMessage="No research guidelines were returned by the research service."
       metaFields={["guideline_type", "category", "status"]}
       detailHref={(record) => `/research/settings/guidelines/${record.id}`}
+      editorMode="sheet"
     />
   );
 }

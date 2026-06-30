@@ -1,6 +1,64 @@
 "use client";
 
+import type { EditableListFilter, EditableRecordColumn } from "@/components/dashboard/editable-service-resource-page";
+import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchResourcePage, researchServiceApi } from "../_components/research-resource-page";
+import { formatPublicationDate, labelize, PublicationRelationCell, StatusBadge } from "../publications/_components/publication-workspace";
+
+const innovationFilters: EditableListFilter[] = [
+  { name: "search", label: "Search", type: "text", placeholder: "Search innovations, patent numbers, or inventors" },
+  { name: "innovation_type", label: "Innovation Type", type: "text", placeholder: "invention, prototype, startup" },
+  { name: "project_id", label: "Source Project", type: "entity", relation: { adapter: "researchProject", filters: { is_active: true } } },
+  { name: "center_id", label: "Research Center", type: "entity", relation: { adapter: "researchCenter", filters: { is_active: true } } },
+  { name: "lead_inventor_id", label: "Lead Inventor", type: "entity", relation: { adapter: "person", filters: { status: "active" } } },
+  { name: "status", label: "Status", type: "text", placeholder: "draft, disclosed, licensed" },
+  { name: "is_public", label: "Public", type: "boolean" },
+  { name: "is_featured", label: "Featured", type: "boolean" },
+];
+
+const innovationColumns: EditableRecordColumn<ResearchGenericRecord>[] = [
+  {
+    key: "innovation",
+    label: "Innovation",
+    className: "min-w-[280px]",
+    render: (record) => (
+      <div className="space-y-1">
+        <p className="font-medium">{record.title}</p>
+        <p className="text-xs text-muted-foreground">{[record.code, labelize(record.innovation_type), labelize(record.development_stage)].filter(Boolean).join(" · ")}</p>
+      </div>
+    ),
+  },
+  {
+    key: "project",
+    label: "Source Project",
+    className: "hidden min-w-[220px] lg:table-cell",
+    render: (record) => <PublicationRelationCell id={record.project_id} adapterKey="researchProject" emptyLabel="No source project" />,
+  },
+  {
+    key: "inventor",
+    label: "Lead",
+    className: "hidden min-w-[180px] xl:table-cell",
+    render: (record) => <PublicationRelationCell id={record.lead_inventor_id} adapterKey="person" emptyLabel="No lead inventor" />,
+  },
+  {
+    key: "ip",
+    label: "IP / Commercial",
+    className: "hidden min-w-[180px] xl:table-cell",
+    render: (record) => <span>{[labelize(record.ip_status), labelize(record.commercialization_status)].filter(Boolean).join(" · ") || "Not recorded"}</span>,
+  },
+  {
+    key: "date",
+    label: "Invented",
+    className: "hidden w-[130px] 2xl:table-cell",
+    render: (record) => <span>{formatPublicationDate(record.invention_date) || "No date"}</span>,
+  },
+  {
+    key: "status",
+    label: "Status",
+    className: "w-[120px]",
+    render: (record) => <StatusBadge value={record.status} />,
+  },
+];
 
 export default function ResearchInnovationsPage() {
   return (
@@ -46,9 +104,13 @@ export default function ResearchInnovationsPage() {
         { name: "is_public", label: "Public", type: "boolean" },
       ]}
       defaults={{ innovation_type: "invention", currency: "KES", development_stage: "research", status: "draft", is_public: true }}
+      listFilters={innovationFilters}
+      recordColumns={innovationColumns}
       emptyMessage="No innovations were returned by the research service."
+      metaFields={["innovation_type", "development_stage", "ip_status", "status"]}
       importResource="research-innovations"
       detailHref={(record) => `/research/innovations/${record.id}`}
+      editorMode="sheet"
     />
   );
 }
