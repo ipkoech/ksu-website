@@ -1,5 +1,7 @@
 import {
+  personsApi,
   researchServiceApi,
+  type Person,
   type ResearchGenericRecord,
   type ResearchGrant,
   type ResearchProject,
@@ -19,12 +21,32 @@ export type PublicResearchRecord<T> = {
   error: string | null;
 };
 
+export type ResearchHeadProfile = {
+  name: string;
+  title: string;
+  message: string;
+  photoUrl: string | null;
+  href: string;
+} | null;
+
 export type ResearchOverviewData = {
   projects: PublicResearchData<ResearchProject>;
   publications: PublicResearchData<ResearchPublication>;
   grants: PublicResearchData<ResearchGrant>;
   innovations: PublicResearchData<ResearchGenericRecord>;
   partners: PublicResearchData<ResearchGenericRecord>;
+  articles: PublicResearchData<ResearchGenericRecord>;
+  events: PublicResearchData<ResearchGenericRecord>;
+  centers: PublicResearchData<ResearchGenericRecord>;
+  facilities: PublicResearchData<ResearchGenericRecord>;
+  expertiseTags: PublicResearchData<ResearchGenericRecord>;
+  impactMetrics: PublicResearchData<ResearchGenericRecord>;
+  stories: PublicResearchData<ResearchGenericRecord>;
+  training: PublicResearchData<ResearchGenericRecord>;
+  resources: PublicResearchData<ResearchGenericRecord>;
+  services: PublicResearchData<ResearchGenericRecord>;
+  guidelines: PublicResearchData<ResearchGenericRecord>;
+  headProfile: ResearchHeadProfile;
   stats: PublicStatsResponse | null;
   errors: string[];
 };
@@ -147,6 +169,41 @@ async function safeStats() {
   try {
     const response = await researchServiceApi.stats();
     return response.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function safeResearchHeadProfile(): Promise<ResearchHeadProfile> {
+  try {
+    const response = await personsApi.list({
+      fields: "id,slug,full_name,title,academic_rank,institutional_role,leadership_message,photo_url,is_researcher,is_public,is_active,is_featured",
+      is_researcher: true,
+      status: "active",
+      per_page: 12,
+    });
+    const people = (response.data ?? []) as Person[];
+    const person =
+      people.find((item) =>
+        compactText(item.institutional_role)
+          .toLowerCase()
+          .includes("research"),
+      ) ??
+      people.find((item) => item.is_featured) ??
+      people[0];
+
+    if (!person) return null;
+
+    return {
+      name: compactText(person.full_name) || "Head of Research",
+      title:
+        compactText(person.institutional_role) ||
+        compactText(person.academic_rank) ||
+        "Head of Research, REIRM",
+      message: compactText(person.leadership_message),
+      photoUrl: person.photo_url || null,
+      href: person.slug ? `/team#${person.slug}` : "/team",
+    };
   } catch {
     return null;
   }
@@ -1222,18 +1279,6 @@ export function getGuidelineBySlug(slug: string) {
   );
 }
 
-export function getBoards() {
-  return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.boards.list({
-      fields: researchPublicListFields,
-      is_active: true,
-      is_public: true,
-      page: 1,
-      per_page: 100,
-    }),
-  );
-}
-
 export function getDonationImpacts() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.donationImpacts.list({
@@ -1277,6 +1322,18 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
     grants,
     innovations,
     partners,
+    articles,
+    events,
+    centers,
+    facilities,
+    expertiseTags,
+    impactMetrics,
+    stories,
+    training,
+    resources,
+    services,
+    guidelines,
+    headProfile,
     stats,
   ] = await Promise.all([
     getProjects(),
@@ -1284,6 +1341,18 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
     getGrants(),
     getInnovations(),
     getPartners(),
+    getArticles(),
+    getEvents(),
+    getCenters(),
+    getFacilities(),
+    getExpertiseTags(),
+    getImpactMetrics(),
+    getStories(),
+    getTraining(),
+    getResources(),
+    getServices(),
+    getGuidelines(),
+    safeResearchHeadProfile(),
     safeStats(),
   ]);
 
@@ -1293,6 +1362,18 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
     grants,
     innovations,
     partners,
+    articles,
+    events,
+    centers,
+    facilities,
+    expertiseTags,
+    impactMetrics,
+    stories,
+    training,
+    resources,
+    services,
+    guidelines,
+    headProfile,
     stats,
     errors: uniqueErrors(
       projects.error,
@@ -1300,6 +1381,17 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
       grants.error,
       innovations.error,
       partners.error,
+      articles.error,
+      events.error,
+      centers.error,
+      facilities.error,
+      expertiseTags.error,
+      impactMetrics.error,
+      stories.error,
+      training.error,
+      resources.error,
+      services.error,
+      guidelines.error,
     ),
   };
 }
