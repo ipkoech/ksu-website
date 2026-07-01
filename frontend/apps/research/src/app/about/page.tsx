@@ -1,13 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { PublicTeamResponse, ResearchGenericRecord } from "@ksu/api-client";
-import {
-  departmentsApi,
-  divisionsApi,
-  publicTeamApi,
-  researchServiceApi,
-  wingsApi,
-} from "@ksu/api-client";
+import { publicTeamApi, researchServiceApi } from "@ksu/api-client";
 import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 import {
   ArrowRight,
@@ -45,10 +39,10 @@ import {
   buildSupportAreaCards,
   buildTeamMembers,
   getLeadTeamMember,
-  resolveResearchTeamEntity,
   type AboutCollection,
   type AboutTeamMember,
 } from "./about-page-model";
+import { getResearchSiteContext } from "../../lib/research-site-context";
 
 export const revalidate = 300;
 
@@ -708,61 +702,14 @@ function MiniFact({ label, value }: { label: string; value: number }) {
 
 async function getResearchStaff() {
   try {
-    const entity = await getResearchTeamEntity();
-    const response = await publicTeamApi.get(entity);
+    const { researchTeamEntity } = await getResearchSiteContext();
+    const response = await publicTeamApi.get(researchTeamEntity);
     return { data: response.data ?? null, error: null as string | null };
   } catch {
     return {
       data: null as PublicTeamResponse | null,
       error: "Research staff records are temporarily unavailable.",
     };
-  }
-}
-
-async function getResearchTeamEntity() {
-  const [departments, wings] = await Promise.all([
-    getResearchDepartments(),
-    getResearchWings(),
-  ]);
-  return resolveResearchTeamEntity({ departments, wings });
-}
-
-async function getResearchDepartments() {
-  try {
-    const response = await departmentsApi.list({
-      search: "REIRM",
-      fields: "id,name,code,slug",
-      page: 1,
-      per_page: 10,
-    });
-    return response.data ?? [];
-  } catch {
-    return [];
-  }
-}
-
-async function getResearchWings() {
-  try {
-    const divisionsResponse = await divisionsApi.list({
-      fields: "id,name,code",
-      is_active: true,
-      page: 1,
-      per_page: 50,
-    });
-    const arsa = (divisionsResponse.data ?? []).find(
-      (division) =>
-        compactText(division.code).toUpperCase() === "ARSA" ||
-        compactText(division.name).toLowerCase().includes("research"),
-    );
-    if (!arsa?.id) return [];
-
-    const wingsResponse = await wingsApi.listByDivision(arsa.id, {
-      fields: "id,name,code,slug",
-      is_active: true,
-    });
-    return wingsResponse.data ?? [];
-  } catch {
-    return [];
   }
 }
 

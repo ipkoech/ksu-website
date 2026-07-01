@@ -3,6 +3,7 @@ import { PublicFooter } from "@ksu/ui/layout/public";
 import { Announcements } from "@ksu/ui/components";
 import { announcementsApi } from "@ksu/api-client";
 import { ResearchHeader } from "../components/research-header";
+import { getResearchSiteContext } from "../lib/research-site-context";
 import "./globals.css";
 
 const socialLinks = {
@@ -45,11 +46,14 @@ export default async function RootLayout({
 }) {
   let announcements: Array<{ id: string; message: string; linkText?: string; linkHref?: string }> = [];
   try {
-    const response = await announcementsApi.list({
-      is_published: true,
-      per_page: 3,
-      fields: "id,title,slug",
-    });
+    const [response] = await Promise.all([
+      announcementsApi.list({
+        is_published: true,
+        per_page: 3,
+        fields: "id,title,slug",
+      }),
+      getResearchSiteContext(),
+    ]);
     announcements = (response.data ?? []).map((item) => ({
       id: item.id,
       message: item.title,
