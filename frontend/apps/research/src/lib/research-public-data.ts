@@ -132,6 +132,8 @@ const researchPublicListFields =
   "id,title,name,slug,code,summary,abstract,description,about,mission,vision,mandate,objectives,functions,services_summary,leadership_message,strategic_priorities,category,status,is_active,is_public,is_featured,project_type,publication_type,grant_type,center_type,farm_type,program_type,output_type,innovation_type,partner_type,consultancy_type,fund_type,event_type,article_type,news_type,resource_type,service_type,guideline_type,scholarship_type,delivery_mode,access_type,development_stage,ip_status,commercialization_status,partnership_level,client_type,center_id,program_id,project_id,partner_id,year,start_date,end_date,deadline,event_date,published_at,publication_date,progress_percentage,cover_image_id,cover_image_url,logo_url,url,pdf_url,website";
 const researchPublicationListFields =
   `${researchPublicListFields},journal_name,publisher,volume,issue,pages,conference_name,book_title,isbn,issn,doi,is_open_access,authors:id,name,full_name,title,project:id,title,slug,code,summary,center:id,title,name,slug,code,summary`;
+const researchInnovationListFields =
+  `${researchPublicListFields},problem_addressed,solution,benefits,trl_level,outputs_count,partners_count,project:id,title,slug,code,summary,center:id,title,name,slug,code,summary`;
 const researchProjectListFields =
   "id,title,slug,code,summary,status,is_active,is_featured,project_type,cover_image:id,url,public_url,thumbnail_url,alt_text";
 const researchProjectFilterFields = "id,start_date,end_date,published_at,created_at,updated_at";
@@ -402,7 +404,7 @@ export function getGrantBySlug(slug: string) {
 export function getInnovations(search?: string) {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.innovations.list({
-      fields: researchPublicListFields,
+      fields: researchInnovationListFields,
       search: search?.trim() || undefined,
       is_active: true,
       is_public: true,
@@ -415,7 +417,7 @@ export function getInnovations(search?: string) {
 export function getInnovationsFiltered(filters: GenericListFilters = {}) {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.innovations.list({
-      fields: researchPublicListFields,
+      fields: researchInnovationListFields,
       search: filters.search?.trim() || undefined,
       innovation_type: filters.innovationType || undefined,
       development_stage: filters.developmentStage || undefined,
@@ -425,13 +427,14 @@ export function getInnovationsFiltered(filters: GenericListFilters = {}) {
       center_id: filters.centerId || undefined,
       project_id: filters.projectId || undefined,
       status: filters.status || undefined,
+      year: parseYear(filters.year),
       sort: filters.sort || undefined,
       order: filters.order,
       is_active: filters.isActive ?? true,
       is_featured: filters.isFeatured,
       is_public: true,
-      page: 1,
-      per_page: 100,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 100,
     }),
   );
 }

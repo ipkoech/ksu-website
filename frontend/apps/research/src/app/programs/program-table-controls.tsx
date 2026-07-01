@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import { ArrowUpDown, Search } from "lucide-react";
 import { ActiveFilterChips, FilterDrawerSheet } from "@ksu/ui/components";
 import { formatLabel } from "../../lib/research-public-data";
@@ -26,6 +26,8 @@ type ProgramTableControlsProps = {
   sortTitle?: string;
   centers?: ResearchGenericRecord[];
   centerValue?: string;
+  projects?: ResearchGenericRecord[];
+  projectValue?: string;
   filterSelects: ControlSelect[];
   sortValue?: string;
   sortOptions: SelectChoice[];
@@ -41,18 +43,23 @@ export function ProgramTableControls({
   sortTitle = "Sort programs",
   centers,
   centerValue,
+  projects,
+  projectValue,
   filterSelects,
   sortValue,
   sortOptions,
   viewControls,
 }: ProgramTableControlsProps) {
+  const formId = useId().replaceAll(":", "");
   const centerOptions = centers ?? [];
+  const projectOptions = projects ?? [];
   const filterItems = [
     searchValue ? { key: "q", label: "Search", value: searchValue } : null,
     ...filterSelects.map((select) =>
       select.value ? { key: select.name, label: select.label, value: select.value } : null,
     ),
     centerValue ? { key: "center", label: "Center", value: centerValue } : null,
+    projectValue ? { key: "project", label: "Project", value: projectValue } : null,
   ].filter((item): item is { key: string; label: string; value: string } => Boolean(item));
   const sortItems = sortValue ? [{ key: "sort", label: "Sort", value: sortValue }] : [];
   const activeItems = [...filterItems, ...sortItems];
@@ -63,7 +70,7 @@ export function ProgramTableControls({
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-      <form id="filter-drawer-form" action={action} className="flex flex-col gap-3">
+      <form id={formId} action={action} className="flex flex-col gap-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <label className="block min-w-0 flex-1">
             <span className="sr-only">Search</span>
@@ -73,6 +80,7 @@ export function ProgramTableControls({
                 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
               />
               <input
+                form={formId}
                 type="search"
                 name="q"
                 defaultValue={searchValue ?? ""}
@@ -100,10 +108,11 @@ export function ProgramTableControls({
             >
               <div className="grid gap-4">
                 {filterSelects.map((select) => (
-                  <ProgramSelectField key={select.name} {...select} />
+                  <ProgramSelectField key={select.name} {...select} formId={formId} />
                 ))}
                 {centerOptions.length > 0 ? (
                   <ProgramSelectField
+                    formId={formId}
                     name="center"
                     label="Center"
                     value={centerValue}
@@ -111,6 +120,19 @@ export function ProgramTableControls({
                     options={centerOptions.map((center) => ({
                       value: center.id ?? center.code ?? center.name ?? center.title ?? "",
                       label: center.name ?? center.title ?? center.code ?? center.id ?? "Unnamed center",
+                    }))}
+                  />
+                ) : null}
+                {projectOptions.length > 0 ? (
+                  <ProgramSelectField
+                    formId={formId}
+                    name="project"
+                    label="Project"
+                    value={projectValue}
+                    allLabel="All projects"
+                    options={projectOptions.map((project) => ({
+                      value: project.id ?? project.code ?? project.slug ?? project.title ?? project.name ?? "",
+                      label: project.title ?? project.name ?? project.code ?? project.id ?? "Published project",
                     }))}
                   />
                 ) : null}
@@ -127,6 +149,7 @@ export function ProgramTableControls({
               onRemoveFilter={reset}
             >
               <ProgramSelectField
+                formId={formId}
                 name="sort"
                 label="Sort"
                 value={sortValue ?? "created_at"}
@@ -150,11 +173,13 @@ function ProgramSelectField({
   options,
   allLabel,
   includeAllOption = true,
-}: ControlSelect) {
+  formId,
+}: ControlSelect & { formId?: string }) {
   return (
     <label className="block min-w-0">
       <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
       <select
+        form={formId}
         name={name}
         defaultValue={value ?? ""}
         className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-950 outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
