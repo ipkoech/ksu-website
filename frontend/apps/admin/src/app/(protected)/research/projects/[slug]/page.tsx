@@ -31,6 +31,14 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  Switch,
+  Textarea,
 } from "@ksu/ui/components";
 import { Activity, Building2, CalendarDays, Edit3, Eye, EyeOff, Filter, Link2, MoreVertical, Plus, Search, SortAsc, Target, Trash2, Unlink, UsersRound } from "lucide-react";
 import { researchPartnerRelationshipAdapter } from "@/components/relationships/relationship-adapters";
@@ -48,29 +56,128 @@ type ProjectActionConfirmation = {
   deleteRecord?: boolean;
 };
 
-type ProjectEditForm = {
-  title: string;
-  code: string;
-  project_type: string;
-  status: string;
-  progress_percentage: string;
+type ProjectEditFieldType = "text" | "textarea" | "select" | "date" | "number" | "boolean" | "json";
+
+type ProjectEditField = {
+  name: string;
+  label: string;
+  type: ProjectEditFieldType;
+  required?: boolean;
+  options?: Array<{ value: string; label: string }>;
+  placeholder?: string;
+  helper?: string;
+  rows?: number;
+  min?: number;
+  max?: number;
+  nullable?: boolean;
+  jsonShape?: "object" | "array";
 };
 
+type ProjectEditFieldGroup = {
+  title: string;
+  description: string;
+  fields: ProjectEditField[];
+};
+
+type ProjectEditValues = Record<string, string | boolean>;
+
 const PROJECT_TYPE_OPTIONS = [
+  { value: "basic", label: "Basic" },
+  { value: "applied", label: "Applied" },
+  { value: "action", label: "Action" },
   { value: "research", label: "Research" },
   { value: "collaborative", label: "Collaborative" },
   { value: "consultancy", label: "Consultancy" },
   { value: "community", label: "Community" },
   { value: "innovation", label: "Innovation" },
+  { value: "commissioned", label: "Commissioned" },
 ];
 
 const PROJECT_STATUS_OPTIONS = [
   { value: "draft", label: "Draft" },
+  { value: "proposal", label: "Proposal" },
   { value: "planned", label: "Planned" },
+  { value: "approved", label: "Approved" },
   { value: "ongoing", label: "Ongoing" },
   { value: "completed", label: "Completed" },
   { value: "suspended", label: "Suspended" },
+  { value: "cancelled", label: "Cancelled" },
 ];
+
+const PROJECT_EDIT_GROUPS: ProjectEditFieldGroup[] = [
+  {
+    title: "Identity",
+    description: "Core naming and admin identifiers for the project.",
+    fields: [
+      { name: "title", label: "Title", type: "text", required: true },
+      { name: "slug", label: "Slug", type: "text", required: true, helper: "Lowercase URL slug. Use hyphens between words." },
+      { name: "code", label: "Code", type: "text", helper: "Short internal code, if the project has one." },
+      { name: "project_type", label: "Project type", type: "select", required: true, options: PROJECT_TYPE_OPTIONS },
+      { name: "status", label: "Status", type: "select", required: true, options: PROJECT_STATUS_OPTIONS },
+      { name: "display_order", label: "Display order", type: "number", required: true, min: 0, helper: "Lower values appear earlier where ordering is used." },
+    ],
+  },
+  {
+    title: "Ownership",
+    description: "Backend reference IDs for parent records and ownership.",
+    fields: [
+      { name: "program_id", label: "Program ID", type: "text", nullable: true, helper: "Existing research program UUID." },
+      { name: "center_id", label: "Center ID", type: "text", nullable: true, helper: "Existing research center UUID." },
+      { name: "farm_id", label: "Farm ID", type: "text", nullable: true, helper: "Existing research farm UUID." },
+      { name: "pi_id", label: "Principal investigator ID", type: "text", nullable: true, helper: "Existing person UUID." },
+      { name: "grant_id", label: "Grant ID", type: "text", nullable: true, helper: "Existing grant UUID." },
+    ],
+  },
+  {
+    title: "Timeline and Funding",
+    description: "Dates, budget, and progress fields used for dashboards and reporting.",
+    fields: [
+      { name: "start_date", label: "Start date", type: "date", nullable: true },
+      { name: "end_date", label: "End date", type: "date", nullable: true },
+      { name: "budget", label: "Budget", type: "number", min: 0, nullable: true },
+      { name: "currency", label: "Currency", type: "text", required: true, placeholder: "KES", helper: "Three-letter currency code." },
+      { name: "progress_percentage", label: "Progress percentage", type: "number", required: true, min: 0, max: 100 },
+    ],
+  },
+  {
+    title: "Project Content",
+    description: "Narrative fields shown in project detail and public-facing contexts.",
+    fields: [
+      { name: "summary", label: "Summary", type: "textarea", rows: 3, nullable: true },
+      { name: "abstract", label: "Abstract", type: "textarea", rows: 4, nullable: true },
+      { name: "background", label: "Background", type: "textarea", rows: 4, nullable: true },
+      { name: "objectives", label: "Objectives", type: "textarea", rows: 4, nullable: true },
+      { name: "methodology", label: "Methodology", type: "textarea", rows: 4, nullable: true },
+      { name: "expected_outcomes", label: "Expected outcomes", type: "textarea", rows: 4, nullable: true },
+      { name: "impact", label: "Impact", type: "textarea", rows: 4, nullable: true },
+      { name: "deliverables", label: "Deliverables", type: "textarea", rows: 4, nullable: true },
+    ],
+  },
+  {
+    title: "Media and SEO",
+    description: "Model-backed media references and search metadata.",
+    fields: [
+      { name: "cover_image_id", label: "Cover image ID", type: "text", nullable: true, helper: "Existing media UUID." },
+      { name: "gallery_media_ids", label: "Gallery media IDs", type: "json", jsonShape: "array", nullable: true, helper: "JSON array of media UUID strings." },
+      { name: "attachment_media_ids", label: "Attachment media IDs", type: "json", jsonShape: "array", nullable: true, helper: "JSON array of media UUID strings." },
+      { name: "document_media_ids", label: "Document media IDs", type: "json", jsonShape: "array", nullable: true, helper: "JSON array of media UUID strings." },
+      { name: "meta_title", label: "Meta title", type: "text", nullable: true },
+      { name: "meta_description", label: "Meta description", type: "textarea", rows: 3, nullable: true },
+      { name: "keywords", label: "Keywords", type: "json", jsonShape: "object", nullable: true, helper: "JSON object for SEO keywords." },
+    ],
+  },
+  {
+    title: "Visibility",
+    description: "Publication and admin flags for this project.",
+    fields: [
+      { name: "is_active", label: "Active", type: "boolean" },
+      { name: "is_featured", label: "Featured", type: "boolean" },
+      { name: "is_public", label: "Public", type: "boolean" },
+    ],
+  },
+];
+
+const PROJECT_EDIT_FIELDS = PROJECT_EDIT_GROUPS.flatMap((group) => group.fields);
 
 function ProjectRelationshipGuideContent() {
   return (
@@ -151,7 +258,7 @@ function ProjectDetailActions({ project }: { project: ResearchGenericRecord }) {
   const queryClient = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
   const [confirmation, setConfirmation] = useState<ProjectActionConfirmation | null>(null);
-  const [form, setForm] = useState<ProjectEditForm>(() => buildProjectEditForm(project));
+  const [form, setForm] = useState<ProjectEditValues>(() => buildProjectEditForm(project));
 
   const refreshProject = async () => {
     await queryClient.invalidateQueries({ queryKey: ["research", "detail"] });
@@ -185,22 +292,12 @@ function ProjectDetailActions({ project }: { project: ResearchGenericRecord }) {
   const isActive = project.is_active !== false;
 
   const submitEdit = () => {
-    const progress = Number(form.progress_percentage);
-    if (!form.title.trim()) {
-      toast.error("Project title is required");
+    const parsed = buildProjectEditPayload(form);
+    if (!parsed.ok) {
+      toast.error(parsed.message);
       return;
     }
-    if (Number.isNaN(progress) || progress < 0 || progress > 100) {
-      toast.error("Progress must be between 0 and 100");
-      return;
-    }
-    updateMutation.mutate({
-      title: form.title.trim(),
-      code: form.code.trim() || null,
-      project_type: form.project_type || null,
-      status: form.status || null,
-      progress_percentage: progress,
-    });
+    updateMutation.mutate(parsed.payload);
   };
 
   const confirmAction = () => {
@@ -300,79 +397,25 @@ function ProjectDetailActions({ project }: { project: ResearchGenericRecord }) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Dialog open={editOpen} onOpenChange={(open) => !isBusy && setEditOpen(open)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit project</DialogTitle>
-            <DialogDescription>Update the key project fields shown on this detail page.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-2 sm:grid-cols-2">
-            <label className="space-y-2 text-sm font-medium sm:col-span-2">
-              <span>Title</span>
-              <Input value={form.title} disabled={isBusy} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} />
-            </label>
-            <label className="space-y-2 text-sm font-medium">
-              <span>Code</span>
-              <Input value={form.code} disabled={isBusy} onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))} />
-            </label>
-            <label className="space-y-2 text-sm font-medium">
-              <span>Progress</span>
-              <Input
-                type="number"
-                min={0}
-                max={100}
-                value={form.progress_percentage}
-                disabled={isBusy}
-                onChange={(event) => setForm((current) => ({ ...current, progress_percentage: event.target.value }))}
-              />
-            </label>
-            <label className="space-y-2 text-sm font-medium">
-              <span>Type</span>
-              <Select value={form.project_type || "none"} disabled={isBusy} onValueChange={(value) => setForm((current) => ({ ...current, project_type: value === "none" ? "" : value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="none">No type</SelectItem>
-                    {PROJECT_TYPE_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </label>
-            <label className="space-y-2 text-sm font-medium">
-              <span>Status</span>
-              <Select value={form.status || "none"} disabled={isBusy} onValueChange={(value) => setForm((current) => ({ ...current, status: value === "none" ? "" : value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="none">No status</SelectItem>
-                    {PROJECT_STATUS_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </label>
+      <Sheet open={editOpen} onOpenChange={(open) => !isBusy && setEditOpen(open)}>
+        <SheetContent className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl">
+          <SheetHeader className="border-b px-6 py-5">
+            <SheetTitle>Edit project</SheetTitle>
+            <SheetDescription>Update project fields provided by the research backend. Relationship mapping stays in the tabs below.</SheetDescription>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto px-6 py-5">
+            <ProjectEditSheetForm values={form} setValues={setForm} disabled={isBusy} />
           </div>
-          <DialogFooter>
+          <SheetFooter className="sticky bottom-0 gap-2 border-t bg-background px-6 py-4 sm:gap-2">
             <Button type="button" variant="outline" disabled={isBusy} onClick={() => setEditOpen(false)}>
               Cancel
             </Button>
             <Button type="button" disabled={isBusy} onClick={submitEdit}>
               {updateMutation.isPending ? "Saving..." : "Save changes"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
       <ConfirmDialog
         open={Boolean(confirmation)}
@@ -390,14 +433,220 @@ function ProjectDetailActions({ project }: { project: ResearchGenericRecord }) {
   );
 }
 
-function buildProjectEditForm(project: ResearchGenericRecord): ProjectEditForm {
-  return {
-    title: String(project.title ?? ""),
-    code: String(project.code ?? ""),
-    project_type: String(project.project_type ?? ""),
-    status: String(project.status ?? ""),
-    progress_percentage: String(project.progress_percentage ?? 0),
+function ProjectEditSheetForm({
+  values,
+  setValues,
+  disabled,
+}: {
+  values: ProjectEditValues;
+  setValues: (updater: (current: ProjectEditValues) => ProjectEditValues) => void;
+  disabled: boolean;
+}) {
+  const setField = (field: ProjectEditField, value: string | boolean) => {
+    setValues((current) => ({ ...current, [field.name]: value }));
   };
+
+  return (
+    <div className="space-y-6">
+      {PROJECT_EDIT_GROUPS.map((group) => (
+        <section key={group.title} className="space-y-4 rounded-md border bg-card p-4">
+          <div>
+            <h3 className="text-sm font-semibold">{group.title}</h3>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">{group.description}</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {group.fields.map((field) => (
+              <ProjectEditFieldControl
+                key={field.name}
+                field={field}
+                value={values[field.name]}
+                disabled={disabled}
+                onChange={(value) => setField(field, value)}
+              />
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function ProjectEditFieldControl({
+  field,
+  value,
+  disabled,
+  onChange,
+}: {
+  field: ProjectEditField;
+  value: string | boolean | undefined;
+  disabled: boolean;
+  onChange: (value: string | boolean) => void;
+}) {
+  const label = (
+    <span>
+      {field.label}
+      {field.required ? <span className="text-destructive"> *</span> : null}
+    </span>
+  );
+
+  if (field.type === "boolean") {
+    return (
+      <label className="flex min-h-20 items-center justify-between gap-4 rounded-md border px-3 py-2 text-sm font-medium">
+        <span>
+          {label}
+          {field.helper ? <span className="mt-1 block text-xs font-normal leading-5 text-muted-foreground">{field.helper}</span> : null}
+        </span>
+        <Switch checked={Boolean(value)} disabled={disabled} onCheckedChange={(checked) => onChange(Boolean(checked))} />
+      </label>
+    );
+  }
+
+  return (
+    <label className={field.type === "textarea" || field.type === "json" ? "space-y-2 text-sm font-medium md:col-span-2" : "space-y-2 text-sm font-medium"}>
+      {label}
+      {renderProjectEditInput(field, typeof value === "string" ? value : "", disabled, onChange)}
+      {field.helper ? <span className="block text-xs font-normal leading-5 text-muted-foreground">{field.helper}</span> : null}
+    </label>
+  );
+}
+
+function renderProjectEditInput(field: ProjectEditField, value: string, disabled: boolean, onChange: (value: string) => void) {
+  if (field.type === "textarea" || field.type === "json") {
+    return (
+      <Textarea
+        rows={field.rows ?? (field.type === "json" ? 5 : 3)}
+        value={value}
+        disabled={disabled}
+        placeholder={field.placeholder ?? (field.type === "json" ? (field.jsonShape === "array" ? "[]" : "{}") : undefined)}
+        className="font-mono text-sm"
+        onChange={(event) => onChange(event.target.value)}
+      />
+    );
+  }
+
+  if (field.type === "select") {
+    return (
+      <Select value={value || "none"} disabled={disabled} onValueChange={(nextValue) => onChange(nextValue === "none" ? "" : nextValue)}>
+        <SelectTrigger>
+          <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem value="none" disabled={field.required}>
+              {field.required ? `Select ${field.label.toLowerCase()}` : "No value"}
+            </SelectItem>
+            {(field.options ?? []).map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    );
+  }
+
+  return (
+    <Input
+      type={field.type === "number" || field.type === "date" ? field.type : "text"}
+      min={field.min}
+      max={field.max}
+      value={value}
+      disabled={disabled}
+      placeholder={field.placeholder}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  );
+}
+
+function buildProjectEditForm(project: ResearchGenericRecord): ProjectEditValues {
+  return Object.fromEntries(
+    PROJECT_EDIT_FIELDS.map((field) => {
+      const value = project[field.name];
+      if (field.type === "boolean") return [field.name, Boolean(value)];
+      if (field.type === "json") return [field.name, formatProjectJsonValue(value, field.jsonShape)];
+      if (field.type === "date") return [field.name, formatProjectDateValue(value)];
+      return [field.name, value == null ? "" : String(value)];
+    }),
+  );
+}
+
+function formatProjectDateValue(value: unknown) {
+  if (typeof value !== "string") return "";
+  return value.slice(0, 10);
+}
+
+function formatProjectJsonValue(value: unknown, shape: ProjectEditField["jsonShape"]) {
+  if (value == null || value === "") return "";
+  if (typeof value === "string") {
+    try {
+      return JSON.stringify(JSON.parse(value), null, 2);
+    } catch {
+      return value;
+    }
+  }
+  if (shape === "array" && Array.isArray(value)) return JSON.stringify(value, null, 2);
+  if (shape === "object" && typeof value === "object" && !Array.isArray(value)) return JSON.stringify(value, null, 2);
+  return JSON.stringify(value, null, 2);
+}
+
+function buildProjectEditPayload(values: ProjectEditValues): { ok: true; payload: Record<string, unknown> } | { ok: false; message: string } {
+  const payload: Record<string, unknown> = {};
+
+  for (const field of PROJECT_EDIT_FIELDS) {
+    const value = values[field.name];
+
+    if (field.type === "boolean") {
+      payload[field.name] = Boolean(value);
+      continue;
+    }
+
+    const rawValue = typeof value === "string" ? value.trim() : "";
+
+    if (field.required && !rawValue) {
+      return { ok: false, message: `${field.label} is required` };
+    }
+
+    if (!rawValue) {
+      payload[field.name] = field.required ? rawValue : null;
+      continue;
+    }
+
+    if (field.type === "number") {
+      const parsed = Number(rawValue);
+      if (!Number.isFinite(parsed)) return { ok: false, message: `${field.label} must be a valid number` };
+      if (field.min != null && parsed < field.min) return { ok: false, message: `${field.label} must be at least ${field.min}` };
+      if (field.max != null && parsed > field.max) return { ok: false, message: `${field.label} must be at most ${field.max}` };
+      payload[field.name] = Number.isInteger(parsed) ? parsed : parsed;
+      continue;
+    }
+
+    if (field.type === "json") {
+      try {
+        const parsed = JSON.parse(rawValue);
+        if (field.jsonShape === "array" && !Array.isArray(parsed)) return { ok: false, message: `${field.label} must be a JSON array` };
+        if (field.jsonShape === "object" && (typeof parsed !== "object" || parsed === null || Array.isArray(parsed))) return { ok: false, message: `${field.label} must be a JSON object` };
+        payload[field.name] = parsed;
+      } catch {
+        return { ok: false, message: `${field.label} must contain valid JSON` };
+      }
+      continue;
+    }
+
+    if (field.name === "slug" && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(rawValue)) {
+      return { ok: false, message: "Slug must use lowercase letters, numbers, and hyphens" };
+    }
+
+    if (field.name === "currency") {
+      if (rawValue.length !== 3) return { ok: false, message: "Currency must be a three-letter code" };
+      payload[field.name] = rawValue.toUpperCase();
+      continue;
+    }
+
+    payload[field.name] = rawValue;
+  }
+
+  return { ok: true, payload };
 }
 
 function ProjectRelations({ project }: { project: ResearchGenericRecord }) {

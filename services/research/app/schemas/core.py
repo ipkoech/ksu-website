@@ -260,6 +260,7 @@ class ResearchProjectCreate(ResearchProjectBase, StatusMixin):
 class ResearchProjectUpdate(BaseSchema):
     title: str | None = Field(None, max_length=500)
     slug: SlugStr | None = None
+    code: str | None = Field(None, max_length=32)
     program_id: uuid.UUID | None = None
     center_id: uuid.UUID | None = None
     farm_id: uuid.UUID | None = None
@@ -278,14 +279,19 @@ class ResearchProjectUpdate(BaseSchema):
     budget: Decimal | None = None
     currency: str | None = Field(None, max_length=3)
     grant_id: uuid.UUID | None = None
-    cover_image_url: UrlStr | None = None
-    gallery: list[dict] | None = None
-    documents: list[dict] | None = None
+    cover_image_id: uuid.UUID | None = None
+    gallery_media_ids: list[uuid.UUID] | None = None
+    attachment_media_ids: list[uuid.UUID] | None = None
+    document_media_ids: list[uuid.UUID] | None = None
+    meta_title: str | None = Field(None, max_length=255)
+    meta_description: str | None = Field(None, max_length=500)
+    keywords: dict | None = None
     status: str | None = None
     progress_percentage: int | None = Field(None, ge=0, le=100)
     is_active: bool | None = None
     is_featured: bool | None = None
     is_public: bool | None = None
+    display_order: int | None = None
 
 
 class ResearchProjectRead(ResearchProjectBase, BaseReadSchema, StatusMixin):

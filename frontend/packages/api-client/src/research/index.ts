@@ -105,8 +105,10 @@ export interface ResearchProject {
   code?: string | null;
   program_id?: string | null;
   center_id?: string | null;
+  farm_id?: string | null;
   program?: ResearchGenericRecord | null;
   center?: ResearchGenericRecord | null;
+  farm?: ResearchGenericRecord | null;
   pi_id?: string | null;
   project_type?: string;
   start_date?: string | null;
@@ -123,11 +125,19 @@ export interface ResearchProject {
   currency?: string | null;
   grant_id?: string | null;
   cover_image_url?: string | null;
+  cover_image_id?: string | null;
+  gallery_media_ids?: string[] | null;
+  attachment_media_ids?: string[] | null;
+  document_media_ids?: string[] | null;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  keywords?: Record<string, unknown> | null;
   status?: string;
   progress_percentage?: number;
   is_active?: boolean;
   is_featured?: boolean;
   is_public?: boolean;
+  display_order?: number;
   published_at?: string | null;
   created_at: string;
   updated_at: string;
@@ -139,6 +149,7 @@ export interface ResearchProjectPayload {
   code?: string | null;
   program_id?: string | null;
   center_id?: string | null;
+  farm_id?: string | null;
   pi_id?: string | null;
   project_type?: string;
   start_date?: string | null;
@@ -155,11 +166,19 @@ export interface ResearchProjectPayload {
   currency?: string | null;
   grant_id?: string | null;
   cover_image_url?: string | null;
+  cover_image_id?: string | null;
+  gallery_media_ids?: string[] | null;
+  attachment_media_ids?: string[] | null;
+  document_media_ids?: string[] | null;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  keywords?: Record<string, unknown> | null;
   status?: string;
   progress_percentage?: number;
   is_active?: boolean;
   is_featured?: boolean;
   is_public?: boolean;
+  display_order?: number;
 }
 
 export interface ResearchPublication {
