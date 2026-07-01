@@ -28,7 +28,7 @@ export function ResearchPortfolioHero({
   eyebrow: string;
   title: string;
   body: string;
-  primary: PortfolioQuickLink;
+  primary?: PortfolioQuickLink;
   secondary?: PortfolioQuickLink;
   illustration?: PortfolioHeroIllustration;
 }) {
@@ -49,10 +49,12 @@ export function ResearchPortfolioHero({
         <p className="mt-4 max-w-2xl text-pretty text-base leading-7 text-white/92 sm:text-lg">
           {body}
         </p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <PortfolioHeroAction link={primary} primary />
-          {secondary ? <PortfolioHeroAction link={secondary} /> : null}
-        </div>
+        {primary || secondary ? (
+          <div className="mt-6 flex flex-wrap gap-3">
+            {primary ? <PortfolioHeroAction link={primary} primary /> : null}
+            {secondary ? <PortfolioHeroAction link={secondary} /> : null}
+          </div>
+        ) : null}
       </div>
     </section>
   );

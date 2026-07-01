@@ -36,7 +36,10 @@ export function PublicationDetailSheet({
   return (
     <Sheet>
       <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent side="right" className="w-full overflow-y-auto bg-white p-0 sm:max-w-2xl">
+      <SheetContent
+        side="right"
+        className="top-[92px] h-[calc(100dvh-92px)] w-full overflow-y-auto bg-white p-0 sm:max-w-2xl xl:top-[128px] xl:h-[calc(100dvh-128px)]"
+      >
         <SheetHeader className="border-b border-slate-200 px-6 py-5 text-left">
           <div className="mb-2 flex flex-wrap gap-2">
             {publication.publication_type ? <Badge>{formatLabel(publication.publication_type)}</Badge> : null}

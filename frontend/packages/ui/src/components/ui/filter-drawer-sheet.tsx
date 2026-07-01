@@ -31,6 +31,7 @@ export type FilterDrawerSheetProps = {
   filterLabel: string;
   filterCount?: number;
   title?: string;
+  formId?: string;
   triggerIcon?: React.ReactNode;
   children: React.ReactNode;
   activeFilters?: ActiveFilter[];
@@ -44,6 +45,7 @@ export function FilterDrawerSheet({
   filterLabel,
   filterCount,
   title = "Filters",
+  formId = "filter-drawer-form",
   triggerIcon,
   children,
   activeFilters = [],
@@ -80,7 +82,7 @@ export function FilterDrawerSheet({
         className={cn(
           "flex w-full flex-col gap-0 p-0 sm:max-w-md",
           isNarrow && "max-h-[85dvh] rounded-t-xl sm:max-w-none",
-          !isNarrow && "sm:max-w-md",
+          !isNarrow && "top-[92px] h-[calc(100dvh-92px)] sm:max-w-md xl:top-[128px] xl:h-[calc(100dvh-128px)]",
         )}
       >
         <SheetHeader className="flex-row items-center justify-between border-b border-slate-200 px-6 py-4">
@@ -136,7 +138,7 @@ export function FilterDrawerSheet({
         <div className="border-t border-slate-200 px-6 py-4">
           <Button
             type="submit"
-            form="filter-drawer-form"
+            form={formId}
             className="w-full h-11 rounded-md bg-primary text-sm font-semibold text-white hover:bg-primary/90"
             onClick={() => setOpen(false)}
           >

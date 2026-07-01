@@ -107,8 +107,6 @@ export default async function PublicationsPage({
         eyebrow="Research publications"
         title="Publications"
         body="Browse peer-reviewed scholarship, reports, policy briefs, books, and public evidence from Kisii University research work."
-        primary={{ label: "Browse publications", href: "#publication-catalogue" }}
-        secondary={{ label: "Trace to outputs", href: "/outputs" }}
         illustration="publications"
       />
 

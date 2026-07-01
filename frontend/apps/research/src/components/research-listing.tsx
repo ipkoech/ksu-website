@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import { ArrowRight, Search } from "lucide-react";
 import { Badge, StatusMessage } from "./research-ui";
 import { FilterDrawerSheet, ActiveFilterChips } from "@ksu/ui/components";
@@ -43,6 +43,7 @@ type ResearchSelectFieldProps = {
   options: SelectChoice[];
   allLabel?: string;
   includeAllOption?: boolean;
+  formId?: string;
   className?: string;
 };
 
@@ -85,6 +86,7 @@ export function ResearchFilterForm({
   sortValue?: string;
   sortOptions?: SortOption[];
 }) {
+  const formId = useId().replaceAll(":", "");
   const activeFilterItems: { key: string; label: string; value: string }[] = [];
 
   if (searchValue) {
@@ -118,7 +120,7 @@ export function ResearchFilterForm({
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
       <div className="flex flex-col gap-3">
-        <form id="filter-drawer-form" action={action} className="flex gap-2 md:gap-3">
+        <form id={formId} action={action} className="flex gap-2 md:gap-3">
           <ResearchTextField
             name="q"
             label="Search"
@@ -127,8 +129,15 @@ export function ResearchFilterForm({
             type="search"
             className="flex-1"
           />
+          <button
+            type="submit"
+            className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90"
+          >
+            Search
+          </button>
           <FilterDrawerSheet
             filterLabel="Filter"
+            formId={formId}
             filterCount={activeFilterItems.length}
             activeFilters={activeFilterItems}
             onRemoveFilter={(_key) => {
@@ -144,7 +153,7 @@ export function ResearchFilterForm({
             }
           >
             {selects.map((select) => (
-              <ResearchSelectField key={select.name} {...select} />
+              <ResearchSelectField key={select.name} {...select} formId={formId} />
             ))}
             {textFilters.map((filter) => (
               <ResearchTextField
@@ -153,6 +162,7 @@ export function ResearchFilterForm({
                 label={filter.label}
                 value={filter.value}
                 placeholder={filter.placeholder}
+                formId={formId}
               />
             ))}
             {centers ? (
@@ -165,6 +175,7 @@ export function ResearchFilterForm({
                   label: center.name ?? center.title ?? center.code ?? center.id ?? "Unnamed center",
                 }))}
                 allLabel="All centers"
+                formId={formId}
               />
             ) : null}
             {projects ? (
@@ -177,6 +188,7 @@ export function ResearchFilterForm({
                   label: project.title ?? project.name ?? project.code ?? project.id ?? "Unnamed project",
                 }))}
                 allLabel="All projects"
+                formId={formId}
               />
             ) : null}
             {sortOptions.length > 0 ? (
@@ -186,6 +198,7 @@ export function ResearchFilterForm({
                 value={sortValue ?? sortOptions[0]?.value}
                 options={sortOptions}
                 includeAllOption={false}
+                formId={formId}
               />
             ) : null}
           </FilterDrawerSheet>
@@ -208,12 +221,14 @@ export function ResearchSelectField({
   options,
   allLabel,
   includeAllOption = true,
+  formId,
   className = "",
 }: ResearchSelectFieldProps) {
   return (
     <label className={`block min-w-0 ${className}`}>
       <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
       <select
+        form={formId}
         name={name}
         defaultValue={value ?? ""}
         className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-950 outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
@@ -234,9 +249,11 @@ function ResearchTextField({
   label,
   value,
   placeholder,
+  formId,
   type = "text",
   className = "",
 }: TextFilter & {
+  formId?: string;
   type?: "search" | "text";
   className?: string;
 }) {
@@ -253,6 +270,7 @@ function ResearchTextField({
           />
         ) : null}
         <input
+          form={formId}
           type={type}
           name={name}
           defaultValue={value ?? ""}

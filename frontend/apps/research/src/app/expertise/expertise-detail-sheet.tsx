@@ -34,7 +34,10 @@ export function ExpertiseDetailSheet({
   return (
     <Sheet>
       <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent side="right" className="w-full overflow-y-auto bg-white p-0 sm:max-w-2xl">
+      <SheetContent
+        side="right"
+        className="top-[92px] h-[calc(100dvh-92px)] w-full overflow-y-auto bg-white p-0 sm:max-w-2xl xl:top-[128px] xl:h-[calc(100dvh-128px)]"
+      >
         <SheetHeader className="border-b border-slate-200 px-6 py-5 text-left">
           <div className="flex items-start gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary">

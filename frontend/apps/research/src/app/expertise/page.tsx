@@ -58,8 +58,6 @@ export default async function ExpertisePage({
         eyebrow="Research expertise"
         title="Find Expertise"
         body="Connect with Kisii University researchers, staff specialists, and priority knowledge areas across active research work."
-        primary={{ label: "Explore experts", href: "#expertise-directory" }}
-        secondary={{ label: "Partner with us", href: "/connect" }}
         illustration="expertise"
       />
 
