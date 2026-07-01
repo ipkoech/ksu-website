@@ -20,3 +20,12 @@ test("about page keeps backend-backed stats and team data sources", () => {
   assert.match(source, /getResearchStaff/);
   assert.match(source, /personsApi\.list/);
 });
+
+test("about page uses reveal animation and exposes the REIRM about family", () => {
+  assert.match(source, /ScrollReveal/);
+  assert.match(source, /ScrollRevealGroup/);
+  assert.match(source, /Explore REIRM/);
+  assert.match(source, /href: "\/team"/);
+  assert.match(source, /href: "\/connect"/);
+  assert.match(source, /href: "\/donate"/);
+});

@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Person, ResearchGenericRecord } from "@ksu/api-client";
 import { personsApi, researchServiceApi } from "@ksu/api-client";
+import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 import {
   ArrowRight,
   BookOpen,
@@ -50,6 +51,37 @@ export const metadata: Metadata = {
   description:
     "Research office, REIRM mandate, governance, support services, staff, and engagement pathways.",
 };
+
+const aboutFamilyCards = [
+  {
+    title: "About REIRM",
+    body: "Mandate, operating model, governance surface, and backend coverage.",
+    href: "/about",
+    action: "Current page",
+    icon: ShieldCheck,
+  },
+  {
+    title: "Research Team",
+    body: "Published researcher and leadership profiles from the people service.",
+    href: "/team",
+    action: "Meet the team",
+    icon: Users,
+  },
+  {
+    title: "Connect & Engage",
+    body: "Inquiry routes for research, partnerships, community, and media.",
+    href: "/connect",
+    action: "Start contact",
+    icon: Handshake,
+  },
+  {
+    title: "Donate",
+    body: "Giving priorities, major gifts, endowments, and donation tracking.",
+    href: "/donate",
+    action: "Support research",
+    icon: HeartHandshake,
+  },
+];
 
 const pathwayCards = [
   {
@@ -141,23 +173,35 @@ export default async function AboutPage() {
         </section>
       ) : null}
 
+      <ScrollReveal
+        as="section"
+        className="border-b border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
+      >
+        <div className="mx-auto max-w-[1680px]">
+          <AboutFamilyNav />
+        </div>
+      </ScrollReveal>
+
       <ResearchSection
         eyebrow="Mandate"
         title="Coordinate research, extension, innovation, and resource mobilization"
-        body="The About page is now assembled from public research records: services, centers, programmes, guidelines, partners, stats, and researcher profiles."
+        body="The About page is assembled from public research records: services, centers, programmes, guidelines, partners, stats, and researcher profiles."
         tone="white"
       >
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
-          <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-start gap-4">
+        <ScrollReveal
+          className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px]"
+          variant="fade-up"
+        >
+          <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+            <div className="p-6 sm:p-7 lg:p-8">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary text-white">
                 <ShieldCheck aria-hidden className="h-6 w-6" />
               </span>
-              <div>
-                <h3 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+              <div className="mt-6 max-w-3xl">
+                <h3 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950 sm:text-3xl">
                   A public operating layer for research work
                 </h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
+                <p className="mt-4 text-sm leading-7 text-slate-600 sm:text-base">
                   REIRM connects university research priorities with published
                   project records, support services, centers, guidelines,
                   partnerships, and public engagement pathways. The page avoids
@@ -165,9 +209,19 @@ export default async function AboutPage() {
                   wherever they exist.
                 </p>
               </div>
+              <div className="mt-7 grid gap-3 sm:grid-cols-2">
+                <MiniStatement
+                  label="Mandate"
+                  value="Coordinate research support, extension, innovation, and resource mobilization."
+                />
+                <MiniStatement
+                  label="Source"
+                  value="Published records from research services, stats, people, centers, programmes, and partners."
+                />
+              </div>
             </div>
           </section>
-          <section className="rounded-lg border border-emerald-100 bg-emerald-50/60 p-6">
+          <section className="rounded-lg border border-emerald-100 bg-emerald-50/60 p-6 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
               Backend coverage
             </p>
@@ -178,7 +232,7 @@ export default async function AboutPage() {
               <MiniFact label="Partners" value={partners.total} />
             </dl>
           </section>
-        </div>
+        </ScrollReveal>
       </ResearchSection>
 
       <ResearchSection
@@ -186,11 +240,15 @@ export default async function AboutPage() {
         title="Service areas built from published backend records"
         body="Each area highlights one matching record when available and falls back to the relevant listing route when no specific record is published."
       >
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <ScrollRevealGroup
+          className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+          duration={650}
+          staggerDelay={90}
+        >
           {supportAreas.map((area) => (
             <SupportAreaCard key={area.title} area={area} />
           ))}
-        </div>
+        </ScrollRevealGroup>
       </ResearchSection>
 
       <ResearchSection
@@ -199,20 +257,24 @@ export default async function AboutPage() {
         body="Until a dedicated public board endpoint is exposed, the page summarizes governance through real services, guidelines, and institutional records already available from the research backend."
         tone="white"
       >
-        <div
-          id="governance"
+        <ScrollReveal
+          as="div"
           className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,460px)]"
+          variant="fade-up"
         >
-          <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <section
+            id="governance"
+            className="rounded-lg border border-slate-800 bg-slate-950 p-6 text-white shadow-sm"
+          >
             <div className="flex items-start gap-4">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-secondary text-white">
                 <CheckCircle2 aria-hidden className="h-5 w-5" />
               </span>
               <div>
-                <h3 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+                <h3 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-white">
                   Governance is represented through published controls
                 </h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
+                <p className="mt-3 text-sm leading-7 text-white/70">
                   Public guidelines, support services, and reporting pathways
                   create the current governance surface. Board and advisory
                   member records can be added here once the backend exposes a
@@ -241,7 +303,7 @@ export default async function AboutPage() {
               ) : null}
             </div>
           </section>
-        </div>
+        </ScrollReveal>
       </ResearchSection>
 
       <ResearchSection
@@ -249,9 +311,19 @@ export default async function AboutPage() {
         title="Published staff and leadership profiles"
         body="People records are pulled from the main university people service with research-only filtering."
       >
-        <div id="staff" className="grid gap-5 lg:grid-cols-[380px_minmax(0,1fr)]">
-          <LeadPanel lead={lead} staffCount={staff.data.length} />
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <ScrollReveal
+          as="div"
+          className="grid gap-5 lg:grid-cols-[380px_minmax(0,1fr)]"
+          variant="fade-up"
+        >
+          <div id="staff">
+            <LeadPanel lead={lead} staffCount={staff.data.length} />
+          </div>
+          <ScrollRevealGroup
+            className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+            duration={600}
+            staggerDelay={80}
+          >
             {staff.data.slice(0, 6).map((person) => (
               <StaffCard key={person.id} person={person} />
             ))}
@@ -260,8 +332,8 @@ export default async function AboutPage() {
                 Research staff records are not published yet.
               </StatusMessage>
             ) : null}
-          </div>
-        </div>
+          </ScrollRevealGroup>
+        </ScrollReveal>
       </ResearchSection>
 
       <ResearchSection
@@ -270,11 +342,15 @@ export default async function AboutPage() {
         body="These routes connect the institutional overview to backend-backed directories and action pages."
         tone="white"
       >
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <ScrollRevealGroup
+          className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+          duration={600}
+          staggerDelay={80}
+        >
           {pathwayCards.map((card) => (
             <PathwayCard key={card.title} card={card} />
           ))}
-        </div>
+        </ScrollRevealGroup>
       </ResearchSection>
     </main>
   );
@@ -302,7 +378,7 @@ function AboutHero({
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,42,0.86)_0%,rgba(15,23,42,0.68)_48%,rgba(15,23,42,0.24)_100%)]" />
       </div>
       <div className="relative z-10 mx-auto grid max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,460px)] lg:items-end">
-        <div>
+        <ScrollReveal duration={700} variant="fade-up">
           <nav
             className="mb-5 flex flex-wrap items-center gap-2 text-xs font-semibold text-white/75"
             aria-label="Breadcrumb"
@@ -334,7 +410,12 @@ function AboutHero({
               <ArrowRight aria-hidden className="h-4 w-4" />
             </Link>
           </div>
-          <dl className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <ScrollRevealGroup
+            as="dl"
+            className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+            duration={520}
+            staggerDelay={70}
+          >
             {metrics.map((metric) => (
               <div
                 key={metric.label}
@@ -349,9 +430,14 @@ function AboutHero({
                 </dd>
               </div>
             ))}
-          </dl>
-        </div>
-        <section className="rounded-lg border border-white/20 bg-white/12 p-5 shadow-xl backdrop-blur">
+          </ScrollRevealGroup>
+        </ScrollReveal>
+        <ScrollReveal
+          as="section"
+          className="rounded-lg border border-white/20 bg-white/12 p-5 shadow-xl backdrop-blur"
+          delay={120}
+          variant="fade-left"
+        >
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
             Research office
           </p>
@@ -378,9 +464,71 @@ function AboutHero({
             View backend team
             <ArrowRight aria-hidden className="h-4 w-4" />
           </Link>
-        </section>
+        </ScrollReveal>
       </div>
     </section>
+  );
+}
+
+function AboutFamilyNav() {
+  return (
+    <nav
+      aria-label="REIRM about section links"
+      className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start"
+    >
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
+          Explore REIRM
+        </p>
+        <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+          About pages that work together
+        </h2>
+      </div>
+      <ScrollRevealGroup
+        className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+        duration={560}
+        staggerDelay={70}
+      >
+        {aboutFamilyCards.map((item) => (
+          <AboutFamilyCard key={item.href} item={item} />
+        ))}
+      </ScrollRevealGroup>
+    </nav>
+  );
+}
+
+function AboutFamilyCard({
+  item,
+}: {
+  item: {
+    title: string;
+    body: string;
+    href: string;
+    action: string;
+    icon: LucideIcon;
+  };
+}) {
+  const Icon = item.icon;
+  return (
+    <Link
+      href={item.href}
+      className="group flex min-h-[190px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+    >
+      <span className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
+        <Icon aria-hidden className="h-5 w-5" />
+      </span>
+      <h3 className="mt-4 text-lg font-semibold text-slate-950">
+        {item.title}
+      </h3>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+      <span className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-semibold text-primary">
+        {item.action}
+        <ArrowRight
+          aria-hidden
+          className="h-4 w-4 transition group-hover:translate-x-1"
+        />
+      </span>
+    </Link>
   );
 }
 
@@ -482,18 +630,23 @@ function StaffCard({ person }: { person: Person }) {
   const interests = Array.isArray(person.research_interests)
     ? person.research_interests.slice(0, 2)
     : [];
+
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap gap-2">
-        <Badge>{formatLabel(person.academic_rank ?? person.title ?? "researcher")}</Badge>
+        <Badge>
+          {formatLabel(person.academic_rank ?? person.title ?? "researcher")}
+        </Badge>
         {person.is_featured ? <Badge>Featured</Badge> : null}
       </div>
       <h3 className="mt-4 text-lg font-semibold leading-6 text-slate-950">
         {personName(person)}
       </h3>
-      {compactText(person.institutional_role) || compactText(person.department_name) ? (
+      {compactText(person.institutional_role) ||
+      compactText(person.department_name) ? (
         <p className="mt-2 text-sm font-semibold text-primary">
-          {compactText(person.institutional_role) || compactText(person.department_name)}
+          {compactText(person.institutional_role) ||
+            compactText(person.department_name)}
         </p>
       ) : null}
       {personSummary(person) ? (
@@ -538,12 +691,14 @@ function PathwayCard({
   return (
     <Link
       href={card.href}
-      className="group flex min-h-[230px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md"
+      className="group flex min-h-[230px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
       <span className="flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
         <Icon aria-hidden className="h-5 w-5" />
       </span>
-      <h3 className="mt-5 text-lg font-semibold text-slate-950">{card.title}</h3>
+      <h3 className="mt-5 text-lg font-semibold text-slate-950">
+        {card.title}
+      </h3>
       <p className="mt-3 text-sm leading-6 text-slate-600">{card.body}</p>
       <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-primary">
         {card.action}
@@ -601,6 +756,17 @@ function MiniFact({ label, value }: { label: string; value: number }) {
       <dd className="mt-1 text-lg font-semibold text-slate-950">
         {value.toLocaleString("en-KE")}
       </dd>
+    </div>
+  );
+}
+
+function MiniStatement({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+        {label}
+      </p>
+      <p className="mt-2 text-sm leading-6 text-slate-700">{value}</p>
     </div>
   );
 }
