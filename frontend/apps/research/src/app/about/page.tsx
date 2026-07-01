@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import type { Person, ResearchGenericRecord } from "@ksu/api-client";
 import { personsApi, researchServiceApi } from "@ksu/api-client";
@@ -39,8 +38,6 @@ import {
   buildAboutMetricTiles,
   buildSupportAreaCards,
   getLeadResearchPerson,
-  recordSummary,
-  recordTitle,
   type AboutCollection,
 } from "./about-page-model";
 
@@ -49,65 +46,41 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: "About Research",
   description:
-    "Research office, REIRM mandate, governance, support services, staff, and engagement pathways.",
+    "REIRM mandate, research support, governance, staff, and engagement pathways.",
 };
-
-const aboutFamilyCards = [
-  {
-    title: "About REIRM",
-    body: "Mandate, operating model, governance surface, and backend coverage.",
-    href: "/about",
-    action: "Current page",
-    icon: ShieldCheck,
-  },
-  {
-    title: "Research Team",
-    body: "Published researcher and leadership profiles from the people service.",
-    href: "/team",
-    action: "Meet the team",
-    icon: Users,
-  },
-  {
-    title: "Connect & Engage",
-    body: "Inquiry routes for research, partnerships, community, and media.",
-    href: "/connect",
-    action: "Start contact",
-    icon: Handshake,
-  },
-  {
-    title: "Donate",
-    body: "Giving priorities, major gifts, endowments, and donation tracking.",
-    href: "/donate",
-    action: "Support research",
-    icon: HeartHandshake,
-  },
-];
 
 const pathwayCards = [
   {
     title: "Meet the Team",
-    body: "Open published researcher and leadership profiles from the university people service.",
+    body: "Staff and leadership profiles.",
     href: "/team",
     action: "View team",
     icon: Users,
   },
   {
     title: "Find Expertise",
-    body: "Search skills, research interests, focus areas, centers, and related project work.",
+    body: "Research areas and specialists.",
     href: "/expertise",
     action: "Search expertise",
     icon: FlaskConical,
   },
   {
-    title: "Research Support",
-    body: "Browse backend-published services, resources, guidelines, and support workflows.",
+    title: "Research Services",
+    body: "Grants, ethics, facilities, and support.",
     href: "/services",
     action: "Open services",
     icon: ClipboardList,
   },
   {
+    title: "Guidelines & Resources",
+    body: "Policies, templates, and forms.",
+    href: "/guidelines",
+    action: "Open guidelines",
+    icon: BookOpen,
+  },
+  {
     title: "Start an Inquiry",
-    body: "Route research, partnership, community, and media questions to the right pathway.",
+    body: "Contact the REIRM office.",
     href: "/connect",
     action: "Contact REIRM",
     icon: Handshake,
@@ -160,10 +133,10 @@ export default async function AboutPage() {
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <AboutHero metrics={metrics} lead={lead} />
+      <AboutHero metrics={metrics} />
 
       {errors.length > 0 ? (
-        <section className="px-4 pt-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <section className="px-4 pt-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="mx-auto max-w-[1680px]">
             <StatusMessage tone="error">
               Some research records are temporarily unavailable. Showing the
@@ -173,52 +146,27 @@ export default async function AboutPage() {
         </section>
       ) : null}
 
-      <ScrollReveal
-        as="section"
-        className="border-b border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
-      >
-        <div className="mx-auto max-w-[1680px]">
-          <AboutFamilyNav />
-        </div>
-      </ScrollReveal>
-
       <ResearchSection
         eyebrow="Mandate"
-        title="Coordinate research, extension, innovation, and resource mobilization"
-        body="The About page is assembled from public research records: services, centers, programmes, guidelines, partners, stats, and researcher profiles."
+        title="Mandate"
+        body="To coordinate and promote research, extension, innovation and resource mobilization that address societal needs, strengthen capacity and enhance the university's contribution to national development."
         tone="white"
       >
         <ScrollReveal
           className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px]"
           variant="fade-up"
         >
-          <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            <div className="p-6 sm:p-7 lg:p-8">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary text-white">
-                <ShieldCheck aria-hidden className="h-6 w-6" />
+          <section className="rounded-lg border border-slate-200 bg-slate-50 p-6 shadow-sm">
+            <div className="grid gap-5 sm:grid-cols-[96px_minmax(0,1fr)] sm:items-center">
+              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-primary shadow-sm">
+                <ShieldCheck aria-hidden className="h-9 w-9" />
               </span>
-              <div className="mt-6 max-w-3xl">
-                <h3 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950 sm:text-3xl">
-                  A public operating layer for research work
-                </h3>
-                <p className="mt-4 text-sm leading-7 text-slate-600 sm:text-base">
-                  REIRM connects university research priorities with published
-                  project records, support services, centers, guidelines,
-                  partnerships, and public engagement pathways. The page avoids
-                  placeholder board members and uses published backend records
-                  wherever they exist.
-                </p>
-              </div>
-              <div className="mt-7 grid gap-3 sm:grid-cols-2">
-                <MiniStatement
-                  label="Mandate"
-                  value="Coordinate research support, extension, innovation, and resource mobilization."
-                />
-                <MiniStatement
-                  label="Source"
-                  value="Published records from research services, stats, people, centers, programmes, and partners."
-                />
-              </div>
+              <p className="text-sm leading-7 text-slate-700 sm:text-base">
+                To coordinate and promote research, extension, innovation and
+                resource mobilization that address societal needs, strengthen
+                capacity and enhance the university&apos;s contribution to
+                national development.
+              </p>
             </div>
           </section>
           <section className="rounded-lg border border-emerald-100 bg-emerald-50/60 p-6 shadow-sm">
@@ -237,8 +185,8 @@ export default async function AboutPage() {
 
       <ResearchSection
         eyebrow="What REIRM Supports"
-        title="Service areas built from published backend records"
-        body="Each area highlights one matching record when available and falls back to the relevant listing route when no specific record is published."
+        title="What REIRM Supports"
+        body="Research support, extension, innovation, and resource mobilization."
       >
         <ScrollRevealGroup
           className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
@@ -253,63 +201,54 @@ export default async function AboutPage() {
 
       <ResearchSection
         eyebrow="Governance"
-        title="Research governance without placeholder people"
-        body="Until a dedicated public board endpoint is exposed, the page summarizes governance through real services, guidelines, and institutional records already available from the research backend."
+        title="Governance"
+        body="University governance, research controls, accountability, and research integrity."
         tone="white"
       >
         <ScrollReveal
-          as="div"
-          className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,460px)]"
+          className="overflow-hidden rounded-lg border border-slate-800 bg-slate-950 text-white shadow-sm"
           variant="fade-up"
         >
           <section
             id="governance"
-            className="rounded-lg border border-slate-800 bg-slate-950 p-6 text-white shadow-sm"
+            className="grid gap-0 lg:grid-cols-[minmax(320px,520px)_minmax(0,1fr)]"
           >
-            <div className="flex items-start gap-4">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-secondary text-white">
-                <CheckCircle2 aria-hidden className="h-5 w-5" />
-              </span>
-              <div>
-                <h3 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-white">
-                  Governance is represented through published controls
-                </h3>
-                <p className="mt-3 text-sm leading-7 text-white/70">
-                  Public guidelines, support services, and reporting pathways
-                  create the current governance surface. Board and advisory
-                  member records can be added here once the backend exposes a
-                  public board collection.
-                </p>
+            <div className="p-6 sm:p-7">
+              <div className="flex items-start gap-4">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-secondary text-white">
+                  <CheckCircle2 aria-hidden className="h-5 w-5" />
+                </span>
+                <div>
+                  <h3 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-white">
+                    Governance
+                  </h3>
+                  <p className="mt-3 text-sm leading-7 text-white/78">
+                    REIRM operates under university governance and research
+                    controls to ensure transparency, accountability, and
+                    research integrity.
+                  </p>
+                  <Link
+                    href="/guidelines"
+                    className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-md border border-white/30 px-4 text-sm font-semibold text-white transition hover:bg-white/10"
+                  >
+                    View governance structure
+                    <ArrowRight aria-hidden className="h-4 w-4" />
+                  </Link>
+                </div>
               </div>
             </div>
-          </section>
-          <section className="rounded-lg border border-slate-200 bg-slate-50 p-5">
-            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Latest controls
-            </h3>
-            <div className="mt-4 divide-y divide-slate-200">
-              {guidelines.data.slice(0, 3).map((guideline) => (
-                <RecordRow
-                  key={guideline.id}
-                  record={guideline}
-                  hrefBase="/guidelines"
-                  fallbackLabel="Guideline"
-                />
-              ))}
-              {guidelines.data.length === 0 ? (
-                <StatusMessage>
-                  Research guideline records are not published yet.
-                </StatusMessage>
-              ) : null}
-            </div>
+            <div
+              aria-hidden
+              className="min-h-[180px] border-t border-white/10 bg-[url(/images/research/research-demo-imagegen.webp)] bg-cover bg-center opacity-80 lg:min-h-[260px] lg:border-l lg:border-t-0"
+            />
           </section>
         </ScrollReveal>
       </ResearchSection>
 
       <ResearchSection
         eyebrow="People Behind the Work"
-        title="Published staff and leadership profiles"
-        body="People records are pulled from the main university people service with research-only filtering."
+        title="People Behind the Work"
+        body="Research staff and leadership profiles."
       >
         <ScrollReveal
           as="div"
@@ -338,12 +277,12 @@ export default async function AboutPage() {
 
       <ResearchSection
         eyebrow="Research Support Pathways"
-        title="Move from About into the right task"
-        body="These routes connect the institutional overview to backend-backed directories and action pages."
+        title="Research Support Pathways"
+        body="Team, expertise, services, guidelines, and inquiry routes."
         tone="white"
       >
         <ScrollRevealGroup
-          className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+          className="grid gap-4 md:grid-cols-2 xl:grid-cols-5"
           duration={600}
           staggerDelay={80}
         >
@@ -358,177 +297,83 @@ export default async function AboutPage() {
 
 function AboutHero({
   metrics,
-  lead,
 }: {
   metrics: ReturnType<typeof buildAboutMetricTiles>;
-  lead: Person | null;
 }) {
   return (
-    <section className="relative isolate overflow-hidden border-b border-slate-200 px-4 py-14 text-white sm:px-6 sm:py-16 lg:px-8 lg:py-20 xl:px-10 2xl:px-12">
-      <div className="absolute inset-0">
-        <Image
-          src="/images/research/research-about-hero.webp"
-          alt="Kisii University research collaboration and institutional support"
-          fill
-          sizes="100vw"
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-slate-950/48" />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,42,0.86)_0%,rgba(15,23,42,0.68)_48%,rgba(15,23,42,0.24)_100%)]" />
-      </div>
-      <div className="relative z-10 mx-auto grid max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,460px)] lg:items-end">
-        <ScrollReveal duration={700} variant="fade-up">
-          <nav
-            className="mb-5 flex flex-wrap items-center gap-2 text-xs font-semibold text-white/75"
-            aria-label="Breadcrumb"
-          >
-            <Link href="/" className="transition hover:text-white">
-              Home
-            </Link>
-            <span className="text-white/35">/</span>
-            <span className="text-white">About</span>
-          </nav>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
-            About REIRM
-          </p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white sm:text-5xl">
-            The public structure behind Kisii University research support
-          </h1>
-          <p className="mt-4 max-w-4xl text-pretty text-sm leading-7 text-white/86 sm:text-base">
-            Research, Extension, Innovation and Resource Mobilization is shown
-            through backend-backed staff records, service pathways, published
-            controls, and partnership routes.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <PrimaryLink href="/team">Meet the Team</PrimaryLink>
-            <Link
-              href="/expertise"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/35 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/18 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/20"
+    <section className="border-b border-slate-200 bg-white px-4 py-8 text-slate-950 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto max-w-[1680px]">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(420px,680px)] lg:items-stretch">
+          <ScrollReveal duration={700} variant="fade-up">
+            <nav
+              className="mb-5 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500"
+              aria-label="Breadcrumb"
             >
-              Find Expertise
-              <ArrowRight aria-hidden className="h-4 w-4" />
-            </Link>
-          </div>
-          <ScrollRevealGroup
-            as="dl"
-            className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
-            duration={520}
-            staggerDelay={70}
-          >
-            {metrics.map((metric) => (
-              <div
-                key={metric.label}
-                className="rounded-lg border border-white/20 bg-white/12 p-4 shadow-sm backdrop-blur"
+              <Link href="/" className="transition hover:text-primary">
+                Home
+              </Link>
+              <span className="text-slate-300">/</span>
+              <span className="text-slate-900">About</span>
+              <span className="text-slate-300">/</span>
+              <span className="text-slate-900">REIRM</span>
+            </nav>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
+              About REIRM
+            </p>
+            <h1 className="mt-3 max-w-4xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-primary sm:text-5xl">
+              The public structure behind Kisii University research support
+            </h1>
+            <p className="mt-4 max-w-3xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">
+              The Directorate of Research, Extension, Innovation and Resource
+              Mobilization (REIRM) coordinates, supports and promotes research,
+              innovation and partnerships that address real-world challenges and
+              advance societal impact.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <PrimaryLink href="/connect#research">Start an Inquiry</PrimaryLink>
+              <Link
+                href="/donate"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/30 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
               >
-                <dt className="text-[11px] font-semibold uppercase text-white/68">
-                  {metric.label}
-                </dt>
-                <dd className="mt-1 text-2xl font-semibold text-white">
-                  {metric.value.toLocaleString("en-KE")}
-                  {metric.suffix ?? ""}
-                </dd>
-              </div>
-            ))}
-          </ScrollRevealGroup>
-        </ScrollReveal>
-        <ScrollReveal
-          as="section"
-          className="rounded-lg border border-white/20 bg-white/12 p-5 shadow-xl backdrop-blur"
-          delay={120}
-          variant="fade-left"
-        >
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-            Research office
-          </p>
-          <h2 className="mt-2 text-xl font-semibold text-white">
-            {lead ? personName(lead) : "REIRM public profile"}
-          </h2>
-          <p className="mt-2 text-sm font-semibold text-white/78">
-            {lead
-              ? compactText(lead.institutional_role) ||
-                compactText(lead.academic_rank) ||
-                compactText(lead.title)
-              : "Lead profile not published"}
-          </p>
-          <p className="mt-3 line-clamp-4 text-sm leading-7 text-white/76">
-            {lead
-              ? personSummary(lead) ||
-                "Published lead profile from the university people service."
-              : "Lead profile appears when a research role is published."}
-          </p>
-          <Link
-            href="/team"
-            className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white"
+                <HeartHandshake aria-hidden className="h-4 w-4" />
+                Support Research
+              </Link>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal
+            className="min-h-[260px] overflow-hidden rounded-lg border border-slate-200 bg-[url(/images/research/research-demo-imagegen.webp)] bg-cover bg-center shadow-sm sm:min-h-[300px] lg:min-h-[340px]"
+            delay={100}
+            variant="fade-left"
           >
-            View backend team
-            <ArrowRight aria-hidden className="h-4 w-4" />
-          </Link>
-        </ScrollReveal>
+            <span className="sr-only">
+              Kisii University research collaboration and demonstration
+            </span>
+          </ScrollReveal>
+        </div>
+
+        <ScrollRevealGroup
+          as="dl"
+          className="mt-6 grid overflow-hidden rounded-lg bg-primary text-white shadow-sm sm:grid-cols-2 xl:grid-cols-4"
+          duration={520}
+          staggerDelay={70}
+        >
+          {metrics.map((metric) => (
+            <div
+              key={metric.label}
+              className="border-white/20 p-4 sm:border-r last:border-r-0"
+            >
+              <dt className="text-[11px] font-semibold uppercase text-white/70">
+                {metric.label}
+              </dt>
+              <dd className="mt-1 text-2xl font-semibold text-white">
+                {metric.value.toLocaleString("en-KE")}
+                {metric.suffix ?? ""}
+              </dd>
+            </div>
+          ))}
+        </ScrollRevealGroup>
       </div>
     </section>
-  );
-}
-
-function AboutFamilyNav() {
-  return (
-    <nav
-      aria-label="REIRM about section links"
-      className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start"
-    >
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
-          Explore REIRM
-        </p>
-        <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
-          About pages that work together
-        </h2>
-      </div>
-      <ScrollRevealGroup
-        className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
-        duration={560}
-        staggerDelay={70}
-      >
-        {aboutFamilyCards.map((item) => (
-          <AboutFamilyCard key={item.href} item={item} />
-        ))}
-      </ScrollRevealGroup>
-    </nav>
-  );
-}
-
-function AboutFamilyCard({
-  item,
-}: {
-  item: {
-    title: string;
-    body: string;
-    href: string;
-    action: string;
-    icon: LucideIcon;
-  };
-}) {
-  const Icon = item.icon;
-  return (
-    <Link
-      href={item.href}
-      className="group flex min-h-[190px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-    >
-      <span className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
-        <Icon aria-hidden className="h-5 w-5" />
-      </span>
-      <h3 className="mt-4 text-lg font-semibold text-slate-950">
-        {item.title}
-      </h3>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
-      <span className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-semibold text-primary">
-        {item.action}
-        <ArrowRight
-          aria-hidden
-          className="h-4 w-4 transition group-hover:translate-x-1"
-        />
-      </span>
-    </Link>
   );
 }
 
@@ -539,41 +384,29 @@ function SupportAreaCard({
 }) {
   const Icon = supportIcon(area.title);
   return (
-    <article className="flex min-h-[300px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <span className="flex h-11 w-11 items-center justify-center rounded-md bg-primary text-white">
-        <Icon aria-hidden className="h-5 w-5" />
+    <Link
+      href={area.href}
+      className="group flex min-h-[190px] gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+    >
+      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-slate-100 text-primary">
+        <Icon aria-hidden className="h-6 w-6" />
       </span>
-      <div className="mt-4 flex items-start justify-between gap-3">
-        <h3 className="text-xl font-semibold text-slate-950">{area.title}</h3>
-        <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-          {area.count}
+      <span className="min-w-0">
+        <span className="block text-lg font-semibold text-slate-950">
+          {area.title}
         </span>
-      </div>
-      <p className="mt-3 text-sm leading-6 text-slate-600">{area.body}</p>
-      <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
-        <p className="text-xs font-semibold uppercase text-slate-500">
-          Published example
-        </p>
-        <Link
-          href={area.recordHref}
-          className="mt-1 block text-sm font-semibold leading-6 text-primary hover:text-secondary"
-        >
-          {area.recordTitle}
-        </Link>
-        {area.recordSummary ? (
-          <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">
-            {area.recordSummary}
-          </p>
-        ) : null}
-      </div>
-      <Link
-        href={area.href}
-        className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-semibold text-primary"
-      >
-        Open pathway
-        <ArrowRight aria-hidden className="h-4 w-4" />
-      </Link>
-    </article>
+        <span className="mt-2 block text-sm leading-6 text-slate-600">
+          {area.body}
+        </span>
+        <span className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+          Learn more
+          <ArrowRight
+            aria-hidden
+            className="h-4 w-4 transition group-hover:translate-x-1"
+          />
+        </span>
+      </span>
+    </Link>
   );
 }
 
@@ -691,16 +524,16 @@ function PathwayCard({
   return (
     <Link
       href={card.href}
-      className="group flex min-h-[230px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+      className="group flex min-h-[150px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
       <span className="flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
         <Icon aria-hidden className="h-5 w-5" />
       </span>
-      <h3 className="mt-5 text-lg font-semibold text-slate-950">
+      <h3 className="mt-4 text-lg font-semibold text-slate-950">
         {card.title}
       </h3>
-      <p className="mt-3 text-sm leading-6 text-slate-600">{card.body}</p>
-      <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-primary">
+      <p className="mt-2 text-sm leading-6 text-slate-600">{card.body}</p>
+      <span className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-semibold text-primary">
         {card.action}
         <ArrowRight
           aria-hidden
@@ -708,42 +541,6 @@ function PathwayCard({
         />
       </span>
     </Link>
-  );
-}
-
-function RecordRow({
-  record,
-  hrefBase,
-  fallbackLabel,
-}: {
-  record: ResearchGenericRecord;
-  hrefBase: string;
-  fallbackLabel: string;
-}) {
-  const href = record.slug ? `${hrefBase}/${record.slug}` : hrefBase;
-  return (
-    <article className="py-4 first:pt-0 last:pb-0">
-      <div className="flex flex-wrap gap-2">
-        <Badge>
-          {formatLabel(
-            compactText(record.guideline_type) ||
-              compactText(record.category) ||
-              fallbackLabel,
-          )}
-        </Badge>
-      </div>
-      <Link
-        href={href}
-        className="mt-2 block text-sm font-semibold leading-6 text-slate-950 hover:text-primary"
-      >
-        {recordTitle(record, fallbackLabel)}
-      </Link>
-      {recordSummary(record) ? (
-        <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">
-          {recordSummary(record)}
-        </p>
-      ) : null}
-    </article>
   );
 }
 
@@ -756,17 +553,6 @@ function MiniFact({ label, value }: { label: string; value: number }) {
       <dd className="mt-1 text-lg font-semibold text-slate-950">
         {value.toLocaleString("en-KE")}
       </dd>
-    </div>
-  );
-}
-
-function MiniStatement({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-        {label}
-      </p>
-      <p className="mt-2 text-sm leading-6 text-slate-700">{value}</p>
     </div>
   );
 }
