@@ -51,9 +51,18 @@ assert(
     source.includes("PROJECT_EDIT_GROUPS") &&
     source.includes("buildProjectEditPayload") &&
     source.includes("cover_image_id") &&
-    source.includes("gallery_media_ids"),
-  "Project edit should open a side sheet with backend-backed project fields.",
+    source.includes("<MediaPicker") &&
+    source.includes("<RichTextEditor") &&
+    source.includes("openGroups"),
+  "Project edit should open a collapsible side sheet with rich text fields and cover image upload.",
 );
+
+for (const rawRelationshipLabel of ["Program ID", "Center ID", "Farm ID", "Principal investigator ID", "Grant ID", "gallery_media_ids", "attachment_media_ids", "document_media_ids"]) {
+  assert(
+    !source.includes(rawRelationshipLabel),
+    `Project edit should not expose raw relationship or attachment UUID controls: ${rawRelationshipLabel}.`,
+  );
+}
 
 assert(
   !source.includes('publicHrefBase="/projects"'),
