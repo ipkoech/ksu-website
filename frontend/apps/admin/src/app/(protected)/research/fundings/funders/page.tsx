@@ -70,9 +70,15 @@ export default function ResearchFundersPage() {
           { label: "International", value: "international" },
           { label: "University", value: "university" },
         ] },
+        {
+          name: "logo_id",
+          label: "Logo",
+          type: "media",
+          media: { mediaType: "image", accept: "image/*", uploadEntityType: "research_funder", uploadRole: "funder-logo" },
+        },
         { name: "website", label: "Website", type: "url" },
         { name: "email", label: "Email", type: "email" },
-        { name: "about", label: "About", type: "textarea" },
+        { name: "about", label: "About", type: "richtext" },
         { name: "is_active", label: "Active", type: "boolean" },
         { name: "is_featured", label: "Featured", type: "boolean" },
       ]}

@@ -20,7 +20,7 @@ async function revalidateResearch(resource: string) {
 
 import { PageHeader } from "@/components/layout";
 import { MediaPicker } from "@/components/media/media-picker";
-import { EntityPicker, EntityTypeRecordPicker } from "@/components/relationships/entity-picker";
+import { EntityPicker, EntityTypeRecordPicker, MultiEntityPicker } from "@/components/relationships/entity-picker";
 import { relationshipAdapters, type RelationshipFilters } from "@/components/relationships/relationship-adapters";
 import {
   Badge,
@@ -97,6 +97,7 @@ type FieldType =
   | "datetime-local"
   | "select"
   | "entity"
+  | "entity-multi"
   | "entity-record"
   | "media"
   | "boolean";
@@ -244,6 +245,7 @@ interface EditableServiceResourcePageProps<
 
 function defaultValue(field: EditableField) {
   if (field.type === "boolean") return true;
+  if (field.type === "entity-multi") return [];
   if (field.type === "number") return "";
   return "";
 }
@@ -1516,6 +1518,15 @@ function EditableFieldControl({
           description={field.relation.description}
           allowClear={field.relation.allowClear ?? !field.required}
           required={field.required}
+        />
+      ) : field.type === "entity-multi" && field.relation ? (
+        <MultiEntityPicker
+          adapter={relationshipAdapters[field.relation.adapter] as any}
+          value={Array.isArray(value) ? value.map(String) : []}
+          onChange={(nextValue) => setFieldValue(nextValue)}
+          filters={field.relation.filters}
+          placeholder={field.placeholder ?? `Add ${field.label.toLowerCase()}`}
+          description={field.relation.description}
         />
       ) : field.type === "entity-record" && field.entityRecord ? (
         <EntityTypeRecordPicker

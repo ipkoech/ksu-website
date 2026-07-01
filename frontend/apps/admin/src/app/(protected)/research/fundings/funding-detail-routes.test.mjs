@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 function assert(condition, message) {
@@ -16,5 +16,7 @@ const requiredRoutes = [
 ];
 
 for (const route of requiredRoutes) {
-  assert(existsSync(join(base, route)), `Missing funding detail route: ${route}`);
+  const path = join(base, route);
+  assert(existsSync(path), `Missing funding detail route: ${route}`);
+  assert(!readFileSync(path, "utf8").includes("auditResourceTypes"), `Funding detail route should not render audit history: ${route}`);
 }

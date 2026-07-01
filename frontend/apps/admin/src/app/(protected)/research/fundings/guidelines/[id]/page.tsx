@@ -23,7 +23,6 @@ export default function GrantGuidelineDetailPage() {
       sections={[
         { title: "Guideline", fields: ["content", "document_name", "document_url"] },
       ]}
-      auditResourceTypes={["grant_guideline", "grant-guidelines", "funding_guideline"]}
       renderAfter={(record) => <GuidelineRelations guideline={record} />}
     />
   );

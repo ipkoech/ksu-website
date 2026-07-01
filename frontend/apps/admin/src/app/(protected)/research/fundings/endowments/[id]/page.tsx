@@ -8,7 +8,7 @@ export default function EndowmentFundDetailPage() {
   return (
     <ResearchAdminDetailPage
       title="Endowment Fund"
-      description="View endowment purpose, values, donor information, scholarship links, donation records, and audit history."
+      description="View endowment purpose, values, donor information, scholarship links, and donation records."
       resource={researchServiceApi.endowments}
       backHref="/research/fundings/endowments"
       slugParam="id"
@@ -26,7 +26,6 @@ export default function EndowmentFundDetailPage() {
         { title: "Fund", fields: ["purpose", "description", "eligibility", "use_guidelines"] },
         { title: "Donor", fields: ["donor_name", "donor_message", "contact_name", "contact_email"] },
       ]}
-      auditResourceTypes={["endowment", "endowment_fund", "funding_endowment"]}
       renderAfter={(record) => <EndowmentRelations endowment={record} />}
     />
   );

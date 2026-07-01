@@ -8,7 +8,7 @@ export default function GrantApplicationDetailPage() {
   return (
     <ResearchAdminDetailPage
       title="Grant Application"
-      description="View grant application proposal, applicant, review queue, related reports, and audit history."
+      description="View grant application proposal, applicant, review queue, and related reports."
       resource={researchServiceApi.grantApplications}
       backHref="/research/fundings/applications"
       slugParam="id"
@@ -27,7 +27,6 @@ export default function GrantApplicationDetailPage() {
         { title: "Plan", fields: ["work_plan", "timeline", "proposed_start_date", "proposed_end_date", "duration_months"] },
         { title: "Budget And Decision", fields: ["requested_amount", "approved_amount", "budget_breakdown", "review_comments"] },
       ]}
-      auditResourceTypes={["grant_application", "grant-applications", "funding_application"]}
       renderAfter={(record) => <ApplicationRelations application={record} />}
     />
   );

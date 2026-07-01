@@ -27,7 +27,6 @@ export default function GrantReportDetailPage() {
         { title: "Financials", fields: ["expenditure_summary", "amount_spent", "balance"] },
         { title: "Period", fields: ["reporting_period_start", "reporting_period_end", "documents"] },
       ]}
-      auditResourceTypes={["grant_report", "grant-reports", "funding_report"]}
       renderAfter={(record) => <ReportRelations report={record} />}
     />
   );

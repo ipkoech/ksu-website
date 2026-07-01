@@ -8,7 +8,7 @@ export default function GrantReviewDetailPage() {
   return (
     <ResearchAdminDetailPage
       title="Grant Review"
-      description="View reviewer score, recommendation, comments, application context, and audit history."
+      description="View reviewer score, recommendation, comments, and application context."
       resource={researchServiceApi.grantReviews}
       backHref="/research/fundings/reviews"
       slugParam="id"
@@ -23,7 +23,6 @@ export default function GrantReviewDetailPage() {
       sections={[
         { title: "Review", fields: ["criteria_scores", "strengths", "weaknesses", "comments", "recommendation"] },
       ]}
-      auditResourceTypes={["grant_review", "grant-reviews", "funding_review"]}
       renderAfter={(record) => <ReviewRelations review={record} />}
     />
   );
