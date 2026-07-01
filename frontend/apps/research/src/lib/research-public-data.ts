@@ -130,6 +130,8 @@ const unavailableMessage =
 
 const researchPublicListFields =
   "id,title,name,slug,code,summary,abstract,description,about,mission,vision,mandate,objectives,functions,services_summary,leadership_message,strategic_priorities,category,status,is_active,is_public,is_featured,project_type,publication_type,grant_type,center_type,farm_type,program_type,output_type,innovation_type,partner_type,consultancy_type,fund_type,event_type,article_type,news_type,resource_type,service_type,guideline_type,scholarship_type,delivery_mode,access_type,development_stage,ip_status,commercialization_status,partnership_level,client_type,center_id,program_id,project_id,partner_id,year,start_date,end_date,deadline,event_date,published_at,publication_date,progress_percentage,cover_image_id,cover_image_url,logo_url,url,pdf_url,website";
+const researchPublicationListFields =
+  `${researchPublicListFields},journal_name,publisher,volume,issue,pages,conference_name,book_title,isbn,issn,doi,is_open_access,authors:id,name,full_name,title,project:id,title,slug,code,summary,center:id,title,name,slug,code,summary`;
 const researchProjectListFields =
   "id,title,slug,code,summary,status,is_active,is_featured,project_type,cover_image:id,url,public_url,thumbnail_url,alt_text";
 const researchProjectFilterFields = "id,start_date,end_date,published_at,created_at,updated_at";
@@ -283,7 +285,7 @@ export function getProjectFilterRecords() {
 export function getPublications(search?: string) {
   return safeList<ResearchPublication>(() =>
     researchServiceApi.publications.list({
-      fields: researchPublicListFields,
+      fields: researchPublicationListFields,
       search: search?.trim() || undefined,
       status: "published",
       is_active: true,
@@ -300,7 +302,7 @@ export function getPublicationsFiltered(
 ) {
   return safeList<ResearchPublication>(() =>
     researchServiceApi.publications.list({
-      fields: researchPublicListFields,
+      fields: researchPublicationListFields,
       search: filters.search?.trim() || undefined,
       status: filters.status || "published",
       publication_type: filters.publicationType || undefined,
@@ -323,7 +325,7 @@ export function getPublicationsFiltered(
 export function getProjectPublications(projectId: string) {
   return safeList<ResearchPublication>(() =>
     researchServiceApi.publications.list({
-      fields: researchPublicListFields,
+      fields: researchPublicationListFields,
       project_id: projectId,
       status: "published",
       is_active: true,
@@ -337,7 +339,7 @@ export function getProjectPublications(projectId: string) {
 export function getCenterPublications(centerId: string) {
   return safeList<ResearchPublication>(() =>
     researchServiceApi.publications.list({
-      fields: researchPublicListFields,
+      fields: researchPublicationListFields,
       center_id: centerId,
       status: "published",
       is_active: true,

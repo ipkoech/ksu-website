@@ -1,39 +1,39 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import type { Person, ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
+import type { Person } from "@ksu/api-client";
 import { personsApi } from "@ksu/api-client";
-import { ExternalLink } from "lucide-react";
-import {
-  Badge,
-  FilledBadge,
-  PrimaryLink,
-  ResearchSection,
-  SecondaryLink,
-  StatusMessage,
-} from "../../components/research-ui";
-import {
-  compactText,
-  formatLabel,
-  getCenters,
-  getExpertiseTags,
-  getFocusAreas,
-  getProjects,
-  getThemes,
-} from "../../lib/research-public-data";
-import { publicFrontendUrl } from "../../lib/service-urls";
+import { pageFromSearchParams } from "@ksu/ui/components";
+import { ArrowRight, UserRound } from "lucide-react";
+import { ResearchFilterForm } from "../../components/research-listing";
+import { ResearchListPagination } from "../../components/research-list-pagination";
+import { ResearchPortfolioHero, ResearchPortfolioQuickLinks } from "../../components/research-portfolio";
+import { Badge, StatusMessage } from "../../components/research-ui";
+import { compactText, formatLabel } from "../../lib/research-public-data";
+import { ExpertiseDetailSheet } from "./expertise-detail-sheet";
 
 export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Researchers & Expertise",
-  description: "Research expertise, focus areas, and staff directory.",
+  description: "Find Kisii University researchers, staff expertise, and priority knowledge areas.",
 };
 
 type ExpertiseSearchParams = {
   q?: string;
-  area?: string;
-  theme?: string;
+  department?: string;
+  featured?: string;
+  sort?: string;
+  page?: string;
 };
+
+const perPage = 12;
+const peopleTimeoutMs = 3000;
+
+const sortOptions = [
+  { value: "name", label: "Name A-Z" },
+  { value: "featured", label: "Featured first" },
+  { value: "department", label: "Department" },
+  { value: "updated", label: "Recently updated" },
+];
 
 export default async function ExpertisePage({
   searchParams,
@@ -41,460 +41,256 @@ export default async function ExpertisePage({
   searchParams?: Promise<ExpertiseSearchParams>;
 }) {
   const params = (await searchParams) ?? {};
-  const [people, expertiseTags, focusAreas, themes, centers, projects] = await Promise.all([
-    getResearchPeople(),
-    getExpertiseTags(),
-    getFocusAreas(),
-    getThemes(),
-    getCenters(),
-    getProjects(),
-  ]);
-  const filteredTags = expertiseTags.data.filter((tag) => matchesRecord(tag, params));
-  const filteredFocusAreas = focusAreas.data.filter((area) => matchesRecord(area, params));
-  const filteredThemes = themes.data.filter((theme) => matchesRecord(theme, params));
-  const filteredCenters = centers.data.filter((center) => matchesRecord(center, params));
-  const filteredProjects = projects.data.filter((project) => matchesProject(project, params));
-  const filteredPeople = people.data.filter((person) => matchesPerson(person, params));
-  const errors = [
-    people.error,
-    expertiseTags.error,
-    focusAreas.error,
-    themes.error,
-    centers.error,
-    projects.error,
-  ].filter(Boolean);
+  const page = pageFromSearchParams(params);
+  const people = await getResearchPeople();
+  const departments = getDepartments(people.data);
+  const filteredPeople = sortPeople(
+    people.data.filter((person) => matchesPerson(person, params)),
+    params.sort || "featured",
+  );
+  const visiblePeople = filteredPeople.slice((page - 1) * perPage, page * perPage);
+  const totalPages = Math.ceil(filteredPeople.length / perPage);
+  const themes = getExpertiseThemes(people.data);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ExpertiseMasthead
-        tagCount={expertiseTags.data.length}
-        researcherCount={people.data.length}
-        focusAreaCount={focusAreas.data.length}
-        themeCount={themes.data.length}
+      <ResearchPortfolioHero
+        eyebrow="Research expertise"
+        title="Find Expertise"
+        body="Connect with Kisii University researchers, staff specialists, and priority knowledge areas across active research work."
+        primary={{ label: "Explore experts", href: "#expertise-directory" }}
+        secondary={{ label: "Partner with us", href: "/connect" }}
+        illustration="expertise"
       />
 
-      {errors.length > 0 ? (
-        <section className="px-4 pt-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="mx-auto flex max-w-[1680px] flex-col gap-3">
-            {errors.map((error) => (
-              <StatusMessage key={error} tone="error">
-                {error}
-              </StatusMessage>
-            ))}
+      <section id="expertise-directory" className="bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="mx-auto grid max-w-[1680px] gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+          <div className="min-w-0">
+            <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
+              <div className="pt-1">
+                <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
+                  Expertise Directory
+                </h2>
+                <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
+                  Search researchers by name, role, department, specialization, or research interests.
+                </p>
+              </div>
+              <ExpertiseFilters params={params} departments={departments} />
+            </div>
+
+            {people.error ? (
+              <div className="mt-5">
+                <StatusMessage tone="error">{people.error}</StatusMessage>
+              </div>
+            ) : null}
+
+            {visiblePeople.length ? (
+              <>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+                  {visiblePeople.map((person) => (
+                    <ExpertiseCard key={person.id} person={person} />
+                  ))}
+                </div>
+                <ResearchListPagination
+                  page={page}
+                  totalPages={totalPages}
+                  total={filteredPeople.length}
+                  perPage={perPage}
+                  path="/expertise"
+                  params={params}
+                  className="mt-6"
+                />
+              </>
+            ) : (
+              <div className="mt-7">
+                <StatusMessage>No researchers match the current expertise filters.</StatusMessage>
+              </div>
+            )}
           </div>
-        </section>
-      ) : null}
 
-      <ResearchSection
-        eyebrow="Search"
-        title="Type to search the research ecosystem"
-        body="Use public language such as climate, health, food systems, education, data, innovation, or a researcher's role."
-        tone="white"
-      >
-        <div id="search">
-          <ExpertiseFilters params={params} focusAreas={focusAreas.data} themes={themes.data} />
+          <div className="grid gap-4">
+            <ResearchPortfolioQuickLinks
+              links={[
+                { label: "Team", href: "/team", body: "Research staff directory" },
+                { label: "Centers", href: "/centers", body: "Institutional anchors" },
+                { label: "Programs", href: "/programs", body: "Strategic research umbrellas" },
+                { label: "Projects", href: "/projects", body: "Active research work" },
+                { label: "Consultancies", href: "/consultancies", body: "Professional research services" },
+              ]}
+            />
+            <aside className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Work with our experts</p>
+              <div className="mt-3 divide-y divide-slate-200">
+                {[
+                  ["Discover", "Search by person, department, or knowledge area."],
+                  ["Contact", "Open the profile sheet and use the published contact path."],
+                  ["Collaborate", "Connect through projects, centers, or the research office."],
+                ].map(([title, body], index) => (
+                  <div key={title} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 py-3 first:pt-0 last:pb-0">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">
+                      {index + 1}
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">{title}</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">{body}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </aside>
+            {themes.length ? (
+              <aside className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Expertise themes</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {themes.slice(0, 12).map((theme) => (
+                    <span key={theme} className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                      {theme}
+                    </span>
+                  ))}
+                </div>
+              </aside>
+            ) : null}
+          </div>
         </div>
-      </ResearchSection>
-
-      <ResearchSection
-        eyebrow="Researchers"
-        title="People behind the expertise"
-        body="Published researcher profiles from the main university people service appear here when they match the current expertise search."
-        tone="white"
-      >
-        <StaffPanel people={filteredPeople} />
-      </ResearchSection>
-
-      <ResearchSection
-        eyebrow="Research Areas"
-        title="Themes, focus areas, and expertise tags"
-        body="These records create the public taxonomy that helps visitors understand what Kisii University researchers work on."
-      >
-        <div className="grid gap-5 xl:grid-cols-3">
-          <TaxonomyPanel
-            id="focus-areas"
-            title="Focus areas"
-            records={filteredFocusAreas}
-            empty="No focus areas match the current search."
-          />
-          <TaxonomyPanel
-            title="Themes"
-            records={filteredThemes}
-            empty="No research themes match the current search."
-          />
-          <TaxonomyPanel
-            id="expertise-tags"
-            title="Expertise tags"
-            records={filteredTags}
-            empty="No expertise tags match the current search."
-          />
-        </div>
-      </ResearchSection>
-
-      <ResearchSection
-        eyebrow="Related Work"
-        title="Where this expertise shows up"
-        body="Projects and centers show the institutional work connected to the expertise visitors are searching for."
-        tone="white"
-      >
-        <div id="related-work" className="grid gap-5 xl:grid-cols-2">
-          <EvidencePanel
-            title="Related projects"
-            href="/projects"
-            records={filteredProjects}
-            empty="No published projects match the current expertise search."
-          />
-          <EvidencePanel
-            title="Related centers"
-            href="/centers"
-            records={filteredCenters}
-            empty="No published centers match the current expertise search."
-          />
-        </div>
-      </ResearchSection>
+      </section>
     </main>
   );
 }
 
-function ExpertiseMasthead({
-  tagCount,
-  researcherCount,
-  focusAreaCount,
-  themeCount,
-}: {
-  tagCount: number;
-  researcherCount: number;
-  focusAreaCount: number;
-  themeCount: number;
-}) {
-  const stats = [
-    { label: "Researchers", value: researcherCount },
-    { label: "Expertise tags", value: tagCount },
-    { label: "Focus areas", value: focusAreaCount },
-    { label: "Themes", value: themeCount },
-  ];
-
-  return (
-    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
-        <div>
-          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
-            <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-900">Expertise</span>
-          </nav>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Expertise Directory</p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
-            Search skills, research areas, people, and related work
-          </h1>
-          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">
-            Expertise is shown as a backend-backed discovery layer over researcher profiles, tags, focus areas, themes, centers, and projects.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <PrimaryLink href="/projects">Browse projects</PrimaryLink>
-            <SecondaryLink href="/team">Meet the team</SecondaryLink>
-          </div>
-        </div>
-        <dl className="grid gap-2 sm:grid-cols-2">
-          {stats.map((stat) => (
-            <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-              <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
-              <dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </section>
-  );
-}
-
 async function getResearchPeople() {
-  try {
-    const response = await personsApi.list({
-      fields: "id,slug,full_name,first_name,last_name,title,academic_rank,institutional_role,bio,specialization,research_interests,department_name,department,is_featured",
+  const request = personsApi
+    .list({
+      fields: "id,slug,full_name,first_name,last_name,title,academic_rank,email,phone,office_phone,department_name,department,institutional_role,bio,full_bio,specialization,research_interests,publications_count,h_index,google_scholar_url,website_url,researchgate_url,linkedin_url,photo_url,is_researcher,is_featured,updated_at",
       is_researcher: true,
       status: "active",
       page: 1,
       per_page: 100,
-    });
-    return { data: response.data ?? [], error: null as string | null };
-  } catch (error) {
-    return {
+    })
+    .then((response) => ({ data: response.data ?? [], error: null as string | null }))
+    .catch((error) => ({
       data: [] as Person[],
       error: error instanceof Error ? error.message : "Unable to load researcher profiles.",
-    };
-  }
-}
+    }));
 
-function StaffPanel({ people }: { people: Person[] }) {
-  if (people.length === 0) {
-    return <StatusMessage>No published researcher profiles match the current search.</StatusMessage>;
-  }
+  const timeout = new Promise<{ data: Person[]; error: string | null }>((resolve) => {
+    setTimeout(
+      () => resolve({ data: [], error: "Researcher profiles are temporarily unavailable." }),
+      peopleTimeoutMs,
+    );
+  });
 
-  return (
-    <div id="researchers" className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      {people.slice(0, 8).map((person) => (
-        <article key={person.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-wrap gap-2">
-            <Badge>{formatLabel(person.academic_rank ?? person.title ?? "researcher")}</Badge>
-            {person.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
-          </div>
-          <h3 className="mt-4 text-lg font-semibold leading-6 text-slate-950">{personName(person)}</h3>
-          {compactText(person.institutional_role) || compactText(person.department_name ?? person.department?.name) ? (
-            <p className="mt-2 text-sm font-semibold text-primary">
-              {compactText(person.institutional_role) || compactText(person.department_name ?? person.department?.name)}
-            </p>
-          ) : null}
-          {personSummary(person) ? (
-            <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{personSummary(person)}</p>
-          ) : null}
-          {Array.isArray(person.research_interests) && person.research_interests.length > 0 ? (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {person.research_interests.slice(0, 3).map((interest) => (
-                <Badge key={interest}>{interest}</Badge>
-              ))}
-            </div>
-          ) : null}
-          <a
-            href={`${publicFrontendUrl}/staff/${person.slug || person.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary"
-          >
-            View profile
-            <ExternalLink aria-hidden className="h-3.5 w-3.5" />
-          </a>
-        </article>
-      ))}
-    </div>
-  );
+  return Promise.race([request, timeout]);
 }
 
 function ExpertiseFilters({
   params,
-  focusAreas,
-  themes,
+  departments,
 }: {
   params: ExpertiseSearchParams;
-  focusAreas: ResearchGenericRecord[];
-  themes: ResearchGenericRecord[];
+  departments: string[];
 }) {
   return (
-    <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" action="/expertise">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1.5fr)_minmax(180px,0.8fr)_minmax(180px,0.8fr)_auto]">
-        <label>
-          <span className="text-xs font-semibold uppercase text-slate-500">Type to search</span>
-          <input
-            name="q"
-            defaultValue={params.q ?? ""}
-            placeholder="Researcher, skill, theme, project"
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          />
-        </label>
-        <RecordSelect name="area" label="Focus area" value={params.area} records={focusAreas} />
-        <RecordSelect name="theme" label="Theme" value={params.theme} records={themes} />
-        <div className="flex items-end gap-2">
-          <button className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
-            Search
-          </button>
-          <Link
-            href="/expertise"
-            className="inline-flex h-11 items-center justify-center rounded-md border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
-          >
-            Reset
-          </Link>
-        </div>
-      </div>
-    </form>
+    <ResearchFilterForm
+      action="/expertise"
+      resetHref="/expertise"
+      searchValue={params.q}
+      searchPlaceholder="Name, theme, department, method..."
+      selects={[
+        {
+          name: "department",
+          label: "Department",
+          value: params.department,
+          options: departments.map((department) => ({ value: department, label: department })),
+        },
+        {
+          name: "featured",
+          label: "Active state",
+          value: params.featured,
+          options: [
+            { value: "all", label: "All researchers" },
+            { value: "featured", label: "Featured" },
+          ],
+        },
+      ]}
+      sortValue={params.sort}
+      sortOptions={sortOptions}
+    />
   );
 }
 
-function RecordSelect({
-  name,
-  label,
-  value,
-  records,
-}: {
-  name: string;
-  label: string;
-  value?: string;
-  records: ResearchGenericRecord[];
-}) {
+function ExpertiseCard({ person }: { person: Person }) {
+  const name = personName(person);
+  const role = compactText(person.institutional_role) || compactText(person.title) || compactText(person.academic_rank);
+  const department = compactText(person.department_name) || compactText(person.department?.name);
+  const interests = Array.isArray(person.research_interests) ? person.research_interests.filter(Boolean).slice(0, 3) : [];
+
   return (
-    <label>
-      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
-      <select
-        name={name}
-        defaultValue={value ?? ""}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    <ExpertiseDetailSheet person={person}>
+      <button
+        type="button"
+        className="group flex min-h-[230px] w-full flex-col rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
       >
-        <option value="">All {label.toLowerCase()}s</option>
-        {records.map((record) => (
-          <option key={record.id} value={record.id}>
-            {recordTitle(record)}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
-function TaxonomyPanel({
-  id,
-  title,
-  records,
-  empty,
-}: {
-  id?: string;
-  title: string;
-  records: ResearchGenericRecord[];
-  empty: string;
-}) {
-  return (
-    <section id={id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <SectionHeader label="Directory" title={title} count={records.length} />
-      {records.length > 0 ? (
-        <div className="mt-4 flex flex-col gap-3">
-          {records.map((record) => (
-            <article key={record.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <div className="flex flex-wrap gap-2">
-                {record.category ? <Badge>{formatLabel(record.category)}</Badge> : null}
-                {record.status ? <Badge>{formatLabel(record.status)}</Badge> : null}
-              </div>
-              <h3 className="mt-3 text-base font-semibold leading-6 text-slate-950">
-                {recordTitle(record)}
-              </h3>
-              {recordSummary(record) ? (
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {recordSummary(record)}
-                </p>
-              ) : null}
-            </article>
-          ))}
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary">
+            {person.photo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={person.photo_url} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <UserRound aria-hidden className="h-5 w-5" />
+            )}
+          </div>
+          <div className="min-w-0">
+            <h3 className="line-clamp-2 text-base font-semibold leading-6 text-slate-950 group-hover:text-primary">
+              {name}
+            </h3>
+            {role ? <p className="mt-1 line-clamp-1 text-xs font-semibold text-primary">{role}</p> : null}
+          </div>
         </div>
-      ) : (
-        <div className="mt-4">
-          <StatusMessage>{empty}</StatusMessage>
+        {department ? (
+          <p className="mt-3 line-clamp-1 text-xs font-medium text-slate-500">{department}</p>
+        ) : null}
+        {person.specialization || person.bio ? (
+          <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">
+            {compactText(person.specialization) || compactText(person.bio)}
+          </p>
+        ) : null}
+        {interests.length ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {interests.map((interest) => (
+              <Badge key={interest}>{interest}</Badge>
+            ))}
+          </div>
+        ) : null}
+        <div className="mt-auto flex items-center justify-between gap-3 pt-4 text-xs text-slate-500">
+          <span>{person.publications_count ? `${person.publications_count} publications` : "Research profile"}</span>
+          <span className="inline-flex items-center gap-1 font-semibold text-primary">
+            View profile
+            <ArrowRight aria-hidden className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
+          </span>
         </div>
-      )}
-    </section>
+      </button>
+    </ExpertiseDetailSheet>
   );
-}
-
-function EvidencePanel({
-  title,
-  href,
-  records,
-  empty,
-}: {
-  title: string;
-  href: string;
-  records: Array<ResearchGenericRecord | ResearchProject>;
-  empty: string;
-}) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-slate-50 p-5">
-      <div className="flex items-start justify-between gap-4">
-        <SectionHeader label="Related" title={title} count={records.length} />
-        <Link
-          href={href}
-          className="rounded-md border border-primary/20 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
-        >
-          View all
-        </Link>
-      </div>
-      {records.length > 0 ? (
-        <div className="mt-4 grid gap-3">
-          {records.slice(0, 6).map((record) => (
-            <article key={record.id} className="rounded-lg border border-slate-200 bg-white p-4">
-              <h3 className="text-base font-semibold leading-6 text-slate-950">
-                {recordTitle(record)}
-              </h3>
-              {recordSummary(record) ? (
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {recordSummary(record)}
-                </p>
-              ) : null}
-              <div className="mt-3 flex flex-wrap gap-2">
-                {"project_type" in record && record.project_type ? (
-                  <Badge>{formatLabel(record.project_type)}</Badge>
-                ) : null}
-                {record.status ? <Badge>{formatLabel(record.status)}</Badge> : null}
-              </div>
-            </article>
-          ))}
-        </div>
-      ) : (
-        <div className="mt-4">
-          <StatusMessage>{empty}</StatusMessage>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function SectionHeader({
-  label,
-  title,
-  count,
-}: {
-  label: string;
-  title: string;
-  count: number;
-}) {
-  return (
-    <div>
-      <p className="text-xs font-semibold uppercase text-secondary">{label}</p>
-      <h2 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
-        {title}
-      </h2>
-      <p className="mt-1 text-xs font-semibold text-slate-500">
-        {count} published records
-      </p>
-    </div>
-  );
-}
-
-function matchesRecord(record: ResearchGenericRecord, params: ExpertiseSearchParams) {
-  if (params.area && record.id !== params.area && record.focus_area_id !== params.area) return false;
-  if (params.theme && record.id !== params.theme && record.theme_id !== params.theme) return false;
-  const query = compactText(params.q).toLowerCase();
-  if (!query) return true;
-  return recordSearchText(record).includes(query);
-}
-
-function matchesProject(project: ResearchProject, params: ExpertiseSearchParams) {
-  const record = project as ResearchGenericRecord;
-  if (params.area && record.focus_area_id !== params.area) return false;
-  if (params.theme && record.theme_id !== params.theme) return false;
-  const query = compactText(params.q).toLowerCase();
-  if (!query) return true;
-  return [
-    project.title,
-    project.summary,
-    record.description,
-    project.project_type,
-    project.status,
-  ]
-    .map(compactText)
-    .join(" ")
-    .toLowerCase()
-    .includes(query);
 }
 
 function matchesPerson(person: Person, params: ExpertiseSearchParams) {
+  const department = compactText(person.department_name) || compactText(person.department?.name);
+  if (params.department && department !== params.department) return false;
+  if (params.featured === "featured" && !person.is_featured) return false;
+
   const query = compactText(params.q).toLowerCase();
   if (!query) return true;
   const interests = Array.isArray(person.research_interests) ? person.research_interests.join(" ") : "";
+
   return [
     personName(person),
     person.title,
     person.academic_rank,
     person.institutional_role,
-    person.department_name,
-    person.department?.name,
+    department,
     person.specialization,
     person.bio,
+    person.full_bio,
     interests,
   ]
     .map(compactText)
@@ -503,50 +299,39 @@ function matchesPerson(person: Person, params: ExpertiseSearchParams) {
     .includes(query);
 }
 
-function recordSearchText(record: ResearchGenericRecord) {
-  const nestedStaff = record.staff_assignment?.staff ?? record.staff ?? {};
-
-  return [
-    recordTitle(record),
-    recordSummary(record),
-    record.category,
-    record.status,
-    record.role,
-    record.staff_type,
-    record.responsibilities,
-    nestedStaff.full_name,
-  ]
-    .map(compactText)
-    .join(" ")
-    .toLowerCase();
+function sortPeople(people: Person[], sort: string) {
+  return [...people].sort((a, b) => {
+    if (sort === "updated") {
+      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+    }
+    if (sort === "department") {
+      return getDepartment(a).localeCompare(getDepartment(b)) || personName(a).localeCompare(personName(b));
+    }
+    if (sort === "featured") {
+      return Number(Boolean(b.is_featured)) - Number(Boolean(a.is_featured)) || personName(a).localeCompare(personName(b));
+    }
+    return personName(a).localeCompare(personName(b));
+  });
 }
 
-function recordTitle(record: ResearchGenericRecord | ResearchProject) {
-  return (
-    compactText(record.title) ||
-    compactText("name" in record ? record.name : undefined) ||
-    compactText("display_name" in record ? record.display_name : undefined) ||
-    compactText("code" in record ? record.code : undefined) ||
-    "Published record"
-  );
+function getDepartments(people: Person[]) {
+  return Array.from(new Set(people.map(getDepartment).filter(Boolean))).sort();
 }
 
-function recordSummary(record: ResearchGenericRecord | ResearchProject) {
-  const generic = record as ResearchGenericRecord;
+function getDepartment(person: Person) {
+  return compactText(person.department_name) || compactText(person.department?.name);
+}
 
-  return (
-    compactText(record.summary) ||
-    compactText(generic.description) ||
-    compactText(generic.about) ||
-    compactText(generic.mandate) ||
-    compactText(generic.objectives)
-  );
+function getExpertiseThemes(people: Person[]) {
+  return Array.from(
+    new Set(
+      people.flatMap((person) =>
+        Array.isArray(person.research_interests) ? person.research_interests.map(formatLabel) : [],
+      ),
+    ),
+  ).filter(Boolean);
 }
 
 function personName(person: Person) {
-  return compactText(person.full_name) || [person.first_name, person.last_name].map(compactText).filter(Boolean).join(" ") || "Researcher";
-}
-
-function personSummary(person: Person) {
-  return compactText(person.specialization) || compactText(person.bio) || compactText(person.institutional_role);
+  return compactText(person.full_name) || [person.first_name, person.last_name].map(compactText).filter(Boolean).join(" ") || person.id;
 }

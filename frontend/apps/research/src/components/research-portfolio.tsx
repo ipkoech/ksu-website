@@ -13,7 +13,9 @@ export type PortfolioHeroIllustration =
   | "projects"
   | "centers"
   | "facilities"
-  | "outputs";
+  | "outputs"
+  | "publications"
+  | "expertise";
 
 export function ResearchPortfolioHero({
   eyebrow,
@@ -57,7 +59,7 @@ export function ResearchPortfolioHero({
 }
 
 function HeroIllustration({ variant }: { variant: PortfolioHeroIllustration }) {
-  const accent = variant === "outputs" ? "#F59E0B" : variant === "centers" ? "#38BDF8" : "#10B981";
+  const accent = variant === "outputs" || variant === "publications" ? "#F59E0B" : variant === "centers" ? "#38BDF8" : "#10B981";
   const secondary = variant === "facilities" ? "#A7F3D0" : "#FDE68A";
   const nodes = getHeroNodes(variant);
 
@@ -150,6 +152,32 @@ function HeroVariantGlyph({
       </g>
     );
   }
+  if (variant === "publications") {
+    return (
+      <g>
+        <rect x="520" y="126" width="212" height="164" rx="16" fill="#061A36" fillOpacity="0.72" stroke="white" strokeOpacity="0.22" />
+        <path d="M560 166h126M560 198h146M560 230h104" stroke="white" strokeOpacity="0.52" strokeWidth="8" strokeLinecap="round" />
+        <path d="M704 246l26 24 48-64" stroke={accent} strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="568" y="274" width="96" height="10" rx="5" fill={secondary} fillOpacity="0.85" />
+      </g>
+    );
+  }
+  if (variant === "expertise") {
+    return (
+      <g>
+        <circle cx="628" cy="204" r="46" fill="#061A36" fillOpacity="0.74" stroke="white" strokeOpacity="0.22" />
+        <circle cx="628" cy="188" r="16" fill={accent} />
+        <path d="M588 238c12-24 66-24 80 0" stroke={secondary} strokeWidth="10" strokeLinecap="round" />
+        {[540, 716, 650].map((x, index) => (
+          <g key={x}>
+            <path d={`M628 204L${x} ${index === 2 ? 116 : 254}`} stroke="white" strokeOpacity="0.28" strokeWidth="3" />
+            <circle cx={x} cy={index === 2 ? 116 : 254} r="22" fill="#061A36" fillOpacity="0.7" stroke="white" strokeOpacity="0.22" />
+            <circle cx={x} cy={index === 2 ? 116 : 254} r="7" fill={index === 1 ? secondary : accent} />
+          </g>
+        ))}
+      </g>
+    );
+  }
   return (
     <g>
       <rect x="522" y="154" width="250" height="124" rx="18" fill="#061A36" fillOpacity="0.7" stroke="white" strokeOpacity="0.22" />
@@ -171,6 +199,8 @@ function getHeroNodes(variant: PortfolioHeroIllustration) {
 
   if (variant === "facilities") return base.map((node, index) => ({ ...node, y: node.y + (index % 2 ? 20 : -8) }));
   if (variant === "outputs") return base.map((node, index) => ({ ...node, x: node.x + index * 8 }));
+  if (variant === "publications") return base.map((node, index) => ({ ...node, x: node.x + index * 10, hot: index % 2 === 0 }));
+  if (variant === "expertise") return base.map((node, index) => ({ ...node, y: node.y + (index % 2 ? -16 : 16), hot: true }));
   if (variant === "centers") return base.map((node) => ({ ...node, hot: true }));
   return base;
 }

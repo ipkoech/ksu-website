@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import type { ResearchPublication } from "@ksu/api-client";
 import { pageFromSearchParams } from "@ksu/ui/components";
+import { ArrowRight } from "lucide-react";
 import { ResearchListPagination } from "../../components/research-list-pagination";
-import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
-import { PrimaryLink, ResearchSection, SecondaryLink, StatusMessage } from "../../components/research-ui";
+import { ResearchFilterForm } from "../../components/research-listing";
+import { ResearchPortfolioHero, ResearchPortfolioQuickLinks } from "../../components/research-portfolio";
+import { Badge, StatusMessage } from "../../components/research-ui";
 import {
   compactText,
   formatDate,
+  formatLabel,
   getCenters,
   getProjects,
   getPublications,
@@ -18,6 +21,7 @@ import {
   getRecordTimelineLabel,
   getRecordYears,
 } from "../../lib/research-page-model";
+import { PublicationDetailSheet } from "./publication-detail-sheet";
 
 export const revalidate = 300;
 
@@ -99,126 +103,110 @@ export default async function PublicationsPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <PublicationsMasthead
-        resultCount={visiblePublications.length}
-        publishedCount={allPublications.data.length}
-        centersCount={centers.data.length}
-        projectsCount={projects.data.length}
+      <ResearchPortfolioHero
+        eyebrow="Research publications"
+        title="Publications"
+        body="Browse peer-reviewed scholarship, reports, policy briefs, books, and public evidence from Kisii University research work."
+        primary={{ label: "Browse publications", href: "#publication-catalogue" }}
+        secondary={{ label: "Trace to outputs", href: "/outputs" }}
+        illustration="publications"
       />
 
-      <ResearchSection
-        eyebrow="Research Library"
-        title="Publications"
-        body="Search first, then use the filter menu for type, access, active state, year, month, project, center, and sort order."
-        tone="white"
-      >
-        <PublicationFilters
-          params={params}
-          years={years}
-          months={months}
-          centers={centers.data}
-          projects={projects.data}
-        />
-
-        {[publications.error, centers.error, projects.error]
-          .filter(Boolean)
-          .map((error) => (
-            <div key={error} className="mt-5">
-              <StatusMessage tone="error">{error}</StatusMessage>
+      <section id="publication-catalogue" className="bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="mx-auto grid max-w-[1680px] gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+          <div className="min-w-0">
+            <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
+              <div className="pt-1">
+                <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
+                  Publication Catalogue
+                </h2>
+                <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
+                  Search, filter, sort, and inspect publication records without leaving the catalogue.
+                </p>
+              </div>
+              <PublicationFilters
+                params={params}
+                years={years}
+                months={months}
+                centers={centers.data}
+                projects={projects.data}
+              />
             </div>
-          ))}
 
-        {visiblePublications.length > 0 ? (
-          <>
-            <div className="mt-7 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
-              {visiblePublications.map((publication) => (
-                <ResearchRecordRow
-                  key={publication.id}
-                  href={publication.slug ? `/publications/${publication.slug}` : "/publications"}
-                  title={publication.title}
-                  description={
-                    compactText(publication.abstract) ||
-                    [publication.journal_name, publication.publisher, publication.conference_name]
-                      .map(compactText)
-                      .filter(Boolean)
-                      .join(" · ") ||
-                    "Publication abstract is not published yet."
-                  }
-                  badges={[publication.publication_type, publication.access_type]}
-                  filledBadges={[publication.is_open_access ? "Open access" : null]}
-                  facts={[
-                    { label: "Published in", value: publication.journal_name || publication.publisher || publication.conference_name || "" },
-                    { label: "Year", value: compactText(publication.year) },
-                    { label: "Date", value: formatDate(publication.publication_date) || getRecordTimelineLabel(publication) },
-                    { label: "DOI", value: compactText(publication.doi) },
-                  ]}
-                />
+            {[publications.error, centers.error, projects.error]
+              .filter(Boolean)
+              .map((error) => (
+                <div key={error} className="mt-5">
+                  <StatusMessage tone="error">{error}</StatusMessage>
+                </div>
               ))}
-            </div>
-            <ResearchListPagination
-              page={page}
-              totalPages={totalPages}
-              total={params.month ? visiblePublications.length : publications.total}
-              perPage={publications.perPage}
-              path="/publications"
-              params={params}
-            />
-          </>
-        ) : (
-          <div className="mt-7">
-            <StatusMessage>No publications match the current filters.</StatusMessage>
+
+            {visiblePublications.length > 0 ? (
+              <>
+                <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                  <div className="hidden grid-cols-[minmax(0,1fr)_160px_170px_150px] border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 lg:grid">
+                    <span>Publication</span>
+                    <span>Type</span>
+                    <span>Access</span>
+                    <span>Published</span>
+                  </div>
+                  <div className="divide-y divide-slate-200">
+                    {visiblePublications.map((publication) => (
+                      <PublicationRow key={publication.id} publication={publication} />
+                    ))}
+                  </div>
+                </div>
+                <ResearchListPagination
+                  page={page}
+                  totalPages={totalPages}
+                  total={params.month ? visiblePublications.length : publications.total}
+                  perPage={publications.perPage}
+                  path="/publications"
+                  params={params}
+                  className="mt-6"
+                />
+              </>
+            ) : (
+              <div className="mt-7">
+                <StatusMessage>No publications match the current filters.</StatusMessage>
+              </div>
+            )}
           </div>
-        )}
-      </ResearchSection>
-    </main>
-  );
-}
-
-function PublicationsMasthead({
-  resultCount,
-  publishedCount,
-  centersCount,
-  projectsCount,
-}: {
-  resultCount: number;
-  publishedCount: number;
-  centersCount: number;
-  projectsCount: number;
-}) {
-  const stats = [
-    { label: "Publication results", value: resultCount },
-    { label: "Published publications", value: publishedCount },
-    { label: "Centers", value: centersCount },
-    { label: "Projects", value: projectsCount },
-  ];
-
-  return (
-    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
-        <div>
-          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
-            <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-900">Publications</span>
-          </nav>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Publications & Outputs</p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">Scholarly publications, reports, policy briefs, books, and public research evidence</h1>
-          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">Browse publication records by type, access, DOI, journal, project, center, and publication window.</p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <PrimaryLink href="/outputs">View outputs</PrimaryLink>
-            <SecondaryLink href="/projects">Trace to projects</SecondaryLink>
+          <div className="grid gap-4">
+            <ResearchPortfolioQuickLinks
+              links={[
+                { label: "Projects", href: "/projects", body: "Trace evidence to active work" },
+                { label: "Programs", href: "/programs", body: "Browse strategic umbrellas" },
+                { label: "Outputs", href: "/outputs", body: "Datasets, tools, and briefs" },
+                { label: "Resources & tools", href: "/resources-tools", body: "Access reusable research tools" },
+              ]}
+            />
+            <aside className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">How to read publications</p>
+              <div className="mt-3 divide-y divide-slate-200">
+                {["Evidence", "Access", "Related work"].map((label, index) => (
+                  <div key={label} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 py-3 first:pt-0 last:pb-0">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">
+                      {index + 1}
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">{label}</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        {index === 0
+                          ? "Start with the abstract, venue, and year."
+                          : index === 1
+                            ? "Use DOI, PDF, or open access links where published."
+                            : "Follow linked projects and centers for context."}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </aside>
           </div>
         </div>
-        <dl className="grid gap-2 sm:grid-cols-2">
-          {stats.map((stat) => (
-            <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-              <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
-              <dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </section>
+      </section>
+    </main>
   );
 }
 
@@ -255,6 +243,47 @@ function PublicationFilters({
       sortValue={params.sort}
       sortOptions={sortOptions}
     />
+  );
+}
+
+function PublicationRow({ publication }: { publication: ResearchPublication }) {
+  const venue = [publication.journal_name, publication.publisher, publication.conference_name]
+    .map(compactText)
+    .filter(Boolean)
+    .join(" / ");
+  const published = formatDate(publication.publication_date) || getRecordTimelineLabel(publication);
+
+  return (
+    <PublicationDetailSheet publication={publication}>
+      <button
+        type="button"
+        className="group grid w-full gap-3 px-4 py-3 text-left transition hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 lg:grid-cols-[minmax(0,1fr)_160px_170px_150px] lg:items-center"
+      >
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold leading-6 text-slate-950 group-hover:text-primary">
+            {publication.title}
+          </span>
+          <span className="mt-1 line-clamp-1 block text-xs leading-5 text-slate-500">
+            {[venue, compactText(publication.doi)].filter(Boolean).join(" · ") || compactText(publication.abstract)}
+          </span>
+        </span>
+        <span className="flex flex-wrap gap-2">
+          {publication.publication_type ? <Badge>{formatLabel(publication.publication_type)}</Badge> : null}
+        </span>
+        <span className="flex flex-wrap gap-2">
+          {publication.access_type ? <Badge>{formatLabel(publication.access_type)}</Badge> : null}
+          {publication.is_open_access ? (
+            <span className="inline-flex rounded-md bg-secondary px-2.5 py-1 text-xs font-semibold uppercase text-primary">
+              Open
+            </span>
+          ) : null}
+        </span>
+        <span className="flex items-center justify-between gap-3 text-sm font-medium text-slate-600">
+          {published || compactText(publication.year)}
+          <ArrowRight aria-hidden className="h-4 w-4 text-slate-400 transition group-hover:translate-x-1 group-hover:text-primary" />
+        </span>
+      </button>
+    </PublicationDetailSheet>
   );
 }
 
