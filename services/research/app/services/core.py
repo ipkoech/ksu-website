@@ -79,8 +79,6 @@ def _brief(item: Any, *extra_fields: str) -> dict[str, Any]:
         "name": getattr(item, "name", None),
         "slug": getattr(item, "slug", None),
         "status": getattr(item, "status", None),
-        "created_at": getattr(item, "created_at", None),
-        "updated_at": getattr(item, "updated_at", None),
     }
     for field in extra_fields:
         payload[field] = getattr(item, field, None)
@@ -98,6 +96,14 @@ def _model_payload(item: Any) -> dict[str, Any]:
 async def _related_many(db: AsyncSession, statement, *extra_fields: str) -> list[dict[str, Any]]:
     result = await db.execute(statement)
     return [_brief(item, *extra_fields) for item in result.scalars().all()]
+
+
+async def _get_or_404(db: AsyncSession, model: Any, record_id: uuid.UUID, error_message: str) -> Any:
+    result = await db.execute(model.active_query().where(model.id == record_id))
+    record = result.scalar_one_or_none()
+    if record is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error_message)
+    return record
 
 
 class MainScopedEventService:
@@ -214,11 +220,7 @@ class ProjectRelationshipService:
 
     @staticmethod
     async def _ensure_record(db: AsyncSession, model: Any, record_id: uuid.UUID, error_message: str) -> Any:
-        result = await db.execute(model.active_query().where(model.id == record_id))
-        record = result.scalar_one_or_none()
-        if record is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error_message)
-        return record
+        return await _get_or_404(db, model, record_id, error_message)
 
     @staticmethod
     async def _ensure_project(db: AsyncSession, project_id: uuid.UUID) -> ResearchProject:
@@ -358,11 +360,11 @@ class CenterRelationshipService:
 
     @staticmethod
     async def _ensure_center(db: AsyncSession, center_id: uuid.UUID) -> ResearchCenter:
-        return await ResearchCenter.get_or_raise(db, center_id, error_message="Research center not found")
+        return await _get_or_404(db, ResearchCenter, center_id, "Research center not found")
 
     @staticmethod
     async def _ensure_focus_area(db: AsyncSession, focus_area_id: uuid.UUID) -> FocusArea:
-        return await FocusArea.get_or_raise(db, focus_area_id, error_message="Focus area not found")
+        return await _get_or_404(db, FocusArea, focus_area_id, "Focus area not found")
 
     @staticmethod
     async def list_projects(db: AsyncSession, center_id: uuid.UUID) -> list[dict[str, Any]]:
@@ -442,13 +444,13 @@ class ProgramRelationshipService:
 
     @staticmethod
     async def _ensure_program(db: AsyncSession, program_id: uuid.UUID) -> ResearchProgram:
-        return await ResearchProgram.get_or_raise(db, program_id, error_message="Research program not found")
+        return await _get_or_404(db, ResearchProgram, program_id, "Research program not found")
 
     @staticmethod
     async def _ensure_theme(db: AsyncSession, theme_id: uuid.UUID):
         from ..models import ResearchTheme
 
-        return await ResearchTheme.get_or_raise(db, theme_id, error_message="Research theme not found")
+        return await _get_or_404(db, ResearchTheme, theme_id, "Research theme not found")
 
     @staticmethod
     async def list_projects(db: AsyncSession, program_id: uuid.UUID) -> list[dict[str, Any]]:

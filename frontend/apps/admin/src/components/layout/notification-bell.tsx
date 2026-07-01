@@ -11,7 +11,7 @@ import {
   PopoverTrigger,
 } from "@ksu/ui/components";
 import { cn } from "@ksu/ui/lib/utils";
-import { getMainApiBaseUrl, getStoredAccessToken } from "@ksu/api-client";
+import { getMainApiBaseUrl, getStoredAccessToken, refreshStoredAccessToken } from "@ksu/api-client";
 import { useRealtime } from "@/components/realtime/realtime-provider";
 
 type NotificationItem = {
@@ -33,12 +33,24 @@ function useNotifications() {
   return useQuery({
     queryKey: ["current-user", "notifications", "unread"],
     queryFn: async () => {
-      const token = getStoredAccessToken();
+      let token = getStoredAccessToken();
       if (!token) return { data: [], meta: { total: 0 } };
       const baseUrl = getMainApiBaseUrl();
-      const response = await fetch(`${baseUrl}/api/v1/notifications?per_page=5&unread_only=true`, {
+      let response = await fetch(`${baseUrl}/api/v1/notifications?per_page=5&unread_only=true`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (response.status === 401) {
+        const refreshed = await refreshStoredAccessToken(baseUrl);
+        token = getStoredAccessToken();
+        if (refreshed && token) {
+          response = await fetch(`${baseUrl}/api/v1/notifications?per_page=5&unread_only=true`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        } else {
+          window.dispatchEvent(new CustomEvent("ksu:session-expired"));
+          return { data: [], meta: { total: 0 } };
+        }
+      }
       if (!response.ok) return { data: [], meta: { total: 0 } };
       return response.json() as Promise<NotificationsResponse>;
     },
@@ -58,13 +70,25 @@ function formatTime(dateStr: string) {
 }
 
 async function markAsRead(notificationId: string) {
-  const token = getStoredAccessToken();
+  let token = getStoredAccessToken();
   if (!token) return;
   const baseUrl = getMainApiBaseUrl();
-  await fetch(`${baseUrl}/api/v1/notifications/${notificationId}/read`, {
+  let response = await fetch(`${baseUrl}/api/v1/notifications/${notificationId}/read`, {
     method: "PATCH",
     headers: { Authorization: `Bearer ${token}` },
   });
+  if (response.status === 401) {
+    const refreshed = await refreshStoredAccessToken(baseUrl);
+    token = getStoredAccessToken();
+    if (refreshed && token) {
+      response = await fetch(`${baseUrl}/api/v1/notifications/${notificationId}/read`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } else {
+      window.dispatchEvent(new CustomEvent("ksu:session-expired"));
+    }
+  }
 }
 
 export function NotificationBell() {

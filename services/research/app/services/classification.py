@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
+from fastapi import HTTPException, status
 from sqlalchemy import delete, func, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -46,28 +47,36 @@ async def _related_many(db: AsyncSession, stmt, *extra_fields: str) -> list[dict
     return [_brief(item, *extra_fields) for item in result.scalars().unique().all()]
 
 
+async def _get_or_404(db: AsyncSession, model: Any, record_id: uuid.UUID, error_message: str) -> Any:
+    result = await db.execute(model.active_query().where(model.id == record_id))
+    record = result.scalar_one_or_none()
+    if record is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error_message)
+    return record
+
+
 class ThemeRelationshipService:
     """Manage research theme relationships backed by FK and theme association tables."""
 
     @staticmethod
     async def _ensure_theme(db: AsyncSession, theme_id: uuid.UUID) -> ResearchTheme:
-        return await ResearchTheme.get_or_raise(db, theme_id, error_message="Research theme not found")
+        return await _get_or_404(db, ResearchTheme, theme_id, "Research theme not found")
 
     @staticmethod
     async def _ensure_project(db: AsyncSession, project_id: uuid.UUID) -> ResearchProject:
-        return await ResearchProject.get_or_raise(db, project_id, error_message="Research project not found")
+        return await _get_or_404(db, ResearchProject, project_id, "Research project not found")
 
     @staticmethod
     async def _ensure_program(db: AsyncSession, program_id: uuid.UUID) -> ResearchProgram:
-        return await ResearchProgram.get_or_raise(db, program_id, error_message="Research program not found")
+        return await _get_or_404(db, ResearchProgram, program_id, "Research program not found")
 
     @staticmethod
     async def _ensure_publication(db: AsyncSession, publication_id: uuid.UUID) -> Publication:
-        return await Publication.get_or_raise(db, publication_id, error_message="Publication not found")
+        return await _get_or_404(db, Publication, publication_id, "Publication not found")
 
     @staticmethod
     async def _ensure_grant(db: AsyncSession, grant_id: uuid.UUID) -> Grant:
-        return await Grant.get_or_raise(db, grant_id, error_message="Grant not found")
+        return await _get_or_404(db, Grant, grant_id, "Grant not found")
 
     @staticmethod
     async def list_focus_areas(db: AsyncSession, theme_id: uuid.UUID) -> list[dict[str, Any]]:
