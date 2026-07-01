@@ -51,6 +51,8 @@ export function ResearchAdminDetailPage({
   editHref,
   publicHrefBase,
   actionsSlot,
+  hideHeader = false,
+  showBackAction = true,
   showDetailGuide = true,
   slugParam = "slug",
   lookup = "slug",
@@ -68,6 +70,8 @@ export function ResearchAdminDetailPage({
   editHref?: (record: ResearchGenericRecord) => string | null | undefined;
   publicHrefBase?: string;
   actionsSlot?: (record: ResearchGenericRecord) => ReactNode;
+  hideHeader?: boolean;
+  showBackAction?: boolean;
   showDetailGuide?: boolean;
   slugParam?: string;
   lookup?: "slug" | "id";
@@ -108,15 +112,17 @@ export function ResearchAdminDetailPage({
 
   return (
     <div>
-      <PageHeader title={recordTitle} description={description} backHref={backHref} />
-      <div className="space-y-6 p-4 sm:p-6">
+      {!hideHeader ? <PageHeader title={recordTitle} description={description} backHref={backHref} /> : null}
+      <div className={`space-y-6 p-4 sm:p-6 ${hideHeader ? "pt-3" : ""}`}>
         <div className="flex flex-wrap gap-2">
+          {showBackAction ? (
           <Button asChild variant="outline">
             <Link href={backHref}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Link>
           </Button>
+          ) : null}
           {resolvedEditHref ? (
             <Button asChild variant="outline">
               <Link href={resolvedEditHref}>Edit</Link>

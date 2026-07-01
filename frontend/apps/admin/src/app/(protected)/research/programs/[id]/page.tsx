@@ -11,6 +11,8 @@ export default function ResearchProgramDetailPage() {
       description="View program metadata, lead, center binding, projects, impact metrics, and audit history."
       resource={researchServiceApi.programs}
       backHref="/research/programs"
+      hideHeader
+      showBackAction={false}
       slugParam="id"
       lookup="id"
       labelFields={["status", "is_featured", "is_active"]}
@@ -46,7 +48,7 @@ function ProgramRelations({ program }: { program: ResearchGenericRecord }) {
             <RelatedRecordsCard
               title="Program Projects"
               queryKey={["research", "programs", programId, "projects"]}
-              queryFn={() => researchServiceApi.projects.list({ page: 1, per_page: 12, program_id: programId })}
+              queryFn={() => researchServiceApi.projects.list({ page: 1, per_page: 12, program_id: programId, fields: "id,title,slug,code,project_type,status,start_date" })}
               emptyLabel="No projects were returned for this program."
               metaFields={["project_type", "status", "start_date"]}
             />
@@ -60,7 +62,7 @@ function ProgramRelations({ program }: { program: ResearchGenericRecord }) {
               <RelatedRecordsCard
                 title="Program Impact Metrics"
                 queryKey={["research", "programs", programId, "impact"]}
-                queryFn={() => researchServiceApi.impactMetrics.list({ page: 1, per_page: 8, program_id: programId })}
+                queryFn={() => researchServiceApi.impactMetrics.list({ page: 1, per_page: 8, program_id: programId, fields: "id,name,metric_type,value,reporting_year" })}
                 emptyLabel="No impact metrics were returned for this program."
                 metaFields={["metric_type", "value", "reporting_year"]}
               />

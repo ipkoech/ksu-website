@@ -11,6 +11,8 @@ export default function ResearchCenterDetailPage() {
       description="View center profile, mandate, contact information, and public content fields."
       resource={researchServiceApi.centers}
       backHref="/research/centers"
+      hideHeader
+      showBackAction={false}
       publicHrefBase="/centers"
       auditResourceTypes={["center", "centers", "research_center"]}
       labelFields={["center_type", "status"]}
@@ -43,7 +45,7 @@ function CenterRelations({ center }: { center: ResearchGenericRecord }) {
             <RelatedRecordsCard
               title="Center Projects"
               queryKey={["research", "centers", center.id, "projects"]}
-              queryFn={() => researchServiceApi.projects.list({ page: 1, per_page: 8, center_id: center.id })}
+              queryFn={() => researchServiceApi.projects.list({ page: 1, per_page: 8, center_id: center.id, fields: "id,title,slug,code,project_type,status" })}
               emptyLabel="No projects were returned for this research center."
               metaFields={["code", "project_type", "status"]}
             />
@@ -56,7 +58,7 @@ function CenterRelations({ center }: { center: ResearchGenericRecord }) {
             <RelatedRecordsCard
               title="Center Publications"
               queryKey={["research", "centers", center.id, "publications"]}
-              queryFn={() => researchServiceApi.publications.list({ page: 1, per_page: 8, center_id: center.id })}
+              queryFn={() => researchServiceApi.publications.list({ page: 1, per_page: 8, center_id: center.id, fields: "id,title,slug,publication_type,year,status" })}
               emptyLabel="No publications were returned for this research center."
               metaFields={["publication_type", "year", "status"]}
             />
@@ -70,14 +72,14 @@ function CenterRelations({ center }: { center: ResearchGenericRecord }) {
               <RelatedRecordsCard
                 title="Programs"
                 queryKey={["research", "centers", center.id, "programs"]}
-                queryFn={() => researchServiceApi.programs.list({ page: 1, per_page: 8, center_id: center.id })}
+                queryFn={() => researchServiceApi.programs.list({ page: 1, per_page: 8, center_id: center.id, fields: "id,name,slug,code,status" })}
                 emptyLabel="No programs were returned for this center."
                 metaFields={["code", "status"]}
               />
               <RelatedRecordsCard
                 title="Training"
                 queryKey={["research", "centers", center.id, "training"]}
-                queryFn={() => researchServiceApi.training.list({ page: 1, per_page: 8, center_id: center.id })}
+                queryFn={() => researchServiceApi.training.list({ page: 1, per_page: 8, center_id: center.id, fields: "id,title,slug,program_type,status" })}
                 emptyLabel="No training programs were returned for this center."
                 metaFields={["program_type", "status"]}
               />
