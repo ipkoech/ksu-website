@@ -26,7 +26,16 @@ from ..models import (
 from ._crud import CRUDService, build_simple_service
 
 
-GrantService = build_simple_service(Grant, "title", "code", "funder_name", "summary", "description", "status")
+GrantService = build_simple_service(
+    Grant,
+    "title",
+    "code",
+    "funder_name",
+    "summary",
+    "description",
+    "status",
+    reference_fields={"funder_id": "fundings"},
+)
 GrantGuidelineService = build_simple_service(GrantGuideline, "title", "guideline_type", "content")
 FundingService = build_simple_service(Funding, "name", "acronym", "about", "country")
 EndowmentFundService = build_simple_service(EndowmentFund, "name", "code", "purpose", "description", "donor_name")
@@ -181,6 +190,21 @@ class FundingRelationshipService:
             "project_type",
             "status",
             "start_date",
+        )
+
+    @staticmethod
+    async def list_grants(db: AsyncSession, funder_id: uuid.UUID) -> list[dict[str, Any]]:
+        await FundingRelationshipService._ensure_funder(db, funder_id)
+        return await _related_many(
+            db,
+            Grant.active_query()
+            .where(Grant.funder_id == funder_id)
+            .order_by(Grant.deadline.desc().nullslast(), Grant.title.asc()),
+            "code",
+            "grant_type",
+            "category",
+            "status",
+            "deadline",
         )
 
 

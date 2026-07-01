@@ -69,6 +69,11 @@ async def list_funder_projects(funder_id: uuid.UUID, db: AsyncSession = Depends(
     return success(data=await FundingRelationshipService.list_projects(db, funder_id))
 
 
+@router.get("/funders/id/{funder_id}/grants", tags=["Funding Sources"])
+async def list_funder_grants(funder_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return success(data=await FundingRelationshipService.list_grants(db, funder_id))
+
+
 @router.get("/grant-applications/id/{application_id}/reviews", tags=["Grant Applications"], dependencies=[Depends(require_scope("funding.manage"))])
 async def list_application_reviews(application_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await ApplicationRelationshipService.list_reviews(db, application_id))

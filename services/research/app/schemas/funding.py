@@ -31,6 +31,7 @@ class GrantBase(BaseSchema, SlugMixin, SEOFieldsMixin):
     code: str | None = Field(None, max_length=32)
     grant_type: str = Field(default="internal", max_length=32)
     category: str = Field(default="research", max_length=64)
+    funder_id: uuid.UUID | None = None
     funder_name: str | None = Field(None, max_length=255)
     funder_logo_url: UrlStr | None = None
     summary: str | None = None
@@ -76,6 +77,7 @@ class GrantUpdate(BaseSchema):
     code: str | None = Field(None, max_length=32)
     grant_type: str | None = Field(None, max_length=32)
     category: str | None = Field(None, max_length=64)
+    funder_id: uuid.UUID | None = None
     funder_name: str | None = Field(None, max_length=255)
     funder_logo_url: UrlStr | None = None
     summary: str | None = None
@@ -114,6 +116,7 @@ class GrantUpdate(BaseSchema):
 
 
 class GrantRead(GrantBase, BaseReadSchema, StatusMixin):
+    funder: dict[str, Any] | None = None
     guidelines: list[dict[str, Any]] | None = None
     applications: list[dict[str, Any]] | None = None
     reports: list[dict[str, Any]] | None = None
@@ -125,6 +128,7 @@ class GrantList(BaseReadSchema):
     code: str | None
     grant_type: str
     category: str
+    funder_id: uuid.UUID | None
     funder_name: str | None
     deadline: datetime | None
     status: str

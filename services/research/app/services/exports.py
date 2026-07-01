@@ -105,6 +105,7 @@ EXPORT_RESOURCE_CONFIGS: dict[str, ExportResourceConfig] = {
             "grant_type",
             "category",
             "status",
+            "funder_id",
             "funder_name",
             "total_budget",
             "min_award",

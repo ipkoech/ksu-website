@@ -283,6 +283,7 @@ export interface ResearchGrant {
   code?: string | null;
   grant_type?: string;
   category?: string;
+  funder_id?: string | null;
   funder_name?: string | null;
   summary?: string | null;
   description?: string | null;
@@ -309,6 +310,7 @@ export interface ResearchGrantPayload {
   code?: string | null;
   grant_type?: string;
   category?: string;
+  funder_id?: string | null;
   funder_name?: string | null;
   description?: string | null;
   eligibility?: string | null;

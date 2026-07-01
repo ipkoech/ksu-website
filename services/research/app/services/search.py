@@ -101,7 +101,7 @@ RESEARCH_SEARCH_AREAS = (
         ("summary", "description", "eligibility"),
         ("title", "code", "summary", "description", "objectives", "eligibility", "focus_areas", "funder_name"),
         ("deadline", "open_date", "announcement_date", "created_at"),
-        ("grant_type", "category", "status", "funder_name", "currency", "max_award"),
+        ("grant_type", "category", "status", "funder_id", "funder_name", "currency", "max_award"),
     ),
     ResearchSearchArea(
         "centers",

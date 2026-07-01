@@ -4,7 +4,11 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from fastapi.routing import APIRoute
+
 from app.models import grant_themes
+from app.models.funding import Grant
+from app.routes.v1.grants import router as grants_router
 from app.schemas import (
     EndowmentFundUpdate,
     FundingUpdate,
@@ -18,7 +22,15 @@ from app.services.funding import GrantRelationshipService
 
 
 class FundingUpdateSchemaTests(unittest.TestCase):
+    def test_grant_model_has_nullable_funder_foreign_key(self):
+        column = Grant.__table__.c.funder_id
+
+        self.assertTrue(column.nullable)
+        self.assertTrue(column.index)
+        self.assertEqual({"fundings.id"}, {str(fk.column) for fk in column.foreign_keys})
+
     def test_grant_update_accepts_full_edit_fields(self):
+        funder_id = uuid.uuid4()
         cover_image_id = uuid.uuid4()
         attachment_id = uuid.uuid4()
         payload = GrantUpdate.model_validate(
@@ -28,6 +40,7 @@ class FundingUpdateSchemaTests(unittest.TestCase):
                 "code": "CSG",
                 "grant_type": "internal",
                 "category": "research",
+                "funder_id": funder_id,
                 "funder_name": "Research Office",
                 "summary": "Short summary",
                 "description": "Detailed description",
@@ -63,6 +76,7 @@ class FundingUpdateSchemaTests(unittest.TestCase):
         )
 
         self.assertEqual("Climate Seed Grant", payload.title)
+        self.assertEqual(funder_id, payload.funder_id)
         self.assertEqual(Decimal("1000000.00"), payload.total_budget)
         self.assertEqual("open", payload.status)
         self.assertEqual(cover_image_id, payload.cover_image_id)
@@ -231,6 +245,17 @@ class FundingRelationshipServiceTests(unittest.IsolatedAsyncioTestCase):
         insert_mock.return_value.values.assert_called_once_with(grant_id=grant_id, theme_id=theme_id)
         db.execute.assert_awaited_once_with("insert-statement")
         db.flush.assert_awaited_once()
+
+
+class FundingRelationshipRouteTests(unittest.TestCase):
+    def test_funder_grants_route_exists(self):
+        route_paths = {
+            route.path
+            for route in grants_router.routes
+            if isinstance(route, APIRoute) and "GET" in route.methods
+        }
+
+        self.assertIn("/funders/id/{funder_id}/grants", route_paths)
 
 
 if __name__ == "__main__":
