@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ExternalLink } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { pageFromSearchParams } from "@ksu/ui/components";
 import { ResearchListPagination } from "../../components/research-list-pagination";
 import { Badge, FilledBadge, StatusMessage } from "../../components/research-ui";
@@ -15,10 +15,7 @@ import {
 import {
   filterRecordsByMonth,
   getListPageSize,
-  getPublishedFactItems,
   getRecordMonths,
-  getRecordSummary,
-  getRecordTimelineLabel,
   getRecordTitle,
   getRecordYears,
 } from "../../lib/research-page-model";
@@ -202,11 +199,10 @@ function ProgramFilters({
 function ProgramsTable({ programs }: { programs: ResearchGenericRecord[] }) {
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="hidden grid-cols-[minmax(360px,1fr)_150px_210px_170px] gap-4 border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 lg:grid">
+      <div className="hidden grid-cols-[minmax(320px,1fr)_150px_150px] gap-4 border-b border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 md:grid">
         <span>Program</span>
+        <span>Type</span>
         <span>Status</span>
-        <span>Center</span>
-        <span>Timeline</span>
       </div>
       <div className="divide-y divide-slate-200">
         {programs.map((program) => (
@@ -219,60 +215,28 @@ function ProgramsTable({ programs }: { programs: ResearchGenericRecord[] }) {
 
 function ProgramTableRow({ program }: { program: ResearchGenericRecord }) {
   const href = program.slug ? `/programs/${program.slug}` : "/programs";
-  const summary = getRecordSummary(program);
   const title = getRecordTitle(program, "Research program");
-  const center = getCenterName(program);
-  const timeline = getRecordTimelineLabel(program);
-  const facts = getPublishedFactItems([
-    { label: "Center", value: center },
-    { label: "Timeline", value: timeline },
-  ]);
-  const badges = [program.program_type, program.status]
-    .map(compactText)
-    .filter(Boolean)
-    .slice(0, 2);
 
   return (
     <Link
       href={href}
-      className="group grid gap-3 px-4 py-4 transition hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 lg:grid-cols-[minmax(360px,1fr)_150px_210px_170px] lg:items-center"
+      className="group grid gap-2 px-4 py-3 transition hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 md:grid-cols-[minmax(320px,1fr)_150px_150px] md:items-center"
     >
       <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          {badges.map((badge) => (
-            <Badge key={badge}>{formatLabel(badge)}</Badge>
-          ))}
-          {program.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
-        </div>
-        <h2 className="mt-2 flex items-start gap-2 text-base font-semibold leading-6 text-slate-950">
-          <span className="transition group-hover:text-primary">
-            {title}
-          </span>
-          <ExternalLink
-            aria-hidden
-            className="mt-1 h-3.5 w-3.5 shrink-0 text-primary transition group-hover:translate-x-0.5"
-          />
+        <h2 className="truncate text-sm font-semibold leading-6 text-slate-950 transition group-hover:text-primary">
+          {title}
         </h2>
-        {summary ? (
-          <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{summary}</p>
-        ) : null}
-        {facts.length ? (
-          <dl className="mt-3 grid gap-2 text-xs text-slate-600 sm:grid-cols-2 lg:hidden">
-            {facts.map((fact) => (
-              <div key={fact.label} className="rounded-md bg-slate-50 px-3 py-2">
-                <dt className="font-semibold uppercase text-slate-500">{fact.label}</dt>
-                <dd className="mt-1 font-medium text-slate-800">{fact.value}</dd>
-              </div>
-            ))}
-          </dl>
+        {program.code ? (
+          <p className="mt-0.5 truncate text-xs font-medium text-slate-500">{compactText(program.code)}</p>
         ) : null}
       </div>
-
-      <div className="hidden text-sm font-medium text-slate-700 lg:block">
-        {badges[1] ? formatLabel(badges[1]) : program.is_active === false ? "Inactive" : "Active"}
+      <div className="text-xs font-medium text-slate-600 md:text-sm">
+        {program.program_type ? formatLabel(program.program_type) : "Program"}
       </div>
-      <div className="hidden text-sm text-slate-600 lg:block">{center || "-"}</div>
-      <div className="hidden text-sm text-slate-600 lg:block">{timeline || "-"}</div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge>{formatLabel(program.status ?? (program.is_active === false ? "inactive" : "active"))}</Badge>
+        {program.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
+      </div>
     </Link>
   );
 }
@@ -305,11 +269,6 @@ function ProgramQuickLinks() {
       </div>
     </aside>
   );
-}
-
-function getCenterName(record: ResearchGenericRecord) {
-  const center = record.center as ResearchGenericRecord | undefined;
-  return center ? getRecordTitle(center, "") : compactText(record.center_name);
 }
 
 function getActiveFlags(value?: string) {

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
 import { pageFromSearchParams } from "@ksu/ui/components";
 import { ProgramTableControls } from "../programs/program-table-controls";
 import { ResearchListPagination } from "../../components/research-list-pagination";
@@ -26,10 +25,7 @@ import type { ResearchGenericRecord } from "@ksu/api-client";
 import {
   filterRecordsByMonth,
   getListPageSize,
-  getPublishedFactItems,
   getRecordMonths,
-  getRecordSummary,
-  getRecordTimelineLabel,
   getRecordTitle,
   getRecordYears,
 } from "../../lib/research-page-model";
@@ -135,11 +131,10 @@ export default async function FacilitiesPage({
         {visibleFacilities.length > 0 ? (
           <>
             <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-              <div className="hidden grid-cols-[minmax(340px,1fr)_150px_180px_150px] gap-4 border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 lg:grid">
+              <div className="hidden grid-cols-[minmax(320px,1fr)_150px_150px] gap-4 border-b border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 md:grid">
                 <span>Facility</span>
                 <span>Type</span>
-                <span>Location</span>
-                <span>Updated</span>
+                <span>Status</span>
               </div>
               <div className="divide-y divide-slate-200">
                 {visibleFacilities.map((facility) => (
@@ -237,49 +232,27 @@ function FacilityFilters({
 function FacilityRow({ facility }: { facility: ResearchGenericRecord }) {
   const href = facility.slug ? `/farm/${facility.slug}` : "/farm";
   const title = getRecordTitle(facility, "Research facility");
-  const summary =
-    getRecordSummary(facility) ||
-    compactText(facility.activities) ||
-    compactText(facility.facilities);
   const type = formatLabel(compactText(facility.farm_type) || "facility");
-  const location = compactText(facility.location) || compactText(facility.county);
-  const updated = getRecordTimelineLabel(facility);
-  const facts = getPublishedFactItems([
-    { label: "Type", value: type },
-    { label: "Location", value: location },
-    { label: "Updated", value: updated },
-  ]);
+  const status = formatLabel(compactText(facility.status) || (facility.is_active === false ? "inactive" : "active"));
 
   return (
     <Link
       href={href}
-      className="group grid gap-3 px-4 py-4 transition hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 lg:grid-cols-[minmax(340px,1fr)_150px_180px_150px] lg:items-center"
+      className="group grid gap-2 px-4 py-3 transition hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 md:grid-cols-[minmax(320px,1fr)_150px_150px] md:items-center"
     >
       <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge>{type}</Badge>
-          {facility.county ? <Badge>{formatLabel(facility.county)}</Badge> : null}
-          {facility.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
-        </div>
-        <h2 className="mt-2 flex items-start gap-2 text-base font-semibold leading-6 text-slate-950">
-          <span className="transition group-hover:text-primary">{title}</span>
-          <ExternalLink aria-hidden className="mt-1 h-3.5 w-3.5 shrink-0 text-primary transition group-hover:translate-x-0.5" />
+        <h2 className="truncate text-sm font-semibold leading-6 text-slate-950 transition group-hover:text-primary">
+          {title}
         </h2>
-        {summary ? <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{summary}</p> : null}
-        {facts.length ? (
-          <dl className="mt-3 grid gap-2 text-xs text-slate-600 sm:grid-cols-3 lg:hidden">
-            {facts.map((fact) => (
-              <div key={fact.label} className="rounded-md bg-slate-50 px-3 py-2">
-                <dt className="font-semibold uppercase text-slate-500">{fact.label}</dt>
-                <dd className="mt-1 font-medium text-slate-800">{fact.value}</dd>
-              </div>
-            ))}
-          </dl>
+        {facility.code ? (
+          <p className="mt-0.5 truncate text-xs font-medium text-slate-500">{compactText(facility.code)}</p>
         ) : null}
       </div>
-      <div className="hidden text-sm font-medium text-slate-700 lg:block">{type}</div>
-      <div className="hidden text-sm text-slate-600 lg:block">{location || "-"}</div>
-      <div className="hidden text-sm text-slate-600 lg:block">{updated || "-"}</div>
+      <div className="text-xs font-medium text-slate-600 md:text-sm">{type}</div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge>{status}</Badge>
+        {facility.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
+      </div>
     </Link>
   );
 }
