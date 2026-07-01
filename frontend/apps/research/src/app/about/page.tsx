@@ -22,7 +22,6 @@ import {
   Badge,
   PrimaryLink,
   ResearchSection,
-  SecondaryLink,
   StatusMessage,
 } from "../../components/research-ui";
 import {
@@ -289,44 +288,62 @@ function AboutHero({
   lead: Person | null;
 }) {
   return (
-    <section className="border-b border-slate-200 bg-white px-4 py-7 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,560px)] lg:items-stretch">
-        <div className="flex flex-col justify-center">
+    <section className="relative isolate overflow-hidden border-b border-slate-200 px-4 py-10 text-white sm:px-6 sm:py-12 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="absolute inset-0">
+        <Image
+          src="/images/research/research-about-hero.webp"
+          alt="Kisii University research collaboration and institutional support"
+          fill
+          sizes="100vw"
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-slate-950/65" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,42,0.92)_0%,rgba(15,23,42,0.76)_48%,rgba(15,23,42,0.4)_100%)]" />
+      </div>
+      <div className="relative z-10 mx-auto grid max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,460px)] lg:items-end">
+        <div>
           <nav
-            className="mb-5 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500"
+            className="mb-5 flex flex-wrap items-center gap-2 text-xs font-semibold text-white/75"
             aria-label="Breadcrumb"
           >
-            <Link href="/" className="transition hover:text-primary">
+            <Link href="/" className="transition hover:text-white">
               Home
             </Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-900">About</span>
+            <span className="text-white/35">/</span>
+            <span className="text-white">About</span>
           </nav>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
             About REIRM
           </p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-5xl">
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white sm:text-5xl">
             The public structure behind Kisii University research support
           </h1>
-          <p className="mt-4 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">
+          <p className="mt-4 max-w-4xl text-pretty text-sm leading-7 text-white/86 sm:text-base">
             Research, Extension, Innovation and Resource Mobilization is shown
             through backend-backed staff records, service pathways, published
             controls, and partnership routes.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <PrimaryLink href="/team">Meet the Team</PrimaryLink>
-            <SecondaryLink href="/expertise">Find Expertise</SecondaryLink>
+            <Link
+              href="/expertise"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/35 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/18 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/20"
+            >
+              Find Expertise
+              <ArrowRight aria-hidden className="h-4 w-4" />
+            </Link>
           </div>
           <dl className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {metrics.map((metric) => (
               <div
                 key={metric.label}
-                className="rounded-lg border border-slate-200 bg-slate-50 p-4"
+                className="rounded-lg border border-white/20 bg-white/12 p-4 shadow-sm backdrop-blur"
               >
-                <dt className="text-[11px] font-semibold uppercase text-slate-500">
+                <dt className="text-[11px] font-semibold uppercase text-white/68">
                   {metric.label}
                 </dt>
-                <dd className="mt-1 text-2xl font-semibold text-slate-950">
+                <dd className="mt-1 text-2xl font-semibold text-white">
                   {metric.value.toLocaleString("en-KE")}
                   {metric.suffix ?? ""}
                 </dd>
@@ -334,31 +351,34 @@ function AboutHero({
             ))}
           </dl>
         </div>
-        <div className="relative min-h-[360px] overflow-hidden rounded-lg border border-slate-200 bg-slate-100 shadow-sm">
-          <Image
-            src="/images/research/research-about-hero.webp"
-            alt="Kisii University research collaboration and institutional support"
-            fill
-            sizes="(min-width: 1024px) 560px, 100vw"
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-x-4 bottom-4 rounded-lg border border-white/40 bg-white/92 p-4 shadow-lg backdrop-blur">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-              Research office
-            </p>
-            <h2 className="mt-1 text-lg font-semibold text-slate-950">
-              {lead ? personName(lead) : "REIRM public profile"}
-            </h2>
-            <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">
-              {lead
-                ? personSummary(lead) ||
-                  compactText(lead.institutional_role) ||
-                  "Published lead profile from the university people service."
-                : "Lead profile appears when a research role is published."}
-            </p>
-          </div>
-        </div>
+        <section className="rounded-lg border border-white/20 bg-white/12 p-5 shadow-xl backdrop-blur">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
+            Research office
+          </p>
+          <h2 className="mt-2 text-xl font-semibold text-white">
+            {lead ? personName(lead) : "REIRM public profile"}
+          </h2>
+          <p className="mt-2 text-sm font-semibold text-white/78">
+            {lead
+              ? compactText(lead.institutional_role) ||
+                compactText(lead.academic_rank) ||
+                compactText(lead.title)
+              : "Lead profile not published"}
+          </p>
+          <p className="mt-3 line-clamp-4 text-sm leading-7 text-white/76">
+            {lead
+              ? personSummary(lead) ||
+                "Published lead profile from the university people service."
+              : "Lead profile appears when a research role is published."}
+          </p>
+          <Link
+            href="/team"
+            className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white"
+          >
+            View backend team
+            <ArrowRight aria-hidden className="h-4 w-4" />
+          </Link>
+        </section>
       </div>
     </section>
   );
