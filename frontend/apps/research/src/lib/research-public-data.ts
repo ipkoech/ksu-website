@@ -751,6 +751,75 @@ export function getRelatedOutputs(filters: RelationshipFilters) {
   );
 }
 
+export async function getProgramSuccessStories(projectIds: string[]) {
+  const uniqueProjectIds = Array.from(new Set(projectIds.filter(Boolean)));
+  if (!uniqueProjectIds.length) {
+    return { data: [], total: 0, perPage: 100, error: null } satisfies PublicResearchData<ResearchGenericRecord>;
+  }
+
+  const results = await Promise.all(
+    uniqueProjectIds.map((projectId) =>
+      safeList<ResearchGenericRecord>(() =>
+        researchServiceApi.stories.list({
+          fields:
+            "id,title,slug,summary,challenge,solution,approach,outcomes,impact,future_directions,beneficiaries,location,county,story_type,story_date,published_at,status,is_active,is_featured,project_id,cover_image_url",
+          project_id: projectId,
+          status: "published",
+          is_active: true,
+          page: 1,
+          per_page: 20,
+        }),
+      ),
+    ),
+  );
+
+  return mergePublicData(results, sortByStoryDate);
+}
+
+export async function getProgramScopedNews(programId: string, projectIds: string[] = []) {
+  const scopes = getProgramContentScopes(programId, projectIds);
+  const results = await Promise.all(
+    scopes.map(({ scopeType, scopeId }) =>
+      safeList<ResearchGenericRecord>(() =>
+        newsApi.list({
+          fields: researchMainContentFields,
+          include: "featured_media",
+          scope_type: scopeType,
+          scope_id: scopeId,
+          is_published: true,
+          is_main: false,
+          page: 1,
+          per_page: 20,
+        }),
+      ),
+    ),
+  );
+
+  return mergePublicData(results, sortByPublishedDate);
+}
+
+export async function getProgramScopedEvents(programId: string, projectIds: string[] = []) {
+  const scopes = getProgramContentScopes(programId, projectIds);
+  const results = await Promise.all(
+    scopes.map(({ scopeType, scopeId }) =>
+      safeList<ResearchGenericRecord>(() =>
+        eventsApi.list({
+          fields: researchMainContentFields,
+          include: "featured_media",
+          scope_type: scopeType,
+          scope_id: scopeId,
+          is_published: true,
+          is_main: false,
+          page: 1,
+          per_page: 20,
+        }),
+      ),
+    ),
+  );
+
+  return mergePublicData(results, sortByEventDate);
+}
+
 export function getOutputBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.outputs.getBySlug(slug, {
@@ -1495,4 +1564,59 @@ export function formatDate(value?: string | null) {
     month: "short",
     year: "numeric",
   }).format(date);
+}
+
+function getProgramContentScopes(programId: string, projectIds: string[]) {
+  const scopes = [
+    { scopeType: "research_program", scopeId: programId },
+    { scopeType: "research", scopeId: programId },
+    ...Array.from(new Set(projectIds.filter(Boolean))).map((projectId) => ({
+      scopeType: "research_project",
+      scopeId: projectId,
+    })),
+  ];
+
+  return scopes.filter((scope) => scope.scopeId);
+}
+
+function mergePublicData<T extends ResearchGenericRecord>(
+  results: Array<PublicResearchData<T>>,
+  sortRecords: (left: T, right: T) => number,
+): PublicResearchData<T> {
+  const byId = new Map<string, T>();
+  for (const result of results) {
+    for (const record of result.data) {
+      const key = compactText(record.id) || compactText(record.slug) || JSON.stringify(record);
+      if (!byId.has(key)) byId.set(key, record);
+    }
+  }
+
+  const data = Array.from(byId.values()).sort(sortRecords);
+  return {
+    data,
+    total: data.length,
+    perPage: 100,
+    error: uniqueErrors(...results.map((result) => result.error))[0] ?? null,
+  };
+}
+
+function sortByStoryDate(left: ResearchGenericRecord, right: ResearchGenericRecord) {
+  return recordTime(right.story_date ?? right.published_at ?? right.created_at) -
+    recordTime(left.story_date ?? left.published_at ?? left.created_at);
+}
+
+function sortByPublishedDate(left: ResearchGenericRecord, right: ResearchGenericRecord) {
+  return recordTime(right.published_at ?? right.created_at) -
+    recordTime(left.published_at ?? left.created_at);
+}
+
+function sortByEventDate(left: ResearchGenericRecord, right: ResearchGenericRecord) {
+  return recordTime(right.start_date ?? right.event_date ?? right.created_at) -
+    recordTime(left.start_date ?? left.event_date ?? left.created_at);
+}
+
+function recordTime(value: unknown) {
+  if (typeof value !== "string" && typeof value !== "number") return 0;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
 }

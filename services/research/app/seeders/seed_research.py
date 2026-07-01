@@ -25,6 +25,7 @@ from app.models import (
     ResearchProgram,
     ResearchProject,
     Scholarship,
+    SuccessStory,
     TrainingProgram,
 )
 from app.schemas.base import slugify
@@ -646,6 +647,58 @@ async def seed_publications(
     await db.flush()
 
 
+async def seed_success_stories(
+    db: AsyncSession,
+    projects: dict[str, ResearchProject],
+) -> None:
+    climate_project = projects["climate-smart-agriculture-for-smallholder-food-security"]
+    specs = [
+        {
+            "title": "From low yields to stable harvests",
+            "story_type": "impact",
+            "project_id": climate_project.id,
+            "summary": (
+                "Farmer field trials helped smallholder households adopt soil health practices, "
+                "timely advisories, and climate-smart planting decisions."
+            ),
+            "challenge": (
+                "Smallholder farmers in Nyamira faced erratic rainfall, declining soil fertility, "
+                "and limited access to practical climate information."
+            ),
+            "approach": (
+                "The project worked with farmer groups, field schools, and extension teams to test "
+                "soil amendments, water-wise practices, and advisory messages under real farm conditions."
+            ),
+            "outcomes": (
+                "Participating farmers reported more reliable crop establishment, stronger soil management "
+                "routines, and better confidence in seasonal decisions."
+            ),
+            "impact": (
+                "The story demonstrates how program research translates into practical livelihood gains "
+                "for households and extension networks."
+            ),
+            "future_directions": (
+                "The team is expanding demonstration plots and packaging the lessons into farmer-facing "
+                "training materials."
+            ),
+            "beneficiaries": "Smallholder farmers, extension officers, and farmer field school groups.",
+            "beneficiary_count": 1340,
+            "location": "Nyamira County",
+            "county": "Nyamira",
+            "country": "Kenya",
+            "story_date": date(2025, 4, 18),
+            "published_at": date(2025, 5, 10),
+            "status": "published",
+            "is_active": True,
+            "is_featured": True,
+            "display_order": 1,
+        },
+    ]
+
+    for spec in specs:
+        await upsert_by_slug(db, SuccessStory, slugify(spec["title"]), spec)
+
+
 async def seed_grants(db: AsyncSession) -> None:
     specs = [
         {
@@ -1103,6 +1156,7 @@ async def run() -> None:
             programs = await seed_programs(db, centers)
             projects = await seed_projects(db, centers, programs)
             await seed_publications(db, centers, projects)
+            await seed_success_stories(db, projects)
             await seed_grants(db)
             await seed_innovations_and_outputs(db, centers, projects)
             await seed_partners(db)

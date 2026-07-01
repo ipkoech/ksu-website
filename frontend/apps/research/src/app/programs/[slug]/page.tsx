@@ -28,6 +28,9 @@ import {
   formatLabel,
   generateSlugParams,
   getProgramBySlug,
+  getProgramScopedEvents,
+  getProgramScopedNews,
+  getProgramSuccessStories,
   getPublicationsFiltered,
   getRelatedOutputs,
 } from "../../../lib/research-public-data";
@@ -44,6 +47,7 @@ import type {
   ResearchPublication,
 } from "@ksu/api-client";
 import { researchServiceApi } from "@ksu/api-client";
+import { ProgramUpdatesSheet } from "./program-updates-sheet";
 
 export const revalidate = 300;
 
@@ -76,9 +80,13 @@ export default async function ProgramDetailPage({
 
   const program = data as ResearchGenericRecord;
   const includedProjects = getIncludedProgramProjects(program);
-  const [publications, outputs] = await Promise.all([
+  const projectIds = includedProjects.map((project) => project.id).filter(Boolean);
+  const [publications, outputs, successStories, newsItems, eventItems] = await Promise.all([
     getPublicationsFiltered({ programId: program.id }),
     getRelatedOutputs({ programId: program.id }),
+    getProgramSuccessStories(projectIds),
+    getProgramScopedNews(program.id, projectIds),
+    getProgramScopedEvents(program.id, projectIds),
   ]);
   const center = program.center as ResearchGenericRecord | undefined;
   const title = getRecordTitle(program, "Research programme");
@@ -151,6 +159,29 @@ export default async function ProgramDetailPage({
             {publications.data.length > 0 || outputs.data.length > 0 ? (
               <EvidenceOutputs publications={publications.data} outputs={outputs.data} />
             ) : null}
+            <ProgramUpdatesSheet
+              groups={[
+                {
+                  title: "Impact stories",
+                  label: "Story",
+                  hrefBase: "/community-impact",
+                  appendSlug: false,
+                  records: successStories.data,
+                },
+                {
+                  title: "News",
+                  label: "News",
+                  hrefBase: "/news",
+                  records: newsItems.data,
+                },
+                {
+                  title: "Events",
+                  label: "Event",
+                  hrefBase: "/events",
+                  records: eventItems.data,
+                },
+              ]}
+            />
           </div>
 
           <aside className="flex flex-col gap-4 xl:sticky xl:top-24">
