@@ -3,7 +3,9 @@
 import type { EditableListFilter, EditableRecordColumn } from "@/components/dashboard/editable-service-resource-page";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchResourcePage, researchServiceApi } from "../_components/research-resource-page";
-import { formatPublicationDate, labelize, PublicationRelationCell, StatusBadge } from "../publications/_components/publication-workspace";
+import { labelize, StatusBadge } from "../publications/_components/publication-workspace";
+
+const PROGRAM_LIST_FIELDS = "id,name,slug,code,status,is_active,is_featured";
 
 const programFilters: EditableListFilter[] = [
   { name: "search", label: "Search", type: "text", placeholder: "Search programs, codes, or outcomes" },
@@ -25,24 +27,6 @@ const programColumns: EditableRecordColumn<ResearchGenericRecord>[] = [
         <p className="text-xs text-muted-foreground">{[record.code, labelize(record.status)].filter(Boolean).join(" · ")}</p>
       </div>
     ),
-  },
-  {
-    key: "center",
-    label: "Center",
-    className: "hidden min-w-[200px] lg:table-cell",
-    render: (record) => <PublicationRelationCell id={record.center_id} adapterKey="researchCenter" emptyLabel="No center" />,
-  },
-  {
-    key: "lead",
-    label: "Lead",
-    className: "hidden min-w-[180px] xl:table-cell",
-    render: (record) => <PublicationRelationCell id={record.lead_id} adapterKey="person" emptyLabel="No lead" />,
-  },
-  {
-    key: "dates",
-    label: "Dates",
-    className: "hidden min-w-[160px] xl:table-cell",
-    render: (record) => <span>{[formatPublicationDate(record.start_date), formatPublicationDate(record.end_date)].filter(Boolean).join(" - ") || "No dates"}</span>,
   },
   {
     key: "status",
@@ -81,6 +65,7 @@ export default function ResearchProgramsPage() {
         { name: "is_featured", label: "Featured", type: "boolean" },
       ]}
       defaults={{ currency: "KES", status: "active" }}
+      listParams={{ fields: PROGRAM_LIST_FIELDS }}
       listFilters={programFilters}
       recordColumns={programColumns}
       emptyMessage="No research programs were returned by the research service."

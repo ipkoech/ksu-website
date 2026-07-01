@@ -3,7 +3,9 @@
 import type { EditableListFilter, EditableRecordColumn } from "@/components/dashboard/editable-service-resource-page";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchResourcePage, researchServiceApi } from "../_components/research-resource-page";
-import { labelize, PublicationRelationCell, StatusBadge } from "../publications/_components/publication-workspace";
+import { labelize, StatusBadge } from "../publications/_components/publication-workspace";
+
+const CENTER_LIST_FIELDS = "id,name,slug,code,acronym,center_type,status,is_active,is_featured";
 
 const centerFilters: EditableListFilter[] = [
   { name: "search", label: "Search", type: "text", placeholder: "Search centers, codes, directors, or locations" },
@@ -26,24 +28,6 @@ const centerColumns: Array<EditableRecordColumn<ResearchGenericRecord>> = [
         <p className="text-xs text-muted-foreground">{[record.code, record.acronym, labelize(record.center_type)].filter(Boolean).join(" · ")}</p>
       </div>
     ),
-  },
-  {
-    key: "director",
-    label: "Director",
-    className: "hidden min-w-[180px] lg:table-cell",
-    render: (record) => <PublicationRelationCell id={record.director_id} adapterKey="person" emptyLabel="No director assigned" />,
-  },
-  {
-    key: "department",
-    label: "Department",
-    className: "hidden min-w-[180px] xl:table-cell",
-    render: (record) => <PublicationRelationCell id={record.department_id} adapterKey="department" emptyLabel="No department" />,
-  },
-  {
-    key: "location",
-    label: "Location",
-    className: "hidden min-w-[160px] xl:table-cell",
-    render: (record) => <span>{record.location || "No location"}</span>,
   },
   {
     key: "status",
@@ -90,6 +74,7 @@ export default function ResearchCentersPage() {
         { name: "is_featured", label: "Featured", type: "boolean" },
       ]}
       defaults={{ center_type: "center", status: "active" }}
+      listParams={{ fields: CENTER_LIST_FIELDS }}
       listFilters={centerFilters}
       recordColumns={centerColumns}
       emptyMessage="No research centers were returned by the research service."
