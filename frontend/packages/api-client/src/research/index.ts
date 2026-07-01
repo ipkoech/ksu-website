@@ -689,6 +689,41 @@ function themeBindingApi(relation: "projects" | "programs" | "publications" | "g
   };
 }
 
+function grantBindingApi(relation: "themes") {
+  return {
+    list: (grantId: string) =>
+      researchApi.get<{ data: ResearchGenericRecord[] }>(
+        `/api/v1/grants/id/${grantId}/${relation}`,
+      ),
+    add: (grantId: string, relatedId: string) =>
+      researchApi.put<{ data: ResearchGenericRecord }>(
+        `/api/v1/grants/id/${grantId}/${relation}/${relatedId}`,
+      ),
+    remove: (grantId: string, relatedId: string) =>
+      researchApi.delete<void>(
+        `/api/v1/grants/id/${grantId}/${relation}/${relatedId}`,
+      ),
+  };
+}
+
+function readonlyGrantRelationApi(relation: "projects") {
+  return {
+    list: (grantId: string) =>
+      researchApi.get<{ data: ResearchGenericRecord[] }>(
+        `/api/v1/grants/id/${grantId}/${relation}`,
+      ),
+  };
+}
+
+function readonlyFunderRelationApi(relation: "grants" | "projects") {
+  return {
+    list: (funderId: string) =>
+      researchApi.get<{ data: ResearchGenericRecord[] }>(
+        `/api/v1/funders/id/${funderId}/${relation}`,
+      ),
+  };
+}
+
 function readonlyPartnerRelationApi(
   relation:
     | "projects"
@@ -778,6 +813,10 @@ export const researchServiceApi = {
     "/api/v1/publications",
   ),
   grants: crudApi<ResearchGrant, ResearchGrantPayload>("/api/v1/grants"),
+  grantRelations: {
+    projects: readonlyGrantRelationApi("projects"),
+    themes: grantBindingApi("themes"),
+  },
   centers: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/centers",
   ),
@@ -839,6 +878,10 @@ export const researchServiceApi = {
   funders: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/funders",
   ),
+  funderRelations: {
+    grants: readonlyFunderRelationApi("grants"),
+    projects: readonlyFunderRelationApi("projects"),
+  },
   endowments: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/endowments",
   ),
