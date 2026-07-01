@@ -181,6 +181,7 @@ export function ResearchPortfolioShell({
   body,
   controls,
   quickLinks,
+  footer,
   children,
 }: {
   id: string;
@@ -188,6 +189,7 @@ export function ResearchPortfolioShell({
   body: string;
   controls: ReactNode;
   quickLinks: PortfolioQuickLink[];
+  footer?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -206,6 +208,7 @@ export function ResearchPortfolioShell({
           {children}
         </div>
         <ResearchPortfolioQuickLinks links={quickLinks} />
+        {footer ? <div className="xl:col-span-2">{footer}</div> : null}
       </div>
     </section>
   );

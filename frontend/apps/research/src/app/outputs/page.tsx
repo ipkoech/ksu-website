@@ -133,6 +133,18 @@ export default async function OutputsPage({
             projects={projects.data}
           />
         }
+        footer={
+          visibleOutputs.length > 0 ? (
+            <ResearchListPagination
+              page={page}
+              totalPages={totalPages}
+              total={params.month ? visibleOutputs.length : outputs.total}
+              perPage={outputs.perPage}
+              path="/outputs"
+              params={params}
+            />
+          ) : null
+        }
       >
         {[outputs.error, centers.error, projects.error]
           .filter(Boolean)
@@ -148,15 +160,6 @@ export default async function OutputsPage({
               outputs={visibleOutputs}
               projectNames={projectNames}
               centerNames={centerNames}
-            />
-            <ResearchListPagination
-              page={page}
-              totalPages={totalPages}
-              total={params.month ? visibleOutputs.length : outputs.total}
-              perPage={outputs.perPage}
-              path="/outputs"
-              params={params}
-              className="mt-5"
             />
           </>
         ) : (

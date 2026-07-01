@@ -119,6 +119,18 @@ export default async function CentersPage({
         body="Search, filter, sort, and open published center profiles."
         quickLinks={quickLinks}
         controls={<CenterFilters params={params} years={years} months={months} />}
+        footer={
+          visibleCenters.length > 0 ? (
+            <ResearchListPagination
+              page={page}
+              totalPages={totalPages}
+              total={params.month ? visibleCenters.length : centers.total}
+              perPage={centers.perPage}
+              path="/centers"
+              params={params}
+            />
+          ) : null
+        }
       >
         {[centers.error, allCenters.error, facilities.error]
           .filter(Boolean)
@@ -142,15 +154,6 @@ export default async function CentersPage({
                 ))}
               </div>
             </div>
-            <ResearchListPagination
-              page={page}
-              totalPages={totalPages}
-              total={params.month ? visibleCenters.length : centers.total}
-              perPage={centers.perPage}
-              path="/centers"
-              params={params}
-              className="mt-5"
-            />
           </>
         ) : (
           <div className="mt-7">

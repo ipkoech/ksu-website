@@ -119,6 +119,18 @@ export default async function FacilitiesPage({
         body="Search, filter, sort, and open published infrastructure profiles."
         quickLinks={quickLinks}
         controls={<FacilityFilters params={params} centers={centers.data} years={years} months={months} />}
+        footer={
+          visibleFacilities.length > 0 ? (
+            <ResearchListPagination
+              page={page}
+              totalPages={totalPages}
+              total={params.month ? visibleFacilities.length : facilities.total}
+              perPage={facilities.perPage}
+              path="/facilities"
+              params={params}
+            />
+          ) : null
+        }
       >
         {[facilities.error, allFacilities.error, centers.error]
           .filter(Boolean)
@@ -142,15 +154,6 @@ export default async function FacilitiesPage({
                 ))}
               </div>
             </div>
-            <ResearchListPagination
-              page={page}
-              totalPages={totalPages}
-              total={params.month ? visibleFacilities.length : facilities.total}
-              perPage={facilities.perPage}
-              path="/facilities"
-              params={params}
-              className="mt-5"
-            />
           </>
         ) : (
           <div className="mt-7">

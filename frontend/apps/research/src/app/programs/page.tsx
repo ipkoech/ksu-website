@@ -142,15 +142,6 @@ export default async function ProgramsPage({
             {visiblePrograms.length > 0 ? (
               <div className="mt-5">
                 <ProgramsTable programs={visiblePrograms} />
-                <ResearchListPagination
-                  page={page}
-                  totalPages={totalPages}
-                  total={params.month ? visiblePrograms.length : programs.total}
-                  perPage={programs.perPage}
-                  path="/programs"
-                  params={params}
-                  className="mt-5"
-                />
               </div>
             ) : !errors.length ? (
               <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-5 text-sm font-medium text-slate-600">
@@ -160,6 +151,18 @@ export default async function ProgramsPage({
           </div>
 
           <ProgramQuickLinks />
+          {visiblePrograms.length > 0 ? (
+            <div className="xl:col-span-2">
+              <ResearchListPagination
+                page={page}
+                totalPages={totalPages}
+                total={params.month ? visiblePrograms.length : programs.total}
+                perPage={programs.perPage}
+                path="/programs"
+                params={params}
+              />
+            </div>
+          ) : null}
         </div>
       </section>
     </main>

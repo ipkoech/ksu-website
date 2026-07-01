@@ -153,6 +153,18 @@ export default async function ProjectsPage({
             view={view}
           />
         }
+        footer={
+          visibleProjects.length > 0 ? (
+            <ResearchListPagination
+              page={page}
+              totalPages={totalPages}
+              total={params.month ? visibleProjects.length : projects.total}
+              perPage={projects.perPage}
+              path="/projects"
+              params={params}
+            />
+          ) : null
+        }
       >
         {[projects.error, projectFilterRecords.error, centers.error, programs.error]
           .filter(Boolean)
@@ -169,15 +181,6 @@ export default async function ProjectsPage({
             ) : (
               <ProjectTable projects={visibleProjects} />
             )}
-            <ResearchListPagination
-              page={page}
-              totalPages={totalPages}
-              total={params.month ? visibleProjects.length : projects.total}
-              perPage={projects.perPage}
-              path="/projects"
-              params={params}
-              className="mt-5"
-            />
           </>
         ) : (
           <div className="mt-7">
