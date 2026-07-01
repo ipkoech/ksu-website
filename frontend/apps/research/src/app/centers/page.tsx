@@ -119,6 +119,7 @@ export default async function CentersPage({
         body="Centers, institutes, hubs, laboratories, and specialist units that coordinate research delivery, infrastructure, and public collaboration."
         primary={{ label: "Explore centers", href: "#center-directory" }}
         secondary={{ label: "View facilities", href: "/facilities" }}
+        illustration="centers"
       />
 
       <ResearchPortfolioShell

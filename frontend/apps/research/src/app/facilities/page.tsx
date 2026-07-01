@@ -114,6 +114,7 @@ export default async function FacilitiesPage({
         body="Facilities, farms, laboratories, and practical infrastructure that support field trials, experiments, services, and training."
         primary={{ label: "Explore facilities", href: "#facility-portfolio" }}
         secondary={{ label: "View centers", href: "/centers" }}
+        illustration="facilities"
       />
 
       <ResearchPortfolioShell

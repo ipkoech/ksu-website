@@ -120,6 +120,7 @@ export default async function ProjectsPage({
         body="Active research workstreams delivering evidence, outputs, field activity, and public value across Kisii University priority areas."
         primary={{ label: "Explore projects", href: "#project-portfolio" }}
         secondary={{ label: "View programmes", href: "/programs" }}
+        illustration="projects"
       />
 
       <ResearchPortfolioShell

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, ExternalLink } from "lucide-react";
 import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
 import { Badge, FilledBadge, StatusMessage } from "../../components/research-ui";
+import { ResearchPortfolioHero } from "../../components/research-portfolio";
 import {
   compactText,
   formatLabel,
@@ -101,7 +102,14 @@ export default async function ProgramsPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white text-slate-950">
-      <ProgramsHero />
+      <ResearchPortfolioHero
+        eyebrow="Published program portfolio"
+        title="Research Programs"
+        body="Strategic research umbrellas coordinating projects, expertise, funding, and outputs around Kisii University priority areas."
+        primary={{ label: "Explore programs", href: "#program-portfolio" }}
+        secondary={{ label: "View projects", href: "/projects" }}
+        illustration="programs"
+      />
 
       <section
         id="program-portfolio"
@@ -157,50 +165,6 @@ export default async function ProgramsPage({
         </div>
       </section>
     </main>
-  );
-}
-
-function ProgramsHero() {
-  return (
-    <section className="relative isolate overflow-hidden bg-slate-950 px-4 py-7 text-white sm:px-6 lg:px-8 lg:py-8 xl:px-10 2xl:px-12">
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-[url('/images/research/research-hero-imagegen.webp')] bg-cover bg-center"
-      />
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-gradient-to-r from-slate-950/78 via-slate-950/42 to-slate-950/8"
-      />
-      <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-white/20" />
-      <div className="relative mx-auto max-w-[1680px] py-2">
-        <span className="inline-flex rounded-md border border-white/25 bg-primary/80 px-3 py-1 text-xs font-semibold text-white shadow-sm backdrop-blur">
-          Published program portfolio
-        </span>
-        <h2 className="mt-4 max-w-2xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-none text-white sm:text-5xl lg:text-6xl">
-          Research Programs
-        </h2>
-        <p className="mt-4 max-w-xl text-pretty text-base leading-7 text-white/92 sm:text-lg">
-          Strategic research umbrellas coordinating projects, expertise, funding, and outputs
-          around Kisii University priority areas.
-        </p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link
-            href="#program-portfolio"
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
-          >
-            Explore programs
-            <ArrowRight aria-hidden className="h-4 w-4" />
-          </Link>
-          <Link
-            href="/projects"
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/40 bg-white/8 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/20"
-          >
-            View projects
-            <ArrowRight aria-hidden className="h-4 w-4" />
-          </Link>
-        </div>
-      </div>
-    </section>
   );
 }
 

@@ -130,6 +130,7 @@ export default async function OutputsPage({
         body="Datasets, tools, policy briefs, reports, prototypes, and public deliverables produced through Kisii University research."
         primary={{ label: "Explore outputs", href: "#output-catalogue" }}
         secondary={{ label: "Trace to projects", href: "/projects" }}
+        illustration="outputs"
       />
 
       <ResearchPortfolioShell
