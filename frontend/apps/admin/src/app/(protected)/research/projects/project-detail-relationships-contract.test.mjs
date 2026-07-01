@@ -71,6 +71,19 @@ assert(
 );
 
 assert(
+  detailSource.includes("defaultOpen={index === 0}") &&
+    detailSource.includes("aria-expanded={open}") &&
+    detailSource.includes("setOpen((current) => !current)"),
+  "Research detail sections should be collapsible to reduce long-page scrolling.",
+);
+
+assert(
+  source.includes('className="ml-auto"') &&
+    source.indexOf("<ResearchDetailGuide") > source.indexOf("<DropdownMenu>"),
+  "Project detail guide tooltip should sit at the far right of the action row.",
+);
+
+assert(
   !source.includes('publicHrefBase="/projects"'),
   "Project detail must not render the generic public page button.",
 );

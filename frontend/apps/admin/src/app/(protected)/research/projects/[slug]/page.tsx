@@ -301,9 +301,6 @@ function ProjectDetailActions({ project }: { project: ResearchGenericRecord }) {
 
   return (
     <>
-      <ResearchDetailGuide title="Research Project" status={project.status} isPublic={project.is_public}>
-        <ProjectRelationshipGuideContent />
-      </ResearchDetailGuide>
       <Button
         type="button"
         variant="outline"
@@ -386,6 +383,9 @@ function ProjectDetailActions({ project }: { project: ResearchGenericRecord }) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <ResearchDetailGuide title="Research Project" status={project.status} isPublic={project.is_public} className="ml-auto">
+        <ProjectRelationshipGuideContent />
+      </ResearchDetailGuide>
 
       <Sheet open={editOpen} onOpenChange={(open) => !isBusy && setEditOpen(open)}>
         <SheetContent className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl">

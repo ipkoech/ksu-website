@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ExternalLink } from "lucide-react";
-import type { ReactNode } from "react";
+import { ArrowLeft, ChevronDown, ExternalLink } from "lucide-react";
+import { useState, type ReactNode } from "react";
 import { PageHeader } from "@/components/layout";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, RichTextRenderer, Tabs, TabsContent, TabsList, TabsTrigger } from "@ksu/ui/components";
 import { auditLogsApi, type ResearchGenericRecord } from "@ksu/api-client";
@@ -148,8 +148,8 @@ export function ResearchAdminDetailPage({
         ) : (
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
             <div className="space-y-6">
-              {sections.map((section) => (
-                <DetailSectionCard key={section.title} record={record} section={section} />
+              {sections.map((section, index) => (
+                <DetailSectionCard key={section.title} record={record} section={section} defaultOpen={index === 0} />
               ))}
               {renderAfter?.(record)}
             </div>
@@ -350,10 +350,13 @@ function RelationshipFact({
 function DetailSectionCard({
   record,
   section,
+  defaultOpen = false,
 }: {
   record: ResearchGenericRecord;
   section: DetailSection;
+  defaultOpen?: boolean;
 }) {
+  const [open, setOpen] = useState(defaultOpen);
   const entries = section.fields
     .map((field) => ({ label: formatLabel(field), value: record[field] }))
     .filter((entry) => entry.value);
@@ -362,17 +365,27 @@ function DetailSectionCard({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{section.title}</CardTitle>
+      <CardHeader className="border-b p-0">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-4 px-6 py-4 text-left"
+          aria-expanded={open}
+          onClick={() => setOpen((current) => !current)}
+        >
+          <CardTitle>{section.title}</CardTitle>
+          <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {entries.map((entry) => (
-          <div key={entry.label}>
-            <p className="text-xs font-semibold uppercase text-muted-foreground">{entry.label}</p>
-            <RichTextRenderer content={formatRichTextValue(entry.value)} className="mt-1 text-sm leading-6" />
-          </div>
-        ))}
-      </CardContent>
+      {open ? (
+        <CardContent className="space-y-4 pt-4">
+          {entries.map((entry) => (
+            <div key={entry.label}>
+              <p className="text-xs font-semibold uppercase text-muted-foreground">{entry.label}</p>
+              <RichTextRenderer content={formatRichTextValue(entry.value)} className="mt-1 text-sm leading-6" />
+            </div>
+          ))}
+        </CardContent>
+      ) : null}
     </Card>
   );
 }
