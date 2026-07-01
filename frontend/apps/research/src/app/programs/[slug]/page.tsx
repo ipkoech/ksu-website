@@ -26,10 +26,8 @@ import {
   compactText,
   formatDate,
   formatLabel,
-  getCenters,
   generateSlugParams,
   getProgramBySlug,
-  getProgramProjects,
   getPublicationsFiltered,
   getRelatedOutputs,
 } from "../../../lib/research-public-data";
@@ -77,15 +75,12 @@ export default async function ProgramDetailPage({
   if (!data) notFound();
 
   const program = data as ResearchGenericRecord;
-  const [projects, publications, outputs, centers] = await Promise.all([
-    getProgramProjects(program.id),
+  const includedProjects = getIncludedProgramProjects(program);
+  const [publications, outputs] = await Promise.all([
     getPublicationsFiltered({ programId: program.id }),
     getRelatedOutputs({ programId: program.id }),
-    getCenters(),
   ]);
-  const center =
-    (program.center as ResearchGenericRecord | undefined) ||
-    centers.data.find((item) => item.id === program.center_id);
+  const center = program.center as ResearchGenericRecord | undefined;
   const title = getRecordTitle(program, "Research programme");
   const summary = getRecordSummary(program);
   const leadName =
@@ -112,7 +107,7 @@ export default async function ProgramDetailPage({
     { label: "Timeline", value: getRecordTimelineLabel(program) },
     { label: "Lead center", value: center ? getRecordTitle(center, "") : "" },
     { label: "Program lead", value: leadName },
-    { label: "Active projects", value: projects.data.length ? projects.data.length : "" },
+    { label: "Active projects", value: includedProjects.length ? includedProjects.length : "" },
     {
       label: "Funding",
       value: formatMoney(program.budget, program.currency) || compactText(program.funder_name),
@@ -129,7 +124,7 @@ export default async function ProgramDetailPage({
         program={program}
         contactEmail={contactEmail}
         briefUrl={briefUrl}
-        hasProjects={projects.data.length > 0}
+        hasProjects={includedProjects.length > 0}
       />
 
       <ProgramGlance
@@ -137,10 +132,10 @@ export default async function ProgramDetailPage({
         center={center}
         leadName={leadName}
         contactEmail={contactEmail}
-        projectCount={projects.data.length}
+        projectCount={includedProjects.length}
       />
 
-      {[error, projects.error, publications.error, outputs.error, centers.error].filter(Boolean).map((message, i) => (
+      {[error, publications.error, outputs.error].filter(Boolean).map((message, i) => (
         <section key={`${message}-${i}`} className="px-4 pt-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="mx-auto max-w-[1680px]">
             <StatusMessage tone="error">{message}</StatusMessage>
@@ -152,7 +147,7 @@ export default async function ProgramDetailPage({
         <div className="mx-auto grid max-w-[1680px] gap-6 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
           <div className="flex min-w-0 flex-col gap-6">
             {storySections.length > 0 ? <ProgramStoryTable sections={storySections} /> : null}
-            {projects.data.length > 0 ? <ProjectStreams projects={projects.data} /> : null}
+            {includedProjects.length > 0 ? <ProjectStreams projects={includedProjects} /> : null}
             {publications.data.length > 0 || outputs.data.length > 0 ? (
               <EvidenceOutputs publications={publications.data} outputs={outputs.data} />
             ) : null}
@@ -165,7 +160,7 @@ export default async function ProgramDetailPage({
               center={center}
               contactEmail={contactEmail}
             />
-            <QuickPaths center={center} program={program} hasProjects={projects.data.length > 0} />
+            <QuickPaths center={center} program={program} hasProjects={includedProjects.length > 0} />
             <ContactCard contactEmail={contactEmail} program={program} />
             {partners.length > 0 ? <PartnerChips partners={partners} /> : null}
           </aside>
@@ -639,6 +634,19 @@ function ContactCard({
       ) : null}
     </section>
   );
+}
+
+function getIncludedProgramProjects(program: ResearchGenericRecord) {
+  const projects = Array.isArray(program.projects)
+    ? (program.projects as unknown as ResearchProject[])
+    : [];
+  return projects
+    .filter((project) => project.is_active !== false && project.is_public !== false)
+    .sort((a, b) => {
+      const left = Number((a as unknown as ResearchGenericRecord).display_order ?? 100);
+      const right = Number((b as unknown as ResearchGenericRecord).display_order ?? 100);
+      return left - right;
+    });
 }
 
 function PartnerChips({ partners }: { partners: ResearchGenericRecord[] }) {

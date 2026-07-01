@@ -128,7 +128,7 @@ const unavailableMessage =
   "Research records are temporarily unavailable. Try again later or contact the research office.";
 
 const researchPublicListFields =
-  "id,title,name,slug,code,summary,abstract,description,about,mission,vision,mandate,objectives,functions,services_summary,leadership_message,strategic_priorities,category,status,is_active,is_public,is_featured,project_type,publication_type,grant_type,center_type,farm_type,program_type,output_type,innovation_type,partner_type,consultancy_type,fund_type,event_type,article_type,news_type,resource_type,service_type,guideline_type,scholarship_type,delivery_mode,access_type,development_stage,ip_status,commercialization_status,partnership_level,client_type,center_id,program_id,project_id,partner_id,year,start_date,end_date,deadline,event_date,published_at,publication_date,progress_percentage,cover_image_url,logo_url,url,pdf_url,website";
+  "id,title,name,slug,code,summary,abstract,description,about,mission,vision,mandate,objectives,functions,services_summary,leadership_message,strategic_priorities,category,status,is_active,is_public,is_featured,project_type,publication_type,grant_type,center_type,farm_type,program_type,output_type,innovation_type,partner_type,consultancy_type,fund_type,event_type,article_type,news_type,resource_type,service_type,guideline_type,scholarship_type,delivery_mode,access_type,development_stage,ip_status,commercialization_status,partnership_level,client_type,center_id,program_id,project_id,partner_id,year,start_date,end_date,deadline,event_date,published_at,publication_date,progress_percentage,cover_image_id,cover_image_url,logo_url,url,pdf_url,website";
 
 const researchPublicDetailFields = `${researchPublicListFields},background,objectives,methodology,expected_outcomes,impact,deliverables,budget,currency,funder_name,journal_name,publisher,volume,issue,pages,article_number,conference_name,conference_location,conference_date,book_title,editors,edition,isbn,issn,doi,pmid,arxiv_id,is_open_access,impact_factor,quartile,h_index,funding_acknowledgment,contact_email,contact_phone,email,phone,address,location,venue,registration_url,application_url,download_url,file_url,eligibility,requirements,benefits,scope,content,body,rich_text,plain_text,mission,vision,mandate,head_message,office_location,social_links`;
 const researchMainContentFields =
@@ -635,6 +635,8 @@ export function getProgramBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.programs.getBySlug(slug, {
       fields: researchPublicDetailFields,
+      include:
+        "center:id,name,slug,code,acronym,center_type;projects:id,title,slug,code,status,start_date,end_date,progress_percentage,is_active,is_public,display_order",
     }),
   );
 }
