@@ -36,6 +36,7 @@ import { Activity, Building2, CalendarDays, Edit3, Eye, EyeOff, Filter, Link2, M
 import { researchPartnerRelationshipAdapter } from "@/components/relationships/relationship-adapters";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ResearchAdminDetailPage, ResearchDetailRelationshipTabs } from "../../_components/research-admin-detail-page";
+import { ResearchDetailGuide } from "../../_components/research-guidance";
 import { RelatedRecordsCard, RelatedRecordsGrid } from "../../_components/research-detail-relationships";
 
 type ProjectActionConfirmation = {
@@ -83,6 +84,7 @@ export default function ResearchProjectDetailPage() {
       resource={researchServiceApi.projects}
       backHref="/research/projects"
       actionsSlot={renderProjectDetailActions}
+      showDetailGuide={false}
       labelFields={["project_type", "status"]}
       factFields={[
         { label: "Code", field: "code" },
@@ -171,6 +173,9 @@ function ProjectDetailActions({ project }: { project: ResearchGenericRecord }) {
 
   return (
     <>
+      <ResearchDetailGuide title="Research Project" status={project.status} isPublic={project.is_public}>
+        <ProjectRelationshipGuideContent />
+      </ResearchDetailGuide>
       <Button
         type="button"
         variant="outline"
@@ -221,18 +226,18 @@ function ProjectDetailActions({ project }: { project: ResearchGenericRecord }) {
           >
             {isActive ? "Deactivate" : "Activate"}
           </DropdownMenuItem>
-          {project.status !== "completed" || isActive ? (
+          {project.status !== "completed" ? (
             <DropdownMenuItem
               onClick={() =>
                 setConfirmation({
-                  title: "Retire project?",
-                  description: "This will mark the project completed and inactive, matching the project list workflow action.",
-                  confirmText: "Retire",
-                  payload: { status: "completed", is_active: false },
+                  title: "Mark project completed?",
+                  description: "This will update the project status to completed. Use Deactivate separately if the project should no longer appear in active workflows.",
+                  confirmText: "Mark completed",
+                  payload: { status: "completed" },
                 })
               }
             >
-              Retire
+              Mark completed
             </DropdownMenuItem>
           ) : null}
           <DropdownMenuSeparator />
@@ -712,7 +717,6 @@ function ProjectRelationshipWorkspace({
 
   return (
     <>
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_260px]">
       <div className="space-y-4">
         <div>
           <h2 className="text-base font-semibold">Relationship mapping and binding</h2>
@@ -783,8 +787,6 @@ function ProjectRelationshipWorkspace({
             <RelationshipMetricCard key={config.key} config={config} />
           ))}
         </div>
-      </div>
-      <RelationshipGuide />
       </div>
       <ConfirmDialog
         open={Boolean(confirmation)}
@@ -997,11 +999,11 @@ function RelationshipMetricCard({ config }: { config: RelationshipConfig }) {
   );
 }
 
-function RelationshipGuide() {
+function ProjectRelationshipGuideContent() {
   return (
-    <aside className="space-y-5 rounded-lg border bg-background p-4">
+    <div className="space-y-4 border-t pt-5">
       <div>
-        <h3 className="font-semibold">Relationship guide</h3>
+        <p className="text-xs font-semibold uppercase text-muted-foreground">Relationship mapping</p>
         <p className="mt-2 text-sm text-muted-foreground">
           Map this project to existing records in the system to build connections and enable reporting.
         </p>
@@ -1020,7 +1022,7 @@ function RelationshipGuide() {
           </div>
         </div>
       ))}
-      <div className="rounded-md border p-3 text-center text-xs">
+      <div className="rounded-md border bg-background p-3 text-center text-xs">
         <p className="font-medium">Project</p>
         <p className="mt-1 text-muted-foreground">Current project</p>
         <div className="my-2 text-muted-foreground">↓</div>
@@ -1034,7 +1036,7 @@ function RelationshipGuide() {
           <p className="text-muted-foreground">Existing record in the system</p>
         </div>
       </div>
-    </aside>
+    </div>
   );
 }
 

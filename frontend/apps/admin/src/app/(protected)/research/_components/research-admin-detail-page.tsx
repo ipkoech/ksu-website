@@ -51,6 +51,7 @@ export function ResearchAdminDetailPage({
   editHref,
   publicHrefBase,
   actionsSlot,
+  showDetailGuide = true,
   slugParam = "slug",
   lookup = "slug",
   labelFields = ["status"],
@@ -67,6 +68,7 @@ export function ResearchAdminDetailPage({
   editHref?: (record: ResearchGenericRecord) => string | null | undefined;
   publicHrefBase?: string;
   actionsSlot?: (record: ResearchGenericRecord) => ReactNode;
+  showDetailGuide?: boolean;
   slugParam?: string;
   lookup?: "slug" | "id";
   labelFields?: string[];
@@ -152,11 +154,13 @@ export function ResearchAdminDetailPage({
               {renderAfter?.(record)}
             </div>
             <aside className="space-y-6">
-              <ResearchDetailGuide
-                title={title}
-                status={record.status}
-                isPublic={record.is_public}
-              />
+              {showDetailGuide ? (
+                <ResearchDetailGuide
+                  title={title}
+                  status={record.status}
+                  isPublic={record.is_public}
+                />
+              ) : null}
               <Card>
                 <CardHeader>
                   <CardTitle>Record Details</CardTitle>

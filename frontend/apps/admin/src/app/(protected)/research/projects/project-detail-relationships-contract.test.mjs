@@ -50,3 +50,13 @@ assert(
   !source.includes('publicHrefBase="/projects"'),
   "Project detail must not render the generic public page button.",
 );
+
+assert(
+  source.includes("showDetailGuide={false}") && source.includes("<ProjectRelationshipGuideContent />"),
+  "Project detail should move relationship guidance into the project guide trigger.",
+);
+
+assert(
+  !source.includes("Retire"),
+  "Project actions should use clear workflow labels instead of Retire.",
+);

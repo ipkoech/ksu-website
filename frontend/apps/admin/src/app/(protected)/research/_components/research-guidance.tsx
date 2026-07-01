@@ -582,11 +582,13 @@ export function ResearchDetailGuide({
   status,
   isPublic,
   className,
+  children,
 }: {
   title?: string;
   status?: unknown;
   isPublic?: unknown;
   className?: string;
+  children?: ReactNode;
 }) {
   const guide = getResearchDetailGuidance(title);
   if (!guide) return null;
@@ -641,6 +643,7 @@ export function ResearchDetailGuide({
             <span>{guide.publicPortalNote}</span>
           </div>
         ) : null}
+        {children}
       </div>
     </ResearchGuideTrigger>
   );
