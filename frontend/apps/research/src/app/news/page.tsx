@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
-import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
+import { pageFromSearchParams } from "@ksu/ui/components";
+import { ResearchListPagination } from "../../components/research-list-pagination";
 import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
 import {
   Badge,
@@ -46,6 +47,7 @@ type NewsSearchParams = {
   year?: string;
   month?: string;
   sort?: string;
+  page?: string;
 };
 
 const articleTypes = ["article", "feature", "opinion", "case_study", "research_story"];
@@ -151,12 +153,13 @@ export default async function NewsPage({
                 <ArticleRow key={record.id} record={record} />
               ))}
             </div>
-            <ListPagination
+            <ResearchListPagination
               page={page}
               totalPages={totalPages}
-              total={articles.total}
+              total={params.month ? visibleArticles.length : articles.total}
               perPage={articles.perPage}
-              baseHref="/news"
+              path="/news"
+              params={params}
             />
           </>
         ) : (

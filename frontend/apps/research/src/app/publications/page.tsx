@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
+import { pageFromSearchParams } from "@ksu/ui/components";
+import { ResearchListPagination } from "../../components/research-list-pagination";
 import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
 import { PrimaryLink, ResearchSection, SecondaryLink, StatusMessage } from "../../components/research-ui";
 import {
@@ -35,6 +36,7 @@ type PublicationSearchParams = {
   year?: string;
   month?: string;
   sort?: string;
+  page?: string;
 };
 
 const publicationTypes = [
@@ -88,10 +90,12 @@ export default async function PublicationsPage({
     getCenters(),
     getProjects(),
   ]);
-  const totalPages = Math.ceil(publications.total / publications.perPage);
   const years = getRecordYears(allPublications.data);
   const months = getRecordMonths(allPublications.data, params.year);
   const visiblePublications = filterRecordsByMonth(publications.data, params.year, params.month);
+  const totalPages = Math.ceil(
+    (params.month ? visiblePublications.length : publications.total) / publications.perPage,
+  );
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
@@ -151,12 +155,13 @@ export default async function PublicationsPage({
                 />
               ))}
             </div>
-            <ListPagination
+            <ResearchListPagination
               page={page}
               totalPages={totalPages}
-              total={publications.total}
+              total={params.month ? visiblePublications.length : publications.total}
               perPage={publications.perPage}
-              baseHref="/publications"
+              path="/publications"
+              params={params}
             />
           </>
         ) : (

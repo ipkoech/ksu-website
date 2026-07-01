@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ExternalLink } from "lucide-react";
-import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
+import { pageFromSearchParams } from "@ksu/ui/components";
+import { ResearchListPagination } from "../../components/research-list-pagination";
 import { Badge, FilledBadge, StatusMessage } from "../../components/research-ui";
 import { ResearchPortfolioHero } from "../../components/research-portfolio";
 import {
@@ -98,7 +99,6 @@ export default async function ProgramsPage({
     (params.month ? visiblePrograms.length : programs.total) / programs.perPage,
   );
   const errors = [programs.error, centers.error].filter(Boolean);
-  const baseHref = getProgramsPageHref(params);
 
   return (
     <main id="research-main" className="min-h-screen bg-white text-slate-950">
@@ -145,12 +145,13 @@ export default async function ProgramsPage({
             {visiblePrograms.length > 0 ? (
               <div className="mt-5">
                 <ProgramsTable programs={visiblePrograms} />
-                <ListPagination
+                <ResearchListPagination
                   page={page}
                   totalPages={totalPages}
                   total={params.month ? visiblePrograms.length : programs.total}
                   perPage={programs.perPage}
-                  baseHref={baseHref}
+                  path="/programs"
+                  params={params}
                   className="mt-5"
                 />
               </div>
@@ -315,14 +316,4 @@ function getActiveFlags(value?: string) {
   if (value === "inactive") return { isActive: false };
   if (value === "featured") return { isActive: true, isFeatured: true };
   return { isActive: true };
-}
-
-function getProgramsPageHref(params: ProgramSearchParams) {
-  const query = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (!value || key === "page") continue;
-    query.set(key, value);
-  }
-  const search = query.toString();
-  return search ? `/programs?${search}` : "/programs";
 }

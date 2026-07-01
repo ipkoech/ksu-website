@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
-import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
+import { pageFromSearchParams } from "@ksu/ui/components";
 import { ProgramTableControls } from "../programs/program-table-controls";
+import { ResearchListPagination } from "../../components/research-list-pagination";
 import {
   ResearchPortfolioHero,
   ResearchPortfolioShell,
@@ -118,7 +119,6 @@ export default async function OutputsPage({
     ? visibleOutputs.filter((output) => output.id !== featuredOutput.id)
     : visibleOutputs;
 
-  const baseHref = getOutputsPageHref(params);
   const projectNames = new Map(projects.data.map((project) => [project.id, project.title ?? project.name ?? project.code ?? ""]));
   const centerNames = new Map(centers.data.map((center) => [center.id, center.name ?? center.title ?? center.code ?? ""]));
 
@@ -185,12 +185,13 @@ export default async function OutputsPage({
                 ))}
               </div>
             </div>
-            <ListPagination
+            <ResearchListPagination
               page={page}
               totalPages={totalPages}
               total={params.month ? visibleOutputs.length : outputs.total}
               perPage={outputs.perPage}
-              baseHref={baseHref}
+              path="/outputs"
+              params={params}
               className="mt-5"
             />
           </>
@@ -379,14 +380,4 @@ function getActiveFlags(value?: string) {
   if (value === "inactive") return { isActive: false };
   if (value === "featured") return { isActive: true, isFeatured: true };
   return { isActive: true };
-}
-
-function getOutputsPageHref(params: OutputSearchParams) {
-  const query = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (!value || key === "page") continue;
-    query.set(key, value);
-  }
-  const search = query.toString();
-  return search ? `/outputs?${search}` : "/outputs";
 }

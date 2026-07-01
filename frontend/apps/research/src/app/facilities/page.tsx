@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
-import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
+import { pageFromSearchParams } from "@ksu/ui/components";
 import { ProgramTableControls } from "../programs/program-table-controls";
+import { ResearchListPagination } from "../../components/research-list-pagination";
 import {
   ResearchPortfolioHero,
   ResearchPortfolioShell,
@@ -104,7 +105,6 @@ export default async function FacilitiesPage({
   const totalPages = Math.ceil(
     (params.month ? visibleFacilities.length : facilities.total) / facilities.perPage,
   );
-  const baseHref = getFacilitiesPageHref(params);
 
   return (
     <main id="research-main" className="min-h-screen bg-white text-slate-950">
@@ -147,12 +147,13 @@ export default async function FacilitiesPage({
                 ))}
               </div>
             </div>
-            <ListPagination
+            <ResearchListPagination
               page={page}
               totalPages={totalPages}
               total={params.month ? visibleFacilities.length : facilities.total}
               perPage={facilities.perPage}
-              baseHref={baseHref}
+              path="/facilities"
+              params={params}
               className="mt-5"
             />
           </>
@@ -287,14 +288,4 @@ function getActiveFlags(value?: string) {
   if (value === "inactive") return { isActive: false };
   if (value === "featured") return { isActive: true, isFeatured: true };
   return { isActive: true };
-}
-
-function getFacilitiesPageHref(params: FacilitySearchParams) {
-  const query = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (!value || key === "page") continue;
-    query.set(key, value);
-  }
-  const search = query.toString();
-  return search ? `/facilities?${search}` : "/facilities";
 }
