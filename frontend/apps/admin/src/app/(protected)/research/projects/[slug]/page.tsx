@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { eventsApi, researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
 import { toast } from "@ksu/ui";
@@ -14,6 +15,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DropdownMenu,
@@ -23,11 +25,51 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Input,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@ksu/ui/components";
-import { Activity, Building2, CalendarDays, Filter, Link2, MoreVertical, Plus, Search, SortAsc, Target, Unlink, UsersRound } from "lucide-react";
+import { Activity, Building2, CalendarDays, Edit3, Eye, EyeOff, Filter, Link2, MoreVertical, Plus, Search, SortAsc, Target, Trash2, Unlink, UsersRound } from "lucide-react";
 import { researchPartnerRelationshipAdapter } from "@/components/relationships/relationship-adapters";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ResearchAdminDetailPage, ResearchDetailRelationshipTabs } from "../../_components/research-admin-detail-page";
 import { RelatedRecordsCard, RelatedRecordsGrid } from "../../_components/research-detail-relationships";
+
+type ProjectActionConfirmation = {
+  title: string;
+  description: string;
+  confirmText: string;
+  variant?: "default" | "warning" | "destructive" | "success";
+  payload?: Record<string, unknown>;
+  deleteRecord?: boolean;
+};
+
+type ProjectEditForm = {
+  title: string;
+  code: string;
+  project_type: string;
+  status: string;
+  progress_percentage: string;
+};
+
+const PROJECT_TYPE_OPTIONS = [
+  { value: "research", label: "Research" },
+  { value: "collaborative", label: "Collaborative" },
+  { value: "consultancy", label: "Consultancy" },
+  { value: "community", label: "Community" },
+  { value: "innovation", label: "Innovation" },
+];
+
+const PROJECT_STATUS_OPTIONS = [
+  { value: "draft", label: "Draft" },
+  { value: "planned", label: "Planned" },
+  { value: "ongoing", label: "Ongoing" },
+  { value: "completed", label: "Completed" },
+  { value: "suspended", label: "Suspended" },
+];
 
 export default function ResearchProjectDetailPage() {
   return (
@@ -36,7 +78,7 @@ export default function ResearchProjectDetailPage() {
       description="View public profile fields, project dates, progress, and publication-ready details."
       resource={researchServiceApi.projects}
       backHref="/research/projects"
-      publicHrefBase="/projects"
+      actionsSlot={(record) => <ProjectDetailActions project={record} />}
       labelFields={["project_type", "status"]}
       factFields={[
         { label: "Code", field: "code" },
@@ -55,6 +97,257 @@ export default function ResearchProjectDetailPage() {
       renderAfter={(record) => <ProjectRelations project={record} />}
     />
   );
+}
+
+function ProjectDetailActions({ project }: { project: ResearchGenericRecord }) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [editOpen, setEditOpen] = useState(false);
+  const [confirmation, setConfirmation] = useState<ProjectActionConfirmation | null>(null);
+  const [form, setForm] = useState<ProjectEditForm>(() => buildProjectEditForm(project));
+
+  const refreshProject = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["research", "detail"] });
+    await queryClient.invalidateQueries({ queryKey: ["research", "projects"] });
+  };
+
+  const updateMutation = useMutation({
+    mutationFn: (payload: Record<string, unknown>) => researchServiceApi.projects.update(project.id, payload),
+    onSuccess: async () => {
+      toast.success("Project updated");
+      setEditOpen(false);
+      setConfirmation(null);
+      await refreshProject();
+    },
+    onError: () => toast.error("Could not update project"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => researchServiceApi.projects.delete(project.id),
+    onSuccess: async () => {
+      toast.success("Project deleted");
+      setConfirmation(null);
+      await queryClient.invalidateQueries({ queryKey: ["research", "projects"] });
+      router.push("/research/projects");
+    },
+    onError: () => toast.error("Could not delete project"),
+  });
+
+  const isBusy = updateMutation.isPending || deleteMutation.isPending;
+  const isPublic = Boolean(project.is_public);
+  const isActive = project.is_active !== false;
+
+  const submitEdit = () => {
+    const progress = Number(form.progress_percentage);
+    if (!form.title.trim()) {
+      toast.error("Project title is required");
+      return;
+    }
+    if (Number.isNaN(progress) || progress < 0 || progress > 100) {
+      toast.error("Progress must be between 0 and 100");
+      return;
+    }
+    updateMutation.mutate({
+      title: form.title.trim(),
+      code: form.code.trim() || null,
+      project_type: form.project_type || null,
+      status: form.status || null,
+      progress_percentage: progress,
+    });
+  };
+
+  const confirmAction = () => {
+    if (!confirmation) return;
+    if (confirmation.deleteRecord) {
+      deleteMutation.mutate();
+      return;
+    }
+    updateMutation.mutate(confirmation.payload ?? {});
+  };
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => {
+          setForm(buildProjectEditForm(project));
+          setEditOpen(true);
+        }}
+      >
+        <Edit3 className="mr-2 h-4 w-4" />
+        Edit Project
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button type="button" variant="outline">
+            <MoreVertical className="mr-2 h-4 w-4" />
+            More actions
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel>Project actions</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() =>
+              setConfirmation({
+                title: isPublic ? "Unpublish project?" : "Publish project?",
+                description: isPublic
+                  ? "This project will no longer be visible on the public research site."
+                  : "This project will become visible on the public research site.",
+                confirmText: isPublic ? "Unpublish" : "Publish",
+                payload: { is_public: !isPublic },
+              })
+            }
+          >
+            {isPublic ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+            {isPublic ? "Unpublish" : "Publish"}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() =>
+              setConfirmation({
+                title: isActive ? "Deactivate project?" : "Activate project?",
+                description: isActive
+                  ? "The project will remain in the system but will be marked inactive."
+                  : "The project will be available again for active research workflows.",
+                confirmText: isActive ? "Deactivate" : "Activate",
+                payload: { is_active: !isActive },
+              })
+            }
+          >
+            {isActive ? "Deactivate" : "Activate"}
+          </DropdownMenuItem>
+          {project.status !== "completed" || isActive ? (
+            <DropdownMenuItem
+              onClick={() =>
+                setConfirmation({
+                  title: "Retire project?",
+                  description: "This will mark the project completed and inactive, matching the project list workflow action.",
+                  confirmText: "Retire",
+                  payload: { status: "completed", is_active: false },
+                })
+              }
+            >
+              Retire
+            </DropdownMenuItem>
+          ) : null}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive"
+            onClick={() =>
+              setConfirmation({
+                title: "Delete project?",
+                description: "This removes the project record from the admin system. This action cannot be undone.",
+                confirmText: "Delete project",
+                variant: "destructive",
+                deleteRecord: true,
+              })
+            }
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Dialog open={editOpen} onOpenChange={(open) => !isBusy && setEditOpen(open)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit project</DialogTitle>
+            <DialogDescription>Update the key project fields shown on this detail page.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-2 sm:grid-cols-2">
+            <label className="space-y-2 text-sm font-medium sm:col-span-2">
+              <span>Title</span>
+              <Input value={form.title} disabled={isBusy} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} />
+            </label>
+            <label className="space-y-2 text-sm font-medium">
+              <span>Code</span>
+              <Input value={form.code} disabled={isBusy} onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))} />
+            </label>
+            <label className="space-y-2 text-sm font-medium">
+              <span>Progress</span>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                value={form.progress_percentage}
+                disabled={isBusy}
+                onChange={(event) => setForm((current) => ({ ...current, progress_percentage: event.target.value }))}
+              />
+            </label>
+            <label className="space-y-2 text-sm font-medium">
+              <span>Type</span>
+              <Select value={form.project_type || "none"} disabled={isBusy} onValueChange={(value) => setForm((current) => ({ ...current, project_type: value === "none" ? "" : value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="none">No type</SelectItem>
+                    {PROJECT_TYPE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </label>
+            <label className="space-y-2 text-sm font-medium">
+              <span>Status</span>
+              <Select value={form.status || "none"} disabled={isBusy} onValueChange={(value) => setForm((current) => ({ ...current, status: value === "none" ? "" : value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="none">No status</SelectItem>
+                    {PROJECT_STATUS_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </label>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" disabled={isBusy} onClick={() => setEditOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" disabled={isBusy} onClick={submitEdit}>
+              {updateMutation.isPending ? "Saving..." : "Save changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={Boolean(confirmation)}
+        onOpenChange={(open) => {
+          if (!open && !isBusy) setConfirmation(null);
+        }}
+        title={confirmation?.title ?? ""}
+        description={confirmation?.description ?? ""}
+        confirmText={confirmation?.confirmText ?? "Confirm"}
+        variant={confirmation?.variant ?? "default"}
+        isLoading={isBusy}
+        onConfirm={confirmAction}
+      />
+    </>
+  );
+}
+
+function buildProjectEditForm(project: ResearchGenericRecord): ProjectEditForm {
+  return {
+    title: String(project.title ?? ""),
+    code: String(project.code ?? ""),
+    project_type: String(project.project_type ?? ""),
+    status: String(project.status ?? ""),
+    progress_percentage: String(project.progress_percentage ?? 0),
+  };
 }
 
 function ProjectRelations({ project }: { project: ResearchGenericRecord }) {
@@ -243,6 +536,14 @@ type RelationshipConfig = {
   unbindRecord?: (recordId: string) => Promise<unknown>;
 };
 
+type RelationshipConfirmation = {
+  title: string;
+  description: string;
+  confirmText: string;
+  variant?: "default" | "warning" | "destructive" | "success";
+  onConfirm: () => void;
+};
+
 function ProjectRelationshipWorkspace({
   projectId,
   relationBaseKey,
@@ -254,6 +555,7 @@ function ProjectRelationshipWorkspace({
   const [activeKind, setActiveKind] = useState<RelationshipKind>("partners");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
+  const [confirmation, setConfirmation] = useState<RelationshipConfirmation | null>(null);
 
   const configs = useMemo<RelationshipConfig[]>(() => [
     {
@@ -375,9 +677,38 @@ function ProjectRelationshipWorkspace({
   const bindSelected = () => {
     for (const id of selected) bindMutation.mutate(id);
   };
+  const requestRelationshipConfirmation = (nextConfirmation: RelationshipConfirmation) => {
+    setConfirmation(nextConfirmation);
+  };
+  const requestBindConfirmation = (id: string, label: string) => {
+    requestRelationshipConfirmation({
+      title: `Bind ${active.relationship.toLowerCase()}`,
+      description: `Bind "${label}" to this project as ${active.relationship.toLowerCase()}?`,
+      confirmText: "Bind",
+      onConfirm: () => bindMutation.mutate(id),
+    });
+  };
+  const requestBindSelectedConfirmation = () => {
+    requestRelationshipConfirmation({
+      title: `Bind selected ${active.label.toLowerCase()}`,
+      description: `Bind ${selected.length} selected ${active.label.toLowerCase()} to this project?`,
+      confirmText: "Bind selected",
+      onConfirm: bindSelected,
+    });
+  };
+  const requestUnbindConfirmation = (id: string, label: string) => {
+    requestRelationshipConfirmation({
+      title: `Unbind ${active.relationship.toLowerCase()}`,
+      description: `Remove the relationship between this project and "${label}"? The related record itself will not be deleted.`,
+      confirmText: "Unbind",
+      variant: "destructive",
+      onConfirm: () => unbindMutation.mutate(id),
+    });
+  };
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_260px]">
+    <>
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_260px]">
       <div className="space-y-4">
         <div>
           <h2 className="text-base font-semibold">Relationship mapping and binding</h2>
@@ -426,7 +757,7 @@ function ProjectRelationshipWorkspace({
             isLoading={linkedQuery.isLoading}
             emptyLabel={`No ${active.label.toLowerCase()} are linked.`}
             actionLabel="Unbind"
-            onAction={active.unbindRecord ? (id) => unbindMutation.mutate(id) : undefined}
+            onAction={active.unbindRecord ? requestUnbindConfirmation : undefined}
             actionPending={unbindMutation.isPending}
           />
           <RelationshipCandidateTable
@@ -438,8 +769,8 @@ function ProjectRelationshipWorkspace({
             relationship={active.relationship}
             canBind={Boolean(active.bindRecord)}
             isLoading={candidatesQuery.isLoading}
-            onBind={(id) => bindMutation.mutate(id)}
-            onBindSelected={bindSelected}
+            onBind={requestBindConfirmation}
+            onBindSelected={requestBindSelectedConfirmation}
             actionPending={bindMutation.isPending}
           />
         </div>
@@ -450,7 +781,21 @@ function ProjectRelationshipWorkspace({
         </div>
       </div>
       <RelationshipGuide />
-    </div>
+      </div>
+      <ConfirmDialog
+        open={Boolean(confirmation)}
+        onOpenChange={(open) => !open && setConfirmation(null)}
+        title={confirmation?.title ?? "Confirm relationship change"}
+        description={confirmation?.description ?? ""}
+        confirmText={confirmation?.confirmText ?? "Confirm"}
+        variant={confirmation?.variant}
+        isLoading={bindMutation.isPending || unbindMutation.isPending}
+        onConfirm={() => {
+          confirmation?.onConfirm();
+          setConfirmation(null);
+        }}
+      />
+    </>
   );
 }
 
@@ -470,7 +815,7 @@ function RelationshipTable({
   isLoading: boolean;
   emptyLabel: string;
   actionLabel: string;
-  onAction?: (id: string) => void;
+  onAction?: (id: string, label: string) => void;
   actionPending: boolean;
 }) {
   return (
@@ -520,7 +865,7 @@ function RelationshipTable({
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
                         disabled={actionPending}
-                        onClick={() => onAction(record.id)}
+                        onClick={() => onAction(record.id, record.label)}
                       >
                         <Unlink className="mr-2 h-4 w-4" />
                         {actionLabel}
@@ -558,7 +903,7 @@ function RelationshipCandidateTable({
   relationship: string;
   canBind: boolean;
   isLoading: boolean;
-  onBind: (id: string) => void;
+  onBind: (id: string, label: string) => void;
   onBindSelected: () => void;
   actionPending: boolean;
 }) {
@@ -605,7 +950,7 @@ function RelationshipCandidateTable({
                   {candidate.description ? <p className="mt-0.5 truncate text-xs text-muted-foreground">{candidate.description}</p> : null}
                 </div>
                 <span className="text-xs text-muted-foreground">{relationship}</span>
-                <Button type="button" size="sm" variant="outline" disabled={!canBind || actionPending} onClick={() => onBind(candidate.id)}>
+                <Button type="button" size="sm" variant="outline" disabled={!canBind || actionPending} onClick={() => onBind(candidate.id, candidate.label)}>
                   Bind
                 </Button>
               </div>
@@ -723,6 +1068,7 @@ function ProjectRelationBindingCard({
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [confirmation, setConfirmation] = useState<RelationshipConfirmation | null>(null);
   const linkedQuery = useQuery({ queryKey, queryFn });
   const linkedRecords = useMemo(() => linkedQuery.data?.data ?? [], [linkedQuery.data]);
   const linkedIds = useMemo(() => new Set(linkedRecords.map((record) => String(record.id))), [linkedRecords]);
@@ -765,6 +1111,26 @@ function ProjectRelationBindingCard({
     },
     onError: () => toast.error(`Failed to detach ${relationshipLabel.toLowerCase()}`),
   });
+  const requestRelationshipConfirmation = (nextConfirmation: RelationshipConfirmation) => {
+    setConfirmation(nextConfirmation);
+  };
+  const requestBindConfirmation = (id: string, label: string) => {
+    requestRelationshipConfirmation({
+      title: `Bind ${relationshipLabel.toLowerCase()}`,
+      description: `Bind "${label}" to this project as ${relationshipLabel.toLowerCase()}?`,
+      confirmText: "Bind",
+      onConfirm: () => bindMutation.mutate(id),
+    });
+  };
+  const requestUnbindConfirmation = (id: string, label: string) => {
+    requestRelationshipConfirmation({
+      title: `Unbind ${relationshipLabel.toLowerCase()}`,
+      description: `Remove the relationship between this project and "${label}"? The related record itself will not be deleted.`,
+      confirmText: "Unbind",
+      variant: "destructive",
+      onConfirm: () => unbindMutation.mutate(id),
+    });
+  };
 
   return (
     <>
@@ -816,7 +1182,7 @@ function ProjectRelationBindingCard({
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
                               disabled={unbindMutation.isPending}
-                              onClick={() => unbindMutation.mutate(String(record.id))}
+                              onClick={() => requestUnbindConfirmation(String(record.id), recordTitle(record))}
                             >
                               <Unlink className="mr-2 h-4 w-4" />
                               Unbind
@@ -872,7 +1238,7 @@ function ProjectRelationBindingCard({
                       size="sm"
                       variant="outline"
                       disabled={bindMutation.isPending}
-                      onClick={() => bindMutation.mutate(String(candidate.id))}
+                      onClick={() => requestBindConfirmation(String(candidate.id), candidate.label)}
                     >
                       <Link2 className="mr-2 h-4 w-4" />
                       Bind
@@ -884,6 +1250,19 @@ function ProjectRelationBindingCard({
           </div>
         </DialogContent>
       </Dialog>
+      <ConfirmDialog
+        open={Boolean(confirmation)}
+        onOpenChange={(open) => !open && setConfirmation(null)}
+        title={confirmation?.title ?? "Confirm relationship change"}
+        description={confirmation?.description ?? ""}
+        confirmText={confirmation?.confirmText ?? "Confirm"}
+        variant={confirmation?.variant}
+        isLoading={bindMutation.isPending || unbindMutation.isPending}
+        onConfirm={() => {
+          confirmation?.onConfirm();
+          setConfirmation(null);
+        }}
+      />
     </>
   );
 }

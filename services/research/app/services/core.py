@@ -7,6 +7,7 @@ import logging
 from typing import Any
 
 import httpx
+from fastapi import HTTPException, status
 from ksu_common.models import AuditLog
 from sqlalchemy import delete, func, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -210,8 +211,31 @@ class ProjectRelationshipService:
     """Manage existing M:N project relationship tables."""
 
     @staticmethod
+    async def _ensure_record(db: AsyncSession, model: Any, record_id: uuid.UUID, error_message: str) -> Any:
+        result = await db.execute(model.active_query().where(model.id == record_id))
+        record = result.scalar_one_or_none()
+        if record is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error_message)
+        return record
+
+    @staticmethod
     async def _ensure_project(db: AsyncSession, project_id: uuid.UUID) -> ResearchProject:
-        return await ResearchProject.get_or_raise(db, project_id, error_message="Project not found")
+        project = await ProjectService.get_by_id(db, project_id)
+        if project is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+        return project
+
+    @staticmethod
+    async def _ensure_partner(db: AsyncSession, partner_id: uuid.UUID) -> Partner:
+        return await ProjectRelationshipService._ensure_record(db, Partner, partner_id, "Partner not found")
+
+    @staticmethod
+    async def _ensure_funder(db: AsyncSession, funder_id: uuid.UUID) -> Funding:
+        return await ProjectRelationshipService._ensure_record(db, Funding, funder_id, "Funder not found")
+
+    @staticmethod
+    async def _ensure_focus_area(db: AsyncSession, focus_area_id: uuid.UUID) -> FocusArea:
+        return await ProjectRelationshipService._ensure_record(db, FocusArea, focus_area_id, "Focus area not found")
 
     @staticmethod
     async def list_activities(db: AsyncSession, project_id: uuid.UUID) -> list[dict[str, Any]]:
@@ -260,7 +284,7 @@ class ProjectRelationshipService:
     @staticmethod
     async def add_partner(db: AsyncSession, project_id: uuid.UUID, partner_id: uuid.UUID) -> None:
         await ProjectRelationshipService._ensure_project(db, project_id)
-        await Partner.get_or_raise(db, partner_id, error_message="Partner not found")
+        await ProjectRelationshipService._ensure_partner(db, partner_id)
         exists = await db.scalar(select(func.count()).select_from(project_partners).where(project_partners.c.project_id == project_id, project_partners.c.partner_id == partner_id))
         if not exists:
             await db.execute(insert(project_partners).values(project_id=project_id, partner_id=partner_id))
@@ -287,7 +311,7 @@ class ProjectRelationshipService:
     @staticmethod
     async def add_funder(db: AsyncSession, project_id: uuid.UUID, funder_id: uuid.UUID) -> None:
         await ProjectRelationshipService._ensure_project(db, project_id)
-        await Funding.get_or_raise(db, funder_id, error_message="Funder not found")
+        await ProjectRelationshipService._ensure_funder(db, funder_id)
         exists = await db.scalar(select(func.count()).select_from(project_funders).where(project_funders.c.project_id == project_id, project_funders.c.funding_id == funder_id))
         if not exists:
             await db.execute(insert(project_funders).values(project_id=project_id, funding_id=funder_id))
@@ -314,7 +338,7 @@ class ProjectRelationshipService:
     @staticmethod
     async def add_focus_area(db: AsyncSession, project_id: uuid.UUID, focus_area_id: uuid.UUID) -> None:
         await ProjectRelationshipService._ensure_project(db, project_id)
-        await FocusArea.get_or_raise(db, focus_area_id, error_message="Focus area not found")
+        await ProjectRelationshipService._ensure_focus_area(db, focus_area_id)
         exists = await db.scalar(select(func.count()).select_from(project_focus_areas).where(project_focus_areas.c.project_id == project_id, project_focus_areas.c.focus_area_id == focus_area_id))
         if not exists:
             await db.execute(insert(project_focus_areas).values(project_id=project_id, focus_area_id=focus_area_id))

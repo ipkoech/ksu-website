@@ -50,6 +50,7 @@ export function ResearchAdminDetailPage({
   backHref,
   editHref,
   publicHrefBase,
+  actionsSlot,
   slugParam = "slug",
   lookup = "slug",
   labelFields = ["status"],
@@ -65,6 +66,7 @@ export function ResearchAdminDetailPage({
   backHref: string;
   editHref?: (record: ResearchGenericRecord) => string | null | undefined;
   publicHrefBase?: string;
+  actionsSlot?: (record: ResearchGenericRecord) => ReactNode;
   slugParam?: string;
   lookup?: "slug" | "id";
   labelFields?: string[];
@@ -118,6 +120,7 @@ export function ResearchAdminDetailPage({
               <Link href={resolvedEditHref}>Edit</Link>
             </Button>
           ) : null}
+          {record ? actionsSlot?.(record) : null}
           {publicHref ? (
             <Button asChild variant="outline">
               <Link href={publicHref} target="_blank">

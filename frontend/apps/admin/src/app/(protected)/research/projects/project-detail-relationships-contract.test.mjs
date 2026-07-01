@@ -30,3 +30,23 @@ assert(
   source.includes('defaultValue="relationships"'),
   "Project detail tabs should open on the relationship mapping workspace.",
 );
+
+assert(
+  source.includes("ConfirmDialog"),
+  "Project relationship bind and unbind actions must use a confirmation dialog.",
+);
+
+assert(
+  source.includes("requestRelationshipConfirmation"),
+  "Project relationship mutations should be routed through confirmation helpers.",
+);
+
+assert(
+  source.includes("actionsSlot={(record) => <ProjectDetailActions project={record} />}"),
+  "Project detail should render project-specific edit and workflow actions.",
+);
+
+assert(
+  !source.includes('publicHrefBase="/projects"'),
+  "Project detail must not render the generic public page button.",
+);
