@@ -6,7 +6,7 @@ import {
   ResearchRecordPanel,
 } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
-import { ResearchStoryAccordion } from "../../../components/research-rich-text";
+import { ResearchRichText, ResearchStoryAccordion } from "../../../components/research-rich-text";
 import {
   compactText,
   formatDate,
@@ -250,7 +250,7 @@ function ImpactStories({
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-xl font-semibold text-slate-950">Impact stories</h2>
       {impact ? (
-        <p className="mt-3 text-sm leading-7 text-slate-600">{impact}</p>
+        <ResearchRichText content={impact} className="mt-3 text-sm leading-7 text-slate-600" />
       ) : (
         <p className="mt-3 text-sm leading-7 text-slate-600">
           Impact stories will appear here when published by the research office.

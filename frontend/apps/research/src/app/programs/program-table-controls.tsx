@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { ArrowUpDown, Search } from "lucide-react";
 import { ActiveFilterChips, FilterDrawerSheet } from "@ksu/ui/components";
 import { formatLabel } from "../../lib/research-public-data";
@@ -28,6 +29,7 @@ type ProgramTableControlsProps = {
   filterSelects: ControlSelect[];
   sortValue?: string;
   sortOptions: SelectChoice[];
+  viewControls?: ReactNode;
 };
 
 export function ProgramTableControls({
@@ -42,6 +44,7 @@ export function ProgramTableControls({
   filterSelects,
   sortValue,
   sortOptions,
+  viewControls,
 }: ProgramTableControlsProps) {
   const centerOptions = centers ?? [];
   const filterItems = [
@@ -63,8 +66,8 @@ export function ProgramTableControls({
       <form id="filter-drawer-form" action={action} className="flex flex-col gap-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <label className="block min-w-0 flex-1">
-            <span className="text-xs font-semibold uppercase text-slate-500">Search</span>
-            <span className="relative mt-2 block">
+            <span className="sr-only">Search</span>
+            <span className="relative block">
               <Search
                 aria-hidden
                 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
@@ -131,6 +134,7 @@ export function ProgramTableControls({
                 includeAllOption={false}
               />
             </FilterDrawerSheet>
+            {viewControls}
           </div>
         </div>
         <ActiveFilterChips filters={activeItems} onRemove={reset} />

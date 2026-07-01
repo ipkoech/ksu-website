@@ -150,6 +150,7 @@ export default async function ProjectsPage({
             programs={programs.data}
             years={years}
             months={months}
+            view={view}
           />
         }
       >
@@ -163,7 +164,6 @@ export default async function ProjectsPage({
 
         {visibleProjects.length > 0 ? (
           <>
-            <ProjectViewSwitch params={params} view={view} />
             {view === "cards" ? (
               <ProjectCardGrid projects={visibleProjects} />
             ) : (
@@ -198,12 +198,14 @@ function ProjectFilters({
   programs,
   years,
   months,
+  view,
 }: {
   params: ProjectSearchParams;
   centers: ResearchGenericRecord[];
   programs: Array<Record<string, any>>;
   years: string[];
   months: Array<{ value: string; label: string }>;
+  view: ProjectListView;
 }) {
   return (
     <ProgramTableControls
@@ -235,6 +237,7 @@ function ProjectFilters({
       centerValue={params.center}
       sortValue={params.sort}
       sortOptions={sortOptions}
+      viewControls={<ProjectViewSwitch params={params} view={view} />}
     />
   );
 }
@@ -252,8 +255,7 @@ function ProjectViewSwitch({
   ];
 
   return (
-    <div className="mt-5 flex justify-end">
-      <div className="inline-flex rounded-md border border-slate-200 bg-white p-1 shadow-sm">
+    <div className="col-span-3 inline-flex rounded-md border border-slate-200 bg-white p-1 sm:col-span-1">
         {options.map((option) => {
           const Icon = option.icon;
           const active = view === option.value;
@@ -272,7 +274,6 @@ function ProjectViewSwitch({
             </Link>
           );
         })}
-      </div>
     </div>
   );
 }
