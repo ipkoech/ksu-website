@@ -103,7 +103,7 @@ export type AboutResearchEntityRecord = {
 };
 
 export type AboutResearchTeamEntity =
-  | { entity_type: "department" | "wing"; entity_id: string }
+  | { entity_type: "department" | "wing" | "division"; entity_id: string }
   | { entity_type: "university"; entity_id?: undefined };
 
 export type AboutCollection<T = AboutRecord> = {

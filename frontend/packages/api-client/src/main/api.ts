@@ -80,6 +80,7 @@ import type {
   MediaUploadOptions,
   PaginatedResponse,
   PublicStatsResponse,
+  PublicResearchContextResponse,
   PublicTeamResponse,
 } from "./types";
 import type { FieldSelectionParams, QueryParams } from "../client";
@@ -299,6 +300,14 @@ export const publicTeamApi = {
       entity_id?: string;
     },
   ) => mainApi.get<{ data: PublicTeamResponse }>("/api/v1/public/team", params),
+};
+
+export const publicResearchContextApi = {
+  get: (params?: FieldSelectionParams) =>
+    mainApi.get<{ data: PublicResearchContextResponse }>(
+      "/api/v1/public/research/context",
+      params,
+    ),
 };
 
 // Divisions

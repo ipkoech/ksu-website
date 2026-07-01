@@ -18,9 +18,10 @@ test("about page keeps backend-backed stats and team data sources", () => {
   assert.match(source, /buildAboutMetricTiles/);
   assert.match(source, /getResearchStats/);
   assert.match(source, /getResearchStaff/);
-  assert.match(source, /publicTeamApi\.get/);
   assert.match(source, /getResearchSiteContext/);
+  assert.match(source, /researchContext\?\.team/);
   assert.match(source, /buildTeamMembers/);
+  assert.doesNotMatch(source, /publicTeamApi\.get/);
   assert.doesNotMatch(source, /personsApi\.list/);
   assert.doesNotMatch(source, /departmentsApi\.list/);
   assert.doesNotMatch(source, /wingsApi\.listByDivision/);

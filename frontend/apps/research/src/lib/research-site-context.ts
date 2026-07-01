@@ -1,30 +1,29 @@
 import { unstable_cache } from "next/cache";
 import {
-  departmentsApi,
-  divisionsApi,
-  wingsApi,
-  type Department,
-  type Division,
-  type Wing,
+  publicResearchContextApi,
+  type PublicResearchContextResponse,
 } from "@ksu/api-client";
-import {
-  resolveResearchTeamEntity,
-  type AboutResearchTeamEntity,
-} from "../app/about/about-page-model";
+import type { AboutResearchTeamEntity } from "../app/about/about-page-model";
 
 export type ResearchSiteContext = {
   researchTeamEntity: AboutResearchTeamEntity;
+  researchContext: PublicResearchContextResponse | null;
 };
 
 export const getResearchSiteContext = unstable_cache(
   async (): Promise<ResearchSiteContext> => {
-    const [departments, wings] = await Promise.all([
-      getResearchDepartments(),
-      getResearchWings(),
-    ]);
+    const response = await publicResearchContextApi.get({
+      fields: "resolved_entity,entity,team,leadership,relationships,division,wing,department",
+      include:
+        "division:id,name,slug,code,division_type,description,head_message,mission,vision,core_values,email,phone,office_location,operating_hours,cover_image_id;" +
+        "wing:id,division_id,name,slug,code,wing_type,description,head_message,mandate,service_charter,email,phone,office_location,operating_hours,cover_image_id,division(id,name,slug,code,division_type);" +
+        "department:id,name,slug,code,department_type,wing_id,about,head_message,mission,vision,mandate,core_values,service_charter,guidelines,email,phone,office_location,cover_image_id,is_public,wing(id,name,slug,code,wing_type)",
+    });
+    const context = response.data ?? null;
 
     return {
-      researchTeamEntity: resolveResearchTeamEntity({ departments, wings }),
+      researchTeamEntity: toResearchTeamEntity(context),
+      researchContext: context,
     };
   },
   ["research-site-context"],
@@ -34,46 +33,19 @@ export const getResearchSiteContext = unstable_cache(
   },
 );
 
-async function getResearchDepartments() {
-  try {
-    const response = await departmentsApi.list({
-      search: "REIRM",
-      fields: "id,name,code,slug",
-      page: 1,
-      per_page: 10,
-    });
-    return (response.data ?? []) as Pick<Department, "id" | "name" | "code" | "slug">[];
-  } catch {
-    return [];
+function toResearchTeamEntity(
+  context: PublicResearchContextResponse | null,
+): AboutResearchTeamEntity {
+  const entity = context?.resolved_entity;
+  if (!entity?.entity_type || !entity.entity_id || entity.entity_type === "university") {
+    return { entity_type: "university" };
   }
-}
-
-async function getResearchWings() {
-  try {
-    const divisionsResponse = await divisionsApi.list({
-      fields: "id,name,code",
-      is_active: true,
-      page: 1,
-      per_page: 50,
-    });
-    const arsa = ((divisionsResponse.data ?? []) as Pick<Division, "id" | "name" | "code">[]).find(
-      (division) =>
-        compactText(division.code).toUpperCase() === "ARSA" ||
-        compactText(division.name).toLowerCase().includes("research"),
-    );
-    if (!arsa?.id) return [];
-
-    const wingsResponse = await wingsApi.listByDivision(arsa.id, {
-      fields: "id,name,code,slug",
-      is_active: true,
-    });
-    return (wingsResponse.data ?? []) as Pick<Wing, "id" | "name" | "code" | "slug">[];
-  } catch {
-    return [];
+  if (
+    entity.entity_type === "department" ||
+    entity.entity_type === "wing" ||
+    entity.entity_type === "division"
+  ) {
+    return { entity_type: entity.entity_type, entity_id: entity.entity_id };
   }
-}
-
-function compactText(value?: string | number | null) {
-  if (value === null || value === undefined) return "";
-  return String(value).replace(/\s+/g, " ").trim();
+  return { entity_type: "university" };
 }

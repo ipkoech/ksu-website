@@ -318,6 +318,52 @@ export interface PublicTeamResponse {
   };
 }
 
+export interface PublicResearchContextEntity {
+  id?: string | null;
+  entity_type: string;
+  source?: string | null;
+  name?: string | null;
+  slug?: string | null;
+  code?: string | null;
+  about?: string | null;
+  description?: string | null;
+  mission?: string | null;
+  vision?: string | null;
+  mandate?: string | null;
+  core_values?: string | null;
+  service_charter?: string | null;
+  guidelines?: string | null;
+  head_message?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  office_location?: string | null;
+  operating_hours?: Record<string, unknown> | null;
+  cover_image_id?: string | null;
+}
+
+export interface PublicResearchContextResponse {
+  resolved_entity: {
+    entity_type: "university" | "school" | "department" | "division" | "wing" | "directorate" | "board";
+    entity_id?: string | null;
+    source?: string | null;
+  };
+  entity: PublicResearchContextEntity;
+  division?: Record<string, unknown> | null;
+  wing?: Record<string, unknown> | null;
+  department?: Record<string, unknown> | null;
+  team: Omit<PublicTeamResponse, "entity">;
+  leadership: {
+    assignment?: PublicTeamAssignment | null;
+    person?: (PublicTeamPerson & { leadership_message?: string | null; bio?: string | null }) | null;
+    message?: string | null;
+  };
+  relationships: {
+    division_id?: string | null;
+    wing_id?: string | null;
+    department_id?: string | null;
+  };
+}
+
 export interface StaffAssignment {
   id: string;
   person_id: string;

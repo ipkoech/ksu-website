@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import type { PublicTeamResponse, ResearchGenericRecord } from "@ksu/api-client";
-import { publicTeamApi, researchServiceApi } from "@ksu/api-client";
+import type { PublicResearchContextResponse, ResearchGenericRecord } from "@ksu/api-client";
+import { researchServiceApi } from "@ksu/api-client";
 import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 import {
   ArrowRight,
@@ -702,12 +702,11 @@ function MiniFact({ label, value }: { label: string; value: number }) {
 
 async function getResearchStaff() {
   try {
-    const { researchTeamEntity } = await getResearchSiteContext();
-    const response = await publicTeamApi.get(researchTeamEntity);
-    return { data: response.data ?? null, error: null as string | null };
+    const { researchContext } = await getResearchSiteContext();
+    return { data: researchContext?.team ?? null, error: null as string | null };
   } catch {
     return {
-      data: null as PublicTeamResponse | null,
+      data: null as PublicResearchContextResponse["team"] | null,
       error: "Research staff records are temporarily unavailable.",
     };
   }

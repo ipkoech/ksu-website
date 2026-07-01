@@ -14,9 +14,11 @@ test("research site context caches the backend REIRM entity lookup", () => {
 
   assert.match(source, /unstable_cache/);
   assert.match(source, /getResearchSiteContext/);
-  assert.match(source, /resolveResearchTeamEntity/);
-  assert.match(source, /departmentsApi\.list/);
-  assert.match(source, /wingsApi\.listByDivision/);
+  assert.match(source, /publicResearchContextApi\.get/);
+  assert.match(source, /researchContext/);
+  assert.match(source, /include:/);
+  assert.match(source, /mission,vision/);
+  assert.match(source, /team,leadership/);
   assert.match(source, /research-site-context/);
 });
 
