@@ -13,10 +13,6 @@ import {
   type EditableRecordColumn,
 } from "@/components/dashboard/editable-service-resource-page";
 import {
-  relationshipAdapters,
-  type RelationshipAdapter,
-} from "@/components/relationships/relationship-adapters";
-import {
   ResearchBulkActions,
   withResearchFieldHelp,
 } from "../_components/research-resource-page";
@@ -43,6 +39,8 @@ const projectTypeOptions = [
   { label: "Collaborative", value: "collaborative" },
   { label: "Commissioned", value: "commissioned" },
 ];
+
+const PROJECT_LIST_FIELDS = "id,title,slug,code,project_type,status,is_active,is_public,is_featured";
 
 const projectListFilters: EditableListFilter[] = [
   { name: "search", label: "Search", type: "text", placeholder: "Search title, code, summary" },
@@ -138,7 +136,7 @@ const projectColumns: EditableRecordColumn<ResearchProject>[] = [
   {
     key: "title",
     label: "Project Title",
-    className: "min-w-[260px]",
+    className: "min-w-[300px]",
     render: (record) => (
       <div className="space-y-1">
         <Link href={record.slug ? `/research/projects/${record.slug}` : "#"} className="font-medium hover:underline">
@@ -152,51 +150,21 @@ const projectColumns: EditableRecordColumn<ResearchProject>[] = [
     key: "status",
     label: "Status",
     render: (record) => (
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-wrap gap-1.5">
         <Badge variant="outline">{labelize(record.status) || "Unspecified"}</Badge>
-        {typeof record.progress_percentage === "number" ? (
-          <span className="text-xs text-muted-foreground">{record.progress_percentage}% progress</span>
-        ) : null}
+        {record.is_active === false ? <Badge variant="secondary">Inactive</Badge> : null}
       </div>
     ),
   },
   {
-    key: "center",
-    label: "Center / Program",
-    className: "min-w-[220px]",
+    key: "visibility",
+    label: "Visibility",
     render: (record) => (
-      <div className="space-y-1">
-        <p className="font-medium">{record.center?.name ?? "No center"}</p>
-        <p className="text-xs text-muted-foreground">{record.program?.name ?? "No program"}</p>
+      <div className="flex flex-wrap gap-1.5">
+        <Badge variant={record.is_public ? "default" : "outline"}>{record.is_public ? "Public" : "Internal"}</Badge>
+        {record.is_featured ? <Badge variant="secondary">Featured</Badge> : null}
       </div>
     ),
-  },
-  {
-    key: "pi",
-    label: "Principal Investigator",
-    className: "min-w-[190px]",
-    render: (record) => <RelationCell id={record.pi_id} adapterKey="person" emptyLabel="No PI assigned" />,
-  },
-  {
-    key: "grant",
-    label: "Funding / Grant",
-    className: "min-w-[190px]",
-    render: (record) => <RelationCell id={record.grant_id} adapterKey="researchGrant" emptyLabel="Unfunded" />,
-  },
-  {
-    key: "dates",
-    label: "Start / End",
-    render: (record) => (
-      <div className="space-y-1 text-sm">
-        <p>{formatDate(record.start_date) || "No start"}</p>
-        <p className="text-muted-foreground">{formatDate(record.end_date) || "No end"}</p>
-      </div>
-    ),
-  },
-  {
-    key: "updated",
-    label: "Last Updated",
-    render: (record) => <span className="text-sm text-muted-foreground">{formatDate(record.updated_at)}</span>,
   },
 ];
 
@@ -207,15 +175,15 @@ function ProjectMobileRecord(record: ResearchProject, actions: ReactNode) {
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{record.title}</p>
           <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-            {[record.code, record.center?.name, record.program?.name].filter(Boolean).join(" · ")}
+            {[record.code, labelize(record.project_type)].filter(Boolean).join(" · ")}
           </p>
         </div>
         <div className="shrink-0">{actions}</div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
         <span className="rounded-md border px-2 py-1">{labelize(record.status) || "Unspecified"}</span>
-        <span className="rounded-md border px-2 py-1">{record.grant_id ? "Funded" : "Unfunded"}</span>
-        {typeof record.progress_percentage === "number" ? <span className="rounded-md border px-2 py-1">{record.progress_percentage}%</span> : null}
+        <span className="rounded-md border px-2 py-1">{record.is_public ? "Public" : "Internal"}</span>
+        {record.is_featured ? <span className="rounded-md border px-2 py-1">Featured</span> : null}
       </div>
     </div>
   );
@@ -246,28 +214,7 @@ export default function ResearchProjectsPage() {
         researchServiceApi.projects.list({
           page: 1,
           per_page: 25,
-          fields: [
-            "id",
-            "title",
-            "slug",
-            "code",
-            "program_id",
-            "center_id",
-            "pi_id",
-            "grant_id",
-            "project_type",
-            "start_date",
-            "end_date",
-            "budget",
-            "currency",
-            "status",
-            "progress_percentage",
-            "is_public",
-            "is_featured",
-            "is_active",
-            "updated_at",
-          ].join(","),
-          include: "center:id,name,code;program:id,name,code",
+          fields: PROJECT_LIST_FIELDS,
           ...filters,
         })
       }
@@ -290,11 +237,10 @@ export default function ResearchProjectsPage() {
       getRecordMeta={(record) =>
         [
           record.code,
-          record.center?.name,
-          record.program?.name,
           labelize(record.project_type),
           labelize(record.status),
-          record.grant_id ? "Funded" : "Unfunded",
+          record.is_public ? "Public" : "Internal",
+          record.is_featured ? "Featured" : null,
         ]
           .filter(Boolean)
           .join(" · ")
@@ -305,13 +251,13 @@ export default function ResearchProjectsPage() {
           ? []
           : [
               {
-                label: "Retire",
+                label: "Mark completed",
                 variant: "outline",
                 payload: { status: "completed", is_active: false },
-                successMessage: "Research project retired",
-                confirmTitle: `Retire ${record.title}?`,
+                successMessage: "Research project marked completed",
+                confirmTitle: `Mark ${record.title} completed?`,
                 confirmDescription: "This marks the project completed and inactive while preserving the record.",
-                confirmLabel: "Retire project",
+                confirmLabel: "Mark completed",
               },
             ]
       }
@@ -347,8 +293,8 @@ export default function ResearchProjectsPage() {
       })}
       toolbarSlot={
         <>
-          <ResearchSectionGuide title="Projects" className="mr-auto" />
           <ResearchBulkActions resourceKey="research-projects" />
+          <ResearchSectionGuide title="Projects" className="sm:ml-auto" />
         </>
       }
     />
@@ -403,45 +349,6 @@ function ProjectMetricCard({
       <span className="font-semibold">{loading ? "--" : value.toLocaleString()}</span>
     </div>
   );
-}
-
-function RelationCell({
-  id,
-  adapterKey,
-  emptyLabel,
-}: {
-  id?: string | null;
-  adapterKey: keyof typeof relationshipAdapters;
-  emptyLabel: string;
-}) {
-  const adapter = relationshipAdapters[adapterKey] as RelationshipAdapter;
-  const relationQuery = useQuery({
-    queryKey: ["research", "projects", "relation", adapterKey, id],
-    queryFn: () => adapter.get(id as string),
-    enabled: Boolean(id),
-    staleTime: 60_000,
-  });
-
-  if (!id) return <span className="text-sm text-muted-foreground">{emptyLabel}</span>;
-  if (relationQuery.isLoading) return <span className="text-sm text-muted-foreground">Loading...</span>;
-  const option = relationQuery.data;
-  return (
-    <div className="space-y-1">
-      <p className="font-medium">{option?.label ?? "Related record unavailable"}</p>
-      {option?.description ? <p className="text-xs text-muted-foreground">{option.description}</p> : null}
-    </div>
-  );
-}
-
-function formatDate(value?: string | null) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(date);
 }
 
 function labelize(value?: string | null) {

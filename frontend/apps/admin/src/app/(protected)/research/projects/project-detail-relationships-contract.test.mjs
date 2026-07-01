@@ -4,6 +4,9 @@ import { join } from "node:path";
 
 const source = readFileSync(join(process.cwd(), "src/app/(protected)/research/projects/[slug]/page.tsx"), "utf8");
 const detailSource = readFileSync(join(process.cwd(), "src/app/(protected)/research/_components/research-admin-detail-page.tsx"), "utf8");
+const resourceSource = readFileSync(join(process.cwd(), "src/app/(protected)/research/_components/research-resource-page.tsx"), "utf8");
+const editableSource = readFileSync(join(process.cwd(), "src/components/dashboard/editable-service-resource-page.tsx"), "utf8");
+const projectListSource = readFileSync(join(process.cwd(), "src/app/(protected)/research/projects/page.tsx"), "utf8");
 
 assert(
   !source.includes("projectRelations.impactMetrics.list"),
@@ -84,6 +87,22 @@ assert(
 );
 
 assert(
+  resourceSource.includes('tableLayout="compact"') &&
+    resourceSource.includes("actionsInMenuOnly") &&
+    resourceSource.includes("withDefaultSearchFilter") &&
+    resourceSource.includes("defaultResearchSortOptions"),
+  "Research resource listings should use compact tables, search, sort, and action menus by default.",
+);
+
+assert(
+  editableSource.includes("groupEditableFields") &&
+    editableSource.includes("aria-expanded={Boolean(openGroups[group.title])}") &&
+    editableSource.includes("Filter {title.toLowerCase()}") &&
+    editableSource.includes("Sort {title.toLowerCase()}"),
+  "Shared editable resource pages should have collapsible editor groups and resource-specific filter/sort labels.",
+);
+
+assert(
   !source.includes('publicHrefBase="/projects"'),
   "Project detail must not render the generic public page button.",
 );
@@ -94,6 +113,31 @@ assert(
 );
 
 assert(
-  !source.includes("Retire"),
+  !source.includes("Retire") && !projectListSource.includes("Retire"),
   "Project actions should use clear workflow labels instead of Retire.",
+);
+
+const expectedProjectListFields = [
+  "id",
+  "title",
+  "slug",
+  "code",
+  "project_type",
+  "status",
+  "is_active",
+  "is_public",
+  "is_featured",
+].join(",");
+
+assert(
+  projectListSource.includes(`fields: PROJECT_LIST_FIELDS`) &&
+    projectListSource.includes(`const PROJECT_LIST_FIELDS = "${expectedProjectListFields}"`),
+  "Project listing should use the backend fields selector with only slim display fields.",
+);
+
+assert(
+  !projectListSource.includes("include: \"center:id,name,code;program:id,name,code\"") &&
+    !projectListSource.includes("RelationCell") &&
+    !projectListSource.includes("adapter.get(id as string)"),
+  "Project listing rows should not request relationship includes or issue per-row relationship lookups.",
 );
