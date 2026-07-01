@@ -19,6 +19,7 @@ import {
   Switch,
 } from "@ksu/ui/components";
 import { ChevronDown, Edit3, Eye, EyeOff, Star, StarOff, Trash2 } from "lucide-react";
+import { MediaPicker } from "@/components/media";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 type CoreDetailResource = {
@@ -54,6 +55,7 @@ export function ResearchCoreDetailActions({
   const fieldGroups = useMemo(() => groupEditableFields(editableFields), [editableFields]);
   const [editValues, setEditValues] = useState<Record<string, string | boolean>>(() => buildEditValues(record, editableFields));
   const id = String(record.id);
+  const uploadEntityType = useMemo(() => getUploadEntityType(resourceLabel), [resourceLabel]);
   const isActive = record.is_active !== false;
   const isFeatured = Boolean(record.is_featured);
 
@@ -151,6 +153,8 @@ export function ResearchCoreDetailActions({
               groups={fieldGroups}
               values={editValues}
               disabled={busy}
+              recordId={id}
+              uploadEntityType={uploadEntityType}
               setValues={setEditValues}
             />
             <SheetFooter className="border-t px-6 py-4">
@@ -184,7 +188,7 @@ export function ResearchCoreDetailActions({
 type EditableField = {
   name: string;
   label: string;
-  kind: "text" | "richtext" | "number" | "boolean" | "json";
+  kind: "text" | "richtext" | "number" | "boolean" | "json" | "media";
 };
 
 type EditableFieldGroup = {
@@ -202,11 +206,11 @@ const HIDDEN_EDIT_FIELDS = new Set([
 
 function getEditableFields(record: ResearchGenericRecord): EditableField[] {
   return Object.entries(record)
-    .filter(([key, value]) => !HIDDEN_EDIT_FIELDS.has(key) && value !== null && typeof value !== "object")
+    .filter(([key, value]) => !HIDDEN_EDIT_FIELDS.has(key) && (isMediaField(key) || (value !== null && typeof value !== "object")))
     .map(([key, value]) => ({
       name: key,
       label: key.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase()),
-      kind: typeof value === "boolean" ? "boolean" : typeof value === "number" ? "number" : isRichTextField(key, value) ? "richtext" : "text",
+      kind: isMediaField(key) ? "media" : typeof value === "boolean" ? "boolean" : typeof value === "number" ? "number" : isRichTextField(key, value) ? "richtext" : "text",
     }));
 }
 
@@ -214,11 +218,15 @@ function CoreEditSheetForm({
   groups,
   values,
   disabled,
+  recordId,
+  uploadEntityType,
   setValues,
 }: {
   groups: EditableFieldGroup[];
   values: Record<string, string | boolean>;
   disabled: boolean;
+  recordId: string;
+  uploadEntityType: string;
   setValues: (updater: (current: Record<string, string | boolean>) => Record<string, string | boolean>) => void;
 }) {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
@@ -253,6 +261,8 @@ function CoreEditSheetForm({
                   field={field}
                   value={values[field.name]}
                   disabled={disabled}
+                  recordId={recordId}
+                  uploadEntityType={uploadEntityType}
                   onChange={(value) => setField(field, value)}
                 />
               ))}
@@ -268,11 +278,15 @@ function CoreEditFieldControl({
   field,
   value,
   disabled,
+  recordId,
+  uploadEntityType,
   onChange,
 }: {
   field: EditableField;
   value: string | boolean | undefined;
   disabled: boolean;
+  recordId: string;
+  uploadEntityType: string;
   onChange: (value: string | boolean) => void;
 }) {
   const label = <span>{field.label}</span>;
@@ -301,6 +315,29 @@ function CoreEditFieldControl({
           disabled={disabled}
           placeholder={`Enter ${field.label.toLowerCase()}`}
           onChange={onChange}
+        />
+      </div>
+    );
+  }
+
+  if (field.kind === "media") {
+    return (
+      <div className="space-y-2 text-sm font-medium md:col-span-2">
+        {label}
+        <MediaPicker
+          value={typeof value === "string" ? value : ""}
+          onChange={(nextValue) => onChange(nextValue || "")}
+          mediaType="image"
+          accept="image/*"
+          label={field.label}
+          helperText={field.name === "cover_image_id" ? "Upload or choose the cover image for this record." : "Upload or choose an image for this record."}
+          uploadEntityType={uploadEntityType}
+          uploadEntityId={recordId}
+          uploadRole={field.name === "cover_image_id" ? "cover_image" : field.name.replace(/_id$/, "")}
+          uploadLabel={value ? "Reupload" : "Upload"}
+          allowUpload
+          allowClear
+          disabled={disabled}
         />
       </div>
     );
@@ -363,7 +400,7 @@ function groupEditableFields(fields: EditableField[]): EditableFieldGroup[] {
     {
       title: "Media and SEO",
       description: "Media references and search metadata.",
-      names: new Set(["cover_image_id", "logo_id", "meta_title", "meta_description", "keywords"]),
+      names: new Set(["cover_image_id", "logo_id", "photo_id", "thumbnail_image_id", "meta_title", "meta_description", "keywords"]),
     },
     {
       title: "Visibility",
@@ -393,6 +430,18 @@ function groupEditableFields(fields: EditableField[]): EditableFieldGroup[] {
 function isRichTextField(key: string, value: unknown) {
   const richTextFields = new Set(["about", "summary", "description", "objectives", "mission", "vision", "mandate", "research_areas", "expected_outcomes", "methodology", "meta_description"]);
   return richTextFields.has(key) || String(value ?? "").length > 140;
+}
+
+function isMediaField(key: string) {
+  return ["cover_image_id", "logo_id", "photo_id", "thumbnail_image_id"].includes(key);
+}
+
+function getUploadEntityType(resourceLabel: string) {
+  const normalized = resourceLabel.trim().toLowerCase().replace(/\s+/g, "_");
+  if (normalized === "center") return "research_center";
+  if (normalized === "program") return "research_program";
+  if (normalized === "theme") return "research_theme";
+  return `research_${normalized}`;
 }
 
 function buildEditValues(record: ResearchGenericRecord, fields: EditableField[]) {
