@@ -243,6 +243,81 @@ export type PersonStatusFilter = "active" | "inactive" | "deleted" | "all";
 export type StaffAssignmentStatusFilter = "active" | "ended" | "inactive" | "pending" | "all";
 export type StaffAssignmentConflictResolution = "cancel" | "assign_acting" | "replace_current" | "edit_selection";
 
+export interface PublicTeamEntity {
+  id?: string | null;
+  entity_type: string;
+  name: string;
+  slug?: string | null;
+  code?: string | null;
+  description?: string | null;
+  head_message?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  office_location?: string | null;
+}
+
+export interface PublicTeamPerson {
+  id: string;
+  slug?: string | null;
+  title?: string | null;
+  full_name?: string | null;
+  email?: string | null;
+  photo_id?: string | null;
+  photo_url?: string | null;
+  academic_rank?: string | null;
+  institutional_role?: string | null;
+  office_location?: string | null;
+  specialization?: string | null;
+  research_interests?: string[] | null;
+}
+
+export interface PublicTeamAssignment {
+  id: string;
+  person_id: string;
+  entity_type: string;
+  entity_id?: string | null;
+  role: string;
+  role_label: string;
+  role_display?: string | null;
+  group: string;
+  title?: string | null;
+  hierarchy_level: number;
+  reports_to_id?: string | null;
+  is_primary: boolean;
+  is_acting: boolean;
+  is_current: boolean;
+  display_order: number;
+  start_date?: string | null;
+  end_date?: string | null;
+  term_display?: string | null;
+}
+
+export interface PublicTeamGroup {
+  key: string;
+  label: string;
+  count: number;
+  assignment_ids: string[];
+}
+
+export interface PublicTeamHierarchyLevel {
+  level: number;
+  label: string;
+  assignment_ids: string[];
+}
+
+export interface PublicTeamResponse {
+  entity: PublicTeamEntity;
+  assignments: PublicTeamAssignment[];
+  persons: Record<string, PublicTeamPerson>;
+  groups: PublicTeamGroup[];
+  hierarchy: PublicTeamHierarchyLevel[];
+  counts: {
+    assignments: number;
+    persons: number;
+    leadership: number;
+  };
+}
+
 export interface StaffAssignment {
   id: string;
   person_id: string;

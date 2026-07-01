@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  buildTeamMembers,
   buildAboutMetricTiles,
   buildSupportAreaCards,
+  getLeadTeamMember,
   getLeadResearchPerson,
 } from "./about-page-model.ts";
 
@@ -101,4 +103,70 @@ test("support area cards are populated from matching backend records", () => {
   assert.equal(cards[2].recordTitle, "Student Innovation Programme");
   assert.equal(cards[3].title, "Resource Mobilization");
   assert.equal(cards[3].recordTitle, "Foundation Funder");
+});
+
+test("team members join backend hierarchy assignments to public persons", () => {
+  const members = buildTeamMembers({
+    persons: {
+      "person-2": {
+        id: "person-2",
+        full_name: "Research Officer",
+        specialization: "Research administration",
+      },
+      "person-1": {
+        id: "person-1",
+        full_name: "Research Director",
+        institutional_role: "Director, REIRM",
+      },
+    },
+    groups: [
+      {
+        key: "leadership",
+        label: "Leadership",
+        count: 1,
+        assignment_ids: ["assignment-1"],
+      },
+      {
+        key: "administrative",
+        label: "Administrative Staff",
+        count: 1,
+        assignment_ids: ["assignment-2"],
+      },
+    ],
+    hierarchy: [
+      { level: 2, label: "Level 2", assignment_ids: ["assignment-1"] },
+      { level: 9, label: "Level 9", assignment_ids: ["assignment-2"] },
+    ],
+    assignments: [
+      {
+        id: "assignment-2",
+        person_id: "person-2",
+        role: "officer",
+        role_label: "Officer",
+        group: "administrative",
+        title: "Research Officer",
+        hierarchy_level: 9,
+        display_order: 1,
+      },
+      {
+        id: "assignment-1",
+        person_id: "person-1",
+        role: "director",
+        role_label: "Director",
+        group: "leadership",
+        title: "Director, REIRM",
+        hierarchy_level: 2,
+        display_order: 1,
+      },
+    ],
+  });
+
+  assert.deepEqual(
+    members.map((member) => [member.id, member.assignmentTitle, member.groupLabel]),
+    [
+      ["person-1", "Director, REIRM", "Leadership"],
+      ["person-2", "Research Officer", "Administrative Staff"],
+    ],
+  );
+  assert.equal(getLeadTeamMember(members)?.id, "person-1");
 });

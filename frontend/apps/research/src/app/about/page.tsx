@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import type { Person, ResearchGenericRecord } from "@ksu/api-client";
-import { personsApi, researchServiceApi } from "@ksu/api-client";
+import type { PublicTeamResponse, ResearchGenericRecord } from "@ksu/api-client";
+import { publicTeamApi, researchServiceApi } from "@ksu/api-client";
 import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 import {
   ArrowRight,
@@ -15,6 +15,7 @@ import {
   Lightbulb,
   ShieldCheck,
   Sprout,
+  Target,
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -26,7 +27,6 @@ import {
 } from "../../components/research-ui";
 import {
   compactText,
-  formatLabel,
   getCenters,
   getGuidelines,
   getPartners,
@@ -37,8 +37,10 @@ import { publicFrontendUrl } from "../../lib/service-urls";
 import {
   buildAboutMetricTiles,
   buildSupportAreaCards,
-  getLeadResearchPerson,
+  buildTeamMembers,
+  getLeadTeamMember,
   type AboutCollection,
+  type AboutTeamMember,
 } from "./about-page-model";
 
 export const revalidate = 300;
@@ -106,9 +108,10 @@ export default async function AboutPage() {
     getResearchStats(),
   ]);
 
-  const lead = getLeadResearchPerson(staff.data);
+  const teamMembers = buildTeamMembers(staff.data);
+  const lead = getLeadTeamMember(teamMembers);
   const metrics = buildAboutMetricTiles({
-    staffCount: staff.data.length,
+    staffCount: staff.data?.counts?.persons ?? teamMembers.length,
     centers: toAboutCollection(centers),
     programs: toAboutCollection(programs),
     services: toAboutCollection(services),
@@ -146,104 +149,15 @@ export default async function AboutPage() {
         </section>
       ) : null}
 
-      <ResearchSection
-        eyebrow="Mandate"
-        title="Mandate"
-        body="To coordinate and promote research, extension, innovation and resource mobilization that address societal needs, strengthen capacity and enhance the university's contribution to national development."
-        tone="white"
-      >
-        <ScrollReveal
-          className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px]"
-          variant="fade-up"
-        >
-          <section className="rounded-lg border border-slate-200 bg-slate-50 p-6 shadow-sm">
-            <div className="grid gap-5 sm:grid-cols-[96px_minmax(0,1fr)] sm:items-center">
-              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-primary shadow-sm">
-                <ShieldCheck aria-hidden className="h-9 w-9" />
-              </span>
-              <p className="text-sm leading-7 text-slate-700 sm:text-base">
-                To coordinate and promote research, extension, innovation and
-                resource mobilization that address societal needs, strengthen
-                capacity and enhance the university&apos;s contribution to
-                national development.
-              </p>
-            </div>
-          </section>
-          <section className="rounded-lg border border-emerald-100 bg-emerald-50/60 p-6 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-              Backend coverage
-            </p>
-            <dl className="mt-4 grid gap-3">
-              <MiniFact label="Centers" value={centers.total} />
-              <MiniFact label="Programs" value={programs.total} />
-              <MiniFact label="Guidelines" value={guidelines.total} />
-              <MiniFact label="Partners" value={partners.total} />
-            </dl>
-          </section>
-        </ScrollReveal>
-      </ResearchSection>
-
-      <ResearchSection
-        eyebrow="What REIRM Supports"
-        title="What REIRM Supports"
-        body="Research support, extension, innovation, and resource mobilization."
-      >
-        <ScrollRevealGroup
-          className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
-          duration={650}
-          staggerDelay={90}
-        >
-          {supportAreas.map((area) => (
-            <SupportAreaCard key={area.title} area={area} />
-          ))}
-        </ScrollRevealGroup>
-      </ResearchSection>
-
-      <ResearchSection
-        eyebrow="Governance"
-        title="Governance"
-        body="University governance, research controls, accountability, and research integrity."
-        tone="white"
-      >
-        <ScrollReveal
-          className="overflow-hidden rounded-lg border border-slate-800 bg-slate-950 text-white shadow-sm"
-          variant="fade-up"
-        >
-          <section
-            id="governance"
-            className="grid gap-0 lg:grid-cols-[minmax(320px,520px)_minmax(0,1fr)]"
-          >
-            <div className="p-6 sm:p-7">
-              <div className="flex items-start gap-4">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-secondary text-white">
-                  <CheckCircle2 aria-hidden className="h-5 w-5" />
-                </span>
-                <div>
-                  <h3 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-white">
-                    Governance
-                  </h3>
-                  <p className="mt-3 text-sm leading-7 text-white/78">
-                    REIRM operates under university governance and research
-                    controls to ensure transparency, accountability, and
-                    research integrity.
-                  </p>
-                  <Link
-                    href="/guidelines"
-                    className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-md border border-white/30 px-4 text-sm font-semibold text-white transition hover:bg-white/10"
-                  >
-                    View governance structure
-                    <ArrowRight aria-hidden className="h-4 w-4" />
-                  </Link>
-                </div>
-              </div>
-            </div>
-            <div
-              aria-hidden
-              className="min-h-[180px] border-t border-white/10 bg-[url(/images/research/research-demo-imagegen.webp)] bg-cover bg-center opacity-80 lg:min-h-[260px] lg:border-l lg:border-t-0"
-            />
-          </section>
-        </ScrollReveal>
-      </ResearchSection>
+      <LayeredAboutSections
+        supportAreas={supportAreas}
+        coverage={{
+          centers: centers.total,
+          programs: programs.total,
+          guidelines: guidelines.total,
+          partners: partners.total,
+        }}
+      />
 
       <ResearchSection
         eyebrow="People Behind the Work"
@@ -256,17 +170,22 @@ export default async function AboutPage() {
           variant="fade-up"
         >
           <div id="staff">
-            <LeadPanel lead={lead} staffCount={staff.data.length} />
+            <LeadPanel
+              lead={lead}
+              staffCount={staff.data?.counts?.persons ?? teamMembers.length}
+              groupCount={staff.data?.groups?.length ?? 0}
+              leadershipCount={staff.data?.counts?.leadership ?? 0}
+            />
           </div>
           <ScrollRevealGroup
             className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
             duration={600}
             staggerDelay={80}
           >
-            {staff.data.slice(0, 6).map((person) => (
-              <StaffCard key={person.id} person={person} />
+            {teamMembers.slice(0, 6).map((person) => (
+              <StaffCard key={person.assignmentId} person={person} />
             ))}
-            {staff.data.length === 0 ? (
+            {teamMembers.length === 0 ? (
               <StatusMessage>
                 Research staff records are not published yet.
               </StatusMessage>
@@ -377,6 +296,218 @@ function AboutHero({
   );
 }
 
+function LayeredAboutSections({
+  supportAreas,
+  coverage,
+}: {
+  supportAreas: ReturnType<typeof buildSupportAreaCards>;
+  coverage: {
+    centers: number;
+    programs: number;
+    guidelines: number;
+    partners: number;
+  };
+}) {
+  const panels = [
+    {
+      key: "mandate",
+      eyebrow: "Mandate",
+      title: "Coordinate. Promote. Mobilize.",
+      body: "REIRM coordinates research, extension, innovation and resource mobilization for societal needs, research capacity and national development.",
+    },
+    {
+      key: "support",
+      eyebrow: "Supports",
+      title: "Research support areas",
+      body: "Proposal support, extension pathways, innovation development and partnership mobilization.",
+    },
+    {
+      key: "governance",
+      eyebrow: "Governance",
+      title: "Research controls and accountability",
+      body: "University governance, approval controls, transparency and research integrity.",
+    },
+  ];
+
+  return (
+    <section className="border-y border-slate-200 bg-slate-50 px-4 py-8 sm:px-6 lg:px-8 lg:py-10 xl:px-10 2xl:px-12">
+      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
+        <ScrollReveal
+          className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-24 lg:self-start"
+          variant="fade-up"
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
+            About REIRM
+          </p>
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
+            Structure, services and controls
+          </h2>
+          <div className="mt-5 grid gap-2">
+            {panels.map((panel, index) => (
+              <a
+                key={panel.key}
+                href={`#about-${panel.key}`}
+                className="group flex items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary/25 hover:bg-primary/5 hover:text-primary"
+              >
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-xs text-primary shadow-sm">
+                  {index + 1}
+                </span>
+                {panel.eyebrow}
+              </a>
+            ))}
+          </div>
+        </ScrollReveal>
+
+        <div className="relative grid gap-4 lg:block lg:min-h-[980px]">
+          <ScrollReveal
+            className="top-24 z-[1] lg:sticky"
+            variant="fade-up"
+          >
+            <div id="about-mandate">
+              <MandateStackCard coverage={coverage} />
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal
+            className="top-28 z-[2] lg:sticky lg:mt-7"
+            variant="fade-up"
+          >
+            <section
+              id="about-support"
+              className="rounded-lg border border-slate-200 bg-white p-5 shadow-lg shadow-slate-950/5 sm:p-6"
+            >
+              <SectionKicker icon={Target} label="What REIRM supports" />
+              <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {supportAreas.map((area) => (
+                  <SupportAreaCard key={area.title} area={area} />
+                ))}
+              </div>
+            </section>
+          </ScrollReveal>
+
+          <ScrollReveal
+            className="top-32 z-[3] lg:sticky lg:mt-7"
+            variant="fade-up"
+          >
+            <section
+              id="about-governance"
+              className="overflow-hidden rounded-lg border border-slate-800 bg-slate-950 text-white shadow-lg shadow-slate-950/10"
+            >
+              <div className="grid gap-0 lg:grid-cols-[minmax(320px,520px)_minmax(0,1fr)]">
+                <div className="p-5 sm:p-6">
+                  <SectionKicker icon={CheckCircle2} label="Governance" inverted />
+                  <h3 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-white">
+                    Research controls and accountability
+                  </h3>
+                  <p className="mt-3 text-sm leading-7 text-white/78">
+                    REIRM operates under university governance and research
+                    controls to ensure transparency, accountability, and
+                    research integrity.
+                  </p>
+                  <Link
+                    href="/guidelines"
+                    className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-md border border-white/30 px-4 text-sm font-semibold text-white transition hover:bg-white/10"
+                  >
+                    View governance structure
+                    <ArrowRight aria-hidden className="h-4 w-4" />
+                  </Link>
+                </div>
+                <div
+                  aria-hidden
+                  className="min-h-[180px] border-t border-white/10 bg-[url(/images/research/research-demo-imagegen.webp)] bg-cover bg-center opacity-80 lg:min-h-[260px] lg:border-l lg:border-t-0"
+                />
+              </div>
+            </section>
+          </ScrollReveal>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MandateStackCard({
+  coverage,
+}: {
+  coverage: {
+    centers: number;
+    programs: number;
+    guidelines: number;
+    partners: number;
+  };
+}) {
+  return (
+    <section className="overflow-hidden rounded-lg border border-primary/20 bg-white shadow-lg shadow-slate-950/5">
+      <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="bg-primary p-5 text-white sm:p-6">
+          <SectionKicker icon={ShieldCheck} label="Mandate" inverted />
+          <h3 className="mt-4 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white">
+            Coordinate research, extension, innovation and resource mobilization.
+          </h3>
+          <p className="mt-4 max-w-3xl text-sm leading-7 text-white/82 sm:text-base">
+            The mandate is direct: address societal needs, strengthen research
+            capacity and increase Kisii University&apos;s contribution to
+            national development.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            {["Coordinate", "Promote", "Mobilize"].map((item) => (
+              <span
+                key={item}
+                className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white"
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="grid gap-3 bg-white p-5 sm:p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">
+            Backend coverage
+          </p>
+          <dl className="grid grid-cols-2 gap-3">
+            <MiniFact label="Centers" value={coverage.centers} />
+            <MiniFact label="Programs" value={coverage.programs} />
+            <MiniFact label="Guidelines" value={coverage.guidelines} />
+            <MiniFact label="Partners" value={coverage.partners} />
+          </dl>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SectionKicker({
+  icon: Icon,
+  label,
+  inverted = false,
+}: {
+  icon: LucideIcon;
+  label: string;
+  inverted?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span
+        className={
+          inverted
+            ? "flex h-10 w-10 items-center justify-center rounded-md bg-white/12 text-secondary"
+            : "flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary"
+        }
+      >
+        <Icon aria-hidden className="h-5 w-5" />
+      </span>
+      <p
+        className={
+          inverted
+            ? "text-xs font-semibold uppercase tracking-[0.22em] text-white/70"
+            : "text-xs font-semibold uppercase tracking-[0.22em] text-secondary"
+        }
+      >
+        {label}
+      </p>
+    </div>
+  );
+}
+
 function SupportAreaCard({
   area,
 }: {
@@ -413,9 +544,13 @@ function SupportAreaCard({
 function LeadPanel({
   lead,
   staffCount,
+  groupCount,
+  leadershipCount,
 }: {
-  lead: Person | null;
+  lead: AboutTeamMember | null;
   staffCount: number;
+  groupCount: number;
+  leadershipCount: number;
 }) {
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -426,31 +561,30 @@ function LeadPanel({
         <Users aria-hidden className="h-7 w-7" />
       </div>
       <h3 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
-        {lead ? personName(lead) : "Research staff directory"}
+        {lead ? teamMemberName(lead) : "Research staff directory"}
       </h3>
       {lead ? (
         <>
           <p className="mt-2 text-sm font-semibold text-primary">
-            {compactText(lead.institutional_role) ||
-              compactText(lead.academic_rank) ||
-              compactText(lead.title)}
+            {lead.assignmentTitle}
           </p>
           {personSummary(lead) ? (
             <p className="mt-3 text-sm leading-7 text-slate-600">
               {personSummary(lead)}
             </p>
           ) : null}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Badge>{lead.groupLabel}</Badge>
+            <Badge>Level {lead.hierarchyLevel}</Badge>
+          </div>
         </>
       ) : (
         <StatusMessage>Research staff records are not published yet.</StatusMessage>
       )}
-      <dl className="mt-5 rounded-md bg-slate-50 p-3">
-        <dt className="text-xs font-semibold uppercase text-slate-500">
-          Published profiles
-        </dt>
-        <dd className="mt-1 text-2xl font-semibold text-slate-950">
-          {staffCount}
-        </dd>
+      <dl className="mt-5 grid grid-cols-3 gap-2 rounded-md bg-slate-50 p-3">
+        <MiniTeamFact label="Profiles" value={staffCount} />
+        <MiniTeamFact label="Groups" value={groupCount} />
+        <MiniTeamFact label="Leads" value={leadershipCount} />
       </dl>
       <div className="mt-5 flex flex-wrap gap-3">
         <PrimaryLink href="/team">Open team</PrimaryLink>
@@ -459,7 +593,7 @@ function LeadPanel({
   );
 }
 
-function StaffCard({ person }: { person: Person }) {
+function StaffCard({ person }: { person: AboutTeamMember }) {
   const interests = Array.isArray(person.research_interests)
     ? person.research_interests.slice(0, 2)
     : [];
@@ -467,21 +601,16 @@ function StaffCard({ person }: { person: Person }) {
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap gap-2">
-        <Badge>
-          {formatLabel(person.academic_rank ?? person.title ?? "researcher")}
-        </Badge>
-        {person.is_featured ? <Badge>Featured</Badge> : null}
+        <Badge>{person.groupLabel}</Badge>
+        <Badge>Level {person.hierarchyLevel}</Badge>
+        {person.isActing ? <Badge>Acting</Badge> : null}
       </div>
       <h3 className="mt-4 text-lg font-semibold leading-6 text-slate-950">
-        {personName(person)}
+        {teamMemberName(person)}
       </h3>
-      {compactText(person.institutional_role) ||
-      compactText(person.department_name) ? (
-        <p className="mt-2 text-sm font-semibold text-primary">
-          {compactText(person.institutional_role) ||
-            compactText(person.department_name)}
-        </p>
-      ) : null}
+      <p className="mt-2 text-sm font-semibold text-primary">
+        {person.assignmentTitle}
+      </p>
       {personSummary(person) ? (
         <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">
           {personSummary(person)}
@@ -506,6 +635,19 @@ function StaffCard({ person }: { person: Person }) {
         </a>
       ) : null}
     </article>
+  );
+}
+
+function MiniTeamFact({ label, value }: { label: string; value: number }) {
+  return (
+    <div>
+      <dt className="text-[10px] font-semibold uppercase text-slate-500">
+        {label}
+      </dt>
+      <dd className="mt-1 text-lg font-semibold text-slate-950">
+        {value.toLocaleString("en-KE")}
+      </dd>
+    </div>
   );
 }
 
@@ -558,19 +700,25 @@ function MiniFact({ label, value }: { label: string; value: number }) {
 }
 
 async function getResearchStaff() {
+  const directorateId = process.env.NEXT_PUBLIC_RESEARCH_DIRECTORATE_ID;
   try {
-    const response = await personsApi.list({
-      fields:
-        "id,slug,full_name,first_name,last_name,title,academic_rank,institutional_role,leadership_message,bio,specialization,research_interests,department_name,email,is_researcher,is_featured",
-      is_researcher: true,
-      status: "active",
-      page: 1,
-      per_page: 12,
-    });
-    return { data: response.data ?? [], error: null as string | null };
+    if (directorateId) {
+      const response = await publicTeamApi.get({
+        entity_type: "directorate",
+        entity_id: directorateId,
+      });
+      return { data: response.data ?? null, error: null as string | null };
+    }
+  } catch {
+    // Fall back to the university hierarchy when the configured directorate is unavailable.
+  }
+
+  try {
+    const response = await publicTeamApi.get({ entity_type: "university" });
+    return { data: response.data ?? null, error: null as string | null };
   } catch {
     return {
-      data: [] as Person[],
+      data: null as PublicTeamResponse | null,
       error: "Research staff records are temporarily unavailable.",
     };
   }
@@ -601,23 +749,17 @@ function supportIcon(title: string): LucideIcon {
   return BookOpen;
 }
 
-function personName(person: Person) {
-  return (
-    compactText(person.full_name) ||
-    [person.first_name, person.last_name].map(compactText).filter(Boolean).join(" ") ||
-    "Research staff"
-  );
+function teamMemberName(person: AboutTeamMember) {
+  return compactText(person.full_name) || "Research staff";
 }
 
-function personSummary(person: Person) {
+function personSummary(person: AboutTeamMember) {
   return (
-    compactText(person.leadership_message) ||
-    compactText(person.bio) ||
     compactText(person.specialization)
   );
 }
 
-function staffHref(person: Person) {
+function staffHref(person: AboutTeamMember) {
   const base = publicFrontendUrl.replace(/\/$/, "");
   return `${base || ""}/staff/${person.slug || person.id}`;
 }

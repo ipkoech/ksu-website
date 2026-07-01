@@ -18,12 +18,19 @@ test("about page keeps backend-backed stats and team data sources", () => {
   assert.match(source, /buildAboutMetricTiles/);
   assert.match(source, /getResearchStats/);
   assert.match(source, /getResearchStaff/);
-  assert.match(source, /personsApi\.list/);
+  assert.match(source, /publicTeamApi\.get/);
+  assert.match(source, /buildTeamMembers/);
+  assert.doesNotMatch(source, /personsApi\.list/);
 });
 
 test("about page uses reveal animation without the removed about family band", () => {
   assert.match(source, /ScrollReveal/);
   assert.match(source, /ScrollRevealGroup/);
+  assert.match(source, /LayeredAboutSections/);
+  assert.match(source, /lg:sticky/);
+  assert.match(source, /top-24 z-\[1\]/);
+  assert.match(source, /top-28 z-\[2\]/);
+  assert.match(source, /top-32 z-\[3\]/);
   assert.doesNotMatch(source, /Explore REIRM/);
   assert.doesNotMatch(source, /About pages that work together/);
   assert.doesNotMatch(source, /aboutFamilyCards/);
@@ -33,5 +40,6 @@ test("about page avoids old generic placeholder language", () => {
   assert.doesNotMatch(source, /public operating layer/i);
   assert.doesNotMatch(source, /without placeholder people/i);
   assert.doesNotMatch(source, /Move from About into the right task/);
-  assert.match(source, /To coordinate and promote research, extension, innovation/);
+  assert.match(source, /Coordinate\. Promote\. Mobilize\./);
+  assert.match(source, /Coordinate research, extension, innovation and resource mobilization/);
 });

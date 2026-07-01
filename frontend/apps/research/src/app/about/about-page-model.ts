@@ -30,6 +30,71 @@ export type AboutPerson = {
   is_featured?: boolean | null;
 };
 
+export type AboutTeamPerson = {
+  id: string;
+  slug?: string | null;
+  title?: string | null;
+  full_name?: string | null;
+  email?: string | null;
+  photo_url?: string | null;
+  academic_rank?: string | null;
+  institutional_role?: string | null;
+  office_location?: string | null;
+  specialization?: string | null;
+  research_interests?: string[] | null;
+};
+
+export type AboutTeamAssignment = {
+  id: string;
+  person_id: string;
+  role?: string | null;
+  role_label?: string | null;
+  role_display?: string | null;
+  group?: string | null;
+  title?: string | null;
+  hierarchy_level?: number | null;
+  reports_to_id?: string | null;
+  display_order?: number | null;
+  is_acting?: boolean | null;
+};
+
+export type AboutTeamGroup = {
+  key: string;
+  label: string;
+  count: number;
+  assignment_ids: string[];
+};
+
+export type AboutTeamHierarchy = {
+  level: number;
+  label: string;
+  assignment_ids: string[];
+};
+
+export type AboutTeamResponse = {
+  assignments?: AboutTeamAssignment[];
+  persons?: Record<string, AboutTeamPerson>;
+  groups?: AboutTeamGroup[];
+  hierarchy?: AboutTeamHierarchy[];
+  counts?: {
+    assignments?: number;
+    persons?: number;
+    leadership?: number;
+  };
+};
+
+export type AboutTeamMember = AboutTeamPerson & {
+  assignmentId: string;
+  assignmentTitle: string;
+  roleLabel: string;
+  groupKey: string;
+  groupLabel: string;
+  hierarchyLevel: number;
+  displayOrder: number;
+  reportsToId?: string | null;
+  isActing: boolean;
+};
+
 export type AboutCollection<T = AboutRecord> = {
   data: T[];
   total?: number;
@@ -71,6 +136,65 @@ export function getLeadResearchPerson<T extends AboutPerson>(people: T[]) {
     ) ??
     people.find((person) => person.is_featured) ??
     people[0] ??
+    null
+  );
+}
+
+export function buildTeamMembers(team?: AboutTeamResponse | null): AboutTeamMember[] {
+  const people = team?.persons ?? {};
+  const groupLabels = new Map(
+    (team?.groups ?? []).map((group) => [group.key, group.label]),
+  );
+
+  return [...(team?.assignments ?? [])]
+    .map((assignment) => {
+      const person = people[String(assignment.person_id)];
+      if (!person) return null;
+      const groupKey = compactText(assignment.group) || "other";
+      const roleLabel =
+        compactText(assignment.role_display) ||
+        compactText(assignment.role_label) ||
+        formatRole(assignment.role) ||
+        compactText(person.institutional_role) ||
+        "Research Staff";
+      const assignmentTitle =
+        compactText(assignment.title) ||
+        compactText(person.institutional_role) ||
+        roleLabel;
+
+      const member: AboutTeamMember = {
+        ...person,
+        assignmentId: String(assignment.id),
+        assignmentTitle,
+        roleLabel,
+        groupKey,
+        groupLabel: groupLabels.get(groupKey) ?? formatRole(groupKey) ?? "Team",
+        hierarchyLevel: Number(assignment.hierarchy_level ?? 99),
+        displayOrder: Number(assignment.display_order ?? 999),
+        reportsToId: assignment.reports_to_id,
+        isActing: Boolean(assignment.is_acting),
+      };
+      return member;
+    })
+    .filter((member): member is AboutTeamMember => member !== null)
+    .sort((a, b) => {
+      if (a.hierarchyLevel !== b.hierarchyLevel) {
+        return a.hierarchyLevel - b.hierarchyLevel;
+      }
+      if (a.displayOrder !== b.displayOrder) {
+        return a.displayOrder - b.displayOrder;
+      }
+      return compactText(a.full_name).localeCompare(compactText(b.full_name));
+    });
+}
+
+export function getLeadTeamMember(members: AboutTeamMember[]) {
+  return (
+    members.find((member) => member.groupKey === "leadership") ??
+    members.find((member) =>
+      compactText(member.assignmentTitle).toLowerCase().includes("director"),
+    ) ??
+    members[0] ??
     null
   );
 }
@@ -246,4 +370,14 @@ function firstMatching(records: AboutRecord[], terms: string[]) {
 function compactText(value?: string | number | null) {
   if (value === null || value === undefined) return "";
   return String(value).replace(/\s+/g, " ").trim();
+}
+
+function formatRole(value?: string | number | null) {
+  const text = compactText(value);
+  if (!text) return "";
+  return text
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }

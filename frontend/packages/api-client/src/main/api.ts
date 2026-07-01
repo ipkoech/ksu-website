@@ -80,6 +80,7 @@ import type {
   MediaUploadOptions,
   PaginatedResponse,
   PublicStatsResponse,
+  PublicTeamResponse,
 } from "./types";
 import type { FieldSelectionParams, QueryParams } from "../client";
 
@@ -289,6 +290,15 @@ export const personsApi = {
     mainApi.delete<{ data: Person }>(`/api/v1/persons/${id}/photo`),
 
   delete: (id: string) => mainApi.delete<void>(`/api/v1/persons/${id}`),
+};
+
+export const publicTeamApi = {
+  get: (
+    params: {
+      entity_type: "university" | "school" | "department" | "division" | "wing" | "directorate" | "board";
+      entity_id?: string;
+    },
+  ) => mainApi.get<{ data: PublicTeamResponse }>("/api/v1/public/team", params),
 };
 
 // Divisions
