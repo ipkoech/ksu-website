@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
-import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
+import { ProgramTableControls } from "../programs/program-table-controls";
+import {
+  ResearchPortfolioHero,
+  ResearchPortfolioShell,
+} from "../../components/research-portfolio";
 import {
   Badge,
   FilledBadge,
-  PrimaryLink,
-  ResearchSection,
-  SecondaryLink,
   StatusMessage,
 } from "../../components/research-ui";
 import {
@@ -17,7 +19,7 @@ import {
   getPrograms,
   getProjects,
 } from "../../lib/research-public-data";
-import type { ResearchProject } from "@ksu/api-client";
+import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
 import {
   filterProjectsByMonth,
   getProjectMonths,
@@ -60,6 +62,12 @@ const sortOptions = [
   { label: "Title A-Z", value: "title" },
   { label: "Title Z-A", value: "title_desc" },
 ];
+const quickLinks = [
+  { label: "Programs", href: "/programs", body: "Strategic research umbrellas" },
+  { label: "Centers", href: "/centers", body: "Institutional research anchors" },
+  { label: "Publications", href: "/publications", body: "Scholarly evidence" },
+  { label: "Outputs", href: "/outputs", body: "Data, tools, and reports" },
+];
 
 export default async function ProjectsPage({
   searchParams,
@@ -101,30 +109,34 @@ export default async function ProjectsPage({
   const rowProjects = featuredProject
     ? visibleProjects.filter((project) => project.id !== featuredProject.id)
     : visibleProjects;
+  const centerNames = new Map(centers.data.map((center) => [center.id, center.name ?? center.title ?? center.code ?? ""]));
+  const programNames = new Map(programs.data.map((program) => [program.id, program.name ?? program.title ?? program.code ?? ""]));
 
   return (
-    <main id="research-main" className="min-h-screen bg-white">
-      <ProjectsMasthead
-        resultCount={visibleProjects.length}
-        publishedCount={allProjects.data.length}
-        centersCount={centers.data.length}
-        programsCount={programs.data.length}
+    <main id="research-main" className="min-h-screen bg-white text-slate-950">
+      <ResearchPortfolioHero
+        eyebrow="Published project portfolio"
+        title="Research Projects"
+        body="Active research workstreams delivering evidence, outputs, field activity, and public value across Kisii University priority areas."
+        primary={{ label: "Explore projects", href: "#project-portfolio" }}
+        secondary={{ label: "View programmes", href: "/programs" }}
       />
 
-      <ResearchSection
-        eyebrow="Project Registry"
-        title="Projects"
-        body="Search public projects and use the filter menu for years, months, active states, status, center, and programme."
-        tone="white"
+      <ResearchPortfolioShell
+        id="project-portfolio"
+        title="Project Portfolio"
+        body="Search, filter, sort, and open published research project stories."
+        quickLinks={quickLinks}
+        controls={
+          <ProjectFilters
+            params={params}
+            centers={centers.data}
+            programs={programs.data}
+            years={years}
+            months={months}
+          />
+        }
       >
-        <ProjectFilters
-          params={params}
-          centers={centers.data}
-          programs={programs.data}
-          years={years}
-          months={months}
-        />
-
         {[projects.error, centers.error, programs.error]
           .filter(Boolean)
           .map((error) => (
@@ -137,13 +149,31 @@ export default async function ProjectsPage({
           <>
             {featuredProject ? (
               <div className="mt-6">
-                <FeaturedProject project={featuredProject} />
+                <FeaturedProject
+                  project={featuredProject}
+                  centerName={centerNames.get(featuredProject.center_id ?? "")}
+                  programName={programNames.get(featuredProject.program_id ?? "")}
+                />
               </div>
             ) : null}
-            <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
+            <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              <div className="hidden grid-cols-[minmax(360px,1fr)_170px_150px_140px_130px] gap-4 border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 lg:grid">
+                <span>Project</span>
+                <span>Program / Center</span>
+                <span>Status</span>
+                <span>Timeline</span>
+                <span>Progress</span>
+              </div>
+              <div className="divide-y divide-slate-200">
               {rowProjects.map((project) => (
-                <ProjectRow key={project.id} project={project} />
+                <ProjectRow
+                  key={project.id}
+                  project={project}
+                  centerName={centerNames.get(project.center_id ?? "")}
+                  programName={programNames.get(project.program_id ?? "")}
+                />
               ))}
+              </div>
             </div>
             <ListPagination
               page={page}
@@ -160,65 +190,9 @@ export default async function ProjectsPage({
             </StatusMessage>
           </div>
         )}
-      </ResearchSection>
+      </ResearchPortfolioShell>
 
     </main>
-  );
-}
-
-function ProjectsMasthead({
-  resultCount,
-  publishedCount,
-  centersCount,
-  programsCount,
-}: {
-  resultCount: number;
-  publishedCount: number;
-  centersCount: number;
-  programsCount: number;
-}) {
-  const stats = [
-    { label: "Project results", value: resultCount },
-    { label: "Published projects", value: publishedCount },
-    { label: "Centers", value: centersCount },
-    { label: "Programmes", value: programsCount },
-  ];
-
-  return (
-    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
-        <div>
-          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
-            <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-slate-300">/</span>
-            <Link href="/projects" className="transition hover:text-primary">Research</Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-900">Projects</span>
-          </nav>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
-            Research Projects
-          </p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
-            Research work across Kisii University
-          </h1>
-          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">
-            Browse public projects by title, active state, status, programme, center, year, month, and current progress.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <PrimaryLink href="/programs">Explore programmes</PrimaryLink>
-            <SecondaryLink href="/partners">Partner with research</SecondaryLink>
-          </div>
-        </div>
-        <dl className="grid gap-2 sm:grid-cols-2">
-          {stats.map((stat) => (
-            <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-              <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
-              <dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </section>
   );
 }
 
@@ -230,18 +204,20 @@ function ProjectFilters({
   months,
 }: {
   params: ProjectSearchParams;
-  centers: Array<Record<string, any>>;
+  centers: ResearchGenericRecord[];
   programs: Array<Record<string, any>>;
   years: string[];
   months: Array<{ value: string; label: string }>;
 }) {
   return (
-    <ResearchFilterForm
+    <ProgramTableControls
       action="/projects"
       resetHref="/projects"
       searchValue={params.q}
-      searchPlaceholder="Project title, summary, code"
-      selects={[
+      searchPlaceholder="Search projects by title, summary, code..."
+      filterTitle="Filter projects"
+      sortTitle="Sort projects"
+      filterSelects={[
         { name: "type", label: "Type", value: params.type, options: projectTypes },
         { name: "active", label: "Active state", value: params.active, options: activeStates },
         { name: "status", label: "Status", value: params.status, options: projectStatuses },
@@ -267,39 +243,73 @@ function ProjectFilters({
   );
 }
 
-function FeaturedProject({ project }: { project: ResearchProject }) {
+function FeaturedProject({
+  project,
+  centerName,
+  programName,
+}: {
+  project: ResearchProject;
+  centerName?: string;
+  programName?: string;
+}) {
   return (
     <Link
       href={project.slug ? `/projects/${project.slug}` : "/projects"}
       className="group grid gap-4 rounded-lg border border-primary/20 bg-primary/[0.03] p-4 shadow-sm transition hover:border-primary/40 lg:grid-cols-[minmax(0,1fr)_260px_auto] lg:items-center"
     >
-      <ProjectRowContent project={project} featured />
+      <ProjectRowContent project={project} centerName={centerName} programName={programName} featured />
     </Link>
   );
 }
 
-function ProjectRow({ project }: { project: ResearchProject }) {
+function ProjectRow({
+  project,
+  centerName,
+  programName,
+}: {
+  project: ResearchProject;
+  centerName?: string;
+  programName?: string;
+}) {
+  const href = project.slug ? `/projects/${project.slug}` : "/projects";
+  const summary = compactText(project.summary) || compactText(project.abstract);
+  const timeline = getProjectTimelineLabel(project);
   return (
-    <ResearchRecordRow
-      href={project.slug ? `/projects/${project.slug}` : "/projects"}
-      title={project.title}
-      description={
-        compactText(project.summary) ||
-        compactText(project.abstract) ||
-        "Project summary has not been published yet."
-      }
-      badges={[project.project_type, project.status]}
-      filledBadges={[project.is_featured ? "Featured" : null]}
-      facts={[
-        { label: "Timeline", value: getProjectTimelineLabel(project) },
-        { label: "Progress", value: `${project.progress_percentage ?? 0}%` },
-        { label: "Active", value: project.is_active === false ? "Inactive" : "Active" },
-      ]}
-    />
+    <Link
+      href={href}
+      className="group grid gap-3 px-4 py-4 transition hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 lg:grid-cols-[minmax(360px,1fr)_170px_150px_140px_130px] lg:items-center"
+    >
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge>{formatLabel(project.project_type ?? "research")}</Badge>
+          <Badge>{formatLabel(project.status ?? "ongoing")}</Badge>
+          {project.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
+        </div>
+        <h2 className="mt-2 flex items-start gap-2 text-base font-semibold leading-6 text-slate-950">
+          <span className="transition group-hover:text-primary">{project.title}</span>
+          <ExternalLink aria-hidden className="mt-1 h-3.5 w-3.5 shrink-0 text-primary transition group-hover:translate-x-0.5" />
+        </h2>
+        {summary ? <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{summary}</p> : null}
+      </div>
+      <div className="text-sm text-slate-600 lg:block">{programName || centerName || "-"}</div>
+      <div className="text-sm font-medium text-slate-700 lg:block">{formatLabel(project.status ?? "ongoing")}</div>
+      <div className="text-sm text-slate-600 lg:block">{timeline || "-"}</div>
+      <div className="text-sm text-slate-600 lg:block">{project.progress_percentage ?? 0}%</div>
+    </Link>
   );
 }
 
-function ProjectRowContent({ project, featured = false }: { project: ResearchProject; featured?: boolean }) {
+function ProjectRowContent({
+  project,
+  centerName,
+  programName,
+  featured = false,
+}: {
+  project: ResearchProject;
+  centerName?: string;
+  programName?: string;
+  featured?: boolean;
+}) {
   return (
     <>
       <div>
@@ -319,8 +329,8 @@ function ProjectRowContent({ project, featured = false }: { project: ResearchPro
       </div>
       <dl className="grid gap-2 text-sm">
         <div className="rounded-md bg-white p-2.5">
-          <dt className="text-xs font-semibold uppercase text-slate-500">Timeline</dt>
-          <dd className="mt-1 font-semibold text-slate-950">{getProjectTimelineLabel(project)}</dd>
+          <dt className="text-xs font-semibold uppercase text-slate-500">Program / Center</dt>
+          <dd className="mt-1 font-semibold text-slate-950">{programName || centerName || "Not published"}</dd>
         </div>
         <div className="rounded-md bg-white p-2.5">
           <dt className="text-xs font-semibold uppercase text-slate-500">Progress</dt>

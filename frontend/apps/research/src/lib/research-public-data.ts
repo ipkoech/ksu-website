@@ -492,8 +492,8 @@ export function getCentersFiltered(filters: GenericListFilters = {}) {
       is_active: filters.isActive ?? true,
       is_featured: filters.isFeatured,
       is_public: true,
-      page: 1,
-      per_page: 100,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 100,
     }),
   );
 }
@@ -545,8 +545,8 @@ export function getFacilitiesFiltered(filters: GenericListFilters = {}) {
       is_active: filters.isActive ?? true,
       is_featured: filters.isFeatured,
       is_public: true,
-      page: 1,
-      per_page: 100,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 100,
     }),
   );
 }
@@ -730,8 +730,8 @@ export function getOutputsFiltered(filters: GenericListFilters = {}) {
       is_active: filters.isActive ?? true,
       is_featured: filters.isFeatured,
       is_public: true,
-      page: 1,
-      per_page: 100,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 100,
     }),
   );
 }

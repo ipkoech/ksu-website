@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
+import { ExternalLink } from "lucide-react";
+import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
+import { ProgramTableControls } from "../programs/program-table-controls";
+import {
+  ResearchPortfolioHero,
+  ResearchPortfolioShell,
+} from "../../components/research-portfolio";
 import {
   Badge,
   FilledBadge,
-  PrimaryLink,
   ResearchSection,
-  SecondaryLink,
   StatusMessage,
 } from "../../components/research-ui";
 import {
@@ -18,6 +22,8 @@ import {
 } from "../../lib/research-public-data";
 import {
   filterRecordsByMonth,
+  getListPageSize,
+  getPublishedFactItems,
   getRecordMonths,
   getRecordSummary,
   getRecordTimelineLabel,
@@ -41,6 +47,7 @@ type CenterSearchParams = {
   year?: string;
   month?: string;
   sort?: string;
+  page?: string;
 };
 
 const centerTypes = ["research_center", "institute", "hub", "laboratory", "farm"];
@@ -57,6 +64,12 @@ const sortOptions = [
   { label: "Name A-Z", value: "name" },
   { label: "Name Z-A", value: "name_desc" },
 ];
+const quickLinks = [
+  { label: "Programs", href: "/programs", body: "Research umbrellas anchored by centers" },
+  { label: "Projects", href: "/projects", body: "Workstreams delivered with centers" },
+  { label: "Facilities", href: "/facilities", body: "Labs, farms, and infrastructure" },
+  { label: "Outputs", href: "/outputs", body: "Evidence produced by research teams" },
+];
 
 export default async function CentersPage({
   searchParams,
@@ -64,6 +77,8 @@ export default async function CentersPage({
   searchParams?: Promise<CenterSearchParams>;
 }) {
   const params = (await searchParams) ?? {};
+  const page = pageFromSearchParams(params);
+  const perPage = getListPageSize(12);
   const sort = params.sort || "display_order";
   const sortField = sort === "name_desc" ? "name" : sort;
   const order = sort === "name" ? "asc" : "desc";
@@ -76,6 +91,8 @@ export default async function CentersPage({
       year: params.year,
       sort: sortField,
       order,
+      page,
+      perPage,
       ...activeFlags,
     }),
     getCenters(),
@@ -84,28 +101,33 @@ export default async function CentersPage({
   const years = getRecordYears(allCenters.data);
   const months = getRecordMonths(allCenters.data, params.year);
   const visibleCenters = filterRecordsByMonth(centers.data, params.year, params.month);
+  const totalPages = Math.ceil(
+    (params.month ? visibleCenters.length : centers.total) / centers.perPage,
+  );
   const featuredCenter = visibleCenters.find((center) => center.is_featured);
   const rowCenters = featuredCenter
     ? visibleCenters.filter((center) => center.id !== featuredCenter.id)
     : visibleCenters;
 
+  const baseHref = getCentersPageHref(params);
+
   return (
-    <main id="research-main" className="min-h-screen bg-white">
-      <CentersMasthead
-        resultCount={visibleCenters.length}
-        publishedCount={allCenters.data.length}
-        facilitiesCount={facilities.data.length}
-        centerTypesCount={centerTypes.length}
+    <main id="research-main" className="min-h-screen bg-white text-slate-950">
+      <ResearchPortfolioHero
+        eyebrow="Institutional research anchors"
+        title="Research Centers"
+        body="Centers, institutes, hubs, laboratories, and specialist units that coordinate research delivery, infrastructure, and public collaboration."
+        primary={{ label: "Explore centers", href: "#center-directory" }}
+        secondary={{ label: "View facilities", href: "/facilities" }}
       />
 
-      <ResearchSection
-        eyebrow="Center Directory"
-        title="Centers, institutes, hubs, and specialist units"
-        body="Search published centers and use the filter menu for type, years, months, active states, status, and sort order."
-        tone="white"
+      <ResearchPortfolioShell
+        id="center-directory"
+        title="Center Directory"
+        body="Search, filter, sort, and open published center profiles."
+        quickLinks={quickLinks}
+        controls={<CenterFilters params={params} years={years} months={months} />}
       >
-        <CenterFilters params={params} years={years} months={months} />
-
         {[centers.error, allCenters.error, facilities.error]
           .filter(Boolean)
           .map((error) => (
@@ -121,18 +143,34 @@ export default async function CentersPage({
                 <FeaturedCenter center={featuredCenter} />
               </div>
             ) : null}
-            <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
-              {rowCenters.map((center) => (
-                <CenterRow key={center.id} center={center} />
-              ))}
+            <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              <div className="hidden grid-cols-[minmax(340px,1fr)_150px_170px_170px] gap-4 border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 lg:grid">
+                <span>Center</span>
+                <span>Status</span>
+                <span>Location</span>
+                <span>Updated</span>
+              </div>
+              <div className="divide-y divide-slate-200">
+                {rowCenters.map((center) => (
+                  <CenterRow key={center.id} center={center} />
+                ))}
+              </div>
             </div>
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              total={params.month ? visibleCenters.length : centers.total}
+              perPage={centers.perPage}
+              baseHref={baseHref}
+              className="mt-5"
+            />
           </>
         ) : (
           <div className="mt-7">
             <StatusMessage>No published research centers match the current filters.</StatusMessage>
           </div>
         )}
-      </ResearchSection>
+      </ResearchPortfolioShell>
 
       <ResearchSection
         eyebrow="Infrastructure"
@@ -152,62 +190,6 @@ export default async function CentersPage({
   );
 }
 
-function CentersMasthead({
-  resultCount,
-  publishedCount,
-  facilitiesCount,
-  centerTypesCount,
-}: {
-  resultCount: number;
-  publishedCount: number;
-  facilitiesCount: number;
-  centerTypesCount: number;
-}) {
-  const stats = [
-    { label: "Center results", value: resultCount },
-    { label: "Published centers", value: publishedCount },
-    { label: "Facilities", value: facilitiesCount },
-    { label: "Center types", value: centerTypesCount },
-  ];
-
-  return (
-    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
-        <div>
-          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
-            <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-slate-300">/</span>
-            <Link href="/projects" className="transition hover:text-primary">Research</Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-900">Centers</span>
-          </nav>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
-            Research Centers
-          </p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
-            Institutional homes for research, innovation, and public collaboration
-          </h1>
-          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">
-            Browse centers by name, type, active state, status, published period, and linked infrastructure.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <PrimaryLink href="/facilities">Explore facilities</PrimaryLink>
-            <SecondaryLink href="/programs">View programmes</SecondaryLink>
-          </div>
-        </div>
-        <dl className="grid gap-2 sm:grid-cols-2">
-          {stats.map((stat) => (
-            <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-              <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
-              <dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </section>
-  );
-}
-
 function CenterFilters({
   params,
   years,
@@ -218,12 +200,14 @@ function CenterFilters({
   months: Array<{ value: string; label: string }>;
 }) {
   return (
-    <ResearchFilterForm
+    <ProgramTableControls
       action="/centers"
       resetHref="/centers"
       searchValue={params.q}
-      searchPlaceholder="Center name, mandate, research area"
-      selects={[
+      searchPlaceholder="Search centers by name, mandate, research area..."
+      filterTitle="Filter centers"
+      sortTitle="Sort centers"
+      filterSelects={[
         { name: "type", label: "Type", value: params.type, options: centerTypes },
         { name: "active", label: "Active state", value: params.active, options: activeStates },
         { name: "status", label: "Status", value: params.status, options: centerStatuses },
@@ -248,25 +232,53 @@ function FeaturedCenter({ center }: { center: ResearchGenericRecord }) {
 }
 
 function CenterRow({ center }: { center: ResearchGenericRecord }) {
+  const href = center.slug ? `/centers/${center.slug}` : "/centers";
+  const title = getRecordTitle(center, "Research center");
+  const summary =
+    compactText(center.about) ||
+    compactText(center.mandate) ||
+    compactText(center.research_areas) ||
+    getRecordSummary(center);
+  const status = center.status ? formatLabel(center.status) : center.is_active === false ? "Inactive" : "Active";
+  const location = compactText(center.location);
+  const updated = getRecordTimelineLabel(center);
+  const facts = getPublishedFactItems([
+    { label: "Status", value: status },
+    { label: "Location", value: location },
+    { label: "Updated", value: updated },
+  ]);
+
   return (
-    <ResearchRecordRow
-      href={center.slug ? `/centers/${center.slug}` : "/centers"}
-      title={getRecordTitle(center, "Research center")}
-      description={
-        compactText(center.about) ||
-        compactText(center.mandate) ||
-        compactText(center.research_areas) ||
-        getRecordSummary(center) ||
-        "Center profile has not been published yet."
-      }
-      badges={[center.center_type, center.status]}
-      filledBadges={[center.is_featured ? "Featured" : null]}
-      facts={[
-        { label: "Location", value: compactText(center.location) },
-        { label: "Updated", value: getRecordTimelineLabel(center) },
-        { label: "Active", value: center.is_active === false ? "Inactive" : "Active" },
-      ]}
-    />
+    <Link
+      href={href}
+      className="group grid gap-3 px-4 py-4 transition hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 lg:grid-cols-[minmax(340px,1fr)_150px_170px_170px] lg:items-center"
+    >
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge>{formatLabel(compactText(center.center_type) || "research center")}</Badge>
+          {center.status ? <Badge>{formatLabel(center.status)}</Badge> : null}
+          {center.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
+        </div>
+        <h2 className="mt-2 flex items-start gap-2 text-base font-semibold leading-6 text-slate-950">
+          <span className="transition group-hover:text-primary">{title}</span>
+          <ExternalLink aria-hidden className="mt-1 h-3.5 w-3.5 shrink-0 text-primary transition group-hover:translate-x-0.5" />
+        </h2>
+        {summary ? <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{summary}</p> : null}
+        {facts.length ? (
+          <dl className="mt-3 grid gap-2 text-xs text-slate-600 sm:grid-cols-3 lg:hidden">
+            {facts.map((fact) => (
+              <div key={fact.label} className="rounded-md bg-slate-50 px-3 py-2">
+                <dt className="font-semibold uppercase text-slate-500">{fact.label}</dt>
+                <dd className="mt-1 font-medium text-slate-800">{fact.value}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
+      </div>
+      <div className="hidden text-sm font-medium text-slate-700 lg:block">{status}</div>
+      <div className="hidden text-sm text-slate-600 lg:block">{location || "-"}</div>
+      <div className="hidden text-sm text-slate-600 lg:block">{updated || "-"}</div>
+    </Link>
   );
 }
 
@@ -338,4 +350,14 @@ function getActiveFlags(value?: string) {
   if (value === "inactive") return { isActive: false };
   if (value === "featured") return { isActive: true, isFeatured: true };
   return { isActive: true };
+}
+
+function getCentersPageHref(params: CenterSearchParams) {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (!value || key === "page") continue;
+    query.set(key, value);
+  }
+  const search = query.toString();
+  return search ? `/centers?${search}` : "/centers";
 }

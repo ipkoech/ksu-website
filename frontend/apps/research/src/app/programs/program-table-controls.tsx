@@ -20,7 +20,10 @@ type ProgramTableControlsProps = {
   action: string;
   resetHref: string;
   searchValue?: string;
-  centers: ResearchGenericRecord[];
+  searchPlaceholder?: string;
+  filterTitle?: string;
+  sortTitle?: string;
+  centers?: ResearchGenericRecord[];
   centerValue?: string;
   filterSelects: ControlSelect[];
   sortValue?: string;
@@ -31,12 +34,16 @@ export function ProgramTableControls({
   action,
   resetHref,
   searchValue,
+  searchPlaceholder = "Search programs by title, code or focus area...",
+  filterTitle = "Filter programs",
+  sortTitle = "Sort programs",
   centers,
   centerValue,
   filterSelects,
   sortValue,
   sortOptions,
 }: ProgramTableControlsProps) {
+  const centerOptions = centers ?? [];
   const filterItems = [
     searchValue ? { key: "q", label: "Search", value: searchValue } : null,
     ...filterSelects.map((select) =>
@@ -66,7 +73,7 @@ export function ProgramTableControls({
                 type="search"
                 name="q"
                 defaultValue={searchValue ?? ""}
-                placeholder="Search programs by title, code or focus area..."
+                placeholder={searchPlaceholder}
                 autoComplete="off"
                 className="h-11 w-full rounded-md border border-slate-200 bg-white px-3 pl-9 text-sm font-medium text-slate-950 outline-none ring-primary/20 transition placeholder:text-slate-400 focus:border-primary focus:ring-4"
               />
@@ -81,7 +88,7 @@ export function ProgramTableControls({
             </button>
             <FilterDrawerSheet
               filterLabel="Filter"
-              title="Filter programs"
+              title={filterTitle}
               filterCount={filterItems.length}
               activeFilters={filterItems}
               showReset={activeItems.length > 0}
@@ -92,21 +99,23 @@ export function ProgramTableControls({
                 {filterSelects.map((select) => (
                   <ProgramSelectField key={select.name} {...select} />
                 ))}
-                <ProgramSelectField
-                  name="center"
-                  label="Center"
-                  value={centerValue}
-                  allLabel="All centers"
-                  options={centers.map((center) => ({
-                    value: center.id ?? center.code ?? center.name ?? center.title ?? "",
-                    label: center.name ?? center.title ?? center.code ?? center.id ?? "Unnamed center",
-                  }))}
-                />
+                {centerOptions.length > 0 ? (
+                  <ProgramSelectField
+                    name="center"
+                    label="Center"
+                    value={centerValue}
+                    allLabel="All centers"
+                    options={centerOptions.map((center) => ({
+                      value: center.id ?? center.code ?? center.name ?? center.title ?? "",
+                      label: center.name ?? center.title ?? center.code ?? center.id ?? "Unnamed center",
+                    }))}
+                  />
+                ) : null}
               </div>
             </FilterDrawerSheet>
             <FilterDrawerSheet
               filterLabel="Sort"
-              title="Sort programs"
+              title={sortTitle}
               triggerIcon={<ArrowUpDown aria-hidden className="h-4 w-4" />}
               filterCount={sortItems.length}
               activeFilters={sortItems}
