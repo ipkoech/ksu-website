@@ -23,10 +23,14 @@ export default function ResearchProgramDetailPage() {
         { label: "Start", field: "start_date", format: "date" },
         { label: "End", field: "end_date", format: "date" },
         { label: "Budget", field: "budget" },
+        { label: "Display Order", field: "display_order" },
+        { label: "Active", field: "is_active", format: "boolean" },
+        { label: "Featured", field: "is_featured", format: "boolean" },
       ]}
       sections={[
-        { title: "Program", fields: ["summary", "description", "objectives", "expected_outcomes", "methodology"] },
+        { title: "Program Narrative", fields: ["summary", "description", "objectives", "expected_outcomes", "methodology"] },
         { title: "Finance", fields: ["budget", "currency"] },
+        { title: "Media and SEO", fields: ["cover_image_id", "meta_title", "meta_description", "keywords"] },
       ]}
       auditResourceTypes={["research_program", "program", "programs"]}
       renderAfter={(record) => <ProgramRelations program={record} />}

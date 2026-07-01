@@ -19,15 +19,22 @@ export default function ResearchCenterDetailPage() {
       factFields={[
         { label: "Code", field: "code" },
         { label: "Acronym", field: "acronym" },
+        { label: "School", field: "school_id", relation: { adapter: "school" } },
+        { label: "Department", field: "department_id", relation: { adapter: "department" } },
+        { label: "Director", field: "director_id", relation: { adapter: "person" } },
         { label: "Established", field: "established_date", format: "date" },
         { label: "Email", field: "email" },
         { label: "Phone", field: "phone" },
+        { label: "Display Order", field: "display_order" },
+        { label: "Active", field: "is_active", format: "boolean" },
         { label: "Featured", field: "is_featured", format: "boolean" },
       ]}
       sections={[
-        { title: "Profile", fields: ["summary", "about", "description"] },
+        { title: "Profile", fields: ["about"] },
         { title: "Mandate", fields: ["mandate", "mission", "vision", "objectives", "research_areas"] },
-        { title: "Location and Media", fields: ["location", "address", "website", "logo_image_url", "cover_image_url"] },
+        { title: "Location", fields: ["location", "address", "gps_latitude", "gps_longitude"] },
+        { title: "Contact and Social", fields: ["email", "phone", "website", "social_links"] },
+        { title: "Media and SEO", fields: ["logo_id", "cover_image_id", "gallery_media_ids", "attachment_media_ids", "document_media_ids", "meta_title", "meta_description", "keywords"] },
       ]}
       renderAfter={(record) => <CenterRelations center={record} />}
     />

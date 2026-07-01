@@ -20,11 +20,13 @@ export default function ResearchThemeDetailPage() {
         { label: "Code", field: "code" },
         { label: "Icon", field: "icon" },
         { label: "Color", field: "color" },
+        { label: "Display Order", field: "display_order" },
         { label: "Active", field: "is_active", format: "boolean" },
         { label: "Featured", field: "is_featured", format: "boolean" },
       ]}
       sections={[
-        { title: "Theme", fields: ["description", "objectives", "cover_image_url"] },
+        { title: "Theme Narrative", fields: ["description", "objectives"] },
+        { title: "Visual Identity", fields: ["icon", "color", "cover_image_id"] },
       ]}
       auditResourceTypes={["research_theme", "theme", "themes"]}
       renderAfter={(record) => <ThemeRelations theme={record} />}
