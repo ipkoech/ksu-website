@@ -609,6 +609,84 @@ function farmProjectBindingApi() {
   };
 }
 
+function readonlyCenterRelationApi(relation: "projects" | "programs" | "farms") {
+  return {
+    list: (centerId: string) =>
+      researchApi.get<{ data: ResearchGenericRecord[] }>(
+        `/api/v1/centers/id/${centerId}/${relation}`,
+      ),
+  };
+}
+
+function centerFocusAreaBindingApi() {
+  return {
+    list: (centerId: string) =>
+      researchApi.get<{ data: ResearchGenericRecord[] }>(
+        `/api/v1/centers/id/${centerId}/focus-areas`,
+      ),
+    add: (centerId: string, relatedId: string) =>
+      researchApi.put<{ data: ResearchGenericRecord }>(
+        `/api/v1/centers/id/${centerId}/focus-areas/${relatedId}`,
+      ),
+    remove: (centerId: string, relatedId: string) =>
+      researchApi.delete<void>(
+        `/api/v1/centers/id/${centerId}/focus-areas/${relatedId}`,
+      ),
+  };
+}
+
+function readonlyProgramRelationApi(relation: "projects") {
+  return {
+    list: (programId: string) =>
+      researchApi.get<{ data: ResearchGenericRecord[] }>(
+        `/api/v1/programs/id/${programId}/${relation}`,
+      ),
+  };
+}
+
+function programThemeBindingApi() {
+  return {
+    list: (programId: string) =>
+      researchApi.get<{ data: ResearchGenericRecord[] }>(
+        `/api/v1/programs/id/${programId}/themes`,
+      ),
+    add: (programId: string, relatedId: string) =>
+      researchApi.put<{ data: ResearchGenericRecord }>(
+        `/api/v1/programs/id/${programId}/themes/${relatedId}`,
+      ),
+    remove: (programId: string, relatedId: string) =>
+      researchApi.delete<void>(
+        `/api/v1/programs/id/${programId}/themes/${relatedId}`,
+      ),
+  };
+}
+
+function readonlyThemeRelationApi(relation: "focus-areas") {
+  return {
+    list: (themeId: string) =>
+      researchApi.get<{ data: ResearchGenericRecord[] }>(
+        `/api/v1/themes/id/${themeId}/${relation}`,
+      ),
+  };
+}
+
+function themeBindingApi(relation: "projects" | "programs" | "publications" | "grants") {
+  return {
+    list: (themeId: string) =>
+      researchApi.get<{ data: ResearchGenericRecord[] }>(
+        `/api/v1/themes/id/${themeId}/${relation}`,
+      ),
+    add: (themeId: string, relatedId: string) =>
+      researchApi.put<{ data: ResearchGenericRecord }>(
+        `/api/v1/themes/id/${themeId}/${relation}/${relatedId}`,
+      ),
+    remove: (themeId: string, relatedId: string) =>
+      researchApi.delete<void>(
+        `/api/v1/themes/id/${themeId}/${relation}/${relatedId}`,
+      ),
+  };
+}
+
 function readonlyPartnerRelationApi(
   relation:
     | "projects"
@@ -701,6 +779,12 @@ export const researchServiceApi = {
   centers: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/centers",
   ),
+  centerRelations: {
+    projects: readonlyCenterRelationApi("projects"),
+    programs: readonlyCenterRelationApi("programs"),
+    farms: readonlyCenterRelationApi("farms"),
+    focusAreas: centerFocusAreaBindingApi(),
+  },
   farms: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/farms",
   ),
@@ -715,9 +799,20 @@ export const researchServiceApi = {
   programs: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/programs",
   ),
+  programRelations: {
+    projects: readonlyProgramRelationApi("projects"),
+    themes: programThemeBindingApi(),
+  },
   themes: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/themes",
   ),
+  themeRelations: {
+    focusAreas: readonlyThemeRelationApi("focus-areas"),
+    projects: themeBindingApi("projects"),
+    programs: themeBindingApi("programs"),
+    publications: themeBindingApi("publications"),
+    grants: themeBindingApi("grants"),
+  },
   focusAreas: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/focus-areas",
   ),

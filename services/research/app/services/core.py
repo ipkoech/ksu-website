@@ -29,6 +29,8 @@ from ..models import (
     ResearchProject,
     SuccessStory,
     Sustainability,
+    center_focus_areas,
+    program_themes,
     project_focus_areas,
     project_funders,
     project_partners,
@@ -348,6 +350,152 @@ class ProjectRelationshipService:
     async def remove_focus_area(db: AsyncSession, project_id: uuid.UUID, focus_area_id: uuid.UUID) -> None:
         await ProjectRelationshipService._ensure_project(db, project_id)
         await db.execute(delete(project_focus_areas).where(project_focus_areas.c.project_id == project_id, project_focus_areas.c.focus_area_id == focus_area_id))
+        await db.flush()
+
+
+class CenterRelationshipService:
+    """Manage research center relationships backed by FK and center_focus_areas links."""
+
+    @staticmethod
+    async def _ensure_center(db: AsyncSession, center_id: uuid.UUID) -> ResearchCenter:
+        return await ResearchCenter.get_or_raise(db, center_id, error_message="Research center not found")
+
+    @staticmethod
+    async def _ensure_focus_area(db: AsyncSession, focus_area_id: uuid.UUID) -> FocusArea:
+        return await FocusArea.get_or_raise(db, focus_area_id, error_message="Focus area not found")
+
+    @staticmethod
+    async def list_projects(db: AsyncSession, center_id: uuid.UUID) -> list[dict[str, Any]]:
+        await CenterRelationshipService._ensure_center(db, center_id)
+        return await _related_many(
+            db,
+            ResearchProject.active_query()
+            .where(ResearchProject.center_id == center_id)
+            .order_by(ResearchProject.start_date.desc().nullslast(), ResearchProject.title.asc()),
+            "code",
+            "project_type",
+            "status",
+            "start_date",
+        )
+
+    @staticmethod
+    async def list_programs(db: AsyncSession, center_id: uuid.UUID) -> list[dict[str, Any]]:
+        await CenterRelationshipService._ensure_center(db, center_id)
+        return await _related_many(
+            db,
+            ResearchProgram.active_query()
+            .where(ResearchProgram.center_id == center_id)
+            .order_by(ResearchProgram.start_date.desc().nullslast(), ResearchProgram.name.asc()),
+            "code",
+            "status",
+            "start_date",
+        )
+
+    @staticmethod
+    async def list_farms(db: AsyncSession, center_id: uuid.UUID) -> list[dict[str, Any]]:
+        await CenterRelationshipService._ensure_center(db, center_id)
+        return await _related_many(
+            db,
+            ResearchFarm.active_query()
+            .where(ResearchFarm.center_id == center_id)
+            .order_by(ResearchFarm.display_order.asc(), ResearchFarm.name.asc()),
+            "code",
+            "farm_type",
+            "location",
+        )
+
+    @staticmethod
+    async def list_focus_areas(db: AsyncSession, center_id: uuid.UUID) -> list[dict[str, Any]]:
+        await CenterRelationshipService._ensure_center(db, center_id)
+        return await _related_many(
+            db,
+            FocusArea.active_query()
+            .join(center_focus_areas, FocusArea.id == center_focus_areas.c.focus_area_id)
+            .where(center_focus_areas.c.center_id == center_id)
+            .order_by(FocusArea.display_order.asc(), FocusArea.name.asc()),
+            "code",
+            "theme_id",
+        )
+
+    @staticmethod
+    async def add_focus_area(db: AsyncSession, center_id: uuid.UUID, focus_area_id: uuid.UUID) -> None:
+        await CenterRelationshipService._ensure_center(db, center_id)
+        await CenterRelationshipService._ensure_focus_area(db, focus_area_id)
+        exists = await db.scalar(
+            select(func.count())
+            .select_from(center_focus_areas)
+            .where(center_focus_areas.c.center_id == center_id, center_focus_areas.c.focus_area_id == focus_area_id)
+        )
+        if not exists:
+            await db.execute(insert(center_focus_areas).values(center_id=center_id, focus_area_id=focus_area_id))
+            await db.flush()
+
+    @staticmethod
+    async def remove_focus_area(db: AsyncSession, center_id: uuid.UUID, focus_area_id: uuid.UUID) -> None:
+        await CenterRelationshipService._ensure_center(db, center_id)
+        await db.execute(delete(center_focus_areas).where(center_focus_areas.c.center_id == center_id, center_focus_areas.c.focus_area_id == focus_area_id))
+        await db.flush()
+
+
+class ProgramRelationshipService:
+    """Manage research program relationships backed by project FK and program_themes links."""
+
+    @staticmethod
+    async def _ensure_program(db: AsyncSession, program_id: uuid.UUID) -> ResearchProgram:
+        return await ResearchProgram.get_or_raise(db, program_id, error_message="Research program not found")
+
+    @staticmethod
+    async def _ensure_theme(db: AsyncSession, theme_id: uuid.UUID):
+        from ..models import ResearchTheme
+
+        return await ResearchTheme.get_or_raise(db, theme_id, error_message="Research theme not found")
+
+    @staticmethod
+    async def list_projects(db: AsyncSession, program_id: uuid.UUID) -> list[dict[str, Any]]:
+        await ProgramRelationshipService._ensure_program(db, program_id)
+        return await _related_many(
+            db,
+            ResearchProject.active_query()
+            .where(ResearchProject.program_id == program_id)
+            .order_by(ResearchProject.start_date.desc().nullslast(), ResearchProject.title.asc()),
+            "code",
+            "project_type",
+            "status",
+            "start_date",
+        )
+
+    @staticmethod
+    async def list_themes(db: AsyncSession, program_id: uuid.UUID) -> list[dict[str, Any]]:
+        from ..models import ResearchTheme
+
+        await ProgramRelationshipService._ensure_program(db, program_id)
+        return await _related_many(
+            db,
+            ResearchTheme.active_query()
+            .join(program_themes, ResearchTheme.id == program_themes.c.theme_id)
+            .where(program_themes.c.program_id == program_id)
+            .order_by(ResearchTheme.display_order.asc(), ResearchTheme.name.asc()),
+            "code",
+            "color",
+        )
+
+    @staticmethod
+    async def add_theme(db: AsyncSession, program_id: uuid.UUID, theme_id: uuid.UUID) -> None:
+        await ProgramRelationshipService._ensure_program(db, program_id)
+        await ProgramRelationshipService._ensure_theme(db, theme_id)
+        exists = await db.scalar(
+            select(func.count())
+            .select_from(program_themes)
+            .where(program_themes.c.program_id == program_id, program_themes.c.theme_id == theme_id)
+        )
+        if not exists:
+            await db.execute(insert(program_themes).values(program_id=program_id, theme_id=theme_id))
+            await db.flush()
+
+    @staticmethod
+    async def remove_theme(db: AsyncSession, program_id: uuid.UUID, theme_id: uuid.UUID) -> None:
+        await ProgramRelationshipService._ensure_program(db, program_id)
+        await db.execute(delete(program_themes).where(program_themes.c.program_id == program_id, program_themes.c.theme_id == theme_id))
         await db.flush()
 
 

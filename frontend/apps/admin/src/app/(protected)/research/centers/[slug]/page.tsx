@@ -2,7 +2,8 @@
 
 import { researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchAdminDetailPage, ResearchDetailRelationshipTabs } from "../../_components/research-admin-detail-page";
-import { RelatedRecordsCard, RelatedRecordsGrid } from "../../_components/research-detail-relationships";
+import { ResearchCoreDetailActions } from "../../_components/research-core-detail-actions";
+import { BindableRecordsCard, RelatedRecordsCard, RelatedRecordsGrid } from "../../_components/research-detail-relationships";
 
 export default function ResearchCenterDetailPage() {
   return (
@@ -14,7 +15,14 @@ export default function ResearchCenterDetailPage() {
       hideHeader
       showBackAction={false}
       publicHrefBase="/centers"
-      auditResourceTypes={["center", "centers", "research_center"]}
+      actionsSlot={(record) => (
+        <ResearchCoreDetailActions
+          record={record}
+          resource={researchServiceApi.centers}
+          resourceLabel="Center"
+          listHref="/research/centers"
+        />
+      )}
       labelFields={["center_type", "status"]}
       factFields={[
         { label: "Code", field: "code" },
@@ -52,7 +60,7 @@ function CenterRelations({ center }: { center: ResearchGenericRecord }) {
             <RelatedRecordsCard
               title="Center Projects"
               queryKey={["research", "centers", center.id, "projects"]}
-              queryFn={() => researchServiceApi.projects.list({ page: 1, per_page: 8, center_id: center.id, fields: "id,title,slug,code,project_type,status" })}
+              queryFn={() => researchServiceApi.centerRelations.projects.list(String(center.id))}
               emptyLabel="No projects were returned for this research center."
               metaFields={["code", "project_type", "status"]}
             />
@@ -72,25 +80,44 @@ function CenterRelations({ center }: { center: ResearchGenericRecord }) {
           ),
         },
         {
-          value: "resources",
-          label: "Resources",
+          value: "programs",
+          label: "Programs",
           content: (
             <RelatedRecordsGrid>
               <RelatedRecordsCard
                 title="Programs"
                 queryKey={["research", "centers", center.id, "programs"]}
-                queryFn={() => researchServiceApi.programs.list({ page: 1, per_page: 8, center_id: center.id, fields: "id,name,slug,code,status" })}
+                queryFn={() => researchServiceApi.centerRelations.programs.list(String(center.id))}
                 emptyLabel="No programs were returned for this center."
                 metaFields={["code", "status"]}
               />
               <RelatedRecordsCard
-                title="Training"
-                queryKey={["research", "centers", center.id, "training"]}
-                queryFn={() => researchServiceApi.training.list({ page: 1, per_page: 8, center_id: center.id, fields: "id,title,slug,program_type,status" })}
-                emptyLabel="No training programs were returned for this center."
-                metaFields={["program_type", "status"]}
+                title="Research Farms"
+                queryKey={["research", "centers", center.id, "farms"]}
+                queryFn={() => researchServiceApi.centerRelations.farms.list(String(center.id))}
+                emptyLabel="No farms were returned for this center."
+                metaFields={["code", "farm_type", "location"]}
               />
             </RelatedRecordsGrid>
+          ),
+        },
+        {
+          value: "focus-areas",
+          label: "Focus Areas",
+          content: (
+            <BindableRecordsCard
+              title="Center Focus Areas"
+              addLabel="Add focus area"
+              relationshipLabel="Focus Area"
+              queryKey={["research", "centers", center.id, "focus-areas"]}
+              queryFn={() => researchServiceApi.centerRelations.focusAreas.list(String(center.id))}
+              candidateQueryFn={(search) => researchServiceApi.focusAreas.list({ page: 1, per_page: 20, q: search || undefined, fields: "id,name,slug,code,is_active,theme_id" })}
+              bindRecord={(recordId) => researchServiceApi.centerRelations.focusAreas.add(String(center.id), recordId)}
+              unbindRecord={(recordId) => researchServiceApi.centerRelations.focusAreas.remove(String(center.id), recordId)}
+              emptyLabel="No focus areas are linked to this center."
+              searchPlaceholder="Search focus areas"
+              metaFields={["code", "is_active"]}
+            />
           ),
         },
       ]}

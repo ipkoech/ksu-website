@@ -81,6 +81,53 @@ class ResearchAdminWorkspaceContractTests(unittest.TestCase):
             with self.subTest(path=path, method=method):
                 self.assertIsNotNone(_route(centers_router, path, method))
 
+    def test_core_center_relationship_binding_routes_exist(self):
+        expected_routes = (
+            ("/centers/id/{center_id}/projects", "GET"),
+            ("/centers/id/{center_id}/programs", "GET"),
+            ("/centers/id/{center_id}/farms", "GET"),
+            ("/centers/id/{center_id}/focus-areas", "GET"),
+            ("/centers/id/{center_id}/focus-areas/{focus_area_id}", "PUT"),
+            ("/centers/id/{center_id}/focus-areas/{focus_area_id}", "DELETE"),
+        )
+
+        for path, method in expected_routes:
+            with self.subTest(path=path, method=method):
+                self.assertIsNotNone(_route(centers_router, path, method))
+
+    def test_core_program_relationship_binding_routes_exist(self):
+        expected_routes = (
+            ("/programs/id/{program_id}/projects", "GET"),
+            ("/programs/id/{program_id}/themes", "GET"),
+            ("/programs/id/{program_id}/themes/{theme_id}", "PUT"),
+            ("/programs/id/{program_id}/themes/{theme_id}", "DELETE"),
+        )
+
+        for path, method in expected_routes:
+            with self.subTest(path=path, method=method):
+                self.assertIsNotNone(_route(centers_router, path, method))
+
+    def test_core_theme_relationship_routes_exist(self):
+        expected_routes = (
+            ("/themes/id/{theme_id}/focus-areas", "GET"),
+            ("/themes/id/{theme_id}/projects", "GET"),
+            ("/themes/id/{theme_id}/projects/{project_id}", "PUT"),
+            ("/themes/id/{theme_id}/projects/{project_id}", "DELETE"),
+            ("/themes/id/{theme_id}/programs", "GET"),
+            ("/themes/id/{theme_id}/programs/{program_id}", "PUT"),
+            ("/themes/id/{theme_id}/programs/{program_id}", "DELETE"),
+            ("/themes/id/{theme_id}/publications", "GET"),
+            ("/themes/id/{theme_id}/publications/{publication_id}", "PUT"),
+            ("/themes/id/{theme_id}/publications/{publication_id}", "DELETE"),
+            ("/themes/id/{theme_id}/grants", "GET"),
+            ("/themes/id/{theme_id}/grants/{grant_id}", "PUT"),
+            ("/themes/id/{theme_id}/grants/{grant_id}", "DELETE"),
+        )
+
+        for path, method in expected_routes:
+            with self.subTest(path=path, method=method):
+                self.assertIsNotNone(_route(projects_router, path, method))
+
     def test_sustainability_relationship_binding_routes_exist(self):
         expected_routes = (
             ("/sustainability/id/{sustainability_id}/projects", "GET"),

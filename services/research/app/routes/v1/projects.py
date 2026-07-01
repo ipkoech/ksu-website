@@ -20,7 +20,7 @@ from ...schemas import (
     ResearchThemeCreate,
     ResearchThemeUpdate,
 )
-from ...services import FocusAreaService, ProjectDetailService, ProjectRelationshipService, ProjectService, TagService, ThemeService
+from ...services import FocusAreaService, ProjectDetailService, ProjectRelationshipService, ProjectService, TagService, ThemeRelationshipService, ThemeService
 from ._crud import build_crud_router
 
 router = APIRouter()
@@ -98,6 +98,75 @@ async def add_project_focus_area(project_id: uuid.UUID, focus_area_id: uuid.UUID
 @router.delete("/projects/id/{project_id}/focus-areas/{focus_area_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Research Projects"], dependencies=[Depends(require_scope("research.manage_projects"))])
 async def remove_project_focus_area(project_id: uuid.UUID, focus_area_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     await ProjectRelationshipService.remove_focus_area(db, project_id, focus_area_id)
+
+
+@router.get("/themes/id/{theme_id}/focus-areas", tags=["Research Themes"])
+async def list_theme_focus_areas(theme_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return success(data=await ThemeRelationshipService.list_focus_areas(db, theme_id))
+
+
+@router.get("/themes/id/{theme_id}/projects", tags=["Research Themes"])
+async def list_theme_projects(theme_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return success(data=await ThemeRelationshipService.list_projects(db, theme_id))
+
+
+@router.put("/themes/id/{theme_id}/projects/{project_id}", tags=["Research Themes"], dependencies=[Depends(require_scope("research_theme.manage"))])
+async def add_theme_project(theme_id: uuid.UUID, project_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    await ThemeRelationshipService.add_project(db, theme_id, project_id)
+    return success(data={"theme_id": theme_id, "project_id": project_id}, message="Theme project linked")
+
+
+@router.delete("/themes/id/{theme_id}/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Research Themes"], dependencies=[Depends(require_scope("research_theme.manage"))])
+async def remove_theme_project(theme_id: uuid.UUID, project_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    await ThemeRelationshipService.remove_project(db, theme_id, project_id)
+
+
+@router.get("/themes/id/{theme_id}/programs", tags=["Research Themes"])
+async def list_theme_programs(theme_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return success(data=await ThemeRelationshipService.list_programs(db, theme_id))
+
+
+@router.put("/themes/id/{theme_id}/programs/{program_id}", tags=["Research Themes"], dependencies=[Depends(require_scope("research_theme.manage"))])
+async def add_theme_program(theme_id: uuid.UUID, program_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    await ThemeRelationshipService.add_program(db, theme_id, program_id)
+    return success(data={"theme_id": theme_id, "program_id": program_id}, message="Theme program linked")
+
+
+@router.delete("/themes/id/{theme_id}/programs/{program_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Research Themes"], dependencies=[Depends(require_scope("research_theme.manage"))])
+async def remove_theme_program(theme_id: uuid.UUID, program_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    await ThemeRelationshipService.remove_program(db, theme_id, program_id)
+
+
+@router.get("/themes/id/{theme_id}/publications", tags=["Research Themes"])
+async def list_theme_publications(theme_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return success(data=await ThemeRelationshipService.list_publications(db, theme_id))
+
+
+@router.put("/themes/id/{theme_id}/publications/{publication_id}", tags=["Research Themes"], dependencies=[Depends(require_scope("research_theme.manage"))])
+async def add_theme_publication(theme_id: uuid.UUID, publication_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    await ThemeRelationshipService.add_publication(db, theme_id, publication_id)
+    return success(data={"theme_id": theme_id, "publication_id": publication_id}, message="Theme publication linked")
+
+
+@router.delete("/themes/id/{theme_id}/publications/{publication_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Research Themes"], dependencies=[Depends(require_scope("research_theme.manage"))])
+async def remove_theme_publication(theme_id: uuid.UUID, publication_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    await ThemeRelationshipService.remove_publication(db, theme_id, publication_id)
+
+
+@router.get("/themes/id/{theme_id}/grants", tags=["Research Themes"])
+async def list_theme_grants(theme_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return success(data=await ThemeRelationshipService.list_grants(db, theme_id))
+
+
+@router.put("/themes/id/{theme_id}/grants/{grant_id}", tags=["Research Themes"], dependencies=[Depends(require_scope("research_theme.manage"))])
+async def add_theme_grant(theme_id: uuid.UUID, grant_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    await ThemeRelationshipService.add_grant(db, theme_id, grant_id)
+    return success(data={"theme_id": theme_id, "grant_id": grant_id}, message="Theme grant linked")
+
+
+@router.delete("/themes/id/{theme_id}/grants/{grant_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Research Themes"], dependencies=[Depends(require_scope("research_theme.manage"))])
+async def remove_theme_grant(theme_id: uuid.UUID, grant_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    await ThemeRelationshipService.remove_grant(db, theme_id, grant_id)
 
 
 router.include_router(build_crud_router(prefix="/projects", tag="Research Projects", service=ProjectService, create_schema=ResearchProjectCreate, update_schema=ResearchProjectUpdate, write_scope="research.manage_projects"))

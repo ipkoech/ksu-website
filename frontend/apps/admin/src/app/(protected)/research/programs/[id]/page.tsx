@@ -2,7 +2,8 @@
 
 import { researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchAdminDetailPage, ResearchDetailRelationshipTabs } from "../../_components/research-admin-detail-page";
-import { RelatedRecordsCard, RelatedRecordsGrid } from "../../_components/research-detail-relationships";
+import { ResearchCoreDetailActions } from "../../_components/research-core-detail-actions";
+import { BindableRecordsCard, RelatedRecordsCard } from "../../_components/research-detail-relationships";
 
 export default function ResearchProgramDetailPage() {
   return (
@@ -13,6 +14,14 @@ export default function ResearchProgramDetailPage() {
       backHref="/research/programs"
       hideHeader
       showBackAction={false}
+      actionsSlot={(record) => (
+        <ResearchCoreDetailActions
+          record={record}
+          resource={researchServiceApi.programs}
+          resourceLabel="Program"
+          listHref="/research/programs"
+        />
+      )}
       slugParam="id"
       lookup="id"
       labelFields={["status", "is_featured", "is_active"]}
@@ -32,7 +41,6 @@ export default function ResearchProgramDetailPage() {
         { title: "Finance", fields: ["budget", "currency"] },
         { title: "Media and SEO", fields: ["cover_image_id", "meta_title", "meta_description", "keywords"] },
       ]}
-      auditResourceTypes={["research_program", "program", "programs"]}
       renderAfter={(record) => <ProgramRelations program={record} />}
     />
   );
@@ -52,31 +60,29 @@ function ProgramRelations({ program }: { program: ResearchGenericRecord }) {
             <RelatedRecordsCard
               title="Program Projects"
               queryKey={["research", "programs", programId, "projects"]}
-              queryFn={() => researchServiceApi.projects.list({ page: 1, per_page: 12, program_id: programId, fields: "id,title,slug,code,project_type,status,start_date" })}
+              queryFn={() => researchServiceApi.programRelations.projects.list(programId)}
               emptyLabel="No projects were returned for this program."
               metaFields={["project_type", "status", "start_date"]}
             />
           ),
         },
         {
-          value: "outputs",
-          label: "Outputs",
+          value: "themes",
+          label: "Themes",
           content: (
-            <RelatedRecordsGrid>
-              <RelatedRecordsCard
-                title="Program Impact Metrics"
-                queryKey={["research", "programs", programId, "impact"]}
-                queryFn={() => researchServiceApi.impactMetrics.list({ page: 1, per_page: 8, program_id: programId, fields: "id,name,metric_type,value,reporting_year" })}
-                emptyLabel="No impact metrics were returned for this program."
-                metaFields={["metric_type", "value", "reporting_year"]}
-              />
-              <RelatedRecordsCard
-                title="Program Export Outputs"
-                queryKey={["research", "programs", programId, "outputs-empty"]}
-                queryFn={() => Promise.resolve({ data: [] })}
-                emptyLabel="Outputs are linked through projects or centers; the backend does not expose program_id on outputs."
-              />
-            </RelatedRecordsGrid>
+            <BindableRecordsCard
+              title="Program Themes"
+              addLabel="Add theme"
+              relationshipLabel="Theme"
+              queryKey={["research", "programs", programId, "themes"]}
+              queryFn={() => researchServiceApi.programRelations.themes.list(programId)}
+              candidateQueryFn={(search) => researchServiceApi.themes.list({ page: 1, per_page: 20, q: search || undefined, fields: "id,name,slug,code,color,is_active" })}
+              bindRecord={(recordId) => researchServiceApi.programRelations.themes.add(programId, recordId)}
+              unbindRecord={(recordId) => researchServiceApi.programRelations.themes.remove(programId, recordId)}
+              emptyLabel="No themes are linked to this program."
+              searchPlaceholder="Search themes"
+              metaFields={["code", "color"]}
+            />
           ),
         },
       ]}
