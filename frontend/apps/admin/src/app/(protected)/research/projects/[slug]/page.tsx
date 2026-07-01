@@ -72,6 +72,47 @@ const PROJECT_STATUS_OPTIONS = [
   { value: "suspended", label: "Suspended" },
 ];
 
+function ProjectRelationshipGuideContent() {
+  return (
+    <div className="space-y-4 border-t pt-5">
+      <div>
+        <p className="text-xs font-semibold uppercase text-muted-foreground">Relationship mapping</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Map this project to existing records in the system to build connections and enable reporting.
+        </p>
+      </div>
+      {[
+        ["1", "Choose a relationship type", "Select the type of relationship that best describes the connection."],
+        ["2", "Bind existing records", "Search and select existing records to link to this project."],
+        ["3", "Review visibility", "Set the appropriate visibility for each relationship."],
+        ["4", "Save mapping", "Bind the relationship to keep your project data connected and up to date."],
+      ].map(([step, title, description]) => (
+        <div key={step} className="flex gap-3">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">{step}</span>
+          <div>
+            <p className="text-sm font-medium">{title}</p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p>
+          </div>
+        </div>
+      ))}
+      <div className="rounded-md border bg-background p-3 text-center text-xs">
+        <p className="font-medium">Project</p>
+        <p className="mt-1 text-muted-foreground">Current project</p>
+        <div className="my-2 text-muted-foreground">↓</div>
+        <div className="rounded-md border p-2">
+          <p className="font-medium">Relationship Type</p>
+          <p className="text-muted-foreground">Partner, Funder, Activity</p>
+        </div>
+        <div className="my-2 text-muted-foreground">↓</div>
+        <div className="rounded-md border p-2">
+          <p className="font-medium">Related Record</p>
+          <p className="text-muted-foreground">Existing record in the system</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function renderProjectDetailActions(record: ResearchGenericRecord) {
   return <ProjectDetailActions project={record} />;
 }
@@ -996,47 +1037,6 @@ function RelationshipMetricCard({ config }: { config: RelationshipConfig }) {
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function ProjectRelationshipGuideContent() {
-  return (
-    <div className="space-y-4 border-t pt-5">
-      <div>
-        <p className="text-xs font-semibold uppercase text-muted-foreground">Relationship mapping</p>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Map this project to existing records in the system to build connections and enable reporting.
-        </p>
-      </div>
-      {[
-        ["1", "Choose a relationship type", "Select the type of relationship that best describes the connection."],
-        ["2", "Bind existing records", "Search and select existing records to link to this project."],
-        ["3", "Review visibility", "Set the appropriate visibility for each relationship."],
-        ["4", "Save mapping", "Bind the relationship to keep your project data connected and up to date."],
-      ].map(([step, title, description]) => (
-        <div key={step} className="flex gap-3">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">{step}</span>
-          <div>
-            <p className="text-sm font-medium">{title}</p>
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p>
-          </div>
-        </div>
-      ))}
-      <div className="rounded-md border bg-background p-3 text-center text-xs">
-        <p className="font-medium">Project</p>
-        <p className="mt-1 text-muted-foreground">Current project</p>
-        <div className="my-2 text-muted-foreground">↓</div>
-        <div className="rounded-md border p-2">
-          <p className="font-medium">Relationship Type</p>
-          <p className="text-muted-foreground">Partner, Funder, Activity</p>
-        </div>
-        <div className="my-2 text-muted-foreground">↓</div>
-        <div className="rounded-md border p-2">
-          <p className="font-medium">Related Record</p>
-          <p className="text-muted-foreground">Existing record in the system</p>
-        </div>
-      </div>
-    </div>
   );
 }
 
