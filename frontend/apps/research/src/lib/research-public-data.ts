@@ -72,6 +72,7 @@ export type ProjectListFilters = {
   year?: string;
   sort?: string;
   order?: "asc" | "desc";
+  perPage?: number;
 };
 
 export type GenericListFilters = {
@@ -129,6 +130,9 @@ const unavailableMessage =
 
 const researchPublicListFields =
   "id,title,name,slug,code,summary,abstract,description,about,mission,vision,mandate,objectives,functions,services_summary,leadership_message,strategic_priorities,category,status,is_active,is_public,is_featured,project_type,publication_type,grant_type,center_type,farm_type,program_type,output_type,innovation_type,partner_type,consultancy_type,fund_type,event_type,article_type,news_type,resource_type,service_type,guideline_type,scholarship_type,delivery_mode,access_type,development_stage,ip_status,commercialization_status,partnership_level,client_type,center_id,program_id,project_id,partner_id,year,start_date,end_date,deadline,event_date,published_at,publication_date,progress_percentage,cover_image_id,cover_image_url,logo_url,url,pdf_url,website";
+const researchProjectListFields =
+  "id,title,slug,code,summary,status,is_active,is_featured,project_type,cover_image:id,url,public_url,thumbnail_url,alt_text";
+const researchProjectFilterFields = "id,start_date,end_date,published_at,created_at,updated_at";
 
 const researchPublicDetailFields = `${researchPublicListFields},background,objectives,methodology,expected_outcomes,impact,deliverables,budget,currency,funder_name,journal_name,publisher,volume,issue,pages,article_number,conference_name,conference_location,conference_date,book_title,editors,edition,isbn,issn,doi,pmid,arxiv_id,is_open_access,impact_factor,quartile,h_index,funding_acknowledgment,contact_email,contact_phone,email,phone,address,location,venue,registration_url,application_url,download_url,file_url,eligibility,requirements,benefits,scope,content,body,rich_text,plain_text,mission,vision,mandate,head_message,office_location,social_links`;
 const researchMainContentFields =
@@ -237,7 +241,7 @@ export function getProjects(
 
   return safeList<ResearchProject>(() =>
     researchServiceApi.projects.list({
-      fields: researchPublicListFields,
+      fields: researchProjectListFields,
       search: params.search?.trim() || undefined,
       project_type: params.projectType || undefined,
       status: params.status || undefined,
@@ -251,7 +255,7 @@ export function getProjects(
       is_featured: params.isFeatured,
       is_public: true,
       page,
-      per_page: 100,
+      per_page: params.perPage ?? 100,
     }),
   );
 }
@@ -260,6 +264,18 @@ export function getProjectBySlug(slug: string) {
   return safeRecord<ResearchProject>(() =>
     researchServiceApi.projects.getBySlug(slug, {
       fields: researchPublicDetailFields,
+    }),
+  );
+}
+
+export function getProjectFilterRecords() {
+  return safeList<Partial<ResearchProject>>(() =>
+    researchServiceApi.projects.list({
+      fields: researchProjectFilterFields,
+      is_active: true,
+      is_public: true,
+      page: 1,
+      per_page: 100,
     }),
   );
 }
