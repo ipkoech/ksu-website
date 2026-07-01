@@ -9,6 +9,7 @@ import {
   ResearchRecordPanel,
 } from "../../../components/research-detail";
 import { Badge, ResearchSection, StatusMessage } from "../../../components/research-ui";
+import { ResearchRichText } from "../../../components/research-rich-text";
 import {
   compactText,
   formatDate,
@@ -120,7 +121,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
               fields={[
                 ["Excerpt", record.excerpt],
                 ["Summary", record.summary],
-                ["Content", record.content ?? record.body],
+                ["Content", record.rich_text ?? record.content ?? record.body ?? record.plain_text],
               ]}
             />
             {tags.length > 0 ? (
@@ -199,7 +200,7 @@ function NewsEvidencePanel({ title, fields }: { title: string; fields: Array<[st
         {entries.map((entry) => (
           <div key={entry.label}>
             <p className="text-xs font-semibold uppercase text-slate-500">{entry.label}</p>
-            <p className="mt-1 break-words whitespace-pre-line text-sm leading-7 text-slate-600">{entry.value}</p>
+            <ResearchRichText content={entry.value} className="mt-1 text-sm leading-7 text-slate-600" />
           </div>
         ))}
       </div>

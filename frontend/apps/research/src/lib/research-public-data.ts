@@ -132,7 +132,7 @@ const researchPublicListFields =
 
 const researchPublicDetailFields = `${researchPublicListFields},background,objectives,methodology,expected_outcomes,impact,deliverables,budget,currency,funder_name,journal_name,publisher,volume,issue,pages,article_number,conference_name,conference_location,conference_date,book_title,editors,edition,isbn,issn,doi,pmid,arxiv_id,is_open_access,impact_factor,quartile,h_index,funding_acknowledgment,contact_email,contact_phone,email,phone,address,location,venue,registration_url,application_url,download_url,file_url,eligibility,requirements,benefits,scope,content,body,rich_text,plain_text,mission,vision,mandate,head_message,office_location,social_links`;
 const researchMainContentFields =
-  "id,title,slug,summary,excerpt,plain_text,content,category,status,scope_type,scope_id,is_featured,is_main,is_public,is_published,published_at,valid_from,valid_to,start_date,end_date,location,venue,event_type,priority,display_order,featured_media,cover_image,cover_image_url,created_at,updated_at";
+  "id,title,slug,summary,excerpt,plain_text,rich_text,content,body,category,status,scope_type,scope_id,is_featured,is_main,is_public,is_published,published_at,valid_from,valid_to,start_date,end_date,location,venue,event_type,priority,display_order,featured_media,cover_image,cover_image_url,created_at,updated_at";
 const researchHeroSliderFields =
   "id,title,subtitle,plain_text,rich_text,structured_content,desktop_media,mobile_media,external_url,link_text,open_in_new_tab,scope_type,scope_id,is_main,is_public,is_active,display_order,start_datetime,end_datetime,created_at,updated_at";
 

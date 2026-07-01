@@ -22,6 +22,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import { StatusMessage } from "../../../components/research-ui";
+import { ResearchRichText } from "../../../components/research-rich-text";
 import {
   compactText,
   formatDate,
@@ -399,7 +400,7 @@ function ProgramStoryTable({ sections }: { sections: Array<{ title: string; body
                 </span>
                 <h3 className="text-sm font-semibold text-primary">{section.title}</h3>
               </div>
-              <p className="text-sm leading-6 text-slate-700">{section.body}</p>
+              <ResearchRichText content={section.body} className="text-sm leading-6 text-slate-700" />
             </article>
           );
         })}

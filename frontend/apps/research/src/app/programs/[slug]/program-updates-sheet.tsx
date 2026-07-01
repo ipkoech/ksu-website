@@ -16,6 +16,7 @@ import {
   SheetTrigger,
 } from "@ksu/ui/components";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { ResearchRichText } from "../../../components/research-rich-text";
 
 type ProgramUpdateGroup = {
   title: string;
@@ -156,10 +157,10 @@ function RecordNarrative({ record }: { record: ResearchGenericRecord }) {
     { label: "Challenge", value: record.challenge },
     { label: "Approach", value: record.approach || record.solution },
     { label: "Outcomes", value: record.outcomes || record.impact },
-    { label: "Details", value: record.plain_text || record.content || record.body || record.description },
+    { label: "Details", value: record.rich_text || record.plain_text || record.content || record.body || record.description },
     { label: "What comes next", value: record.future_directions },
   ]
-    .map((section) => ({ ...section, value: cleanText(section.value) }))
+    .map((section) => ({ ...section, value: getText(section.value) }))
     .filter((section) => section.value);
 
   if (!sections.length) return null;
@@ -169,9 +170,7 @@ function RecordNarrative({ record }: { record: ResearchGenericRecord }) {
       {sections.map((section) => (
         <section key={section.label}>
           <h3 className="text-sm font-semibold text-slate-950">{section.label}</h3>
-          <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-700">
-            {section.value}
-          </p>
+          <ResearchRichText content={section.value} className="mt-2 text-sm leading-7 text-slate-700" />
         </section>
       ))}
     </div>

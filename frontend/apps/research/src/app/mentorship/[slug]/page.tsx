@@ -3,6 +3,7 @@ import type { ResearchGenericRecord } from "@ksu/api-client";
 import { researchServiceApi } from "@ksu/api-client";
 import { ResearchDetailHero, ResearchDetailSidebar, ResearchRecordPanel } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
+import { ResearchStoryAccordion } from "../../../components/research-rich-text";
 import { compactText, formatDate, generateSlugParams, getMentorshipBySlug } from "../../../lib/research-public-data";
 import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 
@@ -86,20 +87,11 @@ export default async function MentorshipDetailPage({ params }: { params: Promise
 }
 
 function MentorshipStory({ sections }: { sections: Array<{ title: string; body: string }> }) {
-  if (sections.length === 0) return <StatusMessage>The mentorship story appears when fit, requirements, benefits, or expectations fields are published.</StatusMessage>;
-
   return (
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      {sections.map((section, index) => (
-        <details key={section.title} className="group border-b border-slate-200 last:border-b-0" open={index === 0}>
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-base font-semibold text-slate-950 transition hover:bg-slate-50">
-            {section.title}
-            <span className="text-primary transition group-open:rotate-45">+</span>
-          </summary>
-          <p className="px-5 pb-5 text-sm leading-7 text-slate-600">{section.body}</p>
-        </details>
-      ))}
-    </section>
+    <ResearchStoryAccordion
+      sections={sections}
+      empty="The mentorship story appears when fit, requirements, benefits, or expectations fields are published."
+    />
   );
 }
 
