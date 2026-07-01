@@ -40,6 +40,9 @@ async def upsert_by_slug(
 ) -> ModelT:
     result = await db.execute(select(model).where(model.slug == slug))
     record = result.scalar_one_or_none()
+    if record is None and payload.get("code") and hasattr(model, "code"):
+        result = await db.execute(select(model).where(model.code == payload["code"]))
+        record = result.scalar_one_or_none()
     payload = {**payload, "slug": slug}
 
     if record is None:
@@ -89,6 +92,23 @@ async def seed_centers(db: AsyncSession) -> dict[str, ResearchCenter]:
             "is_featured": True,
             "display_order": 20,
         },
+        {
+            "name": "Centre for Sustainable Agriculture & Extension",
+            "code": "CSAE",
+            "acronym": "CSAE",
+            "center_type": "research_center",
+            "about": (
+                "Coordinates applied agriculture, extension, climate resilience, food systems, "
+                "and farmer-facing innovation work for Kisii University research programs."
+            ),
+            "mission": "Advance practical agricultural research that improves productivity, resilience, and livelihoods.",
+            "research_areas": "Climate-smart agriculture, soil and water management, resilient livelihoods, food systems, extension, and markets.",
+            "location": "Kisii University Main Campus and field sites in Nyamira and neighbouring counties",
+            "email": "research@kisiiuniversity.ac.ke",
+            "is_active": True,
+            "is_featured": True,
+            "display_order": 5,
+        },
     ]
     records: dict[str, ResearchCenter] = {}
     for spec in specs:
@@ -103,7 +123,41 @@ async def seed_programs(
 ) -> dict[str, ResearchProgram]:
     research_center = centers["research-extension-innovation-and-resource-mobilization"]
     sist_center = centers["school-of-information-science-and-technology-research"]
+    agriculture_center = centers["centre-for-sustainable-agriculture-extension"]
     specs = [
+        {
+            "name": "Climate-Resilient Agrifood Systems Program",
+            "code": "CRASP/2024/01",
+            "center_id": agriculture_center.id,
+            "start_date": date(2024, 1, 1),
+            "end_date": date(2028, 12, 31),
+            "summary": (
+                "Coordinated research that strengthens climate resilience, productivity, and nutrition "
+                "across agrifood value chains in Nyamira and neighbouring counties."
+            ),
+            "description": (
+                "Improve climate resilience, productivity, and nutrition across crop, livestock, and fish "
+                "value chains through integrated research and innovation."
+            ),
+            "objectives": (
+                "Smallholder farmers face rising climate risks and market pressures that threaten food "
+                "security and income across Western Kenya."
+            ),
+            "methodology": (
+                "Co-design solutions with farmers and partners; test in real-world conditions; scale proven "
+                "innovations; and inform policy and practice."
+            ),
+            "expected_outcomes": (
+                "Higher yields and incomes, reduced climate risks, improved nutrition, and stronger value "
+                "chain competitiveness."
+            ),
+            "budget": Decimal("12800000.00"),
+            "currency": "KES",
+            "status": "active",
+            "is_active": True,
+            "is_featured": True,
+            "display_order": 1,
+        },
         {
             "name": "Carbon Literacy for Youth Employability and Job Creation",
             "code": "CL4YEJCP",
@@ -151,9 +205,149 @@ async def seed_projects(
 ) -> dict[str, ResearchProject]:
     research_center = centers["research-extension-innovation-and-resource-mobilization"]
     sist_center = centers["school-of-information-science-and-technology-research"]
+    agriculture_center = centers["centre-for-sustainable-agriculture-extension"]
+    agrifood_program = programs["climate-resilient-agrifood-systems-program"]
     carbon_program = programs["carbon-literacy-for-youth-employability-and-job-creation"]
     responsible_program = programs["responsible-computing-challenge"]
     specs = [
+        {
+            "title": "Climate-Smart Agriculture for Smallholder Food Security",
+            "code": "CRASP-CSA-01",
+            "program_id": agrifood_program.id,
+            "center_id": agriculture_center.id,
+            "project_type": "applied",
+            "start_date": date(2024, 1, 1),
+            "end_date": date(2026, 12, 31),
+            "summary": "Improving productivity and food security through climate-smart agriculture technologies.",
+            "abstract": "Farmer field trials test drought-tolerant crops, soil health practices, advisory services, and extension models.",
+            "objectives": "Increase adoption of climate-smart practices among smallholder farmers.",
+            "methodology": "Demonstration plots, farmer learning groups, extension visits, and seasonal monitoring.",
+            "expected_outcomes": "Improved yields, stronger soil health, better farm decisions, and reduced climate vulnerability.",
+            "impact": "Supports stable food supply and household income in Nyamira and neighbouring counties.",
+            "budget": Decimal("3200000.00"),
+            "currency": "KES",
+            "status": "ongoing",
+            "progress_percentage": 75,
+            "is_active": True,
+            "is_featured": True,
+            "is_public": True,
+            "display_order": 1,
+        },
+        {
+            "title": "Agroforestry for Landscape Restoration",
+            "code": "CRASP-AFLR-02",
+            "program_id": agrifood_program.id,
+            "center_id": agriculture_center.id,
+            "project_type": "applied",
+            "start_date": date(2024, 3, 1),
+            "end_date": date(2026, 12, 31),
+            "summary": "Restoring farms and landscapes through agroforestry, tree nurseries, and soil conservation practices.",
+            "abstract": "Community nurseries and farm-level tree integration are used to improve landscape resilience.",
+            "objectives": "Improve soil protection, farm biodiversity, and long-term climate resilience.",
+            "methodology": "Participatory farm planning, nursery establishment, field days, and survival monitoring.",
+            "expected_outcomes": "More trees on farms, reduced erosion, stronger biodiversity, and improved microclimates.",
+            "impact": "Creates resilient landscapes that support production and ecosystem services.",
+            "budget": Decimal("1800000.00"),
+            "currency": "KES",
+            "status": "ongoing",
+            "progress_percentage": 60,
+            "is_active": True,
+            "is_featured": False,
+            "is_public": True,
+            "display_order": 2,
+        },
+        {
+            "title": "Climate Information Services for Farmers",
+            "code": "CRASP-CIS-03",
+            "program_id": agrifood_program.id,
+            "center_id": agriculture_center.id,
+            "project_type": "action",
+            "start_date": date(2023, 9, 1),
+            "end_date": date(2025, 12, 31),
+            "summary": "Delivering weather and agronomic information that helps farmers make timely production decisions.",
+            "abstract": "Seasonal advisories, SMS updates, and extension clinics are co-produced with local partners.",
+            "objectives": "Improve access to usable climate information for farmers and extension workers.",
+            "methodology": "Advisory co-design, dissemination pilots, farmer feedback loops, and uptake analysis.",
+            "expected_outcomes": "Better planting decisions, improved risk planning, and increased use of climate advisories.",
+            "impact": "Reduces production losses caused by rainfall variability and delayed decisions.",
+            "budget": Decimal("1400000.00"),
+            "currency": "KES",
+            "status": "ongoing",
+            "progress_percentage": 80,
+            "is_active": True,
+            "is_featured": False,
+            "is_public": True,
+            "display_order": 3,
+        },
+        {
+            "title": "Postharvest Loss Reduction Innovations",
+            "code": "CRASP-PHL-04",
+            "program_id": agrifood_program.id,
+            "center_id": agriculture_center.id,
+            "project_type": "applied",
+            "start_date": date(2024, 5, 1),
+            "end_date": date(2026, 12, 31),
+            "summary": "Testing storage, handling, and market-linkage innovations that reduce postharvest losses.",
+            "abstract": "Farmer groups test practical postharvest handling methods for grains, horticulture, and priority value chains.",
+            "objectives": "Reduce losses between farm gate and market while improving quality and farmer returns.",
+            "methodology": "Technology pilots, market assessments, group training, and quality monitoring.",
+            "expected_outcomes": "Lower losses, better quality, stronger market readiness, and improved incomes.",
+            "impact": "Helps households retain more value from harvested produce.",
+            "budget": Decimal("1600000.00"),
+            "currency": "KES",
+            "status": "ongoing",
+            "progress_percentage": 55,
+            "is_active": True,
+            "is_featured": False,
+            "is_public": True,
+            "display_order": 4,
+        },
+        {
+            "title": "Water Quality and Ecosystem Health in Nyamira",
+            "code": "CRASP-WQEH-05",
+            "program_id": agrifood_program.id,
+            "center_id": agriculture_center.id,
+            "project_type": "applied",
+            "start_date": date(2024, 1, 1),
+            "end_date": date(2027, 12, 31),
+            "summary": "Monitoring water quality and ecosystem health to protect livelihoods and agricultural productivity.",
+            "abstract": "Water sampling and ecosystem assessments inform land-use recommendations and local stewardship.",
+            "objectives": "Track priority water-quality indicators and promote ecosystem management practices.",
+            "methodology": "Field sampling, watershed mapping, community reporting, and policy engagement.",
+            "expected_outcomes": "Cleaner water systems, improved stewardship, and evidence for local decision-making.",
+            "impact": "Protects water resources that sustain farms, households, and ecosystems.",
+            "budget": Decimal("2600000.00"),
+            "currency": "KES",
+            "status": "ongoing",
+            "progress_percentage": 40,
+            "is_active": True,
+            "is_featured": False,
+            "is_public": True,
+            "display_order": 5,
+        },
+        {
+            "title": "Smart Soil Moisture Monitoring for Smallholders",
+            "code": "CRASP-SSMM-06",
+            "program_id": agrifood_program.id,
+            "center_id": agriculture_center.id,
+            "project_type": "applied",
+            "start_date": date(2024, 7, 1),
+            "end_date": date(2025, 12, 31),
+            "summary": "Deploying low-cost soil moisture sensing to guide irrigation and water-use decisions.",
+            "abstract": "Field-tested devices and dashboards support smallholder irrigation scheduling.",
+            "objectives": "Improve water productivity through affordable monitoring and farmer-friendly guidance.",
+            "methodology": "Sensor prototyping, field validation, farmer training, and dashboard feedback.",
+            "expected_outcomes": "More efficient water use, reduced crop stress, and practical digital advisory tools.",
+            "impact": "Supports smarter water management for smallholder farms.",
+            "budget": Decimal("2200000.00"),
+            "currency": "KES",
+            "status": "ongoing",
+            "progress_percentage": 35,
+            "is_active": True,
+            "is_featured": False,
+            "is_public": True,
+            "display_order": 6,
+        },
         {
             "title": "Carbon Literacy for Youth Employability and Job Creation",
             "code": "CL4YEJCP",
@@ -241,7 +435,81 @@ async def seed_publications(
 ) -> None:
     research_center = centers["research-extension-innovation-and-resource-mobilization"]
     sist_center = centers["school-of-information-science-and-technology-research"]
+    agriculture_center = centers["centre-for-sustainable-agriculture-extension"]
     specs = [
+        {
+            "payload": {
+                "title": "Climate-smart technologies improve maize yields in Western Kenya",
+                "publication_type": "journal_article",
+                "project_id": projects["climate-smart-agriculture-for-smallholder-food-security"].id,
+                "center_id": agriculture_center.id,
+                "abstract": "Reports field evidence on climate-smart agriculture practices, soil health, and smallholder yield gains.",
+                "keywords": ["climate-smart agriculture", "maize yields", "smallholders", "Western Kenya"],
+                "journal_name": "Journal of Agrifood Systems and Climate Resilience",
+                "publisher": "Kisii University Research",
+                "year": 2025,
+                "publication_date": date(2025, 4, 10),
+                "doi": "10.5555/ksu.crasp.2025.001",
+                "url": "https://research.kisiiuniversity.ac.ke/publications/climate-smart-technologies-maize-yields",
+                "is_open_access": True,
+                "access_type": "gold",
+                "citation_count": 18,
+                "status": "published",
+                "is_active": True,
+                "is_featured": True,
+                "display_order": 1,
+            },
+            "authors": ["Dr. Jane Agutu", "Dr. Daniel Ochieng", "Prof. Nancy Onkwaro"],
+        },
+        {
+            "payload": {
+                "title": "Policy brief: Scaling conservation agriculture in smallholder systems",
+                "publication_type": "report",
+                "project_id": projects["climate-smart-agriculture-for-smallholder-food-security"].id,
+                "center_id": agriculture_center.id,
+                "abstract": "Synthesizes farmer trial evidence and policy actions for scaling conservation agriculture practices.",
+                "keywords": ["policy brief", "conservation agriculture", "extension", "smallholder systems"],
+                "journal_name": "Kisii University Policy Brief Series",
+                "publisher": "Centre for Sustainable Agriculture & Extension",
+                "year": 2025,
+                "publication_date": date(2025, 3, 14),
+                "doi": "10.5555/ksu.crasp.2025.002",
+                "url": "https://research.kisiiuniversity.ac.ke/publications/scaling-conservation-agriculture-smallholders",
+                "pdf_url": "https://research.kisiiuniversity.ac.ke/downloads/scaling-conservation-agriculture-smallholders.pdf",
+                "is_open_access": True,
+                "access_type": "green",
+                "citation_count": 6,
+                "status": "published",
+                "is_active": True,
+                "is_featured": True,
+                "display_order": 2,
+            },
+            "authors": ["Dr. Jane Agutu", "Centre for Sustainable Agriculture & Extension"],
+        },
+        {
+            "payload": {
+                "title": "Water quality indicators and ecosystem health in Nyamira County",
+                "publication_type": "report",
+                "project_id": projects["water-quality-and-ecosystem-health-in-nyamira"].id,
+                "center_id": agriculture_center.id,
+                "abstract": "Presents baseline water quality and ecosystem health observations for agricultural landscapes in Nyamira.",
+                "keywords": ["water quality", "ecosystem health", "Nyamira", "agricultural landscapes"],
+                "journal_name": "Kisii University Environmental Research Reports",
+                "publisher": "Kisii University Research",
+                "year": 2025,
+                "publication_date": date(2025, 2, 28),
+                "doi": "10.5555/ksu.crasp.2025.003",
+                "url": "https://research.kisiiuniversity.ac.ke/publications/water-quality-ecosystem-health-nyamira",
+                "is_open_access": True,
+                "access_type": "gold",
+                "citation_count": 4,
+                "status": "published",
+                "is_active": True,
+                "is_featured": False,
+                "display_order": 3,
+            },
+            "authors": ["Dr. E. Boahen", "Dr. Jane Agutu"],
+        },
         {
             "payload": {
                 "title": "Carbon Literacy, Green Skills, and Employability Pathways among University Students",
@@ -397,7 +665,31 @@ async def seed_innovations_and_outputs(
 ) -> None:
     research_center = centers["research-extension-innovation-and-resource-mobilization"]
     sist_center = centers["school-of-information-science-and-technology-research"]
+    agriculture_center = centers["centre-for-sustainable-agriculture-extension"]
     innovations = [
+        {
+            "title": "Smart Soil Moisture Sensor for Smallholder Farms",
+            "code": "CRASP-SSMS",
+            "innovation_type": "hardware",
+            "category": "agriculture",
+            "project_id": projects["smart-soil-moisture-monitoring-for-smallholders"].id,
+            "center_id": agriculture_center.id,
+            "summary": "Low-cost IoT device for real-time soil moisture monitoring in smallholder farms.",
+            "description": "Field-tested prototype supporting irrigation decisions and water-use efficiency.",
+            "problem_addressed": "Farmers lack affordable, timely soil moisture information for irrigation and crop stress management.",
+            "solution": "Sensor kits connected to simple advisory dashboards and farmer-facing guidance.",
+            "benefits": "Improves irrigation timing, reduces water waste, and supports better crop performance.",
+            "applications": "Smallholder irrigation, demonstration farms, extension clinics, and student innovation projects.",
+            "ip_status": "pending",
+            "commercialization_status": "prototype",
+            "development_stage": "field_tested",
+            "trl_level": 6,
+            "status": "active",
+            "is_active": True,
+            "is_featured": True,
+            "is_public": True,
+            "display_order": 1,
+        },
         {
             "title": "Carbon Literacy Micro-Credential Toolkit",
             "code": "CL-MCT",
@@ -446,6 +738,51 @@ async def seed_innovations_and_outputs(
         },
     ]
     outputs = [
+        {
+            "title": "Nyamira Soil Health Dashboard",
+            "output_type": "tool",
+            "project_id": projects["climate-smart-agriculture-for-smallholder-food-security"].id,
+            "center_id": agriculture_center.id,
+            "summary": "Interactive dashboard summarizing soil health observations from CRASP field sites.",
+            "description": "Aggregates farmer field school data, soil indicators, and advisory prompts for extension teams.",
+            "access_type": "open",
+            "access_url": "https://research.kisiiuniversity.ac.ke/outputs/nyamira-soil-health-dashboard",
+            "keywords": ["soil health", "dashboard", "Nyamira", "extension"],
+            "status": "published",
+            "is_active": True,
+            "is_featured": True,
+            "display_order": 1,
+        },
+        {
+            "title": "Farmer Field School Training Manual",
+            "output_type": "guideline",
+            "project_id": projects["climate-smart-agriculture-for-smallholder-food-security"].id,
+            "center_id": agriculture_center.id,
+            "summary": "Training manual for farmer field schools focused on climate-smart agriculture practices.",
+            "description": "Provides facilitator notes, activity plans, and farmer learning tools for demonstration plots.",
+            "access_type": "open",
+            "download_url": "https://research.kisiiuniversity.ac.ke/downloads/farmer-field-school-training-manual.pdf",
+            "keywords": ["farmer field school", "training", "climate-smart agriculture"],
+            "status": "published",
+            "is_active": True,
+            "is_featured": True,
+            "display_order": 2,
+        },
+        {
+            "title": "Community radio guide on climate-smart practices",
+            "output_type": "brief",
+            "project_id": projects["climate-information-services-for-farmers"].id,
+            "center_id": agriculture_center.id,
+            "summary": "Radio guide for communicating climate-smart practices and seasonal advisories to farming communities.",
+            "description": "Supports extension teams and media partners with scripts, seasonal prompts, and call-in discussion points.",
+            "access_type": "open",
+            "access_url": "https://research.kisiiuniversity.ac.ke/outputs/community-radio-guide-climate-smart-practices",
+            "keywords": ["community radio", "climate information", "extension"],
+            "status": "published",
+            "is_active": True,
+            "is_featured": False,
+            "display_order": 3,
+        },
         {
             "title": "Lake Region Carbon Literacy Training Dataset",
             "output_type": "dataset",

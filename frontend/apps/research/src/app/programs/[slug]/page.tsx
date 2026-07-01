@@ -26,6 +26,7 @@ import {
   compactText,
   formatDate,
   formatLabel,
+  getCenters,
   generateSlugParams,
   getProgramBySlug,
   getProgramProjects,
@@ -76,12 +77,15 @@ export default async function ProgramDetailPage({
   if (!data) notFound();
 
   const program = data as ResearchGenericRecord;
-  const [projects, publications, outputs] = await Promise.all([
+  const [projects, publications, outputs, centers] = await Promise.all([
     getProgramProjects(program.id),
     getPublicationsFiltered({ programId: program.id }),
     getRelatedOutputs({ programId: program.id }),
+    getCenters(),
   ]);
-  const center = program.center as ResearchGenericRecord | undefined;
+  const center =
+    (program.center as ResearchGenericRecord | undefined) ||
+    centers.data.find((item) => item.id === program.center_id);
   const title = getRecordTitle(program, "Research programme");
   const summary = getRecordSummary(program);
   const leadName =
@@ -98,11 +102,11 @@ export default async function ProgramDetailPage({
   const coverImage = getProgramCoverImage(program);
   const partners = getChildRecords(program, ["partners", "collaborators"]);
   const storySections = getNarrativeSections(program, [
-    { title: "Program focus", fields: ["summary", "description", "about"] },
-    { title: "Why it matters", fields: ["background", "rationale", "need", "mandate"] },
-    { title: "Approach", fields: ["methodology", "approach", "activities"] },
-    { title: "Expected outcomes", fields: ["expected_outcomes", "deliverables", "objectives"] },
-    { title: "Public impact", fields: ["impact", "benefits", "public_value"] },
+    { title: "Program focus", fields: ["description", "summary"] },
+    { title: "Why it matters", fields: ["objectives"] },
+    { title: "Our approach", fields: ["methodology"] },
+    { title: "Expected outcomes", fields: ["expected_outcomes"] },
+    { title: "Public impact", fields: ["summary"] },
   ]);
   const facts = getPublishedFactItems([
     { label: "Timeline", value: getRecordTimelineLabel(program) },
@@ -136,7 +140,7 @@ export default async function ProgramDetailPage({
         projectCount={projects.data.length}
       />
 
-      {[error, projects.error, publications.error, outputs.error].filter(Boolean).map((message, i) => (
+      {[error, projects.error, publications.error, outputs.error, centers.error].filter(Boolean).map((message, i) => (
         <section key={`${message}-${i}`} className="px-4 pt-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="mx-auto max-w-[1680px]">
             <StatusMessage tone="error">{message}</StatusMessage>
