@@ -34,10 +34,28 @@ test("about metric tiles use backend collection counts and published stats", () 
       title: "Research stats",
       stats: [
         {
-          key: "projects",
-          label: "Published projects",
+          key: "research_projects",
+          label: "Research Projects",
           value: 12,
-          description: "Published projects currently visible on the research portal.",
+          description: "Active public research projects.",
+        },
+        {
+          key: "publications",
+          label: "Publications",
+          value: 8,
+          description: "Published research publications.",
+        },
+        {
+          key: "research_centres",
+          label: "Research Centres",
+          value: 4,
+          description: "Active research centres and institutes.",
+        },
+        {
+          key: "partner_count",
+          label: "Total Partners",
+          value: 6,
+          description: "All active institutional and industry partners.",
         },
       ],
     },
@@ -47,9 +65,9 @@ test("about metric tiles use backend collection counts and published stats", () 
     metrics.map((metric) => [metric.label, metric.value]),
     [
       ["Research staff", 3],
-      ["Centers and programs", 3],
-      ["Support services", 1],
-      ["Published projects", 12],
+      ["Research Projects", 12],
+      ["Publications", 8],
+      ["Research Centres", 4],
     ],
   );
 });

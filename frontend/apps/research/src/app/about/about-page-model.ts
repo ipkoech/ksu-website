@@ -90,8 +90,23 @@ export function buildAboutMetricTiles({
   partners: AboutCollection;
   stats?: PublicStats | null;
 }): AboutMetricTile[] {
-  const projectStat = stats?.stats?.find((item) => item.key === "projects");
-  return [
+  const preferredStatKeys = [
+    "research_projects",
+    "publications",
+    "research_centres",
+    "partner_count",
+  ];
+  const preferredStats = preferredStatKeys
+    .map((key) => stats?.stats?.find((item) => item.key === key))
+    .filter((item): item is PublicStat => Boolean(item))
+    .map((item) => ({
+      label: item.label,
+      value: item.value,
+      suffix: item.suffix,
+      description: item.description || "Published research statistic.",
+    }));
+
+  const fallbackMetrics: AboutMetricTile[] = [
     {
       label: "Research staff",
       value: staffCount,
@@ -108,12 +123,13 @@ export function buildAboutMetricTiles({
       description: "Research support services currently published for public discovery.",
     },
     {
-      label: projectStat?.label || "Partners",
-      value: projectStat?.value ?? collectionCount(partners),
-      suffix: projectStat?.suffix,
-      description: projectStat?.description || "Published partner and collaboration records.",
+      label: "Partners",
+      value: collectionCount(partners),
+      description: "Published partner and collaboration records.",
     },
   ];
+
+  return [fallbackMetrics[0], ...preferredStats, ...fallbackMetrics.slice(1)].slice(0, 4);
 }
 
 export function buildSupportAreaCards({

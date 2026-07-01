@@ -288,7 +288,7 @@ function AboutHero({
   lead: Person | null;
 }) {
   return (
-    <section className="relative isolate overflow-hidden border-b border-slate-200 px-4 py-10 text-white sm:px-6 sm:py-12 lg:px-8 xl:px-10 2xl:px-12">
+    <section className="relative isolate overflow-hidden border-b border-slate-200 px-4 py-14 text-white sm:px-6 sm:py-16 lg:px-8 lg:py-20 xl:px-10 2xl:px-12">
       <div className="absolute inset-0">
         <Image
           src="/images/research/research-about-hero.webp"
@@ -298,8 +298,8 @@ function AboutHero({
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-slate-950/65" />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,42,0.92)_0%,rgba(15,23,42,0.76)_48%,rgba(15,23,42,0.4)_100%)]" />
+        <div className="absolute inset-0 bg-slate-950/48" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,42,0.86)_0%,rgba(15,23,42,0.68)_48%,rgba(15,23,42,0.24)_100%)]" />
       </div>
       <div className="relative z-10 mx-auto grid max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,460px)] lg:items-end">
         <div>
