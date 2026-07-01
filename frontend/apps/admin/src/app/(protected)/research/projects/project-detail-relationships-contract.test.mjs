@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const source = readFileSync(join(process.cwd(), "src/app/(protected)/research/projects/[slug]/page.tsx"), "utf8");
+const detailSource = readFileSync(join(process.cwd(), "src/app/(protected)/research/_components/research-admin-detail-page.tsx"), "utf8");
 
 assert(
   !source.includes("projectRelations.impactMetrics.list"),
@@ -63,6 +64,11 @@ for (const rawRelationshipLabel of ["Program ID", "Center ID", "Farm ID", "Princ
     `Project edit should not expose raw relationship or attachment UUID controls: ${rawRelationshipLabel}.`,
   );
 }
+
+assert(
+  detailSource.includes("RichTextRenderer") && detailSource.includes("formatRichTextValue(entry.value)"),
+  "Research detail sections should render rich text content instead of plain markup.",
+);
 
 assert(
   !source.includes('publicHrefBase="/projects"'),

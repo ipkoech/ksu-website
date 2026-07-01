@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import type { ReactNode } from "react";
 import { PageHeader } from "@/components/layout";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger } from "@ksu/ui/components";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, RichTextRenderer, Tabs, TabsContent, TabsList, TabsTrigger } from "@ksu/ui/components";
 import { auditLogsApi, type ResearchGenericRecord } from "@ksu/api-client";
 import {
   relationshipAdapters,
@@ -355,7 +355,7 @@ function DetailSectionCard({
   section: DetailSection;
 }) {
   const entries = section.fields
-    .map((field) => ({ label: formatLabel(field), value: formatValue(record[field]) }))
+    .map((field) => ({ label: formatLabel(field), value: record[field] }))
     .filter((entry) => entry.value);
 
   if (entries.length === 0) return null;
@@ -369,12 +369,19 @@ function DetailSectionCard({
         {entries.map((entry) => (
           <div key={entry.label}>
             <p className="text-xs font-semibold uppercase text-muted-foreground">{entry.label}</p>
-            <p className="mt-1 whitespace-pre-line text-sm leading-6">{entry.value}</p>
+            <RichTextRenderer content={formatRichTextValue(entry.value)} className="mt-1 text-sm leading-6" />
           </div>
         ))}
       </CardContent>
     </Card>
   );
+}
+
+function formatRichTextValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "";
+  if (Array.isArray(value)) return value.map((item) => formatValue(item)).filter(Boolean).join(", ");
+  if (typeof value === "object") return JSON.stringify(value, null, 2);
+  return String(value);
 }
 
 function Fact({ label, value }: { label: string; value: string }) {
