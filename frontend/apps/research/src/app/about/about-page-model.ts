@@ -95,6 +95,17 @@ export type AboutTeamMember = AboutTeamPerson & {
   isActing: boolean;
 };
 
+export type AboutResearchEntityRecord = {
+  id?: string | null;
+  code?: string | null;
+  name?: string | null;
+  slug?: string | null;
+};
+
+export type AboutResearchTeamEntity =
+  | { entity_type: "department" | "wing"; entity_id: string }
+  | { entity_type: "university"; entity_id?: undefined };
+
 export type AboutCollection<T = AboutRecord> = {
   data: T[];
   total?: number;
@@ -197,6 +208,26 @@ export function getLeadTeamMember(members: AboutTeamMember[]) {
     members[0] ??
     null
   );
+}
+
+export function resolveResearchTeamEntity({
+  departments,
+  wings,
+}: {
+  departments?: AboutResearchEntityRecord[];
+  wings?: AboutResearchEntityRecord[];
+}): AboutResearchTeamEntity {
+  const department = findReirmRecord(departments ?? []);
+  if (department?.id) {
+    return { entity_type: "department", entity_id: String(department.id) };
+  }
+
+  const wing = findReirmRecord(wings ?? []);
+  if (wing?.id) {
+    return { entity_type: "wing", entity_id: String(wing.id) };
+  }
+
+  return { entity_type: "university" };
 }
 
 export function buildAboutMetricTiles({
@@ -380,4 +411,22 @@ function formatRole(value?: string | number | null) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function findReirmRecord(records: AboutResearchEntityRecord[]) {
+  return records.find((record) => {
+    const code = compactText(record.code).toUpperCase();
+    const name = compactText(record.name).toLowerCase();
+    const slug = compactText(record.slug).toLowerCase();
+    return (
+      code === "REIRM" ||
+      slug.includes("research-extension-innovation") ||
+      (
+        name.includes("research") &&
+        name.includes("extension") &&
+        name.includes("innovation") &&
+        name.includes("resource mobilization")
+      )
+    );
+  });
 }

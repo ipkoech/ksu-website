@@ -7,6 +7,7 @@ import {
   buildSupportAreaCards,
   getLeadTeamMember,
   getLeadResearchPerson,
+  resolveResearchTeamEntity,
 } from "./about-page-model.ts";
 
 const people = [
@@ -169,4 +170,28 @@ test("team members join backend hierarchy assignments to public persons", () => 
     ],
   );
   assert.equal(getLeadTeamMember(members)?.id, "person-1");
+});
+
+test("research team entity resolver prefers REIRM department before public wing", () => {
+  const entity = resolveResearchTeamEntity({
+    departments: [
+      { id: "dept-1", code: "REIRM", name: "Research, Extension, Innovation and Resource Mobilization" },
+    ],
+    wings: [
+      { id: "wing-1", code: "REIRM", name: "Research, Extension, Innovation and Resource Mobilization" },
+    ],
+  });
+
+  assert.deepEqual(entity, { entity_type: "department", entity_id: "dept-1" });
+});
+
+test("research team entity resolver uses public REIRM wing when department is hidden", () => {
+  const entity = resolveResearchTeamEntity({
+    departments: [],
+    wings: [
+      { id: "wing-1", code: "REIRM", name: "Research, Extension, Innovation and Resource Mobilization" },
+    ],
+  });
+
+  assert.deepEqual(entity, { entity_type: "wing", entity_id: "wing-1" });
 });

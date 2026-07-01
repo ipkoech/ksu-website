@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { PublicTeamResponse, ResearchGenericRecord } from "@ksu/api-client";
-import { publicTeamApi, researchServiceApi } from "@ksu/api-client";
+import {
+  departmentsApi,
+  divisionsApi,
+  publicTeamApi,
+  researchServiceApi,
+  wingsApi,
+} from "@ksu/api-client";
 import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 import {
   ArrowRight,
@@ -39,6 +45,7 @@ import {
   buildSupportAreaCards,
   buildTeamMembers,
   getLeadTeamMember,
+  resolveResearchTeamEntity,
   type AboutCollection,
   type AboutTeamMember,
 } from "./about-page-model";
@@ -700,27 +707,62 @@ function MiniFact({ label, value }: { label: string; value: number }) {
 }
 
 async function getResearchStaff() {
-  const directorateId = process.env.NEXT_PUBLIC_RESEARCH_DIRECTORATE_ID;
   try {
-    if (directorateId) {
-      const response = await publicTeamApi.get({
-        entity_type: "directorate",
-        entity_id: directorateId,
-      });
-      return { data: response.data ?? null, error: null as string | null };
-    }
-  } catch {
-    // Fall back to the university hierarchy when the configured directorate is unavailable.
-  }
-
-  try {
-    const response = await publicTeamApi.get({ entity_type: "university" });
+    const entity = await getResearchTeamEntity();
+    const response = await publicTeamApi.get(entity);
     return { data: response.data ?? null, error: null as string | null };
   } catch {
     return {
       data: null as PublicTeamResponse | null,
       error: "Research staff records are temporarily unavailable.",
     };
+  }
+}
+
+async function getResearchTeamEntity() {
+  const [departments, wings] = await Promise.all([
+    getResearchDepartments(),
+    getResearchWings(),
+  ]);
+  return resolveResearchTeamEntity({ departments, wings });
+}
+
+async function getResearchDepartments() {
+  try {
+    const response = await departmentsApi.list({
+      search: "REIRM",
+      fields: "id,name,code,slug",
+      page: 1,
+      per_page: 10,
+    });
+    return response.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+async function getResearchWings() {
+  try {
+    const divisionsResponse = await divisionsApi.list({
+      fields: "id,name,code",
+      is_active: true,
+      page: 1,
+      per_page: 50,
+    });
+    const arsa = (divisionsResponse.data ?? []).find(
+      (division) =>
+        compactText(division.code).toUpperCase() === "ARSA" ||
+        compactText(division.name).toLowerCase().includes("research"),
+    );
+    if (!arsa?.id) return [];
+
+    const wingsResponse = await wingsApi.listByDivision(arsa.id, {
+      fields: "id,name,code,slug",
+      is_active: true,
+    });
+    return wingsResponse.data ?? [];
+  } catch {
+    return [];
   }
 }
 

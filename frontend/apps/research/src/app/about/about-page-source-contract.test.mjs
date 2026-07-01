@@ -19,8 +19,12 @@ test("about page keeps backend-backed stats and team data sources", () => {
   assert.match(source, /getResearchStats/);
   assert.match(source, /getResearchStaff/);
   assert.match(source, /publicTeamApi\.get/);
+  assert.match(source, /departmentsApi\.list/);
+  assert.match(source, /wingsApi\.listByDivision/);
+  assert.match(source, /resolveResearchTeamEntity/);
   assert.match(source, /buildTeamMembers/);
   assert.doesNotMatch(source, /personsApi\.list/);
+  assert.doesNotMatch(source, /NEXT_PUBLIC_RESEARCH_DIRECTORATE_ID/);
 });
 
 test("about page uses reveal animation without the removed about family band", () => {
