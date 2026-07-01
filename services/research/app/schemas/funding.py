@@ -53,7 +53,12 @@ class GrantBase(BaseSchema, SlugMixin, SEOFieldsMixin):
     project_end_date: date | None = None
     external_url: UrlStr | None = None
     application_url: UrlStr | None = None
+    cover_image_id: uuid.UUID | None = None
     cover_image_url: UrlStr | None = None
+    logo_id: uuid.UUID | None = None
+    gallery_media_ids: list[uuid.UUID] | None = None
+    attachment_media_ids: list[uuid.UUID] | None = None
+    document_media_ids: list[uuid.UUID] | None = None
     documents: list[dict] | None = None
     contact_name: str | None = Field(None, max_length=255)
     contact_email: EmailField | None = None
@@ -68,8 +73,42 @@ class GrantCreate(GrantBase, StatusMixin):
 class GrantUpdate(BaseSchema):
     title: str | None = Field(None, max_length=500)
     slug: SlugStr | None = None
+    code: str | None = Field(None, max_length=32)
+    grant_type: str | None = Field(None, max_length=32)
+    category: str | None = Field(None, max_length=64)
+    funder_name: str | None = Field(None, max_length=255)
+    funder_logo_url: UrlStr | None = None
+    summary: str | None = None
+    description: str | None = None
+    objectives: str | None = None
+    eligibility: str | None = None
+    focus_areas: str | None = None
+    requirements: str | None = None
+    total_budget: Decimal | None = None
+    min_award: Decimal | None = None
+    max_award: Decimal | None = None
+    currency: str | None = Field(None, max_length=3)
+    number_of_awards: int | None = None
+    announcement_date: date | None = None
+    open_date: date | None = None
     status: str | None = None
     deadline: datetime | None = None
+    review_start_date: date | None = None
+    award_date: date | None = None
+    project_start_date: date | None = None
+    project_end_date: date | None = None
+    external_url: UrlStr | None = None
+    application_url: UrlStr | None = None
+    cover_image_id: uuid.UUID | None = None
+    cover_image_url: UrlStr | None = None
+    logo_id: uuid.UUID | None = None
+    gallery_media_ids: list[uuid.UUID] | None = None
+    attachment_media_ids: list[uuid.UUID] | None = None
+    document_media_ids: list[uuid.UUID] | None = None
+    documents: list[dict] | None = None
+    contact_name: str | None = Field(None, max_length=255)
+    contact_email: EmailField | None = None
+    contact_phone: PhoneStr | None = None
     is_active: bool | None = None
     is_featured: bool | None = None
 
@@ -103,6 +142,7 @@ class GrantGuidelineBase(BaseSchema, SlugMixin):
     title: str = Field(max_length=255)
     guideline_type: str = Field(default="procedure", max_length=32)
     content: str | None = None
+    document_id: uuid.UUID | None = None
     document_url: UrlStr | None = None
     document_name: str | None = Field(None, max_length=255)
     is_required: bool = False
@@ -113,8 +153,15 @@ class GrantGuidelineCreate(GrantGuidelineBase, StatusMixin):
 
 
 class GrantGuidelineUpdate(BaseSchema):
+    grant_id: uuid.UUID | None = None
     title: str | None = Field(None, max_length=255)
+    slug: SlugStr | None = None
+    guideline_type: str | None = Field(None, max_length=32)
     content: str | None = None
+    document_id: uuid.UUID | None = None
+    document_url: UrlStr | None = None
+    document_name: str | None = Field(None, max_length=255)
+    is_required: bool | None = None
     is_active: bool | None = None
 
 
@@ -145,6 +192,9 @@ class GrantApplicationBase(BaseSchema):
     proposed_end_date: date | None = None
     duration_months: int | None = None
     co_investigators: list[dict] | None = None
+    gallery_media_ids: list[uuid.UUID] | None = None
+    attachment_media_ids: list[uuid.UUID] | None = None
+    document_media_ids: list[uuid.UUID] | None = None
     documents: list[dict] | None = None
 
 
@@ -153,9 +203,27 @@ class GrantApplicationCreate(GrantApplicationBase):
 
 
 class GrantApplicationUpdate(BaseSchema):
+    grant_id: uuid.UUID | None = None
+    applicant_id: uuid.UUID | None = None
     project_title: str | None = Field(None, max_length=500)
     summary: str | None = None
+    abstract: str | None = None
+    objectives: str | None = None
+    methodology: str | None = None
+    expected_outcomes: str | None = None
+    work_plan: str | None = None
+    timeline: str | None = None
     requested_amount: Decimal | None = None
+    budget_breakdown: dict | None = None
+    currency: str | None = Field(None, max_length=3)
+    proposed_start_date: date | None = None
+    proposed_end_date: date | None = None
+    duration_months: int | None = None
+    co_investigators: list[dict] | None = None
+    gallery_media_ids: list[uuid.UUID] | None = None
+    attachment_media_ids: list[uuid.UUID] | None = None
+    document_media_ids: list[uuid.UUID] | None = None
+    documents: list[dict] | None = None
     status: str | None = None
 
 
@@ -199,7 +267,13 @@ class GrantReviewCreate(GrantReviewBase):
 
 
 class GrantReviewUpdate(BaseSchema):
+    application_id: uuid.UUID | None = None
+    reviewer_id: uuid.UUID | None = None
     overall_score: int | None = None
+    criteria_scores: dict | None = None
+    strengths: str | None = None
+    weaknesses: str | None = None
+    comments: str | None = None
     recommendation: str | None = None
     status: str | None = None
 
@@ -233,6 +307,9 @@ class GrantReportBase(BaseSchema):
     expenditure_summary: dict | None = None
     amount_spent: Decimal | None = None
     balance: Decimal | None = None
+    gallery_media_ids: list[uuid.UUID] | None = None
+    attachment_media_ids: list[uuid.UUID] | None = None
+    document_media_ids: list[uuid.UUID] | None = None
     documents: list[dict] | None = None
 
 
@@ -241,8 +318,27 @@ class GrantReportCreate(GrantReportBase):
 
 
 class GrantReportUpdate(BaseSchema):
+    grant_id: uuid.UUID | None = None
+    application_id: uuid.UUID | None = None
+    project_id: uuid.UUID | None = None
+    submitter_id: uuid.UUID | None = None
+    report_type: str | None = Field(None, max_length=32)
     title: str | None = None
+    reporting_period_start: date | None = None
+    reporting_period_end: date | None = None
     summary: str | None = None
+    activities: str | None = None
+    achievements: str | None = None
+    challenges: str | None = None
+    lessons_learned: str | None = None
+    next_steps: str | None = None
+    expenditure_summary: dict | None = None
+    amount_spent: Decimal | None = None
+    balance: Decimal | None = None
+    gallery_media_ids: list[uuid.UUID] | None = None
+    attachment_media_ids: list[uuid.UUID] | None = None
+    document_media_ids: list[uuid.UUID] | None = None
+    documents: list[dict] | None = None
     status: str | None = None
 
 
@@ -269,6 +365,7 @@ class FundingBase(BaseSchema, SlugMixin):
     phone: PhoneStr | None = None
     address: str | None = None
     country: str | None = Field(None, max_length=128)
+    logo_id: uuid.UUID | None = None
     logo_url: UrlStr | None = None
 
 
@@ -279,6 +376,17 @@ class FundingCreate(FundingBase, StatusMixin):
 class FundingUpdate(BaseSchema):
     name: str | None = Field(None, max_length=255)
     slug: SlugStr | None = None
+    acronym: str | None = Field(None, max_length=32)
+    funder_type: str | None = Field(None, max_length=32)
+    about: str | None = None
+    focus_areas: str | None = None
+    website: UrlStr | None = None
+    email: EmailField | None = None
+    phone: PhoneStr | None = None
+    address: str | None = None
+    country: str | None = Field(None, max_length=128)
+    logo_id: uuid.UUID | None = None
+    logo_url: UrlStr | None = None
     is_active: bool | None = None
 
 
@@ -317,7 +425,11 @@ class EndowmentFundBase(BaseSchema, SlugMixin, SEOFieldsMixin):
     donor_message: str | None = None
     contact_name: str | None = Field(None, max_length=255)
     contact_email: EmailField | None = None
+    cover_image_id: uuid.UUID | None = None
     cover_image_url: UrlStr | None = None
+    gallery_media_ids: list[uuid.UUID] | None = None
+    attachment_media_ids: list[uuid.UUID] | None = None
+    document_media_ids: list[uuid.UUID] | None = None
     status: str = Field(default="active", max_length=32)
     is_accepting_contributions: bool = True
 
@@ -329,8 +441,28 @@ class EndowmentFundCreate(EndowmentFundBase, StatusMixin):
 class EndowmentFundUpdate(BaseSchema):
     name: str | None = Field(None, max_length=255)
     slug: SlugStr | None = None
+    code: str | None = Field(None, max_length=32)
+    fund_type: str | None = Field(None, max_length=32)
+    purpose: str | None = None
+    description: str | None = None
+    eligibility: str | None = None
+    use_guidelines: str | None = None
+    principal_amount: Decimal | None = None
     current_value: Decimal | None = None
+    annual_distribution: Decimal | None = None
+    currency: str | None = Field(None, max_length=3)
+    established_date: date | None = None
+    donor_name: str | None = Field(None, max_length=255)
+    donor_message: str | None = None
+    contact_name: str | None = Field(None, max_length=255)
+    contact_email: EmailField | None = None
+    cover_image_id: uuid.UUID | None = None
+    cover_image_url: UrlStr | None = None
+    gallery_media_ids: list[uuid.UUID] | None = None
+    attachment_media_ids: list[uuid.UUID] | None = None
+    document_media_ids: list[uuid.UUID] | None = None
     status: str | None = None
+    is_accepting_contributions: bool | None = None
     is_active: bool | None = None
     is_featured: bool | None = None
 

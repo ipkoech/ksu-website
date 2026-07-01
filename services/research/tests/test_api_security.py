@@ -112,6 +112,8 @@ class RouteProtectionTests(unittest.TestCase):
             (grants_router, "/grant-reviews/{slug}"),
             (grants_router, "/grant-reports"),
             (grants_router, "/grant-reports/{slug}"),
+            (grants_router, "/grant-applications/id/{application_id}/reviews"),
+            (grants_router, "/grant-applications/id/{application_id}/reports"),
             (scholarships_router, "/scholarship-applications"),
             (scholarships_router, "/scholarship-applications/{slug}"),
             (training_router, "/mentorship-applications"),
@@ -123,6 +125,16 @@ class RouteProtectionTests(unittest.TestCase):
         for router, path in protected_routes:
             with self.subTest(path=path):
                 self.assertTrue(_is_protected(router, path))
+
+    def test_funding_relationship_writes_are_protected(self):
+        protected_routes = (
+            ("/grants/id/{grant_id}/themes/{theme_id}", "PUT"),
+            ("/grants/id/{grant_id}/themes/{theme_id}", "DELETE"),
+        )
+
+        for path, method in protected_routes:
+            with self.subTest(path=path, method=method):
+                self.assertTrue(_is_protected(grants_router, path, method))
 
 
 class PublicDonationSubmissionTests(unittest.IsolatedAsyncioTestCase):
