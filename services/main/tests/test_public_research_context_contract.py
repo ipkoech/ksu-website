@@ -24,3 +24,13 @@ def test_public_research_context_uses_field_selectors_for_relations_and_returns_
     assert '"leadership"' in SOURCE
     assert '"mission"' in SOURCE
     assert '"vision"' in SOURCE
+
+
+def test_public_research_context_has_authenticated_edit_endpoint():
+    assert "@router.patch" in SOURCE
+    assert "ResearchContextUpdate" in SOURCE
+    assert "CurrentUser" in SOURCE
+    assert "can_access_scope" in SOURCE
+    assert "WingService.update" in SOURCE
+    assert "DepartmentService.update" in SOURCE
+    assert "Research context updated" in SOURCE

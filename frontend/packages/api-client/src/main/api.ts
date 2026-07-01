@@ -81,6 +81,7 @@ import type {
   PaginatedResponse,
   PublicStatsResponse,
   PublicResearchContextResponse,
+  PublicResearchContextUpdatePayload,
   PublicTeamResponse,
 } from "./types";
 import type { FieldSelectionParams, QueryParams } from "../client";
@@ -306,6 +307,16 @@ export const publicResearchContextApi = {
   get: (params?: FieldSelectionParams) =>
     mainApi.get<{ data: PublicResearchContextResponse }>(
       "/api/v1/public/research/context",
+      params,
+    ),
+
+  update: (
+    data: PublicResearchContextUpdatePayload,
+    params?: FieldSelectionParams,
+  ) =>
+    mainApi.patch<{ data: PublicResearchContextResponse }>(
+      "/api/v1/public/research/context",
+      data,
       params,
     ),
 };

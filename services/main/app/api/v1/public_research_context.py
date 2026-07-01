@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import uuid
-from collections import defaultdict
 from typing import Any
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request, status
+from pydantic import BaseModel, Field
 from sqlalchemy import or_, select, tuple_
 from sqlalchemy.orm import selectinload
 
@@ -15,8 +15,10 @@ from ksu_common.schemas.responses import success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from .public_team import _assignment_payload, _build_groups, _build_hierarchy, _photo_urls, _person_payload
-from ...deps import DbSession
+from ...deps import CurrentUser, DbSession
 from ...models import Department, Division, Person, StaffAssignment, Wing
+from ...security.scopes import can_access_scope
+from ...services import DepartmentService, WingService
 
 router = APIRouter()
 
@@ -35,6 +37,62 @@ DEFAULT_DEPARTMENT_FIELDS = FieldSelection(
     nested={"wing": FieldSelection(fields=("id", "name", "slug", "code", "wing_type"))},
 )
 
+RESEARCH_CONTEXT_MANAGE_PERMISSIONS = (
+    "administration.manage_units",
+    "office.manage_content",
+    "academic.manage_departments",
+)
+
+
+class ResearchWingUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    slug: str | None = None
+    code: str | None = None
+    wing_type: str | None = Field(default=None, max_length=64)
+    head_id: uuid.UUID | None = None
+    description: str | None = None
+    head_message: str | None = None
+    mandate: str | None = None
+    service_charter: str | None = None
+    email: str | None = Field(default=None, max_length=320)
+    phone: str | None = None
+    office_location: str | None = Field(default=None, max_length=255)
+    operating_hours: dict[str, Any] | None = None
+    cover_image_id: uuid.UUID | None = None
+    is_public: bool | None = None
+    is_active: bool | None = None
+    display_order: int | None = None
+
+
+class ResearchDepartmentUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    slug: str | None = None
+    code: str | None = None
+    department_type: str | None = Field(default=None, max_length=32)
+    head_id: uuid.UUID | None = None
+    postgraduate_coordinator_id: uuid.UUID | None = None
+    about: str | None = None
+    head_message: str | None = None
+    mission: str | None = None
+    vision: str | None = None
+    mandate: str | None = None
+    core_values: str | None = None
+    service_charter: str | None = None
+    guidelines: str | None = None
+    email: str | None = Field(default=None, max_length=320)
+    phone: str | None = None
+    office_location: str | None = Field(default=None, max_length=255)
+    cover_image_id: uuid.UUID | None = None
+    is_public: bool | None = None
+    is_active: bool | None = None
+    allows_staff_management: bool | None = None
+    display_order: int | None = None
+
+
+class ResearchContextUpdate(BaseModel):
+    wing: ResearchWingUpdate | None = None
+    department: ResearchDepartmentUpdate | None = None
+
 
 @router.get("")
 @cached_public(timeout=300, vary_on=("fields", "include"))
@@ -50,6 +108,50 @@ async def get_public_research_context(
     merges both into one public-safe research context.
     """
 
+    payload = await build_research_context_payload(db, fields)
+    return success(data=apply_context_selection(payload, fields))
+
+
+@router.patch("")
+async def update_public_research_context(
+    data: ResearchContextUpdate,
+    db: DbSession,
+    user: CurrentUser,
+    fields: FieldSelection = FieldsDep,
+):
+    """Edit the research wing and hidden/public research department context."""
+
+    division = await get_research_division(db, [])
+    wing = await get_research_wing(db, division, [])
+    department = await get_research_department(db, wing, [])
+
+    if wing is None and department is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Research wing or department not found")
+    if not await can_manage_research_context(db, user, wing, department, division):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient privileges to edit the research context",
+        )
+
+    if data.wing is not None:
+        if wing is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Research wing not found")
+        wing_payload = data.wing.model_dump(exclude_unset=True)
+        if wing_payload:
+            wing = await WingService.update(db, wing, **wing_payload)
+
+    if data.department is not None:
+        if department is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Research department not found")
+        department_payload = data.department.model_dump(exclude_unset=True)
+        if department_payload:
+            department = await DepartmentService.update(db, department, **department_payload)
+
+    payload = await build_research_context_payload(db, fields)
+    return success(data=apply_context_selection(payload, fields), message="Research context updated")
+
+
+async def build_research_context_payload(db: DbSession, fields: FieldSelection) -> dict[str, Any]:
     division_selector = build_selector(Division, selection_for(fields, "division", DEFAULT_DIVISION_FIELDS))
     wing_selector = build_selector(Wing, selection_for(fields, "wing", DEFAULT_WING_FIELDS))
     department_selector = build_selector(Department, selection_for(fields, "department", DEFAULT_DEPARTMENT_FIELDS))
@@ -75,13 +177,35 @@ async def get_public_research_context(
             "department_id": getattr(department, "id", None),
         },
     }
-
-    return success(data=apply_context_selection(payload, fields))
+    return payload
 
 
 def selection_for(fields: FieldSelection, key: str, default: FieldSelection) -> FieldSelection:
     nested = fields.get_nested(key)
     return nested if nested else default
+
+
+async def can_manage_research_context(
+    db: DbSession,
+    user: CurrentUser,
+    wing: Wing | None,
+    department: Department | None,
+    division: Division | None,
+) -> bool:
+    scopes: list[tuple[str, uuid.UUID | None]] = []
+    if department is not None:
+        scopes.append(("department", department.id))
+    if wing is not None:
+        scopes.append(("wing", wing.id))
+    if division is not None:
+        scopes.append(("division", division.id))
+    scopes.append(("university", None))
+
+    for permission in RESEARCH_CONTEXT_MANAGE_PERMISSIONS:
+        for scope_type, scope_id in scopes:
+            if await can_access_scope(db, user, permission, scope_type, scope_id):
+                return True
+    return False
 
 
 async def get_research_division(db: DbSession, load_options: list[Any]) -> Division | None:

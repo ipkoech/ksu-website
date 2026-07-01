@@ -364,6 +364,62 @@ export interface PublicResearchContextResponse {
   };
 }
 
+export type PublicResearchContextWingUpdatePayload = Partial<
+  Pick<
+    Wing,
+    | "name"
+    | "slug"
+    | "code"
+    | "wing_type"
+    | "head_id"
+    | "description"
+    | "head_message"
+    | "mandate"
+    | "service_charter"
+    | "email"
+    | "phone"
+    | "office_location"
+    | "operating_hours"
+    | "cover_image_id"
+    | "is_public"
+    | "is_active"
+    | "display_order"
+  >
+>;
+
+export type PublicResearchContextDepartmentUpdatePayload = Partial<
+  Pick<
+    Department,
+    | "name"
+    | "slug"
+    | "code"
+    | "department_type"
+    | "head_id"
+    | "postgraduate_coordinator_id"
+    | "about"
+    | "head_message"
+    | "mission"
+    | "vision"
+    | "mandate"
+    | "core_values"
+    | "service_charter"
+    | "guidelines"
+    | "email"
+    | "phone"
+    | "office_location"
+    | "cover_image_id"
+    | "is_public"
+    | "is_active"
+    | "allows_staff_management"
+    | "display_order"
+  >
+>;
+
+export interface PublicResearchContextUpdatePayload {
+  wing?: PublicResearchContextWingUpdatePayload;
+  department?: PublicResearchContextDepartmentUpdatePayload;
+}
+
 export interface StaffAssignment {
   id: string;
   person_id: string;
