@@ -71,6 +71,10 @@ const PROJECT_STATUS_OPTIONS = [
   { value: "suspended", label: "Suspended" },
 ];
 
+function renderProjectDetailActions(record: ResearchGenericRecord) {
+  return <ProjectDetailActions project={record} />;
+}
+
 export default function ResearchProjectDetailPage() {
   return (
     <ResearchAdminDetailPage
@@ -78,7 +82,7 @@ export default function ResearchProjectDetailPage() {
       description="View public profile fields, project dates, progress, and publication-ready details."
       resource={researchServiceApi.projects}
       backHref="/research/projects"
-      actionsSlot={(record) => <ProjectDetailActions project={record} />}
+      actionsSlot={renderProjectDetailActions}
       labelFields={["project_type", "status"]}
       factFields={[
         { label: "Code", field: "code" },

@@ -42,7 +42,7 @@ assert(
 );
 
 assert(
-  source.includes("actionsSlot={(record) => <ProjectDetailActions project={record} />}"),
+  source.includes("actionsSlot={renderProjectDetailActions}") && source.includes("function renderProjectDetailActions"),
   "Project detail should render project-specific edit and workflow actions.",
 );
 

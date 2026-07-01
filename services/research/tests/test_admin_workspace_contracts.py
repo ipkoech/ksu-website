@@ -6,6 +6,7 @@ from app.routes.v1.centers import router as centers_router
 from app.routes.v1.donations import router as donations_router
 from app.routes.v1.partners import router as partners_router
 from app.routes.v1.projects import router as projects_router
+from app.routes.v1.publications import router as publications_router
 from app.routes.v1.stories import router as stories_router
 
 
@@ -56,6 +57,14 @@ class ResearchAdminWorkspaceContractTests(unittest.TestCase):
         query_param_names = {param.name for param in route.dependant.query_params}
 
         self.assertIn("farm_id", query_param_names)
+
+    def test_crud_update_routes_accept_json_body(self):
+        route = _route(publications_router, "/publications/id/{item_id}", "PATCH")
+        query_param_names = {param.name for param in route.dependant.query_params}
+        body_param_names = {param.name for param in route.dependant.body_params}
+
+        self.assertNotIn("data", query_param_names)
+        self.assertIn("data", body_param_names)
 
     def test_farm_detail_and_project_binding_routes_exist(self):
         expected_routes = (

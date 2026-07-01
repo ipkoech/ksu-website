@@ -1,10 +1,8 @@
 """Shared router builder for CRUD endpoints."""
 
-from __future__ import annotations
-
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request, Response, status
 
 from ksu_common import cached_public, rate_limit
 from ksu_common.schemas.responses import success
@@ -272,7 +270,7 @@ def build_crud_router(
         @rate_limit(requests=requests, window=window, by_user=False)
         async def create_item(
             request: Request,
-            data: create_schema,
+            data: create_schema = Body(...),
             db: AsyncSession = Depends(get_db),
         ):
             try:
@@ -288,7 +286,7 @@ def build_crud_router(
             dependencies=[Depends(require_scope(write_scope))],
         )
         async def create_item(
-            data: create_schema,
+            data: create_schema = Body(...),
             db: AsyncSession = Depends(get_db),
             user=Depends(get_current_user),
         ):
@@ -304,7 +302,7 @@ def build_crud_router(
     @router.patch("/id/{item_id}", dependencies=[Depends(require_scope(write_scope))])
     async def update_item(
         item_id: uuid.UUID,
-        data: update_schema,
+        data: update_schema = Body(...),
         db: AsyncSession = Depends(get_db),
         user=Depends(get_current_user),
     ):
