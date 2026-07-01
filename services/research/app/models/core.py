@@ -9,11 +9,12 @@ from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, foreign, mapped_column, relationship
 
 from ksu_common.models.base import AttachmentRefsMixin, CoverImageRefMixin, LogoRefMixin, SEOMixin
 
 from .base import Base
+from .media import PublicMedia
 
 if TYPE_CHECKING:
     from .classification import ResearchTheme, FocusArea
@@ -235,6 +236,12 @@ class ResearchProgram(Base, SEOMixin, CoverImageRefMixin):
     projects: Mapped[list["ResearchProject"]] = relationship(
         "ResearchProject",
         back_populates="program",
+        lazy="selectin",
+    )
+    cover_image: Mapped[Optional[PublicMedia]] = relationship(
+        PublicMedia,
+        primaryjoin=lambda: foreign(ResearchProgram.cover_image_id) == PublicMedia.id,
+        viewonly=True,
         lazy="selectin",
     )
 

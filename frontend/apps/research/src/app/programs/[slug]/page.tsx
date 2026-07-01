@@ -676,8 +676,12 @@ function getChildRecords(record: ResearchGenericRecord, fields: string[]) {
 }
 
 function getProgramCoverImage(program: ResearchGenericRecord) {
+  const coverImage = program.cover_image as ResearchGenericRecord | undefined;
   return (
     compactText(program.cover_image_url) ||
+    compactText(coverImage?.url) ||
+    compactText(coverImage?.public_url) ||
+    compactText(coverImage?.thumbnail_url) ||
     compactText(program.image_url) ||
     compactText(program.thumbnail_url) ||
     "/images/research/research-projects-hero.webp"

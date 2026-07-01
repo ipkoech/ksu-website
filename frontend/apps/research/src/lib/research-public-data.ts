@@ -636,7 +636,7 @@ export function getProgramBySlug(slug: string) {
     researchServiceApi.programs.getBySlug(slug, {
       fields: researchPublicDetailFields,
       include:
-        "center:id,name,slug,code,acronym,center_type;projects:id,title,slug,code,status,start_date,end_date,progress_percentage,is_active,is_public,display_order",
+        "center:id,name,slug,code,acronym,center_type;cover_image:id,title,alt_text,public_url,url,thumbnail_url;projects:id,title,slug,code,status,start_date,end_date,progress_percentage,is_active,is_public,display_order",
     }),
   );
 }

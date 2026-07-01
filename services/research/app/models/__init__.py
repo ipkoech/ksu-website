@@ -6,6 +6,7 @@ from ksu_common.models.base import SEOMixin, PolymorphicMixin
 from .base import Base
 
 from .ask_ai import ResearchAIConversation, ResearchAIMessage
+from .media import PublicMedia
 
 # Core Research
 from .core import (
@@ -116,6 +117,7 @@ __all__ = [
     "AuditLog",
     "SEOMixin",
     "PolymorphicMixin",
+    "PublicMedia",
     # Core
     "ResearchCenter",
     "ResearchFarm",
