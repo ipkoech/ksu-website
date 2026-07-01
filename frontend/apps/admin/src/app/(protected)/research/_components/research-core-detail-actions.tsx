@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type ResearchGenericRecord, type ResearchGenericPayload } from "@ksu/api-client";
@@ -8,6 +9,7 @@ import { toast } from "@ksu/ui";
 import {
   Button,
   Input,
+  RichTextEditor,
   Sheet,
   SheetContent,
   SheetDescription,
@@ -16,7 +18,7 @@ import {
   SheetTitle,
   Switch,
 } from "@ksu/ui/components";
-import { Edit3, Eye, EyeOff, Star, StarOff, Trash2 } from "lucide-react";
+import { ChevronDown, Edit3, Eye, EyeOff, Star, StarOff, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 type CoreDetailResource = {
@@ -49,6 +51,7 @@ export function ResearchCoreDetailActions({
   const [confirmation, setConfirmation] = useState<CoreActionConfirmation | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const editableFields = useMemo(() => getEditableFields(record), [record]);
+  const fieldGroups = useMemo(() => groupEditableFields(editableFields), [editableFields]);
   const [editValues, setEditValues] = useState<Record<string, string | boolean>>(() => buildEditValues(record, editableFields));
   const id = String(record.id);
   const isActive = record.is_active !== false;
@@ -144,37 +147,12 @@ export function ResearchCoreDetailActions({
             <SheetDescription>Update fields provided by the backend. Relationship mapping stays in the tabs below.</SheetDescription>
           </SheetHeader>
           <form onSubmit={submitEdit} className="flex min-h-0 flex-1 flex-col">
-            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
-              {editableFields.map((field) => (
-                <div key={field.name} className="space-y-2">
-                  <label className="text-sm font-medium" htmlFor={`core-edit-${field.name}`}>{field.label}</label>
-                  {field.kind === "boolean" ? (
-                    <div className="flex items-center justify-between rounded-md border px-3 py-2">
-                      <span className="text-sm text-muted-foreground">{editValues[field.name] ? "Enabled" : "Disabled"}</span>
-                      <Switch
-                        id={`core-edit-${field.name}`}
-                        checked={Boolean(editValues[field.name])}
-                        onCheckedChange={(checked) => setEditValues((current) => ({ ...current, [field.name]: checked }))}
-                      />
-                    </div>
-                  ) : field.kind === "long" || field.kind === "json" ? (
-                    <textarea
-                      id={`core-edit-${field.name}`}
-                      className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                      value={String(editValues[field.name] ?? "")}
-                      onChange={(event) => setEditValues((current) => ({ ...current, [field.name]: event.target.value }))}
-                    />
-                  ) : (
-                    <Input
-                      id={`core-edit-${field.name}`}
-                      type={field.kind === "number" ? "number" : "text"}
-                      value={String(editValues[field.name] ?? "")}
-                      onChange={(event) => setEditValues((current) => ({ ...current, [field.name]: event.target.value }))}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
+            <CoreEditSheetForm
+              groups={fieldGroups}
+              values={editValues}
+              disabled={busy}
+              setValues={setEditValues}
+            />
             <SheetFooter className="border-t px-6 py-4">
               <Button type="button" variant="outline" disabled={busy} onClick={() => setEditOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={busy}>{updateMutation.isPending ? "Saving..." : "Save changes"}</Button>
@@ -206,7 +184,13 @@ export function ResearchCoreDetailActions({
 type EditableField = {
   name: string;
   label: string;
-  kind: "text" | "long" | "number" | "boolean" | "json";
+  kind: "text" | "richtext" | "number" | "boolean" | "json";
+};
+
+type EditableFieldGroup = {
+  title: string;
+  description: string;
+  fields: EditableField[];
 };
 
 const HIDDEN_EDIT_FIELDS = new Set([
@@ -222,8 +206,193 @@ function getEditableFields(record: ResearchGenericRecord): EditableField[] {
     .map(([key, value]) => ({
       name: key,
       label: key.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase()),
-      kind: typeof value === "boolean" ? "boolean" : typeof value === "number" ? "number" : String(value).length > 140 ? "long" : "text",
+      kind: typeof value === "boolean" ? "boolean" : typeof value === "number" ? "number" : isRichTextField(key, value) ? "richtext" : "text",
     }));
+}
+
+function CoreEditSheetForm({
+  groups,
+  values,
+  disabled,
+  setValues,
+}: {
+  groups: EditableFieldGroup[];
+  values: Record<string, string | boolean>;
+  disabled: boolean;
+  setValues: (updater: (current: Record<string, string | boolean>) => Record<string, string | boolean>) => void;
+}) {
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(groups.map((group, index) => [group.title, index < 2])),
+  );
+
+  const setField = (field: EditableField, value: string | boolean) => {
+    setValues((current) => ({ ...current, [field.name]: value }));
+  };
+
+  return (
+    <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-6 py-5">
+      {groups.map((group) => (
+        <section key={group.title} className="rounded-md border bg-card">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left"
+            onClick={() => setOpenGroups((current) => ({ ...current, [group.title]: !current[group.title] }))}
+            aria-expanded={Boolean(openGroups[group.title])}
+          >
+            <span>
+              <span className="block text-sm font-semibold">{group.title}</span>
+              <span className="mt-1 block text-xs leading-5 text-muted-foreground">{group.description}</span>
+            </span>
+            <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${openGroups[group.title] ? "rotate-180" : ""}`} />
+          </button>
+          {openGroups[group.title] ? (
+            <div className="grid gap-4 border-t p-4 md:grid-cols-2">
+              {group.fields.map((field) => (
+                <CoreEditFieldControl
+                  key={field.name}
+                  field={field}
+                  value={values[field.name]}
+                  disabled={disabled}
+                  onChange={(value) => setField(field, value)}
+                />
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function CoreEditFieldControl({
+  field,
+  value,
+  disabled,
+  onChange,
+}: {
+  field: EditableField;
+  value: string | boolean | undefined;
+  disabled: boolean;
+  onChange: (value: string | boolean) => void;
+}) {
+  const label = <span>{field.label}</span>;
+
+  if (field.kind === "boolean") {
+    return (
+      <label className="flex min-h-20 items-center justify-between gap-4 rounded-md border px-3 py-2 text-sm font-medium">
+        <span>
+          {label}
+          <span className="mt-1 block text-xs font-normal leading-5 text-muted-foreground">{value ? "Enabled" : "Disabled"}</span>
+        </span>
+        <Switch checked={Boolean(value)} disabled={disabled} onCheckedChange={(checked) => onChange(Boolean(checked))} />
+      </label>
+    );
+  }
+
+  if (field.kind === "richtext") {
+    return (
+      <div className="space-y-2 text-sm font-medium md:col-span-2">
+        {label}
+        <RichTextEditor
+          toolbar="simple"
+          minHeight="150px"
+          maxHeight="28rem"
+          value={typeof value === "string" ? value : ""}
+          disabled={disabled}
+          placeholder={`Enter ${field.label.toLowerCase()}`}
+          onChange={onChange}
+        />
+      </div>
+    );
+  }
+
+  if (field.kind === "json") {
+    return (
+      <label className="space-y-2 text-sm font-medium md:col-span-2">
+        {label}
+        <textarea
+          className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          value={String(value ?? "")}
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </label>
+    );
+  }
+
+  return (
+    <label className="space-y-2 text-sm font-medium">
+      {label}
+      <Input
+        type={field.kind === "number" ? "number" : "text"}
+        value={String(value ?? "")}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
+  );
+}
+
+function groupEditableFields(fields: EditableField[]): EditableFieldGroup[] {
+  const groups = [
+    {
+      title: "Identity",
+      description: "Core naming, classification, and display identifiers.",
+      names: new Set(["title", "name", "slug", "code", "acronym", "center_type", "status", "icon", "color"]),
+    },
+    {
+      title: "Content",
+      description: "Narrative fields shown in admin and public research pages.",
+      names: new Set(["about", "summary", "description", "objectives", "mission", "vision", "mandate", "research_areas", "expected_outcomes", "methodology"]),
+    },
+    {
+      title: "Organization",
+      description: "Backend references to people, schools, departments, centers, and programs.",
+      names: new Set(["school_id", "department_id", "director_id", "lead_id", "center_id", "program_id"]),
+    },
+    {
+      title: "Timeline and Ordering",
+      description: "Dates, ordering, and sequencing fields.",
+      names: new Set(["established_date", "start_date", "end_date", "display_order"]),
+    },
+    {
+      title: "Location and Contact",
+      description: "Location, contact, and external URL fields.",
+      names: new Set(["location", "address", "gps_latitude", "gps_longitude", "email", "phone", "website"]),
+    },
+    {
+      title: "Media and SEO",
+      description: "Media references and search metadata.",
+      names: new Set(["cover_image_id", "logo_id", "meta_title", "meta_description", "keywords"]),
+    },
+    {
+      title: "Visibility",
+      description: "Publication and admin visibility flags.",
+      names: new Set(["is_active", "is_featured", "is_public"]),
+    },
+  ];
+  const assigned = new Set<string>();
+  const grouped = groups
+    .map((group) => {
+      const groupFields = fields.filter((field) => group.names.has(field.name));
+      groupFields.forEach((field) => assigned.add(field.name));
+      return { title: group.title, description: group.description, fields: groupFields };
+    })
+    .filter((group) => group.fields.length > 0);
+  const remaining = fields.filter((field) => !assigned.has(field.name));
+  if (remaining.length > 0) {
+    grouped.push({
+      title: "Additional Fields",
+      description: "Other backend-provided fields for this record.",
+      fields: remaining,
+    });
+  }
+  return grouped;
+}
+
+function isRichTextField(key: string, value: unknown) {
+  const richTextFields = new Set(["about", "summary", "description", "objectives", "mission", "vision", "mandate", "research_areas", "expected_outcomes", "methodology", "meta_description"]);
+  return richTextFields.has(key) || String(value ?? "").length > 140;
 }
 
 function buildEditValues(record: ResearchGenericRecord, fields: EditableField[]) {
