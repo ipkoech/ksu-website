@@ -61,8 +61,12 @@ export function ResearchCoreDetailActions({
 
   const updateMutation = useMutation({
     mutationFn: (payload: Partial<ResearchGenericPayload>) => resource.update(id, payload),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["research-detail"] });
+    onSuccess: async (response) => {
+      const nextRecord = response.data ?? record;
+      const nextFields = getEditableFields(nextRecord);
+      setEditValues(buildEditValues(nextRecord, nextFields));
+      await queryClient.invalidateQueries({ queryKey: ["research", "detail"] });
+      router.refresh();
       setEditOpen(false);
       toast.success(`${resourceLabel} updated`);
     },
@@ -205,13 +209,24 @@ const HIDDEN_EDIT_FIELDS = new Set([
 ]);
 
 function getEditableFields(record: ResearchGenericRecord): EditableField[] {
-  return Object.entries(record)
+  const fields: EditableField[] = Object.entries(record)
     .filter(([key, value]) => !HIDDEN_EDIT_FIELDS.has(key) && (isMediaField(key) || (value !== null && typeof value !== "object")))
     .map(([key, value]) => ({
       name: key,
       label: key.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase()),
-      kind: isMediaField(key) ? "media" : typeof value === "boolean" ? "boolean" : typeof value === "number" ? "number" : isRichTextField(key, value) ? "richtext" : "text",
+      kind: (isMediaField(key) ? "media" : typeof value === "boolean" ? "boolean" : typeof value === "number" ? "number" : isRichTextField(key, value) ? "richtext" : "text") as EditableField["kind"],
     }));
+  const existing = new Set(fields.map((field) => field.name));
+  for (const fieldName of mediaFieldsForRecord(record)) {
+    if (!existing.has(fieldName)) {
+      fields.push({
+        name: fieldName,
+        label: fieldName.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase()),
+        kind: "media",
+      });
+    }
+  }
+  return fields;
 }
 
 function CoreEditSheetForm({
@@ -436,6 +451,14 @@ function isMediaField(key: string) {
   return ["cover_image_id", "logo_id", "photo_id", "thumbnail_image_id"].includes(key);
 }
 
+function mediaFieldsForRecord(record: ResearchGenericRecord) {
+  const fields = new Set<string>(["cover_image_id"]);
+  if ("logo_id" in record || "logo" in record) fields.add("logo_id");
+  if ("photo_id" in record || "photo" in record) fields.add("photo_id");
+  if ("thumbnail_image_id" in record || "thumbnail_image" in record) fields.add("thumbnail_image_id");
+  return Array.from(fields);
+}
+
 function getUploadEntityType(resourceLabel: string) {
   const normalized = resourceLabel.trim().toLowerCase().replace(/\s+/g, "_");
   if (normalized === "center") return "research_center";
@@ -446,10 +469,21 @@ function getUploadEntityType(resourceLabel: string) {
 
 function buildEditValues(record: ResearchGenericRecord, fields: EditableField[]) {
   return fields.reduce<Record<string, string | boolean>>((values, field) => {
-    const value = record[field.name];
+    const value = field.kind === "media" ? mediaFieldValue(record, field.name) : record[field.name];
     values[field.name] = typeof value === "boolean" ? value : value == null ? "" : String(value);
     return values;
   }, {});
+}
+
+function mediaFieldValue(record: ResearchGenericRecord, fieldName: string) {
+  const direct = record[fieldName];
+  if (direct) return direct;
+  const relationName = fieldName.replace(/_id$/, "");
+  const relation = record[relationName];
+  if (relation && typeof relation === "object" && "id" in relation) {
+    return (relation as { id?: unknown }).id;
+  }
+  return "";
 }
 
 function buildPayload(values: Record<string, string | boolean>, fields: EditableField[]) {
