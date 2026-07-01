@@ -322,20 +322,24 @@ function ProgramGlance({
   if (!cards.length) return null;
 
   return (
-    <section className="border-b border-slate-200 bg-white px-4 py-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <dl className="mx-auto grid max-w-[1680px] gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <section className="border-b border-slate-200 bg-white px-4 py-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <dl
+        className={`mx-auto grid max-w-[1680px] gap-2 sm:grid-cols-2 lg:grid-cols-3 ${
+          cards.length === 5 ? "xl:grid-cols-5" : "xl:grid-cols-6"
+        }`}
+      >
         {cards.map((fact) => {
           const Icon = fact.icon;
           return (
-            <div key={fact.label} className="flex min-h-24 gap-4 rounded-lg border border-slate-200 bg-white px-5 py-4 shadow-sm">
-              <Icon aria-hidden className="mt-1 h-6 w-6 shrink-0 text-primary" />
+            <div key={fact.label} className="flex min-h-20 gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
+              <Icon aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
               <div className="min-w-0">
                 <dt className="text-xs font-semibold text-slate-700">{fact.label}</dt>
-                <dd className="mt-1 break-words text-base font-semibold leading-6 text-slate-950 [overflow-wrap:anywhere]">
+                <dd className="mt-1 line-clamp-3 break-words text-sm font-semibold leading-5 text-slate-950 [overflow-wrap:anywhere]">
                   {fact.value}
                 </dd>
                 {fact.caption ? (
-                  <p className="mt-1 break-words text-xs leading-5 text-slate-600 [overflow-wrap:anywhere]">
+                  <p className="mt-1 line-clamp-1 break-words text-xs leading-4 text-slate-600 [overflow-wrap:anywhere]">
                     {fact.caption}
                   </p>
                 ) : null}
