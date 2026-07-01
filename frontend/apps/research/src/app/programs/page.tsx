@@ -162,7 +162,7 @@ export default async function ProgramsPage({
 
 function ProgramsHero() {
   return (
-    <section className="relative isolate overflow-hidden bg-slate-950 px-4 py-10 text-white sm:px-6 lg:px-8 lg:py-12 xl:px-10 2xl:px-12">
+    <section className="relative isolate overflow-hidden bg-slate-950 px-4 py-7 text-white sm:px-6 lg:px-8 lg:py-8 xl:px-10 2xl:px-12">
       <div
         aria-hidden
         className="absolute inset-0 bg-[url('/images/research/research-hero-imagegen.webp')] bg-cover bg-center"
@@ -172,7 +172,7 @@ function ProgramsHero() {
         className="absolute inset-0 bg-gradient-to-r from-slate-950/78 via-slate-950/42 to-slate-950/8"
       />
       <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-white/20" />
-      <div className="relative mx-auto max-w-[1680px] py-3">
+      <div className="relative mx-auto max-w-[1680px] py-2">
         <span className="inline-flex rounded-md border border-white/25 bg-primary/80 px-3 py-1 text-xs font-semibold text-white shadow-sm backdrop-blur">
           Published program portfolio
         </span>
