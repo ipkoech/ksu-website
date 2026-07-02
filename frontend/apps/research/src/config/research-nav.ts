@@ -10,10 +10,8 @@ import {
   FlaskConical,
   Globe,
   GraduationCap,
-  Handshake,
   Heart,
   HeartHandshake,
-  HelpCircle,
   Lightbulb,
   Mail,
   Newspaper,
@@ -357,70 +355,9 @@ export const researchNavConfig: NavSection[] = [
     title: "About",
     href: "/about",
     icon: Mail,
-    description:
-      "Research office, team, contacts, inquiries, donations, and multimedia.",
-    activePaths: ["/about", "/team", "/connect", "/donate"],
-    columns: [
-      {
-        heading: "About REIRM",
-        items: [
-          {
-            title: "Our Team",
-            href: "/team",
-            description: "Leadership and research staff.",
-            icon: Users,
-          },
-          {
-            title: "Contact Us",
-            href: "/connect",
-            description: "Inquiries and support.",
-            icon: Mail,
-          },
-          {
-            title: "Multimedia",
-            href: "/connect",
-            description: "Tours, interviews, and galleries.",
-            icon: Video,
-          },
-        ],
-      },
-      {
-        heading: "Engage",
-        items: [
-          {
-            title: "Research Inquiry",
-            href: "/connect#research",
-            description: "Project collaboration and research support.",
-            icon: FlaskConical,
-          },
-          {
-            title: "Partnership Inquiry",
-            href: "/connect#partnership",
-            description: "Industry, government, and funder requests.",
-            icon: Handshake,
-          },
-          {
-            title: "Media Inquiry",
-            href: "/connect#media",
-            description: "Expert comments and press requests.",
-            icon: Newspaper,
-          },
-          {
-            title: "Help Desk",
-            href: "/connect",
-            description: "Research support and general help.",
-            icon: HelpCircle,
-          },
-          {
-            title: "Donate",
-            href: "/donate",
-            description:
-              "Support research, scholarships, endowments, and impact.",
-            icon: Heart,
-          },
-        ],
-      },
-    ],
+    description: "Research office mandate, leadership, team, governance, and contacts.",
+    activePaths: ["/about"],
+    columns: [],
   },
 ];
 
