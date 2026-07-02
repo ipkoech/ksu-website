@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Menu, ChevronRight, Home, Settings } from "lucide-react";
+import { Search, ChevronRight, Home, Settings } from "lucide-react";
 import {
   Avatar,
   AvatarFallback,
@@ -21,7 +21,6 @@ import {
   Input,
 } from "@ksu/ui/components";
 import { useAuth } from "@ksu/auth";
-import { useSidebar } from "@/hooks/use-sidebar";
 import { NotificationBell } from "./notification-bell";
 import { useRealtime } from "@/components/realtime/realtime-provider";
 import type { PortalConfig } from "@/lib/portals/types";
@@ -64,7 +63,6 @@ export function Toolbar({ portal }: ToolbarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
-  const { toggle, toggleMobile, isCollapsed } = useSidebar();
   const { status } = useRealtime();
   const [search, setSearch] = useState("");
 
@@ -82,28 +80,6 @@ export function Toolbar({ portal }: ToolbarProps) {
       transition={{ duration: 0.3, ease: "easeOut" }}
       className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:gap-4 md:px-6"
     >
-      {/* Mobile menu */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-9 w-9 md:hidden"
-        onClick={toggleMobile}
-        aria-label="Open navigation"
-      >
-        <Menu size={20} />
-      </Button>
-
-      {/* Toggle sidebar on desktop */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="hidden h-9 w-9 md:flex"
-        onClick={toggle}
-        aria-label={isCollapsed ? "Expand navigation" : "Collapse navigation"}
-      >
-        {isCollapsed ? <Menu size={20} /> : <Menu size={20} />}
-      </Button>
-
       {/* Breadcrumbs */}
       <nav className="hidden min-w-0 items-center gap-1 text-sm sm:flex">
         <Link
