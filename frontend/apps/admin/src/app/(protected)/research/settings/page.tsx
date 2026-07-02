@@ -14,7 +14,7 @@ export default function ResearchSettingsPage() {
         title="Research Settings"
         description="Research resources, services, guidelines, and configuration."
         links={[
-          { title: "Research Profile", description: "Manage research office profile, leadership, mandates, address, and public cover image.", href: "/research/settings/profile", icon: Building2 },
+          { title: "Research Profile", description: "Manage research office profile, leadership, mandates, office location, and public cover image.", href: "/research/settings/profile", icon: Building2 },
           { title: "Resources", description: "Research resources, equipment, facilities, and access details.", href: "/research/settings/resources", icon: FileText },
           { title: "Services", description: "Research support services and how to access them.", href: "/research/settings/services", icon: FileText },
           { title: "Guidelines", description: "Research policies, forms, and procedures.", href: "/research/settings/guidelines", icon: FileText },

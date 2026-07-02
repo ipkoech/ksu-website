@@ -336,7 +336,7 @@ function PageIntro({ meta }: { meta: SectionMeta }) {
 function ContactPanel({ data }: { data: SchoolDetailOverviewData }) {
   const { school } = data;
   const rows = [
-    { label: "Office", value: present(school.office_location) ?? present(school.address), icon: MapPin },
+    { label: "Office", value: present(school.office_location), icon: MapPin },
     { label: "Phone", value: present(school.phone), icon: Phone },
     { label: "Email", value: present(school.email), icon: Mail },
     { label: "Website", value: present(school.website), icon: Globe },
@@ -716,7 +716,7 @@ function ClubsSection({ data }: { data: SchoolDetailOverviewData }) {
 function ContactSection({ data }: { data: SchoolDetailOverviewData }) {
   const { school } = data;
   const rows = [
-    { label: "Office", value: present(school.office_location) ?? present(school.address), icon: MapPin },
+    { label: "Office", value: present(school.office_location), icon: MapPin },
     { label: "Email", value: present(school.email), icon: Mail },
     { label: "Phone", value: present(school.phone), icon: Phone },
     { label: "Website", value: present(school.website), icon: Globe },

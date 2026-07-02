@@ -433,8 +433,7 @@ function ContactPanel({ data }: { data: DepartmentDetailData }) {
   const { department } = data;
   const email = present(department.email);
   const phone = present(department.phone);
-  const office =
-    present(department.office_location) ?? present(department.address);
+  const office = present(department.office_location);
   const website = present(department.website);
 
   if (!email && !phone && !office && !website) return null;
@@ -1363,7 +1362,7 @@ function ContactSection({ data }: { data: DepartmentDetailData }) {
   const rows = [
     {
       label: "Office",
-      value: present(department.office_location) ?? present(department.address),
+      value: present(department.office_location),
       icon: MapPin,
     },
     { label: "Email", value: present(department.email), icon: Mail },

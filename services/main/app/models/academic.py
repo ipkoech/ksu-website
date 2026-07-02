@@ -237,7 +237,6 @@ class Department(Base):
     email: Mapped[Optional[str]] = mapped_column(sa.String(320), nullable=True)
     phone: Mapped[Optional[str]] = mapped_column(sa.String(24), nullable=True)
     office_location: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
-    address: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
 
     # Media
     cover_image_id: Mapped[Optional[uuid.UUID]] = mapped_column(

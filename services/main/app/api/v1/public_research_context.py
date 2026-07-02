@@ -33,7 +33,7 @@ DEFAULT_WING_FIELDS = FieldSelection(
     nested={"division": FieldSelection(fields=("id", "name", "slug", "code", "division_type"))},
 )
 DEFAULT_DEPARTMENT_FIELDS = FieldSelection(
-    fields=("id", "name", "slug", "code", "department_type", "wing_id", "about", "head_message", "mission", "vision", "mandate", "core_values", "service_charter", "guidelines", "email", "phone", "office_location", "address", "cover_image_id", "is_public"),
+    fields=("id", "name", "slug", "code", "department_type", "wing_id", "about", "head_message", "mission", "vision", "mandate", "core_values", "service_charter", "guidelines", "email", "phone", "office_location", "cover_image_id", "is_public"),
     nested={"wing": FieldSelection(fields=("id", "name", "slug", "code", "wing_type"))},
 )
 
@@ -82,7 +82,6 @@ class ResearchDepartmentUpdate(BaseModel):
     email: str | None = Field(default=None, max_length=320)
     phone: str | None = None
     office_location: str | None = Field(default=None, max_length=255)
-    address: str | None = None
     cover_image_id: uuid.UUID | None = None
     is_public: bool | None = None
     is_active: bool | None = None

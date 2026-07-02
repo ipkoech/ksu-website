@@ -337,7 +337,6 @@ export interface PublicResearchContextEntity {
   email?: string | null;
   phone?: string | null;
   office_location?: string | null;
-  address?: string | null;
   operating_hours?: Record<string, unknown> | null;
   cover_image_id?: string | null;
 }
@@ -408,7 +407,6 @@ export type PublicResearchContextDepartmentUpdatePayload = Partial<
     | "email"
     | "phone"
     | "office_location"
-    | "address"
     | "cover_image_id"
     | "is_public"
     | "is_active"
@@ -624,7 +622,6 @@ export interface School {
   website?: string | null;
   logo_image_id?: string | null;
   logo_image?: Media | null;
-  address?: string | null;
   cover_image_id?: string | null;
   cover_image?: Media | null;
   brochure_id?: string | null;
@@ -770,7 +767,6 @@ export interface Department {
   email?: string | null;
   website?: string | null;
   office_location?: string | null;
-  address?: string | null;
   cover_image_id?: string | null;
   student_count?: number;
   postgraduate_student_count?: number;

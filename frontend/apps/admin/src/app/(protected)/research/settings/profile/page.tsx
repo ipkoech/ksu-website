@@ -43,7 +43,6 @@ import {
   SheetTitle,
   Skeleton,
   Switch,
-  Textarea,
   richTextToPlainText,
 } from "@ksu/ui/components";
 import { cn } from "@ksu/ui/lib";
@@ -61,7 +60,7 @@ type FormValues = {
 const contextFields = "resolved_entity,entity,team,leadership,relationships,division,wing,department";
 const contextInclude =
   "wing:id,name,slug,code,wing_type,head_id,description,head_message,mandate,service_charter,email,phone,office_location,cover_image_id,is_public,is_active,display_order;" +
-  "department:id,name,slug,code,department_type,head_id,postgraduate_coordinator_id,about,head_message,mission,vision,mandate,core_values,service_charter,guidelines,email,phone,office_location,address,cover_image_id,is_public,is_active,allows_staff_management,display_order";
+  "department:id,name,slug,code,department_type,head_id,postgraduate_coordinator_id,about,head_message,mission,vision,mandate,core_values,service_charter,guidelines,email,phone,office_location,cover_image_id,is_public,is_active,allows_staff_management,display_order";
 
 const manageScopes = [
   "research.manage_office",
@@ -261,7 +260,7 @@ export default function ResearchProfileSettingsPage() {
                   <div className="grid gap-3 md:grid-cols-2">
                     <InfoTile icon={Building2} label="Mandates" value={entity?.mandate ?? text(department.mandate) ?? text(wing.mandate)} />
                     <InfoTile icon={ShieldCheck} label="Service charter" value={entity?.service_charter ?? text(department.service_charter) ?? text(wing.service_charter)} />
-                    <InfoTile icon={MapPin} label="Address" value={entity?.address ?? text(department.address) ?? text(department.office_location) ?? text(wing.office_location)} />
+                    <InfoTile icon={MapPin} label="Office location" value={text(department.office_location) ?? text(wing.office_location)} />
                     <InfoTile icon={UserCheck} label="Lead / Head" value={leadership?.full_name || "No dedicated research lead assigned"} />
                   </div>
                 </CardContent>
@@ -394,7 +393,7 @@ export default function ResearchProfileSettingsPage() {
 
               <EditorSection
                 id="contact"
-                title="Address and Contacts"
+                title="Contacts"
                 description="Contact fields shown on research public surfaces and admin profile cards."
                 openSections={openSections}
                 setOpenSections={setOpenSections}
@@ -402,9 +401,6 @@ export default function ResearchProfileSettingsPage() {
                 <Field label="Email"><Input type="email" value={text(formValues.department.email)} onChange={(event) => setField("department", "email", event.target.value)} /></Field>
                 <Field label="Phone"><Input value={text(formValues.department.phone)} onChange={(event) => setField("department", "phone", event.target.value)} /></Field>
                 <Field label="Office location"><Input value={text(formValues.department.office_location)} onChange={(event) => setField("department", "office_location", event.target.value)} /></Field>
-                <Field label="Address" wide>
-                  <Textarea rows={4} value={text(formValues.department.address)} onChange={(event) => setField("department", "address", event.target.value)} />
-                </Field>
               </EditorSection>
 
               <EditorSection
@@ -518,7 +514,6 @@ function buildDepartmentPayload(values: Record<string, any>) {
     email: values.email,
     phone: values.phone,
     office_location: values.office_location,
-    address: values.address,
     cover_image_id: emptyToNull(values.cover_image_id),
     is_public: values.is_public,
     is_active: values.is_active,

@@ -541,7 +541,7 @@ export function SchoolDetailOverview({
   const overview = schoolSummary(data);
   const email = present(school.email);
   const phone = present(school.phone);
-  const office = present(school.office_location) ?? present(school.address);
+  const office = present(school.office_location);
   const website = present(school.website);
   const quickLinks = buildQuickLinks({ baseHref, navItems, counts });
   const established =

@@ -180,7 +180,6 @@ class DepartmentCreate(BaseSchema):
     email: str | None = Field(default=None, max_length=320)
     phone: PhoneStr | None = None
     office_location: str | None = Field(default=None, max_length=255)
-    address: str | None = None
     cover_image_id: uuid.UUID | None = None
     student_count: int = 0
     postgraduate_student_count: int = 0
@@ -258,7 +257,6 @@ class DepartmentRead(BaseReadSchema):
     email: str | None = None
     phone: str | None = None
     office_location: str | None = None
-    address: str | None = None
     cover_image_id: uuid.UUID | None = None
     cover_image: dict[str, Any] | None = None
     school: dict[str, Any] | None = None
@@ -300,7 +298,6 @@ class DepartmentUpdate(BaseSchema):
     email: str | None = Field(default=None, max_length=320)
     phone: PhoneStr | None = None
     office_location: str | None = Field(default=None, max_length=255)
-    address: str | None = None
     cover_image_id: uuid.UUID | None = None
     student_count: int | None = None
     postgraduate_student_count: int | None = None
