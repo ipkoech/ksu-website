@@ -1,12 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { Activity, BadgeCheck, CalendarDays, Handshake, Leaf, NotebookText, TrendingUp } from "lucide-react";
-import type { ReactNode } from "react";
+import { Activity, BadgeCheck, Handshake, Leaf, NotebookText } from "lucide-react";
 import type { EditableListFilter, EditableRecordColumn } from "@/components/dashboard/editable-service-resource-page";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
-import { eventsApi, researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
+import { Badge } from "@ksu/ui/components";
+import { eventsApi, type ResearchGenericRecord } from "@ksu/api-client";
 import {
   DateValue,
   labelize,
@@ -16,9 +13,6 @@ import {
   StatusBadge,
   titleOf,
 } from "../../_components/research-workspace";
-
-const environmentImpactParams = { category: "environmental", page: 1, per_page: 6 };
-const researchActivityParams = { scope_type: "research", page: 1, per_page: 6, upcoming: true };
 
 export const sustainabilityTabs = [
   { label: "Dashboard", href: "/research/sustainability" },
@@ -34,117 +28,11 @@ export function SustainabilityWorkspaceHeader() {
       metrics={[
         { title: "Active Projects", queryKey: ["research", "sustainability", "metrics", "projects"], queryFn: () => researchCount("sustainability", { status: "active" }), icon: <Leaf className="h-4 w-4" /> },
         { title: "Partners", queryKey: ["research", "sustainability", "metrics", "partners"], queryFn: () => researchCount("partners", { is_active: true }), icon: <Handshake className="h-4 w-4" /> },
-        { title: "Activities", queryKey: ["research", "sustainability", "metrics", "activities"], queryFn: () => eventsApi.listAdmin({ scope_type: "research", upcoming: true, per_page: 1 }), icon: <Activity className="h-4 w-4" /> },
+        { title: "Activities", queryKey: ["research", "sustainability", "metrics", "activities"], queryFn: () => eventsApi.listAdmin({ scope_type: "research_sustainability", upcoming: true, per_page: 1 }), icon: <Activity className="h-4 w-4" /> },
         { title: "Impact Records", queryKey: ["research", "sustainability", "metrics", "impact"], queryFn: () => researchCount("impactMetrics", { category: "environmental" }), icon: <BadgeCheck className="h-4 w-4" /> },
         { title: "Impact Stories", queryKey: ["research", "sustainability", "metrics", "stories"], queryFn: () => researchCount("stories", { status: "published" }), icon: <NotebookText className="h-4 w-4" /> },
       ]}
     />
-  );
-}
-
-export function SustainabilityDashboard() {
-  const projects = useQuery({
-    queryKey: ["research", "sustainability", "dashboard", "projects"],
-    queryFn: () => researchServiceApi.sustainability.list({ page: 1, per_page: 5, status: "active" }),
-  });
-  const metrics = useQuery({
-    queryKey: ["research", "sustainability", "dashboard", "impact", environmentImpactParams],
-    queryFn: () => researchServiceApi.impactMetrics.list(environmentImpactParams),
-  });
-  const activities = useQuery({
-    queryKey: ["research", "sustainability", "dashboard", "activities", researchActivityParams],
-    queryFn: () => eventsApi.listAdmin(researchActivityParams),
-  });
-
-  return (
-    <div className="grid gap-4 p-4 pt-0 sm:p-6 sm:pt-0 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
-      <Card>
-        <CardHeader className="flex flex-row items-start justify-between gap-3">
-          <div>
-            <CardTitle className="text-base">Active Sustainability Projects</CardTitle>
-            <p className="mt-1 text-sm text-muted-foreground">Climate, biodiversity, conservation, energy, water, and food security initiatives.</p>
-          </div>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/research/sustainability/projects">Open</Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <DashboardList
-            isLoading={projects.isLoading}
-            isError={projects.isError}
-            emptyLabel="No active sustainability projects were returned."
-            records={projects.data?.data ?? []}
-            render={(record) => (
-              <div className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{titleOf(record)}</p>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span>{labelize(record.initiative_type)}</span>
-                    {record.start_date ? <DateValue value={record.start_date} /> : null}
-                    <StatusBadge value={record.status} />
-                  </div>
-                </div>
-                <SdgBadges goals={record.sdg_goals} limit={4} />
-              </div>
-            )}
-          />
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <TrendingUp className="h-4 w-4" />
-              Environmental Metrics
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DashboardList
-              isLoading={metrics.isLoading}
-              isError={metrics.isError}
-              emptyLabel="No environmental impact metrics were returned."
-              records={metrics.data?.data ?? []}
-              render={(record) => (
-                <div className="rounded-lg border p-3">
-                  <p className="text-sm font-medium">{titleOf(record)}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    <span className="font-semibold text-foreground">{formatMetricValue(record)}</span>
-                    {record.reporting_year ? ` · ${record.reporting_year}` : ""}
-                  </p>
-                </div>
-              )}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <CalendarDays className="h-4 w-4" />
-              Research-Scoped Activities
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DashboardList
-              isLoading={activities.isLoading}
-              isError={activities.isError}
-              emptyLabel="No upcoming research-scoped sustainability activities were returned."
-              records={activities.data?.data ?? []}
-              render={(record) => (
-                <div className="rounded-lg border p-3">
-                  <p className="text-sm font-medium">{titleOf(record)}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {record.start_date ? <DateValue value={record.start_date} /> : "No date"}
-                    {record.location ? ` · ${record.location}` : ""}
-                  </p>
-                </div>
-              )}
-            />
-          </CardContent>
-        </Card>
-      </div>
-    </div>
   );
 }
 
@@ -269,36 +157,4 @@ function RelationshipSummary({
   }
 
   return <span className="text-muted-foreground">{emptyLabel}</span>;
-}
-
-function formatMetricValue(record: ResearchGenericRecord) {
-  return [record.value, record.unit].filter(Boolean).join(" ") || "No value";
-}
-
-function DashboardList({
-  records,
-  isLoading,
-  isError,
-  emptyLabel,
-  render,
-}: {
-  records: ResearchGenericRecord[];
-  isLoading: boolean;
-  isError: boolean;
-  emptyLabel: string;
-  render: (record: ResearchGenericRecord) => ReactNode;
-}) {
-  if (isLoading) {
-    return <div className="space-y-3">{[1, 2, 3].map((item) => <div key={item} className="h-16 animate-pulse rounded-lg bg-muted" />)}</div>;
-  }
-
-  if (isError) {
-    return <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">Unable to load this sustainability data.</p>;
-  }
-
-  if (records.length === 0) {
-    return <p className="rounded-lg border bg-background p-3 text-sm text-muted-foreground">{emptyLabel}</p>;
-  }
-
-  return <div className="space-y-3">{records.map((record) => <div key={record.id}>{render(record)}</div>)}</div>;
 }

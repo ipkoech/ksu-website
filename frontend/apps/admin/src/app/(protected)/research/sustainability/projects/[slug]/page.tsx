@@ -60,7 +60,7 @@ function SustainabilityRelations({ record }: { record: ResearchGenericRecord }) 
   });
   const activities = useQuery({
     queryKey: ["research", "sustainability", "detail", record.id, "activities"],
-    queryFn: () => eventsApi.listAdmin({ page: 1, per_page: 6, scope_type: "research", upcoming: true }),
+    queryFn: () => eventsApi.listAdmin({ page: 1, per_page: 6, scope_type: "research_sustainability", upcoming: true }),
   });
 
   return (

@@ -75,7 +75,7 @@ export default function SustainabilityActivitiesPage() {
       queryKey={["research", "sustainability-activities"]}
       resource={{ list: eventsApi.listAdmin, create: eventsApi.create, update: eventsApi.update, delete: eventsApi.delete }}
       manageScopes={["content.manage_events", "admin:*"]}
-      listParams={{ scope_type: "research" }}
+      listParams={{ scope_type: "research_sustainability" }}
       summarySlot={<SustainabilityWorkspaceHeader />}
       listFilters={activityFilters}
       recordColumns={activityColumns}
@@ -95,9 +95,7 @@ export default function SustainabilityActivitiesPage() {
           typePlaceholder: "Select research scope",
           recordPlaceholder: "Select linked record",
           configs: [
-            { value: "research", label: "Research Portal", adapter: "researchCenter", recordRequired: false },
             { value: "research_project", label: "Research Project", adapter: "researchProject", filters: { is_active: true } },
-            { value: "research_farm", label: "Research Farm", adapter: "researchFarm", filters: { is_active: true } },
             { value: "research_center", label: "Research Center", adapter: "researchCenter", filters: { is_active: true } },
             { value: "research_grant", label: "Research Grant", adapter: "researchGrant", filters: { is_active: true } },
             { value: "research_sustainability", label: "Sustainability Initiative", adapter: "researchSustainability", filters: { is_active: true } },
@@ -115,7 +113,7 @@ export default function SustainabilityActivitiesPage() {
         { name: "is_published", label: "Published", type: "boolean" },
         { name: "is_featured", label: "Featured", type: "boolean" },
       ]}
-      defaults={{ scope_type: "research", status: "upcoming", is_public: true }}
+      defaults={{ scope_type: "research_sustainability", status: "upcoming", is_public: true }}
       emptyMessage="No sustainability activities were returned by the main content service."
     />
   );
