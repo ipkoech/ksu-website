@@ -1,61 +1,19 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FileCheck2, FileClock, HandCoins, ShieldCheck, WalletCards } from "lucide-react";
 import { Badge, Card, CardContent } from "@ksu/ui/components";
-import { cn } from "@ksu/ui/lib";
 import { researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
 import {
   relationshipAdapters,
   type RelationshipAdapter,
 } from "@/components/relationships/relationship-adapters";
 
-const fundingTabs = [
-  { label: "Grants", href: "/research/grants" },
-  { label: "Applications", href: "/research/fundings/applications" },
-  { label: "Reviews", href: "/research/fundings/reviews" },
-  { label: "Funders", href: "/research/fundings/funders" },
-  { label: "Reports", href: "/research/fundings/reports" },
-  { label: "Guidelines", href: "/research/fundings/guidelines" },
-  { label: "Endowments", href: "/research/fundings/endowments" },
-];
-
 export function FundingWorkspaceHeader() {
   return (
-    <div className="space-y-3">
+    <div>
       <FundingLifecycleStats />
-      <FundingTabs />
-    </div>
-  );
-}
-
-function FundingTabs() {
-  const pathname = usePathname();
-
-  return (
-    <div className="overflow-x-auto rounded-lg border bg-background p-1">
-      <div className="flex min-w-max gap-1">
-        {fundingTabs.map((tab) => {
-          const active = pathname === tab.href || pathname.startsWith(`${tab.href}/`);
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className={cn(
-                "rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                active
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-            >
-              {tab.label}
-            </Link>
-          );
-        })}
-      </div>
     </div>
   );
 }

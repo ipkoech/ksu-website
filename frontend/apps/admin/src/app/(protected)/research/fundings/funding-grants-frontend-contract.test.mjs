@@ -12,6 +12,7 @@ const applicationsSource = readFileSync(join(root, "src/app/(protected)/research
 const reportsSource = readFileSync(join(root, "src/app/(protected)/research/fundings/reports/page.tsx"), "utf8");
 const guidelinesSource = readFileSync(join(root, "src/app/(protected)/research/fundings/guidelines/page.tsx"), "utf8");
 const endowmentsSource = readFileSync(join(root, "src/app/(protected)/research/fundings/endowments/page.tsx"), "utf8");
+const fundingWorkspaceSource = readFileSync(join(root, "src/app/(protected)/research/fundings/_components/funding-workspace.tsx"), "utf8");
 
 assert(
   grantsListSource.includes('name: "funder_id"') &&
@@ -72,4 +73,11 @@ assert(
     guidelinesSource.includes('type: "media"') &&
     guidelinesSource.includes('uploadRole: "grant-guideline-document"'),
   "Grant guideline creation should use the media picker for guideline documents.",
+);
+
+assert(
+  !fundingWorkspaceSource.includes("function FundingTabs") &&
+    !fundingWorkspaceSource.includes("usePathname") &&
+    !fundingWorkspaceSource.includes("fundingTabs.map"),
+  "Funding workspace header should not duplicate the Funding side-nav items as page tabs.",
 );
