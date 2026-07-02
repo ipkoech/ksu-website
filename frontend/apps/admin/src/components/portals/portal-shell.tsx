@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, LogOut, Menu, Minus, Plus } from "lucide-react";
@@ -111,7 +112,6 @@ function PortalSidebar({
   const { hasScope } = usePermissions();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set());
-  const PortalIcon = portal.icon;
 
   const hasItemScope = useCallback((item: PortalNavItem) => {
     if (!item.scope) return true;
@@ -128,13 +128,13 @@ function PortalSidebar({
   const grouped = useMemo(
     () => filteredNav.reduce<{ group?: string; items: PortalNavItem[] }[]>(
       (acc, item) => {
-      const last = acc[acc.length - 1];
-      if (last && last.group === item.group) {
-        last.items.push(item);
-      } else {
-        acc.push({ group: item.group, items: [item] });
-      }
-      return acc;
+        const last = acc[acc.length - 1];
+        if (last && last.group === item.group) {
+          last.items.push(item);
+        } else {
+          acc.push({ group: item.group, items: [item] });
+        }
+        return acc;
       },
       [],
     ),
@@ -195,7 +195,7 @@ function PortalSidebar({
           isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
       >
-        <div className="flex h-16 items-center justify-between border-b px-3">
+        <div className="group/sidebar-header relative flex h-16 items-center justify-between border-b px-3">
           <Link
             href={portal.baseHref}
             className={cn(
@@ -203,8 +203,14 @@ function PortalSidebar({
               collapsed && !isMobileOpen && "justify-center",
             )}
           >
-            <div className={cn("flex size-10 shrink-0 items-center justify-center rounded-lg border [&_svg]:size-5", portal.accentClassName)}>
-              <PortalIcon />
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-background p-1.5 shadow-sm">
+              <Image
+                src="/logos/ksu-logo.png"
+                alt="Kisii University"
+                width={32}
+                height={32}
+                className="h-full w-full object-contain"
+              />
             </div>
             {!collapsed || isMobileOpen ? (
               <div className="min-w-0">
@@ -219,6 +225,10 @@ function PortalSidebar({
             variant="ghost"
             size="icon-sm"
             onClick={onToggle}
+            className={cn(
+              collapsed && !isMobileOpen &&
+                "absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 bg-sidebar/95 opacity-0 shadow-sm transition-opacity hover:bg-sidebar-accent focus-visible:opacity-100 group-hover/sidebar-header:opacity-100",
+            )}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? <Menu /> : <ChevronLeft />}
