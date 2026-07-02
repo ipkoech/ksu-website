@@ -4,9 +4,7 @@ import {
   BookOpen,
   Briefcase,
   Building2,
-  CalendarDays,
   ClipboardList,
-  FileText,
   FlaskConical,
   Globe,
   GraduationCap,
@@ -20,7 +18,6 @@ import {
   Target,
   TrendingUp,
   Users,
-  Video,
   Zap,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -225,51 +222,6 @@ export const researchNavConfig: NavSection[] = [
     ],
   },
   {
-    title: "News & Events",
-    href: "/news",
-    icon: Newspaper,
-    description:
-      "Research news, blogs, events, announcements, and gallery highlights.",
-    activePaths: ["/news", "/events"],
-    columns: [
-      {
-        heading: "Research Updates",
-        items: [
-          {
-            title: "News",
-            href: "/news#news",
-            description: "Research stories, office updates, and public notices.",
-            icon: Newspaper,
-          },
-          {
-            title: "Blogs",
-            href: "/news#blogs",
-            description: "Research commentary, explainers, and field notes.",
-            icon: FileText,
-          },
-          {
-            title: "Events",
-            href: "/news#events",
-            description: "Conferences, workshops, forums, and seminars.",
-            icon: CalendarDays,
-          },
-          {
-            title: "Announcements",
-            href: "/news#announcements",
-            description: "Calls, notices, deadlines, and research alerts.",
-            icon: ClipboardList,
-          },
-          {
-            title: "Gallery",
-            href: "/news#gallery",
-            description: "Photos, videos, and media from research activities.",
-            icon: Video,
-          },
-        ],
-      },
-    ],
-  },
-  {
     title: "Resources & Tools",
     href: "/resources-tools",
     icon: ClipboardList,
@@ -350,6 +302,14 @@ export const researchNavConfig: NavSection[] = [
         ],
       },
     ],
+  },
+  {
+    title: "News & Events",
+    href: "/news",
+    icon: Newspaper,
+    description: "Research news, events, announcements, and gallery highlights.",
+    activePaths: ["/news"],
+    columns: [],
   },
   {
     title: "About",
