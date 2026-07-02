@@ -3,7 +3,7 @@
 import type { EditableListFilter, EditableRecordColumn } from "@/components/dashboard/editable-service-resource-page";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
-import { FundingRelationCell, FundingWorkspaceHeader } from "../_components/funding-workspace";
+import { FundingPageChrome, FundingRelationCell } from "../_components/funding-workspace";
 
 const guidelineFilters: EditableListFilter[] = [
   { name: "grant_id", label: "Grant", type: "entity", relation: { adapter: "researchGrant", filters: { is_active: true } } },
@@ -55,7 +55,7 @@ export default function GrantGuidelinesPage() {
       queryKey={["research", "grant-guidelines"]}
       resource={researchServiceApi.grantGuidelines}
       manageScopes={["funding.manage", "research.manage_grant_guidelines", "research:write"]}
-      summarySlot={<FundingWorkspaceHeader />}
+      {...FundingPageChrome({ guideTitle: "Grant Guidelines", resourceKey: "research-grant-guidelines", importResource: "research-grant-guidelines" })}
       listFilters={guidelineFilters}
       recordColumns={guidelineColumns}
       fields={[

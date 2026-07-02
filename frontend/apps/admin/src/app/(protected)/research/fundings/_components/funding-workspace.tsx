@@ -9,6 +9,37 @@ import {
   relationshipAdapters,
   type RelationshipAdapter,
 } from "@/components/relationships/relationship-adapters";
+import { ResearchBulkActions } from "../../_components/research-resource-page";
+import { ResearchSectionGuide } from "../../_components/research-guidance";
+
+export function FundingPageChrome({
+  guideTitle,
+  resourceKey,
+  importResource,
+  exportResource,
+}: {
+  guideTitle: string;
+  resourceKey: string;
+  importResource?: string;
+  exportResource?: string;
+}) {
+  return {
+    hideHeader: true,
+    tableLayout: "compact" as const,
+    actionsInMenuOnly: true,
+    summarySlot: <FundingWorkspaceHeader />,
+    toolbarSlot: (
+      <>
+        <ResearchBulkActions
+          resourceKey={resourceKey}
+          importResource={importResource}
+          exportResource={exportResource}
+        />
+        <ResearchSectionGuide title={guideTitle} className="sm:ml-auto" />
+      </>
+    ),
+  };
+}
 
 export function FundingWorkspaceHeader() {
   return (

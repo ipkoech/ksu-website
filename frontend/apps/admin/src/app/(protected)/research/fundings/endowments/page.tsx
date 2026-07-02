@@ -3,7 +3,7 @@
 import type { EditableListFilter, EditableRecordColumn } from "@/components/dashboard/editable-service-resource-page";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
-import { FundingWorkspaceHeader, labelize, MoneyValue, StatusBadge } from "../_components/funding-workspace";
+import { FundingPageChrome, labelize, MoneyValue, StatusBadge } from "../_components/funding-workspace";
 
 const endowmentFilters: EditableListFilter[] = [
   { name: "search", label: "Search", type: "text", placeholder: "Search endowments" },
@@ -65,7 +65,7 @@ export default function EndowmentsPage() {
       queryKey={["research", "endowments"]}
       resource={researchServiceApi.endowments}
       manageScopes={["research.manage_endowments", "funding.manage", "research:write"]}
-      summarySlot={<FundingWorkspaceHeader />}
+      {...FundingPageChrome({ guideTitle: "Endowment Funds", resourceKey: "research-endowments", importResource: "research-endowments" })}
       listFilters={endowmentFilters}
       recordColumns={endowmentColumns}
       fields={[

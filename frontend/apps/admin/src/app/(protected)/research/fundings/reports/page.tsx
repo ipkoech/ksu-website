@@ -5,8 +5,8 @@ import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
 import {
   formatFundingDate,
+  FundingPageChrome,
   FundingRelationCell,
-  FundingWorkspaceHeader,
   MoneyValue,
   StatusBadge,
 } from "../_components/funding-workspace";
@@ -77,7 +77,7 @@ export default function GrantReportsPage() {
       queryKey={["research", "grant-reports"]}
       resource={researchServiceApi.grantReports}
       manageScopes={["funding.manage", "research.manage_reports", "research:write"]}
-      summarySlot={<FundingWorkspaceHeader />}
+      {...FundingPageChrome({ guideTitle: "Grant Reports", resourceKey: "research-grant-reports" })}
       listFilters={reportFilters}
       recordColumns={reportColumns}
       fields={[

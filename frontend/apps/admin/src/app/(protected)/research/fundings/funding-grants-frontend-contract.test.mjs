@@ -9,6 +9,8 @@ const funderDetailSource = readFileSync(join(root, "src/app/(protected)/research
 const apiSource = readFileSync(join(root, "../../packages/api-client/src/research/index.ts"), "utf8");
 const editableResourceSource = readFileSync(join(root, "src/components/dashboard/editable-service-resource-page.tsx"), "utf8");
 const applicationsSource = readFileSync(join(root, "src/app/(protected)/research/fundings/applications/page.tsx"), "utf8");
+const reviewsSource = readFileSync(join(root, "src/app/(protected)/research/fundings/reviews/page.tsx"), "utf8");
+const fundersSource = readFileSync(join(root, "src/app/(protected)/research/fundings/funders/page.tsx"), "utf8");
 const reportsSource = readFileSync(join(root, "src/app/(protected)/research/fundings/reports/page.tsx"), "utf8");
 const guidelinesSource = readFileSync(join(root, "src/app/(protected)/research/fundings/guidelines/page.tsx"), "utf8");
 const endowmentsSource = readFileSync(join(root, "src/app/(protected)/research/fundings/endowments/page.tsx"), "utf8");
@@ -80,4 +82,30 @@ assert(
     !fundingWorkspaceSource.includes("usePathname") &&
     !fundingWorkspaceSource.includes("fundingTabs.map"),
   "Funding workspace header should not duplicate the Funding side-nav items as page tabs.",
+);
+
+for (const [label, source] of [
+  ["grants", grantsListSource],
+  ["applications", applicationsSource],
+  ["reviews", reviewsSource],
+  ["funders", fundersSource],
+  ["reports", reportsSource],
+  ["guidelines", guidelinesSource],
+  ["endowments", endowmentsSource],
+]) {
+  assert(
+    source.includes("...FundingPageChrome("),
+    `${label} list page should use the Projects-style action-first header chrome.`,
+  );
+}
+
+assert(
+  fundingWorkspaceSource.includes("function FundingPageChrome") &&
+    fundingWorkspaceSource.includes("hideHeader: true") &&
+    fundingWorkspaceSource.includes('tableLayout: "compact"') &&
+    fundingWorkspaceSource.includes("actionsInMenuOnly: true") &&
+    fundingWorkspaceSource.includes("toolbarSlot") &&
+    fundingWorkspaceSource.includes("ResearchBulkActions") &&
+    fundingWorkspaceSource.includes("ResearchSectionGuide"),
+  "FundingPageChrome should provide the Projects-style action-first header props.",
 );

@@ -4,8 +4,8 @@ import type { EditableListFilter, EditableRecordColumn } from "@/components/dash
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
 import {
+  FundingPageChrome,
   FundingRelationCell,
-  FundingWorkspaceHeader,
   StatusBadge,
 } from "../_components/funding-workspace";
 
@@ -57,7 +57,7 @@ export default function GrantReviewsPage() {
       queryKey={["research", "grant-reviews"]}
       resource={researchServiceApi.grantReviews}
       manageScopes={["funding.manage", "research.review_grants", "research:write"]}
-      summarySlot={<FundingWorkspaceHeader />}
+      {...FundingPageChrome({ guideTitle: "Grant Reviews", resourceKey: "research-grant-reviews" })}
       listFilters={reviewFilters}
       recordColumns={reviewColumns}
       fields={[

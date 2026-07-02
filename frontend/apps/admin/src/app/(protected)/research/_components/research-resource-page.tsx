@@ -79,6 +79,10 @@ interface ResearchResourcePageProps {
   auditServiceName?: string;
   auditResourceType?: string;
   editorMode?: "dialog" | "sheet" | "auto";
+  hideHeader?: boolean;
+  tableLayout?: "default" | "compact";
+  actionsInMenuOnly?: boolean;
+  toolbarSlot?: ReactNode;
   renderMobileRecord?: (record: ResearchGenericRecord, actions: ReactNode) => ReactNode;
   buildPayload?: (
     values: ResearchGenericPayload,
@@ -190,9 +194,26 @@ function downloadBlob(blob: Blob, filename: string) {
 export function withResearchFieldHelp(fields: EditableField[]) {
   return fields.map((field) => ({
     ...field,
+    type: field.type === "textarea" ? ("richtext" as const) : field.type,
     helpText: field.helpText ?? getResearchFieldHelp(field.name),
   }));
 }
+
+function withDefaultSearchFilter(filters: EditableListFilter[]) {
+  if (filters.some((filter) => filter.name === "search")) return filters;
+  return [
+    { name: "search", label: "Search", type: "text" as const, placeholder: "Search records" },
+    ...filters,
+  ];
+}
+
+const defaultResearchSortOptions = [
+  { label: "Recently updated", sort: "updated_at", order: "desc" as const },
+  { label: "Oldest updated", sort: "updated_at", order: "asc" as const },
+  { label: "Recently created", sort: "created_at", order: "desc" as const },
+  { label: "Title A-Z", sort: "title", order: "asc" as const },
+  { label: "Name A-Z", sort: "name", order: "asc" as const },
+];
 
 export function ResearchBulkActions({
   resourceKey,
@@ -772,32 +793,19 @@ export function ResearchResourcePage({
   getRecordWorkflowActions,
   importResource,
   exportResource,
-  auditServiceName = "research",
-  auditResourceType,
   editorMode = "auto",
+  hideHeader = false,
+  tableLayout = "compact",
+  actionsInMenuOnly = true,
+  toolbarSlot,
   renderMobileRecord,
   buildPayload,
 }: ResearchResourcePageProps) {
   const { hasScope } = usePermissions();
   const canManage = manageScopes.some((scope) => hasScope(scope));
-  const resolvedListFilters = listFilters ?? deriveListFilters(fields);
+  const resolvedListFilters = withDefaultSearchFilter(listFilters ?? deriveListFilters(fields));
   const guidance = getResearchGuidance(title);
-  const resolvedAuditResourceType = deriveAuditResourceType({
-    auditResourceType,
-    importResource,
-    exportResource,
-    queryKey,
-  });
-  const resolvedSummarySlot = (
-    <div className="space-y-4">
-      <ResearchSectionGuide title={title} />
-      <ResearchResourceAuditPreview
-        serviceName={auditServiceName}
-        resourceType={resolvedAuditResourceType}
-      />
-      {summarySlot}
-    </div>
-  );
+  const resolvedSummarySlot = summarySlot;
 
   return (
     <EditableServiceResourcePage<ResearchGenericRecord, ResearchGenericPayload>
@@ -805,15 +813,19 @@ export function ResearchResourcePage({
       description={description}
       backHref="/research"
       queryKey={queryKey}
+      hideHeader={hideHeader}
       fields={withResearchFieldHelp(fields)}
       listFilters={resolvedListFilters}
       recordColumns={recordColumns}
       summarySlot={resolvedSummarySlot}
-      toolbarSlot={
-        importResource || exportResource ? (
-          <ResearchBulkActions importResource={importResource} exportResource={exportResource} />
-        ) : undefined
-      }
+      toolbarSlot={toolbarSlot ?? (
+        <>
+          {importResource || exportResource ? (
+            <ResearchBulkActions importResource={importResource} exportResource={exportResource} />
+          ) : null}
+          <ResearchSectionGuide title={title} className="sm:ml-auto" />
+        </>
+      )}
       list={async (filters) => {
         const response = await resource.list({ page: 1, per_page: 50, ...listParams, ...filters });
         return { data: (response.data ?? []) as ResearchGenericRecord[], meta: response.meta };
@@ -832,6 +844,10 @@ export function ResearchResourcePage({
       }
       getRecordWorkflowActions={getRecordWorkflowActions}
       editorMode={editorMode}
+      tableLayout={tableLayout}
+      actionsInMenuOnly={actionsInMenuOnly}
+      defaultSort={defaultResearchSortOptions[0]}
+      sortOptions={defaultResearchSortOptions}
       renderMobileRecord={
         renderMobileRecord ??
         ((record, actions) => (

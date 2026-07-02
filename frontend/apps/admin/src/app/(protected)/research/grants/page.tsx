@@ -8,18 +8,16 @@ import {
   type EditableRecordColumn,
 } from "@/components/dashboard/editable-service-resource-page";
 import {
-  ResearchBulkActions,
   withResearchFieldHelp,
 } from "../_components/research-resource-page";
 import {
   getResearchGuidance,
-  ResearchSectionGuide,
 } from "../_components/research-guidance";
 import { researchServiceApi, type ResearchGrant, type ResearchGrantPayload } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
 import {
   formatFundingDate,
-  FundingWorkspaceHeader,
+  FundingPageChrome,
   labelize,
   MoneyValue,
   StatusBadge,
@@ -143,15 +141,18 @@ export default function ResearchGrantsPage() {
       description="Create, edit, and close grant records from the research service."
       backHref="/research"
       queryKey={["research", "grants"]}
-      summarySlot={
-        <div className="space-y-4">
-          <ResearchSectionGuide title="Grants" />
-          <FundingWorkspaceHeader />
-        </div>
-      }
+      {...FundingPageChrome({ guideTitle: "Grants", resourceKey: "research-grants" })}
       listFilters={grantListFilters}
       recordColumns={grantColumns}
       editorMode="sheet"
+      tableLayout="compact"
+      actionsInMenuOnly
+      defaultSort={{ label: "Recently updated", sort: "updated_at", order: "desc" }}
+      sortOptions={[
+        { label: "Recently updated", sort: "updated_at", order: "desc" },
+        { label: "Deadline soonest", sort: "deadline", order: "asc" },
+        { label: "Grant title A-Z", sort: "title", order: "asc" },
+      ]}
       renderMobileRecord={GrantMobileRecord}
       fields={withResearchFieldHelp([
         { name: "title", label: "Title", required: true, placeholder: "Grant title" },
@@ -260,7 +261,6 @@ export default function ResearchGrantsPage() {
         is_active: values.is_active,
         is_featured: values.is_featured,
       })}
-      toolbarSlot={<ResearchBulkActions resourceKey="research-grants" />}
       resourceKey="research-grants"
     />
   );

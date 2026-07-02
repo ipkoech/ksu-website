@@ -3,7 +3,7 @@
 import type { EditableListFilter, EditableRecordColumn } from "@/components/dashboard/editable-service-resource-page";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
-import { FundingWorkspaceHeader, labelize } from "../_components/funding-workspace";
+import { FundingPageChrome, labelize } from "../_components/funding-workspace";
 
 const funderFilters: EditableListFilter[] = [
   { name: "search", label: "Search", type: "text", placeholder: "Search funders" },
@@ -55,7 +55,7 @@ export default function ResearchFundersPage() {
       queryKey={["research", "funders"]}
       resource={researchServiceApi.funders}
       manageScopes={["funding.manage", "research.manage_grants", "research:write"]}
-      summarySlot={<FundingWorkspaceHeader />}
+      {...FundingPageChrome({ guideTitle: "Funders", resourceKey: "research-funders", importResource: "research-funders" })}
       listFilters={funderFilters}
       recordColumns={funderColumns}
       fields={[
