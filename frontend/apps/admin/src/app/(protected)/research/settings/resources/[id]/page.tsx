@@ -10,7 +10,7 @@ export default function ResearchResourceDetailPage() {
       title="Research Resource"
       description="View operational resource details, access rules, manager binding, and audit history."
       resource={researchServiceApi.resources}
-      backHref="/research/settings/resources"
+      backHref="/research/resources"
       slugParam="id"
       lookup="id"
       labelFields={["resource_type", "status", "is_active"]}

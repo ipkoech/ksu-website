@@ -10,7 +10,7 @@ export default function ResearchGuidelineDetailPage() {
       title="Research Guideline"
       description="View guideline content, document metadata, review dates, and audit history."
       resource={researchServiceApi.guidelines}
-      backHref="/research/settings/guidelines"
+      backHref="/research/guidelines"
       slugParam="id"
       lookup="id"
       labelFields={["guideline_type", "category", "status"]}

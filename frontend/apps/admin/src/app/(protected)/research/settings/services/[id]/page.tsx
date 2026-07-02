@@ -10,7 +10,7 @@ export default function ResearchServiceDetailPage() {
       title="Research Service"
       description="View service access details, contact metadata, center binding, and audit history."
       resource={researchServiceApi.services}
-      backHref="/research/settings/services"
+      backHref="/research/services"
       slugParam="id"
       lookup="id"
       labelFields={["service_type", "category", "is_active"]}

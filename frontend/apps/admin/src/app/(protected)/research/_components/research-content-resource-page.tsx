@@ -51,6 +51,7 @@ interface ResearchContentResourcePageProps {
   ) => Array<EditableRecordWorkflowAction<ContentRecord, Record<string, any>>>;
   getRecordDetailHref?: (record: ContentRecord) => string | null | undefined;
   editorMode?: "dialog" | "sheet" | "auto";
+  hideHeader?: boolean;
   renderMobileRecord?: (record: ContentRecord, actions: ReactNode) => ReactNode;
   buildPayload?: (
     values: Record<string, any>,
@@ -75,6 +76,20 @@ function recordMeta(record: ContentRecord, fields: string[]) {
     .filter(Boolean)
     .join(" · ");
 }
+
+function withDefaultSearchFilter(filters: EditableListFilter[] = []) {
+  if (filters.some((filter) => filter.name === "search")) return filters;
+  return [
+    { name: "search", label: "Search", type: "text" as const, placeholder: "Search content records" },
+    ...filters,
+  ];
+}
+
+const defaultContentSortOptions = [
+  { label: "Recently updated", sort: "updated_at", order: "desc" as const },
+  { label: "Oldest updated", sort: "updated_at", order: "asc" as const },
+  { label: "Title A-Z", sort: "title", order: "asc" as const },
+];
 
 function ContentMobileRecordCard({
   record,
@@ -122,6 +137,7 @@ export function ResearchContentResourcePage({
   getRecordWorkflowActions,
   getRecordDetailHref,
   editorMode = "auto",
+  hideHeader = true,
   renderMobileRecord,
   buildPayload,
 }: ResearchContentResourcePageProps) {
@@ -135,15 +151,12 @@ export function ResearchContentResourcePage({
       description={description}
       backHref="/research/content"
       queryKey={queryKey}
+      hideHeader={hideHeader}
       fields={withResearchFieldHelp(fields)}
-      listFilters={listFilters}
+      listFilters={withDefaultSearchFilter(listFilters)}
       recordColumns={recordColumns}
-      summarySlot={
-        <div className="space-y-4">
-          <ResearchSectionGuide title="Research Content" />
-          {summarySlot}
-        </div>
-      }
+      summarySlot={summarySlot}
+      toolbarSlot={<ResearchSectionGuide title="Research Content" className="sm:ml-auto" />}
       list={async (filters) => resource.list({ page: 1, per_page: 50, scope_type: "research", ...listParams, ...filters })}
       create={(payload) => resource.create({ ...payload, scope_type: "research" })}
       update={(id, payload) => resource.update(id, { ...payload, scope_type: "research" })}
@@ -156,6 +169,10 @@ export function ResearchContentResourcePage({
       getRecordWorkflowActions={getRecordWorkflowActions}
       getRecordDetailHref={getRecordDetailHref}
       editorMode={editorMode}
+      tableLayout="compact"
+      actionsInMenuOnly
+      defaultSort={defaultContentSortOptions[0]}
+      sortOptions={defaultContentSortOptions}
       renderMobileRecord={
         renderMobileRecord ??
         ((record, actions) => <ContentMobileRecordCard record={record} actions={actions} metaFields={metaFields} />)

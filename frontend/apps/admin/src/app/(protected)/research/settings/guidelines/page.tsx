@@ -89,7 +89,7 @@ export default function ResearchGuidelinesPage() {
       recordColumns={guidelineColumns}
       emptyMessage="No research guidelines were returned by the research service."
       metaFields={["guideline_type", "category", "status"]}
-      detailHref={(record) => `/research/settings/guidelines/${record.id}`}
+      detailHref={(record) => `/research/guidelines/${record.id}`}
       editorMode="sheet"
     />
   );

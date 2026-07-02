@@ -100,7 +100,7 @@ export default function ResearchResourcesPage() {
       recordColumns={resourceColumns}
       emptyMessage="No research resources were returned by the research service."
       metaFields={["resource_type", "location", "status"]}
-      detailHref={(record) => `/research/settings/resources/${record.id}`}
+      detailHref={(record) => `/research/resources/${record.id}`}
       editorMode="sheet"
     />
   );

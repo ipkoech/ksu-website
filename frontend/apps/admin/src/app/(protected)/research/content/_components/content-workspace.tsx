@@ -19,7 +19,6 @@ export const contentTabs = [
 export function ContentWorkspaceHeader() {
   return (
     <ResearchWorkspaceHeader
-      tabs={contentTabs}
       metrics={[
         { title: "Published", queryKey: ["research", "content", "metrics", "published"], queryFn: () => newsApi.listAdmin({ page: 1, per_page: 1, scope_type: "research", is_published: true }), icon: <Newspaper className="h-4 w-4" /> },
         { title: "Drafts", queryKey: ["research", "content", "metrics", "drafts"], queryFn: () => newsApi.listAdmin({ page: 1, per_page: 1, scope_type: "research", status: "draft" }), icon: <FileText className="h-4 w-4" /> },

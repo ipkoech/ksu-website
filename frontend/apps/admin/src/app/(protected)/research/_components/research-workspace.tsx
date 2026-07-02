@@ -19,7 +19,7 @@ export function ResearchWorkspaceHeader({
   tabs,
 }: {
   metrics: Array<{ title: string; queryKey: readonly unknown[]; queryFn: CountQuery; icon: ReactNode }>;
-  tabs: Array<{ label: string; href: string }>;
+  tabs?: Array<{ label: string; href: string }>;
 }) {
   return (
     <div className="space-y-3">
@@ -28,7 +28,7 @@ export function ResearchWorkspaceHeader({
           <ResearchMetric key={metric.title} {...metric} />
         ))}
       </div>
-      <ResearchWorkspaceTabs tabs={tabs} />
+      {tabs?.length ? <ResearchWorkspaceTabs tabs={tabs} /> : null}
     </div>
   );
 }
@@ -176,4 +176,3 @@ export function researchCount(resource: keyof typeof researchServiceApi, params:
     ...params,
   });
 }
-

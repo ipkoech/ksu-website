@@ -94,7 +94,7 @@ export default function ResearchServicesPage() {
       recordColumns={serviceColumns}
       emptyMessage="No research services were returned by the research service."
       metaFields={["service_type", "category", "is_free"]}
-      detailHref={(record) => `/research/settings/services/${record.id}`}
+      detailHref={(record) => `/research/services/${record.id}`}
       editorMode="sheet"
     />
   );

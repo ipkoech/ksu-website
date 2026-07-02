@@ -31,7 +31,6 @@ export const sustainabilityTabs = [
 export function SustainabilityWorkspaceHeader() {
   return (
     <ResearchWorkspaceHeader
-      tabs={sustainabilityTabs}
       metrics={[
         { title: "Active Projects", queryKey: ["research", "sustainability", "metrics", "projects"], queryFn: () => researchCount("sustainability", { status: "active" }), icon: <Leaf className="h-4 w-4" /> },
         { title: "Partners", queryKey: ["research", "sustainability", "metrics", "partners"], queryFn: () => researchCount("partners", { is_active: true }), icon: <Handshake className="h-4 w-4" /> },

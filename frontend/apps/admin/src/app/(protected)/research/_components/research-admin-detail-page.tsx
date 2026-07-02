@@ -51,9 +51,9 @@ export function ResearchAdminDetailPage({
   editHref,
   publicHrefBase,
   actionsSlot,
-  hideHeader = false,
-  showBackAction = true,
-  showDetailGuide = true,
+  hideHeader = true,
+  showBackAction = false,
+  showDetailGuide = false,
   slugParam = "slug",
   lookup = "slug",
   labelFields = ["status"],
@@ -109,6 +109,14 @@ export function ResearchAdminDetailPage({
     : [];
   const publicHref = record?.slug && publicHrefBase ? `${publicHrefBase}/${record.slug}` : null;
   const resolvedEditHref = record ? editHref?.(record) : null;
+  const actionGuide = record ? (
+    <ResearchDetailGuide
+      title={title}
+      status={record.status}
+      isPublic={record.is_public}
+      className="ml-auto"
+    />
+  ) : null;
 
   return (
     <div>
@@ -128,7 +136,7 @@ export function ResearchAdminDetailPage({
               <Link href={resolvedEditHref}>Edit</Link>
             </Button>
           ) : null}
-          {record ? actionsSlot?.(record) : null}
+          {record ? (actionsSlot?.(record) ?? (!showDetailGuide ? actionGuide : null)) : null}
           {publicHref ? (
             <Button asChild variant="outline">
               <Link href={publicHref} target="_blank">

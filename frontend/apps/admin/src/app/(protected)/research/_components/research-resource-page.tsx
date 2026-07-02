@@ -794,7 +794,7 @@ export function ResearchResourcePage({
   importResource,
   exportResource,
   editorMode = "auto",
-  hideHeader = false,
+  hideHeader = true,
   tableLayout = "compact",
   actionsInMenuOnly = true,
   toolbarSlot,

@@ -26,7 +26,6 @@ export const farmTabs = [
 export function FarmWorkspaceHeader() {
   return (
     <ResearchWorkspaceHeader
-      tabs={farmTabs}
       metrics={[
         { title: "Farm Sites", queryKey: ["research", "farm", "metrics", "farms"], queryFn: () => researchCount("farms", { is_active: true }), icon: <Tractor className="h-4 w-4" /> },
         { title: "Active Projects", queryKey: ["research", "farm", "metrics", "projects"], queryFn: () => researchCount("projects", { project_type: "action", is_active: true }), icon: <Sprout className="h-4 w-4" /> },
@@ -155,4 +154,3 @@ export const partnerColumns: Array<EditableRecordColumn<ResearchGenericRecord>> 
   { key: "contact", label: "Contact", className: "hidden min-w-[220px] xl:table-cell", render: (record) => <span>{[record.email, record.country].filter(Boolean).join(" · ") || "No contact"}</span> },
   { key: "status", label: "Status", className: "w-[130px]", render: (record) => <StatusBadge value={record.status} /> },
 ];
-
