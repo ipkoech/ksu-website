@@ -282,6 +282,26 @@ const researchNavigation: NavItem[] = [
         href: "/research/fundings",
         icon: HandCoins,
         scope: ["research.view", "funding.manage"],
+        children: [
+          {
+            title: "Donations",
+            href: "/research/donations",
+            icon: HandCoins,
+            scope: ["research.view", "donations.manage", "donations.view"],
+          },
+          {
+            title: "Donation Records",
+            href: "/research/donations/records",
+            icon: HandCoins,
+            scope: ["research.view", "donations.manage", "donations.view"],
+          },
+          {
+            title: "Donors",
+            href: "/research/donations/donors",
+            icon: Users,
+            scope: ["research.view", "donations.manage", "donations.view"],
+          },
+        ],
       },
       {
         title: "Impact",
@@ -306,12 +326,6 @@ const researchNavigation: NavItem[] = [
         href: "/research/partnerships",
         icon: HeartHandshake,
         scope: ["research.view", "partnerships.manage", "partnerships.manage_partners"],
-      },
-      {
-        title: "Donations",
-        href: "/research/donations",
-        icon: HandCoins,
-        scope: ["research.view", "donations.manage", "donations.view"],
       },
       {
         title: "Innovation",

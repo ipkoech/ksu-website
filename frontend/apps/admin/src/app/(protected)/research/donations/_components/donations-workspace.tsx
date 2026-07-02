@@ -23,7 +23,6 @@ export const donationTabs = [
 export function DonationsWorkspaceHeader() {
   return (
     <ResearchWorkspaceHeader
-      tabs={donationTabs}
       metrics={[
         { title: "Total Donations", queryKey: ["research", "donations", "metrics", "records"], queryFn: () => researchCount("donations", {}), icon: <HandCoins className="h-4 w-4" /> },
         { title: "Donors", queryKey: ["research", "donations", "metrics", "donors"], queryFn: () => researchCount("donors", { is_active: true }), icon: <Users className="h-4 w-4" /> },

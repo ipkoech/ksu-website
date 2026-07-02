@@ -7,12 +7,11 @@ import { DonationsWorkspaceHeader } from "./_components/donations-workspace";
 export default function ResearchDonationsPage() {
   return (
     <div>
-      <div className="p-4 sm:p-6">
-        <DonationsWorkspaceHeader />
-      </div>
       <ResearchSectionIndex
         title="Donations"
         description="Donor profiles, gifts, impact records, giving stories, and donation settings."
+        hideHeader
+        summarySlot={<DonationsWorkspaceHeader />}
         links={[
           { title: "Donation Records", description: "Donation payments and designations.", href: "/research/donations/records", icon: HandCoins },
           { title: "Donors", description: "Donor profiles and organizations.", href: "/research/donations/donors", icon: Users },
