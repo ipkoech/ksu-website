@@ -15,6 +15,22 @@ type ListParams<
     category?: string;
     project_type?: string;
     partner_type?: string;
+    partnership_level?: string;
+    consultancy_type?: string;
+    client_type?: string;
+    innovation_type?: string;
+    development_stage?: string;
+    ip_status?: string;
+    commercialization_status?: string;
+    venture_stage?: string;
+    registration_status?: string;
+    startup_id?: string;
+    incubation_type?: string;
+    stage?: string;
+    entry_type?: string;
+    entry_status?: string;
+    case_type?: string;
+    transfer_status?: string;
     event_type?: string;
     output_type?: string;
     program_type?: string;
@@ -360,6 +376,38 @@ export type ResearchGenericRecord = Record<string, any> & {
 
 export type ResearchGenericPayload = Record<string, any>;
 
+export interface ResearchPathwayActionNote {
+  note?: string | null;
+}
+
+export interface StartupStageAction extends ResearchPathwayActionNote {
+  venture_stage: string;
+  registration_status?: string | null;
+  status?: string | null;
+}
+
+export interface IncubationStageAction extends ResearchPathwayActionNote {
+  stage: string;
+  status?: string | null;
+}
+
+export interface MentorAssignmentAction extends ResearchPathwayActionNote {
+  mentor_ids: string[];
+}
+
+export interface CompetitionEntryStatusAction extends ResearchPathwayActionNote {
+  entry_status: string;
+  award?: string | null;
+  position?: string | null;
+  status?: string | null;
+}
+
+export interface TechnologyTransferStatusAction extends ResearchPathwayActionNote {
+  transfer_status: string;
+  case_type?: string | null;
+  status?: string | null;
+}
+
 export interface ResearchSearchResult {
   id: string;
   type: string;
@@ -524,6 +572,24 @@ function crudApi<TRecord, TPayload>(path: string) {
     update: (id: string, data: Partial<TPayload>) =>
       researchApi.patch<{ data: TRecord }>(`${path}/id/${id}`, data),
     delete: (id: string) => researchApi.delete<void>(`${path}/id/${id}`),
+  };
+}
+
+function pathwayCrudApi(path: string) {
+  return {
+    ...crudApi<ResearchGenericRecord, ResearchGenericPayload>(path),
+    approve: (id: string, data?: ResearchPathwayActionNote) =>
+      researchApi.post<{ data: ResearchGenericRecord }>(`${path}/id/${id}/approve`, data ?? {}),
+    publish: (id: string, data?: ResearchPathwayActionNote) =>
+      researchApi.post<{ data: ResearchGenericRecord }>(`${path}/id/${id}/publish`, data ?? {}),
+    unpublish: (id: string, data?: ResearchPathwayActionNote) =>
+      researchApi.post<{ data: ResearchGenericRecord }>(`${path}/id/${id}/unpublish`, data ?? {}),
+    archive: (id: string, data?: ResearchPathwayActionNote) =>
+      researchApi.post<{ data: ResearchGenericRecord }>(`${path}/id/${id}/archive`, data ?? {}),
+    feature: (id: string, data?: ResearchPathwayActionNote) =>
+      researchApi.post<{ data: ResearchGenericRecord }>(`${path}/id/${id}/feature`, data ?? {}),
+    unfeature: (id: string, data?: ResearchPathwayActionNote) =>
+      researchApi.post<{ data: ResearchGenericRecord }>(`${path}/id/${id}/unfeature`, data ?? {}),
   };
 }
 
@@ -732,12 +798,31 @@ function readonlyPartnerRelationApi(
     | "impact-stories"
     | "impact-metrics"
     | "consultancies"
+    | "startups"
+    | "incubation-records"
+    | "competition-entries"
+    | "technology-transfer-cases"
     | "sustainability",
 ) {
   return {
     list: (partnerId: string) =>
       researchApi.get<{ data: ResearchGenericRecord[] }>(
         `/api/v1/partners/id/${partnerId}/${relation}`,
+      ),
+  };
+}
+
+function readonlyInnovationRelationApi(
+  relation:
+    | "startups"
+    | "incubation-records"
+    | "competition-entries"
+    | "technology-transfer-cases",
+) {
+  return {
+    list: (innovationId: string) =>
+      researchApi.get<{ data: ResearchGenericRecord[] }>(
+        `/api/v1/innovations/id/${innovationId}/${relation}`,
       ),
   };
 }
@@ -906,6 +991,34 @@ export const researchServiceApi = {
   innovations: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/innovations",
   ),
+  innovationRelations: {
+    startups: readonlyInnovationRelationApi("startups"),
+    incubationRecords: readonlyInnovationRelationApi("incubation-records"),
+    competitionEntries: readonlyInnovationRelationApi("competition-entries"),
+    technologyTransferCases: readonlyInnovationRelationApi("technology-transfer-cases"),
+  },
+  startups: {
+    ...pathwayCrudApi("/api/v1/startups"),
+    setStage: (id: string, data: StartupStageAction) =>
+      researchApi.post<{ data: ResearchGenericRecord }>(`/api/v1/startups/id/${id}/stage`, data),
+  },
+  incubationRecords: {
+    ...pathwayCrudApi("/api/v1/incubation-records"),
+    setStage: (id: string, data: IncubationStageAction) =>
+      researchApi.post<{ data: ResearchGenericRecord }>(`/api/v1/incubation-records/id/${id}/stage`, data),
+    assignMentors: (id: string, data: MentorAssignmentAction) =>
+      researchApi.post<{ data: ResearchGenericRecord }>(`/api/v1/incubation-records/id/${id}/assign-mentors`, data),
+  },
+  competitionEntries: {
+    ...pathwayCrudApi("/api/v1/competition-entries"),
+    setEntryStatus: (id: string, data: CompetitionEntryStatusAction) =>
+      researchApi.post<{ data: ResearchGenericRecord }>(`/api/v1/competition-entries/id/${id}/entry-status`, data),
+  },
+  technologyTransferCases: {
+    ...pathwayCrudApi("/api/v1/technology-transfer-cases"),
+    setTransferStatus: (id: string, data: TechnologyTransferStatusAction) =>
+      researchApi.post<{ data: ResearchGenericRecord }>(`/api/v1/technology-transfer-cases/id/${id}/transfer-status`, data),
+  },
   partners: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/partners",
   ),
@@ -916,6 +1029,10 @@ export const researchServiceApi = {
     impactStories: readonlyPartnerRelationApi("impact-stories"),
     impactMetrics: readonlyPartnerRelationApi("impact-metrics"),
     consultancies: readonlyPartnerRelationApi("consultancies"),
+    startups: readonlyPartnerRelationApi("startups"),
+    incubationRecords: readonlyPartnerRelationApi("incubation-records"),
+    competitionEntries: readonlyPartnerRelationApi("competition-entries"),
+    technologyTransferCases: readonlyPartnerRelationApi("technology-transfer-cases"),
     sustainability: readonlyPartnerRelationApi("sustainability"),
   },
   consultancies: crudApi<ResearchGenericRecord, ResearchGenericPayload>(

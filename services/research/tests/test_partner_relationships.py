@@ -57,6 +57,26 @@ class PartnerRelationshipAggregationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual([direct_story, sustainability_story], stories)
         stories_mock.assert_awaited_once_with(None, sustainability_id)
 
+    async def test_partner_innovation_pathway_methods_read_partner_records(self):
+        partner_id = uuid.uuid4()
+        expected = [{"id": "pathway-record", "title": "Partner pathway record"}]
+
+        for method_name in (
+            "list_startups",
+            "list_incubation_records",
+            "list_competition_entries",
+            "list_technology_transfer_cases",
+        ):
+            with self.subTest(method_name=method_name):
+                with (
+                    patch.object(PartnerRelationshipService, "_ensure_partner", new=AsyncMock()),
+                    patch("app.services.partnership._related_many", new=AsyncMock(return_value=expected)) as related_mock,
+                ):
+                    result = await getattr(PartnerRelationshipService, method_name)(None, partner_id)
+
+                self.assertEqual(expected, result)
+                related_mock.assert_awaited_once()
+
 
 if __name__ == "__main__":
     unittest.main()

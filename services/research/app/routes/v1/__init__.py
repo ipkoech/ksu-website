@@ -12,6 +12,7 @@ from .exports import router as exports_router
 from .grants import router as grants_router
 from .health import router as health_router
 from .innovations import router as innovations_router
+from .innovation_partnership import router as innovation_partnership_router
 from .partners import router as partners_router
 from .projects import router as projects_router
 from .publications import router as publications_router
@@ -36,6 +37,7 @@ router.include_router(projects_router)
 router.include_router(grants_router)
 router.include_router(publications_router)
 router.include_router(innovations_router)
+router.include_router(innovation_partnership_router)
 router.include_router(training_router)
 router.include_router(scholarships_router)
 router.include_router(partners_router)

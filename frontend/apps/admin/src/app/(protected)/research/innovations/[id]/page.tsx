@@ -8,7 +8,7 @@ export default function InnovationDetailPage() {
   return (
     <ResearchAdminDetailPage
       title="Innovation"
-      description="View innovation disclosure, IP, commercialization, source project, related stories, and audit history."
+      description="View innovation disclosure, IP, commercialization, source project, startup pathway, and transfer history."
       resource={researchServiceApi.innovations}
       backHref="/research/innovations"
       slugParam="id"
@@ -40,8 +40,52 @@ function InnovationRelations({ innovation }: { innovation: ResearchGenericRecord
 
   return (
     <ResearchDetailRelationshipTabs
-      defaultValue="stories"
+      defaultValue="pathway"
       tabs={[
+        {
+          value: "pathway",
+          label: "Pathway",
+          content: (
+            <RelatedRecordsGrid>
+              <RelatedRecordsCard
+                title="Startups"
+                queryKey={["research", "innovations", innovationId, "startups"]}
+                queryFn={() => researchServiceApi.innovationRelations.startups.list(innovationId)}
+                emptyLabel="No startup ventures are linked to this innovation."
+                metaFields={["venture_stage", "registration_status", "status"]}
+              />
+              <RelatedRecordsCard
+                title="Incubation"
+                queryKey={["research", "innovations", innovationId, "incubation-records"]}
+                queryFn={() => researchServiceApi.innovationRelations.incubationRecords.list(innovationId)}
+                emptyLabel="No incubation records are linked to this innovation."
+                metaFields={["program_name", "cohort", "stage"]}
+              />
+            </RelatedRecordsGrid>
+          ),
+        },
+        {
+          value: "commercialization",
+          label: "Commercialization",
+          content: (
+            <RelatedRecordsGrid>
+              <RelatedRecordsCard
+                title="Hackathons & Competitions"
+                queryKey={["research", "innovations", innovationId, "competition-entries"]}
+                queryFn={() => researchServiceApi.innovationRelations.competitionEntries.list(innovationId)}
+                emptyLabel="No hackathon or competition entries are linked to this innovation."
+                metaFields={["entry_type", "competition_name", "entry_status"]}
+              />
+              <RelatedRecordsCard
+                title="Technology Transfer"
+                queryKey={["research", "innovations", innovationId, "technology-transfer-cases"]}
+                queryFn={() => researchServiceApi.innovationRelations.technologyTransferCases.list(innovationId)}
+                emptyLabel="No technology transfer cases are linked to this innovation."
+                metaFields={["case_type", "transfer_status", "agreement_date"]}
+              />
+            </RelatedRecordsGrid>
+          ),
+        },
         {
           value: "stories",
           label: "Stories",

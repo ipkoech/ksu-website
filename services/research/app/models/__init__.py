@@ -50,6 +50,10 @@ from .funding import (
 # Innovation & Output
 from .innovation import (
     Innovation,
+    StartupVenture,
+    IncubationRecord,
+    InnovationCompetitionEntry,
+    TechnologyTransferCase,
     ResearchOutput,
     innovation_sponsors,
 )
@@ -150,6 +154,10 @@ __all__ = [
     "center_partners",
     # Innovation
     "Innovation",
+    "StartupVenture",
+    "IncubationRecord",
+    "InnovationCompetitionEntry",
+    "TechnologyTransferCase",
     "ResearchOutput",
     "innovation_sponsors",
     # Publication

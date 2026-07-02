@@ -10,11 +10,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..models import (
     Consultancy,
     ImpactMetric,
+    IncubationRecord,
+    InnovationCompetitionEntry,
     Partner,
     ResearchFarm,
     ResearchProject,
+    StartupVenture,
     SuccessStory,
     Sustainability,
+    TechnologyTransferCase,
     project_partners,
     sustainability_partners,
 )
@@ -160,6 +164,94 @@ class PartnerRelationshipService:
             "client_name",
             "contract_value",
             "currency",
+        )
+
+    @staticmethod
+    async def list_startups(db: AsyncSession, partner_id: uuid.UUID) -> list[dict[str, Any]]:
+        await PartnerRelationshipService._ensure_partner(db, partner_id)
+        return await _related_many(
+            db,
+            StartupVenture.active_query()
+            .where(
+                StartupVenture.partner_id == partner_id,
+                StartupVenture.is_active.is_(True),
+                StartupVenture.is_public.is_(True),
+            )
+            .order_by(StartupVenture.display_order.asc(), StartupVenture.created_at.desc()),
+            "code",
+            "innovation_id",
+            "venture_stage",
+            "registration_status",
+            "sector",
+        )
+
+    @staticmethod
+    async def list_incubation_records(db: AsyncSession, partner_id: uuid.UUID) -> list[dict[str, Any]]:
+        await PartnerRelationshipService._ensure_partner(db, partner_id)
+        return await _related_many(
+            db,
+            IncubationRecord.active_query()
+            .where(
+                IncubationRecord.partner_id == partner_id,
+                IncubationRecord.is_active.is_(True),
+                IncubationRecord.is_public.is_(True),
+            )
+            .order_by(IncubationRecord.display_order.asc(), IncubationRecord.created_at.desc()),
+            "code",
+            "innovation_id",
+            "startup_id",
+            "program_name",
+            "cohort",
+            "incubation_type",
+            "stage",
+        )
+
+    @staticmethod
+    async def list_competition_entries(db: AsyncSession, partner_id: uuid.UUID) -> list[dict[str, Any]]:
+        await PartnerRelationshipService._ensure_partner(db, partner_id)
+        return await _related_many(
+            db,
+            InnovationCompetitionEntry.active_query()
+            .where(
+                InnovationCompetitionEntry.partner_id == partner_id,
+                InnovationCompetitionEntry.is_active.is_(True),
+                InnovationCompetitionEntry.is_public.is_(True),
+            )
+            .order_by(
+                InnovationCompetitionEntry.event_date.desc().nullslast(),
+                InnovationCompetitionEntry.display_order.asc(),
+            ),
+            "code",
+            "innovation_id",
+            "startup_id",
+            "entry_type",
+            "competition_name",
+            "entry_status",
+            "event_date",
+            "award",
+        )
+
+    @staticmethod
+    async def list_technology_transfer_cases(db: AsyncSession, partner_id: uuid.UUID) -> list[dict[str, Any]]:
+        await PartnerRelationshipService._ensure_partner(db, partner_id)
+        return await _related_many(
+            db,
+            TechnologyTransferCase.active_query()
+            .where(
+                TechnologyTransferCase.partner_id == partner_id,
+                TechnologyTransferCase.is_active.is_(True),
+                TechnologyTransferCase.is_public.is_(True),
+            )
+            .order_by(
+                TechnologyTransferCase.agreement_date.desc().nullslast(),
+                TechnologyTransferCase.display_order.asc(),
+            ),
+            "code",
+            "innovation_id",
+            "case_type",
+            "transfer_status",
+            "agreement_date",
+            "ip_reference",
         )
 
     @staticmethod

@@ -28,6 +28,7 @@ import {
 } from "@ksu/ui/components";
 import { cn } from "@ksu/ui/lib";
 import {
+  BadgeCheck,
   LayoutDashboard,
   FileText,
   GraduationCap,
@@ -56,7 +57,10 @@ import {
   HeartHandshake,
   Leaf,
   Lightbulb,
+  Rocket,
   Sprout,
+  Trophy,
+  Waypoints,
   type LucideIcon,
 } from "lucide-react";
 
@@ -316,16 +320,54 @@ const researchNavigation: NavItem[] = [
         scope: ["research.view", "partnerships.manage", "partnerships.manage_partners"],
       },
       {
-        title: "Innovation",
+        title: "Innovation & Output",
         href: "/research/innovations",
         icon: Lightbulb,
-        scope: ["research.view", "innovation.review_disclosure"],
-      },
-      {
-        title: "Outputs",
-        href: "/research/outputs",
-        icon: FileText,
-        scope: ["research.view", "research.manage_reports", "research.submit_reports"],
+        scope: ["research.view", "innovation.review_disclosure", "innovation.manage_ecosystem", "research.manage_reports"],
+        children: [
+          {
+            title: "Innovations",
+            href: "/research/innovations",
+            icon: Lightbulb,
+            scope: ["research.view", "innovation.review_disclosure"],
+          },
+          {
+            title: "Startups",
+            href: "/research/innovations?tab=startups",
+            icon: Rocket,
+            scope: ["research.view", "innovation.manage_startups"],
+          },
+          {
+            title: "Incubation",
+            href: "/research/innovations?tab=incubation",
+            icon: Waypoints,
+            scope: ["research.view", "innovation.manage_startups"],
+          },
+          {
+            title: "Hackathons",
+            href: "/research/innovations?tab=competitions",
+            icon: Trophy,
+            scope: ["research.view", "innovation.manage_competitions"],
+          },
+          {
+            title: "Technology Transfer",
+            href: "/research/innovations?tab=transfers",
+            icon: BadgeCheck,
+            scope: ["research.view", "innovation.manage_transfers"],
+          },
+          {
+            title: "Outputs",
+            href: "/research/outputs",
+            icon: FileText,
+            scope: ["research.view", "research.manage_reports", "research.submit_reports"],
+          },
+          {
+            title: "Publications",
+            href: "/research/publications",
+            icon: BookOpen,
+            scope: ["research.view", "research.manage_publications", "publications.manage"],
+          },
+        ],
       },
       {
         title: "Reports",

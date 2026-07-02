@@ -910,6 +910,70 @@ export const researchGrantRelationshipAdapter: RelationshipAdapter<{ is_active?:
   },
 };
 
+export const researchInnovationRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean; status?: string; innovation_type?: string }> = {
+  key: "research-innovation",
+  entityType: "research_innovation",
+  label: "Innovation",
+  pluralLabel: "Innovations",
+  searchPlaceholder: "Search innovations by title, code, or type",
+  emptyLabel: "No innovations found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await researchServiceApi.innovations.list({
+      page: 1,
+      per_page: limit,
+      search: search?.trim() || undefined,
+      is_active: filters?.is_active ?? undefined,
+      status: filters?.status || undefined,
+      innovation_type: filters?.innovation_type || undefined,
+      fields: "id,title,slug,code,innovation_type,development_stage,status,is_active",
+    });
+    return (response.data ?? []).map(researchRecordOption);
+  },
+  async get(id, filters) {
+    const response = await researchServiceApi.innovations.list({
+      page: 1,
+      per_page: 100,
+      is_active: filters?.is_active ?? undefined,
+      status: filters?.status || undefined,
+      innovation_type: filters?.innovation_type || undefined,
+      fields: "id,title,slug,code,innovation_type,development_stage,status,is_active",
+    });
+    return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
+  },
+};
+
+export const researchStartupRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean; status?: string; venture_stage?: string }> = {
+  key: "research-startup",
+  entityType: "research_startup",
+  label: "Startup",
+  pluralLabel: "Startups",
+  searchPlaceholder: "Search startups by name, code, or stage",
+  emptyLabel: "No startups found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await researchServiceApi.startups.list({
+      page: 1,
+      per_page: limit,
+      search: search?.trim() || undefined,
+      is_active: filters?.is_active ?? undefined,
+      status: filters?.status || undefined,
+      venture_stage: filters?.venture_stage || undefined,
+      fields: "id,name,slug,code,venture_stage,registration_status,status,is_active",
+    });
+    return (response.data ?? []).map(researchRecordOption);
+  },
+  async get(id, filters) {
+    const response = await researchServiceApi.startups.list({
+      page: 1,
+      per_page: 100,
+      is_active: filters?.is_active ?? undefined,
+      status: filters?.status || undefined,
+      venture_stage: filters?.venture_stage || undefined,
+      fields: "id,name,slug,code,venture_stage,registration_status,status,is_active",
+    });
+    return (response.data ?? []).map(researchRecordOption).find((item) => item.id === id) ?? null;
+  },
+};
+
 export const researchFunderRelationshipAdapter: RelationshipAdapter<{ is_active?: boolean; funder_type?: string }> = {
   key: "research-funder",
   entityType: "research_funder",
@@ -1194,6 +1258,8 @@ export const relationshipAdapters = {
   researchProject: researchProjectRelationshipAdapter,
   researchFarm: researchFarmRelationshipAdapter,
   researchGrant: researchGrantRelationshipAdapter,
+  researchInnovation: researchInnovationRelationshipAdapter,
+  researchStartup: researchStartupRelationshipAdapter,
   researchFunder: researchFunderRelationshipAdapter,
   researchSustainability: researchSustainabilityRelationshipAdapter,
   researchEndowment: researchEndowmentRelationshipAdapter,

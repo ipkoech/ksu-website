@@ -46,6 +46,26 @@ async def list_partner_consultancies(partner_id: uuid.UUID, db: AsyncSession = D
     return success(data=await PartnerRelationshipService.list_consultancies(db, partner_id))
 
 
+@router.get("/partners/id/{partner_id}/startups", tags=["Partners"])
+async def list_partner_startups(partner_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return success(data=await PartnerRelationshipService.list_startups(db, partner_id))
+
+
+@router.get("/partners/id/{partner_id}/incubation-records", tags=["Partners"])
+async def list_partner_incubation_records(partner_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return success(data=await PartnerRelationshipService.list_incubation_records(db, partner_id))
+
+
+@router.get("/partners/id/{partner_id}/competition-entries", tags=["Partners"])
+async def list_partner_competition_entries(partner_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return success(data=await PartnerRelationshipService.list_competition_entries(db, partner_id))
+
+
+@router.get("/partners/id/{partner_id}/technology-transfer-cases", tags=["Partners"])
+async def list_partner_technology_transfer_cases(partner_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return success(data=await PartnerRelationshipService.list_technology_transfer_cases(db, partner_id))
+
+
 @router.get("/partners/id/{partner_id}/sustainability", tags=["Partners"])
 async def list_partner_sustainability(partner_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await PartnerRelationshipService.list_sustainability(db, partner_id))

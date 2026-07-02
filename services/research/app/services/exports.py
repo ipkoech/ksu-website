@@ -20,6 +20,12 @@ from .donation import DonationService, DonationStoryService, DonorService
 from .funding import EndowmentFundService, FundingService, GrantGuidelineService, GrantService
 from .impact import MetricService, StoryService, SustainabilityService
 from .innovation import InnovationService, OutputService
+from .innovation_partnership import (
+    CompetitionEntryService,
+    IncubationRecordService,
+    StartupVentureService,
+    TechnologyTransferCaseService,
+)
 from .partnership import ConsultancyService, PartnerService
 from .publication import JournalService, PublicationService
 
@@ -121,6 +127,10 @@ EXPORT_RESOURCE_CONFIGS: dict[str, ExportResourceConfig] = {
         filename="research-grants",
     ),
     "research-innovations": ExportResourceConfig("research-innovations", "Research Innovations", InnovationService, TITLE_COLUMNS + ("code", "innovation_type", "category", "development_stage", "ip_status", "commercialization_status", "center_id", "project_id"), "research-innovations"),
+    "research-startups": ExportResourceConfig("research-startups", "Research Startup Ventures", StartupVentureService, NAME_COLUMNS + ("innovation_id", "partner_id", "center_id", "venture_stage", "registration_status", "sector", "funding_raised", "currency"), "research-startups"),
+    "research-incubation-records": ExportResourceConfig("research-incubation-records", "Research Incubation Records", IncubationRecordService, TITLE_COLUMNS + ("code", "innovation_id", "startup_id", "partner_id", "center_id", "program_name", "cohort", "incubation_type", "stage", "start_date", "end_date"), "research-incubation-records"),
+    "research-competition-entries": ExportResourceConfig("research-competition-entries", "Research Competition Entries", CompetitionEntryService, TITLE_COLUMNS + ("code", "innovation_id", "startup_id", "partner_id", "entry_type", "competition_name", "entry_status", "event_date", "award", "prize_value", "currency"), "research-competition-entries"),
+    "research-technology-transfer-cases": ExportResourceConfig("research-technology-transfer-cases", "Technology Transfer Cases", TechnologyTransferCaseService, TITLE_COLUMNS + ("code", "innovation_id", "partner_id", "center_id", "case_type", "transfer_status", "agreement_date", "ip_reference", "agreement_reference", "revenue_generated", "currency"), "research-technology-transfer-cases"),
     "research-partners": ExportResourceConfig("research-partners", "Research Partners", PartnerService, NAME_COLUMNS + ("partner_type", "partnership_level", "country", "website", "email"), "research-partners"),
     "research-centers": ExportResourceConfig("research-centers", "Research Centers", CenterService, NAME_COLUMNS + ("acronym", "center_type", "school_id", "department_id", "location"), "research-centers"),
     "research-outputs": ExportResourceConfig("research-outputs", "Research Outputs", OutputService, TITLE_COLUMNS + ("output_type", "project_id", "center_id", "access_type", "doi", "download_count", "citation_count"), "research-outputs"),

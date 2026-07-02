@@ -10,6 +10,7 @@ from .donation import *
 from .funding import *
 from .impact import *
 from .innovation import *
+from .innovation_partnership import *
 from .partnership import *
 from .publication import *
 from .search import *
