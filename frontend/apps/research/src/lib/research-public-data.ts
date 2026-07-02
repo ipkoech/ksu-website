@@ -140,6 +140,22 @@ const researchProjectListFields =
 const researchProjectFilterFields = "id,start_date,end_date,published_at,created_at,updated_at";
 
 const researchPublicDetailFields = `${researchPublicListFields},background,objectives,methodology,expected_outcomes,impact,deliverables,budget,currency,funder_name,journal_name,publisher,volume,issue,pages,article_number,conference_name,conference_location,conference_date,book_title,editors,edition,isbn,issn,doi,pmid,arxiv_id,is_open_access,impact_factor,quartile,h_index,funding_acknowledgment,contact_email,contact_phone,email,phone,address,location,venue,registration_url,application_url,download_url,file_url,eligibility,requirements,benefits,scope,content,body,rich_text,plain_text,mission,vision,mandate,head_message,office_location,social_links`;
+const researchResourceListFields =
+  "id,name,slug,code,description,summary,resource_type,category,access_type,status,is_active,is_public,is_featured,center_id,department_id,location,room,availability,operating_hours,is_free,fee_structure,contact_name,contact_email,contact_phone,booking_url,access_url,url,file_url,download_url,document_url,cover_image_url,created_at,updated_at";
+const researchResourceDetailFields =
+  `${researchResourceListFields},specifications,capabilities,usage_guidelines,training_required,attachments,requirements,how_to_access`;
+const researchGuidelineListFields =
+  "id,title,slug,code,summary,content,scope,applicability,guideline_type,category,document_name,document_url,file_url,download_url,url,version,approved_by,approval_date,effective_date,review_date,status,is_active,is_public,is_featured,is_mandatory,contact_email,created_at,updated_at";
+const researchGuidelineDetailFields =
+  `${researchGuidelineListFields},procedure,instructions,requirements,version_notes,change_summary,review_notes,related_guideline_ids,supersedes_id`;
+const researchServiceListFields =
+  "id,name,slug,code,summary,description,scope,service_type,category,status,is_active,is_public,is_featured,center_id,department_id,turnaround_time,how_to_access,request_url,url,file_url,download_url,document_url,is_free,fee_structure,contact_name,contact_email,contact_phone,attachments,created_at,updated_at";
+const researchServiceDetailFields =
+  `${researchServiceListFields},process,eligibility,deliverables,requirements,outputs,request_process`;
+const researchOutputListFields =
+  "id,title,name,slug,code,summary,description,about,output_type,category,access_type,status,is_active,is_public,is_featured,center_id,project_id,innovation_id,release_date,version,doi,license,citation,format,download_url,file_url,repository_url,access_url,url,cover_image_url,created_at,updated_at,project:id,title,slug,code,summary,center:id,title,name,slug,code,summary";
+const researchOutputDetailFields =
+  `${researchOutputListFields},methodology,methods,source,usage_notes,applications,reuse_notes`;
 const researchMainContentFields =
   "id,title,slug,summary,excerpt,plain_text,rich_text,content,body,category,status,scope_type,scope_id,is_featured,is_main,is_public,is_published,published_at,valid_from,valid_to,start_date,end_date,location,venue,event_type,priority,display_order,featured_media,cover_image,cover_image_url,created_at,updated_at";
 const researchHeroSliderFields =
@@ -727,7 +743,7 @@ export function getJournals() {
 export function getOutputs() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.outputs.list({
-      fields: researchPublicListFields,
+      fields: researchOutputListFields,
       is_active: true,
       is_public: true,
       page: 1,
@@ -739,7 +755,7 @@ export function getOutputs() {
 export function getOutputsFiltered(filters: GenericListFilters = {}) {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.outputs.list({
-      fields: researchPublicListFields,
+      fields: researchOutputListFields,
       search: filters.search?.trim() || undefined,
       status: filters.status || undefined,
       output_type: filters.outputType || undefined,
@@ -761,7 +777,7 @@ export function getOutputsFiltered(filters: GenericListFilters = {}) {
 export function getRelatedOutputs(filters: RelationshipFilters) {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.outputs.list({
-      fields: researchPublicListFields,
+      fields: researchOutputListFields,
       project_id: filters.projectId || undefined,
       center_id: filters.centerId || undefined,
       program_id: filters.programId || undefined,
@@ -845,7 +861,7 @@ export async function getProgramScopedEvents(programId: string, projectIds: stri
 export function getOutputBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.outputs.getBySlug(slug, {
-      fields: researchPublicDetailFields,
+      fields: researchOutputDetailFields,
     }),
   );
 }
@@ -946,7 +962,7 @@ export function getEndowmentBySlug(slug: string) {
 export function getGrantGuidelines() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.grantGuidelines.list({
-      fields: researchPublicListFields,
+      fields: researchGuidelineListFields,
       is_active: true,
       is_public: true,
       page: 1,
@@ -958,7 +974,7 @@ export function getGrantGuidelines() {
 export function getGrantGuidelineBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.grantGuidelines.getBySlug(slug, {
-      fields: researchPublicDetailFields,
+      fields: researchGuidelineDetailFields,
     }),
   );
 }
@@ -1300,7 +1316,7 @@ export function getHeroSliders() {
 export function getResources() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.resources.list({
-      fields: researchPublicListFields,
+      fields: researchResourceListFields,
       is_active: true,
       is_public: true,
       page: 1,
@@ -1312,7 +1328,7 @@ export function getResources() {
 export function getResourcesFiltered(filters: GenericListFilters = {}) {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.resources.list({
-      fields: researchPublicListFields,
+      fields: researchResourceListFields,
       search: filters.search?.trim() || undefined,
       resource_type: filters.resourceType || undefined,
       category: filters.category || undefined,
@@ -1334,7 +1350,7 @@ export function getResourcesFiltered(filters: GenericListFilters = {}) {
 export function getResourceBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.resources.getBySlug(slug, {
-      fields: researchPublicDetailFields,
+      fields: researchResourceDetailFields,
     }),
   );
 }
@@ -1342,7 +1358,7 @@ export function getResourceBySlug(slug: string) {
 export function getServices() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.services.list({
-      fields: researchPublicListFields,
+      fields: researchServiceListFields,
       is_active: true,
       is_public: true,
       page: 1,
@@ -1354,7 +1370,7 @@ export function getServices() {
 export function getServicesFiltered(filters: GenericListFilters = {}) {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.services.list({
-      fields: researchPublicListFields,
+      fields: researchServiceListFields,
       search: filters.search?.trim() || undefined,
       service_type: filters.serviceType || undefined,
       category: filters.category || undefined,
@@ -1375,7 +1391,7 @@ export function getServicesFiltered(filters: GenericListFilters = {}) {
 export function getServiceBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.services.getBySlug(slug, {
-      fields: researchPublicDetailFields,
+      fields: researchServiceDetailFields,
     }),
   );
 }
@@ -1383,7 +1399,7 @@ export function getServiceBySlug(slug: string) {
 export function getGuidelines() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.guidelines.list({
-      fields: researchPublicListFields,
+      fields: researchGuidelineListFields,
       is_active: true,
       is_public: true,
       page: 1,
@@ -1395,7 +1411,7 @@ export function getGuidelines() {
 export function getGuidelinesFiltered(filters: GenericListFilters = {}) {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.guidelines.list({
-      fields: researchPublicListFields,
+      fields: researchGuidelineListFields,
       search: filters.search?.trim() || undefined,
       guideline_type: filters.guidelineType || undefined,
       category: filters.category || undefined,
@@ -1415,7 +1431,7 @@ export function getGuidelinesFiltered(filters: GenericListFilters = {}) {
 export function getGuidelineBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.guidelines.getBySlug(slug, {
-      fields: researchPublicDetailFields,
+      fields: researchGuidelineDetailFields,
     }),
   );
 }
