@@ -141,11 +141,11 @@ const researchProjectFilterFields = "id,start_date,end_date,published_at,created
 
 const researchPublicDetailFields = `${researchPublicListFields},background,objectives,methodology,expected_outcomes,impact,deliverables,budget,currency,funder_name,journal_name,publisher,volume,issue,pages,article_number,conference_name,conference_location,conference_date,book_title,editors,edition,isbn,issn,doi,pmid,arxiv_id,is_open_access,impact_factor,quartile,h_index,funding_acknowledgment,contact_email,contact_phone,email,phone,address,location,venue,registration_url,application_url,download_url,file_url,eligibility,requirements,benefits,scope,content,body,rich_text,plain_text,mission,vision,mandate,head_message,office_location,social_links`;
 const researchResourceListFields =
-  "id,name,slug,code,description,summary,resource_type,category,access_type,status,is_active,is_public,is_featured,center_id,department_id,location,room,availability,operating_hours,is_free,fee_structure,contact_name,contact_email,contact_phone,booking_url,access_url,url,file_url,download_url,document_url,cover_image_url,created_at,updated_at";
+  "id,name,slug,code,description,summary,resource_type,category,access_type,status,is_active,is_public,is_featured,center_id,department_id,location,room,availability,operating_hours,is_free,fee_structure,contact_name,contact_email,contact_phone,booking_url,access_url,url,file_url,download_url,document_url,cover_image_url,attachment_media_ids,document_media_ids,created_at,updated_at";
 const researchResourceDetailFields =
   `${researchResourceListFields},specifications,capabilities,usage_guidelines,training_required,attachments,requirements,how_to_access`;
 const researchGuidelineListFields =
-  "id,title,slug,code,summary,content,scope,applicability,guideline_type,category,document_name,document_url,file_url,download_url,url,version,approved_by,approval_date,effective_date,review_date,status,is_active,is_public,is_featured,is_mandatory,contact_email,created_at,updated_at";
+  "id,title,slug,code,summary,content,scope,applicability,guideline_type,category,document_name,document_url,file_url,download_url,url,document_id,version,approved_by,approval_date,effective_date,review_date,status,is_active,is_public,is_featured,is_mandatory,contact_email,created_at,updated_at";
 const researchGuidelineDetailFields =
   `${researchGuidelineListFields},procedure,instructions,requirements,version_notes,change_summary,review_notes,related_guideline_ids,supersedes_id`;
 const researchServiceListFields =

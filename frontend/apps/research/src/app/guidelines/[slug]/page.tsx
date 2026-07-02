@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { researchServiceApi } from "@ksu/api-client";
+import { getResearchApiBaseUrl, researchServiceApi } from "@ksu/api-client";
 import { ResearchDetailHero, ResearchDetailSidebar } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { ResearchStoryAccordion } from "../../../components/research-rich-text";
@@ -25,10 +25,13 @@ export default async function GuidelineDetailPage({ params }: { params: Promise<
     { title: "How to use it", fields: ["procedure", "instructions", "requirements"] },
     { title: "Version notes", fields: ["version_notes", "change_summary", "review_notes"] },
   ]);
+  const downloadHref = hasGuidelineDownloadSupport(guideline)
+    ? getResearchDownloadUrl(`/api/v1/guidelines/${guideline.id}/download`)
+    : "";
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchDetailHero eyebrow="Guideline" title={title} body={getRecordSummary(guideline) || compactText(guideline.scope)} breadcrumbs={[{ label: "Home", href: "/" }, { label: "Guidelines", href: "/guidelines" }, { label: title }]} labels={[guideline.guideline_type, guideline.category, guideline.status, guideline.is_mandatory ? "mandatory" : null, guideline.is_featured ? "featured" : null]} facts={[{ label: "Version", value: guideline.version }, { label: "Effective", value: formatDate(guideline.effective_date) }, { label: "Review", value: formatDate(guideline.review_date) }, { label: "Approved by", value: guideline.approved_by }]} actions={[{ label: "Back to guidelines", href: "/guidelines", variant: "secondary" }, ...(compactText(guideline.document_url) ? [{ label: "Download document", href: compactText(guideline.document_url) }] : [])]} imageSrc="/images/research/research-events-hero.svg" imageAlt="Research guideline document control and download information" />
+      <ResearchDetailHero eyebrow="Guideline" title={title} body={getRecordSummary(guideline) || compactText(guideline.scope)} breadcrumbs={[{ label: "Home", href: "/" }, { label: "Guidelines", href: "/guidelines" }, { label: title }]} labels={[guideline.guideline_type, guideline.category, guideline.status, guideline.is_mandatory ? "mandatory" : null, guideline.is_featured ? "featured" : null]} facts={[{ label: "Version", value: guideline.version }, { label: "Effective", value: formatDate(guideline.effective_date) }, { label: "Review", value: formatDate(guideline.review_date) }, { label: "Approved by", value: guideline.approved_by }]} actions={[{ label: "Back to guidelines", href: "/guidelines", variant: "secondary" }, ...(downloadHref ? [{ label: "Download document", href: downloadHref }] : [])]} imageSrc="/images/research/research-events-hero.svg" imageAlt="Research guideline document control and download information" />
       {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}
       <ResearchSection eyebrow="Document Story" title="Scope, use, and controlled version" body="Document fields are grouped into compact sections for quick scanning while keeping the source record backend-backed." tone="white">
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -46,12 +49,33 @@ export default async function GuidelineDetailPage({ params }: { params: Promise<
               { label: "Review date", value: formatDate(guideline.review_date) },
               { label: "Contact", value: guideline.contact_email },
             ]}
-            actions={compactText(guideline.document_url) ? [{ label: "Download document", href: compactText(guideline.document_url) }] : []}
+            actions={downloadHref ? [{ label: "Download document", href: downloadHref }] : []}
           />
         </div>
       </ResearchSection>
     </main>
   );
+}
+
+function getResearchDownloadUrl(path: string) {
+  const baseUrl = getResearchApiBaseUrl().replace(/\/$/, "");
+  return `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+function hasGuidelineDownloadSupport(guideline: ResearchGenericRecord) {
+  return Boolean(
+    compactText(guideline.document_url) ||
+      compactText(guideline.download_url) ||
+      compactText(guideline.file_url) ||
+      compactText(guideline.url) ||
+      hasValues(guideline.document_id),
+  );
+}
+
+function hasValues(value: unknown) {
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === "string" || typeof value === "number") return Boolean(compactText(value));
+  return Boolean(value);
 }
 
 function GuidelineStory({ sections }: { sections: Array<{ title: string; body: string }> }) {

@@ -17,6 +17,7 @@ import {
   Wrench,
 } from "lucide-react";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { getResearchApiBaseUrl } from "@ksu/api-client";
 import {
   Badge,
   FilledBadge,
@@ -540,7 +541,7 @@ function PoliciesPanel({
         empty="No policy or guideline records match the current filters."
       >
         {policyRows.map((policy) => {
-          const href = getDownloadHref(policy);
+          const href = getBackendDownloadHref(policy, "Policy") || getDownloadHref(policy);
           return (
             <tr key={policy.id} className="border-b border-slate-100 last:border-b-0">
               <NameCell title={getRecordTitle(policy, "Research guideline")} body={getRecordSummary(policy) || compactText(policy.scope)} icon={FileText} />
@@ -861,7 +862,7 @@ function collectDownloadRecords(dataset: WorkspaceDataset): DownloadRecord[] {
 }
 
 function buildDownloadRecord(record: ResearchGenericRecord, source: string, hrefBase: string): DownloadRecord | null {
-  const href = getDownloadHref(record);
+  const href = getBackendDownloadHref(record, source) || getDownloadHref(record);
   if (!href) return null;
   const title = compactText(record.document_name) || getRecordTitle(record, source);
   return {
@@ -885,6 +886,38 @@ function getDownloadHref(record: ResearchGenericRecord): string {
     compactText(record.url) ||
     ""
   );
+}
+
+function getBackendDownloadHref(record: ResearchGenericRecord, source: string): string {
+  if (!record.id || !hasDownloadSupport(record)) return "";
+  if (source === "Resource" || source === "Form" || source === "Template") {
+    return getResearchDownloadUrl(`/api/v1/resources/${record.id}/download`);
+  }
+  if (source === "Policy") {
+    return getResearchDownloadUrl(`/api/v1/guidelines/${record.id}/download`);
+  }
+  return "";
+}
+
+function getResearchDownloadUrl(path: string) {
+  const baseUrl = getResearchApiBaseUrl().replace(/\/$/, "");
+  return `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+function hasDownloadSupport(record: ResearchGenericRecord) {
+  return Boolean(
+    getDownloadHref(record) ||
+      hasValues(record.document_id) ||
+      hasValues(record.document_media_ids) ||
+      hasValues(record.attachment_media_ids) ||
+      compactText(record.access_url),
+  );
+}
+
+function hasValues(value: unknown) {
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === "string" || typeof value === "number") return Boolean(compactText(value));
+  return Boolean(value);
 }
 
 function getFileExtension(href: string) {
