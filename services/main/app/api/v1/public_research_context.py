@@ -374,7 +374,15 @@ def build_leadership_payload(
 ) -> dict[str, Any]:
     assignments = team.get("assignments", [])
     persons = team.get("persons", {})
-    lead_assignment = next((item for item in assignments if item.get("group") == "leadership"), assignments[0] if assignments else None)
+    dvc_roles = {"dvc", "deputy_vice_chancellor", "dvc_arsa", "dvc_apf"}
+    lead_assignment = next(
+        (
+            item
+            for item in assignments
+            if item.get("group") == "leadership" and str(item.get("role") or "").lower() not in dvc_roles
+        ),
+        None,
+    )
     lead_person = persons.get(str(lead_assignment["person_id"])) if lead_assignment else None
     return {
         "assignment": lead_assignment,

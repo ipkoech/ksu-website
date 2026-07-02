@@ -781,6 +781,25 @@ export interface Department {
   updated_at: string;
 }
 
+export interface DepartmentService {
+  id: string;
+  department_id: string;
+  department?: Pick<Department, "id" | "name" | "code" | "slug"> | null;
+  name: string;
+  slug: string;
+  description?: string | null;
+  requirements?: string | null;
+  process?: string | null;
+  turnaround_time?: string | null;
+  fee?: string | null;
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  is_active: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Programme {
   id: string;
   name: string;

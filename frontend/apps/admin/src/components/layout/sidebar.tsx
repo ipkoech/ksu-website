@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth, usePermissions, type Service } from "@ksu/auth";
 import {
@@ -40,6 +40,7 @@ import {
   LogOut,
   ChevronLeft,
   Menu,
+  Minus,
   BookOpen,
   UserCheck,
   MessageSquare,
@@ -56,6 +57,7 @@ import {
   HeartHandshake,
   Leaf,
   Lightbulb,
+  Plus,
   Sprout,
   type LucideIcon,
 } from "lucide-react";
@@ -636,19 +638,20 @@ export function Sidebar({
   const { user, logout } = useAuth();
   const { hasScope } = usePermissions();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(() => new Set());
 
-  const navigation = navigationMap[service] || [];
+  const navigation = useMemo(() => navigationMap[service] || [], [service]);
 
-  const hasItemScope = (item: NavItem) => {
+  const hasItemScope = useCallback((item: NavItem) => {
     if (!item.scope) return true;
     return Array.isArray(item.scope)
       ? item.scope.some((scope) => hasScope(scope))
       : hasScope(item.scope);
-  };
+  }, [hasScope]);
 
-  const filterNavItem = (item: NavItem): NavItem | null => {
+  const filterNavItem = useCallback(function filter(item: NavItem): NavItem | null {
     const children = item.children
-      ?.map(filterNavItem)
+      ?.map(filter)
       .filter((child): child is NavItem => child !== null);
     if (!hasItemScope(item) && (!children || children.length === 0)) {
       return null;
@@ -656,11 +659,55 @@ export function Sidebar({
     return children && children.length > 0
       ? { ...item, children }
       : { ...item, children: undefined };
-  };
+  }, [hasItemScope]);
 
-  const filteredNav = navigation
-    .map(filterNavItem)
-    .filter((item): item is NavItem => item !== null);
+  const filteredNav = useMemo(
+    () => navigation
+      .map(filterNavItem)
+      .filter((item): item is NavItem => item !== null),
+    [filterNavItem, navigation],
+  );
+
+  const isNavItemActive = useCallback(function check(item: NavItem): boolean {
+    return (
+      pathname === item.href ||
+      pathname.startsWith(item.href + "/") ||
+      Boolean(item.children?.some(check))
+    );
+  }, [pathname]);
+
+  const hasActiveChild = useCallback((item: NavItem): boolean =>
+    Boolean(item.children?.some(isNavItemActive)), [isNavItemActive]);
+
+  useEffect(() => {
+    const activeParents = filteredNav
+      .filter((item) => item.children?.length && hasActiveChild(item))
+      .map((item) => item.href);
+    if (activeParents.length === 0) return;
+    setExpandedSections((current) => {
+      let changed = false;
+      const next = new Set(current);
+      for (const href of activeParents) {
+        if (!next.has(href)) {
+          next.add(href);
+          changed = true;
+        }
+      }
+      return changed ? next : current;
+    });
+  }, [filteredNav, hasActiveChild]);
+
+  const toggleExpanded = (href: string) => {
+    setExpandedSections((current) => {
+      const next = new Set(current);
+      if (next.has(href)) {
+        next.delete(href);
+      } else {
+        next.add(href);
+      }
+      return next;
+    });
+  };
 
   const getInitials = (name: string) => {
     return name
@@ -670,6 +717,50 @@ export function Sidebar({
       .toUpperCase()
       .slice(0, 2);
   };
+
+  const renderChildItems = (children: NavItem[], depth = 0) => (
+    <div className={cn("mt-1 flex flex-col gap-1 border-l border-sidebar-border pl-2", depth === 0 ? "ml-5" : "ml-3")}>
+      {children.map((child) => {
+        const ChildIcon = child.icon;
+        const childHasChildren = Boolean(child.children?.length);
+        const childIsActive = isNavItemActive(child);
+        const childIsExpanded = expandedSections.has(child.href) || hasActiveChild(child);
+        const childClassName = cn(
+          "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs font-medium transition-colors",
+          childIsActive
+            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+            : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        );
+
+        return (
+          <div key={child.href}>
+            {childHasChildren ? (
+              <button
+                type="button"
+                onClick={() => toggleExpanded(child.href)}
+                className={childClassName}
+                aria-expanded={childIsExpanded}
+              >
+                <ChildIcon className="h-3.5 w-3.5" />
+                <span className="min-w-0 flex-1 truncate">{child.title}</span>
+                {childIsExpanded ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+              </button>
+            ) : (
+              <Link
+                href={child.href}
+                onClick={onMobileClose}
+                className={childClassName}
+              >
+                <ChildIcon className="h-3.5 w-3.5" />
+                <span className="min-w-0 flex-1 truncate">{child.title}</span>
+              </Link>
+            )}
+            {childHasChildren && childIsExpanded ? renderChildItems(child.children ?? [], depth + 1) : null}
+          </div>
+        );
+      })}
+    </div>
+  );
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -769,45 +860,40 @@ export function Sidebar({
 
               return (
                 <div key={item.href}>
-                  <Link
-                    href={item.href}
-                    onClick={onMobileClose}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                      isActive
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent",
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {item.title}
-                  </Link>
-                  {item.children && item.children.length > 0 && (
-                    <div className="ml-5 mt-1 flex flex-col gap-1 border-l border-sidebar-border pl-2">
-                      {item.children.map((child) => {
-                        const ChildIcon = child.icon;
-                        const childIsActive =
-                          pathname === child.href ||
-                          pathname.startsWith(child.href + "/");
-                        return (
-                          <Link
-                            key={child.href}
-                            href={child.href}
-                            onClick={onMobileClose}
-                            className={cn(
-                              "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
-                              childIsActive
-                                ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                                : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                            )}
-                          >
-                            <ChildIcon className="h-3.5 w-3.5" />
-                            {child.title}
-                          </Link>
-                        );
-                      })}
-                    </div>
+                  {item.children && item.children.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleExpanded(item.href)}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
+                        isActive
+                          ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent",
+                      )}
+                      aria-expanded={expandedSections.has(item.href) || hasActiveChild(item)}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="min-w-0 flex-1 truncate">{item.title}</span>
+                      {expandedSections.has(item.href) || hasActiveChild(item) ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                    </button>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      onClick={onMobileClose}
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                        isActive
+                          ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent",
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="truncate">{item.title}</span>
+                    </Link>
                   )}
+                  {item.children && item.children.length > 0 && (expandedSections.has(item.href) || hasActiveChild(item))
+                    ? renderChildItems(item.children)
+                    : null}
                 </div>
               );
             })}

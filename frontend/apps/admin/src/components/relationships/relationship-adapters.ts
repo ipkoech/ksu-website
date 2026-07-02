@@ -13,6 +13,7 @@ import {
   slidersApi,
   staffApi,
   usersApi,
+  wingsApi,
   type AcademicCalendar,
   type Board,
   type Department,
@@ -34,6 +35,7 @@ import {
   type SliderGroup,
   type StaffEntityOption,
   type User,
+  type Wing,
 } from "@ksu/api-client";
 
 export type RelationshipFilters = Record<string, string | number | boolean | null | undefined>;
@@ -144,6 +146,15 @@ function divisionOption(division: Division): RelationshipOption {
     label: division.name,
     description: joinDescription([division.code, division.division_type, division.is_active === false ? "Inactive" : undefined]),
     raw: division,
+  };
+}
+
+function wingOption(wing: Wing): RelationshipOption {
+  return {
+    id: wing.id,
+    label: wing.name,
+    description: joinDescription([wing.code, wing.wing_type, wing.is_active === false ? "Inactive" : undefined]),
+    raw: wing,
   };
 }
 
@@ -440,6 +451,28 @@ export const divisionRelationshipAdapter: RelationshipAdapter<{ is_active?: bool
   async get(id) {
     const response = await divisionsApi.get(id, { fields: "id,name,code,slug,division_type,is_active" });
     return response.data ? divisionOption(response.data) : null;
+  },
+};
+
+export const wingRelationshipAdapter: RelationshipAdapter<{ division_id?: string; is_active?: boolean }> = {
+  key: "wing",
+  entityType: "wing",
+  label: "Wing",
+  pluralLabel: "Wings",
+  searchPlaceholder: "Search wings by name or code",
+  emptyLabel: "No wings found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await wingsApi.listAdmin({
+      per_page: 100,
+      division_id: filters?.division_id || undefined,
+      is_active: filters?.is_active ?? undefined,
+      fields: "id,name,code,slug,division_id,is_active",
+    });
+    return limitOptions((response.data ?? []).map(wingOption).filter((option) => matches(option, search)), limit);
+  },
+  async get(id) {
+    const response = await wingsApi.get(id, { fields: "id,name,code,slug,division_id,is_active" });
+    return response.data ? wingOption(response.data) : null;
   },
 };
 
@@ -1242,6 +1275,7 @@ export const relationshipAdapters = {
   programme: programmeRelationshipAdapter,
   academicCalendar: academicCalendarRelationshipAdapter,
   division: divisionRelationshipAdapter,
+  wing: wingRelationshipAdapter,
   intake: intakeRelationshipAdapter,
   governanceBoard: governanceBoardRelationshipAdapter,
   sliderGroup: sliderGroupRelationshipAdapter,

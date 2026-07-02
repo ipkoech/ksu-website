@@ -29,6 +29,7 @@ import type {
   Division,
   Wing,
   Department,
+  DepartmentService,
   Programme,
   Club,
   Accommodation,
@@ -640,6 +641,38 @@ export const departmentsApi = {
     mainApi.patch<{ data: Department }>(`/api/v1/departments/${id}`, data),
 
   delete: (id: string) => mainApi.delete<void>(`/api/v1/departments/${id}`),
+};
+
+// Department Services
+export const departmentServicesApi = {
+  listAdmin: (
+    params?: ListParams<{
+      department_id?: string;
+      search?: string;
+      is_active?: boolean;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<DepartmentService>>(
+      "/api/v1/department-services/admin",
+      params,
+    ),
+
+  get: (id: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: DepartmentService }>(
+      `/api/v1/department-services/${id}`,
+      params,
+    ),
+
+  create: (data: Partial<DepartmentService>) =>
+    mainApi.post<{ data: DepartmentService }>("/api/v1/department-services", data),
+
+  update: (id: string, data: Partial<DepartmentService>) =>
+    mainApi.patch<{ data: DepartmentService }>(
+      `/api/v1/department-services/${id}`,
+      data,
+    ),
+
+  delete: (id: string) => mainApi.delete<void>(`/api/v1/department-services/${id}`),
 };
 
 // Programmes

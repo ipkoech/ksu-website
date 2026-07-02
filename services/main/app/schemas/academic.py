@@ -180,6 +180,7 @@ class DepartmentCreate(BaseSchema):
     email: str | None = Field(default=None, max_length=320)
     phone: PhoneStr | None = None
     office_location: str | None = Field(default=None, max_length=255)
+    address: str | None = None
     cover_image_id: uuid.UUID | None = None
     student_count: int = 0
     postgraduate_student_count: int = 0
@@ -205,6 +206,36 @@ class DepartmentServiceRead(BaseReadSchema):
     display_order: int
 
 
+class DepartmentServiceCreate(BaseSchema):
+    department_id: uuid.UUID
+    name: str = Field(min_length=1, max_length=255)
+    slug: SlugStr | None = None
+    description: str | None = None
+    requirements: str | None = None
+    process: str | None = None
+    turnaround_time: str | None = Field(default=None, max_length=128)
+    fee: str | None = Field(default=None, max_length=128)
+    contact_email: str | None = Field(default=None, max_length=320)
+    contact_phone: PhoneStr | None = None
+    is_active: bool = True
+    display_order: int = 100
+
+
+class DepartmentServiceUpdate(BaseSchema):
+    department_id: uuid.UUID | None = None
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    slug: SlugStr | None = None
+    description: str | None = None
+    requirements: str | None = None
+    process: str | None = None
+    turnaround_time: str | None = Field(default=None, max_length=128)
+    fee: str | None = Field(default=None, max_length=128)
+    contact_email: str | None = Field(default=None, max_length=320)
+    contact_phone: PhoneStr | None = None
+    is_active: bool | None = None
+    display_order: int | None = None
+
+
 class DepartmentRead(BaseReadSchema):
     name: str
     slug: str
@@ -227,6 +258,7 @@ class DepartmentRead(BaseReadSchema):
     email: str | None = None
     phone: str | None = None
     office_location: str | None = None
+    address: str | None = None
     cover_image_id: uuid.UUID | None = None
     cover_image: dict[str, Any] | None = None
     school: dict[str, Any] | None = None
@@ -268,6 +300,7 @@ class DepartmentUpdate(BaseSchema):
     email: str | None = Field(default=None, max_length=320)
     phone: PhoneStr | None = None
     office_location: str | None = Field(default=None, max_length=255)
+    address: str | None = None
     cover_image_id: uuid.UUID | None = None
     student_count: int | None = None
     postgraduate_student_count: int | None = None

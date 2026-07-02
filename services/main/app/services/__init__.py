@@ -1,7 +1,7 @@
 """Main service layer exports."""
 
 from .admissions import AdmissionInfoService, IntakeService, ProgrammeService
-from .academic import CampusService, DepartmentService, SchoolService
+from .academic import CampusService, DepartmentService, DepartmentServiceCatalogService, SchoolService
 from .alumni import AlumniAssociationService, AlumniService
 from .audit import AuditService
 from .analytics import AnalyticsService
@@ -52,6 +52,7 @@ __all__ = [
     "CampusService",
     "SchoolService",
     "DepartmentService",
+    "DepartmentServiceCatalogService",
     "ProgrammeService",
     "IntakeService",
     "AdmissionInfoService",
