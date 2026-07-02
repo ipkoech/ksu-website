@@ -12,7 +12,8 @@ import {
   Sprout,
 } from "lucide-react";
 import { researchServiceApi, type ResearchGenericRecord, type ResearchProject } from "@ksu/api-client";
-import { Badge, PrimaryLink, ResearchSection, SecondaryLink, StatusMessage } from "../../components/research-ui";
+import { Badge, ResearchSection, StatusMessage } from "../../components/research-ui";
+import { FundingIllustratedHero, fundingIcons } from "../../components/funding-ui";
 import {
   compactText,
   formatLabel,
@@ -145,7 +146,7 @@ export default async function DonatePage({
   const featuredImpact = impacts.data[0];
 
   return (
-    <main id="research-main" className="min-h-screen bg-white">
+    <main id="research-main" className="min-h-screen bg-slate-50">
       <DonateMasthead
         priorityCount={priorities.length}
         impactCount={impacts.data.length}
@@ -201,7 +202,10 @@ export default async function DonatePage({
             contactEmail={donationSettings.contactEmail}
             onlineGivingUrl={donationSettings.onlineGivingUrl}
           />
-          <ImpactFeature impact={featuredImpact} />
+          <div className="grid gap-5">
+            <DonationAccountPanel bank={donationSettings.bank} contactEmail={donationSettings.contactEmail} />
+            {featuredImpact ? <ImpactFeature impact={featuredImpact} /> : null}
+          </div>
         </div>
       </ResearchSection>
 
@@ -233,39 +237,22 @@ function DonateMasthead({
   currency: string;
   contactHref: string;
 }) {
-  const stats = [
-    { label: "Giving priorities", value: priorityCount },
-    { label: "Impact reports", value: impactCount },
-    { label: "Currency", value: currency },
-  ];
-
   return (
-    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
-        <div>
-          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
-            <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-900">Donate</span>
-          </nav>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Research Giving</p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">Support research that serves communities</h1>
-          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">Give to published projects, student discovery, innovation, community extension, sustainability work, facilities, or endowment funds.</p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <PrimaryLink href="/donate#make-a-gift">Give now</PrimaryLink>
-            <SecondaryLink href={contactHref}>Discuss major gift</SecondaryLink>
-          </div>
-        </div>
-        <dl className="grid gap-2 sm:grid-cols-3">
-          {stats.map((stat) => (
-            <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-              <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
-              <dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </section>
+    <FundingIllustratedHero
+      eyebrow="Research Giving"
+      title="Support Research"
+      body="Give to published projects, student discovery, innovation, community extension, sustainability work, facilities, or endowment funds."
+      tone="donate"
+      actions={[
+        { label: "Give now", href: "/donate#make-a-gift" },
+        { label: "Discuss major gift", href: contactHref, variant: "secondary" },
+      ]}
+      facts={[
+        { label: "Giving priorities", value: priorityCount || "", icon: fundingIcons.check },
+        { label: "Impact reports", value: impactCount || "", icon: fundingIcons.award },
+        { label: "Currency", value: currency, icon: fundingIcons.money },
+      ]}
+    />
   );
 }
 
@@ -398,11 +385,7 @@ function DonationSuccessPanel({
                 </div>
               ))}
             </dl>
-          ) : (
-            <p className="mt-3 text-sm leading-6 text-slate-600">
-              Account details are not published yet. The giving office will share payment instructions by email.
-            </p>
-          )}
+          ) : null}
           <p className="mt-4 text-sm leading-6 text-slate-600">
             {bank.instructions || `For payment instructions, contact ${contactEmail}.`}
           </p>
@@ -751,6 +734,55 @@ function DonationForm({
   );
 }
 
+function DonationAccountPanel({
+  bank,
+  contactEmail,
+}: {
+  bank: DonationBankDetails;
+  contactEmail: string;
+}) {
+  const accountRows = [
+    { label: "Bank", value: bank.bankName },
+    { label: "Account name", value: bank.accountName },
+    { label: "Account number", value: bank.accountNumber },
+    { label: "SWIFT code", value: bank.swiftCode },
+    { label: "Branch", value: bank.branch },
+  ].filter((row) => row.value);
+
+  if (accountRows.length === 0 && !bank.instructions && !contactEmail) return null;
+
+  return (
+    <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-start gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+          <Banknote aria-hidden className="h-5 w-5" />
+        </span>
+        <div>
+          <Badge>Payment details</Badge>
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-8 text-slate-950">
+            Donation account details
+          </h2>
+        </div>
+      </div>
+      {accountRows.length > 0 ? (
+        <dl className="mt-5 divide-y divide-slate-200">
+          {accountRows.map((row) => (
+            <div key={row.label} className="grid gap-1 py-3 first:pt-0 sm:grid-cols-[128px_1fr]">
+              <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{row.label}</dt>
+              <dd className="break-words text-sm font-semibold text-slate-950">{row.value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+      {bank.instructions || contactEmail ? (
+        <p className="mt-4 rounded-md bg-slate-50 p-3 text-sm leading-6 text-slate-600">
+          {bank.instructions || `For payment instructions, contact ${contactEmail}.`}
+        </p>
+      ) : null}
+    </aside>
+  );
+}
+
 function InputField({
   name,
   label,
@@ -793,12 +825,11 @@ function ImpactFeature({ impact }: { impact?: ResearchGenericRecord }) {
       <div className="p-5">
         <Badge>{formatLabel(impact?.impact_type ?? "impact")}</Badge>
         <h2 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
-          {impact?.title ?? "Impact published back to donors"}
+          {impact?.title ?? impact?.name ?? "Research impact"}
         </h2>
         <p className="mt-3 text-sm leading-7 text-slate-600">
           {compactText(impact?.summary) ||
-            compactText(impact?.description) ||
-            "Donation impact reports show how gifts support projects, students, facilities, and community outcomes."}
+            compactText(impact?.description)}
         </p>
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           <MiniFact label="Raised" value={formatMoney(impact?.total_raised, impact?.currency)} />
@@ -853,10 +884,11 @@ function MajorGiftPanel({ contactHref }: { contactHref: string }) {
 }
 
 function MiniFact({ label, value }: { label: string; value: string }) {
+  if (!value) return null;
   return (
     <div className="rounded-md bg-slate-50 p-3">
       <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
-      <p className="mt-1 font-semibold text-slate-950">{value || "Not published"}</p>
+      <p className="mt-1 font-semibold text-slate-950">{value}</p>
     </div>
   );
 }

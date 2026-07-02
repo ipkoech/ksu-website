@@ -4,11 +4,10 @@ import { ResearchFilterForm, ResearchRecordRow } from "../../components/research
 import {
   Badge,
   FilledBadge,
-  PrimaryLink,
   ResearchSection,
-  SecondaryLink,
   StatusMessage,
 } from "../../components/research-ui";
+import { FundingIllustratedHero, formatMoney, fundingIcons } from "../../components/funding-ui";
 import {
   compactText,
   formatDate,
@@ -90,7 +89,7 @@ export default async function EndowmentsPage({
     : visibleEndowments;
 
   return (
-    <main id="research-main" className="min-h-screen bg-white">
+    <main id="research-main" className="min-h-screen bg-slate-50">
       <EndowmentsMasthead
         resultCount={visibleEndowments.length}
         publishedCount={allEndowments.data.length}
@@ -144,12 +143,11 @@ export default async function EndowmentsPage({
               <h2 className="mt-4 text-xl font-semibold text-slate-950">
                 {funder.name ?? funder.title}
               </h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                {compactText(funder.about) ||
-                  compactText(funder.summary) ||
-                  compactText(funder.description) ||
-                  "Funder profile will appear when published."}
-              </p>
+              {compactText(funder.about) || compactText(funder.summary) || compactText(funder.description) ? (
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {compactText(funder.about) || compactText(funder.summary) || compactText(funder.description)}
+                </p>
+              ) : null}
             </article>
           ))}
         </div>
@@ -197,42 +195,23 @@ function EndowmentsMasthead({
   fundersCount: number;
   fundTypeCount: number;
 }) {
-  const stats = [
-    { label: "Endowment results", value: resultCount },
-    { label: "Published endowments", value: publishedCount },
-    { label: "Funders", value: fundersCount },
-    { label: "Fund types", value: fundTypeCount },
-  ];
-
   return (
-    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
-        <div>
-          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
-            <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-slate-300">/</span>
-            <Link href="/innovations" className="transition hover:text-primary">Innovation & Partnerships</Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-900">Endowments</span>
-          </nav>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Innovation & Partnerships</p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">Permanent research funds, named endowments, and long-term giving initiatives</h1>
-          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">Scan purpose, donor context, contribution status, current value, annual distribution, and eligibility from published fund records.</p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <PrimaryLink href="/donate">Support research</PrimaryLink>
-            <SecondaryLink href="/partners">View partners</SecondaryLink>
-          </div>
-        </div>
-        <dl className="grid gap-2 sm:grid-cols-2">
-          {stats.map((stat) => (
-            <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-              <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
-              <dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </section>
+    <FundingIllustratedHero
+      eyebrow="Funding / Endowments"
+      title="Research Endowments"
+      body="Scan purpose, donor context, contribution status, current value, annual distribution, and eligibility from published fund records."
+      tone="endowment"
+      actions={[
+        { label: "Support research", href: "/donate" },
+        { label: "View partners", href: "/partners", variant: "secondary" },
+      ]}
+      facts={[
+        { label: "Results", value: resultCount || "", icon: fundingIcons.check },
+        { label: "Published", value: publishedCount || "", icon: fundingIcons.award },
+        { label: "Funders", value: fundersCount || "", icon: fundingIcons.bank },
+        { label: "Fund types", value: fundTypeCount || "", icon: fundingIcons.money },
+      ]}
+    />
   );
 }
 
@@ -251,22 +230,21 @@ function FeaturedEndowment({ fund }: { fund: ResearchGenericRecord }) {
         <h2 className="mt-3 text-lg font-semibold leading-7 text-slate-950">
           {getRecordTitle(fund, "Endowment fund")}
         </h2>
-        <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+        {compactText(fund.purpose) || getRecordSummary(fund) || compactText(fund.donor_message) ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
           {compactText(fund.purpose) ||
             getRecordSummary(fund) ||
-            compactText(fund.donor_message) ||
-            "Endowment purpose has not been published yet."}
-        </p>
+            compactText(fund.donor_message)}
+        </p> : null}
       </div>
       <dl className="grid gap-2 text-sm">
-        <div className="rounded-md bg-white p-2.5">
+        {formatMoney(fund.current_value, fund.currency) ? <div className="rounded-md bg-white p-2.5">
           <dt className="text-xs font-semibold uppercase text-slate-500">Current value</dt>
-          <dd className="mt-1 font-semibold text-slate-950">{formatMoney(fund.current_value, fund.currency) || "Not published"}</dd>
-        </div>
-        <div className="rounded-md bg-white p-2.5">
+          <dd className="mt-1 font-semibold text-slate-950">{formatMoney(fund.current_value, fund.currency)}</dd>
+        </div> : null}
+        {formatDate(fund.established_date) ? <div className="rounded-md bg-white p-2.5">
           <dt className="text-xs font-semibold uppercase text-slate-500">Established</dt>
-          <dd className="mt-1 font-semibold text-slate-950">{formatDate(fund.established_date) || "Not published"}</dd>
-        </div>
+          <dd className="mt-1 font-semibold text-slate-950">{formatDate(fund.established_date)}</dd>
+        </div> : null}
       </dl>
       <span className="inline-flex min-h-10 items-center justify-center rounded-md border border-primary/20 px-3 text-sm font-semibold text-primary transition group-hover:bg-primary group-hover:text-white">
         Open fund
@@ -283,8 +261,7 @@ function EndowmentRow({ fund }: { fund: ResearchGenericRecord }) {
       description={
         compactText(fund.purpose) ||
         getRecordSummary(fund) ||
-        compactText(fund.donor_message) ||
-        "Endowment purpose has not been published yet."
+        compactText(fund.donor_message)
       }
       badges={[fund.fund_type ?? "fund", fund.status]}
       filledBadges={[fund.is_featured ? "Featured" : null, fund.is_accepting_contributions ? "Accepting contributions" : null]}
@@ -295,13 +272,6 @@ function EndowmentRow({ fund }: { fund: ResearchGenericRecord }) {
       ]}
     />
   );
-}
-
-function formatMoney(value?: string | number | null, currency?: string | null) {
-  if (value === null || value === undefined || value === "") return "";
-  const amount = Number(value);
-  if (Number.isNaN(amount)) return compactText(value);
-  return `${currency ?? "KES"} ${new Intl.NumberFormat("en-KE").format(amount)}`;
 }
 
 function getActiveFlags(value?: string) {

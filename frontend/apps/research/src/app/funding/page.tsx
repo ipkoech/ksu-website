@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ResearchSidePanel } from "../../components/research-detail";
-import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
+import { ResearchFilterForm } from "../../components/research-listing";
 import {
   Badge,
   FilledBadge,
-  PrimaryLink,
   ResearchSection,
-  SecondaryLink,
   StatusMessage,
 } from "../../components/research-ui";
+import {
+  DeadlineStatusBadge,
+  FundingIllustratedHero,
+  FundingSidebar,
+  getDeadlineState,
+} from "../../components/funding-ui";
 import { getResearchRecordDownloadHref } from "../../lib/research-downloads";
 import {
   compactText,
@@ -26,6 +29,13 @@ import {
   getRecordYears,
 } from "../../lib/research-page-model";
 import type { ResearchGenericRecord, ResearchGrant } from "@ksu/api-client";
+import {
+  ArrowRight,
+  ExternalLink,
+  FileText,
+  Landmark,
+  ShieldCheck,
+} from "lucide-react";
 
 export const revalidate = 300;
 
@@ -112,7 +122,7 @@ export default async function FundingPage({
   const externalGrants = visibleGrants.filter((grant) => grant.grant_type === "external");
 
   return (
-    <main id="research-main" className="min-h-screen bg-white">
+    <main id="research-main" className="min-h-screen bg-slate-50">
       <FundingMasthead
         resultCount={visibleGrants.length}
         publishedCount={allGrants.data.length}
@@ -145,24 +155,24 @@ export default async function FundingPage({
 
         {visibleGrants.length > 0 ? (
           <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-            <div>
+            <div className="min-w-0">
               {featuredGrant ? (
                 <div className="mb-6">
                   <FeaturedGrant grant={featuredGrant} />
                 </div>
               ) : null}
-              <div className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
+              {rowGrants.length > 0 ? <div className="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
                 {rowGrants.map((grant) => (
                   <GrantRow key={grant.id} grant={grant} />
                 ))}
-              </div>
+              </div> : null}
             </div>
-            <aside className="flex flex-col gap-5">
+            {[...guidelines.data, ...resources.data].length > 0 ? <aside className="flex flex-col gap-5">
               <SupportPanel
                 title="Downloadable guidance"
                 records={[...guidelines.data, ...resources.data].slice(0, 8)}
               />
-            </aside>
+            </aside> : null}
           </div>
         ) : (
           <div className="mt-7">
@@ -189,61 +199,25 @@ function FundingMasthead({
   guidanceCount: number;
   resourcesCount: number;
 }) {
-  const stats = [
-    { label: "Funding results", value: resultCount },
-    { label: "Published grants", value: publishedCount },
-    { label: "Internal grants", value: internalCount },
-    { label: "External calls", value: externalCount },
-  ];
-
   return (
-    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
-        <div>
-          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
-            <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-slate-300">/</span>
-            <Link href="/resources-tools" className="transition hover:text-primary">Funding & Support</Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-900">Funding</span>
-          </nav>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
-            Funding & Support
-          </p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
-            Grant calls, internal funding, and research support opportunities
-          </h1>
-          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">
-            Review internal grants administered through Kisii University and external funder calls with deadlines, eligibility notes, documents, and application routes.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <PrimaryLink href="/guidelines">Open guidelines</PrimaryLink>
-            <SecondaryLink href="/forms">View forms</SecondaryLink>
-          </div>
-        </div>
-        <dl className="grid gap-2 sm:grid-cols-2">
-          {stats.map((stat) => (
-            <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-              <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
-              <dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd>
-            </div>
-          ))}
-        </dl>
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Support records</p>
-          <dl className="mt-3 grid gap-2 sm:grid-cols-2">
-            <div className="rounded-md bg-white px-3 py-2">
-              <dt className="text-[11px] font-semibold uppercase text-slate-500">Guidance</dt>
-              <dd className="mt-1 text-lg font-semibold text-slate-950">{guidanceCount}</dd>
-            </div>
-            <div className="rounded-md bg-white px-3 py-2">
-              <dt className="text-[11px] font-semibold uppercase text-slate-500">Resources</dt>
-              <dd className="mt-1 text-lg font-semibold text-slate-950">{resourcesCount}</dd>
-            </div>
-          </dl>
-        </div>
-      </div>
-    </section>
+    <FundingIllustratedHero
+      eyebrow="Funding & Support"
+      title="Funding Opportunities"
+      body="Review internal grants administered through Kisii University and external funder calls with deadlines, eligibility notes, documents, and application routes."
+      tone="grant"
+      actions={[
+        { label: "Open guidelines", href: "/guidelines" },
+        { label: "View forms", href: "/forms", variant: "secondary" },
+      ]}
+      facts={[
+        { label: "Results", value: resultCount || "", icon: FileText },
+        { label: "Published", value: publishedCount || "", icon: ShieldCheck },
+        { label: "Internal", value: internalCount || "", icon: Landmark },
+        { label: "External", value: externalCount || "", icon: ExternalLink },
+        { label: "Guidance", value: guidanceCount || "", icon: FileText },
+        { label: "Resources", value: resourcesCount || "", icon: FileText },
+      ]}
+    />
   );
 }
 
@@ -280,27 +254,24 @@ function GrantTypeSplit({
     },
   ];
 
+  const visibleItems = items.filter((item) => item.count > 0 || item.label === "All funding");
+
   return (
-    <div className="mb-5 grid gap-3 lg:grid-cols-3">
-      {items.map((item) => (
+    <div className="mb-5 flex flex-wrap gap-2">
+      {visibleItems.map((item) => (
         <Link
           key={item.label}
           href={item.href}
           className={
             item.active
-              ? "rounded-lg border border-primary bg-primary/[0.04] p-4 shadow-sm"
-              : "rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30"
+              ? "inline-flex min-h-10 items-center gap-3 rounded-md border border-primary bg-primary px-4 text-sm font-semibold text-white shadow-sm"
+              : "inline-flex min-h-10 items-center gap-3 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-primary/30 hover:text-primary"
           }
         >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-base font-semibold text-slate-950">{item.label}</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
-            </div>
-            <span className={item.active ? "rounded-md bg-primary px-3 py-1 text-sm font-semibold text-white" : "rounded-md bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700"}>
-              {item.count}
-            </span>
-          </div>
+          {item.label}
+          <span className={item.active ? "rounded bg-white/15 px-2 py-0.5 text-white" : "rounded bg-slate-100 px-2 py-0.5 text-slate-700"}>
+            {item.count}
+          </span>
         </Link>
       ))}
     </div>
@@ -344,8 +315,8 @@ function FeaturedGrant({ grant }: { grant: ResearchGrant }) {
       href={grant.slug ? `/funding/${grant.slug}` : "/funding"}
       className={
         isInternal
-          ? "group grid gap-4 rounded-lg border-2 border-primary bg-primary/[0.04] p-4 shadow-sm transition hover:bg-primary/[0.07] lg:grid-cols-[minmax(0,1fr)_260px_auto] lg:items-center"
-          : "group grid gap-4 rounded-lg border border-amber-300 bg-amber-50/50 p-4 shadow-sm transition hover:border-amber-400 lg:grid-cols-[minmax(0,1fr)_260px_auto] lg:items-center"
+          ? "group grid gap-4 rounded-lg border-2 border-primary bg-primary/[0.04] p-4 shadow-sm transition hover:bg-primary/[0.07] lg:grid-cols-[minmax(0,1fr)_280px_auto] lg:items-center"
+          : "group grid gap-4 rounded-lg border border-amber-300 bg-amber-50/50 p-4 shadow-sm transition hover:border-amber-400 lg:grid-cols-[minmax(0,1fr)_280px_auto] lg:items-center"
       }
     >
       <GrantRowContent grant={grant} featured />
@@ -356,24 +327,36 @@ function FeaturedGrant({ grant }: { grant: ResearchGrant }) {
 function GrantRow({ grant }: { grant: ResearchGrant }) {
   const deadline = getDeadlineState(grant.deadline, grant.status);
   const isInternal = grant.grant_type === "internal";
+  const href = grant.slug ? `/funding/${grant.slug}` : "/funding";
 
   return (
-    <ResearchRecordRow
-      href={grant.slug ? `/funding/${grant.slug}` : "/funding"}
-      title={grant.title}
-      description={
-        compactText(grant.summary) ||
-        compactText((grant as ResearchGenericRecord).description) ||
-        "Funding details have not been published yet."
-      }
-      badges={[grant.grant_type, grant.category, grant.status]}
-      filledBadges={[isInternal ? deadline.label : null, grant.is_featured ? "Featured" : null]}
-      facts={[
-        { label: "Funder", value: compactText(grant.funder_name) },
-        { label: deadline.label, value: deadline.value },
-        { label: "Award range", value: formatAwardRange(grant as ResearchGenericRecord) },
-      ]}
-    />
+    <Link href={href} className="group grid gap-3 px-4 py-3 transition hover:bg-primary/[0.03] lg:grid-cols-[minmax(0,1fr)_180px_190px_120px] lg:items-center">
+      <div className="min-w-0">
+        <div className="flex flex-wrap gap-2">
+          <Badge>{formatLabel(grant.grant_type ?? "internal")}</Badge>
+          {grant.category ? <Badge>{formatLabel(grant.category)}</Badge> : null}
+          {isInternal ? <DeadlineStatusBadge deadline={deadline} /> : null}
+          {grant.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
+        </div>
+        <h2 className="mt-2 line-clamp-1 text-sm font-semibold text-slate-950 group-hover:text-primary">{grant.title}</h2>
+        {compactText(grant.summary) || compactText((grant as ResearchGenericRecord).description) ? (
+          <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">
+            {compactText(grant.summary) || compactText((grant as ResearchGenericRecord).description)}
+          </p>
+        ) : null}
+      </div>
+      <div className="text-sm">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Funder</p>
+        <p className="mt-1 line-clamp-1 font-semibold text-slate-800">{compactText(grant.funder_name) || formatLabel(grant.grant_type ?? "funding")}</p>
+      </div>
+      <div className="text-sm">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{isInternal ? deadline.label : "Deadline"}</p>
+        <p className="mt-1 font-semibold text-slate-800">{deadline.value || formatDate(grant.deadline)}</p>
+      </div>
+      <span className="inline-flex items-center justify-start gap-2 text-sm font-semibold text-primary lg:justify-end">
+        Open <ArrowRight aria-hidden className="h-4 w-4 transition group-hover:translate-x-1" />
+      </span>
+    </Link>
   );
 }
 
@@ -393,14 +376,14 @@ function GrantRowContent({
         <div className="flex flex-wrap gap-2">
           <Badge>{formatLabel(grant.grant_type ?? "internal")}</Badge>
           <Badge>{formatLabel(grant.category ?? "research")}</Badge>
-          {isInternal ? <DeadlineStatusBadge deadline={deadline} size="large" /> : null}
+          {isInternal ? <DeadlineStatusBadge deadline={deadline} large /> : null}
           {featured || grant.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
         </div>
         <h2 className="mt-3 text-lg font-semibold leading-7 text-slate-950">{grant.title}</h2>
         <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
           {compactText(grant.summary) ||
             compactText((grant as ResearchGenericRecord).description) ||
-            "Funding details have not been published yet."}
+            ""}
         </p>
       </div>
       <dl className="grid gap-2 text-sm">
@@ -410,11 +393,11 @@ function GrantRowContent({
             <dd className="mt-1 text-lg font-semibold text-slate-950">{deadline.value}</dd>
           </div>
         ) : null}
-        <div className="rounded-md bg-white p-2.5">
+        {compactText(grant.funder_name) ? <div className="rounded-md bg-white p-2.5">
           <dt className="text-xs font-semibold uppercase text-slate-500">Funder</dt>
-          <dd className="mt-1 font-semibold text-slate-950">{compactText(grant.funder_name) || "Not published"}</dd>
-        </div>
-        {!isInternal ? <div className="rounded-md bg-white p-2.5">
+          <dd className="mt-1 font-semibold text-slate-950">{compactText(grant.funder_name)}</dd>
+        </div> : null}
+        {!isInternal && deadline.value ? <div className="rounded-md bg-white p-2.5">
           <dt className="text-xs font-semibold uppercase text-slate-500">{deadline.label}</dt>
           <dd className="mt-1 font-semibold text-slate-950">{deadline.value}</dd>
         </div> : null}
@@ -426,30 +409,6 @@ function GrantRowContent({
   );
 }
 
-function DeadlineStatusBadge({
-  deadline,
-  size = "normal",
-}: {
-  deadline: ReturnType<typeof getDeadlineState>;
-  size?: "normal" | "large";
-}) {
-  const tone = deadline.tone;
-  const className =
-    tone === "closed"
-      ? "border-slate-300 bg-slate-100 text-slate-700"
-      : tone === "urgent"
-        ? "border-red-300 bg-red-50 text-red-700"
-        : tone === "soon"
-          ? "border-amber-300 bg-amber-50 text-amber-800"
-          : "border-primary/30 bg-primary/[0.08] text-primary";
-
-  return (
-    <span className={`inline-flex items-center rounded-md border font-semibold ${className} ${size === "large" ? "px-3 py-1.5 text-sm" : "px-2.5 py-1 text-xs"}`}>
-      {deadline.label}
-    </span>
-  );
-}
-
 function SupportPanel({
   title,
   records,
@@ -458,88 +417,36 @@ function SupportPanel({
   records: SupportRecord[];
 }) {
   return (
-    <ResearchSidePanel title={title}>
+    <FundingSidebar title={title}>
       <div className="divide-y divide-slate-200">
-        {records.map((record) => {
-          const downloadHref = getResearchRecordDownloadHref(record, record.resource_type ? "resource" : "guideline");
-          return (
-            <article key={compactText(record.id)} className="py-4 first:pt-0 last:pb-0">
-              <h3 className="text-sm font-semibold text-slate-950">
-                {compactText(record.title) || compactText(record.name)}
-              </h3>
-              <p className="mt-1 text-xs font-semibold uppercase text-slate-500">
-                {formatLabel(record.guideline_type ?? record.resource_type ?? record.category ?? "resource")}
-              </p>
-              {downloadHref ? (
-                <a href={downloadHref} className="mt-2 inline-flex text-sm font-semibold text-primary">
-                  Download
-                </a>
-              ) : null}
-            </article>
-          );
-        })}
-        {records.length === 0 ? (
-          <p className="py-4 text-sm text-slate-600">
-            Downloadable guidance will appear when resources are published.
-          </p>
-        ) : null}
+        {records.map((record) => (
+          <SupportPanelItem key={compactText(record.id)} record={record} />
+        ))}
       </div>
-    </ResearchSidePanel>
+    </FundingSidebar>
   );
 }
 
-function getDeadlineState(deadline?: string | null, status?: string) {
-  if (!deadline) {
-    return {
-      label: "Deadline",
-      value: "No deadline published",
-      tone: "open" as const,
-    };
-  }
-  const date = new Date(deadline);
-  const now = new Date();
-  const days = Math.ceil((date.getTime() - now.getTime()) / 86_400_000);
-  if (status === "closed" || days < 0) {
-    return {
-      label: "Closed",
-      value: formatDate(deadline),
-      tone: "closed" as const,
-    };
-  }
-  if (days === 0) {
-    return {
-      label: "Due today",
-      value: formatDate(deadline),
-      tone: "urgent" as const,
-    };
-  }
-  if (days <= 14) {
-    return {
-      label: "Closing soon",
-      value: `${formatDate(deadline)} · ${days} days left`,
-      tone: "soon" as const,
-    };
-  }
-  return {
-    label: "Open",
-    value: `${formatDate(deadline)} · ${days} days left`,
-    tone: "open" as const,
-  };
+function SupportPanelItem({ record }: { record: SupportRecord }) {
+  const downloadHref = getResearchRecordDownloadHref(record, record.resource_type ? "resource" : "guideline");
+  return (
+    <article className="py-4 first:pt-0 last:pb-0">
+      <h3 className="text-sm font-semibold text-slate-950">
+        {compactText(record.title) || compactText(record.name)}
+      </h3>
+      <p className="mt-1 text-xs font-semibold uppercase text-slate-500">
+        {formatLabel(record.guideline_type ?? record.resource_type ?? record.category ?? "resource")}
+      </p>
+      {downloadHref ? (
+        <a href={downloadHref} className="mt-2 inline-flex text-sm font-semibold text-primary">
+          Download
+        </a>
+      ) : null}
+    </article>
+  );
 }
 
-function formatAwardRange(grant: ResearchGenericRecord) {
-  const min = formatMoney(grant.min_award, grant.currency);
-  const max = formatMoney(grant.max_award, grant.currency);
-  if (min && max) return `${min} - ${max}`;
-  return min || max;
-}
 
-function formatMoney(value?: string | number | null, currency?: string | null) {
-  if (value === null || value === undefined || value === "") return "";
-  const amount = Number(value);
-  if (Number.isNaN(amount)) return compactText(value);
-  return `${currency ?? "KES"} ${new Intl.NumberFormat("en-KE").format(amount)}`;
-}
 
 function getActiveFlags(value?: string) {
   if (value === "inactive") return { isActive: false };

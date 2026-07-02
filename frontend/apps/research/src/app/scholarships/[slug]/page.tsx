@@ -1,11 +1,20 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { researchServiceApi } from "@ksu/api-client";
-import { ResearchDetailHero, ResearchDetailSidebar, ResearchRecordPanel } from "../../../components/research-detail";
+import { ResearchRecordPanel } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { ResearchStoryAccordion } from "../../../components/research-rich-text";
 import { compactText, formatDate, generateSlugParams, getScholarshipBySlug } from "../../../lib/research-public-data";
 import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
+import {
+  CompactFactGrid,
+  FundingIllustratedHero,
+  FundingSidebar,
+  formatMoney,
+  getDeadlineState,
+  DeadlineStatusBadge,
+  fundingIcons,
+} from "../../../components/funding-ui";
 
 export const revalidate = 300;
 
@@ -30,15 +39,37 @@ export default async function ScholarshipDetailPage({ params }: { params: Promis
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchDetailHero eyebrow="Scholarship Call" title={title} body={getRecordSummary(scholarship)} breadcrumbs={[{ label: "Home", href: "/" }, { label: "Scholarships", href: "/scholarships" }, { label: title }]} labels={[scholarship.scholarship_type, scholarship.status, scholarship.is_featured ? "featured" : null]} facts={[{ label: "Deadline", value: formatDate(scholarship.application_deadline) }, { label: "Value", value: formatMoney(scholarship.value, compactText(scholarship.currency) || "KES") }, { label: "Available", value: scholarship.number_available }, { label: "Funder", value: scholarship.funder_name }]} actions={[{ label: "Back to scholarships", href: "/scholarships", variant: "secondary" }, ...(compactText(scholarship.application_url) ? [{ label: "Apply online", href: compactText(scholarship.application_url) }] : [])]} imageSrc="/images/research/research-projects-hero.svg" imageAlt="Research scholarship call and application information" />
+      <FundingIllustratedHero
+        eyebrow="Scholarship Call"
+        title={title}
+        body={getRecordSummary(scholarship)}
+        tone="scholarship"
+        facts={[
+          { label: "Deadline", value: formatDate(scholarship.application_deadline), icon: fundingIcons.calendar },
+          { label: "Value", value: formatMoney(scholarship.value, compactText(scholarship.currency) || "KES"), icon: fundingIcons.money },
+          { label: "Available", value: scholarship.number_available, icon: fundingIcons.award },
+          { label: "Funder", value: scholarship.funder_name, icon: fundingIcons.bank },
+        ]}
+        actions={[{ label: "Back to scholarships", href: "/scholarships", variant: "secondary" }, ...(compactText(scholarship.application_url) ? [{ label: "Apply online", href: compactText(scholarship.application_url) }] : [])]}
+      />
       {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}
       <ResearchSection eyebrow="Application Brief" title="Eligibility, benefits, and deadline" body="Published scholarship fields are grouped into a compact application story with deadlines, value, documents, and contact context nearby." tone="white">
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-5">
+            <ScholarshipDeadlinePanel scholarship={scholarship} />
+            <CompactFactGrid
+              facts={[
+                { label: "Applications open", value: formatDate(scholarship.application_open), icon: fundingIcons.calendar },
+                { label: "Deadline", value: formatDate(scholarship.application_deadline), icon: fundingIcons.calendar },
+                { label: "Award date", value: formatDate(scholarship.award_date), icon: fundingIcons.award },
+                { label: "Duration", value: scholarship.duration_months ? `${scholarship.duration_months} months` : "", icon: fundingIcons.check },
+              ]}
+            />
             <ScholarshipStory sections={storySections} />
-            <ResearchRecordPanel title="Documents" records={documents} empty="No scholarship documents are linked yet." />
+            {documents.length > 0 ? <ResearchRecordPanel title="Documents" records={documents} empty="" /> : null}
           </div>
-          <ResearchDetailSidebar
+          <FundingSidebar
+            title="Scholarship facts"
             labels={[scholarship.scholarship_type ?? "scholarship", scholarship.status]}
             facts={[
               { label: "Deadline", value: formatDate(scholarship.application_deadline) },
@@ -77,6 +108,23 @@ function ScholarshipStory({ sections }: { sections: Array<{ title: string; body:
   );
 }
 
+function ScholarshipDeadlinePanel({ scholarship }: { scholarship: ResearchGenericRecord }) {
+  const deadline = getDeadlineState(compactText(scholarship.application_deadline), compactText(scholarship.status));
+  if (!deadline.value) return null;
+  return (
+    <section className="rounded-lg border-2 border-primary bg-primary/[0.04] p-5 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Application deadline</p>
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">{deadline.label}</h2>
+          <p className="mt-2 text-lg font-semibold text-slate-800">{deadline.value}</p>
+        </div>
+        <DeadlineStatusBadge deadline={deadline} large />
+      </div>
+    </section>
+  );
+}
+
 function CoveragePanel({ scholarship }: { scholarship: ResearchGenericRecord }) {
   const items = [
     ["Tuition", scholarship.covers_tuition ? "Covered" : ""],
@@ -86,14 +134,14 @@ function CoveragePanel({ scholarship }: { scholarship: ResearchGenericRecord }) 
     ["Renewable", scholarship.renewable ? "Yes" : ""],
   ].filter(([, value]) => value);
 
+  if (items.length === 0) return null;
+
   return (
     <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-xl font-semibold text-slate-950">Coverage</h2>
-      {items.length ? (
-        <dl className="mt-4 grid gap-3 text-sm">
-          {items.map(([label, value]) => <div key={label} className="rounded-md bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt><dd className="mt-1 font-semibold text-slate-950">{value}</dd></div>)}
-        </dl>
-      ) : <p className="mt-3 text-sm leading-7 text-slate-600">Coverage details are not published yet.</p>}
+      <dl className="mt-4 grid gap-3 text-sm">
+        {items.map(([label, value]) => <div key={label} className="rounded-md bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt><dd className="mt-1 font-semibold text-slate-950">{value}</dd></div>)}
+      </dl>
     </section>
   );
 }
@@ -106,20 +154,14 @@ function ContactPanel({ scholarship, applicationCount }: { scholarship: Research
     ["Application records", applicationCount ? `${applicationCount} submitted records` : ""],
   ].filter(([, value]) => value);
 
+  if (items.length === 0) return null;
+
   return (
     <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-xl font-semibold text-slate-950">Contact</h2>
-      {items.length ? (
-        <dl className="mt-4 grid gap-3 text-sm">
-          {items.map(([label, value]) => <div key={label} className="rounded-md bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt><dd className="mt-1 break-words font-semibold text-slate-950">{value}</dd></div>)}
-        </dl>
-      ) : <p className="mt-3 text-sm leading-7 text-slate-600">Contact details are not published yet.</p>}
+      <dl className="mt-4 grid gap-3 text-sm">
+        {items.map(([label, value]) => <div key={label} className="rounded-md bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt><dd className="mt-1 break-words font-semibold text-slate-950">{value}</dd></div>)}
+      </dl>
     </section>
   );
-}
-
-function formatMoney(value?: string | number | null, currency = "KES") {
-  if (value === null || value === undefined || value === "") return "";
-  const amount = Number(value);
-  return Number.isNaN(amount) ? compactText(value) : `${currency} ${new Intl.NumberFormat("en-KE").format(amount)}`;
 }

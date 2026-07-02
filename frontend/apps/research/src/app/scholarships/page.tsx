@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
-import { Badge, FilledBadge, PrimaryLink, ResearchSection, SecondaryLink, StatusMessage } from "../../components/research-ui";
+import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
+import { FundingIllustratedHero, formatMoney, getDeadlineState, DeadlineStatusBadge, fundingIcons } from "../../components/funding-ui";
 import { compactText, formatDate, formatLabel, getScholarships, getScholarshipsFiltered } from "../../lib/research-public-data";
 import { filterRecordsByMonth, getRecordMonths, getRecordSummary, getRecordTimelineLabel, getRecordTitle, getRecordYears } from "../../lib/research-page-model";
 
@@ -55,7 +56,7 @@ export default async function ScholarshipsPage({ searchParams }: { searchParams?
     : visibleScholarships;
 
   return (
-    <main id="research-main" className="min-h-screen bg-white">
+    <main id="research-main" className="min-h-screen bg-slate-50">
       <ScholarshipsMasthead
         resultCount={visibleScholarships.length}
         publishedCount={allScholarships.data.length}
@@ -79,37 +80,23 @@ export default async function ScholarshipsPage({ searchParams }: { searchParams?
 }
 
 function ScholarshipsMasthead({ resultCount, publishedCount, typeCount, statusCount }: { resultCount: number; publishedCount: number; typeCount: number; statusCount: number }) {
-  const stats = [
-    { label: "Scholarship results", value: resultCount },
-    { label: "Published scholarships", value: publishedCount },
-    { label: "Scholarship types", value: typeCount },
-    { label: "Statuses", value: statusCount },
-  ];
-
   return (
-    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
-        <div>
-          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
-            <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-slate-300">/</span>
-            <Link href="/funding" className="transition hover:text-primary">Funding</Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-900">Scholarships</span>
-          </nav>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Funding / Support</p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">Research scholarships, student funding calls, and fellowship opportunities</h1>
-          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">Compare eligibility, award value, coverage, deadlines, funders, and direct application paths from published scholarship records.</p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <PrimaryLink href="/funding">View funding</PrimaryLink>
-            <SecondaryLink href="/guidelines">Read guidelines</SecondaryLink>
-          </div>
-        </div>
-        <dl className="grid gap-2 sm:grid-cols-2">
-          {stats.map((stat) => <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2"><dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt><dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd></div>)}
-        </dl>
-      </div>
-    </section>
+    <FundingIllustratedHero
+      eyebrow="Funding / Support"
+      title="Research Scholarships"
+      body="Compare eligibility, award value, coverage, deadlines, funders, and direct application paths from published scholarship records."
+      tone="scholarship"
+      actions={[
+        { label: "View funding", href: "/funding" },
+        { label: "Read guidelines", href: "/guidelines", variant: "secondary" },
+      ]}
+      facts={[
+        { label: "Results", value: resultCount || "", icon: fundingIcons.check },
+        { label: "Published", value: publishedCount || "", icon: fundingIcons.award },
+        { label: "Types", value: typeCount || "", icon: fundingIcons.money },
+        { label: "Statuses", value: statusCount || "", icon: fundingIcons.calendar },
+      ]}
+    />
   );
 }
 
@@ -135,6 +122,7 @@ function ScholarshipFilters({ params, years, months }: { params: ScholarshipPara
 
 function FeaturedScholarship({ item }: { item: ResearchGenericRecord }) {
   const value = formatMoney(item.value, compactText(item.currency) || "KES");
+  const deadline = getDeadlineState(compactText(item.application_deadline), compactText(item.status));
   const coverage = [
     item.covers_tuition ? "Tuition" : "",
     item.covers_stipend ? "Stipend" : "",
@@ -147,15 +135,16 @@ function FeaturedScholarship({ item }: { item: ResearchGenericRecord }) {
         <div className="flex flex-wrap gap-2">
           <Badge>{formatLabel(item.scholarship_type ?? "scholarship")}</Badge>
           {item.status ? <Badge>{formatLabel(item.status)}</Badge> : null}
+          {deadline.value ? <DeadlineStatusBadge deadline={deadline} /> : null}
           <FilledBadge>Featured</FilledBadge>
         </div>
         <h2 className="mt-3 text-lg font-semibold leading-7 text-slate-950">{getRecordTitle(item, "Research scholarship")}</h2>
-        <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{getRecordSummary(item) || compactText(item.eligibility) || "Scholarship information has not been published yet."}</p>
+        {getRecordSummary(item) || compactText(item.eligibility) ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{getRecordSummary(item) || compactText(item.eligibility)}</p> : null}
         {coverage.length ? <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Covers {coverage.join(", ")}</p> : null}
       </div>
       <dl className="grid gap-2 text-sm">
-        <div className="rounded-md bg-white p-2.5"><dt className="text-xs font-semibold uppercase text-slate-500">Deadline</dt><dd className="mt-1 font-semibold text-slate-950">{formatDate(item.application_deadline) || "Not published"}</dd></div>
-        <div className="rounded-md bg-white p-2.5"><dt className="text-xs font-semibold uppercase text-slate-500">Value</dt><dd className="mt-1 font-semibold text-slate-950">{value || "Not published"}</dd></div>
+        {formatDate(item.application_deadline) ? <div className="rounded-md bg-white p-2.5"><dt className="text-xs font-semibold uppercase text-slate-500">Deadline</dt><dd className="mt-1 font-semibold text-slate-950">{formatDate(item.application_deadline)}</dd></div> : null}
+        {value ? <div className="rounded-md bg-white p-2.5"><dt className="text-xs font-semibold uppercase text-slate-500">Value</dt><dd className="mt-1 font-semibold text-slate-950">{value}</dd></div> : null}
       </dl>
       <span className="inline-flex min-h-10 items-center justify-center rounded-md border border-primary/20 px-3 text-sm font-semibold text-primary transition group-hover:bg-primary group-hover:text-white">Open scholarship</span>
     </Link>
@@ -164,13 +153,14 @@ function FeaturedScholarship({ item }: { item: ResearchGenericRecord }) {
 
 function ScholarshipRow({ item }: { item: ResearchGenericRecord }) {
   const value = formatMoney(item.value, compactText(item.currency) || "KES");
+  const deadline = getDeadlineState(compactText(item.application_deadline), compactText(item.status));
   return (
     <ResearchRecordRow
       href={item.slug ? `/scholarships/${item.slug}` : "/scholarships"}
       title={getRecordTitle(item, "Research scholarship")}
-      description={getRecordSummary(item) || compactText(item.eligibility) || "Scholarship information has not been published yet."}
+      description={getRecordSummary(item) || compactText(item.eligibility)}
       badges={[item.scholarship_type ?? "scholarship", item.status]}
-      filledBadges={[item.is_featured ? "Featured" : null]}
+      filledBadges={[deadline.value ? deadline.label : null, item.is_featured ? "Featured" : null]}
       facts={[
         { label: "Deadline", value: formatDate(item.application_deadline) },
         { label: "Value", value },
@@ -178,12 +168,6 @@ function ScholarshipRow({ item }: { item: ResearchGenericRecord }) {
       ]}
     />
   );
-}
-
-function formatMoney(value?: string | number | null, currency = "KES") {
-  if (value === null || value === undefined || value === "") return "";
-  const amount = Number(value);
-  return Number.isNaN(amount) ? compactText(value) : `${currency} ${new Intl.NumberFormat("en-KE").format(amount)}`;
 }
 
 function getActiveFlags(value?: string) {

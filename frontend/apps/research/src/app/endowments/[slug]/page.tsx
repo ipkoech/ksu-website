@@ -1,10 +1,6 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { researchServiceApi } from "@ksu/api-client";
-import {
-  ResearchDetailHero,
-  ResearchDetailSidebar,
-} from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { ResearchStoryAccordion } from "../../../components/research-rich-text";
 import {
@@ -14,6 +10,13 @@ import {
   getEndowmentBySlug,
 } from "../../../lib/research-public-data";
 import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
+import {
+  CompactFactGrid,
+  FundingIllustratedHero,
+  FundingSidebar,
+  formatMoney,
+  fundingIcons,
+} from "../../../components/funding-ui";
 
 export const revalidate = 300;
 
@@ -41,28 +44,21 @@ export default async function EndowmentDetailPage({
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchDetailHero
+      <FundingIllustratedHero
         eyebrow="Endowment"
         title={title}
         body={compactText(fund.purpose) || getRecordSummary(fund)}
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Endowments", href: "/endowments" },
-          { label: title },
-        ]}
-        labels={[fund.fund_type, fund.status, fund.is_accepting_contributions ? "accepting contributions" : null, fund.is_featured ? "featured" : null]}
+        tone="endowment"
         facts={[
-          { label: "Current value", value: formatMoney(fund.current_value, fund.currency) },
-          { label: "Annual distribution", value: formatMoney(fund.annual_distribution, fund.currency) },
-          { label: "Established", value: formatDate(fund.established_date) },
-          { label: "Donor", value: fund.donor_name },
+          { label: "Current value", value: formatMoney(fund.current_value, compactText(fund.currency) || "KES"), icon: fundingIcons.money },
+          { label: "Annual distribution", value: formatMoney(fund.annual_distribution, compactText(fund.currency) || "KES"), icon: fundingIcons.award },
+          { label: "Established", value: formatDate(fund.established_date), icon: fundingIcons.calendar },
+          { label: "Donor", value: fund.donor_name, icon: fundingIcons.bank },
         ]}
         actions={[
           { label: "Back to endowments", href: "/endowments", variant: "secondary" },
           ...(compactText(fund.contribution_url) ? [{ label: "Contribute", href: compactText(fund.contribution_url) }] : []),
         ]}
-        imageSrc="/images/research/research-projects-hero.svg"
-        imageAlt="Research endowment fund purpose and contribution information"
       />
 
       {error ? (
@@ -81,14 +77,23 @@ export default async function EndowmentDetailPage({
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-5">
+            <CompactFactGrid
+              facts={[
+                { label: "Principal amount", value: formatMoney(fund.principal_amount, compactText(fund.currency) || "KES"), icon: fundingIcons.money },
+                { label: "Current value", value: formatMoney(fund.current_value, compactText(fund.currency) || "KES"), icon: fundingIcons.money },
+                { label: "Target value", value: formatMoney(fund.target_value, compactText(fund.currency) || "KES"), icon: fundingIcons.award },
+                { label: "Annual distribution", value: formatMoney(fund.annual_distribution, compactText(fund.currency) || "KES"), icon: fundingIcons.check },
+              ]}
+            />
             <EndowmentStory sections={storySections} />
           </div>
-          <ResearchDetailSidebar
+          <FundingSidebar
+            title="Fund facts"
             labels={[fund.fund_type ?? "fund", fund.status, fund.is_accepting_contributions ? "Accepting contributions" : null]}
             facts={[
-              { label: "Principal amount", value: formatMoney(fund.principal_amount, fund.currency) },
-              { label: "Current value", value: formatMoney(fund.current_value, fund.currency) },
-              { label: "Annual distribution", value: formatMoney(fund.annual_distribution, fund.currency) },
+              { label: "Principal amount", value: formatMoney(fund.principal_amount, compactText(fund.currency) || "KES") },
+              { label: "Current value", value: formatMoney(fund.current_value, compactText(fund.currency) || "KES") },
+              { label: "Annual distribution", value: formatMoney(fund.annual_distribution, compactText(fund.currency) || "KES") },
               { label: "Established", value: formatDate(fund.established_date) },
               { label: "Contact", value: [fund.contact_name, fund.contact_email].map(compactText).filter(Boolean).join(" · ") },
             ]}
@@ -111,11 +116,4 @@ function EndowmentStory({ sections }: { sections: Array<{ title: string; body: s
       empty="The fund story appears when purpose, eligibility, use, or donor fields are published."
     />
   );
-}
-
-function formatMoney(value?: string | number | null, currency?: string | null) {
-  if (value === null || value === undefined || value === "") return "";
-  const amount = Number(value);
-  if (Number.isNaN(amount)) return compactText(value);
-  return `${currency ?? "KES"} ${new Intl.NumberFormat("en-KE").format(amount)}`;
 }
