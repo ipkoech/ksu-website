@@ -394,7 +394,6 @@ export type PublicResearchContextDepartmentUpdatePayload = Partial<
     | "slug"
     | "code"
     | "head_id"
-    | "postgraduate_coordinator_id"
     | "about"
     | "head_message"
     | "mission"

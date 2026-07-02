@@ -60,7 +60,7 @@ type FormValues = {
 const contextFields = "resolved_entity,entity,team,leadership,relationships,division,wing,department";
 const contextInclude =
   "wing:id,name,slug,code,wing_type,head_id,description,head_message,mandate,service_charter,email,phone,office_location,cover_image_id,is_public,is_active,display_order;" +
-  "department:id,name,slug,code,department_type,head_id,postgraduate_coordinator_id,about,head_message,mission,vision,mandate,core_values,service_charter,guidelines,email,phone,office_location,cover_image_id,is_public,is_active,allows_staff_management,display_order";
+  "department:id,name,slug,code,department_type,head_id,about,head_message,mission,vision,mandate,core_values,service_charter,guidelines,email,phone,office_location,cover_image_id,is_public,is_active,allows_staff_management,display_order";
 
 const manageScopes = [
   "research.manage_office",
@@ -361,16 +361,6 @@ export default function ResearchProfileSettingsPage() {
                     allowClear
                   />
                 </Field>
-                <Field label="Postgraduate coordinator">
-                  <EntityPicker
-                    adapter={relationshipAdapters.person as any}
-                    value={text(formValues.department.postgraduate_coordinator_id)}
-                    onChange={(value) => setField("department", "postgraduate_coordinator_id", value || "")}
-                    filters={{ status: "active" }}
-                    placeholder="Select postgraduate coordinator"
-                    allowClear
-                  />
-                </Field>
                 <RichField label="Lead message" value={text(formValues.department.head_message)} onChange={(value) => setField("department", "head_message", value)} />
               </EditorSection>
 
@@ -500,7 +490,6 @@ function buildDepartmentPayload(values: Record<string, any>) {
     slug: values.slug,
     code: values.code,
     head_id: emptyToNull(values.head_id),
-    postgraduate_coordinator_id: emptyToNull(values.postgraduate_coordinator_id),
     about: values.about,
     head_message: values.head_message,
     mission: values.mission,

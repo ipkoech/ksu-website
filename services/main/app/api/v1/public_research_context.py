@@ -25,6 +25,7 @@ router = APIRouter()
 RESEARCH_NAME = "Research, Extension, Innovation and Resource Mobilization"
 RESEARCH_CODE = "REIRM"
 RESEARCH_DEPARTMENT_TYPE = "administrative"
+RESEARCH_DEPARTMENT_BLOCKED_FIELDS = {"school_id", "postgraduate_coordinator_id"}
 RESEARCH_DEPARTMENT_BLOCKED_RELATIONS = {"school"}
 
 DEFAULT_DIVISION_FIELDS = FieldSelection(
@@ -71,7 +72,6 @@ class ResearchDepartmentUpdate(BaseModel):
     slug: str | None = None
     code: str | None = None
     head_id: uuid.UUID | None = None
-    postgraduate_coordinator_id: uuid.UUID | None = None
     about: str | None = None
     head_message: str | None = None
     mission: str | None = None
@@ -190,16 +190,24 @@ def selection_for(fields: FieldSelection, key: str, default: FieldSelection) -> 
 def restrict_research_department_selection(selection: FieldSelection) -> FieldSelection:
     """Keep the research context department administrative, not school-scoped."""
 
+    fields = tuple(
+        field
+        for field in selection.fields
+        if field not in RESEARCH_DEPARTMENT_BLOCKED_FIELDS
+    )
     if not selection.nested:
-        return selection
+        if len(fields) == len(selection.fields):
+            return selection
+        return FieldSelection(fields=fields)
+
     nested = {
         key: value
         for key, value in selection.nested.items()
         if key not in RESEARCH_DEPARTMENT_BLOCKED_RELATIONS
     }
-    if len(nested) == len(selection.nested):
+    if len(fields) == len(selection.fields) and len(nested) == len(selection.nested):
         return selection
-    return FieldSelection(fields=selection.fields, nested=nested)
+    return FieldSelection(fields=fields, nested=nested)
 
 
 async def can_manage_research_context(
