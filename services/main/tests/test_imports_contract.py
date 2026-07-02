@@ -1,5 +1,6 @@
 import unittest
 import inspect
+from pathlib import Path
 
 from fastapi.routing import APIRoute
 
@@ -34,6 +35,12 @@ class ImportContractTests(unittest.TestCase):
 
         self.assertIn("user_id", signature.parameters)
         self.assertIsNone(signature.parameters["user_id"].default)
+
+    def test_default_main_worker_consumes_import_queue(self):
+        script = Path(__file__).resolve().parents[1] / "scripts" / "start-celery-worker.sh"
+        content = script.read_text()
+
+        self.assertIn("main.imports", content)
 
 
 if __name__ == "__main__":
