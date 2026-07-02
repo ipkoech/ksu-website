@@ -7,12 +7,11 @@ import { FarmWorkspaceHeader } from "./_components/farm-workspace";
 export default function UniversityFarmPage() {
   return (
     <div>
-      <div className="p-4 sm:p-6">
-        <FarmWorkspaceHeader />
-      </div>
       <ResearchSectionIndex
         title="University Farm"
         description="Farm projects, partnerships, impact stories, activities, and focus areas."
+        hideHeader
+        summarySlot={<FarmWorkspaceHeader />}
         links={[
           { title: "Farm Profiles", description: "University farm profile and operational records.", href: "/research/farm/farms", icon: Sprout },
           { title: "Projects", description: "Farm-linked research projects.", href: "/research/farm/projects", icon: FlaskConical },
