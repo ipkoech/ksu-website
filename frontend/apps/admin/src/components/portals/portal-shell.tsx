@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, LogOut, Menu } from "lucide-react";
+import { ChevronLeft, LogOut, Menu, Minus, Plus } from "lucide-react";
 import { useAuth, usePermissions, ServiceGuard } from "@ksu/auth";
 import {
   Avatar,
@@ -30,7 +30,7 @@ import { Toolbar } from "@/components/layout/toolbar";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { getPortalConfig } from "@/lib/portals/registry";
 import type { PortalConfig, PortalKey, PortalNavItem } from "@/lib/portals/types";
-import { useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 interface PortalShellProps {
   portalKey: PortalKey;
@@ -109,19 +109,24 @@ function PortalSidebar({
   const { user, logout } = useAuth();
   const { hasScope } = usePermissions();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set());
   const PortalIcon = portal.icon;
 
-  const hasItemScope = (item: PortalNavItem) => {
+  const hasItemScope = useCallback((item: PortalNavItem) => {
     if (!item.scope) return true;
     return Array.isArray(item.scope)
       ? item.scope.some((scope) => hasScope(scope))
       : hasScope(item.scope);
-  };
+  }, [hasScope]);
 
-  const filteredNav = portal.nav.filter(hasItemScope);
+  const filteredNav = useMemo(
+    () => portal.nav.filter(hasItemScope),
+    [hasItemScope, portal.nav],
+  );
 
-  const grouped = filteredNav.reduce<{ group?: string; items: PortalNavItem[] }[]>(
-    (acc, item) => {
+  const grouped = useMemo(
+    () => filteredNav.reduce<{ group?: string; items: PortalNavItem[] }[]>(
+      (acc, item) => {
       const last = acc[acc.length - 1];
       if (last && last.group === item.group) {
         last.items.push(item);
@@ -129,9 +134,41 @@ function PortalSidebar({
         acc.push({ group: item.group, items: [item] });
       }
       return acc;
-    },
-    [],
+      },
+      [],
+    ),
+    [filteredNav],
   );
+
+  useEffect(() => {
+    const activeGroups = grouped
+      .filter((section) => section.group && section.items.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`)))
+      .map((section) => section.group as string);
+    if (activeGroups.length === 0) return;
+    setExpandedGroups((current) => {
+      let changed = false;
+      const next = new Set(current);
+      for (const group of activeGroups) {
+        if (!next.has(group)) {
+          next.add(group);
+          changed = true;
+        }
+      }
+      return changed ? next : current;
+    });
+  }, [grouped, pathname]);
+
+  const toggleGroup = (group: string) => {
+    setExpandedGroups((current) => {
+      const next = new Set(current);
+      if (next.has(group)) {
+        next.delete(group);
+      } else {
+        next.add(group);
+      }
+      return next;
+    });
+  };
 
   const initials = (user?.name || "User")
     .split(" ")
@@ -187,11 +224,17 @@ function PortalSidebar({
             {grouped.map((section, sIdx) => (
               <div key={section.group ?? `_ungrouped_${sIdx}`}>
                 {section.group && (!collapsed || isMobileOpen) ? (
-                  <p className="mb-1 mt-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground first:mt-0">
-                    {section.group}
-                  </p>
+                  <button
+                    type="button"
+                    className="mb-1 mt-3 flex w-full items-center justify-between gap-2 rounded-md px-3 py-1 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors first:mt-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    aria-expanded={expandedGroups.has(section.group)}
+                    onClick={() => toggleGroup(section.group as string)}
+                  >
+                    <span className="truncate">{section.group}</span>
+                    {expandedGroups.has(section.group) ? <Minus className="size-3" /> : <Plus className="size-3" />}
+                  </button>
                 ) : null}
-                {section.items.map((item) => {
+                {(section.group && (!collapsed || isMobileOpen) && !expandedGroups.has(section.group) ? [] : section.items).map((item) => {
                   const Icon = item.icon;
                   const active =
                     pathname === item.href || pathname.startsWith(`${item.href}/`);

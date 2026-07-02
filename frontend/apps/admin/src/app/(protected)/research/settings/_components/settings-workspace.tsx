@@ -11,6 +11,7 @@ import {
 } from "../../_components/research-workspace";
 
 export const settingsTabs = [
+  { label: "Profile", href: "/research/settings/profile" },
   { label: "General", href: "/research/settings/general" },
   { label: "Services", href: "/research/settings/services" },
   { label: "Resources", href: "/research/settings/resources" },
