@@ -107,6 +107,7 @@ export type GenericListFilters = {
   centerId?: string;
   programId?: string;
   projectId?: string;
+  innovationId?: string;
   partnerId?: string;
   isActive?: boolean;
   isFeatured?: boolean;
