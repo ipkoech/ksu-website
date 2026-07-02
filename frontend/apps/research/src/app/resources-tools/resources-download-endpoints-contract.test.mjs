@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-const pageSource = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
+const pageSource = readFileSync(new URL("./_workspace.tsx", import.meta.url), "utf8");
 const dataSource = readFileSync(
   new URL("../../lib/research-public-data.ts", import.meta.url),
   "utf8",
