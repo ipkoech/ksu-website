@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { getResearchApiBaseUrl, researchServiceApi } from "@ksu/api-client";
+import { researchServiceApi } from "@ksu/api-client";
 import { ResearchDetailHero, ResearchDetailSidebar, ResearchRecordGrid, ResearchRecordPanel } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { ResearchStoryAccordion } from "../../../components/research-rich-text";
+import { getResearchRecordDownloadHref } from "../../../lib/research-downloads";
 import { compactText, formatLabel, generateSlugParams, getResourceBySlug } from "../../../lib/research-public-data";
 import { getNarrativeSections, getRecordSummary, getRecordTimelineLabel, getRecordTitle } from "../../../lib/research-page-model";
 
@@ -26,9 +27,7 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
   ]);
   const title = getRecordTitle(resource, "Research resource");
   const contact = [resource.contact_name, resource.contact_email, resource.contact_phone].map(compactText).filter(Boolean).join(" · ");
-  const downloadHref = hasResourceDownloadSupport(resource)
-    ? getResearchDownloadUrl(`/api/v1/resources/${resource.id}/download`)
-    : "";
+  const downloadHref = getResearchRecordDownloadHref(resource, "resource");
   return (
     <main id="research-main" className="min-h-screen bg-white">
       <ResearchDetailHero eyebrow="Resource / Tool" title={title} body={getRecordSummary(resource) || compactText(resource.capabilities)} breadcrumbs={[{ label: "Home", href: "/" }, { label: "Resources & Tools", href: "/resources-tools" }, { label: title }]} labels={[resource.resource_type, resource.category, resource.status, resource.is_featured ? "featured" : null]} facts={[{ label: "Access", value: formatLabel(resource.access_type) }, { label: "Location", value: [resource.location, resource.room].map(compactText).filter(Boolean).join(" · ") }, { label: "Cost", value: resource.is_free ? "Free" : compactText(resource.fee_structure) }, { label: "Updated", value: getRecordTimelineLabel(resource) }]} actions={[{ label: "Back to resources", href: "/resources-tools", variant: "secondary" }, ...(downloadHref ? [{ label: "Download file", href: downloadHref }] : []), ...(compactText(resource.booking_url) ? [{ label: "Book resource", href: compactText(resource.booking_url) }] : []), ...(compactText(resource.access_url) ? [{ label: "Open access", href: compactText(resource.access_url), variant: "secondary" as const }] : [])]} imageSrc="/images/research/research-home-hero.svg" imageAlt="Research resource access, booking, and capability information" />
@@ -59,29 +58,6 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
       <ResearchSection eyebrow="Downloads" title="Resource files" body="File cards are shown only when backend attachments exist."><ResearchRecordGrid records={attachments} /></ResearchSection>
     </main>
   );
-}
-
-function getResearchDownloadUrl(path: string) {
-  const baseUrl = getResearchApiBaseUrl().replace(/\/$/, "");
-  return `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
-}
-
-function hasResourceDownloadSupport(resource: ResearchGenericRecord) {
-  return Boolean(
-    compactText(resource.document_url) ||
-      compactText(resource.download_url) ||
-      compactText(resource.file_url) ||
-      compactText(resource.url) ||
-      compactText(resource.access_url) ||
-      hasValues(resource.document_media_ids) ||
-      hasValues(resource.attachment_media_ids),
-  );
-}
-
-function hasValues(value: unknown) {
-  if (Array.isArray(value)) return value.length > 0;
-  if (typeof value === "string" || typeof value === "number") return Boolean(compactText(value));
-  return Boolean(value);
 }
 
 function ResourceStory({ sections }: { sections: Array<{ title: string; body: string }> }) {

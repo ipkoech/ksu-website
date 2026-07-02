@@ -15,19 +15,24 @@ const resourceDetailSource = readFileSync(
   new URL("./[slug]/page.tsx", import.meta.url),
   "utf8",
 );
+const downloadsSource = readFileSync(
+  new URL("../../lib/research-downloads.ts", import.meta.url),
+  "utf8",
+);
 
 test("resources workspace prefers backend download endpoints for resources and guidelines", () => {
   assert.match(pageSource, /getBackendDownloadHref/);
-  assert.match(pageSource, /\/api\/v1\/resources\/\$\{record\.id\}\/download/);
-  assert.match(pageSource, /\/api\/v1\/guidelines\/\$\{record\.id\}\/download/);
-  assert.match(pageSource, /getResearchApiBaseUrl/);
+  assert.match(pageSource, /getResearchRecordDownloadHref/);
+  assert.match(downloadsSource, /\/api\/v1\/resources\/\$\{record\.id\}\/download/);
+  assert.match(downloadsSource, /\/api\/v1\/guidelines\/\$\{record\.id\}\/download/);
+  assert.match(downloadsSource, /getResearchApiBaseUrl/);
 });
 
 test("resource and guideline detail pages use backend download endpoints", () => {
-  assert.match(resourceDetailSource, /getResearchDownloadUrl/);
-  assert.match(resourceDetailSource, /\/api\/v1\/resources\/\$\{resource\.id\}\/download/);
-  assert.match(guidelineDetailSource, /getResearchDownloadUrl/);
-  assert.match(guidelineDetailSource, /\/api\/v1\/guidelines\/\$\{guideline\.id\}\/download/);
+  assert.match(resourceDetailSource, /getResearchRecordDownloadHref/);
+  assert.match(resourceDetailSource, /"resource"/);
+  assert.match(guidelineDetailSource, /getResearchRecordDownloadHref/);
+  assert.match(guidelineDetailSource, /"guideline"/);
 });
 
 test("field selectors request media id fields required by backend download resolver", () => {

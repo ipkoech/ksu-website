@@ -5,6 +5,7 @@ import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ArrowRight } from "lucide-react";
 import { Badge, ResearchSection, StatusMessage } from "./research-ui";
 import { compactText, formatDate, formatLabel } from "../lib/research-public-data";
+import { getResearchRecordDownloadHref } from "../lib/research-downloads";
 
 type DetailSection = {
   title: string;
@@ -462,8 +463,8 @@ export function ResearchRecordGrid({
               compactText(record.caption) ||
               "Supporting resource"}
           </p>
-          {record.url || record.file_url || record.document_url ? (
-            <a href={record.url ?? record.file_url ?? record.document_url} className="mt-3 inline-flex text-sm font-semibold text-primary">
+          {getResearchRecordDownloadHref(record) ? (
+            <a href={getResearchRecordDownloadHref(record)} className="mt-3 inline-flex text-sm font-semibold text-primary">
               Open file
             </a>
           ) : null}
@@ -558,8 +559,8 @@ function SimpleRecordItem({
           compactText(record.caption) ||
           "Additional details are not published yet."}
       </p>
-      {record.url || record.file_url || record.document_url ? (
-        <a href={record.url ?? record.file_url ?? record.document_url} className="mt-2 inline-flex text-sm font-semibold text-primary">
+      {getResearchRecordDownloadHref(record) ? (
+        <a href={getResearchRecordDownloadHref(record)} className="mt-2 inline-flex text-sm font-semibold text-primary">
           Open resource
         </a>
       ) : null}

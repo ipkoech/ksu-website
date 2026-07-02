@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
 import { Badge, FilledBadge, PrimaryLink, ResearchSection, SecondaryLink, StatusMessage } from "../../components/research-ui";
+import { getResearchRecordDownloadHref } from "../../lib/research-downloads";
 import { compactText, formatDate, formatLabel, getGrantGuidelines, getGuidelines, getGuidelinesFiltered } from "../../lib/research-public-data";
 import { filterRecordsByMonth, getRecordMonths, getRecordSummary, getRecordTimelineLabel, getRecordTitle, getRecordYears } from "../../lib/research-page-model";
 
@@ -162,7 +163,8 @@ function GuidelineRow({ item, hrefBase }: { item: ResearchGenericRecord; hrefBas
 }
 
 function GuidelineCard({ item }: { item: ResearchGenericRecord }) {
-  return <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><Badge>{formatLabel(item.guideline_type ?? "grant guidance")}</Badge><h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">{item.title ?? "Grant guideline"}</h2><p className="mt-3 text-sm leading-7 text-slate-600">{compactText(item.summary) || compactText(item.description) || "Grant guidance details are not published yet."}</p>{compactText(item.document_url) ? <a href={item.document_url} className="mt-4 inline-flex text-sm font-semibold text-primary">Download document</a> : null}</article>;
+  const downloadHref = getResearchRecordDownloadHref(item, "guideline");
+  return <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><Badge>{formatLabel(item.guideline_type ?? "grant guidance")}</Badge><h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">{item.title ?? "Grant guideline"}</h2><p className="mt-3 text-sm leading-7 text-slate-600">{compactText(item.summary) || compactText(item.description) || "Grant guidance details are not published yet."}</p>{downloadHref ? <a href={downloadHref} className="mt-4 inline-flex text-sm font-semibold text-primary">Download document</a> : null}</article>;
 }
 
 function getActiveFlags(value?: string) {

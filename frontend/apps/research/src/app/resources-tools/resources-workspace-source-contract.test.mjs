@@ -48,8 +48,7 @@ test("resources workspace uses resource-specific field selectors", () => {
 test("downloads are derived only from backend records with file urls", () => {
   assert.match(pageSource, /collectDownloadRecords/);
   assert.match(pageSource, /getDownloadHref/);
-  assert.match(pageSource, /document_url/);
-  assert.match(pageSource, /download_url/);
-  assert.match(pageSource, /file_url/);
+  assert.match(pageSource, /getResearchRecordDirectFileHref/);
+  assert.match(pageSource, /getResearchRecordDownloadHref/);
   assert.doesNotMatch(pageSource, /href="#"/);
 });

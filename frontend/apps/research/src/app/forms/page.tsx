@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchFilterForm } from "../../components/research-listing";
 import { Badge, PrimaryLink, ResearchSection, SecondaryLink, StatusMessage } from "../../components/research-ui";
+import { getResearchRecordDownloadHref } from "../../lib/research-downloads";
 import { compactText, formatDate, formatLabel, getGuidelinesFiltered, getResourcesFiltered } from "../../lib/research-public-data";
 
 export const revalidate = 300;
@@ -93,5 +94,8 @@ function FormsMasthead({
 }
 
 function ResourceColumn({ title, records }: { title: string; records: ResearchGenericRecord[] }) {
-  return <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><h2 className="text-xl font-semibold text-slate-950">{title}</h2><div className="mt-4 divide-y divide-slate-200">{records.map((record) => <article key={record.id} className="py-4 first:pt-0 last:pb-0"><Badge>{formatLabel(record.resource_type ?? record.guideline_type ?? record.category ?? "document")}</Badge><h3 className="mt-3 text-base font-semibold leading-6 text-slate-950">{record.name ?? record.title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{compactText(record.description) || compactText(record.summary) || compactText(record.scope) || "Document details are not published yet."}</p><p className="mt-2 text-xs font-semibold uppercase text-slate-500">{formatDate(record.effective_date) || formatLabel(record.status)}</p>{record.slug ? <Link href={record.resource_type ? `/resources-tools/${record.slug}` : `/guidelines/${record.slug}`} className="mt-3 inline-flex text-sm font-semibold text-primary">Open details</Link> : null}</article>)}{records.length === 0 ? <p className="py-4 text-sm text-slate-600">No records are published yet.</p> : null}</div></section>;
+  return <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><h2 className="text-xl font-semibold text-slate-950">{title}</h2><div className="mt-4 divide-y divide-slate-200">{records.map((record) => {
+    const downloadHref = getResearchRecordDownloadHref(record, record.resource_type ? "resource" : "guideline");
+    return <article key={record.id} className="py-4 first:pt-0 last:pb-0"><Badge>{formatLabel(record.resource_type ?? record.guideline_type ?? record.category ?? "document")}</Badge><h3 className="mt-3 text-base font-semibold leading-6 text-slate-950">{record.name ?? record.title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{compactText(record.description) || compactText(record.summary) || compactText(record.scope) || "Document details are not published yet."}</p><p className="mt-2 text-xs font-semibold uppercase text-slate-500">{formatDate(record.effective_date) || formatLabel(record.status)}</p><div className="mt-3 flex flex-wrap gap-3">{downloadHref ? <a href={downloadHref} className="inline-flex text-sm font-semibold text-primary">Download</a> : null}{record.slug ? <Link href={record.resource_type ? `/resources-tools/${record.slug}` : `/guidelines/${record.slug}`} className="inline-flex text-sm font-semibold text-primary">Open details</Link> : null}</div></article>;
+  })}{records.length === 0 ? <p className="py-4 text-sm text-slate-600">No records are published yet.</p> : null}</div></section>;
 }

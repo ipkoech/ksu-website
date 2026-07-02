@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { getResearchApiBaseUrl, researchServiceApi } from "@ksu/api-client";
+import { researchServiceApi } from "@ksu/api-client";
 import { ResearchDetailHero, ResearchDetailSidebar } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { ResearchStoryAccordion } from "../../../components/research-rich-text";
+import { getResearchRecordDownloadHref } from "../../../lib/research-downloads";
 import { compactText, formatDate, generateSlugParams, getGuidelineBySlug } from "../../../lib/research-public-data";
 import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 
@@ -25,9 +26,7 @@ export default async function GuidelineDetailPage({ params }: { params: Promise<
     { title: "How to use it", fields: ["procedure", "instructions", "requirements"] },
     { title: "Version notes", fields: ["version_notes", "change_summary", "review_notes"] },
   ]);
-  const downloadHref = hasGuidelineDownloadSupport(guideline)
-    ? getResearchDownloadUrl(`/api/v1/guidelines/${guideline.id}/download`)
-    : "";
+  const downloadHref = getResearchRecordDownloadHref(guideline, "guideline");
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
@@ -55,27 +54,6 @@ export default async function GuidelineDetailPage({ params }: { params: Promise<
       </ResearchSection>
     </main>
   );
-}
-
-function getResearchDownloadUrl(path: string) {
-  const baseUrl = getResearchApiBaseUrl().replace(/\/$/, "");
-  return `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
-}
-
-function hasGuidelineDownloadSupport(guideline: ResearchGenericRecord) {
-  return Boolean(
-    compactText(guideline.document_url) ||
-      compactText(guideline.download_url) ||
-      compactText(guideline.file_url) ||
-      compactText(guideline.url) ||
-      hasValues(guideline.document_id),
-  );
-}
-
-function hasValues(value: unknown) {
-  if (Array.isArray(value)) return value.length > 0;
-  if (typeof value === "string" || typeof value === "number") return Boolean(compactText(value));
-  return Boolean(value);
 }
 
 function GuidelineStory({ sections }: { sections: Array<{ title: string; body: string }> }) {

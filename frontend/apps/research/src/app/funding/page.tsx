@@ -10,6 +10,7 @@ import {
   SecondaryLink,
   StatusMessage,
 } from "../../components/research-ui";
+import { getResearchRecordDownloadHref } from "../../lib/research-downloads";
 import {
   compactText,
   formatDate,
@@ -459,24 +460,24 @@ function SupportPanel({
   return (
     <ResearchSidePanel title={title}>
       <div className="divide-y divide-slate-200">
-        {records.map((record) => (
-          <article key={compactText(record.id)} className="py-4 first:pt-0 last:pb-0">
-            <h3 className="text-sm font-semibold text-slate-950">
-              {compactText(record.title) || compactText(record.name)}
-            </h3>
-            <p className="mt-1 text-xs font-semibold uppercase text-slate-500">
-              {formatLabel(record.guideline_type ?? record.resource_type ?? record.category ?? "resource")}
-            </p>
-            {record.document_url || record.file_url || record.url ? (
-              <a
-                href={compactText(record.document_url) || compactText(record.file_url) || compactText(record.url)}
-                className="mt-2 inline-flex text-sm font-semibold text-primary"
-              >
-                Download
-              </a>
-            ) : null}
-          </article>
-        ))}
+        {records.map((record) => {
+          const downloadHref = getResearchRecordDownloadHref(record, record.resource_type ? "resource" : "guideline");
+          return (
+            <article key={compactText(record.id)} className="py-4 first:pt-0 last:pb-0">
+              <h3 className="text-sm font-semibold text-slate-950">
+                {compactText(record.title) || compactText(record.name)}
+              </h3>
+              <p className="mt-1 text-xs font-semibold uppercase text-slate-500">
+                {formatLabel(record.guideline_type ?? record.resource_type ?? record.category ?? "resource")}
+              </p>
+              {downloadHref ? (
+                <a href={downloadHref} className="mt-2 inline-flex text-sm font-semibold text-primary">
+                  Download
+                </a>
+              ) : null}
+            </article>
+          );
+        })}
         {records.length === 0 ? (
           <p className="py-4 text-sm text-slate-600">
             Downloadable guidance will appear when resources are published.

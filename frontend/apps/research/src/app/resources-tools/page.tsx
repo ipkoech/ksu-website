@@ -17,12 +17,12 @@ import {
   Wrench,
 } from "lucide-react";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { getResearchApiBaseUrl } from "@ksu/api-client";
 import {
   Badge,
   FilledBadge,
   StatusMessage,
 } from "../../components/research-ui";
+import { getResearchRecordDirectFileHref, getResearchRecordDownloadHref } from "../../lib/research-downloads";
 import {
   compactText,
   formatDate,
@@ -878,46 +878,17 @@ function buildDownloadRecord(record: ResearchGenericRecord, source: string, href
 }
 
 function getDownloadHref(record: ResearchGenericRecord): string {
-  return (
-    compactText(record.document_url) ||
-    compactText(record.download_url) ||
-    compactText(record.file_url) ||
-    compactText(record.pdf_url) ||
-    compactText(record.url) ||
-    ""
-  );
+  return getResearchRecordDirectFileHref(record);
 }
 
 function getBackendDownloadHref(record: ResearchGenericRecord, source: string): string {
-  if (!record.id || !hasDownloadSupport(record)) return "";
   if (source === "Resource" || source === "Form" || source === "Template") {
-    return getResearchDownloadUrl(`/api/v1/resources/${record.id}/download`);
+    return getResearchRecordDownloadHref(record, "resource");
   }
   if (source === "Policy") {
-    return getResearchDownloadUrl(`/api/v1/guidelines/${record.id}/download`);
+    return getResearchRecordDownloadHref(record, "guideline");
   }
   return "";
-}
-
-function getResearchDownloadUrl(path: string) {
-  const baseUrl = getResearchApiBaseUrl().replace(/\/$/, "");
-  return `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
-}
-
-function hasDownloadSupport(record: ResearchGenericRecord) {
-  return Boolean(
-    getDownloadHref(record) ||
-      hasValues(record.document_id) ||
-      hasValues(record.document_media_ids) ||
-      hasValues(record.attachment_media_ids) ||
-      compactText(record.access_url),
-  );
-}
-
-function hasValues(value: unknown) {
-  if (Array.isArray(value)) return value.length > 0;
-  if (typeof value === "string" || typeof value === "number") return Boolean(compactText(value));
-  return Boolean(value);
 }
 
 function getFileExtension(href: string) {
