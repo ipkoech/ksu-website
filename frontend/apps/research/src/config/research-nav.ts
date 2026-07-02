@@ -14,12 +14,10 @@ import {
   Heart,
   HeartHandshake,
   HelpCircle,
-  Leaf,
   Lightbulb,
   Mail,
   Newspaper,
   Rocket,
-  Sprout,
   Star,
   Target,
   TrendingUp,
@@ -172,19 +170,16 @@ export const researchNavConfig: NavSection[] = [
     href: "/community-impact",
     icon: HeartHandshake,
     description:
-      "Extension, farm, sustainability, impact metrics, consultancies, and mentorship.",
+      "Community initiatives, impact metrics, consultancies, and mentorship.",
     activePaths: [
       "/community-impact",
-      "/events",
-      "/farm",
-      "/sustainability",
       "/impact-metrics",
       "/consultancies",
       "/mentorship",
     ],
     columns: [
       {
-        heading: "Extension & Sustainability",
+        heading: "Community Engagement",
         items: [
           {
             title: "Community Initiatives",
@@ -193,28 +188,10 @@ export const researchNavConfig: NavSection[] = [
             icon: Users,
           },
           {
-            title: "Events Calendar",
-            href: "/events",
-            description: "Workshops, forums, and conferences.",
-            icon: CalendarDays,
-          },
-          {
             title: "Extension Programs",
             href: "/community-impact",
             description: "Knowledge transfer and community service.",
             icon: HeartHandshake,
-          },
-          {
-            title: "University Farm",
-            href: "/farm",
-            description: "Field research, demonstrations, and farm partnerships.",
-            icon: Sprout,
-          },
-          {
-            title: "Sustainability",
-            href: "/sustainability",
-            description: "Climate, conservation, and sustainability records.",
-            icon: Leaf,
           },
         ],
       },
@@ -250,13 +227,57 @@ export const researchNavConfig: NavSection[] = [
     ],
   },
   {
+    title: "News & Events",
+    href: "/news",
+    icon: Newspaper,
+    description:
+      "Research news, blogs, events, announcements, and gallery highlights.",
+    activePaths: ["/news", "/events"],
+    columns: [
+      {
+        heading: "Research Updates",
+        items: [
+          {
+            title: "News",
+            href: "/news#news",
+            description: "Research stories, office updates, and public notices.",
+            icon: Newspaper,
+          },
+          {
+            title: "Blogs",
+            href: "/news#blogs",
+            description: "Research commentary, explainers, and field notes.",
+            icon: FileText,
+          },
+          {
+            title: "Events",
+            href: "/news#events",
+            description: "Conferences, workshops, forums, and seminars.",
+            icon: CalendarDays,
+          },
+          {
+            title: "Announcements",
+            href: "/news#announcements",
+            description: "Calls, notices, deadlines, and research alerts.",
+            icon: ClipboardList,
+          },
+          {
+            title: "Gallery",
+            href: "/news#gallery",
+            description: "Photos, videos, and media from research activities.",
+            icon: Video,
+          },
+        ],
+      },
+    ],
+  },
+  {
     title: "Resources & Tools",
     href: "/resources-tools",
     icon: ClipboardList,
-    description: "Policies, templates, guides, news, and resources.",
+    description: "Policies, templates, guides, forms, and research resources.",
     activePaths: [
       "/resources-tools",
-      "/news",
       "/outputs",
       "/forms",
       "/guidelines",
@@ -271,12 +292,6 @@ export const researchNavConfig: NavSection[] = [
             href: "/resources-tools",
             description: "Policies, templates, reports, and guides.",
             icon: BookOpen,
-          },
-          {
-            title: "News & Media",
-            href: "/news",
-            description: "Latest research news and updates.",
-            icon: Newspaper,
           },
           {
             title: "Forms & Templates",
