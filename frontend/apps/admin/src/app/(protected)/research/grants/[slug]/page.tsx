@@ -176,7 +176,6 @@ function GrantDetail({ grant }: { grant: ResearchGenericRecord }) {
   return (
     <div className="space-y-4 p-4 sm:p-6">
       <div className="flex flex-wrap items-center gap-2">
-        <ResearchDetailGuide title="Grant" status={grant.status} isPublic={grant.is_public} />
         <GrantDetailActions grant={grant} />
       </div>
 
@@ -320,6 +319,7 @@ function GrantDetailActions({ grant }: { grant: ResearchGenericRecord }) {
         <Trash2 className="mr-2 h-4 w-4" />
         Delete
       </Button>
+      <ResearchDetailGuide title="Grant" status={grant.status} isPublic={grant.is_public} className="ml-auto" />
 
       <GrantEditSheet open={editOpen} onOpenChange={(open) => !busy && setEditOpen(open)} grant={grant} values={values} setValues={setValues} disabled={busy} onSubmit={submitEdit} saving={updateMutation.isPending} />
 

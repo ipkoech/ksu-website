@@ -44,6 +44,13 @@ assert(
 );
 
 assert(
+  !grantDetailSource.includes("<ResearchDetailGuide title=\"Grant\" status={grant.status} isPublic={grant.is_public} />\n        <GrantDetailActions grant={grant} />") &&
+    grantDetailSource.includes("<GrantDetailActions grant={grant} />") &&
+    grantDetailSource.includes('ResearchDetailGuide title="Grant" status={grant.status} isPublic={grant.is_public} className="ml-auto"'),
+  "Grant detail header should use the Projects-style action-first row with the guide at the far right.",
+);
+
+assert(
   funderDetailSource.includes("researchServiceApi.funderRelations.grants.list") &&
     funderDetailSource.includes("researchServiceApi.funderRelations.projects.list") &&
     !funderDetailSource.includes("search = String(funder.name"),
