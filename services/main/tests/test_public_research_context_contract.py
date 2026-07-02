@@ -11,6 +11,9 @@ def test_public_research_context_endpoint_merges_public_wing_and_hidden_departme
     assert '"/api/v1/public/research/context"' in ROUTES
     assert "Research, Extension, Innovation and Resource Mobilization" in SOURCE
     assert 'Department.code == "REIRM"' in SOURCE
+    assert "Department.school_id.is_(None)" in SOURCE
+    assert "Department.department_type == RESEARCH_DEPARTMENT_TYPE" in SOURCE
+    assert "RESEARCH_DEPARTMENT_BLOCKED_RELATIONS" in SOURCE
     assert "Department.is_public" not in SOURCE
     assert "merge_research_entity_payload" in SOURCE
 

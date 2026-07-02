@@ -18,7 +18,7 @@ export default function ResearchResourceDetailPage() {
         { label: "Code", field: "code" },
         { label: "Type", field: "resource_type", format: "label" },
         { label: "Center", field: "center_id", relation: { adapter: "researchCenter" } },
-        { label: "Department", field: "department_id", relation: { adapter: "department" } },
+        { label: "Administrative Unit", field: "department_id", relation: { adapter: "department" } },
         { label: "Manager", field: "manager_id", relation: { adapter: "person" } },
         { label: "Free", field: "is_free", format: "boolean" },
       ]}

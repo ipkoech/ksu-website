@@ -343,7 +343,7 @@ export interface PublicResearchContextEntity {
 
 export interface PublicResearchContextResponse {
   resolved_entity: {
-    entity_type: "university" | "school" | "department" | "division" | "wing" | "directorate" | "board";
+    entity_type: "university" | "department" | "division" | "wing" | "directorate" | "board";
     entity_id?: string | null;
     source?: string | null;
   };
@@ -393,7 +393,6 @@ export type PublicResearchContextDepartmentUpdatePayload = Partial<
     | "name"
     | "slug"
     | "code"
-    | "department_type"
     | "head_id"
     | "postgraduate_coordinator_id"
     | "about"

@@ -18,7 +18,7 @@ export default function ResearchServiceDetailPage() {
         { label: "Code", field: "code" },
         { label: "Type", field: "service_type", format: "label" },
         { label: "Center", field: "center_id", relation: { adapter: "researchCenter" } },
-        { label: "Department", field: "department_id", relation: { adapter: "department" } },
+        { label: "Administrative Unit", field: "department_id", relation: { adapter: "department" } },
         { label: "Contact", field: "contact_email" },
         { label: "Free", field: "is_free", format: "boolean" },
       ]}

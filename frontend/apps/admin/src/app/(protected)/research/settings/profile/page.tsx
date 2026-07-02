@@ -155,7 +155,7 @@ export default function ResearchProfileSettingsPage() {
   const stats = useMemo(
     () => [
       { label: "Wing", value: text(wing.name) || "Not set" },
-      { label: "Department", value: text(department.name) || "Not set" },
+      { label: "Administrative unit", value: text(department.name) || "Not set" },
       { label: "Lead", value: leadership?.full_name || "Not assigned" },
       { label: "Visibility", value: department.is_public || wing.is_public ? "Public" : "Internal" },
     ],
@@ -256,7 +256,7 @@ export default function ResearchProfileSettingsPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <ProfileCopy label="About department" value={entity?.about ?? text(department.about) ?? text(wing.description)} />
+                  <ProfileCopy label="About research administration" value={entity?.about ?? text(department.about) ?? text(wing.description)} />
                   <div className="grid gap-3 md:grid-cols-2">
                     <InfoTile icon={Building2} label="Mandates" value={entity?.mandate ?? text(department.mandate) ?? text(wing.mandate)} />
                     <InfoTile icon={ShieldCheck} label="Service charter" value={entity?.service_charter ?? text(department.service_charter) ?? text(wing.service_charter)} />
@@ -313,7 +313,7 @@ export default function ResearchProfileSettingsPage() {
           <SheetHeader className="border-b px-6 py-4">
             <SheetTitle>Edit Research Profile</SheetTitle>
             <SheetDescription>
-              Update the research wing and research department context used by the public research portal.
+              Update the administrative research wing and unit context used by the public research portal.
             </SheetDescription>
           </SheetHeader>
           {formValues ? (
@@ -321,7 +321,7 @@ export default function ResearchProfileSettingsPage() {
               <EditorSection
                 id="identity"
                 title="Identity"
-                description="Research office and department names, codes, and types."
+                description="Research office identity for the administrative wing and unit."
                 openSections={openSections}
                 setOpenSections={setOpenSections}
               >
@@ -329,10 +329,9 @@ export default function ResearchProfileSettingsPage() {
                 <Field label="Wing code"><Input value={text(formValues.wing.code)} onChange={(event) => setField("wing", "code", event.target.value)} /></Field>
                 <Field label="Wing slug"><Input value={text(formValues.wing.slug)} onChange={(event) => setField("wing", "slug", event.target.value)} /></Field>
                 <Field label="Wing type"><Input value={text(formValues.wing.wing_type)} onChange={(event) => setField("wing", "wing_type", event.target.value)} /></Field>
-                <Field label="Department name"><Input value={text(formValues.department.name)} onChange={(event) => setField("department", "name", event.target.value)} /></Field>
-                <Field label="Department code"><Input value={text(formValues.department.code)} onChange={(event) => setField("department", "code", event.target.value)} /></Field>
-                <Field label="Department slug"><Input value={text(formValues.department.slug)} onChange={(event) => setField("department", "slug", event.target.value)} /></Field>
-                <Field label="Department type"><Input value={text(formValues.department.department_type)} onChange={(event) => setField("department", "department_type", event.target.value)} /></Field>
+                <Field label="Administrative unit name"><Input value={text(formValues.department.name)} onChange={(event) => setField("department", "name", event.target.value)} /></Field>
+                <Field label="Administrative unit code"><Input value={text(formValues.department.code)} onChange={(event) => setField("department", "code", event.target.value)} /></Field>
+                <Field label="Administrative unit slug"><Input value={text(formValues.department.slug)} onChange={(event) => setField("department", "slug", event.target.value)} /></Field>
               </EditorSection>
 
               <EditorSection
@@ -352,13 +351,13 @@ export default function ResearchProfileSettingsPage() {
                     allowClear
                   />
                 </Field>
-                <Field label="Department lead">
+                <Field label="Administrative unit lead">
                   <EntityPicker
                     adapter={relationshipAdapters.person as any}
                     value={text(formValues.department.head_id)}
                     onChange={(value) => setField("department", "head_id", value || "")}
                     filters={{ status: "active" }}
-                    placeholder="Select dedicated department lead"
+                    placeholder="Select dedicated research administration lead"
                     allowClear
                   />
                 </Field>
@@ -382,7 +381,7 @@ export default function ResearchProfileSettingsPage() {
                 openSections={openSections}
                 setOpenSections={setOpenSections}
               >
-                <RichField label="About department" value={text(formValues.department.about)} onChange={(value) => setField("department", "about", value)} />
+                <RichField label="About research administration" value={text(formValues.department.about)} onChange={(value) => setField("department", "about", value)} />
                 <RichField label="Mission" value={text(formValues.department.mission)} onChange={(value) => setField("department", "mission", value)} />
                 <RichField label="Vision" value={text(formValues.department.vision)} onChange={(value) => setField("department", "vision", value)} />
                 <RichField label="Mandates" value={text(formValues.department.mandate)} onChange={(value) => setField("department", "mandate", value)} />
@@ -423,11 +422,11 @@ export default function ResearchProfileSettingsPage() {
                     allowClear
                   />
                 </Field>
-                <Field label="Department cover image" wide>
+                <Field label="Administrative unit cover image" wide>
                   <MediaPicker
                     value={text(formValues.department.cover_image_id)}
                     onChange={(value) => setField("department", "cover_image_id", value || "")}
-                    label="Department cover image"
+                    label="Administrative unit cover image"
                     mediaType="image"
                     accept="image/*"
                     uploadEntityType="department"
@@ -447,8 +446,8 @@ export default function ResearchProfileSettingsPage() {
               >
                 <SwitchField label="Wing public" value={Boolean(formValues.wing.is_public)} onChange={(value) => setField("wing", "is_public", value)} />
                 <SwitchField label="Wing active" value={Boolean(formValues.wing.is_active)} onChange={(value) => setField("wing", "is_active", value)} />
-                <SwitchField label="Department public" value={Boolean(formValues.department.is_public)} onChange={(value) => setField("department", "is_public", value)} />
-                <SwitchField label="Department active" value={Boolean(formValues.department.is_active)} onChange={(value) => setField("department", "is_active", value)} />
+                <SwitchField label="Administrative unit public" value={Boolean(formValues.department.is_public)} onChange={(value) => setField("department", "is_public", value)} />
+                <SwitchField label="Administrative unit active" value={Boolean(formValues.department.is_active)} onChange={(value) => setField("department", "is_active", value)} />
                 <SwitchField label="Allow staff management" value={Boolean(formValues.department.allows_staff_management)} onChange={(value) => setField("department", "allows_staff_management", value)} />
               </EditorSection>
             </div>
@@ -500,7 +499,6 @@ function buildDepartmentPayload(values: Record<string, any>) {
     name: values.name,
     slug: values.slug,
     code: values.code,
-    department_type: values.department_type,
     head_id: emptyToNull(values.head_id),
     postgraduate_coordinator_id: emptyToNull(values.postgraduate_coordinator_id),
     about: values.about,

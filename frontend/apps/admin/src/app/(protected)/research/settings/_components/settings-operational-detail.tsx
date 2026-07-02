@@ -111,7 +111,7 @@ function accessFacts(record: ResearchGenericRecord, kind: SettingsOperationalKin
   }
   return [
     ["Center", record.center_id],
-    ["Department", record.department_id],
+    ["Administrative Unit", record.department_id],
     ["Owner/Manager", record.manager_id ?? record.contact_name],
     ["Contact Email", record.contact_email],
     ["Contact Phone", record.contact_phone],

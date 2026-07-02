@@ -24,6 +24,8 @@ router = APIRouter()
 
 RESEARCH_NAME = "Research, Extension, Innovation and Resource Mobilization"
 RESEARCH_CODE = "REIRM"
+RESEARCH_DEPARTMENT_TYPE = "administrative"
+RESEARCH_DEPARTMENT_BLOCKED_RELATIONS = {"school"}
 
 DEFAULT_DIVISION_FIELDS = FieldSelection(
     fields=("id", "name", "slug", "code", "division_type", "description", "head_message", "mission", "vision", "core_values", "email", "phone", "office_location", "operating_hours", "cover_image_id"),
@@ -68,7 +70,6 @@ class ResearchDepartmentUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=255)
     slug: str | None = None
     code: str | None = None
-    department_type: str | None = Field(default=None, max_length=32)
     head_id: uuid.UUID | None = None
     postgraduate_coordinator_id: uuid.UUID | None = None
     about: str | None = None
@@ -154,7 +155,8 @@ async def update_public_research_context(
 async def build_research_context_payload(db: DbSession, fields: FieldSelection) -> dict[str, Any]:
     division_selector = build_selector(Division, selection_for(fields, "division", DEFAULT_DIVISION_FIELDS))
     wing_selector = build_selector(Wing, selection_for(fields, "wing", DEFAULT_WING_FIELDS))
-    department_selector = build_selector(Department, selection_for(fields, "department", DEFAULT_DEPARTMENT_FIELDS))
+    department_selection = restrict_research_department_selection(selection_for(fields, "department", DEFAULT_DEPARTMENT_FIELDS))
+    department_selector = build_selector(Department, department_selection)
 
     division = await get_research_division(db, division_selector.load_options)
     wing = await get_research_wing(db, division, wing_selector.load_options)
@@ -183,6 +185,21 @@ async def build_research_context_payload(db: DbSession, fields: FieldSelection) 
 def selection_for(fields: FieldSelection, key: str, default: FieldSelection) -> FieldSelection:
     nested = fields.get_nested(key)
     return nested if nested else default
+
+
+def restrict_research_department_selection(selection: FieldSelection) -> FieldSelection:
+    """Keep the research context department administrative, not school-scoped."""
+
+    if not selection.nested:
+        return selection
+    nested = {
+        key: value
+        for key, value in selection.nested.items()
+        if key not in RESEARCH_DEPARTMENT_BLOCKED_RELATIONS
+    }
+    if len(nested) == len(selection.nested):
+        return selection
+    return FieldSelection(fields=selection.fields, nested=nested)
 
 
 async def can_manage_research_context(
@@ -254,6 +271,8 @@ async def get_research_department(db: DbSession, wing: Wing | None, load_options
         select(Department)
         .where(
             Department.is_active.is_(True),
+            Department.school_id.is_(None),
+            Department.department_type == RESEARCH_DEPARTMENT_TYPE,
             or_(
                 Department.code == "REIRM",
                 Department.name == RESEARCH_NAME,
@@ -263,7 +282,7 @@ async def get_research_department(db: DbSession, wing: Wing | None, load_options
         .order_by(Department.display_order.asc(), Department.name.asc())
     )
     if wing is not None:
-        query = query.where(or_(Department.wing_id == wing.id, Department.code == "REIRM"))
+        query = query.where(Department.wing_id == wing.id)
     if load_options:
         query = query.options(*load_options)
     result = await db.execute(query)
