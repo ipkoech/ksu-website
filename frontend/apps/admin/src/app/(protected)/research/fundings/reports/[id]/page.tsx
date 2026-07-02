@@ -3,6 +3,7 @@
 import { researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchAdminDetailPage, ResearchDetailRelationshipTabs } from "../../../_components/research-admin-detail-page";
 import { RelatedRecordsCard, RelatedRecordsGrid } from "../../../_components/research-detail-relationships";
+import { FundingDetailChrome } from "../../_components/funding-workspace";
 
 export default function GrantReportDetailPage() {
   return (
@@ -11,6 +12,7 @@ export default function GrantReportDetailPage() {
       description="View grant report period, spending, submitter, review state, and related grant records."
       resource={researchServiceApi.grantReports}
       backHref="/research/fundings/reports"
+      {...FundingDetailChrome({ title: "Grant Report" })}
       slugParam="id"
       lookup="id"
       labelFields={["report_type", "status"]}

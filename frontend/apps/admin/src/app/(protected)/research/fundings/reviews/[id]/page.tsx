@@ -3,6 +3,7 @@
 import { researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchAdminDetailPage, ResearchDetailRelationshipTabs } from "../../../_components/research-admin-detail-page";
 import { RelatedRecordsCard } from "../../../_components/research-detail-relationships";
+import { FundingDetailChrome } from "../../_components/funding-workspace";
 
 export default function GrantReviewDetailPage() {
   return (
@@ -11,6 +12,7 @@ export default function GrantReviewDetailPage() {
       description="View reviewer score, recommendation, comments, and application context."
       resource={researchServiceApi.grantReviews}
       backHref="/research/fundings/reviews"
+      {...FundingDetailChrome({ title: "Grant Review" })}
       slugParam="id"
       lookup="id"
       labelFields={["recommendation", "status"]}

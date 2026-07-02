@@ -3,6 +3,7 @@
 import { researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchAdminDetailPage, ResearchDetailRelationshipTabs } from "../../../_components/research-admin-detail-page";
 import { RelatedRecordsCard, RelatedRecordsGrid } from "../../../_components/research-detail-relationships";
+import { FundingDetailChrome } from "../../_components/funding-workspace";
 
 export default function EndowmentFundDetailPage() {
   return (
@@ -11,6 +12,7 @@ export default function EndowmentFundDetailPage() {
       description="View endowment purpose, values, donor information, scholarship links, and donation records."
       resource={researchServiceApi.endowments}
       backHref="/research/fundings/endowments"
+      {...FundingDetailChrome({ title: "Endowment Fund" })}
       slugParam="id"
       lookup="id"
       labelFields={["fund_type", "status", "is_accepting_contributions"]}

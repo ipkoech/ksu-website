@@ -3,6 +3,7 @@
 import { researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchAdminDetailPage, ResearchDetailRelationshipTabs } from "../../../_components/research-admin-detail-page";
 import { RelatedRecordsCard } from "../../../_components/research-detail-relationships";
+import { FundingDetailChrome } from "../../_components/funding-workspace";
 
 export default function FunderDetailPage() {
   return (
@@ -11,6 +12,7 @@ export default function FunderDetailPage() {
       description="View funder contact, focus, activity status, grants, and funded projects."
       resource={researchServiceApi.funders}
       backHref="/research/fundings/funders"
+      {...FundingDetailChrome({ title: "Funder" })}
       slugParam="id"
       lookup="id"
       labelFields={["funder_type", "is_active", "is_featured"]}

@@ -3,6 +3,7 @@
 import { researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchAdminDetailPage, ResearchDetailRelationshipTabs } from "../../../_components/research-admin-detail-page";
 import { RelatedRecordsCard, RelatedRecordsGrid } from "../../../_components/research-detail-relationships";
+import { FundingDetailChrome } from "../../_components/funding-workspace";
 
 export default function GrantGuidelineDetailPage() {
   return (
@@ -11,6 +12,7 @@ export default function GrantGuidelineDetailPage() {
       description="View grant guideline content, requirement status, document metadata, and grant context."
       resource={researchServiceApi.grantGuidelines}
       backHref="/research/fundings/guidelines"
+      {...FundingDetailChrome({ title: "Grant Guideline" })}
       slugParam="id"
       lookup="id"
       labelFields={["guideline_type", "is_required", "is_active"]}

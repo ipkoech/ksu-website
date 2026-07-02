@@ -10,7 +10,7 @@ import {
   type RelationshipAdapter,
 } from "@/components/relationships/relationship-adapters";
 import { ResearchBulkActions } from "../../_components/research-resource-page";
-import { ResearchSectionGuide } from "../../_components/research-guidance";
+import { ResearchDetailGuide, ResearchSectionGuide } from "../../_components/research-guidance";
 
 export function FundingPageChrome({
   guideTitle,
@@ -37,6 +37,22 @@ export function FundingPageChrome({
         />
         <ResearchSectionGuide title={guideTitle} className="sm:ml-auto" />
       </>
+    ),
+  };
+}
+
+export function FundingDetailChrome({ title }: { title: string }) {
+  return {
+    hideHeader: true,
+    showBackAction: false,
+    showDetailGuide: false,
+    actionsSlot: (record: ResearchGenericRecord) => (
+      <ResearchDetailGuide
+        title={title}
+        status={record.status}
+        isPublic={record.is_public}
+        className="ml-auto"
+      />
     ),
   };
 }
