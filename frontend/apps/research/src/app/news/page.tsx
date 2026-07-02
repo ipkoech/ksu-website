@@ -40,14 +40,22 @@ export const metadata: Metadata = {
 
 type NewsSearchParams = {
   q?: string;
+  tab?: string;
 };
 
 type ContentKind = "news" | "article" | "event" | "announcement";
+type NewsTab = "news" | "articles" | "events" | "announcements" | "gallery";
 
 type ContentItem = {
   kind: ContentKind;
   record: ResearchGenericRecord;
   href?: string;
+};
+
+type NewsTabLink = {
+  id: NewsTab;
+  label: string;
+  icon: typeof Grid3X3;
 };
 
 const fallbackImages = [
@@ -60,12 +68,12 @@ const fallbackImages = [
   "/images/research/university-farm-hero-imagegen.webp",
 ];
 
-const navButtons = [
-  { label: "News", href: "#latest", icon: Grid3X3 },
-  { label: "Articles", href: "#latest", icon: PenLine },
-  { label: "Events", href: "#events", icon: CalendarDays },
-  { label: "Announcements", href: "#announcements", icon: Bell },
-  { label: "Gallery", href: "#gallery", icon: ImageIcon },
+const navButtons: NewsTabLink[] = [
+  { id: "news", label: "News", icon: Grid3X3 },
+  { id: "articles", label: "Articles", icon: PenLine },
+  { id: "events", label: "Events", icon: CalendarDays },
+  { id: "announcements", label: "Announcements", icon: Bell },
+  { id: "gallery", label: "Gallery", icon: ImageIcon },
 ];
 
 export default async function NewsPage({
@@ -82,7 +90,7 @@ export default async function NewsPage({
     getAnnouncements(),
   ]);
 
-  const articleItems = filterItems(
+  const editorialItems = filterItems(
     [
       ...articles.data.map((record) => ({
         kind: normalizeArticleKind(record),
@@ -96,6 +104,8 @@ export default async function NewsPage({
     ],
     query,
   ).sort(sortNewest);
+  const newsItems = editorialItems.filter((item) => item.kind === "news");
+  const articleItems = editorialItems.filter((item) => item.kind === "article");
 
   const eventItems = filterItems(
     events.data.map((record) => ({
@@ -114,35 +124,67 @@ export default async function NewsPage({
     query,
   ).sort(sortNewest);
 
-  const combined = [...articleItems, ...eventItems, ...announcementItems].sort(sortNewest);
-  const featured = withPlaceholderItems(pickFeatured(combined), "featured").slice(0, 3);
-  const latest = withPlaceholderItems(articleItems, "latest").slice(0, 5);
-  const calendarItems = withPlaceholderItems(eventItems, "events").slice(0, 6);
-  const noticeItems = withPlaceholderItems(announcementItems, "announcements").slice(0, 3);
-  const gallery = withPlaceholderItems(
-    combined.filter((item) => getRecordImage(item.record)),
-    "gallery",
-  ).slice(0, 8);
+  const combined = [...editorialItems, ...eventItems, ...announcementItems].sort(sortNewest);
+  const gallery = combined.filter((item) => getRecordImage(item.record)).slice(0, 8);
+  const availableTabs = navButtons.filter((button) => {
+    if (button.id === "news") return newsItems.length > 0;
+    if (button.id === "articles") return articleItems.length > 0;
+    if (button.id === "events") return eventItems.length > 0;
+    if (button.id === "announcements") return announcementItems.length > 0;
+    return gallery.length > 0;
+  });
+  const requestedTab = normalizeTab(params.tab);
+  const activeTab = requestedTab && availableTabs.some((button) => button.id === requestedTab)
+    ? requestedTab
+    : undefined;
+  const showAll = !activeTab;
+  const featuredSource = activeTab === "news"
+    ? newsItems
+    : activeTab === "articles"
+      ? articleItems
+      : activeTab === "events"
+        ? eventItems
+        : combined;
+  const featured = pickFeatured(featuredSource).slice(0, 3);
+  const latest = (activeTab === "news" ? newsItems : activeTab === "articles" ? articleItems : editorialItems).slice(0, 5);
+  const calendarItems = eventItems.slice(0, 6);
+  const noticeItems = announcementItems.slice(0, 3);
+  const heroImage = getRecordImage(featured[0]?.record) || getRecordImage(gallery[0]?.record) || fallbackImages[0];
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <NewsHero query={compactText(params.q)} image={getRecordImage(featured[0]?.record) || fallbackImages[0]} />
+      <NewsHero
+        activeTab={activeTab}
+        image={heroImage}
+        query={compactText(params.q)}
+        tabs={availableTabs}
+      />
 
       <section className="px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mx-auto max-w-[1680px]">
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.9fr)_minmax(360px,0.95fr)]">
-            <div className="min-w-0 space-y-7">
-              <FeaturedStories items={featured} />
-              <LatestResearch items={latest} />
+          {showAll ? (
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,1.9fr)_minmax(360px,0.95fr)]">
+              <div className="min-w-0 space-y-7">
+                {featured.length > 0 ? <FeaturedStories items={featured} /> : null}
+                {latest.length > 0 ? <LatestResearch items={latest} /> : null}
+              </div>
+
+              <aside className="min-w-0 space-y-7">
+                {calendarItems.length > 0 ? <EventsCalendar items={calendarItems} /> : null}
+                {noticeItems.length > 0 ? <AnnouncementsPanel items={noticeItems} /> : null}
+              </aside>
             </div>
+          ) : (
+            <div className="space-y-7">
+              {activeTab === "news" && newsItems.length > 0 ? <LatestResearch items={newsItems.slice(0, 9)} title="Research news" /> : null}
+              {activeTab === "articles" && articleItems.length > 0 ? <LatestResearch items={articleItems.slice(0, 9)} title="Articles" /> : null}
+              {activeTab === "events" && calendarItems.length > 0 ? <EventsCalendar items={calendarItems} /> : null}
+              {activeTab === "announcements" && noticeItems.length > 0 ? <AnnouncementsPanel items={noticeItems} /> : null}
+              {activeTab === "gallery" && gallery.length > 0 ? <ResearchGallery items={gallery} flush /> : null}
+            </div>
+          )}
 
-            <aside className="min-w-0 space-y-7">
-              <EventsCalendar items={calendarItems} />
-              <AnnouncementsPanel items={noticeItems} />
-            </aside>
-          </div>
-
-          <ResearchGallery items={gallery} />
+          {showAll && gallery.length > 0 ? <ResearchGallery items={gallery} /> : null}
           <ResearchUpdatesBand />
         </div>
       </section>
@@ -150,7 +192,17 @@ export default async function NewsPage({
   );
 }
 
-function NewsHero({ query, image }: { query: string; image: string }) {
+function NewsHero({
+  activeTab,
+  image,
+  query,
+  tabs,
+}: {
+  activeTab?: NewsTab;
+  image: string;
+  query: string;
+  tabs: NewsTabLink[];
+}) {
   return (
     <section className="relative overflow-hidden bg-primary text-white">
       <div
@@ -171,13 +223,13 @@ function NewsHero({ query, image }: { query: string; image: string }) {
 
           <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] lg:items-center">
             <div className="flex flex-wrap gap-3">
-              {navButtons.map((button, index) => {
+              {tabs.map((button) => {
                 const Icon = button.icon;
-                const active = index === 0;
+                const active = activeTab === button.id || (!activeTab && button.id === tabs[0]?.id);
                 return (
-                  <a
+                  <Link
                     key={button.label}
-                    href={button.href}
+                    href={`/news?tab=${button.id}`}
                     className={`inline-flex min-h-11 items-center gap-3 rounded-md border px-5 text-sm font-semibold transition ${
                       active
                         ? "border-white/20 bg-primary text-white shadow-lg"
@@ -186,12 +238,13 @@ function NewsHero({ query, image }: { query: string; image: string }) {
                   >
                     <Icon aria-hidden className="h-4 w-4" />
                     {button.label}
-                  </a>
+                  </Link>
                 );
               })}
             </div>
 
             <form action="/news" className="flex rounded-md border border-white/20 bg-white/95 p-1 shadow-xl">
+              {activeTab ? <input type="hidden" name="tab" value={activeTab} /> : null}
               <label className="relative min-w-0 flex-1">
                 <span className="sr-only">Search updates</span>
                 <Search aria-hidden className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -269,12 +322,13 @@ function StoryCard({
   return item.href ? <Link href={item.href}>{content}</Link> : content;
 }
 
-function LatestResearch({ items }: { items: ContentItem[] }) {
+function LatestResearch({ items, title = "Latest from research" }: { items: ContentItem[]; title?: string }) {
+  if (items.length === 0) return null;
   const [a, b, c, ...compact] = items;
   return (
     <div id="latest">
       <ScrollReveal className="space-y-4" variant="fade-up">
-        <SectionHeader title="Latest from research" href="/news" />
+        <SectionHeader title={title} href="/news" />
         <div className="grid gap-4 xl:grid-cols-[repeat(3,minmax(0,1fr))_minmax(220px,0.9fr)]">
           {[a, b, c].filter(Boolean).map((item, index) => (
             <LatestCard key={`${item.kind}-${item.record.id}`} item={item} index={index + 3} />
@@ -342,6 +396,7 @@ function MiniLatestCard({ item, index }: { item: ContentItem; index: number }) {
 }
 
 function EventsCalendar({ items }: { items: ContentItem[] }) {
+  if (items.length === 0) return null;
   const sorted = [...items].sort(sortEventDate);
   const monthLabel = formatMonth(recordDate(sorted[0].record));
   const activeDay = formatDay(recordDate(sorted[0].record));
@@ -418,6 +473,7 @@ function EventRow({ item, index }: { item: ContentItem; index: number }) {
 }
 
 function AnnouncementsPanel({ items }: { items: ContentItem[] }) {
+  if (items.length === 0) return null;
   return (
     <div id="announcements">
       <ScrollReveal className="space-y-4 rounded-lg bg-slate-50/80 p-5" variant="fade-up">
@@ -443,10 +499,11 @@ function AnnouncementsPanel({ items }: { items: ContentItem[] }) {
   );
 }
 
-function ResearchGallery({ items }: { items: ContentItem[] }) {
+function ResearchGallery({ items, flush = false }: { items: ContentItem[]; flush?: boolean }) {
+  if (items.length === 0) return null;
   return (
     <div id="gallery">
-      <ScrollReveal className="mt-7 space-y-4" variant="fade-up">
+      <ScrollReveal className={`${flush ? "" : "mt-7"} space-y-4`} variant="fade-up">
         <SectionHeader title="Research gallery" href="/news#gallery" />
         <div className="relative">
           <button className="absolute -left-4 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white shadow-md">
@@ -620,60 +677,9 @@ function filterItems(items: ContentItem[], query: string) {
   });
 }
 
-function withPlaceholderItems(items: ContentItem[], section: "featured" | "latest" | "events" | "announcements" | "gallery") {
-  if (items.length > 0) return items;
-  const placeholders: Record<typeof section, ContentItem[]> = {
-    featured: [
-      placeholderItem("news", "{{ article_title }}", "{{ article_summary }}", fallbackImages[0], "2025-05-20"),
-      placeholderItem("article", "{{ article_title }}", "{{ article_summary }}", fallbackImages[1], "2025-05-24"),
-      placeholderItem("event", "{{ event_title }}", "{{ event_summary }}", fallbackImages[2], "2025-05-28"),
-    ],
-    latest: [
-      placeholderItem("news", "{{ article_title }}", "{{ article_summary }}", fallbackImages[5], "2025-05-18"),
-      placeholderItem("article", "{{ article_title }}", "{{ article_summary }}", fallbackImages[3], "2025-05-16"),
-      placeholderItem("event", "{{ event_title }}", "{{ event_summary }}", fallbackImages[0], "2025-05-15"),
-      placeholderItem("news", "{{ article_title }}", "{{ article_summary }}", fallbackImages[4], "2025-05-14"),
-      placeholderItem("article", "{{ article_title }}", "{{ article_summary }}", fallbackImages[2], "2025-05-12"),
-    ],
-    events: [
-      placeholderItem("event", "{{ event_title }}", "{{ event_summary }}", fallbackImages[2], "2025-05-20"),
-      placeholderItem("event", "{{ event_title }}", "{{ event_summary }}", fallbackImages[3], "2025-05-24"),
-      placeholderItem("event", "{{ event_title }}", "{{ event_summary }}", fallbackImages[4], "2025-05-28"),
-    ],
-    announcements: [
-      placeholderItem("announcement", "{{ announcement_title }}", "", "", "2025-05-20", "High"),
-      placeholderItem("announcement", "{{ announcement_title }}", "", "", "2025-05-24", "Medium"),
-      placeholderItem("announcement", "{{ announcement_title }}", "", "", "2025-05-28", "Low"),
-    ],
-    gallery: fallbackImages.map((image, index) =>
-      placeholderItem("news", "{{ article_title }}", "", image, `2025-05-${String(10 + index).padStart(2, "0")}`),
-    ),
-  };
-  return placeholders[section];
-}
-
-function placeholderItem(
-  kind: ContentKind,
-  title: string,
-  summary: string,
-  image: string,
-  date: string,
-  priority?: string,
-): ContentItem {
-  return {
-    kind,
-    record: {
-      id: `${kind}-${title}-${date}-${priority || "placeholder"}`,
-      title,
-      summary,
-      published_at: date,
-      start_date: date,
-      venue: "{{ venue }}",
-      category: "{{ category }}",
-      priority,
-      cover_image_url: image,
-    },
-  };
+function normalizeTab(value?: string) {
+  const normalized = compactText(value).replace(/^-+/, "").toLowerCase();
+  return navButtons.some((button) => button.id === normalized) ? (normalized as NewsTab) : undefined;
 }
 
 function pickFeatured(items: ContentItem[]) {
