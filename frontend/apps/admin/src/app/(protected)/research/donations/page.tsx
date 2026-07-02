@@ -1,24 +1,22 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FileText, Settings } from "lucide-react";
-import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from "@ksu/ui/components";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ksu/ui/components";
 import {
+  DonationImpactsResource,
   DonationRecordsResource,
+  DonationSettingsResource,
+  DonationStoriesResource,
   DonationsWorkspaceHeader,
   DonorsResource,
 } from "./_components/donations-workspace";
 
 const workspaceTabs = [
-  { label: "Donation Records", value: "records" },
+  { label: "Donations", value: "records" },
   { label: "Donors", value: "donors" },
-];
-
-const relatedDonationPages = [
-  { label: "Impacts", href: "/research/donations/impacts", icon: FileText },
-  { label: "Stories", href: "/research/donations/stories", icon: FileText },
-  { label: "Settings", href: "/research/donations/settings", icon: Settings },
+  { label: "Impacts", value: "impacts" },
+  { label: "Stories", value: "stories" },
+  { label: "Settings", value: "settings" },
 ];
 
 export default function ResearchDonationsPage() {
@@ -34,17 +32,6 @@ export default function ResearchDonationsPage() {
   return (
     <div className="space-y-4">
       <DonationsWorkspaceHeader />
-
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        {relatedDonationPages.map((page) => (
-          <Button key={page.href} asChild variant="outline" size="sm">
-            <Link href={page.href}>
-              <page.icon className="mr-2 h-4 w-4" />
-              {page.label}
-            </Link>
-          </Button>
-        ))}
-      </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
         <div className="overflow-x-auto rounded-lg border bg-background p-1">
@@ -62,6 +49,15 @@ export default function ResearchDonationsPage() {
         </TabsContent>
         <TabsContent value="donors" className="mt-0">
           <DonorsResource summarySlot={null} />
+        </TabsContent>
+        <TabsContent value="impacts" className="mt-0">
+          <DonationImpactsResource summarySlot={null} />
+        </TabsContent>
+        <TabsContent value="stories" className="mt-0">
+          <DonationStoriesResource summarySlot={null} />
+        </TabsContent>
+        <TabsContent value="settings" className="mt-0">
+          <DonationSettingsResource summarySlot={null} />
         </TabsContent>
       </Tabs>
     </div>

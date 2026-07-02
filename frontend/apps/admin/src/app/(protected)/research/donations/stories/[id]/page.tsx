@@ -10,7 +10,7 @@ export default function DonationStoryDetailPage() {
       title="Donation Story"
       description="View donor story content, linked donor context, related donations, impact records, and audit history."
       resource={researchServiceApi.donationStories}
-      backHref="/research/donations/stories"
+      backHref="/research/donations?tab=stories"
       slugParam="id"
       lookup="id"
       labelFields={["status", "is_featured", "is_active"]}

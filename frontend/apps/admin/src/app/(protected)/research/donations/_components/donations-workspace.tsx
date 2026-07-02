@@ -1,15 +1,15 @@
 "use client";
 
-import { BadgeCheck, FileText, HandCoins, Users } from "lucide-react";
+import { BadgeCheck, FileText, HandCoins, Settings, Users } from "lucide-react";
 import type { ReactNode } from "react";
-import type { EditableRecordColumn } from "@/components/dashboard/editable-service-resource-page";
+import { useQuery } from "@tanstack/react-query";
+import type { EditableListFilter, EditableRecordColumn } from "@/components/dashboard/editable-service-resource-page";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import {
   DateValue,
   MoneyValue,
   RelationCell,
   researchCount,
-  ResearchWorkspaceHeader,
   StatusBadge,
   titleOf,
 } from "../../_components/research-workspace";
@@ -18,20 +18,51 @@ import { ResearchResourcePage, researchServiceApi } from "../../_components/rese
 export const donationTabs = [
   { label: "Records", href: "/research/donations?tab=records" },
   { label: "Donors", href: "/research/donations?tab=donors" },
-  { label: "Impacts", href: "/research/donations/impacts" },
-  { label: "Stories", href: "/research/donations/stories" },
+  { label: "Impacts", href: "/research/donations?tab=impacts" },
+  { label: "Stories", href: "/research/donations?tab=stories" },
+  { label: "Settings", href: "/research/donations?tab=settings" },
 ];
 
 export function DonationsWorkspaceHeader() {
+  const metrics = [
+    { title: "Donations", queryKey: ["research", "donations", "metrics", "records"], queryFn: () => researchCount("donations", {}), icon: <HandCoins className="h-4 w-4" /> },
+    { title: "Donors", queryKey: ["research", "donations", "metrics", "donors"], queryFn: () => researchCount("donors", { is_active: true }), icon: <Users className="h-4 w-4" /> },
+    { title: "Impacts", queryKey: ["research", "donations", "metrics", "impacts"], queryFn: () => researchCount("donationImpacts", { is_active: true }), icon: <BadgeCheck className="h-4 w-4" /> },
+    { title: "Stories", queryKey: ["research", "donations", "metrics", "stories"], queryFn: () => researchCount("donationStories", { status: "published" }), icon: <FileText className="h-4 w-4" /> },
+    { title: "Settings", queryKey: ["research", "donations", "metrics", "settings"], queryFn: () => researchCount("donationSettings", { is_active: true }), icon: <Settings className="h-4 w-4" /> },
+  ];
+
   return (
-    <ResearchWorkspaceHeader
-      metrics={[
-        { title: "Total Donations", queryKey: ["research", "donations", "metrics", "records"], queryFn: () => researchCount("donations", {}), icon: <HandCoins className="h-4 w-4" /> },
-        { title: "Donors", queryKey: ["research", "donations", "metrics", "donors"], queryFn: () => researchCount("donors", { is_active: true }), icon: <Users className="h-4 w-4" /> },
-        { title: "Impact Records", queryKey: ["research", "donations", "metrics", "impacts"], queryFn: () => researchCount("donationImpacts", { is_active: true }), icon: <BadgeCheck className="h-4 w-4" /> },
-        { title: "Stories Published", queryKey: ["research", "donations", "metrics", "stories"], queryFn: () => researchCount("donationStories", { status: "published" }), icon: <FileText className="h-4 w-4" /> },
-      ]}
-    />
+    <div className="flex flex-wrap gap-2">
+      {metrics.map((metric) => (
+        <DonationMetricChip key={metric.title} {...metric} />
+      ))}
+    </div>
+  );
+}
+
+function DonationMetricChip({
+  title,
+  queryKey,
+  queryFn,
+  icon,
+}: {
+  title: string;
+  queryKey: readonly unknown[];
+  queryFn: () => Promise<{ meta?: { total?: number }; data?: unknown[] }>;
+  icon: ReactNode;
+}) {
+  const query = useQuery({ queryKey, queryFn });
+  const value = query.data?.meta?.total ?? query.data?.data?.length ?? 0;
+
+  return (
+    <div className="inline-flex min-h-10 items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm shadow-sm">
+      <span className="flex size-7 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
+        {icon}
+      </span>
+      <span className="text-muted-foreground">{title}</span>
+      <span className="font-semibold">{query.isLoading ? "--" : value.toLocaleString()}</span>
+    </div>
   );
 }
 
@@ -55,6 +86,64 @@ export const donorColumns: Array<EditableRecordColumn<ResearchGenericRecord>> = 
   { key: "total", label: "Total Contributions", className: "hidden w-[180px] xl:table-cell", render: (record) => <MoneyValue amount={record.total_donated} currency="KES" /> },
   { key: "impacts", label: "Linked Impacts", className: "hidden w-[150px] xl:table-cell", render: (record) => <span>{record.impact_count ?? record.donation_count ?? 0}</span> },
   { key: "status", label: "Status", className: "w-[130px]", render: (record) => <StatusBadge value={record.is_active === false ? "inactive" : "active"} /> },
+];
+
+const donationImpactColumns: Array<EditableRecordColumn<ResearchGenericRecord>> = [
+  {
+    key: "title",
+    label: "Impact",
+    className: "min-w-[260px]",
+    render: (record) => (
+      <div className="space-y-1">
+        <span className="font-medium">{titleOf(record)}</span>
+        <p className="line-clamp-1 text-xs text-muted-foreground">{record.summary ?? record.impact_type ?? "No summary"}</p>
+      </div>
+    ),
+  },
+  { key: "type", label: "Type", className: "hidden w-[150px] lg:table-cell", render: (record) => <span>{labelize(record.impact_type)}</span> },
+  { key: "raised", label: "Raised", className: "w-[150px]", render: (record) => <MoneyValue amount={record.total_raised} currency={record.currency} /> },
+  { key: "year", label: "Year", className: "hidden w-[100px] xl:table-cell", render: (record) => <span>{record.reporting_year ?? "-"}</span> },
+  { key: "status", label: "Status", className: "w-[130px]", render: (record) => <StatusBadge value={record.status} /> },
+];
+
+const donationStoryColumns: Array<EditableRecordColumn<ResearchGenericRecord>> = [
+  {
+    key: "story",
+    label: "Story",
+    className: "min-w-[280px]",
+    render: (record) => (
+      <div className="space-y-1">
+        <span className="font-medium">{titleOf(record)}</span>
+        <p className="line-clamp-1 text-xs text-muted-foreground">{record.summary ?? record.quote ?? "No summary"}</p>
+      </div>
+    ),
+  },
+  { key: "donor", label: "Donor", className: "hidden min-w-[200px] lg:table-cell", render: (record) => record.donor_id ? <RelationCell id={record.donor_id} adapterKey="researchDonor" emptyLabel="No donor" /> : <span>{record.donor_name ?? "No donor"}</span> },
+  { key: "organization", label: "Organization", className: "hidden min-w-[180px] xl:table-cell", render: (record) => <span>{record.donor_organization ?? "-"}</span> },
+  { key: "status", label: "Status", className: "w-[130px]", render: (record) => <StatusBadge value={record.status} /> },
+];
+
+const donationSettingFilters: EditableListFilter[] = [
+  { name: "search", label: "Search", type: "text", placeholder: "Search keys or descriptions" },
+  { name: "setting_type", label: "Setting Type", type: "text", placeholder: "general, donation, visibility" },
+  { name: "is_active", label: "Active", type: "boolean" },
+];
+
+const donationSettingColumns: Array<EditableRecordColumn<ResearchGenericRecord>> = [
+  {
+    key: "setting",
+    label: "Setting",
+    className: "min-w-[260px]",
+    render: (record) => (
+      <div className="space-y-1">
+        <span className="font-medium">{record.key}</span>
+        <p className="line-clamp-1 text-xs text-muted-foreground">{record.description || "No description"}</p>
+      </div>
+    ),
+  },
+  { key: "type", label: "Type", className: "w-[150px]", render: (record) => <span>{labelize(record.setting_type)}</span> },
+  { key: "value", label: "Value", className: "hidden min-w-[240px] lg:table-cell", render: (record) => <span className="line-clamp-1 text-sm text-muted-foreground">{record.value || "No value"}</span> },
+  { key: "status", label: "Status", className: "w-[120px]", render: (record) => <StatusBadge value={record.is_active ? "active" : "inactive"} /> },
 ];
 
 const donationStatusOptions = [
@@ -207,4 +296,104 @@ export function DonorsResource({ summarySlot }: { summarySlot?: ReactNode }) {
       detailHref={(record) => `/research/donations/donors/${record.id}`}
     />
   );
+}
+
+export function DonationImpactsResource({ summarySlot }: { summarySlot?: ReactNode }) {
+  return (
+    <ResearchResourcePage
+      title="Donation Impacts"
+      description="Manage impact records showing how research donations were used."
+      queryKey={["research", "donation-impacts"]}
+      resource={researchServiceApi.donationImpacts}
+      manageScopes={["donations.manage", "research.manage_impact", "research:write"]}
+      summarySlot={summarySlot}
+      recordColumns={donationImpactColumns}
+      fields={[
+        { name: "title", label: "Title", required: true },
+        { name: "slug", label: "Slug" },
+        { name: "impact_type", label: "Impact Type", placeholder: "project" },
+        { name: "project_id", label: "Project", type: "entity", relation: { adapter: "researchProject", filters: { is_active: true } } },
+        { name: "center_id", label: "Research Center", type: "entity", relation: { adapter: "researchCenter", filters: { is_active: true } } },
+        { name: "scholarship_id", label: "Scholarship", type: "entity", relation: { adapter: "researchScholarship", filters: { is_active: true } } },
+        { name: "summary", label: "Summary", type: "textarea" },
+        { name: "description", label: "Description", type: "textarea" },
+        { name: "total_raised", label: "Total Raised", type: "number" },
+        { name: "currency", label: "Currency", placeholder: "KES" },
+        { name: "reporting_year", label: "Reporting Year", type: "number" },
+        { name: "status", label: "Status", placeholder: "published" },
+        { name: "is_active", label: "Active", type: "boolean" },
+        { name: "is_featured", label: "Featured", type: "boolean" },
+      ]}
+      defaults={{ impact_type: "project", currency: "KES", status: "published" }}
+      emptyMessage="No donation impacts were returned by the research service."
+      metaFields={["impact_type", "reporting_year", "status"]}
+      detailHref={(record) => `/research/donations/impacts/${record.id}`}
+    />
+  );
+}
+
+export function DonationStoriesResource({ summarySlot }: { summarySlot?: ReactNode }) {
+  return (
+    <ResearchResourcePage
+      title="Donation Stories"
+      description="Manage donor stories, testimonials, and public donation narratives."
+      queryKey={["research", "donation-stories"]}
+      resource={researchServiceApi.donationStories}
+      manageScopes={["donations.manage", "research:write"]}
+      exportResource="research-donation-stories"
+      summarySlot={summarySlot}
+      recordColumns={donationStoryColumns}
+      fields={[
+        { name: "title", label: "Title", required: true },
+        { name: "slug", label: "Slug" },
+        { name: "donor_id", label: "Donor", type: "entity", relation: { adapter: "researchDonor", filters: { is_active: true } } },
+        { name: "donor_name", label: "Donor Name" },
+        { name: "donor_organization", label: "Donor Organization" },
+        { name: "summary", label: "Summary", type: "textarea" },
+        { name: "story", label: "Story", type: "textarea" },
+        { name: "quote", label: "Quote", type: "textarea" },
+        { name: "photo_url", label: "Photo URL", type: "url" },
+        { name: "video_url", label: "Video URL", type: "url" },
+        { name: "status", label: "Status", placeholder: "published" },
+        { name: "is_active", label: "Active", type: "boolean" },
+        { name: "is_featured", label: "Featured", type: "boolean" },
+      ]}
+      defaults={{ status: "published" }}
+      emptyMessage="No donation stories were returned by the research service."
+      metaFields={["donor_name", "donor_organization", "status"]}
+      detailHref={(record) => `/research/donations/stories/${record.id}`}
+    />
+  );
+}
+
+export function DonationSettingsResource({ summarySlot }: { summarySlot?: ReactNode }) {
+  return (
+    <ResearchResourcePage
+      title="Donation Settings"
+      description="Manage donation portal and public-facing configuration values."
+      queryKey={["research", "donation-settings"]}
+      resource={researchServiceApi.donationSettings}
+      manageScopes={["donations.settings", "donations.manage", "research:write"]}
+      summarySlot={summarySlot}
+      fields={[
+        { name: "key", label: "Key", required: true },
+        { name: "value", label: "Value", type: "textarea" },
+        { name: "setting_type", label: "Setting Type", placeholder: "donation" },
+        { name: "description", label: "Description", type: "textarea" },
+        { name: "is_active", label: "Active", type: "boolean" },
+      ]}
+      defaults={{ setting_type: "donation" }}
+      listFilters={donationSettingFilters}
+      recordColumns={donationSettingColumns}
+      emptyMessage="No donation settings were returned by the research service."
+      metaFields={["setting_type", "is_active"]}
+      detailHref={(record) => `/research/settings/general/${record.id}`}
+      editorMode="sheet"
+    />
+  );
+}
+
+function labelize(value?: string | null) {
+  if (!value) return "";
+  return value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }

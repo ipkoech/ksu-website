@@ -10,7 +10,7 @@ export default function DonationImpactDetailPage() {
       title="Donation Impact"
       description="View donation impact metadata, source bindings, related donations, stories, and audit history."
       resource={researchServiceApi.donationImpacts}
-      backHref="/research/donations/impacts"
+      backHref="/research/donations?tab=impacts"
       slugParam="id"
       lookup="id"
       labelFields={["impact_type", "status", "is_featured"]}
