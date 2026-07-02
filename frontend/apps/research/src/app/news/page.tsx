@@ -3,19 +3,19 @@ import Link from "next/link";
 import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 import {
   ArrowRight,
+  Bell,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Grid3X3,
   ImageIcon,
+  Mail,
   Megaphone,
-  Newspaper,
+  PenLine,
   Search,
-  Sparkles,
+  TrendingUp,
 } from "lucide-react";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import {
-  Badge,
-  FilledBadge,
-  StatusMessage,
-} from "../../components/research-ui";
 import {
   compactText,
   formatDate,
@@ -42,7 +42,7 @@ type NewsSearchParams = {
   q?: string;
 };
 
-type ContentKind = "news" | "article" | "blog" | "event" | "announcement";
+type ContentKind = "news" | "article" | "event" | "announcement";
 
 type ContentItem = {
   kind: ContentKind;
@@ -50,12 +50,22 @@ type ContentItem = {
   href?: string;
 };
 
-const sectionLinks = [
-  { id: "featured", label: "Featured stories", icon: Sparkles },
-  { id: "latest", label: "Latest from research", icon: Newspaper },
-  { id: "events", label: "Events calendar", icon: CalendarDays },
-  { id: "announcements", label: "Announcements", icon: Megaphone },
-  { id: "gallery", label: "Gallery", icon: ImageIcon },
+const fallbackImages = [
+  "/images/research/research-hero-imagegen.webp",
+  "/images/research/research-projects-hero.webp",
+  "/images/research/research-events-hero.webp",
+  "/images/research/research-demo-imagegen.webp",
+  "/images/research/research-innovation-hero.webp",
+  "/images/research/sustainability-hero-imagegen.webp",
+  "/images/research/university-farm-hero-imagegen.webp",
+];
+
+const navButtons = [
+  { label: "News", href: "#latest", icon: Grid3X3 },
+  { label: "Articles", href: "#latest", icon: PenLine },
+  { label: "Events", href: "#events", icon: CalendarDays },
+  { label: "Announcements", href: "#announcements", icon: Bell },
+  { label: "Gallery", href: "#gallery", icon: ImageIcon },
 ];
 
 export default async function NewsPage({
@@ -73,17 +83,20 @@ export default async function NewsPage({
   ]);
 
   const articleItems = filterItems(
-    articles.data.map((record) => ({
-      kind: normalizeArticleKind(record),
-      record,
-      href: record.slug ? `/news/${record.slug}` : undefined,
-    })),
+    [
+      ...articles.data.map((record) => ({
+        kind: normalizeArticleKind(record),
+        record,
+        href: record.slug ? `/news/${record.slug}` : undefined,
+      })),
+      ...blogs.data.map((record) => ({
+        kind: "article" as const,
+        record,
+      })),
+    ],
     query,
-  );
-  const blogItems = filterItems(
-    blogs.data.map((record) => ({ kind: "blog" as const, record })),
-    query,
-  );
+  ).sort(sortNewest);
+
   const eventItems = filterItems(
     events.data.map((record) => ({
       kind: "event" as const,
@@ -91,387 +104,284 @@ export default async function NewsPage({
       href: record.slug ? `/events/${record.slug}` : undefined,
     })),
     query,
-  );
-  const announcementItems = filterItems(
-    announcements.data.map((record) => ({ kind: "announcement" as const, record })),
-    query,
-  );
+  ).sort(sortEventDate);
 
-  const allEditorialItems = [...articleItems, ...blogItems].sort(sortByPublished);
-  const allContentItems = [
-    ...allEditorialItems,
-    ...eventItems,
-    ...announcementItems,
-  ].sort(sortByPublished);
-  const featuredItems = pickFeatured(allContentItems).slice(0, 3);
-  const galleryItems = allContentItems.filter((item) => getRecordImage(item.record)).slice(0, 8);
-  const errors = [articles.error, blogs.error, events.error, announcements.error].filter(Boolean);
+  const announcementItems = filterItems(
+    announcements.data.map((record) => ({
+      kind: "announcement" as const,
+      record,
+    })),
+    query,
+  ).sort(sortNewest);
+
+  const combined = [...articleItems, ...eventItems, ...announcementItems].sort(sortNewest);
+  const featured = withPlaceholderItems(pickFeatured(combined), "featured").slice(0, 3);
+  const latest = withPlaceholderItems(articleItems, "latest").slice(0, 5);
+  const calendarItems = withPlaceholderItems(eventItems, "events").slice(0, 6);
+  const noticeItems = withPlaceholderItems(announcementItems, "announcements").slice(0, 3);
+  const gallery = withPlaceholderItems(
+    combined.filter((item) => getRecordImage(item.record)),
+    "gallery",
+  ).slice(0, 8);
 
   return (
-    <main id="research-main" className="min-h-screen bg-slate-50">
+    <main id="research-main" className="min-h-screen bg-white">
+      <NewsHero query={compactText(params.q)} image={getRecordImage(featured[0]?.record) || fallbackImages[0]} />
+
       <section className="px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mx-auto max-w-[1680px]">
-          <Breadcrumbs />
-
-          <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
-            <NewsSectionNav />
-
-            <div className="min-w-0 space-y-5">
-              <NewsHero
-                query={compactText(params.q)}
-                totals={{
-                  articles: articleItems.length,
-                  blogs: blogItems.length,
-                  events: eventItems.length,
-                  announcements: announcementItems.length,
-                }}
-                image={getRecordImage(featuredItems[0]?.record) || getRecordImage(allContentItems[0]?.record)}
-              />
-
-              {errors.length > 0 ? (
-                <StatusMessage tone="error">{errors[0]}</StatusMessage>
-              ) : null}
-
-              {featuredItems.length > 0 ? (
-                <FeaturedStories items={featuredItems} />
-              ) : null}
-
-              {allEditorialItems.length > 0 ? (
-                <LatestFromResearch items={allEditorialItems.slice(0, 9)} />
-              ) : null}
-
-              {eventItems.length > 0 ? (
-                <EventsCalendar items={eventItems.slice(0, 8)} />
-              ) : null}
-
-              {announcementItems.length > 0 ? (
-                <AnnouncementsPanel items={announcementItems.slice(0, 6)} />
-              ) : null}
-
-              {galleryItems.length > 0 ? (
-                <ResearchGallery items={galleryItems} />
-              ) : null}
-
-              <ResearchUpdatesBand />
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.9fr)_minmax(360px,0.95fr)]">
+            <div className="min-w-0 space-y-7">
+              <FeaturedStories items={featured} />
+              <LatestResearch items={latest} />
             </div>
+
+            <aside className="min-w-0 space-y-7">
+              <EventsCalendar items={calendarItems} />
+              <AnnouncementsPanel items={noticeItems} />
+            </aside>
           </div>
+
+          <ResearchGallery items={gallery} />
+          <ResearchUpdatesBand />
         </div>
       </section>
     </main>
   );
 }
 
-function Breadcrumbs() {
+function NewsHero({ query, image }: { query: string; image: string }) {
   return (
-    <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
-      <Link href="/" className="transition hover:text-primary">Home</Link>
-      <span className="text-slate-300">/</span>
-      <span className="text-slate-900">News, Articles & Events</span>
-    </nav>
-  );
-}
-
-function NewsSectionNav() {
-  return (
-    <aside className="lg:sticky lg:top-24 lg:self-start">
-      <nav
-        aria-label="News sections"
-        className="overflow-x-auto rounded-lg border border-slate-200 bg-white p-2 shadow-sm"
-      >
-        <div className="flex min-w-max gap-1 lg:min-w-0 lg:flex-col">
-          {sectionLinks.map((section) => {
-            const Icon = section.icon;
-            return (
-              <a
-                key={section.id}
-                href={`#${section.id}`}
-                className="inline-flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-semibold text-slate-700 transition hover:bg-primary/5 hover:text-primary"
-              >
-                <Icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
-                {section.label}
-              </a>
-            );
-          })}
-        </div>
-      </nav>
-    </aside>
-  );
-}
-
-function NewsHero({
-  query,
-  totals,
-  image,
-}: {
-  query: string;
-  totals: {
-    articles: number;
-    blogs: number;
-    events: number;
-    announcements: number;
-  };
-  image: string;
-}) {
-  const chips = [
-    { label: "News", href: "#latest", value: totals.articles },
-    { label: "Articles", href: "#latest", value: totals.articles },
-    { label: "Events", href: "#events", value: totals.events },
-    { label: "Announcements", href: "#announcements", value: totals.announcements },
-    { label: "Gallery", href: "#gallery", value: totals.articles + totals.events },
-  ];
-
-  return (
-    <ScrollReveal
-      className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
-      variant="fade-up"
-    >
-      <div className="grid min-h-[320px] lg:grid-cols-[minmax(0,0.95fr)_minmax(360px,0.75fr)]">
-        <div className="flex flex-col justify-center p-5 sm:p-6 lg:p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
-            Research updates
-          </p>
-          <h1 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
-            News, Articles & Events
-          </h1>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-700 sm:text-base">
-            Follow research stories, field notes, public events, announcements, and gallery highlights from published university records.
-          </p>
-
-          <form action="/news" className="mt-5 flex max-w-2xl flex-col gap-2 sm:flex-row">
-            <label className="relative min-w-0 flex-1">
-              <span className="sr-only">Search updates</span>
-              <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                name="q"
-                defaultValue={query}
-                placeholder="Search updates..."
-                className="h-11 w-full rounded-md border border-slate-200 bg-white pl-10 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
-              />
-            </label>
-            <button className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
-              Search
-            </button>
-          </form>
-
-          <div className="mt-5 flex flex-wrap gap-2">
-            {chips.filter((chip) => chip.value > 0 || chip.label === "Gallery").map((chip) => (
-              <a
-                key={chip.label}
-                href={chip.href}
-                className="rounded-full border border-primary/15 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary hover:text-white"
-              >
-                {chip.label}
-              </a>
-            ))}
+    <section className="relative overflow-hidden bg-primary text-white">
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${image})` }}
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,35,76,0.94)_0%,rgba(0,35,76,0.78)_36%,rgba(0,88,61,0.32)_70%,rgba(0,0,0,0.14)_100%)]" />
+      <div className="relative px-4 py-7 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="mx-auto max-w-[1680px]">
+          <div className="max-w-3xl">
+            <h1 className="font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight sm:text-5xl">
+              News, Articles & Events
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-white/88 sm:text-base">
+              Discover the latest research news, insights, upcoming events, and announcements from Kisii University.
+            </p>
           </div>
-        </div>
-        <div className="relative min-h-[260px] overflow-hidden bg-primary">
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${image || "/images/research/research-events-hero.webp"})` }}
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,35,76,0.82),rgba(0,88,61,0.36),rgba(255,255,255,0.04))]" />
-          <div className="absolute inset-x-5 bottom-5 rounded-lg border border-white/20 bg-white/14 p-4 text-white shadow-2xl backdrop-blur-md">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">
-              Featured stories
-            </p>
-            <p className="mt-2 max-w-sm font-[family-name:var(--font-display)] text-xl font-semibold leading-7">
-              Image-led research updates, events, and public announcements.
-            </p>
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] lg:items-center">
+            <div className="flex flex-wrap gap-3">
+              {navButtons.map((button, index) => {
+                const Icon = button.icon;
+                const active = index === 0;
+                return (
+                  <a
+                    key={button.label}
+                    href={button.href}
+                    className={`inline-flex min-h-11 items-center gap-3 rounded-md border px-5 text-sm font-semibold transition ${
+                      active
+                        ? "border-white/20 bg-primary text-white shadow-lg"
+                        : "border-white/55 bg-slate-950/18 text-white hover:bg-white/10"
+                    }`}
+                  >
+                    <Icon aria-hidden className="h-4 w-4" />
+                    {button.label}
+                  </a>
+                );
+              })}
+            </div>
+
+            <form action="/news" className="flex rounded-md border border-white/20 bg-white/95 p-1 shadow-xl">
+              <label className="relative min-w-0 flex-1">
+                <span className="sr-only">Search updates</span>
+                <Search aria-hidden className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  name="q"
+                  defaultValue={query}
+                  placeholder="Search updates..."
+                  className="h-11 w-full rounded-md bg-transparent pl-11 pr-3 text-sm text-slate-950 outline-none placeholder:text-slate-500"
+                />
+              </label>
+              <button className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-sm font-semibold text-white transition hover:bg-primary/90">
+                Search
+              </button>
+            </form>
           </div>
         </div>
       </div>
-    </ScrollReveal>
+    </section>
   );
 }
 
 function FeaturedStories({ items }: { items: ContentItem[] }) {
-  const [lead, ...side] = items;
   return (
     <div id="featured">
-      <ScrollRevealGroup
-        className="grid gap-5 xl:grid-cols-[minmax(0,1.25fr)_minmax(340px,0.75fr)]"
-        duration={620}
-        staggerDelay={80}
-      >
-        <StoryFeature item={lead} />
-        {side.length > 0 ? (
-          <div className="grid gap-5">
-            {side.map((item) => (
-              <CompactStoryCard key={item.record.id} item={item} />
-            ))}
-          </div>
-        ) : null}
+      <ScrollRevealGroup className="space-y-4" duration={620} staggerDelay={80}>
+        <SectionHeader title="Featured stories" href="/news" />
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1.45fr)_minmax(260px,0.75fr)_minmax(260px,0.75fr)]">
+          {items.map((item, index) => (
+            <StoryCard key={`${item.kind}-${item.record.id}`} item={item} priority={index === 0} index={index} />
+          ))}
+        </div>
       </ScrollRevealGroup>
     </div>
   );
 }
 
-function StoryFeature({ item }: { item: ContentItem }) {
-  const image = getRecordImage(item.record) || "/images/research/research-hero-imagegen.webp";
-  return (
-    <article className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl">
-      <div className="grid min-h-[360px] lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.7fr)]">
-        <div className="relative min-h-[260px] overflow-hidden">
-          <div
-            className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-105"
-            style={{ backgroundImage: `url(${image})` }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-slate-950/10 to-transparent" />
-          <span className="absolute left-4 top-4 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
-            Featured update
-          </span>
-        </div>
-        <div className="flex flex-col justify-center p-5 sm:p-6">
-          <ContentBadges item={item} />
-          <h2 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
-            {getRecordTitle(item.record, "Research update")}
-          </h2>
-          {summaryFor(item.record) ? (
-            <p className="mt-3 line-clamp-4 text-sm leading-7 text-slate-600">
-              {summaryFor(item.record)}
-            </p>
-          ) : null}
-          <div className="mt-5 flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
-            <span>{formatDate(recordDate(item.record))}</span>
-            {compactText(item.record.venue ?? item.record.location) ? (
-              <span>{compactText(item.record.venue ?? item.record.location)}</span>
-            ) : null}
-          </div>
-          {item.href ? (
-            <Link href={item.href} className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-primary transition hover:text-secondary">
-              Read story <ArrowRight aria-hidden className="h-4 w-4" />
-            </Link>
-          ) : null}
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function CompactStoryCard({ item }: { item: ContentItem }) {
-  const image = getRecordImage(item.record) || "/images/research/research-demo-imagegen.webp";
+function StoryCard({
+  item,
+  priority,
+  index,
+}: {
+  item: ContentItem;
+  priority?: boolean;
+  index: number;
+}) {
+  const image = getRecordImage(item.record) || fallbackImages[index % fallbackImages.length];
   const content = (
-    <article className="group grid gap-4 overflow-hidden rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg sm:grid-cols-[150px_minmax(0,1fr)]">
-      <div className="relative min-h-[140px] overflow-hidden rounded-md bg-primary/10">
+    <article className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl">
+      <div className={`relative overflow-hidden ${priority ? "h-56" : "h-40"}`}>
         <div
           className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-105"
           style={{ backgroundImage: `url(${image})` }}
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/42 to-transparent" />
+        <KindBadge item={item} className="absolute left-3 top-3" />
       </div>
-      <div className="min-w-0 py-1">
-        <ContentBadges item={item} compact />
-        <h3 className="mt-3 line-clamp-2 font-[family-name:var(--font-display)] text-lg font-semibold leading-6 text-slate-950">
+      <div className="p-4">
+        <h2 className={`${priority ? "text-xl" : "text-lg"} line-clamp-2 font-[family-name:var(--font-display)] font-semibold leading-7 text-slate-950`}>
           {getRecordTitle(item.record, "Research update")}
-        </h3>
+        </h2>
+        <MetaLine record={item.record} className="mt-2" />
         {summaryFor(item.record) ? (
-          <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{summaryFor(item.record)}</p>
+          <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+            {summaryFor(item.record)}
+          </p>
+        ) : null}
+        {item.href ? (
+          <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+            Read story <ArrowRight aria-hidden className="h-4 w-4" />
+          </span>
         ) : null}
       </div>
     </article>
   );
-
   return item.href ? <Link href={item.href}>{content}</Link> : content;
 }
 
-function LatestFromResearch({ items }: { items: ContentItem[] }) {
+function LatestResearch({ items }: { items: ContentItem[] }) {
+  const [a, b, c, ...compact] = items;
   return (
     <div id="latest">
-      <ScrollReveal className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6" variant="fade-up">
-        <SectionHeader
-          eyebrow="Latest from research"
-          title="Latest from research"
-          href="/news"
-        />
-        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {items.map((item, index) => (
-            <EditorialCard key={`${item.kind}-${item.record.id}`} item={item} raised={index % 3 === 1} />
+      <ScrollReveal className="space-y-4" variant="fade-up">
+        <SectionHeader title="Latest from research" href="/news" />
+        <div className="grid gap-4 xl:grid-cols-[repeat(3,minmax(0,1fr))_minmax(220px,0.9fr)]">
+          {[a, b, c].filter(Boolean).map((item, index) => (
+            <LatestCard key={`${item.kind}-${item.record.id}`} item={item} index={index + 3} />
           ))}
+          {compact.length > 0 ? (
+            <div className="grid gap-4">
+              {compact.slice(0, 2).map((item, index) => (
+                <MiniLatestCard key={`${item.kind}-${item.record.id}`} item={item} index={index + 6} />
+              ))}
+            </div>
+          ) : null}
         </div>
       </ScrollReveal>
     </div>
   );
 }
 
-function EditorialCard({ item, raised }: { item: ContentItem; raised?: boolean }) {
-  const image = getRecordImage(item.record);
+function LatestCard({ item, index }: { item: ContentItem; index: number }) {
+  const image = getRecordImage(item.record) || fallbackImages[index % fallbackImages.length];
   const content = (
-    <article className={`group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl ${raised ? "xl:-mt-3" : ""}`}>
-      <div className="relative h-36 overflow-hidden bg-[linear-gradient(135deg,#00234c,#00583d)]">
-        {image ? (
-          <div
-            className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-105"
-            style={{ backgroundImage: `url(${image})` }}
-          />
-        ) : (
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(245,166,35,0.45),transparent_32%),linear-gradient(135deg,#00234c,#00583d)]" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/62 via-transparent to-transparent" />
-        <div className="absolute bottom-3 left-3">
-          <ContentBadges item={item} compact inverted />
-        </div>
+    <article className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg">
+      <div className="relative h-40 overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-105"
+          style={{ backgroundImage: `url(${image})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/42 to-transparent" />
+        <KindBadge item={item} className="absolute left-3 top-3" />
       </div>
       <div className="p-4">
-        <h3 className="line-clamp-2 min-h-[3rem] font-[family-name:var(--font-display)] text-lg font-semibold leading-6 text-slate-950">
+        <h3 className="line-clamp-2 font-[family-name:var(--font-display)] text-lg font-semibold leading-6 text-slate-950">
           {getRecordTitle(item.record, "Research update")}
         </h3>
+        <MetaLine record={item.record} className="mt-2" />
         {summaryFor(item.record) ? (
           <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{summaryFor(item.record)}</p>
         ) : null}
-        <div className="mt-4 flex items-center justify-between gap-3 text-xs font-semibold text-slate-500">
-          <span>{formatDate(recordDate(item.record))}</span>
-          {item.href ? <span className="text-primary">Read story</span> : null}
-        </div>
       </div>
     </article>
   );
+  return item.href ? <Link href={item.href}>{content}</Link> : content;
+}
 
+function MiniLatestCard({ item, index }: { item: ContentItem; index: number }) {
+  const image = getRecordImage(item.record) || fallbackImages[index % fallbackImages.length];
+  const content = (
+    <article className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:border-primary/30 hover:shadow-md">
+      <div className="relative h-20 overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-105"
+          style={{ backgroundImage: `url(${image})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/55 to-transparent" />
+        <KindBadge item={item} className="absolute left-3 top-3" compact />
+      </div>
+      <div className="p-3">
+        <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-950">
+          {getRecordTitle(item.record, "Research update")}
+        </h3>
+        <MetaLine record={item.record} className="mt-2" />
+      </div>
+    </article>
+  );
   return item.href ? <Link href={item.href}>{content}</Link> : content;
 }
 
 function EventsCalendar({ items }: { items: ContentItem[] }) {
-  const sorted = [...items].sort(sortByEventDate);
-  const selected = sorted[0];
-  const dateTiles = sorted.slice(0, 6);
+  const sorted = [...items].sort(sortEventDate);
+  const monthLabel = formatMonth(recordDate(sorted[0].record));
+  const activeDay = formatDay(recordDate(sorted[0].record));
+  const calendarDays = Array.from({ length: 35 }, (_, index) => index + 1);
 
   return (
     <div id="events">
-      <ScrollReveal className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6" variant="fade-up">
-        <SectionHeader
-          eyebrow="Events calendar"
-          title="Events calendar"
-          href="/news#events"
-        />
-        <div className="mt-5 grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
-          <div className="rounded-lg border border-primary/10 bg-primary/[0.03] p-4">
+      <ScrollReveal className="space-y-4" variant="fade-up">
+        <SectionHeader title="Events calendar" href="/news#events" />
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-950">
-                {formatMonth(recordDate(selected.record))}
-              </p>
-              <CalendarDays aria-hidden className="h-5 w-5 text-primary" />
+              <ChevronLeft aria-hidden className="h-5 w-5 text-primary" />
+              <h3 className="text-sm font-semibold text-slate-950">{monthLabel}</h3>
+              <ChevronRight aria-hidden className="h-5 w-5 text-primary" />
             </div>
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              {dateTiles.map((item) => (
-                <a
-                  key={item.record.id}
-                  href={item.href || "#events"}
-                  className="rounded-md border border-slate-200 bg-white p-3 text-center transition hover:border-primary/35 hover:bg-primary/5"
-                >
-                  <span className="block text-[10px] font-semibold uppercase text-slate-500">
-                    {formatWeekday(recordDate(item.record))}
+            <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[10px] font-semibold uppercase text-slate-500">
+              {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => <span key={`${day}-${index}`}>{day}</span>)}
+            </div>
+            <div className="mt-2 grid grid-cols-7 gap-1 text-center text-xs text-slate-600">
+              {calendarDays.map((day) => {
+                const active = String(day).padStart(2, "0") === activeDay;
+                return (
+                  <span
+                    key={day}
+                    className={`flex aspect-square items-center justify-center rounded-full ${active ? "bg-primary text-white" : "text-slate-600"}`}
+                  >
+                    {day}
                   </span>
-                  <span className="mt-1 block font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
-                    {formatDay(recordDate(item.record))}
-                  </span>
-                </a>
-              ))}
+                );
+              })}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-3 text-[10px] font-semibold text-slate-500">
+              <LegendDot label="Upcoming" className="bg-primary" />
+              <LegendDot label="Ongoing" className="bg-secondary" />
+              <LegendDot label="Completed" className="bg-slate-300" />
             </div>
           </div>
-
           <div className="grid gap-3">
-            {sorted.slice(0, 4).map((item) => (
-              <EventAgendaRow key={item.record.id} item={item} />
-            ))}
+            {sorted.slice(0, 3).map((item, index) => <EventRow key={item.record.id} item={item} index={index} />)}
           </div>
         </div>
       </ScrollReveal>
@@ -479,60 +389,52 @@ function EventsCalendar({ items }: { items: ContentItem[] }) {
   );
 }
 
-function EventAgendaRow({ item }: { item: ContentItem }) {
+function EventRow({ item, index }: { item: ContentItem; index: number }) {
+  const month = formatMonthShort(recordDate(item.record));
+  const day = formatDay(recordDate(item.record));
+  const ongoing = index === 2;
   const content = (
-    <article className="group grid gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md sm:grid-cols-[76px_minmax(0,1fr)_auto] sm:items-center">
-      <div className="rounded-md border border-primary/15 bg-primary/5 px-3 py-2 text-center">
-        <span className="block text-[10px] font-semibold uppercase text-primary">
-          {formatWeekday(recordDate(item.record))}
-        </span>
-        <span className="block font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
-          {formatDay(recordDate(item.record))}
-        </span>
+    <article className="group grid grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition hover:border-primary/30 hover:shadow-md">
+      <div className="overflow-hidden rounded-md border border-primary/15 text-center">
+        <div className={`${ongoing ? "bg-secondary" : "bg-primary"} py-1 text-[10px] font-semibold uppercase text-white`}>
+          {month}
+        </div>
+        <div className="bg-white py-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">{day}</div>
       </div>
       <div className="min-w-0">
-        <ContentBadges item={item} compact />
-        <h3 className="mt-2 line-clamp-1 font-semibold text-slate-950">
+        <h3 className="line-clamp-1 font-[family-name:var(--font-display)] text-lg font-semibold leading-6 text-slate-950">
           {getRecordTitle(item.record, "Research event")}
         </h3>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 line-clamp-1 text-sm text-slate-600">
           {compactText(item.record.venue ?? item.record.location) || formatDate(recordDate(item.record))}
         </p>
       </div>
-      {item.href ? (
-        <span className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
-          View <ArrowRight aria-hidden className="h-4 w-4" />
-        </span>
-      ) : null}
+      <span className={`rounded-md px-2 py-1 text-[10px] font-semibold ${ongoing ? "bg-orange-50 text-secondary" : "bg-primary/10 text-primary"}`}>
+        {ongoing ? "Ongoing" : "Upcoming"}
+      </span>
     </article>
   );
-
   return item.href ? <Link href={item.href}>{content}</Link> : content;
 }
 
 function AnnouncementsPanel({ items }: { items: ContentItem[] }) {
   return (
     <div id="announcements">
-      <ScrollReveal className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6" variant="fade-up">
-        <SectionHeader
-          eyebrow="Announcements"
-          title="Announcements"
-          href="/news#announcements"
-        />
-        <div className="mt-5 grid gap-3 md:grid-cols-2">
-          {items.map((item) => (
-            <article key={item.record.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4 transition hover:border-secondary/40 hover:bg-white hover:shadow-sm">
-              <div className="flex flex-wrap gap-2">
-                <Badge>{formatLabel(compactText(item.record.category) || "Notice")}</Badge>
-                {compactText(item.record.priority) ? <FilledBadge>{formatLabel(item.record.priority)}</FilledBadge> : null}
+      <ScrollReveal className="space-y-4 rounded-lg bg-slate-50/80 p-5" variant="fade-up">
+        <SectionHeader title="Announcements" href="/news#announcements" />
+        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+          {items.map((item, index) => (
+            <article key={item.record.id} className="grid grid-cols-[48px_minmax(0,1fr)_auto] items-center gap-3 border-b border-slate-200 p-4 last:border-b-0">
+              <PriorityBadge priority={compactText(item.record.priority) || (index === 0 ? "High" : index === 1 ? "Medium" : "Low")} />
+              <div className="min-w-0">
+                <h3 className="line-clamp-1 font-[family-name:var(--font-display)] text-base font-semibold text-slate-950">
+                  {getRecordTitle(item.record, "Research announcement")}
+                </h3>
+                <p className="mt-1 text-xs font-semibold text-slate-500">
+                  {compactText(item.record.category) || "Research"} {formatDate(item.record.valid_to) ? ` • Due ${formatDate(item.record.valid_to)}` : ""}
+                </p>
               </div>
-              <h3 className="mt-3 line-clamp-2 font-semibold text-slate-950">
-                {getRecordTitle(item.record, "Research announcement")}
-              </h3>
-              <div className="mt-3 flex flex-wrap gap-3 text-xs font-semibold text-slate-500">
-                {formatDate(recordDate(item.record)) ? <span>{formatDate(recordDate(item.record))}</span> : null}
-                {formatDate(item.record.valid_to) ? <span>Until {formatDate(item.record.valid_to)}</span> : null}
-              </div>
+              <ChevronRight aria-hidden className="h-4 w-4 text-primary" />
             </article>
           ))}
         </div>
@@ -544,97 +446,111 @@ function AnnouncementsPanel({ items }: { items: ContentItem[] }) {
 function ResearchGallery({ items }: { items: ContentItem[] }) {
   return (
     <div id="gallery">
-      <ScrollReveal className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6" variant="fade-up">
-        <SectionHeader
-          eyebrow="Research gallery"
-          title="Research gallery"
-          href="/news#gallery"
-        />
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {items.slice(0, 4).map((item) => (
-            <GalleryTile key={`${item.kind}-${item.record.id}`} item={item} />
-          ))}
+      <ScrollReveal className="mt-7 space-y-4" variant="fade-up">
+        <SectionHeader title="Research gallery" href="/news#gallery" />
+        <div className="relative">
+          <button className="absolute -left-4 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white shadow-md">
+            <ChevronLeft aria-hidden className="h-5 w-5 text-primary" />
+          </button>
+          <div className="grid gap-4 overflow-hidden sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-7">
+            {items.slice(0, 7).map((item, index) => (
+              <GalleryTile key={`${item.kind}-${item.record.id}`} item={item} index={index} />
+            ))}
+          </div>
+          <button className="absolute -right-4 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white shadow-md">
+            <ChevronRight aria-hidden className="h-5 w-5 text-primary" />
+          </button>
         </div>
       </ScrollReveal>
     </div>
   );
 }
 
-function GalleryTile({ item }: { item: ContentItem }) {
-  const image = getRecordImage(item.record);
+function GalleryTile({ item, index }: { item: ContentItem; index: number }) {
+  const image = getRecordImage(item.record) || fallbackImages[index % fallbackImages.length];
   return (
-    <article className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="relative h-36 overflow-hidden bg-primary/10">
-        <div
-          className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-105"
-          style={{ backgroundImage: `url(${image})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 to-transparent" />
-        <div className="absolute bottom-3 left-3">
-          <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">{formatLabel(item.kind)}</span>
-        </div>
-      </div>
-      <p className="line-clamp-2 p-3 text-sm font-semibold leading-6 text-slate-950">
-        {getRecordTitle(item.record, "Research media")}
-      </p>
+    <article className="group h-24 overflow-hidden rounded-lg border border-slate-200 bg-primary/10 shadow-sm">
+      <div
+        className="h-full bg-cover bg-center transition duration-700 group-hover:scale-105"
+        style={{ backgroundImage: `url(${image})` }}
+      />
     </article>
   );
 }
 
 function ResearchUpdatesBand() {
   return (
-    <ScrollReveal className="overflow-hidden rounded-lg border border-primary/15 bg-primary text-white shadow-sm" variant="fade-up">
-      <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/70">
-            Research updates
-          </p>
-          <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold">
-            Connect with the research office
-          </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-7 text-white/78">
-            Send media, collaboration, event, and public communication inquiries through the research contact desk.
-          </p>
+    <ScrollReveal className="mt-7 overflow-hidden rounded-lg border border-primary/15 bg-[linear-gradient(135deg,#00234c,#00583d)] text-white shadow-sm" variant="fade-up">
+      <div className="grid gap-5 p-6 lg:grid-cols-[minmax(260px,0.9fr)_minmax(320px,0.9fr)_minmax(420px,1.2fr)] lg:items-center">
+        <div className="flex items-center gap-4">
+          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-secondary text-secondary">
+            <Mail aria-hidden className="h-7 w-7" />
+          </span>
+          <div>
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold">
+              Research updates
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-white/80">
+              Subscribe to receive the latest research news, articles, events and announcements from Kisii University.
+            </p>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/connect#media"
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-white px-5 py-3 text-sm font-semibold text-primary shadow-sm transition hover:bg-white/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/20"
-          >
-            Media inquiry
-            <ArrowRight aria-hidden className="h-4 w-4" />
-          </Link>
-          <Link
-            href="/connect"
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/30 bg-transparent px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/20"
-          >
-            Contact research
-            <ArrowRight aria-hidden className="h-4 w-4" />
-          </Link>
+
+        <form className="flex rounded-md border border-white/20 bg-white p-1">
+          <input
+            type="email"
+            placeholder="Enter your email address"
+            className="h-11 min-w-0 flex-1 rounded-md px-4 text-sm text-slate-950 outline-none placeholder:text-slate-500"
+          />
+          <button className="h-11 rounded-md bg-primary px-6 text-sm font-semibold text-white">
+            Subscribe
+          </button>
+        </form>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <UpdateBenefit icon={Megaphone} title="Timely updates" body="Be the first to know" />
+          <UpdateBenefit icon={TrendingUp} title="Curated insights" body="Research that matters" />
+          <UpdateBenefit icon={SparkIcon} title="Make an impact" body="Support our mission" />
         </div>
       </div>
     </ScrollReveal>
   );
 }
 
-function SectionHeader({
-  eyebrow,
+function UpdateBenefit({
+  icon: Icon,
   title,
-  href,
+  body,
 }: {
-  eyebrow: string;
+  icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
   title: string;
-  href: string;
+  body: string;
 }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="flex items-center gap-3 border-l border-white/15 pl-4">
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/10 text-secondary">
+        <Icon aria-hidden className="h-5 w-5" />
+      </span>
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-          {eyebrow}
-        </p>
-        <h2 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+        <p className="text-sm font-semibold">{title}</p>
+        <p className="mt-1 text-xs text-white/70">{body}</p>
+      </div>
+    </div>
+  );
+}
+
+function SparkIcon({ className }: { className?: string }) {
+  return <ImageIcon aria-hidden className={className} />;
+}
+
+function SectionHeader({ title, href }: { title: string; href: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center gap-3">
+        <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
           {title}
         </h2>
+        <span className="h-px w-7 bg-secondary" />
       </div>
       <Link href={href} className="inline-flex items-center gap-2 text-sm font-semibold text-primary transition hover:text-secondary">
         View all <ArrowRight aria-hidden className="h-4 w-4" />
@@ -643,46 +559,46 @@ function SectionHeader({
   );
 }
 
-function ContentBadges({
-  item,
-  compact = false,
-  inverted = false,
-}: {
-  item: ContentItem;
-  compact?: boolean;
-  inverted?: boolean;
-}) {
-  const label =
-    item.kind === "blog"
-      ? "Article"
-      : item.kind === "event"
-        ? "Event"
-        : item.kind === "announcement"
-          ? "Announcement"
-          : "News";
-  const type = compactText(
-    item.record.article_type ??
-      item.record.news_type ??
-      item.record.event_type ??
-      item.record.category,
-  );
-
+function KindBadge({ item, className = "", compact = false }: { item: ContentItem; className?: string; compact?: boolean }) {
+  const label = item.kind === "event" ? "Event" : item.kind === "article" ? "Article" : item.kind === "announcement" ? "Notice" : "News";
+  const tone = item.kind === "event" ? "bg-secondary text-white" : item.kind === "article" ? "bg-blue-700 text-white" : "bg-primary text-white";
   return (
-    <div className="flex flex-wrap gap-2">
-      <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${inverted ? "bg-white/90 text-primary" : "bg-primary/10 text-primary"}`}>
-        {label}
-      </span>
-      {type && !compact ? (
-        <span className="rounded-full bg-secondary/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-secondary">
-          {formatLabel(type)}
-        </span>
-      ) : null}
-      {item.record.is_featured ? (
-        <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-700">
-          Featured
-        </span>
+    <span className={`${className} rounded-md px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${tone}`}>
+      {compact ? label.toUpperCase() : label}
+    </span>
+  );
+}
+
+function MetaLine({ record, className = "" }: { record: ResearchGenericRecord; className?: string }) {
+  const date = formatDate(recordDate(record));
+  return (
+    <div className={`${className} flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500`}>
+      {date ? (
+        <>
+          <CalendarDays aria-hidden className="h-3.5 w-3.5" />
+          <span>{date}</span>
+        </>
       ) : null}
     </div>
+  );
+}
+
+function PriorityBadge({ priority }: { priority: string }) {
+  const value = priority.toLowerCase();
+  const tone = value.includes("high")
+    ? "bg-secondary text-white"
+    : value.includes("medium")
+      ? "bg-amber-100 text-amber-700"
+      : "bg-primary text-white";
+  return <span className={`rounded-md px-2 py-1 text-[10px] font-semibold ${tone}`}>{formatLabel(priority)}</span>;
+}
+
+function LegendDot({ label, className }: { label: string; className: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={`h-2 w-2 rounded-full ${className}`} />
+      {label}
+    </span>
   );
 }
 
@@ -702,6 +618,62 @@ function filterItems(items: ContentItem[], query: string) {
     ].map((value) => compactText(value).toLowerCase());
     return searchable.some((value) => value.includes(query));
   });
+}
+
+function withPlaceholderItems(items: ContentItem[], section: "featured" | "latest" | "events" | "announcements" | "gallery") {
+  if (items.length > 0) return items;
+  const placeholders: Record<typeof section, ContentItem[]> = {
+    featured: [
+      placeholderItem("news", "{{ article_title }}", "{{ article_summary }}", fallbackImages[0], "2025-05-20"),
+      placeholderItem("article", "{{ article_title }}", "{{ article_summary }}", fallbackImages[1], "2025-05-24"),
+      placeholderItem("event", "{{ event_title }}", "{{ event_summary }}", fallbackImages[2], "2025-05-28"),
+    ],
+    latest: [
+      placeholderItem("news", "{{ article_title }}", "{{ article_summary }}", fallbackImages[5], "2025-05-18"),
+      placeholderItem("article", "{{ article_title }}", "{{ article_summary }}", fallbackImages[3], "2025-05-16"),
+      placeholderItem("event", "{{ event_title }}", "{{ event_summary }}", fallbackImages[0], "2025-05-15"),
+      placeholderItem("news", "{{ article_title }}", "{{ article_summary }}", fallbackImages[4], "2025-05-14"),
+      placeholderItem("article", "{{ article_title }}", "{{ article_summary }}", fallbackImages[2], "2025-05-12"),
+    ],
+    events: [
+      placeholderItem("event", "{{ event_title }}", "{{ event_summary }}", fallbackImages[2], "2025-05-20"),
+      placeholderItem("event", "{{ event_title }}", "{{ event_summary }}", fallbackImages[3], "2025-05-24"),
+      placeholderItem("event", "{{ event_title }}", "{{ event_summary }}", fallbackImages[4], "2025-05-28"),
+    ],
+    announcements: [
+      placeholderItem("announcement", "{{ announcement_title }}", "", "", "2025-05-20", "High"),
+      placeholderItem("announcement", "{{ announcement_title }}", "", "", "2025-05-24", "Medium"),
+      placeholderItem("announcement", "{{ announcement_title }}", "", "", "2025-05-28", "Low"),
+    ],
+    gallery: fallbackImages.map((image, index) =>
+      placeholderItem("news", "{{ article_title }}", "", image, `2025-05-${String(10 + index).padStart(2, "0")}`),
+    ),
+  };
+  return placeholders[section];
+}
+
+function placeholderItem(
+  kind: ContentKind,
+  title: string,
+  summary: string,
+  image: string,
+  date: string,
+  priority?: string,
+): ContentItem {
+  return {
+    kind,
+    record: {
+      id: `${kind}-${title}-${date}-${priority || "placeholder"}`,
+      title,
+      summary,
+      published_at: date,
+      start_date: date,
+      venue: "{{ venue }}",
+      category: "{{ category }}",
+      priority,
+      cover_image_url: image,
+    },
+  };
 }
 
 function pickFeatured(items: ContentItem[]) {
@@ -730,11 +702,11 @@ function recordDate(record: ResearchGenericRecord) {
   );
 }
 
-function sortByPublished(a: ContentItem, b: ContentItem) {
+function sortNewest(a: ContentItem, b: ContentItem) {
   return toTime(recordDate(b.record)) - toTime(recordDate(a.record));
 }
 
-function sortByEventDate(a: ContentItem, b: ContentItem) {
+function sortEventDate(a: ContentItem, b: ContentItem) {
   return toTime(recordDate(a.record)) - toTime(recordDate(b.record));
 }
 
@@ -782,9 +754,9 @@ function formatMonth(value: string) {
     : "Events calendar";
 }
 
-function formatWeekday(value: string) {
+function formatMonthShort(value: string) {
   const date = parseDate(value);
-  return date ? new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(date) : "Date";
+  return date ? new Intl.DateTimeFormat("en-GB", { month: "short" }).format(date) : "Date";
 }
 
 function formatDay(value: string) {
