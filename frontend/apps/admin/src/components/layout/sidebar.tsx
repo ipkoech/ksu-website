@@ -289,18 +289,6 @@ const researchNavigation: NavItem[] = [
             icon: HandCoins,
             scope: ["research.view", "donations.manage", "donations.view"],
           },
-          {
-            title: "Donation Records",
-            href: "/research/donations/records",
-            icon: HandCoins,
-            scope: ["research.view", "donations.manage", "donations.view"],
-          },
-          {
-            title: "Donors",
-            href: "/research/donations/donors",
-            icon: Users,
-            scope: ["research.view", "donations.manage", "donations.view"],
-          },
         ],
       },
       {

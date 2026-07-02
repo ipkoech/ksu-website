@@ -10,7 +10,7 @@ export default function ResearchDonationDetailPage() {
       title="Donation Record"
       description="View donation amount, designation, donor linkage, purpose, and status."
       resource={researchServiceApi.donations}
-      backHref="/research/donations/records"
+      backHref="/research/donations?tab=records"
       slugParam="id"
       lookup="id"
       labelFields={["donation_type", "designation", "status"]}

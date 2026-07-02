@@ -5963,20 +5963,6 @@ export const portalConfigs: Record<string, PortalConfig> = {
         group: "Grants & Funding",
       },
       {
-        title: "Donation Records",
-        href: "/research/donations/records",
-        icon: HandCoins,
-        scope: "donations.manage",
-        group: "Grants & Funding",
-      },
-      {
-        title: "Donors",
-        href: "/research/donations/donors",
-        icon: Users,
-        scope: "donations.manage",
-        group: "Grants & Funding",
-      },
-      {
         title: "Innovation",
         href: "/research/innovations",
         icon: Boxes,
