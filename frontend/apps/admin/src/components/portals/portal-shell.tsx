@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, LogOut, Menu, Minus, Plus } from "lucide-react";
 import { useAuth, usePermissions, ServiceGuard } from "@ksu/auth";
@@ -106,6 +106,7 @@ function PortalSidebar({
   onMobileClose,
 }: PortalSidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user, logout } = useAuth();
   const { hasScope } = usePermissions();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -140,9 +141,14 @@ function PortalSidebar({
     [filteredNav],
   );
 
+  const activeHref = useMemo(
+    () => getBestActiveHref(filteredNav, pathname, searchParams),
+    [filteredNav, pathname, searchParams],
+  );
+
   useEffect(() => {
     const activeGroups = grouped
-      .filter((section) => section.group && section.items.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`)))
+      .filter((section) => section.group && section.items.some((item) => item.href === activeHref))
       .map((section) => section.group as string);
     if (activeGroups.length === 0) return;
     setExpandedGroups((current) => {
@@ -156,7 +162,7 @@ function PortalSidebar({
       }
       return changed ? next : current;
     });
-  }, [grouped, pathname]);
+  }, [activeHref, grouped]);
 
   const toggleGroup = (group: string) => {
     setExpandedGroups((current) => {
@@ -236,8 +242,7 @@ function PortalSidebar({
                 ) : null}
                 {(section.group && (!collapsed || isMobileOpen) && !expandedGroups.has(section.group) ? [] : section.items).map((item) => {
                   const Icon = item.icon;
-                  const active =
-                    pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  const active = item.href === activeHref;
                   const className = cn(
                     "flex items-center gap-3 rounded-lg text-sm font-medium transition-colors",
                     collapsed && !isMobileOpen
@@ -341,4 +346,44 @@ function PortalSidebar({
       />
     </TooltipProvider>
   );
+}
+
+function getBestActiveHref(
+  items: PortalNavItem[],
+  pathname: string,
+  searchParams: URLSearchParams,
+) {
+  let best: { href: string; score: number } | null = null;
+
+  for (const item of items) {
+    const score = activeScore(item.href, pathname, searchParams);
+    if (score === null) continue;
+    if (!best || score > best.score) {
+      best = { href: item.href, score };
+    }
+  }
+
+  return best?.href ?? "";
+}
+
+function activeScore(
+  href: string,
+  pathname: string,
+  searchParams: URLSearchParams,
+) {
+  const [itemPath, itemQuery] = href.split("?");
+  if (!itemPath) return null;
+
+  if (itemQuery) {
+    if (pathname !== itemPath) return null;
+    const requiredParams = new URLSearchParams(itemQuery);
+    for (const [key, value] of requiredParams.entries()) {
+      if (searchParams.get(key) !== value) return null;
+    }
+    return 10000 + href.length;
+  }
+
+  if (pathname === itemPath) return 5000 + href.length;
+  if (pathname.startsWith(`${itemPath}/`)) return itemPath.length;
+  return null;
 }

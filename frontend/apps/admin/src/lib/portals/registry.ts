@@ -6143,13 +6143,6 @@ export const portalConfigs: Record<string, PortalConfig> = {
     accentClassName: "text-green-700 bg-green-50 border-green-100",
     nav: [
       {
-        title: "Dashboard",
-        href: "/research",
-        icon: PanelsTopLeft,
-        scope: "research.view",
-        group: "Core",
-      },
-      {
         title: "Projects",
         href: "/research/projects",
         icon: FlaskConical,
