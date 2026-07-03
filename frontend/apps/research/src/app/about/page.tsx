@@ -4,7 +4,6 @@ import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 import {
   ArrowRight,
   BookOpen,
-  Building2,
   CheckCircle2,
   ChevronRight,
   ClipboardList,
@@ -18,6 +17,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { PublicResearchContextResponse } from "@ksu/api-client";
 import { Badge, PrimaryLink } from "../../components/research-ui";
+import { ResearchRichText } from "../../components/research-rich-text";
 import { compactText } from "../../lib/research-public-data";
 import { getResearchSiteContext } from "../../lib/research-site-context";
 import {
@@ -34,34 +34,7 @@ export const metadata: Metadata = {
     "Mandate, mission, leadership, staff hierarchy, governance, and contact information for Kisii University research support.",
 };
 
-const aboutSections = [
-  { id: "overview", anchor: "about-overview", label: "Overview", icon: Building2 },
-  { id: "mandate", anchor: "about-mandate", label: "Mandate", icon: ClipboardList },
-  { id: "leadership", anchor: "about-leadership", label: "Leadership", icon: MessageSquareText },
-  { id: "team", anchor: "about-team", label: "Team", icon: Users },
-  { id: "governance", anchor: "about-governance", label: "Governance", icon: ShieldCheck },
-  { id: "contact", anchor: "about-contact", label: "Contact", icon: Mail },
-] satisfies Array<{ id: AboutSectionId; anchor: string; label: string; icon: LucideIcon }>;
-
-type AboutSectionId =
-  | "overview"
-  | "mandate"
-  | "leadership"
-  | "team"
-  | "governance"
-  | "contact";
-
-type AboutSearchParams = {
-  section?: string;
-  tab?: string;
-};
-
-export default async function AboutPage({
-  searchParams,
-}: {
-  searchParams?: Promise<AboutSearchParams>;
-}) {
-  const params = (await searchParams) ?? {};
+export default async function AboutPage() {
   const { researchContext } = await getResearchSiteContext();
   const teamMembers = buildTeamMembers(researchContext?.team);
   const lead = getLeadTeamMember(teamMembers);
@@ -72,7 +45,6 @@ export default async function AboutPage({
         researchContext={researchContext}
         teamMembers={teamMembers}
         lead={lead}
-        requestedSection={params.section ?? params.tab}
       />
     </main>
   );
@@ -82,12 +54,10 @@ function AboutWorkspace({
   researchContext,
   teamMembers,
   lead,
-  requestedSection,
 }: {
   researchContext: PublicResearchContextResponse | null;
   teamMembers: AboutTeamMember[];
   lead: AboutTeamMember | null;
-  requestedSection?: string;
 }) {
   const entity = researchContext?.entity;
   const title = compactText(entity?.name) || "Research, Extension, Innovation and Resource Mobilization";
@@ -103,168 +73,100 @@ function AboutWorkspace({
     { label: "Phone", value: entity?.phone, href: entity?.phone ? `tel:${entity.phone}` : undefined, icon: Phone },
     { label: "Office", value: entity?.office_location, icon: MapPin },
   ];
-  const availableSections = aboutSections.filter((section) => {
-    if (section.id === "overview") return Boolean(overview || title);
-    if (section.id === "mandate") return mandateRows.length > 0;
-    if (section.id === "leadership") return Boolean(leadershipMessage || lead || researchContext?.leadership?.person);
-    if (section.id === "team") return teamMembers.length > 0 || Boolean(researchContext?.team?.groups?.length);
-    if (section.id === "governance") return governanceRows.length > 0;
-    return primaryContact.some((item) => compactText(item.value));
-  });
-  const normalizedSection = normalizeAboutSection(requestedSection);
-  const activeSection = normalizedSection && availableSections.some((section) => section.id === normalizedSection)
-    ? normalizedSection
-    : undefined;
-  const showAll = !activeSection;
-  const shouldShow = (section: AboutSectionId) => showAll || activeSection === section;
+  const hasLeadership = Boolean(leadershipMessage || lead || researchContext?.leadership?.person);
+  const hasTeam = teamMembers.length > 0 || Boolean(researchContext?.team?.groups?.length);
+  const hasContact = primaryContact.some((item) => compactText(item.value));
 
   return (
     <section className="px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
         <Breadcrumbs />
 
-        <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
-          <AboutSectionNav activeSection={activeSection} sections={availableSections} />
+        <div className="min-w-0 space-y-5">
+          <ScrollReveal
+            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+            variant="fade-up"
+          >
+            <div id="about-overview" className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
+                  About REIRM
+                </p>
+                <h1 className="mt-3 max-w-5xl font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
+                  {title}
+                </h1>
+                {overview ? (
+                  <ResearchRichText
+                    content={overview}
+                    className="mt-3 text-sm leading-7 text-slate-700"
+                  />
+                ) : null}
+              </div>
+              <div className="flex flex-wrap gap-2 xl:justify-end">
+                <PrimaryLink href="/connect#research">Start an inquiry</PrimaryLink>
+                {teamMembers.length > 0 ? (
+                  <Link
+                    href="/team"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+                  >
+                    Team
+                    <ArrowRight aria-hidden className="h-4 w-4" />
+                  </Link>
+                ) : null}
+              </div>
+            </div>
+          </ScrollReveal>
 
-          <div className="min-w-0 space-y-5">
-            {shouldShow("overview") ? (
-              <ScrollReveal
-                className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
-                variant="fade-up"
-              >
-                <div id="about-overview" className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="max-w-4xl">
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
-                      About REIRM
-                    </p>
-                    <h1 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
-                      {title}
-                    </h1>
-                    {overview ? (
-                      <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-700">
-                        {overview}
-                      </p>
-                    ) : null}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <PrimaryLink href="/connect#research">Start an inquiry</PrimaryLink>
-                    {teamMembers.length > 0 ? (
-                      <Link
-                        href="/team"
-                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
-                      >
-                        Team
-                        <ArrowRight aria-hidden className="h-4 w-4" />
-                      </Link>
-                    ) : null}
-                  </div>
+          {mandateRows.length > 0 || hasLeadership ? (
+            <ScrollRevealGroup
+              className="grid gap-5 xl:grid-cols-2"
+              duration={620}
+              staggerDelay={80}
+            >
+              {mandateRows.length > 0 ? (
+                <MandateCard rows={mandateRows} />
+              ) : null}
+              {hasLeadership ? (
+                <LeadershipCard
+                  lead={lead}
+                  message={leadershipMessage}
+                  leadership={researchContext?.leadership}
+                />
+              ) : null}
+            </ScrollRevealGroup>
+          ) : null}
+
+          {hasTeam ? (
+            <ScrollReveal variant="fade-up">
+              <TeamHierarchyCard team={researchContext?.team} members={teamMembers} />
+            </ScrollReveal>
+          ) : null}
+
+          {governanceRows.length > 0 ? (
+            <ScrollReveal variant="fade-up">
+              <GovernanceCard rows={governanceRows} />
+            </ScrollReveal>
+          ) : null}
+
+          {hasContact ? (
+            <ScrollReveal variant="fade-up">
+              <section id="about-contact" className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <SectionHeader
+                  icon={Mail}
+                  label="Contact"
+                  title="Research office contact"
+                />
+                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                  {primaryContact.filter((item) => compactText(item.value)).map((item) => (
+                    <ContactTile key={item.label} item={item} />
+                  ))}
                 </div>
-              </ScrollReveal>
-            ) : null}
-
-            {shouldShow("mandate") || shouldShow("leadership") ? (
-              <ScrollRevealGroup
-                className="grid gap-5 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]"
-                duration={620}
-                staggerDelay={80}
-              >
-                {shouldShow("mandate") && mandateRows.length > 0 ? (
-                  <MandateCard rows={mandateRows} />
-                ) : null}
-                {shouldShow("leadership") && (leadershipMessage || lead || researchContext?.leadership?.person) ? (
-                  <LeadershipCard
-                    lead={lead}
-                    message={leadershipMessage}
-                    leadership={researchContext?.leadership}
-                  />
-                ) : null}
-              </ScrollRevealGroup>
-            ) : null}
-
-            {shouldShow("team") || shouldShow("governance") ? (
-              <ScrollRevealGroup
-                className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.8fr)]"
-                duration={620}
-                staggerDelay={80}
-              >
-                {shouldShow("team") && (teamMembers.length > 0 || researchContext?.team?.groups?.length) ? (
-                  <TeamHierarchyCard team={researchContext?.team} members={teamMembers} />
-                ) : null}
-                {shouldShow("governance") && governanceRows.length > 0 ? (
-                  <GovernanceCard rows={governanceRows} />
-                ) : null}
-              </ScrollRevealGroup>
-            ) : null}
-
-            {shouldShow("contact") && primaryContact.some((item) => compactText(item.value)) ? (
-              <ScrollReveal variant="fade-up">
-                <section id="about-contact" className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                  <SectionHeader
-                    icon={Mail}
-                    label="Contact"
-                    title="Research office contact"
-                  />
-                  <div className="mt-5 grid gap-3 md:grid-cols-3">
-                    {primaryContact.filter((item) => compactText(item.value)).map((item) => (
-                      <ContactTile key={item.label} item={item} />
-                    ))}
-                  </div>
-                </section>
-              </ScrollReveal>
-            ) : null}
-          </div>
+              </section>
+            </ScrollReveal>
+          ) : null}
         </div>
       </div>
     </section>
-  );
-}
-
-function AboutSectionNav({
-  activeSection,
-  sections,
-}: {
-  activeSection?: AboutSectionId;
-  sections: typeof aboutSections;
-}) {
-  return (
-    <aside className="lg:sticky lg:top-24 lg:self-start">
-      <nav
-        aria-label="About sections"
-        className="overflow-x-auto rounded-lg border border-slate-200 bg-white p-2 shadow-sm"
-      >
-        <div className="flex min-w-max gap-1 lg:min-w-0 lg:flex-col">
-          <Link
-            href="/about"
-            className={`inline-flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-semibold transition ${
-              !activeSection
-                ? "bg-primary text-white"
-                : "text-slate-700 hover:bg-primary/5 hover:text-primary"
-            }`}
-          >
-            <Building2 aria-hidden className={`h-4 w-4 shrink-0 ${!activeSection ? "text-white" : "text-primary"}`} />
-            All sections
-          </Link>
-          {sections.map((section) => {
-            const Icon = section.icon;
-            const active = activeSection === section.id;
-            return (
-              <Link
-                key={section.id}
-                href={`/about?section=${section.id}`}
-                className={`inline-flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-semibold transition ${
-                  active
-                    ? "bg-primary text-white"
-                    : "text-slate-700 hover:bg-primary/5 hover:text-primary"
-                }`}
-              >
-                <Icon aria-hidden className={`h-4 w-4 shrink-0 ${active ? "text-white" : "text-primary"}`} />
-                {section.label}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
-    </aside>
   );
 }
 
@@ -307,7 +209,10 @@ function LeadershipCard({
         inverted
       />
       {message ? (
-        <p className="mt-5 text-sm leading-7 text-white/86">{message}</p>
+        <ResearchRichText
+          content={message}
+          className="mt-5 text-sm leading-7 text-white/86 prose-headings:text-white prose-p:text-white/86 prose-strong:text-white prose-li:text-white/86"
+        />
       ) : (
         <p className="mt-5 text-sm leading-7 text-white/72">
           Leadership message is not published yet.
@@ -354,28 +259,32 @@ function TeamHierarchyCard({
           <ArrowRight aria-hidden className="h-4 w-4" />
         </Link>
       </div>
-      <div className="mt-5 grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Published groups
-          </p>
-          <div className="mt-3 grid gap-2">
+      <div className="mt-5 grid gap-4">
+        {groups.length > 0 ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {groups.map((group) => (
               <div
                 key={group.key}
-                className="flex items-center justify-between rounded-md bg-white px-3 py-2 text-sm"
+                className="flex min-h-20 items-center justify-between gap-4 rounded-md border border-slate-200 bg-slate-50 px-4 py-3"
               >
                 <span className="font-semibold text-slate-800">{group.label}</span>
-                <span className="text-slate-500">{group.count}</span>
+                <span className="rounded-full bg-white px-2.5 py-1 text-sm font-semibold text-primary shadow-sm">
+                  {group.count}
+                </span>
               </div>
             ))}
           </div>
-        </div>
-        <div className="grid gap-3 md:grid-cols-2">
-          {members.slice(0, 4).map((member) => (
+        ) : null}
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {members.slice(0, 8).map((member) => (
             <StaffMiniCard key={member.assignmentId} person={member} />
           ))}
         </div>
+        {groups.length === 0 && members.length === 0 ? (
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm leading-6 text-slate-600">Research staff hierarchy is not published yet.</p>
+          </div>
+        ) : null}
       </div>
     </section>
   );
@@ -388,7 +297,7 @@ function GovernanceCard({ rows }: { rows: Array<{ label: string; value?: string 
       className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
     >
       <SectionHeader icon={ShieldCheck} label="Governance" title="Controls and reference documents" />
-      <div className="mt-5 grid gap-3">
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
         {rows.map((row) => (
           <Link
             key={row.label}
@@ -398,9 +307,12 @@ function GovernanceCard({ rows }: { rows: Array<{ label: string; value?: string 
             <span className="block text-sm font-semibold text-slate-950">
               {row.label}
             </span>
-            <span className="mt-2 line-clamp-3 block text-sm leading-6 text-slate-600">
-              {compactText(row.value)}
-            </span>
+            <div className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
+              <ResearchRichText
+                content={row.value}
+                className="text-sm leading-6 text-slate-600"
+              />
+            </div>
             <span className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-primary">
               Open
               <ArrowRight aria-hidden className="h-4 w-4 transition group-hover:translate-x-1" />
@@ -471,9 +383,10 @@ function InfoRow({
       </span>
       <div>
         <h3 className="text-sm font-semibold text-slate-950">{item.label}</h3>
-        <p className="mt-2 text-sm leading-7 text-slate-600">
-          {compactText(item.value)}
-        </p>
+        <ResearchRichText
+          content={item.value}
+          className="mt-2 text-sm leading-7 text-slate-600"
+        />
       </div>
     </article>
   );
@@ -620,14 +533,4 @@ function governanceContentRows(entity: PublicResearchContextResponse["entity"] |
     { label: "Service charter", value: entity?.service_charter, href: "/services" },
     { label: "Guidelines", value: entity?.guidelines, href: "/guidelines" },
   ].filter((item) => compactText(item.value));
-}
-
-function normalizeAboutSection(value?: string) {
-  const normalized = compactText(value)
-    .replace(/^-+/, "")
-    .replace(/^about-/, "")
-    .toLowerCase();
-  return aboutSections.some((section) => section.id === normalized)
-    ? (normalized as AboutSectionId)
-    : undefined;
 }
