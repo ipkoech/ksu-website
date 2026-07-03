@@ -53,7 +53,7 @@ PORTAL_USER_SPECS = [
     },
     {
         "key": "portal_research_admin",
-        "email": "research.admin@example.invalid",
+        "email": "research@kisiiuniversity.ac.ke",
         "full_name": "KSU Research Admin",
         "role": "research_admin",
         "institutional_role": "research_admin",
