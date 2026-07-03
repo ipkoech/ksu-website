@@ -38,12 +38,19 @@ ModelT = TypeVar("ModelT")
 
 NOW = datetime.now(timezone.utc)
 
+
+def seed_slug(value: str) -> str:
+    """Keep generated seed slugs within the shared schema column limit."""
+    return slugify(value)[:128].rstrip("-") or "record"
+
+
 async def upsert_by_slug(
     db: AsyncSession,
     model: type[ModelT],
     slug: str,
     payload: dict[str, Any],
 ) -> ModelT:
+    slug = seed_slug(slug)
     result = await db.execute(select(model).where(model.slug == slug))
     record = result.scalar_one_or_none()
     if record is None and payload.get("code") and hasattr(model, "code"):
