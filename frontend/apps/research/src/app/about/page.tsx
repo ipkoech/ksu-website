@@ -34,6 +34,23 @@ export const metadata: Metadata = {
     "Mandate, mission, leadership, staff hierarchy, governance, and contact information for Kisii University research support.",
 };
 
+const aboutSections = [
+  { id: "overview", anchor: "about-overview", label: "Overview", icon: ClipboardList },
+  { id: "mandate", anchor: "about-mandate", label: "Mandate", icon: ClipboardList },
+  { id: "leadership", anchor: "about-leadership", label: "Leadership", icon: MessageSquareText },
+  { id: "team", anchor: "about-team", label: "Team", icon: Users },
+  { id: "governance", anchor: "about-governance", label: "Governance", icon: ShieldCheck },
+  { id: "contact", anchor: "about-contact", label: "Contact", icon: Mail },
+] satisfies Array<{ id: string; anchor: string; label: string; icon: LucideIcon }>;
+
+type SectionBackdropVariant =
+  | "network"
+  | "checklist"
+  | "leadership"
+  | "hierarchy"
+  | "governance"
+  | "contact";
+
 export default async function AboutPage() {
   const { researchContext } = await getResearchSiteContext();
   const teamMembers = buildTeamMembers(researchContext?.team);
@@ -76,97 +93,144 @@ function AboutWorkspace({
   const hasLeadership = Boolean(leadershipMessage || lead || researchContext?.leadership?.person);
   const hasTeam = teamMembers.length > 0 || Boolean(researchContext?.team?.groups?.length);
   const hasContact = primaryContact.some((item) => compactText(item.value));
+  const visibleSections = aboutSections.filter((section) => {
+    if (section.id === "overview") return Boolean(overview || title);
+    if (section.id === "mandate") return mandateRows.length > 0;
+    if (section.id === "leadership") return hasLeadership;
+    if (section.id === "team") return hasTeam;
+    if (section.id === "governance") return governanceRows.length > 0;
+    return hasContact;
+  });
 
   return (
     <section className="px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
         <Breadcrumbs />
 
-        <div className="min-w-0 space-y-5">
-          <ScrollReveal
-            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
-            variant="fade-up"
-          >
-            <div id="about-overview" className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
-                  About REIRM
-                </p>
-                <h1 className="mt-3 max-w-5xl font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
-                  {title}
-                </h1>
-                {overview ? (
-                  <ResearchRichText
-                    content={overview}
-                    className="mt-3 text-sm leading-7 text-slate-700"
+        <div className="grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
+          <AboutSectionNav sections={visibleSections} />
+
+          <div className="min-w-0 space-y-5">
+            <ScrollReveal
+              className="relative isolate overflow-hidden rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+              variant="fade-up"
+            >
+              <SectionBackdrop variant="network" />
+              <div id="about-overview" className="relative z-10 grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
+                    About REIRM
+                  </p>
+                  <h1 className="mt-3 max-w-5xl font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
+                    {title}
+                  </h1>
+                  {overview ? (
+                    <ResearchRichText
+                      content={overview}
+                      className="mt-3 text-sm leading-7 text-slate-700"
+                    />
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap gap-2 xl:justify-end">
+                  <PrimaryLink href="/connect#research">Start an inquiry</PrimaryLink>
+                  {teamMembers.length > 0 ? (
+                    <Link
+                      href="/team"
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+                    >
+                      Team
+                      <ArrowRight aria-hidden className="h-4 w-4" />
+                    </Link>
+                  ) : null}
+                </div>
+              </div>
+            </ScrollReveal>
+
+            {mandateRows.length > 0 || hasLeadership ? (
+              <ScrollRevealGroup
+                className="grid gap-5 xl:grid-cols-2"
+                duration={620}
+                staggerDelay={80}
+              >
+                {mandateRows.length > 0 ? (
+                  <MandateCard rows={mandateRows} />
+                ) : null}
+                {hasLeadership ? (
+                  <LeadershipCard
+                    lead={lead}
+                    message={leadershipMessage}
+                    leadership={researchContext?.leadership}
                   />
                 ) : null}
-              </div>
-              <div className="flex flex-wrap gap-2 xl:justify-end">
-                <PrimaryLink href="/connect#research">Start an inquiry</PrimaryLink>
-                {teamMembers.length > 0 ? (
-                  <Link
-                    href="/team"
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
-                  >
-                    Team
-                    <ArrowRight aria-hidden className="h-4 w-4" />
-                  </Link>
-                ) : null}
-              </div>
-            </div>
-          </ScrollReveal>
+              </ScrollRevealGroup>
+            ) : null}
 
-          {mandateRows.length > 0 || hasLeadership ? (
-            <ScrollRevealGroup
-              className="grid gap-5 xl:grid-cols-2"
-              duration={620}
-              staggerDelay={80}
-            >
-              {mandateRows.length > 0 ? (
-                <MandateCard rows={mandateRows} />
-              ) : null}
-              {hasLeadership ? (
-                <LeadershipCard
-                  lead={lead}
-                  message={leadershipMessage}
-                  leadership={researchContext?.leadership}
-                />
-              ) : null}
-            </ScrollRevealGroup>
-          ) : null}
+            {hasTeam ? (
+              <ScrollReveal variant="fade-up">
+                <TeamHierarchyCard team={researchContext?.team} members={teamMembers} />
+              </ScrollReveal>
+            ) : null}
 
-          {hasTeam ? (
-            <ScrollReveal variant="fade-up">
-              <TeamHierarchyCard team={researchContext?.team} members={teamMembers} />
-            </ScrollReveal>
-          ) : null}
+            {governanceRows.length > 0 ? (
+              <ScrollReveal variant="fade-up">
+                <GovernanceCard rows={governanceRows} />
+              </ScrollReveal>
+            ) : null}
 
-          {governanceRows.length > 0 ? (
-            <ScrollReveal variant="fade-up">
-              <GovernanceCard rows={governanceRows} />
-            </ScrollReveal>
-          ) : null}
-
-          {hasContact ? (
-            <ScrollReveal variant="fade-up">
-              <section id="about-contact" className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                <SectionHeader
-                  icon={Mail}
-                  label="Contact"
-                  title="Research office contact"
-                />
-                <div className="mt-5 grid gap-3 md:grid-cols-3">
-                  {primaryContact.filter((item) => compactText(item.value)).map((item) => (
-                    <ContactTile key={item.label} item={item} />
-                  ))}
-                </div>
-              </section>
-            </ScrollReveal>
-          ) : null}
+            {hasContact ? (
+              <ScrollReveal variant="fade-up">
+                <section id="about-contact" className="relative isolate overflow-hidden rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                  <SectionBackdrop variant="contact" />
+                  <div className="relative z-10">
+                  <SectionHeader
+                    icon={Mail}
+                    label="Contact"
+                    title="Research office contact"
+                  />
+                  <div className="mt-5 grid gap-3 md:grid-cols-3">
+                    {primaryContact.filter((item) => compactText(item.value)).map((item) => (
+                      <ContactTile key={item.label} item={item} />
+                    ))}
+                  </div>
+                  </div>
+                </section>
+              </ScrollReveal>
+            ) : null}
+          </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function AboutSectionNav({
+  sections,
+}: {
+  sections: typeof aboutSections;
+}) {
+  return (
+    <aside className="lg:sticky lg:top-24 lg:self-start">
+      <nav
+        aria-label="About sections"
+        className="overflow-x-auto rounded-lg border border-slate-200 bg-white p-2 shadow-sm"
+      >
+        <div className="flex min-w-max gap-1 lg:min-w-0 lg:flex-col">
+          {sections.map((section) => {
+            const Icon = section.icon;
+            return (
+              <Link
+                key={section.id}
+                href={`#${section.anchor}`}
+                className="inline-flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-semibold text-slate-700 transition hover:bg-primary/5 hover:text-primary"
+              >
+                <Icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
+                {section.label}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </aside>
   );
 }
 
@@ -174,10 +238,13 @@ function MandateCard({ rows }: { rows: Array<{ label: string; value?: string | n
   return (
     <section
       id="about-mandate"
-      className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+      className="relative isolate overflow-hidden rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
     >
-      <SectionHeader icon={ClipboardList} label="Mandate" title="What the office is set up to do" />
-      <div className="mt-5 grid gap-3">
+      <SectionBackdrop variant="checklist" />
+      <div className="relative z-10">
+        <SectionHeader icon={ClipboardList} label="Mandate" title="What the office is set up to do" />
+      </div>
+      <div className="relative z-10 mt-5 grid gap-3">
         {rows.map((item) => (
           <InfoRow key={item.label} item={item} />
         ))}
@@ -200,38 +267,59 @@ function LeadershipCard({
   return (
     <section
       id="about-leadership"
-      className="rounded-lg border border-primary/20 bg-primary p-5 text-white shadow-sm sm:p-6"
+      className="relative isolate overflow-hidden rounded-lg border border-primary/20 bg-primary p-5 text-white shadow-sm sm:p-6"
     >
-      <SectionHeader
-        icon={MessageSquareText}
-        label="Leadership"
-        title="Leadership message"
-        inverted
-      />
-      {message ? (
-        <ResearchRichText
-          content={message}
-          className="mt-5 text-sm leading-7 text-white/86 prose-headings:text-white prose-p:text-white/86 prose-strong:text-white prose-li:text-white/86"
+      <SectionBackdrop variant="leadership" inverted />
+      <div className="relative z-10">
+        <SectionHeader
+          icon={MessageSquareText}
+          label="Leadership"
+          title="Leadership message"
+          inverted
         />
-      ) : (
-        <p className="mt-5 text-sm leading-7 text-white/72">
-          Leadership message is not published yet.
-        </p>
-      )}
-      {person ? (
-        <div className="mt-6 flex items-center gap-4 rounded-md border border-white/15 bg-white/10 p-3">
-          <Avatar person={person} />
+        <div className="mt-5 grid gap-5 lg:grid-cols-[180px_minmax(0,1fr)]">
+          {person ? <LeadershipPortrait person={person} /> : null}
           <div className="min-w-0">
-            <h3 className="truncate text-sm font-semibold text-white">
-              {teamMemberName(person)}
-            </h3>
-            <p className="mt-1 text-xs font-semibold text-white/72">
-              {person.assignmentTitle}
-            </p>
+            {message ? (
+              <ResearchRichText
+                content={message}
+                className="text-sm leading-7 text-white/86 prose-headings:text-white prose-p:text-white/86 prose-strong:text-white prose-li:text-white/86"
+              />
+            ) : (
+              <p className="text-sm leading-7 text-white/72">
+                Leadership message is not published yet.
+              </p>
+            )}
+            {person ? (
+              <div className="mt-5 rounded-md border border-white/15 bg-white/10 p-3">
+                <h3 className="text-sm font-semibold text-white">
+                  {teamMemberName(person)}
+                </h3>
+                <p className="mt-1 text-xs font-semibold text-white/72">
+                  {person.assignmentTitle}
+                </p>
+              </div>
+            ) : null}
           </div>
         </div>
-      ) : null}
+      </div>
     </section>
+  );
+}
+
+function LeadershipPortrait({ person }: { person: AboutTeamMember }) {
+  const photoUrl = compactText(person.photo_url);
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-white/15 bg-white/10 shadow-sm">
+      <div
+        aria-hidden
+        className="flex aspect-[4/5] min-h-48 items-center justify-center bg-white/10 bg-cover bg-center text-3xl font-semibold text-white"
+        style={photoUrl ? { backgroundImage: `url(${photoUrl})` } : undefined}
+      >
+        {photoUrl ? null : initials(teamMemberName(person))}
+      </div>
+    </div>
   );
 }
 
@@ -247,9 +335,10 @@ function TeamHierarchyCard({
   return (
     <section
       id="about-team"
-      className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+      className="relative isolate overflow-hidden rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
     >
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <SectionBackdrop variant="hierarchy" />
+      <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
         <SectionHeader icon={Users} label="Team" title="Research staff hierarchy" />
         <Link
           href="/team"
@@ -259,7 +348,7 @@ function TeamHierarchyCard({
           <ArrowRight aria-hidden className="h-4 w-4" />
         </Link>
       </div>
-      <div className="mt-5 grid gap-4">
+      <div className="relative z-10 mt-5 grid gap-4">
         {groups.length > 0 ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {groups.map((group) => (
@@ -294,10 +383,13 @@ function GovernanceCard({ rows }: { rows: Array<{ label: string; value?: string 
   return (
     <section
       id="about-governance"
-      className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+      className="relative isolate overflow-hidden rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
     >
-      <SectionHeader icon={ShieldCheck} label="Governance" title="Controls and reference documents" />
-      <div className="mt-5 grid gap-3 md:grid-cols-2">
+      <SectionBackdrop variant="governance" />
+      <div className="relative z-10">
+        <SectionHeader icon={ShieldCheck} label="Governance" title="Controls and reference documents" />
+      </div>
+      <div className="relative z-10 mt-5 grid gap-3 md:grid-cols-2">
         {rows.map((row) => (
           <Link
             key={row.label}
@@ -321,6 +413,90 @@ function GovernanceCard({ rows }: { rows: Array<{ label: string; value?: string 
         ))}
       </div>
     </section>
+  );
+}
+
+function SectionBackdrop({
+  variant,
+  inverted = false,
+}: {
+  variant: SectionBackdropVariant;
+  inverted?: boolean;
+}) {
+  const stroke = inverted ? "rgba(255,255,255,0.28)" : "rgba(0,63,45,0.16)";
+  const fill = inverted ? "rgba(255,255,255,0.12)" : "rgba(0,63,45,0.07)";
+  const accent = inverted ? "rgba(245,158,11,0.34)" : "rgba(245,158,11,0.2)";
+
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div
+        className={[
+          "absolute inset-0 opacity-70",
+          inverted
+            ? "bg-[radial-gradient(circle_at_82%_18%,rgba(255,255,255,0.18),transparent_24%),radial-gradient(circle_at_10%_95%,rgba(245,158,11,0.24),transparent_26%)]"
+            : "bg-[radial-gradient(circle_at_86%_12%,rgba(0,63,45,0.08),transparent_26%),radial-gradient(circle_at_8%_100%,rgba(245,158,11,0.12),transparent_22%)]",
+        ].join(" ")}
+      />
+      <svg
+        viewBox="0 0 520 280"
+        className="absolute right-[-80px] top-0 h-full w-[58%] min-w-72 motion-safe:animate-pulse"
+        fill="none"
+      >
+        <g opacity={variant === "contact" ? 0.82 : 0.72}>
+          {variant === "network" ? (
+            <>
+              <path d="M60 206C124 116 198 82 282 104c66 18 98-18 154-48" stroke={stroke} strokeWidth="2" />
+              {[72, 154, 244, 326, 438].map((x, index) => (
+                <g key={x}>
+                  <circle cx={x} cy={index % 2 ? 132 : 194} r="16" fill={fill} stroke={stroke} />
+                  <circle cx={x} cy={index % 2 ? 132 : 194} r="4" fill={accent} />
+                </g>
+              ))}
+            </>
+          ) : null}
+          {variant === "checklist" ? (
+            <>
+              {[72, 156, 240].map((x, index) => (
+                <rect key={x} x={x} y={58 + index * 28} width="118" height="146" rx="12" fill={fill} stroke={stroke} />
+              ))}
+              <path d="M116 106h64M116 132h82M116 158h56" stroke={stroke} strokeWidth="5" strokeLinecap="round" />
+              <path d="M92 106l12 12 24-32M92 158l12 12 24-32" stroke={accent} strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+            </>
+          ) : null}
+          {variant === "leadership" ? (
+            <>
+              <circle cx="356" cy="94" r="84" fill={fill} stroke={stroke} />
+              <path d="M210 216c58-58 104-86 138-84 48 3 62 54 118 32" stroke={stroke} strokeWidth="3" strokeLinecap="round" />
+              <path d="M272 110h62M272 138h98M272 166h72" stroke={stroke} strokeWidth="6" strokeLinecap="round" />
+            </>
+          ) : null}
+          {variant === "hierarchy" ? (
+            <>
+              <path d="M270 70v52M158 162h224M158 162v54M270 162v54M382 162v54" stroke={stroke} strokeWidth="3" />
+              {[270, 158, 270, 382].map((x, index) => (
+                <rect key={`${x}-${index}`} x={x - 36} y={index === 0 ? 38 : 216} width="72" height="42" rx="10" fill={fill} stroke={stroke} />
+              ))}
+              <circle cx="270" cy="70" r="8" fill={accent} />
+            </>
+          ) : null}
+          {variant === "governance" ? (
+            <>
+              <rect x="190" y="52" width="190" height="170" rx="14" fill={fill} stroke={stroke} />
+              <path d="M224 96h94M224 126h118M224 156h76" stroke={stroke} strokeWidth="6" strokeLinecap="round" />
+              <path d="M350 176l28 28 54-72" stroke={accent} strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+            </>
+          ) : null}
+          {variant === "contact" ? (
+            <>
+              <path d="M148 170c74-78 162-78 264 0" stroke={stroke} strokeWidth="3" strokeLinecap="round" />
+              <path d="M194 170c54-48 112-48 174 0" stroke={stroke} strokeWidth="3" strokeLinecap="round" />
+              <rect x="232" y="108" width="124" height="88" rx="14" fill={fill} stroke={stroke} />
+              <path d="M240 128l54 38 54-38" stroke={accent} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+            </>
+          ) : null}
+        </g>
+      </svg>
+    </div>
   );
 }
 
