@@ -521,11 +521,11 @@ function NewsEventsArticlesSection({ items }: { items: NewsItem[] }) {
             <ArrowRight aria-hidden className="h-4 w-4" />
           </Link>
         </div>
-        <div className={`mt-5 grid gap-3 ${groups.length === 1 ? "lg:grid-cols-1" : groups.length === 2 ? "lg:grid-cols-2" : "lg:grid-cols-3"}`}>
+        <ScrollRevealGroup className={`mt-5 grid gap-3 ${groups.length === 1 ? "lg:grid-cols-1" : groups.length === 2 ? "lg:grid-cols-2" : "lg:grid-cols-3"}`} staggerDelay={80}>
           {groups.map((group) => (
             <UpdateGroupCard key={group.kind} group={group} wide={groups.length === 1} />
           ))}
-        </div>
+        </ScrollRevealGroup>
       </div>
     </ScrollReveal>
   );
@@ -563,11 +563,11 @@ function UpdateGroupCard({
           <ArrowRight aria-hidden className="h-4 w-4" />
         </Link>
       </div>
-      <div className={`mt-3 grid gap-2 ${wide ? "md:grid-cols-2 xl:grid-cols-3" : ""}`}>
+      <ScrollRevealGroup className={`mt-3 grid gap-2 ${wide ? "md:grid-cols-2 xl:grid-cols-3" : ""}`} staggerDelay={55}>
         {group.items.map((item) => (
           <EditorialUpdateCard key={`${item.kind}-${item.id}`} item={item} compact />
         ))}
-      </div>
+      </ScrollRevealGroup>
     </section>
   );
 }
@@ -623,11 +623,11 @@ function DirectorySection({ items }: { items: DirectoryItem[] }) {
             </div>
           </aside>
           {items.length > 0 ? (
-            <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+            <ScrollRevealGroup className="overflow-hidden rounded-lg border border-slate-200 bg-white" staggerDelay={60}>
               {items.slice(0, 6).map((item) => (
                 <DirectoryRow key={`${item.kind}-${item.id}`} item={item} />
               ))}
-            </div>
+            </ScrollRevealGroup>
           ) : null}
         </div>
       </div>
@@ -785,7 +785,7 @@ function ResearchFaqSection({ items }: { items: FaqItem[] }) {
           </p>
           <TextLink href="/resources-tools">Open resources and policies</TextLink>
         </div>
-        <div className="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200">
+        <ScrollRevealGroup className="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200" staggerDelay={60}>
           {items.slice(0, 6).map((item, index) => (
             <details key={item.id} className="group bg-white open:bg-slate-50" open={index === 0}>
               <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold text-slate-950 marker:hidden">
@@ -799,7 +799,7 @@ function ResearchFaqSection({ items }: { items: FaqItem[] }) {
               </div>
             </details>
           ))}
-        </div>
+        </ScrollRevealGroup>
       </div>
     </ScrollReveal>
   );

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ScrollReveal } from "@ksu/ui/components";
 import {
   ArrowRight,
   Award,
@@ -138,7 +139,7 @@ export function ResearchSection({
           : `border-y border-slate-200 bg-slate-50 px-4 ${spacing} sm:px-6 lg:px-8 xl:px-10 2xl:px-12`
       }
     >
-      <div className="mx-auto w-full max-w-[1680px]">
+      <ScrollReveal className="mx-auto w-full max-w-[1680px]">
         <div className="mb-5 max-w-3xl">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-secondary">
             {eyebrow}
@@ -151,7 +152,7 @@ export function ResearchSection({
           ) : null}
         </div>
         {children}
-      </div>
+      </ScrollReveal>
     </section>
   );
 }
