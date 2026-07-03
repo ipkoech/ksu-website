@@ -2,11 +2,13 @@ import {
   announcementsApi,
   blogsApi,
   eventsApi,
+  faqsApi,
   newsApi,
   personsApi,
   researchServiceApi,
   slidersApi,
   type Person,
+  type FAQ,
   type ResearchGenericRecord,
   type ResearchGrant,
   type ResearchProject,
@@ -45,6 +47,7 @@ export type ResearchOverviewData = {
   announcements: PublicResearchData<ResearchGenericRecord>;
   events: PublicResearchData<ResearchGenericRecord>;
   heroSliders: PublicResearchData<ResearchGenericRecord>;
+  faqs: PublicResearchData<FAQ>;
   centers: PublicResearchData<ResearchGenericRecord>;
   facilities: PublicResearchData<ResearchGenericRecord>;
   expertiseTags: PublicResearchData<ResearchGenericRecord>;
@@ -66,6 +69,7 @@ export type ProjectListFilters = {
   centerId?: string;
   programId?: string;
   projectId?: string;
+  innovationId?: string;
   partnerId?: string;
   isActive?: boolean;
   isFeatured?: boolean;
@@ -90,6 +94,15 @@ export type GenericListFilters = {
   developmentStage?: string;
   ipStatus?: string;
   commercializationStatus?: string;
+  ventureStage?: string;
+  registrationStatus?: string;
+  startupId?: string;
+  incubationType?: string;
+  incubationStage?: string;
+  entryType?: string;
+  entryStatus?: string;
+  caseType?: string;
+  transferStatus?: string;
   partnerType?: string;
   partnershipLevel?: string;
   consultancyType?: string;
@@ -135,6 +148,14 @@ const researchPublicationListFields =
   `${researchPublicListFields},journal_name,publisher,volume,issue,pages,conference_name,book_title,isbn,issn,doi,is_open_access,authors:id,name,full_name,title,project:id,title,slug,code,summary,center:id,title,name,slug,code,summary`;
 const researchInnovationListFields =
   `${researchPublicListFields},problem_addressed,solution,benefits,trl_level,outputs_count,partners_count,project:id,title,slug,code,summary,center:id,title,name,slug,code,summary`;
+const researchStartupListFields =
+  "id,name,slug,code,summary,problem,solution,business_model,market,traction,venture_stage,registration_status,registration_number,incorporation_date,sector,funding_raised,currency,website,pitch_deck_url,status,is_active,is_public,is_featured,display_order,innovation_id,partner_id,center_id,lead_founder_id,cover_image_id,gallery_media_ids,attachment_media_ids,document_media_ids,created_at,updated_at";
+const researchIncubationListFields =
+  "id,title,slug,code,summary,program_name,cohort,incubation_type,start_date,end_date,stage,milestones,support_received,outcomes,next_steps,mentor_ids,status,is_active,is_public,is_featured,display_order,innovation_id,startup_id,partner_id,center_id,gallery_media_ids,attachment_media_ids,document_media_ids,created_at,updated_at";
+const researchCompetitionListFields =
+  "id,title,slug,code,summary,entry_type,competition_name,organizer_name,venue,country,event_date,application_deadline,entry_status,award,position,prize_value,currency,pitch_summary,judges_feedback,public_url,pitch_deck_url,status,is_active,is_public,is_featured,display_order,innovation_id,startup_id,partner_id,event_id,center_id,gallery_media_ids,attachment_media_ids,document_media_ids,created_at,updated_at";
+const researchTechnologyTransferListFields =
+  "id,title,slug,code,summary,case_type,transfer_status,disclosure_date,agreement_date,ip_reference,agreement_reference,license_type,territory,exclusivity,revenue_generated,currency,public_benefit,next_steps,status,is_active,is_public,is_featured,display_order,innovation_id,partner_id,center_id,gallery_media_ids,attachment_media_ids,document_media_ids,created_at,updated_at";
 const researchProjectListFields =
   "id,title,slug,code,summary,status,is_active,is_featured,project_type,cover_image:id,url,public_url,thumbnail_url,alt_text";
 const researchProjectFilterFields = "id,start_date,end_date,published_at,created_at,updated_at";
@@ -176,7 +197,7 @@ async function safeList<T>(
   const request = load()
     .then((response) => ({
       data: response.data ?? [],
-      total: response.meta?.total ?? 0,
+      total: response.meta?.total ?? response.data?.length ?? 0,
       perPage: response.meta?.per_page ?? 100,
       error: null,
     }))
@@ -403,11 +424,118 @@ export function getGrantsFiltered(filters: GenericListFilters = {}) {
       order: filters.order,
       is_active: filters.isActive ?? true,
       is_featured: filters.isFeatured,
-      is_public: true,
       page: 1,
       per_page: 100,
     }),
   );
+}
+
+function partnerRelationList(
+  partnerId: string,
+  relation: keyof typeof researchServiceApi.partnerRelations,
+) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.partnerRelations[relation].list(partnerId),
+  );
+}
+
+export function getPartnerProjects(partnerId: string) {
+  return partnerRelationList(partnerId, "projects");
+}
+
+export function getPartnerFarms(partnerId: string) {
+  return partnerRelationList(partnerId, "farms");
+}
+
+export function getPartnerActivities(partnerId: string) {
+  return partnerRelationList(partnerId, "activities");
+}
+
+export function getPartnerImpactStories(partnerId: string) {
+  return partnerRelationList(partnerId, "impactStories");
+}
+
+export function getPartnerImpactMetrics(partnerId: string) {
+  return partnerRelationList(partnerId, "impactMetrics");
+}
+
+export function getPartnerConsultancies(partnerId: string) {
+  return partnerRelationList(partnerId, "consultancies");
+}
+
+export function getPartnerStartups(partnerId: string) {
+  return partnerRelationList(partnerId, "startups");
+}
+
+export function getPartnerIncubationRecords(partnerId: string) {
+  return partnerRelationList(partnerId, "incubationRecords");
+}
+
+export function getPartnerCompetitionEntries(partnerId: string) {
+  return partnerRelationList(partnerId, "competitionEntries");
+}
+
+export function getPartnerTechnologyTransferCases(partnerId: string) {
+  return partnerRelationList(partnerId, "technologyTransferCases");
+}
+
+export function getPartnerSustainability(partnerId: string) {
+  return partnerRelationList(partnerId, "sustainability");
+}
+
+export async function getPartnerRelationshipBundle(partnerId: string) {
+  const [
+    projects,
+    farms,
+    activities,
+    impactStories,
+    impactMetrics,
+    consultancies,
+    startups,
+    incubationRecords,
+    competitionEntries,
+    technologyTransferCases,
+    sustainability,
+  ] = await Promise.all([
+    getPartnerProjects(partnerId),
+    getPartnerFarms(partnerId),
+    getPartnerActivities(partnerId),
+    getPartnerImpactStories(partnerId),
+    getPartnerImpactMetrics(partnerId),
+    getPartnerConsultancies(partnerId),
+    getPartnerStartups(partnerId),
+    getPartnerIncubationRecords(partnerId),
+    getPartnerCompetitionEntries(partnerId),
+    getPartnerTechnologyTransferCases(partnerId),
+    getPartnerSustainability(partnerId),
+  ]);
+
+  return {
+    projects,
+    farms,
+    activities,
+    impactStories,
+    impactMetrics,
+    consultancies,
+    startups,
+    incubationRecords,
+    competitionEntries,
+    technologyTransferCases,
+    sustainability,
+    errors: uniqueErrors(
+      projects.error,
+      farms.error,
+      activities.error,
+      impactStories.error,
+      impactMetrics.error,
+      consultancies.error,
+      startups.error,
+      incubationRecords.error,
+      competitionEntries.error,
+      technologyTransferCases.error,
+      sustainability.error,
+    ),
+  };
 }
 
 export function getGrantBySlug(slug: string) {
@@ -460,6 +588,97 @@ export function getInnovationBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.innovations.getBySlug(slug, {
       fields: researchPublicDetailFields,
+    }),
+  );
+}
+
+export function getStartupsFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.startups.list({
+      fields: researchStartupListFields,
+      search: filters.search?.trim() || undefined,
+      venture_stage: filters.ventureStage || undefined,
+      registration_status: filters.registrationStatus || undefined,
+      sector: filters.category || undefined,
+      innovation_id: filters.innovationId || undefined,
+      partner_id: filters.partnerId || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
+      is_public: true,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 100,
+    }),
+  );
+}
+
+export function getIncubationRecordsFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.incubationRecords.list({
+      fields: researchIncubationListFields,
+      search: filters.search?.trim() || undefined,
+      incubation_type: filters.incubationType || undefined,
+      stage: filters.incubationStage || undefined,
+      startup_id: filters.startupId || undefined,
+      innovation_id: filters.innovationId || undefined,
+      partner_id: filters.partnerId || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
+      is_public: true,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 100,
+    }),
+  );
+}
+
+export function getCompetitionEntriesFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.competitionEntries.list({
+      fields: researchCompetitionListFields,
+      search: filters.search?.trim() || undefined,
+      entry_type: filters.entryType || undefined,
+      entry_status: filters.entryStatus || undefined,
+      startup_id: filters.startupId || undefined,
+      innovation_id: filters.innovationId || undefined,
+      partner_id: filters.partnerId || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
+      is_public: true,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 100,
+    }),
+  );
+}
+
+export function getTechnologyTransferCasesFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.technologyTransferCases.list({
+      fields: researchTechnologyTransferListFields,
+      search: filters.search?.trim() || undefined,
+      case_type: filters.caseType || undefined,
+      transfer_status: filters.transferStatus || undefined,
+      innovation_id: filters.innovationId || undefined,
+      partner_id: filters.partnerId || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
+      is_public: true,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 100,
     }),
   );
 }
@@ -1313,6 +1532,18 @@ export function getHeroSliders() {
   );
 }
 
+export function getResearchFAQs() {
+  return safeList<FAQ>(() =>
+    faqsApi.list({
+      fields: "id,question,answer,answer_plain_text,answer_rich_text,category,status,is_public,display_order,created_at,updated_at",
+      scope_type: "research",
+      is_main: false,
+      page: 1,
+      per_page: 8,
+    }),
+  );
+}
+
 export function getResources() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.resources.list({
@@ -1484,6 +1715,7 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
     announcements,
     events,
     heroSliders,
+    faqs,
     centers,
     facilities,
     expertiseTags,
@@ -1506,6 +1738,7 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
     getAnnouncements(),
     getEvents(),
     getHeroSliders(),
+    getResearchFAQs(),
     getCenters(),
     getFacilities(),
     getExpertiseTags(),
@@ -1530,6 +1763,7 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
     announcements,
     events,
     heroSliders,
+    faqs,
     centers,
     facilities,
     expertiseTags,
@@ -1552,6 +1786,7 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
       announcements.error,
       events.error,
       heroSliders.error,
+      faqs.error,
       centers.error,
       facilities.error,
       expertiseTags.error,

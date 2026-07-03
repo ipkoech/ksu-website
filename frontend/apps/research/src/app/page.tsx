@@ -9,7 +9,6 @@ import {
   FlaskConical,
   GraduationCap,
   Handshake,
-  Lightbulb,
   Search,
   Sprout,
   Users,
@@ -17,6 +16,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 import type {
+  FAQ,
   ResearchGenericRecord,
   ResearchGrant,
   ResearchProject,
@@ -29,6 +29,7 @@ import {
   getResearchOverviewData,
   type ResearchHeadProfile,
 } from "../lib/research-public-data";
+import { getResearchSiteContext, type ResearchSiteContext } from "../lib/research-site-context";
 import { Badge, FilledBadge, StatusMessage } from "../components/research-ui";
 
 export const revalidate = 300;
@@ -83,6 +84,7 @@ const directoryFilters = ["All", "Centers", "Facilities", "Expertise"];
 
 export default async function ResearchPage() {
   const overview = await getResearchOverviewData();
+  const siteContext = await getResearchSiteContext();
   const {
     projects,
     publications,
@@ -94,6 +96,7 @@ export default async function ResearchPage() {
     announcements,
     events,
     heroSliders,
+    faqs,
     centers,
     facilities,
     expertiseTags,
@@ -108,7 +111,6 @@ export default async function ResearchPage() {
     errors,
   } = overview;
 
-  const statsMap = mapStats(stats);
   const featuredWork = buildFeaturedWork(
     projects.data,
     publications.data,
@@ -135,6 +137,7 @@ export default async function ResearchPage() {
   );
   const partnerItems = partners.data.slice(0, 16);
   const story = stories.data[0];
+  const faqItems = buildFaqItems(faqs.data);
   const hasHomepageRecords =
     [
       projects,
@@ -147,6 +150,7 @@ export default async function ResearchPage() {
       announcements,
       events,
       heroSliders,
+      faqs,
       centers,
       facilities,
       expertiseTags,
@@ -163,15 +167,7 @@ export default async function ResearchPage() {
   return (
     <main id="research-main" className="min-h-screen bg-[#f4f6f4] text-slate-950">
       <ResearchLandingHero
-        activeProjects={statsMap.research_projects || projects.total || projects.data.length}
         slides={heroSliders.data}
-      />
-      <PortfolioQuickAccessSection
-        projects={statsMap.research_projects || projects.total || projects.data.length}
-        publications={statsMap.publications || publications.total || publications.data.length}
-        partners={statsMap.partner_count || partners.total || partners.data.length}
-        grants={statsMap.grant_funding || grants.total || grants.data.length}
-        innovations={statsMap.patents || innovations.total || innovations.data.length}
       />
 
       {errors.length > 0 && !hasHomepageRecords ? (
@@ -186,7 +182,7 @@ export default async function ResearchPage() {
         </section>
       ) : null}
 
-      <AboutResearchSection headProfile={headProfile} />
+      <AboutResearchSection headProfile={headProfile} siteContext={siteContext} />
       <PillarsSection />
       <FeaturedWorkSection items={featuredWork} />
       <DirectorySection items={directoryItems} />
@@ -197,26 +193,27 @@ export default async function ResearchPage() {
       <NewsEventsArticlesSection items={newsItems} />
       <ResearchPartnersSection partners={partnerItems} />
       <FundingResourcesSection items={supportItems} />
+      <ResearchFaqSection items={faqItems} />
       <ResearchConversationSection />
     </main>
   );
 }
 
 function ResearchLandingHero({
-  activeProjects,
   slides,
 }: {
-  activeProjects: number;
   slides: ResearchGenericRecord[];
 }) {
-  const slide = slides
+  const activeSlides = slides
     .filter((item) => item.is_active !== false)
-    .sort((a, b) => Number(a.display_order ?? 100) - Number(b.display_order ?? 100))[0];
-  const heroTitle = compactText(slide?.title) || "Research. Innovation.";
-  const heroAccent = compactText(slide?.subtitle) || "Impact for a Better Future.";
+    .sort((a, b) => Number(a.display_order ?? 100) - Number(b.display_order ?? 100));
+  const slide = activeSlides[0];
+  const hasBackendSlides = activeSlides.length > 0;
+  const heroTitle = compactText(slide?.title) || "Research at Kisii University";
+  const heroAccent = compactText(slide?.subtitle) || "Knowledge, innovation, and public value.";
   const heroBody =
     compactText(slide?.plain_text ?? slide?.summary ?? slide?.description) ||
-    "Advancing knowledge, solving real-world challenges, and building partnerships that create lasting impact for communities and the environment.";
+    "REIRM coordinates research, extension, innovation, partnerships, and resource mobilization for Kisii University.";
   const heroImage = getRecordImage(slide, "desktop_media") || "/images/research/research-hero-imagegen.webp";
   const slideActionHref = compactText(slide?.external_url);
   const slideActionLabel = compactText(slide?.link_text) || "Explore Research";
@@ -225,7 +222,7 @@ function ResearchLandingHero({
     : heroActions;
 
   return (
-    <section className="relative isolate min-h-[520px] overflow-hidden bg-primary">
+    <section className="relative isolate min-h-[560px] overflow-hidden bg-primary">
       <Image
         src={heroImage}
         alt=""
@@ -234,13 +231,17 @@ function ResearchLandingHero({
         sizes="100vw"
         className="object-cover"
       />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,35,80,0.98)_0%,rgba(0,53,99,0.88)_30%,rgba(0,62,73,0.45)_58%,rgba(0,27,54,0.12)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,50,32,0.98)_0%,rgba(0,67,43,0.9)_34%,rgba(0,67,43,0.52)_62%,rgba(0,27,20,0.16)_100%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_38%_20%,rgba(226,165,35,0.16)_0%,rgba(226,165,35,0)_32%)]" />
       <ResearchAnimatedBackdrop dark />
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#f4f6f4] via-[#f4f6f4]/60 to-transparent" />
-      <div className="relative mx-auto grid min-h-[520px] max-w-[1920px] items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_520px] lg:px-8 xl:px-10 2xl:px-12">
+      <div className="relative mx-auto grid min-h-[560px] max-w-[1920px] items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_520px] lg:px-8 xl:px-10 2xl:px-12">
         <div className="max-w-4xl">
           <ScrollReveal>
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur">
+              <span className="h-2 w-2 rounded-full bg-secondary" />
+              {hasBackendSlides ? "Hero slides from backend" : "Default hero fallback"}
+            </div>
             <h1 className="max-w-4xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.03] text-white sm:text-5xl xl:text-6xl 2xl:text-7xl">
               {heroTitle}
               <span className="block text-secondary">{heroAccent}</span>
@@ -259,27 +260,43 @@ function ResearchLandingHero({
                 </ActionLink>
               ))}
             </div>
+            <div className="mt-8 flex items-center gap-2">
+              {(hasBackendSlides ? activeSlides : [{ id: "default" }]).slice(0, 5).map((item, index) => (
+                <span
+                  key={String(item.id ?? index)}
+                  className={`h-2 rounded-full transition-all ${index === 0 ? "w-9 bg-secondary" : "w-2 bg-white/45"}`}
+                />
+              ))}
+            </div>
           </ScrollReveal>
         </div>
         <ScrollReveal className="hidden lg:block">
-          <div className="relative min-h-[360px]">
-            <div className="absolute left-4 top-24 w-44 rounded-lg border border-white/35 bg-white/18 p-4 text-white shadow-[0_20px_70px_rgba(0,0,0,0.18)] backdrop-blur-md">
-              <p className="text-xs font-semibold">Evidence to Impact</p>
+          <div className="relative min-h-[380px]">
+            <div className="absolute left-4 top-20 w-48 rounded-lg border border-white/35 bg-white/18 p-4 text-white shadow-[0_20px_70px_rgba(0,0,0,0.18)] backdrop-blur-md">
+              <p className="text-xs font-semibold">{hasBackendSlides ? "Active slide" : "Fallback state"}</p>
               <p className="mt-2 text-xs leading-5 text-white/80">
-                Turning discovery into solutions that matter.
+                {compactText(slide?.category) || "Research, extension, innovation, and resource mobilization."}
               </p>
               <div className="mt-5 h-12 rounded-md border border-lime-200/30 bg-[linear-gradient(135deg,rgba(132,204,22,0.18),rgba(255,255,255,0.05))]" />
             </div>
             <Link
-              href="/projects"
-              className="absolute bottom-8 right-2 w-56 rounded-lg border border-white/35 bg-white/24 p-4 text-white shadow-[0_20px_70px_rgba(0,0,0,0.18)] backdrop-blur-md transition hover:bg-white/30"
+              href="/resources-tools"
+              className="absolute bottom-8 right-2 w-60 rounded-lg border border-white/35 bg-white/24 p-4 text-white shadow-[0_20px_70px_rgba(0,0,0,0.18)] backdrop-blur-md transition hover:bg-white/30"
             >
-              <span className="block text-xs font-semibold">Active Projects</span>
-              <span className="mt-3 block font-[family-name:var(--font-display)] text-4xl font-semibold">
-                {activeProjects > 0 ? formatNumber(activeProjects) : "Explore"}
+              <span className="block text-xs font-semibold">Research support</span>
+              <span className="mt-3 block font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight">
+                Policies, resources, grants, and services
               </span>
-              <span className="mt-1 block text-xs text-white/75">Across research themes</span>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs text-white/85">
+                Open resources <ArrowRight aria-hidden className="h-3.5 w-3.5" />
+              </span>
             </Link>
+            <div className="absolute right-16 top-6 w-52 rounded-lg border border-secondary/35 bg-secondary/15 p-4 text-white shadow-[0_20px_70px_rgba(0,0,0,0.18)] backdrop-blur-md">
+              <p className="text-xs font-semibold">Default hero fallback</p>
+              <p className="mt-2 text-xs leading-5 text-white/80">
+                Used only when the backend has no active research hero slides.
+              </p>
+            </div>
             <div className="absolute right-28 top-6 h-3 w-3 rounded-full bg-lime-200 shadow-[0_0_0_12px_rgba(217,249,157,0.14),0_0_34px_rgba(217,249,157,0.9)]" />
             <div className="absolute left-10 top-2 h-2 w-2 rounded-full bg-blue-200 shadow-[0_0_0_10px_rgba(191,219,254,0.12),0_0_24px_rgba(191,219,254,0.9)]" />
             </div>
@@ -303,145 +320,74 @@ function ResearchAnimatedBackdrop({ dark = false }: { dark?: boolean }) {
   );
 }
 
-function PortfolioQuickAccessSection({
-  projects,
-  publications,
-  partners,
-  grants,
-  innovations,
-}: {
-  projects: number;
-  publications: number;
-  partners: number;
-  grants: number;
-  innovations: number;
-}) {
-  const metrics = [
-    { label: "Projects", value: formatNumber(projects), rawValue: projects, href: "/projects", icon: FlaskConical },
-    { label: "Publications", value: formatNumber(publications), rawValue: publications, href: "/publications", icon: BookOpen },
-    { label: "Partners", value: formatNumber(partners), rawValue: partners, href: "/partners", icon: Handshake },
-    { label: "Grants", value: formatGrantValue(grants), rawValue: grants, href: "/funding", icon: Award },
-    { label: "Innovations", value: formatNumber(innovations), rawValue: innovations, href: "/innovations", icon: Lightbulb },
-  ];
-
-  return (
-    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
-      <ResearchAnimatedBackdrop />
-      <div className="relative mx-auto max-w-[1680px] rounded-lg border border-slate-200 bg-white p-5 shadow-[0_20px_80px_rgba(15,23,42,0.08)] backdrop-blur lg:p-7">
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-stretch lg:divide-x lg:divide-slate-200">
-          <div className="hidden lg:block lg:pr-8">
-            <SectionKicker>Direct access</SectionKicker>
-            <nav aria-label="Research quick links" className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {quickLinks.map((link) => {
-                const Icon = link.icon;
-                return (
-                  <Link key={link.href + link.label} href={link.href} className="group block border-r border-slate-200 pr-5 last:border-r-0">
-                    <span className={`inline-flex h-14 w-14 items-center justify-center rounded-md ${link.tone === "gold" ? "bg-secondary/12 text-secondary" : link.tone === "green" ? "bg-primary/10 text-primary" : "bg-blue-600/10 text-blue-700"}`}>
-                      <Icon aria-hidden className="h-6 w-6" />
-                    </span>
-                    <span className="mt-4 block text-sm font-bold text-slate-950 transition group-hover:text-primary">
-                      {link.label}
-                    </span>
-                    <span className="mt-1 block min-h-10 text-xs leading-5 text-slate-500">
-                      {link.description}
-                    </span>
-                    <ArrowRight aria-hidden className="mt-3 h-4 w-4 text-primary transition group-hover:translate-x-1" />
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
-          <div className="lg:pl-8">
-            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-              <div>
-                <SectionKicker>Research portfolio at a glance</SectionKicker>
-              </div>
-            </div>
-            <ScrollRevealGroup className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-4 lg:mt-6 xl:grid-cols-5" staggerDelay={55}>
-              {metrics.map((metric) => {
-                const Icon = metric.icon;
-                const hasPublishedCount = metric.rawValue > 0;
-
-                return (
-                  <Link
-                    key={metric.label}
-                    href={metric.href}
-                    className="group flex min-h-[56px] flex-col items-start justify-center rounded-full border border-slate-200 bg-slate-50 px-3 py-2 transition hover:border-primary/30 hover:bg-white sm:min-h-[74px] sm:rounded-md sm:gap-2"
-                  >
-                    <span className={`hidden h-7 w-7 shrink-0 items-center justify-center rounded-md sm:inline-flex ${metric.label === "Grants" ? "bg-secondary/10 text-secondary" : "bg-primary/10 text-primary"}`}>
-                      <Icon aria-hidden className="h-3.5 w-3.5" />
-                    </span>
-                    <span className="block min-w-0">
-                      <span className={`block font-[family-name:var(--font-display)] font-semibold leading-none text-slate-950 ${hasPublishedCount ? "text-sm sm:text-base" : "text-xs sm:text-sm"}`}>
-                        {hasPublishedCount ? metric.value : "Explore"}
-                      </span>
-                      <span className="mt-0.5 block text-[9px] leading-3 text-slate-500 sm:mt-1 sm:text-[10px]">
-                        {metric.label}
-                      </span>
-                    </span>
-                  </Link>
-                );
-              })}
-            </ScrollRevealGroup>
-          </div>
-        </div>
-      </div>
-    </ScrollReveal>
+function AboutResearchSection({ headProfile, siteContext }: { headProfile: ResearchHeadProfile; siteContext: ResearchSiteContext }) {
+  const researchEntity = getResearchContextEntity(siteContext);
+  const about = compactText(
+    stringish(researchEntity?.about) ??
+      stringish(researchEntity?.description) ??
+      stringish(researchEntity?.mandate),
   );
-}
-
-function AboutResearchSection({ headProfile }: { headProfile: ResearchHeadProfile }) {
+  const mission = compactText(stringish(researchEntity?.mission));
+  const mandate = compactText(stringish(researchEntity?.mandate));
   const headName = headProfile?.name || "Head of Research";
   const headTitle = headProfile?.title || "Head of Research, REIRM";
   const headMessage =
     headProfile?.message ||
     "Our mandate is to create an enabling environment where every scholar, student, and partner can turn knowledge into public value.";
-  const headHref = headProfile?.href || "/about";
 
   return (
     <ScrollReveal as="section" className="relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
       <div className="relative mx-auto grid max-w-[1680px] gap-3 rounded-xl border border-white bg-white p-4 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:p-5 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.78fr)] lg:p-8">
         <article className="rounded-lg bg-[linear-gradient(135deg,#f7faf8_0%,#ffffff_100%)] p-6 lg:p-8">
-          <SectionKicker>About research at Kisii University</SectionKicker>
+          <SectionKicker>About Research</SectionKicker>
           <h2 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
-            An inclusive engine for knowledge, innovation, and societal impact.
+            {compactText(stringish(researchEntity?.name)) || "Research, Extension, Innovation and Resource Mobilization"}
           </h2>
           <div className="mt-5 space-y-4 text-sm leading-7 text-slate-600 sm:text-base">
             <p>
-              The Department of Research, Extension, Innovation, and Resource
-              Mobilization is the engine of knowledge preservation, creation,
-              and societal impact at Kisii University.
+              {about ||
+                "The Directorate of Research, Extension, Innovation and Resource Mobilization coordinates research, innovation, extension, partnerships, and resource mobilization at Kisii University."}
             </p>
-            <p>
-              Our identity is borderless and inclusive. We connect scholarly
-              excellence to tangible global progress by empowering scholars,
-              students, and partners to generate and apply high-impact
-              knowledge.
-            </p>
-            <p>
-              We are committed to creating an enabling environment where staff,
-              students, and partners can excel in discovery, innovation,
-              consultancy, extension, and resource mobilization while
-              benchmarking against leading global universities.
-            </p>
+            {mission ? <p>{mission}</p> : null}
+            {mandate && mandate !== about ? <p>{mandate}</p> : null}
           </div>
+          <nav aria-label="Research quick links" className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {quickLinks.map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link key={link.href} href={link.href} className="group rounded-md border border-slate-200 bg-white p-4 transition hover:border-primary/30 hover:shadow-sm">
+                  <span className={`inline-flex h-10 w-10 items-center justify-center rounded-md ${link.tone === "gold" ? "bg-secondary/12 text-secondary" : link.tone === "green" ? "bg-primary/10 text-primary" : "bg-emerald-600/10 text-primary"}`}>
+                    <Icon aria-hidden className="h-5 w-5" />
+                  </span>
+                  <span className="mt-3 block text-sm font-bold text-slate-950 transition group-hover:text-primary">
+                    {link.label}
+                  </span>
+                  <span className="mt-1 block text-xs leading-5 text-slate-500">
+                    {link.description}
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
         </article>
 
-        <article className="research-glass-panel research-border-sheen rounded-lg p-6 lg:p-8">
-          <div className="research-image-fallback absolute right-5 top-5 h-[20%] min-h-24 w-[20%] min-w-24 overflow-hidden rounded-md border border-white shadow-sm">
-            <Image
-              src={headProfile?.photoUrl || "/images/research/registrar-reirm-imagegen.webp"}
-              alt={headName}
-              fill
-              sizes="140px"
-              className="object-cover"
-            />
-          </div>
-          <div className="max-w-[76%]">
+        <article className="research-glass-panel research-border-sheen relative rounded-lg p-6 lg:p-8">
+          {headProfile?.photoUrl ? (
+            <div className="research-image-fallback absolute right-5 top-5 h-[20%] min-h-24 w-[20%] min-w-24 overflow-hidden rounded-md border border-white shadow-sm">
+              <Image
+                src={headProfile.photoUrl}
+                alt={headName}
+                fill
+                sizes="140px"
+                className="object-cover"
+              />
+            </div>
+          ) : null}
+          <div className={headProfile?.photoUrl ? "max-w-[76%]" : "max-w-xl"}>
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary text-white">
               <Users aria-hidden className="h-5 w-5" />
             </span>
-            <SectionKicker className="mt-5">Message from the Head of Research</SectionKicker>
+            <SectionKicker className="mt-5">Message from the Head</SectionKicker>
           </div>
           <blockquote className="mt-6 max-w-xl text-lg font-medium leading-8 text-slate-950">
             “{headMessage}”
@@ -453,7 +399,6 @@ function AboutResearchSection({ headProfile }: { headProfile: ResearchHeadProfil
             <p className="mt-1 text-sm text-slate-600">{headProfile.name}</p>
           ) : null}
           <div className="mt-6 flex flex-wrap gap-3">
-            <ActionLink href={headHref} variant="primary">Read full message</ActionLink>
             <ActionLink href="/connect" variant="outline">Contact REIRM</ActionLink>
           </div>
         </article>
@@ -817,6 +762,44 @@ function FundingResourcesSection({ items }: { items: SupportItem[] }) {
             <SupportCard key={`${item.kind}-${item.id}`} item={item} />
           ))}
         </ScrollRevealGroup>
+      </div>
+    </ScrollReveal>
+  );
+}
+
+function ResearchFaqSection({ items }: { items: FaqItem[] }) {
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
+      <div className="relative mx-auto grid max-w-[1680px] gap-6 rounded-xl border border-white bg-white px-4 py-12 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:px-6 lg:grid-cols-[360px_minmax(0,1fr)] lg:px-10">
+        <div>
+          <SectionKicker>Research FAQs</SectionKicker>
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+            Common research support questions.
+          </h2>
+          <p className="mt-4 text-sm leading-7 text-slate-600">
+            These answers are loaded from public research FAQ records when available, with practical defaults for common REIRM pathways.
+          </p>
+          <TextLink href="/resources-tools">Open resources and policies</TextLink>
+        </div>
+        <div className="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200">
+          {items.slice(0, 6).map((item, index) => (
+            <details key={item.id} className="group bg-white open:bg-slate-50" open={index === 0}>
+              <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold text-slate-950 marker:hidden">
+                <span>{item.question}</span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/20 text-primary transition group-open:rotate-45 group-open:bg-primary group-open:text-white">
+                  +
+                </span>
+              </summary>
+              <div className="px-5 pb-5 text-sm leading-7 text-slate-600">
+                {item.answer}
+              </div>
+            </details>
+          ))}
+        </div>
       </div>
     </ScrollReveal>
   );
@@ -1186,6 +1169,12 @@ type SupportItem = {
   icon: LucideIcon;
 };
 
+type FaqItem = {
+  id: string;
+  question: string;
+  answer: string;
+};
+
 function buildFeaturedWork(
   projects: ResearchProject[],
   publications: ResearchPublication[],
@@ -1373,28 +1362,45 @@ function buildSupportItems(
   ].filter((item) => item.title);
 }
 
+function buildFaqItems(items: FAQ[]): FaqItem[] {
+  const backendItems = items
+    .map((item) => ({
+      id: item.id,
+      question: compactText(item.question),
+      answer: compactText(item.answer_plain_text ?? item.answer ?? item.answer_rich_text),
+    }))
+    .filter((item) => item.question && item.answer);
+
+  if (backendItems.length > 0) {
+    return backendItems;
+  }
+
+  return [
+    {
+      id: "default-contact",
+      question: "How do I contact REIRM?",
+      answer: "Use the Contact REIRM page or email research@kisiiuniversity.ac.ke for research, innovation, extension, partnership, and resource mobilization support.",
+    },
+    {
+      id: "default-policies",
+      question: "Where do I find research policies and guidelines?",
+      answer: "Use Resources & Tools to access public research policies, guidelines, forms, templates, services, outputs, and downloads.",
+    },
+    {
+      id: "default-nacosti",
+      question: "How do I apply for NACOSTI approval?",
+      answer: "Use the Apply NACOSTI link in the research portal header or visit the NACOSTI research portal directly at research-portal.nacosti.go.ke.",
+    },
+    {
+      id: "default-partnership",
+      question: "How can an external organization partner with Kisii University research?",
+      answer: "Start from the Partners section or Contact REIRM so the office can route the request to the relevant research, extension, innovation, or resource mobilization pathway.",
+    },
+  ];
+}
+
 function preferFeatured<T extends { is_featured?: boolean }>(items: T[]) {
   return [...items].sort((a, b) => Number(Boolean(b.is_featured)) - Number(Boolean(a.is_featured)));
-}
-
-function mapStats(stats: unknown) {
-  const values: Record<string, number> = {};
-  const arr = ((stats as any)?.stats ?? []) as Array<{ key: string; value: number }>;
-  for (const item of arr) {
-    values[item.key] = Number(item.value) || 0;
-  }
-  return values;
-}
-
-function formatNumber(value: number) {
-  return new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 }).format(value);
-}
-
-function formatGrantValue(value: number) {
-  if (value >= 1_000_000) {
-    return `KES ${Math.round(value / 1_000_000)}M`;
-  }
-  return formatNumber(value);
 }
 
 function getRecordImage(record?: ResearchGenericRecord, mediaField?: string) {
@@ -1430,6 +1436,16 @@ function getRecordImage(record?: ResearchGenericRecord, mediaField?: string) {
 
 function stringish(value: unknown) {
   return typeof value === "string" || typeof value === "number" ? value : undefined;
+}
+
+function getResearchContextEntity(siteContext: ResearchSiteContext) {
+  return (
+    siteContext.researchContext?.entity ??
+    siteContext.researchContext?.department ??
+    siteContext.researchContext?.wing ??
+    siteContext.researchContext?.division ??
+    {}
+  ) as Record<string, unknown>;
 }
 
 function getTimestamp(value?: string | null) {
