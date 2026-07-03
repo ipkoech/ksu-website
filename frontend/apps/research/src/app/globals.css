@@ -158,8 +158,8 @@
     position: absolute;
     inset: -18%;
     background-image:
-      linear-gradient(rgba(0, 78, 56, 0.12) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 78, 56, 0.1) 1px, transparent 1px);
+      linear-gradient(hsl(var(--primary) / 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--primary) / 0.1) 1px, transparent 1px);
     background-size:
       72px 72px,
       72px 72px;
@@ -179,7 +179,7 @@
       90deg,
       transparent,
       rgba(255, 255, 255, 0.34),
-      rgba(0, 78, 56, 0.16),
+      hsl(var(--primary) / 0.16),
       transparent
     );
     filter: blur(18px);
@@ -198,11 +198,11 @@
     width: 0.55rem;
     height: 0.55rem;
     border-radius: 9999px;
-    border: 1px solid rgba(0, 78, 56, 0.42);
+    border: 1px solid hsl(var(--primary) / 0.42);
     background: rgba(255, 255, 255, 0.72);
     box-shadow:
-      0 0 0 10px rgba(0, 78, 56, 0.08),
-      0 0 28px rgba(0, 78, 56, 0.24);
+      0 0 0 10px hsl(var(--primary) / 0.08),
+      0 0 28px hsl(var(--primary) / 0.24);
     animation: research-signal-pulse 5.5s ease-in-out infinite;
   }
 
@@ -217,10 +217,10 @@
   .research-glass-panel {
     position: relative;
     overflow: hidden;
-    border: 1px solid rgba(0, 78, 56, 0.14);
+    border: 1px solid hsl(var(--primary) / 0.14);
     background:
-      linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(244, 250, 247, 0.78)),
-      radial-gradient(circle at 12% 0%, rgba(226, 165, 35, 0.14), transparent 34%);
+      linear-gradient(135deg, rgba(255, 255, 255, 0.92), hsl(var(--muted) / 0.78)),
+      radial-gradient(circle at 12% 0%, hsl(var(--secondary) / 0.14), transparent 34%);
     box-shadow:
       0 24px 70px rgba(15, 23, 42, 0.08),
       inset 0 1px 0 rgba(255, 255, 255, 0.78);
@@ -235,10 +235,10 @@
     border-radius: inherit;
     background: linear-gradient(
       110deg,
-      rgba(0, 78, 56, 0),
-      rgba(0, 78, 56, 0.34),
-      rgba(226, 165, 35, 0.44),
-      rgba(0, 78, 56, 0)
+      hsl(var(--primary) / 0),
+      hsl(var(--primary) / 0.34),
+      hsl(var(--secondary) / 0.44),
+      hsl(var(--primary) / 0)
     );
     background-size: 200% 200%;
     mask:
@@ -250,16 +250,16 @@
 
   .research-surface-grid {
     background-image:
-      linear-gradient(rgba(0, 78, 56, 0.07) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 78, 56, 0.06) 1px, transparent 1px);
+      linear-gradient(hsl(var(--primary) / 0.07) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--primary) / 0.06) 1px, transparent 1px);
     background-size: 56px 56px;
   }
 
   .research-image-fallback {
     background:
-      radial-gradient(circle at 18% 18%, rgba(226, 165, 35, 0.18), transparent 32%),
-      radial-gradient(circle at 82% 22%, rgba(0, 78, 56, 0.14), transparent 30%),
-      linear-gradient(135deg, #edf3f6 0%, #f8fafc 52%, #eef5f0 100%);
+      radial-gradient(circle at 18% 18%, hsl(var(--secondary) / 0.18), transparent 32%),
+      radial-gradient(circle at 82% 22%, hsl(var(--primary) / 0.14), transparent 30%),
+      linear-gradient(135deg, hsl(var(--muted)) 0%, #f8fafc 52%, hsl(var(--accent)) 100%);
   }
 
   .animate-research-marquee:hover,

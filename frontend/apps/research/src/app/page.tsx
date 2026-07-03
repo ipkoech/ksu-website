@@ -5,11 +5,10 @@ import {
   ArrowRight,
   Award,
   BookOpen,
+  ClipboardList,
   FileText,
   FlaskConical,
-  GraduationCap,
   Handshake,
-  Search,
   Sprout,
   Users,
 } from "lucide-react";
@@ -42,45 +41,10 @@ const heroActions = [
 
 const quickLinks = [
   { label: "Projects", href: "/projects", description: "Explore active research projects", icon: FlaskConical, tone: "blue" },
-  { label: "Publications", href: "/publications", description: "Browse our research output", icon: FileText, tone: "green" },
-  { label: "Funding", href: "/funding", description: "Grants and funding opportunities", icon: Handshake, tone: "gold" },
+  { label: "Publications", href: "/publications", description: "Browse our research output", icon: FileText, tone: "primary" },
+  { label: "Funding", href: "/funding", description: "Grants and funding opportunities", icon: Handshake, tone: "secondary" },
   { label: "Partners", href: "/partners", description: "Collaborate with us for greater impact", icon: Users, tone: "blue" },
 ];
-
-const pillars = [
-  {
-    index: "1",
-    title: "Research, Innovation & Commercialisation",
-    body: "Advance high-quality inquiry and translate discoveries into practical technologies, enterprises, and public value.",
-    icon: FlaskConical,
-  },
-  {
-    index: "2",
-    title: "Extension & Community Engagement",
-    body: "Co-create knowledge with communities, industry, and public partners through responsive outreach and sustainability work.",
-    icon: Sprout,
-  },
-  {
-    index: "3",
-    title: "Strategic Partnerships & Collaborations",
-    body: "Build local and international linkages that expand shared resources, exchanges, and joint research.",
-    icon: Handshake,
-  },
-  {
-    index: "4",
-    title: "Capacity Building & Knowledge Dissemination",
-    body: "Nurture researchers through training, mentorship, publications, seminars, and scholarly communication.",
-    icon: GraduationCap,
-  },
-  {
-    index: "5",
-    title: "Grant Management & Resource Mobilization",
-    body: "Secure and administer grants, endowments, infrastructure support, and data-driven proposals.",
-    icon: Award,
-  },
-];
-
-const directoryFilters = ["All", "Centers", "Facilities", "Expertise"];
 
 export default async function ResearchPage() {
   const overview = await getResearchOverviewData();
@@ -123,20 +87,9 @@ export default async function ResearchPage() {
     announcements.data,
     events.data,
   );
-  const directoryItems = buildDirectoryItems(
-    centers.data,
-    facilities.data,
-    expertiseTags.data,
-  );
-  const supportItems = buildSupportItems(
-    grants.data,
-    training.data,
-    resources.data,
-    services.data,
-    guidelines.data,
-  );
+  const focusItems = buildFocusItems(services.data);
+  const resourceToolItems = buildResourceToolItems(resources.data, guidelines.data);
   const partnerItems = partners.data.slice(0, 16);
-  const story = stories.data[0];
   const faqItems = buildFaqItems(faqs.data);
   const hasHomepageRecords =
     [
@@ -165,7 +118,7 @@ export default async function ResearchPage() {
     Boolean(stats);
 
   return (
-    <main id="research-main" className="min-h-screen bg-[#f4f6f4] text-slate-950">
+    <main id="research-main" className="min-h-screen bg-background text-slate-950">
       <ResearchLandingHero
         slides={heroSliders.data}
       />
@@ -183,18 +136,12 @@ export default async function ResearchPage() {
       ) : null}
 
       <AboutResearchSection headProfile={headProfile} siteContext={siteContext} />
-      <PillarsSection />
+      <ResearchFocusServicesSection items={focusItems} />
       <FeaturedWorkSection items={featuredWork} />
-      <DirectorySection items={directoryItems} />
-      <PartnersImpactSection
-        impactMetrics={impactMetrics.data}
-        story={story}
-      />
-      <NewsEventsArticlesSection items={newsItems} />
       <ResearchPartnersSection partners={partnerItems} />
-      <FundingResourcesSection items={supportItems} />
+      <ResourceToolsSection items={resourceToolItems} />
+      <NewsEventsArticlesSection items={newsItems} />
       <ResearchFaqSection items={faqItems} />
-      <ResearchConversationSection />
     </main>
   );
 }
@@ -208,9 +155,8 @@ function ResearchLandingHero({
     .filter((item) => item.is_active !== false)
     .sort((a, b) => Number(a.display_order ?? 100) - Number(b.display_order ?? 100));
   const slide = activeSlides[0];
-  const hasBackendSlides = activeSlides.length > 0;
   const heroTitle = compactText(slide?.title) || "Research at Kisii University";
-  const heroAccent = compactText(slide?.subtitle) || "Knowledge, innovation, and public value.";
+  const heroAccent = compactText(slide?.subtitle);
   const heroBody =
     compactText(slide?.plain_text ?? slide?.summary ?? slide?.description) ||
     "REIRM coordinates research, extension, innovation, partnerships, and resource mobilization for Kisii University.";
@@ -231,20 +177,19 @@ function ResearchLandingHero({
         sizes="100vw"
         className="object-cover"
       />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,50,32,0.98)_0%,rgba(0,67,43,0.9)_34%,rgba(0,67,43,0.52)_62%,rgba(0,27,20,0.16)_100%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_38%_20%,rgba(226,165,35,0.16)_0%,rgba(226,165,35,0)_32%)]" />
+      <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/85 to-primary/20" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_38%_20%,hsl(var(--secondary)/0.22)_0%,transparent_34%)]" />
       <ResearchAnimatedBackdrop dark />
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#f4f6f4] via-[#f4f6f4]/60 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/60 to-transparent" />
       <div className="relative mx-auto grid min-h-[560px] max-w-[1920px] items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_520px] lg:px-8 xl:px-10 2xl:px-12">
         <div className="max-w-4xl">
           <ScrollReveal>
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur">
-              <span className="h-2 w-2 rounded-full bg-secondary" />
-              {hasBackendSlides ? "Hero slides from backend" : "Default hero fallback"}
-            </div>
+            <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-secondary">
+              Research & Innovation
+            </p>
             <h1 className="max-w-4xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.03] text-white sm:text-5xl xl:text-6xl 2xl:text-7xl">
               {heroTitle}
-              <span className="block text-secondary">{heroAccent}</span>
+              {heroAccent ? <span className="block text-secondary">{heroAccent}</span> : null}
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-8 text-white/90 sm:text-lg">
               {heroBody}
@@ -261,7 +206,7 @@ function ResearchLandingHero({
               ))}
             </div>
             <div className="mt-8 flex items-center gap-2">
-              {(hasBackendSlides ? activeSlides : [{ id: "default" }]).slice(0, 5).map((item, index) => (
+              {(activeSlides.length > 0 ? activeSlides : [{ id: "default" }]).slice(0, 5).map((item, index) => (
                 <span
                   key={String(item.id ?? index)}
                   className={`h-2 rounded-full transition-all ${index === 0 ? "w-9 bg-secondary" : "w-2 bg-white/45"}`}
@@ -273,11 +218,11 @@ function ResearchLandingHero({
         <ScrollReveal className="hidden lg:block">
           <div className="relative min-h-[380px]">
             <div className="absolute left-4 top-20 w-48 rounded-lg border border-white/35 bg-white/18 p-4 text-white shadow-[0_20px_70px_rgba(0,0,0,0.18)] backdrop-blur-md">
-              <p className="text-xs font-semibold">{hasBackendSlides ? "Active slide" : "Fallback state"}</p>
+              <p className="text-xs font-semibold">Research coordination</p>
               <p className="mt-2 text-xs leading-5 text-white/80">
-                {compactText(slide?.category) || "Research, extension, innovation, and resource mobilization."}
+                Grants, ethics, partnerships, publications, innovation, and resource mobilization.
               </p>
-              <div className="mt-5 h-12 rounded-md border border-lime-200/30 bg-[linear-gradient(135deg,rgba(132,204,22,0.18),rgba(255,255,255,0.05))]" />
+              <div className="mt-5 h-12 rounded-md border border-white/30 bg-white/10" />
             </div>
             <Link
               href="/resources-tools"
@@ -292,13 +237,13 @@ function ResearchLandingHero({
               </span>
             </Link>
             <div className="absolute right-16 top-6 w-52 rounded-lg border border-secondary/35 bg-secondary/15 p-4 text-white shadow-[0_20px_70px_rgba(0,0,0,0.18)] backdrop-blur-md">
-              <p className="text-xs font-semibold">Default hero fallback</p>
+              <p className="text-xs font-semibold">Research at Kisii University</p>
               <p className="mt-2 text-xs leading-5 text-white/80">
-                Used only when the backend has no active research hero slides.
+                Advancing knowledge, solving problems, and strengthening communities.
               </p>
             </div>
-            <div className="absolute right-28 top-6 h-3 w-3 rounded-full bg-lime-200 shadow-[0_0_0_12px_rgba(217,249,157,0.14),0_0_34px_rgba(217,249,157,0.9)]" />
-            <div className="absolute left-10 top-2 h-2 w-2 rounded-full bg-blue-200 shadow-[0_0_0_10px_rgba(191,219,254,0.12),0_0_24px_rgba(191,219,254,0.9)]" />
+            <div className="absolute right-28 top-6 h-3 w-3 rounded-full bg-white shadow-[0_0_0_12px_hsl(var(--primary-foreground)/0.12),0_0_34px_hsl(var(--primary-foreground)/0.7)]" />
+            <div className="absolute left-10 top-2 h-2 w-2 rounded-full bg-secondary shadow-[0_0_0_10px_hsl(var(--secondary)/0.16),0_0_24px_hsl(var(--secondary)/0.75)]" />
             </div>
         </ScrollReveal>
       </div>
@@ -336,9 +281,9 @@ function AboutResearchSection({ headProfile, siteContext }: { headProfile: Resea
     "Our mandate is to create an enabling environment where every scholar, student, and partner can turn knowledge into public value.";
 
   return (
-    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
+    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-background px-3 py-3 sm:px-4">
       <div className="relative mx-auto grid max-w-[1680px] gap-3 rounded-xl border border-white bg-white p-4 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:p-5 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.78fr)] lg:p-8">
-        <article className="rounded-lg bg-[linear-gradient(135deg,#f7faf8_0%,#ffffff_100%)] p-6 lg:p-8">
+        <article className="rounded-lg bg-card p-6 lg:p-8">
           <SectionKicker>About Research</SectionKicker>
           <h2 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
             {compactText(stringish(researchEntity?.name)) || "Research, Extension, Innovation and Resource Mobilization"}
@@ -356,7 +301,7 @@ function AboutResearchSection({ headProfile, siteContext }: { headProfile: Resea
               const Icon = link.icon;
               return (
                 <Link key={link.href} href={link.href} className="group rounded-md border border-slate-200 bg-white p-4 transition hover:border-primary/30 hover:shadow-sm">
-                  <span className={`inline-flex h-10 w-10 items-center justify-center rounded-md ${link.tone === "gold" ? "bg-secondary/12 text-secondary" : link.tone === "green" ? "bg-primary/10 text-primary" : "bg-emerald-600/10 text-primary"}`}>
+                  <span className={`inline-flex h-10 w-10 items-center justify-center rounded-md ${link.tone === "secondary" ? "bg-secondary/10 text-secondary" : "bg-primary/10 text-primary"}`}>
                     <Icon aria-hidden className="h-5 w-5" />
                   </span>
                   <span className="mt-3 block text-sm font-bold text-slate-950 transition group-hover:text-primary">
@@ -407,27 +352,45 @@ function AboutResearchSection({ headProfile, siteContext }: { headProfile: Resea
   );
 }
 
-function PillarsSection() {
+function ResearchFocusServicesSection({ items }: { items: FocusItem[] }) {
   return (
-    <ScrollReveal as="section" className="research-surface-grid relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
-      <ResearchAnimatedBackdrop />
-      <div className="relative mx-auto max-w-[1680px] rounded-xl border border-white bg-white px-4 py-12 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:px-6 lg:px-10">
-        <div className="mx-auto max-w-4xl text-center">
-            <SectionKicker>Our five pillars</SectionKicker>
-            <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-5xl">
-              The REIRM model for research that reaches people.
-            </h2>
-            <div className="mt-6 flex justify-center">
-              <ActionLink href="/about" variant="outline">How REIRM works</ActionLink>
-            </div>
-        </div>
-        <ScrollRevealGroup className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-5" staggerDelay={70}>
-          {pillars.map((pillar) => (
-            <PillarCard key={pillar.title} {...pillar} />
+    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-background px-3 py-3 sm:px-4">
+      <div className="relative mx-auto max-w-[1680px] border-t border-slate-200 bg-card px-4 py-8 sm:px-6 lg:px-8">
+        <SectionHeader
+          eyebrow="Research Focus / Services"
+          title="Support pathways for research, innovation, extension, and resource mobilization."
+        />
+        <ScrollRevealGroup className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4" staggerDelay={70}>
+          {items.map((item) => (
+            <FocusServiceCard key={item.title} item={item} />
           ))}
         </ScrollRevealGroup>
       </div>
     </ScrollReveal>
+  );
+}
+
+function FocusServiceCard({ item }: { item: FocusItem }) {
+  const Icon = item.icon;
+  return (
+    <Link
+      href={item.href}
+      className="group flex min-h-[170px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md"
+    >
+      <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
+        <Icon aria-hidden className="h-5 w-5" />
+      </span>
+      <h3 className="mt-4 text-base font-semibold leading-6 text-slate-950">
+        {item.title}
+      </h3>
+      <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
+        {item.summary}
+      </p>
+      <span className="mt-auto inline-flex items-center gap-2 pt-4 text-xs font-semibold text-primary">
+        Learn more
+        <ArrowRight aria-hidden className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
+      </span>
+    </Link>
   );
 }
 
@@ -437,22 +400,22 @@ function FeaturedWorkSection({ items }: { items: FeaturedWorkItem[] }) {
   }
 
   return (
-    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
+    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-background px-3 py-3 sm:px-4">
       <div className="relative mx-auto max-w-[1680px] px-4 py-8 sm:px-6 lg:px-10">
         <div className="grid gap-8 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start">
           <div>
-            <SectionKicker>Research in motion</SectionKicker>
+            <SectionKicker>Featured Projects / Grants</SectionKicker>
             <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
-              Driving Discovery. Creating Solutions.
+              Research work and funding records.
             </h2>
             <p className="mt-5 text-sm leading-7 text-slate-600">
-              Our researchers are addressing pressing challenges through
-              collaborative, interdisciplinary, and solution-oriented research.
+              Active projects, published outputs, innovations, and grants from
+              the research portfolio.
             </p>
             <TextLink href="/projects">View all projects</TextLink>
           </div>
-          <ScrollRevealGroup className="grid gap-5 md:grid-cols-2 xl:grid-cols-3" staggerDelay={65}>
-            {items.slice(0, 3).map((item) => (
+          <ScrollRevealGroup className="grid gap-5 md:grid-cols-2 xl:grid-cols-4" staggerDelay={65}>
+            {items.slice(0, 4).map((item) => (
               <FeaturedWorkCard key={`${item.type}-${item.id}`} item={item} />
             ))}
           </ScrollRevealGroup>
@@ -469,32 +432,25 @@ function NewsEventsArticlesSection({ items }: { items: NewsItem[] }) {
 
   const groups = [
     {
+      kind: "News" as const,
+      eyebrow: "Latest News",
+      title: "Latest News",
+      href: "/news",
+      items: items.filter((item) => item.kind === "News").slice(0, 3),
+    },
+    {
       kind: "Event" as const,
-      eyebrow: "Events",
-      title: "Research events",
+      eyebrow: "Upcoming Events",
+      title: "Upcoming Events",
       href: "/events",
       items: items.filter((item) => item.kind === "Event").slice(0, 3),
     },
     {
       kind: "Article" as const,
-      eyebrow: "Blogs",
-      title: "Ideas & articles",
+      eyebrow: "Research Articles",
+      title: "Research Articles",
       href: "/news",
       items: items.filter((item) => item.kind === "Article").slice(0, 3),
-    },
-    {
-      kind: "Announcement" as const,
-      eyebrow: "Announcements",
-      title: "Research notices",
-      href: "/news",
-      items: items.filter((item) => item.kind === "Announcement").slice(0, 3),
-    },
-    {
-      kind: "News" as const,
-      eyebrow: "News",
-      title: "Latest news",
-      href: "/news",
-      items: items.filter((item) => item.kind === "News").slice(0, 3),
     },
   ].filter((group) => group.items.length > 0);
 
@@ -503,7 +459,7 @@ function NewsEventsArticlesSection({ items }: { items: NewsItem[] }) {
   }
 
   return (
-    <ScrollReveal as="section" className="research-surface-grid relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
+    <ScrollReveal as="section" className="research-surface-grid relative isolate overflow-hidden bg-background px-3 py-3 sm:px-4">
       <ResearchAnimatedBackdrop />
       <div className="relative mx-auto max-w-[1680px] rounded-lg border border-white bg-white px-4 py-6 shadow-[0_14px_50px_rgba(15,23,42,0.05)] sm:px-6 lg:px-8">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
@@ -572,198 +528,102 @@ function UpdateGroupCard({
   );
 }
 
-function DirectorySection({ items }: { items: DirectoryItem[] }) {
-  return (
-    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
-      <div className="relative mx-auto max-w-[1680px] rounded-xl border border-white bg-white px-4 py-12 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:px-6 lg:px-10">
-        <SectionHeader
-          eyebrow="Centers, facilities & expertise"
-          title="Find capabilities, infrastructure, and research contacts."
-          action={{ href: "/expertise", label: "View all centers, facilities & expertise" }}
-        />
-        <div className="mt-8 grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
-          <aside className="rounded-lg border border-slate-200 bg-slate-50 p-5">
-            <form action="/search" className="block">
-              <label className="text-xs font-semibold uppercase text-slate-500" htmlFor="research-directory-search">
-                Search directory
-              </label>
-              <div className="relative mt-3">
-                <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  id="research-directory-search"
-                  name="q"
-                  className="h-11 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-900"
-                  placeholder="Search centers, facilities..."
-                />
-              </div>
-              <button className="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white">
-                Search directory
-              </button>
-            </form>
-            <div className="mt-5 flex flex-wrap gap-2">
-              {directoryFilters.map((filter) => {
-                const href =
-                  filter === "Centers"
-                    ? "/centers"
-                    : filter === "Facilities"
-                      ? "/facilities"
-                      : filter === "Expertise"
-                        ? "/expertise"
-                        : "/search";
-                return (
-                  <Link
-                    key={filter}
-                    href={href}
-                    className="rounded-md border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 transition hover:border-primary/30 hover:text-primary"
-                  >
-                    {filter}
-                  </Link>
-                );
-              })}
-            </div>
-          </aside>
-          {items.length > 0 ? (
-            <ScrollRevealGroup className="overflow-hidden rounded-lg border border-slate-200 bg-white" staggerDelay={60}>
-              {items.slice(0, 6).map((item) => (
-                <DirectoryRow key={`${item.kind}-${item.id}`} item={item} />
-              ))}
-            </ScrollRevealGroup>
-          ) : null}
-        </div>
-      </div>
-    </ScrollReveal>
-  );
-}
-
-function PartnersImpactSection({
-  impactMetrics,
-  story,
-}: {
-  impactMetrics: ResearchGenericRecord[];
-  story?: ResearchGenericRecord;
-}) {
-  const metrics = impactMetrics.slice(0, 4);
-  const storyImage = story?.cover_image_url || story?.image_url || "/images/research/research-projects-hero.webp";
-
-  return (
-    <ScrollReveal as="section" className="research-surface-grid relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
-      <ResearchAnimatedBackdrop />
-      <div className="relative mx-auto max-w-[1680px] space-y-5">
-        <div className="relative overflow-hidden rounded-lg border border-primary/20 bg-white p-5 shadow-[0_20px_70px_rgba(15,23,42,0.06)] lg:p-6">
-          <div className="grid gap-6 lg:grid-cols-[300px_minmax(280px,360px)_minmax(0,1fr)] lg:items-center">
-            <div>
-              <SectionKicker>Public impact</SectionKicker>
-              <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
-                Research that improves lives and livelihoods
-              </h2>
-              <TextLink href="/community-impact">View all impact stories</TextLink>
-            </div>
-            <div className="research-image-fallback relative aspect-[16/7] overflow-hidden rounded-md lg:aspect-[16/8]">
-              <Image
-                src={storyImage}
-                alt=""
-                fill
-                sizes="(min-width: 1024px) 360px, 100vw"
-                className="object-cover"
-              />
-            </div>
-            <div>
-              <SectionKicker>Impact story</SectionKicker>
-              {story ? (
-                <>
-                  <h3 className="mt-3 font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
-                    {compactText(story.title ?? story.name)}
-                  </h3>
-                  {compactText(story.summary ?? story.description ?? story.body) ? (
-                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
-                      {compactText(story.summary ?? story.description ?? story.body)}
-                    </p>
-                  ) : null}
-                  {story.slug ? <TextLink href={`/community-impact/${story.slug}`}>Read story</TextLink> : null}
-                </>
-              ) : (
-                <Link href="/community-impact" className="mt-3 inline-flex items-center gap-2 font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950 transition hover:text-primary">
-                  Explore community impact
-                  <ArrowRight aria-hidden className="h-4 w-4" />
-                </Link>
-              )}
-            </div>
-          </div>
-          {metrics.length > 0 ? (
-            <div className="mt-6 grid gap-3 border-t border-slate-200 pt-5 sm:grid-cols-2 lg:grid-cols-4">
-              {metrics.map((metric) => (
-                <div key={metric.id} className="border-slate-200 lg:border-r lg:pr-5 lg:last:border-r-0">
-                  <p className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
-                    {compactText(metric.value ?? metric.metric_value ?? metric.count ?? "—")}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {compactText(metric.title ?? metric.name ?? metric.label)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : null}
-          <Link
-            href="/impact-metrics"
-            aria-label="View impact metrics"
-            className="absolute right-4 top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white text-primary shadow-lg transition hover:translate-x-1 lg:flex"
-          >
-            <ArrowRight aria-hidden className="h-5 w-5" />
-          </Link>
-        </div>
-      </div>
-    </ScrollReveal>
-  );
-}
-
 function ResearchPartnersSection({ partners }: { partners: ResearchGenericRecord[] }) {
   if (partners.length === 0) {
     return null;
   }
 
   return (
-    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
-      <div className="relative mx-auto max-w-[1680px] rounded-lg border border-slate-200 bg-white py-5 shadow-[0_14px_50px_rgba(15,23,42,0.05)]">
+    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-background px-3 py-3 sm:px-4">
+      <div className="relative mx-auto max-w-[1680px] border-t border-slate-200 bg-card px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col justify-between gap-3 px-4 sm:flex-row sm:items-end sm:px-6 lg:px-8">
           <div>
             <SectionKicker>Partners</SectionKicker>
             <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
-              Collaboration network.
+              Our Partners
             </h2>
           </div>
           <TextLink href="/partners">View all partners</TextLink>
         </div>
-        <div className="research-marquee-frame relative mt-5 overflow-hidden border-y border-slate-100 bg-white py-4">
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-white to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-white to-transparent" />
-          <PartnerMarquee partners={partners} />
-          <PartnerMarquee partners={[...partners].reverse()} reverse />
-        </div>
+        <ScrollRevealGroup className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6" staggerDelay={60}>
+          {partners.slice(0, 12).map((partner) => (
+            <PartnerLogoCard key={partner.id} partner={partner} />
+          ))}
+        </ScrollRevealGroup>
       </div>
     </ScrollReveal>
   );
 }
 
-function FundingResourcesSection({ items }: { items: SupportItem[] }) {
+function PartnerLogoCard({ partner }: { partner: ResearchGenericRecord }) {
+  const logo = getPartnerLogo(partner);
+  const name = compactText(partner.name ?? partner.title) || "Research partner";
+
+  return (
+    <Link
+      href={partner.slug ? `/partners/${partner.slug}` : "/partners"}
+      className="group flex min-h-24 flex-col items-center justify-center rounded-lg border border-slate-200 bg-white p-4 text-center text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary hover:shadow-md"
+    >
+      {logo ? (
+        <span className="relative mb-3 h-10 w-28 shrink-0 overflow-hidden bg-white">
+          <Image
+            src={logo}
+            alt=""
+            fill
+            sizes="112px"
+            className="object-contain"
+          />
+        </span>
+      ) : null}
+      <span className="line-clamp-2">{name}</span>
+    </Link>
+  );
+}
+
+function ResourceToolsSection({ items }: { items: ResourceToolItem[] }) {
   if (items.length === 0) {
     return null;
   }
 
   return (
-    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
-      <div className="relative mx-auto max-w-[1680px] rounded-xl border border-white bg-white px-4 py-12 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:px-6 lg:px-10">
+    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-background px-3 py-3 sm:px-4">
+      <div className="relative mx-auto max-w-[1680px] border-t border-slate-200 bg-card px-4 py-8 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow="Funding, training & resources"
-          title="Support for proposals, grants, mentorship, publications, and resource mobilization."
+          eyebrow="Resources & Tools"
+          title="Policies, forms, downloads, and services for research work."
           action={{ href: "/resources-tools", label: "View all resources" }}
         />
-        <ScrollRevealGroup className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3" staggerDelay={70}>
-          {items.slice(0, 6).map((item) => (
-            <SupportCard key={`${item.kind}-${item.id}`} item={item} />
+        <ScrollRevealGroup className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4" staggerDelay={70}>
+          {items.map((item) => (
+            <ResourceToolCard key={item.href} item={item} />
           ))}
         </ScrollRevealGroup>
       </div>
     </ScrollReveal>
+  );
+}
+
+function ResourceToolCard({ item }: { item: ResourceToolItem }) {
+  const Icon = item.icon;
+  return (
+    <Link
+      href={item.href}
+      className="group flex min-h-[165px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md"
+    >
+      <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
+        <Icon aria-hidden className="h-5 w-5" />
+      </span>
+      <h3 className="mt-4 text-base font-semibold leading-6 text-slate-950">
+        {item.title}
+      </h3>
+      <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
+        {item.summary}
+      </p>
+      <span className="mt-auto inline-flex items-center gap-2 pt-4 text-xs font-semibold text-primary">
+        {item.action}
+        <ArrowRight aria-hidden className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
+      </span>
+    </Link>
   );
 }
 
@@ -773,7 +633,7 @@ function ResearchFaqSection({ items }: { items: FaqItem[] }) {
   }
 
   return (
-    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-[#f4f6f4] px-3 py-3 sm:px-4">
+    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-background px-3 py-3 sm:px-4">
       <div className="relative mx-auto grid max-w-[1680px] gap-6 rounded-xl border border-white bg-white px-4 py-12 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:px-6 lg:grid-cols-[360px_minmax(0,1fr)] lg:px-10">
         <div>
           <SectionKicker>Research FAQs</SectionKicker>
@@ -781,7 +641,7 @@ function ResearchFaqSection({ items }: { items: FaqItem[] }) {
             Common research support questions.
           </h2>
           <p className="mt-4 text-sm leading-7 text-slate-600">
-            These answers are loaded from public research FAQ records when available, with practical defaults for common REIRM pathways.
+            Quick answers for research office contacts, policies, approvals, projects, and funding support.
           </p>
           <TextLink href="/resources-tools">Open resources and policies</TextLink>
         </div>
@@ -802,60 +662,6 @@ function ResearchFaqSection({ items }: { items: FaqItem[] }) {
         </ScrollRevealGroup>
       </div>
     </ScrollReveal>
-  );
-}
-
-function ResearchConversationSection() {
-  return (
-    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-[#f4f6f4] px-3 pb-3 pt-3 text-white sm:px-4">
-      <ResearchAnimatedBackdrop dark />
-      <div className="relative mx-auto max-w-[1680px] overflow-hidden rounded-xl bg-primary px-4 py-14 text-center shadow-[0_20px_70px_rgba(15,23,42,0.16)] sm:px-6 lg:px-10">
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.14),transparent,rgba(0,0,0,0.1))]" />
-        <div className="relative">
-        <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight sm:text-4xl">
-          Join us in advancing humanity through knowledge, innovation, and collaboration.
-        </h2>
-        <p className="mx-auto mt-3 max-w-3xl text-sm leading-7 text-white/80 sm:text-base">
-          To partner with us or sponsor a research initiative, contact the REIRM
-          office and we will connect you to the right pathway.
-        </p>
-        <div className="mt-7 flex flex-wrap justify-center gap-3">
-          <ActionLink href="/connect" variant="light">Contact REIRM</ActionLink>
-          <ActionLink href="/partners" variant="light">Explore partnerships</ActionLink>
-          <ActionLink href="/funding" variant="light">Support research</ActionLink>
-        </div>
-        </div>
-      </div>
-    </ScrollReveal>
-  );
-}
-
-function PillarCard({
-  index,
-  title,
-  body,
-  icon: Icon,
-}: {
-  index: string;
-  title: string;
-  body: string;
-  icon: LucideIcon;
-}) {
-  return (
-    <article className="flex min-h-[270px] flex-col rounded-lg border border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f5faf7_100%)] p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-4">
-        <span className="inline-flex h-12 w-12 items-center justify-center rounded-md bg-primary/10 text-primary">
-          <Icon aria-hidden className="h-5 w-5" />
-        </span>
-        <span className="font-[family-name:var(--font-display)] text-4xl font-semibold text-slate-200">
-          {index}
-        </span>
-      </div>
-      <h3 className="mt-5 font-[family-name:var(--font-display)] text-lg font-semibold leading-7 text-slate-950">
-        {title}
-      </h3>
-      <p className="mt-3 text-sm leading-7 text-slate-600">{body}</p>
-    </article>
   );
 }
 
@@ -957,103 +763,6 @@ function EditorialUpdateCard({
   );
 }
 
-function DirectoryRow({ item }: { item: DirectoryItem }) {
-  return (
-    <Link
-      href={item.href}
-      className="grid gap-4 border-b border-slate-200 p-4 transition last:border-b-0 hover:bg-primary/5 sm:grid-cols-[92px_minmax(0,1fr)_auto]"
-    >
-      <div className="research-image-fallback relative h-20 overflow-hidden rounded-md">
-        <Image src={item.image} alt="" fill sizes="92px" className="object-cover" />
-      </div>
-      <div className="min-w-0">
-        <h3 className="font-semibold text-slate-950">{item.title}</h3>
-        <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{item.summary}</p>
-      </div>
-      <div className="flex items-center gap-2 sm:justify-end">
-        <Badge>{item.kind}</Badge>
-        <ArrowRight aria-hidden className="h-4 w-4 text-primary" />
-      </div>
-    </Link>
-  );
-}
-
-function PartnerMarquee({
-  partners,
-  reverse = false,
-}: {
-  partners: ResearchGenericRecord[];
-  reverse?: boolean;
-}) {
-  const row = [...partners, ...partners];
-  return (
-    <div className="flex overflow-hidden py-2">
-      <div className={`flex min-w-full shrink-0 gap-3 ${reverse ? "animate-research-marquee-reverse" : "animate-research-marquee"}`}>
-        {row.map((partner, index) => (
-          <PartnerMarqueeItem
-            key={`${partner.id}-${index}-${reverse ? "reverse" : "forward"}`}
-            partner={partner}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function PartnerMarqueeItem({ partner }: { partner: ResearchGenericRecord }) {
-  const logo = compactText(
-    partner.logo_url ??
-      partner.logo ??
-      partner.image_url ??
-      partner.cover_image_url,
-  );
-  const name = compactText(partner.name ?? partner.title) || "Research partner";
-
-  return (
-    <Link
-      href={partner.slug ? `/partners/${partner.slug}` : "/partners"}
-      className="flex h-16 min-w-[210px] shrink-0 items-center justify-center gap-3 rounded-md border border-slate-200 bg-white px-5 text-center text-sm font-semibold text-slate-700 transition hover:border-primary/30 hover:text-primary"
-    >
-      {logo ? (
-        <span className="relative h-9 w-16 shrink-0 overflow-hidden rounded bg-white">
-          <Image
-            src={logo}
-            alt=""
-            fill
-            sizes="64px"
-            className="object-contain"
-          />
-        </span>
-      ) : null}
-      <span className="line-clamp-2">{name}</span>
-    </Link>
-  );
-}
-
-function SupportCard({ item }: { item: SupportItem }) {
-  return (
-    <Link
-      href={item.href}
-      className="group flex min-h-[210px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md"
-    >
-      <div className="flex items-center justify-between gap-3">
-        <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
-          <item.icon aria-hidden className="h-5 w-5" />
-        </span>
-        <Badge>{item.kind}</Badge>
-      </div>
-      <h3 className="mt-5 font-[family-name:var(--font-display)] text-xl font-semibold leading-7 text-slate-950">
-        {item.title}
-      </h3>
-      <p className="mt-3 line-clamp-3 text-sm leading-7 text-slate-600">{item.summary}</p>
-      <span className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-semibold text-primary">
-        Open resource
-        <ArrowRight aria-hidden className="h-4 w-4 transition group-hover:translate-x-1" />
-      </span>
-    </Link>
-  );
-}
-
 function SectionHeader({
   eyebrow,
   title,
@@ -1097,7 +806,7 @@ function ActionLink({
 }: {
   href: string;
   children: ReactNode;
-  variant?: "primary" | "outline" | "light" | "gold" | "impact" | "glass";
+  variant?: "primary" | "outline" | "light" | "secondary" | "impact" | "glass";
 }) {
   const className =
     variant === "light"
@@ -1105,8 +814,8 @@ function ActionLink({
       : variant === "glass"
         ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/45 bg-white/10 px-5 py-3 text-sm font-semibold text-white shadow-sm backdrop-blur transition hover:bg-white/18"
         : variant === "impact"
-          ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-secondary/60 bg-emerald-900/85 px-5 py-3 text-sm font-semibold text-white shadow-sm backdrop-blur transition hover:bg-emerald-900"
-      : variant === "gold"
+          ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/35 bg-primary/80 px-5 py-3 text-sm font-semibold text-white shadow-sm backdrop-blur transition hover:bg-primary"
+      : variant === "secondary"
         ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-secondary/20 bg-white px-5 py-3 text-sm font-semibold text-secondary transition hover:border-secondary hover:bg-secondary/5"
         : variant === "outline"
           ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
@@ -1151,21 +860,18 @@ type NewsItem = {
   timestamp: number;
 };
 
-type DirectoryItem = {
-  id: string;
-  kind: string;
+type FocusItem = {
   title: string;
   summary: string;
   href: string;
-  image: string;
+  icon: LucideIcon;
 };
 
-type SupportItem = {
-  id: string;
-  kind: string;
+type ResourceToolItem = {
   title: string;
   summary: string;
   href: string;
+  action: string;
   icon: LucideIcon;
 };
 
@@ -1278,88 +984,87 @@ function buildNewsItems(
     .slice(0, 12);
 }
 
-function buildDirectoryItems(
-  centers: ResearchGenericRecord[],
-  facilities: ResearchGenericRecord[],
-  expertiseTags: ResearchGenericRecord[],
-): DirectoryItem[] {
-  return [
-    ...centers.slice(0, 3).map((item) => ({
-      id: item.id,
-      kind: "Research Center",
+function buildFocusItems(services: ResearchGenericRecord[]): FocusItem[] {
+  const backendItems = preferFeatured(services)
+    .slice(0, 4)
+    .map((item) => ({
       title: compactText(item.title ?? item.name),
-      summary: compactText(item.summary ?? item.description ?? item.about ?? item.mandate),
-      href: item.slug ? `/centers/${item.slug}` : "/centers",
-      image: item.cover_image_url || "/images/research/research-home-hero.webp",
-    })),
-    ...facilities.slice(0, 2).map((item) => ({
-      id: item.id,
-      kind: "Facility",
-      title: compactText(item.title ?? item.name),
-      summary: compactText(item.summary ?? item.description ?? item.about),
-      href: item.slug ? `/facilities/${item.slug}` : "/facilities",
-      image: item.cover_image_url || "/images/research/research-farm-hero.svg",
-    })),
-    ...expertiseTags.slice(0, 2).map((item) => ({
-      id: item.id,
-      kind: "Expertise",
-      title: compactText(item.title ?? item.name),
-      summary: compactText(item.summary ?? item.description),
-      href: "/expertise",
-      image: "/images/research/research-about-hero.webp",
-    })),
-  ].filter((item) => item.title);
-}
-
-function buildSupportItems(
-  grants: ResearchGrant[],
-  training: ResearchGenericRecord[],
-  resources: ResearchGenericRecord[],
-  services: ResearchGenericRecord[],
-  guidelines: ResearchGenericRecord[],
-): SupportItem[] {
-  return [
-    ...grants.slice(0, 1).map((item) => ({
-      id: item.id,
-      kind: "Grant support",
-      title: item.title,
-      summary: compactText(item.summary ?? item.description ?? item.eligibility),
-      href: item.slug ? `/funding/${item.slug}` : "/funding",
-      icon: Award,
-    })),
-    ...training.slice(0, 1).map((item) => ({
-      id: item.id,
-      kind: "Training",
-      title: compactText(item.title ?? item.name),
-      summary: compactText(item.summary ?? item.description ?? item.about),
-      href: item.slug ? `/training/${item.slug}` : "/training",
-      icon: GraduationCap,
-    })),
-    ...resources.slice(0, 2).map((item) => ({
-      id: item.id,
-      kind: formatLabel(item.resource_type ?? "Resource"),
-      title: compactText(item.title ?? item.name),
-      summary: compactText(item.summary ?? item.description ?? item.about),
-      href: item.slug ? `/resources-tools/${item.slug}` : "/resources-tools",
-      icon: FileText,
-    })),
-    ...services.slice(0, 1).map((item) => ({
-      id: item.id,
-      kind: "Service",
-      title: compactText(item.title ?? item.name),
-      summary: compactText(item.summary ?? item.description ?? item.services_summary),
+      summary: compactText(item.summary ?? item.description ?? item.scope ?? item.how_to_access),
       href: item.slug ? `/services/${item.slug}` : "/services",
       icon: Handshake,
-    })),
-    ...guidelines.slice(0, 1).map((item) => ({
-      id: item.id,
-      kind: "Guideline",
-      title: compactText(item.title ?? item.name),
-      summary: compactText(item.summary ?? item.description ?? item.content),
-      href: item.slug ? `/guidelines/${item.slug}` : "/guidelines",
+    }))
+    .filter((item) => item.title && item.summary);
+
+  if (backendItems.length >= 4) {
+    return backendItems.slice(0, 4);
+  }
+
+  return [
+    ...backendItems,
+    {
+      title: "Research Support",
+      summary: "Grants management, ethical review, research administration, and capacity building.",
+      href: "/services",
+      icon: Users,
+    },
+    {
+      title: "Extension",
+      summary: "Community engagement, knowledge transfer, and societal impact initiatives.",
+      href: "/community-impact",
+      icon: Sprout,
+    },
+    {
+      title: "Innovation",
+      summary: "Technology development, incubation, startups, and commercialization support.",
+      href: "/innovations",
+      icon: FlaskConical,
+    },
+    {
+      title: "Resource Mobilization",
+      summary: "Partnership development, proposal support, and fundraising for sustainable research.",
+      href: "/funding",
+      icon: Handshake,
+    },
+  ].slice(0, 4);
+}
+
+function buildResourceToolItems(
+  resources: ResearchGenericRecord[],
+  guidelines: ResearchGenericRecord[],
+): ResourceToolItem[] {
+  const resource = preferFeatured(resources)[0];
+  const guideline = preferFeatured(guidelines)[0];
+
+  return [
+    {
+      title: compactText(resource?.title ?? resource?.name) || "Research Library",
+      summary: compactText(resource?.summary ?? resource?.description) || "Access publications, journals, books, and datasets.",
+      href: resource?.slug ? `/resources-tools/${resource.slug}` : "/resources-tools/library",
+      action: "Go to library",
       icon: BookOpen,
-    })),
-  ].filter((item) => item.title);
+    },
+    {
+      title: compactText(guideline?.title ?? guideline?.name) || "Policies & Guidelines",
+      summary: compactText(guideline?.summary ?? guideline?.content) || "University research policies, guidelines, and procedures.",
+      href: guideline?.slug ? `/guidelines/${guideline.slug}` : "/resources-tools/policies",
+      action: "View policies",
+      icon: FileText,
+    },
+    {
+      title: "Downloads",
+      summary: "Templates, toolkits, reports, and useful documents.",
+      href: "/resources-tools/downloads",
+      action: "Browse downloads",
+      icon: Award,
+    },
+    {
+      title: "Forms & Templates",
+      summary: "Research forms, applications, reporting templates, and submission documents.",
+      href: "/resources-tools/forms",
+      action: "View forms",
+      icon: ClipboardList,
+    },
+  ];
 }
 
 function buildFaqItems(items: FAQ[]): FaqItem[] {
@@ -1394,7 +1099,7 @@ function buildFaqItems(items: FAQ[]): FaqItem[] {
     {
       id: "default-partnership",
       question: "How can an external organization partner with Kisii University research?",
-      answer: "Start from the Partners section or Contact REIRM so the office can route the request to the relevant research, extension, innovation, or resource mobilization pathway.",
+      answer: "Use Partners or Contact REIRM so the office can route the request to the relevant research, extension, innovation, or resource mobilization pathway.",
     },
   ];
 }
@@ -1429,6 +1134,23 @@ function getRecordImage(record?: ResearchGenericRecord, mediaField?: string) {
       ),
     );
     if (url) return url;
+  }
+
+  return "";
+}
+
+function getPartnerLogo(partner: ResearchGenericRecord) {
+  const direct = compactText(
+    partner.logo_url ??
+      partner.logo ??
+      partner.image_url ??
+      partner.cover_image_url,
+  );
+  if (direct) return direct;
+
+  const socialLinks = partner.social_links;
+  if (socialLinks && typeof socialLinks === "object" && !Array.isArray(socialLinks)) {
+    return compactText(stringish((socialLinks as Record<string, unknown>).logo_source_url));
   }
 
   return "";

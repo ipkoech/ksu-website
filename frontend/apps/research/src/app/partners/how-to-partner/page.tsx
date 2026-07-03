@@ -8,9 +8,7 @@ import {
   ClipboardList,
   Handshake,
   Lightbulb,
-  Network,
   Sprout,
-  Target,
   UsersRound,
 } from "lucide-react";
 
@@ -41,25 +39,25 @@ const collaborationRoutes = [
 export default function HowToPartnerPage() {
   return (
     <main id="research-main" className="min-h-screen bg-white text-slate-950">
-      <section className="relative isolate overflow-hidden bg-[#061A36] px-4 py-7 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div aria-hidden className="absolute inset-0 bg-[linear-gradient(115deg,#061A36_0%,#07315f_48%,#07543f_100%)]" />
+      <section className="relative isolate overflow-hidden bg-primary px-4 py-7 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div aria-hidden className="absolute inset-0 bg-[linear-gradient(115deg,hsl(var(--primary))_0%,hsl(var(--primary)/0.86)_52%,hsl(var(--secondary)/0.58)_100%)]" />
         <div aria-hidden className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:42px_42px] opacity-60" />
         <svg aria-hidden viewBox="0 0 900 260" className="absolute right-0 top-1/2 hidden h-full w-[58%] -translate-y-1/2 opacity-70 lg:block" fill="none">
-          <g stroke="#FDE68A" strokeOpacity="0.44" strokeWidth="1.5">
+          <g stroke="hsl(var(--secondary))" strokeOpacity="0.44" strokeWidth="1.5">
             <path d="M116 120c30-28 58-28 86 0 25-21 50-17 73 13M124 157l60 35 61-54" />
             <rect x="366" y="74" width="118" height="134" rx="14" />
             <path d="M394 108h62M394 138h44M394 168h72M518 116h92M564 116v70M532 186h62" />
             <circle cx="745" cy="132" r="62" />
             <path d="M745 84v96M697 132h96M714 101c35 20 64 50 88 89M790 101c-34 20-64 50-88 89" />
           </g>
-          <g stroke="#10B981" strokeOpacity="0.38">
+          <g stroke="hsl(var(--primary-foreground))" strokeOpacity="0.38">
             <path d="M276 132h72M486 132h108M638 132h44" />
             {[276, 348, 486, 594, 638, 682].map((x, index) => (
-              <circle key={x} cx={x} cy={index % 2 ? 112 : 132} r="7" fill="#061A36" stroke="#FDE68A" />
+              <circle key={x} cx={x} cy={index % 2 ? 112 : 132} r="7" fill="hsl(var(--primary))" stroke="hsl(var(--secondary))" />
             ))}
           </g>
         </svg>
-        <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[#061A36]/95 via-[#061A36]/70 to-[#061A36]/20" />
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-primary/95 via-primary/70 to-primary/20" />
         <div className="relative mx-auto flex min-h-[230px] max-w-[1680px] items-center">
           <div className="max-w-3xl">
             <p className="inline-flex rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white">Partner Engagement</p>
@@ -94,7 +92,7 @@ export default function HowToPartnerPage() {
           </div>
 
           <aside className="grid gap-4">
-            <section className="rounded-lg border border-primary/20 bg-emerald-50/70 p-5 shadow-sm">
+            <section className="rounded-lg border border-primary/20 bg-primary/5 p-5 shadow-sm">
               <Handshake aria-hidden className="h-8 w-8 text-primary" />
               <h2 className="mt-3 text-lg font-semibold text-primary">Before you contact us</h2>
               <ul className="mt-3 grid gap-2 text-sm leading-6 text-slate-700">

@@ -433,9 +433,15 @@ function SectionBackdrop({
   variant: SectionBackdropVariant;
   inverted?: boolean;
 }) {
-  const stroke = inverted ? "rgba(255,255,255,0.28)" : "rgba(0,63,45,0.16)";
-  const fill = inverted ? "rgba(255,255,255,0.12)" : "rgba(0,63,45,0.07)";
-  const accent = inverted ? "rgba(245,158,11,0.34)" : "rgba(245,158,11,0.2)";
+  const stroke = inverted
+    ? "hsl(var(--primary-foreground) / 0.28)"
+    : "hsl(var(--primary) / 0.16)";
+  const fill = inverted
+    ? "hsl(var(--primary-foreground) / 0.12)"
+    : "hsl(var(--primary) / 0.07)";
+  const accent = inverted
+    ? "hsl(var(--secondary) / 0.34)"
+    : "hsl(var(--secondary) / 0.2)";
 
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -443,8 +449,8 @@ function SectionBackdrop({
         className={[
           "absolute inset-0 opacity-70",
           inverted
-            ? "bg-[radial-gradient(circle_at_82%_18%,rgba(255,255,255,0.18),transparent_24%),radial-gradient(circle_at_10%_95%,rgba(245,158,11,0.24),transparent_26%)]"
-            : "bg-[radial-gradient(circle_at_86%_12%,rgba(0,63,45,0.08),transparent_26%),radial-gradient(circle_at_8%_100%,rgba(245,158,11,0.12),transparent_22%)]",
+            ? "bg-[radial-gradient(circle_at_82%_18%,hsl(var(--primary-foreground)/0.18),transparent_24%),radial-gradient(circle_at_10%_95%,hsl(var(--secondary)/0.24),transparent_26%)]"
+            : "bg-[radial-gradient(circle_at_86%_12%,hsl(var(--primary)/0.08),transparent_26%),radial-gradient(circle_at_8%_100%,hsl(var(--secondary)/0.12),transparent_22%)]",
         ].join(" ")}
       />
       <svg
