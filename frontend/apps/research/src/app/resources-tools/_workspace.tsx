@@ -21,6 +21,7 @@ import {
   FilledBadge,
   StatusMessage,
 } from "../../components/research-ui";
+import { ResearchPortfolioHero } from "../../components/research-portfolio";
 import { getResearchRecordDirectFileHref, getResearchRecordDownloadHref } from "../../lib/research-downloads";
 import {
   compactText,
@@ -316,7 +317,6 @@ export function ResourcesWorkspace({
         params={params}
         categories={categories}
         centers={centers}
-        downloads={downloads}
       />
       <section className="w-full max-w-none px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="grid w-full gap-5 lg:grid-cols-[244px_minmax(0,1fr)]">
@@ -349,138 +349,69 @@ function WorkspaceHero({
   params,
   categories,
   centers,
-  downloads,
 }: {
   latestUpdate: string;
   params: ResourceWorkspaceParams;
   categories: string[];
   centers: ResearchGenericRecord[];
-  downloads: DownloadRecord[];
 }) {
-  const latestDownload = downloads[0];
   return (
-    <header className="relative isolate overflow-hidden border-b border-slate-200 bg-[#061A36] px-4 py-5 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div aria-hidden className="absolute inset-0 bg-[linear-gradient(115deg,#061A36_0%,#07315f_48%,#07543f_100%)]" />
-      <div aria-hidden className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:42px_42px] opacity-60" />
-      <svg aria-hidden viewBox="0 0 900 260" className="absolute right-0 top-1/2 hidden h-full w-[52%] -translate-y-1/2 opacity-60 lg:block" fill="none">
-        <g stroke="#FDE68A" strokeOpacity="0.44" strokeWidth="1.5">
-          <rect x="344" y="64" width="122" height="140" rx="14" />
-          <path d="M374 100h62M374 130h44M374 160h72M510 114h92M556 114v72M524 186h62" />
-          <circle cx="732" cy="132" r="62" />
-          <path d="M732 84v96M684 132h96M701 101c35 20 64 50 88 89M777 101c-34 20-64 50-88 89" />
-        </g>
-        <g stroke="#10B981" strokeOpacity="0.38">
-          <path d="M238 132h90M466 132h108M618 132h44" />
-          {[238, 328, 466, 574, 618, 662].map((x, index) => (
-            <circle key={x} cx={x} cy={index % 2 ? 112 : 132} r="7" fill="#061A36" stroke="#FDE68A" />
-          ))}
-        </g>
-      </svg>
-      <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[#061A36]/95 via-[#061A36]/70 to-[#061A36]/20" />
-      <div className="grid w-full max-w-none gap-5 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-stretch">
-        <div className="relative min-w-0 rounded-lg border border-white/15 bg-white/95 p-5 text-slate-950 shadow-sm">
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
-            <div>
-              <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500" aria-label="Breadcrumb">
-                <Link href="/" className="transition hover:text-primary">Home</Link>
-                <span className="text-slate-300">/</span>
-                <span className="text-slate-900">Resources & Tools</span>
-              </nav>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Public Downloads</p>
-              <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-primary sm:text-4xl">
-                Resources & Tools
-              </h1>
-              <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-700">
-                Access backend-published policies, forms, services, outputs and public downloads from one research support workspace.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-slate-600">
-              <span>{latestUpdate ? `Data as of ${latestUpdate}` : "Backend records loaded"}</span>
-              <RefreshCw aria-hidden className="h-3.5 w-3.5 text-primary" />
-            </div>
+    <>
+      <ResearchPortfolioHero
+        eyebrow="Published resource workspace"
+        title="Resources & Tools"
+        body="Access backend-published policies, forms, services, outputs and public downloads from one research support workspace."
+        primary={{ label: "Open resource library", href: "/resources-tools/library" }}
+        secondary={{ label: "View downloads", href: "/resources-tools/downloads" }}
+        illustration="projects"
+      />
+      <section className="border-b border-slate-200 bg-white px-4 py-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
+          <nav className="flex flex-wrap items-center gap-2 font-medium" aria-label="Breadcrumb">
+            <Link href="/" className="transition hover:text-primary">Home</Link>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-900">Resources & Tools</span>
+          </nav>
+          <div className="flex items-center gap-2">
+            <span>{latestUpdate ? `Data as of ${latestUpdate}` : "Backend records loaded"}</span>
+            <RefreshCw aria-hidden className="h-3.5 w-3.5 text-primary" />
           </div>
-          <form action="/resources-tools" className="mt-5 grid gap-3 xl:grid-cols-[minmax(260px,1fr)_repeat(4,minmax(150px,190px))_auto]">
-            <label className="relative block">
-              <span className="sr-only">Search resources</span>
-              <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                name="q"
-                defaultValue={params.q}
-                placeholder="Search resources, policies, forms, services, outputs..."
-                className="h-11 w-full rounded-md border border-slate-200 bg-white pl-10 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
-              />
-            </label>
-            <FilterSelect name="type" label="All Types" value={params.type} options={typeOptions} />
-            <FilterSelect name="category" label="All Categories" value={params.category} options={categories} />
-            <FilterSelect name="status" label="All Status" value={params.status} options={statusOptions} />
-            <FilterSelect
-              name="center"
-              label="All Centers"
-              value={params.center}
-              options={centers.map((center) => ({
-                value: String(center.id),
-                label: compactText(center.name) || compactText(center.title) || compactText(center.code) || "Research center",
-              }))}
+        </div>
+        <form action="/resources-tools" className="grid gap-3 xl:grid-cols-[minmax(260px,1fr)_repeat(4,minmax(150px,190px))_auto]">
+          <label className="relative block">
+            <span className="sr-only">Search resources</span>
+            <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              name="q"
+              defaultValue={params.q}
+              placeholder="Search resources, policies, forms, services, outputs..."
+              className="h-11 w-full rounded-md border border-slate-200 bg-white pl-10 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
             />
-            <div className="flex gap-2">
-              <button className="inline-flex h-11 min-w-28 items-center justify-center gap-2 rounded-md border border-primary/30 bg-white px-4 text-sm font-semibold text-primary transition hover:bg-primary/5" type="submit">
-                <SlidersHorizontal aria-hidden className="h-4 w-4" />
-                Filter
-              </button>
-              <Link href="/resources-tools" className="inline-flex h-11 items-center justify-center rounded-md px-3 text-sm font-semibold text-primary transition hover:bg-primary/5">
-                Reset
-              </Link>
-            </div>
-          </form>
-        </div>
-        <ResourceIllustration latestDownload={latestDownload} />
-      </div>
-    </header>
-  );
-}
-
-function ResourceIllustration({
-  latestDownload,
-}: {
-  latestDownload?: DownloadRecord;
-}) {
-  return (
-    <div className="relative min-h-[230px] overflow-hidden rounded-lg border border-white/20 bg-white/10 p-5 text-white shadow-sm backdrop-blur-sm">
-      <div className="absolute right-5 top-5 h-16 w-16 rounded-full border border-white/10 bg-white/10" />
-      <div className="absolute bottom-4 right-14 h-24 w-24 rounded-full border border-white/10" />
-      <div className="relative z-10 flex h-full flex-col justify-between gap-5">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Public Downloads</p>
-          <p className="mt-2 text-2xl font-semibold">Backend-controlled file access</p>
-          <p className="mt-1 text-sm text-white/75">Public documents served through consistent download endpoints</p>
-        </div>
-        <div className="relative h-28">
-          <div className="absolute left-0 top-2 w-[74%] animate-pulse rounded-lg border border-white/15 bg-white p-3 text-slate-950 shadow-xl">
-            <div className="flex items-start gap-3">
-              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                <FileArchive aria-hidden className="h-5 w-5" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="h-2.5 w-28 rounded bg-slate-200" />
-                <div className="mt-2 h-2 w-40 rounded bg-slate-100" />
-                <div className="mt-3 inline-flex rounded bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-800">Public</div>
-              </div>
-            </div>
+          </label>
+          <FilterSelect name="type" label="All Types" value={params.type} options={typeOptions} />
+          <FilterSelect name="category" label="All Categories" value={params.category} options={categories} />
+          <FilterSelect name="status" label="All Status" value={params.status} options={statusOptions} />
+          <FilterSelect
+            name="center"
+            label="All Centers"
+            value={params.center}
+            options={centers.map((center) => ({
+              value: String(center.id),
+              label: compactText(center.name) || compactText(center.title) || compactText(center.code) || "Research center",
+            }))}
+          />
+          <div className="flex gap-2">
+            <button className="inline-flex h-11 min-w-28 items-center justify-center gap-2 rounded-md border border-primary/30 bg-white px-4 text-sm font-semibold text-primary transition hover:bg-primary/5" type="submit">
+              <SlidersHorizontal aria-hidden className="h-4 w-4" />
+              Filter
+            </button>
+            <Link href="/resources-tools" className="inline-flex h-11 items-center justify-center rounded-md px-3 text-sm font-semibold text-primary transition hover:bg-primary/5">
+              Reset
+            </Link>
           </div>
-          <div className="absolute bottom-1 right-0 w-[58%] animate-bounce rounded-lg border border-secondary/40 bg-white/95 p-3 text-slate-950 shadow-xl [animation-duration:2.6s]">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-semibold uppercase text-slate-500">Download File</p>
-                <p className="mt-1 line-clamp-1 text-sm font-semibold">{latestDownload?.title || "Research policy"}</p>
-              </div>
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-secondary text-primary">
-                <Download aria-hidden className="h-4 w-4" />
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        </form>
+      </section>
+    </>
   );
 }
 

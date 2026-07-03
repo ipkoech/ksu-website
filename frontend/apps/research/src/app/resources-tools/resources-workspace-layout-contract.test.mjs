@@ -9,11 +9,10 @@ const downloadsSource = readFileSync(new URL("./downloads/page.tsx", import.meta
 
 test("resources workspace keeps a compact hero with animated illustration", () => {
   assert.match(pageSource, /function WorkspaceHero/);
-  assert.match(pageSource, /function ResourceIllustration/);
-  assert.match(pageSource, /animate-/);
-  assert.match(pageSource, /Public Downloads/);
-  assert.match(pageSource, /bg-\[#061A36\]/);
-  assert.match(pageSource, /bg-\[linear-gradient\(rgba\(255,255,255,0\.06\)_1px,transparent_1px\)/);
+  assert.match(pageSource, /ResearchPortfolioHero/);
+  assert.match(pageSource, /illustration="projects"/);
+  assert.match(pageSource, /Published resource workspace/);
+  assert.doesNotMatch(pageSource, /function ResourceIllustration/);
 });
 
 test("resources side navigation points to section pages and anchors", () => {
