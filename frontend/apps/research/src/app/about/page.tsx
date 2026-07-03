@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
+import { ScrollReveal } from "@ksu/ui/components";
 import {
   ArrowRight,
   BookOpen,
@@ -25,6 +25,7 @@ import {
   getLeadTeamMember,
   type AboutTeamMember,
 } from "./about-page-model";
+import { AboutScrollAccordion } from "./about-scroll-accordion";
 
 export const revalidate = 300;
 
@@ -93,6 +94,7 @@ function AboutWorkspace({
   const hasLeadership = Boolean(leadershipMessage || lead || researchContext?.leadership?.person);
   const hasTeam = teamMembers.length > 0 || Boolean(researchContext?.team?.groups?.length);
   const hasContact = primaryContact.some((item) => compactText(item.value));
+  const hasMiddleContent = mandateRows.length > 0 || hasLeadership || hasTeam || governanceRows.length > 0;
   const visibleSections = aboutSections.filter((section) => {
     if (section.id === "overview") return Boolean(overview || title);
     if (section.id === "mandate") return mandateRows.length > 0;
@@ -146,34 +148,42 @@ function AboutWorkspace({
               </div>
             </ScrollReveal>
 
-            {mandateRows.length > 0 || hasLeadership ? (
-              <ScrollRevealGroup
-                className="grid gap-5 xl:grid-cols-2"
-                duration={620}
-                staggerDelay={80}
-              >
-                {mandateRows.length > 0 ? (
-                  <MandateCard rows={mandateRows} />
-                ) : null}
-                {hasLeadership ? (
-                  <LeadershipCard
-                    lead={lead}
-                    message={leadershipMessage}
-                    leadership={researchContext?.leadership}
-                  />
-                ) : null}
-              </ScrollRevealGroup>
-            ) : null}
-
-            {hasTeam ? (
+            {hasMiddleContent ? (
               <ScrollReveal variant="fade-up">
-                <TeamHierarchyCard team={researchContext?.team} members={teamMembers} />
-              </ScrollReveal>
-            ) : null}
-
-            {governanceRows.length > 0 ? (
-              <ScrollReveal variant="fade-up">
-                <GovernanceCard rows={governanceRows} />
+                <AboutScrollAccordion>
+                  {mandateRows.length > 0 ? (
+                    <div data-about-panel data-panel-title="Mandate">
+                      <div data-about-panel-content>
+                        <MandateCard rows={mandateRows} />
+                      </div>
+                    </div>
+                  ) : null}
+                  {hasLeadership ? (
+                    <div data-about-panel data-panel-title="Leadership">
+                      <div data-about-panel-content>
+                        <LeadershipCard
+                          lead={lead}
+                          message={leadershipMessage}
+                          leadership={researchContext?.leadership}
+                        />
+                      </div>
+                    </div>
+                  ) : null}
+                  {hasTeam ? (
+                    <div data-about-panel data-panel-title="Team">
+                      <div data-about-panel-content>
+                        <TeamHierarchyCard team={researchContext?.team} members={teamMembers} />
+                      </div>
+                    </div>
+                  ) : null}
+                  {governanceRows.length > 0 ? (
+                    <div data-about-panel data-panel-title="Governance">
+                      <div data-about-panel-content>
+                        <GovernanceCard rows={governanceRows} />
+                      </div>
+                    </div>
+                  ) : null}
+                </AboutScrollAccordion>
               </ScrollReveal>
             ) : null}
 
@@ -182,16 +192,16 @@ function AboutWorkspace({
                 <section id="about-contact" className="relative isolate overflow-hidden rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                   <SectionBackdrop variant="contact" />
                   <div className="relative z-10">
-                  <SectionHeader
-                    icon={Mail}
-                    label="Contact"
-                    title="Research office contact"
-                  />
-                  <div className="mt-5 grid gap-3 md:grid-cols-3">
-                    {primaryContact.filter((item) => compactText(item.value)).map((item) => (
-                      <ContactTile key={item.label} item={item} />
-                    ))}
-                  </div>
+                    <SectionHeader
+                      icon={Mail}
+                      label="Contact"
+                      title="Research office contact"
+                    />
+                    <div className="mt-5 grid gap-3 md:grid-cols-3">
+                      {primaryContact.filter((item) => compactText(item.value)).map((item) => (
+                        <ContactTile key={item.label} item={item} />
+                      ))}
+                    </div>
                   </div>
                 </section>
               </ScrollReveal>

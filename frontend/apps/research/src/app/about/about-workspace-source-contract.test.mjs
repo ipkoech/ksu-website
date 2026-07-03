@@ -6,6 +6,10 @@ const source = readFileSync(
   new URL("./page.tsx", import.meta.url),
   "utf8",
 );
+const accordionSource = readFileSync(
+  new URL("./about-scroll-accordion.tsx", import.meta.url),
+  "utf8",
+);
 
 test("about page is a compact content workspace without hero or stats strip", () => {
   assert.match(source, /AboutWorkspace/);
@@ -68,4 +72,24 @@ test("leadership section renders the lead profile image from backend staff data"
   assert.match(source, /function LeadershipPortrait/);
   assert.match(source, /photo_url/);
   assert.match(source, /style=\{photoUrl \? \{ backgroundImage: `url\(\$\{photoUrl\}\)` \} : undefined\}/);
+});
+
+test("about page uses sticky scroll accordion for middle content sections", () => {
+  assert.match(source, /AboutScrollAccordion/);
+  assert.match(source, /data-about-panel/);
+  assert.match(source, /data-panel-title="Mandate"/);
+  assert.match(source, /data-panel-title="Leadership"/);
+  assert.match(source, /data-panel-title="Team"/);
+  assert.match(source, /data-panel-title="Governance"/);
+});
+
+test("about scroll accordion progressively enhances desktop scrolling only", () => {
+  assert.match(accordionSource, /"use client"/);
+  assert.match(accordionSource, /prefers-reduced-motion: reduce/);
+  assert.match(accordionSource, /min-width: 1024px/);
+  assert.match(accordionSource, /style\.position = "sticky"/);
+  assert.match(accordionSource, /style\.height =/);
+  assert.match(accordionSource, /style\.opacity =/);
+  assert.match(accordionSource, /translateY/);
+  assert.match(accordionSource, /aria-hidden/);
 });
