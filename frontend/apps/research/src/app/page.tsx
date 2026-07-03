@@ -160,7 +160,9 @@ function ResearchLandingHero({
   const heroBody =
     compactText(slide?.plain_text ?? slide?.summary ?? slide?.description) ||
     "REIRM coordinates research, extension, innovation, partnerships, and resource mobilization for Kisii University.";
-  const heroImage = getRecordImage(slide, "desktop_media") || "/images/research/research-hero-imagegen.webp";
+  const heroImage =
+    getRecordImage(slide, "desktop_media") ||
+    "/images/research/research-office-operations-hero.webp";
   const slideActionHref = compactText(slide?.external_url);
   const slideActionLabel = compactText(slide?.link_text) || "Explore Research";
   const actions = slideActionHref
@@ -177,8 +179,8 @@ function ResearchLandingHero({
         sizes="100vw"
         className="object-cover"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/85 to-primary/20" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_38%_20%,hsl(var(--secondary)/0.22)_0%,transparent_34%)]" />
+      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/82 via-slate-950/46 to-slate-950/8" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
       <ResearchAnimatedBackdrop dark />
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/60 to-transparent" />
       <div className="relative mx-auto grid min-h-[560px] max-w-[1920px] items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_520px] lg:px-8 xl:px-10 2xl:px-12">
