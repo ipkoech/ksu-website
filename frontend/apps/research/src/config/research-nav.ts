@@ -104,7 +104,7 @@ export const researchNavConfig: NavSection[] = [
     icon: Lightbulb,
     description:
       "IP, startups, commercialization, partners, donors, and collaborations.",
-    activePaths: ["/innovations", "/partners"],
+    activePaths: ["/innovations", "/startups", "/incubation", "/competitions", "/technology-transfer", "/partners"],
     columns: [
       {
         heading: "Innovation",
@@ -117,15 +117,27 @@ export const researchNavConfig: NavSection[] = [
           },
           {
             title: "Startups & Incubation",
-            href: "/innovations",
+            href: "/startups",
             description: "Support for entrepreneurs and ventures.",
             icon: Rocket,
           },
           {
+            title: "Incubation Support",
+            href: "/incubation",
+            description: "Cohorts, mentorship, and venture support.",
+            icon: Users,
+          },
+          {
             title: "Competitions & Hackathons",
-            href: "/innovations",
+            href: "/competitions",
             description: "Innovation challenges and prizes.",
             icon: Award,
+          },
+          {
+            title: "Technology Transfer",
+            href: "/technology-transfer",
+            description: "Licensing, disclosures, and transfer cases.",
+            icon: Briefcase,
           },
           {
             title: "Innovation Ecosystem",
@@ -139,21 +151,21 @@ export const researchNavConfig: NavSection[] = [
         heading: "Partner Engagement",
         items: [
           {
-            title: "For Industry Partners",
-            href: "/partners#how-to-partner",
-            description: "How to partner with Kisii University.",
+            title: "How to Partner",
+            href: "/partners/how-to-partner",
+            description: "Collaboration routes and engagement process.",
             icon: Building2,
           },
           {
-            title: "Partner Showcase",
-            href: "/partners",
-            description: "Case studies and testimonials.",
+            title: "Case Studies & Testimonials",
+            href: "/partners/stories",
+            description: "Published partner-linked work and outcomes.",
             icon: Star,
           },
           {
-            title: "Industry Network",
+            title: "Partner Directory",
             href: "/partners",
-            description: "Corporate and institutional partners.",
+            description: "Corporate, community, and institutional partners.",
             icon: Globe,
           },
         ],

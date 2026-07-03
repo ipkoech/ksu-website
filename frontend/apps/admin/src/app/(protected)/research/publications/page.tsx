@@ -176,13 +176,20 @@ export default function ResearchPublicationsPage() {
       queryKey={["research", "publications"]}
       summarySlot={
         <div className="space-y-4">
-          <ResearchSectionGuide title="Publications" />
           <PublicationWorkspaceHeader />
         </div>
       }
       listFilters={publicationListFilters}
       recordColumns={publicationColumns}
       editorMode="sheet"
+      tableLayout="compact"
+      actionsInMenuOnly
+      defaultSort={{ label: "Recently updated", sort: "updated_at", order: "desc" }}
+      sortOptions={[
+        { label: "Recently updated", sort: "updated_at", order: "desc" },
+        { label: "Publication year newest", sort: "year", order: "desc" },
+        { label: "Publication title A-Z", sort: "title", order: "asc" },
+      ]}
       renderMobileRecord={PublicationMobileRecord}
       fields={withResearchFieldHelp([
         { name: "title", label: "Title", required: true, placeholder: "Publication title" },
@@ -321,7 +328,12 @@ export default function ResearchPublicationsPage() {
         is_active: values.is_active,
         is_featured: values.is_featured,
       })}
-      toolbarSlot={<ResearchBulkActions resourceKey="research-publications" />}
+      toolbarSlot={
+        <>
+          <ResearchBulkActions resourceKey="research-publications" />
+          <ResearchSectionGuide title="Publications" className="sm:ml-auto" />
+        </>
+      }
     />
   );
 }

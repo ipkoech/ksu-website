@@ -92,6 +92,14 @@ export default function ResearchStaffPage() {
       listFilters={staffFilters}
       recordColumns={staffColumns}
       editorMode="sheet"
+      tableLayout="compact"
+      actionsInMenuOnly
+      defaultSort={{ label: "Recently updated", sort: "updated_at", order: "desc" }}
+      sortOptions={[
+        { label: "Recently updated", sort: "updated_at", order: "desc" },
+        { label: "Display order", sort: "display_order", order: "asc" },
+      ]}
+      toolbarSlot={<ResearchSectionGuide title="Research Content" className="sm:ml-auto" />}
       renderMobileRecord={StaffMobileRecord}
       fields={withResearchFieldHelp([
         { name: "person_id", label: "Person", type: "entity", required: true, relation: { adapter: "person", filters: { status: "active" } } },

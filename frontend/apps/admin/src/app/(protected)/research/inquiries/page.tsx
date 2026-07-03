@@ -20,7 +20,15 @@ export default function ResearchInquiriesPage() {
       description="Manage consultancy inquiries, clients, and engagement records."
       backHref="/research"
       queryKey={["research", "consultancies"]}
-      summarySlot={<ResearchSectionGuide title="Research Capacity" />}
+      toolbarSlot={<ResearchSectionGuide title="Research Capacity" className="sm:ml-auto" />}
+      tableLayout="compact"
+      actionsInMenuOnly
+      editorMode="sheet"
+      defaultSort={{ label: "Recently updated", sort: "updated_at", order: "desc" }}
+      sortOptions={[
+        { label: "Recently updated", sort: "updated_at", order: "desc" },
+        { label: "Title A-Z", sort: "title", order: "asc" },
+      ]}
       fields={withResearchFieldHelp([
         { name: "title", label: "Title", required: true },
         { name: "slug", label: "Slug" },

@@ -65,13 +65,20 @@ export default function ResearchBoardsPage() {
       queryKey={["research", "content", "boards"]}
       summarySlot={
         <div className="space-y-4">
-          <ResearchSectionGuide title="Research Content" />
           <ContentWorkspaceHeader />
         </div>
       }
       listFilters={boardFilters}
       recordColumns={boardColumns}
       editorMode="sheet"
+      tableLayout="compact"
+      actionsInMenuOnly
+      defaultSort={{ label: "Recently updated", sort: "updated_at", order: "desc" }}
+      sortOptions={[
+        { label: "Recently updated", sort: "updated_at", order: "desc" },
+        { label: "Name A-Z", sort: "name", order: "asc" },
+      ]}
+      toolbarSlot={<ResearchSectionGuide title="Research Content" className="sm:ml-auto" />}
       renderMobileRecord={BoardMobileRecord}
       fields={withResearchFieldHelp([
         { name: "name", label: "Name", required: true },

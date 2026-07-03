@@ -5,6 +5,8 @@ import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchResourcePage, researchServiceApi } from "../_components/research-resource-page";
 import { StatusBadge } from "../publications/_components/publication-workspace";
 
+const THEME_LIST_FIELDS = "id,name,slug,code,color,status,is_active,is_featured";
+
 const themeFilters: EditableListFilter[] = [
   { name: "search", label: "Search", type: "text", placeholder: "Search themes or codes" },
   { name: "status", label: "Status", type: "text", placeholder: "active, draft, archived" },
@@ -57,6 +59,7 @@ export default function ResearchThemesPage() {
       queryKey={["research", "themes"]}
       resource={researchServiceApi.themes}
       manageScopes={["research.manage_projects", "research:write"]}
+      hideHeader
       fields={[
         { name: "name", label: "Name", required: true },
         { name: "slug", label: "Slug" },
@@ -68,12 +71,14 @@ export default function ResearchThemesPage() {
         { name: "is_featured", label: "Featured", type: "boolean" },
       ]}
       defaults={{ status: "active" }}
+      listParams={{ fields: THEME_LIST_FIELDS }}
       listFilters={themeFilters}
       recordColumns={themeColumns}
       emptyMessage="No research themes were returned by the research service."
       metaFields={["code", "status", "is_featured"]}
       importResource="research-themes"
       detailHref={(record) => `/research/themes/${record.id}`}
+      editorMode="sheet"
     />
   );
 }

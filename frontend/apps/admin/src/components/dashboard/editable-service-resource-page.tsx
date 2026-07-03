@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { useEffect, useId, useMemo, useState, type Dispatch, type KeyboardEvent, type ReactNode, type SetStateAction } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpDown, Edit, Eye, FilterX, HelpCircle, MoreHorizontal, Plus, Search, SlidersHorizontal, Trash2 } from "lucide-react";
+import { ArrowUpDown, ChevronDown, Edit, Eye, FilterX, HelpCircle, MoreHorizontal, Plus, Search, SlidersHorizontal, Trash2 } from "lucide-react";
 
 const RESEARCH_FRONTEND = process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL;
 
@@ -229,7 +230,7 @@ interface EditableServiceResourcePageProps<
   toolbarSlot?: ReactNode;
   summarySlot?: ReactNode;
   editorMode?: "dialog" | "sheet" | "auto";
-  renderMobileRecord?: (record: TRecord, actions: ReactNode) => ReactNode;
+  renderMobileRecord?: (record: TRecord, actions: ReactNode, detailHref?: string | null) => ReactNode;
   hideHeader?: boolean;
   tableLayout?: "default" | "compact";
   actionsInMenuOnly?: boolean;
@@ -412,6 +413,7 @@ export function EditableServiceResourcePage<
   defaultSort,
   emptyState,
 }: EditableServiceResourcePageProps<TRecord, TPayload>) {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const formId = useId();
   const workflowFormId = useId();
@@ -654,6 +656,17 @@ export function EditableServiceResourcePage<
     setWorkflowFieldErrors({});
   };
 
+  const openRecordDetail = (record: TRecord) => {
+    const detailHref = getRecordDetailHref?.(record);
+    if (detailHref) router.push(detailHref);
+  };
+
+  const handleRecordKeyDown = (event: KeyboardEvent, record: TRecord) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    openRecordDetail(record);
+  };
+
   const submitWorkflowEditor = async () => {
     if (!workflowEditorTarget) return;
     const { record, action } = workflowEditorTarget;
@@ -695,7 +708,11 @@ export function EditableServiceResourcePage<
     if (!canShowMenu) return null;
 
     return (
-      <div className="flex shrink-0 items-center gap-2">
+      <div
+        className="flex shrink-0 items-center gap-2"
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={(event) => event.stopPropagation()}
+      >
         {!actionsInMenuOnly ? (
           <>
             {workflowActions.slice(0, 2).map((action) => (
@@ -806,13 +823,13 @@ export function EditableServiceResourcePage<
         tableLayout === "compact" && "flex-wrap rounded-lg border bg-background p-3 sm:items-center",
       )}
     >
-      {toolbarSlot}
       {canCreate ? (
         <Button type="button" size="sm" onClick={startCreate}>
           <Plus data-icon="inline-start" />
           Create Record
         </Button>
       ) : null}
+      {toolbarSlot}
       {tableLayout !== "compact" && listFilters.length > 0 ? (
         <Button
           type="button"
@@ -952,8 +969,8 @@ export function EditableServiceResourcePage<
                       >
                         <div className="mb-3 flex items-center justify-between gap-3">
                           <div>
-                            <p className="text-sm font-semibold">Filter projects</p>
-                            <p className="text-xs text-muted-foreground">Narrow the table by project metadata.</p>
+                            <p className="text-sm font-semibold">Filter {title.toLowerCase()}</p>
+                            <p className="text-xs text-muted-foreground">Narrow the table by {title.toLowerCase()} metadata.</p>
                           </div>
                           <Button
                             type="button"
@@ -983,7 +1000,7 @@ export function EditableServiceResourcePage<
                       </PopoverTrigger>
                       <PopoverContent align="end" className="w-64 p-2">
                         <div className="px-2 py-1.5">
-                          <p className="text-sm font-semibold">Sort projects</p>
+                          <p className="text-sm font-semibold">Sort {title.toLowerCase()}</p>
                         </div>
                         <div className="grid gap-1">
                           {sortOptions.map((option) => (
@@ -1056,7 +1073,17 @@ export function EditableServiceResourcePage<
                       </thead>
                       <tbody className="divide-y bg-background">
                         {records.map((record) => (
-                          <tr key={record.id} className="align-top">
+                          <tr
+                            key={record.id}
+                            className={cn(
+                              "align-top",
+                              getRecordDetailHref?.(record) && "cursor-pointer transition-colors hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                            )}
+                            role={getRecordDetailHref?.(record) ? "link" : undefined}
+                            tabIndex={getRecordDetailHref?.(record) ? 0 : undefined}
+                            onClick={() => openRecordDetail(record)}
+                            onKeyDown={(event) => handleRecordKeyDown(event, record)}
+                          >
                             {recordColumns.map((column) => (
                               <td key={column.key} className={`px-4 py-3 ${column.className ?? ""}`}>
                                 {column.render(record)}
@@ -1072,8 +1099,18 @@ export function EditableServiceResourcePage<
                     <div className="divide-y md:hidden">
                       {records.map((record) => (
                         renderMobileRecord ? (
-                          <div key={`mobile-${record.id}`} className="p-3">
-                            {renderMobileRecord(record, renderRecordActions(record))}
+                          <div
+                            key={`mobile-${record.id}`}
+                            className={cn(
+                              "p-3",
+                              getRecordDetailHref?.(record) && "cursor-pointer transition-colors hover:bg-muted/35",
+                            )}
+                            role={getRecordDetailHref?.(record) ? "link" : undefined}
+                            tabIndex={getRecordDetailHref?.(record) ? 0 : undefined}
+                            onClick={() => openRecordDetail(record)}
+                            onKeyDown={(event) => handleRecordKeyDown(event, record)}
+                          >
+                            {renderMobileRecord(record, renderRecordActions(record), getRecordDetailHref?.(record))}
                           </div>
                         ) : (
                           <RecordListRow
@@ -1082,6 +1119,8 @@ export function EditableServiceResourcePage<
                             getRecordTitle={getRecordTitle}
                             getRecordMeta={getRecordMeta}
                             actions={renderRecordActions(record)}
+                            detailHref={getRecordDetailHref?.(record)}
+                            onOpen={() => openRecordDetail(record)}
                           />
                         )
                       ))}
@@ -1091,8 +1130,18 @@ export function EditableServiceResourcePage<
                   <div className="divide-y rounded-lg border">
                     {records.map((record) => (
                       renderMobileRecord ? (
-                        <div key={record.id} className="p-3">
-                          {renderMobileRecord(record, renderRecordActions(record))}
+                        <div
+                          key={record.id}
+                          className={cn(
+                            "p-3",
+                            getRecordDetailHref?.(record) && "cursor-pointer transition-colors hover:bg-muted/35",
+                          )}
+                          role={getRecordDetailHref?.(record) ? "link" : undefined}
+                          tabIndex={getRecordDetailHref?.(record) ? 0 : undefined}
+                          onClick={() => openRecordDetail(record)}
+                          onKeyDown={(event) => handleRecordKeyDown(event, record)}
+                        >
+                          {renderMobileRecord(record, renderRecordActions(record), getRecordDetailHref?.(record))}
                         </div>
                       ) : (
                         <RecordListRow
@@ -1101,6 +1150,8 @@ export function EditableServiceResourcePage<
                           getRecordTitle={getRecordTitle}
                           getRecordMeta={getRecordMeta}
                           actions={renderRecordActions(record)}
+                          detailHref={getRecordDetailHref?.(record)}
+                          onOpen={() => openRecordDetail(record)}
                         />
                       )
                     ))}
@@ -1332,14 +1383,33 @@ function RecordListRow<TRecord extends RecordShape>({
   getRecordTitle,
   getRecordMeta,
   actions,
+  detailHref,
+  onOpen,
 }: {
   record: TRecord;
   getRecordTitle: (record: TRecord) => string;
   getRecordMeta?: (record: TRecord) => string;
   actions: ReactNode;
+  detailHref?: string | null;
+  onOpen?: () => void;
 }) {
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (!detailHref || (event.key !== "Enter" && event.key !== " ")) return;
+    event.preventDefault();
+    onOpen?.();
+  };
+
   return (
-    <div className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
+    <div
+      className={cn(
+        "flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between",
+        detailHref && "cursor-pointer transition-colors hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+      )}
+      role={detailHref ? "link" : undefined}
+      tabIndex={detailHref ? 0 : undefined}
+      onClick={detailHref ? onOpen : undefined}
+      onKeyDown={handleKeyDown}
+    >
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <p className="break-words font-medium">{getRecordTitle(record)}</p>
@@ -1396,6 +1466,14 @@ function EditorFormBody<TRecord extends RecordShape>({
   readOnlyMessage: string;
 }) {
   const isEditable = editingRecord ? canEdit : canCreate;
+  const fieldGroups = useMemo(() => groupEditableFields(fields), [fields]);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(fieldGroups.map((group, index) => [group.title, index < 2])),
+  );
+
+  useEffect(() => {
+    setOpenGroups(Object.fromEntries(fieldGroups.map((group, index) => [group.title, index < 2])));
+  }, [fieldGroups]);
 
   return (
     <div className="flex flex-col gap-4 py-2">
@@ -1410,21 +1488,96 @@ function EditorFormBody<TRecord extends RecordShape>({
         </p>
       ) : null}
       {isEditable
-        ? fields.map((field) => (
-            <EditableFieldControl
-              key={field.name}
-              field={field}
-              id={`${formId}-${field.name}`}
-              value={values[field.name]}
-              values={values}
-              error={fieldErrors[field.name]}
-              setValues={setValues}
-              setFieldErrors={setFieldErrors}
-            />
+        ? fieldGroups.map((group) => (
+            <section key={group.title} className="rounded-lg border bg-background">
+              <button
+                type="button"
+                className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left"
+                aria-expanded={Boolean(openGroups[group.title])}
+                onClick={() => setOpenGroups((current) => ({ ...current, [group.title]: !current[group.title] }))}
+              >
+                <span>
+                  <span className="block text-sm font-semibold">{group.title}</span>
+                  <span className="mt-1 block text-xs text-muted-foreground">{group.description}</span>
+                </span>
+                <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${openGroups[group.title] ? "rotate-180" : ""}`} />
+              </button>
+              {openGroups[group.title] ? (
+                <div className="grid gap-4 border-t p-4 md:grid-cols-2">
+                  {group.fields.map((field) => (
+                    <EditableFieldControl
+                      key={field.name}
+                      field={field}
+                      id={`${formId}-${field.name}`}
+                      value={values[field.name]}
+                      values={values}
+                      error={fieldErrors[field.name]}
+                      setValues={setValues}
+                      setFieldErrors={setFieldErrors}
+                    />
+                  ))}
+                </div>
+              ) : null}
+            </section>
           ))
         : null}
     </div>
   );
+}
+
+function groupEditableFields(fields: EditableField[]) {
+  const groups = [
+    {
+      title: "Basics",
+      description: "Core naming, status, and primary identifiers.",
+      fields: [] as EditableField[],
+    },
+    {
+      title: "Relationships",
+      description: "Readable selectors for backend-linked records.",
+      fields: [] as EditableField[],
+    },
+    {
+      title: "Dates and Numbers",
+      description: "Timeline, budget, counts, and measurable values.",
+      fields: [] as EditableField[],
+    },
+    {
+      title: "Content",
+      description: "Long-form copy shown in admin or public contexts.",
+      fields: [] as EditableField[],
+    },
+    {
+      title: "Media and Links",
+      description: "Media uploads, URLs, and external references.",
+      fields: [] as EditableField[],
+    },
+    {
+      title: "Visibility",
+      description: "Publication, featured, and active-state controls.",
+      fields: [] as EditableField[],
+    },
+  ];
+
+  const byTitle = Object.fromEntries(groups.map((group) => [group.title, group]));
+  for (const field of fields) {
+    const name = field.name.toLowerCase();
+    if (field.type === "entity" || field.type === "entity-record" || name.endsWith("_id")) {
+      byTitle.Relationships.fields.push(field);
+    } else if (field.type === "date" || field.type === "datetime-local" || field.type === "number" || /amount|budget|value|count|year|percentage|order|capacity|award|score|rate/.test(name)) {
+      byTitle["Dates and Numbers"].fields.push(field);
+    } else if (field.type === "textarea" || field.type === "richtext" || /summary|description|abstract|background|objectives|methodology|outcomes|impact|deliverables|eligibility|requirements|content|notes|story|body|about|mandate|vision|mission/.test(name)) {
+      byTitle.Content.fields.push(field);
+    } else if (field.type === "media" || field.type === "url" || /url|image|media|document|file|attachment|doi|pdf/.test(name)) {
+      byTitle["Media and Links"].fields.push(field);
+    } else if (field.type === "boolean" || /^is_/.test(name) || /status|visibility|featured|active|public|required/.test(name)) {
+      byTitle.Visibility.fields.push(field);
+    } else {
+      byTitle.Basics.fields.push(field);
+    }
+  }
+
+  return groups.filter((group) => group.fields.length > 0);
 }
 
 function EditableFieldControl({
@@ -1448,6 +1601,7 @@ function EditableFieldControl({
   const describedBy = error ? `${id}-error` : undefined;
   const resolvedType = inputType(field);
   const stringValue = value === null || value === undefined ? "" : String(value);
+  const wideField = field.type === "textarea" || field.type === "richtext" || field.type === "media" || field.type === "entity-record" || field.type === "entity-multi";
   const clearError = () => {
     if (!error) return;
     setFieldErrors((current) => {
@@ -1465,7 +1619,7 @@ function EditableFieldControl({
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className={cn("flex flex-col gap-2", wideField && "md:col-span-2")}>
       <div className="flex items-center gap-1.5">
         <label
           id={labelId}

@@ -404,12 +404,36 @@ const defaultDetailGuidance: ResearchDetailGuidanceConfig = {
 
 export function getResearchGuidance(title?: string): ResearchGuidanceConfig | undefined {
   if (!title) return defaultGuidance;
-  return guidanceByTitle[title] ?? defaultGuidance;
+  const direct = guidanceByTitle[title];
+  if (direct) return direct;
+  const normalized = title.toLowerCase();
+  if (normalized.includes("project")) return guidanceByTitle.Projects;
+  if (normalized.includes("grant") || normalized.includes("fund") || normalized.includes("application") || normalized.includes("review")) return guidanceByTitle.Grants;
+  if (normalized.includes("publication") || normalized.includes("journal") || normalized.includes("output") || normalized.includes("innovation")) return guidanceByTitle.Publications;
+  if (normalized.includes("content") || normalized.includes("news") || normalized.includes("event") || normalized.includes("blog") || normalized.includes("gallery") || normalized.includes("slider") || normalized.includes("staff") || normalized.includes("board")) return guidanceByTitle["Research Content"];
+  if (normalized.includes("capacity") || normalized.includes("training") || normalized.includes("scholarship") || normalized.includes("mentor") || normalized.includes("consult")) return guidanceByTitle["Research Capacity"];
+  if (normalized.includes("donation") || normalized.includes("donor")) return guidanceByTitle.Donations;
+  if (normalized.includes("farm")) return guidanceByTitle["University Farm"];
+  if (normalized.includes("sustainability")) return guidanceByTitle.Sustainability;
+  if (normalized.includes("setting") || normalized.includes("service") || normalized.includes("resource") || normalized.includes("guideline")) return guidanceByTitle["Research Settings"];
+  return defaultGuidance;
 }
 
 export function getResearchDetailGuidance(title?: string): ResearchDetailGuidanceConfig | undefined {
   if (!title) return defaultDetailGuidance;
-  return detailGuidanceByTitle[title] ?? defaultDetailGuidance;
+  const direct = detailGuidanceByTitle[title];
+  if (direct) return direct;
+  const normalized = title.toLowerCase();
+  if (normalized.includes("project")) return detailGuidanceByTitle["Research Project"];
+  if (normalized.includes("grant") || normalized.includes("fund")) return detailGuidanceByTitle.Grant;
+  if (normalized.includes("publication") || normalized.includes("output") || normalized.includes("innovation")) return detailGuidanceByTitle.Publication;
+  if (normalized.includes("center")) return detailGuidanceByTitle["Research Center"];
+  if (normalized.includes("partner")) return detailGuidanceByTitle["Research Partner"];
+  if (normalized.includes("farm")) return detailGuidanceByTitle["Farm Profile"];
+  if (normalized.includes("sustainability")) return detailGuidanceByTitle["Sustainability Initiative"];
+  if (normalized.includes("donation")) return detailGuidanceByTitle["Donation Record"];
+  if (normalized.includes("donor")) return detailGuidanceByTitle["Research Donor"];
+  return defaultDetailGuidance;
 }
 
 export function getResearchFieldHelp(fieldName: string) {

@@ -45,6 +45,7 @@ export default function ResearchCentersPage() {
       queryKey={["research", "centers"]}
       resource={researchServiceApi.centers}
       manageScopes={["research.manage_projects", "research:write"]}
+      hideHeader
       fields={[
         { name: "name", label: "Name", required: true },
         { name: "slug", label: "Slug" },

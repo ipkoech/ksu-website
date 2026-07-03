@@ -396,7 +396,6 @@ export default function ResearchGalleryPage() {
       queryKey={["research", "content", "gallery"]}
       summarySlot={
         <div className="space-y-4">
-          <ResearchSectionGuide title="Research Content" />
           <ContentWorkspaceHeader />
           <GalleryAssetWorkflow />
         </div>
@@ -404,6 +403,14 @@ export default function ResearchGalleryPage() {
       listFilters={galleryFilters}
       recordColumns={galleryColumns}
       editorMode="sheet"
+      tableLayout="compact"
+      actionsInMenuOnly
+      defaultSort={{ label: "Recently updated", sort: "updated_at", order: "desc" }}
+      sortOptions={[
+        { label: "Recently updated", sort: "updated_at", order: "desc" },
+        { label: "Folder name A-Z", sort: "name", order: "asc" },
+      ]}
+      toolbarSlot={<ResearchSectionGuide title="Research Content" className="sm:ml-auto" />}
       renderMobileRecord={GalleryMobileRecord}
       fields={withResearchFieldHelp([
         { name: "name", label: "Name", required: true },
