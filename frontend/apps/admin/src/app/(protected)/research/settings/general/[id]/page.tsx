@@ -7,7 +7,7 @@ export default function ResearchGeneralSettingDetailPage() {
   return (
     <ResearchAdminDetailPage
       title="Research Setting"
-      description="View research configuration key, value, status, and audit history."
+      description="View research configuration key, value, and status."
       resource={researchServiceApi.donationSettings}
       backHref="/research/settings/general"
       slugParam="id"
@@ -21,7 +21,6 @@ export default function ResearchGeneralSettingDetailPage() {
       sections={[
         { title: "Setting", fields: ["value", "value_json", "description"] },
       ]}
-      auditResourceTypes={["donation_setting", "setting", "research_setting"]}
     />
   );
 }

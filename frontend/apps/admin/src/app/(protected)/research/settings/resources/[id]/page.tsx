@@ -8,9 +8,9 @@ export default function ResearchResourceDetailPage() {
   return (
     <ResearchAdminDetailPage
       title="Research Resource"
-      description="View operational resource details, access rules, manager binding, and audit history."
+      description="View operational resource details, access rules, and manager binding."
       resource={researchServiceApi.resources}
-      backHref="/research/resources"
+      backHref="/research/settings/resources"
       slugParam="id"
       lookup="id"
       labelFields={["resource_type", "status", "is_active"]}
@@ -27,7 +27,6 @@ export default function ResearchResourceDetailPage() {
         { title: "Access", fields: ["usage_guidelines", "training_required", "access_type", "access_url", "booking_url"] },
         { title: "Operations", fields: ["availability", "operating_hours", "fee_structure", "contact_name", "contact_email", "contact_phone"] },
       ]}
-      auditResourceTypes={["resource", "research_resource", "resources"]}
       renderAfter={(record) => <SettingsOperationalDetail record={record} kind="resource" />}
     />
   );

@@ -56,7 +56,7 @@ const guidelineColumns: EditableRecordColumn<ResearchGenericRecord>[] = [
 export default function ResearchGuidelinesPage() {
   return (
     <ResearchResourcePage
-      title="Research Guidelines"
+      title="Research Policies"
       description="Manage research policies, procedures, forms, and operational guidelines."
       queryKey={["research", "guidelines"]}
       resource={researchServiceApi.guidelines}

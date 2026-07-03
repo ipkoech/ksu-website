@@ -13,6 +13,7 @@ import {
   MessageSquare,
   Phone,
   Save,
+  Settings,
   ShieldCheck,
   UserCheck,
   Users,
@@ -110,6 +111,15 @@ const profileLinks = [
   },
 ];
 
+const profileActions = [
+  { label: "Staff", href: "/research/content/staff", icon: Users },
+  { label: "Services", href: "/research/settings/services", icon: MessageSquare },
+  { label: "Documents", href: "/research/settings/resources", icon: FileText },
+  { label: "Policies", href: "/research/settings/guidelines", icon: ShieldCheck },
+  { label: "Media", href: "/research/settings/sliders", icon: ImageIcon },
+  { label: "Settings", href: "/research/settings/general", icon: Settings },
+];
+
 export default function ResearchProfileSettingsPage() {
   const { hasScope } = usePermissions();
   const canManage = manageScopes.some((scope) => hasScope(scope));
@@ -192,27 +202,26 @@ export default function ResearchProfileSettingsPage() {
   return (
     <div>
       <div className="space-y-4 p-4 sm:p-6">
-        <ResearchSettingsWorkspaceHeader />
-
         <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-background p-3">
           <ResearchSectionGuide title="Research Settings" className="mr-auto" />
-          <Button asChild variant="outline" size="sm">
-            <Link href="/research/settings/resources">
-              <FileText data-icon="inline-start" />
-              Documents
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/research/settings/services">
-              <MessageSquare data-icon="inline-start" />
-              Services
-            </Link>
-          </Button>
+          {profileActions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <Button key={action.href} asChild variant="outline" size="sm">
+                <Link href={action.href}>
+                  <Icon data-icon="inline-start" />
+                  {action.label}
+                </Link>
+              </Button>
+            );
+          })}
           <Button type="button" size="sm" onClick={startEdit} disabled={!canManage || contextQuery.isLoading || !context}>
             <Save data-icon="inline-start" />
             Edit Profile
           </Button>
         </div>
+
+        <ResearchSettingsWorkspaceHeader />
 
         {contextQuery.isLoading ? (
           <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
@@ -237,7 +246,7 @@ export default function ResearchProfileSettingsPage() {
               ))}
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
+            <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
               <Card>
                 <CardHeader>
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -266,36 +275,41 @@ export default function ResearchProfileSettingsPage() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Operational Links</CardTitle>
-                  <CardDescription>Manage related research administration records.</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-2">
-                  {profileLinks.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <Link key={item.href} href={item.href} className="group rounded-lg border bg-background p-3 transition-colors hover:border-primary/50 hover:bg-muted/30">
-                        <div className="flex items-start gap-3">
-                          <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                            <Icon className="size-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold">{item.title}</p>
-                            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{item.description}</p>
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </CardContent>
-              </Card>
+              <div className="grid gap-4">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle>Leadership</CardTitle>
+                    <CardDescription>Research administration lead and public message.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <InfoTile icon={UserCheck} label="Dedicated lead" value={leadership?.full_name || "No dedicated research lead assigned"} />
+                    <ProfileCopy label="Lead message" value={text(department.head_message) || text(wing.head_message)} />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle>Contact and Media</CardTitle>
+                    <CardDescription>Public-facing communication and cover asset status.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                    <InfoTile icon={Mail} label="Email" value={entity?.email ?? text(department.email) ?? text(wing.email)} />
+                    <InfoTile icon={Phone} label="Phone" value={entity?.phone ?? text(department.phone) ?? text(wing.phone)} />
+                    <InfoTile icon={MapPin} label="Office" value={entity?.office_location ?? text(department.office_location) ?? text(wing.office_location)} />
+                    <InfoTile
+                      icon={ImageIcon}
+                      label="Cover image"
+                      value={department.cover_image_id || wing.cover_image_id ? "Cover image linked" : "No cover image selected"}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-3">
-              <ContactCard icon={Mail} label="Email" value={entity?.email ?? text(department.email) ?? text(wing.email)} />
-              <ContactCard icon={Phone} label="Phone" value={entity?.phone ?? text(department.phone) ?? text(wing.phone)} />
-              <ContactCard icon={MapPin} label="Office" value={entity?.office_location ?? text(department.office_location) ?? text(wing.office_location)} />
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {profileLinks.map((item) => (
+                <OperationalCard key={item.href} {...item} />
+              ))}
             </div>
           </>
         )}
@@ -560,27 +574,29 @@ function InfoTile({
   );
 }
 
-function ContactCard({
+function OperationalCard({
   icon: Icon,
-  label,
-  value,
+  title,
+  description,
+  href,
 }: {
   icon: LucideIcon;
-  label: string;
-  value?: string | null;
+  title: string;
+  description: string;
+  href: string;
 }) {
   return (
-    <Card>
-      <CardContent className="flex items-center gap-3 p-4">
-        <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+    <Link href={href} className="group rounded-lg border bg-background p-3 shadow-sm transition-colors hover:border-primary/50 hover:bg-muted/30">
+      <div className="flex items-start gap-3">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
           <Icon className="size-4" />
         </div>
         <div className="min-w-0">
-          <p className="text-xs text-muted-foreground">{label}</p>
-          <p className="truncate text-sm font-medium">{value || "Not set"}</p>
+          <p className="text-sm font-semibold">{title}</p>
+          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{description}</p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </Link>
   );
 }
 

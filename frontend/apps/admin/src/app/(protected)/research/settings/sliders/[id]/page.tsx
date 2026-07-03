@@ -8,7 +8,7 @@ export default function ResearchSliderDetailPage() {
   return (
     <ResearchAdminDetailPage
       title="Research Slider"
-      description="View research-scoped slider copy, media bindings, CTA metadata, and audit history."
+      description="View research-scoped media copy, media bindings, and CTA metadata."
       resource={{
         list: (params) => slidersApi.listAdminSliders({ page: 1, per_page: 100, scope_type: "research", ...params }),
       }}
@@ -28,8 +28,6 @@ export default function ResearchSliderDetailPage() {
         { title: "Copy", fields: ["title", "subtitle", "rich_text"] },
         { title: "CTA", fields: ["link_text", "external_url"] },
       ]}
-      auditServiceName="main"
-      auditResourceTypes={["slider", "marketing_slider", "sliders"]}
       renderAfter={(record) => <SettingsOperationalDetail record={record} kind="slider" />}
     />
   );

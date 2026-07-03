@@ -5,7 +5,7 @@ import { staffApi, type StaffAssignment } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
 import { EditableServiceResourcePage, type EditableListFilter, type EditableRecordColumn, type EditableRecordWorkflowAction } from "@/components/dashboard/editable-service-resource-page";
 import { DateValue, StatusBadge, titleOf } from "../../_components/research-workspace";
-import { ContentWorkspaceHeader } from "../_components/content-workspace";
+import { ResearchSettingsWorkspaceHeader } from "../../settings/_components/settings-workspace";
 import {
   getResearchGuidance,
   ResearchSectionGuide,
@@ -80,14 +80,13 @@ export default function ResearchStaffPage() {
 
   return (
     <EditableServiceResourcePage<StaffRecord, Record<string, any>>
-      title="Research Staff"
-      description="Manage staff assignments attached to the research portal."
+      title="Research Administration Staff"
+      description="Manage staff assignments attached to the research administrative unit."
       backHref="/research/content"
       queryKey={["research", "content", "staff"]}
       summarySlot={
         <div className="space-y-4">
-          <ResearchSectionGuide title="Research Content" />
-          <ContentWorkspaceHeader />
+          <ResearchSettingsWorkspaceHeader />
         </div>
       }
       listFilters={staffFilters}

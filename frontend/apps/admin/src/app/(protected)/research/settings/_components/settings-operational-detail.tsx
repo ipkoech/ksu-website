@@ -93,9 +93,9 @@ function SettingsOperationalCard({
 function accessFacts(record: ResearchGenericRecord, kind: SettingsOperationalKind): Array<[string, unknown]> {
   if (kind === "slider") {
     return [
-      ["Group", record.slider_group_id],
-      ["Desktop Media", record.desktop_media_id],
-      ["Mobile Media", record.mobile_media_id],
+      ["Slider Group", record.slider_group_id ? "Linked" : ""],
+      ["Desktop Media", record.desktop_media_id ? "Linked" : ""],
+      ["Mobile Media", record.mobile_media_id ? "Linked" : ""],
       ["CTA Text", record.link_text],
       ["CTA URL", record.external_url],
     ];
@@ -110,9 +110,9 @@ function accessFacts(record: ResearchGenericRecord, kind: SettingsOperationalKin
     ];
   }
   return [
-    ["Center", record.center_id],
-    ["Administrative Unit", record.department_id],
-    ["Owner/Manager", record.manager_id ?? record.contact_name],
+    ["Center", record.center_id ? "Linked" : ""],
+    ["Administrative Unit", record.department_id ? "Linked" : ""],
+    ["Owner/Manager", record.manager_id ? "Linked" : record.contact_name],
     ["Contact Email", record.contact_email],
     ["Contact Phone", record.contact_phone],
     ["Access URL", record.access_url ?? record.request_url ?? record.booking_url],

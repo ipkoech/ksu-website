@@ -8,9 +8,9 @@ export default function ResearchGuidelineDetailPage() {
   return (
     <ResearchAdminDetailPage
       title="Research Guideline"
-      description="View guideline content, document metadata, review dates, and audit history."
+      description="View guideline content, document metadata, and review dates."
       resource={researchServiceApi.guidelines}
-      backHref="/research/guidelines"
+      backHref="/research/settings/guidelines"
       slugParam="id"
       lookup="id"
       labelFields={["guideline_type", "category", "status"]}
@@ -26,7 +26,6 @@ export default function ResearchGuidelineDetailPage() {
         { title: "Guideline", fields: ["summary", "content", "scope", "applicability"] },
         { title: "Document", fields: ["document_name", "document_url", "approval_date", "contact_email"] },
       ]}
-      auditResourceTypes={["guideline", "research_guideline", "guidelines"]}
       renderAfter={(record) => <SettingsOperationalDetail record={record} kind="guideline" />}
     />
   );

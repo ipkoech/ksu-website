@@ -8,9 +8,9 @@ export default function ResearchServiceDetailPage() {
   return (
     <ResearchAdminDetailPage
       title="Research Service"
-      description="View service access details, contact metadata, center binding, and audit history."
+      description="View service access details, contact metadata, and center binding."
       resource={researchServiceApi.services}
-      backHref="/research/services"
+      backHref="/research/settings/services"
       slugParam="id"
       lookup="id"
       labelFields={["service_type", "category", "is_active"]}
@@ -27,7 +27,6 @@ export default function ResearchServiceDetailPage() {
         { title: "Access", fields: ["eligibility", "deliverables", "turnaround_time", "how_to_access", "request_url"] },
         { title: "Contact", fields: ["contact_name", "contact_email", "contact_phone", "fee_structure"] },
       ]}
-      auditResourceTypes={["service", "research_service", "services"]}
       renderAfter={(record) => <SettingsOperationalDetail record={record} kind="service" />}
     />
   );

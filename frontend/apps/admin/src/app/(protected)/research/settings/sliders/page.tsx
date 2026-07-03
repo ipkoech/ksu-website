@@ -7,8 +7,8 @@ import { ResearchSettingsWorkspaceHeader } from "../_components/settings-workspa
 export default function ResearchSlidersPage() {
   return (
     <ResearchContentResourcePage
-      title="Research Sliders"
-      description="Manage main content slider groups scoped to research pages."
+      title="Research Media"
+      description="Manage research-scoped public visuals, page sliders, and media-backed calls to action."
       queryKey={["research", "sliders"]}
       resource={{
         list: slidersApi.listAdminSliders,
