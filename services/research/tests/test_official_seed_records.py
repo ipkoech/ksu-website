@@ -33,6 +33,27 @@ OFFICIAL_PARTNERS = [
     "Kenya National Commission on Human Rights",
 ]
 
+OFFICIAL_PARTNER_LOGO_DOMAINS = [
+    "kumc.edu",
+    "plu.ac.mw",
+    "computeraid.org",
+    "knls.ac.ke",
+    "kmfri.go.ke",
+    "booksforafrica.org",
+    "jci.edu.cn",
+    "bgsu.edu",
+    "apsu.edu",
+    "icdl.org",
+    "kalro.org",
+    "umn.edu",
+    "semyung.ac.kr",
+    "uct.ac.za",
+    "iyf.org",
+    "veriangroup.com",
+    "mu.edu.so",
+    "knchr.org",
+]
+
 REMOVED_PARTNERS = [
     "Mozilla Foundation",
     "Sheffield Hallam University",
@@ -66,6 +87,18 @@ def test_partner_seeders_only_use_official_published_mous():
     for partner in REMOVED_PARTNERS:
         assert partner not in SEED_PARTNERS
         assert f'"name": "{partner}"' not in SEED_RESEARCH
+
+
+def test_partner_seeders_attach_public_logo_media_from_online_domains():
+    for domain in OFFICIAL_PARTNER_LOGO_DOMAINS:
+        assert f'"logo_domain": "{domain}"' in SEED_PARTNERS
+        assert f'"logo_domain": "{domain}"' in SEED_RESEARCH
+
+    for source in (SEED_PARTNERS, SEED_RESEARCH):
+        assert "https://www.google.com/s2/favicons?domain=" in source
+        assert '"storage_provider": "external"' in source
+        assert '"logo_id": logo.id if logo else None' in source
+        assert '"logo_source_url": partner_logo_url(spec)' in source
 
 
 def test_external_grant_seeder_uses_official_awarded_list():

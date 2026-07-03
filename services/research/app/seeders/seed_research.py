@@ -104,6 +104,51 @@ async def upsert_public_media(
     return media
 
 
+def partner_logo_url(spec: dict[str, Any]) -> str | None:
+    domain = spec.get("logo_domain")
+    if not domain:
+        return None
+    return f"https://www.google.com/s2/favicons?domain={domain}&sz=256"
+
+
+async def upsert_partner_logo(db: AsyncSession, spec: dict[str, Any], slug: str) -> PublicMedia | None:
+    logo_url = partner_logo_url(spec)
+    if not logo_url:
+        return None
+
+    result = await db.execute(select(PublicMedia).where(PublicMedia.public_url == logo_url))
+    media = result.scalar_one_or_none()
+    filename = f"{slug}-logo.png"
+    payload = {
+        "filename": filename,
+        "original_filename": filename,
+        "mime_type": "image/png",
+        "file_size": 1,
+        "storage_provider": "external",
+        "storage_path": logo_url,
+        "public_url": logo_url,
+        "cdn_url": logo_url,
+        "title": f"{spec['name']} logo",
+        "alt_text": f"{spec['name']} logo",
+        "description": f"Public logo image for {spec['name']}.",
+        "caption": f"{spec['name']} logo",
+        "media_type": "image",
+        "thumbnail_url": logo_url,
+        "is_public": True,
+        "is_processed": True,
+    }
+
+    if media is None:
+        media = PublicMedia(**payload)
+        db.add(media)
+    else:
+        for field_name, value in payload.items():
+            setattr(media, field_name, value)
+
+    await db.flush()
+    return media
+
+
 async def seed_centers(db: AsyncSession) -> dict[str, ResearchCenter]:
     specs = [
         {
@@ -1034,42 +1079,45 @@ async def seed_innovations_and_outputs(
 async def seed_partners(db: AsyncSession) -> None:
     source_url = "https://kisiiuniversity.ac.ke/%D7%97%D7%96%D7%99%D7%AA%D7%99/research_partnerships/2b25301b-de41-435a-a8f1-763f78cd3df2"
     specs = [
-        {"name": "University of Kansas Medical Centre", "partner_type": "academic", "partnership_level": "strategic", "country": "United States"},
-        {"name": "Pentecostal Life University", "partner_type": "academic", "partnership_level": "strategic", "country": "Malawi"},
-        {"name": "Computer Aid International", "partner_type": "international", "partnership_level": "technical", "country": "United Kingdom"},
-        {"name": "Kenya National Library Service", "acronym": "KNLS", "partner_type": "government", "partnership_level": "implementing", "country": "Kenya"},
-        {"name": "Kenya Marine Fisheries Research Institute", "acronym": "KMFRI", "partner_type": "government", "partnership_level": "research", "country": "Kenya"},
-        {"name": "Books for Africa", "partner_type": "foundation", "partnership_level": "community", "country": "United States"},
-        {"name": "Jingdezhen University", "partner_type": "academic", "partnership_level": "strategic", "country": "China"},
-        {"name": "Bowling Green State University", "partner_type": "academic", "partnership_level": "strategic", "country": "United States"},
-        {"name": "Austin Peay State University", "partner_type": "academic", "partnership_level": "strategic", "country": "United States"},
-        {"name": "International Computer Driving License", "acronym": "ICDL Africa", "partner_type": "international", "partnership_level": "technical", "country": "Africa"},
-        {"name": "Kenya Agricultural and Livestock Research Organization (KARLO)", "acronym": "KARLO", "partner_type": "government", "partnership_level": "research", "country": "Kenya"},
-        {"name": "University of Minnesota", "acronym": "UMN", "partner_type": "academic", "partnership_level": "strategic", "country": "United States"},
-        {"name": "Semyung University", "partner_type": "academic", "partnership_level": "strategic", "country": "South Korea"},
-        {"name": "University of Cape Town", "partner_type": "academic", "partnership_level": "strategic", "country": "South Africa"},
-        {"name": "International Youth Fellowship", "acronym": "IYF", "partner_type": "ngo", "partnership_level": "community", "country": "International"},
-        {"name": "Kantar Public", "partner_type": "industry", "partnership_level": "research", "country": "United Kingdom"},
-        {"name": "Mogadishu University", "partner_type": "academic", "partnership_level": "strategic", "country": "Somalia"},
-        {"name": "Kenya National Commission on Human Rights", "partner_type": "government", "partnership_level": "community", "country": "Kenya"},
+        {"name": "University of Kansas Medical Centre", "partner_type": "academic", "partnership_level": "strategic", "country": "United States", "website": "https://www.kumc.edu/", "logo_domain": "kumc.edu"},
+        {"name": "Pentecostal Life University", "partner_type": "academic", "partnership_level": "strategic", "country": "Malawi", "website": "https://plu.ac.mw/", "logo_domain": "plu.ac.mw"},
+        {"name": "Computer Aid International", "partner_type": "international", "partnership_level": "technical", "country": "United Kingdom", "website": "https://www.computeraid.org/", "logo_domain": "computeraid.org"},
+        {"name": "Kenya National Library Service", "acronym": "KNLS", "partner_type": "government", "partnership_level": "implementing", "country": "Kenya", "website": "https://www.knls.ac.ke/", "logo_domain": "knls.ac.ke"},
+        {"name": "Kenya Marine Fisheries Research Institute", "acronym": "KMFRI", "partner_type": "government", "partnership_level": "research", "country": "Kenya", "website": "https://www.kmfri.go.ke/", "logo_domain": "kmfri.go.ke"},
+        {"name": "Books for Africa", "partner_type": "foundation", "partnership_level": "community", "country": "United States", "website": "https://www.booksforafrica.org/", "logo_domain": "booksforafrica.org"},
+        {"name": "Jingdezhen University", "partner_type": "academic", "partnership_level": "strategic", "country": "China", "website": "https://www.jci.edu.cn/english/", "logo_domain": "jci.edu.cn"},
+        {"name": "Bowling Green State University", "partner_type": "academic", "partnership_level": "strategic", "country": "United States", "website": "https://www.bgsu.edu/", "logo_domain": "bgsu.edu"},
+        {"name": "Austin Peay State University", "partner_type": "academic", "partnership_level": "strategic", "country": "United States", "website": "https://www.apsu.edu/", "logo_domain": "apsu.edu"},
+        {"name": "International Computer Driving License", "acronym": "ICDL Africa", "partner_type": "international", "partnership_level": "technical", "country": "Africa", "website": "https://icdl.org/icdl-africa/", "logo_domain": "icdl.org"},
+        {"name": "Kenya Agricultural and Livestock Research Organization (KARLO)", "acronym": "KARLO", "partner_type": "government", "partnership_level": "research", "country": "Kenya", "website": "https://www.kalro.org/", "logo_domain": "kalro.org"},
+        {"name": "University of Minnesota", "acronym": "UMN", "partner_type": "academic", "partnership_level": "strategic", "country": "United States", "website": "https://twin-cities.umn.edu/", "logo_domain": "umn.edu"},
+        {"name": "Semyung University", "partner_type": "academic", "partnership_level": "strategic", "country": "South Korea", "website": "https://www.semyung.ac.kr/eng.do", "logo_domain": "semyung.ac.kr"},
+        {"name": "University of Cape Town", "partner_type": "academic", "partnership_level": "strategic", "country": "South Africa", "website": "https://www.uct.ac.za/", "logo_domain": "uct.ac.za"},
+        {"name": "International Youth Fellowship", "acronym": "IYF", "partner_type": "ngo", "partnership_level": "community", "country": "International", "website": "https://www.iyf.org/", "logo_domain": "iyf.org"},
+        {"name": "Kantar Public", "partner_type": "industry", "partnership_level": "research", "country": "United Kingdom", "website": "https://www.veriangroup.com/", "logo_domain": "veriangroup.com"},
+        {"name": "Mogadishu University", "partner_type": "academic", "partnership_level": "strategic", "country": "Somalia", "website": "https://mu.edu.so/", "logo_domain": "mu.edu.so"},
+        {"name": "Kenya National Commission on Human Rights", "partner_type": "government", "partnership_level": "community", "country": "Kenya", "website": "https://www.knchr.org/", "logo_domain": "knchr.org"},
     ]
     official_slugs: list[str] = []
     for order, spec in enumerate(specs, start=1):
+        slug = slugify(spec["name"])
+        logo = await upsert_partner_logo(db, spec, slug)
         payload = {
-            **spec,
+            **{key: value for key, value in spec.items() if key != "logo_domain"},
+            "logo_id": logo.id if logo else None,
             "about": f"Active memorandum of understanding between Kisii University and {spec['name']}.",
             "collaboration_areas": "Research, academic collaboration, extension, innovation, and institutional partnership.",
             "key_achievements": "Published by Kisii University as an active memorandum of understanding.",
             "social_links": {
                 "source_url": source_url,
                 "source_type": "official_ksu_research_partnerships",
+                "logo_source_url": partner_logo_url(spec),
             },
             "status": "active",
             "is_active": True,
             "is_featured": order <= 6,
             "display_order": order * 10,
         }
-        slug = slugify(spec["name"])
         official_slugs.append(slug)
         await upsert_by_slug(db, Partner, slug, payload)
     await db.execute(delete(Partner).where(Partner.slug.not_in(official_slugs)))
