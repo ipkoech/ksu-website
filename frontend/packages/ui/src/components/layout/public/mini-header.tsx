@@ -21,6 +21,11 @@ interface MiniHeaderProps {
 
 const defaultQuickLinks: QuickLink[] = [
   {
+    label: "Apply NACOSTI",
+    href: "https://research-portal.nacosti.go.ke/",
+    external: true,
+  },
+  {
     label: "Conferences",
     href: "https://digital.kisiiuniversity.ac.ke/conferences",
     external: true,

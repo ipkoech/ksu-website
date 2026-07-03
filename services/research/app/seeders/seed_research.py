@@ -14,7 +14,9 @@ from app.core.database import AsyncSessionLocal
 from app.models import (
     Consultancy,
     Grant,
+    IncubationRecord,
     Innovation,
+    InnovationCompetitionEntry,
     MentorshipProgram,
     Partner,
     Publication,
@@ -25,7 +27,9 @@ from app.models import (
     ResearchProgram,
     ResearchProject,
     Scholarship,
+    StartupVenture,
     SuccessStory,
+    TechnologyTransferCase,
     TrainingProgram,
 )
 from app.schemas.base import slugify
@@ -44,6 +48,9 @@ async def upsert_by_slug(
     record = result.scalar_one_or_none()
     if record is None and payload.get("code") and hasattr(model, "code"):
         result = await db.execute(select(model).where(model.code == payload["code"]))
+        record = result.scalar_one_or_none()
+    if record is None and payload.get("doi") and hasattr(model, "doi"):
+        result = await db.execute(select(model).where(model.doi == payload["doi"]))
         record = result.scalar_one_or_none()
     payload = {**payload, "slug": slug}
 
@@ -110,7 +117,7 @@ async def seed_centers(db: AsyncSession) -> dict[str, ResearchCenter]:
             ),
             "mission": "Coordinate university research, extension, innovation, and resource mobilization.",
             "research_areas": "Funding opportunities, external research grants, ongoing research projects, innovation, and resource mobilization.",
-            "location": "Kisii University Main Campus",
+            "location": "408 - 40200 Kisii, Kenya",
             "email": "research@kisiiuniversity.ac.ke",
             "is_active": True,
             "is_featured": True,
@@ -700,62 +707,166 @@ async def seed_success_stories(
 
 
 async def seed_grants(db: AsyncSession) -> None:
+    source_url = "https://kisiiuniversity.ac.ke/%D7%97%D7%96%D7%99%D7%AA%D7%99/external_research_grants_s/external-research-grants-awarded"
     specs = [
         {
-            "title": "Carbon Literacy for Youth Employability and Job Creation Grant",
-            "code": "CL4YEJCP-IAU",
+            "title": "Scientific Manuscript Writing Workshop at Kisii University",
+            "code": "AUTHORAID-SMW",
             "grant_type": "external",
-            "category": "research",
-            "funder_name": "British Council Innovation for African Universities",
-            "summary": "Official CL4YEJCP collaboration funded at GBP 60,000 through the British Council IAU programme.",
-            "description": "Supports Kisii University and partners to leverage carbon literacy for youth employability and job creation.",
-            "eligibility": "Project partners named by Kisii University: Sheffield Hallam University, Durban University of Technology, Ladoke Akintola University of Technology, Innovate Durban, and Kisii University.",
-            "focus_areas": "Carbon literacy, youth employability, job creation, green innovation, and entrepreneurship.",
-            "total_budget": Decimal("60000.00"),
-            "min_award": Decimal("60000.00"),
-            "max_award": Decimal("60000.00"),
-            "currency": "GBP",
-            "number_of_awards": 1,
-            "announcement_date": date(2023, 8, 4),
-            "open_date": date(2023, 8, 4),
-            "deadline": date(2025, 12, 31),
-            "application_url": "https://kisiiuniversity.ac.ke/%D7%97%D7%96%D7%99%D7%AA%D7%99/ongoing_research_projects_s/kisii-university-partners-with-universities-in-ssa-and-uk-to-leverage-carbon-literacy-for-youth-employability-and-job-creation",
-            "contact_name": "Directorate of Research",
-            "contact_email": "research@kisiiuniversity.ac.ke",
-            "status": "awarded",
-            "is_active": True,
-            "is_featured": True,
-            "display_order": 10,
+            "category": "capacity_building",
+            "funder_name": "AUTHORAID/INASP",
+            "summary": "External research grant awarded for a scientific manuscript writing workshop at Kisii University.",
+            "total_budget": Decimal("2500.00"),
+            "currency": "USD",
         },
         {
-            "title": "Responsible Computing Challenge Grant",
-            "code": "RCC-MOZILLA",
+            "title": "Communicating Research findings",
+            "code": "AUTHORAID-CRF",
+            "grant_type": "external",
+            "category": "capacity_building",
+            "funder_name": "AUTHORAID/INASP",
+            "summary": "External research grant awarded for communicating research findings.",
+            "total_budget": Decimal("2500.00"),
+            "currency": "USD",
+        },
+        {
+            "title": "Post-Harvest Losses in South Western Kenya",
+            "code": "USDA-PHL-SWK",
+            "grant_type": "external",
+            "category": "research",
+            "funder_name": "USDA - United States Department of Agriculture",
+            "summary": "External research grant awarded to Kisii University and University of Minnesota for post-harvest losses in South Western Kenya.",
+            "total_budget": Decimal("40000.00"),
+            "currency": "USD",
+        },
+        {
+            "title": "Effect of Human Immunodeficiency virus on progesterone and cytokines levels during pregnancy",
+            "code": "AZ-HIV-PREG",
+            "grant_type": "external",
+            "category": "research",
+            "funder_name": "AstraZeneca",
+            "summary": "External research grant awarded to Dr. Stanslaus Kiilu Musyoki.",
+            "total_budget": Decimal("5000.00"),
+            "currency": "USD",
+        },
+        {
+            "title": "Home and school partnership for child development",
+            "code": "UKRI-GCRF-HSP",
+            "grant_type": "external",
+            "category": "research",
+            "funder_name": "UKRI / Global Challenges Research Fund",
+            "summary": "External research grant awarded to Dr. Pamela Wadende for home and school partnership for child development.",
+            "total_budget": Decimal("70000.00"),
+            "currency": "USD",
+        },
+        {
+            "title": "Innovation partnership for accelerating third generation mini girds deployment in Africa, for rural electrification and sustainable development",
+            "code": "WB-MINIGRIDS",
             "grant_type": "external",
             "category": "innovation",
-            "funder_name": "Mozilla Foundation",
-            "summary": "Official Responsible Computing Challenge support for ethical AI and computing curriculum integration.",
-            "description": "Kisii University reports USD 62,500 support for embedding responsible computing into the Computer Science syllabus.",
-            "eligibility": "Kisii University School of Information Science and Technology and responsible computing project participants.",
-            "focus_areas": "Responsible computing, ethical artificial intelligence, data privacy, cybersecurity, and algorithmic bias.",
-            "total_budget": Decimal("62500.00"),
-            "min_award": Decimal("62500.00"),
-            "max_award": Decimal("62500.00"),
+            "funder_name": "World Bank",
+            "summary": "External research grant awarded to Dr. James Onchieku for rural electrification and sustainable development.",
+            "total_budget": Decimal("200000.00"),
             "currency": "USD",
-            "number_of_awards": 1,
-            "announcement_date": date(2024, 5, 16),
-            "open_date": date(2024, 5, 16),
-            "deadline": date(2025, 3, 31),
-            "external_url": "https://kisiiuniversity.ac.ke/%D7%97%D7%96%D7%99%D7%AA%D7%99/ongoing_research_projects_s/responsible-computing-challenge",
-            "application_url": "https://kisiiuniversity.ac.ke/blog/which-way-ethics-onboarding-artificial-intelligence",
-            "contact_email": "innovation@kisiiuniversity.ac.ke",
-            "status": "awarded",
-            "is_active": True,
-            "is_featured": True,
-            "display_order": 20,
+        },
+        {
+            "title": "Development and promotion of insect-based feeds to sustainably increase productivity, income, and resilience of fish farming in Kenya",
+            "code": "KCSAP-FISH-FEED",
+            "grant_type": "external",
+            "category": "research",
+            "funder_name": "Kenya Climate Smart Agriculture Project (KCSAP)",
+            "summary": "External research grant awarded to Dr. Simion Omasaki for insect-based fish feeds in Kenya.",
+            "total_budget": Decimal("80000.00"),
+            "currency": "USD",
+        },
+        {
+            "title": "Enhancing Local Social Capital In Kenya",
+            "code": "UMN-FORD-SOC",
+            "grant_type": "external",
+            "category": "research",
+            "funder_name": "University of Minnesota and Ford Foundation",
+            "summary": "External research grant awarded to Kisii University and University of Minnesota for rural leadership training in Southwest Kenya.",
+            "description": "Full proposal title published as Enhancing Local Social Capital In Kenya: Adapting Rural Leadership Training For Southwest Kenya.",
+            "total_budget": Decimal("300642.00"),
+            "currency": "USD",
+        },
+        {
+            "title": "African Higher Education Leadership in Advancing Inclusive Innovation for Development",
+            "code": "ERASMUS-AHEAD",
+            "grant_type": "external",
+            "category": "research",
+            "funder_name": "European Union (ERASMUS+)",
+            "summary": "External research grant awarded for the AHEAD project, coordinated by Universitatea Petru Maior din Tirgu Mures, Romania.",
+            "total_budget": Decimal("46494.00"),
+            "currency": "EUR",
+        },
+        {
+            "title": "Efficacy of Selected Indigenous Medicinal Plants from Kenya against Drug Resistant Mycobacteria tuberculosis",
+            "code": "IFS-SPAS-TB",
+            "grant_type": "external",
+            "category": "research",
+            "funder_name": "International Foundation for Science",
+            "summary": "External research grant awarded to SPAS - Sospeter Njeru Ngoci.",
+            "total_budget": Decimal("12000.00"),
+            "currency": "USD",
+        },
+        {
+            "title": "DAAD Msc and PhD Scholarships in Fisheries",
+            "code": "DAAD-FISH-SCH",
+            "grant_type": "external",
+            "category": "scholarship",
+            "funder_name": "DAAD Scholarships",
+            "summary": "External scholarship support for fisheries: 16 MSc scholarships and 8 PhD scholarships.",
+            "description": "Published amounts: MSc approximately KES 2,456,000 and PhD KES 4,732,000.",
+            "max_award": Decimal("4732000.00"),
+            "currency": "KES",
+            "number_of_awards": 24,
+        },
+        {
+            "title": "African Development Bank Msc and PhD Scholarships",
+            "code": "ADB-AGR-SCH",
+            "grant_type": "external",
+            "category": "scholarship",
+            "funder_name": "African Development Bank (ADB) Scholarships",
+            "summary": "External scholarship support tenable at the Faculty of Agriculture: 16 MSc and 10 PhD scholarships.",
+            "description": "Published amounts: MSc approximately KES 2,456,000 and PhD KES 5,915,000.",
+            "max_award": Decimal("5915000.00"),
+            "currency": "KES",
+            "number_of_awards": 26,
+        },
+        {
+            "title": "National Research Fund Msc and PhD Students",
+            "code": "NRF-MSC-PHD",
+            "grant_type": "external",
+            "category": "scholarship",
+            "funder_name": "National Research Fund",
+            "summary": "External research scholarship support for MSc and PhD students in the School of Agriculture and Natural Resources and School of Pure and Applied Sciences.",
+            "total_budget": Decimal("14818194.00"),
+            "currency": "KES",
         },
     ]
-    for spec in specs:
-        await upsert_by_slug(db, Grant, slugify(spec["title"]), spec)
+    official_slugs: list[str] = []
+    for order, spec in enumerate(specs, start=1):
+        payload = {
+            **spec,
+            "description": spec.get("description") or spec["summary"],
+            "focus_areas": spec.get("focus_areas") or spec["category"].replace("_", " ").title(),
+            "announcement_date": date(2023, 8, 4),
+            "open_date": date(2023, 8, 4),
+            "external_url": source_url,
+            "application_url": source_url,
+            "contact_name": "Directorate of Research",
+            "contact_email": "research@kisiiuniversity.ac.ke",
+            "contact_phone": "+254773452323",
+            "status": "awarded",
+            "is_active": True,
+            "is_featured": order <= 4,
+            "display_order": order * 10,
+        }
+        slug = slugify(spec["title"])
+        official_slugs.append(slug)
+        await upsert_by_slug(db, Grant, slug, payload)
+    await db.execute(delete(Grant).where(Grant.grant_type == "external", Grant.slug.not_in(official_slugs)))
 
 
 async def seed_innovations_and_outputs(
@@ -921,98 +1032,180 @@ async def seed_innovations_and_outputs(
 
 
 async def seed_partners(db: AsyncSession) -> None:
+    source_url = "https://kisiiuniversity.ac.ke/%D7%97%D7%96%D7%99%D7%AA%D7%99/research_partnerships/2b25301b-de41-435a-a8f1-763f78cd3df2"
     specs = [
-        {
-            "name": "University of Minnesota",
-            "acronym": "UMN",
-            "partner_type": "academic",
-            "partnership_level": "strategic",
-            "about": "Strategic academic partner supporting research collaboration, staff development, and student exchange.",
-            "collaboration_areas": "Research funding, academic exchange, community leadership, and internationalization.",
-            "key_achievements": "Joint initiatives have supported research training and international collaboration.",
-            "website": "https://twin-cities.umn.edu/",
-            "country": "United States",
-            "status": "active",
-            "is_active": True,
-            "is_featured": True,
-            "display_order": 10,
-        },
-        {
-            "name": "Mozilla Foundation",
-            "acronym": "Mozilla",
-            "partner_type": "foundation",
-            "partnership_level": "technical",
-            "about": "Foundation partner supporting responsible computing, ethical AI, and curriculum innovation.",
-            "collaboration_areas": "Responsible computing, AI ethics, curriculum redesign, and student innovation.",
-            "key_achievements": "Supports Kisii University responsible computing and public-interest technology work.",
-            "website": "https://foundation.mozilla.org/",
-            "country": "United States",
-            "status": "active",
-            "is_active": True,
-            "is_featured": True,
-            "display_order": 20,
-        },
-        {
-            "name": "Sheffield Hallam University",
-            "partner_type": "academic",
-            "partnership_level": "implementing",
-            "about": "United Kingdom university collaborator in Kisii University's Carbon Literacy for Youth Employability and Job Creation project.",
-            "collaboration_areas": "Carbon literacy, youth employability, green innovation, and entrepreneurship.",
-            "key_achievements": "Named by Kisii University as a collaborator in the British Council-funded CL4YEJCP project.",
-            "website": "https://www.shu.ac.uk/",
-            "country": "United Kingdom",
-            "status": "active",
-            "is_active": True,
-            "is_featured": False,
-            "display_order": 30,
-        },
-        {
-            "name": "Durban University of Technology",
-            "acronym": "DUT",
-            "partner_type": "academic",
-            "partnership_level": "implementing",
-            "about": "South African university collaborator in Kisii University's carbon literacy and youth employability project.",
-            "collaboration_areas": "Climate innovation, carbon literacy, youth employability, and joint project delivery.",
-            "key_achievements": "Named by Kisii University as part of the CL4YEJCP international university collaboration network.",
-            "website": "https://www.dut.ac.za/",
-            "country": "South Africa",
-            "status": "active",
-            "is_active": True,
-            "is_featured": False,
-            "display_order": 40,
-        },
-        {
-            "name": "Ladoke Akintola University of Technology",
-            "acronym": "LAUTECH",
-            "partner_type": "academic",
-            "partnership_level": "implementing",
-            "about": "West African university collaborator in Kisii University's carbon literacy and youth employability project.",
-            "collaboration_areas": "Carbon literacy, youth employability, innovation, and entrepreneurship.",
-            "key_achievements": "Listed by Kisii University as one of the institutions participating in the CL4YEJCP grant network.",
-            "website": "https://www.lautech.edu.ng/",
-            "country": "Nigeria",
-            "status": "active",
-            "is_active": True,
-            "is_featured": False,
-            "display_order": 50,
-        },
-        {
-            "name": "Innovate Durban",
-            "partner_type": "industry",
-            "partnership_level": "technical",
-            "about": "Innovation ecosystem partner participating in Kisii University's carbon literacy employability collaboration.",
-            "collaboration_areas": "Innovation ecosystems, entrepreneurship, green skills, and project implementation.",
-            "key_achievements": "Listed by Kisii University among the CL4YEJCP collaborating organizations funded through the British Council IAU grant.",
-            "website": "https://www.innovate.durban/",
-            "country": "South Africa",
-            "status": "active",
-            "is_active": True,
-            "is_featured": False,
-            "display_order": 60,
-        },
+        {"name": "University of Kansas Medical Centre", "partner_type": "academic", "partnership_level": "strategic", "country": "United States"},
+        {"name": "Pentecostal Life University", "partner_type": "academic", "partnership_level": "strategic", "country": "Malawi"},
+        {"name": "Computer Aid International", "partner_type": "international", "partnership_level": "technical", "country": "United Kingdom"},
+        {"name": "Kenya National Library Service", "acronym": "KNLS", "partner_type": "government", "partnership_level": "implementing", "country": "Kenya"},
+        {"name": "Kenya Marine Fisheries Research Institute", "acronym": "KMFRI", "partner_type": "government", "partnership_level": "research", "country": "Kenya"},
+        {"name": "Books for Africa", "partner_type": "foundation", "partnership_level": "community", "country": "United States"},
+        {"name": "Jingdezhen University", "partner_type": "academic", "partnership_level": "strategic", "country": "China"},
+        {"name": "Bowling Green State University", "partner_type": "academic", "partnership_level": "strategic", "country": "United States"},
+        {"name": "Austin Peay State University", "partner_type": "academic", "partnership_level": "strategic", "country": "United States"},
+        {"name": "International Computer Driving License", "acronym": "ICDL Africa", "partner_type": "international", "partnership_level": "technical", "country": "Africa"},
+        {"name": "Kenya Agricultural and Livestock Research Organization (KARLO)", "acronym": "KARLO", "partner_type": "government", "partnership_level": "research", "country": "Kenya"},
+        {"name": "University of Minnesota", "acronym": "UMN", "partner_type": "academic", "partnership_level": "strategic", "country": "United States"},
+        {"name": "Semyung University", "partner_type": "academic", "partnership_level": "strategic", "country": "South Korea"},
+        {"name": "University of Cape Town", "partner_type": "academic", "partnership_level": "strategic", "country": "South Africa"},
+        {"name": "International Youth Fellowship", "acronym": "IYF", "partner_type": "ngo", "partnership_level": "community", "country": "International"},
+        {"name": "Kantar Public", "partner_type": "industry", "partnership_level": "research", "country": "United Kingdom"},
+        {"name": "Mogadishu University", "partner_type": "academic", "partnership_level": "strategic", "country": "Somalia"},
+        {"name": "Kenya National Commission on Human Rights", "partner_type": "government", "partnership_level": "community", "country": "Kenya"},
     ]
-    for spec in specs:
-        await upsert_by_slug(db, Partner, slugify(spec["name"]), spec)
+    official_slugs: list[str] = []
+    for order, spec in enumerate(specs, start=1):
+        payload = {
+            **spec,
+            "about": f"Active memorandum of understanding between Kisii University and {spec['name']}.",
+            "collaboration_areas": "Research, academic collaboration, extension, innovation, and institutional partnership.",
+            "key_achievements": "Published by Kisii University as an active memorandum of understanding.",
+            "social_links": {
+                "source_url": source_url,
+                "source_type": "official_ksu_research_partnerships",
+            },
+            "status": "active",
+            "is_active": True,
+            "is_featured": order <= 6,
+            "display_order": order * 10,
+        }
+        slug = slugify(spec["name"])
+        official_slugs.append(slug)
+        await upsert_by_slug(db, Partner, slug, payload)
+    await db.execute(delete(Partner).where(Partner.slug.not_in(official_slugs)))
+
+
+async def seed_innovation_pathways(db: AsyncSession) -> None:
+    soil_sensor = await db.scalar(
+        select(Innovation).where(Innovation.slug == "smart-soil-moisture-sensor-for-smallholder-farms")
+    )
+    carbon_toolkit = await db.scalar(
+        select(Innovation).where(Innovation.slug == "carbon-literacy-micro-credential-toolkit")
+    )
+    responsible_computing = await db.scalar(
+        select(Innovation).where(Innovation.slug == "responsible-computing-curriculum-integration")
+    )
+    university_minnesota = await db.scalar(select(Partner).where(Partner.slug == "university-of-minnesota"))
+    mozilla = await db.scalar(select(Partner).where(Partner.slug == "mozilla-foundation"))
+    innovate_durban = await db.scalar(select(Partner).where(Partner.slug == "innovate-durban"))
+
+    if soil_sensor is not None:
+        startup = await upsert_by_slug(
+            db,
+            StartupVenture,
+            "soilsense-analytics",
+            {
+                "name": "SoilSense Analytics",
+                "code": "SSA-001",
+                "innovation_id": soil_sensor.id,
+                "partner_id": innovate_durban.id if innovate_durban else None,
+                "center_id": soil_sensor.center_id,
+                "venture_stage": "incubating",
+                "registration_status": "in_progress",
+                "sector": "agriculture",
+                "summary": "Venture pathway for deploying smart soil moisture monitoring support to smallholder farms.",
+                "problem": "Smallholder irrigation decisions are often made without timely soil moisture data.",
+                "solution": "Bundle low-cost sensors, advisory dashboards, and extension support into a deployable service.",
+                "business_model": "Device kits, maintenance support, and advisory subscriptions for farmer groups and partners.",
+                "market": "Smallholder irrigation schemes, demonstration farms, and county extension programmes.",
+                "traction": "Field-tested prototype with CRASP-linked smallholder sites.",
+                "funding_raised": Decimal("250000.00"),
+                "currency": "KES",
+                "status": "active",
+                "is_active": True,
+                "is_public": True,
+                "is_featured": True,
+                "display_order": 1,
+            },
+        )
+        await upsert_by_slug(
+            db,
+            TechnologyTransferCase,
+            "soilsense-field-deployment-transfer",
+            {
+                "title": "SoilSense Field Deployment Transfer",
+                "code": "KSU-TT-2026-001",
+                "innovation_id": soil_sensor.id,
+                "partner_id": innovate_durban.id if innovate_durban else None,
+                "center_id": soil_sensor.center_id,
+                "case_type": "license",
+                "transfer_status": "licensed",
+                "disclosure_date": date(2026, 1, 15),
+                "agreement_date": date(2026, 4, 1),
+                "ip_reference": "KSU-IP-2026-001",
+                "agreement_reference": "KSU-TT-2026-001",
+                "license_type": "non-exclusive",
+                "territory": "Kenya",
+                "exclusivity": "non_exclusive",
+                "summary": "Technology transfer case for partner-supported field deployment of smart soil monitoring.",
+                "public_benefit": "Improves water-use decisions and crop stress response for smallholder farmers.",
+                "next_steps": "Expand county demonstration sites and document adoption outcomes.",
+                "status": "active",
+                "is_active": True,
+                "is_public": True,
+                "is_featured": True,
+                "display_order": 1,
+            },
+        )
+    else:
+        startup = None
+
+    if carbon_toolkit is not None:
+        await upsert_by_slug(
+            db,
+            IncubationRecord,
+            "carbon-literacy-toolkit-incubation",
+            {
+                "title": "Carbon Literacy Toolkit Incubation",
+                "code": "CL-MCT-INC",
+                "innovation_id": carbon_toolkit.id,
+                "startup_id": startup.id if startup else None,
+                "partner_id": university_minnesota.id if university_minnesota else None,
+                "center_id": carbon_toolkit.center_id,
+                "program_name": "Kisii Innovation Incubation Programme",
+                "cohort": "2026 Cohort",
+                "incubation_type": "incubation",
+                "start_date": date(2026, 2, 1),
+                "end_date": date(2026, 8, 31),
+                "stage": "active",
+                "support_received": "Mentorship, curriculum packaging, partner feedback, and market validation.",
+                "outcomes": "Toolkit packaged for student enterprise teams and community training cohorts.",
+                "next_steps": "Complete pilot delivery and publish adoption results.",
+                "status": "active",
+                "is_active": True,
+                "is_public": True,
+                "is_featured": True,
+                "display_order": 1,
+            },
+        )
+
+    if responsible_computing is not None:
+        await upsert_by_slug(
+            db,
+            InnovationCompetitionEntry,
+            "responsible-computing-curriculum-showcase",
+            {
+                "title": "Responsible Computing Curriculum Showcase",
+                "code": "RCC-SHOW-2026",
+                "innovation_id": responsible_computing.id,
+                "partner_id": mozilla.id if mozilla else None,
+                "center_id": responsible_computing.center_id,
+                "entry_type": "showcase",
+                "competition_name": "Kisii University Innovation Week",
+                "organizer_name": "Research, Extension, Innovation and Resource Mobilization",
+                "venue": "Kisii University Main Campus",
+                "country": "Kenya",
+                "event_date": date(2026, 5, 20),
+                "entry_status": "finalist",
+                "award": "Responsible Technology Showcase Finalist",
+                "pitch_summary": "Curriculum integration model for responsible computing and ethical AI learning.",
+                "status": "completed",
+                "is_active": True,
+                "is_public": True,
+                "is_featured": True,
+                "display_order": 1,
+            },
+        )
 
 
 async def seed_consultancies_and_events(db: AsyncSession) -> None:
@@ -1160,6 +1353,7 @@ async def run() -> None:
             await seed_grants(db)
             await seed_innovations_and_outputs(db, centers, projects)
             await seed_partners(db)
+            await seed_innovation_pathways(db)
             await seed_consultancies_and_events(db)
             await seed_capacity(db)
             await db.commit()

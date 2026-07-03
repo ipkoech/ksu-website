@@ -81,15 +81,18 @@ export function ResearchHeader({
               <Mail className="h-3.5 w-3.5" />
               research@kisiiuniversity.ac.ke
             </a>
-            <a href="tel:+254720875082" className="flex items-center gap-1.5 transition hover:text-white/80">
+            <a href="tel:+254773452323" className="flex items-center gap-1.5 transition hover:text-white/80">
               <Phone className="h-3.5 w-3.5" />
-              +254 720 875 082
+              +254 773 452 323
             </a>
           </div>
           <div className="flex items-center gap-5">
             <nav className="flex items-center gap-5" aria-label="Research utility">
               <Link href="/training" className="text-[11px] font-semibold transition-colors hover:text-white/80">
                 Student Portal
+              </Link>
+              <Link href="https://research-portal.nacosti.go.ke/" target="_blank" rel="noopener noreferrer" className="text-[11px] font-semibold transition-colors hover:text-white/80">
+                Apply NACOSTI
               </Link>
               <Link href="/team" className="text-[11px] font-semibold transition-colors hover:text-white/80">
                 Staff Portal
