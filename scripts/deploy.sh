@@ -568,9 +568,9 @@ NEXT_PUBLIC_PUBLIC_FRONTEND_URL=\${PUBLIC_URL}
 NEXT_PUBLIC_RESEARCH_FRONTEND_URL=\${RESEARCH_URL}
 NEXT_PUBLIC_LIBRARY_FRONTEND_URL=\${LIBRARY_URL}
 NEXT_PUBLIC_APP_URL=\${ADMIN_URL}
-KSU_MAIN_API_URL=http://host.docker.internal:8000
-KSU_RESEARCH_API_URL=http://host.docker.internal:8001
-KSU_LIBRARY_API_URL=http://host.docker.internal:8002
+KSU_MAIN_API_URL=http://main:8000
+KSU_RESEARCH_API_URL=http://research:8001
+KSU_LIBRARY_API_URL=http://library:8002
 EOF
 
 required_env_files=(services/main/.env services/research/.env services/library/.env)
