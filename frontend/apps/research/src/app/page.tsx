@@ -170,7 +170,7 @@ function ResearchLandingHero({
     : heroActions;
 
   return (
-    <section className="relative isolate min-h-[560px] overflow-hidden bg-slate-950">
+    <section className="relative isolate min-h-[520px] overflow-hidden bg-slate-950 sm:min-h-[560px]">
       <Image
         src={heroImage}
         alt=""
@@ -179,22 +179,22 @@ function ResearchLandingHero({
         sizes="100vw"
         className="object-cover"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/72 via-slate-950/28 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/36 via-slate-950/10 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent" />
-      <div className="relative mx-auto grid min-h-[560px] max-w-[1920px] items-center px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="max-w-4xl">
+      <div className="relative mx-auto grid min-h-[520px] max-w-[1920px] items-center px-4 py-10 sm:min-h-[560px] sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="max-w-4xl rounded-lg border border-white/18 bg-slate-950/54 p-5 shadow-[0_24px_70px_rgba(15,23,42,0.28)] backdrop-blur-[3px] sm:p-6 lg:bg-slate-950/46 lg:p-7">
           <ScrollReveal>
-            <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-secondary">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary sm:mb-4">
               Research & Innovation
             </p>
-            <h1 className="max-w-4xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.03] text-white sm:text-5xl xl:text-6xl 2xl:text-7xl">
+            <h1 className="max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white sm:text-5xl xl:text-6xl 2xl:text-7xl">
               {heroTitle}
               {heroAccent ? <span className="block text-secondary">{heroAccent}</span> : null}
             </h1>
-            <p className="mt-6 max-w-2xl text-base leading-8 text-white/90 sm:text-lg">
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-white/92 sm:mt-6 sm:text-lg sm:leading-8">
               {heroBody}
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-6 flex flex-wrap gap-3 sm:mt-8">
               {actions.map((action) => (
                 <ActionLink
                   key={action.href}
@@ -205,7 +205,7 @@ function ResearchLandingHero({
                 </ActionLink>
               ))}
             </div>
-            <div className="mt-8 flex items-center gap-2">
+            <div className="mt-6 flex items-center gap-2 sm:mt-8">
               {(activeSlides.length > 0 ? activeSlides : [{ id: "default" }]).slice(0, 5).map((item, index) => (
                 <span
                   key={String(item.id ?? index)}
