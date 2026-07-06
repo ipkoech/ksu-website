@@ -170,7 +170,7 @@ function ResearchLandingHero({
     : heroActions;
 
   return (
-    <section className="relative isolate min-h-[560px] overflow-hidden bg-primary">
+    <section className="relative isolate min-h-[560px] overflow-hidden bg-slate-950">
       <Image
         src={heroImage}
         alt=""
@@ -179,11 +179,9 @@ function ResearchLandingHero({
         sizes="100vw"
         className="object-cover"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/82 via-slate-950/46 to-slate-950/8" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-      <ResearchAnimatedBackdrop dark />
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/60 to-transparent" />
-      <div className="relative mx-auto grid min-h-[560px] max-w-[1920px] items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_520px] lg:px-8 xl:px-10 2xl:px-12">
+      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/72 via-slate-950/28 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent" />
+      <div className="relative mx-auto grid min-h-[560px] max-w-[1920px] items-center px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="max-w-4xl">
           <ScrollReveal>
             <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-secondary">
@@ -217,37 +215,6 @@ function ResearchLandingHero({
             </div>
           </ScrollReveal>
         </div>
-        <ScrollReveal className="hidden lg:block">
-          <div className="relative min-h-[380px]">
-            <div className="absolute left-4 top-20 w-48 rounded-lg border border-white/35 bg-white/18 p-4 text-white shadow-[0_20px_70px_rgba(0,0,0,0.18)] backdrop-blur-md">
-              <p className="text-xs font-semibold">Research coordination</p>
-              <p className="mt-2 text-xs leading-5 text-white/80">
-                Grants, ethics, partnerships, publications, innovation, and resource mobilization.
-              </p>
-              <div className="mt-5 h-12 rounded-md border border-white/30 bg-white/10" />
-            </div>
-            <Link
-              href="/resources-tools"
-              className="absolute bottom-8 right-2 w-60 rounded-lg border border-white/35 bg-white/24 p-4 text-white shadow-[0_20px_70px_rgba(0,0,0,0.18)] backdrop-blur-md transition hover:bg-white/30"
-            >
-              <span className="block text-xs font-semibold">Research support</span>
-              <span className="mt-3 block font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight">
-                Policies, resources, grants, and services
-              </span>
-              <span className="mt-3 inline-flex items-center gap-1 text-xs text-white/85">
-                Open resources <ArrowRight aria-hidden className="h-3.5 w-3.5" />
-              </span>
-            </Link>
-            <div className="absolute right-16 top-6 w-52 rounded-lg border border-secondary/35 bg-secondary/15 p-4 text-white shadow-[0_20px_70px_rgba(0,0,0,0.18)] backdrop-blur-md">
-              <p className="text-xs font-semibold">Research at Kisii University</p>
-              <p className="mt-2 text-xs leading-5 text-white/80">
-                Advancing knowledge, solving problems, and strengthening communities.
-              </p>
-            </div>
-            <div className="absolute right-28 top-6 h-3 w-3 rounded-full bg-white shadow-[0_0_0_12px_hsl(var(--primary-foreground)/0.12),0_0_34px_hsl(var(--primary-foreground)/0.7)]" />
-            <div className="absolute left-10 top-2 h-2 w-2 rounded-full bg-secondary shadow-[0_0_0_10px_hsl(var(--secondary)/0.16),0_0_24px_hsl(var(--secondary)/0.75)]" />
-            </div>
-        </ScrollReveal>
       </div>
     </section>
   );
