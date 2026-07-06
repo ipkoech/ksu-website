@@ -170,7 +170,7 @@ function ResearchLandingHero({
     : heroActions;
 
   return (
-    <section className="relative isolate min-h-[520px] overflow-hidden bg-slate-950 sm:min-h-[560px]">
+    <section className="relative isolate min-h-[620px] overflow-hidden bg-slate-950 sm:min-h-[680px] lg:min-h-[720px]">
       <Image
         src={heroImage}
         alt=""
@@ -179,42 +179,42 @@ function ResearchLandingHero({
         sizes="100vw"
         className="object-cover"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/36 via-slate-950/10 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent" />
-      <div className="relative mx-auto grid min-h-[520px] max-w-[1920px] items-center px-4 py-10 sm:min-h-[560px] sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="max-w-4xl rounded-lg border border-white/18 bg-slate-950/54 p-5 shadow-[0_24px_70px_rgba(15,23,42,0.28)] backdrop-blur-[3px] sm:p-6 lg:bg-slate-950/46 lg:p-7">
-          <ScrollReveal>
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary sm:mb-4">
-              Research & Innovation
-            </p>
-            <h1 className="max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white sm:text-5xl xl:text-6xl 2xl:text-7xl">
-              {heroTitle}
-              {heroAccent ? <span className="block text-secondary">{heroAccent}</span> : null}
-            </h1>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-white/92 sm:mt-6 sm:text-lg sm:leading-8">
-              {heroBody}
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3 sm:mt-8">
-              {actions.map((action) => (
-                <ActionLink
-                  key={action.href}
-                  href={action.href}
-                  variant={action.variant}
-                >
-                  {action.label}
-                </ActionLink>
-              ))}
-            </div>
-            <div className="mt-6 flex items-center gap-2 sm:mt-8">
-              {(activeSlides.length > 0 ? activeSlides : [{ id: "default" }]).slice(0, 5).map((item, index) => (
-                <span
-                  key={String(item.id ?? index)}
-                  className={`h-2 rounded-full transition-all ${index === 0 ? "w-9 bg-secondary" : "w-2 bg-white/45"}`}
-                />
-              ))}
-            </div>
-          </ScrollReveal>
-        </div>
+      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/88 via-slate-950/38 to-slate-950/6" />
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/8 to-slate-950/14" />
+      <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-background via-background/40 to-transparent" />
+      <div className="relative mx-auto flex min-h-[620px] max-w-[1920px] items-end px-4 pb-16 pt-28 sm:min-h-[680px] sm:px-6 sm:pb-20 lg:min-h-[720px] lg:px-8 lg:pb-24 xl:px-10 2xl:px-12">
+        <ScrollReveal className="relative max-w-5xl">
+          <div aria-hidden className="absolute -inset-x-5 -inset-y-8 -z-10 rounded-[2rem] bg-slate-950/24 blur-2xl sm:-inset-x-8 lg:-inset-x-12 lg:bg-slate-950/18" />
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary drop-shadow-[0_2px_10px_rgba(0,0,0,0.65)] sm:mb-4">
+            Research & Innovation
+          </p>
+          <h1 className="max-w-5xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[0.98] text-white drop-shadow-[0_6px_24px_rgba(0,0,0,0.55)] sm:text-6xl lg:text-7xl 2xl:text-8xl">
+            {heroTitle}
+            {heroAccent ? <span className="block text-secondary">{heroAccent}</span> : null}
+          </h1>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-white/88 drop-shadow-[0_2px_12px_rgba(0,0,0,0.72)] sm:mt-6 sm:text-lg sm:leading-8 lg:max-w-3xl">
+            {heroBody}
+          </p>
+          <div className="mt-7 flex flex-wrap gap-3 sm:mt-9">
+            {actions.map((action) => (
+              <ActionLink
+                key={action.href}
+                href={action.href}
+                variant={action.variant}
+              >
+                {action.label}
+              </ActionLink>
+            ))}
+          </div>
+          <div className="mt-7 flex items-center gap-2 sm:mt-9">
+            {(activeSlides.length > 0 ? activeSlides : [{ id: "default" }]).slice(0, 5).map((item, index) => (
+              <span
+                key={String(item.id ?? index)}
+                className={`h-2 rounded-full transition-all ${index === 0 ? "w-9 bg-secondary" : "w-2 bg-white/45"}`}
+              />
+            ))}
+          </div>
+        </ScrollReveal>
       </div>
     </section>
   );
