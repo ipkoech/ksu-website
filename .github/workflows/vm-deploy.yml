@@ -3,25 +3,14 @@ name: Deploy VM
 on:
   push:
     branches:
-      - dev
       - staging
-      - production
   workflow_dispatch:
     inputs:
-      target_env:
-        description: Deployment environment
-        required: true
-        type: choice
-        options:
-          - dev
-          - staging
-          - production
-        default: dev
       branch:
         description: Branch to deploy
         required: true
         type: string
-        default: dev
+        default: staging
 
 permissions:
   contents: read
@@ -40,15 +29,9 @@ jobs:
       VM_SSH_USER: ${{ vars.VM_SSH_USER }}
       VM_REPO_PATH: ${{ vars.VM_REPO_PATH }}
       CERT_EMAIL: ${{ vars.CERT_EMAIL }}
-      DEV_PUBLIC_HOST: ${{ vars.DEV_PUBLIC_HOST }}
-      DEV_API_HOST: ${{ vars.DEV_API_HOST }}
-      DEV_RESEARCH_HOST: ${{ vars.DEV_RESEARCH_HOST }}
       STAGING_PUBLIC_HOST: ${{ vars.STAGING_PUBLIC_HOST }}
       STAGING_API_HOST: ${{ vars.STAGING_API_HOST }}
       STAGING_RESEARCH_HOST: ${{ vars.STAGING_RESEARCH_HOST }}
-      PRODUCTION_PUBLIC_HOST: ${{ vars.PRODUCTION_PUBLIC_HOST }}
-      PRODUCTION_API_HOST: ${{ vars.PRODUCTION_API_HOST }}
-      PRODUCTION_RESEARCH_HOST: ${{ vars.PRODUCTION_RESEARCH_HOST }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -65,32 +48,22 @@ jobs:
           env_name=""
           branch="${REF_NAME}"
           commit_message=""
-          input_env=""
           input_branch=""
 
           if [[ -f "${GITHUB_EVENT_PATH}" ]]; then
             commit_message="$(jq -r '.head_commit.message // ""' "${GITHUB_EVENT_PATH}")"
-            input_env="$(jq -r '.inputs.target_env // ""' "${GITHUB_EVENT_PATH}")"
             input_branch="$(jq -r '.inputs.branch // ""' "${GITHUB_EVENT_PATH}")"
           fi
 
           if [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
             should_deploy=true
-            env_name="${input_env:-dev}"
-            branch="${input_branch:-dev}"
+            env_name="staging"
+            branch="${input_branch:-staging}"
           else
             case "${REF_NAME}" in
-              dev)
-                env_name="dev"
-                marker="[deploy dev]"
-                ;;
               staging)
                 env_name="staging"
                 marker="[deploy staging]"
-                ;;
-              production)
-                env_name="production"
-                marker="[deploy production]"
                 ;;
               *)
                 env_name=""
@@ -162,20 +135,10 @@ jobs:
           set -euo pipefail
 
           case "${TARGET_ENV}" in
-            dev)
-              public_host="${DEV_PUBLIC_HOST:-dev.kisiiuniversity.ac.ke}"
-              api_host="${DEV_API_HOST:-api.dev.kisiiuniversity.ac.ke}"
-              research_host="${DEV_RESEARCH_HOST:-dev.research.kisiiuniversity.ac.ke}"
-              ;;
             staging)
-              public_host="${STAGING_PUBLIC_HOST:-staging.kisiiuniversity.ac.ke}"
-              api_host="${STAGING_API_HOST:-api.staging.kisiiuniversity.ac.ke}"
-              research_host="${STAGING_RESEARCH_HOST:-staging.research.kisiiuniversity.ac.ke}"
-              ;;
-            production)
-              public_host="${PRODUCTION_PUBLIC_HOST:-www.kisiiuniversity.ac.ke}"
-              api_host="${PRODUCTION_API_HOST:-api.kisiiuniversity.ac.ke}"
-              research_host="${PRODUCTION_RESEARCH_HOST:-research.kisiiuniversity.ac.ke}"
+              public_host="${STAGING_PUBLIC_HOST:-kisiiuniversity.ac.ke}"
+              api_host="${STAGING_API_HOST:-api.kisiiuniversity.ac.ke}"
+              research_host="${STAGING_RESEARCH_HOST:-research.kisiiuniversity.ac.ke}"
               ;;
             *)
               echo "Unsupported environment: ${TARGET_ENV}" >&2
@@ -211,7 +174,9 @@ jobs:
             --env "${TARGET_ENV}" \
             --branch "${DEPLOY_BRANCH}" \
             --path "${VM_REPO_PATH}" \
-            --project-name "ksu-${TARGET_ENV}" \
+            --project-name "ksu-research-staging" \
+            --scope research \
+            --edge-http-port "127.0.0.1:8081" \
             --public-host "${PUBLIC_HOST}" \
             --api-host "${API_HOST}" \
             --research-host "${RESEARCH_HOST}" \
