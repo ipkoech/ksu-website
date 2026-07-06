@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
+import { richTextToPlainText } from "@ksu/ui/rich-text-renderer";
 import type {
   FAQ,
   ResearchGenericRecord,
@@ -30,6 +31,7 @@ import {
 } from "../lib/research-public-data";
 import { getResearchSiteContext, type ResearchSiteContext } from "../lib/research-site-context";
 import { Badge, FilledBadge, StatusMessage } from "../components/research-ui";
+import { ResearchRichText } from "../components/research-rich-text";
 
 export const revalidate = 300;
 
@@ -170,7 +172,7 @@ function ResearchLandingHero({
     : heroActions;
 
   return (
-    <section className="relative isolate min-h-[620px] overflow-hidden bg-slate-950 sm:min-h-[680px] lg:min-h-[720px]">
+    <section className="relative isolate min-h-[435px] overflow-hidden bg-slate-950 sm:min-h-[475px] lg:min-h-[505px]">
       <Image
         src={heroImage}
         alt=""
@@ -182,20 +184,20 @@ function ResearchLandingHero({
       <div className="absolute inset-0 bg-gradient-to-r from-slate-950/88 via-slate-950/38 to-slate-950/6" />
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/8 to-slate-950/14" />
       <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-background via-background/40 to-transparent" />
-      <div className="relative mx-auto flex min-h-[620px] max-w-[1920px] items-end px-4 pb-16 pt-28 sm:min-h-[680px] sm:px-6 sm:pb-20 lg:min-h-[720px] lg:px-8 lg:pb-24 xl:px-10 2xl:px-12">
+      <div className="relative mx-auto flex min-h-[435px] max-w-[1920px] items-end px-4 pb-10 pt-24 sm:min-h-[475px] sm:px-6 sm:pb-12 lg:min-h-[505px] lg:px-8 lg:pb-14 xl:px-10 2xl:px-12">
         <ScrollReveal className="relative max-w-5xl">
           <div aria-hidden className="absolute -inset-x-5 -inset-y-8 -z-10 rounded-[2rem] bg-slate-950/24 blur-2xl sm:-inset-x-8 lg:-inset-x-12 lg:bg-slate-950/18" />
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary drop-shadow-[0_2px_10px_rgba(0,0,0,0.65)] sm:mb-4">
             Research & Innovation
           </p>
-          <h1 className="max-w-5xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[0.98] text-white drop-shadow-[0_6px_24px_rgba(0,0,0,0.55)] sm:text-6xl lg:text-7xl 2xl:text-8xl">
+          <h1 className="max-w-5xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[0.98] text-white drop-shadow-[0_6px_24px_rgba(0,0,0,0.55)] sm:text-5xl lg:text-6xl 2xl:text-7xl">
             {heroTitle}
             {heroAccent ? <span className="block text-secondary">{heroAccent}</span> : null}
           </h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-white/88 drop-shadow-[0_2px_12px_rgba(0,0,0,0.72)] sm:mt-6 sm:text-lg sm:leading-8 lg:max-w-3xl">
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-white/88 drop-shadow-[0_2px_12px_rgba(0,0,0,0.72)] sm:mt-5 sm:text-base sm:leading-8 lg:max-w-3xl">
             {heroBody}
           </p>
-          <div className="mt-7 flex flex-wrap gap-3 sm:mt-9">
+          <div className="mt-6 flex flex-wrap gap-3 sm:mt-7">
             {actions.map((action) => (
               <ActionLink
                 key={action.href}
@@ -206,7 +208,7 @@ function ResearchLandingHero({
               </ActionLink>
             ))}
           </div>
-          <div className="mt-7 flex items-center gap-2 sm:mt-9">
+          <div className="mt-6 flex items-center gap-2 sm:mt-7">
             {(activeSlides.length > 0 ? activeSlides : [{ id: "default" }]).slice(0, 5).map((item, index) => (
               <span
                 key={String(item.id ?? index)}
@@ -236,13 +238,17 @@ function ResearchAnimatedBackdrop({ dark = false }: { dark?: boolean }) {
 
 function AboutResearchSection({ headProfile, siteContext }: { headProfile: ResearchHeadProfile; siteContext: ResearchSiteContext }) {
   const researchEntity = getResearchContextEntity(siteContext);
-  const about = compactText(
+  const aboutSource =
     stringish(researchEntity?.about) ??
       stringish(researchEntity?.description) ??
-      stringish(researchEntity?.mandate),
+      stringish(researchEntity?.mandate);
+  const about = truncateRichTextPreview(
+    String(
+      aboutSource ||
+        "The Directorate of Research, Extension, Innovation and Resource Mobilization coordinates research, innovation, extension, partnerships, and resource mobilization at Kisii University.",
+    ),
+    500,
   );
-  const mission = compactText(stringish(researchEntity?.mission));
-  const mandate = compactText(stringish(researchEntity?.mandate));
   const headName = headProfile?.name || "Head of Research";
   const headTitle = headProfile?.title || "Head of Research, REIRM";
   const headMessage =
@@ -257,13 +263,18 @@ function AboutResearchSection({ headProfile, siteContext }: { headProfile: Resea
           <h2 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
             {compactText(stringish(researchEntity?.name)) || "Research, Extension, Innovation and Resource Mobilization"}
           </h2>
-          <div className="mt-5 space-y-4 text-sm leading-7 text-slate-600 sm:text-base">
-            <p>
-              {about ||
-                "The Directorate of Research, Extension, Innovation and Resource Mobilization coordinates research, innovation, extension, partnerships, and resource mobilization at Kisii University."}
-            </p>
-            {mission ? <p>{mission}</p> : null}
-            {mandate && mandate !== about ? <p>{mandate}</p> : null}
+          <div className="mt-5">
+            <ResearchRichText
+              content={about}
+              className="text-sm leading-7 text-slate-600 sm:text-base sm:leading-8 prose-p:my-0"
+            />
+            <Link
+              href="/about"
+              className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-primary transition hover:text-primary/80"
+            >
+              Read more
+              <ArrowRight aria-hidden className="h-4 w-4" />
+            </Link>
           </div>
           <nav aria-label="Research quick links" className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {quickLinks.map((link) => {
@@ -1127,6 +1138,15 @@ function getPartnerLogo(partner: ResearchGenericRecord) {
 
 function stringish(value: unknown) {
   return typeof value === "string" || typeof value === "number" ? value : undefined;
+}
+
+function truncateRichTextPreview(content: string, maxLength: number) {
+  const text = richTextToPlainText(content);
+  if (text.length <= maxLength) return content;
+
+  const preview = text.slice(0, maxLength).trimEnd();
+  const lastSpace = preview.lastIndexOf(" ");
+  return `${preview.slice(0, lastSpace > 360 ? lastSpace : preview.length)}...`;
 }
 
 function getResearchContextEntity(siteContext: ResearchSiteContext) {
