@@ -14,6 +14,7 @@ from app.models import AdmissionInfo, Announcement, Club, ContactDirectory, Docu
 from app.schemas.base import slugify
 
 from ._shared import SeedContext
+from .live_site_snapshot import LIVE_SITE_DOCUMENTS
 
 
 EAT = ZoneInfo("Africa/Nairobi")
@@ -292,6 +293,33 @@ DOWNLOAD_SPECS = [
         "display_order": 125,
     },
 ]
+
+
+def _live_document_spec(spec: dict[str, object]) -> dict[str, object]:
+    return {
+        "slug": spec["slug"],
+        "title": spec["title"],
+        "url": spec["url"],
+        "document_type": spec.get("document_type", "document"),
+        "category": spec.get("category", "Official Website"),
+        "description": f"Official Kisii University document linked from {spec['source_page_title']}.",
+        "mime_type": spec["mime_type"],
+        "display_order": spec["display_order"],
+        "source_page_url": spec["source_page_url"],
+        "source_page_title": spec["source_page_title"],
+    }
+
+
+def _merged_download_specs() -> list[dict[str, object]]:
+    merged: list[dict[str, object]] = []
+    seen_urls: set[str] = set()
+    for spec in [*DOWNLOAD_SPECS, *(_live_document_spec(spec) for spec in LIVE_SITE_DOCUMENTS)]:
+        url = str(spec["url"])
+        if url in seen_urls:
+            continue
+        seen_urls.add(url)
+        merged.append(spec)
+    return merged
 
 
 FAQ_SPECS = [
@@ -660,7 +688,12 @@ async def _upsert_external_media(db: AsyncSession, spec: dict[str, object]) -> M
         "media_type": "document",
         "is_public": True,
         "is_processed": True,
-        "extra_metadata": {"source": "kisiiuniversity.ac.ke", "seed_asset": True},
+        "extra_metadata": {
+            "source": "kisiiuniversity.ac.ke",
+            "seed_asset": True,
+            "source_page_url": spec.get("source_page_url"),
+            "source_page_title": spec.get("source_page_title"),
+        },
     }
     if media is None:
         media = Media(id=uuid.uuid4(), **payload)
@@ -842,7 +875,7 @@ async def seed_public_records(db: AsyncSession, ctx: SeedContext) -> None:
     del ctx
 
     media_by_slug: dict[str, Media] = {}
-    for spec in DOWNLOAD_SPECS:
+    for spec in _merged_download_specs():
         media = await _upsert_external_media(db, spec)
         media_by_slug[str(spec["slug"])] = media
         await _upsert_document(db, spec, media)

@@ -8,12 +8,14 @@ from app.seeders._shared import ICT_SECTION_DEPARTMENTS
 from app.seeders.seed_admin_departments import ADMIN_SERVICE_SPECS, MOVED_ADMIN_SERVICE_SLUGS
 from app.seeders.seed_content import HOMEPAGE_SLIDER_GROUP, HOMEPAGE_SLIDER_ITEMS
 from app.seeders.seed_content import LIVE_SITE_BLOG_ITEMS, LIVE_SITE_EVENT_ITEMS, LIVE_SITE_NEWS_ITEMS
+from app.seeders.live_site_snapshot import LIVE_SITE_DOCUMENTS, LIVE_SITE_PAGES
 from app.seeders.seed_cover_images import cover_targets_from_specs
 from app.seeders.seed_divisions import DIVISION_SPECS, WING_SPECS
 from app.seeders.programme_catalogue import BROCHURE_PROGRAMMES
 from app.seeders.seed_portal_users import PORTAL_USER_SPECS
 from app.seeders.seed_programmes import programme_code
 from app.seeders.seed_public_records import CLUB_SPECS, CONTACT_SPECS, DOWNLOAD_SPECS, FAQ_SPECS
+from app.seeders.seed_public_records import _merged_download_specs
 from app.schemas.base import slugify
 
 
@@ -65,6 +67,48 @@ class SeederDataTests(unittest.TestCase):
             self.assertIn("https://kisiiuniversity.ac.ke/event/", spec["source_url"])
             self.assertTrue(spec["start_date"].tzinfo)
             self.assertGreaterEqual(spec["end_date"], spec["start_date"])
+
+    def test_full_live_site_snapshot_contains_official_public_sections(self):
+        pages_by_path = {spec["path"]: spec for spec in LIVE_SITE_PAGES}
+        required_paths = {
+            "/",
+            "/about_us",
+            "/news",
+            "/page_downloads",
+            "/faq",
+            "/campus-life",
+            "/A-ZClubs",
+            "/data_privacy_statement",
+            "/school/school-of-health-sciences",
+            "/dpt/information-communication-and-technology-ict",
+            "/profile_view/prof-fredrick-o-wanyama-phd",
+            "/admission/how-to-apply",
+        }
+
+        self.assertGreaterEqual(len(LIVE_SITE_PAGES), 500)
+        self.assertEqual(set(), required_paths - set(pages_by_path))
+        for path in required_paths:
+            spec = pages_by_path[path]
+            self.assertTrue(spec["source_url"].startswith("https://kisiiuniversity.ac.ke"))
+            self.assertTrue(spec["source_hash"])
+            self.assertTrue(spec["plain_text"])
+
+    def test_full_live_site_document_snapshot_contains_current_official_files(self):
+        document_titles = {spec["title"] for spec in LIVE_SITE_DOCUMENTS}
+
+        self.assertGreaterEqual(len(LIVE_SITE_DOCUMENTS), 30)
+        self.assertIn("Kisii University 15th Graduation Booklet March 2026.pdf", document_titles)
+        self.assertIn("KISII UNIVERSITY  STRATEGIC  PLAN 2024 - 2028-6.pdf", document_titles)
+        for spec in LIVE_SITE_DOCUMENTS:
+            self.assertIn("kisiiuniversity.ac.ke", spec["url"])
+            self.assertIn("kisiiuniversity.ac.ke", spec["source_page_url"])
+
+    def test_download_specs_include_full_live_document_snapshot(self):
+        merged_urls = {str(spec["url"]) for spec in _merged_download_specs()}
+
+        self.assertGreater(len(_merged_download_specs()), len(DOWNLOAD_SPECS))
+        for spec in LIVE_SITE_DOCUMENTS:
+            self.assertIn(str(spec["url"]), merged_urls)
 
     def test_admin_department_specs_are_unique(self):
         self.assertEqual([], duplicates(spec["code"] for spec in ADMIN_DEPARTMENTS))

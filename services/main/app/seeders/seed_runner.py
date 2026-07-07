@@ -16,6 +16,7 @@ from .seed_governance import seed_governance
 from .seed_management import seed_management
 from .seed_programmes import seed_programmes
 from .seed_public_records import seed_public_records
+from .seed_public_site_pages import seed_public_site_pages
 from .seed_portal_users import seed_portal_users
 from .seed_rbac import seed_rbac
 from .seed_schools import seed_schools
@@ -39,6 +40,7 @@ async def run() -> None:
             await seed_admission_info(db, ctx)
             await seed_content(db, ctx)
             await seed_public_records(db, ctx)
+            await seed_public_site_pages(db, ctx)
             await seed_admin_departments(db, ctx)
             await seed_cover_images(db, ctx)
             await seed_staff_assignments(db, ctx)

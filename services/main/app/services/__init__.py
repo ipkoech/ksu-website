@@ -29,6 +29,7 @@ from .media import MediaService
 from .notification import NotificationService
 from .organization import DivisionService, WingService
 from .person import PersonService
+from .public_page import PublicSitePageService
 from .rbac import RBACService
 from .search import SearchService
 from .staff import StaffService
@@ -44,6 +45,7 @@ __all__ = [
     "AnalyticsService",
     "UserService",
     "PersonService",
+    "PublicSitePageService",
     "StaffService",
     "GovernanceService",
     "ImportService",

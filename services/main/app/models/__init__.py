@@ -65,6 +65,7 @@ from .media import Media, MediaFolder, MediaLink
 
 # Content
 from .content import Announcement, Blog, Event, News, Slider, SliderGroup
+from .public_page import PublicSitePage
 
 # Support and notifications
 from .support import ContactDirectory, FAQ, SupportTicket
@@ -146,6 +147,7 @@ __all__ = [
     "Event",
     "SliderGroup",
     "Slider",
+    "PublicSitePage",
     # Support
     "FAQ",
     "ContactDirectory",

@@ -88,6 +88,7 @@ from .auth import (
 )
 from .base import APIResponse, BaseReadSchema, BaseSchema, PaginatedResponse
 from .document import DocumentCreate, DocumentRead, DocumentUpdate, PolicyCreate, PolicyRead, PolicyUpdate
+from .public_page import PublicSitePageCreate, PublicSitePageRead, PublicSitePageUpdate
 from .exchange import ExchangeProgrammeCreate, ExchangeProgrammeRead, ExchangeProgrammeUpdate
 from .governance import BoardCreate, BoardMemberCreate, BoardRead, BoardUpdate
 from .imports import (
@@ -344,6 +345,9 @@ __all__ = [
     "DocumentCreate",
     "DocumentUpdate",
     "DocumentRead",
+    "PublicSitePageCreate",
+    "PublicSitePageUpdate",
+    "PublicSitePageRead",
     "AlumniCreate",
     "AlumniUpdate",
     "AlumniRead",
