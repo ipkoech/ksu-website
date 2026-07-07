@@ -85,7 +85,7 @@ class SeederDataTests(unittest.TestCase):
             "/admission/how-to-apply",
         }
 
-        self.assertGreaterEqual(len(LIVE_SITE_PAGES), 500)
+        self.assertGreaterEqual(len(LIVE_SITE_PAGES), 1600)
         self.assertEqual(set(), required_paths - set(pages_by_path))
         for path in required_paths:
             spec = pages_by_path[path]
@@ -96,7 +96,7 @@ class SeederDataTests(unittest.TestCase):
     def test_full_live_site_document_snapshot_contains_current_official_files(self):
         document_titles = {spec["title"] for spec in LIVE_SITE_DOCUMENTS}
 
-        self.assertGreaterEqual(len(LIVE_SITE_DOCUMENTS), 30)
+        self.assertGreaterEqual(len(LIVE_SITE_DOCUMENTS), 120)
         self.assertIn("Kisii University 15th Graduation Booklet March 2026.pdf", document_titles)
         self.assertIn("KISII UNIVERSITY  STRATEGIC  PLAN 2024 - 2028-6.pdf", document_titles)
         for spec in LIVE_SITE_DOCUMENTS:
