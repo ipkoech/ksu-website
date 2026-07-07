@@ -7,6 +7,7 @@ from app.seeders._shared import SCHOOL_SPECS
 from app.seeders._shared import ICT_SECTION_DEPARTMENTS
 from app.seeders.seed_admin_departments import ADMIN_SERVICE_SPECS, MOVED_ADMIN_SERVICE_SLUGS
 from app.seeders.seed_content import HOMEPAGE_SLIDER_GROUP, HOMEPAGE_SLIDER_ITEMS
+from app.seeders.seed_content import LIVE_SITE_BLOG_ITEMS, LIVE_SITE_EVENT_ITEMS, LIVE_SITE_NEWS_ITEMS
 from app.seeders.seed_cover_images import cover_targets_from_specs
 from app.seeders.seed_divisions import DIVISION_SPECS, WING_SPECS
 from app.seeders.programme_catalogue import BROCHURE_PROGRAMMES
@@ -34,6 +35,36 @@ class SeederDataTests(unittest.TestCase):
             self.assertIn("https://kisiiuniversity.ac.ke/blog/", spec["source_url"])
             self.assertIn("https://kisiiuniversity.ac.ke/storage/public/resources/", spec["source_image_url"])
             self.assertTrue((asset_root / spec["asset_filename"]).exists())
+
+    def test_live_site_publication_snapshot_contains_current_official_records(self):
+        news_by_title = {spec["title"]: spec for spec in LIVE_SITE_NEWS_ITEMS}
+        blog_by_title = {spec["title"]: spec for spec in LIVE_SITE_BLOG_ITEMS}
+
+        expected_current_news = {
+            "KSU Scouts Clinch three Regional titles",
+            "Kudos Davis Ogega, Barbara Aron, and Talia Tamar",
+            "Cancer Prevention and Care Workshop",
+            "Medical Class of 2031 White Coat Ceremony",
+        }
+        self.assertEqual(set(), expected_current_news - set(news_by_title))
+        self.assertGreaterEqual(len(LIVE_SITE_NEWS_ITEMS), 200)
+        self.assertIn("INNOVATION WEEK 2026 WEBSITE", blog_by_title)
+
+        for spec in LIVE_SITE_NEWS_ITEMS[:25]:
+            self.assertIn("https://kisiiuniversity.ac.ke/blog/", spec["source_url"])
+            self.assertIn("kisiiuniversity.ac.ke", spec["source_image_url"])
+            self.assertTrue(spec["plain_text"])
+            self.assertTrue(spec["published_at"].tzinfo)
+
+    def test_live_site_event_snapshot_contains_current_official_events(self):
+        events_by_title = {spec["title"]: spec for spec in LIVE_SITE_EVENT_ITEMS}
+
+        self.assertIn("KSU 15th Graduation Ceremony", events_by_title)
+        self.assertIn("Innovation Week 2026", events_by_title)
+        for spec in LIVE_SITE_EVENT_ITEMS:
+            self.assertIn("https://kisiiuniversity.ac.ke/event/", spec["source_url"])
+            self.assertTrue(spec["start_date"].tzinfo)
+            self.assertGreaterEqual(spec["end_date"], spec["start_date"])
 
     def test_admin_department_specs_are_unique(self):
         self.assertEqual([], duplicates(spec["code"] for spec in ADMIN_DEPARTMENTS))
