@@ -1,114 +1,43 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  ChevronRight,
-  ClipboardCheck,
-  Compass,
-  History,
-  Landmark,
-  Users,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import {
-  AboutIllustration,
-  aboutIllustrations,
-} from "@/components/about/AboutIllustration";
-import { AboutSidebarNav } from "@/components/about/about-sidebar-nav";
-import { ScrollReveal } from "@ksu/ui/components";
+import { ArrowRight, Landmark, ShieldCheck, Users } from "lucide-react";
+import { BoardMemberGrid } from "@/components/about/BoardMemberGrid";
 import { GovernanceChart } from "@/components/about/GovernanceChart";
-import {
-  getGovernanceBoard,
-  getOverviewData,
-  quickNavigation,
-} from "@/lib/about-data";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
+import { getGovernanceData, type BackendBoard } from "@/lib/about-data";
 
-type RouteCard = {
-  title: string;
-  href: string;
-  description: string;
-  action: string;
-  icon: LucideIcon;
-};
+function boardMatches(board: BackendBoard, terms: string[]) {
+  const haystack = `${board.slug} ${board.name} ${board.board_type}`.toLowerCase();
+  return terms.some((term) => haystack.includes(term));
+}
 
-const routeMeta: Record<string, RouteCard> = {
-  "/about": {
-    title: "About Overview",
-    href: "/about",
-    description: "Return to the About overview.",
-    action: "Back to overview",
-    icon: History,
-  },
-  "/about/history": {
-    title: "History",
-    href: "/about/history",
-    description:
-      "Follow the dated institutional journey from teacher training roots to chartered university status.",
-    action: "View history",
-    icon: History,
-  },
-  "/about/mission-vision": {
-    title: "Mission, Vision & Values",
-    href: "/about/mission-vision",
-    description: "Read the official institutional statements.",
-    action: "View statements",
-    icon: Compass,
-  },
-  "/about/quality-assurance": {
-    title: "Quality Assurance",
-    href: "/about/quality-assurance",
-    description:
-      "Review public quality, strategic plan, service charter, and accountability references.",
-    action: "View quality",
-    icon: ClipboardCheck,
-  },
-  "/about/university-management": {
-    title: "University Management",
-    href: "/about/university-management",
-    description:
-      "Review the published management board and senior office responsibilities.",
-    action: "View management",
-    icon: Users,
-  },
-  "/about/service-charter": {
-    title: "Our Service Charter",
-    href: "/about/service-charter",
-    description:
-      "Open the public service charter access point for service commitments and accountability information.",
-    action: "Open charter",
-    icon: ClipboardCheck,
-  },
-};
+function EmptyState({ label }: { label: string }) {
+  return (
+    <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-6 text-slate-500">
+      {label} has not been published yet.
+    </div>
+  );
+}
 
 export default async function GovernancePage() {
-  const [council, overview] = await Promise.all([
-    getGovernanceBoard("university-council"),
-    getOverviewData(),
-  ]);
-  const navigationLinks = quickNavigation.filter(
-    (item) => item.href !== "/about/governance",
+  const data = await getGovernanceData();
+  const council = data.boards.find((board) =>
+    boardMatches(board, ["council"]),
   );
-  const relatedRoutes = [
-    routeMeta["/about"],
-    routeMeta["/about/history"],
-    routeMeta["/about/mission-vision"],
-    routeMeta["/about/university-management"],
-    routeMeta["/about/quality-assurance"],
-    routeMeta["/about/service-charter"],
-  ];
-  const chancellorMessage =
-    overview.chancellor_message?.replace(
-      " and Senate",
-      "",
-    ) ||
-    "The Chancellor supports the University Council in safeguarding the university's charter, governance, and public accountability.";
+  const senate = data.boards.find((board) => boardMatches(board, ["senate"]));
+  const management = data.boards.find((board) =>
+    boardMatches(board, ["management"]),
+  );
+  const visibleBoards = data.boards.slice().sort((first, second) => {
+    const order = first.display_order - second.display_order;
+    return order || first.name.localeCompare(second.name);
+  });
 
   return (
     <PageShell>
       <AboutPageLenis>
-        <section className="relative overflow-hidden border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_44%,#eef4ff_100%)] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-          <div className="relative w-full">
+        <section className="border-b border-slate-200 bg-white px-4 py-8 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-[1440px]">
             <BreadcrumbTrail
               items={[
                 { label: "Home", href: "/" },
@@ -117,107 +46,114 @@ export default async function GovernancePage() {
               ]}
             />
 
-            <div className="mt-7 grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_340px] xl:items-start">
-              <AboutSidebarNav
-                items={navigationLinks.slice(0, 6).map((item) => ({
-                  title: item.title,
-                  href: item.href,
-                  icon: ChevronRight,
-                }))}
-                title="Explore About"
-                ariaLabel="About section links"
-                className="xl:sticky xl:top-28"
-              />
+            <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+              <article className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-secondary">
+                  Governance
+                </p>
+                <h1 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950 sm:text-4xl">
+                  Public boards and accountability
+                </h1>
+                <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-700">
+                  Governance information is rendered from public board records,
+                  mandates, messages, and board-member assignments.
+                </p>
+              </article>
 
-              <div className="min-w-0 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_70px_-42px_rgba(15,23,42,0.45)]">
-                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-0 lg:grid-cols-[minmax(0,1fr)_320px]">
-                  <div className="min-w-0 px-6 py-8 sm:px-8 lg:px-10 lg:py-10">
-                    <p className="text-sm font-semibold uppercase text-secondary">
-                      University Governance
-                    </p>
-                    <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.08] text-slate-950 sm:text-5xl xl:text-6xl">
-                      University Council governance and accountability
-                    </h1>
-                    <p className="mt-6 text-base leading-8 text-slate-600 sm:text-lg">
-                      The University Council provides oversight, policy
-                      direction, and stewardship for the institution.
-                    </p>
-                    <article className="mt-8 rounded-[1.25rem] border border-slate-200 bg-slate-50/80 p-5">
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-secondary">
-                        {overview.chancellor_message_title ||
-                          "Message from the Chancellor"}
-                      </p>
-                      <blockquote className="mt-3 text-base font-semibold leading-8 text-slate-800">
-                        {chancellorMessage}
-                      </blockquote>
-                    </article>
-                    <div className="mt-8 flex min-w-0 flex-col gap-3 sm:flex-row">
-                      <Link
-                        href="/about/governance/university-council"
-                        className="inline-flex min-w-0 items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-                      >
-                        View University Council
-                        <ArrowRight aria-hidden className="h-4 w-4" />
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="min-w-0 border-t border-slate-200 bg-slate-950 p-4 lg:border-l lg:border-t-0">
-                    <AboutIllustration
-                      src={aboutIllustrations.governance}
-                      alt="University Council governance meeting"
-                      priority
-                      sizes="(min-width: 1280px) 320px, (min-width: 1024px) 30vw, 100vw"
-                      className="aspect-[4/3] min-h-[260px] shadow-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <aside className="space-y-5">
-                <AboutSidebarNav
-                  items={relatedRoutes.slice(0, 5).map((item) => ({
-                    title: item.title,
-                    href: item.href,
-                    icon: item.icon,
-                  }))}
-                  title="Related Pages"
-                  ariaLabel="Related governance pages"
-                />
+              <aside className="rounded-lg border border-slate-200 bg-slate-950 p-5 text-white shadow-sm">
+                <ShieldCheck aria-hidden className="h-5 w-5 text-secondary" />
+                <p className="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-white/55">
+                  Published Boards
+                </p>
+                <p className="mt-2 text-3xl font-semibold leading-none">
+                  {visibleBoards.length}
+                </p>
+                <p className="mt-3 text-sm leading-6 text-white/65">
+                  Only active public board records are displayed.
+                </p>
               </aside>
             </div>
           </div>
         </section>
 
-        <ScrollReveal
-          as="section"
-          className="border-b border-slate-200 bg-white px-4 py-12 sm:px-6 lg:px-8 lg:py-14"
-        >
-          <div className="grid w-full gap-6 xl:grid-cols-[minmax(0,4fr)_minmax(220px,1fr)]">
-            <div className="min-w-0 overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <section className="bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
+          <div className="mx-auto grid max-w-[1440px] gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <GovernanceChart
-                councilOnly
-                councilDescription={council?.description}
+                title="University governance structure"
+                description="The chart uses public council, senate, and management board records where available."
+                councilDescription={council?.description ?? council?.mandate}
+                senateDescription={senate?.description ?? senate?.mandate}
+                managementDescription={
+                  management?.description ?? management?.mandate
+                }
                 councilMembers={council?.members ?? []}
+                senateMembers={senate?.members ?? []}
+                managementMembers={management?.members ?? []}
               />
             </div>
-            <aside className="rounded-[1.75rem] border border-slate-200 bg-slate-950 p-6 text-white shadow-[0_24px_70px_-46px_rgba(15,23,42,0.7)] xl:sticky xl:top-28 xl:self-start">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-secondary ring-1 ring-white/10">
-                <Landmark aria-hidden className="h-5 w-5" />
-              </span>
-              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-secondary">
-                Mandate of the Council
-              </p>
-              <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight">
-                Oversight, policy, and public stewardship
+
+            <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-28 xl:self-start">
+              <Landmark aria-hidden className="h-5 w-5 text-primary" />
+              <h2 className="mt-3 text-xl font-semibold text-slate-950">
+                Mandates
               </h2>
-              <p className="mt-5 text-sm leading-7 text-white/75">
-                {council?.mandate ||
-                  "Provides strategic oversight, approves policy, and safeguards the university's mandate under the charter and Universities Act framework."}
-              </p>
+              <div className="mt-4 grid gap-3">
+                {visibleBoards.length ? (
+                  visibleBoards.map((board) => (
+                    <Link
+                      key={board.id}
+                      href={`/about/governance/${board.slug}`}
+                      className="rounded-md border border-slate-200 p-3 transition hover:border-primary/30"
+                    >
+                      <p className="text-sm font-semibold text-slate-950">
+                        {board.name}
+                      </p>
+                      <p className="mt-1 line-clamp-3 text-xs leading-5 text-slate-600">
+                        {board.mandate ??
+                          board.description ??
+                          "Mandate has not been published."}
+                      </p>
+                    </Link>
+                  ))
+                ) : (
+                  <EmptyState label="Governance board records" />
+                )}
+              </div>
             </aside>
           </div>
-        </ScrollReveal>
+        </section>
 
+        <section className="bg-white px-4 py-8 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-[1440px]">
+            <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+              <div>
+                <Users aria-hidden className="h-5 w-5 text-primary" />
+                <h2 className="mt-3 text-xl font-semibold text-slate-950">
+                  Council members
+                </h2>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  Membership comes from public staff assignments attached to the
+                  council board record.
+                </p>
+                {council?.slug ? (
+                  <Link
+                    href={`/about/governance/${council.slug}`}
+                    className="mt-4 inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-primary"
+                  >
+                    Open council detail
+                    <ArrowRight aria-hidden className="h-4 w-4" />
+                  </Link>
+                ) : null}
+              </div>
+              {council?.members.length ? (
+                <BoardMemberGrid members={council.members} />
+              ) : (
+                <EmptyState label="Council member assignments" />
+              )}
+            </div>
+          </div>
+        </section>
       </AboutPageLenis>
     </PageShell>
   );

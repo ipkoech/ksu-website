@@ -317,38 +317,30 @@ function buildNavigation(
     label: "About",
     href: "/about",
     children: [
-      // Overview group
       {
-        label: "Overview",
+        label: "About Us",
         href: "/about",
-        description: "About Kisii University",
+        description: "University profile and institutional statements",
       },
       {
         label: "History",
         href: "/about/history",
-        description: "Our journey since establishment",
+        description: "Published institutional history",
       },
-      {
-        label: "Mission & Vision",
-        href: "/about/mission-vision",
-        description: "What drives us forward",
-      },
-      // Governance & Leadership
       {
         label: "Governance",
         href: "/about/governance",
-        description: "Council and Senate",
+        description: "Public boards, mandates, and membership",
       },
       {
-        label: "University Management",
+        label: "Management",
         href: "/about/university-management",
-        description: "University management team",
+        description: "Executive leadership and management board",
       },
-      // Quality
       {
         label: "Quality Assurance",
         href: "/about/quality-assurance",
-        description: "Standards and accreditation",
+        description: "Quality, planning, and service accountability",
       },
     ],
   };
