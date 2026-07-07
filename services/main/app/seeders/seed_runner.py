@@ -20,6 +20,7 @@ from .seed_public_site_pages import seed_public_site_pages
 from .seed_portal_users import seed_portal_users
 from .seed_rbac import seed_rbac
 from .seed_schools import seed_schools
+from .seed_staff_profiles import seed_staff_profiles
 from .seed_staff_assignments import seed_staff_assignments
 from .seed_system_settings import seed_system_settings
 from .seed_test_user import seed_test_user
@@ -42,6 +43,7 @@ async def run() -> None:
             await seed_public_records(db, ctx)
             await seed_public_site_pages(db, ctx)
             await seed_admin_departments(db, ctx)
+            await seed_staff_profiles(db, ctx)
             await seed_cover_images(db, ctx)
             await seed_staff_assignments(db, ctx)
             await seed_system_settings(db)

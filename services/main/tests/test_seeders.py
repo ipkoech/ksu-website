@@ -16,6 +16,7 @@ from app.seeders.seed_portal_users import PORTAL_USER_SPECS
 from app.seeders.seed_programmes import programme_code
 from app.seeders.seed_public_records import CLUB_SPECS, CONTACT_SPECS, DOWNLOAD_SPECS, FAQ_SPECS
 from app.seeders.seed_public_records import _merged_download_specs
+from app.seeders.seed_staff_profiles import LIVE_STAFF_PROFILE_SPECS
 from app.schemas.base import slugify
 
 
@@ -85,13 +86,36 @@ class SeederDataTests(unittest.TestCase):
             "/admission/how-to-apply",
         }
 
-        self.assertGreaterEqual(len(LIVE_SITE_PAGES), 1600)
+        self.assertGreaterEqual(len(LIVE_SITE_PAGES), 1670)
         self.assertEqual(set(), required_paths - set(pages_by_path))
         for path in required_paths:
             spec = pages_by_path[path]
             self.assertTrue(spec["source_url"].startswith("https://kisiiuniversity.ac.ke"))
             self.assertTrue(spec["source_hash"])
             self.assertTrue(spec["plain_text"])
+
+    def test_live_site_staff_profile_snapshot_contains_official_profiles(self):
+        profile_paths = {spec["path"] for spec in LIVE_SITE_PAGES if spec["page_type"] == "profile"}
+
+        self.assertGreaterEqual(len(profile_paths), 55)
+        self.assertIn("/profile_view/allan-khisa", profile_paths)
+        self.assertIn("/profile_view/dr-abraham-nyakebogo-osogo", profile_paths)
+        self.assertIn("/profile_view/prof-fredrick-o-wanyama-phd", profile_paths)
+
+    def test_live_staff_profile_specs_are_extracted_from_profiles(self):
+        profiles_by_path = {spec["source_path"]: spec for spec in LIVE_STAFF_PROFILE_SPECS}
+
+        self.assertGreaterEqual(len(LIVE_STAFF_PROFILE_SPECS), 55)
+        khisa = profiles_by_path["/profile_view/allan-khisa"]
+        self.assertEqual("Dr.", khisa["title"])
+        self.assertEqual("Khisa Wanjala Allan", khisa["full_name"])
+        self.assertEqual("C.O.D, Human Anatomy", khisa["official_role"])
+        self.assertEqual("hod", khisa["institutional_role"])
+
+        osogo = profiles_by_path["/profile_view/dr-abraham-nyakebogo-osogo"]
+        self.assertEqual(["FLUID DYNAMICS"], osogo["research_interests"])
+        self.assertIn("JOMO KENYATTA UNIVERSITY", osogo["education_background"][0]["raw"])
+        self.assertIn("https://kisiiuniversity.ac.ke/profile_view/dr-abraham-nyakebogo-osogo", osogo["website_url"])
 
     def test_full_live_site_document_snapshot_contains_current_official_files(self):
         document_titles = {spec["title"] for spec in LIVE_SITE_DOCUMENTS}
