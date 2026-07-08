@@ -855,6 +855,9 @@ server {
     server_name \${RESEARCH_HOST};
 
     client_max_body_size 25M;
+    proxy_buffer_size 32k;
+    proxy_buffers 16 32k;
+    proxy_busy_buffers_size 64k;
 
     location / {
         proxy_pass http://\${EDGE_PROXY_TARGET};
@@ -876,6 +879,9 @@ server {
     server_name \${API_HOST};
 
     client_max_body_size 25M;
+    proxy_buffer_size 32k;
+    proxy_buffers 16 32k;
+    proxy_busy_buffers_size 64k;
 
     location / {
         proxy_pass http://\${EDGE_PROXY_TARGET};
@@ -895,6 +901,9 @@ server {
     server_name \${PUBLIC_HOST};
 
     client_max_body_size 25M;
+    proxy_buffer_size 32k;
+    proxy_buffers 16 32k;
+    proxy_busy_buffers_size 64k;
 
     location / {
         proxy_pass http://\${EDGE_PROXY_TARGET};
@@ -913,6 +922,9 @@ server {
     server_name \${API_HOST};
 
     client_max_body_size 25M;
+    proxy_buffer_size 32k;
+    proxy_buffers 16 32k;
+    proxy_busy_buffers_size 64k;
 
     location / {
         proxy_pass http://\${EDGE_PROXY_TARGET};
@@ -929,6 +941,9 @@ server {
     server_name \${RESEARCH_HOST};
 
     client_max_body_size 25M;
+    proxy_buffer_size 32k;
+    proxy_buffers 16 32k;
+    proxy_busy_buffers_size 64k;
 
     location / {
         proxy_pass http://\${EDGE_PROXY_TARGET};
