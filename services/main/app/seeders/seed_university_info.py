@@ -6,6 +6,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ._shared import LEADERSHIP_PEOPLE, SeedContext, get_or_create_person, upsert_university_info
 
+HANDBOOK_SOURCE = {
+    "title": "Kisii University Student Handbook",
+    "edition": "4th edition",
+    "pages": 48,
+    "publisher": "Dean of Students' Office",
+    "publisher_email": "deanofstudents@kisiiuniversity.ac.ke",
+    "url": "https://kisiiuniversity.ac.ke/storage/public/downloads//Kisii%20University%20Revised%20Handbook%202019.pdf",
+}
+
+HANDBOOK_SOURCE_PHRASES = (
+    "public chartered institution of higher learning",
+    "13th Public University in Kenya",
+    "serene, picturesque and congenial environment",
+    "University of the 21st Century",
+)
+
 
 async def seed_university_info(db: AsyncSession, ctx: SeedContext) -> None:
     main_campus = ctx.campuses.get("MAIN")
@@ -34,10 +50,10 @@ async def seed_university_info(db: AsyncSession, ctx: SeedContext) -> None:
         slug="kisii-university",
         motto=None,
         overview=(
-            "Kisii University College was founded in 1965 as a Primary Teachers Training College on a 61 acre "
-            "land donated by the County Council of Gusii. The college was upgraded to a Secondary Teachers "
-            "College in 1983, taken over by Egerton University as a campus in 1994, established as a constituent "
-            "college on 23 August 2007, and granted a charter on 6 February 2013."
+            "Kisii University is a public chartered institution of higher learning. Its institutional story "
+            "began in 1965 as a Primary Teachers Training College on 61 acres donated by the County Council "
+            "of Gusii, later becoming an Egerton University campus, a constituent college, and then a chartered "
+            "public university."
         ),
         vision="An inclusive and borderless University that creates positive change in the world",
         mission=(
@@ -51,7 +67,8 @@ async def seed_university_info(db: AsyncSession, ctx: SeedContext) -> None:
         institution_type="public_university",
         charter_summary=(
             "Kisii University was granted a charter on 6 February 2013 through Legal Notice No. 225 "
-            "in accordance with the Universities Act 2012."
+            "in accordance with the Universities Act 2012. The revised student handbook records this milestone "
+            "as Kisii University becoming the 13th Public University in Kenya."
         ),
         history_summary=(
             "The institution began in 1965 as a Primary Teachers Training College, became a Secondary Teachers "
@@ -79,6 +96,21 @@ async def seed_university_info(db: AsyncSession, ctx: SeedContext) -> None:
             "charter_year": 2013,
             "schools": 8,
             "main_campus": "Main Campus",
+            "handbook": {
+                "title": HANDBOOK_SOURCE["title"],
+                "edition": HANDBOOK_SOURCE["edition"],
+                "pages": HANDBOOK_SOURCE["pages"],
+                "publisher": HANDBOOK_SOURCE["publisher"],
+                "publisher_email": HANDBOOK_SOURCE["publisher_email"],
+                "source_url": HANDBOOK_SOURCE["url"],
+                "source_phrases": list(HANDBOOK_SOURCE_PHRASES),
+            },
+            "handbook_history": {
+                "founded_as": "Primary Teachers Training College",
+                "constituent_college_date": "23 August 2007",
+                "charter_date": "6 February 2013",
+                "charter_rank_phrase": "13th Public University in Kenya",
+            },
         },
         strategic_priorities={
             "philosophy": "Creative, scientific, technological, innovative, and critical thinking, responsive to societal needs and service to humanity.",

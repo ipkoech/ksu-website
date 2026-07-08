@@ -188,7 +188,7 @@ DOWNLOAD_SPECS = [
         "url": f"{PUBLIC_SOURCE}/storage/public/downloads//Kisii%20University%20Revised%20Handbook%202019.pdf",
         "document_type": "handbook",
         "category": "Student Life",
-        "description": "Student handbook listed on the Dean of Students downloads page.",
+        "description": "Dean of Students' Office student handbook source for Kisii University history, governance, student affairs, schools, conduct, and examination regulations.",
         "mime_type": "application/pdf",
         "display_order": 95,
     },

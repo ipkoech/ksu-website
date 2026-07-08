@@ -17,6 +17,7 @@ from app.seeders.seed_programmes import programme_code
 from app.seeders.seed_public_records import CLUB_SPECS, CONTACT_SPECS, DOWNLOAD_SPECS, FAQ_SPECS
 from app.seeders.seed_public_records import _merged_download_specs
 from app.seeders.seed_staff_profiles import LIVE_STAFF_PROFILE_SPECS
+from app.seeders.seed_university_info import HANDBOOK_SOURCE, HANDBOOK_SOURCE_PHRASES
 from app.schemas.base import slugify
 
 
@@ -133,6 +134,23 @@ class SeederDataTests(unittest.TestCase):
         self.assertGreater(len(_merged_download_specs()), len(DOWNLOAD_SPECS))
         for spec in LIVE_SITE_DOCUMENTS:
             self.assertIn(str(spec["url"]), merged_urls)
+
+    def test_handbook_source_enriches_university_seed_data(self):
+        handbook_download = next(
+            spec for spec in _merged_download_specs() if spec["slug"] == "kisii-university-revised-handbook-2019"
+        )
+
+        self.assertEqual(
+            "https://kisiiuniversity.ac.ke/storage/public/downloads//Kisii%20University%20Revised%20Handbook%202019.pdf",
+            HANDBOOK_SOURCE["url"],
+        )
+        self.assertEqual("4th edition", HANDBOOK_SOURCE["edition"])
+        self.assertEqual(48, HANDBOOK_SOURCE["pages"])
+        self.assertEqual("deanofstudents@kisiiuniversity.ac.ke", HANDBOOK_SOURCE["publisher_email"])
+        self.assertIn("public chartered institution of higher learning", HANDBOOK_SOURCE_PHRASES)
+        self.assertIn("13th Public University in Kenya", HANDBOOK_SOURCE_PHRASES)
+        self.assertEqual(HANDBOOK_SOURCE["url"], handbook_download["url"])
+        self.assertIn("Dean of Students", handbook_download["description"])
 
     def test_admin_department_specs_are_unique(self):
         self.assertEqual([], duplicates(spec["code"] for spec in ADMIN_DEPARTMENTS))
