@@ -145,6 +145,9 @@ test("chancellor and vice chancellor pages use backend messages and supplied ima
   assert.match(chancellorSource, /max-w-\[340px\]/);
   assert.match(chancellorSource, /text-primary\/10/);
   assert.match(chancellorSource, /max-w-none/);
+  assert.match(chancellorSource, /min-h-\[calc\(100vh-180px\)\]/);
+  assert.match(chancellorSource, /xl:grid-cols-\[minmax\(320px,400px\)_minmax\(0,1fr\)\]/);
+  assert.match(chancellorSource, /xl:grid-cols-\[minmax\(0,1fr\)_260px\]/);
   assert.match(chancellorSource, /motion-safe:/);
   assert.doesNotMatch(chancellorSource, /has not been published yet/);
   assert.doesNotMatch(chancellorSource, /LeadershipMandateCard/);
@@ -168,6 +171,9 @@ test("chancellor and vice chancellor pages use backend messages and supplied ima
   assert.match(viceChancellorSource, /max-w-\[340px\]/);
   assert.match(viceChancellorSource, /text-primary\/10/);
   assert.match(viceChancellorSource, /max-w-none/);
+  assert.match(viceChancellorSource, /min-h-\[calc\(100vh-180px\)\]/);
+  assert.match(viceChancellorSource, /xl:grid-cols-\[minmax\(320px,400px\)_minmax\(0,1fr\)\]/);
+  assert.match(viceChancellorSource, /xl:grid-cols-\[minmax\(0,1fr\)_260px\]/);
   assert.match(viceChancellorSource, /motion-safe:/);
   assert.doesNotMatch(viceChancellorSource, /has not been published yet/);
   assert.doesNotMatch(viceChancellorSource, /LeadershipMandateCard/);
