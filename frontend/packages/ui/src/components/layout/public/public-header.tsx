@@ -42,6 +42,7 @@ export interface NavDepartment {
   id: string;
   name: string;
   slug: string;
+  code?: string;
   school_id?: string;
   department_type?: string;
 }
@@ -314,6 +315,9 @@ function buildNavigation(
   const wings = megaMenuData?.wings || [];
   const registrarWings = wings.filter(isRegistrarUnit);
   const adminUnits = megaMenuData?.adminUnits || [];
+  const administrativeDepartments = (departments.length ? departments : adminUnits).filter(
+    (unit) => !isRegistrarUnit(unit),
+  );
   const clubs = megaMenuData?.clubs || [];
 
   // About menu
@@ -364,7 +368,7 @@ function buildNavigation(
         href: `/administration/units/${wing.slug}`,
         group: "Registrars",
       })),
-      ...(departments.length ? departments : adminUnits).map((unit) => ({
+      ...administrativeDepartments.map((unit) => ({
         label: unit.name,
         href: `/administration/units/${unit.slug}`,
         group: "Departments",
@@ -559,6 +563,7 @@ function MegaMenuDropdown({
     item.label === "Administration" ||
     item.label === "Campus Life";
   const isAcademicsMenu = item.label === "Academics";
+  const isAdministrationMenu = item.label === "Administration";
   const isMegaMenu =
     isStructuredMegaMenu ||
     rightSections.length > 0 ||
@@ -775,6 +780,11 @@ function MegaMenuDropdown({
                     sections={rightSections}
                     variant="two-column"
                   />
+                ) : isAdministrationMenu ? (
+                  <GroupedMenuGrid
+                    sections={rightSections}
+                    variant="administration"
+                  />
                 ) : (
                   <div className="grid gap-5 lg:grid-cols-[minmax(13rem,16rem)_minmax(0,1fr)]">
                     <div>
@@ -904,7 +914,7 @@ function GroupedMenuGrid({
   variant = "stacked",
 }: {
   sections: GroupedMenuSection[];
-  variant?: "stacked" | "two-column";
+  variant?: "stacked" | "two-column" | "administration";
 }) {
   if (!sections.length) {
     return (
@@ -923,6 +933,36 @@ function GroupedMenuGrid({
             title={section.title}
             items={section.items}
             headingStyle="bold"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (variant === "administration") {
+    const topSections = sections.filter((section) =>
+      ["Divisions", "Registrars"].includes(section.title),
+    );
+    const bottomSections = sections.filter(
+      (section) => !["Divisions", "Registrars"].includes(section.title),
+    );
+
+    return (
+      <div className="space-y-5">
+        <div className="grid gap-6 border-b border-gray-200 pb-5 md:grid-cols-2">
+          {topSections.map((section) => (
+            <MenuLinkGrid
+              key={section.title}
+              title={section.title}
+              items={section.items}
+            />
+          ))}
+        </div>
+        {bottomSections.map((section) => (
+          <MenuLinkGrid
+            key={section.title}
+            title={section.title}
+            items={section.items}
           />
         ))}
       </div>

@@ -26,9 +26,13 @@ test("public header administration groups divisions registrars and departments",
   assert.match(headerSource, /wings\?: NavAdminUnit\[\]/);
   assert.match(headerSource, /const wings = megaMenuData\?\.wings \|\| \[\]/);
   assert.match(headerSource, /const registrarWings = wings\.filter\(isRegistrarUnit\)/);
+  assert.match(headerSource, /const administrativeDepartments = \(departments\.length \? departments : adminUnits\)\.filter/);
   assert.match(headerSource, /group: "Divisions"/);
   assert.match(headerSource, /group: "Registrars"/);
   assert.match(headerSource, /group: "Departments"/);
+  assert.match(headerSource, /variant="administration"/);
+  assert.match(headerSource, /topSections = sections\.filter/);
+  assert.match(headerSource, /bottomSections = sections\.filter/);
   assert.doesNotMatch(headerSource, /group: "Wings"/);
 });
 
@@ -36,5 +40,7 @@ test("web nav data fetches public wings for the administration menu", () => {
   assert.match(navDataSource, /wingsApi/);
   assert.match(navDataSource, /wingsResult/);
   assert.match(navDataSource, /fields: "id,name,slug,code,wing_type"/);
+  assert.match(navDataSource, /fields: "id,name,slug,code,school_id,department_type"/);
+  assert.match(navDataSource, /uniqueNavUnits/);
   assert.match(navDataSource, /wings,/);
 });

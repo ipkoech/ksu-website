@@ -25,7 +25,7 @@ export async function getNavData(): Promise<MegaMenuData> {
         per_page: 50,
       }),
       departmentsApi.list({
-        fields: "id,name,slug,school_id,department_type",
+        fields: "id,name,slug,code,school_id,department_type",
         department_type: "administrative",
         per_page: 100,
       }),
@@ -67,13 +67,15 @@ export async function getNavData(): Promise<MegaMenuData> {
 
   const divisions: NavAdminUnit[] =
     divisionsResult.status === "fulfilled"
-      ? (divisionsResult.value.data ?? [])
-          .filter((division) => division.division_type === "division")
-          .map((division) => ({
-            id: division.id,
-            name: division.name,
-            slug: division.slug,
-          }))
+      ? uniqueNavUnits(
+          (divisionsResult.value.data ?? [])
+            .filter((division) => division.division_type === "division")
+            .map((division) => ({
+              id: division.id,
+              name: division.name,
+              slug: division.slug,
+            })),
+        )
       : [];
 
   const wingsResult = await Promise.allSettled(
@@ -93,36 +95,43 @@ export async function getNavData(): Promise<MegaMenuData> {
     });
   }
 
-  const wings: NavAdminUnit[] = wingsResult.flatMap((result) =>
-    result.status === "fulfilled"
-      ? (result.value.data ?? []).map((wing) => ({
-          id: wing.id,
-          name: wing.name,
-          slug: wing.slug,
-          code: wing.code,
-        }))
-      : [],
+  const wings: NavAdminUnit[] = uniqueNavUnits(
+    wingsResult.flatMap((result) =>
+      result.status === "fulfilled"
+        ? (result.value.data ?? []).map((wing) => ({
+            id: wing.id,
+            name: wing.name,
+            slug: wing.slug,
+            code: wing.code,
+          }))
+        : [],
+    ),
   );
 
   const adminUnits: NavAdminUnit[] =
     adminDepartmentsResult.status === "fulfilled"
-      ? (adminDepartmentsResult.value.data ?? []).map((department) => ({
-          id: department.id,
-          name: department.name,
-          slug: department.slug,
-        }))
+      ? uniqueNavUnits(
+          (adminDepartmentsResult.value.data ?? []).map((department) => ({
+            id: department.id,
+            name: department.name,
+            slug: department.slug,
+            code: department.code,
+          })),
+        )
       : [];
 
   const departments: NavDepartment[] =
     adminDepartmentsResult.status === "fulfilled"
-      ? (adminDepartmentsResult.value.data ?? [])
-          .map((department) => ({
+      ? uniqueNavUnits(
+          (adminDepartmentsResult.value.data ?? []).map((department) => ({
             id: department.id,
             name: department.name,
             slug: department.slug,
+            code: department.code,
             school_id: department.school_id ?? undefined,
             department_type: department.department_type ?? undefined,
-          }))
+          })),
+        )
       : [];
 
   const clubs: NavClub[] =
@@ -142,6 +151,20 @@ export async function getNavData(): Promise<MegaMenuData> {
     adminUnits,
     clubs,
   };
+}
+
+function uniqueNavUnits<T extends { id: string; slug: string }>(
+  items: T[],
+): T[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const key = item.id || item.slug;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
 }
 
 export function emptyNavData(): MegaMenuData {
