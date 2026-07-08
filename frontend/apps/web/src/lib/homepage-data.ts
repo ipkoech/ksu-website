@@ -72,6 +72,15 @@ export type HomeCard = {
   meta?: string | null;
 };
 
+export type HomeProgrammeCard = HomeCard & {
+  schoolId?: string | null;
+  schoolName?: string | null;
+};
+
+export type HomeSchoolCard = HomeCard & {
+  programmes: HomeProgrammeCard[];
+};
+
 export type HomeLink = {
   label: string;
   href: string;
@@ -124,9 +133,9 @@ export type HomepageData = {
   researchStats: HomeMetric[];
   libraryStats: HomeMetric[];
   priorityActions: HomeCard[];
-  schools: HomeCard[];
+  schools: HomeSchoolCard[];
   viceChancellor: HomeLeader | null;
-  featuredProgrammes: HomeCard[];
+  featuredProgrammes: HomeProgrammeCard[];
   programmesSummary: HomeMetric[];
   activeIntakes: HomeIntake[];
   admissionsActions: HomeCard[];
@@ -307,11 +316,30 @@ async function getProgrammesList() {
   const response = await programmesApi.list({
     per_page: 100,
     fields:
-      "id,name,slug,level,mode_of_study,duration,department_name,cover_image_id,display_order",
+      "id,name,slug,level,mode_of_study,duration,department_id,department_name,cover_image_id,display_order",
     include:
-      "cover_image(id,url,public_url,cdn_url,thumbnail_url,alt_text,title)",
+      "cover_image(id,url,public_url,cdn_url,thumbnail_url,alt_text,title),department(id,name,school_id,school_name,school(id,name,code,slug))",
   });
   return (response.data ?? []) as ProgrammeWithMedia[];
+}
+
+async function getProgrammesBySchool(schools: SchoolWithMedia[]) {
+  const entries = await Promise.all(
+    schools.map(async (school) => {
+      const response = await programmesApi.list({
+        school_id: school.id,
+        per_page: 3,
+        fields:
+          "id,name,slug,level,mode_of_study,duration,department_id,department_name,cover_image_id,display_order",
+        include:
+          "cover_image(id,url,public_url,cdn_url,thumbnail_url,alt_text,title),department(id,name,school_id,school_name,school(id,name,code,slug))",
+      });
+
+      return [school.id, normalizeFeaturedProgrammes(response.data ?? [])] as const;
+    }),
+  );
+
+  return new Map(entries);
 }
 
 async function getLatestNews() {
@@ -470,7 +498,10 @@ function schoolBody(school: School) {
   );
 }
 
-function normalizeSchools(schools: SchoolWithMedia[]): HomeCard[] {
+function normalizeSchools(
+  schools: SchoolWithMedia[],
+  programmesBySchool: Map<string, HomeProgrammeCard[]>,
+): HomeSchoolCard[] {
   return schools.map((school) => ({
     id: school.id,
     title: school.name,
@@ -481,12 +512,13 @@ function normalizeSchools(schools: SchoolWithMedia[]): HomeCard[] {
     imageUrl:
       publicMediaUrl(school.cover_image) ??
       publicFileUrl(school.cover_image_id),
+    programmes: programmesBySchool.get(school.id) ?? [],
   }));
 }
 
 function normalizeFeaturedProgrammes(
   programmes: ProgrammeWithMedia[],
-): HomeCard[] {
+): HomeProgrammeCard[] {
   return programmes.slice(0, 24).map((programme) => ({
     id: programme.id,
     title: programme.name,
@@ -505,6 +537,10 @@ function normalizeFeaturedProgrammes(
       publicMediaUrl(programme.cover_image) ??
       publicFileUrl(programme.cover_image_id),
     meta: programme.level,
+    schoolId: present(programme.department?.school_id),
+    schoolName:
+      present(programme.department?.school?.name) ??
+      present(programme.department?.school_name),
   }));
 }
 
@@ -713,6 +749,13 @@ export async function getHomepageData(): Promise<HomepageData> {
   const contactInfo = buildContactInfo(university, contact);
   const viceChancellorMessage =
     plainText(university?.vc_message) || viceChancellor?.message || null;
+  const featuredProgrammes = normalizeFeaturedProgrammes(programmes);
+  const programmesBySchool = await safe(
+    getProgrammesBySchool(schools),
+    new Map<string, HomeProgrammeCard[]>(),
+    "school programmes",
+    false,
+  );
 
   return {
     hero,
@@ -748,7 +791,7 @@ export async function getHomepageData(): Promise<HomepageData> {
         external: true,
       },
     ],
-    schools: normalizeSchools(schools),
+    schools: normalizeSchools(schools, programmesBySchool),
     viceChancellor: viceChancellor
       ? {
           name: viceChancellor.name,
@@ -760,7 +803,7 @@ export async function getHomepageData(): Promise<HomepageData> {
             : "/about/university-management",
         }
       : null,
-    featuredProgrammes: normalizeFeaturedProgrammes(programmes),
+    featuredProgrammes,
     programmesSummary: buildProgrammeSummary(programmes),
     activeIntakes: normalizeIntakes(activeIntakes),
     admissionsActions: [

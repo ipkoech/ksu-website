@@ -13,17 +13,16 @@ import {
   Megaphone,
   Newspaper,
   Phone,
-  Search,
   ShieldCheck,
   Sparkles,
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { Button, ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
+import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 import { MiniHeader, PublicFooter, PublicHeader } from "@ksu/ui/layout/public";
 import { LandingHero } from "@/components/home/landing-hero";
 import { CountdownStrip } from "@/components/home/countdown-strip";
-import { FeaturedProgrammeTabs } from "@/components/home/featured-programme-tabs";
+import { AnimatedStatRow } from "@/components/home/animated-stat-row";
 import { AnnouncementHeader } from "@/components/site-shell";
 import {
   ProgressiveImageCard,
@@ -33,7 +32,10 @@ import {
   getHomepageData,
   type HomeCard,
   type HomeIntake,
+  type HomeMetric,
   type HomePartner,
+  type HomeProgrammeCard,
+  type HomeSchoolCard,
 } from "@/lib/homepage-data";
 import { getNavData } from "@/lib/nav-data";
 import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
@@ -41,14 +43,6 @@ import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
 export const revalidate = 300;
 
 const researchHref = researchFrontendUrl;
-
-const intakeSteps = [
-  "Choose programme",
-  "Check requirements",
-  "Submit application",
-  "Upload documents",
-  "Review and submit",
-];
 
 const campusLife = [
   {
@@ -234,43 +228,20 @@ export default async function HomePage() {
 
         {isContentDegraded ? <ContentDegradedNotice /> : null}
 
-        {/* Why Choose Kisii University */}
-        <section className="bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-          <div className="mx-auto max-w-[1680px]">
-            <div className="text-center">
-              <p className="text-sm font-semibold uppercase text-secondary">Why Choose KSU</p>
-              <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950 sm:text-4xl">
-                Why choose Kisii University
-              </h2>
-            </div>
-            <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                { title: "Accredited Public University", body: "Chartered in 2013 under the Universities Act 2012, delivering regulated, quality-assured higher education.", icon: Building2 },
-                { title: "Diverse Programmes", body: "Academic programmes across multiple schools from certificates to doctoral research.", icon: GraduationCap },
-                { title: "Research with Community Impact", body: "Research connected to agriculture, health, education, technology, and public service priorities.", icon: Sparkles },
-                { title: "Student Support Services", body: "Accommodation, health services, clubs, sports, counselling, and career guidance.", icon: ShieldCheck },
-              ].map((item) => (
-                <div key={item.title} className="rounded-xl border border-blue-100 bg-white p-5 shadow-sm">
-                  <item.icon className="h-8 w-8 text-primary" aria-hidden />
-                  <h3 className="mt-4 font-[family-name:var(--font-display)] text-lg font-semibold text-slate-950">{item.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <WhyChooseSection
+          facts={homepage.facts}
+          applyHref={
+            homepage.activeIntakes[0]?.href ?? "/admissions/how-to-apply"
+          }
+        />
 
         <section className="relative z-10 pb-0">
           <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-            <LandingReveal variant="fade-right">
-              <SchoolsSection schools={homepage.schools} />
-            </LandingReveal>
-            <LandingReveal variant="zoom-in">
-              <AdmissionsFunnel
-                programmes={homepage.featuredProgrammes}
-                activeIntakes={homepage.activeIntakes}
-              />
-            </LandingReveal>
+            <AcademicsPathwaySection
+              schools={homepage.schools}
+              programmes={homepage.featuredProgrammes}
+              activeIntakes={homepage.activeIntakes}
+            />
             <LandingReveal variant="fade-left">
               <LatestContentSection
                 newsItems={homepage.latestNews}
@@ -361,72 +332,406 @@ function ContentDegradedNotice() {
   );
 }
 
-function SchoolsSection({
-  schools,
+function WhyChooseSection({
+  facts,
+  applyHref,
 }: {
-  schools: HomeCard[];
+  facts: HomeMetric[];
+  applyHref: string;
 }) {
+  const reasons = [
+    {
+      title: "Accredited Public University",
+      body: "Chartered in 2013 under the Universities Act 2012, delivering regulated, quality-assured higher education.",
+      icon: Building2,
+    },
+    {
+      title: "Diverse Programmes",
+      body: "Academic programmes across schools from certificates to doctoral research.",
+      icon: GraduationCap,
+    },
+    {
+      title: "Research with Community Impact",
+      body: "Research connected to agriculture, health, education, technology, and public service priorities.",
+      icon: Sparkles,
+    },
+    {
+      title: "Student Support Services",
+      body: "Accommodation, health services, clubs, sports, counselling, and career guidance.",
+      icon: ShieldCheck,
+    },
+  ] satisfies Array<{ title: string; body: string; icon: LucideIcon }>;
+
   return (
-    <section className="border-b border-blue-100 bg-white py-12">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <SectionKicker title="Our Schools" />
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-            Browse academic homes for teaching, research, professional
-            training, and community engagement.
-          </p>
-        </div>
-        <Link
-          href="/academics"
-          className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary hover:text-secondary"
-        >
-          View academics
-          <ArrowRight className="h-4 w-4" aria-hidden />
-        </Link>
+    <section className="border-b border-blue-100 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+      <div className="mx-auto grid max-w-[1680px] gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <LandingReveal variant="fade-right">
+          <div>
+            <p className="text-sm font-semibold uppercase text-secondary">
+              Why Choose KSU
+            </p>
+            <h2 className="mt-2 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950 sm:text-4xl">
+              Why choose Kisii University
+            </h2>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+              A student-focused public university combining accredited
+              programmes, applied research, and practical support from
+              application to graduation.
+            </p>
+          </div>
+          <ScrollRevealGroup
+            className="mt-7 grid gap-4 sm:grid-cols-2"
+            variant="fade-up"
+            staggerDelay={70}
+          >
+            {reasons.map((item) => (
+              <div
+                key={item.title}
+                className="rounded-md border border-blue-100 bg-white p-5 shadow-sm shadow-blue-100/60 transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+              >
+                <span className="flex h-11 w-11 items-center justify-center rounded-md bg-blue-50 text-primary ring-1 ring-blue-100">
+                  <item.icon className="h-5 w-5" aria-hidden />
+                </span>
+                <h3 className="mt-4 font-[family-name:var(--font-display)] text-lg font-semibold text-slate-950">
+                  {item.title}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {item.body}
+                </p>
+              </div>
+            ))}
+          </ScrollRevealGroup>
+          {facts.length ? (
+            <LandingReveal className="mt-6" variant="zoom-in" delay={90}>
+              <AnimatedStatRow facts={facts} />
+            </LandingReveal>
+          ) : null}
+        </LandingReveal>
+
+        <LandingReveal variant="fade-left" delay={120}>
+          <aside className="rounded-md border border-blue-100 bg-primary p-6 text-white shadow-lg shadow-blue-950/10 xl:sticky xl:top-24">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/70">
+              Admissions support
+            </p>
+            <h3 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold">
+              Ready to find your path at KSU?
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-white/75">
+              Explore available programmes, confirm requirements, and contact
+              the admissions team for guidance before you submit.
+            </p>
+            <div className="mt-6 grid gap-3">
+              <Link
+                href={applyHref}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-secondary px-4 text-sm font-semibold text-white transition hover:bg-secondary/90"
+              >
+                Apply Now
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </Link>
+              <Link
+                href="/contact"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/20"
+              >
+                Contact Us
+                <Mail className="h-4 w-4" aria-hidden />
+              </Link>
+            </div>
+          </aside>
+        </LandingReveal>
       </div>
-      {schools.length ? (
-        <ScrollRevealGroup
-          className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
-          variant="fade-up"
-          staggerDelay={55}
-        >
-          {schools.slice(0, 8).map((school) => (
-            <SchoolCard key={school.href} school={school} />
-          ))}
-        </ScrollRevealGroup>
-      ) : (
-        <HomeEmptyState
-          title="Schools are not available"
-          body="Published school records could not be loaded right now."
-          actionHref="/academics/schools"
-          actionLabel="Open schools"
-        />
-      )}
     </section>
   );
 }
 
-function SchoolCard({ school }: { school: HomeCard }) {
+function AcademicsPathwaySection({
+  schools,
+  programmes,
+  activeIntakes,
+}: {
+  schools: HomeSchoolCard[];
+  programmes: HomeProgrammeCard[];
+  activeIntakes: HomeIntake[];
+}) {
+  const activeIntake = activeIntakes[0] ?? null;
+  const journey = [
+    {
+      step: "01",
+      title: "Choose programme",
+      body: "Compare schools, levels, delivery modes, and programme fit.",
+      href: "/academics/programmes",
+    },
+    {
+      step: "02",
+      title: "Check requirements",
+      body: "Confirm entry criteria, intake eligibility, and required records.",
+      href: "/admissions/requirements",
+    },
+    {
+      step: "03",
+      title: "Confirm intake",
+      body: activeIntake
+        ? `Apply for the ${intakeLabel(activeIntake)} before the deadline.`
+        : "Review current admission windows before preparing your application.",
+      href: activeIntake?.href ?? "/admissions/intakes",
+    },
+    {
+      step: "04",
+      title: "Apply and submit",
+      body: "Complete the official application route and submit documents.",
+      href: activeIntake?.href ?? "/admissions/how-to-apply",
+      accent: true,
+    },
+  ];
+
   return (
-    <Link
-      href={school.href}
-      className="group block h-full overflow-hidden rounded-md border border-blue-100 bg-white shadow-sm shadow-blue-100/60 transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md hover:shadow-blue-200"
-    >
-      <PublicImage
-        src={school.imageUrl}
-        alt=""
-        ratio="card"
-        fallbackContent={<GraduationCap className="h-8 w-8" aria-hidden />}
-        sizes="(min-width: 1280px) 18vw, (min-width: 1024px) 28vw, (min-width: 640px) 45vw, 100vw"
-        className="h-28"
-        imageClassName="transition duration-500 group-hover:scale-105"
-      />
-      <div className="flex min-h-16 items-center px-3 py-2">
-        <h3 className="w-full line-clamp-2 text-sm font-bold leading-5 text-slate-950 transition group-hover:text-primary">
-          {school.title}
-        </h3>
+    <section className="border-b border-blue-100 bg-white py-12 lg:py-14">
+      <div className="mx-auto max-w-[1680px]">
+        <LandingReveal>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase text-secondary">
+                Academics and Admissions
+              </p>
+              <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950 sm:text-4xl">
+                Schools, programmes, and your application journey
+              </h2>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+                Browse schools with sample programmes, scan highlighted
+                academic routes, and move straight into the admission steps.
+              </p>
+            </div>
+            <Link
+              href="/academics"
+              className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary hover:text-secondary"
+            >
+              View academics
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          </div>
+        </LandingReveal>
+
+        <div className="mt-8 grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.75fr)_minmax(280px,0.8fr)]">
+          <LandingReveal variant="fade-right">
+            <div className="rounded-md border border-blue-100 bg-blue-50/40 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <SectionKicker title="Schools" />
+                <Link
+                  href="/academics/schools"
+                  className="text-xs font-bold text-primary hover:text-secondary"
+                >
+                  View all
+                </Link>
+              </div>
+              {schools.length ? (
+                <ScrollRevealGroup
+                  className="mt-5 grid gap-4 md:grid-cols-2"
+                  variant="fade-up"
+                  staggerDelay={55}
+                >
+                  {schools.slice(0, 6).map((school) => (
+                    <SchoolCard key={school.href} school={school} />
+                  ))}
+                </ScrollRevealGroup>
+              ) : (
+                <div className="mt-5">
+                  <HomeEmptyState
+                    title="Schools are not available"
+                    body="Published school records could not be loaded right now."
+                    actionHref="/academics/schools"
+                    actionLabel="Open schools"
+                  />
+                </div>
+              )}
+            </div>
+          </LandingReveal>
+
+          <LandingReveal variant="zoom-in" delay={80}>
+            <div className="h-full rounded-md border border-blue-100 bg-white p-4 shadow-sm shadow-blue-100/60">
+              <SectionKicker title="Featured Programmes" />
+              {programmes.length ? (
+                <div className="mt-5 grid gap-3">
+                  {programmes.slice(0, 6).map((programme) => (
+                    <Link
+                      key={programme.href}
+                      href={programme.href}
+                      className="group rounded-md border border-blue-100 bg-white p-3 transition hover:border-primary/30 hover:bg-blue-50/60"
+                    >
+                      <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-secondary">
+                        {programme.eyebrow ?? "Programme"}
+                      </span>
+                      <h3 className="mt-1 line-clamp-2 text-sm font-bold leading-5 text-slate-950 group-hover:text-primary">
+                        {programme.title}
+                      </h3>
+                      {programme.body ? (
+                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">
+                          {programme.body}
+                        </p>
+                      ) : null}
+                    </Link>
+                  ))}
+                  <Link
+                    href="/academics/programmes"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-4 text-sm font-semibold text-primary transition hover:bg-blue-100"
+                  >
+                    View Programmes
+                    <ArrowRight className="h-4 w-4" aria-hidden />
+                  </Link>
+                </div>
+              ) : (
+                <div className="mt-5">
+                  <HomeEmptyState
+                    title="Programmes are being refreshed"
+                    body="Open the programme listing for currently published records."
+                    actionHref="/academics/programmes"
+                    actionLabel="Open programmes"
+                  />
+                </div>
+              )}
+            </div>
+          </LandingReveal>
+
+          <LandingReveal variant="fade-left" delay={120}>
+            <div className="h-full rounded-md border border-blue-100 bg-slate-950 p-4 text-white shadow-lg shadow-blue-950/10">
+              <SectionKicker title="Application Journey" className="text-white" />
+              <div className="mt-5 grid gap-3">
+                {journey.map((item) => (
+                  <Link
+                    key={item.step}
+                    href={item.href}
+                    className={`group rounded-md border p-3 transition ${
+                      item.accent
+                        ? "border-secondary/50 bg-secondary/15 hover:bg-secondary/25"
+                        : "border-white/10 bg-white/5 hover:bg-white/10"
+                    }`}
+                  >
+                    <span className="text-xs font-bold text-secondary">
+                      {item.step}
+                    </span>
+                    <h3 className="mt-1 text-sm font-bold text-white">
+                      {item.title}
+                    </h3>
+                    <p className="mt-1 text-xs leading-5 text-white/70">
+                      {item.body}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </LandingReveal>
+        </div>
+
+        <LandingReveal className="mt-6" variant="fade-up">
+          <div className="rounded-md border border-blue-100 bg-[linear-gradient(135deg,#eef7ff_0%,#ffffff_56%,#effaf3_100%)] p-5 shadow-sm shadow-blue-100/70">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+                  {activeIntake ? "Applications Open" : "Admissions"}
+                </p>
+                <h3 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+                  {activeIntake
+                    ? `${intakeLabel(activeIntake)} is currently open`
+                    : "Prepare your application for the next intake"}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {activeIntake
+                    ? `Application deadline: ${formatDate(activeIntake.lateApplicationEnd ?? activeIntake.applicationEnd)}.`
+                    : "Review the guide, compare programmes, and contact admissions for current routes."}
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href={activeIntake?.href ?? "/admissions/how-to-apply"}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90"
+                >
+                  Apply Now
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </Link>
+                <Link
+                  href="/contact"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-blue-200 bg-white px-5 text-sm font-semibold text-primary transition hover:bg-blue-50"
+                >
+                  Contact Us
+                  <Mail className="h-4 w-4" aria-hidden />
+                </Link>
+              </div>
+            </div>
+            {activeIntake ? (
+              <div className="mt-5">
+                <CountdownStrip
+                  title={`${intakeLabel(activeIntake)} Countdown`}
+                  deadline={
+                    activeIntake.lateApplicationEnd ??
+                    activeIntake.applicationEnd
+                  }
+                  deadlineLabel={formatDate(
+                    activeIntake.lateApplicationEnd ??
+                      activeIntake.applicationEnd,
+                  )}
+                />
+              </div>
+            ) : null}
+          </div>
+        </LandingReveal>
       </div>
-    </Link>
+    </section>
+  );
+}
+
+function SchoolCard({ school }: { school: HomeSchoolCard }) {
+  return (
+    <article className="group h-full overflow-hidden rounded-md border border-blue-100 bg-white shadow-sm shadow-blue-100/60 transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md hover:shadow-blue-200">
+      <Link href={school.href} className="block">
+        <PublicImage
+          src={school.imageUrl}
+          alt=""
+          ratio="card"
+          fallbackContent={<GraduationCap className="h-8 w-8" aria-hidden />}
+          sizes="(min-width: 1280px) 28vw, (min-width: 768px) 42vw, 100vw"
+          className="h-28"
+          imageClassName="transition duration-500 group-hover:scale-105"
+        />
+      </Link>
+      <div className="p-4">
+        <Link href={school.href} className="block">
+          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-secondary">
+            {school.eyebrow ?? "School"}
+          </span>
+          <h3 className="mt-1 line-clamp-2 font-[family-name:var(--font-display)] text-lg font-semibold leading-6 text-slate-950 transition group-hover:text-primary">
+            {school.title}
+          </h3>
+          <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600">
+            {school.body}
+          </p>
+        </Link>
+        <div className="mt-4 border-t border-blue-100 pt-3">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
+            Featured programmes
+          </p>
+          {school.programmes.length ? (
+            <div className="mt-2 grid gap-1.5">
+              {school.programmes.map((programme) => (
+                <Link
+                  key={programme.href}
+                  href={programme.href}
+                  className="flex min-h-9 items-center justify-between gap-2 rounded-md px-2 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-primary"
+                >
+                  <span className="line-clamp-1">{programme.title}</span>
+                  <ArrowRight className="h-3 w-3 shrink-0" aria-hidden />
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <Link
+              href={school.href}
+              className="mt-2 inline-flex min-h-9 items-center gap-2 rounded-md px-2 text-xs font-semibold text-primary transition hover:bg-blue-50"
+            >
+              Browse school programmes
+              <ArrowRight className="h-3 w-3" aria-hidden />
+            </Link>
+          )}
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -446,77 +751,6 @@ function SectionKicker({
       </h2>
       <span className="mt-2 block h-0.5 w-7 bg-secondary" />
     </div>
-  );
-}
-
-function AdmissionsFunnel({
-  programmes,
-  activeIntakes,
-}: {
-  programmes: HomeCard[];
-  activeIntakes: HomeIntake[];
-}) {
-  const activeIntake = activeIntakes[0] ?? null;
-
-  return (
-    <section className="border-b border-blue-100 bg-white py-12">
-      <div className="mx-auto max-w-[1680px]">
-        <div className="text-center">
-          <p className="text-sm font-semibold uppercase text-secondary">Your Application Journey</p>
-          <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950 sm:text-4xl">
-            From interest to admission
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-600">
-            Follow the four steps below to move from programme discovery through to application submission.
-          </p>
-        </div>
-
-        {/* Funnel steps */}
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { step: 1, title: "Explore Programmes", body: "Browse academic programmes across schools and levels.", href: "/academics/programmes" },
-            { step: 2, title: "Check Requirements", body: "Confirm entry criteria, subject clusters, and intake eligibility.", href: "/admissions/requirements" },
-            { step: 3, title: "Confirm Intake", body: activeIntake ? `Apply for the ${intakeLabel(activeIntake)} before the deadline.` : "Verify the open intake and deadline before submitting.", href: activeIntake?.href ?? "/admissions/intakes" },
-            { step: 4, title: "Apply Now", body: "Complete and submit your application through the official portal.", href: activeIntake?.href ?? "/admissions/how-to-apply", accent: true },
-          ].map((item) => (
-            <Link key={item.step} href={item.href}
-              className={`group rounded-xl border p-5 shadow-sm transition hover:shadow-md ${item.accent ? "border-secondary/30 bg-secondary/5 hover:border-secondary/50" : "border-blue-100 bg-white hover:border-primary/30"}`}>
-              <span className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold ${item.accent ? "bg-secondary text-white" : "bg-primary/10 text-primary"}`}>
-                {item.step}
-              </span>
-              <h3 className="mt-4 font-[family-name:var(--font-display)] text-lg font-semibold text-slate-950">{item.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
-              <span className={`mt-3 inline-flex items-center gap-1 text-xs font-semibold ${item.accent ? "text-secondary" : "text-primary"}`}>
-                {item.step === 4 ? "Apply" : item.step === 3 ? "View intake" : "Open"}
-                <ArrowRight className="h-3 w-3 transition group-hover:translate-x-0.5" aria-hidden />
-              </span>
-            </Link>
-          ))}
-        </div>
-
-        {/* Active intake countdown */}
-        {activeIntake ? (
-          <div className="mt-6">
-            <CountdownStrip
-              title={`${intakeLabel(activeIntake)} Countdown`}
-              deadline={activeIntake.lateApplicationEnd ?? activeIntake.applicationEnd}
-              deadlineLabel={formatDate(activeIntake.lateApplicationEnd ?? activeIntake.applicationEnd)}
-            />
-          </div>
-        ) : null}
-
-        {/* Featured programmes grid */}
-        {programmes.length > 0 ? (
-          <div className="mt-10">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">Featured Programmes</h3>
-              <Link href="/academics/programmes" className="text-xs font-semibold text-primary hover:text-secondary">View all</Link>
-            </div>
-            <FeaturedProgrammeTabs programmes={programmes} />
-          </div>
-        ) : null}
-      </div>
-    </section>
   );
 }
 
