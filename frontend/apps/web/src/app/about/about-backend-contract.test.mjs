@@ -24,6 +24,7 @@ const qualitySource = readFileSync(
 
 test("about data helpers do not expose static fallback records as page data", () => {
   assert.match(aboutDataSource, /universityInfoApi\.getCurrent/);
+  assert.match(aboutDataSource, /schoolsApi\.list/);
   assert.match(aboutDataSource, /governanceApi\.listBoards/);
   assert.match(aboutDataSource, /governanceApi\.getBoardMembersBySlug/);
   assert.match(aboutDataSource, /personsApi\.list/);
@@ -54,4 +55,32 @@ test("about pages source their content from backend helpers", () => {
   assert.match(qualitySource, /getQualityAssuranceData/);
   assert.doesNotMatch(qualitySource, /strategicDocuments/);
   assert.doesNotMatch(qualitySource, /accreditations/);
+});
+
+test("about us page follows the compact handbook-backed layout", () => {
+  assert.match(aboutSource, /AboutHeroPanel/);
+  assert.match(aboutSource, /IdentityCard/);
+  assert.match(aboutSource, /ExploreCard/);
+  assert.match(aboutSource, /getAboutSchools/);
+  assert.match(aboutSource, /getPhilosophy/);
+  assert.match(aboutSource, /about-overview-branded\.webp/);
+  assert.match(aboutSource, /lg:grid-cols-\[minmax\(0,1fr\)_minmax\(420px,680px\)\]/);
+  assert.doesNotMatch(aboutSource, /Cover image has not been published/);
+});
+
+test("university seed uses revised handbook institutional statements", () => {
+  const seedSource = readFileSync(
+    new URL("../../../../../../services/main/app/seeders/seed_university_info.py", import.meta.url),
+    "utf8",
+  );
+  const handbookSource = readFileSync(
+    new URL("../../../../../../services/main/app/seeders/seed_handbook.py", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(seedSource, /World Class University in the advancement of academic excellence/);
+  assert.match(seedSource, /HANDBOOK_INSTITUTIONAL_FACTS\["mission"\]/);
+  assert.match(handbookSource, /training high level human resource/);
+  assert.match(seedSource, /Integrity; Diligence; Hard work; Professionalism/);
+  assert.match(seedSource, /academic freedom, civility, social responsiveness, integrity and accountability/);
 });

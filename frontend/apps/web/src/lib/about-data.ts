@@ -2,10 +2,12 @@ import {
   documentsApi,
   governanceApi,
   personsApi,
+  schoolsApi,
   universityInfoApi,
   type Board,
   type Document,
   type Person,
+  type School,
   type StaffAssignment,
   type UniversityInfo,
 } from "@ksu/api-client";
@@ -30,6 +32,11 @@ export type AboutOverviewData = {
   coreValues: string[];
   quickFacts: Array<{ label: string; value: string }>;
 };
+
+export type AboutSchoolSummary = Pick<
+  School,
+  "id" | "name" | "slug" | "description" | "about" | "departments_count"
+>;
 
 export type GovernancePageData = {
   overview: UniversityInfo | null;
@@ -152,6 +159,18 @@ const personFields = [
   "show_on_directory",
 ].join(",");
 
+const schoolFields = [
+  "id",
+  "name",
+  "slug",
+  "description",
+  "about",
+  "departments_count",
+  "is_public",
+  "is_active",
+  "display_order",
+].join(",");
+
 const documentFields = [
   "id",
   "title",
@@ -264,6 +283,27 @@ export function splitCoreValues(value?: string | null) {
     .filter(Boolean);
 }
 
+export function getPhilosophy(overview?: UniversityInfo | null) {
+  const priorities = overview?.strategic_priorities;
+  if (!priorities) return null;
+
+  if (Array.isArray(priorities)) {
+    const item = priorities.find((entry) => {
+      const title =
+        present(entry.title as string | undefined) ??
+        present(entry.name as string | undefined);
+      return title?.toLowerCase().includes("philosophy");
+    });
+    return (
+      present(item?.body as string | undefined) ??
+      present(item?.description as string | undefined) ??
+      present(item?.summary as string | undefined)
+    );
+  }
+
+  return present(priorities.philosophy as string | undefined);
+}
+
 export function normalizeQuickFacts(value?: Record<string, unknown> | null) {
   if (!value) return [];
 
@@ -312,6 +352,32 @@ export async function getOverviewData(): Promise<UniversityInfo | null> {
   } catch (error) {
     console.error("Failed to fetch university info:", error);
     return null;
+  }
+}
+
+export async function getAboutSchools(): Promise<AboutSchoolSummary[]> {
+  try {
+    const response = await schoolsApi.list({
+      per_page: 8,
+      fields: schoolFields,
+    });
+    return (response.data ?? [])
+      .filter((school) => school.is_public !== false && school.is_active !== false)
+      .sort(
+        (first, second) =>
+          (first.display_order ?? 100) - (second.display_order ?? 100),
+      )
+      .map((school) => ({
+        id: school.id,
+        name: school.name,
+        slug: school.slug,
+        description: school.description,
+        about: school.about,
+        departments_count: school.departments_count,
+      }));
+  } catch (error) {
+    console.error("Failed to fetch about schools:", error);
+    return [];
   }
 }
 
