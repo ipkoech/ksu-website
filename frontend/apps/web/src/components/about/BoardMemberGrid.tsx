@@ -5,6 +5,7 @@ export interface BoardMember {
   role: string;
   note?: string;
   photoUrl?: string | null;
+  profileHref?: string;
 }
 
 export function BoardMemberGrid({ members }: { members: BoardMember[] }) {

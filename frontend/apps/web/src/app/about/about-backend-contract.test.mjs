@@ -29,6 +29,10 @@ const qualitySource = readFileSync(
   new URL("./quality-assurance/page.tsx", import.meta.url),
   "utf8",
 );
+const governanceChartSource = readFileSync(
+  new URL("../../components/about/GovernanceChart.tsx", import.meta.url),
+  "utf8",
+);
 
 test("about data helpers do not expose static fallback records as page data", () => {
   assert.match(aboutDataSource, /universityInfoApi\.getCurrent/);
@@ -119,13 +123,32 @@ test("about subpages expose strategic-plan guided page-specific layouts", () => 
   assert.doesNotMatch(historySource, /Related institutional pages/);
   assert.doesNotMatch(historySource, /Institutional context/);
 
-  assert.match(governanceSource, /GovernanceMandateCard/);
-  assert.match(governanceSource, /CouncilPreviewTable/);
-  assert.match(governanceSource, /MessagePanel/);
+  assert.match(aboutDataSource, /"mission"/);
+  assert.match(aboutDataSource, /"vision"/);
+  assert.match(aboutDataSource, /profileHref: `\/staff\/\$\{assignment\.person_id\}`/);
 
-  assert.match(managementSource, /ManagementMetric/);
-  assert.match(managementSource, /LeadershipDirectoryTable/);
-  assert.match(managementSource, /ManagementLegend/);
+  assert.match(governanceSource, /BoardIdentityGrid/);
+  assert.match(governanceSource, /councilOnly/);
+  assert.match(governanceSource, /title="University Council organogram"/);
+  assert.match(governanceSource, /Council mandate/);
+  assert.doesNotMatch(governanceSource, /GovernanceMandateCard/);
+  assert.doesNotMatch(governanceSource, /CouncilPreviewTable/);
+  assert.doesNotMatch(governanceSource, /MessagePanel/);
+  assert.doesNotMatch(governanceSource, /Published Boards/);
+
+  assert.match(managementSource, /BoardIdentityGrid/);
+  assert.match(managementSource, /managementOnly/);
+  assert.match(managementSource, /title="University Management organogram"/);
+  assert.match(managementSource, /Management mandate/);
+  assert.doesNotMatch(managementSource, /ManagementMetric/);
+  assert.doesNotMatch(managementSource, /LeadershipDirectoryTable/);
+  assert.doesNotMatch(managementSource, /ManagementLegend/);
+  assert.doesNotMatch(managementSource, /senateMembers/);
+
+  assert.match(governanceChartSource, /profileHref/);
+  assert.match(governanceChartSource, /View full screen/);
+  assert.match(governanceChartSource, /fixed inset-0 z-50/);
+  assert.match(governanceChartSource, /href=\{data\.profileHref\}/);
 
   assert.match(qualitySource, /QualityResourceCard/);
   assert.match(qualitySource, /StrategicHighlightCard/);

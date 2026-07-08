@@ -106,6 +106,8 @@ const boardFields = [
   "mandate",
   "description",
   "head_message",
+  "mission",
+  "vision",
   "meeting_schedule",
   "member_count",
   "current_members",
@@ -229,6 +231,7 @@ function toBoardMembers(assignments: StaffAssignment[]): BoardMember[] {
         "Published member",
       role: roleLabel(assignment),
       note: assignment.term_display ?? assignment.notes ?? undefined,
+      profileHref: `/staff/${assignment.person_id}`,
       photoUrl:
         publicFileUrl(assignment.person?.photo_id) ??
         resolvePublicMediaUrl(assignment.person?.photo_url),

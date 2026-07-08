@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Maximize2, X } from "lucide-react";
 import { hierarchy } from "d3-hierarchy";
 import type { HierarchyNode } from "d3-hierarchy";
 import type { BoardMember } from "@/components/about/BoardMemberGrid";
@@ -26,6 +27,7 @@ type OrgNode = {
   role: string;
   description?: string;
   photoUrl?: string | null;
+  profileHref?: string;
   kind: "root" | "group" | "person" | "function";
   childCount?: number;
   children?: OrgNode[];
@@ -104,6 +106,7 @@ function personNode(
     title: member.name,
     role: member.role,
     photoUrl: member.photoUrl,
+    profileHref: member.profileHref,
     kind: "person",
   };
 }
@@ -414,6 +417,51 @@ function NodeCard({
   const isRoot = data.kind === "root";
   const isPerson = data.kind === "person" || isRoot;
   const isFunction = data.kind === "function";
+  const nodeContent = (
+    <>
+      {isPerson ? (
+        <div className="flex h-24 w-full shrink-0 items-center justify-center overflow-hidden bg-[linear-gradient(135deg,#dbeafe,#eef4ff_56%,#fff7ed)] text-primary">
+          {data.photoUrl ? (
+            <PublicImage
+              src={data.photoUrl}
+              alt={data.title}
+              ratio="card"
+              sizes="190px"
+              className="h-full w-full"
+            />
+          ) : (
+            <span className="font-[family-name:var(--font-display)] text-3xl font-semibold">
+              {initials(data.title)}
+            </span>
+          )}
+        </div>
+      ) : null}
+
+      <div className="min-w-0 flex-1 p-3">
+        <h3
+          className={`line-clamp-2 font-semibold leading-tight ${
+            isRoot ? "text-base text-slate-950" : "text-sm text-slate-950"
+          }`}
+        >
+          {data.title}
+        </h3>
+        <p
+          className={`mt-2 line-clamp-2 text-[0.64rem] font-bold uppercase tracking-[0.1em] ${
+            isRoot ? "text-secondary" : "text-primary"
+          }`}
+        >
+          {data.role}
+        </p>
+        {data.description ? (
+          <p
+            className="mt-2 line-clamp-3 text-xs leading-5 text-slate-500"
+          >
+            {data.description}
+          </p>
+        ) : null}
+      </div>
+    </>
+  );
 
   return (
     <foreignObject
@@ -431,47 +479,16 @@ function NodeCard({
               : "border-slate-200 bg-white"
         }`}
       >
-        {isPerson ? (
-          <div className="flex h-24 w-full shrink-0 items-center justify-center overflow-hidden bg-[linear-gradient(135deg,#dbeafe,#eef4ff_56%,#fff7ed)] text-primary">
-            {data.photoUrl ? (
-              <PublicImage
-                src={data.photoUrl}
-                alt={data.title}
-                ratio="card"
-                sizes="190px"
-                className="h-full w-full"
-              />
-            ) : (
-              <span className="font-[family-name:var(--font-display)] text-3xl font-semibold">
-                {initials(data.title)}
-              </span>
-            )}
-          </div>
-        ) : null}
-
-        <div className="min-w-0 flex-1 p-3">
-          <h3
-            className={`line-clamp-2 font-semibold leading-tight ${
-              isRoot ? "text-base text-slate-950" : "text-sm text-slate-950"
-            }`}
+        {data.profileHref ? (
+          <a
+            href={data.profileHref}
+            className="flex h-full w-full flex-col transition hover:bg-primary/[0.03] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
           >
-            {data.title}
-          </h3>
-          <p
-            className={`mt-2 line-clamp-2 text-[0.64rem] font-bold uppercase tracking-[0.1em] ${
-              isRoot ? "text-secondary" : "text-primary"
-            }`}
-          >
-            {data.role}
-          </p>
-          {data.description ? (
-            <p
-              className="mt-2 line-clamp-3 text-xs leading-5 text-slate-500"
-            >
-              {data.description}
-            </p>
-          ) : null}
-        </div>
+            {nodeContent}
+          </a>
+        ) : (
+          nodeContent
+        )}
       </div>
     </foreignObject>
   );
@@ -539,6 +556,7 @@ function layoutNodes(root: HierarchyNode<OrgNode>) {
 }
 
 export function GovernanceChart(props: GovernanceChartProps) {
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const fullTree = useMemo(() => buildTree(props), [props]);
   const root = hierarchy(fullTree);
   const { positionedNodes, links, chartWidth } = layoutNodes(root);
@@ -546,6 +564,43 @@ export function GovernanceChart(props: GovernanceChartProps) {
     Math.max(...positionedNodes.map((node) => node.y)) + NODE_HEIGHT + 32;
   const isCouncilOnly = Boolean(props.councilOnly);
   const isManagementOnly = Boolean(props.managementOnly);
+  const title =
+    props.title ??
+    (isCouncilOnly
+      ? "Chancellor and University Council"
+      : isManagementOnly
+        ? "Vice Chancellor and university management"
+        : "Vice Chancellor, governance bodies, and named members");
+  const description =
+    props.description ??
+    (isCouncilOnly
+      ? "The hierarchy starts with the Chancellor, followed by the Council Secretary, then the remaining published Council members."
+      : "The hierarchy is shown without interaction so governance relationships remain visible at a glance.");
+  const chart = (
+    <svg
+      role="img"
+      aria-label={props.ariaLabel ?? "Kisii University governance org chart"}
+      width={chartWidth}
+      height={height}
+      viewBox={`0 0 ${chartWidth} ${height}`}
+      className="mx-auto block h-auto max-w-full"
+    >
+      <g fill="none" stroke="#cbd5e1" strokeLinecap="round" strokeWidth="2">
+        {links.map((link) => (
+          <path
+            key={`${link.source.data.id}-${link.target.data.id}`}
+            d={linkPath(link.source, link.target)}
+          />
+        ))}
+      </g>
+      {positionedNodes.map((node) => (
+        <NodeCard
+          key={node.data.id}
+          node={node}
+        />
+      ))}
+    </svg>
+  );
 
   return (
     <div className="w-full">
@@ -555,47 +610,49 @@ export function GovernanceChart(props: GovernanceChartProps) {
             Org Chart
           </p>
           <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
-            {props.title ??
-              (isCouncilOnly
-                ? "Chancellor and University Council"
-                : isManagementOnly
-                  ? "Vice Chancellor and university management"
-                  : "Vice Chancellor, governance bodies, and named members")}
+            {title}
           </h2>
         </div>
+        <button
+          type="button"
+          onClick={() => setIsFullScreen(true)}
+          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-primary shadow-sm transition hover:border-primary/40 hover:bg-primary/[0.03]"
+        >
+          <Maximize2 aria-hidden className="h-4 w-4" />
+          View full screen
+        </button>
       </div>
       <p className="mt-3 text-sm leading-6 text-slate-600">
-        {props.description ??
-          (isCouncilOnly
-            ? "The hierarchy starts with the Chancellor, followed by the Council Secretary, then the remaining published Council members."
-            : "The hierarchy is shown without interaction so governance relationships remain visible at a glance.")}
+        {description}
       </p>
 
       <div className="mt-6 overflow-x-auto">
-        <svg
-          role="img"
-          aria-label={props.ariaLabel ?? "Kisii University governance org chart"}
-          width={chartWidth}
-          height={height}
-          viewBox={`0 0 ${chartWidth} ${height}`}
-          className="mx-auto block h-auto max-w-full"
-        >
-          <g fill="none" stroke="#cbd5e1" strokeLinecap="round" strokeWidth="2">
-            {links.map((link) => (
-              <path
-                key={`${link.source.data.id}-${link.target.data.id}`}
-                d={linkPath(link.source, link.target)}
-              />
-            ))}
-          </g>
-          {positionedNodes.map((node) => (
-            <NodeCard
-              key={node.data.id}
-              node={node}
-            />
-          ))}
-        </svg>
+        {chart}
       </div>
+
+      {isFullScreen ? (
+        <div className="fixed inset-0 z-50 bg-white">
+          <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4 sm:px-6">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+                Full screen org chart
+              </p>
+              <h2 className="text-lg font-semibold text-slate-950">{title}</h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsFullScreen(false)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 text-slate-700 transition hover:border-primary/40 hover:text-primary"
+              aria-label="Close full screen org chart"
+            >
+              <X aria-hidden className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="h-[calc(100vh-4rem)] overflow-auto p-4 sm:p-6">
+            <div className="min-w-max">{chart}</div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
