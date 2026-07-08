@@ -254,6 +254,10 @@ function firstPhone(contact?: ContactDirectory | null) {
   return phone ?? null;
 }
 
+function isAbortError(error: unknown) {
+  return error instanceof Error && error.name === "AbortError";
+}
+
 async function safe<T>(
   task: Promise<T>,
   fallback: T,
@@ -263,7 +267,7 @@ async function safe<T>(
   try {
     return await task;
   } catch (error) {
-    if (logFailure) {
+    if (logFailure && !isAbortError(error)) {
       console.warn(`Failed to load ${label}:`, error);
     }
     return fallback;

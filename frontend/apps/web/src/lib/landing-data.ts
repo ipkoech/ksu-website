@@ -71,6 +71,10 @@ const defaultHeroSettings: Omit<LandingHeroData, "slides"> = {
 const homepageHeroLocations = new Set(["home.hero", "homepage.hero", "landing.hero"]);
 const homepageHeroSlugs = new Set(["homepage-hero", "home-hero", "landing-hero"]);
 
+function isAbortError(error: unknown) {
+  return error instanceof Error && error.name === "AbortError";
+}
+
 const sliderGroupFields = [
   "id",
   "name",
@@ -315,7 +319,9 @@ export async function getLandingHeroData(): Promise<LandingHeroData> {
         .map(normalizeSlider),
     };
   } catch (error) {
-    console.error("Failed to fetch landing sliders:", error);
+    if (!isAbortError(error)) {
+      console.error("Failed to fetch landing sliders:", error);
+    }
     return { ...defaultHeroSettings, slides: [] };
   }
 }
@@ -350,7 +356,9 @@ export async function getLandingAnnouncements(): Promise<LandingAnnouncement[]> 
     const announcements = mainAnnouncements.length ? mainAnnouncements : await listLatestAnnouncements();
     return announcements.slice(0, 5).map(normalizeAnnouncement);
   } catch (error) {
-    console.error("Failed to fetch landing announcements:", error);
+    if (!isAbortError(error)) {
+      console.error("Failed to fetch landing announcements:", error);
+    }
     return [];
   }
 }
