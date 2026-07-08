@@ -12,7 +12,6 @@ import {
   Phone,
   School,
   Sparkles,
-  UserRound,
 } from "lucide-react";
 import Link from "next/link";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
@@ -37,8 +36,7 @@ type ProfileLink = { label: string; href: string | null };
 type ProfileFact = {
   icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
   label: string;
-  value?: string | null;
-  unavailable?: string;
+  value: string;
 };
 
 function present(value?: string | number | null) {
@@ -237,14 +235,6 @@ function PillList({ items }: { items: string[] }) {
   );
 }
 
-function UnavailableFact({ label }: { label: string }) {
-  return (
-    <span className="text-sm font-medium leading-5 text-slate-400">
-      {label}
-    </span>
-  );
-}
-
 function ProfileActionRail({
   email,
   links,
@@ -281,9 +271,8 @@ function ProfileActionRail({
 
 function ProfileFactGrid({ facts }: { facts: ProfileFact[] }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
       {facts.map((fact) => {
-        const text = present(fact.value);
         const Icon = fact.icon;
         return (
           <div
@@ -297,15 +286,9 @@ function ProfileFactGrid({ facts }: { facts: ProfileFact[] }) {
               <span className="block text-[0.68rem] font-bold uppercase tracking-[0.08em] text-slate-500">
                 {fact.label}
               </span>
-              {text ? (
-                <span className="mt-0.5 block break-words text-sm font-semibold leading-5 text-slate-800">
-                  {text}
-                </span>
-              ) : (
-                <UnavailableFact
-                  label={fact.unavailable ?? `${fact.label} not published`}
-                />
-              )}
+              <span className="mt-0.5 block break-words text-sm font-semibold leading-5 text-slate-800">
+                {fact.value}
+              </span>
             </span>
           </div>
         );
@@ -334,9 +317,21 @@ function ProfileHero({
   facts: ProfileFact[];
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:p-5">
-      <div className="grid gap-5 lg:grid-cols-[200px_minmax(0,1fr)_minmax(280px,380px)]">
-        <div className="max-w-[220px]">
+    <section
+      className={[
+        "rounded-lg border border-slate-200 bg-white p-4 shadow-sm",
+        facts.length ? "" : "lg:max-w-4xl",
+      ].join(" ")}
+    >
+      <div
+        className={[
+          "grid gap-4",
+          facts.length
+            ? "lg:grid-cols-[160px_minmax(0,1fr)_300px]"
+            : "lg:grid-cols-[160px_minmax(0,1fr)]",
+        ].join(" ")}
+      >
+        <div className="max-w-[180px]">
           <div className="aspect-[4/5] overflow-hidden rounded-lg bg-slate-100">
             <ProfileImage person={person} name={name} />
           </div>
@@ -349,7 +344,7 @@ function ProfileHero({
                 ? "Researcher Profile"
                 : "Staff Profile"}
           </span>
-          <h1 className="mt-3 max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+          <h1 className="mt-3 max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-[2.15rem]">
             {name}
           </h1>
           <p className="mt-2 text-base font-semibold leading-6 text-primary">
@@ -360,16 +355,18 @@ function ProfileHero({
               {[departmentName, schoolName].filter(Boolean).join(" | ")}
             </p>
           ) : null}
-          <div className="mt-5">
+          <div className="mt-4">
             <ProfileActionRail email={person.email} links={links} />
           </div>
         </div>
-        <aside className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-          <h2 className="text-sm font-bold text-slate-950">At a Glance</h2>
-          <div className="mt-4">
-            <ProfileFactGrid facts={facts} />
-          </div>
-        </aside>
+        {facts.length ? (
+          <aside className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <h2 className="text-sm font-bold text-slate-950">At a Glance</h2>
+            <div className="mt-3">
+              <ProfileFactGrid facts={facts} />
+            </div>
+          </aside>
+        ) : null}
       </div>
     </section>
   );
@@ -417,6 +414,8 @@ function RoleRelationshipGrid({
 }: {
   assignments: PublicPersonAssignment[];
 }) {
+  if (!assignments.length) return null;
+
   return (
     <ContentBlock title="Current Roles">
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -514,24 +513,29 @@ function ResearcherProfileSection({
   const publications = recordList(person.publications);
   const grants = recordList(person.research_grants_won);
   const hasMetrics = Boolean(person.publications_count || person.h_index);
+  const hasResearchProfiles = publicationLinks.length > 0;
 
-  if (!person.is_researcher && !researchInterests.length && !hasMetrics) {
+  if (
+    !researchInterests.length &&
+    !publications.length &&
+    !grants.length &&
+    !hasMetrics &&
+    !hasResearchProfiles
+  ) {
     return null;
   }
 
   return (
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
       <div className="grid gap-5">
-        <ContentBlock title="Research Areas">
-          {researchInterests.length ? (
+        {researchInterests.length ? (
+          <ContentBlock title="Research Areas">
             <PillList items={researchInterests} />
-          ) : (
-            <UnavailableFact label="Research areas not published" />
-          )}
-        </ContentBlock>
+          </ContentBlock>
+        ) : null}
 
-        <ContentBlock title="Publications">
-          {publications.length ? (
+        {publications.length ? (
+          <ContentBlock title="Publications">
             <div className="grid gap-3">
               {publications.map((item, index) => (
                 <ResearchRecordCard
@@ -546,13 +550,11 @@ function ResearcherProfileSection({
                 />
               ))}
             </div>
-          ) : (
-            <UnavailableFact label="Publication records not published" />
-          )}
-        </ContentBlock>
+          </ContentBlock>
+        ) : null}
 
-        <ContentBlock title="Research Grants Won">
-          {grants.length ? (
+        {grants.length ? (
+          <ContentBlock title="Research Grants Won">
             <div className="grid gap-3">
               {grants.map((item, index) => (
                 <ResearchRecordCard
@@ -568,36 +570,52 @@ function ResearcherProfileSection({
                 />
               ))}
             </div>
-          ) : (
-            <UnavailableFact label="Research grants not published" />
-          )}
-        </ContentBlock>
+          </ContentBlock>
+        ) : null}
       </div>
 
-      <aside className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <h2 className="text-sm font-bold text-slate-950">Research Summary</h2>
-        <dl className="mt-4 grid gap-3 text-sm">
-          <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-3">
-            <dt className="flex items-center gap-2 font-semibold text-slate-700">
-              <BookOpenCheck aria-hidden className="h-4 w-4 text-primary" />
-              Publications
-            </dt>
-            <dd className="font-bold text-slate-950">
-              {person.publications_count || publications.length || "Not published"}
-            </dd>
-          </div>
-          <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-3">
-            <dt className="flex items-center gap-2 font-semibold text-slate-700">
-              <Award aria-hidden className="h-4 w-4 text-primary" />
-              H-index
-            </dt>
-            <dd className="font-bold text-slate-950">
-              {person.h_index ?? "Not published"}
-            </dd>
-          </div>
-        </dl>
+      {hasMetrics || publicationLinks.length ? (
+        <aside className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+          {hasMetrics ? (
+            <>
+              <h2 className="text-sm font-bold text-slate-950">
+                Research Summary
+              </h2>
+              <dl className="mt-4 grid gap-3 text-sm">
+                {person.publications_count || publications.length ? (
+                  <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-3">
+                    <dt className="flex items-center gap-2 font-semibold text-slate-700">
+                      <BookOpenCheck
+                        aria-hidden
+                        className="h-4 w-4 text-primary"
+                      />
+                      Publications
+                    </dt>
+                    <dd className="font-bold text-slate-950">
+                      {person.publications_count || publications.length}
+                    </dd>
+                  </div>
+                ) : null}
+                {person.h_index ? (
+                  <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-3">
+                    <dt className="flex items-center gap-2 font-semibold text-slate-700">
+                      <Award aria-hidden className="h-4 w-4 text-primary" />
+                      H-index
+                    </dt>
+                    <dd className="font-bold text-slate-950">
+                      {person.h_index}
+                    </dd>
+                  </div>
+                ) : null}
+              </dl>
+            </>
+          ) : null}
         {publicationLinks.length ? (
-          <div className="mt-5 border-t border-slate-200 pt-4">
+          <div
+            className={[
+              hasMetrics ? "mt-5 border-t border-slate-200 pt-4" : "",
+            ].join(" ")}
+          >
             <h3 className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
               Research Profiles
             </h3>
@@ -606,7 +624,8 @@ function ResearcherProfileSection({
             </div>
           </div>
         ) : null}
-      </aside>
+        </aside>
+      ) : null}
     </div>
   );
 }
@@ -655,59 +674,54 @@ export default async function PublicPersonPage({
   const publicationLinks = links.filter((item) =>
     ["Google Scholar", "ORCID", "ResearchGate", "Scopus"].includes(item.label),
   );
-  const facts: ProfileFact[] = [
-    { icon: UserRound, label: "Role", value: role },
+  const rawFacts: Array<{
+    icon: ProfileFact["icon"];
+    label: string;
+    value?: string | null;
+  }> = [
     { icon: School, label: "School", value: schoolName },
     { icon: Building2, label: "Department", value: departmentName },
-    {
-      icon: MapPin,
-      label: "Office",
-      value: person.office_location,
-      unavailable: "Office not published",
-    },
-    {
-      icon: Phone,
-      label: "Phone",
-      value: person.phone ?? person.office_phone,
-      unavailable: "Phone not published",
-    },
+    { icon: MapPin, label: "Office", value: person.office_location },
+    { icon: Phone, label: "Phone", value: person.phone ?? person.office_phone },
     {
       icon: BriefcaseBusiness,
       label: "Office hours",
       value: formatOfficeHours(person.office_hours),
-      unavailable: "Office hours not published",
     },
   ];
+  const facts: ProfileFact[] = rawFacts.flatMap((fact) => {
+    const value = present(fact.value);
+    return value ? [{ icon: fact.icon, label: fact.label, value }] : [];
+  });
   const hasResearchSection = Boolean(
-    person.is_researcher ||
-      researchInterests.length ||
+    person.is_researcher &&
+      (researchInterests.length ||
       person.publications_count ||
       person.h_index ||
       person.publications?.length ||
-      person.research_grants_won?.length,
+        person.research_grants_won?.length ||
+        publicationLinks.length),
   );
 
   const tabs: PublicPersonTab[] = [
-    {
-      id: "overview",
-      label: "Overview",
-      content: (
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-          <ContentBlock title="Biography">
-            {bio ? (
-              <ExpandableRichText text={bio} collapsedLines={8} />
-            ) : (
-              <UnavailableFact label="Biography not published" />
-            )}
-          </ContentBlock>
-          <div className="grid content-start gap-3">
-            <RoleRelationshipGrid
-              assignments={assignment ? [assignment] : []}
-            />
-          </div>
-        </div>
-      ),
-    },
+    bio
+      ? {
+          id: "biography",
+          label: "Biography",
+          content: (
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+              <ContentBlock title="Biography">
+                <ExpandableRichText text={bio} collapsedLines={8} />
+              </ContentBlock>
+              <div className="grid content-start gap-3">
+                <RoleRelationshipGrid
+                  assignments={assignment ? [assignment] : []}
+                />
+              </div>
+            </div>
+          ),
+        }
+      : null,
     qualifications.length
       ? {
           id: "qualifications",

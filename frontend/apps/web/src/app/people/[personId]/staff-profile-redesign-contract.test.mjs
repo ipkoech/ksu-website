@@ -23,7 +23,10 @@ test("staff profile page uses redesigned information-flow components", () => {
   assert.match(pageSource, /QualificationTimeline/);
   assert.match(pageSource, /RoleRelationshipGrid/);
   assert.match(pageSource, /ResearcherProfileSection/);
-  assert.match(pageSource, /UnavailableFact/);
+  assert.match(pageSource, /label: "Biography"/);
+  assert.match(pageSource, /facts\.length/);
+  assert.doesNotMatch(pageSource, /UnavailableFact/);
+  assert.doesNotMatch(pageSource, /not published/i);
 });
 
 test("public person data supports researcher-only publications and grants", () => {
