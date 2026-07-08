@@ -538,8 +538,8 @@ function buildNavigation(
     academicsItem,
     campusLifeItem,
     mediaDeskItem,
-    contactItem,
     ...serviceItems,
+    contactItem,
   ];
 }
 
