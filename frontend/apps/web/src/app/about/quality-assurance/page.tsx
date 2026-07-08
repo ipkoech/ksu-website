@@ -5,35 +5,52 @@ import {
   Download,
   FileText,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import { getQualityAssuranceData } from "@/lib/about-data";
 import { publicFileUrl } from "@/lib/public-media";
 
+type ResourceDocument = {
+  id: string;
+  title: string;
+  description?: string | null;
+  file_id: string;
+  category?: string | null;
+  document_type?: string | null;
+};
+
 function EmptyState({ label }: { label: string }) {
   return (
-    <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-6 text-slate-500">
+    <div
+      data-backend-empty-state
+      className="rounded-lg border border-dashed border-slate-300 bg-white/70 p-5 text-sm leading-6 text-slate-500"
+    >
       {label} has not been published yet.
     </div>
   );
 }
 
+function documentText(document: ResourceDocument) {
+  return [document.category, document.document_type, document.title]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function documentMatches(document: ResourceDocument, term: string) {
+  return documentText(document).includes(term);
+}
+
 export default async function QualityAssurancePage() {
   const data = await getQualityAssuranceData();
   const planDocuments = data.documents.filter((document) =>
-    [document.category, document.document_type, document.title]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase()
-      .includes("strategic"),
+    documentMatches(document, "strategic"),
   );
   const serviceDocuments = data.documents.filter((document) =>
-    [document.category, document.document_type, document.title]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase()
-      .includes("service"),
+    documentMatches(document, "service"),
   );
   const qualityDocuments = data.documents.filter(
     (document) =>
@@ -41,196 +58,359 @@ export default async function QualityAssurancePage() {
       !serviceDocuments.some((item) => item.id === document.id),
   );
 
+  const resourceCards = [
+    {
+      title: "Quality Assurance",
+      kicker: "Continuous improvement",
+      body: "Policies, frameworks, and evidence records that support academic quality review.",
+      icon: ClipboardCheck,
+      documents: qualityDocuments,
+      emptyLabel: "Quality assurance documents",
+    },
+    {
+      title: "Strategic Plan",
+      kicker: "Institutional priorities",
+      body: "Planning documents and priorities used to align university performance.",
+      icon: FileText,
+      documents: planDocuments,
+      emptyLabel: "Strategic plan document",
+    },
+    {
+      title: "Service Charter",
+      kicker: "Service accountability",
+      body:
+        data.overview?.charter_summary ??
+        "Published service commitments appear here when the charter record is available.",
+      icon: ShieldCheck,
+      documents: serviceDocuments,
+      emptyLabel: "Service charter document",
+    },
+  ];
+
+  const commitmentSteps = [
+    {
+      title: "Publish the commitment",
+      body:
+        data.overview?.charter_summary ??
+        "The service charter summary is loaded from the university information record.",
+    },
+    {
+      title: "Attach the evidence",
+      body: data.documents.length
+        ? `${data.documents.length} backend document record${
+            data.documents.length === 1 ? "" : "s"
+          } currently support this page.`
+        : "Backend quality, strategic plan, and service charter documents will appear here after publication.",
+    },
+    {
+      title: "Review against priorities",
+      body: data.strategicPriorities.length
+        ? "Strategic priorities guide the quality assurance and service review cycle."
+        : "Strategic priorities will appear here after the university information record is updated.",
+    },
+  ];
+
   return (
     <PageShell>
       <AboutPageLenis>
-        <section className="border-b border-slate-200 bg-white px-4 py-8 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-[1440px]">
-            <BreadcrumbTrail
-              items={[
-                { label: "Home", href: "/" },
-                { label: "About", href: "/about" },
-                { label: "Quality Assurance" },
-              ]}
+        <main className="max-w-none bg-white">
+          <section className="relative isolate overflow-hidden bg-slate-950 text-white">
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-[url('/images/about/about-quality-assurance-branded.webp')] bg-cover bg-center opacity-55 mix-blend-luminosity"
             />
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/88 to-primary/70"
+            />
+            <div className="relative px-4 py-8 sm:px-6 lg:px-8">
+              <div className="mx-auto w-full max-w-none">
+                <BreadcrumbTrail
+                  items={[
+                    { label: "Home", href: "/" },
+                    { label: "About", href: "/about" },
+                    { label: "Quality Assurance" },
+                  ]}
+                />
 
-            <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-              <article className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-secondary">
-                  Quality Assurance
-                </p>
-                <h1 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950 sm:text-4xl">
-                  Quality, planning, and service accountability
-                </h1>
-                {data.overview?.charter_summary ? (
-                  <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-700">
-                    {data.overview.charter_summary}
-                  </p>
-                ) : (
-                  <EmptyState label="Quality assurance summary" />
-                )}
-              </article>
+                <div className="grid min-h-[560px] items-end gap-10 py-14 lg:grid-cols-[minmax(0,1fr)_360px] lg:py-20">
+                  <div className="max-w-4xl">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+                      Quality Assurance
+                    </p>
+                    <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
+                      Quality, planning, and service accountability
+                    </h1>
+                    {data.overview?.charter_summary ? (
+                      <p className="mt-6 max-w-3xl text-base leading-8 text-white/82 sm:text-lg">
+                        {data.overview.charter_summary}
+                      </p>
+                    ) : (
+                      <div className="mt-6 max-w-2xl">
+                        <EmptyState label="Quality assurance summary" />
+                      </div>
+                    )}
+                  </div>
 
-              <aside className="rounded-lg border border-slate-200 bg-slate-950 p-5 text-white shadow-sm">
-                <ShieldCheck aria-hidden className="h-5 w-5 text-secondary" />
-                <p className="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-white/55">
-                  Backend Records
-                </p>
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <div className="rounded-md border border-white/10 bg-white/[0.04] p-3">
-                    <p className="text-2xl font-semibold leading-none">
-                      {data.strategicPriorities.length}
+                  <aside className="rounded-lg border border-white/15 bg-white/[0.08] p-5 shadow-2xl backdrop-blur">
+                    <ShieldCheck aria-hidden className="h-6 w-6 text-secondary" />
+                    <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-white/60">
+                      Backend Records
                     </p>
-                    <p className="mt-1 text-xs text-white/60">Priorities</p>
-                  </div>
-                  <div className="rounded-md border border-white/10 bg-white/[0.04] p-3">
-                    <p className="text-2xl font-semibold leading-none">
-                      {data.documents.length}
-                    </p>
-                    <p className="mt-1 text-xs text-white/60">Documents</p>
-                  </div>
+                    <div className="mt-5 grid grid-cols-2 gap-3">
+                      <MetricCard
+                        value={data.strategicPriorities.length}
+                        label="Priorities"
+                      />
+                      <MetricCard value={data.documents.length} label="Documents" />
+                    </div>
+                  </aside>
                 </div>
-              </aside>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section className="bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
-          <div className="mx-auto grid max-w-[1440px] gap-4 lg:grid-cols-3">
-            <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <ClipboardCheck aria-hidden className="h-5 w-5 text-primary" />
-              <h2 className="mt-3 text-xl font-semibold text-slate-950">
-                Quality Assurance
-              </h2>
-              {qualityDocuments.length ? (
-                <DocumentList documents={qualityDocuments} />
-              ) : (
-                <EmptyState label="Quality assurance documents" />
-              )}
-            </article>
-
-            <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <FileText aria-hidden className="h-5 w-5 text-primary" />
-              <h2 className="mt-3 text-xl font-semibold text-slate-950">
-                Strategic Plan
-              </h2>
-              {planDocuments.length ? (
-                <DocumentList documents={planDocuments} />
-              ) : data.brochureUrl ? (
-                <a
-                  href={data.brochureUrl}
-                  className="mt-4 inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-primary"
-                >
-                  Open university brochure
-                  <Download aria-hidden className="h-4 w-4" />
-                </a>
-              ) : (
-                <EmptyState label="Strategic plan document" />
-              )}
-            </article>
-
-            <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <ShieldCheck aria-hidden className="h-5 w-5 text-primary" />
-              <h2 className="mt-3 text-xl font-semibold text-slate-950">
-                Service Charter
-              </h2>
-              {serviceDocuments.length ? (
-                <DocumentList documents={serviceDocuments} />
-              ) : data.overview?.charter_summary ? (
-                <p className="mt-4 text-sm leading-7 text-slate-700">
-                  {data.overview.charter_summary}
-                </p>
-              ) : (
-                <EmptyState label="Service charter" />
-              )}
-            </article>
-          </div>
-        </section>
-
-        <section className="bg-white px-4 py-8 sm:px-6 lg:px-8">
-          <div className="mx-auto grid max-w-[1440px] gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
-            <aside>
-              <h2 className="text-xl font-semibold text-slate-950">
-                Strategic priorities
-              </h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                Priorities are rendered from the university information record.
-              </p>
-            </aside>
-            {data.strategicPriorities.length ? (
-              <div className="grid gap-3 md:grid-cols-2">
-                {data.strategicPriorities.map((priority) => (
-                  <article
-                    key={priority.title}
-                    className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
-                  >
-                    <h3 className="text-sm font-bold text-slate-950">
-                      {priority.title}
-                    </h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                      {priority.body}
-                    </p>
-                  </article>
+          <section className="bg-slate-50 px-4 py-12 sm:px-6 lg:px-8">
+            <div className="mx-auto w-full max-w-none">
+              <div className="grid gap-4 lg:grid-cols-3">
+                {resourceCards.map((card) => (
+                  <QualityResourceCard key={card.title} {...card} />
                 ))}
               </div>
-            ) : (
-              <EmptyState label="Strategic priorities" />
-            )}
-          </div>
-        </section>
+            </div>
+          </section>
 
-        <section className="border-t border-slate-200 bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-[1440px]">
-            <Link
-              href="/about/governance"
-              className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-primary"
-            >
-              View governance context
-              <ArrowRight aria-hidden className="h-4 w-4" />
-            </Link>
-          </div>
-        </section>
+          <section className="bg-white px-4 py-14 sm:px-6 lg:px-8">
+            <div className="mx-auto grid w-full max-w-none gap-8 lg:grid-cols-[360px_minmax(0,1fr)]">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+                  Strategic Plan Highlights
+                </p>
+                <h2 className="mt-3 text-3xl font-semibold text-slate-950">
+                  Priorities that shape quality review
+                </h2>
+                <p className="mt-4 text-sm leading-7 text-slate-600">
+                  These priorities are rendered from the university information
+                  record and remain empty until backend content is published.
+                </p>
+              </div>
+
+              {data.strategicPriorities.length ? (
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {data.strategicPriorities.map((priority, index) => (
+                    <StrategicHighlightCard
+                      key={priority.title}
+                      index={index + 1}
+                      title={priority.title}
+                      body={priority.body}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState label="Strategic priorities" />
+              )}
+            </div>
+          </section>
+
+          <section className="bg-primary px-4 py-14 text-white sm:px-6 lg:px-8">
+            <div className="mx-auto grid w-full max-w-none gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+                  Service Commitments
+                </p>
+                <h2 className="mt-3 text-3xl font-semibold">
+                  From charter to evidence
+                </h2>
+                <p className="mt-4 text-sm leading-7 text-white/78">
+                  The page connects the service charter summary, official
+                  backend documents, and strategic priorities into one public
+                  accountability view.
+                </p>
+              </div>
+              <div className="grid gap-3">
+                {commitmentSteps.map((step, index) => (
+                  <ServiceCommitmentStep
+                    key={step.title}
+                    index={index + 1}
+                    title={step.title}
+                    body={step.body}
+                  />
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="border-t border-slate-200 bg-white px-4 py-12 sm:px-6 lg:px-8">
+            <div className="mx-auto grid w-full max-w-none gap-8 lg:grid-cols-[360px_minmax(0,1fr)]">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+                  Official References
+                </p>
+                <h2 className="mt-3 text-3xl font-semibold text-slate-950">
+                  Backend-published downloads
+                </h2>
+                <Link
+                  href="/about/governance"
+                  className="mt-6 inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-primary"
+                >
+                  View governance context
+                  <ArrowRight aria-hidden className="h-4 w-4" />
+                </Link>
+              </div>
+
+              {data.documents.length ? (
+                <DocumentList documents={data.documents} />
+              ) : (
+                <EmptyState label="Official quality assurance references" />
+              )}
+            </div>
+          </section>
+        </main>
       </AboutPageLenis>
     </PageShell>
   );
 }
 
-function DocumentList({
+function MetricCard({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.06] p-4">
+      <p className="text-3xl font-semibold leading-none">{value}</p>
+      <p className="mt-2 text-xs font-medium text-white/65">{label}</p>
+    </div>
+  );
+}
+
+function QualityResourceCard({
+  title,
+  kicker,
+  body,
+  icon: Icon,
   documents,
+  emptyLabel,
 }: {
-  documents: Array<{
-    id: string;
-    title: string;
-    description?: string | null;
-    file_id: string;
-  }>;
+  title: string;
+  kicker: string;
+  body: string;
+  icon: LucideIcon;
+  documents: ResourceDocument[];
+  emptyLabel: string;
 }) {
   return (
-    <div className="mt-4 grid gap-2">
+    <article className="flex min-h-[360px] flex-col rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between gap-4">
+        <div className="rounded-lg bg-primary/10 p-3 text-primary">
+          <Icon aria-hidden className="h-5 w-5" />
+        </div>
+        <span className="text-xs font-bold uppercase tracking-[0.12em] text-secondary">
+          {kicker}
+        </span>
+      </div>
+      <h2 className="mt-5 text-2xl font-semibold text-slate-950">{title}</h2>
+      <p className="mt-3 text-sm leading-7 text-slate-600">{body}</p>
+      <div className="mt-auto pt-6">
+        {documents.length ? (
+          <DocumentList documents={documents} compact />
+        ) : (
+          <EmptyState label={emptyLabel} />
+        )}
+      </div>
+    </article>
+  );
+}
+
+function StrategicHighlightCard({
+  index,
+  title,
+  body,
+}: {
+  index: number;
+  title: string;
+  body: string;
+}) {
+  return (
+    <article className="rounded-lg border border-slate-200 bg-slate-50 p-5">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-sm font-bold text-slate-950">
+        {String(index).padStart(2, "0")}
+      </div>
+      <h3 className="mt-5 text-base font-bold text-slate-950">{title}</h3>
+      <p className="mt-3 text-sm leading-7 text-slate-600">{body}</p>
+    </article>
+  );
+}
+
+function ServiceCommitmentStep({
+  index,
+  title,
+  body,
+}: {
+  index: number;
+  title: string;
+  body: string;
+}) {
+  return (
+    <article className="grid gap-4 rounded-lg border border-white/15 bg-white/[0.08] p-5 backdrop-blur sm:grid-cols-[64px_minmax(0,1fr)]">
+      <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-secondary text-base font-bold text-slate-950">
+        {index}
+      </div>
+      <div>
+        <h3 className="text-base font-bold text-white">{title}</h3>
+        <p className="mt-2 text-sm leading-7 text-white/76">{body}</p>
+      </div>
+    </article>
+  );
+}
+
+function DocumentList({
+  documents,
+  compact = false,
+}: {
+  documents: ResourceDocument[];
+  compact?: boolean;
+}) {
+  return (
+    <div className={compact ? "grid gap-2" : "grid gap-3 md:grid-cols-2"}>
       {documents.map((document) => {
         const href = publicFileUrl(document.file_id);
+        const body = document.description ?? document.document_type ?? document.category;
+        const className =
+          "group rounded-lg border border-slate-200 bg-white px-4 py-3 transition hover:border-primary/35 hover:shadow-sm";
+
         return href ? (
-          <a
-            key={document.id}
-            href={href}
-            className="rounded-md border border-slate-200 px-3 py-2 transition hover:border-primary/30"
-          >
-            <span className="block text-sm font-semibold text-slate-950">
-              {document.title}
-            </span>
-            {document.description ? (
-              <span className="mt-1 block text-xs leading-5 text-slate-600">
-                {document.description}
+          <a key={document.id} href={href} className={className}>
+            <span className="flex items-start justify-between gap-3">
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-slate-950">
+                  {document.title}
+                </span>
+                {body ? (
+                  <span className="mt-1 block text-xs leading-5 text-slate-600">
+                    {body}
+                  </span>
+                ) : null}
               </span>
-            ) : null}
+              <Download
+                aria-hidden
+                className="mt-0.5 h-4 w-4 shrink-0 text-primary transition group-hover:translate-y-0.5"
+              />
+            </span>
           </a>
         ) : (
-          <div
-            key={document.id}
-            className="rounded-md border border-slate-200 px-3 py-2"
-          >
-            <span className="block text-sm font-semibold text-slate-950">
-              {document.title}
+          <div key={document.id} className={className}>
+            <span className="flex items-start gap-3">
+              <Sparkles
+                aria-hidden
+                className="mt-0.5 h-4 w-4 shrink-0 text-secondary"
+              />
+              <span>
+                <span className="block text-sm font-semibold text-slate-950">
+                  {document.title}
+                </span>
+                {body ? (
+                  <span className="mt-1 block text-xs leading-5 text-slate-600">
+                    {body}
+                  </span>
+                ) : null}
+              </span>
             </span>
           </div>
         );

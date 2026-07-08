@@ -406,7 +406,11 @@ export async function getGovernanceData(): Promise<GovernancePageData> {
     }),
   ]);
   const boards =
-    boardsResponse.status === "fulfilled" ? boardsResponse.value.data ?? [] : [];
+    boardsResponse.status === "fulfilled"
+      ? (boardsResponse.value.data ?? []).filter(
+          (board) => board.is_public !== false && board.is_active !== false,
+        )
+      : [];
 
   if (boardsResponse.status === "rejected") {
     console.error("Failed to fetch governance boards:", boardsResponse.reason);
@@ -429,6 +433,12 @@ export async function getGovernanceBoard(slug: string) {
       governanceApi.getBoardBySlug(slug, { fields: boardFields }),
       getBoardMembers(slug),
     ]);
+    if (
+      boardResponse.data.is_public === false ||
+      boardResponse.data.is_active === false
+    ) {
+      return null;
+    }
     return { ...boardResponse.data, members };
   } catch (error) {
     if (!isNotFoundError(error)) {

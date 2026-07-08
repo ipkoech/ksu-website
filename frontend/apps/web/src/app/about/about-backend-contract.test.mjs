@@ -68,6 +68,37 @@ test("about us page follows the compact handbook-backed layout", () => {
   assert.doesNotMatch(aboutSource, /Cover image has not been published/);
 });
 
+test("about pages use full-width design sections instead of centered card pages", () => {
+  for (const source of [
+    historySource,
+    governanceSource,
+    managementSource,
+    qualitySource,
+  ]) {
+    assert.match(source, /max-w-none/);
+    assert.doesNotMatch(source, /max-w-\[1440px\]/);
+  }
+});
+
+test("about subpages expose strategic-plan guided page-specific layouts", () => {
+  assert.match(historySource, /HistoryTimeline/);
+  assert.match(historySource, /AtAGlancePanel/);
+  assert.match(historySource, /about-history-hero-branded\.webp/);
+
+  assert.match(governanceSource, /GovernanceMandateCard/);
+  assert.match(governanceSource, /CouncilPreviewTable/);
+  assert.match(governanceSource, /MessagePanel/);
+
+  assert.match(managementSource, /ManagementMetric/);
+  assert.match(managementSource, /LeadershipDirectoryTable/);
+  assert.match(managementSource, /ManagementLegend/);
+
+  assert.match(qualitySource, /QualityResourceCard/);
+  assert.match(qualitySource, /StrategicHighlightCard/);
+  assert.match(qualitySource, /ServiceCommitmentStep/);
+  assert.match(qualitySource, /about-quality-assurance-branded\.webp/);
+});
+
 test("university seed uses revised handbook institutional statements", () => {
   const seedSource = readFileSync(
     new URL("../../../../../../services/main/app/seeders/seed_university_info.py", import.meta.url),
@@ -79,6 +110,8 @@ test("university seed uses revised handbook institutional statements", () => {
   );
 
   assert.match(seedSource, /World Class University in the advancement of academic excellence/);
+  assert.match(seedSource, /premier public institution of higher learning in Kenya/);
+  assert.match(seedSource, /undergraduate, postgraduate, and doctoral programmes/);
   assert.match(seedSource, /HANDBOOK_INSTITUTIONAL_FACTS\["mission"\]/);
   assert.match(handbookSource, /training high level human resource/);
   assert.match(seedSource, /Integrity; Diligence; Hard work; Professionalism/);

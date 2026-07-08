@@ -1,24 +1,22 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, Building2, Mail, Phone, Users } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  Circle,
+  Mail,
+  Network,
+  Phone,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import { GovernanceChart } from "@/components/about/GovernanceChart";
 import { PublicImage } from "@/components/public/public-image";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import { getManagementData } from "@/lib/about-data";
 import type { BoardMember } from "@/components/about/BoardMemberGrid";
-
-function leaderMembers(data: Awaited<ReturnType<typeof getManagementData>>) {
-  if (data.managementBoard?.members.length) return data.managementBoard.members;
-
-  return data.leaders.map(
-    (leader): BoardMember => ({
-      name: leader.name,
-      role: leader.role,
-      photoUrl: leader.photoUrl,
-      note: leader.summary,
-    }),
-  );
-}
+import type { LeaderCardData } from "@/components/about/LeaderCard";
 
 function EmptyState({ label }: { label: string }) {
   return (
@@ -28,16 +26,169 @@ function EmptyState({ label }: { label: string }) {
   );
 }
 
+function ManagementMetric({
+  label,
+  value,
+  detail,
+  icon,
+}: {
+  label: string;
+  value: string | number;
+  detail: string;
+  icon: ReactNode;
+}) {
+  return (
+    <div className="border-b border-slate-200 bg-white px-4 py-5 sm:px-6 lg:border-b-0 lg:border-r lg:px-8">
+      <div className="flex items-start gap-4">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+          {icon}
+        </span>
+        <div>
+          <p className="text-3xl font-semibold leading-none text-slate-950">
+            {value}
+          </p>
+          <p className="mt-2 text-xs font-bold uppercase tracking-[0.12em] text-secondary">
+            {label}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ManagementLegend({
+  managementMembers,
+  senateMembers,
+}: {
+  managementMembers: BoardMember[];
+  senateMembers: BoardMember[];
+}) {
+  const items = [
+    {
+      label: "Vice Chancellor",
+      description: "Executive lead for institutional implementation.",
+      swatch: "bg-slate-950",
+    },
+    {
+      label: "Management Board",
+      description: `${managementMembers.length} published management assignment${
+        managementMembers.length === 1 ? "" : "s"
+      }.`,
+      swatch: "bg-primary",
+    },
+    {
+      label: "Senate",
+      description: `${senateMembers.length} published senate assignment${
+        senateMembers.length === 1 ? "" : "s"
+      }.`,
+      swatch: "bg-secondary",
+    },
+  ];
+
+  return (
+    <aside className="border-t border-slate-200 bg-white px-4 py-6 sm:px-6 lg:border-l lg:border-t-0 lg:px-8">
+      <div className="flex items-center gap-3">
+        <Circle aria-hidden className="h-4 w-4 fill-primary text-primary" />
+        <h2 className="text-lg font-semibold text-slate-950">Chart legend</h2>
+      </div>
+      <div className="mt-5 grid gap-4">
+        {items.map((item) => (
+          <div key={item.label} className="flex gap-3">
+            <span
+              className={`mt-1 h-3 w-3 shrink-0 rounded-full ${item.swatch}`}
+            />
+            <div>
+              <p className="text-sm font-semibold text-slate-950">
+                {item.label}
+              </p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                {item.description}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
+function LeadershipDirectoryTable({ leaders }: { leaders: LeaderCardData[] }) {
+  if (!leaders.length) {
+    return <EmptyState label="Leadership profiles" />;
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[760px] text-left text-sm">
+        <thead className="bg-slate-950 text-xs uppercase tracking-[0.08em] text-white/70">
+          <tr>
+            <th className="px-4 py-4 font-semibold">Leader</th>
+            <th className="px-4 py-4 font-semibold">Role</th>
+            <th className="px-4 py-4 font-semibold">Contact</th>
+            <th className="px-4 py-4 font-semibold">Profile</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100 bg-white">
+          {leaders.map((leader) => (
+            <tr key={leader.slug} className="align-top">
+              <td className="px-4 py-4">
+                <p className="font-semibold text-slate-950">{leader.name}</p>
+                {leader.credentials ? (
+                  <p className="mt-1 text-xs text-slate-500">
+                    {leader.credentials}
+                  </p>
+                ) : null}
+              </td>
+              <td className="px-4 py-4 text-slate-600">{leader.role}</td>
+              <td className="px-4 py-4 text-slate-600">
+                <div className="grid gap-1">
+                  {leader.email ? (
+                    <a
+                      href={`mailto:${leader.email}`}
+                      className="font-medium text-primary"
+                    >
+                      {leader.email}
+                    </a>
+                  ) : null}
+                  {leader.phone ? <span>{leader.phone}</span> : null}
+                  {!leader.email && !leader.phone ? (
+                    <span>Not published</span>
+                  ) : null}
+                </div>
+              </td>
+              <td className="px-4 py-4">
+                <Link
+                  href={`/about/university-management/${leader.slug}`}
+                  className="inline-flex min-h-9 items-center gap-2 font-semibold text-primary"
+                >
+                  Open
+                  <ArrowRight aria-hidden className="h-4 w-4" />
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default async function UniversityManagementPage() {
   const data = await getManagementData();
-  const members = leaderMembers(data);
+  const managementMembers = data.managementBoard?.members ?? [];
+  const senateMembers = data.senate?.members ?? [];
   const featured = data.featuredLeader;
+  const boardDescription =
+    data.managementBoard?.description ??
+    data.managementBoard?.mandate ??
+    "Management structure from public leadership records.";
 
   return (
     <PageShell>
       <AboutPageLenis>
-        <section className="border-b border-slate-200 bg-white px-4 py-8 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-[1440px]">
+        <section className="border-b border-slate-200 bg-slate-950 text-white">
+          <div className="max-w-none px-4 py-8 sm:px-6 lg:px-8">
             <BreadcrumbTrail
               items={[
                 { label: "Home", href: "/" },
@@ -46,79 +197,111 @@ export default async function UniversityManagementPage() {
               ]}
             />
 
-            <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-              <article className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-secondary">
-                  Management
+            <div className="grid gap-8 py-10 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-end lg:py-14">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+                  University Management
                 </p>
-                <h1 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950 sm:text-4xl">
-                  Executive leadership and management board
+                <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-white sm:text-5xl">
+                  Executive leadership and management structure
                 </h1>
-                <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-700">
-                  Management information is rendered from the published
-                  management-board record, public member assignments, and public
-                  person profiles with institutional roles.
+                <p className="mt-5 max-w-3xl text-base leading-8 text-white/70">
+                  This page is rendered from the published management board,
+                  senate assignments, and public institutional leadership
+                  profiles.
                 </p>
-              </article>
+              </div>
 
-              <aside className="rounded-lg border border-slate-200 bg-slate-950 p-5 text-white shadow-sm">
-                <Building2 aria-hidden className="h-5 w-5 text-secondary" />
-                <p className="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-white/55">
-                  Published Leadership
-                </p>
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <div className="rounded-md border border-white/10 bg-white/[0.04] p-3">
-                    <p className="text-2xl font-semibold leading-none">
-                      {members.length}
+              <aside className="rounded-lg border border-white/10 bg-white/[0.06] p-5 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-md bg-secondary/15 text-secondary">
+                    <ShieldCheck aria-hidden className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-white/55">
+                      Featured Leader
                     </p>
-                    <p className="mt-1 text-xs text-white/60">Chart nodes</p>
-                  </div>
-                  <div className="rounded-md border border-white/10 bg-white/[0.04] p-3">
-                    <p className="text-2xl font-semibold leading-none">
-                      {data.leaders.length}
+                    <p className="mt-1 text-lg font-semibold text-white">
+                      {featured?.name ?? "Not published"}
                     </p>
-                    <p className="mt-1 text-xs text-white/60">Profiles</p>
                   </div>
                 </div>
+                {featured ? (
+                  <p className="mt-4 text-sm leading-6 text-white/65">
+                    {featured.role}
+                  </p>
+                ) : (
+                  <p className="mt-4 text-sm leading-6 text-white/65">
+                    Vice Chancellor profile has not been published yet.
+                  </p>
+                )}
               </aside>
             </div>
           </div>
         </section>
 
-        <section className="bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
-          <div className="mx-auto grid max-w-[1440px] gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
-            <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-28 xl:self-start">
-              <Users aria-hidden className="h-5 w-5 text-primary" />
-              <h2 className="mt-3 text-xl font-semibold text-slate-950">
+        <section className="bg-white">
+          <div className="grid max-w-none lg:grid-cols-4">
+            <ManagementMetric
+              label="Leadership profiles"
+              value={data.leaders.length}
+              detail="Public persons with institutional roles."
+              icon={<Users aria-hidden className="h-5 w-5" />}
+            />
+            <ManagementMetric
+              label="Management assignments"
+              value={managementMembers.length}
+              detail="Published management board member assignments."
+              icon={<Building2 aria-hidden className="h-5 w-5" />}
+            />
+            <ManagementMetric
+              label="Senate assignments"
+              value={senateMembers.length}
+              detail="Published senate member assignments included in the chart."
+              icon={<Network aria-hidden className="h-5 w-5" />}
+            />
+            <ManagementMetric
+              label="Management record"
+              value={data.managementBoard ? "Live" : "Pending"}
+              detail="Status reflects the public management board source."
+              icon={<ShieldCheck aria-hidden className="h-5 w-5" />}
+            />
+          </div>
+        </section>
+
+        <section className="bg-slate-50">
+          <div className="grid max-w-none lg:grid-cols-[420px_minmax(0,1fr)]">
+            <aside className="border-b border-slate-200 bg-white px-4 py-8 sm:px-6 lg:border-b-0 lg:border-r lg:px-8">
+              <h2 className="text-2xl font-semibold text-slate-950">
                 Vice Chancellor
               </h2>
               {featured ? (
-                <div className="mt-4">
+                <div className="mt-5">
                   {featured.photoUrl ? (
                     <PublicImage
                       src={featured.photoUrl}
                       alt={featured.name}
                       ratio="profile"
-                      sizes="320px"
-                      className="rounded-md"
+                      sizes="360px"
+                      className="rounded-lg"
                     />
                   ) : null}
-                  <h3 className="mt-4 text-lg font-semibold text-slate-950">
+                  <h3 className="mt-5 text-xl font-semibold text-slate-950">
                     {featured.name}
                   </h3>
-                  <p className="mt-1 text-sm font-semibold text-primary">
+                  <p className="mt-2 text-sm font-semibold text-primary">
                     {featured.role}
                   </p>
                   {featured.summary ? (
-                    <p className="mt-3 text-sm leading-6 text-slate-600">
+                    <p className="mt-4 text-sm leading-7 text-slate-600">
                       {featured.summary}
                     </p>
                   ) : null}
-                  <div className="mt-4 grid gap-2">
+                  <div className="mt-5 grid gap-2">
                     {featured.email ? (
                       <a
                         href={`mailto:${featured.email}`}
-                        className="inline-flex min-h-10 items-center gap-2 text-sm text-slate-700"
+                        className="inline-flex min-h-10 items-center gap-2 text-sm font-medium text-slate-700"
                       >
                         <Mail aria-hidden className="h-4 w-4 text-primary" />
                         {featured.email}
@@ -127,7 +310,7 @@ export default async function UniversityManagementPage() {
                     {featured.phone ? (
                       <a
                         href={`tel:${featured.phone}`}
-                        className="inline-flex min-h-10 items-center gap-2 text-sm text-slate-700"
+                        className="inline-flex min-h-10 items-center gap-2 text-sm font-medium text-slate-700"
                       >
                         <Phone aria-hidden className="h-4 w-4 text-primary" />
                         {featured.phone}
@@ -136,86 +319,76 @@ export default async function UniversityManagementPage() {
                   </div>
                   <Link
                     href={`/about/university-management/${featured.slug}`}
-                    className="mt-4 inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-primary"
+                    className="mt-5 inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-primary"
                   >
                     Open profile
                     <ArrowRight aria-hidden className="h-4 w-4" />
                   </Link>
                 </div>
               ) : (
-                <EmptyState label="Vice Chancellor profile" />
+                <div className="mt-5">
+                  <EmptyState label="Vice Chancellor profile" />
+                </div>
               )}
             </aside>
 
-            <div className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              {members.length ? (
+            <div className="min-w-0 px-4 py-8 sm:px-6 lg:px-8">
+              <div className="mb-6">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-secondary">
+                  Structure
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold text-slate-950">
+                  Management structure and academic authority
+                </h2>
+                <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+                  {boardDescription}
+                </p>
+              </div>
+              <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
                 <GovernanceChart
                   managementOnly
                   title="Management structure"
-                  description={
-                    data.managementBoard?.description ??
-                    data.managementBoard?.mandate ??
-                    "Management structure from public leadership records."
-                  }
+                  description={boardDescription}
                   managementDescription={
                     data.managementBoard?.description ??
                     data.managementBoard?.mandate
                   }
-                  senateDescription={data.senate?.description ?? data.senate?.mandate}
-                  managementMembers={members}
-                  senateMembers={data.senate?.members ?? []}
+                  senateDescription={
+                    data.senate?.description ?? data.senate?.mandate
+                  }
+                  managementMembers={managementMembers}
+                  senateMembers={senateMembers}
                 />
-              ) : (
-                <EmptyState label="Management board members" />
-              )}
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="bg-white px-4 py-8 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-[1440px]">
-            <h2 className="text-xl font-semibold text-slate-950">
-              Leadership directory
-            </h2>
-            <div className="mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-              {data.leaders.length ? (
-                <table className="w-full min-w-[720px] text-left text-sm">
-                  <thead className="bg-slate-50 text-xs uppercase tracking-[0.08em] text-slate-500">
-                    <tr>
-                      <th className="px-4 py-3">Name</th>
-                      <th className="px-4 py-3">Role</th>
-                      <th className="px-4 py-3">Contact</th>
-                      <th className="px-4 py-3">Profile</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {data.leaders.map((leader) => (
-                      <tr key={leader.slug}>
-                        <td className="px-4 py-3 font-semibold text-slate-950">
-                          {leader.name}
-                        </td>
-                        <td className="px-4 py-3 text-slate-600">
-                          {leader.role}
-                        </td>
-                        <td className="px-4 py-3 text-slate-600">
-                          {leader.email ?? "Not published"}
-                        </td>
-                        <td className="px-4 py-3">
-                          <Link
-                            href={`/about/university-management/${leader.slug}`}
-                            className="font-semibold text-primary"
-                          >
-                            Open
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <EmptyState label="Leadership profiles" />
-              )}
+        <section className="bg-white">
+          <div className="grid max-w-none lg:grid-cols-[minmax(0,1fr)_360px]">
+            <div className="min-w-0 px-4 py-8 sm:px-6 lg:px-8">
+              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-secondary">
+                    Directory
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold text-slate-950">
+                    Leadership directory
+                  </h2>
+                </div>
+                <p className="max-w-2xl text-sm leading-7 text-slate-600">
+                  Public leadership profiles come from active person records
+                  with institutional roles.
+                </p>
+              </div>
+              <div className="overflow-hidden rounded-lg border border-slate-200 shadow-sm">
+                <LeadershipDirectoryTable leaders={data.leaders} />
+              </div>
             </div>
+            <ManagementLegend
+              managementMembers={managementMembers}
+              senateMembers={senateMembers}
+            />
           </div>
         </section>
       </AboutPageLenis>

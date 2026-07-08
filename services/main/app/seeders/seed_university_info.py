@@ -41,11 +41,13 @@ async def seed_university_info(db: AsyncSession, ctx: SeedContext) -> None:
         slug="kisii-university",
         motto=None,
         overview=(
-            "Kisii University is a public chartered institution of higher learning that provides holistic "
-            "and value based education, training, research and extension services. Its institutional story "
-            "began in 1965 as a Primary Teachers Training College on 61 acres donated by the County Council "
-            "of Gusii, later becoming an Egerton University campus, a constituent college, and then a chartered "
-            "public university."
+            "Kisii University is a premier public institution of higher learning in Kenya, dedicated to "
+            "advancing academic excellence, research, innovation, and community service. Established to "
+            "provide accessible and transformative education, the university offers undergraduate, postgraduate, and doctoral programmes "
+            "across diverse fields including science, technology, "
+            "business, education, agriculture, law, and health sciences. Located in Kisii County, the "
+            "university provides a dynamic campus environment for teaching, research, professional training, "
+            "strategic partnerships, and community engagement."
         ),
         vision=(
             "To be a World Class University in the advancement of academic excellence, research, innovation, "
