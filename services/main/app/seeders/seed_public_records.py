@@ -19,6 +19,16 @@ from .live_site_snapshot import LIVE_SITE_DOCUMENTS
 
 EAT = ZoneInfo("Africa/Nairobi")
 PUBLIC_SOURCE = "https://kisiiuniversity.ac.ke"
+SEO_DESCRIPTION_MAX_LENGTH = 500
+
+
+def _seo_description(value: object) -> str | None:
+    if value is None:
+        return None
+    description = str(value).strip()
+    if len(description) <= SEO_DESCRIPTION_MAX_LENGTH:
+        return description
+    return description[:SEO_DESCRIPTION_MAX_LENGTH].rstrip()
 
 
 DOWNLOAD_SPECS = [
@@ -834,7 +844,7 @@ async def _upsert_announcement(db: AsyncSession, spec: dict[str, object]) -> Non
         "featured_media_id": None,
         "author_user_id": None,
         "meta_title": spec["title"],
-        "meta_description": spec["summary"],
+        "meta_description": _seo_description(spec["summary"]),
         "keywords": {"tags": ["kisii university", str(spec["category"]).lower()]},
         "scope_type": "university",
         "scope_id": None,

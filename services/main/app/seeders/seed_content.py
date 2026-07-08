@@ -20,6 +20,16 @@ from .live_site_snapshot import LIVE_SITE_BLOG_ITEMS, LIVE_SITE_EVENT_ITEMS, LIV
 
 EAT = ZoneInfo("Africa/Nairobi")
 ASSET_ROOT = Path(__file__).resolve().parent / "assets" / "content"
+SEO_DESCRIPTION_MAX_LENGTH = 500
+
+
+def _seo_description(value: object) -> str | None:
+    if value is None:
+        return None
+    description = str(value).strip()
+    if len(description) <= SEO_DESCRIPTION_MAX_LENGTH:
+        return description
+    return description[:SEO_DESCRIPTION_MAX_LENGTH].rstrip()
 
 
 NEWS_ITEMS = [
@@ -440,7 +450,7 @@ async def _upsert_news(db: AsyncSession, spec: dict[str, object], media: Media) 
         "featured_media_id": media.id,
         "author_user_id": None,
         "meta_title": spec["title"],
-        "meta_description": spec["summary"],
+        "meta_description": _seo_description(spec["summary"]),
         "keywords": {"tags": ["kisii university", "news", "public website"]},
         "scope_type": "university",
         "scope_id": None,
@@ -482,7 +492,7 @@ async def _upsert_blog(db: AsyncSession, spec: dict[str, object], media: Media) 
         "featured_media_id": media.id,
         "author_user_id": None,
         "meta_title": spec["title"],
-        "meta_description": spec["summary"],
+        "meta_description": _seo_description(spec["summary"]),
         "keywords": {"tags": ["kisii university", "blog", "research", "innovation"]},
         "scope_type": "university",
         "scope_id": None,
@@ -529,7 +539,7 @@ async def _upsert_event(db: AsyncSession, spec: dict[str, object], media: Media)
         "author_user_id": None,
         "related_links": spec.get("related_links") or [{"label": "Official Kisii University source", "url": spec["source_url"]}],
         "meta_title": spec["title"],
-        "meta_description": spec["summary"],
+        "meta_description": _seo_description(spec["summary"]),
         "keywords": {"tags": ["kisii university", "event", "public website"]},
         "scope_type": "university",
         "scope_id": None,

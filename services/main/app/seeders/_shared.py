@@ -866,14 +866,33 @@ async def upsert_department_service(session: AsyncSession, department: Departmen
 
 
 async def upsert_staff_assignment(session: AsyncSession, ctx: SeedContext, key: str, **payload: Any) -> StaffAssignment:
-    assignment = await fetch_one(
-        session,
-        StaffAssignment,
-        person_id=payload["person_id"],
-        entity_type=payload["entity_type"],
-        entity_id=payload.get("entity_id"),
-        role=payload["role"],
+    constrained_active_role = (
+        payload.get("status") == "active"
+        and payload.get("entity_id") is not None
+        and (
+            (payload["entity_type"] == "school" and payload["role"] == "dean")
+            or (payload["entity_type"] == "department" and payload["role"] in {"hod", "cod", "head"})
+        )
     )
+    assignment = None
+    if constrained_active_role:
+        assignment = await fetch_one(
+            session,
+            StaffAssignment,
+            entity_type=payload["entity_type"],
+            entity_id=payload.get("entity_id"),
+            role=payload["role"],
+            status="active",
+        )
+    if assignment is None:
+        assignment = await fetch_one(
+            session,
+            StaffAssignment,
+            person_id=payload["person_id"],
+            entity_type=payload["entity_type"],
+            entity_id=payload.get("entity_id"),
+            role=payload["role"],
+        )
     if assignment is None:
         assignment = StaffAssignment(id=uuid.uuid4(), **payload)
         session.add(assignment)

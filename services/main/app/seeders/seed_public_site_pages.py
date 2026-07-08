@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import uuid
 
 from sqlalchemy import select
@@ -11,6 +12,26 @@ from app.models import PublicSitePage
 
 from ._shared import SeedContext
 from .live_site_snapshot import LIVE_SITE_PAGES
+
+
+TITLE_MAX_LENGTH = 255
+SLUG_MAX_LENGTH = 255
+
+
+def _bounded_text(value: object, max_length: int) -> str:
+    text = str(value).strip()
+    if len(text) <= max_length:
+        return text
+    return text[:max_length].rstrip()
+
+
+def _bounded_slug(value: object, source_url: object) -> str:
+    slug = str(value).strip()
+    if len(slug) <= SLUG_MAX_LENGTH:
+        return slug
+    digest = hashlib.sha1(str(source_url).encode("utf-8")).hexdigest()[:12]
+    suffix = f"-{digest}"
+    return f"{slug[: SLUG_MAX_LENGTH - len(suffix)].rstrip('-')}{suffix}"
 
 
 async def seed_public_site_pages(db: AsyncSession, ctx: SeedContext) -> None:
@@ -23,8 +44,8 @@ async def seed_public_site_pages(db: AsyncSession, ctx: SeedContext) -> None:
             await db.execute(select(PublicSitePage).where(PublicSitePage.source_url == spec["source_url"]))
         ).scalar_one_or_none()
         payload = {
-            "title": spec["title"],
-            "slug": spec["slug"],
+            "title": _bounded_text(spec["title"], TITLE_MAX_LENGTH),
+            "slug": _bounded_slug(spec["slug"], spec["source_url"]),
             "path": spec["path"],
             "page_type": spec["page_type"],
             "summary": spec.get("summary"),
