@@ -272,8 +272,126 @@ HANDBOOK_SCHOOL_FACTS = {
     },
 }
 
+HANDBOOK_DEPARTMENT_SEED_SPECS = {
+    "SANRM": (
+        {
+            "name": "Department of fisheries and aquatic sciences",
+            "code": "SANRM-FAS",
+            "about": "Handbook context: offers fisheries, limnology, aquaculture, and applied aquatic sciences programmes.",
+        },
+        {
+            "name": "Department of crops and soil sciences",
+            "code": "SANRM-CSS",
+            "about": "Handbook context: offers agronomy, sustainable agriculture, and agriculture programmes.",
+        },
+        {
+            "name": "Department of Environmental Science and Natural Resource Management",
+            "code": "SANRM-ESNRM",
+            "about": "Handbook context: covers natural resources, environmental science, and water resources management.",
+        },
+        {
+            "name": "Department of Agricultural Education and Extension",
+            "about": "Handbook context: covers agricultural education, agricultural extension, and rural development.",
+        },
+        {
+            "name": "Department of Animal Science",
+            "code": "SANRM-ANSCI",
+            "about": "Handbook context: covers livestock production systems, animal science, and animal health and production.",
+        },
+        {
+            "name": "Department of Agricultural and Resource Economics",
+            "code": "SANRM-ARE",
+            "about": "Handbook context: covers agricultural and applied economics, agribusiness management, and agricultural economics.",
+        },
+    ),
+    "SIST": (
+        {
+            "name": "Department of Media and Communication Studies",
+            "code": "SIST-MCS",
+            "about": "Handbook context: prepares learners in media, journalism, TV, radio, photo-journalism, new media, and graphic design.",
+        },
+        {
+            "name": "Department of Computing Science",
+            "about": "Handbook context: trains well-rounded IT individuals for innovation and development in the digital space.",
+        },
+        {
+            "name": "Department of Library and Information Science",
+            "code": "SIST-LIS",
+            "about": "Handbook context: focuses on knowledge organization, archives, digital library, access, retrieval, storage, and dissemination.",
+        },
+    ),
+    "SBE": (
+        {
+            "name": "Department of Accounting and Finance",
+            "about": "Handbook context: one of five departments in the oldest school in the university.",
+        },
+        {
+            "name": "Department of Business Administration",
+            "about": "Handbook context: one of five business and economics departments headed by Chairpersons of Department.",
+        },
+        {
+            "name": "Department of Human Resource and Strategic Management",
+            "about": "Handbook context: supports business, management, and human resource programmes.",
+        },
+        {
+            "name": "Department of Management Science",
+            "about": "Handbook context: supports management science and related business programmes.",
+        },
+        {
+            "name": "Department of Tourism and Hospitality Management",
+            "about": "Handbook context: supports tourism, hospitality, hotel, catering, and travel programmes.",
+        },
+    ),
+    "SASS": (
+        {
+            "name": "Department of Psychology",
+            "about": "Handbook context: responds to mental health service needs and prepares competent mental health workers.",
+        },
+        {
+            "name": "Department of Philosophy and Religious Studies",
+            "about": "Handbook context: prepares people to mitigate moral challenges in society through philosophical and religious studies.",
+        },
+        {
+            "name": "Department of Political Science & Peace Studies",
+            "about": "Handbook context: trains human resource for development needs, research, and advancement of humanity.",
+        },
+        {
+            "name": "Department of Languages, Linguistics, and Literature",
+            "about": "Handbook context: supports language, linguistics, literature, pedagogy, and research.",
+        },
+        {
+            "name": "Department of Postgraduate Studies",
+            "code": "SASS-PG",
+            "about": "Handbook context: listed among the School of Arts and Social Sciences departments.",
+        },
+    ),
+    "SOL": (
+        {
+            "name": "Department of Public Law",
+            "code": "SOL-PUB",
+            "about": "Handbook context: one of the four School of Law departments headed by a Chairperson of Department.",
+        },
+        {
+            "name": "Department of Private Law",
+            "code": "SOL-PRIV",
+            "about": "Handbook context: one of the four School of Law departments headed by a Chairperson of Department.",
+        },
+        {
+            "name": "Department of Commercial Law",
+            "code": "SOL-COM",
+            "about": "Handbook context: one of the four School of Law departments headed by a Chairperson of Department.",
+        },
+        {
+            "name": "Department of Research and Post-graduate Studies",
+            "code": "SOL-RPGS",
+            "about": "Handbook context: supports research and post-graduate studies in the School of Law.",
+        },
+    ),
+}
+
 
 __all__ = [
+    "HANDBOOK_DEPARTMENT_SEED_SPECS",
     "HANDBOOK_DIVISION_FACTS",
     "HANDBOOK_GOVERNANCE_FACTS",
     "HANDBOOK_INSTITUTIONAL_FACTS",

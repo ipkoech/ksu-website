@@ -197,6 +197,28 @@ class SeederDataTests(unittest.TestCase):
         self.assertIn("Public Law", schools_by_code["SOL"]["handbook_departments"])
         self.assertIn("Department of Tourism and Hospitality Management", schools_by_code["SBE"]["handbook_departments"])
 
+    def test_handbook_school_departments_are_seeded_as_departments(self):
+        schools_by_code = {spec["code"]: spec for spec in SCHOOL_SPECS}
+        departments_by_school = {
+            code: {department["name"]: department for department in spec["departments"]}
+            for code, spec in schools_by_code.items()
+        }
+
+        self.assertIn("Department of fisheries and aquatic sciences", departments_by_school["SANRM"])
+        self.assertIn("Department of crops and soil sciences", departments_by_school["SANRM"])
+        self.assertIn("Department of Environmental Science and Natural Resource Management", departments_by_school["SANRM"])
+        self.assertIn("Department of Agricultural and Resource Economics", departments_by_school["SANRM"])
+        self.assertIn("Department of Media and Communication Studies", departments_by_school["SIST"])
+        self.assertIn("Department of Library and Information Science", departments_by_school["SIST"])
+        self.assertIn("Department of Postgraduate Studies", departments_by_school["SASS"])
+        self.assertIn("Department of Public Law", departments_by_school["SOL"])
+        self.assertIn("Department of Private Law", departments_by_school["SOL"])
+        self.assertIn("Department of Commercial Law", departments_by_school["SOL"])
+        self.assertIn("Department of Research and Post-graduate Studies", departments_by_school["SOL"])
+
+        self.assertIn("Handbook context", departments_by_school["SANRM"]["Department of fisheries and aquatic sciences"]["about"])
+        self.assertIn("Handbook context", departments_by_school["SOL"]["Department of Public Law"]["about"])
+
     def test_admin_department_specs_are_unique(self):
         self.assertEqual([], duplicates(spec["code"] for spec in ADMIN_DEPARTMENTS))
         self.assertEqual([], duplicates(spec["name"] for spec in ADMIN_DEPARTMENTS))

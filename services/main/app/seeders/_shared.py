@@ -35,6 +35,7 @@ from app.models import (
 from app.schemas.base import slugify
 from app.helpers.password import hash_password
 from .seed_handbook import (
+    HANDBOOK_DEPARTMENT_SEED_SPECS,
     HANDBOOK_LIBRARY_FACTS,
     HANDBOOK_RESEARCH_FACTS,
     HANDBOOK_SCHOOL_FACTS,
@@ -510,6 +511,21 @@ for school_spec in SCHOOL_SPECS:
         school_spec["mandate"] = f"{school_spec['mandate']} Handbook research context: {handbook_fact['research_context']}."
     if handbook_fact.get("programmes"):
         school_spec["mandate"] = f"{school_spec['mandate']} Handbook programmes: {', '.join(handbook_fact['programmes'])}."
+    existing_departments = {department["name"]: department for department in school_spec["departments"]}
+    for department_fact in HANDBOOK_DEPARTMENT_SEED_SPECS.get(school_spec["code"], ()):
+        existing_department = existing_departments.get(department_fact["name"])
+        if existing_department:
+            existing_department["about"] = department_fact["about"]
+            existing_department["handbook_source_url"] = HANDBOOK_SOURCE["url"]
+            continue
+        school_spec["departments"].append(
+            {
+                "name": department_fact["name"],
+                "code": department_fact["code"],
+                "about": department_fact["about"],
+                "handbook_source_url": HANDBOOK_SOURCE["url"],
+            }
+        )
 
 
 ADMIN_DEPARTMENTS: list[dict[str, Any]] = [
