@@ -254,7 +254,7 @@ export default async function AboutPage() {
   const philosophy = getPhilosophy(overview);
   const coverImageUrl =
     publicFileUrl(overview?.cover_image_id) ??
-    "/images/about/about-overview-branded.webp";
+    "/images/backgrounds/about-hero.jpg";
   const title = overview?.name ? `About ${overview.name}` : "About Us";
   const paragraphs = splitParagraphs([
     overview?.overview,
