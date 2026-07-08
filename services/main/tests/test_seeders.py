@@ -11,6 +11,15 @@ from app.seeders.seed_content import LIVE_SITE_BLOG_ITEMS, LIVE_SITE_EVENT_ITEMS
 from app.seeders.live_site_snapshot import LIVE_SITE_DOCUMENTS, LIVE_SITE_PAGES
 from app.seeders.seed_cover_images import cover_targets_from_specs
 from app.seeders.seed_divisions import DIVISION_SPECS, WING_SPECS
+from app.seeders.seed_handbook import (
+    HANDBOOK_DIVISION_FACTS,
+    HANDBOOK_GOVERNANCE_FACTS,
+    HANDBOOK_LIBRARY_FACTS,
+    HANDBOOK_RESEARCH_FACTS,
+    HANDBOOK_SCHOOL_FACTS,
+    HANDBOOK_SECTIONS,
+    HANDBOOK_STUDENT_AFFAIRS_SERVICES,
+)
 from app.seeders.programme_catalogue import BROCHURE_PROGRAMMES
 from app.seeders.seed_portal_users import PORTAL_USER_SPECS
 from app.seeders.seed_programmes import programme_code
@@ -151,6 +160,40 @@ class SeederDataTests(unittest.TestCase):
         self.assertIn("13th Public University in Kenya", HANDBOOK_SOURCE_PHRASES)
         self.assertEqual(HANDBOOK_SOURCE["url"], handbook_download["url"])
         self.assertIn("Dean of Students", handbook_download["description"])
+
+    def test_handbook_constants_cover_full_document_sections(self):
+        self.assertGreaterEqual(len(HANDBOOK_SECTIONS), 20)
+        self.assertIn("HISTORY OF KISII UNIVERSITY", HANDBOOK_SECTIONS)
+        self.assertIn("MESSAGE FROM THE VICE CHANCELLOR", HANDBOOK_SECTIONS)
+        self.assertIn("GOVERNANCE AND ADMINISTRATIVE STRUCTURE OF THE UNIVERSITY", HANDBOOK_SECTIONS)
+        self.assertIn("BRIEF INFORMATION ON SCHOOLS IN THE UNIVERSITY", HANDBOOK_SECTIONS)
+        self.assertIn("UNIVERSITY EXAMINATION REGULATIONS", HANDBOOK_SECTIONS)
+
+        self.assertEqual("supreme governance organ", HANDBOOK_GOVERNANCE_FACTS["council"]["phrase"])
+        self.assertIn("Academic Affairs", HANDBOOK_DIVISION_FACTS["ARSA"]["units"])
+        self.assertIn("Inter-Library Loan", HANDBOOK_LIBRARY_FACTS["services"])
+        self.assertIn("University of Minnesota", HANDBOOK_RESEARCH_FACTS["partners"])
+        self.assertIn("Work-Study Program", HANDBOOK_STUDENT_AFFAIRS_SERVICES)
+        self.assertIn("Public Law", HANDBOOK_SCHOOL_FACTS["SOL"]["handbook_departments"])
+
+    def test_handbook_facts_are_mapped_to_existing_seeders(self):
+        divisions_by_code = {spec["code"]: spec for spec in DIVISION_SPECS}
+        departments_by_code = {spec["code"]: spec for spec in ADMIN_DEPARTMENTS}
+        service_slugs = {spec["slug"] for spec in ADMIN_SERVICE_SPECS}
+        schools_by_code = {spec["code"]: spec for spec in SCHOOL_SPECS}
+
+        self.assertIn("human and physical resources", divisions_by_code["APF"]["description"])
+        self.assertIn("Academic Affairs", divisions_by_code["ARSA"]["description"])
+        self.assertIn("provide quality information services", departments_by_code["LIB"]["about"])
+        self.assertIn("research, innovation and extension activities", departments_by_code["REIRM"]["mandate"])
+        self.assertIn("enabling environment", departments_by_code["STUAFFAIRS"]["about"])
+        self.assertIn("inter-library-loan", service_slugs)
+        self.assertIn("research-linkages-and-partnerships", service_slugs)
+        self.assertIn("work-study-program", service_slugs)
+        self.assertIn("student-accommodation", service_slugs)
+        self.assertEqual("sist@kisiiuniversity.ac.ke", schools_by_code["SIST"]["email"])
+        self.assertIn("Public Law", schools_by_code["SOL"]["handbook_departments"])
+        self.assertIn("Department of Tourism and Hospitality Management", schools_by_code["SBE"]["handbook_departments"])
 
     def test_admin_department_specs_are_unique(self):
         self.assertEqual([], duplicates(spec["code"] for spec in ADMIN_DEPARTMENTS))
@@ -402,9 +445,15 @@ class SeederDataTests(unittest.TestCase):
                 "student-welfare-and-support",
                 "student-clubs-and-campus-life-support",
                 "first-year-registration-and-orientation",
+                "services-to-students-with-disabilities",
                 "student-leadership-and-ksusa-support",
+                "work-study-program",
                 "student-loans-and-bursaries-coordination",
+                "leave-of-absence",
                 "counselling-and-chaplaincy-services",
+                "student-accommodation",
+                "kisii-university-students-association",
+                "student-organizations",
                 "student-handbook-and-cultural-integration",
                 "student-bereavement-support",
             },

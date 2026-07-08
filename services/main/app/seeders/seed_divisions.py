@@ -5,6 +5,7 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ._shared import LEADERSHIP_PEOPLE, SeedContext, get_or_create_person, upsert_division, upsert_wing
+from .seed_handbook import HANDBOOK_DIVISION_FACTS
 from app.schemas.base import slugify
 
 
@@ -21,7 +22,7 @@ DIVISION_SPECS = [
         "code": "APF",
         "division_type": "division",
         "head_key": "dvc_apf",
-        "description": "Parent division for administration, planning, finance, and support services.",
+        "description": HANDBOOK_DIVISION_FACTS["APF"]["description"],
         "source_url": "https://kisiiuniversity.ac.ke/admin_departments/administrative-division",
     },
     {
@@ -29,7 +30,7 @@ DIVISION_SPECS = [
         "code": "ARSA",
         "division_type": "division",
         "head_key": "dvc_arsa",
-        "description": "Parent division for academic affairs, research, and student-facing university functions.",
+        "description": HANDBOOK_DIVISION_FACTS["ARSA"]["description"],
         "source_url": "https://kisiiuniversity.ac.ke/admin_departments/academic-division",
     },
 ]
@@ -77,7 +78,12 @@ async def seed_divisions(db: AsyncSession, ctx: SeedContext) -> None:
             division_type=spec["division_type"],
             head_id=head.id,
             description=spec["description"],
-            settings={"source_url": spec["source_url"]} if spec.get("source_url") else None,
+            settings={
+                "source_url": spec["source_url"],
+                "handbook_units": list(HANDBOOK_DIVISION_FACTS.get(spec["code"], {}).get("units", ())),
+            }
+            if spec.get("source_url")
+            else None,
             is_public=True,
             is_active=True,
             display_order=10,
@@ -86,6 +92,8 @@ async def seed_divisions(db: AsyncSession, ctx: SeedContext) -> None:
     for division_code, name, code, wing_type, head_key in WING_SPECS:
         division = ctx.divisions[division_code]
         head = ctx.people[head_key] if head_key else None
+        handbook_units = HANDBOOK_DIVISION_FACTS.get(division_code, {}).get("units", ())
+        handbook_unit = next((unit for unit in handbook_units if name.lower().split(",", 1)[0] in unit.lower()), None)
         await upsert_wing(
             db,
             ctx,
@@ -95,7 +103,12 @@ async def seed_divisions(db: AsyncSession, ctx: SeedContext) -> None:
             code=code,
             wing_type=wing_type,
             head_id=head.id if head else None,
-            description=f"{name} wing under {division.name}.",
+            description=(
+                f"{name} wing under {division.name}. Handbook unit: {handbook_unit}."
+                if handbook_unit
+                else f"{name} wing under {division.name}."
+            ),
+            mandate=f"Handbook-backed unit under {division.name}." if handbook_unit else None,
             is_public=True,
             is_active=True,
             display_order=20,

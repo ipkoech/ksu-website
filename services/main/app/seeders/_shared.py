@@ -34,6 +34,13 @@ from app.models import (
 )
 from app.schemas.base import slugify
 from app.helpers.password import hash_password
+from .seed_handbook import (
+    HANDBOOK_LIBRARY_FACTS,
+    HANDBOOK_RESEARCH_FACTS,
+    HANDBOOK_SCHOOL_FACTS,
+    HANDBOOK_SOURCE,
+    HANDBOOK_STUDENT_AFFAIRS_FACTS,
+)
 
 
 LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
@@ -490,6 +497,21 @@ SCHOOL_SPECS: list[dict[str, Any]] = [
 ]
 
 
+for school_spec in SCHOOL_SPECS:
+    handbook_fact = HANDBOOK_SCHOOL_FACTS.get(school_spec["code"])
+    if not handbook_fact:
+        continue
+    school_spec["about"] = f"{school_spec['about']} Handbook context: {handbook_fact['about']}"
+    school_spec["handbook_departments"] = list(handbook_fact["handbook_departments"])
+    school_spec["handbook_source_url"] = HANDBOOK_SOURCE["url"]
+    if handbook_fact.get("email"):
+        school_spec["email"] = handbook_fact["email"]
+    if handbook_fact.get("research_context"):
+        school_spec["mandate"] = f"{school_spec['mandate']} Handbook research context: {handbook_fact['research_context']}."
+    if handbook_fact.get("programmes"):
+        school_spec["mandate"] = f"{school_spec['mandate']} Handbook programmes: {', '.join(handbook_fact['programmes'])}."
+
+
 ADMIN_DEPARTMENTS: list[dict[str, Any]] = [
     {"name": "Vice-Chancellor's Office", "code": "VCO", "wing_code": None, "head_key": "vice_chancellor", "about": "Executive office that provides strategic leadership and institutional coordination.", "is_public": False},
     {"name": "Registrar Academic Affairs", "code": "ACAFFAIRS", "wing_code": "RAA", "head_key": "registrar_academic", "about": "Registrar Academic Affairs is listed as an official administration department headed by the Acting Registrar Academic Affairs. Its current public page publishes academic-affairs navigation, team, news, events, and downloads sections, with no additional mandate text beyond the office listing.", "source_url": "https://kisiiuniversity.ac.ke/dpt/registrar-academic-affairs"},
@@ -514,6 +536,42 @@ ADMIN_DEPARTMENTS: list[dict[str, Any]] = [
     {"name": "Central Services", "code": "CENTRAL", "wing_code": "AHRCS", "head_key": None, "about": "Central Services is listed as an official administration department on the university website.", "source_url": "https://kisiiuniversity.ac.ke/dpt/central-services"},
     {"name": "Town Annexes", "code": "TOWNANNEX", "wing_code": "AHRCS", "head_key": None, "about": "Town Annexes is listed as an official administration department on the university website.", "source_url": "https://kisiiuniversity.ac.ke/dpt/town-annexes"},
 ]
+
+
+_admin_department_by_code = {department["code"]: department for department in ADMIN_DEPARTMENTS}
+_admin_department_by_code["LIB"]["about"] = (
+    "Official library support unit whose primary mission is to provide quality information services, "
+    "support teaching, learning, and research activities through print, electronic, reference, and "
+    "inter-library services."
+)
+_admin_department_by_code["LIB"]["mandate"] = (
+    "Support teaching, learning, and research through library membership, catalogue access, "
+    f"{', '.join(HANDBOOK_LIBRARY_FACTS['services'])}."
+)
+_admin_department_by_code["LIB"]["service_charter"] = (
+    "Semester hours: Monday to Friday 8.00 a.m. to 10.00 p.m.; Saturday 8.00 a.m. to 5.00 p.m.; "
+    "Sunday and Public Holidays closed."
+)
+_admin_department_by_code["REIRM"]["about"] = (
+    "Official research office responsible for research, innovation and extension activities, policy, "
+    "linkages, exhibitions, workshops, seminars, grants, and ethics review."
+)
+_admin_department_by_code["REIRM"]["mandate"] = (
+    f"Coordinates {HANDBOOK_RESEARCH_FACTS['mandate_phrase']}. {HANDBOOK_RESEARCH_FACTS['summary']} "
+    "Handbook partners include "
+    f"{', '.join(HANDBOOK_RESEARCH_FACTS['partners'])}."
+)
+_admin_department_by_code["STUAFFAIRS"]["about"] = (
+    "The Student Affairs Department develops, nurtures, and promotes an enabling environment that "
+    "supports academic and developmental pursuits of students."
+)
+_admin_department_by_code["STUAFFAIRS"]["mandate"] = (
+    f"{HANDBOOK_STUDENT_AFFAIRS_FACTS['mandate']} Statute services include "
+    f"{', '.join(HANDBOOK_STUDENT_AFFAIRS_FACTS['statute_services'])}. Operational services include "
+    "first-year registration and orientation, student leadership elections, KSUSA induction and budgeting, "
+    "cultural awareness and integration, student handbook review, clubs and societies, loans and bursaries, "
+    "student bereavement support, counselling, sports and games, and chaplaincy services."
+)
 
 
 ICT_SECTION_DEPARTMENTS: list[dict[str, Any]] = [

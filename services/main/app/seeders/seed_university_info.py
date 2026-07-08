@@ -5,21 +5,11 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ._shared import LEADERSHIP_PEOPLE, SeedContext, get_or_create_person, upsert_university_info
-
-HANDBOOK_SOURCE = {
-    "title": "Kisii University Student Handbook",
-    "edition": "4th edition",
-    "pages": 48,
-    "publisher": "Dean of Students' Office",
-    "publisher_email": "deanofstudents@kisiiuniversity.ac.ke",
-    "url": "https://kisiiuniversity.ac.ke/storage/public/downloads//Kisii%20University%20Revised%20Handbook%202019.pdf",
-}
-
-HANDBOOK_SOURCE_PHRASES = (
-    "public chartered institution of higher learning",
-    "13th Public University in Kenya",
-    "serene, picturesque and congenial environment",
-    "University of the 21st Century",
+from .seed_handbook import (
+    HANDBOOK_GOVERNANCE_FACTS,
+    HANDBOOK_SECTIONS,
+    HANDBOOK_SOURCE,
+    HANDBOOK_SOURCE_PHRASES,
 )
 
 
@@ -50,18 +40,23 @@ async def seed_university_info(db: AsyncSession, ctx: SeedContext) -> None:
         slug="kisii-university",
         motto=None,
         overview=(
-            "Kisii University is a public chartered institution of higher learning. Its institutional story "
+            "Kisii University is a public chartered institution of higher learning that provides holistic "
+            "and value based education, training, research and extension services. Its institutional story "
             "began in 1965 as a Primary Teachers Training College on 61 acres donated by the County Council "
             "of Gusii, later becoming an Egerton University campus, a constituent college, and then a chartered "
             "public university."
         ),
-        vision="An inclusive and borderless University that creates positive change in the world",
+        vision=(
+            "To be a World Class University in the advancement of academic excellence, research, innovation, "
+            "and enhancement of social welfare."
+        ),
         mission=(
-            "Creating a transformative environment that preserves knowledge, enriches the student experience, "
-            "delivers quality training and research, and promotes community engagement for sustainable development."
+            "To train high level human resource that meets the development needs of the country and the "
+            "international labour market while sustaining quality research, dissemination of knowledge, skills "
+            "and competencies for the advancement of humanity."
         ),
         core_values=(
-            "Transformative thinking; Respect; Inclusivity; Fairness."
+            "Integrity; Diligence; Hard work; Professionalism; Academic freedom; Civility; Social responsiveness; Accountability."
         ),
         founding_year=1965,
         institution_type="public_university",
@@ -111,9 +106,11 @@ async def seed_university_info(db: AsyncSession, ctx: SeedContext) -> None:
                 "charter_date": "6 February 2013",
                 "charter_rank_phrase": "13th Public University in Kenya",
             },
+            "handbook_sections": list(HANDBOOK_SECTIONS),
+            "governance": HANDBOOK_GOVERNANCE_FACTS,
         },
         strategic_priorities={
-            "philosophy": "Creative, scientific, technological, innovative, and critical thinking, responsive to societal needs and service to humanity.",
+            "philosophy": "World-class education in an atmosphere of academic freedom, civility, social responsiveness, integrity and accountability.",
             "mandate": [
                 "Produce competent and high-quality graduates.",
                 "Generate appropriate knowledge, skills, competencies, and innovation outputs impacting national development goals and social welfare.",
