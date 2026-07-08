@@ -9,7 +9,11 @@ const headerSource = readFileSync(
 const navDataSource = readFileSync(new URL("../lib/nav-data.ts", import.meta.url), "utf8");
 
 test("public header renders academics as schools and admissions columns", () => {
+  assert.match(headerSource, /const academicQuickLinks: NavItem\[\]/);
   assert.match(headerSource, /const admissionsLinks: NavItem\[\]/);
+  assert.match(headerSource, /label: "Programmes"/);
+  assert.match(headerSource, /label: "Academic Calendar"/);
+  assert.match(headerSource, /label: "Examinations"/);
   assert.match(headerSource, /group: "Admissions"/);
   assert.match(headerSource, /group: "Schools"/);
   assert.match(headerSource, /item\.label === "Academics"/);
@@ -17,9 +21,6 @@ test("public header renders academics as schools and admissions columns", () => 
   assert.doesNotMatch(headerSource, /const admissionsItem: NavItem/);
   assert.doesNotMatch(headerSource, /admissionsItem,\s*\n\s*academicsItem/);
   assert.doesNotMatch(headerSource, /label: "All Schools"/);
-  assert.doesNotMatch(headerSource, /href: "\/academics\/programmes"/);
-  assert.doesNotMatch(headerSource, /href: "\/academics\/calendar"/);
-  assert.doesNotMatch(headerSource, /href: "\/academics\/examinations"/);
 });
 
 test("public header administration groups divisions registrars and departments", () => {

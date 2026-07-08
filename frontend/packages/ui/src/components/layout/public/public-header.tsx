@@ -336,6 +336,16 @@ function buildNavigation(
         description: "Published institutional history",
       },
       {
+        label: "The Chancellor",
+        href: "/about/chancellor",
+        description: "Message and role of the Chancellor",
+      },
+      {
+        label: "The Vice Chancellor",
+        href: "/about/vice-chancellor",
+        description: "Message from executive university leadership",
+      },
+      {
         label: "Governance",
         href: "/about/governance",
         description: "Public boards, mandates, and membership",
@@ -409,10 +419,29 @@ function buildNavigation(
     },
   ];
 
+  const academicQuickLinks: NavItem[] = [
+    {
+      label: "Programmes",
+      href: "/academics/programmes",
+      description: "Browse academic programmes by level and school",
+    },
+    {
+      label: "Academic Calendar",
+      href: "/academics/calendar",
+      description: "Term dates, intakes, and academic timelines",
+    },
+    {
+      label: "Examinations",
+      href: "/academics/examinations",
+      description: "Assessment and examination information",
+    },
+  ];
+
   const academicsItem: NavItem = {
     label: "Academics",
     href: "/academics",
     children: [
+      ...academicQuickLinks,
       ...schools.map((school) => ({
         label: school.name.replace("School of ", "").replace("Faculty of ", ""),
         href: `/academics/schools/${school.slug}`,
@@ -776,10 +805,24 @@ function MegaMenuDropdown({
             >
               {isMegaMenu ? (
                 isAcademicsMenu ? (
-                  <GroupedMenuGrid
-                    sections={rightSections}
-                    variant="two-column"
-                  />
+                  <div className="grid gap-5 lg:grid-cols-[minmax(13rem,16rem)_minmax(0,1fr)]">
+                    <div>
+                      {quickLinks.length ? (
+                        <MenuSection title="Quick Links">
+                          {quickLinks.map((child) => (
+                            <MenuCardLink key={child.href} item={child} />
+                          ))}
+                        </MenuSection>
+                      ) : null}
+                    </div>
+
+                    <div className="min-w-0 border-t border-primary/10 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                      <GroupedMenuGrid
+                        sections={rightSections}
+                        variant="two-column"
+                      />
+                    </div>
+                  </div>
                 ) : isAdministrationMenu ? (
                   <GroupedMenuGrid
                     sections={rightSections}
