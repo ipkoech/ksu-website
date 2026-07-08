@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 
 const aboutDataSource = readFileSync(
@@ -12,6 +12,14 @@ const headerSource = readFileSync(
 );
 const aboutSource = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
 const historySource = readFileSync(new URL("./history/page.tsx", import.meta.url), "utf8");
+const chancellorUrl = new URL("./chancellor/page.tsx", import.meta.url);
+const chancellorSource = existsSync(chancellorUrl)
+  ? readFileSync(chancellorUrl, "utf8")
+  : "";
+const viceChancellorUrl = new URL("./vice-chancellor/page.tsx", import.meta.url);
+const viceChancellorSource = existsSync(viceChancellorUrl)
+  ? readFileSync(viceChancellorUrl, "utf8")
+  : "";
 const governanceSource = readFileSync(new URL("./governance/page.tsx", import.meta.url), "utf8");
 const managementSource = readFileSync(
   new URL("./university-management/page.tsx", import.meta.url),
@@ -38,6 +46,14 @@ test("global about menu uses the reduced backend-backed IA", () => {
   assert.match(headerSource, /label: "About Us"/);
   assert.match(headerSource, /href: "\/about"/);
   assert.match(headerSource, /label: "History"/);
+  assert.match(headerSource, /label: "The Chancellor"/);
+  assert.match(headerSource, /href: "\/about\/chancellor"/);
+  assert.match(headerSource, /label: "The Vice Chancellor"/);
+  assert.match(headerSource, /href: "\/about\/vice-chancellor"/);
+  assert.match(
+    headerSource,
+    /label: "History"[\s\S]*label: "The Chancellor"[\s\S]*label: "The Vice Chancellor"[\s\S]*label: "Governance"/,
+  );
   assert.match(headerSource, /label: "Governance"/);
   assert.match(headerSource, /label: "Management"/);
   assert.match(headerSource, /label: "Quality Assurance"/);
@@ -74,6 +90,8 @@ test("about pages use full-width design sections instead of centered card pages"
   for (const source of [
     aboutSource,
     historySource,
+    chancellorSource,
+    viceChancellorSource,
     governanceSource,
     managementSource,
     qualitySource,
@@ -86,6 +104,8 @@ test("about pages use full-width design sections instead of centered card pages"
 test("about subpages expose strategic-plan guided page-specific layouts", () => {
   assert.match(historySource, /HistoryTimeline/);
   assert.match(historySource, /InteractiveMilestoneCard/);
+  assert.match(historySource, /ScrollRevealSection/);
+  assert.match(historySource, /sticky top-24/);
   assert.match(historySource, /AtAGlancePanel/);
   assert.match(historySource, /HistoryCtaBand/);
   assert.match(historySource, /StrategicDirectionCard/);
@@ -111,6 +131,24 @@ test("about subpages expose strategic-plan guided page-specific layouts", () => 
   assert.match(qualitySource, /StrategicHighlightCard/);
   assert.match(qualitySource, /ServiceCommitmentStep/);
   assert.match(qualitySource, /about-quality-assurance-branded\.webp/);
+});
+
+test("chancellor and vice chancellor pages use backend messages and supplied imagery", () => {
+  assert.match(chancellorSource, /getOverviewData/);
+  assert.match(chancellorSource, /LeadershipMessagePage/);
+  assert.match(chancellorSource, /overview\?\.chancellor_message/);
+  assert.match(chancellorSource, /Dr\.SaraJ\.Ruto-Chairperson-Edited\.png/);
+  assert.match(chancellorSource, /Message from the Chancellor/);
+  assert.match(chancellorSource, /max-w-none/);
+  assert.match(chancellorSource, /motion-safe:/);
+
+  assert.match(viceChancellorSource, /getOverviewData/);
+  assert.match(viceChancellorSource, /LeadershipMessagePage/);
+  assert.match(viceChancellorSource, /overview\?\.vc_message/);
+  assert.match(viceChancellorSource, /KSUB-RollPhotos2025-123\.jpg/);
+  assert.match(viceChancellorSource, /Message from the Vice Chancellor/);
+  assert.match(viceChancellorSource, /max-w-none/);
+  assert.match(viceChancellorSource, /motion-safe:/);
 });
 
 test("university seed uses revised handbook institutional statements", () => {

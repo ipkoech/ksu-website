@@ -179,6 +179,25 @@ function SectionKicker({ children }: { children: ReactNode }) {
   );
 }
 
+function ScrollRevealSection({
+  children,
+  className,
+  delay = 0,
+}: {
+  children: ReactNode;
+  className: string;
+  delay?: number;
+}) {
+  return (
+    <section
+      className={`${className} motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-8 motion-safe:duration-700`}
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      {children}
+    </section>
+  );
+}
+
 function AtAGlancePanel({
   facts,
   foundingYear,
@@ -450,9 +469,10 @@ export default async function AboutHistoryPage() {
           </div>
         </section>
 
-        <section className="bg-white">
+        <ScrollRevealSection className="bg-white">
           <div className="grid max-w-none lg:grid-cols-[330px_minmax(0,1fr)]">
             <aside className="border-b border-slate-200 px-4 py-8 sm:px-6 lg:border-b-0 lg:border-r lg:px-8">
+              <div className="sticky top-24">
               <CalendarDays aria-hidden className="h-6 w-6 text-primary" />
               <SectionKicker>Milestones</SectionKicker>
               <h2 className="mt-3 text-3xl font-semibold text-slate-950">
@@ -462,14 +482,18 @@ export default async function AboutHistoryPage() {
                 Key dates are drawn from the university profile and published
                 institutional facts, then presented as a connected journey.
               </p>
+              </div>
             </aside>
             <HistoryTimeline milestones={milestones} />
           </div>
-        </section>
+        </ScrollRevealSection>
 
-        <section className="bg-slate-50 px-4 py-12 sm:px-6 lg:px-8">
+        <ScrollRevealSection
+          className="bg-slate-50 px-4 py-12 sm:px-6 lg:px-8"
+          delay={80}
+        >
           <div className="grid max-w-none gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start">
-            <div>
+            <div className="sticky top-24 self-start">
               <SectionKicker>Institutional story</SectionKicker>
               <h2 className="mt-3 text-3xl font-semibold text-slate-950">
                 The journey behind the dates
@@ -486,11 +510,14 @@ export default async function AboutHistoryPage() {
               ))}
             </div>
           </div>
-        </section>
+        </ScrollRevealSection>
 
-        <section className="bg-primary px-4 py-12 text-white sm:px-6 lg:px-8">
+        <ScrollRevealSection
+          className="bg-primary px-4 py-12 text-white sm:px-6 lg:px-8"
+          delay={120}
+        >
           <div className="grid max-w-none gap-8 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start">
-            <div>
+            <div className="sticky top-24 self-start">
               <Target aria-hidden className="h-6 w-6 text-secondary" />
               <SectionKicker>Strategic direction</SectionKicker>
               <h2 className="mt-3 text-3xl font-semibold">
@@ -518,11 +545,14 @@ export default async function AboutHistoryPage() {
               )}
             </div>
           </div>
-        </section>
+        </ScrollRevealSection>
 
-        <section className="bg-white px-4 py-12 sm:px-6 lg:px-8">
+        <ScrollRevealSection
+          className="bg-white px-4 py-12 sm:px-6 lg:px-8"
+          delay={160}
+        >
           <div className="grid max-w-none gap-8 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start">
-            <div>
+            <div className="sticky top-24 self-start">
               <FileText aria-hidden className="h-6 w-6 text-primary" />
               <SectionKicker>Academic expansion</SectionKicker>
               <h2 className="mt-3 text-3xl font-semibold text-slate-950">
@@ -540,9 +570,12 @@ export default async function AboutHistoryPage() {
               ))}
             </div>
           </div>
-        </section>
+        </ScrollRevealSection>
 
-        <section className="bg-slate-50 px-4 py-12 sm:px-6 lg:px-8">
+        <ScrollRevealSection
+          className="bg-slate-50 px-4 py-12 sm:px-6 lg:px-8"
+          delay={200}
+        >
           <div className="grid max-w-none gap-8 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-center">
             <div>
               <SectionKicker>Main Campus</SectionKicker>
@@ -559,7 +592,7 @@ export default async function AboutHistoryPage() {
               academic and administrative units.
             </p>
           </div>
-        </section>
+        </ScrollRevealSection>
 
         <HistoryCtaBand />
       </AboutPageLenis>

@@ -18,6 +18,8 @@ import { publicFileUrl, resolvePublicMediaUrl } from "@/lib/public-media";
 export const aboutNavigation = [
   { title: "About Us", href: "/about" },
   { title: "History", href: "/about/history" },
+  { title: "The Chancellor", href: "/about/chancellor" },
+  { title: "The Vice Chancellor", href: "/about/vice-chancellor" },
   { title: "Governance", href: "/about/governance" },
   { title: "Management", href: "/about/university-management" },
   { title: "Quality Assurance", href: "/about/quality-assurance" },

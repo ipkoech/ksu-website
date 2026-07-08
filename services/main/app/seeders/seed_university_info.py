@@ -135,18 +135,22 @@ async def seed_university_info(db: AsyncSession, ctx: SeedContext) -> None:
         council_chair_id=council_chair.id,
         chancellor_message_title="Message from the Chancellor",
         chancellor_message=(
-            "The current official About sources do not publish a dedicated Chancellor message. "
-            "Official university publications describe the Chancellor as the titular head of the "
-            "University who, in the name of the University, confers degrees, diplomas, "
-            "certificates, and other awards in consultation with the University Council and Senate."
+            "Kisii University is guided by a strategic commitment to quality education, knowledge "
+            "generation, partnerships, infrastructure development, financial sustainability, and "
+            "its niche in cancer management and research. As Chancellor, I welcome students, staff, "
+            "alumni, partners, and the wider community to a public university whose mandate is to "
+            "produce competent graduates, advance innovation, disseminate technology, and serve "
+            "society with integrity, accountability, and social responsiveness."
         ),
         vc_message_title="Message from the Vice Chancellor",
         vc_message=(
             "On behalf of Kisii University Council, Management and the entire University community, "
-            "the Vice Chancellor welcomes students to a fast-growing and dynamic institution. "
-            "Kisii University is committed to academic excellence, research, integrity, "
-            "professionalism, and social responsibility while preparing learners to contribute "
-            "meaningfully in a rapidly changing world."
+            "I welcome you to a fast-growing and dynamic public university. Our strategic direction "
+            "places quality education, knowledge preservation and generation, collaborations, "
+            "community outreach, infrastructure, financial sustainability, and cancer management "
+            "and research at the centre of institutional growth. We remain committed to academic "
+            "excellence, integrity, professionalism, innovation, and social responsibility while "
+            "preparing learners to contribute meaningfully in a rapidly changing world."
         ),
         council_chair_message_title="Message from the Chairperson, University Council",
         council_chair_message=None,
