@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Building2, Eye, ShieldCheck, Target, UsersRound, type LucideIcon } from "lucide-react";
-import { GovernanceChart } from "@/components/about/GovernanceChart";
+import GovernanceChart from "@/components/about/GovernanceChart";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import { getManagementData, type BackendBoard } from "@/lib/about-data";

@@ -145,6 +145,7 @@ test("about subpages expose strategic-plan guided page-specific layouts", () => 
   assert.doesNotMatch(managementSource, /ManagementLegend/);
   assert.doesNotMatch(managementSource, /senateMembers/);
 
+  assert.match(governanceChartSource, /export default function GovernanceChart/);
   assert.match(governanceChartSource, /profileHref/);
   assert.match(governanceChartSource, /View full screen/);
   assert.match(governanceChartSource, /fixed inset-0 z-50/);

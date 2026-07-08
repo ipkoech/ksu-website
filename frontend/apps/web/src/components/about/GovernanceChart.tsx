@@ -555,7 +555,7 @@ function layoutNodes(root: HierarchyNode<OrgNode>) {
   return { positionedNodes, links, chartWidth };
 }
 
-export function GovernanceChart(props: GovernanceChartProps) {
+export default function GovernanceChart(props: GovernanceChartProps) {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const fullTree = useMemo(() => buildTree(props), [props]);
   const root = hierarchy(fullTree);
