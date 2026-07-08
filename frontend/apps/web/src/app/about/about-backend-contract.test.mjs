@@ -136,19 +136,39 @@ test("about subpages expose strategic-plan guided page-specific layouts", () => 
 test("chancellor and vice chancellor pages use backend messages and supplied imagery", () => {
   assert.match(chancellorSource, /getOverviewData/);
   assert.match(chancellorSource, /LeadershipMessagePage/);
+  assert.match(chancellorSource, /FALLBACK_CHANCELLOR_MESSAGE/);
+  assert.match(chancellorSource, /fallbackParagraphs/);
   assert.match(chancellorSource, /overview\?\.chancellor_message/);
   assert.match(chancellorSource, /Dr\.SaraJ\.Ruto-Chairperson-Edited\.png/);
   assert.match(chancellorSource, /Message from the Chancellor/);
+  assert.match(chancellorSource, /confers degrees/);
+  assert.match(chancellorSource, /LeadershipMandateCard/);
+  assert.match(chancellorSource, /max-w-\[340px\]/);
+  assert.match(chancellorSource, /text-primary\/10/);
   assert.match(chancellorSource, /max-w-none/);
   assert.match(chancellorSource, /motion-safe:/);
+  assert.doesNotMatch(chancellorSource, /has not been published yet/);
+  assert.doesNotMatch(chancellorSource, /SourcePanel/);
+  assert.doesNotMatch(chancellorSource, /Source reference/);
+  assert.doesNotMatch(chancellorSource, /Open handbook section/);
 
   assert.match(viceChancellorSource, /getOverviewData/);
   assert.match(viceChancellorSource, /LeadershipMessagePage/);
+  assert.match(viceChancellorSource, /FALLBACK_VC_MESSAGE/);
+  assert.match(viceChancellorSource, /fallbackParagraphs/);
   assert.match(viceChancellorSource, /overview\?\.vc_message/);
   assert.match(viceChancellorSource, /KSUB-RollPhotos2025-123\.jpg/);
   assert.match(viceChancellorSource, /Message from the Vice Chancellor/);
+  assert.match(viceChancellorSource, /chief executive officer/);
+  assert.match(viceChancellorSource, /LeadershipMandateCard/);
+  assert.match(viceChancellorSource, /max-w-\[340px\]/);
+  assert.match(viceChancellorSource, /text-primary\/10/);
   assert.match(viceChancellorSource, /max-w-none/);
   assert.match(viceChancellorSource, /motion-safe:/);
+  assert.doesNotMatch(viceChancellorSource, /has not been published yet/);
+  assert.doesNotMatch(viceChancellorSource, /SourcePanel/);
+  assert.doesNotMatch(viceChancellorSource, /Source reference/);
+  assert.doesNotMatch(viceChancellorSource, /Open handbook section/);
 });
 
 test("university seed uses revised handbook institutional statements", () => {
