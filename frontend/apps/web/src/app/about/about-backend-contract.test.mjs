@@ -57,19 +57,22 @@ test("about pages source their content from backend helpers", () => {
   assert.doesNotMatch(qualitySource, /accreditations/);
 });
 
-test("about us page follows the compact handbook-backed layout", () => {
+test("about us page follows the full-width handbook-backed layout", () => {
   assert.match(aboutSource, /AboutHeroPanel/);
   assert.match(aboutSource, /IdentityCard/);
   assert.match(aboutSource, /ExploreCard/);
   assert.match(aboutSource, /getAboutSchools/);
   assert.match(aboutSource, /getPhilosophy/);
   assert.match(aboutSource, /\/images\/backgrounds\/about-hero\.jpg/);
+  assert.match(aboutSource, /max-w-none/);
+  assert.doesNotMatch(aboutSource, /max-w-\[1500px\]/);
   assert.match(aboutSource, /lg:grid-cols-\[minmax\(0,1fr\)_minmax\(420px,680px\)\]/);
   assert.doesNotMatch(aboutSource, /Cover image has not been published/);
 });
 
 test("about pages use full-width design sections instead of centered card pages", () => {
   for (const source of [
+    aboutSource,
     historySource,
     governanceSource,
     managementSource,

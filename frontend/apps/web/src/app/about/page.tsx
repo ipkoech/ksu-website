@@ -290,7 +290,7 @@ export default async function AboutPage() {
     <PageShell>
       <AboutPageLenis>
         <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-[1500px]">
+          <div className="max-w-none">
             <BreadcrumbTrail
               items={[
                 { label: "Home", href: "/" },
@@ -308,7 +308,7 @@ export default async function AboutPage() {
         </section>
 
         <section className="bg-white px-4 py-4 sm:px-6 lg:px-8">
-          <div className="mx-auto grid max-w-[1500px] gap-0 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid max-w-none gap-0 md:grid-cols-2 xl:grid-cols-4">
             <IdentityCard icon={Target} title="Mission">
               {overview?.mission ? (
                 <p>{overview.mission}</p>
@@ -350,7 +350,7 @@ export default async function AboutPage() {
         </section>
 
         <section className="bg-white px-4 pb-7 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-[1500px]">
+          <div className="max-w-none">
             <h2 className="text-lg font-bold text-slate-950">
               Explore More About Kisii University
             </h2>
@@ -385,7 +385,7 @@ export default async function AboutPage() {
 
         {schools.length ? (
           <section className="border-t border-slate-200 bg-slate-50 px-4 py-7 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-[1500px]">
+            <div className="max-w-none">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <h2 className="text-lg font-bold text-primary">Our Schools</h2>
