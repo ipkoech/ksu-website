@@ -5,7 +5,7 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ._shared import LEADERSHIP_PEOPLE, SeedContext, get_or_create_person, upsert_division, upsert_wing
-from .seed_handbook import HANDBOOK_DIVISION_FACTS
+from .seed_handbook import HANDBOOK_DIVISION_FACTS, HANDBOOK_INSTITUTIONAL_FACTS
 from app.schemas.base import slugify
 
 
@@ -31,6 +31,12 @@ DIVISION_SPECS = [
         "division_type": "division",
         "head_key": "dvc_arsa",
         "description": HANDBOOK_DIVISION_FACTS["ARSA"]["description"],
+        "mission": HANDBOOK_INSTITUTIONAL_FACTS["mission"],
+        "vision": HANDBOOK_INSTITUTIONAL_FACTS["vision"],
+        "core_values": HANDBOOK_DIVISION_FACTS["ARSA"]["core_values"],
+        "settings": {
+            "mandate": HANDBOOK_DIVISION_FACTS["ARSA"]["mandate"],
+        },
         "source_url": "https://kisiiuniversity.ac.ke/admin_departments/academic-division",
     },
 ]
@@ -78,9 +84,13 @@ async def seed_divisions(db: AsyncSession, ctx: SeedContext) -> None:
             division_type=spec["division_type"],
             head_id=head.id,
             description=spec["description"],
+            mission=spec.get("mission"),
+            vision=spec.get("vision"),
+            core_values=spec.get("core_values"),
             settings={
                 "source_url": spec["source_url"],
                 "handbook_units": list(HANDBOOK_DIVISION_FACTS.get(spec["code"], {}).get("units", ())),
+                **spec.get("settings", {}),
             }
             if spec.get("source_url")
             else None,

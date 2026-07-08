@@ -173,6 +173,9 @@ class SeederDataTests(unittest.TestCase):
 
         self.assertEqual("supreme governance organ", HANDBOOK_GOVERNANCE_FACTS["council"]["phrase"])
         self.assertIn("Academic Affairs", HANDBOOK_DIVISION_FACTS["ARSA"]["units"])
+        self.assertIn("academic excellence", HANDBOOK_DIVISION_FACTS["ARSA"]["mandate"].lower())
+        self.assertIn("research and consultancy", HANDBOOK_DIVISION_FACTS["ARSA"]["mandate"].lower())
+        self.assertIn("academic excellence", HANDBOOK_DIVISION_FACTS["ARSA"]["core_values"].lower())
         self.assertIn("Inter-Library Loan", HANDBOOK_LIBRARY_FACTS["services"])
         self.assertIn("University of Minnesota", HANDBOOK_RESEARCH_FACTS["partners"])
         self.assertIn("Work-Study Program", HANDBOOK_STUDENT_AFFAIRS_SERVICES)
@@ -186,6 +189,11 @@ class SeederDataTests(unittest.TestCase):
 
         self.assertIn("human and physical resources", divisions_by_code["APF"]["description"])
         self.assertIn("Academic Affairs", divisions_by_code["ARSA"]["description"])
+        self.assertIn("academic excellence", divisions_by_code["ARSA"]["description"].lower())
+        self.assertIn("research and consultancy", divisions_by_code["ARSA"]["settings"]["mandate"].lower())
+        self.assertEqual(HANDBOOK_INSTITUTIONAL_FACTS["mission"], divisions_by_code["ARSA"]["mission"])
+        self.assertEqual(HANDBOOK_INSTITUTIONAL_FACTS["vision"], divisions_by_code["ARSA"]["vision"])
+        self.assertEqual(HANDBOOK_DIVISION_FACTS["ARSA"]["core_values"], divisions_by_code["ARSA"]["core_values"])
         self.assertIn("provide quality information services", departments_by_code["LIB"]["about"])
         self.assertIn("research, innovation and extension activities", departments_by_code["REIRM"]["mandate"])
         self.assertIn("enabling environment", departments_by_code["STUAFFAIRS"]["about"])

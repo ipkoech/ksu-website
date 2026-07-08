@@ -102,9 +102,17 @@ HANDBOOK_DIVISION_FACTS = {
             "Student Affairs",
         ),
         "description": (
-            "Division organized into Academic Affairs; Research, Innovation and Extension; "
-            "Library Services; and Student Affairs."
+            "Division responsible for academic excellence, research and consultancy, knowledge "
+            "dissemination, academic programmes, teaching and learning through Academic Affairs, "
+            "Research, Innovation and Extension, Library Services, and Student Affairs."
         ),
+        "mandate": (
+            "Promotes academic excellence, research and consultancy, dissemination and preservation "
+            "of knowledge, skills and competencies, and coordinates academic programmes, teaching, "
+            "learning, Library Services, and Student Affairs through its Academic Affairs; Research, "
+            "Innovation and Extension; Library Services; and Student Affairs units."
+        ),
+        "core_values": "Academic Excellence, Research and Service to Humanity",
     },
 }
 
