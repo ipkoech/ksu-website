@@ -18,6 +18,16 @@ HANDBOOK_SOURCE_PHRASES = (
     "University of the 21st Century",
 )
 
+HANDBOOK_INSTITUTIONAL_FACTS = {
+    "mission": (
+        "The University is committed to training high level human resource that meets the development needs "
+        "of the country and the international labour market while sustaining quality research, dissemination "
+        "of knowledge, skills and competencies for the advancement of humanity."
+    ),
+    "vision": "World Class University in the advancement of academic excellence, research, innovation, and enhancement of social welfare",
+    "student_formation": "Academic Excellence, Research and Service to Humanity",
+}
+
 HANDBOOK_SECTIONS = (
     "HISTORY OF KISII UNIVERSITY",
     "MESSAGE FROM THE VICE CHANCELLOR",
@@ -266,6 +276,7 @@ HANDBOOK_SCHOOL_FACTS = {
 __all__ = [
     "HANDBOOK_DIVISION_FACTS",
     "HANDBOOK_GOVERNANCE_FACTS",
+    "HANDBOOK_INSTITUTIONAL_FACTS",
     "HANDBOOK_LIBRARY_FACTS",
     "HANDBOOK_RESEARCH_FACTS",
     "HANDBOOK_SCHOOL_FACTS",

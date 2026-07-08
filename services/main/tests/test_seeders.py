@@ -14,6 +14,7 @@ from app.seeders.seed_divisions import DIVISION_SPECS, WING_SPECS
 from app.seeders.seed_handbook import (
     HANDBOOK_DIVISION_FACTS,
     HANDBOOK_GOVERNANCE_FACTS,
+    HANDBOOK_INSTITUTIONAL_FACTS,
     HANDBOOK_LIBRARY_FACTS,
     HANDBOOK_RESEARCH_FACTS,
     HANDBOOK_SCHOOL_FACTS,
@@ -168,6 +169,7 @@ class SeederDataTests(unittest.TestCase):
         self.assertIn("GOVERNANCE AND ADMINISTRATIVE STRUCTURE OF THE UNIVERSITY", HANDBOOK_SECTIONS)
         self.assertIn("BRIEF INFORMATION ON SCHOOLS IN THE UNIVERSITY", HANDBOOK_SECTIONS)
         self.assertIn("UNIVERSITY EXAMINATION REGULATIONS", HANDBOOK_SECTIONS)
+        self.assertIn("high level human resource", HANDBOOK_INSTITUTIONAL_FACTS["mission"])
 
         self.assertEqual("supreme governance organ", HANDBOOK_GOVERNANCE_FACTS["council"]["phrase"])
         self.assertIn("Academic Affairs", HANDBOOK_DIVISION_FACTS["ARSA"]["units"])

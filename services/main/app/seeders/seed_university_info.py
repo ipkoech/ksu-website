@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ._shared import LEADERSHIP_PEOPLE, SeedContext, get_or_create_person, upsert_university_info
 from .seed_handbook import (
     HANDBOOK_GOVERNANCE_FACTS,
+    HANDBOOK_INSTITUTIONAL_FACTS,
     HANDBOOK_SECTIONS,
     HANDBOOK_SOURCE,
     HANDBOOK_SOURCE_PHRASES,
@@ -50,11 +51,7 @@ async def seed_university_info(db: AsyncSession, ctx: SeedContext) -> None:
             "To be a World Class University in the advancement of academic excellence, research, innovation, "
             "and enhancement of social welfare."
         ),
-        mission=(
-            "To train high level human resource that meets the development needs of the country and the "
-            "international labour market while sustaining quality research, dissemination of knowledge, skills "
-            "and competencies for the advancement of humanity."
-        ),
+        mission=HANDBOOK_INSTITUTIONAL_FACTS["mission"],
         core_values=(
             "Integrity; Diligence; Hard work; Professionalism; Academic freedom; Civility; Social responsiveness; Accountability."
         ),
@@ -108,6 +105,7 @@ async def seed_university_info(db: AsyncSession, ctx: SeedContext) -> None:
             },
             "handbook_sections": list(HANDBOOK_SECTIONS),
             "governance": HANDBOOK_GOVERNANCE_FACTS,
+            "institutional_facts": HANDBOOK_INSTITUTIONAL_FACTS,
         },
         strategic_priorities={
             "philosophy": "World-class education in an atmosphere of academic freedom, civility, social responsiveness, integrity and accountability.",
