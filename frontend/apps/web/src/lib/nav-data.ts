@@ -79,7 +79,7 @@ export async function getNavData(): Promise<MegaMenuData> {
   const wingsResult = await Promise.allSettled(
     divisions.map((division) =>
       wingsApi.listByDivision(division.id, {
-        fields: "id,name,slug,wing_type",
+        fields: "id,name,slug,code,wing_type",
         is_active: true,
       }),
     ),
@@ -99,6 +99,7 @@ export async function getNavData(): Promise<MegaMenuData> {
           id: wing.id,
           name: wing.name,
           slug: wing.slug,
+          code: wing.code,
         }))
       : [],
   );

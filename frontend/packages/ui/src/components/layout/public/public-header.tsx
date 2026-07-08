@@ -50,6 +50,7 @@ export interface NavAdminUnit {
   id: string;
   name: string;
   slug: string;
+  code?: string;
 }
 
 export interface NavClub {
@@ -311,6 +312,7 @@ function buildNavigation(
   const departments = megaMenuData?.departments || [];
   const divisions = megaMenuData?.divisions || [];
   const wings = megaMenuData?.wings || [];
+  const registrarWings = wings.filter(isRegistrarUnit);
   const adminUnits = megaMenuData?.adminUnits || [];
   const clubs = megaMenuData?.clubs || [];
 
@@ -352,20 +354,15 @@ function buildNavigation(
     label: "Administration",
     href: "/administration",
     children: [
-      {
-        label: "Organization",
-        href: "/administration/organization",
-        description: "University structure",
-      },
       ...divisions.map((division) => ({
         label: division.name,
         href: `/administration/divisions/${division.slug}`,
         group: "Divisions",
       })),
-      ...wings.map((wing) => ({
+      ...registrarWings.map((wing) => ({
         label: wing.name,
         href: `/administration/units/${wing.slug}`,
-        group: "Wings",
+        group: "Registrars",
       })),
       ...(departments.length ? departments : adminUnits).map((unit) => ({
         label: unit.name,
@@ -412,26 +409,6 @@ function buildNavigation(
     label: "Academics",
     href: "/academics",
     children: [
-      {
-        label: "Programmes",
-        href: "/academics/programmes",
-        description: "Find your programme",
-      },
-      {
-        label: "Academic Calendar",
-        href: "/academics/calendar",
-        description: "Important dates",
-      },
-      {
-        label: "Examinations",
-        href: "/academics/examinations",
-        description: "Exam schedules & results",
-      },
-      {
-        label: "All Schools",
-        href: "/academics/schools",
-        group: "Schools",
-      },
       ...schools.map((school) => ({
         label: school.name.replace("School of ", "").replace("Faculty of ", ""),
         href: `/academics/schools/${school.slug}`,
@@ -527,6 +504,16 @@ function buildNavigation(
   ];
 }
 
+const registrarCodes = new Set(["AHRCS", "RAA", "REIRM"]);
+
+function isRegistrarUnit(unit: NavAdminUnit) {
+  const code = unit.code?.toUpperCase();
+  return (
+    Boolean(code && registrarCodes.has(code)) ||
+    unit.name.toLowerCase().includes("registrar")
+  );
+}
+
 function MegaMenuDropdown({
   item,
   align,
@@ -571,6 +558,7 @@ function MegaMenuDropdown({
     item.label === "Academics" ||
     item.label === "Administration" ||
     item.label === "Campus Life";
+  const isAcademicsMenu = item.label === "Academics";
   const isMegaMenu =
     isStructuredMegaMenu ||
     rightSections.length > 0 ||
@@ -782,21 +770,28 @@ function MegaMenuDropdown({
               }}
             >
               {isMegaMenu ? (
-                <div className="grid gap-5 lg:grid-cols-[minmax(13rem,16rem)_minmax(0,1fr)]">
-                  <div>
-                    {quickLinks.length ? (
-                      <MenuSection title="Quick Links">
-                        {quickLinks.map((child) => (
-                          <MenuCardLink key={child.href} item={child} />
-                        ))}
-                      </MenuSection>
-                    ) : null}
-                  </div>
+                isAcademicsMenu ? (
+                  <GroupedMenuGrid
+                    sections={rightSections}
+                    variant="two-column"
+                  />
+                ) : (
+                  <div className="grid gap-5 lg:grid-cols-[minmax(13rem,16rem)_minmax(0,1fr)]">
+                    <div>
+                      {quickLinks.length ? (
+                        <MenuSection title="Quick Links">
+                          {quickLinks.map((child) => (
+                            <MenuCardLink key={child.href} item={child} />
+                          ))}
+                        </MenuSection>
+                      ) : null}
+                    </div>
 
-                  <div className="min-w-0 border-t border-primary/10 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-                    <GroupedMenuGrid sections={rightSections} />
+                    <div className="min-w-0 border-t border-primary/10 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                      <GroupedMenuGrid sections={rightSections} />
+                    </div>
                   </div>
-                </div>
+                )
               ) : (
                 <div className="space-y-1">
                   {children.map((child) => (
@@ -904,12 +899,33 @@ function getGroupedMenuSections(items: NavItem[]): GroupedMenuSection[] {
   }));
 }
 
-function GroupedMenuGrid({ sections }: { sections: GroupedMenuSection[] }) {
+function GroupedMenuGrid({
+  sections,
+  variant = "stacked",
+}: {
+  sections: GroupedMenuSection[];
+  variant?: "stacked" | "two-column";
+}) {
   if (!sections.length) {
     return (
       <p className="rounded-lg border border-dashed border-gray-200 px-3 py-4 text-sm text-gray-500">
         No menu items available.
       </p>
+    );
+  }
+
+  if (variant === "two-column") {
+    return (
+      <div className="grid gap-6 md:grid-cols-2">
+        {sections.map((section) => (
+          <MenuLinkGrid
+            key={section.title}
+            title={section.title}
+            items={section.items}
+            headingStyle="bold"
+          />
+        ))}
+      </div>
     );
   }
 
@@ -925,13 +941,28 @@ function GroupedMenuGrid({ sections }: { sections: GroupedMenuSection[] }) {
   );
 }
 
-function MenuLinkGrid({ title, items }: { title: string; items: NavItem[] }) {
+function MenuLinkGrid({
+  title,
+  items,
+  headingStyle = "compact",
+}: {
+  title: string;
+  items: NavItem[];
+  headingStyle?: "compact" | "bold";
+}) {
   const minColumnWidth =
     title === "Departments" || items.length > 16 ? "8.5rem" : "10rem";
 
   return (
     <div>
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+      <h3
+        className={cn(
+          "mb-3",
+          headingStyle === "bold"
+            ? "text-base font-bold text-gray-950"
+            : "text-xs font-semibold uppercase tracking-wider text-gray-500",
+        )}
+      >
         {title}
       </h3>
       <div
