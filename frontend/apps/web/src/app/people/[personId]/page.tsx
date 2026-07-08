@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { ComponentType } from "react";
 import {
   ArrowLeft,
   Award,
@@ -6,11 +7,11 @@ import {
   BriefcaseBusiness,
   Building2,
   ExternalLink,
-  GraduationCap,
   Mail,
   MapPin,
   Phone,
   School,
+  Sparkles,
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -27,8 +28,18 @@ import {
   getPublicPersonProfile,
   type PublicPersonAssignment,
   type PublicPersonProfile,
+  type PublicPersonPublication,
+  type PublicPersonResearchGrant,
 } from "@/lib/public-person-data";
 import { publicFileUrl, resolvePublicMediaUrl } from "@/lib/public-media";
+
+type ProfileLink = { label: string; href: string | null };
+type ProfileFact = {
+  icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+  label: string;
+  value?: string | null;
+  unavailable?: string;
+};
 
 function present(value?: string | number | null) {
   if (value === null || value === undefined) return null;
@@ -116,11 +127,20 @@ function listValues(value?: string[] | null) {
   return (value ?? []).map((item) => present(item)).filter(Boolean) as string[];
 }
 
+function recordList<T>(value?: T[] | null) {
+  return (value ?? []).filter(Boolean);
+}
+
 function qualificationText(item: Record<string, unknown>) {
-  return [item.degree, item.field, item.institution, item.year]
+  return [item.degree, item.field, item.institution, normalizedYear(item.year)]
     .map((value) => present(value as string | number | null))
     .filter(Boolean)
     .join(", ");
+}
+
+function normalizedYear(value: unknown) {
+  if (value === 0 || value === "0") return null;
+  return value as string | number | null;
 }
 
 function roleLabel(assignment?: PublicPersonAssignment | null) {
@@ -166,6 +186,14 @@ function backLabel(assignment?: PublicPersonAssignment | null) {
   return "Back to people search";
 }
 
+function formatOfficeHours(value: PublicPersonProfile["office_hours"]) {
+  if (!value) return null;
+  if (typeof value === "string") return value;
+  return Object.entries(value)
+    .map(([day, hours]) => `${day}: ${String(hours)}`)
+    .join("\n");
+}
+
 function ProfileImage({
   person,
   name,
@@ -181,7 +209,7 @@ function ProfileImage({
         src={source}
         alt={name}
         ratio="profile"
-        sizes="240px"
+        sizes="(min-width: 1024px) 220px, 180px"
         className="h-full w-full"
       />
     );
@@ -191,6 +219,159 @@ function ProfileImage({
     <span className="flex h-full w-full items-center justify-center bg-primary/[0.08] font-[family-name:var(--font-display)] text-5xl font-semibold text-primary">
       {initialsFromName(name)}
     </span>
+  );
+}
+
+function PillList({ items }: { items: string[] }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {items.map((item) => (
+        <span
+          key={item}
+          className="rounded-full bg-primary/[0.08] px-3 py-1.5 text-xs font-semibold text-primary"
+        >
+          {item}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function UnavailableFact({ label }: { label: string }) {
+  return (
+    <span className="text-sm font-medium leading-5 text-slate-400">
+      {label}
+    </span>
+  );
+}
+
+function ProfileActionRail({
+  email,
+  links,
+}: {
+  email?: string | null;
+  links: ProfileLink[];
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {email ? (
+        <a
+          href={`mailto:${email}`}
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary/90"
+        >
+          <Mail aria-hidden className="h-4 w-4" />
+          Email
+        </a>
+      ) : null}
+      {links.slice(0, 3).map((item) => (
+        <a
+          key={item.label}
+          href={item.href ?? undefined}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-primary/30 hover:text-primary"
+        >
+          <ExternalLink aria-hidden className="h-4 w-4" />
+          {item.label}
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function ProfileFactGrid({ facts }: { facts: ProfileFact[] }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+      {facts.map((fact) => {
+        const text = present(fact.value);
+        const Icon = fact.icon;
+        return (
+          <div
+            key={fact.label}
+            className="flex min-w-0 gap-3 rounded-lg border border-slate-200 bg-white p-3"
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/[0.08] text-primary">
+              <Icon aria-hidden className="h-4 w-4" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[0.68rem] font-bold uppercase tracking-[0.08em] text-slate-500">
+                {fact.label}
+              </span>
+              {text ? (
+                <span className="mt-0.5 block break-words text-sm font-semibold leading-5 text-slate-800">
+                  {text}
+                </span>
+              ) : (
+                <UnavailableFact
+                  label={fact.unavailable ?? `${fact.label} not published`}
+                />
+              )}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ProfileHero({
+  person,
+  name,
+  role,
+  assignment,
+  schoolName,
+  departmentName,
+  links,
+  facts,
+}: {
+  person: PublicPersonProfile;
+  name: string;
+  role: string;
+  assignment?: PublicPersonAssignment | null;
+  schoolName?: string | null;
+  departmentName?: string | null;
+  links: ProfileLink[];
+  facts: ProfileFact[];
+}) {
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:p-5">
+      <div className="grid gap-5 lg:grid-cols-[200px_minmax(0,1fr)_minmax(280px,380px)]">
+        <div className="max-w-[220px]">
+          <div className="aspect-[4/5] overflow-hidden rounded-lg bg-slate-100">
+            <ProfileImage person={person} name={name} />
+          </div>
+        </div>
+        <div className="min-w-0 self-center py-1">
+          <span className="inline-flex rounded bg-primary px-2 py-1 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-white">
+            {assignment?.entity?.entity_type === "school"
+              ? "Leadership"
+              : person.is_researcher
+                ? "Researcher Profile"
+                : "Staff Profile"}
+          </span>
+          <h1 className="mt-3 max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+            {name}
+          </h1>
+          <p className="mt-2 text-base font-semibold leading-6 text-primary">
+            {role}
+          </p>
+          {schoolName || departmentName ? (
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+              {[departmentName, schoolName].filter(Boolean).join(" | ")}
+            </p>
+          ) : null}
+          <div className="mt-5">
+            <ProfileActionRail email={person.email} links={links} />
+          </div>
+        </div>
+        <aside className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <h2 className="text-sm font-bold text-slate-950">At a Glance</h2>
+          <div className="mt-4">
+            <ProfileFactGrid facts={facts} />
+          </div>
+        </aside>
+      </div>
+    </section>
   );
 }
 
@@ -209,81 +390,55 @@ function ContentBlock({
   );
 }
 
-function PillList({ items }: { items: string[] }) {
+function QualificationTimeline({ items }: { items: string[] }) {
   return (
-    <div className="flex flex-wrap gap-2">
-      {items.map((item) => (
-        <span
-          key={item}
-          className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700"
-        >
-          {item}
-        </span>
-      ))}
-    </div>
+    <ContentBlock title="Qualifications">
+      <ol className="grid gap-3 lg:grid-cols-3">
+        {items.map((item, index) => (
+          <li
+            key={item}
+            className="relative rounded-lg border border-slate-200 bg-slate-50 p-4"
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white">
+              {index + 1}
+            </span>
+            <p className="mt-3 text-sm font-semibold leading-6 text-slate-800">
+              {item}
+            </p>
+          </li>
+        ))}
+      </ol>
+    </ContentBlock>
   );
 }
 
-function RoleCard({
-  assignment,
+function RoleRelationshipGrid({
+  assignments,
 }: {
-  assignment?: PublicPersonAssignment | null;
+  assignments: PublicPersonAssignment[];
 }) {
-  if (!assignment) return null;
-
   return (
-    <article className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-      <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
-        Current appointment
-      </p>
-      <p className="mt-2 text-sm font-bold text-slate-950">
-        {roleLabel(assignment) ?? "Staff role"}
-      </p>
-      <p className="mt-1 text-sm leading-6 text-slate-600">
-        {present(assignment.entity?.name) ??
-          present(assignment.entity_type) ??
-          "Kisii University"}
-      </p>
-    </article>
+    <ContentBlock title="Current Roles">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {assignments.map((item) => (
+          <article
+            key={item.id}
+            className="rounded-lg border border-slate-200 bg-slate-50 p-4"
+          >
+            <p className="text-sm font-bold capitalize text-slate-950">
+              {roleLabel(item) ?? "Staff role"}
+            </p>
+            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+              {present(item.entity?.name) ?? present(item.entity_type) ?? "Unit"}
+            </p>
+          </article>
+        ))}
+      </div>
+    </ContentBlock>
   );
 }
 
-function CompactFact({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof UserRound;
-  label: string;
-  value?: string | null;
-}) {
-  const text = present(value);
-  if (!text) return null;
-
-  return (
-    <div className="flex min-w-0 gap-3">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/[0.08] text-primary">
-        <Icon aria-hidden className="h-4 w-4" />
-      </span>
-      <span className="min-w-0">
-        <span className="block text-[0.68rem] font-bold uppercase tracking-[0.08em] text-slate-500">
-          {label}
-        </span>
-        <span className="mt-0.5 block break-words text-sm font-semibold leading-5 text-slate-800">
-          {text}
-        </span>
-      </span>
-    </div>
-  );
-}
-
-function ExternalProfileLinks({
-  links,
-  compact = false,
-}: {
-  links: Array<{ label: string; href: string | null }>;
-  compact?: boolean;
-}) {
+function ExternalProfileLinks({ links }: { links: ProfileLink[] }) {
   if (!links.length) return null;
 
   return (
@@ -294,15 +449,164 @@ function ExternalProfileLinks({
           href={item.href ?? undefined}
           target="_blank"
           rel="noreferrer"
-          className={[
-            "inline-flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white text-sm font-bold text-slate-700 transition hover:border-primary/30 hover:text-primary",
-            compact ? "min-h-9 px-3" : "min-h-10 px-3",
-          ].join(" ")}
+          className="inline-flex min-h-10 items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 transition hover:border-primary/30 hover:text-primary"
         >
           <span className="truncate">{item.label}</span>
           <ExternalLink aria-hidden className="h-4 w-4 shrink-0" />
         </a>
       ))}
+    </div>
+  );
+}
+
+function publicationTitle(item: PublicPersonPublication) {
+  return (
+    present(item.title) ||
+    present(item.citation) ||
+    present(item.doi) ||
+    "Publication record"
+  );
+}
+
+function grantTitle(item: PublicPersonResearchGrant) {
+  return present(item.title) || "Research grant";
+}
+
+function ResearchRecordCard({
+  title,
+  meta,
+  icon: Icon,
+}: {
+  title: string;
+  meta: string[];
+  icon: typeof BookOpenCheck;
+}) {
+  return (
+    <article className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <div className="flex gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/[0.08] text-primary">
+          <Icon aria-hidden className="h-4 w-4" />
+        </span>
+        <div className="min-w-0">
+          <h3 className="text-sm font-bold leading-6 text-slate-950">
+            {title}
+          </h3>
+          {meta.length ? (
+            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+              {meta.join(" | ")}
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function ResearcherProfileSection({
+  person,
+  researchInterests,
+  publicationLinks,
+}: {
+  person: PublicPersonProfile;
+  researchInterests: string[];
+  publicationLinks: ProfileLink[];
+}) {
+  const publications = recordList(person.publications);
+  const grants = recordList(person.research_grants_won);
+  const hasMetrics = Boolean(person.publications_count || person.h_index);
+
+  if (!person.is_researcher && !researchInterests.length && !hasMetrics) {
+    return null;
+  }
+
+  return (
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid gap-5">
+        <ContentBlock title="Research Areas">
+          {researchInterests.length ? (
+            <PillList items={researchInterests} />
+          ) : (
+            <UnavailableFact label="Research areas not published" />
+          )}
+        </ContentBlock>
+
+        <ContentBlock title="Publications">
+          {publications.length ? (
+            <div className="grid gap-3">
+              {publications.map((item, index) => (
+                <ResearchRecordCard
+                  key={`${publicationTitle(item)}-${index}`}
+                  title={publicationTitle(item)}
+                  meta={[
+                    present(item.venue),
+                    present(normalizedYear(item.year)),
+                    present(item.source),
+                  ].filter(Boolean) as string[]}
+                  icon={BookOpenCheck}
+                />
+              ))}
+            </div>
+          ) : (
+            <UnavailableFact label="Publication records not published" />
+          )}
+        </ContentBlock>
+
+        <ContentBlock title="Research Grants Won">
+          {grants.length ? (
+            <div className="grid gap-3">
+              {grants.map((item, index) => (
+                <ResearchRecordCard
+                  key={`${grantTitle(item)}-${index}`}
+                  title={grantTitle(item)}
+                  meta={[
+                    present(item.funder),
+                    present(item.role),
+                    present(item.amount),
+                    present(normalizedYear(item.year)),
+                  ].filter(Boolean) as string[]}
+                  icon={Sparkles}
+                />
+              ))}
+            </div>
+          ) : (
+            <UnavailableFact label="Research grants not published" />
+          )}
+        </ContentBlock>
+      </div>
+
+      <aside className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <h2 className="text-sm font-bold text-slate-950">Research Summary</h2>
+        <dl className="mt-4 grid gap-3 text-sm">
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-3">
+            <dt className="flex items-center gap-2 font-semibold text-slate-700">
+              <BookOpenCheck aria-hidden className="h-4 w-4 text-primary" />
+              Publications
+            </dt>
+            <dd className="font-bold text-slate-950">
+              {person.publications_count || publications.length || "Not published"}
+            </dd>
+          </div>
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-3">
+            <dt className="flex items-center gap-2 font-semibold text-slate-700">
+              <Award aria-hidden className="h-4 w-4 text-primary" />
+              H-index
+            </dt>
+            <dd className="font-bold text-slate-950">
+              {person.h_index ?? "Not published"}
+            </dd>
+          </div>
+        </dl>
+        {publicationLinks.length ? (
+          <div className="mt-5 border-t border-slate-200 pt-4">
+            <h3 className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+              Research Profiles
+            </h3>
+            <div className="mt-3">
+              <ExternalProfileLinks links={publicationLinks} />
+            </div>
+          </div>
+        ) : null}
+      </aside>
     </div>
   );
 }
@@ -321,8 +625,8 @@ export default async function PublicPersonPage({
   const name = displayName(person);
   const role =
     roleLabel(assignment) ||
-    present(person.institutional_role) ||
-    present(person.academic_rank) ||
+    present(person.institutional_role?.replace(/_/g, " ")) ||
+    present(person.academic_rank?.replace(/_/g, " ")) ||
     present(person.specialization) ||
     "Kisii University staff";
   const bio = present(person.full_bio) || present(person.bio);
@@ -351,78 +655,76 @@ export default async function PublicPersonPage({
   const publicationLinks = links.filter((item) =>
     ["Google Scholar", "ORCID", "ResearchGate", "Scopus"].includes(item.label),
   );
-  const isResearcher = Boolean(
+  const facts: ProfileFact[] = [
+    { icon: UserRound, label: "Role", value: role },
+    { icon: School, label: "School", value: schoolName },
+    { icon: Building2, label: "Department", value: departmentName },
+    {
+      icon: MapPin,
+      label: "Office",
+      value: person.office_location,
+      unavailable: "Office not published",
+    },
+    {
+      icon: Phone,
+      label: "Phone",
+      value: person.phone ?? person.office_phone,
+      unavailable: "Phone not published",
+    },
+    {
+      icon: BriefcaseBusiness,
+      label: "Office hours",
+      value: formatOfficeHours(person.office_hours),
+      unavailable: "Office hours not published",
+    },
+  ];
+  const hasResearchSection = Boolean(
     person.is_researcher ||
-    researchInterests.length ||
-    person.google_scholar_url ||
-    person.google_scholar_id ||
-    person.orcid ||
-    person.researchgate_url ||
-    person.scopus_id,
+      researchInterests.length ||
+      person.publications_count ||
+      person.h_index ||
+      person.publications?.length ||
+      person.research_grants_won?.length,
   );
+
   const tabs: PublicPersonTab[] = [
-    bio
-      ? {
-          id: "overview",
-          label: "Overview",
-          content: (
-            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-              <ContentBlock title="Biography">
-                <ExpandableRichText text={bio} collapsedLines={8} />
-              </ContentBlock>
-              <div className="grid content-start gap-3">
-                {researchInterests.length ? (
-                  <ContentBlock title="Research Focus">
-                    <PillList items={researchInterests} />
-                  </ContentBlock>
-                ) : null}
-                <RoleCard assignment={assignment} />
-              </div>
-            </div>
-          ),
-        }
-      : null,
+    {
+      id: "overview",
+      label: "Overview",
+      content: (
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <ContentBlock title="Biography">
+            {bio ? (
+              <ExpandableRichText text={bio} collapsedLines={8} />
+            ) : (
+              <UnavailableFact label="Biography not published" />
+            )}
+          </ContentBlock>
+          <div className="grid content-start gap-3">
+            <RoleRelationshipGrid
+              assignments={assignment ? [assignment] : []}
+            />
+          </div>
+        </div>
+      ),
+    },
     qualifications.length
       ? {
           id: "qualifications",
           label: "Qualifications",
-          content: (
-            <ContentBlock title="Qualifications">
-              <ul className="grid gap-2 text-sm leading-6 text-slate-700 lg:grid-cols-2">
-                {qualifications.map((item) => (
-                  <li
-                    key={item}
-                    className="flex gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3"
-                  >
-                    <GraduationCap
-                      aria-hidden
-                      className="mt-0.5 h-4 w-4 shrink-0 text-primary"
-                    />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </ContentBlock>
-          ),
+          content: <QualificationTimeline items={qualifications} />,
         }
       : null,
-    researchInterests.length
+    hasResearchSection
       ? {
           id: "research",
           label: "Research",
           content: (
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-              <ContentBlock title="Research Interests">
-                <PillList items={researchInterests} />
-              </ContentBlock>
-              {person.specialization ? (
-                <ContentBlock title="Specialization">
-                  <p className="text-sm leading-7 text-slate-700">
-                    {person.specialization}
-                  </p>
-                </ContentBlock>
-              ) : null}
-            </div>
+            <ResearcherProfileSection
+              person={person}
+              researchInterests={researchInterests}
+              publicationLinks={publicationLinks}
+            />
           ),
         }
       : null,
@@ -433,9 +735,7 @@ export default async function PublicPersonPage({
           content: (
             <ContentBlock title="Teaching Areas">
               <div className="grid gap-4 lg:grid-cols-2">
-                {teachingAreas.length ? (
-                  <PillList items={teachingAreas} />
-                ) : null}
+                {teachingAreas.length ? <PillList items={teachingAreas} /> : null}
                 {courses.length ? (
                   <div>
                     <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
@@ -449,87 +749,11 @@ export default async function PublicPersonPage({
           ),
         }
       : null,
-    isResearcher || person.publications_count || person.h_index
-      ? {
-          id: "publications",
-          label: "Publications",
-          content: (
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-              <ContentBlock title="Publications Summary">
-                <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                  {present(person.publications_count) ? (
-                    <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-                      <dt className="flex items-center gap-2 font-semibold text-slate-700">
-                        <BookOpenCheck
-                          aria-hidden
-                          className="h-4 w-4 text-primary"
-                        />
-                        Publications
-                      </dt>
-                      <dd className="font-bold text-slate-950">
-                        {person.publications_count}
-                      </dd>
-                    </div>
-                  ) : null}
-                  {present(person.h_index) ? (
-                    <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-                      <dt className="flex items-center gap-2 font-semibold text-slate-700">
-                        <Award aria-hidden className="h-4 w-4 text-primary" />
-                        H-index
-                      </dt>
-                      <dd className="font-bold text-slate-950">
-                        {person.h_index}
-                      </dd>
-                    </div>
-                  ) : null}
-                </dl>
-                {!present(person.publications_count) &&
-                !present(person.h_index) ? (
-                  <p className="text-sm leading-7 text-slate-700">
-                    Publication metrics are not currently published on this
-                    profile.
-                  </p>
-                ) : null}
-              </ContentBlock>
-              <ContentBlock title="Research Profiles">
-                {publicationLinks.length ? (
-                  <ExternalProfileLinks links={publicationLinks} />
-                ) : (
-                  <p className="text-sm leading-7 text-slate-700">
-                    No external research profile links are published for this
-                    staff member.
-                  </p>
-                )}
-              </ContentBlock>
-            </div>
-          ),
-        }
-      : null,
     person.assignments?.length
       ? {
-          id: "activities",
-          label: "Activities",
-          content: (
-            <ContentBlock title="Current Roles">
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {person.assignments.map((item) => (
-                  <article
-                    key={item.id}
-                    className="rounded-lg border border-slate-200 bg-slate-50 p-4"
-                  >
-                    <p className="text-sm font-bold capitalize text-slate-950">
-                      {roleLabel(item) ?? "Staff role"}
-                    </p>
-                    <p className="mt-1 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
-                      {present(item.entity?.name) ??
-                        present(item.entity_type) ??
-                        "Unit"}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            </ContentBlock>
-          ),
+          id: "roles",
+          label: "Roles",
+          content: <RoleRelationshipGrid assignments={person.assignments} />,
         }
       : null,
   ].filter(Boolean) as PublicPersonTab[];
@@ -538,7 +762,7 @@ export default async function PublicPersonPage({
     <PageShell>
       <AboutPageLenis>
         <section className="w-full bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_70%)] px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="w-full">
+          <div className="w-full max-w-none">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <BreadcrumbTrail
                 items={[
@@ -557,117 +781,16 @@ export default async function PublicPersonPage({
             </div>
 
             <main className="mt-4 grid gap-4">
-              <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:p-5">
-                <div className="grid gap-5 lg:grid-cols-[180px_minmax(0,1fr)_360px] xl:grid-cols-[200px_minmax(0,1fr)_400px]">
-                  <div className="max-w-[220px]">
-                    <div className="aspect-[4/5] overflow-hidden rounded-lg bg-slate-100">
-                      <ProfileImage person={person} name={name} />
-                    </div>
-                  </div>
-                  <div className="min-w-0 self-center py-1">
-                    <span className="inline-flex rounded bg-primary px-2 py-1 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-white">
-                      {assignment?.entity?.entity_type === "school"
-                        ? "Leadership"
-                        : "Staff Profile"}
-                    </span>
-                    <h1 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
-                      {name}
-                    </h1>
-                    <p className="mt-2 text-base font-semibold leading-6 text-primary">
-                      {role}
-                    </p>
-                    {schoolName || departmentName ? (
-                      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                        {[departmentName, schoolName]
-                          .filter(Boolean)
-                          .join(" | ")}
-                      </p>
-                    ) : null}
-
-                    <div className="mt-5 flex flex-wrap gap-2">
-                      {person.email ? (
-                        <a
-                          href={`mailto:${person.email}`}
-                          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary/90"
-                        >
-                          <Mail aria-hidden className="h-4 w-4" />
-                          Email
-                        </a>
-                      ) : null}
-                      {links.slice(0, 3).map((item) => (
-                        <a
-                          key={item.label}
-                          href={item.href ?? undefined}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 text-sm font-bold text-slate-700 transition hover:border-primary/30 hover:text-primary"
-                        >
-                          <ExternalLink aria-hidden className="h-4 w-4" />
-                          {item.label}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-
-                  <aside className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                    <h2 className="text-sm font-bold text-slate-950">
-                      At a Glance
-                    </h2>
-                    <div className="mt-4 grid gap-4">
-                      <CompactFact icon={UsersIcon} label="Role" value={role} />
-                      <CompactFact
-                        icon={School}
-                        label="School"
-                        value={schoolName}
-                      />
-                      <CompactFact
-                        icon={Building2}
-                        label="Department"
-                        value={departmentName}
-                      />
-                      <CompactFact
-                        icon={MapPin}
-                        label="Office"
-                        value={person.office_location}
-                      />
-                      <CompactFact
-                        icon={Phone}
-                        label="Phone"
-                        value={person.phone ?? person.office_phone}
-                      />
-                      {person.office_hours ? (
-                        <CompactFact
-                          icon={BriefcaseBusiness}
-                          label="Office hours"
-                          value={
-                            typeof person.office_hours === "string"
-                              ? person.office_hours
-                              : Object.entries(person.office_hours)
-                                  .map(
-                                    ([day, hours]) =>
-                                      `${day}: ${String(hours)}`,
-                                  )
-                                  .join("\n")
-                          }
-                        />
-                      ) : null}
-                    </div>
-                    {publicationLinks.length ? (
-                      <div className="mt-5 border-t border-slate-200 pt-4">
-                        <h3 className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
-                          Research Profiles
-                        </h3>
-                        <div className="mt-3">
-                          <ExternalProfileLinks
-                            links={publicationLinks}
-                            compact
-                          />
-                        </div>
-                      </div>
-                    ) : null}
-                  </aside>
-                </div>
-              </section>
+              <ProfileHero
+                person={person}
+                name={name}
+                role={role}
+                assignment={assignment}
+                schoolName={schoolName}
+                departmentName={departmentName}
+                links={links}
+                facts={facts}
+              />
 
               <ScrollReveal>
                 <PublicPersonTabs tabs={tabs} />
@@ -679,5 +802,3 @@ export default async function PublicPersonPage({
     </PageShell>
   );
 }
-
-const UsersIcon = UserRound;

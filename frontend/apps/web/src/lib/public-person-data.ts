@@ -1,6 +1,26 @@
 import { mainApi } from "@ksu/api-client";
 import type { PublicTeamAssignment } from "@/lib/public-team-data";
 
+export type PublicPersonPublication = {
+  title?: string | null;
+  citation?: string | null;
+  year?: string | number | null;
+  venue?: string | null;
+  url?: string | null;
+  doi?: string | null;
+  source?: string | null;
+};
+
+export type PublicPersonResearchGrant = {
+  title?: string | null;
+  funder?: string | null;
+  role?: string | null;
+  amount?: string | number | null;
+  year?: string | number | null;
+  status?: string | null;
+  source?: string | null;
+};
+
 export type PublicPersonProfile = {
   id: string;
   slug?: string | null;
@@ -29,6 +49,8 @@ export type PublicPersonProfile = {
   specialization?: string | null;
   research_interests?: string[] | null;
   teaching_areas?: string[] | null;
+  publications?: PublicPersonPublication[] | null;
+  research_grants_won?: PublicPersonResearchGrant[] | null;
   courses_taught?: string[] | null;
   office_location?: string | null;
   office_hours?: Record<string, unknown> | string | null;

@@ -51,6 +51,8 @@ class PersonCreate(BaseSchema):
     research_interests: list[str] | None = None
     teaching_areas: list[str] | None = None
     publications_count: int = Field(default=0, ge=0)
+    publication_records: list[dict[str, Any]] | None = None
+    research_grants_won: list[dict[str, Any]] | None = None
     h_index: int | None = Field(default=None, ge=0)
     office_location: str | None = Field(default=None, max_length=255)
     office_hours: dict[str, Any] | None = None
@@ -111,6 +113,8 @@ class PersonUpdate(BaseSchema):
     research_interests: list[str] | None = None
     teaching_areas: list[str] | None = None
     publications_count: int | None = Field(default=None, ge=0)
+    publication_records: list[dict[str, Any]] | None = None
+    research_grants_won: list[dict[str, Any]] | None = None
     h_index: int | None = Field(default=None, ge=0)
     office_location: str | None = Field(default=None, max_length=255)
     office_hours: dict[str, Any] | None = None
@@ -169,6 +173,8 @@ class MyProfileUpdate(BaseSchema):
     specialization: str | None = None
     research_interests: list[str] | None = None
     teaching_areas: list[str] | None = None
+    publication_records: list[dict[str, Any]] | None = None
+    research_grants_won: list[dict[str, Any]] | None = None
     office_location: str | None = Field(default=None, max_length=255)
     office_hours: dict[str, Any] | None = None
     office_phone: PhoneStr | None = None
@@ -227,6 +233,8 @@ class PersonRead(BaseReadSchema):
     research_interests: list[str] | None = None
     teaching_areas: list[str] | None = None
     publications_count: int = 0
+    publication_records: list[dict[str, Any]] | None = None
+    research_grants_won: list[dict[str, Any]] | None = None
     h_index: int | None = None
     office_location: str | None = None
     office_hours: dict[str, Any] | None = None

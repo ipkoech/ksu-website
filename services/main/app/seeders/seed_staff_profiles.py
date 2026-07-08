@@ -106,6 +106,16 @@ def _publications_count(value: str | None) -> int:
     return len([item for item in re.split(r";|\n", value) if item.strip()])
 
 
+def _raw_records(value: str | None, empty_markers: tuple[str, ...]) -> list[dict[str, Any]] | None:
+    if not value:
+        return None
+    lowered = value.lower().strip(".")
+    if any(lowered == marker.lower().strip(".") for marker in empty_markers):
+        return None
+    items = [item.strip(" .") for item in re.split(r";|\n", value) if item.strip(" .")]
+    return [{"title": item, "source": "official_profile"} for item in (items or [value])]
+
+
 def _department_from_role(role: str | None, departments: dict[str, Department]) -> Department | None:
     if not role or "," not in role:
         return None
@@ -159,6 +169,8 @@ def _profile_spec(page: dict[str, Any]) -> dict[str, Any]:
         "research_interests": _clean_list_value(research_text, ("No research interests provided",)),
         "teaching_areas": _clean_list_value(skills_text, ("No skills listed",)),
         "publications_count": _publications_count(publications_text),
+        "publication_records": _raw_records(publications_text, ("No publications available",)),
+        "research_grants_won": _raw_records(grants_text, ("No research grants", "N/A")),
         "institutional_role": _institutional_role(official_role),
         "specialization": official_role,
         "website_url": page["source_url"],
@@ -205,6 +217,8 @@ async def seed_staff_profiles(db: AsyncSession, ctx: SeedContext) -> None:
         person.professional_memberships = spec["professional_memberships"]
         person.teaching_areas = spec["teaching_areas"]
         person.publications_count = spec["publications_count"]
+        person.publication_records = spec["publication_records"]
+        person.research_grants_won = spec["research_grants_won"]
         person.show_on_directory = spec["show_on_directory"]
         person.is_public = True
         await db.flush()

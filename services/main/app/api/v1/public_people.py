@@ -39,6 +39,8 @@ PUBLIC_PERSON_FIELDS = (
     "research_interests",
     "teaching_areas",
     "publications_count",
+    "publication_records",
+    "research_grants_won",
     "h_index",
     "office_location",
     "office_hours",
@@ -146,6 +148,7 @@ async def _safe_person_payload(db: DbSession, person: Person) -> dict[str, Any]:
     payload["email"] = _public_email(payload.get("email"))
     payload["slug"] = payload.get("slug") or str(person.id)
     payload["photo_url"] = await _person_photo_url(db, person)
+    payload["publications"] = payload.pop("publication_records", None)
     payload["assignments"] = [
         await _safe_assignment_payload(db, assignment)
         for assignment in person.assignments
