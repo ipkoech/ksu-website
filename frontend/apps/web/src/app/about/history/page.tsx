@@ -3,16 +3,15 @@ import type { ReactNode } from "react";
 import {
   ArrowRight,
   BookOpenCheck,
-  Building2,
   CalendarDays,
+  FileText,
   GraduationCap,
   Landmark,
-  MapPinned,
-  MoveRight,
   PhoneCall,
   School,
   Sparkles,
   Sprout,
+  Target,
   type LucideIcon,
 } from "lucide-react";
 import { PublicImage } from "@/components/public/public-image";
@@ -28,32 +27,23 @@ type Milestone = {
   icon: LucideIcon;
 };
 
-const HISTORY_IMAGES = [
-  "/images/history/KSUGreenLandscapingMay2026-3810.jpg",
-  "/images/history/KSUGreenLandscapingMay2026-3885.jpg",
-  "/images/history/KSUB-RollPhotos2025-122.jpg",
-];
+const HISTORY_HERO_IMAGE = "/images/backgrounds/bg-history.jpg";
 
-const HANDBOOK_INSIGHTS = [
+const INSTITUTIONAL_NOTES = [
   {
-    title: "Teacher training roots",
-    body: "The institution began on 61 acres donated by the County Council of Gusii and first served the region through teacher preparation.",
+    title: "Teacher training foundation",
+    body: "The institution opened its story through teacher preparation, serving education needs in the Gusii region before expanding into broader higher education.",
     icon: School,
   },
   {
-    title: "University campus expansion",
-    body: "Egerton University took over the college as one of Kenya's early university campuses, opening the way for degree-level programmes.",
-    icon: Building2,
-  },
-  {
-    title: "Chartered public university",
-    body: "Rapid academic growth, collaborations, enrollment and regional development led to the 2013 charter as Kenya's 13th public university.",
+    title: "University-level growth",
+    body: "The Egerton University period created a stronger academic base, new programmes, and the pathway toward constituent college status.",
     icon: Landmark,
   },
   {
-    title: "Scenic academic setting",
-    body: "The Main Campus sits about two kilometres from Kisii Town Centre in an environment suited to teaching, research and community service.",
-    icon: MapPinned,
+    title: "Public university mandate",
+    body: "The charter marked a new phase of academic authority, institutional stewardship, research, outreach, and service to national development.",
+    icon: BookOpenCheck,
   },
 ];
 
@@ -165,21 +155,17 @@ function buildHistoryMilestones(
     .filter((item): item is Milestone => Boolean(item));
 }
 
-function EmptyBlock({
-  label,
-  inverse = false,
-}: {
-  label: string;
-  inverse?: boolean;
-}) {
+function strategicGoals(value: unknown) {
+  if (!value || Array.isArray(value) || typeof value !== "object") return [];
+  const goals = (value as { strategic_goals?: unknown }).strategic_goals;
+  return Array.isArray(goals)
+    ? goals.filter((goal): goal is string => typeof goal === "string")
+    : [];
+}
+
+function EmptyBlock({ label }: { label: string }) {
   return (
-    <p
-      className={
-        inverse
-          ? "rounded-md border border-dashed border-white/20 bg-white/[0.05] p-4 text-sm leading-6 text-white/65"
-          : "rounded-md border border-dashed border-slate-300 bg-white p-4 text-sm leading-6 text-slate-500"
-      }
-    >
+    <p className="rounded-md border border-dashed border-slate-300 bg-white p-4 text-sm leading-6 text-slate-500">
       {label} has not been published yet.
     </p>
   );
@@ -205,7 +191,10 @@ function AtAGlancePanel({
   const quickStats = [
     foundingYear ? { label: "Established", value: foundingYear } : null,
     factValue(facts, [/land acres/i])
-      ? { label: "Main campus land", value: `${factValue(facts, [/land acres/i])} acres` }
+      ? {
+          label: "Main campus land",
+          value: `${factValue(facts, [/land acres/i])} acres`,
+        }
       : null,
     factValue(facts, [/egerton/i])
       ? { label: "Egerton campus", value: factValue(facts, [/egerton/i])! }
@@ -214,107 +203,106 @@ function AtAGlancePanel({
   ].filter((item): item is Fact => Boolean(item));
 
   return (
-    <aside className="rounded-none border-t border-white/15 bg-white/[0.08] p-5 text-white backdrop-blur lg:border-l lg:border-t-0 lg:p-7">
-      <CalendarDays aria-hidden className="h-6 w-6 text-secondary" />
-      <SectionKicker>Kisii University at a glance</SectionKicker>
+    <aside className="border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
+      <div className="flex items-center gap-3">
+        <span className="flex h-11 w-11 items-center justify-center rounded-md bg-primary text-white">
+          <CalendarDays aria-hidden className="h-5 w-5" />
+        </span>
+        <SectionKicker>Kisii University at a glance</SectionKicker>
+      </div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
         {quickStats.length ? (
           quickStats.map((fact) => (
             <div
               key={fact.label}
-              className="group border border-white/15 bg-white/[0.06] p-4 transition duration-300 hover:-translate-y-0.5 hover:bg-white/[0.1] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3"
+              className="group border border-slate-200 bg-slate-50 p-4 transition duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-white hover:shadow-md motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3"
             >
-              <p className="text-2xl font-semibold leading-none text-white">
+              <p className="text-2xl font-semibold leading-none text-primary">
                 {fact.value}
               </p>
-              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-white/58">
+              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
                 {fact.label}
               </p>
             </div>
           ))
         ) : (
-          <EmptyBlock label="Quick facts" inverse />
+          <EmptyBlock label="Quick facts" />
         )}
       </div>
     </aside>
   );
 }
 
-function HistoryImageMosaic() {
+function InteractiveMilestoneCard({
+  milestone,
+  index,
+}: {
+  milestone: Milestone;
+  index: number;
+}) {
+  const Icon = milestone.icon;
+  const isEven = index % 2 === 0;
+
   return (
-    <div className="grid h-full min-h-[420px] gap-3 p-3 sm:grid-cols-5 lg:min-h-[620px]">
-      <div className="relative overflow-hidden rounded-lg sm:col-span-3 sm:row-span-2">
-        <PublicImage
-          src={HISTORY_IMAGES[0]}
-          alt="Kisii University Main Campus sign"
-          ratio="fill"
-          priority
-          sizes="(min-width: 1024px) 42vw, 100vw"
-          className="h-full rounded-none"
-          imageClassName="object-[center_58%] transition duration-700 motion-safe:hover:scale-[1.04]"
-        />
+    <article className="group relative grid gap-4 lg:grid-cols-[minmax(0,1fr)_88px_minmax(0,1fr)] lg:items-center">
+      <div className={isEven ? "lg:col-start-1" : "lg:col-start-3"}>
+        <div
+          className="relative overflow-hidden border border-slate-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/35 hover:shadow-xl hover:shadow-slate-200/70 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
+          style={{ animationDelay: `${index * 70}ms` }}
+        >
+          <span
+            aria-hidden
+            className="absolute inset-x-0 top-0 h-1 bg-secondary transition duration-300 group-hover:h-2"
+          />
+          <div className="flex items-start gap-4">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary text-white transition duration-300 group-hover:bg-secondary group-hover:text-slate-950">
+              <Icon aria-hidden className="h-6 w-6" />
+            </span>
+            <div>
+              <p className="text-3xl font-bold leading-none text-primary">
+                {milestone.year}
+              </p>
+              <h3 className="mt-3 text-lg font-bold text-slate-950">
+                {milestone.title}
+              </h3>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                {milestone.detail}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="relative min-h-48 overflow-hidden rounded-lg sm:col-span-2">
-        <PublicImage
-          src={HISTORY_IMAGES[1]}
-          alt="Kisii University library study spaces"
-          ratio="fill"
-          sizes="(min-width: 1024px) 26vw, 100vw"
-          className="h-full rounded-none"
-          imageClassName="object-[center_58%] transition duration-700 motion-safe:hover:scale-[1.04]"
-        />
+      <div className="relative hidden h-full lg:col-start-2 lg:block">
+        <span className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-primary/20" />
+        <span className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-secondary bg-white text-sm font-bold text-primary shadow-sm transition duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-white">
+          {index + 1}
+        </span>
       </div>
-      <div className="relative min-h-48 overflow-hidden rounded-lg bg-primary p-5 text-white sm:col-span-2">
-        <p className="text-5xl font-semibold leading-none">13th</p>
-        <p className="mt-3 max-w-xs text-sm leading-6 text-white/75">
-          Public university in Kenya after receiving the Kisii University
-          Charter in 2013.
-        </p>
-      </div>
-    </div>
+    </article>
   );
 }
 
 function HistoryTimeline({ milestones }: { milestones: Milestone[] }) {
   return (
-    <div className="relative overflow-hidden bg-white">
-      <div className="pointer-events-none absolute left-8 top-0 hidden h-full w-px bg-primary/20 md:block" />
-      <div className="grid gap-3 p-4 sm:p-6 lg:grid-cols-3 xl:grid-cols-6 xl:p-8">
-        {milestones.length ? (
-          milestones.map((milestone, index) => {
-            const Icon = milestone.icon;
-            return (
-              <article
-                key={`${milestone.year}-${milestone.title}`}
-                className="group relative min-h-64 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-5 transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-slate-200/70 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
-                style={{ animationDelay: `${index * 70}ms` }}
-              >
-                <span className="flex h-12 w-12 items-center justify-center rounded-md bg-primary text-white transition duration-300 group-hover:bg-secondary group-hover:text-slate-950">
-                  <Icon aria-hidden className="h-6 w-6" />
-                </span>
-                <p className="mt-5 text-4xl font-bold leading-none text-primary">
-                  {milestone.year}
-                </p>
-                <h3 className="mt-4 text-base font-bold text-slate-950">
-                  {milestone.title}
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600">
-                  {milestone.detail}
-                </p>
-              </article>
-            );
-          })
-        ) : (
-          <div className="lg:col-span-3 xl:col-span-6">
-            <EmptyBlock label="History milestones" />
-          </div>
-        )}
-      </div>
+    <div className="relative p-4 sm:p-6 lg:p-8">
+      {milestones.length ? (
+        <div className="space-y-5 lg:space-y-0">
+          {milestones.map((milestone, index) => (
+            <InteractiveMilestoneCard
+              key={`${milestone.year}-${milestone.title}`}
+              milestone={milestone}
+              index={index}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyBlock label="History milestones" />
+      )}
     </div>
   );
 }
 
-function HandbookInsightCard({
+function InstitutionalNoteCard({
   title,
   body,
   icon: Icon,
@@ -324,7 +312,7 @@ function HandbookInsightCard({
   icon: LucideIcon;
 }) {
   return (
-    <article className="group min-h-60 border border-slate-200 bg-white p-5 transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-slate-200/70 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
+    <article className="group border border-slate-200 bg-white p-5 transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-slate-200/70">
       <span className="flex h-12 w-12 items-center justify-center rounded-md bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
         <Icon aria-hidden className="h-6 w-6" />
       </span>
@@ -334,9 +322,26 @@ function HandbookInsightCard({
   );
 }
 
+function StrategicDirectionCard({
+  goal,
+  index,
+}: {
+  goal: string;
+  index: number;
+}) {
+  return (
+    <article className="group flex gap-4 border border-white/15 bg-white/[0.08] p-4 transition duration-300 hover:-translate-y-1 hover:bg-white/[0.12]">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-bold text-slate-950">
+        {index + 1}
+      </span>
+      <p className="text-sm font-semibold leading-6 text-white">{goal}</p>
+    </article>
+  );
+}
+
 function AcademicFieldPill({ label }: { label: string }) {
   return (
-    <span className="rounded-full border border-white/15 bg-white/[0.08] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.14]">
+    <span className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary/30 hover:text-primary">
       {label}
     </span>
   );
@@ -344,13 +349,8 @@ function AcademicFieldPill({ label }: { label: string }) {
 
 function HistoryCtaBand() {
   return (
-    <section className="relative overflow-hidden bg-slate-950 px-4 py-14 text-white sm:px-6 lg:px-8">
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-[url('/images/history/KSUB-RollPhotos2025-122.jpg')] bg-cover bg-center opacity-30"
-      />
-      <div aria-hidden className="absolute inset-0 bg-primary/75" />
-      <div className="relative grid max-w-none gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+    <section className="relative overflow-hidden bg-primary px-4 py-12 text-white sm:px-6 lg:px-8">
+      <div className="grid max-w-none gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
         <div>
           <SectionKicker>Take the next step</SectionKicker>
           <h2 className="mt-3 max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight sm:text-4xl">
@@ -391,12 +391,13 @@ export default async function AboutHistoryPage() {
     facts,
     foundingYear,
   );
+  const goals = strategicGoals(overview?.strategic_priorities);
 
   return (
     <PageShell>
       <AboutPageLenis>
-        <section className="overflow-hidden bg-slate-950 text-white">
-          <div className="max-w-none px-4 py-6 sm:px-6 lg:px-8">
+        <section className="overflow-hidden bg-white">
+          <div className="max-w-none px-4 py-5 sm:px-6 lg:px-8">
             <BreadcrumbTrail
               items={[
                 { label: "Home", href: "/" },
@@ -406,64 +407,60 @@ export default async function AboutHistoryPage() {
             />
           </div>
 
-          <div className="grid max-w-none lg:grid-cols-[minmax(0,1fr)_430px] xl:grid-cols-[minmax(0,1fr)_460px]">
-            <div className="grid min-h-[720px] lg:grid-cols-[minmax(0,0.8fr)_minmax(420px,0.72fr)]">
-              <div className="flex items-end px-4 py-10 sm:px-6 lg:px-8">
-                <div className="max-w-5xl motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
+          <div className="grid max-w-none gap-0 border-y border-slate-200 lg:grid-cols-[minmax(0,1fr)_430px]">
+            <div className="grid lg:grid-cols-[minmax(0,0.92fr)_minmax(360px,0.68fr)]">
+              <div className="flex items-center px-4 py-8 sm:px-6 lg:px-8">
+                <div className="max-w-4xl motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
                   <SectionKicker>History of Kisii University</SectionKicker>
-                  <h1 className="mt-5 font-[family-name:var(--font-display)] text-5xl font-semibold leading-tight text-white sm:text-6xl lg:text-7xl">
+                  <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-primary sm:text-5xl lg:text-6xl">
                     From teacher training roots to chartered public university
                   </h1>
                   {overview?.history_summary ? (
-                    <p className="mt-7 max-w-4xl text-base leading-8 text-white/76 sm:text-lg">
+                    <p className="mt-5 max-w-3xl text-base leading-8 text-slate-700">
                       {overview.history_summary}
                     </p>
                   ) : (
-                    <div className="mt-7 max-w-xl">
-                      <EmptyBlock label="History summary" inverse />
+                    <div className="mt-6 max-w-xl">
+                      <EmptyBlock label="History summary" />
                     </div>
                   )}
-                  <div className="mt-8 flex flex-wrap gap-3">
-                    <Link
-                      href="/admissions"
-                      className="inline-flex min-h-12 items-center gap-2 rounded-md bg-secondary px-5 text-sm font-semibold text-slate-950 transition hover:bg-white"
-                    >
-                      Apply Now
-                      <ArrowRight aria-hidden className="h-4 w-4" />
-                    </Link>
-                    <Link
-                      href="/contact"
-                      className="inline-flex min-h-12 items-center gap-2 rounded-md border border-white/25 px-5 text-sm font-semibold text-white transition hover:bg-white hover:text-primary"
-                    >
-                      Contact Us
-                      <MoveRight aria-hidden className="h-4 w-4" />
-                    </Link>
-                  </div>
                 </div>
               </div>
 
-              <HistoryImageMosaic />
+              <div className="min-h-[280px] lg:min-h-[360px]">
+                <PublicImage
+                  src={HISTORY_HERO_IMAGE}
+                  alt="Historic Kisii University campus building"
+                  ratio="fill"
+                  priority
+                  sizes="(min-width: 1024px) 38vw, 100vw"
+                  className="h-full rounded-none"
+                  imageClassName="object-cover"
+                />
+              </div>
             </div>
 
-            <AtAGlancePanel
-              facts={facts}
-              foundingYear={foundingYear}
-              charterYear={charterYear}
-            />
+            <div className="border-t border-slate-200 p-4 sm:p-6 lg:border-l lg:border-t-0 lg:p-8">
+              <AtAGlancePanel
+                facts={facts}
+                foundingYear={foundingYear}
+                charterYear={charterYear}
+              />
+            </div>
           </div>
         </section>
 
         <section className="bg-white">
-          <div className="grid max-w-none lg:grid-cols-[360px_minmax(0,1fr)]">
+          <div className="grid max-w-none lg:grid-cols-[330px_minmax(0,1fr)]">
             <aside className="border-b border-slate-200 px-4 py-8 sm:px-6 lg:border-b-0 lg:border-r lg:px-8">
               <CalendarDays aria-hidden className="h-6 w-6 text-primary" />
               <SectionKicker>Milestones</SectionKicker>
               <h2 className="mt-3 text-3xl font-semibold text-slate-950">
-                A journey of growth and public service
+                Growth through public service
               </h2>
               <p className="mt-4 text-sm leading-7 text-slate-600">
-                The timeline is shaped by the handbook history section and the
-                published university quick facts.
+                Key dates are drawn from the university profile and published
+                institutional facts, then presented as a connected journey.
               </p>
             </aside>
             <HistoryTimeline milestones={milestones} />
@@ -471,21 +468,21 @@ export default async function AboutHistoryPage() {
         </section>
 
         <section className="bg-slate-50 px-4 py-12 sm:px-6 lg:px-8">
-          <div className="max-w-none">
-            <div className="max-w-4xl">
-              <SectionKicker>Handbook highlights</SectionKicker>
+          <div className="grid max-w-none gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start">
+            <div>
+              <SectionKicker>Institutional story</SectionKicker>
               <h2 className="mt-3 text-3xl font-semibold text-slate-950">
-                The institutional story behind the dates
+                The journey behind the dates
               </h2>
               <p className="mt-4 text-sm leading-7 text-slate-600">
-                The handbook frames Kisii University as a public chartered
-                institution committed to quality education, research, extension
-                services, regional development and service to humanity.
+                Kisii University has grown from a teacher training institution
+                into a public university with teaching, research, innovation,
+                extension, and community service responsibilities.
               </p>
             </div>
-            <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {HANDBOOK_INSIGHTS.map((item) => (
-                <HandbookInsightCard key={item.title} {...item} />
+            <div className="grid gap-4 md:grid-cols-3">
+              {INSTITUTIONAL_NOTES.map((item) => (
+                <InstitutionalNoteCard key={item.title} {...item} />
               ))}
             </div>
           </div>
@@ -494,15 +491,47 @@ export default async function AboutHistoryPage() {
         <section className="bg-primary px-4 py-12 text-white sm:px-6 lg:px-8">
           <div className="grid max-w-none gap-8 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start">
             <div>
-              <SectionKicker>Academic expansion</SectionKicker>
+              <Target aria-hidden className="h-6 w-6 text-secondary" />
+              <SectionKicker>Strategic direction</SectionKicker>
               <h2 className="mt-3 text-3xl font-semibold">
-                Programmes developed for professional and regional needs
+                Priorities guiding the next chapter
               </h2>
               <p className="mt-4 text-sm leading-7 text-white/76">
-                The handbook records continued development of academic
-                programmes under Senate and Commission for University Education
-                guidelines, with professional accreditation supporting quality
-                and continuity.
+                The university's current direction connects quality education,
+                knowledge generation, partnerships, infrastructure, financial
+                sustainability, and a defined research niche.
+              </p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {goals.length ? (
+                goals.map((goal, index) => (
+                  <StrategicDirectionCard
+                    key={goal}
+                    goal={goal}
+                    index={index}
+                  />
+                ))
+              ) : (
+                <p className="rounded-md border border-dashed border-white/20 bg-white/[0.06] p-4 text-sm leading-6 text-white/70">
+                  Strategic goals have not been published yet.
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-white px-4 py-12 sm:px-6 lg:px-8">
+          <div className="grid max-w-none gap-8 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start">
+            <div>
+              <FileText aria-hidden className="h-6 w-6 text-primary" />
+              <SectionKicker>Academic expansion</SectionKicker>
+              <h2 className="mt-3 text-3xl font-semibold text-slate-950">
+                Programmes shaped by professional and regional needs
+              </h2>
+              <p className="mt-4 text-sm leading-7 text-slate-600">
+                Academic growth has expanded the university's reach across
+                sciences, technology, business, education, law, agriculture,
+                arts, social sciences, and health-related disciplines.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -513,34 +542,22 @@ export default async function AboutHistoryPage() {
           </div>
         </section>
 
-        <section className="bg-white">
-          <div className="grid max-w-none lg:grid-cols-2">
-            <div className="min-h-[420px]">
-              <PublicImage
-                src={HISTORY_IMAGES[1]}
-                alt="Kisii University learning spaces"
-                ratio="fill"
-                sizes="(min-width: 1024px) 50vw, 100vw"
-                className="h-full rounded-none"
-                imageClassName="object-[center_58%]"
-              />
+        <section className="bg-slate-50 px-4 py-12 sm:px-6 lg:px-8">
+          <div className="grid max-w-none gap-8 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-center">
+            <div>
+              <SectionKicker>Main Campus</SectionKicker>
+              <h2 className="mt-3 text-3xl font-semibold text-slate-950">
+                A setting for study, research and community engagement
+              </h2>
             </div>
-            <div className="flex items-center px-4 py-10 sm:px-6 lg:px-12">
-              <div className="max-w-2xl">
-                <SectionKicker>Main Campus</SectionKicker>
-                <h2 className="mt-3 text-3xl font-semibold text-slate-950">
-                  A scenic setting for study, research and community engagement
-                </h2>
-                <p className="mt-5 text-sm leading-7 text-slate-600">
-                  {overview?.physical_address
-                    ? `The Main Campus is located at ${overview.physical_address}.`
-                    : "The Main Campus location is published through the university profile."}{" "}
-                  The handbook describes a setting close to Kisii Town Centre,
-                  supported by satellite campuses that bring education and
-                  research closer to communities.
-                </p>
-              </div>
-            </div>
+            <p className="text-sm leading-7 text-slate-600 lg:max-w-4xl">
+              {overview?.physical_address
+                ? `The Main Campus is located at ${overview.physical_address}.`
+                : "The Main Campus location is published through the university profile."}{" "}
+              The campus environment supports teaching, learning, research,
+              innovation, outreach, and public service across the university's
+              academic and administrative units.
+            </p>
           </div>
         </section>
 

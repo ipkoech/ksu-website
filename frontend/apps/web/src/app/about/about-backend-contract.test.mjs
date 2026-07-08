@@ -85,14 +85,16 @@ test("about pages use full-width design sections instead of centered card pages"
 
 test("about subpages expose strategic-plan guided page-specific layouts", () => {
   assert.match(historySource, /HistoryTimeline/);
+  assert.match(historySource, /InteractiveMilestoneCard/);
   assert.match(historySource, /AtAGlancePanel/);
-  assert.match(historySource, /HistoryImageMosaic/);
   assert.match(historySource, /HistoryCtaBand/);
-  assert.match(historySource, /HandbookInsightCard/);
-  assert.match(historySource, /KSUGreenLandscapingMay2026-3810\.jpg/);
+  assert.match(historySource, /StrategicDirectionCard/);
+  assert.match(historySource, /bg-history\.jpg/);
   assert.match(historySource, /motion-safe:/);
   assert.match(historySource, /Apply Now/);
   assert.match(historySource, /Contact Us/);
+  assert.doesNotMatch(historySource, /HistoryImageMosaic/);
+  assert.doesNotMatch(historySource, /handbook/i);
   assert.doesNotMatch(historySource, /Source of this page/);
   assert.doesNotMatch(historySource, /Related institutional pages/);
   assert.doesNotMatch(historySource, /Institutional context/);
