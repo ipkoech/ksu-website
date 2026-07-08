@@ -21,6 +21,8 @@ test("staff profile page uses redesigned information-flow components", () => {
   assert.match(pageSource, /ProfileActionRail/);
   assert.match(pageSource, /ProfileFactGrid/);
   assert.match(pageSource, /QualificationTimeline/);
+  assert.match(pageSource, /label: "Academics"/);
+  assert.doesNotMatch(pageSource, /label: "Qualifications"/);
   assert.match(pageSource, /RoleRelationshipGrid/);
   assert.match(pageSource, /ResearcherProfileSection/);
   assert.match(pageSource, /label: "Biography"/);

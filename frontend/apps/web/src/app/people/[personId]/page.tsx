@@ -389,7 +389,7 @@ function ContentBlock({
 
 function QualificationTimeline({ items }: { items: string[] }) {
   return (
-    <ContentBlock title="Qualifications">
+    <ContentBlock title="Academics">
       <ol className="grid gap-3 lg:grid-cols-3">
         {items.map((item, index) => (
           <li
@@ -724,8 +724,8 @@ export default async function PublicPersonPage({
       : null,
     qualifications.length
       ? {
-          id: "qualifications",
-          label: "Qualifications",
+          id: "academics",
+          label: "Academics",
           content: <QualificationTimeline items={qualifications} />,
         }
       : null,
