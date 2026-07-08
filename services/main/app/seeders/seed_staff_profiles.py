@@ -11,7 +11,7 @@ from app.models import Department
 from app.schemas.base import slugify
 
 from ._shared import SeedContext, get_or_create_person
-from .live_site_snapshot import LIVE_SITE_PAGES
+from .live_staff_profile_snapshot import LIVE_STAFF_PROFILE_PAGES
 
 TITLE_PATTERN = re.compile(r"^(Prof\. Dr\.|Prof\.|Dr\.|Mr\.|Mrs\.|Ms\.|Miss\.)\s+", re.IGNORECASE)
 SUFFIX_PATTERN = re.compile(r",?\s*(PhD|PHD|MSc|MBA|CPA|CPS)\.?$", re.IGNORECASE)
@@ -188,7 +188,7 @@ def _profile_spec(page: dict[str, Any]) -> dict[str, Any]:
 
 LIVE_STAFF_PROFILE_SPECS = [
     _profile_spec(page)
-    for page in LIVE_SITE_PAGES
+    for page in LIVE_STAFF_PROFILE_PAGES
     if page["page_type"] == "profile" and str(page["path"]).startswith("/profile_view/")
 ]
 
