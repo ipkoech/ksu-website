@@ -1,15 +1,5 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
-import {
-  ArrowRight,
-  Award,
-  Landmark,
-  PhoneCall,
-  Quote,
-  Scale,
-  ShieldCheck,
-  type LucideIcon,
-} from "lucide-react";
+import { Quote } from "lucide-react";
 import { PublicImage } from "@/components/public/public-image";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
@@ -22,24 +12,6 @@ const FALLBACK_CHANCELLOR_MESSAGE = [
   "The Chancellor is the titular head of Kisii University. In the name of the University, the Chancellor confers degrees and awards diplomas, certificates, and other awards in consultation with the University Council and Senate.",
   "The office also provides institutional counsel by advising the Council from time to time and, where necessary, recommending to the Cabinet Secretary for Education that a visitation of the University be undertaken.",
   "This stewardship connects ceremonial authority, public accountability, and the academic mission of a chartered public university committed to quality education, research, innovation, and service to humanity.",
-];
-
-const CHANCELLOR_MANDATES = [
-  {
-    title: "Ceremonial authority",
-    body: "Confers degrees and awards diplomas, certificates, and other University awards.",
-    icon: Award,
-  },
-  {
-    title: "Council counsel",
-    body: "May give advice to the University Council from time to time.",
-    icon: Scale,
-  },
-  {
-    title: "Public stewardship",
-    body: "Links the University charter, Council, Senate, and national education mandate.",
-    icon: ShieldCheck,
-  },
 ];
 
 function SectionKicker({ children }: { children: ReactNode }) {
@@ -62,63 +34,6 @@ function splitMessageParagraphs(message?: string | null) {
 function fallbackParagraphs(message: string | null | undefined) {
   const backendParagraphs = splitMessageParagraphs(message);
   return backendParagraphs.length ? backendParagraphs : FALLBACK_CHANCELLOR_MESSAGE;
-}
-
-function LeadershipMandateCard({
-  title,
-  body,
-  icon: Icon,
-  index,
-}: {
-  title: string;
-  body: string;
-  icon: LucideIcon;
-  index: number;
-}) {
-  return (
-    <article
-      className="group border border-slate-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
-      style={{ animationDelay: `${index * 80}ms` }}
-    >
-      <span className="flex h-12 w-12 items-center justify-center rounded-md bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
-        <Icon aria-hidden className="h-6 w-6" />
-      </span>
-      <h3 className="mt-5 text-lg font-semibold text-slate-950">{title}</h3>
-      <p className="mt-3 text-sm leading-7 text-slate-600">{body}</p>
-    </article>
-  );
-}
-
-function MessageCtas() {
-  return (
-    <section className="bg-slate-950 px-4 py-12 text-white sm:px-6 lg:px-8">
-      <div className="grid max-w-none gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-        <div>
-          <SectionKicker>Connect with Kisii University</SectionKicker>
-          <h2 className="mt-3 max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight">
-            Engage with a public university guided by accountable leadership,
-            academic excellence, research, and service.
-          </h2>
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Link
-            href="/contact"
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-white/30 px-5 text-sm font-semibold text-white transition hover:bg-white hover:text-primary"
-          >
-            <PhoneCall aria-hidden className="h-4 w-4" />
-            Contact Us
-          </Link>
-          <Link
-            href="/admissions/how-to-apply"
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-secondary px-5 text-sm font-semibold text-slate-950 transition hover:bg-white"
-          >
-            Apply Now
-            <ArrowRight aria-hidden className="h-4 w-4" />
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
 }
 
 export default async function LeadershipMessagePage() {
@@ -154,18 +69,6 @@ export default async function LeadershipMessagePage() {
                   institutional counsel, and public stewardship within Kisii
                   University&apos;s governance structure.
                 </p>
-                <div className="mt-8 grid gap-3 sm:grid-cols-3">
-                  {["Titular head", "Council advice", "Awards authority"].map(
-                    (item) => (
-                      <div
-                        key={item}
-                        className="border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700"
-                      >
-                        {item}
-                      </div>
-                    ),
-                  )}
-                </div>
               </div>
             </div>
 
@@ -239,26 +142,6 @@ export default async function LeadershipMessagePage() {
           </div>
         </section>
 
-        <section className="bg-white px-4 py-12 sm:px-6 lg:px-8">
-          <div className="grid max-w-none gap-4 md:grid-cols-3">
-            {CHANCELLOR_MANDATES.map((item, index) => (
-              <LeadershipMandateCard key={item.title} {...item} index={index} />
-            ))}
-          </div>
-        </section>
-
-        <section className="bg-white px-4 py-10 sm:px-6 lg:px-8">
-          <div className="max-w-none border-y border-slate-200 py-10">
-            <Landmark aria-hidden className="h-7 w-7 text-primary" />
-            <SectionKicker>Governance context</SectionKicker>
-            <h2 className="mt-3 max-w-3xl text-3xl font-semibold leading-tight text-slate-950">
-              The Chancellor works within a governance structure that includes
-              Council, Senate, and University Management.
-            </h2>
-          </div>
-        </section>
-
-        <MessageCtas />
       </AboutPageLenis>
     </PageShell>
   );

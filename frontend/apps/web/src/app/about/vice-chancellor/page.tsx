@@ -1,17 +1,5 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
-import {
-  ArrowRight,
-  GraduationCap,
-  Mail,
-  Network,
-  PhoneCall,
-  Quote,
-  Sparkles,
-  Target,
-  UserRound,
-  type LucideIcon,
-} from "lucide-react";
+import { Quote } from "lucide-react";
 import { PublicImage } from "@/components/public/public-image";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
@@ -24,31 +12,6 @@ const FALLBACK_VC_MESSAGE = [
   "On behalf of Kisii University Council, Management and the University community, the Vice Chancellor welcomes learners to a fast-growing and dynamic institution committed to academic preparation, research, consultation, and social interaction.",
   "The handbook presents Kisii University as a serene and congenial environment that advances academic excellence, research, innovation, social welfare, integrity, diligence, hard work, professionalism, academic freedom, civility, social responsiveness, and accountability.",
   "The Vice Chancellor is the chief executive officer, academic and administrative head of the University, with overall responsibility for direction, organization, administration, and implementation of academic programmes.",
-];
-
-const VC_MANDATES = [
-  {
-    title: "Executive leadership",
-    body: "Serves as chief executive officer and academic and administrative head of the University.",
-    icon: UserRound,
-  },
-  {
-    title: "Academic direction",
-    body: "Oversees direction, organization, administration, and implementation of academic programmes.",
-    icon: GraduationCap,
-  },
-  {
-    title: "Management coordination",
-    body: "Works with Deputy Vice Chancellors, Registrars, Finance Officer, departments, and schools.",
-    icon: Network,
-  },
-];
-
-const PRIORITY_POINTS = [
-  "Quality teaching and learning",
-  "Research, innovation, and extension",
-  "Student and staff welfare",
-  "Integrity and accountability",
 ];
 
 function SectionKicker({ children }: { children: ReactNode }) {
@@ -71,63 +34,6 @@ function splitMessageParagraphs(message?: string | null) {
 function fallbackParagraphs(message: string | null | undefined) {
   const backendParagraphs = splitMessageParagraphs(message);
   return backendParagraphs.length ? backendParagraphs : FALLBACK_VC_MESSAGE;
-}
-
-function LeadershipMandateCard({
-  title,
-  body,
-  icon: Icon,
-  index,
-}: {
-  title: string;
-  body: string;
-  icon: LucideIcon;
-  index: number;
-}) {
-  return (
-    <article
-      className="group border border-slate-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
-      style={{ animationDelay: `${index * 80}ms` }}
-    >
-      <span className="flex h-12 w-12 items-center justify-center rounded-md bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
-        <Icon aria-hidden className="h-6 w-6" />
-      </span>
-      <h3 className="mt-5 text-lg font-semibold text-slate-950">{title}</h3>
-      <p className="mt-3 text-sm leading-7 text-slate-600">{body}</p>
-    </article>
-  );
-}
-
-function MessageCtas() {
-  return (
-    <section className="bg-slate-950 px-4 py-12 text-white sm:px-6 lg:px-8">
-      <div className="grid max-w-none gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-        <div>
-          <SectionKicker>Join Kisii University</SectionKicker>
-          <h2 className="mt-3 max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight">
-            Study in a university environment built for academic excellence,
-            research, innovation, and responsible citizenship.
-          </h2>
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Link
-            href="/contact"
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-white/30 px-5 text-sm font-semibold text-white transition hover:bg-white hover:text-primary"
-          >
-            <PhoneCall aria-hidden className="h-4 w-4" />
-            Contact Us
-          </Link>
-          <Link
-            href="/admissions/how-to-apply"
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-secondary px-5 text-sm font-semibold text-slate-950 transition hover:bg-white"
-          >
-            Apply Now
-            <ArrowRight aria-hidden className="h-4 w-4" />
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
 }
 
 export default async function LeadershipMessagePage() {
@@ -184,16 +90,6 @@ export default async function LeadershipMessagePage() {
                   coordination, research growth, student welfare, and
                   implementation of Kisii University&apos;s public mandate.
                 </p>
-                <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  {PRIORITY_POINTS.map((item) => (
-                    <div
-                      key={item}
-                      className="border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700"
-                    >
-                      {item}
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
           </div>
@@ -244,68 +140,6 @@ export default async function LeadershipMessagePage() {
           </div>
         </section>
 
-        <section className="bg-white px-4 py-12 sm:px-6 lg:px-8">
-          <div className="grid max-w-none gap-4 md:grid-cols-3">
-            {VC_MANDATES.map((item, index) => (
-              <LeadershipMandateCard key={item.title} {...item} index={index} />
-            ))}
-          </div>
-        </section>
-
-        <section className="bg-white px-4 py-10 sm:px-6 lg:px-8">
-          <div className="max-w-none border-y border-slate-200 py-10">
-            <Target aria-hidden className="h-7 w-7 text-primary" />
-            <SectionKicker>Implementation context</SectionKicker>
-            <h2 className="mt-3 max-w-3xl text-3xl font-semibold leading-tight text-slate-950">
-              The Vice Chancellor leads implementation through Deputy Vice
-              Chancellors, Registrars, the Finance Officer, departments, and
-              schools.
-            </h2>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {[
-                ["Academic", "Teaching, research, examinations, graduation"],
-                ["Administrative", "Planning, finance, operations, resources"],
-              ].map(([label, body]) => (
-                <div key={label} className="border border-slate-200 p-4">
-                  <Sparkles aria-hidden className="h-5 w-5 text-secondary" />
-                  <p className="mt-3 text-sm font-semibold text-slate-950">
-                    {label}
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {body}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-white px-4 py-10 sm:px-6 lg:px-8">
-          <div className="grid max-w-none gap-4 border-y border-slate-200 py-8 md:grid-cols-3">
-            {[
-              ["Leadership office", "Vice Chancellor"],
-              ["Primary role", "Chief executive officer"],
-              ["Official contact", overview?.email ?? "info@kisiiuniversity.ac.ke"],
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="flex min-h-24 items-center gap-4 border border-slate-200 bg-slate-50 p-4"
-              >
-                <Mail aria-hidden className="h-6 w-6 text-primary" />
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
-                    {label}
-                  </p>
-                  <p className="mt-2 text-sm font-semibold text-slate-950">
-                    {value}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <MessageCtas />
       </AboutPageLenis>
     </PageShell>
   );
