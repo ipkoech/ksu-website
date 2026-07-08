@@ -39,6 +39,9 @@ server {
 
     client_max_body_size 25M;
     large_client_header_buffers 8 32k;
+    proxy_buffer_size 32k;
+    proxy_buffers 16 32k;
+    proxy_busy_buffers_size 64k;
 
     location / {
         proxy_pass         http://api_gateway;
@@ -57,6 +60,9 @@ server {
 
     client_max_body_size 25M;
     large_client_header_buffers 8 32k;
+    proxy_buffer_size 32k;
+    proxy_buffers 16 32k;
+    proxy_busy_buffers_size 64k;
 
     location ^~ /_next/static/ {
         proxy_pass         http://research_web;
@@ -86,6 +92,9 @@ server {
 
     client_max_body_size 25M;
     large_client_header_buffers 8 32k;
+    proxy_buffer_size 32k;
+    proxy_buffers 16 32k;
+    proxy_busy_buffers_size 64k;
 
     location = /admin {
         return 308 /admin/;
