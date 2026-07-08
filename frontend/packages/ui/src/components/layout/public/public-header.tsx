@@ -516,6 +516,11 @@ function buildNavigation(
     ],
   };
 
+  const contactItem: NavItem = {
+    label: "Contact Us",
+    href: "/contact",
+  };
+
   const serviceItems: NavItem[] = [
     {
       label: "Research",
@@ -533,6 +538,7 @@ function buildNavigation(
     academicsItem,
     campusLifeItem,
     mediaDeskItem,
+    contactItem,
     ...serviceItems,
   ];
 }

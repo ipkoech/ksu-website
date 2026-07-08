@@ -46,3 +46,10 @@ test("web nav data fetches public wings for the administration menu", () => {
   assert.match(navDataSource, /uniqueNavUnits/);
   assert.match(navDataSource, /wings,/);
 });
+
+test("public header includes a top-level contact us item", () => {
+  assert.match(headerSource, /const contactItem: NavItem = \{/);
+  assert.match(headerSource, /label: "Contact Us"/);
+  assert.match(headerSource, /href: "\/contact"/);
+  assert.match(headerSource, /mediaDeskItem,\s*\n\s*contactItem,\s*\n\s*\.\.\.serviceItems/);
+});
