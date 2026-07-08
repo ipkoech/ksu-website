@@ -523,7 +523,7 @@ function AcademicsPathwaySection({
               </div>
               {schools.length ? (
                 <ScrollRevealGroup
-                  className="mt-5 grid gap-4 md:grid-cols-2"
+                  className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3"
                   variant="fade-up"
                   staggerDelay={55}
                 >
@@ -570,58 +570,52 @@ function AcademicsPathwaySection({
                   </Link>
                 ))}
               </div>
-            </div>
-          </LandingReveal>
-        </div>
-
-        <LandingReveal className="mt-6" variant="fade-up">
-          <div className="rounded-md border border-blue-100 bg-[linear-gradient(135deg,#eef7ff_0%,#ffffff_56%,#effaf3_100%)] p-5 shadow-sm shadow-blue-100/70">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
+              <div className="mt-5 rounded-md border border-white/10 bg-white p-4 text-slate-950">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
                   {activeIntake && shouldShowCountdown
                     ? "Applications Open"
                     : "Admissions"}
                 </p>
-                <h3 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+                <h3 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold">
                   {activeIntake && shouldShowCountdown
                     ? `${intakeLabel(activeIntake)} is currently open`
                     : "Prepare your application for the next intake"}
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
+                <p className="mt-2 text-xs leading-5 text-slate-600">
                   {activeIntake && shouldShowCountdown
                     ? `Application deadline: ${formatDate(activeDeadline)}.`
                     : "Review the guide, compare programmes, and contact admissions for current routes."}
                 </p>
-              </div>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href={activeIntake?.href ?? "/admissions/how-to-apply"}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90"
-                >
-                  Apply Now
-                  <ArrowRight className="h-4 w-4" aria-hidden />
-                </Link>
-                <Link
-                  href="/contact"
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-blue-200 bg-white px-5 text-sm font-semibold text-primary transition hover:bg-blue-50"
-                >
-                  Contact Us
-                  <Mail className="h-4 w-4" aria-hidden />
-                </Link>
+                <div className="mt-4 grid gap-2">
+                  <Link
+                    href={activeIntake?.href ?? "/admissions/how-to-apply"}
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90"
+                  >
+                    Apply Now
+                    <ArrowRight className="h-4 w-4" aria-hidden />
+                  </Link>
+                  <Link
+                    href="/contact"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-blue-200 bg-white px-4 text-sm font-semibold text-primary transition hover:bg-blue-50"
+                  >
+                    Contact Us
+                    <Mail className="h-4 w-4" aria-hidden />
+                  </Link>
+                </div>
+                {activeIntake && shouldShowCountdown && activeDeadline ? (
+                  <div className="mt-4 overflow-hidden rounded-md">
+                    <CountdownStrip
+                      title={`${intakeLabel(activeIntake)} Countdown`}
+                      deadline={activeDeadline}
+                      deadlineLabel={formatDate(activeDeadline)}
+                      compact
+                    />
+                  </div>
+                ) : null}
               </div>
             </div>
-            {activeIntake && shouldShowCountdown && activeDeadline ? (
-              <div className="mt-5">
-                <CountdownStrip
-                  title={`${intakeLabel(activeIntake)} Countdown`}
-                  deadline={activeDeadline}
-                  deadlineLabel={formatDate(activeDeadline)}
-                />
-              </div>
-            ) : null}
-          </div>
-        </LandingReveal>
+          </LandingReveal>
+        </div>
       </div>
     </section>
   );
