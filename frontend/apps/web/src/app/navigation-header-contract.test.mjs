@@ -26,6 +26,7 @@ test("public header administration groups divisions registrars and departments",
   assert.match(headerSource, /wings\?: NavAdminUnit\[\]/);
   assert.match(headerSource, /const wings = megaMenuData\?\.wings \|\| \[\]/);
   assert.match(headerSource, /const registrarWings = wings\.filter\(isRegistrarUnit\)/);
+  assert.match(headerSource, /const registrarCodes = new Set\(\["AHRCS", "RAA", "REIRM"\]\)/);
   assert.match(headerSource, /const administrativeDepartments = \(departments\.length \? departments : adminUnits\)\.filter/);
   assert.match(headerSource, /group: "Divisions"/);
   assert.match(headerSource, /group: "Registrars"/);
