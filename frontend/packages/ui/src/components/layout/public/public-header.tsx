@@ -71,6 +71,7 @@ export interface MegaMenuData {
   schools?: NavSchool[];
   departments?: NavDepartment[];
   divisions?: NavAdminUnit[];
+  wings?: NavAdminUnit[];
   adminUnits?: NavAdminUnit[];
   clubs?: NavClub[];
 }
@@ -309,6 +310,7 @@ function buildNavigation(
   const schools = megaMenuData?.schools || [];
   const departments = megaMenuData?.departments || [];
   const divisions = megaMenuData?.divisions || [];
+  const wings = megaMenuData?.wings || [];
   const adminUnits = megaMenuData?.adminUnits || [];
   const clubs = megaMenuData?.clubs || [];
 
@@ -360,6 +362,11 @@ function buildNavigation(
         href: `/administration/divisions/${division.slug}`,
         group: "Divisions",
       })),
+      ...wings.map((wing) => ({
+        label: wing.name,
+        href: `/administration/units/${wing.slug}`,
+        group: "Wings",
+      })),
       ...(departments.length ? departments : adminUnits).map((unit) => ({
         label: unit.name,
         href: `/administration/units/${unit.slug}`,
@@ -368,55 +375,43 @@ function buildNavigation(
     ],
   };
 
-  // Admissions menu
-  const admissionsItem: NavItem = {
-    label: "Admissions",
-    href: "/admissions",
-    children: [
-      {
-        label: "Undergraduate",
-        href: "/admissions/undergraduate",
-        description: "Bachelor's programmes",
-      },
-      {
-        label: "Postgraduate",
-        href: "/admissions/postgraduate",
-        description: "Masters & PhD programmes",
-      },
-      {
-        label: "International Students",
-        href: "/admissions/international",
-        description: "Study in Kenya",
-      },
-      {
-        label: "Requirements",
-        href: "/admissions/requirements",
-        description: "Entry qualifications",
-      },
-      {
-        label: "Fees & Scholarships",
-        href: "/admissions/fees",
-        description: "Tuition and financial aid",
-      },
-      {
-        label: "How to Apply",
-        href: "/admissions/how-to-apply",
-        description: "Application process",
-      },
-    ],
-  };
+  const admissionsLinks: NavItem[] = [
+    {
+      label: "Undergraduate",
+      href: "/admissions/undergraduate",
+      group: "Admissions",
+    },
+    {
+      label: "Postgraduate",
+      href: "/admissions/postgraduate",
+      group: "Admissions",
+    },
+    {
+      label: "International Students",
+      href: "/admissions/international",
+      group: "Admissions",
+    },
+    {
+      label: "Requirements",
+      href: "/admissions/requirements",
+      group: "Admissions",
+    },
+    {
+      label: "Fees & Scholarships",
+      href: "/admissions/fees",
+      group: "Admissions",
+    },
+    {
+      label: "How to Apply",
+      href: "/admissions/how-to-apply",
+      group: "Admissions",
+    },
+  ];
 
-  // Academics with schools - restructured
   const academicsItem: NavItem = {
     label: "Academics",
     href: "/academics",
     children: [
-      // Quick links
-      {
-        label: "All Schools",
-        href: "/academics/schools",
-        description: "Browse all schools",
-      },
       {
         label: "Programmes",
         href: "/academics/programmes",
@@ -432,12 +427,17 @@ function buildNavigation(
         href: "/academics/examinations",
         description: "Exam schedules & results",
       },
-      // Dynamic schools
+      {
+        label: "All Schools",
+        href: "/academics/schools",
+        group: "Schools",
+      },
       ...schools.map((school) => ({
         label: school.name.replace("School of ", "").replace("Faculty of ", ""),
         href: `/academics/schools/${school.slug}`,
         group: "Schools",
       })),
+      ...admissionsLinks,
     ],
   };
 
@@ -520,7 +520,6 @@ function buildNavigation(
   return [
     aboutItem,
     administrationItem,
-    admissionsItem,
     academicsItem,
     campusLifeItem,
     mediaDeskItem,
@@ -927,6 +926,9 @@ function GroupedMenuGrid({ sections }: { sections: GroupedMenuSection[] }) {
 }
 
 function MenuLinkGrid({ title, items }: { title: string; items: NavItem[] }) {
+  const minColumnWidth =
+    title === "Departments" || items.length > 16 ? "8.5rem" : "10rem";
+
   return (
     <div>
       <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -935,8 +937,7 @@ function MenuLinkGrid({ title, items }: { title: string; items: NavItem[] }) {
       <div
         className="grid gap-1.5"
         style={{
-          gridTemplateColumns:
-            "repeat(auto-fit, minmax(min(10rem, 100%), 1fr))",
+          gridTemplateColumns: `repeat(auto-fit, minmax(min(${minColumnWidth}, 100%), 1fr))`,
         }}
       >
         {items.map((child) => (

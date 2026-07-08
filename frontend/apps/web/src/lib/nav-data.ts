@@ -1,4 +1,10 @@
-import { clubsApi, departmentsApi, divisionsApi, schoolsApi } from "@ksu/api-client";
+import {
+  clubsApi,
+  departmentsApi,
+  divisionsApi,
+  schoolsApi,
+  wingsApi,
+} from "@ksu/api-client";
 import type {
   MegaMenuData,
   NavAdminUnit,
@@ -32,8 +38,8 @@ export async function getNavData(): Promise<MegaMenuData> {
   if (
     schoolsResult.status === "rejected" ||
     divisionsResult.status === "rejected" ||
-    adminDepartmentsResult.status === "rejected"
-    || clubsResult.status === "rejected"
+    adminDepartmentsResult.status === "rejected" ||
+    clubsResult.status === "rejected"
   ) {
     console.error("Failed to fetch some nav data:", {
       schools:
@@ -70,6 +76,33 @@ export async function getNavData(): Promise<MegaMenuData> {
           }))
       : [];
 
+  const wingsResult = await Promise.allSettled(
+    divisions.map((division) =>
+      wingsApi.listByDivision(division.id, {
+        fields: "id,name,slug,wing_type",
+        is_active: true,
+      }),
+    ),
+  );
+
+  if (wingsResult.some((result) => result.status === "rejected")) {
+    console.error("Failed to fetch some nav data:", {
+      wings: wingsResult
+        .filter((result) => result.status === "rejected")
+        .map((result) => result.reason),
+    });
+  }
+
+  const wings: NavAdminUnit[] = wingsResult.flatMap((result) =>
+    result.status === "fulfilled"
+      ? (result.value.data ?? []).map((wing) => ({
+          id: wing.id,
+          name: wing.name,
+          slug: wing.slug,
+        }))
+      : [],
+  );
+
   const adminUnits: NavAdminUnit[] =
     adminDepartmentsResult.status === "fulfilled"
       ? (adminDepartmentsResult.value.data ?? []).map((department) => ({
@@ -104,6 +137,7 @@ export async function getNavData(): Promise<MegaMenuData> {
     schools,
     departments,
     divisions,
+    wings,
     adminUnits,
     clubs,
   };
@@ -114,6 +148,7 @@ export function emptyNavData(): MegaMenuData {
     schools: [],
     departments: [],
     divisions: [],
+    wings: [],
     adminUnits: [],
     clubs: [],
   };
