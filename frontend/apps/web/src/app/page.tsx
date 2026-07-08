@@ -34,7 +34,6 @@ import {
   type HomeIntake,
   type HomeMetric,
   type HomePartner,
-  type HomeProgrammeCard,
   type HomeSchoolCard,
 } from "@/lib/homepage-data";
 import { getNavData } from "@/lib/nav-data";
@@ -239,7 +238,6 @@ export default async function HomePage() {
           <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
             <AcademicsPathwaySection
               schools={homepage.schools}
-              programmes={homepage.featuredProgrammes}
               activeIntakes={homepage.activeIntakes}
             />
             <LandingReveal variant="fade-left">
@@ -445,14 +443,15 @@ function WhyChooseSection({
 
 function AcademicsPathwaySection({
   schools,
-  programmes,
   activeIntakes,
 }: {
   schools: HomeSchoolCard[];
-  programmes: HomeProgrammeCard[];
   activeIntakes: HomeIntake[];
 }) {
   const activeIntake = activeIntakes[0] ?? null;
+  const activeDeadline =
+    activeIntake?.lateApplicationEnd ?? activeIntake?.applicationEnd;
+  const shouldShowCountdown = hasFutureDeadline(activeDeadline);
   const journey = [
     {
       step: "01",
@@ -469,9 +468,9 @@ function AcademicsPathwaySection({
     {
       step: "03",
       title: "Confirm intake",
-      body: activeIntake
+      body: activeIntake && shouldShowCountdown
         ? `Apply for the ${intakeLabel(activeIntake)} before the deadline.`
-        : "Review current admission windows before preparing your application.",
+        : "Review the admission guide and prepare your application documents.",
       href: activeIntake?.href ?? "/admissions/intakes",
     },
     {
@@ -510,7 +509,7 @@ function AcademicsPathwaySection({
           </div>
         </LandingReveal>
 
-        <div className="mt-8 grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.75fr)_minmax(280px,0.8fr)]">
+        <div className="mt-8 grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(340px,0.75fr)]">
           <LandingReveal variant="fade-right">
             <div className="rounded-md border border-blue-100 bg-blue-50/40 p-4">
               <div className="flex items-center justify-between gap-3">
@@ -545,52 +544,7 @@ function AcademicsPathwaySection({
             </div>
           </LandingReveal>
 
-          <LandingReveal variant="zoom-in" delay={80}>
-            <div className="h-full rounded-md border border-blue-100 bg-white p-4 shadow-sm shadow-blue-100/60">
-              <SectionKicker title="Featured Programmes" />
-              {programmes.length ? (
-                <div className="mt-5 grid gap-3">
-                  {programmes.slice(0, 6).map((programme) => (
-                    <Link
-                      key={programme.href}
-                      href={programme.href}
-                      className="group rounded-md border border-blue-100 bg-white p-3 transition hover:border-primary/30 hover:bg-blue-50/60"
-                    >
-                      <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-secondary">
-                        {programme.eyebrow ?? "Programme"}
-                      </span>
-                      <h3 className="mt-1 line-clamp-2 text-sm font-bold leading-5 text-slate-950 group-hover:text-primary">
-                        {programme.title}
-                      </h3>
-                      {programme.body ? (
-                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">
-                          {programme.body}
-                        </p>
-                      ) : null}
-                    </Link>
-                  ))}
-                  <Link
-                    href="/academics/programmes"
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-4 text-sm font-semibold text-primary transition hover:bg-blue-100"
-                  >
-                    View Programmes
-                    <ArrowRight className="h-4 w-4" aria-hidden />
-                  </Link>
-                </div>
-              ) : (
-                <div className="mt-5">
-                  <HomeEmptyState
-                    title="Programmes are being refreshed"
-                    body="Open the programme listing for currently published records."
-                    actionHref="/academics/programmes"
-                    actionLabel="Open programmes"
-                  />
-                </div>
-              )}
-            </div>
-          </LandingReveal>
-
-          <LandingReveal variant="fade-left" delay={120}>
+          <LandingReveal variant="fade-left" delay={80}>
             <div className="h-full rounded-md border border-blue-100 bg-slate-950 p-4 text-white shadow-lg shadow-blue-950/10">
               <SectionKicker title="Application Journey" className="text-white" />
               <div className="mt-5 grid gap-3">
@@ -625,16 +579,18 @@ function AcademicsPathwaySection({
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
-                  {activeIntake ? "Applications Open" : "Admissions"}
+                  {activeIntake && shouldShowCountdown
+                    ? "Applications Open"
+                    : "Admissions"}
                 </p>
                 <h3 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
-                  {activeIntake
+                  {activeIntake && shouldShowCountdown
                     ? `${intakeLabel(activeIntake)} is currently open`
                     : "Prepare your application for the next intake"}
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {activeIntake
-                    ? `Application deadline: ${formatDate(activeIntake.lateApplicationEnd ?? activeIntake.applicationEnd)}.`
+                  {activeIntake && shouldShowCountdown
+                    ? `Application deadline: ${formatDate(activeDeadline)}.`
                     : "Review the guide, compare programmes, and contact admissions for current routes."}
                 </p>
               </div>
@@ -655,18 +611,12 @@ function AcademicsPathwaySection({
                 </Link>
               </div>
             </div>
-            {activeIntake ? (
+            {activeIntake && shouldShowCountdown && activeDeadline ? (
               <div className="mt-5">
                 <CountdownStrip
                   title={`${intakeLabel(activeIntake)} Countdown`}
-                  deadline={
-                    activeIntake.lateApplicationEnd ??
-                    activeIntake.applicationEnd
-                  }
-                  deadlineLabel={formatDate(
-                    activeIntake.lateApplicationEnd ??
-                      activeIntake.applicationEnd,
-                  )}
+                  deadline={activeDeadline}
+                  deadlineLabel={formatDate(activeDeadline)}
                 />
               </div>
             ) : null}
@@ -675,6 +625,13 @@ function AcademicsPathwaySection({
       </div>
     </section>
   );
+}
+
+function hasFutureDeadline(value?: string | null) {
+  if (!value) return false;
+  const deadline = new Date(value);
+  if (Number.isNaN(deadline.getTime())) return false;
+  return deadline.getTime() > Date.now();
 }
 
 function SchoolCard({ school }: { school: HomeSchoolCard }) {
