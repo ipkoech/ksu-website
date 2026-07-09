@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Standardize all frontend apps on the shared Bookman Old Style typography and 10px-24px size scale from one shared theme source.
+**Goal:** Standardize all frontend apps on the shared Bookman Old Style typography and 10pt-24pt size scale from one shared theme source.
 
 **Architecture:** `frontend/packages/ui/src/globals.css` becomes the canonical source for typography, color, radius, shadows, and shared base styles. App-level `globals.css` files import that shared file and keep only app-specific layout/utilities, so changing shared theme tokens affects `web`, `admin`, `research`, and `library`.
 
@@ -12,10 +12,10 @@
 
 - Body/default font: `"Bookman Old Style", Georgia, serif`.
 - Display/headline font: `"Bookman Old Style", Georgia, serif`.
-- Compact support sizes: `10px` for `xs`, `11px` for `sm`.
-- Body/default size: `12px`.
-- Content and heading progression: `12px`, `14px`, `16px`, `18px`, `20px`, `22px`, `24px`.
-- Standard typography maximum: `24px`.
+- Compact support sizes: `10pt` for `xs`, `11pt` for `sm`.
+- Body/default size: `12pt`.
+- Content and heading progression: `12pt`, `14pt`, `16pt`, `18pt`, `20pt`, `22pt`, `24pt`.
+- Standard typography maximum: `24pt`.
 - No app-level font-family or font-size token overrides.
 - Keep explicit `text-[...]` component classes out of scope except for later review.
 
@@ -51,16 +51,16 @@ test("shared UI globals define the canonical frontend typography scale", () => {
   const expectedTokens = [
     ["--font-sans", '"Bookman Old Style", Georgia, serif'],
     ["--font-display", '"Bookman Old Style", Georgia, serif'],
-    ["--font-size-xs", "0.625rem"],
-    ["--font-size-sm", "0.6875rem"],
-    ["--font-size-base", "0.75rem"],
-    ["--font-size-lg", "0.875rem"],
-    ["--font-size-xl", "1rem"],
-    ["--font-size-2xl", "1.125rem"],
-    ["--font-size-3xl", "1.25rem"],
-    ["--font-size-4xl", "1.375rem"],
-    ["--font-size-5xl", "1.5rem"],
-    ["--font-size-6xl", "1.5rem"],
+    ["--font-size-xs", "10pt"],
+    ["--font-size-sm", "11pt"],
+    ["--font-size-base", "12pt"],
+    ["--font-size-lg", "14pt"],
+    ["--font-size-xl", "16pt"],
+    ["--font-size-2xl", "18pt"],
+    ["--font-size-3xl", "20pt"],
+    ["--font-size-4xl", "22pt"],
+    ["--font-size-5xl", "24pt"],
+    ["--font-size-6xl", "24pt"],
   ];
 
   for (const [token, value] of expectedTokens) {
@@ -106,16 +106,16 @@ Set canonical typography tokens in `frontend/packages/ui/src/globals.css`:
 ```css
 --font-sans: "Bookman Old Style", Georgia, serif;
 --font-display: "Bookman Old Style", Georgia, serif;
---font-size-xs: 0.625rem;
---font-size-sm: 0.6875rem;
---font-size-base: 0.75rem;
---font-size-lg: 0.875rem;
---font-size-xl: 1rem;
---font-size-2xl: 1.125rem;
---font-size-3xl: 1.25rem;
---font-size-4xl: 1.375rem;
---font-size-5xl: 1.5rem;
---font-size-6xl: 1.5rem;
+--font-size-xs: 10pt;
+--font-size-sm: 11pt;
+--font-size-base: 12pt;
+--font-size-lg: 14pt;
+--font-size-xl: 16pt;
+--font-size-2xl: 18pt;
+--font-size-3xl: 20pt;
+--font-size-4xl: 22pt;
+--font-size-5xl: 24pt;
+--font-size-6xl: 24pt;
 ```
 
 - [ ] **Step 2: Remove app-level typography overrides**

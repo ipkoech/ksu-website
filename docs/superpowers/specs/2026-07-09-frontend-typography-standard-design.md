@@ -10,7 +10,7 @@ The current typography is not fully standardized:
 - Public-facing pages use `--font-display` for headings, currently mapped to Playfair Display in several apps.
 - Body text uses `--font-sans`, currently mapped to Inter/system sans stacks.
 
-The goal is to standardize all frontend apps on Bookman Old Style for normal text, with a 12px body/default text size, compact support text at 10px and 11px where appropriate, and a restrained heading scale that tops out at 24px.
+The goal is to standardize all frontend apps on Bookman Old Style for normal text, with a 12pt body/default text size, compact support text at 10pt and 11pt where appropriate, and a restrained heading scale that tops out at 24pt.
 
 ## Decision
 
@@ -18,10 +18,10 @@ Use a single typography contract across all frontends:
 
 - Body/default font: `"Bookman Old Style", Georgia, serif`.
 - Display/headline font: `"Bookman Old Style", Georgia, serif`.
-- Body/default font size: `12px`, represented as `--font-size-base: 0.75rem`.
+- Body/default font size: `12pt`, represented as `--font-size-base: 12pt`.
 - Keep existing Tailwind `font-sans` and `font-mono` mappings, but make `font-sans` resolve to the standardized `--font-sans` value.
 - Keep compact support text tokens for captions, labels, badges, and metadata.
-- Keep scaled heading and utility tokens, but cap the standard typography scale at 24px.
+- Keep scaled heading and utility tokens, but cap the standard typography scale at 24pt.
 
 The fallback stack keeps Bookman Old Style as the first-choice font while giving the browser explicit substitutions when Bookman Old Style is unavailable on a client system.
 
@@ -30,26 +30,26 @@ The fallback stack keeps Bookman Old Style as the first-choice font while giving
 The shared UI package should be the primary typography source:
 
 - Update `frontend/packages/ui/src/globals.css` to define the canonical sans and display stacks.
-- Update `--font-size-base` in the shared scale to `0.75rem`.
-- Update related size tokens so the scale supports compact 10px and 11px text, keeps body text at 12px, and caps headings at 24px.
+- Update `--font-size-base` in the shared scale to `12pt`.
+- Update related size tokens so the scale supports compact 10pt and 11pt text, keeps body text at 12pt, and caps headings at 24pt.
 - Keep the body rule using `font-family: var(--font-sans, "Bookman Old Style", Georgia, serif)` and `font-size: var(--font-size-base)`.
 
 The standard size token scale should be:
 
 | Token | Size | Use |
 | --- | ---: | --- |
-| `xs` | 10px | Fine print, badges, dense metadata, table support text |
-| `sm` | 11px | Captions, labels, helper text, compact secondary controls |
-| `base` | 12px | Body/default text and normal paragraphs |
-| `lg` | 14px | Primary buttons, strong labels, small subheadings |
-| `xl` | 16px | Card titles and local section titles |
-| `2xl` | 18px | Subsection headings |
-| `3xl` | 20px | Section headings |
-| `4xl` | 22px | Page headings |
-| `5xl` | 24px | Alias to maximum standard size for compatibility |
-| `6xl` | 24px | Alias to maximum standard size for compatibility |
+| `xs` | 10pt | Fine print, badges, dense metadata, table support text |
+| `sm` | 11pt | Captions, labels, helper text, compact secondary controls |
+| `base` | 12pt | Body/default text and normal paragraphs |
+| `lg` | 14pt | Primary buttons, strong labels, small subheadings |
+| `xl` | 16pt | Card titles and local section titles |
+| `2xl` | 18pt | Subsection headings |
+| `3xl` | 20pt | Section headings |
+| `4xl` | 22pt | Page headings |
+| `5xl` | 24pt | Alias to maximum standard size for compatibility |
+| `6xl` | 24pt | Alias to maximum standard size for compatibility |
 
-The standard semantic content and heading progression is `12px`, `14px`, `16px`, `18px`, `20px`, `22px`, `24px`. The `10px` and `11px` values are reserved for supporting UI text such as captions, labels, badges, dense metadata, and helper text.
+The standard semantic content and heading progression is `12pt`, `14pt`, `16pt`, `18pt`, `20pt`, `22pt`, `24pt`. The `10pt` and `11pt` values are reserved for supporting UI text such as captions, labels, badges, dense metadata, and helper text.
 
 App-level globals should not drift from the shared contract:
 
@@ -68,9 +68,9 @@ Existing Tailwind typography classes should keep working:
 
 - `font-sans` resolves to Bookman Old Style through `--font-sans`.
 - `font-[family-name:var(--font-display)]` resolves to Bookman Old Style through `--font-display`.
-- `text-base` resolves to the 12px body/default size through `--font-size-base`.
-- Standard Tailwind size utilities resolve within the 10px to 24px range.
-- Explicit `text-[...]` utilities remain intentional local choices, but should be reviewed when they exceed 24px.
+- `text-base` resolves to the 12pt body/default size through `--font-size-base`.
+- Standard Tailwind size utilities resolve within the 10pt to 24pt range.
+- Explicit `text-[...]` utilities remain intentional local choices, but should be reviewed when they exceed 24pt.
 
 This avoids a large risky pass over hundreds of components while still changing the site-wide defaults, display font behavior, and standard heading ceiling.
 
@@ -98,10 +98,10 @@ No runtime error handling is required because CSS font fallback is browser-nativ
 Verification should cover:
 
 - Static search confirming no app still maps `--font-sans` to Inter or `--font-display` to Playfair Display.
-- Static search confirming `--font-size-base` is standardized to `0.75rem` where defined.
-- Static search or visual review for standard tokens exceeding the 24px maximum.
+- Static search confirming `--font-size-base` is standardized to `12pt` where defined.
+- Static search or visual review for standard tokens exceeding the 24pt maximum.
 - Lint/typecheck checks for the affected frontend workspace.
-- A quick browser or screenshot check of at least one public page and one admin page to catch obvious text overflow or layout regressions caused by the smaller default size.
+- A quick browser or screenshot check of at least one public page and one admin page to catch obvious text overflow or layout regressions caused by the point-based default size.
 
 ## Out Of Scope
 

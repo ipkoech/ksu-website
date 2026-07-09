@@ -24,16 +24,16 @@ test("shared UI globals define the canonical frontend typography scale", () => {
   const expectedTokens = [
     ["--font-sans", '"Bookman Old Style", Georgia, serif'],
     ["--font-display", '"Bookman Old Style", Georgia, serif'],
-    ["--font-size-xs", "0.625rem"],
-    ["--font-size-sm", "0.6875rem"],
-    ["--font-size-base", "0.75rem"],
-    ["--font-size-lg", "0.875rem"],
-    ["--font-size-xl", "1rem"],
-    ["--font-size-2xl", "1.125rem"],
-    ["--font-size-3xl", "1.25rem"],
-    ["--font-size-4xl", "1.375rem"],
-    ["--font-size-5xl", "1.5rem"],
-    ["--font-size-6xl", "1.5rem"],
+    ["--font-size-xs", "10pt"],
+    ["--font-size-sm", "11pt"],
+    ["--font-size-base", "12pt"],
+    ["--font-size-lg", "14pt"],
+    ["--font-size-xl", "16pt"],
+    ["--font-size-2xl", "18pt"],
+    ["--font-size-3xl", "20pt"],
+    ["--font-size-4xl", "22pt"],
+    ["--font-size-5xl", "24pt"],
+    ["--font-size-6xl", "24pt"],
   ];
 
   for (const [token, value] of expectedTokens) {
