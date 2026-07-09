@@ -10,7 +10,7 @@ The current typography is not fully standardized:
 - Public-facing pages use `--font-display` for headings, currently mapped to Playfair Display in several apps.
 - Body text uses `--font-sans`, currently mapped to Inter/system sans stacks.
 
-The goal is to standardize all frontend apps on Arial for normal text, with a 12px body/default text size and a restrained heading scale that tops out at 24px.
+The goal is to standardize all frontend apps on Arial for normal text, with a 12px body/default text size, compact support text at 10px and 11px where appropriate, and a restrained heading scale that tops out at 24px.
 
 ## Decision
 
@@ -20,6 +20,7 @@ Use a single typography contract across all frontends:
 - Display/headline font: `Arial, Helvetica, sans-serif`.
 - Body/default font size: `12px`, represented as `--font-size-base: 0.75rem`.
 - Keep existing Tailwind `font-sans` and `font-mono` mappings, but make `font-sans` resolve to the standardized `--font-sans` value.
+- Keep compact support text tokens for captions, labels, badges, and metadata.
 - Keep scaled heading and utility tokens, but cap the standard typography scale at 24px.
 
 The fallback stack keeps Arial as the first-choice font while giving the browser explicit substitutions when Arial is unavailable on a client system.
@@ -30,15 +31,15 @@ The shared UI package should be the primary typography source:
 
 - Update `frontend/packages/ui/src/globals.css` to define the canonical sans and display stacks.
 - Update `--font-size-base` in the shared scale to `0.75rem`.
-- Update related size tokens so the scale follows the approved 12px to 24px range.
+- Update related size tokens so the scale supports compact 10px and 11px text, keeps body text at 12px, and caps headings at 24px.
 - Keep the body rule using `font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif)` and `font-size: var(--font-size-base)`.
 
 The standard size token scale should be:
 
 | Token | Size | Use |
 | --- | ---: | --- |
-| `xs` | 12px | Fine print, metadata, badges, table support text |
-| `sm` | 12px | Compact UI text, captions, labels, secondary buttons |
+| `xs` | 10px | Fine print, badges, dense metadata, table support text |
+| `sm` | 11px | Captions, labels, helper text, compact secondary controls |
 | `base` | 12px | Body/default text and normal paragraphs |
 | `lg` | 14px | Primary buttons, strong labels, small subheadings |
 | `xl` | 16px | Card titles and local section titles |
@@ -48,7 +49,7 @@ The standard size token scale should be:
 | `5xl` | 24px | Alias to maximum standard size for compatibility |
 | `6xl` | 24px | Alias to maximum standard size for compatibility |
 
-The standard semantic heading progression is `12px`, `14px`, `16px`, `18px`, `20px`, `22px`, `24px`. Existing compact utilities that use `text-xs` or `text-sm` should not become smaller than the approved 12px minimum.
+The standard semantic content and heading progression is `12px`, `14px`, `16px`, `18px`, `20px`, `22px`, `24px`. The `10px` and `11px` values are reserved for supporting UI text such as captions, labels, badges, dense metadata, and helper text.
 
 App-level globals should not drift from the shared contract:
 
@@ -68,7 +69,7 @@ Existing Tailwind typography classes should keep working:
 - `font-sans` resolves to Arial through `--font-sans`.
 - `font-[family-name:var(--font-display)]` resolves to Arial through `--font-display`.
 - `text-base` resolves to the 12px body/default size through `--font-size-base`.
-- Standard Tailwind size utilities resolve within the 12px to 24px range.
+- Standard Tailwind size utilities resolve within the 10px to 24px range.
 - Explicit `text-[...]` utilities remain intentional local choices, but should be reviewed when they exceed 24px.
 
 This avoids a large risky pass over hundreds of components while still changing the site-wide defaults, display font behavior, and standard heading ceiling.
