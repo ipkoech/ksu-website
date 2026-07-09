@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Standardize all frontend apps on the shared Arial typography and 10px-24px size scale from one shared theme source.
+**Goal:** Standardize all frontend apps on the shared Bookman Old Style typography and 10px-24px size scale from one shared theme source.
 
 **Architecture:** `frontend/packages/ui/src/globals.css` becomes the canonical source for typography, color, radius, shadows, and shared base styles. App-level `globals.css` files import that shared file and keep only app-specific layout/utilities, so changing shared theme tokens affects `web`, `admin`, `research`, and `library`.
 
@@ -10,8 +10,8 @@
 
 ## Global Constraints
 
-- Body/default font: `Arial, Helvetica, sans-serif`.
-- Display/headline font: `Arial, Helvetica, sans-serif`.
+- Body/default font: `"Bookman Old Style", Georgia, serif`.
+- Display/headline font: `"Bookman Old Style", Georgia, serif`.
 - Compact support sizes: `10px` for `xs`, `11px` for `sm`.
 - Body/default size: `12px`.
 - Content and heading progression: `12px`, `14px`, `16px`, `18px`, `20px`, `22px`, `24px`.
@@ -49,8 +49,8 @@ const appGlobalsPaths = [
 
 test("shared UI globals define the canonical frontend typography scale", () => {
   const expectedTokens = [
-    ["--font-sans", 'Arial, Helvetica, sans-serif'],
-    ["--font-display", 'Arial, Helvetica, sans-serif'],
+    ["--font-sans", '"Bookman Old Style", Georgia, serif'],
+    ["--font-display", '"Bookman Old Style", Georgia, serif'],
     ["--font-size-xs", "0.625rem"],
     ["--font-size-sm", "0.6875rem"],
     ["--font-size-base", "0.75rem"],
@@ -104,8 +104,8 @@ Expected: FAIL because shared globals still use the old Inter/fluid scale and so
 Set canonical typography tokens in `frontend/packages/ui/src/globals.css`:
 
 ```css
---font-sans: Arial, Helvetica, sans-serif;
---font-display: Arial, Helvetica, sans-serif;
+--font-sans: "Bookman Old Style", Georgia, serif;
+--font-display: "Bookman Old Style", Georgia, serif;
 --font-size-xs: 0.625rem;
 --font-size-sm: 0.6875rem;
 --font-size-base: 0.75rem;

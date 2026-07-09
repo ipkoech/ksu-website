@@ -22,8 +22,8 @@ function cssValuePattern(token, value) {
 
 test("shared UI globals define the canonical frontend typography scale", () => {
   const expectedTokens = [
-    ["--font-sans", "Arial, Helvetica, sans-serif"],
-    ["--font-display", "Arial, Helvetica, sans-serif"],
+    ["--font-sans", '"Bookman Old Style", Georgia, serif'],
+    ["--font-display", '"Bookman Old Style", Georgia, serif'],
     ["--font-size-xs", "0.625rem"],
     ["--font-size-sm", "0.6875rem"],
     ["--font-size-base", "0.75rem"],
@@ -39,6 +39,11 @@ test("shared UI globals define the canonical frontend typography scale", () => {
   for (const [token, value] of expectedTokens) {
     assert.match(sharedGlobals, cssValuePattern(token, value));
   }
+
+  assert.match(
+    sharedGlobals,
+    /font-family:\s*var\(--font-sans,\s*"Bookman Old Style", Georgia, serif\);/,
+  );
 });
 
 test("frontend apps import shared globals without typography overrides", () => {

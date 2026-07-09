@@ -78,8 +78,8 @@
        Typography
        Shared across all frontend apps.
        ======================================== */
-    --font-sans: Arial, Helvetica, sans-serif;
-    --font-display: Arial, Helvetica, sans-serif;
+    --font-sans: "Bookman Old Style", Georgia, serif;
+    --font-display: "Bookman Old Style", Georgia, serif;
     --font-size-xs: 0.625rem;
     --font-size-sm: 0.6875rem;
     --font-size-base: 0.75rem;
@@ -253,7 +253,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+    font-family: var(--font-sans, "Bookman Old Style", Georgia, serif);
     font-size: var(--font-size-base);
     line-height: var(--line-height-normal);
     font-feature-settings:

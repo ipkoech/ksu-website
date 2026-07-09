@@ -10,20 +10,20 @@ The current typography is not fully standardized:
 - Public-facing pages use `--font-display` for headings, currently mapped to Playfair Display in several apps.
 - Body text uses `--font-sans`, currently mapped to Inter/system sans stacks.
 
-The goal is to standardize all frontend apps on Arial for normal text, with a 12px body/default text size, compact support text at 10px and 11px where appropriate, and a restrained heading scale that tops out at 24px.
+The goal is to standardize all frontend apps on Bookman Old Style for normal text, with a 12px body/default text size, compact support text at 10px and 11px where appropriate, and a restrained heading scale that tops out at 24px.
 
 ## Decision
 
 Use a single typography contract across all frontends:
 
-- Body/default font: `Arial, Helvetica, sans-serif`.
-- Display/headline font: `Arial, Helvetica, sans-serif`.
+- Body/default font: `"Bookman Old Style", Georgia, serif`.
+- Display/headline font: `"Bookman Old Style", Georgia, serif`.
 - Body/default font size: `12px`, represented as `--font-size-base: 0.75rem`.
 - Keep existing Tailwind `font-sans` and `font-mono` mappings, but make `font-sans` resolve to the standardized `--font-sans` value.
 - Keep compact support text tokens for captions, labels, badges, and metadata.
 - Keep scaled heading and utility tokens, but cap the standard typography scale at 24px.
 
-The fallback stack keeps Arial as the first-choice font while giving the browser explicit substitutions when Arial is unavailable on a client system.
+The fallback stack keeps Bookman Old Style as the first-choice font while giving the browser explicit substitutions when Bookman Old Style is unavailable on a client system.
 
 ## Architecture
 
@@ -32,7 +32,7 @@ The shared UI package should be the primary typography source:
 - Update `frontend/packages/ui/src/globals.css` to define the canonical sans and display stacks.
 - Update `--font-size-base` in the shared scale to `0.75rem`.
 - Update related size tokens so the scale supports compact 10px and 11px text, keeps body text at 12px, and caps headings at 24px.
-- Keep the body rule using `font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif)` and `font-size: var(--font-size-base)`.
+- Keep the body rule using `font-family: var(--font-sans, "Bookman Old Style", Georgia, serif)` and `font-size: var(--font-size-base)`.
 
 The standard size token scale should be:
 
@@ -66,8 +66,8 @@ No broad component rewrite is planned.
 
 Existing Tailwind typography classes should keep working:
 
-- `font-sans` resolves to Arial through `--font-sans`.
-- `font-[family-name:var(--font-display)]` resolves to Arial through `--font-display`.
+- `font-sans` resolves to Bookman Old Style through `--font-sans`.
+- `font-[family-name:var(--font-display)]` resolves to Bookman Old Style through `--font-display`.
 - `text-base` resolves to the 12px body/default size through `--font-size-base`.
 - Standard Tailwind size utilities resolve within the 10px to 24px range.
 - Explicit `text-[...]` utilities remain intentional local choices, but should be reviewed when they exceed 24px.
@@ -81,15 +81,15 @@ Typography values flow from CSS variables into Tailwind utilities and global ele
 1. App `globals.css` loads shared or local theme variables.
 2. Tailwind `fontFamily.sans` points to `var(--font-sans)`.
 3. The global `body` rule applies `var(--font-sans)` and `var(--font-size-base)`.
-4. Headline classes using `var(--font-display)` resolve to the same Arial stack.
+4. Headline classes using `var(--font-display)` resolve to the same Bookman Old Style stack.
 
 ## Error Handling And Compatibility
 
-Arial may not be installed on every operating system. The fallback stack handles that explicitly:
+Bookman Old Style may not be installed on every operating system. The fallback stack handles that explicitly:
 
-- Use Arial when available.
-- Use Helvetica when Arial is unavailable.
-- Use the platform sans-serif as a final fallback.
+- Use Bookman Old Style when available.
+- Use Georgia when Bookman Old Style is unavailable.
+- Use the platform serif as a final fallback.
 
 No runtime error handling is required because CSS font fallback is browser-native.
 
@@ -108,5 +108,5 @@ Verification should cover:
 - Replacing every explicit `text-sm`, `text-base`, `text-lg`, or `text-[...]` class.
 - Eliminating one-off oversized text where a page deliberately uses explicit arbitrary values; those should be reviewed separately.
 - Redesigning page hierarchy or spacing.
-- Loading Arial as a webfont.
+- Loading Bookman Old Style as a webfont.
 - Changing brand colors, layout, or content.
