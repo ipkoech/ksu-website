@@ -1,6 +1,5 @@
 @import "@ksu/ui/globals.css";
 
-@layer utilities {
   @keyframes research-marquee {
     from {
       transform: translateX(0);
@@ -214,4 +213,3 @@
       transform: none;
     }
   }
-}
