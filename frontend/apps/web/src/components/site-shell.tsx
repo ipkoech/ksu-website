@@ -29,36 +29,30 @@ const contactInfo = {
 
 const miniQuickLinks = [
   {
-    label: "Conferences",
-    href: "https://digital.kisiiuniversity.ac.ke/conferences",
+    label: "HERI",
+    href: "https://kisiiuniversity.ac.ke/event/heri-africa-launch",
     external: true,
   },
   {
-    label: "Tenders",
-    href: "https://digital.kisiiuniversity.ac.ke/procurement_portal/tenders",
+    label: "HUDUMA BORA",
+    href: "https://digital.kisiiuniversity.ac.ke/",
     external: true,
   },
   {
-    label: "Careers",
+    label: "STUDENT PORTAL",
+    href: "https://portal.kisiiuniversity.ac.ke",
+    external: true,
+  },
+  {
+    label: "CAREERS",
     href: "https://digital.kisiiuniversity.ac.ke/job_portal/open_adverts",
     external: true,
   },
   {
-    label: "Help Desk",
-    href: "https://digital.kisiiuniversity.ac.ke/ksu_customer_care_center",
+    label: "CONFERENCES",
+    href: "https://digital.kisiiuniversity.ac.ke/conferences",
     external: true,
   },
-  {
-    label: "Visitors",
-    href: "https://kisiiuniversity.ac.ke/visit_home",
-    external: true,
-  },
-  {
-    label: "Downloads",
-    href: "https://kisiiuniversity.ac.ke/page_downloads",
-    external: true,
-  },
-  { label: "FAQ", href: "https://kisiiuniversity.ac.ke/faq", external: true },
 ];
 
 interface PageShellProps {
