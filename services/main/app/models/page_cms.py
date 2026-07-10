@@ -27,12 +27,22 @@ class PageSection(Base):
 
     __tablename__ = "page_sections"
     __table_args__ = (
-        sa.UniqueConstraint(
+        sa.Index(
+            "uq_page_sections_scope_section_with_scope_id",
             "page_key",
             "scope_type",
             "scope_id",
             "section_key",
-            name="uq_page_sections_scope_section",
+            unique=True,
+            postgresql_where=sa.text("scope_id IS NOT NULL"),
+        ),
+        sa.Index(
+            "uq_page_sections_scope_section_without_scope_id",
+            "page_key",
+            "scope_type",
+            "section_key",
+            unique=True,
+            postgresql_where=sa.text("scope_id IS NULL"),
         ),
         sa.CheckConstraint(
             "scope_type IN ('university', 'school', 'research', 'library')",
@@ -59,6 +69,7 @@ class PageSection(Base):
     scope_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True)
     section_key: Mapped[str] = mapped_column(sa.String(64), nullable=False)
     title: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    is_enabled: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
     layout_variant: Mapped[str] = mapped_column(sa.String(64), nullable=False, server_default="default")
     status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default=PAGE_SECTION_STATUSES[0])
     valid_from: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
@@ -167,6 +178,7 @@ class PartnershipSpotlight(Base):
     summary: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
     pillars: Mapped[Optional[list[dict]]] = mapped_column(JSONB, nullable=True)
     opportunities: Mapped[Optional[list[dict]]] = mapped_column(JSONB, nullable=True)
+    is_enabled: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
     status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default=PAGE_SECTION_STATUSES[0])
     valid_from: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
     valid_to: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
