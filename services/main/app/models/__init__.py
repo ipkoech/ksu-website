@@ -67,6 +67,7 @@ from .media import Media, MediaFolder, MediaLink
 from .content import Announcement, Blog, Event, News, Slider, SliderGroup
 from .page_cms import (
     PAGE_SCOPE_TYPES,
+    PAGE_SECTION_LAYOUT_VARIANTS,
     PAGE_SECTION_STATUSES,
     PARTNERSHIP_CTA_SOURCES,
     SECTION_ITEM_TYPES,
@@ -157,6 +158,7 @@ __all__ = [
     "SliderGroup",
     "Slider",
     "PAGE_SCOPE_TYPES",
+    "PAGE_SECTION_LAYOUT_VARIANTS",
     "PAGE_SECTION_STATUSES",
     "SECTION_ITEM_TYPES",
     "PARTNERSHIP_CTA_SOURCES",

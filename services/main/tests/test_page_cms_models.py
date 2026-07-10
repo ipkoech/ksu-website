@@ -8,6 +8,7 @@ import sqlalchemy as sa
 from app.models.media import MediaLink
 from app.models.page_cms import (
     PAGE_SCOPE_TYPES,
+    PAGE_SECTION_LAYOUT_VARIANTS,
     PAGE_SECTION_STATUSES,
     PARTNERSHIP_CTA_SOURCES,
     SECTION_ITEM_TYPES,
@@ -49,6 +50,31 @@ def test_school_scoped_sections_require_scope_id():
     assert "scope_id" in sqltext
 
 
+def test_page_sections_limit_layout_variants_to_the_approved_catalog():
+    constraint = _check_constraint(PageSection.__table__, "ck_page_sections_layout_variant")
+    sqltext = str(constraint.sqltext).lower()
+
+    assert PAGE_SECTION_LAYOUT_VARIANTS == (
+        "hero_admissions",
+        "pulse_strip",
+        "featured_partnership",
+        "programme_finder",
+        "date_timeline",
+        "pillar_grid",
+        "media_mosaic",
+        "leadership_activity",
+        "research_cards",
+        "news_grid",
+        "events_list",
+        "logo_carousel",
+        "alumni_story",
+        "facts_strip",
+    )
+    assert "layout_variant" in sqltext
+    assert "hero_admissions" in sqltext
+    assert "facts_strip" in sqltext
+
+
 def test_page_sections_use_partial_unique_indexes_for_scoped_and_unscoped_records():
     with_scope_id = _index(PageSection.__table__, "uq_page_sections_scope_section_with_scope_id")
     without_scope_id = _index(PageSection.__table__, "uq_page_sections_scope_section_without_scope_id")
@@ -79,7 +105,7 @@ def test_one_page_section_can_have_many_items():
         page_key="homepage",
         scope_type="university",
         section_key="hero",
-        layout_variant="feature_grid",
+        layout_variant=PAGE_SECTION_LAYOUT_VARIANTS[0],
     )
     first_item = SectionItem(item_type=SECTION_ITEM_TYPES[0], title="Primary CTA", page_section=section)
     second_item = SectionItem(item_type=SECTION_ITEM_TYPES[1], title="Secondary CTA", page_section=section)
@@ -130,6 +156,24 @@ def test_followup_migration_adds_partial_unique_indexes_and_enabled_columns():
     assert 'uq_page_sections_scope_section_without_scope_id' in migration_text
     assert 'postgresql_where=sa.text("scope_id is not null")' in migration_text
     assert 'postgresql_where=sa.text("scope_id is null")' in migration_text
+
+
+def test_followup_migration_adds_layout_variant_constraint():
+    migration_path = (
+        Path(__file__).resolve().parents[1]
+        / "migrations"
+        / "versions"
+        / "20260710_0012_constrain_page_section_layout_variants.py"
+    )
+    migration_text = migration_path.read_text(encoding="utf-8").lower()
+
+    assert 'update page_sections' in migration_text
+    assert "set layout_variant = 'hero_admissions'" in migration_text
+    assert "layout_variant not in" in migration_text
+    assert 'op.alter_column("page_sections", "layout_variant"' in migration_text
+    assert 'server_default="hero_admissions"' in migration_text
+    assert 'op.create_check_constraint(' in migration_text
+    assert 'ck_page_sections_layout_variant' in migration_text
 
 
 def test_page_cms_media_attaches_through_existing_media_links():

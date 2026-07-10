@@ -18,6 +18,22 @@ if TYPE_CHECKING:
 
 PAGE_SCOPE_TYPES = ("university", "school", "research", "library")
 PAGE_SECTION_STATUSES = ("draft", "in_review", "changes_requested", "approved", "published", "archived")
+PAGE_SECTION_LAYOUT_VARIANTS = (
+    "hero_admissions",
+    "pulse_strip",
+    "featured_partnership",
+    "programme_finder",
+    "date_timeline",
+    "pillar_grid",
+    "media_mosaic",
+    "leadership_activity",
+    "research_cards",
+    "news_grid",
+    "events_list",
+    "logo_carousel",
+    "alumni_story",
+    "facts_strip",
+)
 SECTION_ITEM_TYPES = ("text", "card", "stat", "cta", "media", "video")
 PARTNERSHIP_CTA_SOURCES = ("research_partner", "custom")
 
@@ -60,6 +76,14 @@ class PageSection(Base):
             "(scope_type != 'school') OR (scope_id IS NOT NULL)",
             name="ck_page_sections_school_scope_requires_id",
         ),
+        sa.CheckConstraint(
+            "layout_variant IN "
+            "('hero_admissions', 'pulse_strip', 'featured_partnership', 'programme_finder', "
+            "'date_timeline', 'pillar_grid', 'media_mosaic', 'leadership_activity', "
+            "'research_cards', 'news_grid', 'events_list', 'logo_carousel', 'alumni_story', "
+            "'facts_strip')",
+            name="ck_page_sections_layout_variant",
+        ),
         sa.Index("ix_page_sections_scope_page", "scope_type", "scope_id", "page_key"),
         sa.Index("ix_page_sections_status_window", "status", "valid_from", "valid_to"),
     )
@@ -70,7 +94,11 @@ class PageSection(Base):
     section_key: Mapped[str] = mapped_column(sa.String(64), nullable=False)
     title: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
     is_enabled: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
-    layout_variant: Mapped[str] = mapped_column(sa.String(64), nullable=False, server_default="default")
+    layout_variant: Mapped[str] = mapped_column(
+        sa.String(64),
+        nullable=False,
+        server_default=PAGE_SECTION_LAYOUT_VARIANTS[0],
+    )
     status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default=PAGE_SECTION_STATUSES[0])
     valid_from: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
     valid_to: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
@@ -189,6 +217,7 @@ class PartnershipSpotlight(Base):
 __all__ = [
     "PAGE_SCOPE_TYPES",
     "PAGE_SECTION_STATUSES",
+    "PAGE_SECTION_LAYOUT_VARIANTS",
     "SECTION_ITEM_TYPES",
     "PARTNERSHIP_CTA_SOURCES",
     "PageSection",
