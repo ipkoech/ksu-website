@@ -1,0 +1,262 @@
+from __future__ import annotations
+
+import unittest
+import uuid
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
+from fastapi import FastAPI, HTTPException
+from fastapi.testclient import TestClient
+
+from app.api.v1 import page_cms
+from app.deps import get_db
+from app.helpers.jwt import create_access_token
+from app.models import PageSection
+from app.schemas import PageSectionCreate, PageSectionUpdate
+
+
+class _ScalarResult:
+    def __init__(self, user):
+        self._user = user
+
+    def scalar_one_or_none(self):
+        return self._user
+
+
+class _AuthDb:
+    def __init__(self, user):
+        self._user = user
+
+    async def execute(self, _statement):
+        return _ScalarResult(self._user)
+
+    async def flush(self):
+        return None
+
+    async def refresh(self, _record):
+        return None
+
+    def add(self, _record):
+        return None
+
+
+def _permission(name: str):
+    return SimpleNamespace(name=name, is_active=True)
+
+
+def _role(name: str, permissions: list[str]):
+    return SimpleNamespace(
+        name=name,
+        is_active=True,
+        role_permissions=[
+            SimpleNamespace(permission=_permission(permission_name))
+            for permission_name in permissions
+        ],
+    )
+
+
+def _role_assignment(*permissions: str):
+    return SimpleNamespace(
+        is_active=True,
+        role=_role("page-editor", list(permissions)),
+        scope_type=None,
+        scope_id=None,
+    )
+
+
+def _user(*permissions: str):
+    return SimpleNamespace(
+        id=uuid.uuid4(),
+        is_active=True,
+        deleted_at=None,
+        role_assignments=[_role_assignment(*permissions)] if permissions else [],
+        person=None,
+    )
+
+
+def _bearer_for(user_id: uuid.UUID) -> dict[str, str]:
+    token, _ = create_access_token(str(user_id), ["page-editor"], permissions=[])
+    return {"Authorization": f"Bearer {token}"}
+
+
+def _build_test_app(db) -> TestClient:
+    app = FastAPI()
+    app.include_router(page_cms.router, prefix="/api/v1")
+
+    async def _override_db():
+        yield db
+
+    app.dependency_overrides[get_db] = _override_db
+    return TestClient(app)
+
+
+class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
+    def test_admin_requests_require_authentication(self):
+        client = _build_test_app(_AuthDb(_user()))
+
+        response = client.post(
+            "/api/v1/page-sections",
+            json={
+                "page_key": "homepage",
+                "scope_type": "university",
+                "section_key": "hero",
+                "layout_variant": "hero_admissions",
+            },
+        )
+
+        self.assertEqual(401, response.status_code)
+
+    def test_authenticated_user_without_scope_gets_forbidden(self):
+        user = _user()
+        client = _build_test_app(_AuthDb(user))
+
+        response = client.post(
+            "/api/v1/page-sections",
+            json={
+                "page_key": "homepage",
+                "scope_type": "university",
+                "section_key": "hero",
+                "layout_variant": "hero_admissions",
+            },
+            headers=_bearer_for(user.id),
+        )
+
+        self.assertEqual(403, response.status_code)
+
+    async def test_create_page_section_accepts_manage_permission_and_starts_in_draft(self):
+        user = _user("page_sections.manage")
+        db = _AuthDb(user)
+        payload = PageSectionCreate(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            title="Homepage Hero",
+        )
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "page_sections.manage"
+
+        with patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access):
+            response = await page_cms.create_page_section(payload, db=db, user=user)
+
+        self.assertEqual("success", response["status"])
+        self.assertEqual("draft", response["data"].status)
+        self.assertEqual(user.id, response["data"].created_by_id)
+        self.assertEqual(user.id, response["data"].updated_by_id)
+
+    async def test_review_permission_can_approve_section(self):
+        user = _user("page_sections.review")
+        db = _AuthDb(user)
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="in_review",
+        )
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "page_sections.review"
+
+        with (
+            patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+        ):
+            response = await page_cms.run_page_section_workflow_action(
+                section.id,
+                "approve",
+                db=db,
+                user=user,
+            )
+
+        self.assertEqual("approved", response["data"].status)
+        self.assertEqual(user.id, response["data"].approved_by_id)
+
+    async def test_publish_permission_can_publish_section(self):
+        user = _user("page_sections.publish")
+        db = _AuthDb(user)
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="approved",
+        )
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "page_sections.publish"
+
+        with (
+            patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+        ):
+            response = await page_cms.run_page_section_workflow_action(
+                section.id,
+                "publish",
+                db=db,
+                user=user,
+            )
+
+        self.assertEqual("published", response["data"].status)
+        self.assertEqual(user.id, response["data"].published_by_id)
+
+    async def test_public_homepage_alias_returns_public_composition(self):
+        composition = {
+            "page_key": "homepage",
+            "scope_type": "university",
+            "scope_id": None,
+            "sections": [
+                {
+                    "id": uuid.uuid4(),
+                    "page_key": "homepage",
+                    "scope_type": "university",
+                    "scope_id": None,
+                    "section_key": "hero",
+                    "title": "Homepage Hero",
+                    "display_order": 10,
+                    "is_enabled": True,
+                    "layout_variant": "hero_admissions",
+                    "status": "published",
+                    "items": [],
+                }
+            ],
+            "partnership_spotlights": [],
+        }
+
+        with patch.object(page_cms.HomepageCompositionService, "compose", AsyncMock(return_value=composition)):
+            response = await page_cms.get_homepage(db=None)
+
+        self.assertEqual("success", response["status"])
+        self.assertEqual(["hero"], [section["section_key"] for section in response["data"]["sections"]])
+        self.assertEqual(["published"], [section["status"] for section in response["data"]["sections"]])
+
+    async def test_school_scoped_update_requires_scope_access(self):
+        own_school_id = uuid.uuid4()
+        other_school_id = uuid.uuid4()
+        user = _user("page_sections.update")
+        item = PageSection(
+            page_key="homepage",
+            scope_type="school",
+            scope_id=own_school_id,
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="draft",
+        )
+        payload = PageSectionUpdate(scope_type="school", scope_id=other_school_id)
+
+        async def fake_can_access(_db, _user, permission, _scope_type, scope_id):
+            return permission == "page_sections.update" and scope_id == own_school_id
+
+        with (
+            patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=item)),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await page_cms.update_page_section(item.id, payload, db=_AuthDb(user), user=user)
+
+        self.assertEqual(403, context.exception.status_code)
+
+
+if __name__ == "__main__":
+    unittest.main()

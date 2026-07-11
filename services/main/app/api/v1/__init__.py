@@ -34,6 +34,7 @@ from .news import router as news_router
 from .newsletters import router as newsletters_router
 from .notifications import router as notifications_router
 from .partners import router as partners_router
+from .page_cms import router as page_cms_router
 from .persons import router as persons_router
 from .policies import router as policies_router
 from .public_media import router as public_media_router
@@ -75,6 +76,7 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(newsletters_router, prefix="/api/v1/newsletters", tags=["Marketing"])
     app.include_router(testimonials_router, prefix="/api/v1/testimonials", tags=["Marketing"])
     app.include_router(social_posts_router, prefix="/api/v1/social-posts", tags=["Marketing"])
+    app.include_router(page_cms_router, prefix="/api/v1", tags=["Content"])
     app.include_router(partners_router, prefix="/api/v1/partners", tags=["Research"])
     app.include_router(users_router, prefix="/api/v1/users", tags=["Users"])
     app.include_router(search_router, prefix="/api/v1/search", tags=["Search"])
