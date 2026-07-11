@@ -8,7 +8,8 @@ type RoleDestination = {
 };
 
 const roleDestinations: RoleDestination[] = [
-  { roles: ["system-admin"], href: "/system", service: "system" },
+  { roles: ["super-admin", "system-admin"], href: "/super-admin", service: "system" },
+  { roles: ["admin", "institution-admin", "office-admin", "office-editor", "office-staff-manager", "staff-admin"], href: "/admin", service: "main" },
   { roles: ["library-admin", "library-manager", "library-staff"], href: "/library", service: "library" },
   { roles: ["research-content"], href: "/research/content", service: "research" },
   { roles: ["research-farm"], href: "/research/farm", service: "research" },
@@ -17,13 +18,12 @@ const roleDestinations: RoleDestination[] = [
   { roles: ["researcher", "lecturer"], href: "/publications/submissions", service: "research" },
   { roles: ["school-admin", "academic-admin"], href: "/schools", service: "main" },
   { roles: ["dept-admin", "dept-staff"], href: "/departments", service: "main" },
-  { roles: ["institution-admin", "office-admin", "office-editor", "office-staff-manager"], href: "/institutional-administration", service: "main" },
-  { roles: ["content-admin", "content-manager", "content-staff"], href: "/corporate-communication", service: "main" },
-  { roles: ["staff-admin"], href: "/governance", service: "main" },
+  { roles: ["content-admin", "content-manager", "content-staff"], href: "/cocms", service: "main" },
+  { roles: ["club-admin", "club-manager", "club-official", "club-editor", "club-leader"], href: "/student-clubs", service: "main" },
   { roles: ["staff"], href: "/settings/profile", service: "main" },
 ];
 
-const broadAdminRoles = new Set(["super-admin", "admin"]);
+const broadAdminRoles = new Set(["super-admin"]);
 const broaderPortalRoles = new Set(
   roleDestinations
     .filter((destination) => destination.href !== "/settings/profile")
@@ -36,7 +36,7 @@ const serviceFallbacks: Record<Service, string> = {
   main: "/select-service",
   research: "/research",
   library: "/library",
-  system: "/system",
+  system: "/super-admin",
 };
 
 function normalizeRole(role: string) {

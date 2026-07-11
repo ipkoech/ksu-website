@@ -65,7 +65,7 @@ class PortalAccessTests(unittest.TestCase):
         self.assertEqual("My Staff Profile", records[0].scope_label)
         self.assertEqual(["profile.self_edit"], records[0].permissions)
 
-    def test_scoped_office_role_gets_institutional_administration_with_label(self):
+    def test_scoped_office_role_gets_admin_with_label(self):
         wing_id = uuid.uuid4()
         user = _user(
             role_assignments=[
@@ -89,7 +89,7 @@ class PortalAccessTests(unittest.TestCase):
 
         self.assertEqual(1, len(records))
         record = records[0]
-        self.assertEqual("institutional-administration", record.key)
+        self.assertEqual("admin", record.key)
         self.assertEqual("main", record.service)
         self.assertEqual("wing", record.scope_type)
         self.assertEqual(wing_id, record.scope_id)
@@ -97,7 +97,7 @@ class PortalAccessTests(unittest.TestCase):
         self.assertNotIn(str(wing_id), record.label)
         self.assertIn("office.manage_content", record.permissions)
 
-    def test_leadership_staff_assignment_infers_office_access(self):
+    def test_leadership_staff_assignment_infers_admin_access(self):
         division_id = uuid.uuid4()
         user = _user(
             role_assignments=[
@@ -120,12 +120,102 @@ class PortalAccessTests(unittest.TestCase):
 
         keys = {record.key for record in records}
         self.assertIn("staff-profile", keys)
-        self.assertIn("institutional-administration", keys)
-        office = next(record for record in records if record.key == "institutional-administration")
+        self.assertIn("admin", keys)
+        office = next(record for record in records if record.key == "admin")
         self.assertEqual("division", office.scope_type)
         self.assertEqual(division_id, office.scope_id)
         self.assertEqual("Division of Academic, Research and Student Affairs", office.scope_label)
         self.assertIn("office.manage_services", office.permissions)
+
+    def test_governance_and_administration_permissions_emit_admin(self):
+        user = _user(
+            role_assignments=[
+                _assignment(
+                    "admin-coordinator",
+                    permissions=["governance.view", "administration.view", "policy.manage"],
+                ),
+            ],
+        )
+
+        records = build_portal_access_records(user, scope_labels={})
+
+        self.assertEqual(1, len(records))
+        record = records[0]
+        self.assertEqual("admin", record.key)
+        self.assertEqual("/admin", record.href)
+        self.assertEqual(
+            ["administration.view", "governance.view", "policy.manage"],
+            record.permissions,
+        )
+
+    def test_content_media_and_homepage_permissions_emit_cocms(self):
+        user = _user(
+            role_assignments=[
+                _assignment(
+                    "content-editor",
+                    permissions=["content.review", "media.manage", "homepage.manage"],
+                ),
+            ],
+        )
+
+        records = build_portal_access_records(user, scope_labels={})
+
+        self.assertEqual(1, len(records))
+        record = records[0]
+        self.assertEqual("cocms", record.key)
+        self.assertEqual("/cocms", record.href)
+        self.assertEqual(
+            ["content.review", "homepage.manage", "media.manage"],
+            record.permissions,
+        )
+
+    def test_club_role_assignment_emits_locked_student_clubs_access(self):
+        club_id = uuid.uuid4()
+        user = _user(
+            role_assignments=[
+                _assignment(
+                    "club-official",
+                    scope_type="club",
+                    scope_id=club_id,
+                    permissions=["clubs.manage_own", "clubs.events_manage"],
+                ),
+            ],
+        )
+
+        records = build_portal_access_records(
+            user,
+            scope_labels={("club", club_id): "KSU Debate Club"},
+        )
+
+        self.assertEqual(1, len(records))
+        record = records[0]
+        self.assertEqual("student-clubs", record.key)
+        self.assertEqual("club", record.scope_type)
+        self.assertEqual(club_id, record.scope_id)
+        self.assertEqual("KSU Debate Club", record.scope_label)
+        self.assertTrue(record.locked_scope)
+        self.assertEqual(["clubs.events_manage", "clubs.manage_own"], record.permissions)
+
+    def test_club_person_assignment_infers_locked_student_clubs_access(self):
+        club_id = uuid.uuid4()
+        user = _user(
+            staff_assignments=[
+                _staff_assignment("club", club_id, role="chairperson"),
+            ],
+        )
+
+        records = build_portal_access_records(
+            user,
+            scope_labels={("club", club_id): "KSU Debate Club"},
+        )
+
+        self.assertEqual(1, len(records))
+        record = records[0]
+        self.assertEqual("student-clubs", record.key)
+        self.assertEqual("club", record.scope_type)
+        self.assertEqual(club_id, record.scope_id)
+        self.assertTrue(record.locked_scope)
+        self.assertIn("clubs.manage_own", record.permissions)
 
     def test_dean_assignment_infers_school_portal_access(self):
         school_id = uuid.uuid4()

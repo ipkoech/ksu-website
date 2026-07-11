@@ -48,25 +48,36 @@ DEPARTMENT_LEADERSHIP_ASSIGNMENT_ROLES = {
 PROFILE_PERMISSION = "profile.self_edit"
 PROFILE_PORTAL_KEY = "staff-profile"
 GLOBAL_ADMIN_PERMISSIONS = {"*", "admin:*"}
+STUDENT_CLUB_ASSIGNMENT_PERMISSIONS = {
+    "clubs.view",
+    "clubs.manage_own",
+    "clubs.content_submit",
+    "clubs.events_manage",
+    "clubs.stories_manage",
+}
 
 PORTAL_DEFINITIONS = {
+    "super-admin": {
+        "label": "Super Admin Portal",
+        "service": "system",
+        "href": "/super-admin",
+        "permissions": {"users.view", "roles.view", "permissions.view", "audit.view", "settings.manage"},
+    },
     PROFILE_PORTAL_KEY: {
         "label": "Staff Profile Portal",
         "service": "main",
         "href": "/settings/profile",
         "permissions": {PROFILE_PERMISSION},
     },
-    "governance": {
-        "label": "Governance Portal",
+    "admin": {
+        "label": "Admin Portal",
         "service": "main",
-        "href": "/governance",
-        "permissions": {"governance.view", "governance.manage_boards", "policy.view", "policy.manage"},
-    },
-    "institutional-administration": {
-        "label": "Institutional Administration Portal",
-        "service": "main",
-        "href": "/institutional-administration",
+        "href": "/admin",
         "permissions": {
+            "governance.view",
+            "governance.manage_boards",
+            "policy.view",
+            "policy.manage",
             "administration.view",
             "administration.manage_units",
             "administration.manage_content",
@@ -92,11 +103,23 @@ PORTAL_DEFINITIONS = {
         "href": "/departments",
         "permissions": {"academic.view", "academic.manage_departments"},
     },
-    "corporate-communication": {
-        "label": "Corporate Communication Portal",
+    "cocms": {
+        "label": "CoCMS",
         "service": "main",
-        "href": "/corporate-communication",
-        "permissions": {"content.view", "content.publish", "media.view", "marketing.view"},
+        "href": "/cocms",
+        "permissions": {
+            "content.view",
+            "content.review",
+            "content.edit_submitted",
+            "content.approve",
+            "content.publish",
+            "content.schedule",
+            "content.unpublish",
+            "media.view",
+            "media.manage",
+            "homepage.manage",
+            "marketing.view",
+        },
     },
     "research": {
         "label": "Research Portal",
@@ -116,11 +139,11 @@ PORTAL_DEFINITIONS = {
         "href": "/publications",
         "permissions": {"publications.view", "publications.submit", "publications.review", "publications.approve"},
     },
-    "system": {
-        "label": "System Administration Portal",
-        "service": "system",
-        "href": "/system",
-        "permissions": {"users.view", "roles.view", "permissions.view", "audit.view", "settings.manage"},
+    "student-clubs": {
+        "label": "Student Clubs Portal",
+        "service": "main",
+        "href": "/student-clubs",
+        "permissions": STUDENT_CLUB_ASSIGNMENT_PERMISSIONS,
     },
 }
 
@@ -243,7 +266,7 @@ def _portal_keys_for_permissions(permissions: set[str], scope_type: str | None) 
         "persons.view",
         "persons.manage",
     }):
-        keys.append("institutional-administration")
+        keys.append("admin")
 
     return list(dict.fromkeys(keys))
 
@@ -296,7 +319,7 @@ def build_portal_access_records(user: User, scope_labels: Mapping[ScopeKey, str]
         if entity_type in ADMINISTRATION_SCOPE_TYPES and role in LEADERSHIP_ASSIGNMENT_ROLES:
             _add_or_merge(
                 records,
-                key="institutional-administration",
+                key="admin",
                 scope_type=entity_type,
                 scope_id=entity_id,
                 permissions=[
@@ -360,6 +383,16 @@ def build_portal_access_records(user: User, scope_labels: Mapping[ScopeKey, str]
                     "research.view_projects",
                     "research.manage_projects",
                 ],
+                scope_labels=scope_labels,
+                source="assignment",
+            )
+        elif entity_type == "club":
+            _add_or_merge(
+                records,
+                key="student-clubs",
+                scope_type=entity_type,
+                scope_id=entity_id,
+                permissions=STUDENT_CLUB_ASSIGNMENT_PERMISSIONS,
                 scope_labels=scope_labels,
                 source="assignment",
             )

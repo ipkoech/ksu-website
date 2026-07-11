@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowRight, Settings, UserCheck } from "lucide-react";
+import { ArrowRight, Landmark, Megaphone, Settings, Trophy, UserCheck } from "lucide-react";
 import { useAuth, getHighestRole, formatRoleName } from "@ksu/auth";
 import type { Service } from "@ksu/auth";
 import { usePortalAccess, type PortalAccess } from "@ksu/api-client";
@@ -29,12 +29,34 @@ type PortalDirectoryItem = Pick<
 
 const portalItems: PortalDirectoryItem[] = [
   {
-    ...portalConfigs["institutional-administration"],
-    requiredScopes: ["administration.view", "office.view", "office.manage_content"],
+    key: "super-admin",
+    title: "Super Admin Portal",
+    description: "System-wide users, roles, permissions, audit records, and administrative overrides.",
+    service: "system",
+    baseHref: "/super-admin",
+    icon: Settings,
+    accentClassName: "text-slate-700 bg-slate-50 border-slate-200",
+    requiredScopes: ["users.view", "roles.view", "permissions.view", "audit.view", "settings.manage"],
   },
   {
-    ...portalConfigs.governance,
-    requiredScopes: ["governance.view", "governance.manage_boards"],
+    key: "admin",
+    title: "Admin Portal",
+    description: "Governance, institutional administration, offices, policies, and academic coordination.",
+    service: "main",
+    baseHref: "/admin",
+    icon: Landmark,
+    accentClassName: "text-sky-700 bg-sky-50 border-sky-100",
+    requiredScopes: ["governance.view", "administration.view", "office.manage_content", "policy.manage"],
+  },
+  {
+    key: "cocms",
+    title: "CoCMS",
+    description: "Homepage CMS, publishing review, news, notices, events, and media management.",
+    service: "main",
+    baseHref: "/cocms",
+    icon: Megaphone,
+    accentClassName: "text-orange-700 bg-orange-50 border-orange-100",
+    requiredScopes: ["content.review", "content.publish", "media.manage", "homepage.manage"],
   },
   {
     ...portalConfigs.schools,
@@ -45,8 +67,14 @@ const portalItems: PortalDirectoryItem[] = [
     requiredScopes: ["academic.view", "academic.manage_departments"],
   },
   {
-    ...portalConfigs["corporate-communication"],
-    requiredScopes: ["content.view", "content.publish", "media.view"],
+    key: "student-clubs",
+    title: "Student Clubs Portal",
+    description: "Club-scoped events, stories, announcements, galleries, and member content.",
+    service: "main",
+    baseHref: "/student-clubs",
+    icon: Trophy,
+    accentClassName: "text-violet-700 bg-violet-50 border-violet-100",
+    requiredScopes: ["clubs.view", "clubs.manage_own", "clubs.content_submit", "clubs.events_manage", "clubs.stories_manage"],
   },
   {
     ...portalConfigs.research,
@@ -61,17 +89,7 @@ const portalItems: PortalDirectoryItem[] = [
     requiredScopes: ["publications.view", "publications.submit", "publications.review"],
   },
   {
-    key: "system" as any,
-    title: "System Administration Portal",
-    description: "Users, roles, permissions, audit logs, notifications, and settings.",
-    service: "system",
-    baseHref: "/system",
-    icon: Settings,
-    accentClassName: "text-slate-700 bg-slate-50 border-slate-200",
-    requiredScopes: ["users.view", "roles.view", "permissions.view", "audit.view"],
-  },
-  {
-    key: "staff-profile" as any,
+    key: "staff-profile",
     title: "Staff Profile Portal",
     description: "Update your public staff profile, photo, CV, contacts, biography, and research profile links.",
     service: "main",

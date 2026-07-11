@@ -8,6 +8,11 @@ import type {
 } from "@/components/dashboard/editable-service-resource-page";
 
 export type PortalKey =
+  | "super-admin"
+  | "admin"
+  | "cocms"
+  | "student-clubs"
+  | "staff-profile"
   | "institutional-administration"
   | "governance"
   | "schools"
