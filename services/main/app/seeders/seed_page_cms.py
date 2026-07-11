@@ -360,45 +360,18 @@ async def _seed_heri_africa_spotlight(db: AsyncSession) -> None:
     existing_spotlights = [
         spotlight for spotlight in result.scalars().all() if spotlight.deleted_at is None
     ]
-    existing_for_source = next(
+    existing_for_source = any(
         (
             candidate
             for candidate in existing_spotlights
             if candidate.source_type == "research_partner" and candidate.source_id == payload["source_id"]
-        ),
-        None,
+        )
     )
 
-    if existing_for_source is not None:
-        if existing_for_source.source_id != PENDING_HERI_AFRICA_SOURCE_ID:
-            return
-        if existing_for_source.headline != PENDING_HERI_AFRICA_HEADLINE:
-            return
-        if existing_for_source.status != "draft":
-            return
-        spotlight = existing_for_source
-    else:
-        spotlight = next(
-            (
-                candidate
-                for candidate in existing_spotlights
-                if candidate.source_type == "research_partner"
-                and candidate.source_id == PENDING_HERI_AFRICA_SOURCE_ID
-                and candidate.headline == PENDING_HERI_AFRICA_HEADLINE
-                and candidate.status == "draft"
-            ),
-            None,
-        )
-
-    if spotlight is not None and spotlight.status != "draft":
+    if existing_for_source:
         return
 
-    if spotlight is None:
-        db.add(PartnershipSpotlight(**payload))
-    else:
-        for field_name, value in payload.items():
-            setattr(spotlight, field_name, value)
-
+    db.add(PartnershipSpotlight(**payload))
     await db.flush()
 
 

@@ -249,3 +249,33 @@ class PageCmsSeederTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("manual", editor_spotlight.primary_cta_source)
         self.assertEqual("in_review", editor_spotlight.status)
         self.assertEqual(1, len(db.spotlights))
+
+    async def test_seed_does_not_overwrite_manually_edited_pending_heri_placeholder(self):
+        db = _MemoryDb()
+        edited_placeholder = PartnershipSpotlight(
+            source_type="research_partner",
+            source_id=uuid.UUID("8d724ec7-3b5b-54f8-b3f3-8770f627dd6a"),
+            headline="Heri Africa partnership spotlight pending",
+            summary="Editor revised the pending partnership summary.",
+            primary_cta_source="manual",
+            primary_cta_label="Editor review link",
+            primary_cta_url="/editor-review",
+            pillars=[{"label": "Editor pillar", "description": "Manual pillar copy"}],
+            opportunities=[{"label": "Editor opportunity", "href": "/editor-opportunity"}],
+            status="draft",
+            is_enabled=False,
+        )
+        db.spotlights.append(edited_placeholder)
+
+        with patch(
+            "app.seeders.seed_page_cms.ResearchPartnersProxyService.list_partners",
+            AsyncMock(return_value={"status": "success", "data": [], "meta": {"pages": 1}}),
+        ):
+            await seed_page_cms(db, SeedContext())
+
+        self.assertEqual("Editor revised the pending partnership summary.", edited_placeholder.summary)
+        self.assertEqual("Editor review link", edited_placeholder.primary_cta_label)
+        self.assertEqual("/editor-review", edited_placeholder.primary_cta_url)
+        self.assertEqual([{"label": "Editor pillar", "description": "Manual pillar copy"}], edited_placeholder.pillars)
+        self.assertEqual([{"label": "Editor opportunity", "href": "/editor-opportunity"}], edited_placeholder.opportunities)
+        self.assertEqual(1, len(db.spotlights))
