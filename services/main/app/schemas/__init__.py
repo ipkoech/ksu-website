@@ -89,6 +89,19 @@ from .auth import (
 from .base import APIResponse, BaseReadSchema, BaseSchema, PaginatedResponse
 from .document import DocumentCreate, DocumentRead, DocumentUpdate, PolicyCreate, PolicyRead, PolicyUpdate
 from .public_page import PublicSitePageCreate, PublicSitePageRead, PublicSitePageUpdate
+from .page_cms import (
+    PageCompositionResponse,
+    PageSectionCreate,
+    PageSectionRead,
+    PageSectionUpdate,
+    PageSectionWorkflowAction,
+    PartnershipSpotlightCreate,
+    PartnershipSpotlightRead,
+    PartnershipSpotlightUpdate,
+    SectionItemCreate,
+    SectionItemRead,
+    SectionItemUpdate,
+)
 from .exchange import ExchangeProgrammeCreate, ExchangeProgrammeRead, ExchangeProgrammeUpdate
 from .governance import BoardCreate, BoardMemberCreate, BoardRead, BoardUpdate
 from .imports import (
@@ -348,6 +361,17 @@ __all__ = [
     "PublicSitePageCreate",
     "PublicSitePageUpdate",
     "PublicSitePageRead",
+    "PageSectionCreate",
+    "PageSectionUpdate",
+    "PageSectionRead",
+    "SectionItemCreate",
+    "SectionItemUpdate",
+    "SectionItemRead",
+    "PartnershipSpotlightCreate",
+    "PartnershipSpotlightUpdate",
+    "PartnershipSpotlightRead",
+    "PageSectionWorkflowAction",
+    "PageCompositionResponse",
     "AlumniCreate",
     "AlumniUpdate",
     "AlumniRead",
