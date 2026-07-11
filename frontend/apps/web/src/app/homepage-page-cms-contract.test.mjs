@@ -29,7 +29,24 @@ const layoutVariants = [
 ];
 
 test("homepage section fetcher calls the public composition endpoint", () => {
-  assert.match(fetcherSource, /mainApi\.get<HomepageCompositionResponse>\(\s*"\/api\/v1\/homepage"/);
+  assert.match(fetcherSource, /mainApi\.get<HomepageCompositionApiResponse>\(\s*"\/api\/v1\/homepage"/);
+});
+
+test("homepage section fetcher unwraps the backend success envelope and tolerates raw composition responses", () => {
+  assert.match(fetcherSource, /export type HomepageCompositionEnvelope = \{/);
+  assert.match(fetcherSource, /data\?: HomepageCompositionResponse \| null/);
+  assert.match(fetcherSource, /export function unwrapHomepageCompositionResponse/);
+  assert.match(fetcherSource, /isHomepageCompositionResponse\(response\)[\s\S]*return response;/);
+  assert.match(fetcherSource, /response\.data && isHomepageCompositionResponse\(response\.data\)[\s\S]*return response\.data;/);
+  assert.match(fetcherSource, /const composition = unwrapHomepageCompositionResponse\(response\);/);
+});
+
+test("homepage section fetcher exposes fallback state when composition is missing or empty", () => {
+  assert.match(fetcherSource, /if \(!composition\) \{/);
+  assert.match(fetcherSource, /data: null,[\s\S]*sections: \[\],[\s\S]*hasRenderableSections: false/);
+  assert.match(fetcherSource, /const sections = normalizeSections\(composition\.sections\);/);
+  assert.match(fetcherSource, /hasRenderableSections: sections\.length > 0/);
+  assert.match(fetcherSource, /catch \(error\)[\s\S]*data: null,[\s\S]*sections: \[\],[\s\S]*hasRenderableSections: false/);
 });
 
 test("all approved layout variants are listed and supported by the renderer", () => {

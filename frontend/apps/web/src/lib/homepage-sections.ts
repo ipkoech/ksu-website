@@ -123,6 +123,17 @@ export type HomepageCompositionResponse = {
   partnership_spotlights: HomepagePartnershipSpotlight[];
 };
 
+export type HomepageCompositionEnvelope = {
+  success?: boolean;
+  data?: HomepageCompositionResponse | null;
+  meta?: unknown;
+  message?: string | null;
+};
+
+export type HomepageCompositionApiResponse =
+  | HomepageCompositionResponse
+  | HomepageCompositionEnvelope;
+
 export type HomepageCompositionState = {
   data: HomepageCompositionResponse | null;
   sections: HomepageSection[];
@@ -133,12 +144,22 @@ export type HomepageCompositionState = {
 export const getComposedHomepage = cache(
   async (): Promise<HomepageCompositionState> => {
     try {
-      const data = await mainApi.get<HomepageCompositionResponse>(
+      const response = await mainApi.get<HomepageCompositionApiResponse>(
         "/api/v1/homepage",
       );
-      const sections = normalizeSections(data.sections);
+      const composition = unwrapHomepageCompositionResponse(response);
+      if (!composition) {
+        return {
+          data: null,
+          sections: [],
+          hasRenderableSections: false,
+          error: null,
+        };
+      }
+
+      const sections = normalizeSections(composition.sections);
       return {
-        data: { ...data, sections },
+        data: { ...composition, sections },
         sections,
         hasRenderableSections: sections.length > 0,
         error: null,
@@ -156,6 +177,18 @@ export const getComposedHomepage = cache(
     }
   },
 );
+
+export function unwrapHomepageCompositionResponse(
+  response: HomepageCompositionApiResponse,
+): HomepageCompositionResponse | null {
+  if (isHomepageCompositionResponse(response)) {
+    return response;
+  }
+  if (response.data && isHomepageCompositionResponse(response.data)) {
+    return response.data;
+  }
+  return null;
+}
 
 export function isKnownHomepageLayoutVariant(
   value: string,
@@ -244,6 +277,22 @@ function normalizeSections(sections: HomepageSection[] | undefined) {
       (first, second) =>
         (first.display_order ?? 100) - (second.display_order ?? 100),
     );
+}
+
+function isHomepageCompositionResponse(
+  value: HomepageCompositionApiResponse | null | undefined,
+): value is HomepageCompositionResponse {
+  return (
+    value !== null &&
+    value !== undefined &&
+    typeof value === "object" &&
+    "page_key" in value &&
+    "scope_type" in value &&
+    Array.isArray((value as HomepageCompositionResponse).sections) &&
+    Array.isArray(
+      (value as HomepageCompositionResponse).partnership_spotlights,
+    )
+  );
 }
 
 function isAbortError(error: unknown) {
