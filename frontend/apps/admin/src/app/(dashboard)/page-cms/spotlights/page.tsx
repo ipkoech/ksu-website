@@ -33,10 +33,9 @@ import { PageTransition } from "@/lib/animations";
 import {
   PAGE_CMS_MEDIA_ROLES,
   PARTNERSHIP_CTA_SOURCES,
-  pageCmsApi,
   partnershipSpotlightsApi,
-  type PartnershipCtaSource,
   type PartnershipSpotlight,
+  type PartnershipCtaSource,
   type PartnershipSpotlightPayload,
 } from "@/lib/api/page-cms";
 
@@ -152,16 +151,18 @@ export default function PageCmsSpotlightsPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await pageCmsApi.getHomepage();
+        const response = await partnershipSpotlightsApi.listAdmin({ page: 1, per_page: 100 });
         if (cancelled) return;
-        const nextSpotlights = response.data?.partnership_spotlights ?? [];
+        const nextSpotlights = response.data ?? [];
         setSpotlights(nextSpotlights);
         if (nextSpotlights.length) {
-          setForm(formFromSpotlight(nextSpotlights[0]));
+          const detail = await partnershipSpotlightsApi.get(nextSpotlights[0].id);
+          if (cancelled) return;
+          setForm(formFromSpotlight(detail.data));
         }
       } catch {
         if (!cancelled) {
-          setError("Failed to load partnership spotlights from homepage composition.");
+          setError("Failed to load partnership spotlight admin data.");
         }
       } finally {
         if (!cancelled) {
@@ -177,12 +178,17 @@ export default function PageCmsSpotlightsPage() {
   }, []);
 
   const spotlightSummary = useMemo(() => {
-    return `${spotlights.length} spotlight${spotlights.length === 1 ? "" : "s"} currently visible from public homepage composition.`;
+    return `${spotlights.length} spotlight${spotlights.length === 1 ? "" : "s"} available in admin, including drafts and disabled records.`;
   }, [spotlights.length]);
 
-  const selectSpotlight = (spotlight: PartnershipSpotlight) => {
-    setForm(formFromSpotlight(spotlight));
-    setPendingAttachments([]);
+  const selectSpotlight = async (spotlight: PartnershipSpotlight) => {
+    try {
+      const response = await partnershipSpotlightsApi.get(spotlight.id);
+      setForm(formFromSpotlight(response.data));
+      setPendingAttachments([]);
+    } catch {
+      toast.error("Failed to load spotlight details.");
+    }
   };
 
   const handleCreateNew = () => {
@@ -273,7 +279,7 @@ export default function PageCmsSpotlightsPage() {
                       key={spotlight.id}
                       type="button"
                       className={`w-full rounded-lg border p-3 text-left transition-colors ${selected ? "border-primary ring-2 ring-primary/20" : "hover:border-primary/50"}`}
-                      onClick={() => selectSpotlight(spotlight)}
+                      onClick={() => void selectSpotlight(spotlight)}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -300,12 +306,12 @@ export default function PageCmsSpotlightsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Backend Notes</CardTitle>
-              <CardDescription>Current Task 4 API constraints that affect this page.</CardDescription>
+              <CardTitle>Admin Coverage</CardTitle>
+              <CardDescription>These records come from admin endpoints, not public homepage composition.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <p>The current backend exposes create and update for spotlights, but not a dedicated admin list or single-record read endpoint.</p>
-              <p>This page loads visible records from homepage composition and keeps newly created drafts in the current session list after save.</p>
+              <p>Draft, disabled, expired, and unpublished spotlight records stay visible here for editorial management.</p>
+              <p>Detail editing loads a single admin record so the editor is not tied to whichever list page was fetched first.</p>
             </CardContent>
           </Card>
         </div>

@@ -114,6 +114,9 @@ def _serialize_section(section: PageSection, media_groups: dict[str, list[dict[s
         "scope_id": section.scope_id,
         "section_key": section.section_key,
         "title": section.title,
+        "subtitle": section.subtitle,
+        "description": section.description,
+        "settings": section.settings,
         "is_enabled": section.is_enabled,
         "layout_variant": section.layout_variant,
         "status": section.status,
@@ -394,6 +397,47 @@ class PageSectionService:
         return await paginate_query(db, query, page=page, per_page=per_page)
 
 
+class PartnershipSpotlightService:
+    """Query helpers for admin spotlight management."""
+
+    @staticmethod
+    def _admin_query(
+        *,
+        status: str | None = None,
+        search: str | None = None,
+    ):
+        query = PartnershipSpotlight.active_query()
+        if status:
+            query = query.where(PartnershipSpotlight.status == status)
+        if search:
+            query = query.where(
+                ilike_any(
+                    search,
+                    PartnershipSpotlight.headline,
+                    PartnershipSpotlight.summary,
+                )
+            )
+        return query.order_by(
+            PartnershipSpotlight.updated_at.desc(),
+            PartnershipSpotlight.created_at.desc(),
+        )
+
+    @staticmethod
+    async def list_admin(
+        db: AsyncSession,
+        *,
+        status: str | None = None,
+        search: str | None = None,
+        page: int = 1,
+        per_page: int = 20,
+    ) -> PaginatedResult:
+        query = PartnershipSpotlightService._admin_query(
+            status=status,
+            search=search,
+        )
+        return await paginate_query(db, query, page=page, per_page=per_page)
+
+
 class PageSectionWorkflowService:
     """Apply the approved editorial workflow map to page sections."""
 
@@ -497,6 +541,7 @@ __all__ = [
     "ALLOWED_TRANSITIONS",
     "PageSectionService",
     "PageSectionWorkflowService",
+    "PartnershipSpotlightService",
     "HomepageCompositionService",
     "group_media_links",
 ]

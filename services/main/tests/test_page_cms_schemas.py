@@ -105,6 +105,9 @@ class PageCmsSchemaTests(unittest.TestCase):
             section_key="hero",
             layout_variant=PAGE_SECTION_LAYOUT_VARIANTS[0],
             display_order=7,
+            subtitle="Admissions 2026",
+            description="Primary homepage section copy",
+            settings={"theme": "dark"},
         )
         update = PageSectionUpdate(display_order=9)
         now = _utc_now()
@@ -120,6 +123,9 @@ class PageCmsSchemaTests(unittest.TestCase):
                 "scope_id": None,
                 "section_key": "hero",
                 "title": "Hero",
+                "subtitle": "Admissions 2026",
+                "description": "Primary homepage section copy",
+                "settings": {"theme": "dark"},
                 "display_order": 11,
                 "is_enabled": True,
                 "layout_variant": PAGE_SECTION_LAYOUT_VARIANTS[0],
@@ -143,7 +149,13 @@ class PageCmsSchemaTests(unittest.TestCase):
         result = PageSectionRead.model_validate(section_like)
 
         self.assertEqual(section.display_order, 7)
+        self.assertEqual(section.subtitle, "Admissions 2026")
+        self.assertEqual(section.description, "Primary homepage section copy")
+        self.assertEqual(section.settings, {"theme": "dark"})
         self.assertEqual(update.display_order, 9)
+        self.assertEqual(result.subtitle, "Admissions 2026")
+        self.assertEqual(result.description, "Primary homepage section copy")
+        self.assertEqual(result.settings, {"theme": "dark"})
         self.assertEqual(result.display_order, 11)
 
     def test_section_item_create_rejects_external_cta_urls_without_http_scheme(self):

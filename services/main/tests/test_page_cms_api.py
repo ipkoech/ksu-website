@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from app.api.v1 import page_cms
 from app.deps import get_db
 from app.helpers.jwt import create_access_token
-from app.models import PageSection
+from app.models import PageSection, PartnershipSpotlight
 from app.schemas import PageSectionCreate, PageSectionUpdate
 from ksu_common import PaginatedResult
 
@@ -168,6 +168,77 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(201, response.status_code)
         self.assertEqual(0, workflow_transition.await_count)
+
+    def test_section_detail_route_returns_single_admin_record(self):
+        user = _user("page_sections.view")
+        client = _build_test_app(_AuthDb(user))
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="draft",
+        )
+        section.id = uuid.uuid4()
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "page_sections.view"
+
+        with (
+            patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+        ):
+            response = client.get(
+                f"/api/v1/page-sections/{section.id}",
+                headers=_bearer_for(user.id),
+            )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(str(section.id), response.json()["data"]["id"])
+
+    def test_spotlight_admin_routes_return_admin_records(self):
+        user = _user("partnership_spotlights.manage")
+        client = _build_test_app(_AuthDb(user))
+        spotlight = PartnershipSpotlight(
+            source_type="research_partner",
+            source_id=uuid.uuid4(),
+            primary_cta_source="manual",
+            headline="Draft spotlight",
+            status="draft",
+            is_enabled=False,
+        )
+        spotlight.id = uuid.uuid4()
+
+        list_admin = AsyncMock(
+            return_value=PaginatedResult(
+                items=[spotlight],
+                meta={"page": 1, "per_page": 20, "total": 1, "pages": 1},
+            )
+        )
+
+        with (
+            patch.object(page_cms, "_get_partnership_spotlight_or_404", AsyncMock(return_value=spotlight)),
+            patch.object(
+                page_cms,
+                "PartnershipSpotlightService",
+                SimpleNamespace(list_admin=list_admin),
+                create=True,
+            ),
+        ):
+            list_response = client.get(
+                "/api/v1/partnership-spotlights/admin",
+                headers=_bearer_for(user.id),
+            )
+            detail_response = client.get(
+                f"/api/v1/partnership-spotlights/{spotlight.id}",
+                headers=_bearer_for(user.id),
+            )
+
+        self.assertEqual(200, list_response.status_code)
+        self.assertEqual([str(spotlight.id)], [item["id"] for item in list_response.json()["data"]])
+        self.assertEqual(200, detail_response.status_code)
+        self.assertEqual("draft", detail_response.json()["data"]["status"])
+        self.assertFalse(detail_response.json()["data"]["is_enabled"])
 
     async def test_create_page_section_accepts_manage_permission_and_starts_in_draft(self):
         user = _user("page_sections.manage")

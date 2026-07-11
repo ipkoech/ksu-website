@@ -140,6 +140,17 @@ def test_page_sections_persist_display_order():
     assert section.display_order == 7
 
 
+def test_page_sections_include_editor_copy_and_settings_columns():
+    columns = PageSection.__table__.c
+
+    assert "subtitle" in columns
+    assert "description" in columns
+    assert "settings" in columns
+    assert columns["subtitle"].nullable is True
+    assert columns["description"].nullable is True
+    assert columns["settings"].nullable is True
+
+
 def test_partnership_spotlights_reference_research_partner_sources():
     constraint = _check_constraint(PartnershipSpotlight.__table__, "ck_partnership_spotlights_source_type")
     spotlight = PartnershipSpotlight(
@@ -242,6 +253,21 @@ def test_followup_migration_persists_page_section_display_order():
     assert "section_items" in migration_text
     assert "min(display_order)" in migration_text
     assert 'op.create_index("ix_page_sections_scope_page_order"' in migration_text
+
+
+def test_followup_migration_adds_page_section_editor_fields():
+    migration_path = (
+        Path(__file__).resolve().parents[1]
+        / "migrations"
+        / "versions"
+        / "20260711_0015_add_page_section_editor_fields.py"
+    )
+    migration_text = migration_path.read_text(encoding="utf-8").lower()
+
+    assert 'op.add_column("page_sections"' in migration_text
+    assert '"subtitle"' in migration_text
+    assert '"description"' in migration_text
+    assert '"settings"' in migration_text
 
 
 def test_page_cms_media_attaches_through_existing_media_links():

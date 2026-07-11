@@ -94,6 +94,9 @@ class PageSection(Base):
     scope_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True)
     section_key: Mapped[str] = mapped_column(sa.String(64), nullable=False)
     title: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    subtitle: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    settings: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
     is_enabled: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
     layout_variant: Mapped[str] = mapped_column(

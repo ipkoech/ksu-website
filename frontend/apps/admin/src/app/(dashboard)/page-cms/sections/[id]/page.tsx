@@ -55,6 +55,9 @@ type SectionFormState = {
   scope_id: string;
   section_key: string;
   title: string;
+  subtitle: string;
+  description: string;
+  settings: Record<string, unknown>;
   layout_variant: PageSectionLayoutVariant;
   display_order: number;
   is_enabled: boolean;
@@ -113,6 +116,9 @@ function createEmptySectionForm(): SectionFormState {
     scope_id: "",
     section_key: "",
     title: "",
+    subtitle: "",
+    description: "",
+    settings: {},
     layout_variant: PAGE_SECTION_LAYOUT_VARIANTS[0],
     display_order: 100,
     is_enabled: true,
@@ -155,6 +161,9 @@ function formFromSection(section: PageSection): SectionFormState {
     scope_id: section.scope_id ?? "",
     section_key: section.section_key,
     title: section.title ?? "",
+    subtitle: section.subtitle ?? "",
+    description: section.description ?? "",
+    settings: (section.settings as Record<string, unknown> | null) ?? {},
     layout_variant: section.layout_variant,
     display_order: section.display_order,
     is_enabled: section.is_enabled,
@@ -256,14 +265,10 @@ export default function PageCmsSectionDetailPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await pageSectionsApi.listAdmin({ page: 1, per_page: 100 });
+        const response = await pageSectionsApi.get(sectionId);
         if (cancelled) return;
-        const nextSection = (response.data ?? []).find((record) => record.id === sectionId) ?? null;
-        if (!nextSection) {
-          setError("This section could not be loaded from the current admin listing.");
-          setSection(null);
-          return;
-        }
+        const nextSection = response.data ?? null;
+        if (!nextSection) throw new Error("Missing section");
         setSection(nextSection);
         setForm(formFromSection(nextSection));
         setItems(nextSection.items.length ? nextSection.items.map((item) => createItemDraft(item)) : [createItemDraft()]);
@@ -324,6 +329,9 @@ export default function PageCmsSectionDetailPage() {
         scope_id: form.scope_id.trim() || null,
         section_key: form.section_key.trim(),
         title: form.title.trim() || null,
+        subtitle: form.subtitle.trim() || null,
+        description: form.description.trim() || null,
+        settings: form.settings,
         layout_variant: form.layout_variant,
         display_order: form.display_order,
         is_enabled: form.is_enabled,
@@ -478,6 +486,25 @@ export default function PageCmsSectionDetailPage() {
                 />
               </div>
               <div className="space-y-2">
+                <p className="text-sm font-medium">Subtitle</p>
+                <Input
+                  value={form.subtitle}
+                  disabled={!canManageSection || isLoading}
+                  onChange={(event) => setForm((current) => ({ ...current, subtitle: event.target.value }))}
+                  placeholder="Supporting section subtitle"
+                />
+              </div>
+              <div className="space-y-2 lg:col-span-2">
+                <p className="text-sm font-medium">Description</p>
+                <Textarea
+                  rows={4}
+                  value={form.description}
+                  disabled={!canManageSection || isLoading}
+                  onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+                  placeholder="Section-level copy for this composition block"
+                />
+              </div>
+              <div className="space-y-2">
                 <p className="text-sm font-medium">Layout Variant</p>
                 <Select
                   value={form.layout_variant}
@@ -542,6 +569,19 @@ export default function PageCmsSectionDetailPage() {
                   checked={form.is_enabled}
                   disabled={!canManageSection || isLoading}
                   onCheckedChange={(checked) => setForm((current) => ({ ...current, is_enabled: checked }))}
+                />
+              </div>
+              <div className="space-y-2 lg:col-span-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">Settings</p>
+                  <Badge variant="outline">JSON</Badge>
+                </div>
+                <JsonObjectEditor
+                  value={form.settings}
+                  onChange={(value) => setForm((current) => ({ ...current, settings: (value as Record<string, unknown>) ?? {} }))}
+                  allowCustomFields
+                  disabled={!canManageSection || isLoading}
+                  emptyLabel="No section settings added."
                 />
               </div>
             </CardContent>
@@ -903,11 +943,11 @@ export default function PageCmsSectionDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle>Save Notes</CardTitle>
-              <CardDescription>Current backend contract notes for this admin surface.</CardDescription>
+              <CardDescription>Behavior notes for this admin surface.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
               <p>Saved items can be disabled directly from this editor. The current backend does not expose a dedicated item delete route.</p>
-              <p>Existing section detail is resolved through the admin list endpoint because the backend does not expose a single-section read route yet.</p>
+              <p>Section details load from the dedicated admin read endpoint, so this editor does not depend on paginated list results.</p>
               <p>Media links persist after save for both the section record and each saved item.</p>
             </CardContent>
           </Card>

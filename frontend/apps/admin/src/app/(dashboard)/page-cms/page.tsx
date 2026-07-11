@@ -5,8 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import { FileStack, Image as ImageIcon, LayoutTemplate, Workflow } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle, Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
 import { PageHeader } from "@/components/shared/page-header";
+import { usePermissions } from "@/hooks/use-permissions";
 import { PageTransition } from "@/lib/animations";
-import { pageCmsApi, pageSectionsApi, type PageComposition, type PageSection } from "@/lib/api/page-cms";
+import { pageSectionsApi, partnershipSpotlightsApi, type PageSection, type PartnershipSpotlight } from "@/lib/api/page-cms";
 
 function StatCard({
   title,
@@ -36,10 +37,29 @@ function StatCard({
 }
 
 export default function PageCmsDashboardPage() {
+  const { hasAnyPermission } = usePermissions();
   const [sections, setSections] = useState<PageSection[]>([]);
-  const [composition, setComposition] = useState<PageComposition | null>(null);
+  const [spotlights, setSpotlights] = useState<PartnershipSpotlight[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const canViewSections = hasAnyPermission([
+    "page_sections.view",
+    "page_sections.create",
+    "page_sections.update",
+    "page_sections.delete",
+    "page_sections.review",
+    "page_sections.publish",
+    "page_sections.manage",
+    "section_items.manage",
+    "homepage.view",
+    "homepage.manage",
+    "homepage.publish",
+    "school_homepage.manage",
+    "research_homepage.manage",
+    "library_homepage.manage",
+  ]);
+  const canManageSpotlights = hasAnyPermission(["partnership_spotlights.manage", "admin:*"]);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,13 +68,13 @@ export default function PageCmsDashboardPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const [sectionsResponse, homepageResponse] = await Promise.all([
-          pageSectionsApi.listAdmin({ page: 1, per_page: 100 }),
-          pageCmsApi.getHomepage(),
+        const [sectionsResponse, spotlightsResponse] = await Promise.all([
+          canViewSections ? pageSectionsApi.listAdmin({ page: 1, per_page: 100 }) : Promise.resolve({ data: [] }),
+          canManageSpotlights ? partnershipSpotlightsApi.listAdmin({ page: 1, per_page: 100 }) : Promise.resolve({ data: [] }),
         ]);
         if (cancelled) return;
         setSections(sectionsResponse.data ?? []);
-        setComposition(homepageResponse.data ?? null);
+        setSpotlights(spotlightsResponse.data ?? []);
       } catch {
         if (!cancelled) {
           setError("Failed to load page CMS overview.");
@@ -70,7 +90,7 @@ export default function PageCmsDashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [canManageSpotlights, canViewSections]);
 
   const stats = useMemo(() => {
     const inReview = sections.filter((section) => section.status === "in_review").length;
@@ -82,9 +102,9 @@ export default function PageCmsDashboardPage() {
       inReview,
       published,
       enabled,
-      spotlights: composition?.partnership_spotlights?.length ?? 0,
+      spotlights: spotlights.length,
     };
-  }, [composition?.partnership_spotlights, sections]);
+  }, [sections, spotlights.length]);
 
   return (
     <PageTransition>
@@ -121,7 +141,11 @@ export default function PageCmsDashboardPage() {
             </Button>
           </CardHeader>
           <CardContent className="space-y-3">
-            {isLoading ? (
+            {!canViewSections ? (
+              <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                Your current access covers spotlight management, but not the section list.
+              </p>
+            ) : isLoading ? (
               <p className="text-sm text-muted-foreground">Loading section activity...</p>
             ) : sections.length ? (
               sections.slice(0, 6).map((section) => (
@@ -160,10 +184,14 @@ export default function PageCmsDashboardPage() {
             </Button>
           </CardHeader>
           <CardContent className="space-y-3">
-            {isLoading ? (
+            {!canManageSpotlights ? (
+              <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                Spotlight admin tools are not included in your current permissions.
+              </p>
+            ) : isLoading ? (
               <p className="text-sm text-muted-foreground">Loading spotlight activity...</p>
-            ) : composition?.partnership_spotlights?.length ? (
-              composition.partnership_spotlights.slice(0, 5).map((spotlight) => (
+            ) : spotlights.length ? (
+              spotlights.slice(0, 5).map((spotlight) => (
                 <div key={spotlight.id} className="rounded-lg border p-3">
                   <div className="flex items-center justify-between gap-3">
                     <p className="truncate font-medium">{spotlight.headline}</p>
@@ -178,7 +206,7 @@ export default function PageCmsDashboardPage() {
               ))
             ) : (
               <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                No homepage spotlights are currently visible in public composition.
+                No spotlight records are available in admin.
               </p>
             )}
           </CardContent>

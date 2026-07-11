@@ -106,6 +106,9 @@ export interface PageSection {
   scope_id?: string | null;
   section_key: string;
   title?: string | null;
+  subtitle?: string | null;
+  description?: string | null;
+  settings?: Record<string, unknown> | null;
   display_order: number;
   is_enabled: boolean;
   layout_variant: PageSectionLayoutVariant;
@@ -125,6 +128,9 @@ export interface PageSectionPayload {
   scope_id?: string | null;
   section_key?: string;
   title?: string | null;
+  subtitle?: string | null;
+  description?: string | null;
+  settings?: Record<string, unknown> | null;
   display_order?: number;
   is_enabled?: boolean;
   layout_variant?: PageSectionLayoutVariant;
@@ -197,13 +203,15 @@ export const pageCmsApi = {
 export const pageSectionsApi = {
   listAdmin: (params?: PageSectionListParams) =>
     api.get<PageSection[]>("/page-sections/admin", { params }),
+  get: (sectionId: string) =>
+    api.get<PageSection>(`/page-sections/${sectionId}`),
   create: (data: PageSectionPayload) =>
     api.post<PageSection>("/page-sections", data),
   update: (sectionId: string, data: PageSectionPayload) =>
     api.patch<PageSection>(`/page-sections/${sectionId}`, data),
   workflow: (sectionId: string, action: PageSectionWorkflowAction) =>
     api.post<PageSection>(`/page-sections/${sectionId}/${action}`),
-  delete: (sectionId: string) =>
+  archive: (sectionId: string) =>
     api.post<PageSection>(`/page-sections/${sectionId}/archive`),
 };
 
@@ -214,20 +222,18 @@ export const sectionItemsApi = {
     api.patch<SectionItem>(`/section-items/${itemId}`, data),
   disable: (itemId: string) =>
     api.patch<SectionItem>(`/section-items/${itemId}`, { is_enabled: false }),
-  delete: (itemId: string) =>
-    api.patch<SectionItem>(`/section-items/${itemId}`, { is_enabled: false }),
 };
 
 export const partnershipSpotlightsApi = {
+  listAdmin: (params?: ListParams) =>
+    api.get<PartnershipSpotlight[]>("/partnership-spotlights/admin", { params }),
+  get: (spotlightId: string) =>
+    api.get<PartnershipSpotlight>(`/partnership-spotlights/${spotlightId}`),
   create: (data: PartnershipSpotlightPayload) =>
     api.post<PartnershipSpotlight>("/partnership-spotlights", data),
   update: (spotlightId: string, data: PartnershipSpotlightPayload) =>
     api.patch<PartnershipSpotlight>(`/partnership-spotlights/${spotlightId}`, data),
   disable: (spotlightId: string) =>
-    api.patch<PartnershipSpotlight>(`/partnership-spotlights/${spotlightId}`, {
-      is_enabled: false,
-    }),
-  delete: (spotlightId: string) =>
     api.patch<PartnershipSpotlight>(`/partnership-spotlights/${spotlightId}`, {
       is_enabled: false,
     }),

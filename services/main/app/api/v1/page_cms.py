@@ -18,7 +18,12 @@ from ...schemas import (
     SectionItemCreate,
     SectionItemUpdate,
 )
-from ...services import HomepageCompositionService, PageSectionService, PageSectionWorkflowService
+from ...services import (
+    HomepageCompositionService,
+    PageSectionService,
+    PageSectionWorkflowService,
+    PartnershipSpotlightService,
+)
 from ...services._base import apply_updates
 from ._scoped import can_access_scoped_record, require_scoped_record
 
@@ -233,6 +238,21 @@ async def list_admin_page_sections(
     return success(data=result.items, meta=result.meta)
 
 
+@router.get("/page-sections/{section_id}")
+async def get_admin_page_section(
+    section_id: uuid.UUID,
+    db: DbSession,
+    user: CurrentUser,
+):
+    item = await _get_page_section_or_404(db, section_id)
+    if not await _can_access_page_section_admin_row(db, user, item):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient privileges for this page section scope",
+        )
+    return success(data=item)
+
+
 @router.post("/page-sections", status_code=status.HTTP_201_CREATED)
 async def create_page_section(data: PageSectionCreate, db: DbSession, user: CurrentUser):
     payload = data.model_dump()
@@ -406,3 +426,36 @@ async def update_partnership_spotlight(
     await db.flush()
     await db.refresh(item)
     return success(data=item, message="Partnership spotlight updated")
+
+
+@router.get(
+    "/partnership-spotlights/admin",
+    dependencies=[Depends(PARTNERSHIP_SPOTLIGHT_MANAGE_SCOPE)],
+)
+async def list_admin_partnership_spotlights(
+    db: DbSession,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    status_filter: str | None = Query(default=None, alias="status"),
+    search: str | None = None,
+):
+    result = await PartnershipSpotlightService.list_admin(
+        db,
+        page=page,
+        per_page=per_page,
+        status=status_filter,
+        search=search,
+    )
+    return success(data=result.items, meta=result.meta)
+
+
+@router.get(
+    "/partnership-spotlights/{spotlight_id}",
+    dependencies=[Depends(PARTNERSHIP_SPOTLIGHT_MANAGE_SCOPE)],
+)
+async def get_admin_partnership_spotlight(
+    spotlight_id: uuid.UUID,
+    db: DbSession,
+):
+    item = await _get_partnership_spotlight_or_404(db, spotlight_id)
+    return success(data=item)

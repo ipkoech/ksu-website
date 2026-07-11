@@ -127,6 +127,9 @@ class PageSectionCreate(BaseSchema):
     scope_id: uuid.UUID | None = None
     section_key: str = Field(min_length=1, max_length=64)
     title: str | None = Field(default=None, max_length=255)
+    subtitle: str | None = Field(default=None, max_length=255)
+    description: str | None = None
+    settings: dict[str, Any] | None = None
     display_order: int = 100
     is_enabled: bool = True
     layout_variant: str = Field(default=PAGE_SECTION_LAYOUT_VARIANTS[0], max_length=64)
@@ -166,6 +169,9 @@ class PageSectionUpdate(BaseSchema):
     scope_id: uuid.UUID | None = None
     section_key: str | None = Field(default=None, min_length=1, max_length=64)
     title: str | None = Field(default=None, max_length=255)
+    subtitle: str | None = Field(default=None, max_length=255)
+    description: str | None = None
+    settings: dict[str, Any] | None = None
     display_order: int | None = None
     is_enabled: bool | None = None
     layout_variant: str | None = Field(default=None, max_length=64)
@@ -198,6 +204,9 @@ class PageSectionRead(BaseReadSchema):
     scope_id: uuid.UUID | None = None
     section_key: str
     title: str | None = None
+    subtitle: str | None = None
+    description: str | None = None
+    settings: dict[str, Any] | None = None
     display_order: int
     is_enabled: bool
     layout_variant: str
