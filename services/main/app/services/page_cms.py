@@ -98,6 +98,14 @@ def _serialize_media_link(link: MediaLink) -> dict[str, Any]:
 
 
 def _serialize_section(section: PageSection, media_groups: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
+    public_items = sorted(
+        (
+            item
+            for item in section.items
+            if item.is_enabled and getattr(item, "deleted_at", None) is None
+        ),
+        key=lambda item: (item.display_order, item.created_at or datetime.min.replace(tzinfo=timezone.utc)),
+    )
     return {
         "id": section.id,
         "page_key": section.page_key,
@@ -133,7 +141,7 @@ def _serialize_section(section: PageSection, media_groups: dict[str, list[dict[s
                 "display_order": item.display_order,
                 "is_enabled": item.is_enabled,
             }
-            for item in section.items
+            for item in public_items
         ],
         "media": media_groups,
     }
@@ -168,11 +176,7 @@ def _serialize_spotlight(
 
 def _section_display_order(section: PageSection) -> int:
     explicit_order = getattr(section, "display_order", None)
-    if explicit_order is not None:
-        return explicit_order
-    if getattr(section, "items", None):
-        return min(item.display_order for item in section.items)
-    return 100
+    return explicit_order if explicit_order is not None else 100
 
 
 def _scope_filter(
@@ -220,16 +224,7 @@ async def _list_active_partnership_spotlights(db: AsyncSession) -> list[Partners
 
 
 async def _get_research_partner_payload(source_id: uuid.UUID) -> dict[str, Any] | None:
-    payload = await ResearchPartnersProxyService.list_partners(page=1, per_page=100)
-    partners = payload.get("data") or []
-    source_id_text = str(source_id)
-    for partner in partners:
-        if not isinstance(partner, dict):
-            continue
-        partner_id = partner.get("id")
-        if partner_id == source_id or str(partner_id) == source_id_text:
-            return partner
-    return None
+    return await ResearchPartnersProxyService.find_partner_by_id(source_id, per_page=100)
 
 
 def _resolve_partner_website(partner_payload: dict[str, Any] | None) -> str | None:
@@ -292,7 +287,7 @@ class PageSectionService:
             query = query.where(PageSection.status == status)
         if search:
             query = query.where(ilike_any(search, PageSection.title, PageSection.section_key, PageSection.page_key))
-        query = query.order_by(PageSection.created_at.desc())
+        query = query.order_by(PageSection.display_order.asc(), PageSection.created_at.desc())
         return await paginate_query(db, query, page=page, per_page=per_page)
 
     @staticmethod
@@ -324,7 +319,11 @@ class PageSectionService:
                 PageSection.is_enabled.is_(True),
                 *_active_window_filter(PageSection, now),
             )
-            .order_by(PageSection.published_at.desc().nullslast(), PageSection.created_at.desc())
+            .order_by(
+                PageSection.display_order.asc(),
+                PageSection.published_at.desc().nullslast(),
+                PageSection.created_at.desc(),
+            )
         )
         return await paginate_query(db, query, page=page, per_page=per_page)
 

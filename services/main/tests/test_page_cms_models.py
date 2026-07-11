@@ -125,6 +125,21 @@ def test_page_section_and_partnership_spotlight_have_enabled_flags():
     assert str(spotlight_enabled.server_default.arg).lower() == "true"
 
 
+def test_page_sections_persist_display_order():
+    display_order = PageSection.__table__.c["display_order"]
+    section = PageSection(
+        page_key="homepage",
+        scope_type="university",
+        section_key="hero",
+        layout_variant=PAGE_SECTION_LAYOUT_VARIANTS[0],
+        display_order=7,
+    )
+
+    assert display_order.nullable is False
+    assert str(display_order.server_default.arg) == "100"
+    assert section.display_order == 7
+
+
 def test_partnership_spotlights_reference_research_partner_sources():
     constraint = _check_constraint(PartnershipSpotlight.__table__, "ck_partnership_spotlights_source_type")
     spotlight = PartnershipSpotlight(
@@ -208,6 +223,25 @@ def test_followup_migration_aligns_partnership_spotlight_primary_cta_fields():
     assert "when primary_cta_source = 'research_partner' then 'partner_website'" in migration_text
     assert 'ck_partnership_spotlights_primary_cta_source' in migration_text
     assert "primary_cta_source in ('manual', 'partner_website', 'generated_detail_page')" in migration_text
+
+
+def test_followup_migration_persists_page_section_display_order():
+    migration_path = (
+        Path(__file__).resolve().parents[1]
+        / "migrations"
+        / "versions"
+        / "20260711_0014_persist_page_section_display_order.py"
+    )
+    migration_text = migration_path.read_text(encoding="utf-8").lower()
+
+    assert 'op.add_column("page_sections"' in migration_text
+    assert '"display_order"' in migration_text
+    assert 'server_default=sa.text("100")' in migration_text
+    assert "update page_sections" in migration_text
+    assert "from (" in migration_text
+    assert "section_items" in migration_text
+    assert "min(display_order)" in migration_text
+    assert 'op.create_index("ix_page_sections_scope_page_order"' in migration_text
 
 
 def test_page_cms_media_attaches_through_existing_media_links():

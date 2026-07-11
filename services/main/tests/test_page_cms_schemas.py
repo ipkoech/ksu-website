@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from app.models import PAGE_SECTION_LAYOUT_VARIANTS
 from app.schemas.page_cms import (
     PageSectionCreate,
+    PageSectionRead,
     PageSectionUpdate,
     PageSectionWorkflowAction,
     PartnershipSpotlightCreate,
@@ -96,6 +97,54 @@ class PageCmsSchemaTests(unittest.TestCase):
                 created_by_id=uuid.uuid4(),
                 updated_by_id=uuid.uuid4(),
             )
+
+    def test_page_section_schemas_include_persisted_display_order(self):
+        section = PageSectionCreate(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant=PAGE_SECTION_LAYOUT_VARIANTS[0],
+            display_order=7,
+        )
+        update = PageSectionUpdate(display_order=9)
+        now = _utc_now()
+        section_like = type(
+            "PageSectionLike",
+            (),
+            {
+                "id": uuid.uuid4(),
+                "created_at": now,
+                "updated_at": now,
+                "page_key": "homepage",
+                "scope_type": "university",
+                "scope_id": None,
+                "section_key": "hero",
+                "title": "Hero",
+                "display_order": 11,
+                "is_enabled": True,
+                "layout_variant": PAGE_SECTION_LAYOUT_VARIANTS[0],
+                "status": "published",
+                "valid_from": None,
+                "valid_to": None,
+                "approved_at": now,
+                "published_at": now,
+                "created_by_id": None,
+                "updated_by_id": None,
+                "approved_by_id": None,
+                "published_by_id": None,
+                "items": [],
+                "created_by": None,
+                "updated_by": None,
+                "approved_by": None,
+                "published_by": None,
+            },
+        )()
+
+        result = PageSectionRead.model_validate(section_like)
+
+        self.assertEqual(section.display_order, 7)
+        self.assertEqual(update.display_order, 9)
+        self.assertEqual(result.display_order, 11)
 
     def test_section_item_create_rejects_external_cta_urls_without_http_scheme(self):
         with self.assertRaises(ValidationError):

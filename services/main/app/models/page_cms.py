@@ -85,6 +85,7 @@ class PageSection(Base):
             name="ck_page_sections_layout_variant",
         ),
         sa.Index("ix_page_sections_scope_page", "scope_type", "scope_id", "page_key"),
+        sa.Index("ix_page_sections_scope_page_order", "scope_type", "scope_id", "page_key", "display_order"),
         sa.Index("ix_page_sections_status_window", "status", "valid_from", "valid_to"),
     )
 
@@ -93,6 +94,7 @@ class PageSection(Base):
     scope_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True)
     section_key: Mapped[str] = mapped_column(sa.String(64), nullable=False)
     title: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
     is_enabled: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
     layout_variant: Mapped[str] = mapped_column(
         sa.String(64),

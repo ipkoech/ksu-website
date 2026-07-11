@@ -32,9 +32,22 @@ class PageCmsWorkflowTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("page_sections.valid_from is null", query_text)
         self.assertIn("page_sections.valid_to is null", query_text)
         self.assertIn("page_sections.deleted_at is null", query_text)
+        self.assertIn("order by page_sections.display_order asc", query_text)
         self.assertIn("published", compiled.params.values())
         self.assertIn("homepage", compiled.params.values())
         self.assertIn("university", compiled.params.values())
+
+    async def test_admin_list_orders_by_persisted_display_order(self):
+        with patch.object(page_cms, "paginate_query", _capture_query):
+            query = await PageSectionService.list_admin(
+                object(),
+                page_key="homepage",
+                scope_type="university",
+            )
+
+        query_text = str(query).lower()
+
+        self.assertIn("order by page_sections.display_order asc", query_text)
 
     async def test_workflow_rejects_draft_publish_transition(self):
         section = PageSection(

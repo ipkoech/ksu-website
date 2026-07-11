@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import unittest
 import uuid
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, patch
 
 from app.models import Media, MediaLink, PageSection, PartnershipSpotlight, SectionItem
 from app.services import HomepageCompositionService, group_media_links
+from app.services.page_cms import _get_research_partner_payload
 
 
 class _ScalarResult:
@@ -98,8 +100,8 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
             section_key="cta-strip",
             layout_variant="pulse_strip",
             status="published",
+            display_order=20,
         )
-        first_section.display_order = 20
         first_section.items = [
             SectionItem(
                 page_section=first_section,
@@ -116,8 +118,8 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
             section_key="hero",
             layout_variant="hero_admissions",
             status="published",
+            display_order=5,
         )
-        second_section.display_order = 5
         second_section.items = [
             SectionItem(
                 page_section=second_section,
@@ -210,6 +212,114 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
             {"label": "Read partnership", "href": "/partnerships/international-collaboration"},
             composition["partnership_spotlights"][2]["primary_cta"],
         )
+
+    async def test_compose_filters_disabled_and_deleted_section_items_and_preserves_item_order(self):
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="published",
+            display_order=5,
+        )
+        deleted_item = SectionItem(
+            page_section=section,
+            page_section_id=section.id,
+            item_type="cta",
+            title="Deleted",
+            display_order=15,
+            is_enabled=True,
+        )
+        deleted_item.deleted_at = datetime.now(timezone.utc)
+        section.items = [
+            SectionItem(
+                page_section=section,
+                page_section_id=section.id,
+                item_type="cta",
+                title="Second live",
+                display_order=30,
+                is_enabled=True,
+            ),
+            SectionItem(
+                page_section=section,
+                page_section_id=section.id,
+                item_type="cta",
+                title="Disabled",
+                display_order=10,
+                is_enabled=False,
+            ),
+            deleted_item,
+            SectionItem(
+                page_section=section,
+                page_section_id=section.id,
+                item_type="cta",
+                title="First live",
+                display_order=5,
+                is_enabled=True,
+            ),
+        ]
+
+        with (
+            patch(
+                "app.services.page_cms.PageSectionService.list_public",
+                AsyncMock(return_value=[section]),
+            ),
+            patch(
+                "app.services.page_cms._list_active_partnership_spotlights",
+                AsyncMock(return_value=[]),
+            ),
+            patch(
+                "app.services.page_cms.group_media_links",
+                AsyncMock(
+                    return_value={
+                        "heroImage": [],
+                        "mobileImage": [],
+                        "logos": [],
+                        "gallery": [],
+                        "video": [],
+                        "background": [],
+                        "poster": [],
+                    }
+                ),
+            ),
+        ):
+            composition = await HomepageCompositionService.compose(object(), "homepage", "university")
+
+        self.assertEqual(
+            ["First live", "Second live"],
+            [item["title"] for item in composition["sections"][0]["items"]],
+        )
+        self.assertEqual(
+            [5, 30],
+            [item["display_order"] for item in composition["sections"][0]["items"]],
+        )
+
+    async def test_partner_lookup_is_not_limited_to_the_first_page(self):
+        target_id = uuid.uuid4()
+        other_id = uuid.uuid4()
+
+        with patch(
+            "app.services.page_cms.ResearchPartnersProxyService.list_partners",
+            AsyncMock(
+                side_effect=[
+                    {
+                        "status": "success",
+                        "data": [{"id": str(other_id), "slug": "other"}],
+                        "meta": {"page": 1, "per_page": 100, "total": 2, "pages": 2},
+                    },
+                    {
+                        "status": "success",
+                        "data": [{"id": str(target_id), "slug": "target"}],
+                        "meta": {"page": 2, "per_page": 100, "total": 2, "pages": 2},
+                    },
+                ]
+            ),
+        ) as list_partners:
+            payload = await _get_research_partner_payload(target_id)
+
+        self.assertIsNotNone(payload)
+        self.assertEqual(str(target_id), payload["id"])
+        self.assertEqual(2, list_partners.await_count)
 
 
 if __name__ == "__main__":
