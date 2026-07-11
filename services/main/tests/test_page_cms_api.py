@@ -123,6 +123,20 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(403, response.status_code)
 
+    def test_admin_listing_requires_page_cms_permission_before_query(self):
+        user = _user()
+        client = _build_test_app(_AuthDb(user))
+        list_admin = AsyncMock(return_value=SimpleNamespace(items=[], meta={"total": 0}))
+
+        with patch.object(page_cms.PageSectionService, "list_admin", list_admin):
+            response = client.get(
+                "/api/v1/page-sections/admin",
+                headers=_bearer_for(user.id),
+            )
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual(0, list_admin.await_count)
+
     async def test_create_page_section_accepts_manage_permission_and_starts_in_draft(self):
         user = _user("page_sections.manage")
         db = _AuthDb(user)
@@ -200,6 +214,88 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual("published", response["data"].status)
         self.assertEqual(user.id, response["data"].published_by_id)
+
+    async def test_homepage_publish_permission_can_publish_homepage_section(self):
+        user = _user("homepage.publish")
+        db = _AuthDb(user)
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="approved",
+        )
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "homepage.publish"
+
+        with (
+            patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+        ):
+            response = await page_cms.run_page_section_workflow_action(
+                section.id,
+                "publish",
+                db=db,
+                user=user,
+            )
+
+        self.assertEqual("published", response["data"].status)
+        self.assertEqual(user.id, response["data"].published_by_id)
+
+    async def test_homepage_publish_permission_cannot_publish_non_homepage_section(self):
+        user = _user("homepage.publish")
+        section = PageSection(
+            page_key="research",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="approved",
+        )
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "homepage.publish"
+
+        with (
+            patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await page_cms.run_page_section_workflow_action(
+                    section.id,
+                    "publish",
+                    db=_AuthDb(user),
+                    user=user,
+                )
+
+        self.assertEqual(403, context.exception.status_code)
+
+    async def test_homepage_publish_permission_cannot_unpublish_non_homepage_section(self):
+        user = _user("homepage.publish")
+        section = PageSection(
+            page_key="research",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="published",
+        )
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "homepage.publish"
+
+        with (
+            patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await page_cms.run_page_section_workflow_action(
+                    section.id,
+                    "unpublish",
+                    db=_AuthDb(user),
+                    user=user,
+                )
+
+        self.assertEqual(403, context.exception.status_code)
 
     async def test_public_homepage_alias_returns_public_composition(self):
         composition = {

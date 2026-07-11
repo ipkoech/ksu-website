@@ -182,6 +182,7 @@ ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
             "page_sections.review", "page_sections.publish",
             "section_items.manage", "homepage.view", "homepage.manage",
             "homepage.publish", "library_homepage.manage",
+            "media.attach", "media.detach",
             "settings.manage", "analytics.view", "workflow.initiate", "workflow.approve",
             "users.view", "media.upload", "external_publications.view",
         ),

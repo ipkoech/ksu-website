@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from ksu_common.schemas.responses import success
 
-from ...deps import CurrentUser, DbSession, require_scope
+from ...deps import CurrentUser, DbSession, require_scope, user_has_scope
 from ...models import PageSection, PartnershipSpotlight, SectionItem
 from ...schemas import (
     PageSectionCreate,
@@ -26,6 +26,22 @@ router = APIRouter()
 
 PAGE_SECTION_FALLBACK_MANAGE = "page_sections.manage"
 PARTNERSHIP_SPOTLIGHT_MANAGE_SCOPE = require_scope("partnership_spotlights.manage")
+PAGE_SECTION_ADMIN_LIST_PERMISSIONS = (
+    "page_sections.view",
+    "page_sections.create",
+    "page_sections.update",
+    "page_sections.delete",
+    "page_sections.review",
+    "page_sections.publish",
+    PAGE_SECTION_FALLBACK_MANAGE,
+    "section_items.manage",
+    "homepage.view",
+    "homepage.manage",
+    "homepage.publish",
+    "school_homepage.manage",
+    "research_homepage.manage",
+    "library_homepage.manage",
+)
 
 
 def _page_specific_permissions(*, page_key: str, scope_type: str, action: str) -> list[str]:
@@ -59,12 +75,21 @@ def _page_section_permissions(*, page_key: str, scope_type: str, action: str) ->
         "update": ["page_sections.update", PAGE_SECTION_FALLBACK_MANAGE],
         "delete": ["page_sections.delete", PAGE_SECTION_FALLBACK_MANAGE],
         "review": ["page_sections.review", PAGE_SECTION_FALLBACK_MANAGE],
-        "publish": ["page_sections.publish", "homepage.publish", PAGE_SECTION_FALLBACK_MANAGE],
+        "publish": ["page_sections.publish", PAGE_SECTION_FALLBACK_MANAGE],
         "item_manage": ["section_items.manage", PAGE_SECTION_FALLBACK_MANAGE],
     }
     permissions = list(permissions_by_action.get(action, [PAGE_SECTION_FALLBACK_MANAGE]))
     permissions.extend(_page_specific_permissions(page_key=page_key, scope_type=scope_type, action=action))
     return permissions
+
+
+def _authorize_page_section_admin_list_access(user: CurrentUser) -> None:
+    if any(user_has_scope(user, permission) for permission in PAGE_SECTION_ADMIN_LIST_PERMISSIONS):
+        return
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Insufficient privileges",
+    )
 
 
 async def _require_page_section_access(
@@ -164,6 +189,7 @@ async def list_admin_page_sections(
     status_filter: str | None = Query(default=None, alias="status"),
     search: str | None = None,
 ):
+    _authorize_page_section_admin_list_access(user)
     result = await PageSectionService.list_admin(
         db,
         page=page,

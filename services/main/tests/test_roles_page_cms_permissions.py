@@ -37,6 +37,10 @@ class PageCmsRolePermissionTests(unittest.TestCase):
         self.assertIn("research_homepage.manage", ROLE_DEFINITIONS["research-content-admin"].scopes)
         self.assertIn("library_homepage.manage", ROLE_DEFINITIONS["library-admin"].scopes)
 
+    def test_library_admin_role_includes_media_link_permissions(self):
+        self.assertIn("media.attach", ROLE_DEFINITIONS["library-admin"].scopes)
+        self.assertIn("media.detach", ROLE_DEFINITIONS["library-admin"].scopes)
+
 
 if __name__ == "__main__":
     unittest.main()
