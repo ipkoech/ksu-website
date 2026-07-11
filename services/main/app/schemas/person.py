@@ -254,6 +254,7 @@ class PersonRead(BaseReadSchema):
     awards_honors: list[dict[str, Any]] | None = None
     cv_file_id: uuid.UUID | None = None
     cv_file: dict[str, Any] | None = None
+    cv_file_url: str | None = None
     department: dict[str, Any] | None = None
     assignments: list[dict[str, Any]] | None = None
     programme_tutorships: list[dict[str, Any]] | None = None

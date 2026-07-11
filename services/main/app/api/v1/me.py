@@ -39,7 +39,6 @@ def _profile_data(person: Person) -> dict:
     nested_fields = {
         "user",
         "photo",
-        "cv_file",
         "department",
         "assignments",
         "programme_tutorships",
@@ -50,6 +49,15 @@ def _profile_data(person: Person) -> dict:
         for field_name in PersonRead.model_fields
         if field_name not in nested_fields
     }
+    cv_file = getattr(person, "cv_file", None)
+    if cv_file is not None:
+        payload["cv_file"] = {
+            "id": getattr(cv_file, "id", None),
+            "original_filename": getattr(cv_file, "original_filename", None),
+            "mime_type": getattr(cv_file, "mime_type", None),
+            "file_size": getattr(cv_file, "file_size", None),
+            "public_url": getattr(cv_file, "public_url", None),
+        }
     return with_person_photo_urls(
         PersonRead.model_validate(payload).model_dump(exclude=nested_fields),
         person,
@@ -110,8 +118,10 @@ async def _validate_profile_media(
                     status_code=400,
                     detail="Choose a CV file uploaded by your account.",
                 )
-            if cv_file.media_type != "document":
-                raise HTTPException(status_code=400, detail="CV file must be a document.")
+            try:
+                MediaService.validate_cv_media(cv_file)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.get("/profile", dependencies=[Depends(require_scope("profile.self_edit"))])

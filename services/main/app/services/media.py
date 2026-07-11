@@ -22,6 +22,14 @@ from ._base import apply_updates, ilike_any, paginate_query
 
 settings = get_settings()
 
+CV_MIME_TYPES = frozenset(
+    {
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    }
+)
+
 
 ENTITY_FOLDER_ALIASES = {
     "campus": "campuses",
@@ -74,6 +82,19 @@ def build_entity_upload_folder(entity_type: str, entity_id: uuid.UUID, role: str
 
 class MediaService:
     """Media upload and management."""
+
+    @staticmethod
+    def validate_cv_mime_type(mime_type: str | None) -> None:
+        if mime_type not in CV_MIME_TYPES:
+            raise ValueError("CV file must be a PDF or Word document.")
+
+    @staticmethod
+    def validate_cv_media(media: Media) -> None:
+        if media.media_type != "document":
+            raise ValueError("CV file must be a document.")
+        mime_type = getattr(media, "mime_type", None)
+        if mime_type is not None:
+            MediaService.validate_cv_mime_type(mime_type)
 
     @staticmethod
     async def upload(
