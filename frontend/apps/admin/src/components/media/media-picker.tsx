@@ -19,7 +19,7 @@ import { formatFileSize, getMediaLabel, getMediaUrl, isImageMedia, mediaAcceptsF
 
 export type MediaPickerProps = {
   value?: string | null;
-  onChange: (value: string, media?: Media | null) => void;
+  onChange: (value: string, media?: Media | null, source?: "upload" | "selection") => void;
   mediaType?: string;
   folderId?: string;
   label?: string;
@@ -109,7 +109,7 @@ export function MediaPicker({
         entityId: uploadEntityId,
         role: uploadRole,
       });
-      onChange(response.data.id, response.data);
+      onChange(response.data.id, response.data, "upload");
       toast.success("Media uploaded");
       setOpen(false);
     } catch {
@@ -199,7 +199,7 @@ export function MediaPicker({
                       type="button"
                       className={`rounded-lg border p-2 text-left transition hover:border-primary ${selected ? "border-primary ring-2 ring-primary/20" : ""}`}
                       onClick={() => {
-                        onChange(media.id, media);
+                        onChange(media.id, media, "selection");
                         setOpen(false);
                       }}
                     >

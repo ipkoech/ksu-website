@@ -18,6 +18,21 @@ if TYPE_CHECKING:
     from .auth import User
 
 
+MEDIA_ATTACHMENT_ROLES = frozenset(
+    {
+        "cover",
+        "gallery",
+        "logo",
+        "video",
+        "document",
+        "poster",
+        "cv",
+        "brochure",
+        "attachment",
+    }
+)
+
+
 def _media_url(value: str) -> str:
     """Build a public media URL without importing app.helpers during model import."""
     if value.startswith(("http://", "https://", "data:", "blob:", "/")):
@@ -224,4 +239,4 @@ class MediaLink(Base):
     )
 
 
-__all__ = ["Media", "MediaFolder", "MediaLink"]
+__all__ = ["MEDIA_ATTACHMENT_ROLES", "Media", "MediaFolder", "MediaLink"]

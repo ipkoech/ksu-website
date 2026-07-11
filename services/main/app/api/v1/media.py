@@ -19,6 +19,7 @@ from ._fields import FieldSelection, FieldsDep, build_selector
 router = APIRouter()
 
 MEDIA_FOLDER_MANAGE_PERMISSIONS = ["media.manage", "media.upload"]
+MEDIA_LINK_MANAGE_PERMISSIONS = ["media.manage"]
 
 
 def _media_folder_scope(scope_type: str | None, scope_id: uuid.UUID | None) -> tuple[str, uuid.UUID | None]:
@@ -51,6 +52,21 @@ async def _require_media_folder_scope(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Insufficient privileges for this media folder scope",
         )
+
+
+async def _require_media_entity_scope(
+    db: DbSession,
+    user: CurrentUser,
+    permissions: list[str],
+    entity_type: str,
+    entity_id: uuid.UUID,
+) -> None:
+    scope_type, scope_id = await MediaService.get_attachment_scope(
+        db,
+        entity_type=entity_type,
+        entity_id=entity_id,
+    )
+    await _require_media_folder_scope(db, user, permissions, scope_type, scope_id)
 
 
 @router.get("")
@@ -97,6 +113,16 @@ async def upload_media(
     entity_id: uuid.UUID | None = Form(default=None),
     role: str | None = Form(default=None, max_length=64),
 ):
+    if entity_type or entity_id is not None:
+        if not entity_type or entity_id is None:
+            raise HTTPException(status_code=400, detail="Both entity_type and entity_id are required for entity uploads")
+        await _require_media_entity_scope(
+            db,
+            user,
+            MEDIA_FOLDER_MANAGE_PERMISSIONS,
+            entity_type,
+            entity_id,
+        )
     if folder_id is not None:
         folder = await MediaService.get_folder_by_id(db, folder_id)
         if folder is None:
@@ -219,47 +245,68 @@ async def list_media_links(
     role: str | None = None,
     fields: FieldSelection = FieldsDep,
 ):
-    selector = build_selector(MediaLink, fields)
     links = await MediaService.list_links(
         db,
         user=user,
         entity_type=entity_type,
         entity_id=entity_id,
         role=role,
-        load_options=selector.load_options,
+        load_options=(),
     )
-    return success(data=selector.apply(links))
+    return success(data=[MediaService.serialize_link(link) for link in links])
 
 
 @router.post("/links", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("media:manage"))])
-async def create_media_link(data: MediaLinkCreate, db: DbSession, _: CurrentUser):
+async def create_media_link(data: MediaLinkCreate, db: DbSession, user: CurrentUser):
+    await _require_media_entity_scope(
+        db,
+        user,
+        MEDIA_LINK_MANAGE_PERMISSIONS,
+        data.entity_type,
+        data.entity_id,
+    )
+    media = await MediaService.get_authorized_by_id(db, data.media_id, user)
+    if media is None:
+        raise HTTPException(status_code=404, detail="Media not found")
     link = await MediaService.link_media(db, **data.model_dump())
-    return success(data=link, message="Media linked")
+    link.media = media
+    return success(data=MediaService.serialize_link(link), message="Media linked")
 
 
 @router.get("/links/{link_id}")
 async def get_media_link(link_id: uuid.UUID, db: DbSession, user: CurrentUser, fields: FieldSelection = FieldsDep):
-    selector = build_selector(MediaLink, fields)
-    link = await MediaService.get_authorized_link_by_id(db, link_id, user, load_options=selector.load_options)
+    link = await MediaService.get_authorized_link_by_id(db, link_id, user, load_options=())
     if link is None:
         raise HTTPException(status_code=404, detail="Media link not found")
-    return success(data=selector.apply(link))
+    return success(data=MediaService.serialize_link(link))
 
 
 @router.patch("/links/{link_id}", dependencies=[Depends(require_scope("media:manage"))])
-async def update_media_link(link_id: uuid.UUID, data: MediaLinkUpdate, db: DbSession, _: CurrentUser):
+async def update_media_link(link_id: uuid.UUID, data: MediaLinkUpdate, db: DbSession, user: CurrentUser):
     link = await MediaService.get_link_by_id(db, link_id)
     if link is None:
         raise HTTPException(status_code=404, detail="Media link not found")
-    link = await MediaService.update_link(db, link, **data.model_dump(exclude_unset=True))
-    return success(data=link, message="Media link updated")
+    await _require_media_entity_scope(db, user, MEDIA_LINK_MANAGE_PERMISSIONS, link.entity_type, link.entity_id)
+    payload = data.model_dump(exclude_unset=True)
+    next_entity_type = payload.get("entity_type", link.entity_type)
+    next_entity_id = payload.get("entity_id", link.entity_id)
+    await _require_media_entity_scope(db, user, MEDIA_LINK_MANAGE_PERMISSIONS, next_entity_type, next_entity_id)
+    if "media_id" in payload:
+        media = await MediaService.get_authorized_by_id(db, payload["media_id"], user)
+        if media is None:
+            raise HTTPException(status_code=404, detail="Media not found")
+    link = await MediaService.update_link(db, link, **payload)
+    if "media_id" in payload:
+        link.media = media
+    return success(data=MediaService.serialize_link(link), message="Media link updated")
 
 
 @router.delete("/links/{link_id}", dependencies=[Depends(require_scope("media:manage"))], status_code=status.HTTP_204_NO_CONTENT)
-async def delete_media_link(link_id: uuid.UUID, db: DbSession, _: CurrentUser):
+async def delete_media_link(link_id: uuid.UUID, db: DbSession, user: CurrentUser):
     link = await MediaService.get_link_by_id(db, link_id)
     if link is None:
         raise HTTPException(status_code=404, detail="Media link not found")
+    await _require_media_entity_scope(db, user, MEDIA_LINK_MANAGE_PERMISSIONS, link.entity_type, link.entity_id)
     await MediaService.delete_link(db, link)
 
 

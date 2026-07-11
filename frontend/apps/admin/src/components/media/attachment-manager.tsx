@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { File, ImageIcon, Link2, Loader2, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, File, ImageIcon, Link2, Loader2, Trash2 } from "lucide-react";
 import { toast } from "@ksu/ui";
 import {
   Badge,
@@ -14,12 +14,14 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Switch,
 } from "@ksu/ui/components";
 import {
   useCreateMediaLink,
   useDeleteMediaLink,
   useMediaItem,
   useMediaLinks,
+  useUpdateMediaLink,
   type Media,
   type MediaLink,
 } from "@ksu/api-client";
@@ -48,9 +50,15 @@ type MediaLinkWithMedia = MediaLink & {
 };
 
 const defaultRoles: AttachmentRoleOption[] = [
+  { value: "cover", label: "Cover image", mediaType: "image", accept: "image/*" },
   { value: "attachment", label: "Attachment" },
   { value: "document", label: "Document" },
   { value: "gallery", label: "Gallery item", mediaType: "image", accept: "image/*" },
+  { value: "logo", label: "Logo", mediaType: "image", accept: "image/*" },
+  { value: "video", label: "Video", mediaType: "video", accept: "video/*" },
+  { value: "poster", label: "Poster", mediaType: "image", accept: "image/*" },
+  { value: "cv", label: "CV", mediaType: "document", accept: ".pdf,.doc,.docx" },
+  { value: "brochure", label: "Brochure", mediaType: "document", accept: ".pdf,.doc,.docx" },
 ];
 
 function roleLabel(roles: AttachmentRoleOption[], role: string) {
@@ -79,6 +87,13 @@ function AttachmentRow({
   role,
   roles,
   onRemove,
+  onRoleChange,
+  onVisibilityChange,
+  onMoveUp,
+  onMoveDown,
+  isPublic,
+  canMoveUp,
+  canMoveDown,
   disabled,
 }: {
   mediaId: string;
@@ -86,6 +101,13 @@ function AttachmentRow({
   role: string;
   roles: AttachmentRoleOption[];
   onRemove: () => void;
+  onRoleChange?: (role: string) => void;
+  onVisibilityChange?: (isPublic: boolean) => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  isPublic?: boolean;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
   disabled?: boolean;
 }) {
   const mediaQuery = useMediaItem(mediaId, { enabled: !media && Boolean(mediaId) });
@@ -93,12 +115,29 @@ function AttachmentRow({
   const url = getMediaUrl(resolvedMedia);
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border p-3">
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border p-3">
       <AttachmentPreview media={resolvedMedia} />
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <p className="truncate text-sm font-medium">{resolvedMedia ? getMediaLabel(resolvedMedia) : "Loading media..."}</p>
-          <Badge variant="secondary">{roleLabel(roles, role)}</Badge>
+          {onRoleChange ? (
+            <Select value={role} disabled={disabled} onValueChange={onRoleChange}>
+              <SelectTrigger className="h-7 w-[138px] text-xs">
+                <SelectValue aria-label="Attachment role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {roles.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          ) : (
+            <Badge variant="secondary">{roleLabel(roles, role)}</Badge>
+          )}
         </div>
         <p className="mt-1 truncate text-xs text-muted-foreground">
           {resolvedMedia ? [resolvedMedia.mime_type, formatFileSize(resolvedMedia.file_size ?? resolvedMedia.size)].filter(Boolean).join(" · ") : mediaId}
@@ -111,6 +150,27 @@ function AttachmentRow({
             View
           </a>
         </Button>
+      ) : null}
+      {onVisibilityChange ? (
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Switch
+            checked={isPublic ?? true}
+            disabled={disabled}
+            onCheckedChange={onVisibilityChange}
+            aria-label="Attachment visibility"
+          />
+          Public
+        </label>
+      ) : null}
+      {onMoveUp && onMoveDown ? (
+        <div className="flex items-center gap-1">
+          <Button type="button" variant="ghost" size="icon" disabled={disabled || !canMoveUp} onClick={onMoveUp} aria-label="Move attachment up">
+            <ChevronUp data-icon />
+          </Button>
+          <Button type="button" variant="ghost" size="icon" disabled={disabled || !canMoveDown} onClick={onMoveDown} aria-label="Move attachment down">
+            <ChevronDown data-icon />
+          </Button>
+        </div>
       ) : null}
       <Button type="button" variant="ghost" size="icon" disabled={disabled} onClick={onRemove} aria-label="Remove attachment">
         <Trash2 data-icon />
@@ -174,6 +234,7 @@ export function AttachmentManager({
   const [removeTarget, setRemoveTarget] = React.useState<null | { id: string; label: string; pending: boolean }>(null);
   const createMediaLink = useCreateMediaLink();
   const deleteMediaLink = useDeleteMediaLink();
+  const updateMediaLink = useUpdateMediaLink();
   const selectedRole = roles.find((item) => item.value === role) ?? roles[0] ?? defaultRoles[0];
   const canPersist = Boolean(entityType && entityId);
 
@@ -224,9 +285,14 @@ export function AttachmentManager({
     toast.success("Attachment linked");
   };
 
-  const handleSelectMedia = async (mediaId: string, media?: Media | null) => {
+  const handleSelectMedia = async (mediaId: string, media?: Media | null, source?: "upload" | "selection") => {
     if (!mediaId) return;
     if (canPersist) {
+      if (source === "upload") {
+        await linksQuery.refetch();
+        toast.success("Attachment uploaded and linked");
+        return;
+      }
       await addPersisted(mediaId);
       return;
     }
@@ -243,6 +309,40 @@ export function AttachmentManager({
 
     await deleteMediaLink.mutateAsync(removeTarget.id);
     setRemoveTarget(null);
+  };
+
+  const updatePersistedLink = async (link: MediaLinkWithMedia, data: Partial<Pick<MediaLink, "role" | "is_public" | "display_order">>) => {
+    await updateMediaLink.mutateAsync({ id: link.id, data });
+    await linksQuery.refetch();
+  };
+
+  const movePersistedLink = async (link: MediaLinkWithMedia, direction: -1 | 1) => {
+    const index = persistedLinks.findIndex((item) => item.id === link.id);
+    const nextIndex = index + direction;
+    if (index < 0 || nextIndex < 0 || nextIndex >= persistedLinks.length) return;
+    const next = [...persistedLinks];
+    [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+    await Promise.all([
+      updateMediaLink.mutateAsync({ id: next[index].id, data: { display_order: index } }),
+      updateMediaLink.mutateAsync({ id: next[nextIndex].id, data: { display_order: nextIndex } }),
+    ]);
+    await linksQuery.refetch();
+  };
+
+  const updatePendingAttachment = (mediaId: string, role: string, changes: Partial<PendingMediaAttachment>) => {
+    onPendingAttachmentsChange?.(
+      pendingAttachments.map((attachment) =>
+        attachment.media_id === mediaId && attachment.role === role ? { ...attachment, ...changes } : attachment,
+      ),
+    );
+  };
+
+  const movePendingAttachment = (index: number, direction: -1 | 1) => {
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= pendingAttachments.length) return;
+    const reordered = [...pendingAttachments];
+    [reordered[index], reordered[nextIndex]] = [reordered[nextIndex], reordered[index]];
+    onPendingAttachmentsChange?.(reordered.map((attachment, order) => ({ ...attachment, display_order: order })));
   };
 
   return (
@@ -275,7 +375,7 @@ export function AttachmentManager({
 
       <MediaPicker
         value=""
-        onChange={(mediaId, media) => void handleSelectMedia(media?.id ?? mediaId, media)}
+        onChange={(mediaId, media, source) => void handleSelectMedia(media?.id ?? mediaId, media, source)}
         mediaType={selectedRole.mediaType}
         accept={selectedRole.accept}
         label={selectedRole.label}
@@ -283,6 +383,9 @@ export function AttachmentManager({
         allowClear={false}
         disabled={disabled || createMediaLink.isPending}
         isPublic={isPublic}
+        uploadEntityType={canPersist ? entityType : undefined}
+        uploadEntityId={canPersist ? entityId ?? undefined : undefined}
+        uploadRole={canPersist ? selectedRole.value : undefined}
       />
 
       <div className="space-y-3">
@@ -293,26 +396,40 @@ export function AttachmentManager({
           </div>
         ) : null}
 
-        {persistedLinks.map((link) => (
+        {persistedLinks.map((link, index) => (
           <AttachmentRow
             key={link.id}
             mediaId={link.media_id}
             media={link.media}
             role={link.role}
             roles={roles}
-            disabled={disabled || deleteMediaLink.isPending}
+            isPublic={link.is_public}
+            canMoveUp={index > 0}
+            canMoveDown={index < persistedLinks.length - 1}
+            disabled={disabled || deleteMediaLink.isPending || updateMediaLink.isPending}
+            onRoleChange={(nextRole) => void updatePersistedLink(link, { role: nextRole })}
+            onVisibilityChange={(nextPublic) => void updatePersistedLink(link, { is_public: nextPublic })}
+            onMoveUp={() => void movePersistedLink(link, -1)}
+            onMoveDown={() => void movePersistedLink(link, 1)}
             onRemove={() => setRemoveTarget({ id: link.id, label: link.media ? getMediaLabel(link.media) : "attachment", pending: false })}
           />
         ))}
 
-        {pendingAttachments.map((attachment) => (
+        {pendingAttachments.map((attachment, index) => (
           <AttachmentRow
             key={`${attachment.media_id}-${attachment.role}`}
             mediaId={attachment.media_id}
             media={attachment.media}
             role={attachment.role}
             roles={roles}
+            isPublic={attachment.is_public}
+            canMoveUp={index > 0}
+            canMoveDown={index < pendingAttachments.length - 1}
             disabled={disabled}
+            onRoleChange={(nextRole) => updatePendingAttachment(attachment.media_id, attachment.role, { role: nextRole })}
+            onVisibilityChange={(nextPublic) => updatePendingAttachment(attachment.media_id, attachment.role, { is_public: nextPublic })}
+            onMoveUp={() => movePendingAttachment(index, -1)}
+            onMoveDown={() => movePendingAttachment(index, 1)}
             onRemove={() => setRemoveTarget({ id: attachment.media_id, label: attachment.media ? getMediaLabel(attachment.media) : "queued attachment", pending: true })}
           />
         ))}

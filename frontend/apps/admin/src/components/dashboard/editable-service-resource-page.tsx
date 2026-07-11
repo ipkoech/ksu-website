@@ -20,7 +20,7 @@ async function revalidateResearch(resource: string) {
 }
 
 import { PageHeader } from "@/components/layout";
-import { MediaPicker } from "@/components/media/media-picker";
+import { AttachmentManager, MediaPicker, useCommitPendingAttachments, type AttachmentRoleOption, type PendingMediaAttachment } from "@/components/media";
 import { EntityPicker, EntityTypeRecordPicker, MultiEntityPicker } from "@/components/relationships/entity-picker";
 import { relationshipAdapters, type RelationshipFilters } from "@/components/relationships/relationship-adapters";
 import {
@@ -101,6 +101,7 @@ type FieldType =
   | "entity-multi"
   | "entity-record"
   | "media"
+  | "attachments"
   | "boolean";
 
 export interface EditableField {
@@ -140,6 +141,12 @@ export interface EditableField {
     uploadEntityType?: string;
     uploadRole?: string;
     allowUpload?: boolean;
+  };
+  attachments?: {
+    entityType: string;
+    roles?: AttachmentRoleOption[];
+    defaultRole?: string;
+    isPublic?: boolean;
   };
 }
 
@@ -247,6 +254,7 @@ interface EditableServiceResourcePageProps<
 function defaultValue(field: EditableField) {
   if (field.type === "boolean") return true;
   if (field.type === "entity-multi") return [];
+  if (field.type === "attachments") return [];
   if (field.type === "number") return "";
   return "";
 }
@@ -254,6 +262,7 @@ function defaultValue(field: EditableField) {
 function recordToValues(fields: EditableField[], record?: RecordShape | null) {
   const values: RecordShape = {};
   for (const field of fields) {
+    if (field.type === "attachments") continue;
     if (field.type === "entity-record" && field.entityRecord) {
       values[field.entityRecord.typeName] =
         record?.[field.entityRecord.typeName] ?? "";
@@ -279,6 +288,7 @@ function recordToValues(fields: EditableField[], record?: RecordShape | null) {
 function normalizePayload(fields: EditableField[], values: RecordShape) {
   const payload: RecordShape = {};
   for (const field of fields) {
+    if (field.type === "attachments") continue;
     if (field.type === "entity-record" && field.entityRecord) {
       payload[field.entityRecord.typeName] =
         values[field.entityRecord.typeName] || null;
@@ -417,6 +427,7 @@ export function EditableServiceResourcePage<
   const queryClient = useQueryClient();
   const formId = useId();
   const workflowFormId = useId();
+  const commitPendingAttachments = useCommitPendingAttachments();
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<TRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TRecord | null>(null);
@@ -572,7 +583,20 @@ export function EditableServiceResourcePage<
         await updateMutation.mutateAsync({ id: editingRecord.id, payload });
         toast.success(`${title} updated successfully`);
       } else {
-        await createMutation.mutateAsync(payload);
+        const created = await createMutation.mutateAsync(payload);
+        const createdId = (created as { data?: { id?: string }; id?: string } | null)?.data?.id
+          ?? (created as { id?: string } | null)?.id;
+        for (const field of fields) {
+          if (field.type !== "attachments" || !field.attachments) continue;
+          const attachments = values[field.name] as PendingMediaAttachment[] | undefined;
+          if (!attachments?.length) continue;
+          if (!createdId) throw new Error("Created record did not return an ID for attachment linking");
+          await commitPendingAttachments({
+            entityType: field.attachments.entityType,
+            entityId: createdId,
+            attachments,
+          });
+        }
         toast.success(`${title} created successfully`);
       }
       resetForm();
@@ -1514,6 +1538,7 @@ function EditorFormBody<TRecord extends RecordShape>({
                       error={fieldErrors[field.name]}
                       setValues={setValues}
                       setFieldErrors={setFieldErrors}
+                      entityId={editingRecord?.id}
                     />
                   ))}
                 </div>
@@ -1588,6 +1613,7 @@ function EditableFieldControl({
   error,
   setValues,
   setFieldErrors,
+  entityId,
 }: {
   field: EditableField;
   id: string;
@@ -1596,12 +1622,13 @@ function EditableFieldControl({
   error?: string;
   setValues: Dispatch<SetStateAction<RecordShape>>;
   setFieldErrors: Dispatch<SetStateAction<Record<string, string>>>;
+  entityId?: string | null;
 }) {
   const labelId = `${id}-label`;
   const describedBy = error ? `${id}-error` : undefined;
   const resolvedType = inputType(field);
   const stringValue = value === null || value === undefined ? "" : String(value);
-  const wideField = field.type === "textarea" || field.type === "richtext" || field.type === "media" || field.type === "entity-record" || field.type === "entity-multi";
+  const wideField = field.type === "textarea" || field.type === "richtext" || field.type === "media" || field.type === "attachments" || field.type === "entity-record" || field.type === "entity-multi";
   const clearError = () => {
     if (!error) return;
     setFieldErrors((current) => {
@@ -1661,6 +1688,16 @@ function EditableFieldControl({
           uploadRole={field.media?.uploadRole}
           allowUpload={field.media?.allowUpload}
           allowClear={!field.required}
+        />
+      ) : field.type === "attachments" && field.attachments ? (
+        <AttachmentManager
+          entityType={field.attachments.entityType}
+          entityId={entityId}
+          roles={field.attachments.roles}
+          defaultRole={field.attachments.defaultRole}
+          pendingAttachments={Array.isArray(value) ? value as PendingMediaAttachment[] : []}
+          onPendingAttachmentsChange={setFieldValue}
+          isPublic={field.attachments.isPublic ?? (typeof values.is_public === "boolean" ? values.is_public : true)}
         />
       ) : field.type === "entity" && field.relation ? (
         <EntityPicker

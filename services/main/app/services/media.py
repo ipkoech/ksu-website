@@ -15,7 +15,19 @@ from ksu_common import PaginatedResult
 
 from ..core.config import get_settings
 from ..helpers.slug import unique_slug
-from ..models import User
+from ..models import (
+    Announcement,
+    Blog,
+    Board,
+    Event,
+    News,
+    PageSection,
+    PartnershipSpotlight,
+    Person,
+    Slider,
+    SliderGroup,
+    User,
+)
 from ..helpers.storage import delete_file, upload_file
 from ..models import Media, MediaFolder, MediaLink
 from ._base import apply_updates, ilike_any, paginate_query
@@ -62,6 +74,28 @@ ENTITY_FOLDER_ALIASES = {
     "sliders": "sliders",
     "slider-group": "slider-groups",
     "slider-groups": "slider-groups",
+}
+
+DIRECT_ATTACHMENT_SCOPE_TYPES = frozenset(
+    {
+        "campus",
+        "school",
+        "department",
+        "programme",
+        "division",
+        "wing",
+    }
+)
+
+CONTENT_ATTACHMENT_MODELS = {
+    "announcement": Announcement,
+    "blog": Blog,
+    "event": Event,
+    "news": News,
+    "slider": Slider,
+    "slider_group": SliderGroup,
+    "page_section": PageSection,
+    "partnership_spotlight": PartnershipSpotlight,
 }
 
 
@@ -136,7 +170,112 @@ class MediaService:
         )
         db.add(media)
         await db.flush()
+        if entity_type and entity_id is not None:
+            await MediaService.link_media(
+                db,
+                media_id=media.id,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                role=role or "attachment",
+                is_public=is_public,
+            )
         return media
+
+    @staticmethod
+    async def get_attachment_scope(
+        db: AsyncSession,
+        *,
+        entity_type: str,
+        entity_id: uuid.UUID,
+    ) -> tuple[str, uuid.UUID | None]:
+        """Resolve an attachment target to the scope used for authorization."""
+        normalized_type = _safe_folder_segment(entity_type).replace("-", "_")
+        normalized_type = {
+            "campuses": "campus",
+            "schools": "school",
+            "departments": "department",
+            "programmes": "programme",
+            "programs": "programme",
+            "divisions": "division",
+            "wings": "wing",
+            "persons": "person",
+            "blogs": "blog",
+            "events": "event",
+            "announcements": "announcement",
+            "sliders": "slider",
+            "slider_groups": "slider_group",
+            "page_sections": "page_section",
+            "partnership_spotlights": "partnership_spotlight",
+        }.get(normalized_type, normalized_type)
+        if normalized_type in DIRECT_ATTACHMENT_SCOPE_TYPES:
+            return normalized_type, entity_id
+
+        if normalized_type == "person":
+            result = await db.execute(
+                select(Person.department_id).where(Person.id == entity_id, Person.deleted_at.is_(None))
+            )
+            department_id = result.scalar_one_or_none()
+            return ("department", department_id) if department_id else ("person", entity_id)
+
+        content_model = CONTENT_ATTACHMENT_MODELS.get(normalized_type)
+        if content_model is not None:
+            result = await db.execute(
+                select(content_model.scope_type, content_model.scope_id).where(
+                    content_model.id == entity_id,
+                    content_model.deleted_at.is_(None),
+                )
+            )
+            scope = result.one_or_none()
+            if scope is not None:
+                return scope[0] or "global", scope[1]
+
+        if normalized_type == "board":
+            result = await db.execute(
+                select(Board.parent_entity_type, Board.parent_entity_id, Board.division_id).where(
+                    Board.id == entity_id,
+                    Board.deleted_at.is_(None),
+                )
+            )
+            scope = result.one_or_none()
+            if scope is not None:
+                if scope[0] and scope[1]:
+                    return scope[0], scope[1]
+                if scope[2]:
+                    return "division", scope[2]
+                return "university", None
+
+        return normalized_type, entity_id
+
+    @staticmethod
+    def serialize_link(link: MediaLink) -> dict:
+        """Return the display-ready attachment contract shared by media link endpoints."""
+        media = link.media
+        return {
+            "id": link.id,
+            "media_id": link.media_id,
+            "entity_type": link.entity_type,
+            "entity_id": link.entity_id,
+            "role": link.role,
+            "folder_id": link.folder_id,
+            "display_order": link.display_order,
+            "is_public": link.is_public,
+            "media": (
+                {
+                    "id": media.id,
+                    "title": media.title,
+                    "filename": media.filename,
+                    "original_filename": media.original_filename,
+                    "mime_type": media.mime_type,
+                    "media_type": media.media_type,
+                    "file_size": media.file_size,
+                    "thumbnail_url": media.thumbnail_url,
+                    "is_public": media.is_public,
+                    "url": media.url,
+                }
+                if media is not None
+                else None
+            ),
+        }
 
     @staticmethod
     async def get_by_id(db: AsyncSession, media_id: uuid.UUID, *, load_options: Sequence = ()) -> Media | None:
