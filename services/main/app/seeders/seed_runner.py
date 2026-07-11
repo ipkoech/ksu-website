@@ -14,6 +14,7 @@ from .seed_cover_images import seed_cover_images
 from .seed_divisions import seed_divisions
 from .seed_governance import seed_governance
 from .seed_management import seed_management
+from .seed_page_cms import seed_page_cms
 from .seed_programmes import seed_programmes
 from .seed_public_records import seed_public_records
 from .seed_public_site_pages import seed_public_site_pages
@@ -42,6 +43,7 @@ async def run() -> None:
             await seed_content(db, ctx)
             await seed_public_records(db, ctx)
             await seed_public_site_pages(db, ctx)
+            await seed_page_cms(db, ctx)
             await seed_admin_departments(db, ctx)
             await seed_staff_profiles(db, ctx)
             await seed_cover_images(db, ctx)
