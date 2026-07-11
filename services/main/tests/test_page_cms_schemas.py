@@ -69,6 +69,17 @@ class PageCmsSchemaTests(unittest.TestCase):
                 published_by_id=uuid.uuid4(),
             )
 
+    def test_page_section_create_rejects_audit_actor_fields(self):
+        with self.assertRaises(ValidationError):
+            PageSectionCreate(
+                page_key="homepage",
+                scope_type="university",
+                section_key="hero",
+                layout_variant=PAGE_SECTION_LAYOUT_VARIANTS[0],
+                created_by_id=uuid.uuid4(),
+                updated_by_id=uuid.uuid4(),
+            )
+
     def test_page_section_update_rejects_lifecycle_fields(self):
         with self.assertRaises(ValidationError):
             PageSectionUpdate(
@@ -77,6 +88,13 @@ class PageCmsSchemaTests(unittest.TestCase):
                 published_at=_utc_now(),
                 approved_by_id=uuid.uuid4(),
                 published_by_id=uuid.uuid4(),
+            )
+
+    def test_page_section_update_rejects_audit_actor_fields(self):
+        with self.assertRaises(ValidationError):
+            PageSectionUpdate(
+                created_by_id=uuid.uuid4(),
+                updated_by_id=uuid.uuid4(),
             )
 
     def test_section_item_create_rejects_external_cta_urls_without_http_scheme(self):

@@ -131,8 +131,6 @@ class PageSectionCreate(BaseSchema):
     layout_variant: str = Field(default=PAGE_SECTION_LAYOUT_VARIANTS[0], max_length=64)
     valid_from: datetime | None = None
     valid_to: datetime | None = None
-    created_by_id: uuid.UUID | None = None
-    updated_by_id: uuid.UUID | None = None
     items: list[SectionItemCreate] = Field(default_factory=list)
 
     @field_validator("scope_type")
@@ -171,8 +169,6 @@ class PageSectionUpdate(BaseSchema):
     layout_variant: str | None = Field(default=None, max_length=64)
     valid_from: datetime | None = None
     valid_to: datetime | None = None
-    created_by_id: uuid.UUID | None = None
-    updated_by_id: uuid.UUID | None = None
     items: list[SectionItemUpdate] | None = None
 
     @field_validator("scope_type")
