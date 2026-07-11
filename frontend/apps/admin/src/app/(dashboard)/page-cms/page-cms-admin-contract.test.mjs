@@ -36,10 +36,27 @@ for (const requiredSnippet of [
   "Subtitle",
   "Description",
   "Settings",
+  "\"page_sections.delete\"",
+  "if (action === \"archive\") return canArchive;",
+  "const creatableItems = items.filter((item) => item.id || !isEmptyItemDraft(item));",
+  "await sectionItemsApi.create(savedSection.id, payload)",
 ]) {
   assert(
     sectionDetailSource.includes(requiredSnippet),
     `Expected section detail page to include: ${requiredSnippet}`,
+  );
+}
+
+const dashboardSource = fs.readFileSync(path.join(appRoot, "page.tsx"), "utf8");
+for (const requiredSnippet of [
+  "canViewSections ? (",
+  "canManageSpotlights ? (",
+  "href=\"/page-cms/sections\"",
+  "href=\"/page-cms/spotlights\"",
+]) {
+  assert(
+    dashboardSource.includes(requiredSnippet),
+    `Expected dashboard page to include: ${requiredSnippet}`,
   );
 }
 

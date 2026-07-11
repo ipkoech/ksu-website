@@ -193,6 +193,24 @@ function itemPayloadFromDraft(item: SectionItemDraft): SectionItemPayload {
   };
 }
 
+function isEmptyItemDraft(item: SectionItemDraft) {
+  return (
+    !item.title.trim() &&
+    !item.subtitle.trim() &&
+    !item.body_text.trim() &&
+    !item.cta_label.trim() &&
+    !item.cta_url.trim() &&
+    !item.cta_description.trim() &&
+    !item.media_caption.trim() &&
+    !item.media_alt_text.trim() &&
+    !item.video_provider.trim() &&
+    !item.video_url.trim() &&
+    !item.video_duration_seconds.trim() &&
+    !Object.keys(item.content ?? {}).length &&
+    !item.pending_attachments.length
+  );
+}
+
 function workflowButtonsForStatus(status: PageSectionStatus) {
   const buttons: PageSectionWorkflowAction[] = [];
   if (status === "draft" || status === "changes_requested") buttons.push("submit");
@@ -238,15 +256,24 @@ export default function PageCmsSectionDetailPage() {
   ]);
   const canReview = hasAnyPermission(["page_sections.review", "page_sections.manage"]);
   const canPublish = hasAnyPermission(["page_sections.publish", "page_sections.manage", "homepage.publish"]);
+  const canArchive = hasAnyPermission([
+    "page_sections.delete",
+    "page_sections.manage",
+    "homepage.manage",
+    "school_homepage.manage",
+    "research_homepage.manage",
+    "library_homepage.manage",
+  ]);
 
   const availableWorkflowActions = useMemo(() => {
     if (isNew) return [];
     return workflowButtonsForStatus(form.status).filter((action) => {
       if (action === "approve" || action === "request_changes") return canReview;
       if (action === "publish" || action === "unpublish") return canPublish;
+      if (action === "archive") return canArchive;
       return canManageSection;
     });
-  }, [canManageSection, canPublish, canReview, form.status, isNew]);
+  }, [canArchive, canManageSection, canPublish, canReview, form.status, isNew]);
 
   useEffect(() => {
     if (isNew) {
@@ -345,8 +372,9 @@ export default function PageCmsSectionDetailPage() {
 
       await persistAttachments("page_section", savedSection.id, pendingSectionAttachments);
 
+      const creatableItems = items.filter((item) => item.id || !isEmptyItemDraft(item));
       const nextItems: SectionItemDraft[] = [];
-      for (const item of items) {
+      for (const item of creatableItems) {
         const payload = itemPayloadFromDraft(item);
         const savedItem = item.id
           ? (await sectionItemsApi.update(item.id, payload)).data
@@ -373,6 +401,18 @@ export default function PageCmsSectionDetailPage() {
 
   const handleWorkflow = async (action: PageSectionWorkflowAction) => {
     if (isNew) return;
+    if (action === "archive" && !canArchive) {
+      toast.error("You do not have permission to archive page sections.");
+      return;
+    }
+    if ((action === "approve" || action === "request_changes") && !canReview) {
+      toast.error("You do not have permission to review page sections.");
+      return;
+    }
+    if ((action === "publish" || action === "unpublish") && !canPublish) {
+      toast.error("You do not have permission to publish page sections.");
+      return;
+    }
     setWorkflowBusy(action);
     try {
       const response = await pageSectionsApi.workflow(sectionId, action);

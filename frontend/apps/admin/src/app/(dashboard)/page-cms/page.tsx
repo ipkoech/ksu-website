@@ -136,9 +136,11 @@ export default function PageCmsDashboardPage() {
                 Create sections, update item content, attach media by role, and move records through review and publishing.
               </p>
             </div>
-            <Button asChild>
-              <Link href="/page-cms/sections">Open Sections</Link>
-            </Button>
+            {canViewSections ? (
+              <Button asChild>
+                <Link href="/page-cms/sections">Open Sections</Link>
+              </Button>
+            ) : null}
           </CardHeader>
           <CardContent className="space-y-3">
             {!canViewSections ? (
@@ -179,9 +181,11 @@ export default function PageCmsDashboardPage() {
                 Manage partnership spotlight content and supporting media with the current backend spotlight endpoints.
               </p>
             </div>
-            <Button variant="outline" asChild>
-              <Link href="/page-cms/spotlights">Open Spotlights</Link>
-            </Button>
+            {canManageSpotlights ? (
+              <Button variant="outline" asChild>
+                <Link href="/page-cms/spotlights">Open Spotlights</Link>
+              </Button>
+            ) : null}
           </CardHeader>
           <CardContent className="space-y-3">
             {!canManageSpotlights ? (
