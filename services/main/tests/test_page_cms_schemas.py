@@ -9,7 +9,9 @@ from pydantic import ValidationError
 from app.models import PAGE_SECTION_LAYOUT_VARIANTS
 from app.schemas.page_cms import (
     PageSectionCreate,
+    PageSectionWorkflowAction,
     PartnershipSpotlightCreate,
+    PartnershipSpotlightRead,
     SectionItemCreate,
 )
 
@@ -93,3 +95,45 @@ class PageCmsSchemaTests(unittest.TestCase):
                 primary_cta_source="manual",
                 primary_cta_url="partner.example.com/opportunities",
             )
+
+    def test_partnership_spotlight_read_round_trips_orm_fields(self):
+        now = _utc_now()
+        spotlight = type(
+            "PartnershipSpotlightLike",
+            (),
+            {
+                "id": uuid.uuid4(),
+                "created_at": now,
+                "updated_at": now,
+                "source_type": "research_partner",
+                "source_id": uuid.uuid4(),
+                "primary_cta_source": "partner_website",
+                "primary_cta_label": "Visit partner",
+                "primary_cta_url": "https://partner.example.com/opportunities",
+                "headline": "Collaborative research in health systems",
+                "summary": "A partnership focused on service delivery and training.",
+                "pillars": [{"title": "Training"}],
+                "opportunities": [{"title": "Scholarships"}],
+                "is_enabled": True,
+                "status": "published",
+                "valid_from": now,
+                "valid_to": now + timedelta(days=30),
+                "approved_at": now,
+                "published_at": now,
+            },
+        )()
+
+        result = PartnershipSpotlightRead.model_validate(spotlight)
+
+        self.assertEqual(result.primary_cta_source, "partner_website")
+        self.assertEqual(result.primary_cta_label, "Visit partner")
+        self.assertEqual(result.primary_cta_url, "https://partner.example.com/opportunities")
+
+    def test_page_section_workflow_action_accepts_supported_actions(self):
+        for action in ("submit", "approve", "request_changes", "publish", "archive", "unpublish"):
+            result = PageSectionWorkflowAction(action=action)
+            self.assertEqual(result.action, action)
+
+    def test_page_section_workflow_action_rejects_unsupported_action(self):
+        with self.assertRaises(ValidationError):
+            PageSectionWorkflowAction(action="delete")

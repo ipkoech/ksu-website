@@ -12,12 +12,13 @@ from app.models import (
     PAGE_SCOPE_TYPES,
     PAGE_SECTION_LAYOUT_VARIANTS,
     PAGE_SECTION_STATUSES,
+    PARTNERSHIP_CTA_SOURCES,
     SECTION_ITEM_TYPES,
 )
 
 from .base import BaseReadSchema, BaseSchema
 
-PRIMARY_CTA_SOURCES = ("manual", "partner_website", "generated_detail_page")
+PAGE_SECTION_WORKFLOW_ACTIONS = ("submit", "approve", "request_changes", "publish", "archive", "unpublish")
 
 
 def _validate_choice(value: str | None, allowed: tuple[str, ...], field_name: str) -> str | None:
@@ -227,7 +228,7 @@ class PageSectionRead(BaseReadSchema):
 class PartnershipSpotlightCreate(BaseSchema):
     source_type: str = Field(default="research_partner", max_length=64)
     source_id: uuid.UUID
-    primary_cta_source: str = Field(default=PRIMARY_CTA_SOURCES[0], max_length=32)
+    primary_cta_source: str = Field(default=PARTNERSHIP_CTA_SOURCES[0], max_length=32)
     primary_cta_label: str | None = Field(default=None, max_length=255)
     primary_cta_url: str | None = Field(default=None, max_length=1024)
     headline: str = Field(min_length=1, max_length=255)
@@ -251,7 +252,7 @@ class PartnershipSpotlightCreate(BaseSchema):
     @field_validator("primary_cta_source")
     @classmethod
     def validate_primary_cta_source(cls, value: str) -> str:
-        return _validate_choice(value, PRIMARY_CTA_SOURCES, "primary_cta_source") or value
+        return _validate_choice(value, PARTNERSHIP_CTA_SOURCES, "primary_cta_source") or value
 
     @field_validator("primary_cta_url")
     @classmethod
@@ -299,7 +300,7 @@ class PartnershipSpotlightUpdate(BaseSchema):
     @field_validator("primary_cta_source")
     @classmethod
     def validate_primary_cta_source(cls, value: str | None) -> str | None:
-        return _validate_choice(value, PRIMARY_CTA_SOURCES, "primary_cta_source")
+        return _validate_choice(value, PARTNERSHIP_CTA_SOURCES, "primary_cta_source")
 
     @field_validator("primary_cta_url")
     @classmethod
@@ -340,6 +341,11 @@ class PageSectionWorkflowAction(BaseSchema):
     action: str = Field(min_length=1, max_length=64)
     note: str | None = None
 
+    @field_validator("action")
+    @classmethod
+    def validate_action(cls, value: str) -> str:
+        return _validate_choice(value, PAGE_SECTION_WORKFLOW_ACTIONS, "action") or value
+
 
 class PageCompositionResponse(BaseSchema):
     page_key: str = Field(min_length=1, max_length=64)
@@ -350,7 +356,8 @@ class PageCompositionResponse(BaseSchema):
 
 
 __all__ = [
-    "PRIMARY_CTA_SOURCES",
+    "PARTNERSHIP_CTA_SOURCES",
+    "PAGE_SECTION_WORKFLOW_ACTIONS",
     "SectionItemCreate",
     "SectionItemUpdate",
     "SectionItemRead",

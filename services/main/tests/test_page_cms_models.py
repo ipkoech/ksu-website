@@ -131,12 +131,28 @@ def test_partnership_spotlights_reference_research_partner_sources():
         source_type="research_partner",
         source_id=uuid.uuid4(),
         headline="Collaborative impact",
-        cta_source=PARTNERSHIP_CTA_SOURCES[0],
+        primary_cta_source=PARTNERSHIP_CTA_SOURCES[0],
     )
 
     assert str(constraint.sqltext).lower().count("research_partner") >= 1
     assert spotlight.source_type == "research_partner"
     assert spotlight.source_id is not None
+
+
+def test_partnership_spotlights_align_primary_cta_columns_and_allowed_sources():
+    constraint = _check_constraint(PartnershipSpotlight.__table__, "ck_partnership_spotlights_primary_cta_source")
+    sqltext = str(constraint.sqltext).lower()
+
+    assert PARTNERSHIP_CTA_SOURCES == ("manual", "partner_website", "generated_detail_page")
+    assert "primary_cta_source" in PartnershipSpotlight.__table__.c
+    assert "primary_cta_label" in PartnershipSpotlight.__table__.c
+    assert "primary_cta_url" in PartnershipSpotlight.__table__.c
+    assert "cta_source" not in PartnershipSpotlight.__table__.c
+    assert "cta_label" not in PartnershipSpotlight.__table__.c
+    assert "cta_url" not in PartnershipSpotlight.__table__.c
+    assert "manual" in sqltext
+    assert "partner_website" in sqltext
+    assert "generated_detail_page" in sqltext
 
 
 def test_followup_migration_adds_partial_unique_indexes_and_enabled_columns():
@@ -174,6 +190,24 @@ def test_followup_migration_adds_layout_variant_constraint():
     assert 'server_default="hero_admissions"' in migration_text
     assert 'op.create_check_constraint(' in migration_text
     assert 'ck_page_sections_layout_variant' in migration_text
+
+
+def test_followup_migration_aligns_partnership_spotlight_primary_cta_fields():
+    migration_path = (
+        Path(__file__).resolve().parents[1]
+        / "migrations"
+        / "versions"
+        / "20260711_0013_align_partnership_spotlight_primary_cta.py"
+    )
+    migration_text = migration_path.read_text(encoding="utf-8").lower()
+
+    assert 'new_column_name="primary_cta_source"' in migration_text
+    assert 'new_column_name="primary_cta_label"' in migration_text
+    assert 'new_column_name="primary_cta_url"' in migration_text
+    assert "when primary_cta_source = 'custom' then 'manual'" in migration_text
+    assert "when primary_cta_source = 'research_partner' then 'partner_website'" in migration_text
+    assert 'ck_partnership_spotlights_primary_cta_source' in migration_text
+    assert "primary_cta_source in ('manual', 'partner_website', 'generated_detail_page')" in migration_text
 
 
 def test_page_cms_media_attaches_through_existing_media_links():

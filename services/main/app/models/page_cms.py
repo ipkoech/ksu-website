@@ -35,7 +35,7 @@ PAGE_SECTION_LAYOUT_VARIANTS = (
     "facts_strip",
 )
 SECTION_ITEM_TYPES = ("text", "card", "stat", "cta", "media", "video")
-PARTNERSHIP_CTA_SOURCES = ("research_partner", "custom")
+PARTNERSHIP_CTA_SOURCES = ("manual", "partner_website", "generated_detail_page")
 
 
 class PageSection(Base):
@@ -179,8 +179,8 @@ class PartnershipSpotlight(Base):
             name="ck_partnership_spotlights_source_type",
         ),
         sa.CheckConstraint(
-            "cta_source IN ('research_partner', 'custom')",
-            name="ck_partnership_spotlights_cta_source",
+            "primary_cta_source IN ('manual', 'partner_website', 'generated_detail_page')",
+            name="ck_partnership_spotlights_primary_cta_source",
         ),
         sa.CheckConstraint(
             "status IN ('draft', 'in_review', 'changes_requested', 'approved', 'published', 'archived')",
@@ -195,13 +195,13 @@ class PartnershipSpotlight(Base):
 
     source_type: Mapped[str] = mapped_column(sa.String(64), nullable=False, server_default="research_partner")
     source_id: Mapped[uuid.UUID] = mapped_column(sa.Uuid, nullable=False)
-    cta_source: Mapped[str] = mapped_column(
+    primary_cta_source: Mapped[str] = mapped_column(
         sa.String(32),
         nullable=False,
         server_default=PARTNERSHIP_CTA_SOURCES[0],
     )
-    cta_label: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
-    cta_url: Mapped[Optional[str]] = mapped_column(sa.String(1024), nullable=True)
+    primary_cta_label: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    primary_cta_url: Mapped[Optional[str]] = mapped_column(sa.String(1024), nullable=True)
     headline: Mapped[str] = mapped_column(sa.String(255), nullable=False)
     summary: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
     pillars: Mapped[Optional[list[dict]]] = mapped_column(JSONB, nullable=True)
