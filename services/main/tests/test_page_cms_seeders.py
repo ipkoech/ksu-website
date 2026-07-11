@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, patch
 
-from app.models import PageSection, PartnershipSpotlight
+from app.models import PageSection, PartnershipSpotlight, SectionItem
 from app.seeders._shared import SeedContext
 from app.seeders.seed_page_cms import seed_page_cms
 
@@ -181,3 +181,71 @@ class PageCmsSeederTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(5, len(db.sections))
         self.assertIs(_section_by_key(db, "facts"), manual_published)
 
+    async def test_seed_does_not_overwrite_published_seeded_section_after_manual_edits(self):
+        db = _MemoryDb()
+        published_seeded_section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            scope_id=None,
+            section_key="hero-admissions",
+            title="Editor hero title",
+            settings={"seed": {"owner": "page-cms-homepage-v1"}, "edited": True},
+            layout_variant="hero_admissions",
+            status="published",
+            published_at=datetime.now(timezone.utc),
+            is_enabled=True,
+        )
+        manual_item = SectionItem(
+            item_type="text",
+            title="Editor item",
+            body_text="Manual homepage copy",
+            display_order=1,
+            is_enabled=True,
+        )
+        published_seeded_section.items = [manual_item]
+        db.sections.append(published_seeded_section)
+
+        with patch(
+            "app.seeders.seed_page_cms.ResearchPartnersProxyService.list_partners",
+            AsyncMock(return_value={"status": "success", "data": [], "meta": {"pages": 1}}),
+        ):
+            await seed_page_cms(db, SeedContext())
+
+        self.assertEqual("Editor hero title", published_seeded_section.title)
+        self.assertEqual({"seed": {"owner": "page-cms-homepage-v1"}, "edited": True}, published_seeded_section.settings)
+        self.assertEqual([manual_item], published_seeded_section.items)
+        self.assertEqual("Editor item", published_seeded_section.items[0].title)
+
+    async def test_seed_does_not_overwrite_editor_owned_unpublished_heri_spotlight(self):
+        db = _MemoryDb()
+        partner_id = uuid.uuid4()
+        editor_spotlight = PartnershipSpotlight(
+            source_type="research_partner",
+            source_id=partner_id,
+            headline="Editor Heri Africa review draft",
+            summary="Editor-owned partnership copy",
+            primary_cta_source="manual",
+            primary_cta_label="Editor CTA",
+            primary_cta_url="/editor-heri-africa",
+            status="in_review",
+            is_enabled=True,
+        )
+        db.spotlights.append(editor_spotlight)
+
+        with patch(
+            "app.seeders.seed_page_cms.ResearchPartnersProxyService.list_partners",
+            AsyncMock(
+                return_value={
+                    "status": "success",
+                    "data": [{"id": str(partner_id), "name": "Heri Africa", "slug": "heri-africa"}],
+                    "meta": {"pages": 1},
+                }
+            ),
+        ):
+            await seed_page_cms(db, SeedContext())
+
+        self.assertEqual("Editor Heri Africa review draft", editor_spotlight.headline)
+        self.assertEqual("Editor-owned partnership copy", editor_spotlight.summary)
+        self.assertEqual("manual", editor_spotlight.primary_cta_source)
+        self.assertEqual("in_review", editor_spotlight.status)
+        self.assertEqual(1, len(db.spotlights))

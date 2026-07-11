@@ -17,6 +17,7 @@ from ._shared import SeedContext
 
 SEED_OWNER = "page-cms-homepage-v1"
 PENDING_HERI_AFRICA_SOURCE_ID = uuid.UUID("8d724ec7-3b5b-54f8-b3f3-8770f627dd6a")
+PENDING_HERI_AFRICA_HEADLINE = "Heri Africa partnership spotlight pending"
 
 
 HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
@@ -188,6 +189,10 @@ def _is_seed_owned_section(section: PageSection) -> bool:
     return seed.get("owner") == SEED_OWNER
 
 
+def _can_update_seeded_section(section: PageSection) -> bool:
+    return section.status == "draft" and _is_seed_owned_section(section)
+
+
 def _section_identity(section: PageSection) -> tuple[str, str, uuid.UUID | None, str]:
     return (section.page_key, section.scope_type, section.scope_id, section.section_key)
 
@@ -222,7 +227,7 @@ async def _seed_homepage_sections(db: AsyncSession) -> None:
     for spec in HOMEPAGE_SECTION_SPECS:
         identity = ("homepage", "university", None, spec["section_key"])
         section = existing.get(identity)
-        if section is not None and section.status == "published" and not _is_seed_owned_section(section):
+        if section is not None and not _can_update_seeded_section(section):
             continue
 
         payload = {
@@ -307,7 +312,7 @@ def _spotlight_payload(partner: dict[str, Any] | None) -> dict[str, Any]:
             "primary_cta_source": "manual",
             "primary_cta_label": "Review partner record",
             "primary_cta_url": "/research/partnerships",
-            "headline": "Heri Africa partnership spotlight pending",
+            "headline": PENDING_HERI_AFRICA_HEADLINE,
             "summary": (
                 "Pending seed placeholder for the Heri Africa spotlight. Publish after the "
                 "matching research partner source record is available."
@@ -355,7 +360,7 @@ async def _seed_heri_africa_spotlight(db: AsyncSession) -> None:
     existing_spotlights = [
         spotlight for spotlight in result.scalars().all() if spotlight.deleted_at is None
     ]
-    spotlight = next(
+    existing_for_source = next(
         (
             candidate
             for candidate in existing_spotlights
@@ -363,19 +368,29 @@ async def _seed_heri_africa_spotlight(db: AsyncSession) -> None:
         ),
         None,
     )
-    if spotlight is None:
+
+    if existing_for_source is not None:
+        if existing_for_source.source_id != PENDING_HERI_AFRICA_SOURCE_ID:
+            return
+        if existing_for_source.headline != PENDING_HERI_AFRICA_HEADLINE:
+            return
+        if existing_for_source.status != "draft":
+            return
+        spotlight = existing_for_source
+    else:
         spotlight = next(
             (
                 candidate
                 for candidate in existing_spotlights
                 if candidate.source_type == "research_partner"
                 and candidate.source_id == PENDING_HERI_AFRICA_SOURCE_ID
-                and candidate.status != "published"
+                and candidate.headline == PENDING_HERI_AFRICA_HEADLINE
+                and candidate.status == "draft"
             ),
             None,
         )
 
-    if spotlight is not None and spotlight.status == "published":
+    if spotlight is not None and spotlight.status != "draft":
         return
 
     if spotlight is None:
