@@ -80,6 +80,7 @@ import type {
   MediaUpdatePayload,
   MediaUploadOptions,
   PaginatedResponse,
+  PortalStatsResponse,
   PublicStatsResponse,
   PublicResearchContextResponse,
   PublicResearchContextUpdatePayload,
@@ -187,6 +188,8 @@ export const statsApi = {
   ) => mainApi.get<{ data: PublicStatsResponse }>("/api/v1/stats", params),
   admin: () =>
     mainApi.get<{ data: PublicStatsResponse }>("/api/v1/stats/admin"),
+  portal: (portal: "admin" | "cocms" | "schools" | "departments" | "student-clubs") =>
+    mainApi.get<{ data: PortalStatsResponse }>(`/api/v1/stats/portal/${portal}`),
 };
 
 // Users

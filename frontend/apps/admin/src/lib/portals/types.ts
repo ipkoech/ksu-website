@@ -40,7 +40,7 @@ export interface PortalDashboardStat {
   icon: LucideIcon;
   scopes?: string[];
   queryKey: readonly unknown[];
-  query: () => Promise<unknown>;
+  query: () => Promise<number>;
 }
 
 export interface PortalDashboardPanel {

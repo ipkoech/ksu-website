@@ -52,6 +52,7 @@ import {
   researchServiceApi,
   schoolsApi,
   slidersApi,
+  statsApi,
   staffApi,
   testimonialsApi,
   usersApi,
@@ -125,15 +126,41 @@ function statCount(value?: number) {
   return { data: [], meta: { total: Number(value ?? 0) } };
 }
 
+async function mainPortalCount(
+  portal: "admin" | "cocms" | "schools" | "departments" | "student-clubs",
+  key: string,
+) {
+  const response = await statsApi.portal(portal);
+  const value = response.data.stats[key];
+  if (typeof value !== "number") {
+    throw new Error(`Missing ${key} portal statistic`);
+  }
+  return statCount(value);
+}
+
 async function researchAdminCount(key: string) {
   const response = await researchServiceApi.adminStats();
-  const item = response.data.stats.find((stat) => stat.key === key);
+  const remoteKeys: Record<string, string> = {
+    active_projects_count: "active_projects",
+    grants_count: "grants",
+    centres_count: "centres",
+    outputs_count: "outputs",
+  };
+  const item = response.data.stats.find((stat) => stat.key === remoteKeys[key]);
+  if (!item) throw new Error(`Missing ${key} research statistic`);
   return statCount(Number(item?.value ?? 0));
 }
 
 async function libraryAdminCount(key: string) {
   const response = await libraryServiceApi.adminStats();
-  const item = response.data.stats.find((stat) => stat.key === key);
+  const remoteKeys: Record<string, string> = {
+    active_branches_count: "active_branches",
+    catalogue_resources_count: "catalogue_resources",
+    active_regulations_count: "active_regulations",
+    loans_count: "loans",
+  };
+  const item = response.data.stats.find((stat) => stat.key === remoteKeys[key]);
+  if (!item) throw new Error(`Missing ${key} library statistic`);
   return statCount(Number(item?.value ?? 0));
 }
 
@@ -5730,8 +5757,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/admin/council",
           Landmark,
           ["governance.view", "administration.view"],
-          ["admin", "boards"],
-          () => governanceApi.listBoards(),
+          ["admin", "portal-stats", "boards_count"],
+          () => mainPortalCount("admin", "boards_count"),
         ),
         stat(
           "Divisions",
@@ -5739,8 +5766,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/admin/divisions",
           Building2,
           ["administration.view", "governance.view"],
-          ["admin", "divisions"],
-          () => divisionsApi.listAdmin(countParams),
+          ["admin", "portal-stats", "divisions_count"],
+          () => mainPortalCount("admin", "divisions_count"),
         ),
         stat(
           "Offices",
@@ -5748,8 +5775,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/admin/offices",
           Building2,
           ["office.view", "administration.view"],
-          ["admin", "offices"],
-          () => wingsApi.listAdmin(countParams),
+          ["admin", "portal-stats", "offices_count"],
+          () => mainPortalCount("admin", "offices_count"),
         ),
         stat(
           "Assignments",
@@ -5757,8 +5784,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/admin/staff-assignments",
           UserCheck,
           ["staff.view_assignments"],
-          ["admin", "staff"],
-          () => staffApi.listAssignments({ entity_type: "division" }),
+          ["admin", "portal-stats", "staff_assignments_count"],
+          () => mainPortalCount("admin", "staff_assignments_count"),
         ),
         stat(
           "Documents",
@@ -5766,8 +5793,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/admin/documents",
           ScrollText,
           ["policy.view", "office.view"],
-          ["admin", "documents"],
-          () => documentsApi.listAdmin({ ...countParams }),
+          ["admin", "portal-stats", "documents_count"],
+          () => mainPortalCount("admin", "documents_count"),
         ),
       ],
       adminResources,
@@ -5874,31 +5901,31 @@ export const portalConfigs: Record<string, PortalConfig> = {
       "Coordinate public publishing, homepage features, and media readiness.",
       [
         stat(
-          "News",
-          "Newsroom records",
+          "Review Queue",
+          "Content awaiting editorial review",
+          "/cocms/review-queue",
+          ClipboardCheck,
+          ["content.view"],
+          ["cocms", "portal-stats", "pending_review_count"],
+          () => mainPortalCount("cocms", "pending_review_count"),
+        ),
+        stat(
+          "Published Content",
+          "Live main-site content",
           "/cocms/news",
           Newspaper,
           ["content.view"],
-          ["cocms", "news"],
-          () => newsApi.listAdmin({ ...countParams, is_main: true }),
+          ["cocms", "portal-stats", "published_count"],
+          () => mainPortalCount("cocms", "published_count"),
         ),
         stat(
-          "Public Notices",
-          "Announcements",
-          "/cocms/notices",
-          Megaphone,
-          ["content.view"],
-          ["cocms", "notices"],
-          () => announcementsApi.listAdmin({ ...countParams, is_main: true }),
-        ),
-        stat(
-          "Events",
-          "Public calendar",
+          "Scheduled Content",
+          "Future-dated main-site content",
           "/cocms/events",
           CalendarDays,
           ["content.view"],
-          ["cocms", "events"],
-          () => eventsApi.listAdmin({ ...countParams, is_main: true }),
+          ["cocms", "portal-stats", "scheduled_count"],
+          () => mainPortalCount("cocms", "scheduled_count"),
         ),
         stat(
           "Media",
@@ -5906,8 +5933,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/cocms/media-assets",
           ImageIcon,
           ["media.view"],
-          ["cocms", "media"],
-          () => mediaApi.list(countParams),
+          ["cocms", "portal-stats", "media_count"],
+          () => mainPortalCount("cocms", "media_count"),
         ),
       ],
       cocmsResources,
@@ -5949,8 +5976,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/student-clubs/profiles",
           Trophy,
           ["clubs.view", "clubs.manage_own"],
-          ["student-clubs", "profiles"],
-          () => clubsApi.list({ ...countParams, is_active: true }),
+          ["student-clubs", "portal-stats", "active_clubs_count"],
+          () => mainPortalCount("student-clubs", "active_clubs_count"),
         ),
       ],
       studentClubResources,
@@ -6301,8 +6328,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/schools/profiles",
           GraduationCap,
           ["academic.view"],
-          ["schools", "profiles"],
-          () => schoolsApi.listAdmin(countParams),
+          ["schools", "portal-stats", "schools_count"],
+          () => mainPortalCount("schools", "schools_count"),
         ),
         stat(
           "Programmes",
@@ -6310,8 +6337,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/schools/programmes",
           BookOpen,
           ["academic.view"],
-          ["schools", "programmes"],
-          () => programmesApi.listAdmin(countParams),
+          ["schools", "portal-stats", "programmes_count"],
+          () => mainPortalCount("schools", "programmes_count"),
         ),
         stat(
           "Departments",
@@ -6319,8 +6346,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/schools/departments",
           Building2,
           ["academic.view"],
-          ["schools", "departments"],
-          () => departmentsApi.listAdmin(countParams),
+          ["schools", "portal-stats", "departments_count"],
+          () => mainPortalCount("schools", "departments_count"),
         ),
         stat(
           "Validation Queue",
@@ -6439,8 +6466,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/departments/profiles",
           Building2,
           ["academic.view"],
-          ["departments", "profiles"],
-          () => departmentsApi.listAdmin(countParams),
+          ["departments", "portal-stats", "departments_count"],
+          () => mainPortalCount("departments", "departments_count"),
         ),
         stat(
           "Programmes",
@@ -6448,27 +6475,17 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/departments/programmes",
           BookOpen,
           ["academic.view"],
-          ["departments", "programmes"],
-          () => programmesApi.listAdmin(countParams),
+          ["departments", "portal-stats", "programmes_count"],
+          () => mainPortalCount("departments", "programmes_count"),
         ),
         stat(
-          "Notices",
-          "Department notices",
+          "Unpublished Content",
+          "Department notices and events not yet public",
           "/departments/notices",
           Megaphone,
           ["content.view"],
-          ["departments", "notices"],
-          () =>
-            announcementsApi.listAdmin({ ...countParams, scope_type: "department" }),
-        ),
-        stat(
-          "Events",
-          "Department events",
-          "/departments/events",
-          CalendarDays,
-          ["content.view"],
-          ["departments", "events"],
-          () => eventsApi.listAdmin({ ...countParams, scope_type: "department" }),
+          ["departments", "portal-stats", "unpublished_count"],
+          () => mainPortalCount("departments", "unpublished_count"),
         ),
       ],
       departmentalResources,
@@ -6947,8 +6964,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/research/projects",
           FlaskConical,
           ["research.view"],
-          ["research", "admin-stats", "active_projects"],
-          () => researchAdminCount("active_projects"),
+          ["research", "admin-stats", "active_projects_count"],
+          () => researchAdminCount("active_projects_count"),
         ),
         stat(
           "Grants",
@@ -6956,8 +6973,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/research/grants",
           BadgeCheck,
           ["research.view"],
-          ["research", "admin-stats", "grants"],
-          () => researchAdminCount("grants"),
+          ["research", "admin-stats", "grants_count"],
+          () => researchAdminCount("grants_count"),
         ),
         stat(
           "Centers",
@@ -6965,8 +6982,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/research/centers",
           Building2,
           ["research.view"],
-          ["research", "admin-stats", "centres"],
-          () => researchAdminCount("centres"),
+          ["research", "admin-stats", "centres_count"],
+          () => researchAdminCount("centres_count"),
         ),
         stat(
           "Outputs",
@@ -6974,8 +6991,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/research/outputs",
           FileText,
           ["research.view"],
-          ["research", "admin-stats", "outputs"],
-          () => researchAdminCount("outputs"),
+          ["research", "admin-stats", "outputs_count"],
+          () => researchAdminCount("outputs_count"),
         ),
       ],
       researchResources,
@@ -7107,8 +7124,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/library/branches",
           Building2,
           ["library.view"],
-          ["library", "admin-stats", "active_branches"],
-          () => libraryAdminCount("active_branches"),
+          ["library", "admin-stats", "active_branches_count"],
+          () => libraryAdminCount("active_branches_count"),
         ),
         stat(
           "Catalog",
@@ -7116,8 +7133,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/library/catalog",
           Library,
           ["library.view"],
-          ["library", "admin-stats", "catalogue_resources"],
-          () => libraryAdminCount("catalogue_resources"),
+          ["library", "admin-stats", "catalogue_resources_count"],
+          () => libraryAdminCount("catalogue_resources_count"),
         ),
         stat(
           "Regulations",
@@ -7125,8 +7142,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/library/regulations",
           ScrollText,
           ["library.view"],
-          ["library", "admin-stats", "active_regulations"],
-          () => libraryAdminCount("active_regulations"),
+          ["library", "admin-stats", "active_regulations_count"],
+          () => libraryAdminCount("active_regulations_count"),
         ),
         stat(
           "Loans",
@@ -7134,8 +7151,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/library/loans",
           BookOpen,
           ["library.view"],
-          ["library", "admin-stats", "loans"],
-          () => libraryAdminCount("loans"),
+          ["library", "admin-stats", "loans_count"],
+          () => libraryAdminCount("loans_count"),
         ),
       ],
       libraryResources,
@@ -7211,7 +7228,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/publications/submissions",
           FileText,
           ["publications.submit"],
-          ["publications", "submissions"],
+          ["publications", "draft_count"],
           () =>
             researchServiceApi.publications.list({
               ...countParams,
@@ -7224,7 +7241,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/publications/school-review",
           ClipboardCheck,
           ["publications.review"],
-          ["publications", "school-review"],
+          ["publications", "submitted_count"],
           () =>
             researchServiceApi.publications.list({
               ...countParams,
@@ -7237,7 +7254,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/publications/office-review",
           ShieldCheck,
           ["publications.approve"],
-          ["publications", "office-review"],
+          ["publications", "school_approved_count"],
           () =>
             researchServiceApi.publications.list({
               ...countParams,
@@ -7250,7 +7267,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/publications/published",
           BookOpen,
           ["publications.view"],
-          ["publications", "published"],
+          ["publications", "published_count"],
           () =>
             researchServiceApi.publications.list({
               ...countParams,
@@ -7272,9 +7289,22 @@ function stat(
   icon: PortalConfig["icon"],
   scopes: string[],
   queryKey: readonly unknown[],
-  query: () => Promise<unknown>,
+  query: () => Promise<{ data?: unknown[]; meta?: { total?: number } }>,
 ) {
-  return { title, description, href, icon, scopes, queryKey, query };
+  return {
+    title,
+    description,
+    href,
+    icon,
+    scopes,
+    queryKey,
+    query: async () => {
+      const response = await query();
+      if (typeof response.meta?.total === "number") return response.meta.total;
+      if (Array.isArray(response.data)) return response.data.length;
+      throw new Error(`The ${title.toLowerCase()} counter did not return a count.`);
+    },
+  };
 }
 
 function dashboard(

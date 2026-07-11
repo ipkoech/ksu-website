@@ -7,8 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
-from ...deps import CurrentUser, DbSession, require_scope
-from ...services.stats import admin_stats, public_stats
+from ...deps import CurrentUser, DbSession, require_scope, user_has_scope
+from ...services.stats import admin_stats, portal_stats, public_stats
 
 router = APIRouter()
 
@@ -33,4 +33,31 @@ async def get_admin_stats(
     _: CurrentUser,
 ):
     result = await admin_stats(db)
+    return success(data=result.model_dump())
+
+
+PORTAL_STAT_SCOPES = {
+    "admin": ("governance.view", "administration.view", "office.view"),
+    "cocms": ("content.view", "media.view"),
+    "schools": ("academic.view",),
+    "departments": ("academic.view",),
+    "student-clubs": ("clubs.view", "clubs.manage_own"),
+}
+
+
+@router.get("/portal/{portal}")
+async def get_portal_stats(
+    portal: str,
+    db: DbSession,
+    user: CurrentUser,
+):
+    required_scopes = PORTAL_STAT_SCOPES.get(portal)
+    if required_scopes is None:
+        raise HTTPException(status_code=404, detail="Portal stats not found")
+    if not any(user_has_scope(user, scope) for scope in required_scopes):
+        raise HTTPException(status_code=403, detail="Insufficient privileges")
+
+    result = await portal_stats(db, portal)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Portal stats not found")
     return success(data=result.model_dump())

@@ -233,6 +233,7 @@ interface EditableServiceResourcePageProps<
   canEdit?: boolean;
   canDelete?: boolean;
   readOnlyMessage?: string;
+  primaryActionLabel?: string;
   resourceKey?: string;
   toolbarSlot?: ReactNode;
   summarySlot?: ReactNode;
@@ -411,6 +412,7 @@ export function EditableServiceResourcePage<
   canEdit = true,
   canDelete = true,
   readOnlyMessage = "You can view these records, but your current permissions do not allow changes.",
+  primaryActionLabel,
   resourceKey,
   toolbarSlot,
   summarySlot,
@@ -850,7 +852,7 @@ export function EditableServiceResourcePage<
       {canCreate ? (
         <Button type="button" size="sm" onClick={startCreate}>
           <Plus data-icon="inline-start" />
-          Create Record
+          {primaryActionLabel ?? "Create Record"}
         </Button>
       ) : null}
       {toolbarSlot}
@@ -1073,7 +1075,7 @@ export function EditableServiceResourcePage<
                     {canCreate ? (
                       <Button type="button" size="sm" onClick={startCreate}>
                         <Plus data-icon="inline-start" />
-                        {emptyState?.primaryActionLabel ?? "Create Record"}
+                        {emptyState?.primaryActionLabel ?? primaryActionLabel ?? "Create Record"}
                       </Button>
                     ) : null}
                     {emptyState?.secondaryAction}

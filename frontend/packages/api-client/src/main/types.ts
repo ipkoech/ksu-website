@@ -30,6 +30,12 @@ export interface PublicStatsResponse {
   stats: PublicStatItem[];
 }
 
+export interface PortalStatsResponse {
+  portal: string;
+  title: string;
+  stats: Record<string, number>;
+}
+
 export interface UserPreference {
   id?: string | null;
   user_id: string;

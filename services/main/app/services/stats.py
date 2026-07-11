@@ -39,7 +39,52 @@ from ..models import (
     Media,
     Policy,
 )
-from ..schemas.stats import PublicStatItem, PublicStatsResponse
+from ..schemas.stats import PortalStatsResponse, PublicStatItem, PublicStatsResponse
+
+
+# These names are the dashboard contract.  Main-service portals are calculated
+# below; service-owned portals use their matching research or library endpoint.
+PORTAL_STAT_CONTRACTS: dict[str, tuple[str, ...]] = {
+    "admin": (
+        "boards_count",
+        "divisions_count",
+        "offices_count",
+        "staff_assignments_count",
+        "documents_count",
+    ),
+    "cocms": (
+        "pending_review_count",
+        "published_count",
+        "draft_count",
+        "scheduled_count",
+        "media_count",
+    ),
+    "schools": ("schools_count", "programmes_count", "departments_count"),
+    "departments": (
+        "departments_count",
+        "programmes_count",
+        "unpublished_count",
+    ),
+    "student-clubs": ("active_clubs_count", "active_members_count"),
+    "research": (
+        "active_projects_count",
+        "grants_count",
+        "centres_count",
+        "outputs_count",
+    ),
+    "library": (
+        "active_branches_count",
+        "catalogue_resources_count",
+        "active_regulations_count",
+        "loans_count",
+    ),
+    "publications": (
+        "draft_count",
+        "submitted_count",
+        "school_approved_count",
+        "published_count",
+    ),
+}
 
 
 async def _count(db: AsyncSession, model, *conditions) -> int:
@@ -57,6 +102,16 @@ async def _sum_publications_for_people(
         select(func.coalesce(func.sum(Person.publications_count), 0)).where(
             Person.deleted_at.is_(None),
             Person.id.in_(person_ids_query),
+        )
+    )
+    return int(result.scalar_one() or 0)
+
+
+async def _sum(db: AsyncSession, field, model, *conditions) -> int:
+    result = await db.execute(
+        select(func.coalesce(func.sum(field), 0)).where(
+            model.deleted_at.is_(None),
+            *conditions,
         )
     )
     return int(result.scalar_one() or 0)
@@ -593,6 +648,93 @@ async def public_stats(
     if scope == "department" and slug:
         return await department_stats(db, slug)
     return None
+
+
+async def portal_stats(
+    db: AsyncSession,
+    portal: str,
+) -> PortalStatsResponse | None:
+    """Return definite counters for Main-service admin portal dashboards."""
+
+    if portal == "admin":
+        stats = {
+            "boards_count": await _count(db, Board),
+            "divisions_count": await _count(db, Division),
+            "offices_count": await _count(db, Wing),
+            "staff_assignments_count": await _count(db, StaffAssignment),
+            "documents_count": await _count(db, Document),
+        }
+        title = "Admin operational counters"
+    elif portal == "cocms":
+        content_models = (News, Blog, Event, Announcement)
+        stats = {
+            "pending_review_count": sum(
+                [
+                    await _count(db, model, model.is_main.is_(True), model.status.in_(("submitted", "under_review")))
+                    for model in content_models
+                ]
+            ),
+            "published_count": sum(
+                [
+                    await _count(db, model, model.is_main.is_(True), model.status == "published", model.is_published.is_(True))
+                    for model in content_models
+                ]
+            ),
+            "draft_count": sum(
+                [
+                    await _count(db, model, model.is_main.is_(True), model.status == "draft")
+                    for model in content_models
+                ]
+            ),
+            "scheduled_count": sum(
+                [
+                    await _count(db, model, model.is_main.is_(True), model.valid_from.is_not(None), model.valid_from > func.now(), model.status != "archived")
+                    for model in content_models
+                ]
+            ),
+            "media_count": await _count(db, Media),
+        }
+        title = "CoCMS publishing counters"
+    elif portal == "schools":
+        stats = {
+            "schools_count": await _count(db, School),
+            "programmes_count": await _count(db, Programme),
+            "departments_count": await _count(db, Department),
+        }
+        title = "School administration counters"
+    elif portal == "departments":
+        content_models = (News, Event, Announcement)
+        stats = {
+            "departments_count": await _count(db, Department),
+            "programmes_count": await _count(db, Programme),
+            "unpublished_count": sum(
+                [
+                    await _count(
+                        db,
+                        model,
+                        model.scope_type == "department",
+                        model.is_published.is_(False),
+                    )
+                    for model in content_models
+                ]
+            ),
+        }
+        title = "Department administration counters"
+    elif portal == "student-clubs":
+        stats = {
+            "active_clubs_count": await _count(db, Club, Club.is_active.is_(True)),
+            "active_members_count": await _sum(
+                db,
+                Club.membership_count,
+                Club,
+                Club.is_active.is_(True),
+            ),
+        }
+        title = "Student club counters"
+    else:
+        return None
+
+    return PortalStatsResponse(portal=portal, title=title, stats=stats)
 
 
 async def admin_stats(db: AsyncSession) -> PublicStatsResponse:

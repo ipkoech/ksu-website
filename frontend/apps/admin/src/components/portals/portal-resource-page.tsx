@@ -227,6 +227,7 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
       canEdit={canEdit}
       canDelete={canDelete}
       readOnlyMessage={scopedResource.readOnlyMessage}
+      primaryActionLabel={primaryActionLabel(scopedResource)}
       toolbarSlot={
         resource.portalScope && lockedAccessOptions.length > 1 ? (
           <ScopeSelector
@@ -242,6 +243,13 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
       }
     />
   );
+}
+
+function primaryActionLabel(resource: PortalResourceConfig<any, any>) {
+  if (resource.key === "submissions") return "Submit Publication";
+  if (/(review|validation)/.test(resource.key)) return "Review Records";
+  if (resource.key.includes("media")) return "Attach Media";
+  return "Create Record";
 }
 
 function accessKey(access: PortalAccess | null) {
