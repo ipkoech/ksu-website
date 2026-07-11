@@ -14,6 +14,7 @@ from .content import (
     SliderGroupService,
     SliderService,
 )
+from .content_workflow import ContentWorkflowService
 from .documents import DocumentService, PolicyService
 from .exchange import ExchangeProgrammeService
 from .governance import GovernanceService
@@ -104,4 +105,5 @@ __all__ = [
     "ContactService",
     "SupportTicketService",
     "NotificationService",
+    "ContentWorkflowService",
 ]

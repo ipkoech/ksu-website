@@ -65,6 +65,7 @@ from .media import Media, MediaFolder, MediaLink
 
 # Content
 from .content import Announcement, Blog, Event, News, Slider, SliderGroup
+from .content_workflow import CONTENT_WORKFLOW_ACTIONS, CONTENT_WORKFLOW_STATUSES, ContentWorkflowLog
 from .page_cms import (
     PAGE_SCOPE_TYPES,
     PAGE_SECTION_LAYOUT_VARIANTS,
@@ -157,6 +158,9 @@ __all__ = [
     "Event",
     "SliderGroup",
     "Slider",
+    "ContentWorkflowLog",
+    "CONTENT_WORKFLOW_ACTIONS",
+    "CONTENT_WORKFLOW_STATUSES",
     "PAGE_SCOPE_TYPES",
     "PAGE_SECTION_LAYOUT_VARIANTS",
     "PAGE_SECTION_STATUSES",

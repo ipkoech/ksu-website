@@ -87,6 +87,7 @@ from .auth import (
     VerifyEmailRequest,
 )
 from .base import APIResponse, BaseReadSchema, BaseSchema, PaginatedResponse
+from .content_workflow import ContentWorkflowAction, ContentWorkflowActionRequest, ContentWorkflowLogRead
 from .document import DocumentCreate, DocumentRead, DocumentUpdate, PolicyCreate, PolicyRead, PolicyUpdate
 from .public_page import PublicSitePageCreate, PublicSitePageRead, PublicSitePageUpdate
 from .page_cms import (
