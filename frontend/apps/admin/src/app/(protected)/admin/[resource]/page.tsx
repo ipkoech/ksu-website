@@ -1,7 +1,8 @@
-import { redirect } from "next/navigation";
+import { PortalResourcePage } from "@/components/portals/portal-resource-page";
 
 export function generateStaticParams() {
   return [
+    { resource: "council" },
     { resource: "divisions" },
     { resource: "offices" },
     { resource: "staff-assignments" },
@@ -14,11 +15,11 @@ export function generateStaticParams() {
   ];
 }
 
-export default async function InstitutionalAdministrationResourcePage({
+export default async function AdminResourcePage({
   params,
 }: {
   params: Promise<{ resource: string }>;
 }) {
   const { resource } = await params;
-  redirect(`/admin/${resource}`);
+  return <PortalResourcePage portalKey="admin" resourceKey={resource} />;
 }
