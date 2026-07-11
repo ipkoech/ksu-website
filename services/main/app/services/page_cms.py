@@ -1,0 +1,437 @@
+"""Services for page CMS sections, workflow, and homepage composition."""
+
+from __future__ import annotations
+
+import uuid
+from datetime import datetime, timezone
+from typing import Any, Sequence
+
+from sqlalchemy import or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from ksu_common import PaginatedResult
+
+from ..models import Media, MediaLink, PageSection, PartnershipSpotlight
+from ._base import ilike_any, paginate_query
+from .research_partners import ResearchPartnersProxyService
+
+ALLOWED_TRANSITIONS = {
+    "draft": {"submit": "in_review", "archive": "archived"},
+    "changes_requested": {"submit": "in_review", "archive": "archived"},
+    "in_review": {"approve": "approved", "request_changes": "changes_requested", "archive": "archived"},
+    "approved": {"publish": "published", "archive": "archived"},
+    "published": {"archive": "archived", "unpublish": "approved"},
+    "archived": set(),
+}
+
+MEDIA_ROLE_BUCKETS = {
+    "hero": "heroImage",
+    "heroimage": "heroImage",
+    "hero-image": "heroImage",
+    "hero_image": "heroImage",
+    "mobile": "mobileImage",
+    "mobileimage": "mobileImage",
+    "mobile-image": "mobileImage",
+    "mobile_image": "mobileImage",
+    "logo": "logos",
+    "logos": "logos",
+    "gallery": "gallery",
+    "video": "video",
+    "background": "background",
+    "poster": "poster",
+}
+
+MEDIA_GROUP_KEYS = ("heroImage", "mobileImage", "logos", "gallery", "video", "background", "poster")
+
+
+def _active_window_filter(model, now: datetime):
+    return (
+        or_(model.valid_from.is_(None), model.valid_from <= now),
+        or_(model.valid_to.is_(None), model.valid_to >= now),
+    )
+
+
+def _normalize_role(role: str) -> str | None:
+    key = role.strip()
+    if key in MEDIA_GROUP_KEYS:
+        return key
+    return MEDIA_ROLE_BUCKETS.get(key.lower())
+
+
+def _default_media_groups() -> dict[str, list[dict[str, Any]]]:
+    return {key: [] for key in MEDIA_GROUP_KEYS}
+
+
+def _serialize_media(media: Media | None) -> dict[str, Any] | None:
+    if media is None:
+        return None
+    return {
+        "id": media.id,
+        "filename": media.filename,
+        "original_filename": media.original_filename,
+        "mime_type": media.mime_type,
+        "media_type": media.media_type,
+        "url": media.url,
+        "public_url": media.public_url,
+        "cdn_url": media.cdn_url,
+        "thumbnail_url": media.thumbnail_url,
+        "alt_text": media.alt_text,
+        "title": media.title,
+        "caption": media.caption,
+        "width": media.width,
+        "height": media.height,
+        "duration": media.duration,
+    }
+
+
+def _serialize_media_link(link: MediaLink) -> dict[str, Any]:
+    return {
+        "id": link.id,
+        "media_id": link.media_id,
+        "entity_type": link.entity_type,
+        "entity_id": link.entity_id,
+        "role": link.role,
+        "display_order": link.display_order,
+        "media": _serialize_media(link.media),
+    }
+
+
+def _serialize_section(section: PageSection, media_groups: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
+    return {
+        "id": section.id,
+        "page_key": section.page_key,
+        "scope_type": section.scope_type,
+        "scope_id": section.scope_id,
+        "section_key": section.section_key,
+        "title": section.title,
+        "is_enabled": section.is_enabled,
+        "layout_variant": section.layout_variant,
+        "status": section.status,
+        "valid_from": section.valid_from,
+        "valid_to": section.valid_to,
+        "approved_at": section.approved_at,
+        "published_at": section.published_at,
+        "display_order": _section_display_order(section),
+        "items": [
+            {
+                "id": item.id,
+                "page_section_id": item.page_section_id,
+                "item_type": item.item_type,
+                "title": item.title,
+                "subtitle": item.subtitle,
+                "body_text": item.body_text,
+                "content": item.content,
+                "cta_label": item.cta_label,
+                "cta_url": item.cta_url,
+                "cta_description": item.cta_description,
+                "media_caption": item.media_caption,
+                "media_alt_text": item.media_alt_text,
+                "video_provider": item.video_provider,
+                "video_url": item.video_url,
+                "video_duration_seconds": item.video_duration_seconds,
+                "display_order": item.display_order,
+                "is_enabled": item.is_enabled,
+            }
+            for item in section.items
+        ],
+        "media": media_groups,
+    }
+
+
+def _serialize_spotlight(
+    spotlight: PartnershipSpotlight,
+    media_groups: dict[str, list[dict[str, Any]]],
+    primary_cta: dict[str, str | None],
+) -> dict[str, Any]:
+    return {
+        "id": spotlight.id,
+        "source_type": spotlight.source_type,
+        "source_id": spotlight.source_id,
+        "primary_cta_source": spotlight.primary_cta_source,
+        "primary_cta_label": spotlight.primary_cta_label,
+        "primary_cta_url": spotlight.primary_cta_url,
+        "headline": spotlight.headline,
+        "summary": spotlight.summary,
+        "pillars": spotlight.pillars,
+        "opportunities": spotlight.opportunities,
+        "is_enabled": spotlight.is_enabled,
+        "status": spotlight.status,
+        "valid_from": spotlight.valid_from,
+        "valid_to": spotlight.valid_to,
+        "approved_at": spotlight.approved_at,
+        "published_at": spotlight.published_at,
+        "primary_cta": primary_cta,
+        "media": media_groups,
+    }
+
+
+def _section_display_order(section: PageSection) -> int:
+    explicit_order = getattr(section, "display_order", None)
+    if explicit_order is not None:
+        return explicit_order
+    if getattr(section, "items", None):
+        return min(item.display_order for item in section.items)
+    return 100
+
+
+def _scope_filter(
+    model,
+    *,
+    page_key: str | None = None,
+    scope_type: str | None = None,
+    scope_id: uuid.UUID | None = None,
+    match_null_scope_id: bool = False,
+):
+    filters = []
+    if page_key is not None:
+        filters.append(model.page_key == page_key)
+    if scope_type is not None:
+        filters.append(model.scope_type == scope_type)
+    if scope_id is not None:
+        filters.append(model.scope_id == scope_id)
+    elif match_null_scope_id:
+        filters.append(model.scope_id.is_(None))
+    return filters
+
+
+def _coerce_items(result: PaginatedResult | list[PageSection]) -> list[PageSection]:
+    if isinstance(result, list):
+        return result
+    return list(result.items)
+
+
+async def _list_active_partnership_spotlights(db: AsyncSession) -> list[PartnershipSpotlight]:
+    now = datetime.now(timezone.utc)
+    query = (
+        PartnershipSpotlight.active_query()
+        .where(
+            PartnershipSpotlight.is_enabled.is_(True),
+            PartnershipSpotlight.status == "published",
+            *_active_window_filter(PartnershipSpotlight, now),
+        )
+        .order_by(
+            PartnershipSpotlight.published_at.desc().nullslast(),
+            PartnershipSpotlight.created_at.desc(),
+        )
+    )
+    result = await db.execute(query)
+    return list(result.scalars().all())
+
+
+async def _get_research_partner_payload(source_id: uuid.UUID) -> dict[str, Any] | None:
+    payload = await ResearchPartnersProxyService.list_partners(page=1, per_page=100)
+    partners = payload.get("data") or []
+    source_id_text = str(source_id)
+    for partner in partners:
+        if not isinstance(partner, dict):
+            continue
+        partner_id = partner.get("id")
+        if partner_id == source_id or str(partner_id) == source_id_text:
+            return partner
+    return None
+
+
+def _resolve_partner_website(partner_payload: dict[str, Any] | None) -> str | None:
+    if not isinstance(partner_payload, dict):
+        return None
+    website = partner_payload.get("website") or partner_payload.get("partner_website")
+    return website if isinstance(website, str) and website else None
+
+
+def _resolve_partner_slug(partner_payload: dict[str, Any] | None) -> str | None:
+    if not isinstance(partner_payload, dict):
+        return None
+    slug = partner_payload.get("slug")
+    return slug if isinstance(slug, str) and slug else None
+
+
+async def _resolve_primary_cta(spotlight: PartnershipSpotlight, partner_payload: dict[str, Any] | None) -> dict[str, str | None]:
+    label = spotlight.primary_cta_label
+    href = spotlight.primary_cta_url
+
+    if spotlight.primary_cta_source == "partner_website":
+        href = _resolve_partner_website(partner_payload)
+    elif spotlight.primary_cta_source == "generated_detail_page":
+        slug = _resolve_partner_slug(partner_payload)
+        href = f"/partnerships/{slug}" if slug else None
+
+    return {
+        "label": label,
+        "href": href,
+    }
+
+
+class PageSectionService:
+    """Query helpers for page sections."""
+
+    @staticmethod
+    async def list_admin(
+        db: AsyncSession,
+        *,
+        page_key: str | None = None,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
+        status: str | None = None,
+        search: str | None = None,
+        page: int = 1,
+        per_page: int = 20,
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        query = PageSection.active_query().options(selectinload(PageSection.items))
+        if load_options:
+            query = query.options(*load_options)
+        for filter_clause in _scope_filter(
+            PageSection,
+            page_key=page_key,
+            scope_type=scope_type,
+            scope_id=scope_id,
+        ):
+            query = query.where(filter_clause)
+        if status:
+            query = query.where(PageSection.status == status)
+        if search:
+            query = query.where(ilike_any(search, PageSection.title, PageSection.section_key, PageSection.page_key))
+        query = query.order_by(PageSection.created_at.desc())
+        return await paginate_query(db, query, page=page, per_page=per_page)
+
+    @staticmethod
+    async def list_public(
+        db: AsyncSession,
+        *,
+        page_key: str,
+        scope_type: str,
+        scope_id: uuid.UUID | None = None,
+        page: int = 1,
+        per_page: int = 20,
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        now = datetime.now(timezone.utc)
+        query = PageSection.active_query().options(selectinload(PageSection.items))
+        if load_options:
+            query = query.options(*load_options)
+        for filter_clause in _scope_filter(
+            PageSection,
+            page_key=page_key,
+            scope_type=scope_type,
+            scope_id=scope_id,
+            match_null_scope_id=True,
+        ):
+            query = query.where(filter_clause)
+        query = (
+            query.where(
+                PageSection.status == "published",
+                PageSection.is_enabled.is_(True),
+                *_active_window_filter(PageSection, now),
+            )
+            .order_by(PageSection.published_at.desc().nullslast(), PageSection.created_at.desc())
+        )
+        return await paginate_query(db, query, page=page, per_page=per_page)
+
+
+class PageSectionWorkflowService:
+    """Apply the approved editorial workflow map to page sections."""
+
+    @staticmethod
+    async def transition(section: PageSection, action: str, user_id: uuid.UUID, note: str | None = None) -> PageSection:
+        del note
+
+        transitions = ALLOWED_TRANSITIONS.get(section.status, set())
+        next_status = transitions.get(action) if isinstance(transitions, dict) else None
+        if next_status is None:
+            raise ValueError(f"Invalid workflow transition: {section.status} -> {action}")
+
+        now = datetime.now(timezone.utc)
+        section.status = next_status
+        section.updated_by_id = user_id
+
+        if action == "approve":
+            section.approved_at = now
+            section.approved_by_id = user_id
+        elif action == "publish":
+            section.published_at = now
+            section.published_by_id = user_id
+
+        return section
+
+
+async def group_media_links(
+    db: AsyncSession,
+    entity_type: str,
+    entity_id: uuid.UUID,
+) -> dict[str, list[dict[str, Any]]]:
+    query = (
+        select(MediaLink)
+        .options(selectinload(MediaLink.media))
+        .join(Media, MediaLink.media_id == Media.id)
+        .where(
+            MediaLink.deleted_at.is_(None),
+            MediaLink.is_public.is_(True),
+            Media.deleted_at.is_(None),
+            Media.is_public.is_(True),
+            MediaLink.entity_type == entity_type,
+            MediaLink.entity_id == entity_id,
+        )
+        .order_by(MediaLink.display_order.asc(), MediaLink.created_at.asc())
+    )
+    result = await db.execute(query)
+    grouped = _default_media_groups()
+    for link in result.scalars().all():
+        bucket = _normalize_role(link.role)
+        if bucket is None:
+            continue
+        grouped[bucket].append(_serialize_media_link(link))
+    return grouped
+
+
+class HomepageCompositionService:
+    """Compose page sections and partnership spotlights for public rendering."""
+
+    @staticmethod
+    async def compose(
+        db: AsyncSession,
+        page_key: str,
+        scope_type: str,
+        scope_id: uuid.UUID | None = None,
+    ) -> dict[str, Any]:
+        sections_result = await PageSectionService.list_public(
+            db,
+            page_key=page_key,
+            scope_type=scope_type,
+            scope_id=scope_id,
+            per_page=100,
+        )
+        sections = sorted(_coerce_items(sections_result), key=_section_display_order)
+        section_payloads = []
+        for section in sections:
+            section_media = await group_media_links(db, "page_section", section.id)
+            section_payloads.append(_serialize_section(section, section_media))
+
+        spotlights = await _list_active_partnership_spotlights(db)
+        spotlight_payloads = []
+        partner_cache: dict[uuid.UUID, dict[str, Any] | None] = {}
+        for spotlight in spotlights:
+            partner_payload = partner_cache.get(spotlight.source_id)
+            if spotlight.source_id not in partner_cache:
+                partner_payload = await _get_research_partner_payload(spotlight.source_id)
+                partner_cache[spotlight.source_id] = partner_payload
+            spotlight_media = await group_media_links(db, "partnership_spotlight", spotlight.id)
+            primary_cta = await _resolve_primary_cta(spotlight, partner_payload)
+            spotlight_payloads.append(_serialize_spotlight(spotlight, spotlight_media, primary_cta))
+
+        return {
+            "page_key": page_key,
+            "scope_type": scope_type,
+            "scope_id": scope_id,
+            "sections": section_payloads,
+            "partnership_spotlights": spotlight_payloads,
+        }
+
+
+__all__ = [
+    "ALLOWED_TRANSITIONS",
+    "PageSectionService",
+    "PageSectionWorkflowService",
+    "HomepageCompositionService",
+    "group_media_links",
+]
