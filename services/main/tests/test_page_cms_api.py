@@ -124,19 +124,19 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(403, response.status_code)
 
-    def test_admin_listing_requires_page_cms_permission_before_query(self):
+    def test_admin_listing_requires_page_cms_permission_before_authorized_query(self):
         user = _user()
         client = _build_test_app(_AuthDb(user))
-        list_admin = AsyncMock(return_value=SimpleNamespace(items=[], meta={"total": 0}))
+        list_admin_authorized = AsyncMock(return_value=SimpleNamespace(items=[], meta={"total": 0}))
 
-        with patch.object(page_cms.PageSectionService, "list_admin", list_admin):
+        with patch.object(page_cms.PageSectionService, "list_admin_authorized", list_admin_authorized):
             response = client.get(
                 "/api/v1/page-sections/admin",
                 headers=_bearer_for(user.id),
             )
 
         self.assertEqual(403, response.status_code)
-        self.assertEqual(0, list_admin.await_count)
+        self.assertEqual(0, list_admin_authorized.await_count)
 
     def test_create_section_item_route_is_not_shadowed_by_workflow_action(self):
         user = _user("section_items.manage")
@@ -280,6 +280,62 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual([section.id], [item.id for item in response["data"]])
         self.assertEqual(1, response["meta"]["total"])
 
+    async def test_review_permission_row_visibility_is_limited_to_in_review_sections(self):
+        user = _user("page_sections.review")
+        cases = (
+            ("homepage", "in_review", True),
+            ("homepage", "approved", False),
+            ("research", "in_review", True),
+            ("research", "published", False),
+        )
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "page_sections.review"
+
+        with patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access):
+            for page_key, status, expected in cases:
+                with self.subTest(page_key=page_key, status=status):
+                    section = PageSection(
+                        page_key=page_key,
+                        scope_type="university",
+                        section_key="hero",
+                        layout_variant="hero_admissions",
+                        status=status,
+                    )
+
+                    visible = await page_cms._can_access_page_section_admin_row(_AuthDb(user), user, section)
+
+                    self.assertEqual(expected, visible)
+
+    async def test_publish_permission_row_visibility_is_limited_to_publishable_statuses(self):
+        user = _user("page_sections.publish")
+        cases = (
+            ("homepage", "approved", True),
+            ("homepage", "published", True),
+            ("homepage", "in_review", False),
+            ("research", "approved", True),
+            ("research", "published", True),
+            ("research", "draft", False),
+        )
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "page_sections.publish"
+
+        with patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access):
+            for page_key, status, expected in cases:
+                with self.subTest(page_key=page_key, status=status):
+                    section = PageSection(
+                        page_key=page_key,
+                        scope_type="university",
+                        section_key="hero",
+                        layout_variant="hero_admissions",
+                        status=status,
+                    )
+
+                    visible = await page_cms._can_access_page_section_admin_row(_AuthDb(user), user, section)
+
+                    self.assertEqual(expected, visible)
+
     async def test_homepage_publish_permission_can_publish_homepage_section(self):
         user = _user("homepage.publish")
         db = _AuthDb(user)
@@ -348,6 +404,52 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
             )
 
         self.assertEqual([allowed.id], [item.id for item in response["data"]])
+
+    async def test_homepage_publish_permission_row_visibility_is_homepage_only_and_actionable(self):
+        user = _user("homepage.publish")
+        cases = (
+            ("homepage", "approved", True),
+            ("homepage", "published", True),
+            ("homepage", "in_review", False),
+            ("research", "approved", False),
+            ("research", "published", False),
+        )
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "homepage.publish"
+
+        with patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access):
+            for page_key, status, expected in cases:
+                with self.subTest(page_key=page_key, status=status):
+                    section = PageSection(
+                        page_key=page_key,
+                        scope_type="university",
+                        section_key="hero",
+                        layout_variant="hero_admissions",
+                        status=status,
+                    )
+
+                    visible = await page_cms._can_access_page_section_admin_row(_AuthDb(user), user, section)
+
+                    self.assertEqual(expected, visible)
+
+    async def test_view_permission_row_visibility_is_not_limited_by_workflow_status(self):
+        user = _user("page_sections.view")
+        section = PageSection(
+            page_key="research",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="draft",
+        )
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "page_sections.view"
+
+        with patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access):
+            visible = await page_cms._can_access_page_section_admin_row(_AuthDb(user), user, section)
+
+        self.assertTrue(visible)
 
     async def test_homepage_publish_permission_cannot_publish_non_homepage_section(self):
         user = _user("homepage.publish")

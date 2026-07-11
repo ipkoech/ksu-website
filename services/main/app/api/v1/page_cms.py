@@ -42,15 +42,18 @@ PAGE_SECTION_ADMIN_LIST_PERMISSIONS = (
     "research_homepage.manage",
     "library_homepage.manage",
 )
-PAGE_SECTION_ADMIN_ROW_ACTIONS = (
+PAGE_SECTION_ADMIN_BROAD_ROW_ACTIONS = (
     "view",
     "create",
     "update",
     "delete",
-    "review",
-    "publish",
     "item_manage",
 )
+PAGE_SECTION_ADMIN_WORKFLOW_ROW_ACTIONS = {
+    "in_review": ("review",),
+    "approved": ("publish",),
+    "published": ("publish",),
+}
 
 
 def _page_specific_permissions(*, page_key: str, scope_type: str, action: str) -> list[str]:
@@ -121,7 +124,21 @@ async def _require_page_section_access(
 
 
 async def _can_access_page_section_admin_row(db: DbSession, user: CurrentUser, section: PageSection) -> bool:
-    for action in PAGE_SECTION_ADMIN_ROW_ACTIONS:
+    for action in PAGE_SECTION_ADMIN_BROAD_ROW_ACTIONS:
+        if await can_access_scoped_record(
+            db,
+            user,
+            _page_section_permissions(
+                page_key=section.page_key,
+                scope_type=section.scope_type,
+                action=action,
+            ),
+            section.scope_type,
+            section.scope_id,
+        ):
+            return True
+
+    for action in PAGE_SECTION_ADMIN_WORKFLOW_ROW_ACTIONS.get(section.status, ()):
         if await can_access_scoped_record(
             db,
             user,
