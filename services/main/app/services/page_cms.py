@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Awaitable, Callable
 from datetime import datetime, timezone
 from typing import Any, Sequence
 
@@ -261,18 +262,15 @@ class PageSectionService:
     """Query helpers for page sections."""
 
     @staticmethod
-    async def list_admin(
-        db: AsyncSession,
+    def _admin_query(
         *,
         page_key: str | None = None,
         scope_type: str | None = None,
         scope_id: uuid.UUID | None = None,
         status: str | None = None,
         search: str | None = None,
-        page: int = 1,
-        per_page: int = 20,
         load_options: Sequence = (),
-    ) -> PaginatedResult:
+    ):
         query = PageSection.active_query().options(selectinload(PageSection.items))
         if load_options:
             query = query.options(*load_options)
@@ -288,7 +286,75 @@ class PageSectionService:
         if search:
             query = query.where(ilike_any(search, PageSection.title, PageSection.section_key, PageSection.page_key))
         query = query.order_by(PageSection.display_order.asc(), PageSection.created_at.desc())
+        return query
+
+    @staticmethod
+    async def list_admin(
+        db: AsyncSession,
+        *,
+        page_key: str | None = None,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
+        status: str | None = None,
+        search: str | None = None,
+        page: int = 1,
+        per_page: int = 20,
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        query = PageSectionService._admin_query(
+            page_key=page_key,
+            scope_type=scope_type,
+            scope_id=scope_id,
+            status=status,
+            search=search,
+            load_options=load_options,
+        )
         return await paginate_query(db, query, page=page, per_page=per_page)
+
+    @staticmethod
+    async def list_admin_authorized(
+        db: AsyncSession,
+        *,
+        is_visible: Callable[[PageSection], Awaitable[bool]],
+        page_key: str | None = None,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
+        status: str | None = None,
+        search: str | None = None,
+        page: int = 1,
+        per_page: int = 20,
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        query = PageSectionService._admin_query(
+            page_key=page_key,
+            scope_type=scope_type,
+            scope_id=scope_id,
+            status=status,
+            search=search,
+            load_options=load_options,
+        )
+        result = await db.execute(query)
+        page = max(1, page)
+        per_page = max(1, min(100, per_page))
+
+        visible_items: list[PageSection] = []
+        for item in result.scalars().all():
+            if await is_visible(item):
+                visible_items.append(item)
+
+        total = len(visible_items)
+        pages = (total + per_page - 1) // per_page if per_page else 0
+        start = (page - 1) * per_page
+        end = start + per_page
+        return PaginatedResult(
+            items=visible_items[start:end],
+            meta={
+                "page": page,
+                "per_page": per_page,
+                "total": total,
+                "pages": pages,
+            },
+        )
 
     @staticmethod
     async def list_public(

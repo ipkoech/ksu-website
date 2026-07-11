@@ -13,6 +13,27 @@ async def _capture_query(_db, query, *, page=1, per_page=20):
     return query
 
 
+class _ScalarListResult:
+    def __init__(self, items):
+        self._items = items
+
+    def scalars(self):
+        return self
+
+    def all(self):
+        return list(self._items)
+
+
+class _ListDb:
+    def __init__(self, items):
+        self._items = items
+        self.queries = []
+
+    async def execute(self, query):
+        self.queries.append(query)
+        return _ScalarListResult(self._items)
+
+
 class PageCmsWorkflowTests(unittest.IsolatedAsyncioTestCase):
     async def test_public_list_requires_published_enabled_and_active_sections(self):
         with patch.object(page_cms, "paginate_query", _capture_query):
@@ -48,6 +69,48 @@ class PageCmsWorkflowTests(unittest.IsolatedAsyncioTestCase):
         query_text = str(query).lower()
 
         self.assertIn("order by page_sections.display_order asc", query_text)
+
+    async def test_admin_authorized_list_filters_before_paginating(self):
+        hidden = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero-hidden",
+            layout_variant="hero_admissions",
+            status="draft",
+        )
+        hidden.id = uuid.uuid4()
+        first_visible = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero-visible-1",
+            layout_variant="hero_admissions",
+            status="draft",
+        )
+        first_visible.id = uuid.uuid4()
+        second_visible = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero-visible-2",
+            layout_variant="hero_admissions",
+            status="draft",
+        )
+        second_visible.id = uuid.uuid4()
+        db = _ListDb([hidden, first_visible, second_visible])
+
+        async def is_visible(section: PageSection) -> bool:
+            return section.id in {first_visible.id, second_visible.id}
+
+        result = await PageSectionService.list_admin_authorized(
+            db,
+            page_key="homepage",
+            scope_type="university",
+            page=2,
+            per_page=1,
+            is_visible=is_visible,
+        )
+
+        self.assertEqual([second_visible.id], [item.id for item in result.items])
+        self.assertEqual({"page": 2, "per_page": 1, "total": 2, "pages": 2}, result.meta)
 
     async def test_workflow_rejects_draft_publish_transition(self):
         section = PageSection(

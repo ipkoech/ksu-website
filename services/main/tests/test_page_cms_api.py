@@ -13,6 +13,7 @@ from app.deps import get_db
 from app.helpers.jwt import create_access_token
 from app.models import PageSection
 from app.schemas import PageSectionCreate, PageSectionUpdate
+from ksu_common import PaginatedResult
 
 
 class _ScalarResult:
@@ -137,6 +138,37 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(403, response.status_code)
         self.assertEqual(0, list_admin.await_count)
 
+    def test_create_section_item_route_is_not_shadowed_by_workflow_action(self):
+        user = _user("section_items.manage")
+        client = _build_test_app(_AuthDb(user))
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="draft",
+        )
+        section.id = uuid.uuid4()
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "section_items.manage"
+
+        workflow_transition = AsyncMock(side_effect=AssertionError("workflow route should not handle /items"))
+
+        with (
+            patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+            patch.object(page_cms.PageSectionWorkflowService, "transition", workflow_transition),
+        ):
+            response = client.post(
+                f"/api/v1/page-sections/{section.id}/items",
+                json={"item_type": "text", "title": "Hero card"},
+                headers=_bearer_for(user.id),
+            )
+
+        self.assertEqual(201, response.status_code)
+        self.assertEqual(0, workflow_transition.await_count)
+
     async def test_create_page_section_accepts_manage_permission_and_starts_in_draft(self):
         user = _user("page_sections.manage")
         db = _AuthDb(user)
@@ -169,6 +201,7 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
             layout_variant="hero_admissions",
             status="in_review",
         )
+        section.id = uuid.uuid4()
 
         async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
             return permission == "page_sections.review"
@@ -215,6 +248,38 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("published", response["data"].status)
         self.assertEqual(user.id, response["data"].published_by_id)
 
+    async def test_review_permission_can_list_visible_sections_without_view_permission(self):
+        user = _user("page_sections.review")
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="in_review",
+        )
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "page_sections.review"
+
+        async def fake_list_admin_authorized(_db, **kwargs):
+            self.assertTrue(await kwargs["is_visible"](section))
+            return PaginatedResult(
+                items=[section],
+                meta={"page": 1, "per_page": 20, "total": 1, "pages": 1},
+            )
+
+        with (
+            patch.object(page_cms.PageSectionService, "list_admin_authorized", side_effect=fake_list_admin_authorized),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+        ):
+            response = await page_cms.list_admin_page_sections(
+                db=_AuthDb(user),
+                user=user,
+            )
+
+        self.assertEqual([section.id], [item.id for item in response["data"]])
+        self.assertEqual(1, response["meta"]["total"])
+
     async def test_homepage_publish_permission_can_publish_homepage_section(self):
         user = _user("homepage.publish")
         db = _AuthDb(user)
@@ -242,6 +307,47 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual("published", response["data"].status)
         self.assertEqual(user.id, response["data"].published_by_id)
+
+    async def test_homepage_publish_permission_lists_only_homepage_sections_it_can_publish(self):
+        user = _user("homepage.publish")
+        allowed = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="approved",
+        )
+        allowed.id = uuid.uuid4()
+        disallowed = PageSection(
+            page_key="research",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="approved",
+        )
+        disallowed.id = uuid.uuid4()
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "homepage.publish"
+
+        async def fake_list_admin_authorized(_db, **kwargs):
+            self.assertTrue(await kwargs["is_visible"](allowed))
+            self.assertFalse(await kwargs["is_visible"](disallowed))
+            return PaginatedResult(
+                items=[allowed],
+                meta={"page": 1, "per_page": 20, "total": 1, "pages": 1},
+            )
+
+        with (
+            patch.object(page_cms.PageSectionService, "list_admin_authorized", side_effect=fake_list_admin_authorized),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+        ):
+            response = await page_cms.list_admin_page_sections(
+                db=_AuthDb(user),
+                user=user,
+            )
+
+        self.assertEqual([allowed.id], [item.id for item in response["data"]])
 
     async def test_homepage_publish_permission_cannot_publish_non_homepage_section(self):
         user = _user("homepage.publish")

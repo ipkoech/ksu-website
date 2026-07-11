@@ -42,6 +42,15 @@ PAGE_SECTION_ADMIN_LIST_PERMISSIONS = (
     "research_homepage.manage",
     "library_homepage.manage",
 )
+PAGE_SECTION_ADMIN_ROW_ACTIONS = (
+    "view",
+    "create",
+    "update",
+    "delete",
+    "review",
+    "publish",
+    "item_manage",
+)
 
 
 def _page_specific_permissions(*, page_key: str, scope_type: str, action: str) -> list[str]:
@@ -111,18 +120,21 @@ async def _require_page_section_access(
     )
 
 
-async def _can_view_page_section(db: DbSession, user: CurrentUser, section: PageSection) -> bool:
-    return await can_access_scoped_record(
-        db,
-        user,
-        _page_section_permissions(
-            page_key=section.page_key,
-            scope_type=section.scope_type,
-            action="view",
-        ),
-        section.scope_type,
-        section.scope_id,
-    )
+async def _can_access_page_section_admin_row(db: DbSession, user: CurrentUser, section: PageSection) -> bool:
+    for action in PAGE_SECTION_ADMIN_ROW_ACTIONS:
+        if await can_access_scoped_record(
+            db,
+            user,
+            _page_section_permissions(
+                page_key=section.page_key,
+                scope_type=section.scope_type,
+                action=action,
+            ),
+            section.scope_type,
+            section.scope_id,
+        ):
+            return True
+    return False
 
 
 async def _get_page_section_or_404(db: DbSession, section_id: uuid.UUID) -> PageSection:
@@ -190,8 +202,9 @@ async def list_admin_page_sections(
     search: str | None = None,
 ):
     _authorize_page_section_admin_list_access(user)
-    result = await PageSectionService.list_admin(
+    result = await PageSectionService.list_admin_authorized(
         db,
+        is_visible=lambda item: _can_access_page_section_admin_row(db, user, item),
         page=page,
         per_page=per_page,
         page_key=page_key,
@@ -200,13 +213,7 @@ async def list_admin_page_sections(
         status=status_filter,
         search=search,
     )
-    items = []
-    for item in result.items:
-        if await _can_view_page_section(db, user, item):
-            items.append(item)
-    meta = dict(result.meta)
-    meta["total"] = len(items)
-    return success(data=items, meta=meta)
+    return success(data=result.items, meta=result.meta)
 
 
 @router.post("/page-sections", status_code=status.HTTP_201_CREATED)
@@ -267,28 +274,6 @@ async def update_page_section(
     return success(data=item, message="Page section updated")
 
 
-@router.post("/page-sections/{section_id}/{action}")
-async def run_page_section_workflow_action(
-    section_id: uuid.UUID,
-    action: str,
-    db: DbSession,
-    user: CurrentUser,
-):
-    item = await _get_page_section_or_404(db, section_id)
-    await _require_page_section_access(
-        db,
-        user,
-        page_key=item.page_key,
-        scope_type=item.scope_type,
-        scope_id=item.scope_id,
-        action=_workflow_action_scope(action),
-    )
-    item = await PageSectionWorkflowService.transition(item, action, user.id)
-    await db.flush()
-    await db.refresh(item)
-    return success(data=item, message="Page section updated")
-
-
 @router.post("/page-sections/{section_id}/items", status_code=status.HTTP_201_CREATED)
 async def create_section_item(
     section_id: uuid.UUID,
@@ -310,6 +295,28 @@ async def create_section_item(
     await db.flush()
     await db.refresh(item)
     return success(data=item, message="Section item created")
+
+
+@router.post("/page-sections/{section_id}/{action}")
+async def run_page_section_workflow_action(
+    section_id: uuid.UUID,
+    action: str,
+    db: DbSession,
+    user: CurrentUser,
+):
+    item = await _get_page_section_or_404(db, section_id)
+    await _require_page_section_access(
+        db,
+        user,
+        page_key=item.page_key,
+        scope_type=item.scope_type,
+        scope_id=item.scope_id,
+        action=_workflow_action_scope(action),
+    )
+    item = await PageSectionWorkflowService.transition(item, action, user.id)
+    await db.flush()
+    await db.refresh(item)
+    return success(data=item, message="Page section updated")
 
 
 @router.patch("/section-items/{item_id}")
