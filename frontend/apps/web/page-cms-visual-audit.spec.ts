@@ -67,6 +67,8 @@ test.describe("page CMS homepage visual audit", () => {
 
       await page.goto(baseUrl, { waitUntil: "networkidle" });
       await expect(page.locator("main")).toBeVisible();
+      await scrollThroughPage(page);
+      await page.waitForLoadState("networkidle");
 
       expect(
         await hasHorizontalOverflow(page),
@@ -232,6 +234,16 @@ async function expectIndependentMobileSections(page: Page) {
       `mobile section ${index + 1} should not overlap the previous section`,
     ).toBeGreaterThanOrEqual(boxes[index - 1].bottom - 1);
   }
+}
+
+async function scrollThroughPage(page: Page) {
+  const pageHeight = await page.evaluate(() => document.documentElement.scrollHeight);
+  const viewportHeight = page.viewportSize()?.height ?? 900;
+  for (let y = 0; y < pageHeight; y += Math.max(240, Math.floor(viewportHeight * 0.75))) {
+    await page.evaluate((nextY) => window.scrollTo(0, nextY), y);
+    await page.waitForTimeout(80);
+  }
+  await page.evaluate(() => window.scrollTo(0, 0));
 }
 
 async function hasHorizontalOverflow(page: Page) {
