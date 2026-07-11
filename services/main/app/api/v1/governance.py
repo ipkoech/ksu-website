@@ -91,21 +91,21 @@ async def get_board_members_by_id(board_id: uuid.UUID, db: DbSession, _: Current
 @router.get("/council")
 @cached_public(timeout=3600, vary_on=("fields", "include"))
 async def get_council(db: DbSession, fields: FieldSelection = FieldsDep):
-    selector = build_selector(Board, fields)
-    board = await GovernanceService.get_board_by_slug(db, "university-council", load_options=selector.load_options)
+    board = await GovernanceService.get_board_by_slug(db, "university-council")
     if board is None:
         raise HTTPException(status_code=404, detail="Council not found")
-    return success(data=selector.apply(board))
+    members = await GovernanceService.get_members(db, board.id, public_only=True)
+    return success(data=GovernanceService.public_board_data(board, members))
 
 
 @router.get("/management-board")
 @cached_public(timeout=3600, vary_on=("fields", "include"))
 async def get_management_board(db: DbSession, fields: FieldSelection = FieldsDep):
-    selector = build_selector(Board, fields)
-    board = await GovernanceService.get_board_by_slug(db, "management-board", load_options=selector.load_options)
+    board = await GovernanceService.get_board_by_slug(db, "management-board")
     if board is None:
         raise HTTPException(status_code=404, detail="Management Board not found")
-    return success(data=selector.apply(board))
+    members = await GovernanceService.get_members(db, board.id, public_only=True)
+    return success(data=GovernanceService.public_board_data(board, members))
 
 
 @router.get("/senate")

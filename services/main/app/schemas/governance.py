@@ -88,7 +88,26 @@ class BoardMemberCreate(BaseSchema):
     notes: str | None = None
 
 
+class BoardMemberSummary(BaseSchema):
+    id: uuid.UUID
+    display_label: str
+    role_label: str
+
+
+class BoardMemberRead(BaseSchema):
+    id: uuid.UUID
+    display_label: str
+    role: str
+    role_label: str
+    title: str | None = None
+    hierarchy_level: int
+    reports_to: BoardMemberSummary | None = None
+    display_order: int
+    is_acting: bool
+
+
 class BoardRead(BaseReadSchema):
+    display_label: str
     name: str
     slug: str
     board_type: str
@@ -120,3 +139,4 @@ class BoardRead(BaseReadSchema):
     is_active: bool
     status: str
     display_order: int
+    members: list[BoardMemberRead] = Field(default_factory=list)

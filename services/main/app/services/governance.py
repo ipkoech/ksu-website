@@ -7,8 +7,9 @@ from typing import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from ..models import Board, StaffAssignment
+from ..models import Board, Person, StaffAssignment
 from .staff import StaffService
 
 
@@ -79,8 +80,77 @@ class GovernanceService:
         await db.flush()
 
     @staticmethod
-    async def get_members(db: AsyncSession, board_id: uuid.UUID) -> list[StaffAssignment]:
-        return await StaffService.get_assignments_for_entity(db, "board", board_id)
+    async def get_members(
+        db: AsyncSession,
+        board_id: uuid.UUID,
+        *,
+        public_only: bool = False,
+    ) -> list[StaffAssignment]:
+        query = (
+            select(StaffAssignment)
+            .join(StaffAssignment.person)
+            .options(
+                selectinload(StaffAssignment.person).selectinload(Person.photo),
+                selectinload(StaffAssignment.reports_to).selectinload(StaffAssignment.person),
+            )
+            .where(
+                StaffAssignment.entity_type == "board",
+                StaffAssignment.entity_id == board_id,
+                StaffAssignment.deleted_at.is_(None),
+                StaffAssignment.status == "active",
+            )
+            .order_by(
+                StaffAssignment.hierarchy_level.asc(),
+                StaffAssignment.display_order.asc(),
+                Person.full_name.asc(),
+            )
+        )
+        if public_only:
+            query = query.where(StaffAssignment.is_public.is_(True))
+        result = await db.execute(query)
+        return list(result.scalars().all())
+
+    @staticmethod
+    def member_display_data(member: StaffAssignment) -> dict:
+        """Return the stable, nested member shape used by public governance pages."""
+        reports_to = member.reports_to
+        return {
+            "id": member.id,
+            "display_label": member.person.display_name,
+            "role": member.role,
+            "role_label": StaffService.role_label(member.role),
+            "title": member.title,
+            "hierarchy_level": member.hierarchy_level,
+            "reports_to": (
+                {
+                    "id": reports_to.id,
+                    "display_label": reports_to.person.display_name,
+                    "role_label": StaffService.role_label(reports_to.role),
+                }
+                if reports_to is not None
+                else None
+            ),
+            "display_order": member.display_order,
+            "is_acting": member.is_acting,
+        }
+
+    @staticmethod
+    def public_board_data(board: Board, members: Sequence[StaffAssignment]) -> dict:
+        """Return board and member display data without UUID-only relationships."""
+        return {
+            "id": board.id,
+            "display_label": board.name,
+            "name": board.name,
+            "slug": board.slug,
+            "board_type": board.board_type,
+            "description": board.description,
+            "mandate": board.mandate,
+            "mission": board.mission,
+            "vision": board.vision,
+            "meeting_schedule": board.meeting_schedule,
+            "display_order": board.display_order,
+            "members": [GovernanceService.member_display_data(member) for member in members],
+        }
 
     @staticmethod
     async def add_member(
