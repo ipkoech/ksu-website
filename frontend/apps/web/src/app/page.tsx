@@ -146,7 +146,7 @@ export default async function HomePage() {
         libraryHref={libraryFrontendUrl}
       />
 
-      <main id="main-content" tabIndex={-1}>
+      <main id="main-content" className="overflow-x-clip" tabIndex={-1}>
         {composedHomepage.hasRenderableSections ? (
           <>
             {hasComposedHero ? null : <LandingHero {...homepage.hero} />}
@@ -651,7 +651,7 @@ function hasFutureDeadline(value?: string | null) {
 function SchoolCard({ school }: { school: HomeSchoolCard }) {
   return (
     <article className="group h-full overflow-hidden rounded-md border border-blue-100 bg-white shadow-sm shadow-blue-100/60 transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md hover:shadow-blue-200">
-      <Link href={school.href} className="block">
+      <Link href={school.href} className="block" aria-label={`View ${school.title}`}>
         <PublicImage
           src={school.imageUrl}
           alt=""

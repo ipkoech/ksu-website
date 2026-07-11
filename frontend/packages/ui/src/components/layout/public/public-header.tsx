@@ -248,7 +248,7 @@ export function PublicHeader({
                 asChild
                 size="sm"
                 className={cn(
-                  "hidden h-11 rounded-full border border-secondary bg-secondary px-5 text-sm font-semibold text-white shadow-sm shadow-secondary/20 hover:bg-secondary/90 xl:flex",
+                  "hidden h-11 rounded-full border border-secondary bg-secondary px-5 text-sm font-semibold text-white shadow-sm shadow-secondary/20 hover:bg-secondary/90 2xl:flex",
                   isTransparent &&
                     "border-white/80 bg-white/10 text-white hover:bg-white/20",
                 )}
