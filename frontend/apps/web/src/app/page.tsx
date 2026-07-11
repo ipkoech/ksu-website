@@ -23,6 +23,7 @@ import { MiniHeader, PublicFooter, PublicHeader } from "@ksu/ui/layout/public";
 import { LandingHero } from "@/components/home/landing-hero";
 import { CountdownStrip } from "@/components/home/countdown-strip";
 import { AnimatedStatRow } from "@/components/home/animated-stat-row";
+import { HomepageSections } from "@/components/home/section-renderer";
 import { AnnouncementHeader } from "@/components/site-shell";
 import {
   ProgressiveImageCard,
@@ -36,6 +37,7 @@ import {
   type HomePartner,
   type HomeSchoolCard,
 } from "@/lib/homepage-data";
+import { getComposedHomepage } from "@/lib/homepage-sections";
 import { getNavData } from "@/lib/nav-data";
 import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
 
@@ -111,9 +113,10 @@ function LandingReveal({
 }
 
 export default async function HomePage() {
-  const [homepage, megaMenuData] = await Promise.all([
+  const [homepage, megaMenuData, composedHomepage] = await Promise.all([
     getHomepageData(),
     getNavData(),
+    getComposedHomepage(),
   ]);
   const degradedSections = [
     homepage.schools.length === 0,
@@ -122,6 +125,9 @@ export default async function HomePage() {
     homepage.upcomingEvents.length === 0,
   ].filter(Boolean).length;
   const isContentDegraded = degradedSections >= 2;
+  const hasComposedHero = composedHomepage.sections.some(
+    (section) => section.layout_variant === "hero_admissions",
+  );
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_38%,#f6f8fc_100%)] text-slate-950">
@@ -141,6 +147,18 @@ export default async function HomePage() {
       />
 
       <main id="main-content" tabIndex={-1}>
+        {composedHomepage.hasRenderableSections ? (
+          <>
+            {hasComposedHero ? null : <LandingHero {...homepage.hero} />}
+            <HomepageSections
+              sections={composedHomepage.sections}
+              partnershipSpotlights={
+                composedHomepage.data?.partnership_spotlights ?? []
+              }
+            />
+          </>
+        ) : (
+          <>
         <LandingHero {...homepage.hero} />
 
         {/* Hero value proposition + secondary CTAs */}
@@ -261,6 +279,8 @@ export default async function HomePage() {
             </LandingReveal>
           </div>
         </section>
+          </>
+        )}
       </main>
 
       {/* Mobile Sticky CTA Bar */}
