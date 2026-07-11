@@ -34,6 +34,7 @@ from .page_cms import (
     PageSectionService,
     PageSectionWorkflowService,
     PartnershipSpotlightService,
+    PartnershipSpotlightWorkflowService,
     group_media_links,
 )
 from .public_page import PublicSitePageService
@@ -55,6 +56,7 @@ __all__ = [
     "PageSectionService",
     "PageSectionWorkflowService",
     "PartnershipSpotlightService",
+    "PartnershipSpotlightWorkflowService",
     "HomepageCompositionService",
     "group_media_links",
     "PublicSitePageService",

@@ -4,8 +4,8 @@ import unittest
 import uuid
 from unittest.mock import patch
 
-from app.models import PageSection
-from app.services import PageSectionService, PageSectionWorkflowService
+from app.models import PageSection, PartnershipSpotlight
+from app.services import PageSectionService, PageSectionWorkflowService, PartnershipSpotlightWorkflowService
 import app.services.page_cms as page_cms
 
 
@@ -172,6 +172,44 @@ class PageCmsWorkflowTests(unittest.IsolatedAsyncioTestCase):
         await PageSectionWorkflowService.transition(section, "unpublish", uuid.uuid4())
 
         self.assertEqual("approved", section.status)
+
+    async def test_spotlight_workflow_accepts_submit_approve_publish_unpublish_sequence(self):
+        user_id = uuid.uuid4()
+        spotlight = PartnershipSpotlight(
+            source_type="research_partner",
+            source_id=uuid.uuid4(),
+            primary_cta_source="manual",
+            headline="Partner impact",
+            status="draft",
+        )
+
+        await PartnershipSpotlightWorkflowService.transition(spotlight, "submit", user_id)
+        self.assertEqual("in_review", spotlight.status)
+
+        await PartnershipSpotlightWorkflowService.transition(spotlight, "approve", user_id)
+        self.assertEqual("approved", spotlight.status)
+        self.assertEqual(user_id, spotlight.approved_by_id)
+        self.assertIsNotNone(spotlight.approved_at)
+
+        await PartnershipSpotlightWorkflowService.transition(spotlight, "publish", user_id)
+        self.assertEqual("published", spotlight.status)
+        self.assertEqual(user_id, spotlight.published_by_id)
+        self.assertIsNotNone(spotlight.published_at)
+
+        await PartnershipSpotlightWorkflowService.transition(spotlight, "unpublish", user_id)
+        self.assertEqual("approved", spotlight.status)
+
+    async def test_spotlight_workflow_rejects_invalid_transition(self):
+        spotlight = PartnershipSpotlight(
+            source_type="research_partner",
+            source_id=uuid.uuid4(),
+            primary_cta_source="manual",
+            headline="Partner impact",
+            status="draft",
+        )
+
+        with self.assertRaisesRegex(ValueError, "Invalid workflow transition"):
+            await PartnershipSpotlightWorkflowService.transition(spotlight, "publish", uuid.uuid4())
 
 
 if __name__ == "__main__":

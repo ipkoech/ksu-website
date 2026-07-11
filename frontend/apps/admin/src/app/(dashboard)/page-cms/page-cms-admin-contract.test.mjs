@@ -64,6 +64,10 @@ const spotlightsPageSource = fs.readFileSync(path.join(appRoot, "spotlights/page
 for (const requiredSnippet of [
   "partnershipSpotlightsApi.listAdmin(",
   "partnershipSpotlightsApi.get(",
+  "partnershipSpotlightsApi.workflow(",
+  "workflowButtonsForStatus(form.status)",
+  "request_changes",
+  "unpublish",
 ]) {
   assert(
     spotlightsPageSource.includes(requiredSnippet),
@@ -105,6 +109,7 @@ for (const expectedSnippet of [
   "disable: (itemId: string)",
   "listAdmin: (params?: ListParams)",
   "get: (spotlightId: string)",
+  "workflow: (spotlightId: string, action: PartnershipSpotlightWorkflowAction)",
   "disable: (spotlightId: string)",
 ]) {
   assert(

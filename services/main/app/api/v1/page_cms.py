@@ -23,6 +23,7 @@ from ...services import (
     PageSectionService,
     PageSectionWorkflowService,
     PartnershipSpotlightService,
+    PartnershipSpotlightWorkflowService,
 )
 from ...services._base import apply_updates
 from ._scoped import can_access_scoped_record, require_scoped_record
@@ -423,6 +424,26 @@ async def update_partnership_spotlight(
     del user
     item = await _get_partnership_spotlight_or_404(db, spotlight_id)
     apply_updates(item, **data.model_dump(exclude_unset=True))
+    await db.flush()
+    await db.refresh(item)
+    return success(data=item, message="Partnership spotlight updated")
+
+
+@router.post(
+    "/partnership-spotlights/{spotlight_id}/{action}",
+    dependencies=[Depends(PARTNERSHIP_SPOTLIGHT_MANAGE_SCOPE)],
+)
+async def run_partnership_spotlight_workflow_action(
+    spotlight_id: uuid.UUID,
+    action: str,
+    db: DbSession,
+    user: CurrentUser,
+):
+    item = await _get_partnership_spotlight_or_404(db, spotlight_id)
+    try:
+        item = await PartnershipSpotlightWorkflowService.transition(item, action, user.id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     await db.flush()
     await db.refresh(item)
     return success(data=item, message="Partnership spotlight updated")

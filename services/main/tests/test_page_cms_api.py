@@ -240,6 +240,61 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("draft", detail_response.json()["data"]["status"])
         self.assertFalse(detail_response.json()["data"]["is_enabled"])
 
+    async def test_partnership_spotlight_workflow_uses_manage_permission(self):
+        user = _user("partnership_spotlights.manage")
+        spotlight = PartnershipSpotlight(
+            source_type="research_partner",
+            source_id=uuid.uuid4(),
+            primary_cta_source="manual",
+            headline="Draft spotlight",
+            status="draft",
+        )
+        spotlight.id = uuid.uuid4()
+        transition = AsyncMock(return_value=spotlight)
+
+        with (
+            patch.object(page_cms, "_get_partnership_spotlight_or_404", AsyncMock(return_value=spotlight)),
+            patch.object(page_cms.PartnershipSpotlightWorkflowService, "transition", transition),
+        ):
+            response = await page_cms.run_partnership_spotlight_workflow_action(
+                spotlight.id,
+                "submit",
+                db=_AuthDb(user),
+                user=user,
+            )
+
+        self.assertEqual("success", response["status"])
+        transition.assert_awaited_once_with(spotlight, "submit", user.id)
+
+    async def test_partnership_spotlight_workflow_rejects_invalid_transition(self):
+        user = _user("partnership_spotlights.manage")
+        spotlight = PartnershipSpotlight(
+            source_type="research_partner",
+            source_id=uuid.uuid4(),
+            primary_cta_source="manual",
+            headline="Draft spotlight",
+            status="draft",
+        )
+        spotlight.id = uuid.uuid4()
+
+        with (
+            patch.object(page_cms, "_get_partnership_spotlight_or_404", AsyncMock(return_value=spotlight)),
+            patch.object(
+                page_cms.PartnershipSpotlightWorkflowService,
+                "transition",
+                AsyncMock(side_effect=ValueError("Invalid workflow transition: draft -> publish")),
+            ),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await page_cms.run_partnership_spotlight_workflow_action(
+                    spotlight.id,
+                    "publish",
+                    db=_AuthDb(user),
+                    user=user,
+                )
+
+        self.assertEqual(400, context.exception.status_code)
+
     async def test_create_page_section_accepts_manage_permission_and_starts_in_draft(self):
         user = _user("page_sections.manage")
         db = _AuthDb(user)

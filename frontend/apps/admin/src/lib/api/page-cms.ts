@@ -56,6 +56,7 @@ export type PageSectionLayoutVariant = (typeof PAGE_SECTION_LAYOUT_VARIANTS)[num
 export type SectionItemType = (typeof SECTION_ITEM_TYPES)[number];
 export type PartnershipCtaSource = (typeof PARTNERSHIP_CTA_SOURCES)[number];
 export type PageSectionWorkflowAction = (typeof PAGE_SECTION_WORKFLOW_ACTIONS)[number];
+export type PartnershipSpotlightWorkflowAction = PageSectionWorkflowAction;
 export type PageCmsMediaRole = (typeof PAGE_CMS_MEDIA_ROLES)[number];
 
 export interface SectionItem {
@@ -233,6 +234,8 @@ export const partnershipSpotlightsApi = {
     api.post<PartnershipSpotlight>("/partnership-spotlights", data),
   update: (spotlightId: string, data: PartnershipSpotlightPayload) =>
     api.patch<PartnershipSpotlight>(`/partnership-spotlights/${spotlightId}`, data),
+  workflow: (spotlightId: string, action: PartnershipSpotlightWorkflowAction) =>
+    api.post<PartnershipSpotlight>(`/partnership-spotlights/${spotlightId}/${action}`),
   disable: (spotlightId: string) =>
     api.patch<PartnershipSpotlight>(`/partnership-spotlights/${spotlightId}`, {
       is_enabled: false,

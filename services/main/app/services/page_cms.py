@@ -464,6 +464,36 @@ class PageSectionWorkflowService:
         return section
 
 
+class PartnershipSpotlightWorkflowService:
+    """Apply the approved editorial workflow map to partnership spotlights."""
+
+    @staticmethod
+    async def transition(
+        spotlight: PartnershipSpotlight,
+        action: str,
+        user_id: uuid.UUID,
+        note: str | None = None,
+    ) -> PartnershipSpotlight:
+        del note
+
+        transitions = ALLOWED_TRANSITIONS.get(spotlight.status, set())
+        next_status = transitions.get(action) if isinstance(transitions, dict) else None
+        if next_status is None:
+            raise ValueError(f"Invalid workflow transition: {spotlight.status} -> {action}")
+
+        now = datetime.now(timezone.utc)
+        spotlight.status = next_status
+
+        if action == "approve":
+            spotlight.approved_at = now
+            spotlight.approved_by_id = user_id
+        elif action == "publish":
+            spotlight.published_at = now
+            spotlight.published_by_id = user_id
+
+        return spotlight
+
+
 async def group_media_links(
     db: AsyncSession,
     entity_type: str,
@@ -542,6 +572,7 @@ __all__ = [
     "PageSectionService",
     "PageSectionWorkflowService",
     "PartnershipSpotlightService",
+    "PartnershipSpotlightWorkflowService",
     "HomepageCompositionService",
     "group_media_links",
 ]

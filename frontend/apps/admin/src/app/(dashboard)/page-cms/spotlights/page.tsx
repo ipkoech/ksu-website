@@ -37,6 +37,7 @@ import {
   type PartnershipSpotlight,
   type PartnershipCtaSource,
   type PartnershipSpotlightPayload,
+  type PartnershipSpotlightWorkflowAction,
 } from "@/lib/api/page-cms";
 
 type SpotlightFormState = {
@@ -132,6 +133,16 @@ function payloadFromForm(form: SpotlightFormState): PartnershipSpotlightPayload 
   };
 }
 
+function workflowButtonsForStatus(status: string) {
+  const buttons: PartnershipSpotlightWorkflowAction[] = [];
+  if (status === "draft" || status === "changes_requested") buttons.push("submit");
+  if (status === "in_review") buttons.push("approve", "request_changes");
+  if (status === "approved") buttons.push("publish");
+  if (status === "published") buttons.push("unpublish");
+  if (status !== "archived") buttons.push("archive");
+  return buttons;
+}
+
 export default function PageCmsSpotlightsPage() {
   const { hasAnyPermission } = usePermissions();
   const commitPendingAttachments = useCommitPendingAttachments();
@@ -140,6 +151,7 @@ export default function PageCmsSpotlightsPage() {
   const [pendingAttachments, setPendingAttachments] = useState<PendingMediaAttachment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [workflowBusy, setWorkflowBusy] = useState<PartnershipSpotlightWorkflowAction | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const canManageSpotlights = hasAnyPermission(["partnership_spotlights.manage", "admin:*"]);
@@ -180,6 +192,11 @@ export default function PageCmsSpotlightsPage() {
   const spotlightSummary = useMemo(() => {
     return `${spotlights.length} spotlight${spotlights.length === 1 ? "" : "s"} available in admin, including drafts and disabled records.`;
   }, [spotlights.length]);
+
+  const availableWorkflowActions = useMemo(() => {
+    if (!form.id || !canManageSpotlights) return [];
+    return workflowButtonsForStatus(form.status);
+  }, [canManageSpotlights, form.id, form.status]);
 
   const selectSpotlight = async (spotlight: PartnershipSpotlight) => {
     try {
@@ -237,6 +254,27 @@ export default function PageCmsSpotlightsPage() {
     }
   };
 
+  const handleWorkflow = async (action: PartnershipSpotlightWorkflowAction) => {
+    if (!form.id) return;
+    if (!canManageSpotlights) {
+      toast.error("You do not have permission to manage partnership spotlights.");
+      return;
+    }
+
+    setWorkflowBusy(action);
+    try {
+      const response = await partnershipSpotlightsApi.workflow(form.id, action);
+      const updated = response.data;
+      setSpotlights((current) => current.map((item) => (item.id === updated.id ? updated : item)));
+      setForm(formFromSpotlight(updated));
+      toast.success(`Spotlight ${action.replace(/_/g, " ")} complete.`);
+    } catch {
+      toast.error(`Failed to ${action.replace(/_/g, " ")} spotlight.`);
+    } finally {
+      setWorkflowBusy(null);
+    }
+  };
+
   return (
     <PageTransition>
       <PageHeader
@@ -245,6 +283,17 @@ export default function PageCmsSpotlightsPage() {
         backHref="/page-cms"
         actions={(
           <div className="flex flex-wrap gap-2">
+            {availableWorkflowActions.map((action) => (
+              <Button
+                key={action}
+                type="button"
+                variant={action === "publish" ? "default" : action === "archive" ? "destructive" : "outline"}
+                disabled={workflowBusy !== null || isSaving}
+                onClick={() => void handleWorkflow(action)}
+              >
+                {workflowBusy === action ? "Working..." : action.replace(/_/g, " ")}
+              </Button>
+            ))}
             <Button type="button" variant="outline" onClick={handleCreateNew}>
               New Spotlight
             </Button>
