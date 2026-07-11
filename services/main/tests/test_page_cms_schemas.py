@@ -9,9 +9,11 @@ from pydantic import ValidationError
 from app.models import PAGE_SECTION_LAYOUT_VARIANTS
 from app.schemas.page_cms import (
     PageSectionCreate,
+    PageSectionUpdate,
     PageSectionWorkflowAction,
     PartnershipSpotlightCreate,
     PartnershipSpotlightRead,
+    PartnershipSpotlightUpdate,
     SectionItemCreate,
 )
 
@@ -53,6 +55,30 @@ class PageCmsSchemaTests(unittest.TestCase):
                 valid_to=valid_to,
             )
 
+    def test_page_section_create_rejects_lifecycle_fields(self):
+        with self.assertRaises(ValidationError):
+            PageSectionCreate(
+                page_key="homepage",
+                scope_type="university",
+                section_key="hero",
+                layout_variant=PAGE_SECTION_LAYOUT_VARIANTS[0],
+                status="published",
+                approved_at=_utc_now(),
+                published_at=_utc_now(),
+                approved_by_id=uuid.uuid4(),
+                published_by_id=uuid.uuid4(),
+            )
+
+    def test_page_section_update_rejects_lifecycle_fields(self):
+        with self.assertRaises(ValidationError):
+            PageSectionUpdate(
+                status="approved",
+                approved_at=_utc_now(),
+                published_at=_utc_now(),
+                approved_by_id=uuid.uuid4(),
+                published_by_id=uuid.uuid4(),
+            )
+
     def test_section_item_create_rejects_external_cta_urls_without_http_scheme(self):
         with self.assertRaises(ValidationError):
             SectionItemCreate(
@@ -86,6 +112,24 @@ class PageCmsSchemaTests(unittest.TestCase):
             )
 
             self.assertEqual(spotlight.primary_cta_source, source)
+
+    def test_partnership_spotlight_create_rejects_lifecycle_fields(self):
+        with self.assertRaises(ValidationError):
+            PartnershipSpotlightCreate(
+                source_id=uuid.uuid4(),
+                headline="Collaborative research in health systems",
+                status="published",
+                approved_at=_utc_now(),
+                published_at=_utc_now(),
+            )
+
+    def test_partnership_spotlight_update_rejects_lifecycle_fields(self):
+        with self.assertRaises(ValidationError):
+            PartnershipSpotlightUpdate(
+                status="approved",
+                approved_at=_utc_now(),
+                published_at=_utc_now(),
+            )
 
     def test_partnership_spotlight_create_rejects_primary_cta_url_without_supported_prefix(self):
         with self.assertRaises(ValidationError):

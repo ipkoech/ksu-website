@@ -6,12 +6,11 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import ConfigDict, Field, field_validator, model_validator
 
 from app.models import (
     PAGE_SCOPE_TYPES,
     PAGE_SECTION_LAYOUT_VARIANTS,
-    PAGE_SECTION_STATUSES,
     PARTNERSHIP_CTA_SOURCES,
     SECTION_ITEM_TYPES,
 )
@@ -116,6 +115,13 @@ class SectionItemRead(BaseReadSchema):
 
 
 class PageSectionCreate(BaseSchema):
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        str_strip_whitespace=True,
+        extra="forbid",
+    )
+
     page_key: str = Field(min_length=1, max_length=64)
     scope_type: str = Field(default=PAGE_SCOPE_TYPES[0], max_length=32)
     scope_id: uuid.UUID | None = None
@@ -123,15 +129,10 @@ class PageSectionCreate(BaseSchema):
     title: str | None = Field(default=None, max_length=255)
     is_enabled: bool = True
     layout_variant: str = Field(default=PAGE_SECTION_LAYOUT_VARIANTS[0], max_length=64)
-    status: str = Field(default=PAGE_SECTION_STATUSES[0], max_length=32)
     valid_from: datetime | None = None
     valid_to: datetime | None = None
-    approved_at: datetime | None = None
-    published_at: datetime | None = None
     created_by_id: uuid.UUID | None = None
     updated_by_id: uuid.UUID | None = None
-    approved_by_id: uuid.UUID | None = None
-    published_by_id: uuid.UUID | None = None
     items: list[SectionItemCreate] = Field(default_factory=list)
 
     @field_validator("scope_type")
@@ -144,11 +145,6 @@ class PageSectionCreate(BaseSchema):
     def validate_layout_variant(cls, value: str) -> str:
         return _validate_choice(value, PAGE_SECTION_LAYOUT_VARIANTS, "layout_variant") or value
 
-    @field_validator("status")
-    @classmethod
-    def validate_status(cls, value: str) -> str:
-        return _validate_choice(value, PAGE_SECTION_STATUSES, "status") or value
-
     @model_validator(mode="after")
     def validate_scope_and_window(self):
         if self.scope_type == "school" and self.scope_id is None:
@@ -159,6 +155,13 @@ class PageSectionCreate(BaseSchema):
 
 
 class PageSectionUpdate(BaseSchema):
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        str_strip_whitespace=True,
+        extra="forbid",
+    )
+
     page_key: str | None = Field(default=None, min_length=1, max_length=64)
     scope_type: str | None = Field(default=None, max_length=32)
     scope_id: uuid.UUID | None = None
@@ -166,15 +169,10 @@ class PageSectionUpdate(BaseSchema):
     title: str | None = Field(default=None, max_length=255)
     is_enabled: bool | None = None
     layout_variant: str | None = Field(default=None, max_length=64)
-    status: str | None = Field(default=None, max_length=32)
     valid_from: datetime | None = None
     valid_to: datetime | None = None
-    approved_at: datetime | None = None
-    published_at: datetime | None = None
     created_by_id: uuid.UUID | None = None
     updated_by_id: uuid.UUID | None = None
-    approved_by_id: uuid.UUID | None = None
-    published_by_id: uuid.UUID | None = None
     items: list[SectionItemUpdate] | None = None
 
     @field_validator("scope_type")
@@ -186,11 +184,6 @@ class PageSectionUpdate(BaseSchema):
     @classmethod
     def validate_layout_variant(cls, value: str | None) -> str | None:
         return _validate_choice(value, PAGE_SECTION_LAYOUT_VARIANTS, "layout_variant")
-
-    @field_validator("status")
-    @classmethod
-    def validate_status(cls, value: str | None) -> str | None:
-        return _validate_choice(value, PAGE_SECTION_STATUSES, "status")
 
     @model_validator(mode="after")
     def validate_scope_and_window(self):
@@ -226,6 +219,13 @@ class PageSectionRead(BaseReadSchema):
 
 
 class PartnershipSpotlightCreate(BaseSchema):
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        str_strip_whitespace=True,
+        extra="forbid",
+    )
+
     source_type: str = Field(default="research_partner", max_length=64)
     source_id: uuid.UUID
     primary_cta_source: str = Field(default=PARTNERSHIP_CTA_SOURCES[0], max_length=32)
@@ -236,11 +236,8 @@ class PartnershipSpotlightCreate(BaseSchema):
     pillars: list[dict[str, Any]] | None = None
     opportunities: list[dict[str, Any]] | None = None
     is_enabled: bool = True
-    status: str = Field(default=PAGE_SECTION_STATUSES[0], max_length=32)
     valid_from: datetime | None = None
     valid_to: datetime | None = None
-    approved_at: datetime | None = None
-    published_at: datetime | None = None
 
     @field_validator("source_type")
     @classmethod
@@ -259,11 +256,6 @@ class PartnershipSpotlightCreate(BaseSchema):
     def validate_primary_cta_url(cls, value: str | None) -> str | None:
         return _validate_link_target(value, "primary_cta_url")
 
-    @field_validator("status")
-    @classmethod
-    def validate_status(cls, value: str) -> str:
-        return _validate_choice(value, PAGE_SECTION_STATUSES, "status") or value
-
     @model_validator(mode="after")
     def validate_window(self):
         if self.valid_from and self.valid_to and self.valid_to < self.valid_from:
@@ -272,6 +264,13 @@ class PartnershipSpotlightCreate(BaseSchema):
 
 
 class PartnershipSpotlightUpdate(BaseSchema):
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        str_strip_whitespace=True,
+        extra="forbid",
+    )
+
     source_type: str | None = Field(default=None, max_length=64)
     source_id: uuid.UUID | None = None
     primary_cta_source: str | None = Field(default=None, max_length=32)
@@ -282,11 +281,8 @@ class PartnershipSpotlightUpdate(BaseSchema):
     pillars: list[dict[str, Any]] | None = None
     opportunities: list[dict[str, Any]] | None = None
     is_enabled: bool | None = None
-    status: str | None = Field(default=None, max_length=32)
     valid_from: datetime | None = None
     valid_to: datetime | None = None
-    approved_at: datetime | None = None
-    published_at: datetime | None = None
 
     @field_validator("source_type")
     @classmethod
@@ -306,11 +302,6 @@ class PartnershipSpotlightUpdate(BaseSchema):
     @classmethod
     def validate_primary_cta_url(cls, value: str | None) -> str | None:
         return _validate_link_target(value, "primary_cta_url")
-
-    @field_validator("status")
-    @classmethod
-    def validate_status(cls, value: str | None) -> str | None:
-        return _validate_choice(value, PAGE_SECTION_STATUSES, "status")
 
     @model_validator(mode="after")
     def validate_window(self):
