@@ -151,7 +151,14 @@ async def create_news(data: NewsCreate, db: DbSession, user: CurrentUser):
         data.scope_id,
         resource_name="news",
     )
-    item = await NewsService.create(db, **data.model_dump())
+    payload = ContentWorkflowService.authoring_create_payload(
+        data.model_dump(),
+        actor_id=user.id,
+        **ContentWorkflowService.owner_metadata_for_scope(
+            data.scope_type, data.scope_id, is_main=data.is_main,
+        ),
+    )
+    item = await NewsService.create(db, **payload)
     return success(data=item, message="News created")
 
 
@@ -176,6 +183,12 @@ async def update_news(news_id: uuid.UUID, data: NewsUpdate, db: DbSession, user:
         payload.get("scope_type", item.scope_type),
         payload.get("scope_id", item.scope_id),
         resource_name="news",
+    )
+    current_status = item.workflow_status or item.status
+    if current_status in {"submitted", "in_review", "approved", "scheduled"}:
+        authorize_content_workflow_action(user, item, "edit", permissions_for_user(user))
+    await ContentWorkflowService.reset_after_authoring_edit(
+        db, item, "news", user.id, changed_fields=payload,
     )
     item = await NewsService.update(db, item, **payload)
     return success(data=item, message="News updated")

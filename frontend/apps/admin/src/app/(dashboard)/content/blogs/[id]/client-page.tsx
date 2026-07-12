@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import { contentAttachmentRoles } from "@/components/content/content-attachment-roles";
 import { ContentRecordInspector } from "@/components/content/content-record-inspector";
 import { AttachmentManager, MediaPicker, useCommitPendingAttachments, type PendingMediaAttachment } from "@/components/media";
-import { MainScopePicker, UserPicker } from "@/components/relationships";
+import { MainScopePicker } from "@/components/relationships";
 import { PageHeader } from "@/components/shared/page-header";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { useRichTextAttachmentUpload } from "@/hooks/use-rich-text-attachment-upload";
@@ -47,18 +47,12 @@ const schema = z
     plain_text: z.string().optional(),
     excerpt: z.string().optional(),
     featured_media_id: z.string().uuid().optional().or(z.literal("")),
-    author_user_id: z.string().uuid().optional().or(z.literal("")),
     scope_type: z.string().max(32).optional(),
     scope_id: z.string().uuid().optional().or(z.literal("")),
-    is_published: z.boolean(),
     is_featured: z.boolean(),
     is_main: z.boolean(),
-    is_public: z.boolean(),
-    published_at: z.string().optional(),
     valid_from: z.string().optional(),
     valid_to: z.string().optional(),
-    archived_at: z.string().optional(),
-    status: z.string().max(32).optional(),
     display_order: z.coerce.number().int().min(0),
     meta_title: z.string().max(255).optional(),
     meta_description: z.string().max(500).optional(),
@@ -83,18 +77,12 @@ const defaultValues: FormValues = {
   plain_text: "",
   excerpt: "",
   featured_media_id: "",
-  author_user_id: "",
   scope_type: "",
   scope_id: "",
-  is_published: false,
   is_featured: false,
   is_main: false,
-  is_public: true,
-  published_at: "",
   valid_from: "",
   valid_to: "",
-  archived_at: "",
-  status: "draft",
   display_order: 100,
   meta_title: "",
   meta_description: "",
@@ -110,18 +98,12 @@ const blogPayloadFieldMap = {
   plain_text: ["plain_text", "rich_text"],
   excerpt: ["excerpt"],
   featured_media_id: ["featured_media_id"],
-  author_user_id: ["author_user_id"],
   scope_type: ["scope_type"],
   scope_id: ["scope_id"],
-  is_published: ["is_published", "status", "published_at"],
   is_featured: ["is_featured"],
   is_main: ["is_main"],
-  is_public: ["is_public"],
-  published_at: ["published_at"],
   valid_from: ["valid_from"],
   valid_to: ["valid_to"],
-  archived_at: ["archived_at"],
-  status: ["status"],
   display_order: ["display_order"],
   meta_title: ["meta_title"],
   meta_description: ["meta_description"],
@@ -173,18 +155,12 @@ function blogValues(blog: Blog): FormValues {
     plain_text: blog.rich_text ?? blog.plain_text ?? blog.content ?? "",
     excerpt: blog.excerpt ?? "",
     featured_media_id: blog.featured_media_id ?? blog.cover_image_id ?? "",
-    author_user_id: blog.author_user_id ?? "",
     scope_type: blog.scope_type ?? "",
     scope_id: blog.scope_id ?? "",
-    is_published: blog.is_published ?? false,
     is_featured: blog.is_featured ?? false,
     is_main: blog.is_main ?? false,
-    is_public: blog.is_public ?? true,
-    published_at: toDateTimeInput(blog.published_at),
     valid_from: toDateTimeInput(blog.valid_from),
     valid_to: toDateTimeInput(blog.valid_to),
-    archived_at: toDateTimeInput(blog.archived_at),
-    status: blog.status ?? (blog.is_published ? "published" : "draft"),
     display_order: blog.display_order ?? 100,
     meta_title: blog.meta_title ?? "",
     meta_description: blog.meta_description ?? "",
@@ -216,9 +192,6 @@ export default function BlogEditorPage() {
 
   const onSubmit = async (values: FormValues) => {
     const cleanContent = sanitizeRichText(values.plain_text);
-    const publishedAt =
-      fromDateTimeInput(values.published_at) ??
-      (values.is_published ? blog?.published_at ?? new Date().toISOString() : null);
     const payload: Partial<Blog> = {
       title: values.title,
       slug: values.slug || slugify(values.title),
@@ -227,18 +200,12 @@ export default function BlogEditorPage() {
       rich_text: cleanContent || null,
       excerpt: values.excerpt || null,
       featured_media_id: values.featured_media_id || null,
-      author_user_id: values.author_user_id || null,
       scope_type: values.scope_type || null,
       scope_id: values.scope_id || null,
-      is_published: values.is_published,
       is_featured: values.is_featured,
       is_main: values.is_main,
-      is_public: values.is_public,
-      published_at: publishedAt,
       valid_from: fromDateTimeInput(values.valid_from),
       valid_to: fromDateTimeInput(values.valid_to),
-      archived_at: isNew ? undefined : fromDateTimeInput(values.archived_at),
-      status: values.status || (values.is_published ? "published" : "draft"),
       display_order: values.display_order,
       meta_title: values.meta_title || null,
       meta_description: values.meta_description || null,
@@ -369,9 +336,9 @@ export default function BlogEditorPage() {
               </Card>
 
               <Card>
-                <CardHeader><CardTitle>Publishing</CardTitle></CardHeader>
+                <CardHeader><CardTitle>Placement</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  {(["is_published", "is_featured", "is_main", "is_public"] as const).map((name) => (
+                  {(["is_featured", "is_main"] as const).map((name) => (
                     <FormField key={name} control={form.control} name={name} render={({ field }) => (
                       <FormItem className="flex items-center justify-between rounded-lg border p-3">
                         <FormLabel className="cursor-pointer">{name.replace("is_", "").replace("_", " ")}</FormLabel>
@@ -379,12 +346,6 @@ export default function BlogEditorPage() {
                       </FormItem>
                     )} />
                   ))}
-                  <FormField control={form.control} name="status" render={({ field }) => (
-                    <FormItem><FormLabel>Status</FormLabel><FormControl><Input placeholder="draft" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={form.control} name="published_at" render={({ field }) => (
-                    <FormItem><FormLabel>Published at</FormLabel><FormControl><Input type="datetime-local" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
                     <FormField control={form.control} name="valid_from" render={({ field }) => (
                       <FormItem><FormLabel>Valid from</FormLabel><FormControl><Input type="datetime-local" {...field} /></FormControl><FormMessage /></FormItem>
@@ -396,11 +357,6 @@ export default function BlogEditorPage() {
                   <FormField control={form.control} name="display_order" render={({ field }) => (
                     <FormItem><FormLabel>Display order</FormLabel><FormControl><Input type="number" min={0} {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
-                  {!isNew ? (
-                    <FormField control={form.control} name="archived_at" render={({ field }) => (
-                      <FormItem><FormLabel>Archived at</FormLabel><FormControl><Input type="datetime-local" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                  ) : null}
                 </CardContent>
               </Card>
 
@@ -418,18 +374,6 @@ export default function BlogEditorPage() {
                           form.setValue("scope_type", value.type, { shouldDirty: true, shouldValidate: true });
                           form.setValue("scope_id", value.id, { shouldDirty: true, shouldValidate: true });
                         }}
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="author_user_id" render={({ field }) => (
-                    <FormItem>
-                      <UserPicker
-                        value={field.value}
-                        onChange={(value) => field.onChange(value)}
-                        filters={{ is_active: true }}
-                        label="Author"
-                        placeholder="Select author"
                       />
                       <FormMessage />
                     </FormItem>

@@ -106,6 +106,11 @@ COCMS_PERMISSION_NAMES = [
     "homepage.view",
     "homepage.manage",
     "homepage.publish",
+    "page_sections.view",
+    "page_sections.update",
+    "page_sections.review",
+    "page_sections.publish",
+    "partnership_spotlights.manage",
     "marketing.view",
     "marketing.manage_sliders",
     "marketing.manage_testimonials",
@@ -114,9 +119,19 @@ COCMS_PERMISSION_NAMES = [
 ]
 
 
-# Most seeded roles retain operator-added permissions. This legacy role is a
-# deliberate consolidation exception: its prior admin:* grant must be removed.
-RECONCILED_ROLE_NAMES = frozenset({"content_admin"})
+# Reconcile roles whose publication authority changed so stale grants are
+# removed idempotently when existing databases are reseeded.
+RECONCILED_ROLE_NAMES = frozenset({
+    "content_admin",
+    "content_manager",
+    "library_admin",
+    "research_content_admin",
+    "research_content",
+    "sustainability_admin",
+    "research_sustainability",
+    "university_farm_admin",
+    "research_farm",
+})
 
 
 ROLE_SPECS = [

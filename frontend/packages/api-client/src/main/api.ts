@@ -1436,13 +1436,12 @@ export const contentWorkflowApi = {
     ),
 
   action: (
-    contentType: ContentWorkflowQueueItem["content_type"],
-    contentId: string,
+    item: ContentWorkflowQueueItem,
     action: ContentWorkflowAction,
     payload: ContentWorkflowActionPayload = {},
   ) =>
     mainApi.post<{ data: ContentWorkflowActionResult }>(
-      `/api/v1/content-workflow/${contentType}/${contentId}/${action}`,
+      item.workflow_action_path.replace("{action}", action),
       payload,
     ),
 

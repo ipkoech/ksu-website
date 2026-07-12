@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import uuid
-
-import sqlalchemy as sa
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,6 +11,7 @@ from ..models import (
     Blog,
     Campus,
     Club,
+    ClubActivity,
     ContactDirectory,
     Department,
     DepartmentService,
@@ -37,7 +35,11 @@ from ..models import (
     AlumniAssociation,
     ExchangeProgramme,
     Media,
+    MediaLink,
+    PageSection,
+    PartnershipSpotlight,
     Policy,
+    Slider,
 )
 from ..schemas.stats import PortalStatsResponse, PublicStatItem, PublicStatsResponse
 
@@ -136,15 +138,14 @@ def _item(
 
 
 async def homepage_stats(db: AsyncSession) -> PublicStatsResponse:
-    public_content = (
-        lambda model: (
+    def public_content(model):
+        return (
             model.is_public.is_(True),
             model.is_published.is_(True),
             model.status == "published",
             model.archived_at.is_(None),
             model.deleted_at.is_(None),
         )
-    )
 
     students_result = await db.execute(
         select(
@@ -260,14 +261,13 @@ async def homepage_stats(db: AsyncSession) -> PublicStatsResponse:
 async def university_stats(db: AsyncSession) -> PublicStatsResponse:
     """Comprehensive public-safe university-wide stats."""
 
-    public_content = (
-        lambda model: (
+    def public_content(model):
+        return (
             model.is_public.is_(True),
             model.is_published.is_(True),
             model.status == "published",
             model.archived_at.is_(None),
         )
-    )
 
     students_result = await db.execute(
         select(
@@ -666,30 +666,45 @@ async def portal_stats(
         }
         title = "Admin operational counters"
     elif portal == "cocms":
-        content_models = (News, Blog, Event, Announcement)
+        content_sources = (
+            (News, ()),
+            (Blog, ()),
+            (Event, ()),
+            (Announcement, ()),
+            (ClubActivity, ()),
+            (MediaLink, (MediaLink.owner_portal == "student-clubs",)),
+            (PageSection, ()),
+            (PartnershipSpotlight, ()),
+            (Slider, ()),
+        )
         stats = {
             "pending_review_count": sum(
                 [
-                    await _count(db, model, model.is_main.is_(True), model.status.in_(("submitted", "under_review")))
-                    for model in content_models
+                    await _count(
+                        db,
+                        model,
+                        model.workflow_status.in_(("submitted", "in_review")),
+                        *extra_filters,
+                    )
+                    for model, extra_filters in content_sources
                 ]
             ),
             "published_count": sum(
                 [
-                    await _count(db, model, model.is_main.is_(True), model.status == "published", model.is_published.is_(True))
-                    for model in content_models
+                    await _count(db, model, model.workflow_status == "published", *extra_filters)
+                    for model, extra_filters in content_sources
                 ]
             ),
             "draft_count": sum(
                 [
-                    await _count(db, model, model.is_main.is_(True), model.status == "draft")
-                    for model in content_models
+                    await _count(db, model, model.workflow_status == "draft", *extra_filters)
+                    for model, extra_filters in content_sources
                 ]
             ),
             "scheduled_count": sum(
                 [
-                    await _count(db, model, model.is_main.is_(True), model.valid_from.is_not(None), model.valid_from > func.now(), model.status != "archived")
-                    for model in content_models
+                    await _count(db, model, model.workflow_status == "scheduled", *extra_filters)
+                    for model, extra_filters in content_sources
                 ]
             ),
             "media_count": await _count(db, Media),

@@ -5,11 +5,11 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 from fastapi import HTTPException
+from pydantic import ValidationError
 
 from app.api.v1 import clubs
 from app.schemas import ClubActivityCreate, ClubMediaPublicationUpdate, ClubUpdate
 from app.security.scopes import can_access_scope
-from app.services import student_life
 from app.services.student_life import ClubService
 
 
@@ -41,6 +41,18 @@ class _Db:
 
 
 class ClubPortalWorkflowTests(unittest.IsolatedAsyncioTestCase):
+    def test_club_event_schema_rejects_direct_publication_state(self):
+        with self.assertRaises(ValidationError):
+            ClubActivityCreate(
+                title="Direct publish",
+                activity_type="event",
+                start_datetime=datetime.now(timezone.utc),
+                status="published",
+                workflow_status="published",
+                is_public=True,
+                is_published=True,
+            )
+
     async def test_club_assignment_only_grants_its_own_club(self):
         assigned_club_id = uuid.uuid4()
         other_club_id = uuid.uuid4()
@@ -99,7 +111,6 @@ class ClubPortalWorkflowTests(unittest.IsolatedAsyncioTestCase):
             title="Debate finals",
             activity_type="competition",
             start_datetime=datetime(2030, 5, 1, tzinfo=timezone.utc),
-            is_public=True,
         )
 
         data = clubs.club_activity_create_payload(payload, club_id=club_id, user_id=user_id)
@@ -112,6 +123,34 @@ class ClubPortalWorkflowTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("club", data["owner_scope_type"])
         self.assertEqual(club_id, data["owner_scope_id"])
         self.assertEqual(user_id, data["author_user_id"])
+
+    async def test_editing_published_club_event_resets_it_for_review(self):
+        user = SimpleNamespace(id=uuid.uuid4())
+        item = SimpleNamespace(
+            id=uuid.uuid4(),
+            club_id=uuid.uuid4(),
+            status="published",
+            workflow_status="published",
+        )
+        db = _Db()
+        reset = AsyncMock(return_value=True)
+
+        with (
+            patch.object(clubs.ClubService, "get_activity", AsyncMock(return_value=item)),
+            patch.object(clubs.ClubService, "update_activity", AsyncMock(return_value=item)),
+            patch.object(clubs.ContentWorkflowService, "reset_after_authoring_edit", reset),
+            patch.object(clubs, "require_club_scope", AsyncMock()),
+        ):
+            await clubs.update_club_activity(
+                item.id,
+                clubs.ClubActivityUpdate(title="Revised event"),
+                db=db,
+                user=user,
+            )
+
+        reset.assert_awaited_once_with(
+            db, item, "club-events", user.id, changed_fields={"title": "Revised event"},
+        )
 
     def test_club_profile_owner_payload_filters_administrative_fields(self):
         user = SimpleNamespace(role_assignments=[], person=SimpleNamespace(assignments=[]))

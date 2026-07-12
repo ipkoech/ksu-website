@@ -6,7 +6,7 @@ import uuid
 from typing import Any
 from datetime import date, datetime
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from .base import BaseReadSchema, BaseSchema, PhoneStr, SlugStr, UrlStr
 
@@ -68,6 +68,8 @@ class ClubUpdate(BaseSchema):
 
 
 class ClubActivityCreate(BaseSchema):
+    model_config = ConfigDict(extra="forbid")
+
     title: str = Field(min_length=1, max_length=255)
     slug: SlugStr | None = None
     description: str | None = None
@@ -78,11 +80,11 @@ class ClubActivityCreate(BaseSchema):
     is_virtual: bool = False
     meeting_link: UrlStr | None = None
     cover_image_id: uuid.UUID | None = None
-    status: str = Field(default="upcoming", max_length=32)
-    is_public: bool = True
 
 
 class ClubActivityUpdate(BaseSchema):
+    model_config = ConfigDict(extra="forbid")
+
     title: str | None = Field(default=None, min_length=1, max_length=255)
     slug: SlugStr | None = None
     description: str | None = None
@@ -93,8 +95,6 @@ class ClubActivityUpdate(BaseSchema):
     is_virtual: bool | None = None
     meeting_link: UrlStr | None = None
     cover_image_id: uuid.UUID | None = None
-    status: str | None = Field(default=None, max_length=32)
-    is_public: bool | None = None
 
 
 class ClubActivityRead(BaseReadSchema):

@@ -1336,7 +1336,7 @@ export interface ContentWorkflowQueueFilters extends Record<
   string | undefined
 > {
   source_portal?: string;
-  content_type?: "news" | "blogs" | "announcements" | "events";
+  content_type?: ContentWorkflowQueueItem["content_type"];
   status?: ContentWorkflowStatus;
   submitted_date?: string;
   scheduled_date?: string;
@@ -1345,7 +1345,16 @@ export interface ContentWorkflowQueueFilters extends Record<
 
 export interface ContentWorkflowQueueItem {
   id: string;
-  content_type: "news" | "blogs" | "announcements" | "events";
+  content_type:
+    | "news"
+    | "blogs"
+    | "announcements"
+    | "events"
+    | "club-events"
+    | "club-media"
+    | "page-sections"
+    | "partnership-spotlights"
+    | "sliders";
   content_type_label: string;
   title: string;
   summary?: string | null;
@@ -1360,6 +1369,7 @@ export interface ContentWorkflowQueueItem {
   publication_target: string;
   preview_path?: string | null;
   edit_path: string;
+  workflow_action_path: string;
   preview: {
     rich_text?: string | null;
     plain_text?: string | null;

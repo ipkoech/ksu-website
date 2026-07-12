@@ -69,6 +69,7 @@ export function ReviewQueue() {
   const canReview = hasScope("content.review") || hasScope("content.manage");
   const canPublish = hasScope("content.publish");
   const canManage = hasScope("content.manage");
+  const canEdit = canManage || hasScope("content.edit_submitted");
   const canAccess = canReview || canPublish || hasScope("homepage.manage");
 
   useEffect(() => {
@@ -193,6 +194,14 @@ export function ReviewQueue() {
                   { value: "blogs", label: "Blogs" },
                   { value: "announcements", label: "Announcements" },
                   { value: "events", label: "Events" },
+                  { value: "club-events", label: "Club events" },
+                  { value: "club-media", label: "Club media" },
+                  { value: "page-sections", label: "Page sections" },
+                  {
+                    value: "partnership-spotlights",
+                    label: "Partnership spotlights",
+                  },
+                  { value: "sliders", label: "Sliders" },
                 ]}
               />
               <FilterSelect
@@ -303,6 +312,7 @@ export function ReviewQueue() {
             canReview={canReview}
             canPublish={canPublish}
             canManage={canManage}
+            canEdit={canEdit}
             onCompleted={() =>
               queryClient.invalidateQueries({
                 queryKey: ["content-workflow", "queue"],
@@ -320,12 +330,14 @@ function ReviewDetail({
   canReview,
   canPublish,
   canManage,
+  canEdit,
   onCompleted,
 }: {
   item: ContentWorkflowQueueItem | null;
   canReview: boolean;
   canPublish: boolean;
   canManage: boolean;
+  canEdit: boolean;
   onCompleted: () => void;
 }) {
   const historyQuery = useQuery({
@@ -373,6 +385,7 @@ function ReviewDetail({
           canReview={canReview}
           canPublish={canPublish}
           canManage={canManage}
+          canEdit={canEdit}
           onCompleted={onCompleted}
         />
       </CardHeader>

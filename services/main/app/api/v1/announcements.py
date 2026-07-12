@@ -156,7 +156,13 @@ async def create_announcement(data: AnnouncementCreate, db: DbSession, user: Cur
         data.scope_id,
         resource_name="announcement",
     )
-    item = await AnnouncementService.create(db, **data.model_dump())
+    payload = ContentWorkflowService.authoring_create_payload(
+        data.model_dump(), actor_id=user.id,
+        **ContentWorkflowService.owner_metadata_for_scope(
+            data.scope_type, data.scope_id, is_main=data.is_main,
+        ),
+    )
+    item = await AnnouncementService.create(db, **payload)
     return success(data=item, message="Announcement created")
 
 
@@ -181,6 +187,12 @@ async def update_announcement(announcement_id: uuid.UUID, data: AnnouncementUpda
         payload.get("scope_type", item.scope_type),
         payload.get("scope_id", item.scope_id),
         resource_name="announcement",
+    )
+    current_status = item.workflow_status or item.status
+    if current_status in {"submitted", "in_review", "approved", "scheduled"}:
+        authorize_content_workflow_action(user, item, "edit", permissions_for_user(user))
+    await ContentWorkflowService.reset_after_authoring_edit(
+        db, item, "announcements", user.id, changed_fields=payload,
     )
     item = await AnnouncementService.update(db, item, **payload)
     return success(data=item, message="Announcement updated")

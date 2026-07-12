@@ -18,7 +18,7 @@ CONTENT_WORKFLOW_STATUSES = (
 )
 CONTENT_WORKFLOW_ACTIONS = (
     "submit", "start_review", "request_changes", "approve", "schedule",
-    "publish", "unpublish", "reject", "archive",
+    "publish", "unpublish", "reject", "archive", "edit_reset",
 )
 
 
@@ -51,7 +51,7 @@ class ContentWorkflowLog(Base):
         ),
         sa.CheckConstraint(
             "action IN ('submit', 'start_review', 'request_changes', 'approve', 'schedule', "
-            "'publish', 'unpublish', 'reject', 'archive')",
+            "'publish', 'unpublish', 'reject', 'archive', 'edit_reset')",
             name="ck_content_workflow_logs_action",
         ),
         sa.Index("ix_content_workflow_logs_content_created", "content_type", "content_id", "created_at"),

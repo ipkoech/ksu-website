@@ -13,7 +13,19 @@ from sqlalchemy.orm import selectinload
 from ksu_common.schemas.responses import success
 
 from ...deps import CurrentUser, DbSession, permissions_for_user
-from ...models import Announcement, Blog, ClubActivity, ContentWorkflowLog, Event, MediaLink, News, User
+from ...models import (
+    Announcement,
+    Blog,
+    ClubActivity,
+    ContentWorkflowLog,
+    Event,
+    MediaLink,
+    News,
+    PageSection,
+    PartnershipSpotlight,
+    Slider,
+    User,
+)
 from ...schemas.content_workflow import ContentWorkflowActionRequest
 from ...security.scopes import can_access_scope
 from ...services.content_workflow import ContentWorkflowService
@@ -27,7 +39,11 @@ CONTENT_MODELS = {
     "events": Event,
     "club-events": ClubActivity,
     "club-media": MediaLink,
+    "page-sections": PageSection,
+    "partnership-spotlights": PartnershipSpotlight,
+    "sliders": Slider,
 }
+CUSTOM_WORKFLOW_CONTENT_TYPES = {"page-sections", "partnership-spotlights"}
 REVIEW_ACTIONS = {"start_review", "request_changes", "approve", "reject"}
 PUBLISH_ACTIONS = {"schedule", "publish", "unpublish"}
 QUEUE_ACCESS_PERMISSIONS = {"content.review", "content.publish", "content.manage", "homepage.manage"}
@@ -50,6 +66,9 @@ CONTENT_TYPE_LABELS = {
     "events": "Event",
     "club-events": "Club Event",
     "club-media": "Club Media",
+    "page-sections": "Page Section",
+    "partnership-spotlights": "Partnership Spotlight",
+    "sliders": "Slider",
 }
 PREVIEW_PATH_PREFIXES = {
     "news": "/news",
@@ -64,6 +83,13 @@ EDIT_PATHS = {
     "events": "/content/events",
     "club-events": "/student-clubs/events",
     "club-media": "/cocms/review-queue",
+    "page-sections": "/page-cms/sections/{id}",
+    "partnership-spotlights": "/page-cms/spotlights",
+    "sliders": "/content/sliders/{id}",
+}
+WORKFLOW_ACTION_PATHS = {
+    "page-sections": "/api/v1/page-sections/{id}/{action}",
+    "partnership-spotlights": "/api/v1/partnership-spotlights/{id}/{action}",
 }
 
 
@@ -128,6 +154,8 @@ def build_content_workflow_queue_items(
             media = getattr(record, "media", None)
             title = (
                 getattr(record, "title", None)
+                or getattr(record, "headline", None)
+                or getattr(record, "section_key", None)
                 or getattr(media, "title", None)
                 or getattr(media, "original_filename", None)
                 or getattr(media, "filename", None)
@@ -152,7 +180,11 @@ def build_content_workflow_queue_items(
                 "content_type": item_type,
                 "content_type_label": CONTENT_TYPE_LABELS[item_type],
                 "title": title,
-                "summary": getattr(record, "summary", None) or getattr(record, "plain_text", None),
+                "summary": (
+                    getattr(record, "summary", None)
+                    or getattr(record, "description", None)
+                    or getattr(record, "plain_text", None)
+                ),
                 "status": workflow_status,
                 "source_portal": owner_portal or "main",
                 "source_label": source_label,
@@ -163,7 +195,11 @@ def build_content_workflow_queue_items(
                 "scheduled_publish_at": scheduled_publish_at,
                 "publication_target": source_label,
                 "preview_path": _preview_path(item_type, getattr(record, "slug", None)),
-                "edit_path": EDIT_PATHS[item_type],
+                "edit_path": EDIT_PATHS[item_type].format(id=record.id),
+                "workflow_action_path": WORKFLOW_ACTION_PATHS.get(
+                    item_type,
+                    f"/api/v1/content-workflow/{item_type}/{record.id}/{{action}}",
+                ).format(id=record.id, action="{action}"),
                 "preview": {
                     "rich_text": getattr(record, "rich_text", None),
                     "plain_text": getattr(record, "plain_text", None),
@@ -260,9 +296,12 @@ async def list_content_workflow_queue(
 def authorize_content_workflow_action(user, content, action: str, permissions: set[str]) -> None:
     owner_id = getattr(content, "author_user_id", None)
     if action == "edit":
-        if "content.manage" in permissions:
-            return
-        if content.status == "submitted" and "content.edit_submitted" in permissions:
+        workflow_status = getattr(content, "workflow_status", None) or content.status
+        if workflow_status in {"submitted", "in_review", "approved", "scheduled"}:
+            if {"content.edit_submitted", "content.manage", "admin:*"}.intersection(permissions):
+                return
+            raise HTTPException(status_code=403, detail="Submitted content requires review edit privileges")
+        if {"content.manage", "admin:*"}.intersection(permissions):
             return
         if owner_id == user.id and "content.edit" in permissions:
             return
@@ -328,6 +367,8 @@ async def run_content_workflow_action(
     db: DbSession,
     user: CurrentUser,
 ):
+    if content_type in CUSTOM_WORKFLOW_CONTENT_TYPES:
+        raise HTTPException(status_code=400, detail="Use the content-specific workflow endpoint")
     content = await _get_content_or_404(db, content_type, content_id)
     permissions = permissions_for_user(user)
     if content_type == "club-events":

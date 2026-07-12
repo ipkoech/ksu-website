@@ -111,18 +111,29 @@ async def get_blog(slug: str, db: DbSession, fields: FieldSelection = FieldsDep)
 
 @router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("content.manage_news"))])
 async def create_blog(data: BlogCreate, db: DbSession, user: CurrentUser):
-    payload = data.model_dump()
-    payload["author_user_id"] = user.id
+    payload = ContentWorkflowService.authoring_create_payload(
+        data.model_dump(), actor_id=user.id,
+        **ContentWorkflowService.owner_metadata_for_scope(
+            data.scope_type, data.scope_id, is_main=data.is_main,
+        ),
+    )
     item = await BlogService.create(db, **payload)
     return success(data=item, message="Blog created")
 
 
 @router.patch("/id/{blog_id}", dependencies=[Depends(require_scope("content.manage_news"))])
-async def update_blog(blog_id: uuid.UUID, data: BlogUpdate, db: DbSession, _: CurrentUser):
+async def update_blog(blog_id: uuid.UUID, data: BlogUpdate, db: DbSession, user: CurrentUser):
     item = await BlogService.get_by_id(db, blog_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Blog not found")
-    item = await BlogService.update(db, item, **data.model_dump(exclude_unset=True))
+    payload = data.model_dump(exclude_unset=True)
+    current_status = item.workflow_status or item.status
+    if current_status in {"submitted", "in_review", "approved", "scheduled"}:
+        authorize_content_workflow_action(user, item, "edit", permissions_for_user(user))
+    await ContentWorkflowService.reset_after_authoring_edit(
+        db, item, "blogs", user.id, changed_fields=payload,
+    )
+    item = await BlogService.update(db, item, **payload)
     return success(data=item, message="Blog updated")
 
 

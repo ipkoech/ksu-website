@@ -27,6 +27,7 @@ class _ScalarResult:
 class _AuthDb:
     def __init__(self, user):
         self._user = user
+        self.added = []
 
     async def execute(self, _statement):
         return _ScalarResult(self._user)
@@ -37,8 +38,8 @@ class _AuthDb:
     async def refresh(self, _record):
         return None
 
-    def add(self, _record):
-        return None
+    def add(self, record):
+        self.added.append(record)
 
 
 def _permission(name: str):
@@ -92,6 +93,82 @@ def _build_test_app(db) -> TestClient:
 
 
 class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
+    async def test_editing_published_section_resets_it_to_draft(self):
+        user = _user("page_sections.update")
+        db = _AuthDb(user)
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="published",
+            workflow_status="published",
+        )
+        section.id = uuid.uuid4()
+
+        with (
+            patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
+            patch("app.api.v1._scoped._can_access_scope", return_value=True),
+        ):
+            response = await page_cms.update_page_section(
+                section.id,
+                PageSectionUpdate(title="Revised hero"),
+                db=db,
+                user=user,
+            )
+
+        self.assertEqual("draft", response["data"].status)
+        self.assertEqual("draft", response["data"].workflow_status)
+        self.assertEqual("edit_reset", db.added[0].action)
+
+    async def test_page_section_transition_adds_workflow_log(self):
+        user = _user("page_sections.review")
+        db = _AuthDb(user)
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="in_review",
+            workflow_status="in_review",
+        )
+        section.id = uuid.uuid4()
+
+        with (
+            patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
+            patch("app.api.v1._scoped._can_access_scope", return_value=True),
+        ):
+            await page_cms.run_page_section_workflow_action(
+                section.id, "approve", db=db, user=user,
+            )
+
+        self.assertEqual(1, len(db.added))
+        self.assertEqual("page-sections", db.added[0].content_type)
+        self.assertEqual("approve", db.added[0].action)
+
+    async def test_spotlight_transition_adds_workflow_log(self):
+        user = _user("partnership_spotlights.manage")
+        db = _AuthDb(user)
+        spotlight = PartnershipSpotlight(
+            source_type="research_partner",
+            source_id=uuid.uuid4(),
+            headline="Research partnership",
+            status="draft",
+            workflow_status="draft",
+        )
+        spotlight.id = uuid.uuid4()
+
+        with patch.object(
+            page_cms, "_get_partnership_spotlight_or_404", AsyncMock(return_value=spotlight),
+        ):
+            await page_cms.run_partnership_spotlight_workflow_action(
+                spotlight.id, "submit", db=db, user=user,
+            )
+
+        self.assertEqual(1, len(db.added))
+        self.assertEqual("partnership-spotlights", db.added[0].content_type)
+        self.assertEqual("submit", db.added[0].action)
+
     def test_admin_requests_require_authentication(self):
         client = _build_test_app(_AuthDb(_user()))
 
@@ -251,6 +328,7 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
         )
         spotlight.id = uuid.uuid4()
         transition = AsyncMock(return_value=spotlight)
+        db = _AuthDb(user)
 
         with (
             patch.object(page_cms, "_get_partnership_spotlight_or_404", AsyncMock(return_value=spotlight)),
@@ -259,14 +337,14 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
             response = await page_cms.run_partnership_spotlight_workflow_action(
                 spotlight.id,
                 "submit",
-                db=_AuthDb(user),
+                db=db,
                 user=user,
             )
 
         self.assertEqual("success", response["status"])
-        transition.assert_awaited_once_with(spotlight, "submit", user.id)
+        transition.assert_awaited_once_with(spotlight, "submit", user.id, db=db)
 
-    async def test_partnership_spotlight_workflow_rejects_invalid_transition(self):
+    async def test_partnership_spotlight_author_cannot_publish(self):
         user = _user("partnership_spotlights.manage")
         spotlight = PartnershipSpotlight(
             source_type="research_partner",
@@ -279,11 +357,6 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch.object(page_cms, "_get_partnership_spotlight_or_404", AsyncMock(return_value=spotlight)),
-            patch.object(
-                page_cms.PartnershipSpotlightWorkflowService,
-                "transition",
-                AsyncMock(side_effect=ValueError("Invalid workflow transition: draft -> publish")),
-            ),
         ):
             with self.assertRaises(HTTPException) as context:
                 await page_cms.run_partnership_spotlight_workflow_action(
@@ -293,7 +366,35 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
                     user=user,
                 )
 
-        self.assertEqual(400, context.exception.status_code)
+        self.assertEqual(403, context.exception.status_code)
+
+    async def test_partnership_spotlight_publish_uses_cocms_publish_permission(self):
+        user = _user("content.publish")
+        spotlight = PartnershipSpotlight(
+            source_type="research_partner",
+            source_id=uuid.uuid4(),
+            primary_cta_source="manual",
+            headline="Approved spotlight",
+            status="approved",
+            workflow_status="approved",
+        )
+        spotlight.id = uuid.uuid4()
+        transition = AsyncMock(return_value=spotlight)
+        db = _AuthDb(user)
+
+        with (
+            patch.object(page_cms, "_get_partnership_spotlight_or_404", AsyncMock(return_value=spotlight)),
+            patch.object(page_cms.PartnershipSpotlightWorkflowService, "transition", transition),
+        ):
+            response = await page_cms.run_partnership_spotlight_workflow_action(
+                spotlight.id,
+                "publish",
+                db=db,
+                user=user,
+            )
+
+        self.assertEqual("success", response["status"])
+        transition.assert_awaited_once_with(spotlight, "publish", user.id, db=db)
 
     async def test_create_page_section_accepts_manage_permission_and_starts_in_draft(self):
         user = _user("page_sections.manage")

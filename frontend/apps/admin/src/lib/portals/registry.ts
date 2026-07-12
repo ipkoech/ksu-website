@@ -711,10 +711,9 @@ function commonContentPayload(values: PortalPayload, scopeType?: string) {
   return {
     title: values.title,
     slug: values.slug,
-    excerpt: values.excerpt,
-    content: values.content,
-    status: values.status || "draft",
-    is_published: values.is_published,
+    summary: values.excerpt,
+    plain_text: values.content,
+    rich_text: values.content,
     is_featured: values.is_featured,
     is_main: values.is_main ?? !scopeType,
     scope_type: scopeType ?? values.scope_type,
@@ -736,12 +735,6 @@ function contentFields(
     { name: "slug", label: "Slug", placeholder: "public-title" },
     { name: "excerpt", label: "Excerpt", type: "textarea" as const },
     { name: "content", label: "Content", type: "textarea" as const },
-    {
-      name: "status",
-      label: "Status",
-      type: "select" as const,
-      options: contentStatusOptions,
-    },
     ...(scopeType === "school"
       ? [
           {
@@ -778,7 +771,6 @@ function contentFields(
         allowClear: true,
       },
     },
-    { name: "is_published", label: "Published", type: "boolean" as const },
     { name: "is_featured", label: "Featured", type: "boolean" as const },
   ];
 }
@@ -870,7 +862,7 @@ function contentResource<TRecord extends PortalRecord>({
             {
               label: "Publish",
               successMessage: `${title} published`,
-              payload: () => ({ is_published: true, status: "published" }),
+              payload: {},
               run: () => publish(record.id),
               confirmTitle: `Publish ${title.toLowerCase()}?`,
               confirmDescription: `This will publish "${titleOf(record)}" to its public-facing portal surface.`,
@@ -879,7 +871,7 @@ function contentResource<TRecord extends PortalRecord>({
               label: "Unpublish",
               variant: "outline",
               successMessage: `${title} unpublished`,
-              payload: () => ({ is_published: false, status: "draft" }),
+              payload: {},
               run: () => unpublish(record.id),
               confirmTitle: `Unpublish ${title.toLowerCase()}?`,
               confirmDescription: `This will remove "${titleOf(record)}" from public visibility.`,
@@ -952,7 +944,7 @@ function administrationContentResource<TRecord extends PortalRecord>({
         label: record.is_published ? "Unpublish" : "Publish",
         variant: record.is_published ? "outline" : undefined,
         successMessage: record.is_published ? "Unpublished" : "Published",
-        payload: { is_published: !record.is_published },
+        payload: {},
         run: record.is_published
           ? (item) => api.unpublish(item.id)
           : (item) => api.publish(item.id),
@@ -2420,12 +2412,6 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       { name: "button_text", label: "Button Text" },
       { name: "button_url", label: "Button URL", type: "url" },
       { name: "link_url", label: "Link URL", type: "url" },
-      {
-        name: "status",
-        label: "Status",
-        type: "select",
-        options: contentStatusOptions,
-      },
       { name: "display_order", label: "Display Order", type: "number" },
       { name: "is_active", label: "Active", type: "boolean" },
     ],
@@ -2458,24 +2444,10 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     delete: (id) => slidersApi.deleteSlider(id),
     getRecordTitle: titleOf,
     getRecordMeta: (record) =>
-      metaOf(record, ["status", "display_order", "updated_at"]),
-    getRecordWorkflowActions: () => [
-      {
-        label: "Publish",
-        successMessage: "Slider item published",
-        payload: { status: "published", is_active: true },
-      },
-      {
-        label: "Archive",
-        variant: "outline",
-        successMessage: "Slider item archived",
-        payload: { status: "archived", is_active: false },
-      },
-    ],
+      metaOf(record, ["workflow_status", "display_order", "updated_at"]),
     emptyMessage: "No homepage slider items were returned.",
     buildPayload: (values) => ({
       ...values,
-      status: values.status || "draft",
       display_order: values.display_order ?? 0,
     }),
     viewScopes: ["marketing.view", "marketing.manage_sliders"],
@@ -3179,25 +3151,6 @@ const studentClubResources: Record<string, PortalResourceConfig<any, any>> = {
     getRecordTitle: (record) => record.name || "Club leader",
     getRecordMeta: (record) => metaOf(record, ["role", "title"]),
     emptyMessage: "No active leaders are assigned to this club.",
-    viewScopes: ["clubs.view", "clubs.manage_own", "admin:*"],
-    manageScopes: ["clubs.manage_own", "admin:*"],
-    canCreate: false,
-    canEdit: false,
-    canDelete: false,
-    portalScope: { idField: "club_id", allowedScopeTypes: ["club"] },
-  },
-  memberships: {
-    key: "memberships",
-    title: "Club Memberships",
-    description: "Membership records are not connected to the consolidated portal yet.",
-    backHref: "/student-clubs",
-    queryKey: ["student-clubs", "memberships"],
-    fields: [],
-    list: async () => ({ data: [] }),
-    create: async () => undefined,
-    update: async () => undefined,
-    getRecordTitle: () => "Membership",
-    emptyMessage: "Membership management is not available yet.",
     viewScopes: ["clubs.view", "clubs.manage_own", "admin:*"],
     manageScopes: ["clubs.manage_own", "admin:*"],
     canCreate: false,
@@ -6375,12 +6328,6 @@ export const portalConfigs: Record<string, PortalConfig> = {
         title: "Leaders",
         href: "/student-clubs/leaders",
         icon: UserCheck,
-        scope: ["clubs.view", "clubs.manage_own"],
-      },
-      {
-        title: "Memberships",
-        href: "/student-clubs/memberships",
-        icon: Users,
         scope: ["clubs.view", "clubs.manage_own"],
       },
     ],

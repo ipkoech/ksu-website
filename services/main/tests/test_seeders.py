@@ -377,6 +377,9 @@ class SeederDataTests(unittest.TestCase):
         self.assertTrue({"content.review", "media.manage", "homepage.manage"}.issubset(
             roles_by_name["cocms_admin"]["permission_names"]
         ))
+        self.assertTrue({"page_sections.review", "page_sections.publish"}.issubset(
+            roles_by_name["cocms_admin"]["permission_names"]
+        ))
         self.assertTrue({"clubs.manage_own", "clubs.content_submit"}.issubset(
             roles_by_name["student_clubs_admin"]["permission_names"]
         ))
@@ -414,6 +417,33 @@ class SeederDataTests(unittest.TestCase):
 
         self.assertIn("content_admin", RECONCILED_ROLE_NAMES)
         self.assertNotIn("admin:*", roles_by_name["content_admin"]["permission_names"])
+
+    def test_only_cocms_and_system_admin_roles_receive_content_publication_authority(self):
+        allowed_roles = {"super_admin", "admin", "cocms_admin", "content_admin"}
+        publication_permissions = {
+            "content.review",
+            "content.approve",
+            "content.publish",
+            "content.schedule",
+            "content.unpublish",
+        }
+
+        for spec in ROLE_SPECS:
+            elevated = publication_permissions.intersection(spec["permission_names"])
+            if spec["name"] not in allowed_roles:
+                self.assertEqual(set(), elevated, spec["name"])
+
+        formerly_privileged = {
+            "content_manager",
+            "library_admin",
+            "research_content_admin",
+            "research_content",
+            "sustainability_admin",
+            "research_sustainability",
+            "university_farm_admin",
+            "research_farm",
+        }
+        self.assertTrue(formerly_privileged.issubset(RECONCILED_ROLE_NAMES))
 
     def test_live_site_programme_department_relationship_overrides(self):
         expected_department_codes = {

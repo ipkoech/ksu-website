@@ -19,6 +19,7 @@ from ...schemas import (
     SectionItemUpdate,
 )
 from ...services import (
+    ContentWorkflowService,
     HomepageCompositionService,
     PageSectionService,
     PageSectionWorkflowService,
@@ -48,6 +49,36 @@ PAGE_SECTION_ADMIN_LIST_PERMISSIONS = (
     "research_homepage.manage",
     "library_homepage.manage",
 )
+
+
+def _require_page_authoring_edit(user: CurrentUser, record) -> None:
+    workflow_status = getattr(record, "workflow_status", None) or record.status
+    if workflow_status not in {"in_review", "approved"}:
+        return
+    if any(
+        user_has_scope(user, permission)
+        for permission in ("content.edit_submitted", "page_sections.review", "admin:*")
+    ):
+        return
+    raise HTTPException(status_code=403, detail="Submitted content requires review edit privileges")
+
+
+def _require_partnership_spotlight_workflow_action(user: CurrentUser, action: str) -> None:
+    if action == "submit":
+        allowed = ("partnership_spotlights.manage", "content.manage", "admin:*")
+    elif action in {"approve", "request_changes"}:
+        allowed = ("content.review", "content.manage", "admin:*")
+    elif action in {"publish", "unpublish"}:
+        allowed = ("content.publish", "content.manage", "admin:*")
+    elif action == "archive":
+        allowed = ("content.manage", "admin:*")
+    else:
+        allowed = ("partnership_spotlights.manage", "content.manage", "admin:*")
+    if any(user_has_scope(user, permission) for permission in allowed):
+        return
+    raise HTTPException(status_code=403, detail="Insufficient privileges")
+
+
 PAGE_SECTION_ADMIN_BROAD_ROW_ACTIONS = (
     "view",
     "create",
@@ -269,6 +300,15 @@ async def create_page_section(data: PageSectionCreate, db: DbSession, user: Curr
     item = PageSection(
         **payload,
         status="draft",
+        workflow_status="draft",
+        owner_portal={
+            "university": "cocms",
+            "school": "schools",
+            "research": "research",
+            "library": "library",
+        }[data.scope_type],
+        owner_scope_type=data.scope_type if data.scope_id is not None else None,
+        owner_scope_id=data.scope_id,
         created_by_id=user.id,
         updated_by_id=user.id,
     )
@@ -306,6 +346,10 @@ async def update_page_section(
         action="update",
     )
     payload["updated_by_id"] = user.id
+    _require_page_authoring_edit(user, item)
+    await ContentWorkflowService.reset_after_authoring_edit(
+        db, item, "page-sections", user.id, changed_fields=payload,
+    )
     apply_updates(item, **payload)
     await db.flush()
     await db.refresh(item)
@@ -327,6 +371,14 @@ async def create_section_item(
         scope_type=section.scope_type,
         scope_id=section.scope_id,
         action="item_manage",
+    )
+    _require_page_authoring_edit(user, section)
+    await ContentWorkflowService.reset_after_authoring_edit(
+        db,
+        section,
+        "page-sections",
+        user.id,
+        changed_fields={"section_item_create": data.model_dump(exclude={"page_section_id"})},
     )
     item = SectionItem(page_section_id=section.id, **data.model_dump(exclude={"page_section_id"}))
     db.add(item)
@@ -351,7 +403,7 @@ async def run_page_section_workflow_action(
         scope_id=item.scope_id,
         action=_workflow_action_scope(action),
     )
-    item = await PageSectionWorkflowService.transition(item, action, user.id)
+    item = await PageSectionWorkflowService.transition(item, action, user.id, db=db)
     await db.flush()
     await db.refresh(item)
     return success(data=item, message="Page section updated")
@@ -375,6 +427,7 @@ async def update_section_item(
         action="item_manage",
     )
     payload = data.model_dump(exclude_unset=True)
+    _require_page_authoring_edit(user, section)
     next_section_id = payload.pop("page_section_id", item.page_section_id)
     if next_section_id != item.page_section_id:
         next_section = await _get_page_section_or_404(db, next_section_id)
@@ -386,7 +439,22 @@ async def update_section_item(
             scope_id=next_section.scope_id,
             action="item_manage",
         )
+        _require_page_authoring_edit(user, next_section)
+        await ContentWorkflowService.reset_after_authoring_edit(
+            db,
+            next_section,
+            "page-sections",
+            user.id,
+            changed_fields={"section_item_move": str(item.id)},
+        )
         item.page_section_id = next_section_id
+    await ContentWorkflowService.reset_after_authoring_edit(
+        db,
+        section,
+        "page-sections",
+        user.id,
+        changed_fields={"section_item_update": payload},
+    )
     apply_updates(item, **payload)
     await db.flush()
     await db.refresh(item)
@@ -403,8 +471,12 @@ async def create_partnership_spotlight(
     db: DbSession,
     user: CurrentUser,
 ):
-    del user
-    item = PartnershipSpotlight(**data.model_dump(), status="draft")
+    item = PartnershipSpotlight(
+        **data.model_dump(),
+        status="draft",
+        workflow_status="draft",
+        owner_portal="cocms",
+    )
     db.add(item)
     await db.flush()
     await db.refresh(item)
@@ -421,9 +493,13 @@ async def update_partnership_spotlight(
     db: DbSession,
     user: CurrentUser,
 ):
-    del user
     item = await _get_partnership_spotlight_or_404(db, spotlight_id)
-    apply_updates(item, **data.model_dump(exclude_unset=True))
+    _require_page_authoring_edit(user, item)
+    payload = data.model_dump(exclude_unset=True)
+    await ContentWorkflowService.reset_after_authoring_edit(
+        db, item, "partnership-spotlights", user.id, changed_fields=payload,
+    )
+    apply_updates(item, **payload)
     await db.flush()
     await db.refresh(item)
     return success(data=item, message="Partnership spotlight updated")
@@ -431,7 +507,6 @@ async def update_partnership_spotlight(
 
 @router.post(
     "/partnership-spotlights/{spotlight_id}/{action}",
-    dependencies=[Depends(PARTNERSHIP_SPOTLIGHT_MANAGE_SCOPE)],
 )
 async def run_partnership_spotlight_workflow_action(
     spotlight_id: uuid.UUID,
@@ -440,8 +515,9 @@ async def run_partnership_spotlight_workflow_action(
     user: CurrentUser,
 ):
     item = await _get_partnership_spotlight_or_404(db, spotlight_id)
+    _require_partnership_spotlight_workflow_action(user, action)
     try:
-        item = await PartnershipSpotlightWorkflowService.transition(item, action, user.id)
+        item = await PartnershipSpotlightWorkflowService.transition(item, action, user.id, db=db)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     await db.flush()

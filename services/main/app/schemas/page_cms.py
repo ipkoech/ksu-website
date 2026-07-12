@@ -134,16 +134,8 @@ class PageSectionCreate(BaseSchema):
     display_order: int = 100
     is_enabled: bool = True
     layout_variant: str = Field(default=PAGE_SECTION_LAYOUT_VARIANTS[0], max_length=64)
-    workflow_status: str = Field(default=PAGE_SECTION_STATUSES[0], max_length=32)
-    owner_portal: str | None = Field(default=None, max_length=64)
-    owner_scope_type: str | None = Field(default=None, max_length=32)
-    owner_scope_id: uuid.UUID | None = None
     valid_from: datetime | None = None
     valid_to: datetime | None = None
-    scheduled_publish_at: datetime | None = None
-    expires_at: datetime | None = None
-    rejection_reason: str | None = None
-    revision_notes: str | None = None
     items: list[SectionItemCreate] = Field(default_factory=list)
 
     @field_validator("scope_type")
@@ -184,16 +176,8 @@ class PageSectionUpdate(BaseSchema):
     display_order: int | None = None
     is_enabled: bool | None = None
     layout_variant: str | None = Field(default=None, max_length=64)
-    workflow_status: str | None = Field(default=None, max_length=32)
-    owner_portal: str | None = Field(default=None, max_length=64)
-    owner_scope_type: str | None = Field(default=None, max_length=32)
-    owner_scope_id: uuid.UUID | None = None
     valid_from: datetime | None = None
     valid_to: datetime | None = None
-    scheduled_publish_at: datetime | None = None
-    expires_at: datetime | None = None
-    rejection_reason: str | None = None
-    revision_notes: str | None = None
     items: list[SectionItemUpdate] | None = None
 
     @field_validator("scope_type")
@@ -275,16 +259,8 @@ class PartnershipSpotlightCreate(BaseSchema):
     pillars: list[dict[str, Any]] | None = None
     opportunities: list[dict[str, Any]] | None = None
     is_enabled: bool = True
-    workflow_status: str = Field(default=PAGE_SECTION_STATUSES[0], max_length=32)
-    owner_portal: str | None = Field(default=None, max_length=64)
-    owner_scope_type: str | None = Field(default=None, max_length=32)
-    owner_scope_id: uuid.UUID | None = None
     valid_from: datetime | None = None
     valid_to: datetime | None = None
-    scheduled_publish_at: datetime | None = None
-    expires_at: datetime | None = None
-    rejection_reason: str | None = None
-    revision_notes: str | None = None
 
     @field_validator("source_type")
     @classmethod
@@ -328,16 +304,8 @@ class PartnershipSpotlightUpdate(BaseSchema):
     pillars: list[dict[str, Any]] | None = None
     opportunities: list[dict[str, Any]] | None = None
     is_enabled: bool | None = None
-    workflow_status: str | None = Field(default=None, max_length=32)
-    owner_portal: str | None = Field(default=None, max_length=64)
-    owner_scope_type: str | None = Field(default=None, max_length=32)
-    owner_scope_id: uuid.UUID | None = None
     valid_from: datetime | None = None
     valid_to: datetime | None = None
-    scheduled_publish_at: datetime | None = None
-    expires_at: datetime | None = None
-    rejection_reason: str | None = None
-    revision_notes: str | None = None
 
     @field_validator("source_type")
     @classmethod

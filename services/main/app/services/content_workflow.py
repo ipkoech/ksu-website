@@ -31,6 +31,98 @@ ALLOWED_TRANSITIONS = {
 class ContentWorkflowService:
     """Transition content that exposes the shared publication status fields."""
 
+    @staticmethod
+    def owner_metadata_for_scope(
+        scope_type: str | None,
+        scope_id: uuid.UUID | None,
+        *,
+        is_main: bool = False,
+    ) -> dict[str, Any]:
+        portal_by_scope = {
+            "school": "schools",
+            "department": "departments",
+            "research": "research",
+            "research-project": "research",
+            "library": "library",
+            "club": "student-clubs",
+        }
+        owner_portal = "main" if is_main else portal_by_scope.get(scope_type, scope_type or "main")
+        return {
+            "owner_portal": owner_portal,
+            "owner_scope_type": scope_type if scope_id is not None else None,
+            "owner_scope_id": scope_id,
+        }
+
+    @staticmethod
+    def authoring_create_payload(
+        payload: dict[str, Any],
+        *,
+        actor_id: uuid.UUID,
+        owner_portal: str,
+        owner_scope_type: str | None,
+        owner_scope_id: uuid.UUID | None,
+    ) -> dict[str, Any]:
+        """Apply server-owned initial workflow metadata to authored content."""
+        return {
+            **payload,
+            "status": "draft",
+            "workflow_status": "draft",
+            "is_public": False,
+            "is_published": False,
+            "author_user_id": actor_id,
+            "owner_portal": owner_portal,
+            "owner_scope_type": owner_scope_type,
+            "owner_scope_id": owner_scope_id,
+        }
+
+    @classmethod
+    async def reset_after_authoring_edit(
+        cls,
+        db: AsyncSession,
+        content: Any,
+        content_type: str,
+        actor_id: uuid.UUID,
+        *,
+        changed_fields: dict[str, Any] | None = None,
+    ) -> bool:
+        """Demote reviewed or public content so edits require a fresh review."""
+        from_status = getattr(content, "workflow_status", None) or getattr(content, "status", "draft")
+        if from_status == "draft":
+            return False
+
+        content.status = "draft"
+        content.workflow_status = "draft"
+        for field, value in (
+            ("is_public", False),
+            ("is_published", False),
+            ("submitted_by_id", None),
+            ("submitted_at", None),
+            ("reviewed_by_id", None),
+            ("reviewed_at", None),
+            ("approved_by_id", None),
+            ("approved_at", None),
+            ("published_by_id", None),
+            ("published_at", None),
+            ("scheduled_publish_at", None),
+            ("unpublished_by_id", None),
+            ("unpublished_at", None),
+            ("rejection_reason", None),
+            ("revision_notes", None),
+        ):
+            if hasattr(content, field):
+                setattr(content, field, value)
+
+        db.add(ContentWorkflowLog(
+            content_type=content_type,
+            content_id=content.id,
+            from_status=from_status,
+            to_status="draft",
+            action="edit_reset",
+            actor_id=actor_id,
+            changed_fields=changed_fields,
+        ))
+        return True
+
     @classmethod
     async def transition(
         cls,
@@ -50,6 +142,16 @@ class ContentWorkflowService:
             raise ValueError(f"Invalid workflow transition: {from_status} -> {action}")
 
         now = datetime.now(timezone.utc)
+        if action == "schedule":
+            if scheduled_for is None:
+                raise ValueError("scheduled_for is required when scheduling content")
+            comparable_schedule = scheduled_for
+            if comparable_schedule.tzinfo is None:
+                comparable_schedule = comparable_schedule.replace(tzinfo=timezone.utc)
+            if comparable_schedule <= now:
+                raise ValueError("scheduled_for must be in the future")
+            scheduled_for = comparable_schedule
+
         content.status = to_status
         content.workflow_status = to_status
         if hasattr(content, "updated_at"):
@@ -67,7 +169,7 @@ class ContentWorkflowService:
             content.approved_at = now
         elif action == "reject":
             content.rejection_reason = comments
-        if action == "schedule" and scheduled_for is not None:
+        if action == "schedule":
             content.scheduled_publish_at = scheduled_for
             if hasattr(content, "valid_from"):
                 content.valid_from = scheduled_for
@@ -78,6 +180,8 @@ class ContentWorkflowService:
             content.published_by_id = actor_id
         elif action == "unpublish":
             content.is_published = False
+            if hasattr(content, "is_public"):
+                content.is_public = False
             content.unpublished_by_id = actor_id
             content.unpublished_at = now
         elif action == "archive":

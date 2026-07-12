@@ -6,29 +6,19 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from pydantic import Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
 from .base import BaseReadSchema, BaseSchema, SlugStr
 
 
 class ScopedContentCreate(BaseSchema):
+    model_config = ConfigDict(extra="forbid")
+
     scope_type: str | None = Field(default=None, max_length=32)
     scope_id: uuid.UUID | None = None
     is_main: bool = False
-    is_public: bool = True
-    is_published: bool = False
-    published_at: datetime | None = None
     valid_from: datetime | None = None
     valid_to: datetime | None = None
-    status: str = Field(default="draft", max_length=32)
-    workflow_status: str = Field(default="draft", max_length=32)
-    owner_portal: str | None = Field(default=None, max_length=64)
-    owner_scope_type: str | None = Field(default=None, max_length=32)
-    owner_scope_id: uuid.UUID | None = None
-    scheduled_publish_at: datetime | None = None
-    expires_at: datetime | None = None
-    rejection_reason: str | None = None
-    revision_notes: str | None = None
     display_order: int = 100
 
     @model_validator(mode="after")
@@ -87,13 +77,14 @@ class RichContentCreate(ScopedContentCreate):
     structured_content: dict[str, Any] | None = None
     related_links: list[dict[str, Any]] | None = None
     featured_media_id: uuid.UUID | None = None
-    author_user_id: uuid.UUID | None = None
     meta_title: str | None = Field(default=None, max_length=255)
     meta_description: str | None = Field(default=None, max_length=500)
     keywords: dict[str, Any] | None = None
 
 
 class RichContentUpdate(BaseSchema):
+    model_config = ConfigDict(extra="forbid")
+
     title: str | None = Field(default=None, min_length=1, max_length=255)
     slug: SlugStr | None = None
     summary: str | None = None
@@ -102,25 +93,11 @@ class RichContentUpdate(BaseSchema):
     structured_content: dict[str, Any] | None = None
     related_links: list[dict[str, Any]] | None = None
     featured_media_id: uuid.UUID | None = None
-    author_user_id: uuid.UUID | None = None
     scope_type: str | None = Field(default=None, max_length=32)
     scope_id: uuid.UUID | None = None
     is_main: bool | None = None
-    is_public: bool | None = None
-    is_published: bool | None = None
-    published_at: datetime | None = None
     valid_from: datetime | None = None
     valid_to: datetime | None = None
-    archived_at: datetime | None = None
-    status: str | None = Field(default=None, max_length=32)
-    workflow_status: str | None = Field(default=None, max_length=32)
-    owner_portal: str | None = Field(default=None, max_length=64)
-    owner_scope_type: str | None = Field(default=None, max_length=32)
-    owner_scope_id: uuid.UUID | None = None
-    scheduled_publish_at: datetime | None = None
-    expires_at: datetime | None = None
-    rejection_reason: str | None = None
-    revision_notes: str | None = None
     display_order: int | None = None
     meta_title: str | None = Field(default=None, max_length=255)
     meta_description: str | None = Field(default=None, max_length=500)
@@ -131,6 +108,7 @@ class RichContentUpdate(BaseSchema):
         if self.valid_from and self.valid_to and self.valid_to < self.valid_from:
             raise ValueError("valid_to must be greater than or equal to valid_from")
         return self
+
 
 
 class RichContentRead(ScopedContentRead):
@@ -218,7 +196,6 @@ class EventCreate(ScopedContentCreate):
     meeting_link: str | None = Field(default=None, max_length=512)
     is_featured: bool = False
     featured_media_id: uuid.UUID | None = None
-    author_user_id: uuid.UUID | None = None
     related_links: list[dict[str, Any]] | None = None
     meta_title: str | None = Field(default=None, max_length=255)
     meta_description: str | None = Field(default=None, max_length=500)
@@ -226,6 +203,8 @@ class EventCreate(ScopedContentCreate):
 
 
 class EventUpdate(BaseSchema):
+    model_config = ConfigDict(extra="forbid")
+
     title: str | None = Field(default=None, min_length=1, max_length=255)
     slug: SlugStr | None = None
     summary: str | None = None
@@ -239,26 +218,12 @@ class EventUpdate(BaseSchema):
     meeting_link: str | None = Field(default=None, max_length=512)
     is_featured: bool | None = None
     featured_media_id: uuid.UUID | None = None
-    author_user_id: uuid.UUID | None = None
     related_links: list[dict[str, Any]] | None = None
     scope_type: str | None = Field(default=None, max_length=32)
     scope_id: uuid.UUID | None = None
     is_main: bool | None = None
-    is_public: bool | None = None
-    is_published: bool | None = None
-    published_at: datetime | None = None
     valid_from: datetime | None = None
     valid_to: datetime | None = None
-    archived_at: datetime | None = None
-    status: str | None = Field(default=None, max_length=32)
-    workflow_status: str | None = Field(default=None, max_length=32)
-    owner_portal: str | None = Field(default=None, max_length=64)
-    owner_scope_type: str | None = Field(default=None, max_length=32)
-    owner_scope_id: uuid.UUID | None = None
-    scheduled_publish_at: datetime | None = None
-    expires_at: datetime | None = None
-    rejection_reason: str | None = None
-    revision_notes: str | None = None
     display_order: int | None = None
     meta_title: str | None = Field(default=None, max_length=255)
     meta_description: str | None = Field(default=None, max_length=500)
@@ -269,6 +234,7 @@ class EventUpdate(BaseSchema):
         if self.valid_from and self.valid_to and self.valid_to < self.valid_from:
             raise ValueError("valid_to must be greater than or equal to valid_from")
         return self
+
 
 
 class EventRead(ScopedContentRead):
@@ -349,6 +315,8 @@ class SliderGroupRead(BaseReadSchema):
 
 
 class SliderCreate(BaseSchema):
+    model_config = ConfigDict(extra="forbid")
+
     slider_group_id: uuid.UUID | None = None
     title: str = Field(min_length=1, max_length=255)
     subtitle: str | None = Field(default=None, max_length=255)
@@ -363,19 +331,9 @@ class SliderCreate(BaseSchema):
     scope_type: str | None = Field(default=None, max_length=32)
     scope_id: uuid.UUID | None = None
     is_main: bool = False
-    is_public: bool = True
     is_active: bool = True
     start_datetime: datetime | None = None
     end_datetime: datetime | None = None
-    archived_at: datetime | None = None
-    workflow_status: str = Field(default="draft", max_length=32)
-    owner_portal: str | None = Field(default=None, max_length=64)
-    owner_scope_type: str | None = Field(default=None, max_length=32)
-    owner_scope_id: uuid.UUID | None = None
-    scheduled_publish_at: datetime | None = None
-    expires_at: datetime | None = None
-    rejection_reason: str | None = None
-    revision_notes: str | None = None
     display_order: int = 100
 
     @model_validator(mode="after")
@@ -386,6 +344,8 @@ class SliderCreate(BaseSchema):
 
 
 class SliderUpdate(BaseSchema):
+    model_config = ConfigDict(extra="forbid")
+
     slider_group_id: uuid.UUID | None = None
     title: str | None = Field(default=None, min_length=1, max_length=255)
     subtitle: str | None = Field(default=None, max_length=255)
@@ -400,19 +360,9 @@ class SliderUpdate(BaseSchema):
     scope_type: str | None = Field(default=None, max_length=32)
     scope_id: uuid.UUID | None = None
     is_main: bool | None = None
-    is_public: bool | None = None
     is_active: bool | None = None
     start_datetime: datetime | None = None
     end_datetime: datetime | None = None
-    archived_at: datetime | None = None
-    workflow_status: str | None = Field(default=None, max_length=32)
-    owner_portal: str | None = Field(default=None, max_length=64)
-    owner_scope_type: str | None = Field(default=None, max_length=32)
-    owner_scope_id: uuid.UUID | None = None
-    scheduled_publish_at: datetime | None = None
-    expires_at: datetime | None = None
-    rejection_reason: str | None = None
-    revision_notes: str | None = None
     display_order: int | None = None
 
     @model_validator(mode="after")

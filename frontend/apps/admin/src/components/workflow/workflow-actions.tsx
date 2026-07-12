@@ -93,12 +93,14 @@ export function WorkflowActions({
   canReview,
   canPublish,
   canManage,
+  canEdit,
   onCompleted,
 }: {
   item: ContentWorkflowQueueItem;
   canReview: boolean;
   canPublish: boolean;
   canManage: boolean;
+  canEdit: boolean;
   onCompleted: () => void;
 }) {
   const [pendingAction, setPendingAction] =
@@ -113,7 +115,7 @@ export function WorkflowActions({
       action: ContentWorkflowAction;
       payload?: Record<string, unknown>;
     }) =>
-      contentWorkflowApi.action(item.content_type, item.id, action, payload),
+      contentWorkflowApi.action(item, action, payload),
     onSuccess: (_, variables) => {
       toast.success(`${actionLabel(variables.action)} completed`);
       setPendingAction(null);
@@ -124,13 +126,23 @@ export function WorkflowActions({
     onError: () => toast.error("Workflow action could not be completed"),
   });
 
+  const usesPageCmsWorkflow =
+    item.content_type === "page-sections" ||
+    item.content_type === "partnership-spotlights";
   const permittedActions = (workflowActionsByStatus[item.status] ?? []).filter(
-    (definition) =>
-      definition.action === "publish" ||
-      definition.action === "schedule" ||
-      definition.action === "unpublish"
+    (definition) => {
+      if (
+        usesPageCmsWorkflow &&
+        (definition.action === "schedule" || definition.action === "reject")
+      ) {
+        return false;
+      }
+      return definition.action === "publish" ||
+        definition.action === "schedule" ||
+        definition.action === "unpublish"
         ? canPublish
-        : canReview,
+        : canReview;
+    },
   );
   const canArchive = canManage && item.status !== "archived";
 
@@ -158,7 +170,7 @@ export function WorkflowActions({
   return (
     <>
       <div className="flex flex-wrap gap-2">
-        {canManage ? (
+        {canEdit ? (
           <Button asChild size="sm" variant="outline">
             <Link href={item.edit_path}>
               <FilePenLine />

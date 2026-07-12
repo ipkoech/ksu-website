@@ -70,6 +70,17 @@ class PageCmsSchemaTests(unittest.TestCase):
                 published_by_id=uuid.uuid4(),
             )
 
+        with self.assertRaises(ValidationError):
+            PageSectionCreate(
+                page_key="homepage",
+                scope_type="university",
+                section_key="hero",
+                layout_variant=PAGE_SECTION_LAYOUT_VARIANTS[0],
+                workflow_status="published",
+                owner_portal="cocms",
+                scheduled_publish_at=_utc_now(),
+            )
+
     def test_page_section_create_rejects_audit_actor_fields(self):
         with self.assertRaises(ValidationError):
             PageSectionCreate(
@@ -90,6 +101,16 @@ class PageCmsSchemaTests(unittest.TestCase):
                 approved_by_id=uuid.uuid4(),
                 published_by_id=uuid.uuid4(),
             )
+
+        with self.assertRaises(ValidationError):
+            PageSectionUpdate(
+                workflow_status="published",
+                owner_scope_type="school",
+                rejection_reason="bypass",
+            )
+
+        with self.assertRaises(ValidationError):
+            PageSectionUpdate(expires_at=_utc_now())
 
     def test_page_section_update_rejects_audit_actor_fields(self):
         with self.assertRaises(ValidationError):
@@ -202,12 +223,26 @@ class PageCmsSchemaTests(unittest.TestCase):
                 published_at=_utc_now(),
             )
 
+        with self.assertRaises(ValidationError):
+            PartnershipSpotlightCreate(
+                source_id=uuid.uuid4(),
+                headline="Collaborative research in health systems",
+                workflow_status="published",
+                owner_portal="cocms",
+            )
+
     def test_partnership_spotlight_update_rejects_lifecycle_fields(self):
         with self.assertRaises(ValidationError):
             PartnershipSpotlightUpdate(
                 status="approved",
                 approved_at=_utc_now(),
                 published_at=_utc_now(),
+            )
+
+        with self.assertRaises(ValidationError):
+            PartnershipSpotlightUpdate(
+                workflow_status="published",
+                scheduled_publish_at=_utc_now(),
             )
 
     def test_partnership_spotlight_create_rejects_primary_cta_url_without_supported_prefix(self):

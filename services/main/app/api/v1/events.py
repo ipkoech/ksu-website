@@ -251,7 +251,13 @@ async def create_event(data: EventCreate, db: DbSession, user: CurrentUser):
         data.scope_id,
         resource_name="event",
     )
-    item = await EventService.create(db, **data.model_dump())
+    payload = ContentWorkflowService.authoring_create_payload(
+        data.model_dump(), actor_id=user.id,
+        **ContentWorkflowService.owner_metadata_for_scope(
+            data.scope_type, data.scope_id, is_main=data.is_main,
+        ),
+    )
+    item = await EventService.create(db, **payload)
     return success(data=item, message="Event created")
 
 
@@ -276,6 +282,12 @@ async def update_event(event_id: uuid.UUID, data: EventUpdate, db: DbSession, us
         payload.get("scope_type", item.scope_type),
         payload.get("scope_id", item.scope_id),
         resource_name="event",
+    )
+    current_status = item.workflow_status or item.status
+    if current_status in {"submitted", "in_review", "approved", "scheduled"}:
+        authorize_content_workflow_action(user, item, "edit", permissions_for_user(user))
+    await ContentWorkflowService.reset_after_authoring_edit(
+        db, item, "events", user.id, changed_fields=payload,
     )
     item = await EventService.update(db, item, **payload)
     return success(data=item, message="Event updated")

@@ -10,9 +10,9 @@ from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
-from .content_workflow import authorize_cocms_workflow_permission, authorize_content_workflow_action
+from .content_workflow import authorize_content_workflow_action
 from ...deps import CurrentUser, DbSession, permissions_for_user, require_scope
-from ...models import Announcement, Blog, Club, ClubActivity
+from ...models import Club, ClubActivity
 from ...schemas import (
     AnnouncementCreate,
     AnnouncementUpdate,
@@ -286,8 +286,12 @@ async def update_club_activity(activity_id: uuid.UUID, data: ClubActivityUpdate,
         raise HTTPException(status_code=404, detail="Club event not found")
     await require_club_scope(db, user, item.club_id, CLUB_EVENT_PERMISSIONS, resource_name="club event")
     payload = data.model_dump(exclude_unset=True)
-    payload.pop("is_public", None)
-    payload.pop("status", None)
+    current_status = item.workflow_status or item.status
+    if current_status in {"submitted", "in_review", "approved", "scheduled"}:
+        authorize_content_workflow_action(user, item, "edit", permissions_for_user(user))
+    await ContentWorkflowService.reset_after_authoring_edit(
+        db, item, "club-events", user.id, changed_fields=payload,
+    )
     item = await ClubService.update_activity(db, item, **payload)
     return success(data=item, message="Club event updated")
 
@@ -342,7 +346,14 @@ async def update_club_story(story_id: uuid.UUID, data: BlogUpdate, db: DbSession
     if item is None or item.scope_type != "club" or item.scope_id is None:
         raise HTTPException(status_code=404, detail="Club story not found")
     await require_club_scope(db, user, item.scope_id, CLUB_STORY_PERMISSIONS, resource_name="club story")
-    item = await BlogService.update(db, item, **_club_content_update_payload(data))
+    payload = _club_content_update_payload(data)
+    current_status = item.workflow_status or item.status
+    if current_status in {"submitted", "in_review", "approved", "scheduled"}:
+        authorize_content_workflow_action(user, item, "edit", permissions_for_user(user))
+    await ContentWorkflowService.reset_after_authoring_edit(
+        db, item, "blogs", user.id, changed_fields=payload,
+    )
+    item = await BlogService.update(db, item, **payload)
     return success(data=item, message="Club story updated")
 
 
@@ -396,7 +407,14 @@ async def update_club_announcement(announcement_id: uuid.UUID, data: Announcemen
     if item is None or item.scope_type != "club" or item.scope_id is None:
         raise HTTPException(status_code=404, detail="Club announcement not found")
     await require_club_scope(db, user, item.scope_id, CLUB_STORY_PERMISSIONS, resource_name="club announcement")
-    item = await AnnouncementService.update(db, item, **_club_content_update_payload(data))
+    payload = _club_content_update_payload(data)
+    current_status = item.workflow_status or item.status
+    if current_status in {"submitted", "in_review", "approved", "scheduled"}:
+        authorize_content_workflow_action(user, item, "edit", permissions_for_user(user))
+    await ContentWorkflowService.reset_after_authoring_edit(
+        db, item, "announcements", user.id, changed_fields=payload,
+    )
+    item = await AnnouncementService.update(db, item, **payload)
     return success(data=item, message="Club announcement updated")
 
 
@@ -500,7 +518,16 @@ async def update_club_media(link_id: uuid.UUID, club_id: uuid.UUID, data: ClubMe
     link = await MediaService.get_link_by_id(db, link_id)
     if link is None or link.entity_type != "club" or link.entity_id != club_id:
         raise HTTPException(status_code=404, detail="Club media not found")
-    link = await MediaService.update_link(db, link, **data.model_dump(exclude_unset=True))
+    payload = data.model_dump(exclude_unset=True)
+    current_status = link.workflow_status or link.status
+    if current_status in {"submitted", "in_review", "approved", "scheduled"}:
+        authorize_content_workflow_action(user, link, "edit", permissions_for_user(user))
+    await ContentWorkflowService.reset_after_authoring_edit(
+        db, link, "club-media", user.id, changed_fields=payload,
+    )
+    if link.media is not None:
+        link.media.is_public = False
+    link = await MediaService.update_link(db, link, **payload)
     return success(data=MediaService.serialize_link(link), message="Club media updated")
 
 

@@ -4,8 +4,11 @@ from app.services.stats import PORTAL_STAT_CONTRACTS, portal_stats
 
 
 class _CountResult:
+    def __init__(self, value=0):
+        self.value = value
+
     def scalar_one(self):
-        return 0
+        return self.value
 
 
 class _FakeDb:
@@ -13,7 +16,43 @@ class _FakeDb:
         return _CountResult()
 
 
+class _WorkflowCountDb:
+    def __init__(self):
+        self.pending_tables = []
+
+    async def execute(self, statement):
+        compiled = statement.compile()
+        values = {
+            value
+            for parameter in compiled.params.values()
+            for value in (parameter if isinstance(parameter, (list, tuple)) else [parameter])
+        }
+        if {"submitted", "in_review"}.issubset(values):
+            self.pending_tables.append(str(statement).lower())
+            return _CountResult(1)
+        return _CountResult()
+
+
 class PortalStatsTests(unittest.IsolatedAsyncioTestCase):
+    async def test_cocms_pending_review_counts_all_emitted_queue_states_and_club_content(self):
+        db = _WorkflowCountDb()
+
+        result = await portal_stats(db, "cocms")
+
+        self.assertEqual(9, result.stats["pending_review_count"])
+        pending_sql = "\n".join(db.pending_tables)
+        for table in (
+            "news",
+            "blogs",
+            "events",
+            "announcements",
+            "club_activities",
+            "media_links",
+            "page_sections",
+            "partnership_spotlights",
+            "sliders",
+        ):
+            self.assertIn(table, pending_sql)
     async def test_main_portal_stats_expose_exact_dashboard_values(self):
         expected_keys = {
             "admin": {

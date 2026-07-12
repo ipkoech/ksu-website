@@ -13,7 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from ksu_common import PaginatedResult
 
-from ..models import Media, MediaLink, PageSection, PartnershipSpotlight
+from ..models import ContentWorkflowLog, Media, MediaLink, PageSection, PartnershipSpotlight
 from ._base import ilike_any, paginate_query
 from .research_partners import ResearchPartnersProxyService
 
@@ -467,7 +467,15 @@ class PageSectionWorkflowService:
     """Apply the approved editorial workflow map to page sections."""
 
     @staticmethod
-    async def transition(section: PageSection, action: str, user_id: uuid.UUID, note: str | None = None) -> PageSection:
+    async def transition(
+        section: PageSection,
+        action: str,
+        user_id: uuid.UUID,
+        note: str | None = None,
+        *,
+        db: AsyncSession | None = None,
+    ) -> PageSection:
+        previous_status = section.status
         transitions = ALLOWED_TRANSITIONS.get(section.status, set())
         next_status = transitions.get(action) if isinstance(transitions, dict) else None
         if next_status is None:
@@ -500,6 +508,17 @@ class PageSectionWorkflowService:
             section.unpublished_by_id = user_id
             section.unpublished_at = now
 
+        if db is not None:
+            db.add(ContentWorkflowLog(
+                content_type="page-sections",
+                content_id=section.id,
+                from_status=previous_status,
+                to_status=next_status,
+                action=action,
+                actor_id=user_id,
+                comments=note,
+            ))
+
         return section
 
 
@@ -512,7 +531,10 @@ class PartnershipSpotlightWorkflowService:
         action: str,
         user_id: uuid.UUID,
         note: str | None = None,
+        *,
+        db: AsyncSession | None = None,
     ) -> PartnershipSpotlight:
+        previous_status = spotlight.status
         transitions = ALLOWED_TRANSITIONS.get(spotlight.status, set())
         next_status = transitions.get(action) if isinstance(transitions, dict) else None
         if next_status is None:
@@ -543,6 +565,17 @@ class PartnershipSpotlightWorkflowService:
         elif action == "archive":
             spotlight.unpublished_by_id = user_id
             spotlight.unpublished_at = now
+
+        if db is not None:
+            db.add(ContentWorkflowLog(
+                content_type="partnership-spotlights",
+                content_id=spotlight.id,
+                from_status=previous_status,
+                to_status=next_status,
+                action=action,
+                actor_id=user_id,
+                comments=note,
+            ))
 
         return spotlight
 
