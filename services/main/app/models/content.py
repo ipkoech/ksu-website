@@ -13,7 +13,29 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ksu_common.models.base import Base, SEOMixin
 
 
-class ScopedContentMixin:
+class WorkflowMetadataMixin:
+    """Audit fields shared by publishable content records."""
+
+    workflow_status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="draft", index=True)
+    owner_portal: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True, index=True)
+    owner_scope_type: Mapped[Optional[str]] = mapped_column(sa.String(32), nullable=True, index=True)
+    owner_scope_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
+    submitted_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    submitted_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    reviewed_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    approved_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    approved_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    published_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    scheduled_publish_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True, index=True)
+    expires_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True, index=True)
+    unpublished_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    unpublished_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    rejection_reason: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    revision_notes: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+
+
+class ScopedContentMixin(WorkflowMetadataMixin):
     """Shared scope, publication, and display controls."""
 
     scope_type: Mapped[Optional[str]] = mapped_column(sa.String(32), nullable=True, index=True)
@@ -139,7 +161,7 @@ class SliderGroup(Base):
     )
 
 
-class Slider(Base):
+class Slider(Base, WorkflowMetadataMixin):
     __tablename__ = "sliders"
 
     slider_group_id: Mapped[Optional[uuid.UUID]] = mapped_column(

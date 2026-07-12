@@ -11,6 +11,7 @@ from pydantic import ConfigDict, Field, field_validator, model_validator
 from app.models import (
     PAGE_SCOPE_TYPES,
     PAGE_SECTION_LAYOUT_VARIANTS,
+    PAGE_SECTION_STATUSES,
     PARTNERSHIP_CTA_SOURCES,
     SECTION_ITEM_TYPES,
 )
@@ -133,8 +134,16 @@ class PageSectionCreate(BaseSchema):
     display_order: int = 100
     is_enabled: bool = True
     layout_variant: str = Field(default=PAGE_SECTION_LAYOUT_VARIANTS[0], max_length=64)
+    workflow_status: str = Field(default=PAGE_SECTION_STATUSES[0], max_length=32)
+    owner_portal: str | None = Field(default=None, max_length=64)
+    owner_scope_type: str | None = Field(default=None, max_length=32)
+    owner_scope_id: uuid.UUID | None = None
     valid_from: datetime | None = None
     valid_to: datetime | None = None
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
+    rejection_reason: str | None = None
+    revision_notes: str | None = None
     items: list[SectionItemCreate] = Field(default_factory=list)
 
     @field_validator("scope_type")
@@ -175,8 +184,16 @@ class PageSectionUpdate(BaseSchema):
     display_order: int | None = None
     is_enabled: bool | None = None
     layout_variant: str | None = Field(default=None, max_length=64)
+    workflow_status: str | None = Field(default=None, max_length=32)
+    owner_portal: str | None = Field(default=None, max_length=64)
+    owner_scope_type: str | None = Field(default=None, max_length=32)
+    owner_scope_id: uuid.UUID | None = None
     valid_from: datetime | None = None
     valid_to: datetime | None = None
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
+    rejection_reason: str | None = None
+    revision_notes: str | None = None
     items: list[SectionItemUpdate] | None = None
 
     @field_validator("scope_type")
@@ -211,10 +228,24 @@ class PageSectionRead(BaseReadSchema):
     is_enabled: bool
     layout_variant: str
     status: str
+    workflow_status: str = PAGE_SECTION_STATUSES[0]
+    owner_portal: str | None = None
+    owner_scope_type: str | None = None
+    owner_scope_id: uuid.UUID | None = None
     valid_from: datetime | None = None
     valid_to: datetime | None = None
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
+    submitted_by_id: uuid.UUID | None = None
+    submitted_at: datetime | None = None
+    reviewed_by_id: uuid.UUID | None = None
+    reviewed_at: datetime | None = None
     approved_at: datetime | None = None
     published_at: datetime | None = None
+    unpublished_by_id: uuid.UUID | None = None
+    unpublished_at: datetime | None = None
+    rejection_reason: str | None = None
+    revision_notes: str | None = None
     created_by_id: uuid.UUID | None = None
     updated_by_id: uuid.UUID | None = None
     approved_by_id: uuid.UUID | None = None
@@ -244,8 +275,16 @@ class PartnershipSpotlightCreate(BaseSchema):
     pillars: list[dict[str, Any]] | None = None
     opportunities: list[dict[str, Any]] | None = None
     is_enabled: bool = True
+    workflow_status: str = Field(default=PAGE_SECTION_STATUSES[0], max_length=32)
+    owner_portal: str | None = Field(default=None, max_length=64)
+    owner_scope_type: str | None = Field(default=None, max_length=32)
+    owner_scope_id: uuid.UUID | None = None
     valid_from: datetime | None = None
     valid_to: datetime | None = None
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
+    rejection_reason: str | None = None
+    revision_notes: str | None = None
 
     @field_validator("source_type")
     @classmethod
@@ -289,8 +328,16 @@ class PartnershipSpotlightUpdate(BaseSchema):
     pillars: list[dict[str, Any]] | None = None
     opportunities: list[dict[str, Any]] | None = None
     is_enabled: bool | None = None
+    workflow_status: str | None = Field(default=None, max_length=32)
+    owner_portal: str | None = Field(default=None, max_length=64)
+    owner_scope_type: str | None = Field(default=None, max_length=32)
+    owner_scope_id: uuid.UUID | None = None
     valid_from: datetime | None = None
     valid_to: datetime | None = None
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
+    rejection_reason: str | None = None
+    revision_notes: str | None = None
 
     @field_validator("source_type")
     @classmethod
@@ -330,10 +377,26 @@ class PartnershipSpotlightRead(BaseReadSchema):
     opportunities: list[dict[str, Any]] | None = None
     is_enabled: bool
     status: str
+    workflow_status: str = PAGE_SECTION_STATUSES[0]
+    owner_portal: str | None = None
+    owner_scope_type: str | None = None
+    owner_scope_id: uuid.UUID | None = None
     valid_from: datetime | None = None
     valid_to: datetime | None = None
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
+    submitted_by_id: uuid.UUID | None = None
+    submitted_at: datetime | None = None
+    reviewed_by_id: uuid.UUID | None = None
+    reviewed_at: datetime | None = None
+    approved_by_id: uuid.UUID | None = None
     approved_at: datetime | None = None
+    published_by_id: uuid.UUID | None = None
     published_at: datetime | None = None
+    unpublished_by_id: uuid.UUID | None = None
+    unpublished_at: datetime | None = None
+    rejection_reason: str | None = None
+    revision_notes: str | None = None
 
 
 class PageSectionWorkflowAction(BaseSchema):

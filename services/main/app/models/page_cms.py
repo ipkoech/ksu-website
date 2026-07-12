@@ -105,10 +105,21 @@ class PageSection(Base):
         server_default=PAGE_SECTION_LAYOUT_VARIANTS[0],
     )
     status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default=PAGE_SECTION_STATUSES[0])
+    workflow_status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default=PAGE_SECTION_STATUSES[0], index=True)
+    owner_portal: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True, index=True)
+    owner_scope_type: Mapped[Optional[str]] = mapped_column(sa.String(32), nullable=True, index=True)
+    owner_scope_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
     valid_from: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
     valid_to: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    scheduled_publish_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True, index=True)
+    expires_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True, index=True)
+    submitted_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
     approved_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
     published_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    unpublished_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    rejection_reason: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    revision_notes: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
     created_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         sa.ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
@@ -117,11 +128,23 @@ class PageSection(Base):
         sa.ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
+    submitted_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    reviewed_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     approved_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         sa.ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
     published_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    unpublished_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         sa.ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
@@ -135,8 +158,11 @@ class PageSection(Base):
     )
     created_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[created_by_id])
     updated_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[updated_by_id])
+    submitted_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[submitted_by_id])
+    reviewed_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[reviewed_by_id])
     approved_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[approved_by_id])
     published_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[published_by_id])
+    unpublished_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[unpublished_by_id])
 
 
 class SectionItem(Base):
@@ -213,10 +239,41 @@ class PartnershipSpotlight(Base):
     opportunities: Mapped[Optional[list[dict]]] = mapped_column(JSONB, nullable=True)
     is_enabled: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
     status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default=PAGE_SECTION_STATUSES[0])
+    workflow_status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default=PAGE_SECTION_STATUSES[0], index=True)
+    owner_portal: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True, index=True)
+    owner_scope_type: Mapped[Optional[str]] = mapped_column(sa.String(32), nullable=True, index=True)
+    owner_scope_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
     valid_from: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
     valid_to: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    scheduled_publish_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True, index=True)
+    expires_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True, index=True)
+    submitted_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
     approved_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
     published_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    unpublished_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    rejection_reason: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    revision_notes: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    submitted_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    reviewed_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    approved_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    published_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    unpublished_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
 
 
 __all__ = [

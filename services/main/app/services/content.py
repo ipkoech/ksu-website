@@ -37,6 +37,36 @@ def _active_window_filter(model, now: datetime):
     )
 
 
+def _public_workflow_filter(model, now: datetime):
+    return (
+        model.is_public.is_(True),
+        model.is_published.is_(True),
+        model.workflow_status == "published",
+        *_active_window_filter(model, now),
+        or_(model.scheduled_publish_at.is_(None), model.scheduled_publish_at <= now),
+        or_(model.expires_at.is_(None), model.expires_at >= now),
+    )
+
+
+def _apply_workflow_admin_filters(
+    query, model, *, workflow_status=None, owner_portal=None, owner_scope_type=None,
+    owner_scope_id=None, scheduled_from=None, scheduled_to=None,
+):
+    if workflow_status is not None:
+        query = query.where(model.workflow_status == workflow_status)
+    if owner_portal is not None:
+        query = query.where(model.owner_portal == owner_portal)
+    if owner_scope_type is not None:
+        query = query.where(model.owner_scope_type == owner_scope_type)
+    if owner_scope_id is not None:
+        query = query.where(model.owner_scope_id == owner_scope_id)
+    if scheduled_from is not None:
+        query = query.where(model.scheduled_publish_at >= scheduled_from)
+    if scheduled_to is not None:
+        query = query.where(model.scheduled_publish_at <= scheduled_to)
+    return query
+
+
 async def _archive_expired_content(db: AsyncSession, model, now: datetime) -> None:
     await db.execute(
         update(model)
@@ -49,6 +79,7 @@ async def _archive_expired_content(db: AsyncSession, model, now: datetime) -> No
         .values(
             archived_at=now,
             status="archived",
+            workflow_status="archived",
             is_published=False,
             updated_at=now,
         )
@@ -68,6 +99,7 @@ async def _archive_expired_sliders(db: AsyncSession, now: datetime) -> None:
         .values(
             archived_at=now,
             is_active=False,
+            workflow_status="archived",
             updated_at=now,
         )
     )
@@ -100,9 +132,7 @@ class _RichContentService:
         if load_options:
             query = query.options(*load_options)
         if public_only:
-            query = query.where(cls.model.is_public.is_(True))
-            query = query.where(cls.model.is_published.is_(True))
-            query = query.where(*_active_window_filter(cls.model, now))
+            query = query.where(*_public_workflow_filter(cls.model, now))
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
@@ -128,6 +158,7 @@ class _RichContentService:
         instance.is_published = True
         instance.is_public = True
         instance.status = "published"
+        instance.workflow_status = "published"
         if instance.published_at is None:
             instance.published_at = datetime.now(timezone.utc)
         await db.flush()
@@ -137,6 +168,7 @@ class _RichContentService:
     async def unpublish(cls, db: AsyncSession, instance):
         instance.is_published = False
         instance.status = "draft"
+        instance.workflow_status = "unpublished"
         await db.flush()
         return instance
 
@@ -161,11 +193,9 @@ class _RichContentService:
         if load_options:
             query = query.options(*load_options)
         query = _apply_scope_filters(query, cls.model, scope_type=scope_type, scope_id=scope_id, is_public=is_public, is_main=is_main)
-        if is_published is not None:
-            query = query.where(cls.model.is_published.is_(is_published))
+        query = query.where(*_public_workflow_filter(cls.model, now))
         if search:
             query = query.where(ilike_any(search, cls.model.title, cls.model.slug, cls.model.summary))
-        query = query.where(*_active_window_filter(cls.model, now))
         return await paginate_query(db, query, page=page, per_page=per_page)
 
     @classmethod
@@ -180,6 +210,12 @@ class _RichContentService:
         is_main: bool | None = None,
         is_published: bool | None = None,
         status: str | None = None,
+        workflow_status: str | None = None,
+        owner_portal: str | None = None,
+        owner_scope_type: str | None = None,
+        owner_scope_id: uuid.UUID | None = None,
+        scheduled_from: datetime | None = None,
+        scheduled_to: datetime | None = None,
         search: str | None = None,
         load_options: Sequence = (),
     ) -> PaginatedResult:
@@ -198,6 +234,11 @@ class _RichContentService:
             query = query.where(cls.model.is_published.is_(is_published))
         if status:
             query = query.where(cls.model.status == status)
+        query = _apply_workflow_admin_filters(
+            query, cls.model, workflow_status=workflow_status, owner_portal=owner_portal,
+            owner_scope_type=owner_scope_type, owner_scope_id=owner_scope_id,
+            scheduled_from=scheduled_from, scheduled_to=scheduled_to,
+        )
         if search:
             query = query.where(ilike_any(search, cls.model.title, cls.model.slug, cls.model.summary))
         return await paginate_query(db, query, page=page, per_page=per_page)
@@ -237,9 +278,7 @@ class EventService:
         if load_options:
             query = query.options(*load_options)
         if public_only:
-            query = query.where(Event.is_public.is_(True))
-            query = query.where(Event.is_published.is_(True))
-            query = query.where(*_active_window_filter(Event, now))
+            query = query.where(*_public_workflow_filter(Event, now))
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
@@ -265,6 +304,7 @@ class EventService:
         event.is_published = True
         event.is_public = True
         event.status = "published"
+        event.workflow_status = "published"
         if event.published_at is None:
             event.published_at = datetime.now(timezone.utc)
         await db.flush()
@@ -274,6 +314,7 @@ class EventService:
     async def unpublish(db: AsyncSession, event: Event) -> Event:
         event.is_published = False
         event.status = "draft"
+        event.workflow_status = "unpublished"
         await db.flush()
         return event
 
@@ -298,11 +339,9 @@ class EventService:
         if load_options:
             query = query.options(*load_options)
         query = _apply_scope_filters(query, Event, scope_type=scope_type, scope_id=scope_id, is_public=is_public, is_main=is_main)
-        if is_published is not None:
-            query = query.where(Event.is_published.is_(is_published))
+        query = query.where(*_public_workflow_filter(Event, now))
         if search:
             query = query.where(ilike_any(search, Event.title, Event.slug, Event.summary, Event.location))
-        query = query.where(*_active_window_filter(Event, now))
         if upcoming is True:
             query = query.where(Event.start_date >= now)
         return await paginate_query(db, query, page=page, per_page=per_page)
@@ -319,6 +358,12 @@ class EventService:
         is_published: bool | None = None,
         upcoming: bool | None = None,
         status: str | None = None,
+        workflow_status: str | None = None,
+        owner_portal: str | None = None,
+        owner_scope_type: str | None = None,
+        owner_scope_id: uuid.UUID | None = None,
+        scheduled_from: datetime | None = None,
+        scheduled_to: datetime | None = None,
         search: str | None = None,
         load_options: Sequence = (),
     ) -> PaginatedResult:
@@ -338,6 +383,11 @@ class EventService:
             query = query.where(Event.is_published.is_(is_published))
         if status:
             query = query.where(Event.status == status)
+        query = _apply_workflow_admin_filters(
+            query, Event, workflow_status=workflow_status, owner_portal=owner_portal,
+            owner_scope_type=owner_scope_type, owner_scope_id=owner_scope_id,
+            scheduled_from=scheduled_from, scheduled_to=scheduled_to,
+        )
         if search:
             query = query.where(ilike_any(search, Event.title, Event.slug, Event.summary, Event.location))
         if upcoming is True:
@@ -451,7 +501,12 @@ class SliderService:
     ) -> list[Slider]:
         now = datetime.now(timezone.utc)
         await _archive_expired_sliders(db, now)
-        query = select(Slider).where(Slider.deleted_at.is_(None), Slider.is_active.is_(True))
+        query = select(Slider).where(
+            Slider.deleted_at.is_(None), Slider.is_active.is_(True),
+            Slider.is_public.is_(True), Slider.workflow_status == "published",
+            or_(Slider.scheduled_publish_at.is_(None), Slider.scheduled_publish_at <= now),
+            or_(Slider.expires_at.is_(None), Slider.expires_at >= now),
+        )
         if load_options:
             query = query.options(*load_options)
         if slider_group_id:

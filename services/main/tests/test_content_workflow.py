@@ -55,6 +55,38 @@ class ContentWorkflowTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("archive", db.added[-1].action)
         self.assertTrue(item.archived_at)
 
+    async def test_transitions_record_workflow_metadata(self):
+        db = _FakeDb()
+        actor_id = uuid.uuid4()
+        item = _content()
+
+        await ContentWorkflowService.transition(db, item, "news", "submit", actor_id)
+        self.assertEqual("submitted", item.workflow_status)
+        self.assertEqual(actor_id, item.submitted_by_id)
+        self.assertIsNotNone(item.submitted_at)
+
+        await ContentWorkflowService.transition(db, item, "news", "start_review", actor_id)
+        self.assertEqual(actor_id, item.reviewed_by_id)
+        self.assertIsNotNone(item.reviewed_at)
+
+        await ContentWorkflowService.transition(db, item, "news", "approve", actor_id)
+        self.assertEqual(actor_id, item.approved_by_id)
+        self.assertIsNotNone(item.approved_at)
+
+        scheduled_for = datetime(2030, 1, 1, tzinfo=timezone.utc)
+        await ContentWorkflowService.transition(
+            db, item, "news", "schedule", actor_id, scheduled_for=scheduled_for,
+        )
+        self.assertEqual(scheduled_for, item.scheduled_publish_at)
+
+        await ContentWorkflowService.transition(db, item, "news", "publish", actor_id)
+        self.assertEqual(actor_id, item.published_by_id)
+        self.assertIsNotNone(item.published_at)
+
+        await ContentWorkflowService.transition(db, item, "news", "unpublish", actor_id)
+        self.assertEqual(actor_id, item.unpublished_by_id)
+        self.assertIsNotNone(item.unpublished_at)
+
     def test_content_owner_cannot_publish(self):
         owner_id = uuid.uuid4()
         item = _content(status="approved", owner_id=owner_id)

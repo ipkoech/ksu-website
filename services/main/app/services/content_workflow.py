@@ -44,23 +44,42 @@ class ContentWorkflowService:
         changed_fields: dict[str, Any] | None = None,
         scheduled_for: datetime | None = None,
     ) -> Any:
-        from_status = content.status
+        from_status = getattr(content, "workflow_status", None) or content.status
         to_status = ALLOWED_TRANSITIONS.get(from_status, {}).get(action)
         if to_status is None:
             raise ValueError(f"Invalid workflow transition: {from_status} -> {action}")
 
         now = datetime.now(timezone.utc)
         content.status = to_status
+        content.workflow_status = to_status
         if hasattr(content, "updated_at"):
             content.updated_at = now
-        if action == "schedule" and scheduled_for is not None and hasattr(content, "valid_from"):
-            content.valid_from = scheduled_for
+        if action == "submit":
+            content.submitted_by_id = actor_id
+            content.submitted_at = now
+        elif action == "start_review":
+            content.reviewed_by_id = actor_id
+            content.reviewed_at = now
+        elif action == "request_changes":
+            content.revision_notes = comments
+        elif action == "approve":
+            content.approved_by_id = actor_id
+            content.approved_at = now
+        elif action == "reject":
+            content.rejection_reason = comments
+        if action == "schedule" and scheduled_for is not None:
+            content.scheduled_publish_at = scheduled_for
+            if hasattr(content, "valid_from"):
+                content.valid_from = scheduled_for
         if action == "publish":
             content.is_published = True
             content.is_public = True
             content.published_at = now
+            content.published_by_id = actor_id
         elif action == "unpublish":
             content.is_published = False
+            content.unpublished_by_id = actor_id
+            content.unpublished_at = now
         elif action == "archive":
             content.is_published = False
             content.archived_at = now

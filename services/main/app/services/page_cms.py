@@ -53,6 +53,16 @@ def _active_window_filter(model, now: datetime):
     )
 
 
+def _published_workflow_filter(model, now: datetime):
+    return (
+        model.status == "published",
+        model.workflow_status == "published",
+        *_active_window_filter(model, now),
+        or_(model.scheduled_publish_at.is_(None), model.scheduled_publish_at <= now),
+        or_(model.expires_at.is_(None), model.expires_at >= now),
+    )
+
+
 def _normalize_role(role: str) -> str | None:
     key = role.strip()
     if key in MEDIA_GROUP_KEYS:
@@ -215,8 +225,7 @@ async def _list_active_partnership_spotlights(db: AsyncSession) -> list[Partners
         PartnershipSpotlight.active_query()
         .where(
             PartnershipSpotlight.is_enabled.is_(True),
-            PartnershipSpotlight.status == "published",
-            *_active_window_filter(PartnershipSpotlight, now),
+            *_published_workflow_filter(PartnershipSpotlight, now),
         )
         .order_by(
             PartnershipSpotlight.published_at.desc().nullslast(),
@@ -384,9 +393,8 @@ class PageSectionService:
             query = query.where(filter_clause)
         query = (
             query.where(
-                PageSection.status == "published",
                 PageSection.is_enabled.is_(True),
-                *_active_window_filter(PageSection, now),
+                *_published_workflow_filter(PageSection, now),
             )
             .order_by(
                 PageSection.display_order.asc(),
@@ -443,8 +451,6 @@ class PageSectionWorkflowService:
 
     @staticmethod
     async def transition(section: PageSection, action: str, user_id: uuid.UUID, note: str | None = None) -> PageSection:
-        del note
-
         transitions = ALLOWED_TRANSITIONS.get(section.status, set())
         next_status = transitions.get(action) if isinstance(transitions, dict) else None
         if next_status is None:
@@ -452,14 +458,30 @@ class PageSectionWorkflowService:
 
         now = datetime.now(timezone.utc)
         section.status = next_status
+        section.workflow_status = next_status
         section.updated_by_id = user_id
 
-        if action == "approve":
+        if action == "submit":
+            section.submitted_by_id = user_id
+            section.submitted_at = now
+        elif action == "approve":
+            section.reviewed_by_id = user_id
+            section.reviewed_at = now
             section.approved_at = now
             section.approved_by_id = user_id
         elif action == "publish":
             section.published_at = now
             section.published_by_id = user_id
+        elif action == "request_changes":
+            section.reviewed_by_id = user_id
+            section.reviewed_at = now
+            section.revision_notes = note
+        elif action == "unpublish":
+            section.unpublished_by_id = user_id
+            section.unpublished_at = now
+        elif action == "archive":
+            section.unpublished_by_id = user_id
+            section.unpublished_at = now
 
         return section
 
@@ -474,8 +496,6 @@ class PartnershipSpotlightWorkflowService:
         user_id: uuid.UUID,
         note: str | None = None,
     ) -> PartnershipSpotlight:
-        del note
-
         transitions = ALLOWED_TRANSITIONS.get(spotlight.status, set())
         next_status = transitions.get(action) if isinstance(transitions, dict) else None
         if next_status is None:
@@ -483,13 +503,29 @@ class PartnershipSpotlightWorkflowService:
 
         now = datetime.now(timezone.utc)
         spotlight.status = next_status
+        spotlight.workflow_status = next_status
 
-        if action == "approve":
+        if action == "submit":
+            spotlight.submitted_by_id = user_id
+            spotlight.submitted_at = now
+        elif action == "approve":
+            spotlight.reviewed_by_id = user_id
+            spotlight.reviewed_at = now
             spotlight.approved_at = now
             spotlight.approved_by_id = user_id
         elif action == "publish":
             spotlight.published_at = now
             spotlight.published_by_id = user_id
+        elif action == "request_changes":
+            spotlight.reviewed_by_id = user_id
+            spotlight.reviewed_at = now
+            spotlight.revision_notes = note
+        elif action == "unpublish":
+            spotlight.unpublished_by_id = user_id
+            spotlight.unpublished_at = now
+        elif action == "archive":
+            spotlight.unpublished_by_id = user_id
+            spotlight.unpublished_at = now
 
         return spotlight
 

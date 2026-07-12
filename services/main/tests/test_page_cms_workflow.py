@@ -49,9 +49,12 @@ class PageCmsWorkflowTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("page_sections.page_key", query_text)
         self.assertIn("page_sections.scope_type", query_text)
         self.assertIn("page_sections.status =", query_text)
+        self.assertIn("page_sections.workflow_status =", query_text)
         self.assertIn("page_sections.is_enabled is true", query_text)
         self.assertIn("page_sections.valid_from is null", query_text)
         self.assertIn("page_sections.valid_to is null", query_text)
+        self.assertIn("page_sections.scheduled_publish_at is null", query_text)
+        self.assertIn("page_sections.expires_at is null", query_text)
         self.assertIn("page_sections.deleted_at is null", query_text)
         self.assertIn("order by page_sections.display_order asc", query_text)
         self.assertIn("published", compiled.params.values())
@@ -136,15 +139,22 @@ class PageCmsWorkflowTests(unittest.IsolatedAsyncioTestCase):
 
         await PageSectionWorkflowService.transition(section, "submit", user_id)
         self.assertEqual("in_review", section.status)
+        self.assertEqual("in_review", section.workflow_status)
+        self.assertEqual(user_id, section.submitted_by_id)
+        self.assertIsNotNone(section.submitted_at)
         self.assertEqual(user_id, section.updated_by_id)
 
         await PageSectionWorkflowService.transition(section, "approve", user_id)
         self.assertEqual("approved", section.status)
+        self.assertEqual("approved", section.workflow_status)
+        self.assertEqual(user_id, section.reviewed_by_id)
+        self.assertIsNotNone(section.reviewed_at)
         self.assertEqual(user_id, section.approved_by_id)
         self.assertIsNotNone(section.approved_at)
 
         await PageSectionWorkflowService.transition(section, "publish", user_id)
         self.assertEqual("published", section.status)
+        self.assertEqual("published", section.workflow_status)
         self.assertEqual(user_id, section.published_by_id)
         self.assertIsNotNone(section.published_at)
 
@@ -172,6 +182,7 @@ class PageCmsWorkflowTests(unittest.IsolatedAsyncioTestCase):
         await PageSectionWorkflowService.transition(section, "unpublish", uuid.uuid4())
 
         self.assertEqual("approved", section.status)
+        self.assertEqual("approved", section.workflow_status)
 
     async def test_spotlight_workflow_accepts_submit_approve_publish_unpublish_sequence(self):
         user_id = uuid.uuid4()
@@ -185,19 +196,27 @@ class PageCmsWorkflowTests(unittest.IsolatedAsyncioTestCase):
 
         await PartnershipSpotlightWorkflowService.transition(spotlight, "submit", user_id)
         self.assertEqual("in_review", spotlight.status)
+        self.assertEqual("in_review", spotlight.workflow_status)
+        self.assertEqual(user_id, spotlight.submitted_by_id)
+        self.assertIsNotNone(spotlight.submitted_at)
 
         await PartnershipSpotlightWorkflowService.transition(spotlight, "approve", user_id)
         self.assertEqual("approved", spotlight.status)
+        self.assertEqual("approved", spotlight.workflow_status)
+        self.assertEqual(user_id, spotlight.reviewed_by_id)
+        self.assertIsNotNone(spotlight.reviewed_at)
         self.assertEqual(user_id, spotlight.approved_by_id)
         self.assertIsNotNone(spotlight.approved_at)
 
         await PartnershipSpotlightWorkflowService.transition(spotlight, "publish", user_id)
         self.assertEqual("published", spotlight.status)
+        self.assertEqual("published", spotlight.workflow_status)
         self.assertEqual(user_id, spotlight.published_by_id)
         self.assertIsNotNone(spotlight.published_at)
 
         await PartnershipSpotlightWorkflowService.transition(spotlight, "unpublish", user_id)
         self.assertEqual("approved", spotlight.status)
+        self.assertEqual("approved", spotlight.workflow_status)
 
     async def test_spotlight_workflow_rejects_invalid_transition(self):
         spotlight = PartnershipSpotlight(

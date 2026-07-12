@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Query, status
 
@@ -11,10 +12,11 @@ from ksu_common.schemas.responses import success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ._scoped import can_access_scoped_record, require_scoped_record
-from ...deps import CurrentUser, DbSession
+from ...deps import CurrentUser, DbSession, permissions_for_user
 from ...models import Announcement
 from ...schemas import AnnouncementCreate, AnnouncementUpdate
-from ...services import AnnouncementService
+from ...services import AnnouncementService, ContentWorkflowService
+from .content_workflow import authorize_content_workflow_action
 
 router = APIRouter()
 
@@ -69,6 +71,12 @@ async def list_admin_announcements(
     is_main: bool | None = None,
     is_published: bool | None = None,
     status: str | None = None,
+    workflow_status: str | None = None,
+    owner_portal: str | None = None,
+    owner_scope_type: str | None = None,
+    owner_scope_id: uuid.UUID | None = None,
+    scheduled_from: datetime | None = None,
+    scheduled_to: datetime | None = None,
     search: str | None = None,
     fields: FieldSelection = FieldsDep,
 ):
@@ -82,6 +90,12 @@ async def list_admin_announcements(
         is_main=is_main,
         is_published=is_published,
         status=status,
+        workflow_status=workflow_status,
+        owner_portal=owner_portal,
+        owner_scope_type=owner_scope_type,
+        owner_scope_id=owner_scope_id,
+        scheduled_from=scheduled_from,
+        scheduled_to=scheduled_to,
         search=search,
         load_options=selector.load_options,
     )
@@ -185,7 +199,14 @@ async def publish_announcement(announcement_id: uuid.UUID, db: DbSession, user: 
         item.scope_id,
         resource_name="announcement",
     )
-    item = await AnnouncementService.publish(db, item)
+    permissions = permissions_for_user(user)
+    authorize_content_workflow_action(user, item, "publish", permissions)
+    try:
+        item = await ContentWorkflowService.publish_content(db, item, "announcements", user.id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    await db.flush()
+    await db.refresh(item)
     return success(data=item, message="Announcement published")
 
 
@@ -202,7 +223,14 @@ async def unpublish_announcement(announcement_id: uuid.UUID, db: DbSession, user
         item.scope_id,
         resource_name="announcement",
     )
-    item = await AnnouncementService.unpublish(db, item)
+    permissions = permissions_for_user(user)
+    authorize_content_workflow_action(user, item, "unpublish", permissions)
+    try:
+        item = await ContentWorkflowService.unpublish_content(db, item, "announcements", user.id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    await db.flush()
+    await db.refresh(item)
     return success(data=item, message="Announcement unpublished")
 
 

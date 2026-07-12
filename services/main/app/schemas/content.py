@@ -21,6 +21,14 @@ class ScopedContentCreate(BaseSchema):
     valid_from: datetime | None = None
     valid_to: datetime | None = None
     status: str = Field(default="draft", max_length=32)
+    workflow_status: str = Field(default="draft", max_length=32)
+    owner_portal: str | None = Field(default=None, max_length=64)
+    owner_scope_type: str | None = Field(default=None, max_length=32)
+    owner_scope_id: uuid.UUID | None = None
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
+    rejection_reason: str | None = None
+    revision_notes: str | None = None
     display_order: int = 100
 
     @model_validator(mode="after")
@@ -41,6 +49,23 @@ class ScopedContentRead(BaseReadSchema):
     valid_to: datetime | None = None
     archived_at: datetime | None = None
     status: str
+    workflow_status: str
+    owner_portal: str | None = None
+    owner_scope_type: str | None = None
+    owner_scope_id: uuid.UUID | None = None
+    submitted_by_id: uuid.UUID | None = None
+    submitted_at: datetime | None = None
+    reviewed_by_id: uuid.UUID | None = None
+    reviewed_at: datetime | None = None
+    approved_by_id: uuid.UUID | None = None
+    approved_at: datetime | None = None
+    published_by_id: uuid.UUID | None = None
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
+    unpublished_by_id: uuid.UUID | None = None
+    unpublished_at: datetime | None = None
+    rejection_reason: str | None = None
+    revision_notes: str | None = None
     display_order: int
     deleted_at: datetime | None = None
 
@@ -88,6 +113,14 @@ class RichContentUpdate(BaseSchema):
     valid_to: datetime | None = None
     archived_at: datetime | None = None
     status: str | None = Field(default=None, max_length=32)
+    workflow_status: str | None = Field(default=None, max_length=32)
+    owner_portal: str | None = Field(default=None, max_length=64)
+    owner_scope_type: str | None = Field(default=None, max_length=32)
+    owner_scope_id: uuid.UUID | None = None
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
+    rejection_reason: str | None = None
+    revision_notes: str | None = None
     display_order: int | None = None
     meta_title: str | None = Field(default=None, max_length=255)
     meta_description: str | None = Field(default=None, max_length=500)
@@ -218,6 +251,14 @@ class EventUpdate(BaseSchema):
     valid_to: datetime | None = None
     archived_at: datetime | None = None
     status: str | None = Field(default=None, max_length=32)
+    workflow_status: str | None = Field(default=None, max_length=32)
+    owner_portal: str | None = Field(default=None, max_length=64)
+    owner_scope_type: str | None = Field(default=None, max_length=32)
+    owner_scope_id: uuid.UUID | None = None
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
+    rejection_reason: str | None = None
+    revision_notes: str | None = None
     display_order: int | None = None
     meta_title: str | None = Field(default=None, max_length=255)
     meta_description: str | None = Field(default=None, max_length=500)
@@ -327,6 +368,14 @@ class SliderCreate(BaseSchema):
     start_datetime: datetime | None = None
     end_datetime: datetime | None = None
     archived_at: datetime | None = None
+    workflow_status: str = Field(default="draft", max_length=32)
+    owner_portal: str | None = Field(default=None, max_length=64)
+    owner_scope_type: str | None = Field(default=None, max_length=32)
+    owner_scope_id: uuid.UUID | None = None
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
+    rejection_reason: str | None = None
+    revision_notes: str | None = None
     display_order: int = 100
 
     @model_validator(mode="after")
@@ -356,6 +405,14 @@ class SliderUpdate(BaseSchema):
     start_datetime: datetime | None = None
     end_datetime: datetime | None = None
     archived_at: datetime | None = None
+    workflow_status: str | None = Field(default=None, max_length=32)
+    owner_portal: str | None = Field(default=None, max_length=64)
+    owner_scope_type: str | None = Field(default=None, max_length=32)
+    owner_scope_id: uuid.UUID | None = None
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
+    rejection_reason: str | None = None
+    revision_notes: str | None = None
     display_order: int | None = None
 
     @model_validator(mode="after")
@@ -388,5 +445,23 @@ class SliderRead(BaseReadSchema):
     start_datetime: datetime | None = None
     end_datetime: datetime | None = None
     archived_at: datetime | None = None
+    workflow_status: str
+    owner_portal: str | None = None
+    owner_scope_type: str | None = None
+    owner_scope_id: uuid.UUID | None = None
+    submitted_by_id: uuid.UUID | None = None
+    submitted_at: datetime | None = None
+    reviewed_by_id: uuid.UUID | None = None
+    reviewed_at: datetime | None = None
+    approved_by_id: uuid.UUID | None = None
+    approved_at: datetime | None = None
+    published_by_id: uuid.UUID | None = None
+    published_at: datetime | None = None
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
+    unpublished_by_id: uuid.UUID | None = None
+    unpublished_at: datetime | None = None
+    rejection_reason: str | None = None
+    revision_notes: str | None = None
     display_order: int
     deleted_at: datetime | None = None
