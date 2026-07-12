@@ -5,7 +5,11 @@ from types import SimpleNamespace
 
 from fastapi import HTTPException
 
-from app.api.v1.content_workflow import authorize_content_workflow_action
+from app.api.v1.content_workflow import (
+    authorize_content_workflow_action,
+    authorize_content_workflow_queue_access,
+    build_content_workflow_queue_items,
+)
 from app.services.content_workflow import ContentWorkflowService
 
 
@@ -32,6 +36,92 @@ def _content(status="draft", owner_id=None):
 
 
 class ContentWorkflowTests(unittest.IsolatedAsyncioTestCase):
+    def test_queue_access_requires_a_cocms_workflow_permission(self):
+        with self.assertRaises(HTTPException) as context:
+            authorize_content_workflow_queue_access({"content.submit"})
+
+        self.assertEqual(403, context.exception.status_code)
+
+        for permission in (
+            "content.review",
+            "content.publish",
+            "content.manage",
+            "homepage.manage",
+        ):
+            authorize_content_workflow_queue_access({permission})
+
+    def test_queue_items_are_filtered_and_use_human_readable_labels(self):
+        reviewer_id = uuid.uuid4()
+        submitted_at = datetime(2030, 1, 10, tzinfo=timezone.utc)
+        scheduled_at = datetime(2030, 1, 15, tzinfo=timezone.utc)
+        records = {
+            "news": [
+                SimpleNamespace(
+                    id=uuid.uuid4(),
+                    title="Campus opens innovation hub",
+                    slug="innovation-hub",
+                    summary="A new collaboration space for students.",
+                    workflow_status="submitted",
+                    owner_portal="research",
+                    author_user_id=None,
+                    submitted_by_id=reviewer_id,
+                    submitted_at=submitted_at,
+                    reviewed_by_id=reviewer_id,
+                    scheduled_publish_at=scheduled_at,
+                    rich_text="<p>Preview body</p>",
+                    plain_text="Preview body",
+                    structured_content=None,
+                    related_links=[],
+                    meta_title="Innovation hub",
+                    meta_description="Research news",
+                    keywords=["innovation"],
+                )
+            ],
+            "blogs": [
+                SimpleNamespace(
+                    id=uuid.uuid4(),
+                    title="Alumni profile",
+                    slug="alumni-profile",
+                    summary=None,
+                    workflow_status="approved",
+                    owner_portal="alumni",
+                    author_user_id=None,
+                    submitted_by_id=None,
+                    submitted_at=datetime(2030, 1, 9, tzinfo=timezone.utc),
+                    reviewed_by_id=None,
+                    scheduled_publish_at=None,
+                    rich_text=None,
+                    plain_text=None,
+                    structured_content=None,
+                    related_links=[],
+                    meta_title=None,
+                    meta_description=None,
+                    keywords=None,
+                )
+            ],
+        }
+
+        items = build_content_workflow_queue_items(
+            records,
+            {reviewer_id: "Amina Reviewer"},
+            content_type="news",
+            status_filter="submitted",
+            source_portal="research",
+            submitted_date=submitted_at.date(),
+            scheduled_date=scheduled_at.date(),
+            reviewer="amina",
+        )
+
+        self.assertEqual(1, len(items))
+        item = items[0]
+        self.assertEqual("Campus opens innovation hub", item["title"])
+        self.assertEqual("Research Portal", item["owner_label"])
+        self.assertEqual("Research Portal", item["source_label"])
+        self.assertEqual("Amina Reviewer", item["submitted_by_label"])
+        self.assertEqual("Amina Reviewer", item["reviewer_label"])
+        self.assertEqual("/news/innovation-hub", item["preview_path"])
+        self.assertNotEqual(str(reviewer_id), item["submitted_by_label"])
+
     async def test_valid_transitions_update_content_and_create_workflow_logs(self):
         db = _FakeDb()
         actor_id = uuid.uuid4()

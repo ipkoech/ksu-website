@@ -46,6 +46,12 @@ import type {
   Blog,
   Event,
   Announcement,
+  ContentWorkflowAction,
+  ContentWorkflowActionPayload,
+  ContentWorkflowActionResult,
+  ContentWorkflowLog,
+  ContentWorkflowQueueFilters,
+  ContentWorkflowQueueItem,
   SliderGroup,
   Slider,
   Media,
@@ -188,8 +194,12 @@ export const statsApi = {
   ) => mainApi.get<{ data: PublicStatsResponse }>("/api/v1/stats", params),
   admin: () =>
     mainApi.get<{ data: PublicStatsResponse }>("/api/v1/stats/admin"),
-  portal: (portal: "admin" | "cocms" | "schools" | "departments" | "student-clubs") =>
-    mainApi.get<{ data: PortalStatsResponse }>(`/api/v1/stats/portal/${portal}`),
+  portal: (
+    portal: "admin" | "cocms" | "schools" | "departments" | "student-clubs",
+  ) =>
+    mainApi.get<{ data: PortalStatsResponse }>(
+      `/api/v1/stats/portal/${portal}`,
+    ),
 };
 
 // Users
@@ -218,14 +228,19 @@ export const myProfileApi = {
 };
 
 export const portalAccessApi = {
-  get: () => mainApi.get<{ data: PortalAccessResponse }>("/api/v1/me/portal-access"),
+  get: () =>
+    mainApi.get<{ data: PortalAccessResponse }>("/api/v1/me/portal-access"),
 };
 
 export const userPreferencesApi = {
-  get: () => mainApi.get<{ data: UserPreferencesResponse }>("/api/v1/me/preferences"),
+  get: () =>
+    mainApi.get<{ data: UserPreferencesResponse }>("/api/v1/me/preferences"),
 
   update: (data: UserPreferencesUpdatePayload) =>
-    mainApi.patch<{ data: UserPreferencesResponse }>("/api/v1/me/preferences", data),
+    mainApi.patch<{ data: UserPreferencesResponse }>(
+      "/api/v1/me/preferences",
+      data,
+    ),
 };
 
 // Persons
@@ -299,12 +314,18 @@ export const personsApi = {
 };
 
 export const publicTeamApi = {
-  get: (
-    params: {
-      entity_type: "university" | "school" | "department" | "division" | "wing" | "directorate" | "board";
-      entity_id?: string;
-    },
-  ) => mainApi.get<{ data: PublicTeamResponse }>("/api/v1/public/team", params),
+  get: (params: {
+    entity_type:
+      | "university"
+      | "school"
+      | "department"
+      | "division"
+      | "wing"
+      | "directorate"
+      | "board";
+    entity_id?: string;
+  }) =>
+    mainApi.get<{ data: PublicTeamResponse }>("/api/v1/public/team", params),
 };
 
 export const publicResearchContextApi = {
@@ -667,7 +688,10 @@ export const departmentServicesApi = {
     ),
 
   create: (data: Partial<DepartmentService>) =>
-    mainApi.post<{ data: DepartmentService }>("/api/v1/department-services", data),
+    mainApi.post<{ data: DepartmentService }>(
+      "/api/v1/department-services",
+      data,
+    ),
 
   update: (id: string, data: Partial<DepartmentService>) =>
     mainApi.patch<{ data: DepartmentService }>(
@@ -675,7 +699,8 @@ export const departmentServicesApi = {
       data,
     ),
 
-  delete: (id: string) => mainApi.delete<void>(`/api/v1/department-services/${id}`),
+  delete: (id: string) =>
+    mainApi.delete<void>(`/api/v1/department-services/${id}`),
 };
 
 // Programmes
@@ -971,7 +996,8 @@ export const documentsApi = {
       scope_type?: string;
       scope_id?: string;
     }>,
-  ) => mainApi.get<PaginatedResponse<Document>>("/api/v1/documents/admin", params),
+  ) =>
+    mainApi.get<PaginatedResponse<Document>>("/api/v1/documents/admin", params),
 
   getBySlug: (slug: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Document }>(`/api/v1/documents/${slug}`, params),
@@ -1287,6 +1313,33 @@ export const announcementsApi = {
   delete: (id: string) => mainApi.delete<void>(`/api/v1/announcements/${id}`),
 };
 
+export const contentWorkflowApi = {
+  listQueue: (params?: ContentWorkflowQueueFilters) =>
+    mainApi.get<{ data: ContentWorkflowQueueItem[] }>(
+      "/api/v1/content-workflow/queue",
+      params,
+    ),
+
+  action: (
+    contentType: ContentWorkflowQueueItem["content_type"],
+    contentId: string,
+    action: ContentWorkflowAction,
+    payload: ContentWorkflowActionPayload = {},
+  ) =>
+    mainApi.post<{ data: ContentWorkflowActionResult }>(
+      `/api/v1/content-workflow/${contentType}/${contentId}/${action}`,
+      payload,
+    ),
+
+  logs: (
+    contentType: ContentWorkflowQueueItem["content_type"],
+    contentId: string,
+  ) =>
+    mainApi.get<{ data: ContentWorkflowLog[] }>(
+      `/api/v1/content-workflow/${contentType}/${contentId}/logs`,
+    ),
+};
+
 // Sliders
 export const slidersApi = {
   listGroups: (
@@ -1409,15 +1462,12 @@ export const mediaApi = {
     if (options?.role) formData.append("role", options.role);
     const token = getStoredAccessToken();
 
-    const response = await fetch(
-      `${MAIN_API_BASE_URL}/api/v1/media/upload`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        body: formData,
-      },
-    );
+    const response = await fetch(`${MAIN_API_BASE_URL}/api/v1/media/upload`, {
+      method: "POST",
+      credentials: "include",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: formData,
+    });
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
@@ -1433,8 +1483,7 @@ export const mediaApi = {
       scope_type?: string;
       scope_id?: string;
     },
-  ) =>
-    mainApi.get<{ data: MediaFolder[] }>("/api/v1/media/folders", params),
+  ) => mainApi.get<{ data: MediaFolder[] }>("/api/v1/media/folders", params),
 
   createFolder: (data: MediaFolderCreatePayload) =>
     mainApi.post<{ data: MediaFolder }>("/api/v1/media/folders", data),

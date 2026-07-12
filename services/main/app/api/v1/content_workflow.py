@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import uuid
+from datetime import date, datetime, time, timedelta, timezone
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from ksu_common.schemas.responses import success
 
 from ...deps import CurrentUser, DbSession, permissions_for_user
-from ...models import Announcement, Blog, ContentWorkflowLog, Event, News
+from ...models import Announcement, Blog, ContentWorkflowLog, Event, News, User
 from ...schemas.content_workflow import ContentWorkflowActionRequest
 from ...services.content_workflow import ContentWorkflowService
 
@@ -19,11 +21,213 @@ router = APIRouter()
 CONTENT_MODELS = {"news": News, "blogs": Blog, "announcements": Announcement, "events": Event}
 REVIEW_ACTIONS = {"start_review", "request_changes", "approve", "reject"}
 PUBLISH_ACTIONS = {"schedule", "publish", "unpublish"}
+QUEUE_ACCESS_PERMISSIONS = {"content.review", "content.publish", "content.manage", "homepage.manage"}
+PORTAL_LABELS = {
+    "admin": "University Administration",
+    "alumni": "Alumni Portal",
+    "cocms": "CoCMS",
+    "library": "Library Portal",
+    "main": "Main University Website",
+    "research": "Research Portal",
+    "schools": "Schools Portal",
+    "student-clubs": "Student Clubs Portal",
+}
+CONTENT_TYPE_LABELS = {
+    "news": "News",
+    "blogs": "Blog",
+    "announcements": "Announcement",
+    "events": "Event",
+}
+PREVIEW_PATH_PREFIXES = {
+    "news": "/news",
+    "blogs": "/blogs",
+    "announcements": "/announcements",
+    "events": "/events",
+}
+EDIT_PATHS = {
+    "news": "/content/news",
+    "blogs": "/content/blogs",
+    "announcements": "/content/announcements",
+    "events": "/content/events",
+}
+
+
+def authorize_content_workflow_queue_access(permissions: set[str]) -> None:
+    """Require a CoCMS role capable of reviewing or managing published content."""
+    if not QUEUE_ACCESS_PERMISSIONS.intersection(permissions):
+        raise HTTPException(status_code=403, detail="Insufficient privileges")
+
+
+def _portal_label(portal: str | None) -> str:
+    if not portal:
+        return "Main University Website"
+    return PORTAL_LABELS.get(portal, portal.replace("-", " ").replace("_", " ").title())
+
+
+def _matches_date(value: datetime | None, expected: date | None) -> bool:
+    return expected is None or (value is not None and value.date() == expected)
+
+
+def _date_bounds(value: date) -> tuple[datetime, datetime]:
+    start = datetime.combine(value, time.min, tzinfo=timezone.utc)
+    return start, start + timedelta(days=1)
+
+
+def _preview_path(content_type: str, slug: str | None) -> str | None:
+    prefix = PREVIEW_PATH_PREFIXES.get(content_type)
+    return f"{prefix}/{slug}" if prefix and slug else None
+
+
+def build_content_workflow_queue_items(
+    records_by_type: dict[str, list[Any]],
+    actor_labels: dict[uuid.UUID, str],
+    *,
+    source_portal: str | None = None,
+    content_type: str | None = None,
+    status_filter: str | None = None,
+    submitted_date: date | None = None,
+    scheduled_date: date | None = None,
+    reviewer: str | None = None,
+) -> list[dict[str, Any]]:
+    """Normalize heterogeneous publishable records for the CoCMS review queue."""
+    normalized_reviewer = reviewer.strip().casefold() if reviewer else None
+    items: list[dict[str, Any]] = []
+    for item_type, records in records_by_type.items():
+        if content_type and item_type != content_type:
+            continue
+        for record in records:
+            workflow_status = getattr(record, "workflow_status", None) or getattr(record, "status", "draft")
+            owner_portal = getattr(record, "owner_portal", None)
+            submitted_at = getattr(record, "submitted_at", None)
+            scheduled_publish_at = getattr(record, "scheduled_publish_at", None)
+            reviewer_label = actor_labels.get(getattr(record, "reviewed_by_id", None), "Unassigned")
+            author_label = actor_labels.get(getattr(record, "author_user_id", None))
+            source_label = _portal_label(owner_portal)
+            owner_label = author_label or source_label
+
+            if source_portal == "main" and owner_portal not in (None, "main"):
+                continue
+            if source_portal and source_portal != "main" and owner_portal != source_portal:
+                continue
+            if status_filter and workflow_status != status_filter:
+                continue
+            if not _matches_date(submitted_at, submitted_date):
+                continue
+            if not _matches_date(scheduled_publish_at, scheduled_date):
+                continue
+            if normalized_reviewer and normalized_reviewer not in reviewer_label.casefold():
+                continue
+
+            items.append({
+                "id": str(record.id),
+                "content_type": item_type,
+                "content_type_label": CONTENT_TYPE_LABELS[item_type],
+                "title": getattr(record, "title", None) or "Untitled content",
+                "summary": getattr(record, "summary", None) or getattr(record, "plain_text", None),
+                "status": workflow_status,
+                "source_portal": owner_portal or "main",
+                "source_label": source_label,
+                "owner_label": owner_label,
+                "submitted_by_label": actor_labels.get(getattr(record, "submitted_by_id", None), "Not submitted"),
+                "submitted_at": submitted_at,
+                "reviewer_label": reviewer_label,
+                "scheduled_publish_at": scheduled_publish_at,
+                "publication_target": source_label,
+                "preview_path": _preview_path(item_type, getattr(record, "slug", None)),
+                "edit_path": EDIT_PATHS[item_type],
+                "preview": {
+                    "rich_text": getattr(record, "rich_text", None),
+                    "plain_text": getattr(record, "plain_text", None),
+                    "structured_content": getattr(record, "structured_content", None),
+                    "related_links": getattr(record, "related_links", None) or [],
+                    "seo": {
+                        "title": getattr(record, "meta_title", None),
+                        "description": getattr(record, "meta_description", None),
+                        "keywords": getattr(record, "keywords", None),
+                    },
+                },
+            })
+
+    return sorted(
+        items,
+        key=lambda item: item["submitted_at"].timestamp() if item["submitted_at"] else float("-inf"),
+        reverse=True,
+    )
+
+
+async def _workflow_queue_actor_labels(db: DbSession, records_by_type: dict[str, list[Any]]) -> dict[uuid.UUID, str]:
+    actor_ids = {
+        actor_id
+        for records in records_by_type.values()
+        for record in records
+        for actor_id in (
+            getattr(record, "author_user_id", None),
+            getattr(record, "submitted_by_id", None),
+            getattr(record, "reviewed_by_id", None),
+        )
+        if actor_id is not None
+    }
+    if not actor_ids:
+        return {}
+    result = await db.execute(select(User.id, User.full_name).where(User.id.in_(actor_ids)))
+    return {user_id: full_name for user_id, full_name in result.all()}
+
+
+@router.get("/queue")
+async def list_content_workflow_queue(
+    db: DbSession,
+    user: CurrentUser,
+    source_portal: str | None = Query(default=None),
+    content_type: str | None = Query(default=None),
+    status_filter: str | None = Query(default=None, alias="status"),
+    submitted_date: date | None = Query(default=None),
+    scheduled_date: date | None = Query(default=None),
+    reviewer: str | None = Query(default=None),
+):
+    """Return reviewable public content in a single CoCMS-oriented queue."""
+    authorize_content_workflow_queue_access(permissions_for_user(user))
+    if content_type and content_type not in CONTENT_MODELS:
+        raise HTTPException(status_code=400, detail="Unsupported content type")
+
+    records_by_type: dict[str, list[Any]] = {}
+    for item_type, model in CONTENT_MODELS.items():
+        if content_type and item_type != content_type:
+            continue
+        query = model.active_query().order_by(model.submitted_at.desc().nullslast(), model.created_at.desc())
+        if source_portal == "main":
+            query = query.where(or_(model.owner_portal.is_(None), model.owner_portal == "main"))
+        elif source_portal:
+            query = query.where(model.owner_portal == source_portal)
+        if status_filter:
+            query = query.where(model.workflow_status == status_filter)
+        if submitted_date:
+            start, end = _date_bounds(submitted_date)
+            query = query.where(model.submitted_at >= start, model.submitted_at < end)
+        if scheduled_date:
+            start, end = _date_bounds(scheduled_date)
+            query = query.where(model.scheduled_publish_at >= start, model.scheduled_publish_at < end)
+        result = await db.execute(query)
+        records_by_type[item_type] = list(result.scalars().all())
+
+    actor_labels = await _workflow_queue_actor_labels(db, records_by_type)
+    items = build_content_workflow_queue_items(
+        records_by_type,
+        actor_labels,
+        source_portal=source_portal,
+        content_type=content_type,
+        status_filter=status_filter,
+        submitted_date=submitted_date,
+        scheduled_date=scheduled_date,
+        reviewer=reviewer,
+    )
+    return success(data=items, message="Content workflow queue retrieved")
 
 
 def authorize_content_workflow_action(user, content, action: str, permissions: set[str]) -> None:
     owner_id = getattr(content, "author_user_id", None)
     if action == "edit":
+        if "content.manage" in permissions:
+            return
         if content.status == "submitted" and "content.edit_submitted" in permissions:
             return
         if owner_id == user.id and "content.edit" in permissions:
@@ -84,7 +288,11 @@ async def list_content_workflow_logs(
     per_page: int = Query(50, ge=1, le=100),
 ):
     content = await _get_content_or_404(db, content_type, content_id)
-    authorize_content_workflow_action(user, content, "edit", permissions_for_user(user))
+    permissions = permissions_for_user(user)
+    try:
+        authorize_content_workflow_queue_access(permissions)
+    except HTTPException:
+        authorize_content_workflow_action(user, content, "edit", permissions)
     result = await db.execute(
         select(ContentWorkflowLog)
         .where(ContentWorkflowLog.content_type == content_type, ContentWorkflowLog.content_id == content_id)

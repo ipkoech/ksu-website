@@ -79,7 +79,14 @@ export interface Person {
   address?: string;
   bio?: string;
   full_bio?: string;
-  qualifications?: { degree: string; field?: string | null; institution: string; year?: number | string | null }[] | null;
+  qualifications?:
+    | {
+        degree: string;
+        field?: string | null;
+        institution: string;
+        year?: number | string | null;
+      }[]
+    | null;
   education_background?: Record<string, unknown>[] | null;
   professional_memberships?: Record<string, unknown>[] | null;
   awards_honors?: Record<string, unknown>[] | null;
@@ -146,7 +153,14 @@ export interface PersonCreatePayload {
   photo_id?: string | null;
   bio?: string | null;
   full_bio?: string | null;
-  qualifications?: { degree: string; field?: string | null; institution: string; year?: number | string | null }[] | null;
+  qualifications?:
+    | {
+        degree: string;
+        field?: string | null;
+        institution: string;
+        year?: number | string | null;
+      }[]
+    | null;
   education_background?: Record<string, unknown>[] | null;
   professional_memberships?: Record<string, unknown>[] | null;
   awards_honors?: Record<string, unknown>[] | null;
@@ -246,8 +260,17 @@ export type MyProfileUpdatePayload = Partial<
 >;
 
 export type PersonStatusFilter = "active" | "inactive" | "deleted" | "all";
-export type StaffAssignmentStatusFilter = "active" | "ended" | "inactive" | "pending" | "all";
-export type StaffAssignmentConflictResolution = "cancel" | "assign_acting" | "replace_current" | "edit_selection";
+export type StaffAssignmentStatusFilter =
+  | "active"
+  | "ended"
+  | "inactive"
+  | "pending"
+  | "all";
+export type StaffAssignmentConflictResolution =
+  | "cancel"
+  | "assign_acting"
+  | "replace_current"
+  | "edit_selection";
 
 export interface PublicTeamEntity {
   id?: string | null;
@@ -349,7 +372,13 @@ export interface PublicResearchContextEntity {
 
 export interface PublicResearchContextResponse {
   resolved_entity: {
-    entity_type: "university" | "department" | "division" | "wing" | "directorate" | "board";
+    entity_type:
+      | "university"
+      | "department"
+      | "division"
+      | "wing"
+      | "directorate"
+      | "board";
     entity_id?: string | null;
     source?: string | null;
   };
@@ -360,7 +389,12 @@ export interface PublicResearchContextResponse {
   team: Omit<PublicTeamResponse, "entity">;
   leadership: {
     assignment?: PublicTeamAssignment | null;
-    person?: (PublicTeamPerson & { leadership_message?: string | null; bio?: string | null }) | null;
+    person?:
+      | (PublicTeamPerson & {
+          leadership_message?: string | null;
+          bio?: string | null;
+        })
+      | null;
     message?: string | null;
   };
   relationships: {
@@ -430,7 +464,13 @@ export interface StaffAssignment {
   person?: Person;
   entity_type: string;
   entity_id?: string | null;
-  entity?: { id: string | null; name: string; type: string; subtitle?: string | null; is_active?: boolean };
+  entity?: {
+    id: string | null;
+    name: string;
+    type: string;
+    subtitle?: string | null;
+    is_active?: boolean;
+  };
   role: string;
   title?: string;
   hierarchy_level?: number;
@@ -479,7 +519,9 @@ export interface StaffAssignmentCreatePayload {
   conflict_notes?: string | null;
 }
 
-export type StaffAssignmentUpdatePayload = Partial<Omit<StaffAssignmentCreatePayload, "person_id">>;
+export type StaffAssignmentUpdatePayload = Partial<
+  Omit<StaffAssignmentCreatePayload, "person_id">
+>;
 
 export interface StaffAssignmentEndPayload {
   end_date?: string | null;
@@ -717,7 +759,9 @@ export interface UniversityInfo {
   country?: string;
   social_links?: Record<string, unknown>;
   quick_facts?: Record<string, unknown>;
-  strategic_priorities?: Record<string, unknown> | Array<Record<string, unknown>>;
+  strategic_priorities?:
+    | Record<string, unknown>
+    | Array<Record<string, unknown>>;
   logo_id?: string;
   seal_id?: string;
   cover_image_id?: string;
@@ -753,8 +797,14 @@ export interface Department {
   school_name?: string | null;
   head_id?: string | null;
   postgraduate_coordinator_id?: string | null;
-  head?: Pick<Person, "id" | "full_name" | "email" | "title" | "department_id"> | null;
-  postgraduate_coordinator?: Pick<Person, "id" | "full_name" | "email" | "title" | "department_id"> | null;
+  head?: Pick<
+    Person,
+    "id" | "full_name" | "email" | "title" | "department_id"
+  > | null;
+  postgraduate_coordinator?: Pick<
+    Person,
+    "id" | "full_name" | "email" | "title" | "department_id"
+  > | null;
   hod_id?: string | null;
   hod_name?: string | null;
   hod_email?: string | null;
@@ -1258,6 +1308,96 @@ export interface Announcement {
   updated_at: string;
 }
 
+export type ContentWorkflowStatus =
+  | "draft"
+  | "submitted"
+  | "in_review"
+  | "changes_requested"
+  | "approved"
+  | "scheduled"
+  | "published"
+  | "unpublished"
+  | "rejected"
+  | "archived";
+
+export type ContentWorkflowAction =
+  | "submit"
+  | "start_review"
+  | "request_changes"
+  | "approve"
+  | "schedule"
+  | "publish"
+  | "unpublish"
+  | "reject"
+  | "archive";
+
+export interface ContentWorkflowQueueFilters extends Record<
+  string,
+  string | undefined
+> {
+  source_portal?: string;
+  content_type?: "news" | "blogs" | "announcements" | "events";
+  status?: ContentWorkflowStatus;
+  submitted_date?: string;
+  scheduled_date?: string;
+  reviewer?: string;
+}
+
+export interface ContentWorkflowQueueItem {
+  id: string;
+  content_type: "news" | "blogs" | "announcements" | "events";
+  content_type_label: string;
+  title: string;
+  summary?: string | null;
+  status: ContentWorkflowStatus;
+  source_portal: string;
+  source_label: string;
+  owner_label: string;
+  submitted_by_label: string;
+  submitted_at?: string | null;
+  reviewer_label: string;
+  scheduled_publish_at?: string | null;
+  publication_target: string;
+  preview_path?: string | null;
+  edit_path: string;
+  preview: {
+    rich_text?: string | null;
+    plain_text?: string | null;
+    structured_content?: Record<string, unknown> | null;
+    related_links: Array<Record<string, unknown>>;
+    seo: {
+      title?: string | null;
+      description?: string | null;
+      keywords?: Record<string, unknown> | string[] | null;
+    };
+  };
+}
+
+export interface ContentWorkflowActionPayload {
+  comments?: string;
+  changed_fields?: Record<string, unknown>;
+  scheduled_for?: string;
+}
+
+export interface ContentWorkflowActionResult {
+  id: string;
+  status: ContentWorkflowStatus;
+  workflow_status?: ContentWorkflowStatus;
+}
+
+export interface ContentWorkflowLog {
+  id: string;
+  content_type: string;
+  content_id: string;
+  from_status: ContentWorkflowStatus;
+  to_status: ContentWorkflowStatus;
+  action: ContentWorkflowAction;
+  actor_id?: string | null;
+  comments?: string | null;
+  changed_fields?: Record<string, unknown> | null;
+  created_at: string;
+}
+
 export interface SliderGroup {
   id: string;
   name: string;
@@ -1562,7 +1702,13 @@ export interface Setting {
 }
 
 export type AnalyticsSourceApp = "web" | "admin";
-export type AnalyticsEventType = "page_view" | "content_view" | "search" | "download" | "cta_click" | "admin_action";
+export type AnalyticsEventType =
+  | "page_view"
+  | "content_view"
+  | "search"
+  | "download"
+  | "cta_click"
+  | "admin_action";
 
 export interface AnalyticsEventPayload {
   event_type: AnalyticsEventType;
