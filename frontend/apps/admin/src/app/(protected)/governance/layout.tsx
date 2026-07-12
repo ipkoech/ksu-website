@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { PortalShell } from "@/components/portals/portal-shell";
-
-export default function GovernanceLayout({ children }: { children: React.ReactNode }) {
-  return <PortalShell portalKey="governance">{children}</PortalShell>;
+export default function GovernanceLayout() {
+  redirect("/admin");
 }

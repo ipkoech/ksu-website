@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import uuid
+
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models import Role, RolePermission
 from ksu_common.roles import ALL_PERMISSIONS, ROLE_DEFINITIONS
 
 from ._shared import SeedContext, upsert_permission, upsert_role, upsert_role_permission
@@ -43,6 +47,17 @@ PERMISSION_SPECS = [
     ("media:upload", "Upload media assets", "media", "upload"),
     ("media:delete", "Delete media assets", "media", "delete"),
     ("media:manage", "Manage media folders and links", "media", "manage"),
+    ("content.manage", "Manage public content records", "content", "manage"),
+    ("content.review", "Review submitted public content", "content", "review"),
+    ("content.edit_submitted", "Edit submitted public content", "content", "edit_submitted"),
+    ("content.approve", "Approve public content", "content", "approve"),
+    ("content.schedule", "Schedule public content", "content", "schedule"),
+    ("content.unpublish", "Unpublish public content", "content", "unpublish"),
+    ("clubs.view", "View student club records", "clubs", "view"),
+    ("clubs.manage_own", "Manage assigned student club records", "clubs", "manage_own"),
+    ("clubs.content_submit", "Submit student club content for review", "clubs", "content_submit"),
+    ("clubs.events_manage", "Manage assigned student club events", "clubs", "events_manage"),
+    ("clubs.stories_manage", "Manage assigned student club stories", "clubs", "stories_manage"),
 ]
 
 
@@ -70,6 +85,40 @@ for permission_name in ALL_PERMISSIONS:
     _existing_permissions.add(permission_name)
 
 
+COCMS_PERMISSION_NAMES = [
+    "content.view",
+    "content.manage",
+    "content.manage_pages",
+    "content.manage_news",
+    "content.manage_events",
+    "content.manage_blogs",
+    "content.manage_announcements",
+    "content.manage_categories",
+    "content.review",
+    "content.edit_submitted",
+    "content.approve",
+    "content.publish",
+    "content.schedule",
+    "content.unpublish",
+    "media.view",
+    "media.upload",
+    "media.manage",
+    "homepage.view",
+    "homepage.manage",
+    "homepage.publish",
+    "marketing.view",
+    "marketing.manage_sliders",
+    "marketing.manage_testimonials",
+    "support.manage_faqs",
+    "support.manage_contacts",
+]
+
+
+# Most seeded roles retain operator-added permissions. This legacy role is a
+# deliberate consolidation exception: its prior admin:* grant must be removed.
+RECONCILED_ROLE_NAMES = frozenset({"content_admin"})
+
+
 ROLE_SPECS = [
     {
         "name": "super_admin",
@@ -87,10 +136,17 @@ ROLE_SPECS = [
     },
     {
         "name": "content_admin",
-        "display_name": "Content Admin",
-        "description": "Administrative role for public website content managed through admin:*.",
+        "display_name": "Content Admin (Legacy)",
+        "description": "Legacy content administration role retained for CoCMS compatibility.",
         "is_system": True,
-        "permission_names": ["admin:*", "media:upload", "media:manage"],
+        "permission_names": COCMS_PERMISSION_NAMES,
+    },
+    {
+        "name": "cocms_admin",
+        "display_name": "CoCMS Admin",
+        "description": "Administrator for the consolidated corporate communications and CMS portal.",
+        "is_system": True,
+        "permission_names": COCMS_PERMISSION_NAMES,
     },
     {
         "name": "staff_admin",
@@ -126,6 +182,32 @@ ROLE_SPECS = [
             "notifications:write",
             "notifications:delete",
             "notifications:send",
+        ],
+    },
+    {
+        "name": "publications_admin",
+        "display_name": "Publications Admin",
+        "description": "Administrator for publications submissions, review, and approval.",
+        "is_system": True,
+        "permission_names": [
+            "publications.manage",
+            "publications.view",
+            "publications.submit",
+            "publications.review",
+            "publications.approve",
+        ],
+    },
+    {
+        "name": "student_clubs_admin",
+        "display_name": "Student Clubs Admin",
+        "description": "Administrator for student club profiles and club-scoped content submission.",
+        "is_system": True,
+        "permission_names": [
+            "clubs.view",
+            "clubs.manage_own",
+            "clubs.content_submit",
+            "clubs.events_manage",
+            "clubs.stories_manage",
         ],
     },
 ]
@@ -173,3 +255,23 @@ async def seed_rbac(db: AsyncSession, ctx: SeedContext) -> None:
         )
         for permission_name in spec["permission_names"]:
             await upsert_role_permission(db, role, ctx.permissions[permission_name])
+        if spec["name"] in RECONCILED_ROLE_NAMES:
+            await _reconcile_role_permissions(
+                db,
+                role,
+                {ctx.permissions[permission_name].id for permission_name in spec["permission_names"]},
+            )
+
+
+async def _reconcile_role_permissions(
+    db: AsyncSession,
+    role: Role,
+    permitted_permission_ids: set[uuid.UUID],
+) -> None:
+    result = await db.execute(
+        select(RolePermission).where(RolePermission.role_id == role.id)
+    )
+    for role_permission in result.scalars():
+        if role_permission.permission_id not in permitted_permission_ids:
+            await db.delete(role_permission)
+    await db.flush()
