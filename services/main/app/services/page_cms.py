@@ -7,7 +7,7 @@ from collections.abc import Awaitable, Callable
 from datetime import datetime, timezone
 from typing import Any, Sequence
 
-from sqlalchemy import or_, select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -60,6 +60,23 @@ def _published_workflow_filter(model, now: datetime):
         *_active_window_filter(model, now),
         or_(model.scheduled_publish_at.is_(None), model.scheduled_publish_at <= now),
         or_(model.expires_at.is_(None), model.expires_at >= now),
+    )
+
+
+def _published_media_link_filter(now: datetime):
+    return (
+        MediaLink.is_public.is_(True),
+        or_(
+            MediaLink.owner_scope_type != "club",
+            MediaLink.owner_scope_type.is_(None),
+            and_(
+                MediaLink.is_published.is_(True),
+                MediaLink.workflow_status == "published",
+                MediaLink.archived_at.is_(None),
+                or_(MediaLink.scheduled_publish_at.is_(None), MediaLink.scheduled_publish_at <= now),
+                or_(MediaLink.expires_at.is_(None), MediaLink.expires_at >= now),
+            ),
+        ),
     )
 
 
@@ -535,13 +552,14 @@ async def group_media_links(
     entity_type: str,
     entity_id: uuid.UUID,
 ) -> dict[str, list[dict[str, Any]]]:
+    now = datetime.now(timezone.utc)
     query = (
         select(MediaLink)
         .options(selectinload(MediaLink.media))
         .join(Media, MediaLink.media_id == Media.id)
         .where(
             MediaLink.deleted_at.is_(None),
-            MediaLink.is_public.is_(True),
+            *_published_media_link_filter(now),
             Media.deleted_at.is_(None),
             Media.is_public.is_(True),
             MediaLink.entity_type == entity_type,

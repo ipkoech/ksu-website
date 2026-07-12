@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import selectinload
 
 from ksu_common.schemas.responses import success
@@ -16,6 +17,23 @@ from ...services import MediaService
 from ...services._base import ilike_any, paginate_query
 
 router = APIRouter()
+
+
+def _public_media_link_filter(now: datetime):
+    return (
+        MediaLink.is_public.is_(True),
+        or_(
+            MediaLink.owner_scope_type != "club",
+            MediaLink.owner_scope_type.is_(None),
+            and_(
+                MediaLink.is_published.is_(True),
+                MediaLink.workflow_status == "published",
+                MediaLink.archived_at.is_(None),
+                or_(MediaLink.scheduled_publish_at.is_(None), MediaLink.scheduled_publish_at <= now),
+                or_(MediaLink.expires_at.is_(None), MediaLink.expires_at >= now),
+            ),
+        ),
+    )
 
 
 def public_media_payload(media: Media) -> dict[str, object | None]:
@@ -103,13 +121,14 @@ async def list_public_media_links(
     role: str | None = Query(default=None, max_length=64),
     per_page: int = Query(24, ge=1, le=100),
 ):
+    now = datetime.now(timezone.utc)
     query = (
         select(MediaLink)
         .options(selectinload(MediaLink.media))
         .join(Media, MediaLink.media_id == Media.id)
         .where(
             MediaLink.deleted_at.is_(None),
-            MediaLink.is_public.is_(True),
+            *_public_media_link_filter(now),
             Media.deleted_at.is_(None),
             Media.is_public.is_(True),
             MediaLink.entity_type == entity_type,

@@ -5,8 +5,10 @@ import uuid
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, patch
 
-from app.models import Media, MediaLink, PageSection, PartnershipSpotlight, SectionItem
-from app.services import HomepageCompositionService, group_media_links
+from app.models import Blog, Media, MediaLink, PageSection, PartnershipSpotlight, SectionItem
+from app.api.v1 import public_media
+from app.services import BlogService, HomepageCompositionService, group_media_links
+import app.services.content as content_service
 from app.services.page_cms import _get_research_partner_payload
 
 
@@ -30,6 +32,10 @@ class _QueueDb:
         self.statements.append(statement)
         rows = self._result_sets.pop(0) if self._result_sets else []
         return _ScalarResult(rows)
+
+
+async def _capture_query(_db, query, *, page=1, per_page=20):
+    return query
 
 
 def _make_media(filename: str, *, media_type: str = "image") -> Media:
@@ -59,6 +65,53 @@ def _make_link(entity_type: str, entity_id: uuid.UUID, role: str, filename: str,
 
 
 class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
+    async def test_group_media_links_scopes_workflow_gate_to_club_media(self):
+        db = _QueueDb([])
+
+        await group_media_links(db, "club", uuid.uuid4())
+
+        query_text = str(db.statements[0]).lower()
+        self.assertIn("media_links.is_public is true", query_text)
+        self.assertIn("media_links.owner_scope_type", query_text)
+        self.assertIn("media_links.is_published is true", query_text)
+        self.assertIn("media_links.workflow_status", query_text)
+        self.assertIn("media_links.archived_at is null", query_text)
+        self.assertIn("media_links.scheduled_publish_at is null", query_text)
+        self.assertIn("media_links.expires_at is null", query_text)
+        self.assertIn("media_links.owner_scope_type is null", query_text)
+
+    async def test_public_media_links_endpoint_scopes_workflow_gate_to_club_media(self):
+        db = _QueueDb([])
+
+        await public_media.list_public_media_links(db, entity_type="club", entity_id=uuid.uuid4(), per_page=24)
+
+        query_text = str(db.statements[0]).lower()
+        self.assertIn("media_links.is_public is true", query_text)
+        self.assertIn("media_links.owner_scope_type", query_text)
+        self.assertIn("media_links.is_published is true", query_text)
+        self.assertIn("media_links.workflow_status", query_text)
+        self.assertIn("media_links.owner_scope_type is null", query_text)
+
+    async def test_public_blog_feed_keeps_published_club_stories_eligible_for_homepage(self):
+        with (
+            patch.object(content_service, "_archive_expired_content", AsyncMock()),
+            patch.object(content_service, "paginate_query", _capture_query),
+        ):
+            query = await BlogService.list(
+                object(),
+                scope_type="club",
+                scope_id=uuid.uuid4(),
+            )
+
+        query_text = str(query).lower()
+        compiled = query.compile()
+        self.assertIn("blogs.scope_type", query_text)
+        self.assertIn("blogs.is_public is true", query_text)
+        self.assertIn("blogs.is_published is true", query_text)
+        self.assertIn("blogs.workflow_status", query_text)
+        self.assertIn("blogs.archived_at is null", query_text)
+        self.assertIn("published", compiled.params.values())
+
     async def test_group_media_links_groups_roles_for_composition(self):
         entity_id = uuid.uuid4()
         db = _QueueDb(
