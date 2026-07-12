@@ -109,9 +109,33 @@ class ClubActivityRead(BaseReadSchema):
     is_virtual: bool
     meeting_link: str | None = None
     cover_image_id: uuid.UUID | None = None
+    author_user_id: uuid.UUID | None = None
     status: str
     club: dict[str, Any] | None = None
     cover_image: dict[str, Any] | None = None
+    is_public: bool
+    is_published: bool
+    workflow_status: str
+    owner_portal: str | None = None
+    owner_scope_type: str | None = None
+    owner_scope_id: uuid.UUID | None = None
+    submitted_at: datetime | None = None
+    approved_at: datetime | None = None
+    published_at: datetime | None = None
+
+
+class ClubMediaCreate(BaseSchema):
+    media_id: uuid.UUID
+    role: str = Field(default="gallery", max_length=64)
+    display_order: int = 100
+
+
+class ClubMediaUpdate(BaseSchema):
+    role: str | None = Field(default=None, max_length=64)
+    display_order: int | None = None
+
+
+class ClubMediaPublicationUpdate(BaseSchema):
     is_public: bool
 
 

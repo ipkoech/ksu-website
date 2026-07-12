@@ -174,4 +174,13 @@ class MediaLinkRead(BaseReadSchema):
     folder: dict[str, Any] | None = None
     display_order: int
     is_public: bool
+    is_published: bool = False
+    status: str = "draft"
+    workflow_status: str = "draft"
+    owner_portal: str | None = None
+    owner_scope_type: str | None = None
+    owner_scope_id: uuid.UUID | None = None
+    submitted_at: datetime | None = None
+    approved_at: datetime | None = None
+    published_at: datetime | None = None
     deleted_at: datetime | None = None

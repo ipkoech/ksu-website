@@ -216,6 +216,9 @@ export type AttachmentManagerProps = {
   onPendingAttachmentsChange?: (attachments: PendingMediaAttachment[]) => void;
   disabled?: boolean;
   isPublic?: boolean;
+  allowVisibilityChange?: boolean;
+  uploadEntityType?: string;
+  uploadEntityId?: string | null;
 };
 
 export function AttachmentManager({
@@ -229,6 +232,9 @@ export function AttachmentManager({
   onPendingAttachmentsChange,
   disabled,
   isPublic = true,
+  allowVisibilityChange = true,
+  uploadEntityType,
+  uploadEntityId,
 }: AttachmentManagerProps) {
   const [role, setRole] = React.useState(defaultRole);
   const [removeTarget, setRemoveTarget] = React.useState<null | { id: string; label: string; pending: boolean }>(null);
@@ -383,9 +389,9 @@ export function AttachmentManager({
         allowClear={false}
         disabled={disabled || createMediaLink.isPending}
         isPublic={isPublic}
-        uploadEntityType={canPersist ? entityType : undefined}
-        uploadEntityId={canPersist ? entityId ?? undefined : undefined}
-        uploadRole={canPersist ? selectedRole.value : undefined}
+        uploadEntityType={canPersist ? entityType : uploadEntityType}
+        uploadEntityId={canPersist ? entityId ?? undefined : uploadEntityId ?? undefined}
+        uploadRole={selectedRole.value}
       />
 
       <div className="space-y-3">
@@ -408,7 +414,7 @@ export function AttachmentManager({
             canMoveDown={index < persistedLinks.length - 1}
             disabled={disabled || deleteMediaLink.isPending || updateMediaLink.isPending}
             onRoleChange={(nextRole) => void updatePersistedLink(link, { role: nextRole })}
-            onVisibilityChange={(nextPublic) => void updatePersistedLink(link, { is_public: nextPublic })}
+            onVisibilityChange={allowVisibilityChange ? (nextPublic) => void updatePersistedLink(link, { is_public: nextPublic }) : undefined}
             onMoveUp={() => void movePersistedLink(link, -1)}
             onMoveDown={() => void movePersistedLink(link, 1)}
             onRemove={() => setRemoveTarget({ id: link.id, label: link.media ? getMediaLabel(link.media) : "attachment", pending: false })}
@@ -427,7 +433,7 @@ export function AttachmentManager({
             canMoveDown={index < pendingAttachments.length - 1}
             disabled={disabled}
             onRoleChange={(nextRole) => updatePendingAttachment(attachment.media_id, attachment.role, { role: nextRole })}
-            onVisibilityChange={(nextPublic) => updatePendingAttachment(attachment.media_id, attachment.role, { is_public: nextPublic })}
+            onVisibilityChange={allowVisibilityChange ? (nextPublic) => updatePendingAttachment(attachment.media_id, attachment.role, { is_public: nextPublic }) : undefined}
             onMoveUp={() => movePendingAttachment(index, -1)}
             onMoveDown={() => movePendingAttachment(index, 1)}
             onRemove={() => setRemoveTarget({ id: attachment.media_id, label: attachment.media ? getMediaLabel(attachment.media) : "queued attachment", pending: true })}

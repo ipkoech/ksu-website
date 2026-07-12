@@ -65,7 +65,7 @@ export function MediaPicker({
   placeholder,
   accept,
   maxSize = 20 * 1024 * 1024,
-  isPublic = true,
+  isPublic = false,
   uploadEntityType,
   uploadEntityId,
   uploadRole,

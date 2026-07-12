@@ -19,6 +19,7 @@ from ..models import (
     Announcement,
     Blog,
     Board,
+    ClubActivity,
     Event,
     News,
     PageSection,
@@ -90,6 +91,7 @@ DIRECT_ATTACHMENT_SCOPE_TYPES = frozenset(
 CONTENT_ATTACHMENT_MODELS = {
     "announcement": Announcement,
     "blog": Blog,
+    "club_activity": ClubActivity,
     "event": Event,
     "news": News,
     "slider": Slider,
@@ -171,13 +173,31 @@ class MediaService:
         db.add(media)
         await db.flush()
         if entity_type and entity_id is not None:
+            scope_type, scope_id = await MediaService.get_attachment_scope(
+                db,
+                entity_type=entity_type,
+                entity_id=entity_id,
+            )
+            if scope_type == "club":
+                media.is_public = False
+            link_metadata = {"is_public": is_public}
+            if scope_type == "club":
+                link_metadata = {
+                    "is_public": False,
+                    "status": "draft",
+                    "workflow_status": "draft",
+                    "owner_portal": "student-clubs",
+                    "owner_scope_type": "club",
+                    "owner_scope_id": scope_id,
+                    "author_user_id": uploaded_by_id,
+                }
             await MediaService.link_media(
                 db,
                 media_id=media.id,
                 entity_type=entity_type,
                 entity_id=entity_id,
                 role=role or "attachment",
-                is_public=is_public,
+                **link_metadata,
             )
         return media
 
@@ -209,6 +229,17 @@ class MediaService:
         }.get(normalized_type, normalized_type)
         if normalized_type in DIRECT_ATTACHMENT_SCOPE_TYPES:
             return normalized_type, entity_id
+
+        if normalized_type == "club_activity":
+            result = await db.execute(
+                select(ClubActivity.owner_scope_type, ClubActivity.owner_scope_id, ClubActivity.club_id).where(
+                    ClubActivity.id == entity_id,
+                    ClubActivity.deleted_at.is_(None),
+                )
+            )
+            scope = result.one_or_none()
+            if scope is not None:
+                return scope[0] or "club", scope[1] or scope[2]
 
         if normalized_type == "person":
             result = await db.execute(
@@ -259,6 +290,15 @@ class MediaService:
             "folder_id": link.folder_id,
             "display_order": link.display_order,
             "is_public": link.is_public,
+            "is_published": getattr(link, "is_published", False),
+            "status": getattr(link, "status", "draft"),
+            "workflow_status": getattr(link, "workflow_status", "draft"),
+            "owner_portal": getattr(link, "owner_portal", None),
+            "owner_scope_type": getattr(link, "owner_scope_type", None),
+            "owner_scope_id": getattr(link, "owner_scope_id", None),
+            "submitted_at": getattr(link, "submitted_at", None),
+            "approved_at": getattr(link, "approved_at", None),
+            "published_at": getattr(link, "published_at", None),
             "media": (
                 {
                     "id": media.id,
@@ -420,6 +460,7 @@ class MediaService:
         folder_id: uuid.UUID | None = None,
         display_order: int = 100,
         is_public: bool = True,
+        **metadata,
     ) -> MediaLink:
         link = MediaLink(
             media_id=media_id,
@@ -429,6 +470,7 @@ class MediaService:
             folder_id=folder_id,
             display_order=display_order,
             is_public=is_public,
+            **metadata,
         )
         db.add(link)
         await db.flush()
@@ -444,6 +486,27 @@ class MediaService:
         if load_options:
             query = query.options(*load_options)
         result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_link_for_media(
+        db: AsyncSession,
+        *,
+        media_id: uuid.UUID,
+        entity_type: str,
+        entity_id: uuid.UUID,
+        role: str,
+    ) -> MediaLink | None:
+        result = await db.execute(
+            MediaLink.active_query()
+            .options(selectinload(MediaLink.media), selectinload(MediaLink.folder))
+            .where(
+                MediaLink.media_id == media_id,
+                MediaLink.entity_type == entity_type,
+                MediaLink.entity_id == entity_id,
+                MediaLink.role == role,
+            )
+        )
         return result.scalar_one_or_none()
 
     @staticmethod
@@ -516,6 +579,14 @@ class MediaService:
             return False
         for assignment in user.role_assignments:
             if assignment.is_active and assignment.scope_type == scope_type and assignment.scope_id == scope_id:
+                return True
+        person = getattr(user, "person", None)
+        for assignment in getattr(person, "assignments", []) or []:
+            if (
+                assignment.status == "active"
+                and assignment.entity_type == scope_type
+                and assignment.entity_id == scope_id
+            ):
                 return True
         return False
 

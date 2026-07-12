@@ -168,6 +168,7 @@ ENTITY_ROLES = {
         "principal_investigator", "project_lead", "chairperson", "researcher",
         "senior_researcher", "admin", "officer", "staff",
     ],
+    "club": ["patron", "chairperson", "vice_chairperson", "secretary", "treasurer", "official", "member"],
     "directorate": ["director", "deputy_director", "manager", "coordinator", "officer", "admin", "staff"],
 }
 

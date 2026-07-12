@@ -8,20 +8,31 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import or_, select
+from sqlalchemy.orm import selectinload
 
 from ksu_common.schemas.responses import success
 
 from ...deps import CurrentUser, DbSession, permissions_for_user
-from ...models import Announcement, Blog, ContentWorkflowLog, Event, News, User
+from ...models import Announcement, Blog, ClubActivity, ContentWorkflowLog, Event, MediaLink, News, User
 from ...schemas.content_workflow import ContentWorkflowActionRequest
+from ...security.scopes import can_access_scope
 from ...services.content_workflow import ContentWorkflowService
 
 router = APIRouter()
 
-CONTENT_MODELS = {"news": News, "blogs": Blog, "announcements": Announcement, "events": Event}
+CONTENT_MODELS = {
+    "news": News,
+    "blogs": Blog,
+    "announcements": Announcement,
+    "events": Event,
+    "club-events": ClubActivity,
+    "club-media": MediaLink,
+}
 REVIEW_ACTIONS = {"start_review", "request_changes", "approve", "reject"}
 PUBLISH_ACTIONS = {"schedule", "publish", "unpublish"}
 QUEUE_ACCESS_PERMISSIONS = {"content.review", "content.publish", "content.manage", "homepage.manage"}
+CLUB_EVENT_SUBMIT_PERMISSIONS = ("clubs.content_submit", "clubs.manage_own")
+COCMS_WORKFLOW_PERMISSIONS = {"content.review", "content.publish", "content.manage"}
 PORTAL_LABELS = {
     "admin": "University Administration",
     "alumni": "Alumni Portal",
@@ -37,6 +48,8 @@ CONTENT_TYPE_LABELS = {
     "blogs": "Blog",
     "announcements": "Announcement",
     "events": "Event",
+    "club-events": "Club Event",
+    "club-media": "Club Media",
 }
 PREVIEW_PATH_PREFIXES = {
     "news": "/news",
@@ -49,12 +62,20 @@ EDIT_PATHS = {
     "blogs": "/content/blogs",
     "announcements": "/content/announcements",
     "events": "/content/events",
+    "club-events": "/student-clubs/events",
+    "club-media": "/cocms/review-queue",
 }
 
 
 def authorize_content_workflow_queue_access(permissions: set[str]) -> None:
     """Require a CoCMS role capable of reviewing or managing published content."""
     if not QUEUE_ACCESS_PERMISSIONS.intersection(permissions):
+        raise HTTPException(status_code=403, detail="Insufficient privileges")
+
+
+def authorize_cocms_workflow_permission(permissions: set[str]) -> None:
+    """Require a CoCMS content workflow permission, excluding homepage-only access."""
+    if not COCMS_WORKFLOW_PERMISSIONS.intersection(permissions):
         raise HTTPException(status_code=403, detail="Insufficient privileges")
 
 
@@ -104,6 +125,14 @@ def build_content_workflow_queue_items(
             author_label = actor_labels.get(getattr(record, "author_user_id", None))
             source_label = _portal_label(owner_portal)
             owner_label = author_label or source_label
+            media = getattr(record, "media", None)
+            title = (
+                getattr(record, "title", None)
+                or getattr(media, "title", None)
+                or getattr(media, "original_filename", None)
+                or getattr(media, "filename", None)
+                or "Untitled content"
+            )
 
             if source_portal == "main" and owner_portal not in (None, "main"):
                 continue
@@ -122,7 +151,7 @@ def build_content_workflow_queue_items(
                 "id": str(record.id),
                 "content_type": item_type,
                 "content_type_label": CONTENT_TYPE_LABELS[item_type],
-                "title": getattr(record, "title", None) or "Untitled content",
+                "title": title,
                 "summary": getattr(record, "summary", None) or getattr(record, "plain_text", None),
                 "status": workflow_status,
                 "source_portal": owner_portal or "main",
@@ -194,6 +223,11 @@ async def list_content_workflow_queue(
         if content_type and item_type != content_type:
             continue
         query = model.active_query().order_by(model.submitted_at.desc().nullslast(), model.created_at.desc())
+        if item_type == "club-media":
+            query = query.options(selectinload(MediaLink.media)).where(
+                MediaLink.owner_portal == "student-clubs",
+                MediaLink.owner_scope_type == "club",
+            )
         if source_portal == "main":
             query = query.where(or_(model.owner_portal.is_(None), model.owner_portal == "main"))
         elif source_portal:
@@ -244,6 +278,37 @@ def authorize_content_workflow_action(user, content, action: str, permissions: s
         raise HTTPException(status_code=403, detail="Insufficient privileges")
 
 
+async def authorize_club_event_workflow_action(
+    db: DbSession,
+    user: CurrentUser,
+    content: ClubActivity,
+    action: str,
+    permissions: set[str],
+) -> None:
+    """Apply club scope checks to generic workflow routes for club events."""
+    if action != "submit":
+        authorize_cocms_workflow_permission(permissions)
+        return
+
+    for permission in CLUB_EVENT_SUBMIT_PERMISSIONS:
+        if await can_access_scope(db, user, permission, "club", content.club_id):
+            return
+    raise HTTPException(status_code=403, detail="Insufficient privileges for this club event")
+
+
+def authorize_club_media_workflow_action(action: str, permissions: set[str]) -> None:
+    if action in {"start_review", "request_changes", "approve", "reject"}:
+        required = "content.review"
+    elif action in {"schedule", "publish", "unpublish"}:
+        required = "content.publish"
+    elif action == "archive":
+        required = "content.manage"
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported club media workflow action")
+    if required not in permissions and "content.manage" not in permissions:
+        raise HTTPException(status_code=403, detail="Insufficient privileges")
+
+
 async def _get_content_or_404(db: DbSession, content_type: str, content_id: uuid.UUID):
     model = CONTENT_MODELS.get(content_type)
     if model is None:
@@ -265,7 +330,12 @@ async def run_content_workflow_action(
 ):
     content = await _get_content_or_404(db, content_type, content_id)
     permissions = permissions_for_user(user)
-    authorize_content_workflow_action(user, content, action, permissions)
+    if content_type == "club-events":
+        await authorize_club_event_workflow_action(db, user, content, action, permissions)
+    elif content_type == "club-media":
+        authorize_club_media_workflow_action(action, permissions)
+    else:
+        authorize_content_workflow_action(user, content, action, permissions)
     try:
         content = await ContentWorkflowService.transition(
             db, content, content_type, action, user.id,
@@ -273,6 +343,15 @@ async def run_content_workflow_action(
         )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    if content_type == "club-media":
+        media = getattr(content, "media", None)
+        if media is not None:
+            if action == "publish":
+                media.is_public = True
+            elif action in {"unpublish", "archive", "reject", "request_changes"}:
+                content.is_public = False
+                content.is_published = False
+                media.is_public = False
     await db.flush()
     await db.refresh(content)
     return success(data=content, message="Content workflow updated")

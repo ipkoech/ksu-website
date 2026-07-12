@@ -785,6 +785,121 @@ export const clubsApi = {
       params,
     ),
 
+  listManaged: (params?: ListParams<{ club_id?: string }>) =>
+    mainApi.get<PaginatedResponse<Club>>("/api/v1/clubs/managed", params),
+
+  listManagedActivities: (clubId: string) =>
+    mainApi.get<{ data: Record<string, unknown>[] }>(
+      `/api/v1/clubs/id/${clubId}/activities`,
+    ),
+
+  createActivity: (clubId: string, data: Record<string, unknown>) =>
+    mainApi.post<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/id/${clubId}/activities`,
+      data,
+    ),
+
+  updateActivity: (activityId: string, data: Record<string, unknown>) =>
+    mainApi.patch<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/activities/${activityId}`,
+      data,
+    ),
+
+  deleteActivity: (activityId: string) =>
+    mainApi.delete<void>(`/api/v1/clubs/activities/${activityId}`),
+
+  submitActivity: (activityId: string) =>
+    mainApi.post<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/activities/${activityId}/workflow/submit`,
+      {},
+    ),
+
+  listStories: (clubId: string) =>
+    mainApi.get<PaginatedResponse<Record<string, unknown>>>(
+      `/api/v1/clubs/id/${clubId}/stories`,
+    ),
+
+  createStory: (clubId: string, data: Record<string, unknown>) =>
+    mainApi.post<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/id/${clubId}/stories`,
+      data,
+    ),
+
+  updateStory: (storyId: string, data: Record<string, unknown>) =>
+    mainApi.patch<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/stories/${storyId}`,
+      data,
+    ),
+
+  deleteStory: (storyId: string) =>
+    mainApi.delete<void>(`/api/v1/clubs/stories/${storyId}`),
+
+  submitStory: (storyId: string) =>
+    mainApi.post<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/stories/${storyId}/workflow/submit`,
+      {},
+    ),
+
+  listAnnouncements: (clubId: string) =>
+    mainApi.get<PaginatedResponse<Record<string, unknown>>>(
+      `/api/v1/clubs/id/${clubId}/announcements`,
+    ),
+
+  createAnnouncement: (clubId: string, data: Record<string, unknown>) =>
+    mainApi.post<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/id/${clubId}/announcements`,
+      data,
+    ),
+
+  updateAnnouncement: (announcementId: string, data: Record<string, unknown>) =>
+    mainApi.patch<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/announcements/${announcementId}`,
+      data,
+    ),
+
+  deleteAnnouncement: (announcementId: string) =>
+    mainApi.delete<void>(`/api/v1/clubs/announcements/${announcementId}`),
+
+  submitAnnouncement: (announcementId: string) =>
+    mainApi.post<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/announcements/${announcementId}/workflow/submit`,
+      {},
+    ),
+
+  listLeaders: (clubId: string) =>
+    mainApi.get<{ data: Record<string, unknown>[] }>(
+      `/api/v1/clubs/id/${clubId}/leaders`,
+    ),
+
+  listMedia: (clubId: string) =>
+    mainApi.get<{ data: Record<string, unknown>[] }>(
+      `/api/v1/clubs/id/${clubId}/media`,
+    ),
+
+  attachMedia: (clubId: string, data: Record<string, unknown>) =>
+    mainApi.post<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/id/${clubId}/media`,
+      data,
+    ),
+
+  updateMedia: (clubId: string, linkId: string, data: Record<string, unknown>) =>
+    mainApi.patch<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/id/${clubId}/media/${linkId}`,
+      data,
+    ),
+
+  transitionMedia: (clubId: string, linkId: string, action: string, data: Record<string, unknown> = {}) =>
+    mainApi.post<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/id/${clubId}/media/${linkId}/workflow/${action}`,
+      data,
+    ),
+
+  setMediaPublication: (clubId: string, linkId: string, isPublic: boolean) =>
+    mainApi.patch<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/id/${clubId}/media/${linkId}/publication`,
+      { is_public: isPublic },
+    ),
+
   create: (data: Partial<Club>) =>
     mainApi.post<{ data: Club }>("/api/v1/clubs", data),
 

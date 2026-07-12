@@ -139,7 +139,9 @@ export interface EditableField {
     helperText?: string;
     accept?: string;
     uploadEntityType?: string;
+    uploadEntityIdField?: string;
     uploadRole?: string;
+    isPublic?: boolean;
     allowUpload?: boolean;
   };
   attachments?: {
@@ -147,6 +149,9 @@ export interface EditableField {
     roles?: AttachmentRoleOption[];
     defaultRole?: string;
     isPublic?: boolean;
+    allowVisibilityChange?: boolean;
+    uploadEntityType?: string;
+    uploadEntityIdField?: string;
   };
 }
 
@@ -173,6 +178,7 @@ export interface EditableRecordWorkflowAction<
   TPayload extends RecordShape,
 > {
   label: string;
+  scopes?: string[];
   successMessage?: string;
   variant?: "default" | "outline" | "secondary" | "destructive" | "ghost";
   className?: string;
@@ -219,6 +225,7 @@ interface EditableServiceResourcePageProps<
   getRecordMeta?: (record: TRecord) => string;
   getRecordDetailHref?: (record: TRecord) => string | null | undefined;
   getRecordWorkflowActions?: (record: TRecord) => Array<EditableRecordWorkflowAction<TRecord, TPayload>>;
+  hasAnyWorkflowScope?: (scopes: string[]) => boolean;
   recordColumns?: Array<EditableRecordColumn<TRecord>>;
   emptyMessage: string;
   buildPayload?: (
@@ -404,6 +411,7 @@ export function EditableServiceResourcePage<
   getRecordMeta,
   getRecordDetailHref,
   getRecordWorkflowActions,
+  hasAnyWorkflowScope,
   recordColumns = [],
   emptyMessage,
   buildPayload,
@@ -724,7 +732,9 @@ export function EditableServiceResourcePage<
 
   const renderRecordActions = (record: TRecord) => {
     const detailHref = getRecordDetailHref?.(record);
-    const workflowActions = getRecordWorkflowActions?.(record) ?? [];
+    const workflowActions = (getRecordWorkflowActions?.(record) ?? []).filter(
+      (action) => !action.scopes?.length || hasAnyWorkflowScope?.(action.scopes) === true,
+    );
     const canShowMenu =
       workflowActions.length > 0 ||
       Boolean(detailHref) ||
@@ -1686,7 +1696,13 @@ function EditableFieldControl({
           helperText={field.media?.helperText}
           placeholder={field.placeholder}
           accept={field.media?.accept}
+          isPublic={field.media?.isPublic}
           uploadEntityType={field.media?.uploadEntityType}
+          uploadEntityId={
+            field.media?.uploadEntityIdField && typeof values[field.media.uploadEntityIdField] === "string"
+              ? values[field.media.uploadEntityIdField]
+              : undefined
+          }
           uploadRole={field.media?.uploadRole}
           allowUpload={field.media?.allowUpload}
           allowClear={!field.required}
@@ -1700,6 +1716,13 @@ function EditableFieldControl({
           pendingAttachments={Array.isArray(value) ? value as PendingMediaAttachment[] : []}
           onPendingAttachmentsChange={setFieldValue}
           isPublic={field.attachments.isPublic ?? (typeof values.is_public === "boolean" ? values.is_public : true)}
+          allowVisibilityChange={field.attachments.allowVisibilityChange}
+          uploadEntityType={field.attachments.uploadEntityType}
+          uploadEntityId={
+            field.attachments.uploadEntityIdField && typeof values[field.attachments.uploadEntityIdField] === "string"
+              ? values[field.attachments.uploadEntityIdField]
+              : undefined
+          }
         />
       ) : field.type === "entity" && field.relation ? (
         <EntityPicker

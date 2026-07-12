@@ -125,6 +125,20 @@ RESEARCH_ASSIGNMENT_PERMISSIONS = frozenset(
     }
 )
 
+CLUB_ASSIGNMENT_PERMISSIONS = frozenset(
+    {
+        "clubs.view",
+        "clubs.manage_own",
+        "clubs.content_submit",
+        "clubs.events_manage",
+        "clubs.stories_manage",
+        "media.upload",
+        "media.manage",
+        "media:upload",
+        "media:manage",
+    }
+)
+
 
 @dataclass(frozen=True)
 class ScopedGrant:
@@ -146,6 +160,8 @@ def normalize_assignment_role(value: str | None) -> str:
 
 
 def assignment_permissions(scope_type: str, role: str) -> frozenset[str]:
+    if scope_type == "club":
+        return CLUB_ASSIGNMENT_PERMISSIONS
     if scope_type == "library" and role in LIBRARY_LEADERSHIP_SCOPE_ROLES:
         return LIBRARY_ASSIGNMENT_PERMISSIONS
     if scope_type == "research" and role in RESEARCH_LEADERSHIP_SCOPE_ROLES:

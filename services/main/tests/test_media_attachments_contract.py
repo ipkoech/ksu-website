@@ -22,6 +22,23 @@ class _Db:
         return None
 
 
+class _ScalarResult:
+    def __init__(self, value):
+        self.value = value
+
+    def one_or_none(self):
+        return self.value
+
+
+class _ScopeDb(_Db):
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
+
+    async def execute(self, statement):
+        return _ScalarResult(self.value)
+
+
 class _Upload:
     content_type = "application/pdf"
     filename = "prospectus.pdf"
@@ -179,6 +196,130 @@ class MediaAttachmentContractTests(unittest.IsolatedAsyncioTestCase):
                 await media.create_media_link(payload, db=None, user=user)
 
         self.assertEqual(403, context.exception.status_code)
+
+    async def test_workflow_managed_club_link_rejects_direct_visibility_update(self):
+        link = SimpleNamespace(
+            id=uuid.uuid4(),
+            entity_type="blog",
+            entity_id=uuid.uuid4(),
+            owner_portal="student-clubs",
+            owner_scope_type="club",
+            owner_scope_id=uuid.uuid4(),
+            is_public=False,
+        )
+
+        with (
+            patch.object(media.MediaService, "get_link_by_id", new_callable=AsyncMock, return_value=link),
+            patch.object(media, "_require_media_entity_scope", new_callable=AsyncMock),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await media.update_media_link(
+                    link_id=link.id,
+                    data=media.MediaLinkUpdate(is_public=True),
+                    db=None,
+                    user=SimpleNamespace(id=uuid.uuid4()),
+                )
+
+        self.assertEqual(400, context.exception.status_code)
+
+    async def test_club_assignment_can_upload_to_own_club_scope(self):
+        club_id = uuid.uuid4()
+        user = SimpleNamespace(
+            id=uuid.uuid4(),
+            role_assignments=[],
+            person=SimpleNamespace(
+                assignments=[
+                    SimpleNamespace(entity_type="club", entity_id=club_id, role="official", status="active")
+                ]
+            ),
+        )
+        uploaded = _media(mime_type="image/jpeg", media_type="image", filename="club.jpg", original_filename="club.jpg")
+
+        with (
+            patch("app.services.media.upload_file", new_callable=AsyncMock, return_value={
+                "filename": uploaded.filename,
+                "original_filename": uploaded.original_filename,
+                "mime_type": uploaded.mime_type,
+                "file_size": uploaded.file_size,
+                "storage_path": "clubs/club.jpg",
+            }),
+            patch.object(MediaService, "link_media", new_callable=AsyncMock) as link_media,
+        ):
+            response = await media.upload_media(
+                db=_Db(),
+                user=user,
+                file=SimpleNamespace(content_type="image/jpeg", filename="club.jpg"),
+                folder_id=None,
+                is_public=True,
+                entity_type="club",
+                entity_id=club_id,
+                role="gallery",
+            )
+
+        self.assertFalse(response["data"].is_public)
+        call = link_media.await_args.kwargs
+        self.assertFalse(call["is_public"])
+        self.assertEqual("student-clubs", call["owner_portal"])
+        self.assertEqual("club", call["owner_scope_type"])
+        self.assertEqual(club_id, call["owner_scope_id"])
+        self.assertEqual(user.id, call["author_user_id"])
+
+    async def test_create_club_scoped_link_stamps_workflow_metadata(self):
+        club_id = uuid.uuid4()
+        user = SimpleNamespace(id=uuid.uuid4())
+        payload = MediaLinkCreate(
+            media_id=uuid.uuid4(),
+            entity_type="club",
+            entity_id=club_id,
+            role="gallery",
+            is_public=True,
+        )
+
+        with (
+            patch.object(media.MediaService, "get_attachment_scope", new_callable=AsyncMock, return_value=("club", club_id)),
+            patch.object(media.MediaService, "get_authorized_by_id", new_callable=AsyncMock, return_value=_media(id=payload.media_id)),
+            patch.object(media.MediaService, "link_media", new_callable=AsyncMock) as link_media,
+            patch.object(media, "_require_media_folder_scope", new_callable=AsyncMock),
+        ):
+            link_media.return_value = SimpleNamespace(
+                id=uuid.uuid4(),
+                media_id=payload.media_id,
+                entity_type="club",
+                entity_id=club_id,
+                role="gallery",
+                folder_id=None,
+                display_order=100,
+                is_public=False,
+                is_published=False,
+                status="draft",
+                workflow_status="draft",
+                owner_portal="student-clubs",
+                owner_scope_type="club",
+                owner_scope_id=club_id,
+                submitted_at=None,
+                approved_at=None,
+                published_at=None,
+                media=_media(id=payload.media_id),
+            )
+            await media.create_media_link(payload, db=None, user=user)
+
+        call = link_media.await_args.kwargs
+        self.assertFalse(call["is_public"])
+        self.assertEqual("student-clubs", call["owner_portal"])
+        self.assertEqual("club", call["owner_scope_type"])
+        self.assertEqual(club_id, call["owner_scope_id"])
+
+    async def test_club_activity_attachment_scope_resolves_to_owning_club(self):
+        club_id = uuid.uuid4()
+
+        scope_type, scope_id = await MediaService.get_attachment_scope(
+            _ScopeDb(("club", club_id, club_id)),
+            entity_type="club_activity",
+            entity_id=uuid.uuid4(),
+        )
+
+        self.assertEqual("club", scope_type)
+        self.assertEqual(club_id, scope_id)
 
 
 if __name__ == "__main__":

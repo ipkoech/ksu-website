@@ -69,6 +69,29 @@ async def _require_media_entity_scope(
     await _require_media_folder_scope(db, user, permissions, scope_type, scope_id)
 
 
+async def _authorized_media_entity_scope(
+    db: DbSession,
+    user: CurrentUser,
+    permissions: list[str],
+    entity_type: str,
+    entity_id: uuid.UUID,
+) -> tuple[str, uuid.UUID | None]:
+    scope_type, scope_id = await MediaService.get_attachment_scope(
+        db,
+        entity_type=entity_type,
+        entity_id=entity_id,
+    )
+    await _require_media_folder_scope(db, user, permissions, scope_type, scope_id)
+    return scope_type, scope_id
+
+
+def _is_workflow_managed_link(link: MediaLink) -> bool:
+    return (
+        getattr(link, "owner_portal", None) == "student-clubs"
+        or getattr(link, "owner_scope_type", None) == "club"
+    )
+
+
 @router.get("")
 async def list_media(
     db: DbSession,
@@ -102,7 +125,7 @@ async def list_media(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.post("/upload", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("media:upload"))])
+@router.post("/upload", status_code=status.HTTP_201_CREATED)
 async def upload_media(
     db: DbSession,
     user: CurrentUser,
@@ -123,6 +146,8 @@ async def upload_media(
             entity_type,
             entity_id,
         )
+    elif folder_id is None:
+        await _require_media_folder_scope(db, user, MEDIA_FOLDER_MANAGE_PERMISSIONS, "global", None)
     if folder_id is not None:
         folder = await MediaService.get_folder_by_id(db, folder_id)
         if folder is None:
@@ -256,9 +281,9 @@ async def list_media_links(
     return success(data=[MediaService.serialize_link(link) for link in links])
 
 
-@router.post("/links", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("media:manage"))])
+@router.post("/links", status_code=status.HTTP_201_CREATED)
 async def create_media_link(data: MediaLinkCreate, db: DbSession, user: CurrentUser):
-    await _require_media_entity_scope(
+    scope_type, scope_id = await _authorized_media_entity_scope(
         db,
         user,
         MEDIA_LINK_MANAGE_PERMISSIONS,
@@ -268,7 +293,18 @@ async def create_media_link(data: MediaLinkCreate, db: DbSession, user: CurrentU
     media = await MediaService.get_authorized_by_id(db, data.media_id, user)
     if media is None:
         raise HTTPException(status_code=404, detail="Media not found")
-    link = await MediaService.link_media(db, **data.model_dump())
+    payload = data.model_dump()
+    if scope_type == "club":
+        payload.update(
+            is_public=False,
+            status="draft",
+            workflow_status="draft",
+            owner_portal="student-clubs",
+            owner_scope_type="club",
+            owner_scope_id=scope_id,
+            author_user_id=user.id,
+        )
+    link = await MediaService.link_media(db, **payload)
     link.media = media
     return success(data=MediaService.serialize_link(link), message="Media linked")
 
@@ -281,16 +317,29 @@ async def get_media_link(link_id: uuid.UUID, db: DbSession, user: CurrentUser, f
     return success(data=MediaService.serialize_link(link))
 
 
-@router.patch("/links/{link_id}", dependencies=[Depends(require_scope("media:manage"))])
+@router.patch("/links/{link_id}")
 async def update_media_link(link_id: uuid.UUID, data: MediaLinkUpdate, db: DbSession, user: CurrentUser):
     link = await MediaService.get_link_by_id(db, link_id)
     if link is None:
         raise HTTPException(status_code=404, detail="Media link not found")
     await _require_media_entity_scope(db, user, MEDIA_LINK_MANAGE_PERMISSIONS, link.entity_type, link.entity_id)
     payload = data.model_dump(exclude_unset=True)
+    if "is_public" in payload and _is_workflow_managed_link(link):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Workflow-managed media visibility must be changed through publication workflow",
+        )
     next_entity_type = payload.get("entity_type", link.entity_type)
     next_entity_id = payload.get("entity_id", link.entity_id)
-    await _require_media_entity_scope(db, user, MEDIA_LINK_MANAGE_PERMISSIONS, next_entity_type, next_entity_id)
+    next_scope_type, next_scope_id = await _authorized_media_entity_scope(
+        db, user, MEDIA_LINK_MANAGE_PERMISSIONS, next_entity_type, next_entity_id,
+    )
+    if next_scope_type == "club":
+        payload.update(
+            owner_portal="student-clubs",
+            owner_scope_type="club",
+            owner_scope_id=next_scope_id,
+        )
     if "media_id" in payload:
         media = await MediaService.get_authorized_by_id(db, payload["media_id"], user)
         if media is None:
@@ -301,7 +350,7 @@ async def update_media_link(link_id: uuid.UUID, data: MediaLinkUpdate, db: DbSes
     return success(data=MediaService.serialize_link(link), message="Media link updated")
 
 
-@router.delete("/links/{link_id}", dependencies=[Depends(require_scope("media:manage"))], status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/links/{link_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_media_link(link_id: uuid.UUID, db: DbSession, user: CurrentUser):
     link = await MediaService.get_link_by_id(db, link_id)
     if link is None:

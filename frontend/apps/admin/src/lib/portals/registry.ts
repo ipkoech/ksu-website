@@ -118,6 +118,7 @@ import type {
   EditableField,
   EditableListFilter,
 } from "@/components/dashboard/editable-service-resource-page";
+import { contentAttachmentRoles } from "@/components/content/content-attachment-roles";
 
 const pageParams = { page: 1, per_page: 50 };
 const countParams = { page: 1, per_page: 1, fields: "id" };
@@ -2729,6 +2730,36 @@ const cocmsResources: Record<string, PortalResourceConfig<any, any>> =
     ]),
   );
 
+function requiredClubId(values?: PortalPayload) {
+  if (typeof values?.club_id === "string" && values.club_id) return values.club_id;
+  if (typeof values?.entity_id === "string" && values.entity_id) return values.entity_id;
+  throw new Error("Select a club scope before managing this resource.");
+}
+
+function withoutClubId(values: PortalPayload) {
+  const { club_id: _clubId, ...payload } = values;
+  return payload;
+}
+
+function clubDraftSubmitAction(
+  label: string,
+  submit: (id: string) => Promise<unknown>,
+) {
+  return (record: PortalRecord) =>
+    record.workflow_status === "draft" || record.workflow_status === "changes_requested"
+      ? [
+          {
+            label: "Submit for CoCMS Review",
+            successMessage: `Club ${label} submitted for CoCMS review`,
+            payload: {},
+            run: (item: PortalRecord) => submit(item.id),
+            confirmTitle: `Submit club ${label} for review?`,
+            confirmDescription: `CoCMS approval is required before "${titleOf(record)}" can be public.`,
+          },
+        ]
+      : [];
+}
+
 const studentClubResources: Record<string, PortalResourceConfig<any, any>> = {
   profiles: {
     key: "profiles",
@@ -2761,7 +2792,6 @@ const studentClubResources: Record<string, PortalResourceConfig<any, any>> = {
       { name: "phone", label: "Phone" },
       { name: "meeting_schedule", label: "Meeting Schedule" },
       { name: "membership_fee", label: "Membership Fee", type: "number" },
-      { name: "membership_count", label: "Membership Count", type: "number" },
       {
         name: "logo_id",
         label: "Logo",
@@ -2782,9 +2812,6 @@ const studentClubResources: Record<string, PortalResourceConfig<any, any>> = {
           allowClear: true,
         },
       },
-      { name: "is_active", label: "Active", type: "boolean" },
-      { name: "is_public", label: "Public", type: "boolean" },
-      { name: "display_order", label: "Display Order", type: "number" },
     ],
     listFilters: [
       {
@@ -2803,10 +2830,16 @@ const studentClubResources: Record<string, PortalResourceConfig<any, any>> = {
       },
       { name: "is_active", label: "Active", type: "boolean" },
     ],
-    list: (filters) => clubsApi.list({ ...pageParams, ...filters }),
+    list: (filters) =>
+      clubsApi.listManaged({
+        ...pageParams,
+        club_id: typeof filters?.club_id === "string" ? filters.club_id : undefined,
+      }),
     create: (payload) => clubsApi.create(payload),
-    update: (id, payload) => clubsApi.update(id, payload),
-    delete: (id) => clubsApi.delete(id),
+    update: (id, payload) => {
+      const { club_id: _clubId, ...data } = payload;
+      return clubsApi.update(id, data);
+    },
     getRecordTitle: (record) => record.name,
     getRecordMeta: (record) =>
       metaOf(record, ["club_type", "membership_count", "is_public"]),
@@ -2814,15 +2847,364 @@ const studentClubResources: Record<string, PortalResourceConfig<any, any>> = {
     buildPayload: (values) => ({
       ...values,
       club_type: values.club_type || "other",
-      membership_count: values.membership_count ?? 0,
-      display_order: values.display_order ?? 100,
-      is_active: values.is_active ?? true,
-      is_public: values.is_public ?? false,
     }),
     viewScopes: ["clubs.view", "clubs.manage_own", "admin:*"],
     manageScopes: ["clubs.manage_own", "admin:*"],
-    deleteScopes: ["clubs.manage_own", "admin:*"],
+    deleteScopes: ["admin:*"],
+    canCreate: false,
+    canDelete: false,
+    portalScope: {
+      idField: "club_id",
+      allowedScopeTypes: ["club"],
+    },
   } as PortalResourceConfig<Club>,
+  events: {
+    key: "events",
+    title: "Club Events",
+    description: "Create club events as drafts and submit them to CoCMS for publication review.",
+    backHref: "/student-clubs",
+    queryKey: ["student-clubs", "events"],
+    fields: [
+      { name: "title", label: "Title", required: true },
+      { name: "slug", label: "Slug" },
+      { name: "activity_type", label: "Event Type", required: true },
+      { name: "description", label: "Description", type: "textarea" },
+      { name: "start_datetime", label: "Starts", type: "datetime-local", required: true },
+      { name: "end_datetime", label: "Ends", type: "datetime-local" },
+      { name: "location", label: "Location" },
+      { name: "is_virtual", label: "Virtual Event", type: "boolean" },
+      { name: "meeting_link", label: "Meeting Link", type: "url" },
+      {
+        name: "cover_image_id",
+        label: "Cover Image",
+        type: "entity",
+        relation: { adapter: "media", filters: { media_type: "image" }, allowClear: true },
+      },
+      {
+        name: "attachments",
+        label: "Attachments",
+        type: "attachments",
+        attachments: {
+          entityType: "club_activity",
+          roles: contentAttachmentRoles,
+          isPublic: false,
+          allowVisibilityChange: false,
+          uploadEntityType: "club",
+          uploadEntityIdField: "club_id",
+        },
+      },
+    ],
+    list: (filters) => clubsApi.listManagedActivities(requiredClubId(filters)),
+    create: (payload) => clubsApi.createActivity(requiredClubId(payload), withoutClubId(payload)),
+    update: (id, payload) => clubsApi.updateActivity(id, withoutClubId(payload)),
+    delete: (id) => clubsApi.deleteActivity(id),
+    getRecordWorkflowActions: (record) =>
+      record.workflow_status === "draft" || record.workflow_status === "changes_requested"
+        ? [
+            {
+              label: "Submit for CoCMS Review",
+              successMessage: "Club event submitted for CoCMS review",
+              payload: {},
+              run: (item) => clubsApi.submitActivity(item.id),
+              confirmTitle: "Submit club event for review?",
+              confirmDescription: `CoCMS approval is required before "${titleOf(record)}" can be public.`,
+            },
+          ]
+        : [],
+    getRecordTitle: titleOf,
+    getRecordMeta: (record) => metaOf(record, ["activity_type", "workflow_status", "start_datetime"]),
+    emptyMessage: "No club events are available for this club.",
+    buildPayload: (values) => ({ ...values, activity_type: values.activity_type || "event" }),
+    viewScopes: ["clubs.view", "clubs.manage_own", "admin:*"],
+    manageScopes: ["clubs.events_manage", "clubs.manage_own", "admin:*"],
+    portalScope: { idField: "club_id", allowedScopeTypes: ["club"] },
+  },
+  stories: {
+    key: "stories",
+    title: "Club Stories",
+    description: "Draft club stories and submit them to CoCMS before public visibility.",
+    backHref: "/student-clubs",
+    queryKey: ["student-clubs", "stories"],
+    fields: [
+      { name: "title", label: "Title", required: true },
+      { name: "slug", label: "Slug", required: true },
+      { name: "excerpt", label: "Excerpt", type: "textarea" },
+      { name: "summary", label: "Summary", type: "textarea" },
+      { name: "plain_text", label: "Story", type: "richtext" },
+      {
+        name: "featured_media_id",
+        label: "Featured Media",
+        type: "entity",
+        relation: { adapter: "media", allowClear: true },
+      },
+      {
+        name: "attachments",
+        label: "Attachments",
+        type: "attachments",
+        attachments: {
+          entityType: "blog",
+          roles: contentAttachmentRoles,
+          isPublic: false,
+          allowVisibilityChange: false,
+          uploadEntityType: "club",
+          uploadEntityIdField: "club_id",
+        },
+      },
+    ],
+    list: (filters) => clubsApi.listStories(requiredClubId(filters)),
+    create: (payload) => clubsApi.createStory(requiredClubId(payload), withoutClubId(payload)),
+    update: (id, payload) => clubsApi.updateStory(id, withoutClubId(payload)),
+    delete: (id) => clubsApi.deleteStory(id),
+    getRecordWorkflowActions: clubDraftSubmitAction("story", (id) => clubsApi.submitStory(id)),
+    getRecordTitle: titleOf,
+    getRecordMeta: (record) => metaOf(record, ["workflow_status", "updated_at"]),
+    emptyMessage: "No club stories are available for this club.",
+    viewScopes: ["clubs.view", "clubs.manage_own", "admin:*"],
+    manageScopes: ["clubs.stories_manage", "clubs.manage_own", "admin:*"],
+    portalScope: { idField: "club_id", allowedScopeTypes: ["club"] },
+  },
+  announcements: {
+    key: "announcements",
+    title: "Club Announcements",
+    description: "Prepare club announcements for CoCMS approval before public publication.",
+    backHref: "/student-clubs",
+    queryKey: ["student-clubs", "announcements"],
+    fields: [
+      { name: "title", label: "Title", required: true },
+      { name: "slug", label: "Slug", required: true },
+      { name: "summary", label: "Summary", type: "textarea" },
+      { name: "plain_text", label: "Announcement", type: "richtext" },
+      {
+        name: "priority",
+        label: "Priority",
+        type: "select",
+        options: [
+          { label: "Low", value: "low" },
+          { label: "Normal", value: "normal" },
+          { label: "High", value: "high" },
+        ],
+      },
+      { name: "audience", label: "Audience" },
+      {
+        name: "attachments",
+        label: "Attachments",
+        type: "attachments",
+        attachments: {
+          entityType: "announcement",
+          roles: contentAttachmentRoles,
+          isPublic: false,
+          allowVisibilityChange: false,
+          uploadEntityType: "club",
+          uploadEntityIdField: "club_id",
+        },
+      },
+    ],
+    list: (filters) => clubsApi.listAnnouncements(requiredClubId(filters)),
+    create: (payload) => clubsApi.createAnnouncement(requiredClubId(payload), withoutClubId(payload)),
+    update: (id, payload) => clubsApi.updateAnnouncement(id, withoutClubId(payload)),
+    delete: (id) => clubsApi.deleteAnnouncement(id),
+    getRecordWorkflowActions: clubDraftSubmitAction("announcement", (id) => clubsApi.submitAnnouncement(id)),
+    getRecordTitle: titleOf,
+    getRecordMeta: (record) => metaOf(record, ["priority", "workflow_status", "updated_at"]),
+    emptyMessage: "No club announcements are available for this club.",
+    buildPayload: (values) => ({ ...values, priority: values.priority || "normal", audience: values.audience || "all" }),
+    viewScopes: ["clubs.view", "clubs.manage_own", "admin:*"],
+    manageScopes: ["clubs.stories_manage", "clubs.manage_own", "admin:*"],
+    portalScope: { idField: "club_id", allowedScopeTypes: ["club"] },
+  },
+  gallery: {
+    key: "gallery",
+    title: "Club Gallery",
+    description: "Attach club images and videos for internal review and managed publication.",
+    backHref: "/student-clubs",
+    queryKey: ["student-clubs", "gallery"],
+    fields: [
+      {
+        name: "media_id",
+        label: "Media",
+        type: "media",
+        required: true,
+        media: {
+          uploadEntityType: "club",
+          uploadEntityIdField: "club_id",
+          uploadRole: "gallery",
+          isPublic: false,
+          allowUpload: true,
+          helperText: "Club gallery uploads remain private until CoCMS publishes them.",
+        },
+      },
+      {
+        name: "role",
+        label: "Role",
+        type: "select",
+        options: [
+          { label: "Gallery Image", value: "gallery" },
+          { label: "Video", value: "video" },
+          { label: "Cover", value: "cover" },
+        ],
+      },
+      { name: "display_order", label: "Display Order", type: "number" },
+    ],
+    list: (filters) => clubsApi.listMedia(requiredClubId(filters)),
+    create: (payload) => clubsApi.attachMedia(requiredClubId(payload), withoutClubId(payload)),
+    update: (id, payload) => clubsApi.updateMedia(requiredClubId(payload), id, withoutClubId(payload)),
+    getRecordWorkflowActions: (record) => {
+      const mediaTitle = record.media?.title || record.media?.filename || "club media";
+      const status = record.workflow_status || record.status || "draft";
+      const actions: ReturnType<NonNullable<PortalResourceConfig["getRecordWorkflowActions"]>> = [];
+      if (status === "draft" || status === "changes_requested" || status === "rejected" || status === "unpublished") {
+        actions.push({
+          label: "Submit Media",
+          scopes: ["clubs.content_submit", "clubs.manage_own"],
+          successMessage: "Club media submitted for CoCMS review",
+          payload: {},
+          run: (item: PortalRecord) => clubsApi.transitionMedia(requiredClubId(item), item.id, "submit"),
+          confirmTitle: "Submit club media?",
+          confirmDescription: `CoCMS approval is required before "${mediaTitle}" can be public.`,
+        });
+      }
+      if (status === "submitted") {
+        actions.push({
+          label: "Start Review",
+          scopes: ["content.review", "content.manage"],
+          successMessage: "Club media review started",
+          payload: {},
+          run: (item: PortalRecord) => clubsApi.transitionMedia(requiredClubId(item), item.id, "start_review"),
+          confirmTitle: "Start club media review?",
+          confirmDescription: `Begin CoCMS review for "${mediaTitle}".`,
+        });
+      }
+      if (status === "in_review") {
+        actions.push({
+          label: "Approve Media",
+          scopes: ["content.review", "content.manage"],
+          successMessage: "Club media approved",
+          payload: {},
+          run: (item: PortalRecord) => clubsApi.transitionMedia(requiredClubId(item), item.id, "approve"),
+          confirmTitle: "Approve club media?",
+          confirmDescription: `"${mediaTitle}" can be published after approval.`,
+        });
+        actions.push({
+          label: "Request Changes",
+          scopes: ["content.review", "content.manage"],
+          variant: "outline" as const,
+          successMessage: "Changes requested for club media",
+          payload: {},
+          run: (item: PortalRecord) => clubsApi.transitionMedia(requiredClubId(item), item.id, "request_changes"),
+          confirmTitle: "Request changes?",
+          confirmDescription: `Return "${mediaTitle}" to the club for revision.`,
+        });
+        actions.push({
+          label: "Reject Media",
+          scopes: ["content.review", "content.manage"],
+          variant: "destructive" as const,
+          successMessage: "Club media rejected",
+          payload: {},
+          run: (item: PortalRecord) => clubsApi.transitionMedia(requiredClubId(item), item.id, "reject"),
+          confirmTitle: "Reject club media?",
+          confirmDescription: `"${mediaTitle}" will not be published.`,
+        });
+      }
+      if (status === "approved" || status === "scheduled") {
+        if (status === "approved") {
+          actions.push({
+            label: "Schedule Media",
+            scopes: ["content.publish", "content.manage"],
+            variant: "outline" as const,
+            successMessage: "Club media scheduled",
+            mode: "sheet" as const,
+            fields: [{ name: "scheduled_for", label: "Publish At", type: "datetime-local", required: true }],
+            payload: {},
+            buildPayload: (values) => ({ scheduled_for: values.scheduled_for }),
+            run: (item: PortalRecord, payload) => clubsApi.transitionMedia(requiredClubId(item), item.id, "schedule", payload ?? {}),
+            confirmTitle: "Schedule club media?",
+            confirmDescription: `Set a publication time for "${mediaTitle}".`,
+          });
+        }
+        actions.push({
+          label: "Publish Media",
+          scopes: ["content.publish", "content.manage"],
+          successMessage: "Club media published",
+          payload: {},
+          run: (item: PortalRecord) => clubsApi.transitionMedia(requiredClubId(item), item.id, "publish"),
+          confirmTitle: "Publish club media?",
+          confirmDescription: `This makes "${mediaTitle}" available for public gallery use.`,
+        });
+      }
+      if (status === "published") {
+        actions.push({
+          label: "Unpublish Media",
+          scopes: ["content.publish", "content.manage"],
+          variant: "outline" as const,
+          successMessage: "Club media unpublished",
+          payload: {},
+          run: (item: PortalRecord) => clubsApi.transitionMedia(requiredClubId(item), item.id, "unpublish"),
+          confirmTitle: "Unpublish club media?",
+          confirmDescription: `This removes "${mediaTitle}" from public visibility.`,
+        });
+      }
+      if (status !== "archived") {
+        actions.push({
+          label: "Archive Media",
+          scopes: ["content.review", "content.publish", "content.manage"],
+          variant: "outline" as const,
+          successMessage: "Club media archived",
+          payload: {},
+          run: (item: PortalRecord) => clubsApi.transitionMedia(requiredClubId(item), item.id, "archive"),
+          confirmTitle: "Archive club media?",
+          confirmDescription: `"${mediaTitle}" will be removed from the active review workflow.`,
+        });
+      }
+      return actions;
+    },
+    getRecordTitle: (record) => record.media?.title || record.media?.filename || "Club media",
+    getRecordMeta: (record) => metaOf(record, ["role", "workflow_status", "is_public", "display_order"]),
+    emptyMessage: "No images or videos are attached to this club.",
+    buildPayload: (values) => ({ ...values, role: values.role || "gallery", display_order: values.display_order ?? 100 }),
+    viewScopes: ["clubs.view", "clubs.manage_own", "admin:*"],
+    manageScopes: ["clubs.manage_own", "admin:*"],
+    canDelete: false,
+    portalScope: { idField: "club_id", allowedScopeTypes: ["club"] },
+  },
+  leaders: {
+    key: "leaders",
+    title: "Club Leaders",
+    description: "View the active club officers recorded through person assignments.",
+    backHref: "/student-clubs",
+    queryKey: ["student-clubs", "leaders"],
+    fields: [],
+    list: (filters) => clubsApi.listLeaders(requiredClubId(filters)),
+    create: async () => undefined,
+    update: async () => undefined,
+    getRecordTitle: (record) => record.name || "Club leader",
+    getRecordMeta: (record) => metaOf(record, ["role", "title"]),
+    emptyMessage: "No active leaders are assigned to this club.",
+    viewScopes: ["clubs.view", "clubs.manage_own", "admin:*"],
+    manageScopes: ["clubs.manage_own", "admin:*"],
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    portalScope: { idField: "club_id", allowedScopeTypes: ["club"] },
+  },
+  memberships: {
+    key: "memberships",
+    title: "Club Memberships",
+    description: "Membership records are not connected to the consolidated portal yet.",
+    backHref: "/student-clubs",
+    queryKey: ["student-clubs", "memberships"],
+    fields: [],
+    list: async () => ({ data: [] }),
+    create: async () => undefined,
+    update: async () => undefined,
+    getRecordTitle: () => "Membership",
+    emptyMessage: "Membership management is not available yet.",
+    viewScopes: ["clubs.view", "clubs.manage_own", "admin:*"],
+    manageScopes: ["clubs.manage_own", "admin:*"],
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    portalScope: { idField: "club_id", allowedScopeTypes: ["club"] },
+  },
 };
 
 async function firstSliderGroupId() {
@@ -5963,6 +6345,42 @@ export const portalConfigs: Record<string, PortalConfig> = {
         title: "Club Profiles",
         href: "/student-clubs/profiles",
         icon: Trophy,
+        scope: ["clubs.view", "clubs.manage_own"],
+      },
+      {
+        title: "Events",
+        href: "/student-clubs/events",
+        icon: CalendarDays,
+        scope: ["clubs.events_manage", "clubs.manage_own"],
+      },
+      {
+        title: "Stories",
+        href: "/student-clubs/stories",
+        icon: Newspaper,
+        scope: ["clubs.stories_manage", "clubs.manage_own"],
+      },
+      {
+        title: "Announcements",
+        href: "/student-clubs/announcements",
+        icon: Bell,
+        scope: ["clubs.stories_manage", "clubs.manage_own"],
+      },
+      {
+        title: "Gallery",
+        href: "/student-clubs/gallery",
+        icon: ImageIcon,
+        scope: ["clubs.manage_own"],
+      },
+      {
+        title: "Leaders",
+        href: "/student-clubs/leaders",
+        icon: UserCheck,
+        scope: ["clubs.view", "clubs.manage_own"],
+      },
+      {
+        title: "Memberships",
+        href: "/student-clubs/memberships",
+        icon: Users,
         scope: ["clubs.view", "clubs.manage_own"],
       },
     ],

@@ -220,6 +220,7 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
       getRecordMeta={scopedResource.getRecordMeta}
       getRecordDetailHref={scopedResource.getRecordDetailHref}
       getRecordWorkflowActions={scopedResource.getRecordWorkflowActions}
+      hasAnyWorkflowScope={hasAnyScope}
       emptyMessage={scopedResource.emptyMessage}
       buildPayload={scopedResource.buildPayload}
       validate={scopedResource.validate}
