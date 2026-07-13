@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
+import httpx
 import pytest
 
 from pydantic import ValidationError
@@ -17,6 +18,7 @@ from app.services.page_cms_sources import (
     PageCmsSourceResolutionState,
     PageCmsSourceService,
 )
+from app.services import page_cms_sources
 from ksu_common import PaginatedResult
 
 
@@ -749,6 +751,93 @@ async def test_resolve_many_fetches_public_partner_provider_once_for_multiple_re
 
     load.assert_awaited_once_with("")
     assert all(result.state is PageCmsSourceResolutionState.RESOLVED for result in resolutions.values())
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "provider_error",
+    [
+        httpx.ConnectError("research transport unavailable"),
+        ValueError("research response was not valid JSON"),
+    ],
+)
+async def test_partner_resolve_many_normalizes_proxy_failures(provider_error):
+    partner_id = uuid.uuid4()
+
+    with patch(
+        "app.services.page_cms_sources.ResearchPartnersProxyService.list_partners",
+        AsyncMock(side_effect=provider_error),
+    ):
+        resolutions = await PageCmsSourceService.resolve_many(
+            _Db(),
+            [("research_partner", partner_id)],
+            destination_scope_type="research",
+            destination_scope_id=uuid.uuid4(),
+        )
+
+    result = resolutions[("research_partner", partner_id)]
+    assert result.state is PageCmsSourceResolutionState.PROVIDER_ERROR
+    assert result.message == "Source provider is unavailable."
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("source_type", ["programme", "news", "event", "person"])
+async def test_resolve_many_chunks_large_sql_source_id_sets(source_type):
+    source_ids = [uuid.uuid4() for _ in range(1001)]
+    db = _Db([])
+
+    resolutions = await PageCmsSourceService.resolve_many(
+        db,
+        [(source_type, source_id) for source_id in source_ids],
+        destination_scope_type="university",
+        destination_scope_id=None,
+    )
+
+    assert len(db.statements) == 3
+    assert list(resolutions) == [(source_type, source_id) for source_id in source_ids]
+    assert all(result.state is PageCmsSourceResolutionState.UNAVAILABLE for result in resolutions.values())
+    for statement in db.statements:
+        parameter_sizes = [
+            len(value)
+            for value in statement.compile().params.values()
+            if isinstance(value, (list, tuple))
+        ]
+        assert parameter_sizes
+        assert max(parameter_sizes) <= page_cms_sources.PAGE_CMS_BULK_CHUNK_SIZE
+
+
+@pytest.mark.asyncio
+async def test_resolve_many_finds_public_stat_beyond_first_catalog_page():
+    stats = SimpleNamespace(
+        scope="university",
+        stats=[
+            SimpleNamespace(
+                key=f"stat-{index:03d}",
+                label=f"Stat {index:03d}",
+                value=index,
+                suffix="",
+                description=None,
+                href=None,
+            )
+            for index in range(75)
+        ],
+    )
+
+    with patch("app.services.page_cms_sources.public_stats", AsyncMock(return_value=stats)):
+        second_page = await PageCmsSourceService.search(
+            _Db(), "public_stat", "", "university", None, 2, 50,
+        )
+        target = second_page.items[-1]
+        resolutions = await PageCmsSourceService.resolve_many(
+            _Db(),
+            [("public_stat", target.id)],
+            destination_scope_type="university",
+            destination_scope_id=None,
+        )
+
+    result = resolutions[("public_stat", target.id)]
+    assert result.state is PageCmsSourceResolutionState.RESOLVED
+    assert result.source == target
 
 
 def test_source_summary_strips_html_bounds_text_and_rejects_unsafe_thumbnail():

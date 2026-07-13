@@ -25,6 +25,7 @@ from ._base import ilike_any, paginate_query
 from .content_workflow import ContentWorkflowService
 from .page_cms_definitions import SECTION_DEFINITIONS
 from .page_cms_sources import (
+    PAGE_CMS_BULK_CHUNK_SIZE,
     PageCmsPreviewCapability,
     PageCmsSourceResolution,
     PageCmsSourceResolutionState,
@@ -87,6 +88,10 @@ class PageCmsValidationError(ValueError):
     def __init__(self, issues: Sequence[PageValidationIssue]):
         super().__init__("Page section has blocking validation issues")
         self.issues = list(issues)
+
+
+class PageCmsMixedScopeError(ValueError):
+    """Raised when one source-resolution set crosses a page or scope boundary."""
 
 
 @dataclass(frozen=True)
@@ -1140,14 +1145,26 @@ class PageSectionValidationService:
         sections: Sequence[PageSection],
         preview_capability: PageCmsPreviewCapability | None,
     ) -> dict[uuid.UUID, list[ResolvedSectionItem]]:
+        if not sections:
+            return {}
+        expected_destination = (
+            sections[0].page_key,
+            sections[0].scope_type,
+            sections[0].scope_id,
+        )
+        if any(
+            (section.page_key, section.scope_type, section.scope_id) != expected_destination
+            for section in sections[1:]
+        ):
+            raise PageCmsMixedScopeError(
+                "Page CMS source resolution requires one page key and destination scope"
+            )
         references = [
             (item.source_type, item.source_id)
             for section in sections
             for item in _active_section_items(section)
             if item.source_type is not None and item.source_id is not None
         ]
-        if not sections:
-            return {}
         destination_scope_type = sections[0].scope_type
         destination_scope_id = sections[0].scope_id
         resolutions = await PageCmsSourceService.resolve_many(
@@ -1350,26 +1367,29 @@ async def group_preview_media_links_many(
 ) -> dict[uuid.UUID, dict[str, list[dict[str, Any]]]]:
     if not entity_ids:
         return {}
-    query = (
-        select(MediaLink)
-        .options(selectinload(MediaLink.media))
-        .join(Media, MediaLink.media_id == Media.id)
-        .where(
-            MediaLink.deleted_at.is_(None),
-            MediaLink.archived_at.is_(None),
-            Media.deleted_at.is_(None),
-            MediaLink.entity_type == entity_type,
-            MediaLink.entity_id.in_(entity_ids),
+    unique_entity_ids = list(dict.fromkeys(entity_ids))
+    grouped = {entity_id: _default_media_groups() for entity_id in unique_entity_ids}
+    for start in range(0, len(unique_entity_ids), PAGE_CMS_BULK_CHUNK_SIZE):
+        entity_id_chunk = unique_entity_ids[start:start + PAGE_CMS_BULK_CHUNK_SIZE]
+        query = (
+            select(MediaLink)
+            .options(selectinload(MediaLink.media))
+            .join(Media, MediaLink.media_id == Media.id)
+            .where(
+                MediaLink.deleted_at.is_(None),
+                MediaLink.archived_at.is_(None),
+                Media.deleted_at.is_(None),
+                MediaLink.entity_type == entity_type,
+                MediaLink.entity_id.in_(entity_id_chunk),
+            )
+            .order_by(MediaLink.entity_id.asc(), MediaLink.display_order.asc(), MediaLink.created_at.asc())
         )
-        .order_by(MediaLink.entity_id.asc(), MediaLink.display_order.asc(), MediaLink.created_at.asc())
-    )
-    result = await db.execute(query)
-    grouped = {entity_id: _default_media_groups() for entity_id in entity_ids}
-    for link in result.scalars().all():
-        bucket = _normalize_role(link.role) or link.role
-        grouped.setdefault(link.entity_id, _default_media_groups()).setdefault(bucket, []).append(
-            _serialize_media_link(link)
-        )
+        result = await db.execute(query)
+        for link in result.scalars().all():
+            bucket = _normalize_role(link.role) or link.role
+            grouped.setdefault(link.entity_id, _default_media_groups()).setdefault(bucket, []).append(
+                _serialize_media_link(link)
+            )
     return grouped
 
 
@@ -1469,6 +1489,7 @@ __all__ = [
     "PageSectionService",
     "ResolvedSectionItem",
     "PageCmsValidationError",
+    "PageCmsMixedScopeError",
     "PageSectionValidationService",
     "PagePreviewCompositionService",
     "PageSectionWorkflowService",

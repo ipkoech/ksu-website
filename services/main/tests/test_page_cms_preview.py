@@ -22,8 +22,10 @@ from app.schemas.page_cms import (
 from app.services.page_cms import (
     PagePreviewCompositionService,
     PageSectionService,
+    PageSectionValidationService,
     group_preview_media_links_many,
 )
+from app.services import page_cms as page_cms_service
 from app.services.page_cms_sources import (
     PageCmsSourceResolution,
     PageCmsSourceResolutionState,
@@ -269,6 +271,47 @@ async def test_preview_bulk_loads_media_once_and_resolves_all_sources_once():
     assert len(result.sections) == 2
     resolve_many.assert_awaited_once()
     media_many.assert_awaited_once_with(db, "page_section", [first.id, second.id])
+
+
+@pytest.mark.asyncio
+async def test_source_resolution_rejects_mixed_section_scopes_before_reusing_source_result():
+    source_id = uuid.uuid4()
+    first = _section(scope_id=uuid.uuid4())
+    second = _section(scope_id=uuid.uuid4())
+    first.items[0].source_id = source_id
+    second.items[0].source_id = source_id
+
+    with patch(
+        "app.services.page_cms.PageCmsSourceService.resolve_many",
+        AsyncMock(),
+    ) as resolve_many:
+        with pytest.raises(page_cms_service.PageCmsMixedScopeError):
+            await PageSectionValidationService.resolve_items_for_sections(
+                object(),
+                [first, second],
+                SimpleNamespace(),
+            )
+
+    resolve_many.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_preview_media_bulk_query_chunks_more_than_one_thousand_section_ids():
+    section_ids = [uuid.uuid4() for _ in range(1001)]
+    db = _Db()
+
+    grouped = await group_preview_media_links_many(db, "page_section", section_ids)
+
+    assert len(db.statements) == 3
+    assert list(grouped) == section_ids
+    for statement in db.statements:
+        parameter_sizes = [
+            len(value)
+            for value in statement.compile().params.values()
+            if isinstance(value, (list, tuple))
+        ]
+        assert parameter_sizes
+        assert max(parameter_sizes) <= page_cms_service.PAGE_CMS_BULK_CHUNK_SIZE
 
 
 def test_preview_response_uses_typed_section_item_media_and_source_contracts():

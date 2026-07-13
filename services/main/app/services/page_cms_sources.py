@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import math
 import uuid
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from enum import Enum
 from typing import Any, Protocol
 
+import httpx
 from sqlalchemy import false, func, or_, select
 from sqlalchemy.orm import selectinload
 
@@ -30,6 +31,7 @@ SUPPORTED_SOURCE_TYPES = frozenset(
     {"programme", "news", "event", "person", "research_partner", "public_stat"}
 )
 PUBLIC_STAT_NAMESPACE = uuid.UUID("64a394c9-9dab-4807-90ef-e05cbf3dde8e")
+PAGE_CMS_BULK_CHUNK_SIZE = 500
 
 
 class PageCmsPreviewCapability(Protocol):
@@ -343,6 +345,25 @@ def _map_page(result: PaginatedResult, mapper) -> PaginatedResult:
     return PaginatedResult(items=[mapper(item) for item in result.items], meta=result.meta)
 
 
+def _chunks(values: Sequence[Any]) -> list[Sequence[Any]]:
+    return [
+        values[start:start + PAGE_CMS_BULK_CHUNK_SIZE]
+        for start in range(0, len(values), PAGE_CMS_BULK_CHUNK_SIZE)
+    ]
+
+
+async def _load_records_in_chunks(
+    db,
+    source_ids: Sequence[uuid.UUID],
+    build_statement: Callable[[Sequence[uuid.UUID]], Any],
+) -> dict[uuid.UUID, Any]:
+    records: dict[uuid.UUID, Any] = {}
+    for source_id_chunk in _chunks(source_ids):
+        result = await db.execute(build_statement(source_id_chunk))
+        records.update((item.id, item) for item in result.scalars().all())
+    return records
+
+
 class PageCmsSourceService:
     """Dispatch source searches and resolution through explicit source adapters."""
 
@@ -613,11 +634,14 @@ class PageCmsSourceService:
 
         programme_ids = grouped.get("programme", [])
         if programme_ids:
-            statement = select(Programme).options(
-                selectinload(Programme.cover_image),
-                selectinload(Programme.department).selectinload(Department.school),
-            ).where(Programme.id.in_(programme_ids), Programme.deleted_at.is_(None))
-            programmes = {item.id: item for item in (await db.execute(statement)).scalars().all()}
+            programmes = await _load_records_in_chunks(
+                db,
+                programme_ids,
+                lambda source_id_chunk: select(Programme).options(
+                    selectinload(Programme.cover_image),
+                    selectinload(Programme.department).selectinload(Department.school),
+                ).where(Programme.id.in_(source_id_chunk), Programme.deleted_at.is_(None)),
+            )
             for source_id in programme_ids:
                 item = programmes.get(source_id)
                 if item is None:
@@ -651,11 +675,14 @@ class PageCmsSourceService:
             if not source_ids:
                 continue
             media_relation = News.featured_media if model is News else Event.featured_media
-            statement = select(model).options(selectinload(media_relation)).where(
-                model.id.in_(source_ids),
-                model.deleted_at.is_(None),
+            records = await _load_records_in_chunks(
+                db,
+                source_ids,
+                lambda source_id_chunk: select(model).options(selectinload(media_relation)).where(
+                    model.id.in_(source_id_chunk),
+                    model.deleted_at.is_(None),
+                ),
             )
-            records = {item.id: item for item in (await db.execute(statement)).scalars().all()}
             now = datetime.now(timezone.utc)
             for source_id in source_ids:
                 item = records.get(source_id)
@@ -694,11 +721,14 @@ class PageCmsSourceService:
 
         person_ids = grouped.get("person", [])
         if person_ids:
-            statement = select(Person).options(
-                selectinload(Person.photo),
-                selectinload(Person.assignments),
-            ).where(Person.id.in_(person_ids), Person.deleted_at.is_(None))
-            people = {item.id: item for item in (await db.execute(statement)).scalars().all()}
+            people = await _load_records_in_chunks(
+                db,
+                person_ids,
+                lambda source_id_chunk: select(Person).options(
+                    selectinload(Person.photo),
+                    selectinload(Person.assignments),
+                ).where(Person.id.in_(source_id_chunk), Person.deleted_at.is_(None)),
+            )
             for source_id in person_ids:
                 item = people.get(source_id)
                 if item is None:
@@ -777,13 +807,10 @@ class PageCmsSourceService:
         stat_ids = grouped.get("public_stat", [])
         if stat_ids:
             try:
-                stat_page = await PageCmsSourceService._search_stats(
+                stats = await PageCmsSourceService._load_stat_summaries(
                     db,
-                    "",
                     destination_scope_type,
                     destination_scope_id,
-                    1,
-                    50,
                 )
             except PageCmsSourceProviderError:
                 for source_id in stat_ids:
@@ -791,7 +818,7 @@ class PageCmsSourceService:
                         "public_stat", source_id, PageCmsSourceResolutionState.PROVIDER_ERROR,
                     )
             else:
-                stats_by_id = {item.id: item for item in stat_page.items}
+                stats_by_id = {item.id: item for item in stats}
                 for source_id in stat_ids:
                     source = stats_by_id.get(source_id)
                     state = (
@@ -848,13 +875,18 @@ class PageCmsSourceService:
         expected_total: int | None = None
         traversed_count = 0
         while True:
-            payload = await ResearchPartnersProxyService.list_partners(
-                page=remote_page,
-                per_page=50,
-                search=query or None,
-                status="active",
-                is_active=True,
-            )
+            try:
+                payload = await ResearchPartnersProxyService.list_partners(
+                    page=remote_page,
+                    per_page=50,
+                    search=query or None,
+                    status="active",
+                    is_active=True,
+                )
+            except PageCmsSourceProviderError:
+                raise
+            except (httpx.HTTPError, ValueError) as exc:
+                raise PageCmsSourceProviderError("Research partner provider is unavailable") from exc
             remote_records = payload.get("data")
             meta = payload.get("meta")
             if not isinstance(remote_records, list) or not isinstance(meta, dict):
@@ -892,36 +924,7 @@ class PageCmsSourceService:
         page: int,
         per_page: int,
     ) -> PaginatedResult:
-        stats_scope = scope_type
-        slug = None
-        if scope_type == "school":
-            school = (await db.execute(
-                select(School).where(
-                    School.id == scope_id,
-                    School.deleted_at.is_(None),
-                    School.is_active.is_(True),
-                    School.is_public.is_(True),
-                )
-            )).scalar_one_or_none()
-            if school is None:
-                return PaginatedResult(items=[], meta={"page": page, "per_page": per_page, "total": 0, "pages": 0})
-            slug = school.slug
-        elif scope_type not in {"homepage", "university", "research", "library"}:
-            return PaginatedResult(items=[], meta={"page": page, "per_page": per_page, "total": 0, "pages": 0})
-
-        if scope_type in {"research", "library"}:
-            response = await PageCmsStatsProxyService.get_public_stats(scope_type)
-            response_scope = response["scope"]
-            response_stats = response["stats"]
-        else:
-            response = await public_stats(db, scope=stats_scope, slug=slug)
-            response_scope = response.scope if response else stats_scope
-            response_stats = response.stats if response else []
-        scope_identity = str(scope_id) if scope_id is not None else None
-        summaries = [
-            _stat_summary(item, response_scope, scope_identity)
-            for item in response_stats
-        ]
+        summaries = await PageCmsSourceService._load_stat_summaries(db, scope_type, scope_id)
         if query:
             term = query.casefold()
             summaries = [
@@ -942,6 +945,43 @@ class PageCmsSourceService:
             },
         )
 
+    @staticmethod
+    async def _load_stat_summaries(
+        db,
+        scope_type: str,
+        scope_id: uuid.UUID | None,
+    ) -> list[PageCmsSourceSummary]:
+        stats_scope = scope_type
+        slug = None
+        if scope_type == "school":
+            school = (await db.execute(
+                select(School).where(
+                    School.id == scope_id,
+                    School.deleted_at.is_(None),
+                    School.is_active.is_(True),
+                    School.is_public.is_(True),
+                )
+            )).scalar_one_or_none()
+            if school is None:
+                return []
+            slug = school.slug
+        elif scope_type not in {"homepage", "university", "research", "library"}:
+            return []
+
+        if scope_type in {"research", "library"}:
+            response = await PageCmsStatsProxyService.get_public_stats(scope_type)
+            response_scope = response["scope"]
+            response_stats = response["stats"]
+        else:
+            response = await public_stats(db, scope=stats_scope, slug=slug)
+            response_scope = response.scope if response else stats_scope
+            response_stats = response.stats if response else []
+        scope_identity = str(scope_id) if scope_id is not None else None
+        return [
+            _stat_summary(item, response_scope, scope_identity)
+            for item in response_stats
+        ]
+
 
 __all__ = [
     "PageCmsPreviewCapability",
@@ -950,5 +990,6 @@ __all__ = [
     "PageCmsSourcePreviewUnsupportedError",
     "PageCmsSourceProviderError",
     "PageCmsSourceService",
+    "PAGE_CMS_BULK_CHUNK_SIZE",
     "SUPPORTED_SOURCE_TYPES",
 ]
