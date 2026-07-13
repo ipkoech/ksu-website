@@ -14,6 +14,7 @@ from .health import router as health_router
 from .innovations import router as innovations_router
 from .innovation_partnership import router as innovation_partnership_router
 from .partners import router as partners_router
+from .page_cms_source_contract import router as page_cms_source_contract_router
 from .projects import router as projects_router
 from .publications import router as publications_router
 from .realtime import router as realtime_router
@@ -41,6 +42,7 @@ router.include_router(innovation_partnership_router)
 router.include_router(training_router)
 router.include_router(scholarships_router)
 router.include_router(partners_router)
+router.include_router(page_cms_source_contract_router)
 router.include_router(donations_router)
 router.include_router(stories_router)
 router.include_router(content_router)
