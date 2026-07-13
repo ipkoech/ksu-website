@@ -724,7 +724,7 @@ async def test_resolve_many_preserves_provider_unsupported_and_preview_taxonomy(
     load.assert_awaited_once_with("")
     assert resolutions[("research_partner", partner_id)].state is PageCmsSourceResolutionState.PROVIDER_ERROR
     assert resolutions[("research_partner", partner_id)].message == "Source provider is unavailable."
-    assert resolutions[("intake", unsupported_id)].state is PageCmsSourceResolutionState.UNSUPPORTED_TYPE
+    assert resolutions[("intake", unsupported_id)].state is PageCmsSourceResolutionState.UNAVAILABLE
 
 
 @pytest.mark.asyncio

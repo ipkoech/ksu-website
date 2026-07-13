@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, patch
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+import pytest
 
 from app.api.v1 import page_cms
 from app.deps import get_db
@@ -98,6 +99,42 @@ def test_source_type_must_be_compatible_with_layout_variant():
     )
 
     assert response.status_code == 422
+
+
+@pytest.mark.parametrize(
+    ("source_type", "layout_variant", "scope_type"),
+    [
+        ("intake", "hero_admissions", "university"),
+        ("academic_calendar", "date_timeline", "university"),
+        ("staff_assignment", "leadership_activity", "school"),
+        ("alumni", "alumni_story", "university"),
+        ("testimonial", "alumni_story", "university"),
+        ("club_activity", "leadership_activity", "school"),
+    ],
+)
+def test_local_source_types_are_accepted_for_their_canonical_layouts(source_type, layout_variant, scope_type):
+    user = _user("section_items.manage")
+    client, headers = _client(user)
+    scope_id = uuid.uuid4() if scope_type == "school" else None
+
+    with (
+        patch("app.api.v1._scoped._can_access_scope", return_value=True),
+        patch.object(page_cms.PageCmsSourceService, "search", AsyncMock(return_value=PaginatedResult(
+            items=[], meta={"page": 1, "per_page": 20, "total": 0, "pages": 0},
+        ))) as search,
+    ):
+        response = client.get(
+            f"/api/v1/page-section-sources/{source_type}",
+            params={
+                "layout_variant": layout_variant,
+                "scope_type": scope_type,
+                **({"scope_id": str(scope_id)} if scope_id else {}),
+            },
+            headers=headers,
+        )
+
+    assert response.status_code == 200
+    search.assert_awaited_once()
 
 
 def test_layout_variant_is_required():

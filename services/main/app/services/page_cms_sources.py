@@ -11,12 +11,27 @@ from enum import Enum
 from typing import Any, Protocol
 
 import httpx
-from sqlalchemy import false, func, or_, select
+from sqlalchemy import String, false, func, or_, select
 from sqlalchemy.orm import selectinload
 
 from ksu_common import PaginatedResult
 
-from ..models import Department, Event, News, Person, Programme, School, StaffAssignment
+from ..models import (
+    AcademicCalendar,
+    Alumni,
+    Club,
+    ClubActivity,
+    Department,
+    Event,
+    Intake,
+    News,
+    Person,
+    Programme,
+    ProgrammeIntake,
+    School,
+    StaffAssignment,
+    Testimonial,
+)
 from ..schemas.page_cms import PageCmsSourceSummary
 from ._base import ilike_any, paginate_query
 from .page_cms_source_errors import (
@@ -28,7 +43,10 @@ from .research_partners import ResearchPartnersProxyService
 from .stats import public_stats
 
 SUPPORTED_SOURCE_TYPES = frozenset(
-    {"programme", "news", "event", "person", "research_partner", "public_stat"}
+    {
+        "programme", "news", "event", "person", "research_partner", "public_stat",
+        "intake", "academic_calendar", "staff_assignment", "alumni", "testimonial", "club_activity",
+    }
 )
 PUBLIC_STAT_NAMESPACE = uuid.UUID("64a394c9-9dab-4807-90ef-e05cbf3dde8e")
 PAGE_CMS_BULK_CHUNK_SIZE = 500
@@ -261,6 +279,310 @@ def _person_summary(
     )
 
 
+LOCAL_SOURCE_TYPES = frozenset(
+    {"intake", "academic_calendar", "staff_assignment", "alumni", "testimonial", "club_activity"}
+)
+
+
+def _not_deleted(item: Any) -> bool:
+    return getattr(item, "deleted_at", None) is None
+
+
+def _intake_school_ids(item: Intake) -> set[uuid.UUID]:
+    return {
+        programme_intake.programme.department.school_id
+        for programme_intake in item.programmes
+        if programme_intake.is_active
+        and programme_intake.programme is not None
+        and programme_intake.programme.department is not None
+        and programme_intake.programme.department.school_id is not None
+    }
+
+
+def _calendar_school_ids(item: AcademicCalendar) -> set[uuid.UUID]:
+    return {
+        school_id
+        for intake in item.intakes
+        if _not_deleted(intake) and intake.is_active
+        for school_id in _intake_school_ids(intake)
+    }
+
+
+def _intake_is_public(item: Intake) -> bool:
+    return bool(_not_deleted(item) and item.is_active)
+
+
+def _calendar_is_public(item: AcademicCalendar) -> bool:
+    return bool(_not_deleted(item) and item.status in {"published", "current"})
+
+
+def _staff_assignment_is_public(item: StaffAssignment) -> bool:
+    person = item.person
+    today = date.today()
+    return bool(
+        _not_deleted(item)
+        and item.status == "active"
+        and item.is_public
+        and (item.start_date is None or item.start_date <= today)
+        and (item.end_date is None or item.end_date >= today)
+        and person is not None
+        and _not_deleted(person)
+        and person.is_active
+        and person.is_public
+    )
+
+
+def _alumni_is_public(item: Alumni) -> bool:
+    person = item.person
+    return bool(
+        _not_deleted(item)
+        and item.is_public
+        and item.is_verified
+        and person is not None
+        and _not_deleted(person)
+        and person.is_active
+        and person.is_public
+    )
+
+
+def _testimonial_is_public(item: Testimonial) -> bool:
+    return bool(_not_deleted(item) and item.is_public and item.is_approved)
+
+
+def _club_activity_is_public(item: ClubActivity) -> bool:
+    club = item.club
+    return bool(
+        _not_deleted(item)
+        and item.archived_at is None
+        and item.status == "published"
+        and item.is_public
+        and item.is_published
+        and club is not None
+        and _not_deleted(club)
+        and club.is_active
+        and club.is_public
+    )
+
+
+def _intake_summary(item: Intake) -> PageCmsSourceSummary:
+    return PageCmsSourceSummary(
+        id=item.id,
+        source_type="intake",
+        label=item.name,
+        secondary_label=item.code,
+        status="active" if item.is_active else "inactive",
+        thumbnail_url=_media_url(item.cover_image),
+        metadata={
+            key: value
+            for key, value in {
+                "slug": item.slug,
+                "application_start": item.application_start,
+                "application_end": item.application_end,
+                "late_application_end": item.late_application_end,
+                "is_open": item.is_open,
+            }.items()
+            if value is not None
+        },
+        selectable=_intake_is_public(item),
+    )
+
+
+def _calendar_summary(item: AcademicCalendar) -> PageCmsSourceSummary:
+    return PageCmsSourceSummary(
+        id=item.id,
+        source_type="academic_calendar",
+        label=f"{item.academic_year} Semester {item.semester}",
+        secondary_label=f"{item.start_date.isoformat()} to {item.end_date.isoformat()}",
+        status=item.status,
+        metadata={
+            key: value
+            for key, value in {
+                "academic_year": item.academic_year,
+                "semester": item.semester,
+                "start_date": item.start_date,
+                "end_date": item.end_date,
+                "registration_start": item.registration_start,
+                "registration_end": item.registration_end,
+                "teaching_start": item.teaching_start,
+                "teaching_end": item.teaching_end,
+                "exam_start": item.exam_start,
+                "exam_end": item.exam_end,
+            }.items()
+            if value is not None
+        },
+        selectable=_calendar_is_public(item),
+    )
+
+
+def _staff_assignment_summary(item: StaffAssignment) -> PageCmsSourceSummary:
+    person = item.person
+    public_title = item.public_role_label or item.title or _format_level(item.role)
+    return PageCmsSourceSummary(
+        id=item.id,
+        source_type="staff_assignment",
+        label=person.full_name,
+        secondary_label=public_title,
+        status=item.status,
+        thumbnail_url=_media_url(person.photo),
+        metadata={"role": _format_level(item.role)},
+        selectable=_staff_assignment_is_public(item),
+    )
+
+
+def _alumni_summary(item: Alumni) -> PageCmsSourceSummary:
+    person = item.person
+    programme_name = item.programme.name if item.programme else None
+    school_name = item.school.name if item.school else None
+    return PageCmsSourceSummary(
+        id=item.id,
+        source_type="alumni",
+        label=person.full_name,
+        secondary_label=item.current_position or programme_name or school_name,
+        status="verified" if item.is_verified else "unverified",
+        thumbnail_url=_media_url(person.photo),
+        metadata={
+            key: value
+            for key, value in {
+                "graduation_year": item.graduation_year,
+                "programme": programme_name,
+                "school": school_name,
+                "current_position": item.current_position,
+                "industry": item.industry,
+                "location_city": item.location_city,
+            }.items()
+            if value is not None
+        },
+        selectable=_alumni_is_public(item),
+    )
+
+
+def _testimonial_summary(item: Testimonial) -> PageCmsSourceSummary:
+    return PageCmsSourceSummary(
+        id=item.id,
+        source_type="testimonial",
+        label=item.name,
+        secondary_label=item.role,
+        status="approved" if item.is_approved else "pending",
+        thumbnail_url=_media_url(item.photo),
+        metadata={
+            key: value
+            for key, value in {"quote": item.quote, "story": item.full_story}.items()
+            if value is not None
+        },
+        selectable=_testimonial_is_public(item),
+    )
+
+
+def _club_activity_summary(item: ClubActivity) -> PageCmsSourceSummary:
+    return PageCmsSourceSummary(
+        id=item.id,
+        source_type="club_activity",
+        label=item.title,
+        secondary_label=item.club.name if item.club else None,
+        status=item.status,
+        published_at=item.published_at,
+        thumbnail_url=_media_url(item.cover_image),
+        metadata={
+            key: value
+            for key, value in {
+                "slug": item.slug,
+                "activity_type": item.activity_type,
+                "start_datetime": item.start_datetime,
+                "end_datetime": item.end_datetime,
+                "location": item.location,
+                "club": item.club.name if item.club else None,
+            }.items()
+            if value is not None
+        },
+        selectable=_club_activity_is_public(item),
+    )
+
+
+def _local_summary(source_type: str, item: Any) -> PageCmsSourceSummary:
+    return {
+        "intake": _intake_summary,
+        "academic_calendar": _calendar_summary,
+        "staff_assignment": _staff_assignment_summary,
+        "alumni": _alumni_summary,
+        "testimonial": _testimonial_summary,
+        "club_activity": _club_activity_summary,
+    }[source_type](item)
+
+
+def _local_is_public(source_type: str, item: Any) -> bool:
+    return {
+        "intake": _intake_is_public,
+        "academic_calendar": _calendar_is_public,
+        "staff_assignment": _staff_assignment_is_public,
+        "alumni": _alumni_is_public,
+        "testimonial": _testimonial_is_public,
+        "club_activity": _club_activity_is_public,
+    }[source_type](item)
+
+
+def _local_scope(source_type: str, item: Any) -> tuple[str, uuid.UUID | None]:
+    if source_type in {"alumni", "testimonial"}:
+        return "university", None
+    if source_type == "staff_assignment":
+        return item.entity_type, item.entity_id
+    if source_type == "club_activity":
+        club = item.club
+        if club is None:
+            return "university", None
+        school_id = club.school_id or (club.department.school_id if club.department else None)
+        return ("school", school_id) if school_id is not None else ("university", None)
+    return "university", None
+
+
+def _local_scope_matches(
+    source_type: str,
+    item: Any,
+    destination_scope_type: str,
+    destination_scope_id: uuid.UUID | None,
+) -> bool:
+    if destination_scope_type == "university":
+        return True
+    if source_type == "intake":
+        return destination_scope_type == "school" and destination_scope_id in _intake_school_ids(item)
+    if source_type == "academic_calendar":
+        return destination_scope_type == "school" and destination_scope_id in _calendar_school_ids(item)
+    if source_type in {"alumni", "testimonial"}:
+        return False
+    if source_type == "club_activity" and destination_scope_type not in {"school"}:
+        return False
+    source_scope_type, source_scope_id = _local_scope(source_type, item)
+    return source_scope_type == destination_scope_type and source_scope_id == destination_scope_id
+
+
+def _local_source_statement(source_type: str):
+    if source_type == "intake":
+        return select(Intake).options(
+            selectinload(Intake.cover_image),
+            selectinload(Intake.programmes).selectinload(ProgrammeIntake.programme).selectinload(Programme.department),
+        )
+    if source_type == "academic_calendar":
+        return select(AcademicCalendar).options(
+            selectinload(AcademicCalendar.intakes)
+            .selectinload(Intake.programmes)
+            .selectinload(ProgrammeIntake.programme)
+            .selectinload(Programme.department),
+        )
+    if source_type == "staff_assignment":
+        return select(StaffAssignment).options(selectinload(StaffAssignment.person).selectinload(Person.photo))
+    if source_type == "alumni":
+        return select(Alumni).options(
+            selectinload(Alumni.person).selectinload(Person.photo),
+            selectinload(Alumni.programme),
+            selectinload(Alumni.school),
+        )
+    if source_type == "testimonial":
+        return select(Testimonial).options(selectinload(Testimonial.photo))
+    return select(ClubActivity).options(
+        selectinload(ClubActivity.cover_image),
+        selectinload(ClubActivity.club).selectinload(Club.department),
+    )
+
+
 def _partner_date(value: Any) -> date | None:
     if isinstance(value, datetime):
         return value.date()
@@ -463,6 +785,98 @@ class PageCmsSourceService:
             result = await paginate_query(db, statement, page=page, per_page=per_page)
             return _map_page(result, lambda item: _person_summary(item, scope_type, scope_id))
 
+        if source_type == "intake":
+            statement = _local_source_statement("intake").where(
+                Intake.deleted_at.is_(None), Intake.is_active.is_(True),
+            )
+            if scope_type == "school":
+                statement = statement.join(ProgrammeIntake).join(Programme).join(Department).where(
+                    ProgrammeIntake.is_active.is_(True), Department.school_id == scope_id,
+                ).distinct()
+            elif scope_type != "university":
+                statement = statement.where(false())
+            if query:
+                statement = statement.where(ilike_any(query, Intake.name, Intake.code, Intake.slug))
+            statement = statement.order_by(Intake.application_end.asc(), Intake.name.asc(), Intake.id.asc())
+            result = await paginate_query(db, statement, page=page, per_page=per_page)
+            return _map_page(result, _intake_summary)
+
+        if source_type == "academic_calendar":
+            statement = _local_source_statement("academic_calendar").where(
+                AcademicCalendar.deleted_at.is_(None), AcademicCalendar.status.in_(("published", "current")),
+            )
+            if scope_type == "school":
+                statement = statement.join(Intake).join(ProgrammeIntake).join(Programme).join(Department).where(
+                    Intake.deleted_at.is_(None), Intake.is_active.is_(True),
+                    ProgrammeIntake.is_active.is_(True), Department.school_id == scope_id,
+                ).distinct()
+            elif scope_type != "university":
+                statement = statement.where(false())
+            if query:
+                statement = statement.where(ilike_any(query, AcademicCalendar.academic_year, func.cast(AcademicCalendar.semester, String)))
+            statement = statement.order_by(AcademicCalendar.academic_year.desc(), AcademicCalendar.semester.asc(), AcademicCalendar.id.asc())
+            result = await paginate_query(db, statement, page=page, per_page=per_page)
+            return _map_page(result, _calendar_summary)
+
+        if source_type == "staff_assignment":
+            statement = _local_source_statement("staff_assignment").join(Person).where(
+                StaffAssignment.deleted_at.is_(None), StaffAssignment.status == "active",
+                StaffAssignment.is_public.is_(True),
+                or_(StaffAssignment.start_date.is_(None), StaffAssignment.start_date <= date.today()),
+                or_(StaffAssignment.end_date.is_(None), StaffAssignment.end_date >= date.today()),
+                Person.deleted_at.is_(None), Person.is_active.is_(True), Person.is_public.is_(True),
+                StaffAssignment.entity_type == scope_type,
+                StaffAssignment.entity_id.is_(None) if scope_type == "university" else StaffAssignment.entity_id == scope_id,
+            )
+            if query:
+                statement = statement.where(ilike_any(query, Person.full_name, StaffAssignment.title, StaffAssignment.public_role_label, StaffAssignment.role))
+            statement = statement.order_by(StaffAssignment.hierarchy_level.asc(), StaffAssignment.display_order.asc(), Person.full_name.asc(), StaffAssignment.id.asc())
+            result = await paginate_query(db, statement, page=page, per_page=per_page)
+            return _map_page(result, _staff_assignment_summary)
+
+        if source_type == "alumni":
+            statement = _local_source_statement("alumni").join(Person).where(
+                Alumni.deleted_at.is_(None), Alumni.is_public.is_(True), Alumni.is_verified.is_(True),
+                Person.deleted_at.is_(None), Person.is_active.is_(True), Person.is_public.is_(True),
+            )
+            if scope_type != "university":
+                statement = statement.where(false())
+            if query:
+                statement = statement.where(ilike_any(query, Person.full_name, Alumni.current_position, Alumni.industry))
+            statement = statement.order_by(Alumni.graduation_year.desc(), Person.full_name.asc(), Alumni.id.asc())
+            result = await paginate_query(db, statement, page=page, per_page=per_page)
+            return _map_page(result, _alumni_summary)
+
+        if source_type == "testimonial":
+            statement = _local_source_statement("testimonial").where(
+                Testimonial.deleted_at.is_(None), Testimonial.is_public.is_(True), Testimonial.is_approved.is_(True),
+            )
+            if scope_type != "university":
+                statement = statement.where(false())
+            if query:
+                statement = statement.where(ilike_any(query, Testimonial.name, Testimonial.role, Testimonial.quote, Testimonial.full_story))
+            statement = statement.order_by(Testimonial.display_order.asc(), Testimonial.name.asc(), Testimonial.id.asc())
+            result = await paginate_query(db, statement, page=page, per_page=per_page)
+            return _map_page(result, _testimonial_summary)
+
+        if source_type == "club_activity":
+            statement = _local_source_statement("club_activity").join(Club).outerjoin(
+                Department, Club.department_id == Department.id,
+            ).where(
+                ClubActivity.deleted_at.is_(None), ClubActivity.archived_at.is_(None),
+                ClubActivity.status == "published", ClubActivity.is_public.is_(True), ClubActivity.is_published.is_(True),
+                Club.deleted_at.is_(None), Club.is_active.is_(True), Club.is_public.is_(True),
+            )
+            if scope_type == "school":
+                statement = statement.where(or_(Club.school_id == scope_id, Department.school_id == scope_id))
+            elif scope_type != "university":
+                statement = statement.where(false())
+            if query:
+                statement = statement.where(ilike_any(query, ClubActivity.title, ClubActivity.description, Club.name))
+            statement = statement.order_by(ClubActivity.start_datetime.asc(), ClubActivity.title.asc(), ClubActivity.id.asc())
+            result = await paginate_query(db, statement, page=page, per_page=per_page)
+            return _map_page(result, _club_activity_summary)
+
         if source_type == "research_partner":
             if scope_type not in {"university", "research"}:
                 raise ValueError(f"Research partner catalog is not available for scope {scope_type}")
@@ -586,6 +1000,37 @@ class PageCmsSourceService:
                 item, destination_scope_type, destination_scope_id, include_private_assignment=True,
             )
 
+        if source_type in LOCAL_SOURCE_TYPES:
+            model = {
+                "intake": Intake,
+                "academic_calendar": AcademicCalendar,
+                "staff_assignment": StaffAssignment,
+                "alumni": Alumni,
+                "testimonial": Testimonial,
+                "club_activity": ClubActivity,
+            }[source_type]
+            statement = _local_source_statement(source_type).where(
+                model.id == source_id,
+                model.deleted_at.is_(None),
+            )
+            item = (await db.execute(statement)).scalar_one_or_none()
+            if item is None or not _not_deleted(item) or not _local_scope_matches(
+                source_type, item, destination_scope_type, destination_scope_id,
+            ):
+                return None
+            if _local_is_public(source_type, item):
+                return _local_summary(source_type, item)
+            source_scope_type, source_scope_id = _local_scope(source_type, item)
+            if not await PageCmsSourceService._preview_allowed(
+                preview_capability,
+                source_scope_type,
+                source_scope_id,
+                destination_scope_type,
+                destination_scope_id,
+            ):
+                return None
+            return _local_summary(source_type, item)
+
         if source_type == "research_partner":
             if destination_scope_type not in {"university", "research"}:
                 return None
@@ -653,7 +1098,7 @@ class PageCmsSourceService:
             )
             for source_id in programme_ids:
                 item = programmes.get(source_id)
-                if item is None:
+                if item is None or not _not_deleted(item):
                     state = PageCmsSourceResolutionState.UNAVAILABLE
                     results[("programme", source_id)] = _source_resolution("programme", source_id, state)
                     continue
@@ -775,6 +1220,54 @@ class PageCmsSourceService:
                 else:
                     results[("person", source_id)] = _source_resolution(
                         "person", source_id, PageCmsSourceResolutionState.UNAVAILABLE,
+                    )
+
+        local_models = {
+            "intake": Intake,
+            "academic_calendar": AcademicCalendar,
+            "staff_assignment": StaffAssignment,
+            "alumni": Alumni,
+            "testimonial": Testimonial,
+            "club_activity": ClubActivity,
+        }
+        for source_type, model in local_models.items():
+            source_ids = grouped.get(source_type, [])
+            if not source_ids:
+                continue
+            records = await _load_records_in_chunks(
+                db,
+                source_ids,
+                lambda source_id_chunk: _local_source_statement(source_type).where(
+                    model.id.in_(source_id_chunk), model.deleted_at.is_(None),
+                ),
+            )
+            for source_id in source_ids:
+                item = records.get(source_id)
+                if item is None:
+                    results[(source_type, source_id)] = _source_resolution(
+                        source_type, source_id, PageCmsSourceResolutionState.UNAVAILABLE,
+                    )
+                    continue
+                if not _local_scope_matches(source_type, item, destination_scope_type, destination_scope_id):
+                    results[(source_type, source_id)] = _source_resolution(
+                        source_type, source_id, PageCmsSourceResolutionState.INACCESSIBLE,
+                    )
+                    continue
+                if _local_is_public(source_type, item):
+                    results[(source_type, source_id)] = _source_resolution(
+                        source_type, source_id, PageCmsSourceResolutionState.RESOLVED,
+                        _local_summary(source_type, item),
+                    )
+                    continue
+                source_scope_type, source_scope_id = _local_scope(source_type, item)
+                if await preview_allowed(source_scope_type, source_scope_id):
+                    results[(source_type, source_id)] = _source_resolution(
+                        source_type, source_id, PageCmsSourceResolutionState.RESOLVED,
+                        _local_summary(source_type, item),
+                    )
+                else:
+                    results[(source_type, source_id)] = _source_resolution(
+                        source_type, source_id, PageCmsSourceResolutionState.UNAVAILABLE,
                     )
 
         partner_ids = grouped.get("research_partner", [])
