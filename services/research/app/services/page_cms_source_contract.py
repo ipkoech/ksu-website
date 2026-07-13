@@ -50,8 +50,24 @@ def _is_numeric_hostname_candidate(hostname: str) -> bool:
     )
 
 
+def _has_unsafe_authority(value: str) -> bool:
+    scheme, separator, remainder = value.partition(":")
+    if not separator or scheme.lower() not in {"http", "https"} or not remainder.startswith("//"):
+        return False
+    authority = remainder[2:]
+    for delimiter in "/?#":
+        authority = authority.split(delimiter, 1)[0]
+    return any(
+        character in {"%", "\\"}
+        or ord(character) < 32
+        or 127 <= ord(character) <= 159
+        or ord(character) > 127
+        for character in authority
+    )
+
+
 def _is_safe_public_url(value: str | None) -> bool:
-    if not isinstance(value, str) or not value or value != value.strip() or "\\" in value:
+    if not isinstance(value, str) or not value or value != value.strip() or _has_unsafe_authority(value):
         return False
     try:
         parsed = urlparse(value)
