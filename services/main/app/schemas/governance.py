@@ -151,6 +151,12 @@ class CouncilMemberUpdate(BaseSchema):
     publication_notes: str | None = None
 
 
+class CouncilMemberReportsToRead(BaseSchema):
+    id: uuid.UUID
+    display_label: str
+    role_label: str
+
+
 class CouncilMemberRead(BaseReadSchema):
     person_id: uuid.UUID
     person: dict[str, Any] | None = None
@@ -177,6 +183,7 @@ class CouncilMemberRead(BaseReadSchema):
     workflow_status: str
     hierarchy_level: int
     reports_to_id: uuid.UUID | None = None
+    reports_to: CouncilMemberReportsToRead | None = None
     display_order: int
     published_at: datetime | None = None
     unpublished_at: datetime | None = None

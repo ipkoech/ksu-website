@@ -2,11 +2,10 @@ import unittest
 import uuid
 from datetime import datetime, timezone
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from sqlalchemy.dialects import postgresql
 
-from app.api.v1 import governance as governance_api
 from app.models import GovernancePageContent, GovernanceRole, StaffAssignment
 from app.schemas import CouncilMemberCreate, CouncilOrderUpdate, GovernanceRoleCreate
 from app.services.governance import GovernanceService
@@ -124,6 +123,21 @@ class UniversityGovernanceAdminSchemaTests(unittest.TestCase):
 
 
 class UniversityGovernanceAdminServiceTests(unittest.IsolatedAsyncioTestCase):
+    async def test_public_page_content_query_requires_published_workflow(self):
+        class RecordingDb:
+            query = None
+
+            async def execute(self, query):
+                self.query = query
+                return SimpleNamespace(scalar_one_or_none=lambda: None)
+
+        db = RecordingDb()
+
+        await GovernanceService.get_council_page_content(db, uuid.uuid4(), published_only=True)
+
+        compiled = str(db.query.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True})).lower()
+        self.assertIn("governance_page_content.workflow_status = 'published'", compiled)
+
     async def test_public_council_groups_members_by_display_group_in_order(self):
         board = SimpleNamespace(
             id=uuid.uuid4(),
@@ -181,14 +195,97 @@ class UniversityGovernanceAdminServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("Mr Secretary", data["secretary"]["name"])
 
     async def test_order_update_rejects_duplicate_group_order(self):
+        first_id = uuid.uuid4()
         duplicate_id = uuid.uuid4()
+        assignments = {
+            first_id: SimpleNamespace(
+                id=first_id, governance_role=SimpleNamespace(display_group="member"), reports_to_id=None
+            ),
+            duplicate_id: SimpleNamespace(
+                id=duplicate_id, governance_role=SimpleNamespace(display_group="member"), reports_to_id=None
+            ),
+        }
         nodes = [
-            {"assignment_id": uuid.uuid4(), "display_group": "member", "display_order": 10, "hierarchy_level": 2, "reports_to_id": None},
-            {"assignment_id": duplicate_id, "display_group": "member", "display_order": 10, "hierarchy_level": 2, "reports_to_id": None},
+            {"assignment_id": first_id, "display_group": "chairperson", "display_order": 10, "hierarchy_level": 2, "reports_to_id": None},
+            {"assignment_id": duplicate_id, "display_group": "secretary", "display_order": 10, "hierarchy_level": 2, "reports_to_id": None},
         ]
 
         with self.assertRaisesRegex(ValueError, "Duplicate display order"):
-            await GovernanceService.validate_council_order_nodes(nodes, assignments_by_id={})
+            await GovernanceService.validate_council_order_nodes(nodes, assignments_by_id=assignments)
+
+    async def test_order_update_rejects_duplicate_assignment_ids(self):
+        assignment_id = uuid.uuid4()
+        assignment = SimpleNamespace(id=assignment_id, governance_role=SimpleNamespace(display_group="member"), reports_to_id=None)
+        nodes = [
+            {"assignment_id": assignment_id, "display_group": "chairperson", "display_order": 10, "hierarchy_level": 2, "reports_to_id": None},
+            {"assignment_id": assignment_id, "display_group": "secretary", "display_order": 20, "hierarchy_level": 2, "reports_to_id": None},
+        ]
+
+        with self.assertRaisesRegex(ValueError, "Duplicate assignment"):
+            await GovernanceService.validate_council_order_nodes(nodes, {assignment_id: assignment})
+
+    async def test_order_update_rejects_inactive_assignment(self):
+        active = SimpleNamespace(id=uuid.uuid4(), governance_role=SimpleNamespace(display_group="member"), reports_to_id=None)
+        inactive_id = uuid.uuid4()
+        nodes = [
+            {"assignment_id": inactive_id, "display_group": "member", "display_order": 10, "hierarchy_level": 2, "reports_to_id": None},
+        ]
+
+        with patch.object(GovernanceService, "list_council_members", new_callable=AsyncMock, return_value=[active]):
+            with self.assertRaisesRegex(ValueError, "outside this board"):
+                await GovernanceService.update_council_order(object(), nodes, uuid.uuid4())
+
+    async def test_create_council_member_forces_draft_workflow_state(self):
+        board = SimpleNamespace(id=uuid.uuid4())
+        role = SimpleNamespace(
+            id=uuid.uuid4(),
+            slug="council-member",
+            category="representative",
+            default_hierarchy_level=2,
+            default_display_order=20,
+        )
+        db = SimpleNamespace(added=[], flush=AsyncMock(), refresh=AsyncMock())
+        db.add = db.added.append
+        payload = {
+            "person_id": uuid.uuid4(),
+            "governance_role_id": role.id,
+            "public_role_label": "Representative",
+            "workflow_status": "published",
+            "appointment_status": "published",
+        }
+
+        with (
+            patch.object(GovernanceService, "get_university_council_board", return_value=board),
+            patch.object(GovernanceService, "get_governance_role", return_value=role),
+        ):
+            assignment = await GovernanceService.create_council_member(db, payload, uuid.uuid4())
+
+        self.assertEqual("draft", assignment.workflow_status)
+        self.assertEqual("draft", assignment.appointment_status)
+
+    async def test_update_council_member_rejects_direct_workflow_changes(self):
+        assignment = SimpleNamespace(workflow_status="draft", appointment_status="draft")
+
+        with self.assertRaisesRegex(ValueError, "workflow state"):
+            await GovernanceService.update_council_member(
+                object(), assignment, {"workflow_status": "published"}, uuid.uuid4()
+            )
+
+    def test_admin_member_read_includes_readable_reports_to_summary(self):
+        chair = SimpleNamespace(
+            id=uuid.uuid4(),
+            person=SimpleNamespace(display_name="Prof. Ada Chair"),
+            public_role_label="Chairperson",
+            governance_role=SimpleNamespace(public_label="Chairperson"),
+            role="chairperson",
+            title=None,
+        )
+        member = SimpleNamespace(reports_to=chair)
+
+        self.assertEqual(
+            {"id": chair.id, "display_label": "Prof. Ada Chair", "role_label": "Chairperson"},
+            GovernanceService.council_member_reports_to_summary(member),
+        )
 
     async def test_workflow_publish_requires_approved_status(self):
         assignment = SimpleNamespace(workflow_status="draft", appointment_status="draft")

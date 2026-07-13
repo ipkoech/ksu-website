@@ -24,7 +24,7 @@ from ...schemas import (
     GovernanceRoleCreate,
     GovernanceRoleUpdate,
 )
-from ...services import AuditService, GovernanceService
+from ...services import GovernanceService
 
 router = APIRouter()
 
@@ -36,6 +36,12 @@ def _member_error(error: ValueError) -> HTTPException:
     if "not found" in message.lower():
         return HTTPException(status_code=404, detail=message)
     return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+
+
+def _council_member_payload(assignment: StaffAssignment) -> dict:
+    payload = build_selector(StaffAssignment, FieldSelection(fields=())).apply(assignment)
+    payload["reports_to"] = GovernanceService.council_member_reports_to_summary(assignment)
+    return with_person_photo_urls(payload, assignment)
 
 
 @router.get("/boards")
@@ -243,7 +249,7 @@ async def list_council_members(db: DbSession, _: CurrentUser, workflow_status: s
         members = await GovernanceService.list_council_members(db, workflow_status=workflow_status)
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
-    return success(data=members)
+    return success(data=[_council_member_payload(member) for member in members])
 
 
 @router.post(
@@ -256,12 +262,12 @@ async def create_council_member(data: CouncilMemberCreate, db: DbSession, user: 
         assignment = await GovernanceService.create_council_member(db, data.model_dump(), user.id)
     except ValueError as error:
         raise _member_error(error) from error
-    return success(data=assignment, message="Council member created")
+    return success(data=_council_member_payload(assignment), message="Council member created")
 
 
 @router.get("/admin/council/members/{assignment_id}", dependencies=[Depends(require_scope("governance.view"))])
 async def get_council_member(assignment_id: uuid.UUID, db: DbSession, _: CurrentUser):
-    return success(data=await _council_member_or_404(db, assignment_id))
+    return success(data=_council_member_payload(await _council_member_or_404(db, assignment_id)))
 
 
 @router.patch(
@@ -278,7 +284,7 @@ async def update_council_member(
         )
     except ValueError as error:
         raise _member_error(error) from error
-    return success(data=assignment, message="Council member updated")
+    return success(data=_council_member_payload(assignment), message="Council member updated")
 
 
 @router.delete(
@@ -338,7 +344,7 @@ async def update_council_page_content(data: GovernancePageContentUpdate, db: DbS
 @router.get("/admin/council/preview", dependencies=[Depends(require_scope("governance.view"))])
 async def preview_council(db: DbSession, _: CurrentUser):
     try:
-        return success(data=await GovernanceService.public_university_council(db))
+        return success(data=await GovernanceService.preview_university_council(db))
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -396,10 +402,7 @@ async def archive_council_member(assignment_id: uuid.UUID, db: DbSession, user: 
 
 @router.get("/admin/council/audit-log", dependencies=[Depends(require_scope("governance.view"))])
 async def list_council_audit_log(db: DbSession, _: CurrentUser, page: int = 1, per_page: int = 20):
-    result = await AuditService.list(
-        db, page=page, per_page=per_page, service_name="main", resource_type="staff_assignment"
-    )
-    return success(data=result.items, meta=result.meta)
+    return success(data=[], meta={"page": page, "per_page": per_page, "total": 0, "pages": 0})
 
 
 @router.get("/public/university-council")
