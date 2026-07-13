@@ -1,14 +1,16 @@
 import {
   announcementsApi,
-  contactsApi,
+  contactDirectoryApi,
   documentsApi,
   eventsApi,
   faqsApi,
   type Announcement,
+  type Campus,
   type ContactDirectory,
   type Document,
   type Event,
   type FAQ,
+  type PublicContactDirectory,
 } from "@ksu/api-client";
 import type {
   PublicCard,
@@ -187,6 +189,16 @@ async function safeList<T>(request: Promise<ListEnvelope<T>>): Promise<T[]> {
   }
 }
 
+async function getPublicContactDirectory(): Promise<PublicContactDirectory | null> {
+  try {
+    const response = await contactDirectoryApi.get({ page: 1, per_page: 20 });
+    return response.data ?? null;
+  } catch (error) {
+    console.error("Failed to fetch public contact directory:", error);
+    return null;
+  }
+}
+
 function utilityConfig({
   currentHref,
   eyebrow,
@@ -269,6 +281,17 @@ function contactCard(contact: ContactDirectory): PublicCard {
   );
 }
 
+function campusCard(campus: Campus): PublicCard {
+  const location = [campus.address, campus.city, campus.county].filter(Boolean);
+
+  return infoCard(
+    campus.name,
+    location.join(" · ") || "Published campus location.",
+    "home",
+    campus.campus_type,
+  );
+}
+
 function faqCard(faq: FAQ): PublicCard {
   return infoCard(
     faq.question,
@@ -318,14 +341,16 @@ function eventCard(item: Event): PublicCard {
 }
 
 export async function getContactPageConfig(): Promise<PublicPageConfig> {
-  const contacts = await safeList(
-    contactsApi.list({
-      is_main: true,
-      per_page: 12,
-      fields:
-        "id,name,contact_type,email,phone,physical_address,building,room_number,is_main,is_public,status",
-    }),
-  );
+  const directory = await getPublicContactDirectory();
+  const contacts = directory?.main_contacts.length
+    ? directory.main_contacts
+    : (directory?.contacts.items ?? []);
+  const institution = directory?.institution;
+  const campuses = directory?.campuses ?? [];
+  const faqs = directory?.faqs ?? [];
+  const email = institution?.email ?? officialLinks.email;
+  const phone = institution?.phone ?? officialLinks.phone;
+  const postalAddress = institution?.postal_address ?? officialLinks.address;
 
   return utilityConfig({
     currentHref: "/contact",
@@ -334,10 +359,15 @@ export async function getContactPageConfig(): Promise<PublicPageConfig> {
     body: "Find the main university contact channels and official service pathways for enquiries, support requests, feedback, and information requests.",
     primaryAction: {
       label: "Email the university",
-      href: `mailto:${officialLinks.email}`,
+      href: `mailto:${email}`,
       external: true,
     },
     secondaryActions: [
+      {
+        label: "Call the university",
+        href: `tel:${phone}`,
+        external: true,
+      },
       {
         label: "Customer care centre",
         href: officialLinks.customerCare,
@@ -358,21 +388,33 @@ export async function getContactPageConfig(): Promise<PublicPageConfig> {
         cards: contacts.length
           ? contacts.map(contactCard)
           : [
-              infoCard(
-                "General enquiries",
-                officialLinks.email,
-                "handshake",
-                "Email",
-              ),
-              infoCard("Telephone", officialLinks.phone, "handshake", "Phone"),
-              infoCard(
-                "Postal address",
-                officialLinks.address,
-                "home",
-                "Address",
-              ),
+              infoCard("General enquiries", email, "handshake", "Email"),
+              infoCard("Telephone", phone, "handshake", "Phone"),
+              infoCard("Postal address", postalAddress, "home", "Address"),
             ],
       },
+      ...(campuses.length
+        ? [
+            {
+              eyebrow: "Campuses",
+              title: "University campus locations",
+              body: "Find the published address and location details for each campus.",
+              columns: 3 as const,
+              cards: campuses.map(campusCard),
+            },
+          ]
+        : []),
+      ...(faqs.length
+        ? [
+            {
+              eyebrow: "Common questions",
+              title: "Contact frequently asked questions",
+              body: "Review published answers to common contact and service questions.",
+              columns: 2 as const,
+              cards: faqs.map(faqCard),
+            },
+          ]
+        : []),
       {
         eyebrow: "Service requests",
         title: "Use the right service channel",
