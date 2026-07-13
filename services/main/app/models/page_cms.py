@@ -238,6 +238,15 @@ class SectionItem(Base):
             ")",
             name="ck_section_items_reference_content_empty",
         ),
+        sa.CheckConstraint(
+            "editorial_overrides IS NULL OR ("
+            "jsonb_typeof(editorial_overrides) = 'object' AND "
+            "editorial_overrides - ARRAY["
+            "'title', 'subtitle', 'summary', 'cta_label', 'cta_url', 'badge', 'image_media_id'"
+            "]::text[] = '{}'::jsonb"
+            ")",
+            name="ck_section_items_editorial_overrides",
+        ),
         sa.Index("ix_section_items_section_order", "page_section_id", "display_order"),
         sa.Index("ix_section_items_source", "source_type", "source_id"),
     )

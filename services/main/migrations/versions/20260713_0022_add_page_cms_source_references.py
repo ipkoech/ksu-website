@@ -57,6 +57,14 @@ REFERENCE_CONTENT_EMPTY_CHECK = (
     "(video_duration_seconds IS NULL OR video_duration_seconds = 0)"
     ")"
 )
+EDITORIAL_OVERRIDES_CHECK = (
+    "editorial_overrides IS NULL OR ("
+    "jsonb_typeof(editorial_overrides) = 'object' AND "
+    "editorial_overrides - ARRAY["
+    "'title', 'subtitle', 'summary', 'cta_label', 'cta_url', 'badge', 'image_media_id'"
+    "]::text[] = '{}'::jsonb"
+    ")"
+)
 REFERENCE_ITEM_TYPE_CHECK = "item_type IN ('text', 'card', 'stat', 'cta', 'media', 'video', 'reference')"
 ORIGINAL_ITEM_TYPE_CHECK = "item_type IN ('text', 'card', 'stat', 'cta', 'media', 'video')"
 
@@ -121,6 +129,12 @@ def upgrade() -> None:
             "section_items",
             REFERENCE_CONTENT_EMPTY_CHECK,
         )
+    if "ck_section_items_editorial_overrides" not in constraints:
+        op.create_check_constraint(
+            "ck_section_items_editorial_overrides",
+            "section_items",
+            EDITORIAL_OVERRIDES_CHECK,
+        )
 
     if "ix_section_items_source" not in _indexes("section_items"):
         op.create_index("ix_section_items_source", "section_items", ["source_type", "source_id"], unique=False)
@@ -136,6 +150,7 @@ def downgrade() -> None:
 
         constraints = _check_constraints("section_items")
         for constraint_name in (
+            "ck_section_items_editorial_overrides",
             "ck_section_items_reference_content_empty",
             "ck_section_items_source_reference_item_type",
             "ck_section_items_source_type",

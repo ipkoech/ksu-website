@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from pathlib import Path
 
 import sqlalchemy as sa
 
@@ -95,3 +96,34 @@ def test_section_item_source_types_match_the_domain_catalog():
         "club_activity",
     )
     assert all(source_type in source_type_sql for source_type in SECTION_ITEM_SOURCE_TYPES)
+
+
+def test_section_items_constrain_editorial_overrides_to_safe_object_keys():
+    constraint = _check_constraint(SectionItem.__table__, "ck_section_items_editorial_overrides")
+    sqltext = str(constraint.sqltext).lower()
+
+    assert "editorial_overrides is null" in sqltext
+    assert "jsonb_typeof(editorial_overrides) = 'object'" in sqltext
+    assert "editorial_overrides - array[" in sqltext
+    assert "::text[]" in sqltext
+    assert "= '{}'::jsonb" in sqltext
+    for key in ("title", "subtitle", "summary", "cta_label", "cta_url", "badge", "image_media_id"):
+        assert f"'{key}'" in sqltext
+
+
+def test_source_reference_migration_creates_and_drops_editorial_overrides_constraint():
+    migration_path = (
+        Path(__file__).resolve().parents[1]
+        / "migrations"
+        / "versions"
+        / "20260713_0022_add_page_cms_source_references.py"
+    )
+    migration_text = migration_path.read_text(encoding="utf-8").lower()
+
+    assert "editorial_overrides_check" in migration_text
+    assert "jsonb_typeof(editorial_overrides) = 'object'" in migration_text
+    assert "editorial_overrides - array[" in migration_text
+    assert "::text[]" in migration_text
+    assert "= '{}'::jsonb" in migration_text
+    assert '"ck_section_items_editorial_overrides"' in migration_text
+    assert migration_text.count("ck_section_items_editorial_overrides") >= 3
