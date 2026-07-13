@@ -4,6 +4,7 @@ import uuid
 from datetime import date, datetime, timezone
 
 import pytest
+from pydantic import ValidationError
 
 from app.models import Intake, IntakeMilestone, IntakePublicAction
 from app.schemas import IntakeHomepageAdmissionUpdate
@@ -156,6 +157,179 @@ async def test_update_config_disables_existing_reporting_milestone():
 
     assert milestone.is_public is False
     assert result.reporting.enabled is False
+
+
+@pytest.mark.asyncio
+async def test_action_partial_patch_preserves_unsupplied_enabled_url_and_window():
+    intake = _intake()
+    action = IntakePublicAction(
+        intake_id=intake.id,
+        action_type="apply",
+        label="Apply Now",
+        target_url="https://apply.kisiiuniversity.ac.ke",
+        starts_at=datetime(2026, 8, 1, tzinfo=timezone.utc),
+        ends_at=datetime(2026, 9, 30, tzinfo=timezone.utc),
+        is_enabled=True,
+        status="published",
+        workflow_status="published",
+    )
+    action.id = uuid.uuid4()
+    intake.public_actions = [action]
+
+    result = await IntakeHomepageAdmissionService.update_config(
+        _FakeDb(),
+        intake,
+        IntakeHomepageAdmissionUpdate(apply={"label": "Start Application"}),
+        uuid.uuid4(),
+        now=NOW,
+    )
+
+    assert action.is_enabled is True
+    assert action.label == "Start Application"
+    assert action.target_url == "https://apply.kisiiuniversity.ac.ke"
+    assert action.starts_at == datetime(2026, 8, 1, tzinfo=timezone.utc)
+    assert action.ends_at == datetime(2026, 9, 30, tzinfo=timezone.utc)
+    assert result.apply.enabled is True
+
+
+@pytest.mark.asyncio
+async def test_reporting_partial_patch_preserves_unsupplied_required_fields():
+    intake = _intake()
+    milestone = IntakeMilestone(
+        intake_id=intake.id,
+        milestone_type="reporting",
+        title="Reporting Day",
+        starts_at=datetime(2026, 10, 26, 5, 0, tzinfo=timezone.utc),
+        is_public=True,
+        status="published",
+        workflow_status="published",
+    )
+    milestone.id = uuid.uuid4()
+    intake.milestones = [milestone]
+
+    result = await IntakeHomepageAdmissionService.update_config(
+        _FakeDb(),
+        intake,
+        IntakeHomepageAdmissionUpdate(reporting={"location": "Kisii Main Campus"}),
+        uuid.uuid4(),
+        now=NOW,
+    )
+
+    assert milestone.is_public is True
+    assert milestone.title == "Reporting Day"
+    assert milestone.starts_at == datetime(2026, 10, 26, 5, 0, tzinfo=timezone.utc)
+    assert milestone.location == "Kisii Main Campus"
+    assert result.reporting.enabled is True
+
+
+@pytest.mark.asyncio
+async def test_invalid_merged_action_window_is_rejected_before_mutation():
+    intake = _intake()
+    action = IntakePublicAction(
+        intake_id=intake.id,
+        action_type="apply",
+        label="Apply Now",
+        target_url="/apply",
+        starts_at=datetime(2026, 9, 2, tzinfo=timezone.utc),
+        ends_at=datetime(2026, 9, 30, tzinfo=timezone.utc),
+        is_enabled=True,
+        status="published",
+        workflow_status="published",
+    )
+    action.id = uuid.uuid4()
+    intake.public_actions = [action]
+
+    with pytest.raises(ValidationError):
+        await IntakeHomepageAdmissionService.update_config(
+            _FakeDb(),
+            intake,
+            IntakeHomepageAdmissionUpdate(
+                apply={"ends_at": "2026-09-01T00:00:00+00:00"}
+            ),
+            uuid.uuid4(),
+            now=NOW,
+        )
+
+    assert action.ends_at == datetime(2026, 9, 30, tzinfo=timezone.utc)
+
+
+@pytest.mark.asyncio
+async def test_enabling_new_action_without_label_and_url_is_rejected_after_merge():
+    intake = _intake()
+
+    with pytest.raises(ValidationError):
+        await IntakeHomepageAdmissionService.update_config(
+            _FakeDb(),
+            intake,
+            IntakeHomepageAdmissionUpdate(apply={"enabled": True}),
+            uuid.uuid4(),
+            now=NOW,
+        )
+
+    assert intake.public_actions == []
+
+
+@pytest.mark.asyncio
+async def test_manual_override_partial_patch_uses_existing_expiry():
+    intake = _intake()
+    intake.override_expires_at = datetime(2026, 8, 15, tzinfo=timezone.utc)
+
+    result = await IntakeHomepageAdmissionService.update_config(
+        _FakeDb(),
+        intake,
+        IntakeHomepageAdmissionUpdate(application_override="force_hidden"),
+        uuid.uuid4(),
+        now=NOW,
+    )
+
+    assert result.application_override == "force_hidden"
+    assert result.override_expires_at == datetime(2026, 8, 15, tzinfo=timezone.utc)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "payload",
+    (
+        {"application_closes_at": "2026-07-31T23:59:59+00:00"},
+        {"late_application_closes_at": "2026-09-01T00:00:00+00:00"},
+        {"application_override": "force_hidden"},
+    ),
+)
+async def test_invalid_merged_intake_config_is_rejected_before_mutation(payload: dict):
+    intake = _intake()
+    original_close = intake.application_closes_at
+    original_late_close = intake.late_application_closes_at
+    original_override = intake.application_override
+
+    with pytest.raises(ValidationError):
+        await IntakeHomepageAdmissionService.update_config(
+            _FakeDb(),
+            intake,
+            IntakeHomepageAdmissionUpdate(**payload),
+            uuid.uuid4(),
+            now=NOW,
+        )
+
+    assert intake.application_closes_at == original_close
+    assert intake.late_application_closes_at == original_late_close
+    assert intake.application_override == original_override
+
+
+@pytest.mark.asyncio
+async def test_featured_inactive_intake_is_rejected_before_mutation():
+    intake = _intake()
+    intake.is_active = False
+
+    with pytest.raises(ValidationError):
+        await IntakeHomepageAdmissionService.update_config(
+            _FakeDb(),
+            intake,
+            IntakeHomepageAdmissionUpdate(is_featured_on_homepage=True),
+            uuid.uuid4(),
+            now=NOW,
+        )
+
+    assert intake.is_featured_on_homepage is False
 
 
 def test_serialize_config_returns_stable_action_and_reporting_defaults():

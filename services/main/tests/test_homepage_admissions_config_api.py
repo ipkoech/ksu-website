@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import HTTPException
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from app.api.v1 import intakes
 from app.schemas import IntakeHomepageAdmissionRead, IntakeHomepageAdmissionUpdate
@@ -30,9 +30,12 @@ def _config(intake_id: uuid.UUID) -> IntakeHomepageAdmissionRead:
     )
 
 
-def test_homepage_action_requires_label_and_url_when_enabled():
-    with pytest.raises(ValidationError):
-        IntakeHomepageAdmissionUpdate(apply={"enabled": True})
+def test_homepage_action_update_accepts_partial_enabled_field_for_service_merge():
+    payload = IntakeHomepageAdmissionUpdate(apply={"enabled": True})
+
+    assert payload.apply is not None
+    assert payload.apply.enabled is True
+    assert payload.apply.model_fields_set == {"enabled"}
 
 
 @pytest.mark.parametrize(
@@ -48,6 +51,25 @@ def test_homepage_action_rejects_unsafe_url(url: str):
 def test_homepage_config_rejects_naive_timestamps():
     with pytest.raises(ValidationError, match="timezone-aware"):
         IntakeHomepageAdmissionUpdate(application_opens_at=datetime(2026, 8, 1))
+
+
+@pytest.mark.parametrize(
+    "field_name",
+    (
+        "is_featured_on_homepage",
+        "homepage_priority",
+        "application_opens_at",
+        "application_closes_at",
+        "late_applications_enabled",
+        "application_override",
+        "timezone",
+    ),
+)
+def test_homepage_config_rejects_explicit_null_for_required_intake_fields(
+    field_name: str,
+):
+    with pytest.raises(ValidationError, match="cannot be null"):
+        IntakeHomepageAdmissionUpdate(**{field_name: None})
 
 
 @pytest.mark.asyncio
@@ -107,6 +129,44 @@ async def test_patch_homepage_admission_updates_through_service():
     get_intake.assert_awaited_once_with(None, intake_id)
     update_config.assert_awaited_once_with(None, intake, payload, user.id)
     assert response["data"] == config
+
+
+@pytest.mark.asyncio
+async def test_patch_homepage_admission_returns_422_for_merged_service_validation():
+    class _InvalidCandidate(BaseModel):
+        value: int
+
+    try:
+        _InvalidCandidate(value="invalid")
+    except ValidationError as validation_error:
+        error = validation_error
+
+    intake_id = uuid.uuid4()
+    user = SimpleNamespace(id=uuid.uuid4())
+    intake = SimpleNamespace(id=intake_id)
+
+    with (
+        patch.object(intakes, "can_access_scope", AsyncMock(return_value=True)),
+        patch.object(
+            intakes.IntakeHomepageAdmissionService,
+            "get_intake",
+            AsyncMock(return_value=intake),
+        ),
+        patch.object(
+            intakes.IntakeHomepageAdmissionService,
+            "update_config",
+            AsyncMock(side_effect=error),
+        ),
+    ):
+        with pytest.raises(HTTPException) as exc:
+            await intakes.update_homepage_admission(
+                intake_id,
+                IntakeHomepageAdmissionUpdate(),
+                db=None,
+                user=user,
+            )
+
+    assert exc.value.status_code == 422
 
 
 @pytest.mark.asyncio

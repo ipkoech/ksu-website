@@ -669,6 +669,31 @@ class HomepageActionConfig(BaseSchema):
         return self
 
 
+class HomepageActionConfigUpdate(BaseSchema):
+    enabled: bool | None = None
+    label: str | None = Field(default=None, min_length=1, max_length=255)
+    url: str | None = Field(default=None, min_length=1, max_length=1024)
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, value: str | None) -> str | None:
+        return _validate_safe_target(value, "url")
+
+    @field_validator("starts_at", "ends_at")
+    @classmethod
+    def validate_operational_timestamp(
+        cls, value: datetime | None, info
+    ) -> datetime | None:
+        return _validate_aware_timestamp(value, info.field_name)
+
+    @model_validator(mode="after")
+    def validate_supplied_window(self) -> "HomepageActionConfigUpdate":
+        _validate_timestamp_window(self.starts_at, self.ends_at, "starts_at", "ends_at")
+        return self
+
+
 class HomepageReportingConfig(BaseSchema):
     enabled: bool = False
     title: str = Field(default="Reporting Day", min_length=1, max_length=255)
@@ -697,6 +722,32 @@ class HomepageReportingConfig(BaseSchema):
         return self
 
 
+class HomepageReportingConfigUpdate(BaseSchema):
+    enabled: bool | None = None
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+    location: str | None = Field(default=None, max_length=255)
+    instructions_url: str | None = Field(default=None, max_length=1024)
+
+    @field_validator("instructions_url")
+    @classmethod
+    def validate_instructions_url(cls, value: str | None) -> str | None:
+        return _validate_safe_target(value, "instructions_url")
+
+    @field_validator("starts_at", "ends_at")
+    @classmethod
+    def validate_operational_timestamp(
+        cls, value: datetime | None, info
+    ) -> datetime | None:
+        return _validate_aware_timestamp(value, info.field_name)
+
+    @model_validator(mode="after")
+    def validate_supplied_window(self) -> "HomepageReportingConfigUpdate":
+        _validate_timestamp_window(self.starts_at, self.ends_at, "starts_at", "ends_at")
+        return self
+
+
 class IntakeHomepageAdmissionUpdate(BaseSchema):
     is_featured_on_homepage: bool | None = None
     homepage_priority: int | None = None
@@ -707,12 +758,12 @@ class IntakeHomepageAdmissionUpdate(BaseSchema):
     application_override: str | None = None
     override_expires_at: datetime | None = None
     timezone: str | None = None
-    apply: HomepageActionConfig | None = None
-    check_requirements: HomepageActionConfig | None = None
-    explore_programmes: HomepageActionConfig | None = None
-    admission_letter: HomepageActionConfig | None = None
-    reporting_instructions: HomepageActionConfig | None = None
-    reporting: HomepageReportingConfig | None = None
+    apply: HomepageActionConfigUpdate | None = None
+    check_requirements: HomepageActionConfigUpdate | None = None
+    explore_programmes: HomepageActionConfigUpdate | None = None
+    admission_letter: HomepageActionConfigUpdate | None = None
+    reporting_instructions: HomepageActionConfigUpdate | None = None
+    reporting: HomepageReportingConfigUpdate | None = None
 
     @field_validator("application_override")
     @classmethod
@@ -740,6 +791,21 @@ class IntakeHomepageAdmissionUpdate(BaseSchema):
 
     @model_validator(mode="after")
     def validate_application_window(self) -> "IntakeHomepageAdmissionUpdate":
+        required_fields = (
+            "is_featured_on_homepage",
+            "homepage_priority",
+            "application_opens_at",
+            "application_closes_at",
+            "late_applications_enabled",
+            "application_override",
+            "timezone",
+        )
+        for field_name in required_fields:
+            if (
+                field_name in self.model_fields_set
+                and getattr(self, field_name) is None
+            ):
+                raise ValueError(f"{field_name} cannot be null")
         _validate_timestamp_window(
             self.application_opens_at,
             self.application_closes_at,
@@ -752,13 +818,6 @@ class IntakeHomepageAdmissionUpdate(BaseSchema):
             "application_closes_at",
             "late_application_closes_at",
         )
-        if (
-            self.application_override in {"force_open", "force_hidden"}
-            and self.override_expires_at is None
-        ):
-            raise ValueError(
-                "override_expires_at is required for a manual application override"
-            )
         return self
 
 
@@ -853,7 +912,9 @@ __all__ = [
     "IntakeMilestoneUpdate",
     "IntakeMilestoneRead",
     "HomepageActionConfig",
+    "HomepageActionConfigUpdate",
     "HomepageReportingConfig",
+    "HomepageReportingConfigUpdate",
     "IntakeHomepageAdmissionUpdate",
     "IntakeHomepageAdmissionRead",
     "ProgrammeIntakeCreate",

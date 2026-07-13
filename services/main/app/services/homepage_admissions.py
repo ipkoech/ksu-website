@@ -12,9 +12,12 @@ from sqlalchemy.orm import selectinload
 from ..models import Intake, IntakeMilestone, IntakePublicAction
 from ..schemas.admissions import (
     HomepageActionConfig,
+    HomepageActionConfigUpdate,
     HomepageReportingConfig,
+    HomepageReportingConfigUpdate,
     IntakeHomepageAdmissionRead,
     IntakeHomepageAdmissionUpdate,
+    IntakeUpdate,
 )
 
 
@@ -73,36 +76,87 @@ class IntakeHomepageAdmissionService:
     ) -> IntakeHomepageAdmissionRead:
         published_at = now or datetime.now(timezone.utc)
         supplied_fields = payload.model_fields_set
-
-        for field_name in INTAKE_CONFIG_FIELDS:
-            if field_name in supplied_fields:
-                setattr(intake, field_name, getattr(payload, field_name))
+        intake_candidate = cls._validate_intake_candidate(intake, payload)
+        action_candidates: dict[str, tuple[str, HomepageActionConfig]] = {}
 
         for config_field, action_type in ACTION_FIELDS.items():
             if config_field not in supplied_fields:
                 continue
-            config = getattr(payload, config_field)
-            if config is not None:
-                cls._upsert_action(
-                    db,
-                    intake,
+            update = getattr(payload, config_field)
+            if update is not None:
+                action_candidates[config_field] = (
                     action_type,
-                    config,
-                    actor_id,
-                    published_at,
+                    cls._merge_action_config(
+                        cls._find_action(intake, action_type), update
+                    ),
                 )
 
+        reporting_candidate = None
         if "reporting" in supplied_fields and payload.reporting is not None:
+            reporting_candidate = cls._merge_reporting_config(
+                cls._find_reporting(intake), payload.reporting
+            )
+
+        for field_name in INTAKE_CONFIG_FIELDS:
+            if field_name in supplied_fields:
+                setattr(intake, field_name, getattr(intake_candidate, field_name))
+
+        for action_type, config in action_candidates.values():
+            cls._upsert_action(
+                db,
+                intake,
+                action_type,
+                config,
+                actor_id,
+                published_at,
+            )
+
+        if reporting_candidate is not None:
             cls._upsert_reporting(
                 db,
                 intake,
-                payload.reporting,
+                reporting_candidate,
                 actor_id,
                 published_at,
             )
 
         await db.flush()
         return cls.serialize_config(intake)
+
+    @staticmethod
+    def _validate_intake_candidate(
+        intake: Intake, payload: IntakeHomepageAdmissionUpdate
+    ) -> IntakeUpdate:
+        candidate = {
+            field_name: getattr(intake, field_name)
+            for field_name in INTAKE_CONFIG_FIELDS
+        }
+        candidate["is_active"] = intake.is_active
+        for field_name in payload.model_fields_set.intersection(INTAKE_CONFIG_FIELDS):
+            candidate[field_name] = getattr(payload, field_name)
+        return IntakeUpdate(**candidate)
+
+    @classmethod
+    def _merge_action_config(
+        cls,
+        action: IntakePublicAction | None,
+        update: HomepageActionConfigUpdate,
+    ) -> HomepageActionConfig:
+        candidate = cls._action_config(action).model_dump()
+        for field_name in update.model_fields_set:
+            candidate[field_name] = getattr(update, field_name)
+        return HomepageActionConfig(**candidate)
+
+    @classmethod
+    def _merge_reporting_config(
+        cls,
+        milestone: IntakeMilestone | None,
+        update: HomepageReportingConfigUpdate,
+    ) -> HomepageReportingConfig:
+        candidate = cls._reporting_config(milestone).model_dump()
+        for field_name in update.model_fields_set:
+            candidate[field_name] = getattr(update, field_name)
+        return HomepageReportingConfig(**candidate)
 
     @classmethod
     def serialize_config(cls, intake: Intake) -> IntakeHomepageAdmissionRead:
@@ -183,11 +237,11 @@ class IntakeHomepageAdmissionService:
 
         action.is_enabled = config.enabled
         action.updated_by_id = actor_id
+        action.label = config.label or action.label
+        action.target_url = config.url or action.target_url
+        action.starts_at = config.starts_at
+        action.ends_at = config.ends_at
         if config.enabled:
-            action.label = config.label or action.label
-            action.target_url = config.url or action.target_url
-            action.starts_at = config.starts_at
-            action.ends_at = config.ends_at
             action.status = "published"
             action.workflow_status = "published"
             action.published_at = published_at
@@ -218,12 +272,12 @@ class IntakeHomepageAdmissionService:
 
         milestone.is_public = config.enabled
         milestone.updated_by_id = actor_id
+        milestone.title = config.title
+        milestone.starts_at = config.starts_at or milestone.starts_at
+        milestone.ends_at = config.ends_at
+        milestone.location = config.location
+        milestone.instructions_url = config.instructions_url
         if config.enabled:
-            milestone.title = config.title
-            milestone.starts_at = config.starts_at
-            milestone.ends_at = config.ends_at
-            milestone.location = config.location
-            milestone.instructions_url = config.instructions_url
             milestone.status = "published"
             milestone.workflow_status = "published"
             milestone.published_at = published_at

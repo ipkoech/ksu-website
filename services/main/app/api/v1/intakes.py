@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, HTTPException, Query, status
+from pydantic import ValidationError
 
 from ksu_common import cached_public
 from ksu_common.schemas.responses import success
@@ -152,9 +153,15 @@ async def update_homepage_admission(
     intake = await IntakeHomepageAdmissionService.get_intake(db, intake_id)
     if intake is None:
         raise HTTPException(status_code=404, detail="Intake not found")
-    config = await IntakeHomepageAdmissionService.update_config(
-        db, intake, data, user.id
-    )
+    try:
+        config = await IntakeHomepageAdmissionService.update_config(
+            db, intake, data, user.id
+        )
+    except ValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=exc.errors(include_url=False, include_context=False),
+        ) from exc
     return success(data=config, message="Homepage admission configuration updated")
 
 
