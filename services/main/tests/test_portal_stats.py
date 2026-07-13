@@ -353,6 +353,19 @@ class PortalStatsApiTests(unittest.TestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual("corporate-communication", response.json()["data"]["portal"])
 
+    def test_corporate_communication_api_authorizes_unpublish_manager(self):
+        user = _user_with_scopes("content.unpublish")
+        db = _AuthStatsDb(user)
+        token, _ = create_access_token(str(user.id), ["corporate-communication"], permissions=[])
+
+        response = _portal_stats_client(db).get(
+            "/api/v1/stats/portal/corporate-communication",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("corporate-communication", response.json()["data"]["portal"])
+
     def test_corporate_communication_api_authorizes_media_uploader(self):
         user = _user_with_scopes("media.upload")
         db = _AuthStatsDb(user)

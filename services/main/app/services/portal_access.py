@@ -164,7 +164,15 @@ PORTAL_DEFINITIONS = {
         "label": "Library Portal",
         "service": "library",
         "href": "/library",
-        "permissions": {"library.view"},
+        "permissions": {
+            "library.view",
+            "library:read",
+            "library.manage_resources",
+            "library.manage_services",
+            "library.manage_collections",
+            "library.manage_staff",
+            "library.manage_loans",
+        },
     },
 }
 

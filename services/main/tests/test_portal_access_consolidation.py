@@ -30,3 +30,18 @@ def test_corporate_communication_covers_homepage_and_content_permissions():
         "partnership_spotlights.manage",
     ]:
         assert permission in portal["permissions"]
+
+
+def test_library_covers_granular_library_permissions():
+    portal = portal_access.PORTAL_DEFINITIONS["library"]
+    assert portal["href"] == "/library"
+    for permission in [
+        "library.view",
+        "library:read",
+        "library.manage_resources",
+        "library.manage_services",
+        "library.manage_collections",
+        "library.manage_staff",
+        "library.manage_loans",
+    ]:
+        assert permission in portal["permissions"]
