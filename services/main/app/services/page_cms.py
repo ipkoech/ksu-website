@@ -13,8 +13,9 @@ from sqlalchemy.orm import selectinload
 
 from ksu_common import PaginatedResult
 
-from ..models import ContentWorkflowLog, Media, MediaLink, PageSection, PartnershipSpotlight
+from ..models import ContentWorkflowLog, Media, MediaLink, PageSection, PartnershipSpotlight, SectionItem
 from ._base import ilike_any, paginate_query
+from .content_workflow import ContentWorkflowService
 from .research_partners import ResearchPartnersProxyService
 
 ALLOWED_TRANSITIONS = {
@@ -44,6 +45,14 @@ MEDIA_ROLE_BUCKETS = {
 }
 
 MEDIA_GROUP_KEYS = ("heroImage", "mobileImage", "logos", "gallery", "video", "background", "poster")
+
+
+class PageCmsReorderValidationError(ValueError):
+    """Raised when a reorder batch does not exactly match its parent collection."""
+
+
+class PageCmsReorderConflictError(ValueError):
+    """Raised when a reorder request carries an outdated record revision."""
 
 
 def _active_window_filter(model, now: datetime):
@@ -420,6 +429,137 @@ class PageSectionService:
             )
         )
         return await paginate_query(db, query, page=page, per_page=per_page)
+
+    @staticmethod
+    async def reorder_sections(
+        db: AsyncSession,
+        *,
+        page_key: str,
+        scope_type: str,
+        scope_id: uuid.UUID | None,
+        entries: Sequence[Any],
+        actor_id: uuid.UUID,
+    ) -> list[PageSection]:
+        query = PageSection.active_query().where(
+            PageSection.page_key == page_key,
+            PageSection.scope_type == scope_type,
+            PageSection.scope_id.is_(None) if scope_id is None else PageSection.scope_id == scope_id,
+        ).order_by(PageSection.display_order.asc(), PageSection.id.asc()).with_for_update()
+        result = await db.execute(query)
+        sections = list(result.scalars().all())
+        PageSectionService._validate_reorder_entries(sections, entries)
+
+        old_order, ordered_entries = PageSectionService._reorder_snapshots(sections, entries)
+        new_order = [
+            {"id": str(PageSectionService._entry_value(entry, "id")), "display_order": (index + 1) * 10}
+            for index, entry in enumerate(ordered_entries)
+        ]
+        audit_fields = {"section_reorder": {"old_order": old_order, "new_order": new_order}}
+
+        for section in sections:
+            await ContentWorkflowService.reset_after_authoring_edit(
+                db,
+                section,
+                "page-sections",
+                actor_id,
+                changed_fields=audit_fields,
+            )
+
+        by_id = {section.id: section for section in sections}
+        for index, entry in enumerate(ordered_entries, start=1):
+            section = by_id[PageSectionService._entry_value(entry, "id")]
+            section.display_order = index * 10
+            section.revision += 1
+            section.updated_by_id = actor_id
+
+        await db.flush()
+        return sorted(sections, key=lambda section: (section.display_order, section.id))
+
+    @staticmethod
+    async def reorder_section_items(
+        db: AsyncSession,
+        *,
+        section_id: uuid.UUID,
+        entries: Sequence[Any],
+        actor_id: uuid.UUID,
+    ) -> list[SectionItem]:
+        section_query = PageSection.active_query().where(
+            PageSection.id == section_id,
+        ).with_for_update()
+        section_result = await db.execute(section_query)
+        section = section_result.scalars().all()
+        if len(section) != 1:
+            raise PageCmsReorderValidationError("Page section not found")
+
+        item_query = SectionItem.active_query().where(
+            SectionItem.page_section_id == section_id,
+        ).order_by(SectionItem.display_order.asc(), SectionItem.id.asc()).with_for_update()
+        item_result = await db.execute(item_query)
+        items = list(item_result.scalars().all())
+        PageSectionService._validate_reorder_entries(items, entries)
+
+        old_order, ordered_entries = PageSectionService._reorder_snapshots(items, entries)
+        new_order = [
+            {"id": str(PageSectionService._entry_value(entry, "id")), "display_order": (index + 1) * 10}
+            for index, entry in enumerate(ordered_entries)
+        ]
+        await ContentWorkflowService.reset_after_authoring_edit(
+            db,
+            section[0],
+            "page-sections",
+            actor_id,
+            changed_fields={"section_item_reorder": {"old_order": old_order, "new_order": new_order}},
+        )
+
+        by_id = {item.id: item for item in items}
+        for index, entry in enumerate(ordered_entries, start=1):
+            item = by_id[PageSectionService._entry_value(entry, "id")]
+            item.display_order = index * 10
+            item.revision += 1
+
+        await db.flush()
+        return sorted(items, key=lambda item: (item.display_order, item.id))
+
+    @staticmethod
+    def _validate_reorder_entries(records: Sequence[Any], entries: Sequence[Any]) -> None:
+        entry_ids = [PageSectionService._entry_value(entry, "id") for entry in entries]
+        if not entry_ids:
+            raise PageCmsReorderValidationError("Reorder entries are required")
+        if len(entry_ids) != len(set(entry_ids)):
+            raise PageCmsReorderValidationError("Reorder entries must not contain duplicate ids")
+
+        records_by_id = {record.id: record for record in records}
+        if set(entry_ids) != set(records_by_id):
+            raise PageCmsReorderValidationError("Reorder entries must include every record in the requested parent")
+
+        for entry in entries:
+            record = records_by_id[PageSectionService._entry_value(entry, "id")]
+            if record.revision != PageSectionService._entry_value(entry, "revision"):
+                raise PageCmsReorderConflictError("Page composition changed; reload before saving order")
+
+    @staticmethod
+    def _reorder_snapshots(records: Sequence[Any], entries: Sequence[Any]) -> tuple[list[dict[str, Any]], list[Any]]:
+        old_order = [
+            {"id": str(record.id), "display_order": record.display_order}
+            for record in sorted(records, key=lambda record: (record.display_order, record.id))
+        ]
+        ordered_entries = [
+            entry
+            for _, entry in sorted(
+                enumerate(entries),
+                key=lambda indexed_entry: (
+                    PageSectionService._entry_value(indexed_entry[1], "display_order"),
+                    indexed_entry[0],
+                ),
+            )
+        ]
+        return old_order, ordered_entries
+
+    @staticmethod
+    def _entry_value(entry: Any, field: str) -> Any:
+        if isinstance(entry, dict):
+            return entry[field]
+        return getattr(entry, field)
 
 
 class PartnershipSpotlightService:

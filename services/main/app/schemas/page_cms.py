@@ -268,6 +268,35 @@ class SectionItemRead(BaseReadSchema):
     is_enabled: bool
 
 
+class ReorderEntry(BaseSchema):
+    id: uuid.UUID
+    display_order: int
+    revision: int = Field(ge=1)
+
+
+class PageSectionReorderRequest(BaseSchema):
+    scope_type: str = Field(default=PAGE_SCOPE_TYPES[0], max_length=32)
+    scope_id: uuid.UUID | None = None
+    items: list[ReorderEntry] = Field(min_length=1)
+
+    @field_validator("scope_type")
+    @classmethod
+    def validate_scope_type(cls, value: str) -> str:
+        return _validate_choice(value, PAGE_SCOPE_TYPES, "scope_type") or value
+
+    @model_validator(mode="after")
+    def validate_scope(self):
+        if self.scope_type == "university" and self.scope_id is not None:
+            raise ValueError("scope_id must be null when scope_type is university")
+        if self.scope_type != "university" and self.scope_id is None:
+            raise ValueError(f"scope_id is required when scope_type is {self.scope_type}")
+        return self
+
+
+class SectionItemReorderRequest(BaseSchema):
+    items: list[ReorderEntry] = Field(min_length=1)
+
+
 class PageSectionCreate(BaseSchema):
     model_config = ConfigDict(
         from_attributes=True,
@@ -584,6 +613,9 @@ __all__ = [
     "SectionItemCreate",
     "SectionItemUpdate",
     "SectionItemRead",
+    "ReorderEntry",
+    "PageSectionReorderRequest",
+    "SectionItemReorderRequest",
     "PageSectionCreate",
     "PageSectionUpdate",
     "PageSectionRead",

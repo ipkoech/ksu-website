@@ -18,7 +18,11 @@ from ...schemas import (
     SectionItemCreate,
     SectionItemUpdate,
 )
-from ...schemas.page_cms import validate_section_item_state
+from ...schemas.page_cms import (
+    PageSectionReorderRequest,
+    SectionItemReorderRequest,
+    validate_section_item_state,
+)
 from ...services import (
     ContentWorkflowService,
     HomepageCompositionService,
@@ -29,6 +33,7 @@ from ...services import (
 )
 from ...services.page_cms_definitions import SECTION_DEFINITIONS, serialize_section_definitions
 from ...services.page_cms_sources import PageCmsSourceProviderError, PageCmsSourceService
+from ...services.page_cms import PageCmsReorderConflictError, PageCmsReorderValidationError
 from ...services._base import apply_updates
 from ._scoped import can_access_scoped_record, require_scoped_record
 
@@ -427,6 +432,40 @@ async def update_page_section(
     return success(data=item, message="Page section updated")
 
 
+@router.patch("/pages/{page_key}/sections/reorder")
+async def reorder_page_sections(
+    page_key: str,
+    data: PageSectionReorderRequest,
+    db: DbSession,
+    user: CurrentUser,
+):
+    await _require_page_section_access(
+        db,
+        user,
+        page_key=page_key,
+        scope_type=data.scope_type,
+        scope_id=data.scope_id,
+        action="update",
+    )
+    try:
+        sections = await PageSectionService.reorder_sections(
+            db,
+            page_key=page_key,
+            scope_type=data.scope_type,
+            scope_id=data.scope_id,
+            entries=data.items,
+            actor_id=user.id,
+        )
+    except PageCmsReorderConflictError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Page composition changed; reload before saving order",
+        ) from exc
+    except PageCmsReorderValidationError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
+    return success(data=sections, message="Page sections reordered")
+
+
 @router.post("/page-sections/{section_id}/items", status_code=status.HTTP_201_CREATED)
 async def create_section_item(
     section_id: uuid.UUID,
@@ -456,6 +495,39 @@ async def create_section_item(
     await db.flush()
     await db.refresh(item)
     return success(data=item, message="Section item created")
+
+
+@router.patch("/page-sections/{section_id}/items/reorder")
+async def reorder_section_items(
+    section_id: uuid.UUID,
+    data: SectionItemReorderRequest,
+    db: DbSession,
+    user: CurrentUser,
+):
+    section = await _get_page_section_or_404(db, section_id)
+    await _require_page_section_access(
+        db,
+        user,
+        page_key=section.page_key,
+        scope_type=section.scope_type,
+        scope_id=section.scope_id,
+        action="item_manage",
+    )
+    try:
+        items = await PageSectionService.reorder_section_items(
+            db,
+            section_id=section_id,
+            entries=data.items,
+            actor_id=user.id,
+        )
+    except PageCmsReorderConflictError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Page composition changed; reload before saving order",
+        ) from exc
+    except PageCmsReorderValidationError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
+    return success(data=items, message="Section items reordered")
 
 
 @router.post("/page-sections/{section_id}/{action}")
