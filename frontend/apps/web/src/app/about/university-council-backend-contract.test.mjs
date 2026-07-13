@@ -26,6 +26,14 @@ test("public council page does not hard-code member names or portraits", () => {
   }
 });
 
+test("public council page sanitizes document CTA URLs", () => {
+  const source = read("src/components/about/UniversityCouncilPage.tsx");
+
+  assert.match(source, /safeCouncilCtaHref/);
+  assert.match(source, /url\.protocol === "https:" \|\| url\.protocol === "http:"/);
+  assert.doesNotMatch(source, /href=\{mandate\.document_cta\.href\}/);
+});
+
 test("public council card is fully clickable and accessible", () => {
   const source = read("src/components/about/UniversityCouncilCard.tsx");
 

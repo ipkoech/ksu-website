@@ -9,6 +9,19 @@ function text(value?: string | null, fallback = "") {
   return trimmed && trimmed.length ? trimmed : fallback;
 }
 
+function safeCouncilCtaHref(value?: string | null) {
+  const href = value?.trim();
+  if (!href) return null;
+  if (href.startsWith("/") && !href.startsWith("//")) return href;
+
+  try {
+    const url = new URL(href);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 function MemberGroup({
   title,
   description,
@@ -45,6 +58,7 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
     "The University Council provides strategic direction, oversight, and policy guidance for Kisii University.",
   );
   const mandate = data.mandate;
+  const documentCtaHref = safeCouncilCtaHref(mandate?.document_cta?.href);
 
   return (
     <div className="bg-white">
@@ -97,12 +111,12 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
                 {text(mandate.description, description)}
               </p>
             </div>
-            {mandate.document_cta?.href ? (
+            {documentCtaHref ? (
               <Link
-                href={mandate.document_cta.href}
+                href={documentCtaHref}
                 className="inline-flex items-center justify-center gap-2 rounded-md border border-primary px-4 py-3 text-sm font-bold text-primary transition hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               >
-                {text(mandate.document_cta.label, "Council Charter")}
+                {text(mandate.document_cta?.label, "Council Charter")}
                 <Download aria-hidden className="h-4 w-4" />
               </Link>
             ) : null}
