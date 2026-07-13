@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 import os
+import uuid
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models import User, UserRole
 
 from ._shared import (
     SeedContext,
@@ -77,6 +81,18 @@ PORTAL_ROLE_EXTRA_PERMISSIONS = {
     ],
 }
 
+LEGACY_PORTAL_USER_EMAILS = frozenset({
+    "super.admin@ksu.dev.com",
+    "governance.admin@ksu.dev.com",
+    "research.content@ksu.dev.com",
+    "research.farm@ksu.dev.com",
+    "research.sustainability@ksu.dev.com",
+    "publications.admin@ksu.dev.com",
+    "student.clubs.admin@ksu.dev.com",
+    "researcher@ksu.dev.com",
+    "staff.profile@ksu.dev.com",
+})
+
 
 def portal_user_password() -> str:
     password = os.getenv("KSU_SEED_PORTAL_USER_PASSWORD")
@@ -89,6 +105,7 @@ def portal_user_password() -> str:
 
 async def seed_portal_users(db: AsyncSession, ctx: SeedContext) -> None:
     password = portal_user_password()
+    await _retire_legacy_portal_users(db)
     for spec in PORTAL_USER_SPECS:
         person = await get_or_create_person(
             db,
@@ -124,6 +141,8 @@ async def seed_portal_users(db: AsyncSession, ctx: SeedContext) -> None:
         if role is None:
             raise ValueError(f"{spec['role']} role must be seeded before portal users")
 
+        await _reconcile_portal_user_role_assignments(db, user, role.id)
+
         for permission_name in PORTAL_ROLE_EXTRA_PERMISSIONS.get(spec["role"], []):
             permission = ctx.permissions.get(permission_name)
             if permission is None:
@@ -139,3 +158,41 @@ async def seed_portal_users(db: AsyncSession, ctx: SeedContext) -> None:
             scope_id=None,
             note="Seeded portal-specific assignment for browser QA",
         )
+
+
+async def _retire_legacy_portal_users(db: AsyncSession) -> None:
+    """Deactivate portal QA accounts removed from the canonical seven-user seed."""
+    legacy_users = (
+        await db.execute(select(User).where(User.email.in_(LEGACY_PORTAL_USER_EMAILS)))
+    ).scalars().all()
+    if not legacy_users:
+        return
+
+    for user in legacy_users:
+        user.is_active = False
+
+    assignments = (
+        await db.execute(select(UserRole).where(UserRole.user_id.in_({user.id for user in legacy_users})))
+    ).scalars().all()
+    for assignment in assignments:
+        assignment.is_active = False
+    await db.flush()
+
+
+async def _reconcile_portal_user_role_assignments(
+    db: AsyncSession,
+    user: User,
+    canonical_role_id: uuid.UUID,
+) -> None:
+    """Leave each seeded portal account with only its canonical global role active."""
+    assignments = (
+        await db.execute(select(UserRole).where(UserRole.user_id == user.id))
+    ).scalars().all()
+    for assignment in assignments:
+        if (
+            assignment.role_id != canonical_role_id
+            or assignment.scope_type is not None
+            or assignment.scope_id is not None
+        ):
+            assignment.is_active = False
+    await db.flush()

@@ -7,7 +7,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Role, RolePermission
+from app.models import Role, RolePermission, UserRole
 from ksu_common.roles import ALL_PERMISSIONS, ROLE_DEFINITIONS
 
 from ._shared import SeedContext, upsert_permission, upsert_role, upsert_role_permission
@@ -132,6 +132,12 @@ PUBLICATIONS_ADMIN_PERMISSION_NAMES = [
     "publications.review",
     "publications.approve",
 ]
+
+LEGACY_PORTAL_ROLE_NAMES = frozenset({
+    "cocms_admin",
+    "publications_admin",
+    "student_clubs_admin",
+})
 
 
 # Reconcile roles whose publication authority changed so stale grants are
@@ -260,6 +266,8 @@ async def seed_rbac(db: AsyncSession, ctx: SeedContext) -> None:
             is_active=True,
         )
 
+    await _retire_legacy_portal_roles(db)
+
     for spec in ROLE_SPECS:
         role = await upsert_role(
             db,
@@ -278,6 +286,32 @@ async def seed_rbac(db: AsyncSession, ctx: SeedContext) -> None:
                 role,
                 {ctx.permissions[permission_name].id for permission_name in spec["permission_names"]},
             )
+
+
+async def _retire_legacy_portal_roles(db: AsyncSession) -> None:
+    """Make roles removed from the portal seed model unable to grant access."""
+    legacy_roles = (
+        await db.execute(select(Role).where(Role.name.in_(LEGACY_PORTAL_ROLE_NAMES)))
+    ).scalars().all()
+    if not legacy_roles:
+        return
+
+    legacy_role_ids = {role.id for role in legacy_roles}
+    for role in legacy_roles:
+        role.is_active = False
+
+    role_permissions = (
+        await db.execute(select(RolePermission).where(RolePermission.role_id.in_(legacy_role_ids)))
+    ).scalars().all()
+    for role_permission in role_permissions:
+        await db.delete(role_permission)
+
+    assignments = (
+        await db.execute(select(UserRole).where(UserRole.role_id.in_(legacy_role_ids)))
+    ).scalars().all()
+    for assignment in assignments:
+        assignment.is_active = False
+    await db.flush()
 
 
 async def _reconcile_role_permissions(
