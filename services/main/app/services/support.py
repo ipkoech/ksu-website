@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common import PaginatedResult
@@ -109,14 +109,39 @@ class ContactService:
         is_public: bool | None = True,
         is_main: bool | None = None,
         status: str | None = "active",
+        search: str | None = None,
+        contact_type: str | None = None,
+        sort: str = "name_asc",
         load_options: Sequence = (),
     ) -> PaginatedResult:
-        query = ContactDirectory.active_query().order_by(ContactDirectory.name.asc())
+        query = ContactDirectory.active_query()
         if load_options:
             query = query.options(*load_options)
         query = _apply_scope(query, ContactDirectory, scope_type=scope_type, scope_id=scope_id, is_public=is_public, is_main=is_main)
         if status is not None:
             query = query.where(ContactDirectory.status == status)
+        search_value = search.strip() if search else None
+        if search_value:
+            pattern = f"%{search_value}%"
+            query = query.where(
+                or_(
+                    ContactDirectory.name.ilike(pattern),
+                    ContactDirectory.contact_type.ilike(pattern),
+                    ContactDirectory.email.ilike(pattern),
+                    ContactDirectory.extension.ilike(pattern),
+                    ContactDirectory.physical_address.ilike(pattern),
+                    ContactDirectory.building.ilike(pattern),
+                    ContactDirectory.room_number.ilike(pattern),
+                )
+            )
+        if contact_type:
+            query = query.where(ContactDirectory.contact_type == contact_type)
+        if sort == "name_desc":
+            query = query.order_by(ContactDirectory.name.desc(), ContactDirectory.id.asc())
+        elif sort == "name_asc":
+            query = query.order_by(ContactDirectory.name.asc(), ContactDirectory.id.asc())
+        else:
+            raise ValueError("Unsupported contact sort")
         return await paginate_query(db, query, page=page, per_page=per_page)
 
     @staticmethod

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query, status
 
@@ -27,7 +28,10 @@ CONTACT_MANAGE_PERMISSIONS = [
 
 
 @router.get("")
-@cached_public(timeout=300, vary_on=("page", "per_page", "scope_type", "scope_id", "is_main", "fields", "include"))
+@cached_public(
+    timeout=300,
+    vary_on=("page", "per_page", "scope_type", "scope_id", "is_main", "q", "contact_type", "sort", "fields", "include"),
+)
 async def list_contacts(
     db: DbSession,
     page: int = Query(1, ge=1),
@@ -35,10 +39,24 @@ async def list_contacts(
     scope_type: str | None = None,
     scope_id: uuid.UUID | None = None,
     is_main: bool | None = None,
+    q: str | None = Query(default=None, max_length=120),
+    contact_type: str | None = Query(default=None, max_length=64),
+    sort: Literal["name_asc", "name_desc"] = "name_asc",
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(ContactDirectory, fields)
-    result = await ContactService.list(db, page=page, per_page=per_page, scope_type=scope_type, scope_id=scope_id, is_main=is_main, load_options=selector.load_options)
+    result = await ContactService.list(
+        db,
+        page=page,
+        per_page=per_page,
+        scope_type=scope_type,
+        scope_id=scope_id,
+        is_main=is_main,
+        search=q,
+        contact_type=contact_type,
+        sort=sort,
+        load_options=selector.load_options,
+    )
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
@@ -51,6 +69,9 @@ async def list_admin_contacts(
     scope_type: str | None = None,
     scope_id: uuid.UUID | None = None,
     is_main: bool | None = None,
+    q: str | None = Query(default=None, max_length=120),
+    contact_type: str | None = Query(default=None, max_length=64),
+    sort: Literal["name_asc", "name_desc"] = "name_asc",
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(ContactDirectory, fields)
@@ -63,6 +84,9 @@ async def list_admin_contacts(
         is_main=is_main,
         is_public=None,
         status=None,
+        search=q,
+        contact_type=contact_type,
+        sort=sort,
         load_options=selector.load_options,
     )
     items = []
