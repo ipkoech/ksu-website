@@ -68,10 +68,9 @@ for (const method of ["definitions", "searchSources", "previewPage", "validatePa
 }
 const canonicalSourceTypes = getConstStringValues(apiSource, "PAGE_CMS_SOURCE_TYPES");
 const catalogSourceTypes = getConstStringValues(apiSource, "PAGE_CMS_CATALOG_SOURCE_TYPES");
-assert(canonicalSourceTypes.includes("intake"), "Canonical source types must retain future layout references");
 assert(
-  JSON.stringify(catalogSourceTypes) === JSON.stringify(["programme", "news", "event", "person", "research_partner", "public_stat"]),
-  "Only server-supported source types may use the catalog endpoint",
+  JSON.stringify(catalogSourceTypes) === JSON.stringify(canonicalSourceTypes),
+  "Every canonical source type must be supported by the catalog endpoint",
 );
 
 const previewItemProperties = getInterfaceProperties(apiSource, "PagePreviewItem");
@@ -142,10 +141,8 @@ assert(
   pickerState.isCatalogSearchableSourceType("programme", catalogSourceTypes),
   "Programme must be catalog searchable",
 );
-assert(
-  !pickerState.isCatalogSearchableSourceType("intake", catalogSourceTypes),
-  "Unsupported canonical source types must be rejected before catalog requests",
-);
+assert(pickerState.isCatalogSearchableSourceType("intake", catalogSourceTypes), "Intake must be catalog searchable");
+assert(!pickerState.isCatalogSearchableSourceType("not-a-source", catalogSourceTypes), "Unknown source types must be rejected before catalog requests");
 
 const selectionContext = {
   sourceType: "news",

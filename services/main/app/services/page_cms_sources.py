@@ -39,6 +39,7 @@ from .page_cms_source_errors import (
     PageCmsSourceProviderError,
 )
 from .page_cms_stats import PageCmsStatsProxyService
+from .research_content_sources import ResearchContentSourcesProxyService
 from .research_partners import ResearchPartnersProxyService
 from .stats import public_stats
 
@@ -46,6 +47,7 @@ SUPPORTED_SOURCE_TYPES = frozenset(
     {
         "programme", "news", "event", "person", "research_partner", "public_stat",
         "intake", "academic_calendar", "staff_assignment", "alumni", "testimonial", "club_activity",
+        "research_project", "publication",
     }
 )
 PUBLIC_STAT_NAMESPACE = uuid.UUID("64a394c9-9dab-4807-90ef-e05cbf3dde8e")
@@ -286,6 +288,7 @@ def _person_summary(
 LOCAL_SOURCE_TYPES = frozenset(
     {"intake", "academic_calendar", "staff_assignment", "alumni", "testimonial", "club_activity"}
 )
+RESEARCH_CONTENT_SOURCE_TYPES = frozenset({"research_project", "publication"})
 
 
 def _not_deleted(item: Any) -> bool:
@@ -799,6 +802,29 @@ def _map_page(result: PaginatedResult, mapper) -> PaginatedResult:
     return PaginatedResult(items=[mapper(item) for item in result.items], meta=result.meta)
 
 
+def _research_content_summary(item: dict[str, Any]) -> PageCmsSourceSummary:
+    """Re-validate provider data at the Page CMS boundary and sanitize display metadata."""
+    return PageCmsSourceSummary.model_validate(item)
+
+
+def _research_content_center_id(
+    scope_type: str,
+    scope_id: uuid.UUID | None,
+) -> uuid.UUID | None:
+    return scope_id if scope_type == "research" else None
+
+
+def _empty_source_page(page: int, per_page: int) -> PaginatedResult:
+    return PaginatedResult(
+        items=[],
+        meta={"page": page, "per_page": per_page, "total": 0, "pages": 0},
+    )
+
+
+def _research_content_provider_error(exc: PageCmsSourceProviderError) -> PageCmsSourceProviderError:
+    return PageCmsSourceProviderError("Research content provider is unavailable")
+
+
 def _chunks(values: Sequence[Any]) -> list[Sequence[Any]]:
     return [
         values[start:start + PAGE_CMS_BULK_CHUNK_SIZE]
@@ -1036,6 +1062,24 @@ class PageCmsSourceService:
                 raise ValueError(f"Research partner catalog is not available for scope {scope_type}")
             return await PageCmsSourceService._search_partners(query, page, per_page)
 
+        if source_type in RESEARCH_CONTENT_SOURCE_TYPES:
+            if scope_type not in {"university", "research"}:
+                return _empty_source_page(page, per_page)
+            try:
+                provider_page = await ResearchContentSourcesProxyService.search(
+                    source_type,
+                    search=query or None,
+                    page=page,
+                    per_page=per_page,
+                    center_id=_research_content_center_id(scope_type, scope_id),
+                )
+            except PageCmsSourceProviderError as exc:
+                raise _research_content_provider_error(exc) from exc
+            return PaginatedResult(
+                items=[_research_content_summary(item) for item in provider_page["data"]],
+                meta=provider_page["meta"],
+            )
+
         return await PageCmsSourceService._search_stats(db, query, scope_type, scope_id, page, per_page)
 
     @staticmethod
@@ -1186,6 +1230,33 @@ class PageCmsSourceService:
             ):
                 return None
             return _local_summary(source_type, item)
+
+        if source_type in RESEARCH_CONTENT_SOURCE_TYPES:
+            if destination_scope_type not in {"university", "research"}:
+                return None
+            try:
+                records = await ResearchContentSourcesProxyService.resolve_many(
+                    source_type,
+                    [source_id],
+                    center_id=_research_content_center_id(destination_scope_type, destination_scope_id),
+                )
+            except PageCmsSourceProviderError as exc:
+                raise _research_content_provider_error(exc) from exc
+            source = next(
+                (
+                    _research_content_summary(item)
+                    for item in records
+                    if str(item["id"]) == str(source_id)
+                ),
+                None,
+            )
+            if source is not None and source.selectable:
+                return source
+            if preview_capability is not None:
+                raise PageCmsSourcePreviewUnsupportedError(
+                    "Research content preview is unsupported because no privileged provider endpoint is available"
+                )
+            return None
 
         if source_type == "research_partner":
             if destination_scope_type not in {"university", "research"}:
@@ -1428,6 +1499,46 @@ class PageCmsSourceService:
                         source_type, source_id, PageCmsSourceResolutionState.UNAVAILABLE,
                     )
 
+        for source_type in RESEARCH_CONTENT_SOURCE_TYPES:
+            source_ids = grouped.get(source_type, [])
+            if not source_ids:
+                continue
+            if destination_scope_type not in {"university", "research"}:
+                for source_id in source_ids:
+                    results[(source_type, source_id)] = _source_resolution(
+                        source_type, source_id, PageCmsSourceResolutionState.INACCESSIBLE,
+                    )
+                continue
+            try:
+                records = await ResearchContentSourcesProxyService.resolve_many(
+                    source_type,
+                    source_ids,
+                    center_id=_research_content_center_id(destination_scope_type, destination_scope_id),
+                )
+            except PageCmsSourceProviderError:
+                for source_id in source_ids:
+                    results[(source_type, source_id)] = _source_resolution(
+                        source_type, source_id, PageCmsSourceResolutionState.PROVIDER_ERROR,
+                    )
+                continue
+            records_by_id = {
+                uuid.UUID(str(item["id"])): _research_content_summary(item)
+                for item in records
+            }
+            for source_id in source_ids:
+                source = records_by_id.get(source_id)
+                if source is not None and source.selectable:
+                    results[(source_type, source_id)] = _source_resolution(
+                        source_type, source_id, PageCmsSourceResolutionState.RESOLVED, source,
+                    )
+                    continue
+                state = (
+                    PageCmsSourceResolutionState.PREVIEW_UNSUPPORTED
+                    if preview_capability is not None
+                    else PageCmsSourceResolutionState.UNAVAILABLE
+                )
+                results[(source_type, source_id)] = _source_resolution(source_type, source_id, state)
+
         partner_ids = grouped.get("research_partner", [])
         if partner_ids:
             if destination_scope_type not in {"university", "research"}:
@@ -1499,7 +1610,7 @@ class PageCmsSourceService:
                         "public_stat", source_id, state, source,
                     )
 
-        return results
+        return {reference: results[reference] for reference in unique_references}
 
     @staticmethod
     async def _preview_allowed(

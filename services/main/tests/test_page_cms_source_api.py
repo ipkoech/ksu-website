@@ -105,17 +105,25 @@ def test_source_type_must_be_compatible_with_layout_variant():
     ("source_type", "layout_variant", "scope_type"),
     [
         ("intake", "hero_admissions", "university"),
+        ("programme", "programme_finder", "university"),
         ("academic_calendar", "date_timeline", "university"),
+        ("person", "leadership_activity", "university"),
         ("staff_assignment", "leadership_activity", "school"),
+        ("research_project", "research_cards", "research"),
+        ("publication", "research_cards", "research"),
+        ("news", "news_grid", "university"),
+        ("event", "events_list", "university"),
+        ("research_partner", "featured_partnership", "university"),
         ("alumni", "alumni_story", "university"),
         ("testimonial", "alumni_story", "university"),
+        ("public_stat", "facts_strip", "university"),
         ("club_activity", "leadership_activity", "school"),
     ],
 )
-def test_local_source_types_are_accepted_for_their_canonical_layouts(source_type, layout_variant, scope_type):
+def test_all_canonical_source_types_are_accepted_for_their_canonical_layouts(source_type, layout_variant, scope_type):
     user = _user("section_items.manage")
     client, headers = _client(user)
-    scope_id = uuid.uuid4() if scope_type == "school" else None
+    scope_id = uuid.uuid4() if scope_type != "university" else None
 
     with (
         patch("app.api.v1._scoped._can_access_scope", return_value=True),
@@ -265,3 +273,29 @@ def test_stats_provider_failure_returns_502():
         )
 
     assert response.status_code == 502
+
+
+def test_research_content_provider_failure_returns_stable_502():
+    user = _user("section_items.manage")
+    client, headers = _client(user)
+
+    with (
+        patch("app.api.v1._scoped._can_access_scope", return_value=True),
+        patch.object(
+            page_cms.PageCmsSourceService,
+            "search",
+            AsyncMock(side_effect=PageCmsSourceProviderError("Research content provider is unavailable")),
+        ),
+    ):
+        response = client.get(
+            "/api/v1/page-section-sources/research_project",
+            params={
+                "layout_variant": "research_cards",
+                "scope_type": "research",
+                "scope_id": str(uuid.uuid4()),
+            },
+            headers=headers,
+        )
+
+    assert response.status_code == 502
+    assert response.json()["detail"] == "Research content provider is unavailable"

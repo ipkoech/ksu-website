@@ -44,12 +44,20 @@ export const PAGE_CMS_SOURCE_TYPES = [
   "club_activity",
 ] as const;
 export const PAGE_CMS_CATALOG_SOURCE_TYPES = [
+  "intake",
   "programme",
+  "academic_calendar",
+  "person",
+  "staff_assignment",
+  "research_project",
+  "publication",
   "news",
   "event",
-  "person",
   "research_partner",
+  "alumni",
+  "testimonial",
   "public_stat",
+  "club_activity",
 ] as const satisfies readonly PageCmsSourceType[];
 export const PARTNERSHIP_CTA_SOURCES = [
   "manual",

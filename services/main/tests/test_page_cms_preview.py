@@ -190,6 +190,43 @@ async def test_preview_surfaces_unsupported_partner_draft_resolution():
     assert "unsupported" in issue.message.lower()
 
 
+@pytest.mark.anyio
+async def test_preview_surfaces_research_content_missing_from_the_public_provider_as_unsupported():
+    section = _section(
+        scope_type="research",
+        source_type="research_project",
+        layout_variant="research_cards",
+    )
+
+    with (
+        patch.object(PageSectionService, "list_preview", AsyncMock(return_value=[section])),
+        patch(
+            "app.services.page_cms.group_preview_media_links_many",
+            AsyncMock(return_value={section.id: {}}),
+        ),
+        patch(
+            "app.services.page_cms_sources.ResearchContentSourcesProxyService.resolve_many",
+            AsyncMock(return_value=[]),
+        ) as resolve_many,
+    ):
+        result = await PagePreviewCompositionService.compose(
+            object(),
+            "homepage",
+            "research",
+            section.scope_id,
+            preview_capability=SimpleNamespace(),
+        )
+
+    resolve_many.assert_awaited_once_with(
+        "research_project",
+        [section.items[0].source_id],
+        center_id=section.scope_id,
+    )
+    issue = next(issue for issue in result.issues if issue.code == "source_preview_unsupported")
+    assert issue.blocking is True
+    assert result.sections[0].items[0].source is None
+
+
 def _media_link(entity_id: uuid.UUID, role: str, *, media_type: str = "image", mime_type: str = "image/jpeg"):
     media = Media(
         filename=f"{role}.bin",
