@@ -51,3 +51,19 @@ for (const href of [
     `Expected select-service to list ${href}`,
   );
 }
+
+for (const alias of [
+  '["cocms", "corporate-communication"]',
+  '["student-clubs", "corporate-communication"]',
+  '["governance", "admin"]',
+  '["institutional-administration", "admin"]',
+  '["publications", "research"]',
+]) {
+  assert(selectService.includes(alias), `Expected select-service alias ${alias}`);
+}
+
+assert(
+  selectService.includes("canonicalPortalKeys") &&
+    selectService.includes("directoryItemsFromAccess"),
+  "Expected backend portal records to be normalized through canonical portal keys",
+);

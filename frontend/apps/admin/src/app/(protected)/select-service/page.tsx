@@ -105,8 +105,30 @@ const portalFallbacks = new Map<string, PortalDirectoryItem>(
   portalItems.map((item) => [item.key, item]),
 );
 
+const canonicalPortalKeys = new Set([
+  "super-admin",
+  "admin",
+  "corporate-communication",
+  "research",
+  "schools",
+  "departments",
+  "library",
+  "staff-profile",
+]);
+
+const portalAliases = new Map<string, string>([
+  ["cocms", "corporate-communication"],
+  ["page-cms", "corporate-communication"],
+  ["student-clubs", "corporate-communication"],
+  ["governance", "admin"],
+  ["institutional-administration", "admin"],
+  ["publications", "research"],
+  ["system", "super-admin"],
+]);
+
 function directoryItemFromAccess(access: PortalAccess): PortalDirectoryItem {
-  const fallback = portalFallbacks.get(access.key);
+  const canonicalKey = portalAliases.get(access.key) ?? access.key;
+  const fallback = portalFallbacks.get(canonicalKey);
   if (fallback) {
     return {
       ...fallback,
@@ -133,6 +155,18 @@ function directoryItemFromAccess(access: PortalAccess): PortalDirectoryItem {
   };
 }
 
+function directoryItemsFromAccess(accessRecords: PortalAccess[]) {
+  const byKey = new Map<string, PortalDirectoryItem>();
+  for (const access of accessRecords) {
+    const canonicalKey = portalAliases.get(access.key) ?? access.key;
+    if (!canonicalPortalKeys.has(canonicalKey)) continue;
+    if (!byKey.has(canonicalKey)) {
+      byKey.set(canonicalKey, directoryItemFromAccess(access));
+    }
+  }
+  return [...byKey.values()];
+}
+
 export default function SelectServicePage() {
   const router = useRouter();
   const { user, switchService } = useAuth();
@@ -157,7 +191,7 @@ export default function SelectServicePage() {
 
   const backendPortals = portalAccessQuery.data?.data.portals;
   const visiblePortals = backendPortals?.length
-    ? backendPortals.map(directoryItemFromAccess)
+    ? directoryItemsFromAccess(backendPortals)
     : portalItems.filter(canAccess);
 
   const handleSelect = (service: Service, href: string) => {
