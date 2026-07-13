@@ -28,6 +28,7 @@ from .page_cms_sources import (
     PAGE_CMS_BULK_CHUNK_SIZE,
     PageCmsPreviewCapability,
     PageCmsSourceResolution,
+    PageCmsSourceResolutionCache,
     PageCmsSourceResolutionState,
     PageCmsSourceService,
 )
@@ -1144,6 +1145,7 @@ class PageSectionValidationService:
         db: AsyncSession,
         sections: Sequence[PageSection],
         preview_capability: PageCmsPreviewCapability | None,
+        resolution_cache: PageCmsSourceResolutionCache | None = None,
     ) -> dict[uuid.UUID, list[ResolvedSectionItem]]:
         if not sections:
             return {}
@@ -1167,12 +1169,17 @@ class PageSectionValidationService:
         ]
         destination_scope_type = sections[0].scope_type
         destination_scope_id = sections[0].scope_id
+        resolve_kwargs = {
+            "destination_scope_type": destination_scope_type,
+            "destination_scope_id": destination_scope_id,
+            "preview_capability": preview_capability,
+        }
+        if resolution_cache is not None:
+            resolve_kwargs["resolution_cache"] = resolution_cache
         resolutions = await PageCmsSourceService.resolve_many(
             db,
             references,
-            destination_scope_type=destination_scope_type,
-            destination_scope_id=destination_scope_id,
-            preview_capability=preview_capability,
+            **resolve_kwargs,
         ) if references else {}
         return {
             section.id: [

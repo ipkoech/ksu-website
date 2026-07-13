@@ -54,8 +54,14 @@ for (const requiredSnippet of [
   "href=\"/page-cms/sections\"",
   "href=\"/page-cms/spotlights\"",
   "pageCmsStatsApi.get()",
+  'type StatsState = "loading" | "ready" | "unavailable";',
+  "isPageCmsStats(statsResult.value.data)",
+  'return "Loading";',
+  'return value ?? "Unavailable";',
   "value={statValue(stats?.draft_count)}",
   "value={statValue(stats?.validation_blocker_count)}",
+  "Published sections with a future start window.",
+  "Published sections past their end window.",
   "spotlights.slice(0, 6)",
 ]) {
   assert(
@@ -108,6 +114,8 @@ for (const expectedSnippet of [
 for (const forbiddenSnippet of [
   "const stats = useMemo(() =>",
   "sections.filter((section) => section.status",
+  "statsUnavailable",
+  "value ?? 0",
 ]) {
   assert(
     !dashboardSource.includes(forbiddenSnippet),

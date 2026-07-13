@@ -9,6 +9,7 @@ from ksu_common.schemas.responses import success
 
 from ...deps import CurrentUser, DbSession, require_scope, user_has_scope
 from ...services.stats import admin_stats, portal_stats, public_stats
+from .page_cms import PAGE_SECTION_ADMIN_LIST_PERMISSIONS
 
 router = APIRouter()
 
@@ -38,7 +39,7 @@ async def get_admin_stats(
 
 PORTAL_STAT_SCOPES = {
     "admin": ("governance.view", "administration.view", "office.view"),
-    "cocms": ("content.view", "media.view"),
+    "cocms": PAGE_SECTION_ADMIN_LIST_PERMISSIONS,
     "schools": ("academic.view",),
     "departments": ("academic.view",),
     "student-clubs": ("clubs.view", "clubs.manage_own"),

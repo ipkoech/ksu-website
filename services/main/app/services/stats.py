@@ -149,26 +149,42 @@ class _PageCmsStatsPreviewCapability:
         )
 
 
-def _page_cms_active_publication_window(model, now):
+def _page_cms_active_publication_start(model, now):
     return (
         or_(model.valid_from.is_(None), model.valid_from <= now),
-        or_(model.valid_to.is_(None), model.valid_to >= now),
         or_(model.scheduled_publish_at.is_(None), model.scheduled_publish_at <= now),
+    )
+
+
+def _page_cms_active_publication_window(model, now):
+    return (
+        *_page_cms_active_publication_start(model, now),
+        or_(model.valid_to.is_(None), model.valid_to >= now),
         or_(model.expires_at.is_(None), model.expires_at >= now),
+    )
+
+
+def _page_cms_public_composition_candidate(model):
+    return (
+        model.is_enabled.is_(True),
+        model.status == "published",
+        model.workflow_status == "published",
     )
 
 
 async def _page_cms_workflow_stats(db: AsyncSession) -> dict[str, int]:
     now = datetime.now(timezone.utc)
+    future_start = or_(
+        PageSection.valid_from > now,
+        PageSection.scheduled_publish_at > now,
+    )
     scheduled = and_(
-        PageSection.status != "archived",
-        or_(
-            PageSection.valid_from > now,
-            PageSection.scheduled_publish_at > now,
-        ),
+        *_page_cms_public_composition_candidate(PageSection),
+        future_start,
     )
     expired = and_(
-        PageSection.status != "archived",
+        *_page_cms_public_composition_candidate(PageSection),
+        *_page_cms_active_publication_start(PageSection, now),
         or_(
             PageSection.valid_to < now,
             PageSection.expires_at < now,
@@ -191,7 +207,7 @@ async def _page_cms_workflow_stats(db: AsyncSession) -> dict[str, int]:
             func.count(PageSection.id).filter(scheduled).label("scheduled_count"),
             func.count(PageSection.id)
             .filter(
-                PageSection.workflow_status == "published",
+                *_page_cms_public_composition_candidate(PageSection),
                 *_page_cms_active_publication_window(PageSection, now),
             )
             .label("published_count"),
@@ -203,6 +219,7 @@ async def _page_cms_workflow_stats(db: AsyncSession) -> dict[str, int]:
 
 async def _page_cms_validation_blocker_count(db: AsyncSession) -> int:
     from .page_cms import PageSectionValidationService, group_preview_media_links_many
+    from .page_cms_sources import PageCmsSourceResolutionCache
 
     result = await db.execute(
         select(PageSection)
@@ -227,11 +244,13 @@ async def _page_cms_validation_blocker_count(db: AsyncSession) -> int:
         sections_by_scope.setdefault(key, []).append(section)
 
     blocker_count = 0
+    resolution_cache = PageCmsSourceResolutionCache()
     for (_, scope_type, scope_id), scoped_sections in sections_by_scope.items():
         resolved_by_section = await PageSectionValidationService.resolve_items_for_sections(
             db,
             scoped_sections,
             _PageCmsStatsPreviewCapability(scope_type, scope_id),
+            resolution_cache=resolution_cache,
         )
         for section in scoped_sections:
             issues = PageSectionValidationService.validate(

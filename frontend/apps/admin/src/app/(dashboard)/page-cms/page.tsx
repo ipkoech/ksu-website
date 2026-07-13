@@ -16,6 +16,31 @@ import {
   type PartnershipSpotlight,
 } from "@/lib/api/page-cms";
 
+type StatsState = "loading" | "ready" | "unavailable";
+
+const PAGE_CMS_STAT_FIELDS = [
+  "draft_count",
+  "in_review_count",
+  "changes_requested_count",
+  "approved_count",
+  "scheduled_count",
+  "published_count",
+  "expired_count",
+  "validation_blocker_count",
+  "spotlight_count",
+] as const;
+
+function isPageCmsStats(value: unknown): value is PageCmsStats {
+  return Boolean(
+    value
+    && typeof value === "object"
+    && PAGE_CMS_STAT_FIELDS.every((field) => {
+      const count = (value as Record<string, unknown>)[field];
+      return typeof count === "number" && Number.isFinite(count);
+    }),
+  );
+}
+
 function StatCard({
   title,
   value,
@@ -48,7 +73,7 @@ export default function PageCmsDashboardPage() {
   const [sections, setSections] = useState<PageSection[]>([]);
   const [spotlights, setSpotlights] = useState<PartnershipSpotlight[]>([]);
   const [stats, setStats] = useState<PageCmsStats | null>(null);
-  const [statsUnavailable, setStatsUnavailable] = useState(false);
+  const [statsState, setStatsState] = useState<StatsState>("loading");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,7 +101,8 @@ export default function PageCmsDashboardPage() {
     const load = async () => {
       setIsLoading(true);
       setError(null);
-      setStatsUnavailable(false);
+      setStats(null);
+      setStatsState("loading");
       const [statsResult, activityResult] = await Promise.allSettled([
         pageCmsStatsApi.get(),
         Promise.all([
@@ -86,11 +112,12 @@ export default function PageCmsDashboardPage() {
       ]);
       if (cancelled) return;
 
-      if (statsResult.status === "fulfilled") {
+      if (statsResult.status === "fulfilled" && isPageCmsStats(statsResult.value.data)) {
         setStats(statsResult.value.data);
+        setStatsState("ready");
       } else {
         setStats(null);
-        setStatsUnavailable(true);
+        setStatsState("unavailable");
       }
 
       if (activityResult.status === "fulfilled") {
@@ -111,7 +138,11 @@ export default function PageCmsDashboardPage() {
     };
   }, [canManageSpotlights, canViewSections]);
 
-  const statValue = (value: number | undefined) => (statsUnavailable ? "Unavailable" : value ?? 0);
+  const statValue = (value: number | undefined) => {
+    if (statsState === "loading") return "Loading";
+    if (statsState === "unavailable") return "Unavailable";
+    return value ?? "Unavailable";
+  };
 
   return (
     <PageTransition>
@@ -132,9 +163,9 @@ export default function PageCmsDashboardPage() {
         <StatCard title="In Review" value={statValue(stats?.in_review_count)} description="Sections waiting on editorial review." icon={Workflow} />
         <StatCard title="Changes Requested" value={statValue(stats?.changes_requested_count)} description="Sections returned for revision." icon={Workflow} />
         <StatCard title="Approved" value={statValue(stats?.approved_count)} description="Sections ready for publication." icon={FileStack} />
-        <StatCard title="Scheduled" value={statValue(stats?.scheduled_count)} description="Sections with a future publication window." icon={Workflow} />
+        <StatCard title="Scheduled" value={statValue(stats?.scheduled_count)} description="Published sections with a future start window." icon={Workflow} />
         <StatCard title="Published" value={statValue(stats?.published_count)} description="Sections currently live in public composition." icon={FileStack} />
-        <StatCard title="Expired" value={statValue(stats?.expired_count)} description="Sections outside their publication window." icon={FileStack} />
+        <StatCard title="Expired" value={statValue(stats?.expired_count)} description="Published sections past their end window." icon={FileStack} />
         <StatCard title="Validation Blockers" value={statValue(stats?.validation_blocker_count)} description="Sections that cannot progress until blockers are resolved." icon={LayoutTemplate} />
         <StatCard title="Spotlights" value={statValue(stats?.spotlight_count)} description="Partnership spotlight records in Page CMS." icon={ImageIcon} />
       </div>

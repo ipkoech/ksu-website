@@ -77,6 +77,14 @@ class PageCmsSourceResolution:
             object.__setattr__(self, "message", SOURCE_STATE_MESSAGES[self.state])
 
 
+@dataclass
+class PageCmsSourceResolutionCache:
+    """Request-local provider results shared by bulk source resolution calls."""
+
+    public_partner_records: list[dict[str, Any]] | None = None
+    public_partner_error: PageCmsSourceProviderError | None = None
+
+
 def _source_resolution(
     source_type: str,
     source_id: uuid.UUID,
@@ -604,6 +612,7 @@ class PageCmsSourceService:
         destination_scope_type: str,
         destination_scope_id: uuid.UUID | None,
         preview_capability: PageCmsPreviewCapability | None = None,
+        resolution_cache: PageCmsSourceResolutionCache | None = None,
     ) -> dict[tuple[str, uuid.UUID], PageCmsSourceResolution]:
         unique_references = list(dict.fromkeys(references))
         results: dict[tuple[str, uuid.UUID], PageCmsSourceResolution] = {}
@@ -777,8 +786,17 @@ class PageCmsSourceService:
                     )
             else:
                 try:
-                    partner_records = await PageCmsSourceService._load_public_partners("")
-                except PageCmsSourceProviderError:
+                    if resolution_cache and resolution_cache.public_partner_error is not None:
+                        raise resolution_cache.public_partner_error
+                    if resolution_cache and resolution_cache.public_partner_records is not None:
+                        partner_records = resolution_cache.public_partner_records
+                    else:
+                        partner_records = await PageCmsSourceService._load_public_partners("")
+                        if resolution_cache is not None:
+                            resolution_cache.public_partner_records = partner_records
+                except PageCmsSourceProviderError as exc:
+                    if resolution_cache is not None:
+                        resolution_cache.public_partner_error = exc
                     for source_id in partner_ids:
                         results[("research_partner", source_id)] = _source_resolution(
                             "research_partner", source_id, PageCmsSourceResolutionState.PROVIDER_ERROR,
@@ -986,6 +1004,7 @@ class PageCmsSourceService:
 __all__ = [
     "PageCmsPreviewCapability",
     "PageCmsSourceResolution",
+    "PageCmsSourceResolutionCache",
     "PageCmsSourceResolutionState",
     "PageCmsSourcePreviewUnsupportedError",
     "PageCmsSourceProviderError",
