@@ -11,8 +11,8 @@ from enum import Enum
 from typing import Any, Protocol
 
 import httpx
-from sqlalchemy import String, false, func, or_, select
-from sqlalchemy.orm import selectinload
+from sqlalchemy import String, and_, false, func, or_, select
+from sqlalchemy.orm import aliased, selectinload
 
 from ksu_common import PaginatedResult
 
@@ -292,6 +292,86 @@ def _not_deleted(item: Any) -> bool:
     return getattr(item, "deleted_at", None) is None
 
 
+def _is_public_school(school: School | None) -> bool:
+    return bool(
+        school is not None
+        and _not_deleted(school)
+        and school.is_active
+        and school.is_public
+    )
+
+
+def _is_public_department(department: Department | None) -> bool:
+    return bool(
+        department is not None
+        and _not_deleted(department)
+        and department.is_active
+        and department.is_public
+    )
+
+
+def _club_public_school_ids(club: Club | None) -> set[uuid.UUID]:
+    """Return every school independently eligible to scope a public club."""
+    if club is None:
+        return set()
+
+    school_ids: set[uuid.UUID] = set()
+    direct_school = club.school
+    if (
+        club.school_id is not None
+        and direct_school is not None
+        and direct_school.id == club.school_id
+        and _is_public_school(direct_school)
+    ):
+        school_ids.add(direct_school.id)
+
+    department = club.department
+    department_school = department.school if department is not None else None
+    if (
+        club.department_id is not None
+        and department is not None
+        and department.id == club.department_id
+        and department.school_id is not None
+        and department_school is not None
+        and department_school.id == department.school_id
+        and _is_public_department(department)
+        and _is_public_school(department_school)
+    ):
+        school_ids.add(department_school.id)
+
+    return school_ids
+
+
+def _club_matches_school_scope(club: Club | None, school_id: uuid.UUID | None) -> bool:
+    return school_id is not None and school_id in _club_public_school_ids(club)
+
+
+def _club_school_scope_clause(
+    school_id: uuid.UUID,
+    *,
+    direct_school,
+    department,
+    department_school,
+):
+    """SQL equivalent of ``_club_public_school_ids`` for source searches."""
+    direct_school_match = and_(
+        Club.school_id == school_id,
+        direct_school.deleted_at.is_(None),
+        direct_school.is_active.is_(True),
+        direct_school.is_public.is_(True),
+    )
+    department_school_match = and_(
+        department.school_id == school_id,
+        department.deleted_at.is_(None),
+        department.is_active.is_(True),
+        department.is_public.is_(True),
+        department_school.deleted_at.is_(None),
+        department_school.is_active.is_(True),
+        department_school.is_public.is_(True),
+    )
+    return or_(direct_school_match, department_school_match)
+
+
 def _intake_school_ids(item: Intake) -> set[uuid.UUID]:
     return {
         programme_intake.programme.department.school_id
@@ -553,8 +633,8 @@ def _local_scope(source_type: str, item: Any) -> tuple[str, uuid.UUID | None]:
         club = item.club
         if club is None:
             return "university", None
-        school_id = club.school_id or (club.department.school_id if club.department else None)
-        return ("school", school_id) if school_id is not None else ("university", None)
+        school_ids = _club_public_school_ids(club)
+        return ("school", sorted(school_ids, key=str)[0]) if school_ids else ("university", None)
     return "university", None
 
 
@@ -565,6 +645,8 @@ def _local_preview_scope(
     destination_scope_id: uuid.UUID | None,
 ) -> tuple[str, uuid.UUID | None]:
     if source_type in {"intake", "academic_calendar"} and destination_scope_type == "school":
+        return "school", destination_scope_id
+    if source_type == "club_activity" and destination_scope_type == "school":
         return "school", destination_scope_id
     return _local_scope(source_type, item)
 
@@ -585,6 +667,8 @@ def _local_scope_matches(
         return False
     if source_type == "club_activity" and destination_scope_type not in {"school"}:
         return False
+    if source_type == "club_activity":
+        return _club_matches_school_scope(item.club, destination_scope_id)
     source_scope_type, source_scope_id = _local_scope(source_type, item)
     return source_scope_type == destination_scope_type and source_scope_id == destination_scope_id
 
@@ -618,7 +702,8 @@ def _local_source_statement(source_type: str):
         return select(Testimonial).options(selectinload(Testimonial.photo))
     return select(ClubActivity).options(
         selectinload(ClubActivity.cover_image),
-        selectinload(ClubActivity.club).selectinload(Club.department),
+        selectinload(ClubActivity.club).selectinload(Club.school),
+        selectinload(ClubActivity.club).selectinload(Club.department).selectinload(Department.school),
     )
 
 
@@ -912,8 +997,15 @@ class PageCmsSourceService:
 
         if source_type == "club_activity":
             now = datetime.now(timezone.utc)
+            direct_school = aliased(School, name="direct_school")
+            department = aliased(Department, name="club_department")
+            department_school = aliased(School, name="department_school")
             statement = _local_source_statement("club_activity").join(Club).outerjoin(
-                Department, Club.department_id == Department.id,
+                direct_school, Club.school_id == direct_school.id,
+            ).outerjoin(
+                department, Club.department_id == department.id,
+            ).outerjoin(
+                department_school, department.school_id == department_school.id,
             ).where(
                 ClubActivity.deleted_at.is_(None), ClubActivity.archived_at.is_(None),
                 ClubActivity.status == "published", ClubActivity.is_public.is_(True), ClubActivity.is_published.is_(True),
@@ -923,7 +1015,12 @@ class PageCmsSourceService:
                 Club.deleted_at.is_(None), Club.is_active.is_(True), Club.is_public.is_(True),
             )
             if scope_type == "school":
-                statement = statement.where(or_(Club.school_id == scope_id, Department.school_id == scope_id))
+                statement = statement.where(_club_school_scope_clause(
+                    scope_id,
+                    direct_school=direct_school,
+                    department=department,
+                    department_school=department_school,
+                ))
             elif scope_type != "university":
                 statement = statement.where(false())
             if query:

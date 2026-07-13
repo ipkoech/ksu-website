@@ -424,6 +424,8 @@ async def test_staff_assignment_public_resolution_and_bulk_require_published_wor
 
 
 def _published_activity(school_id: uuid.UUID, *, scheduled_publish_at=None) -> ClubActivity:
+    school = _public_school("Robotics School")
+    school.id = school_id
     club = Club(
         name="Robotics Club",
         slug=f"robotics-{uuid.uuid4()}",
@@ -433,6 +435,7 @@ def _published_activity(school_id: uuid.UUID, *, scheduled_publish_at=None) -> C
         is_public=True,
     )
     club.id = uuid.uuid4()
+    club.school = school
     activity = ClubActivity(
         club_id=club.id,
         title="Robotics Showcase",
@@ -448,6 +451,166 @@ def _published_activity(school_id: uuid.UUID, *, scheduled_publish_at=None) -> C
     activity.id = uuid.uuid4()
     activity.club = club
     return activity
+
+
+def _public_school(name: str) -> School:
+    school = School(
+        name=name,
+        slug=name.casefold().replace(" ", "-"),
+        code=name[:3].upper(),
+        is_active=True,
+        is_public=True,
+    )
+    school.id = uuid.uuid4()
+    return school
+
+
+def _club_activity_for_school_relationships(
+    *,
+    direct_school: School | None = None,
+    department: Department | None = None,
+) -> ClubActivity:
+    club = Club(
+        name="Robotics Club",
+        slug=f"robotics-{uuid.uuid4()}",
+        club_type="academic",
+        school_id=direct_school.id if direct_school else None,
+        department_id=department.id if department else None,
+        is_active=True,
+        is_public=True,
+    )
+    club.id = uuid.uuid4()
+    club.school = direct_school
+    club.department = department
+    activity = ClubActivity(
+        club_id=club.id,
+        title="Robotics Showcase",
+        slug=f"showcase-{uuid.uuid4()}",
+        activity_type="event",
+        start_datetime=datetime.now(timezone.utc),
+        status="published",
+        is_public=True,
+        is_published=True,
+        workflow_status="published",
+    )
+    activity.id = uuid.uuid4()
+    activity.club = club
+    return activity
+
+
+@pytest.mark.asyncio
+async def test_club_activity_school_scope_uses_each_independently_public_relationship():
+    direct_school = _public_school("Direct School")
+    department_school = _public_school("Department School")
+    department = Department(
+        name="Computer Science",
+        slug="computer-science-club-scope",
+        code="CSC",
+        school_id=department_school.id,
+        is_active=True,
+        is_public=True,
+    )
+    department.id = uuid.uuid4()
+    department.school = department_school
+    activity = _club_activity_for_school_relationships(
+        direct_school=direct_school,
+        department=department,
+    )
+
+    for school_id in (direct_school.id, department_school.id):
+        with patch(
+            "app.services.page_cms_sources.paginate_query",
+            AsyncMock(return_value=_page(activity)),
+        ) as paginate:
+            searched = await PageCmsSourceService.search(
+                _Db(), "club_activity", "robotics", "school", school_id, 1, 20,
+            )
+
+        resolved = await PageCmsSourceService.resolve(
+            _Db(activity),
+            "club_activity",
+            activity.id,
+            destination_scope_type="school",
+            destination_scope_id=school_id,
+        )
+        bulk = await PageCmsSourceService.resolve_many(
+            _Db([activity]),
+            [("club_activity", activity.id)],
+            destination_scope_type="school",
+            destination_scope_id=school_id,
+        )
+
+        sql = str(paginate.await_args.args[1]).lower()
+        assert "direct_school.deleted_at is null" in sql
+        assert "direct_school.is_active is true" in sql
+        assert "direct_school.is_public is true" in sql
+        assert "club_department.deleted_at is null" in sql
+        assert "club_department.is_active is true" in sql
+        assert "club_department.is_public is true" in sql
+        assert "department_school.deleted_at is null" in sql
+        assert "department_school.is_active is true" in sql
+        assert "department_school.is_public is true" in sql
+        assert [item.id for item in searched.items] == [activity.id]
+        assert resolved is not None
+        assert bulk[("club_activity", activity.id)].state is PageCmsSourceResolutionState.RESOLVED
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("relationship", "field", "value"),
+    [
+        ("direct_school", "deleted_at", datetime.now(timezone.utc)),
+        ("direct_school", "is_active", False),
+        ("direct_school", "is_public", False),
+        ("department", "deleted_at", datetime.now(timezone.utc)),
+        ("department", "is_active", False),
+        ("department", "is_public", False),
+        ("department_school", "deleted_at", datetime.now(timezone.utc)),
+        ("department_school", "is_active", False),
+        ("department_school", "is_public", False),
+    ],
+)
+async def test_club_activity_school_scope_rejects_stale_relationships(relationship, field, value):
+    direct_school = _public_school("Direct School")
+    department_school = _public_school("Department School")
+    department = Department(
+        name="Computer Science",
+        slug="computer-science-stale-scope",
+        code="CSS",
+        school_id=department_school.id,
+        is_active=True,
+        is_public=True,
+    )
+    department.id = uuid.uuid4()
+    department.school = department_school
+    activity = _club_activity_for_school_relationships(
+        direct_school=direct_school if relationship == "direct_school" else None,
+        department=department if relationship != "direct_school" else None,
+    )
+    stale_item = {
+        "direct_school": direct_school,
+        "department": department,
+        "department_school": department_school,
+    }[relationship]
+    setattr(stale_item, field, value)
+    school_id = direct_school.id if relationship == "direct_school" else department_school.id
+
+    resolved = await PageCmsSourceService.resolve(
+        _Db(activity),
+        "club_activity",
+        activity.id,
+        destination_scope_type="school",
+        destination_scope_id=school_id,
+    )
+    bulk = await PageCmsSourceService.resolve_many(
+        _Db([activity]),
+        [("club_activity", activity.id)],
+        destination_scope_type="school",
+        destination_scope_id=school_id,
+    )
+
+    assert resolved is None
+    assert bulk[("club_activity", activity.id)].state is PageCmsSourceResolutionState.INACCESSIBLE
 
 
 @pytest.mark.asyncio
