@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from app.api.v1 import page_cms
 from app.deps import get_db
 from app.helpers.jwt import create_access_token
+from app.services.page_cms_sources import PageCmsSourceProviderError
 from ksu_common import PaginatedResult
 
 
@@ -202,3 +203,28 @@ def test_source_catalog_returns_standard_paginated_envelope():
     assert response.json()["data"] == [item]
     assert response.json()["meta"] == result.meta
     assert search.await_args.kwargs["query"] == "graduation"
+
+
+def test_stats_provider_failure_returns_502():
+    user = _user("section_items.manage")
+    client, headers = _client(user)
+
+    with (
+        patch("app.api.v1._scoped._can_access_scope", return_value=True),
+        patch.object(
+            page_cms.PageCmsSourceService,
+            "search",
+            AsyncMock(side_effect=PageCmsSourceProviderError("research stats unavailable")),
+        ),
+    ):
+        response = client.get(
+            "/api/v1/page-section-sources/public_stat",
+            params={
+                "layout_variant": "facts_strip",
+                "scope_type": "research",
+                "scope_id": str(uuid.uuid4()),
+            },
+            headers=headers,
+        )
+
+    assert response.status_code == 502

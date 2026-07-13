@@ -11,7 +11,11 @@ from pydantic import ValidationError
 
 from app.models import Department, Event, News, Person, Programme, School, StaffAssignment
 from app.schemas.page_cms import PageCmsSourceSummary
-from app.services.page_cms_sources import PageCmsSourceService
+from app.services.page_cms_sources import (
+    PageCmsSourcePreviewUnsupportedError,
+    PageCmsSourceProviderError,
+    PageCmsSourceService,
+)
 from ksu_common import PaginatedResult
 
 
@@ -371,6 +375,60 @@ async def test_stat_ids_are_scope_specific_and_resolve_only_exact_scope():
 
 
 @pytest.mark.asyncio
+async def test_school_stat_id_is_stable_when_slug_changes():
+    school_id = uuid.uuid4()
+    school = School(name="School of Computing", slug="old-slug", code="SOC", is_active=True, is_public=True)
+    school.id = school_id
+    stats = SimpleNamespace(scope="school", stats=[SimpleNamespace(
+        key="programmes", label="Programmes", value=12, suffix="", description="Active programmes", href=None,
+    )])
+
+    with patch("app.services.page_cms_sources.public_stats", AsyncMock(return_value=stats)):
+        before = await PageCmsSourceService.search(_Db(school), "public_stat", "", "school", school_id, 1, 20)
+        school.slug = "new-slug"
+        after = await PageCmsSourceService.search(_Db(school), "public_stat", "", "school", school_id, 1, 20)
+
+    assert before.items[0].id == after.items[0].id
+    assert str(school_id) not in str(before.items[0].metadata)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("scope_type", ["research", "library"])
+async def test_remote_public_stats_are_normalized_searched_and_paginated(scope_type):
+    scope_id = uuid.uuid4()
+    payload = {
+        "scope": scope_type,
+        "title": f"{scope_type.title()} stats",
+        "stats": [
+            {"key": "zeta", "label": "<b>Zeta</b>", "value": 2, "suffix": "", "description": "Other", "href": None},
+            {"key": "projects", "label": "Projects", "value": 40, "suffix": "+", "description": "Active research projects", "href": "/projects"},
+        ],
+    }
+
+    with patch("app.services.page_cms_sources.PageCmsStatsProxyService.get_public_stats", AsyncMock(return_value=payload)):
+        result = await PageCmsSourceService.search(
+            _Db(), "public_stat", "project", scope_type, scope_id, 1, 1,
+        )
+
+    assert result.meta == {"page": 1, "per_page": 1, "total": 1, "pages": 1}
+    assert result.items[0].label == "Projects"
+    assert result.items[0].secondary_label == "40+"
+    assert result.items[0].metadata["scope"] == scope_type
+
+
+@pytest.mark.asyncio
+async def test_remote_stats_provider_errors_fail_closed():
+    with patch(
+        "app.services.page_cms_sources.PageCmsStatsProxyService.get_public_stats",
+        AsyncMock(side_effect=PageCmsSourceProviderError("research stats unavailable")),
+    ):
+        with pytest.raises(PageCmsSourceProviderError, match="unavailable"):
+            await PageCmsSourceService.search(
+                _Db(), "public_stat", "", "research", uuid.uuid4(), 1, 20,
+            )
+
+
+@pytest.mark.asyncio
 async def test_person_summary_uses_assignment_for_destination_scope_only():
     school_id = uuid.uuid4()
     library_id = uuid.uuid4()
@@ -434,8 +492,8 @@ async def test_event_search_excludes_past_events_and_orders_upcoming():
 async def test_partner_pagination_filters_before_local_page_and_reports_accurate_meta():
     valid_id = uuid.uuid4()
     pages = {
-        1: {"data": [{"id": str(uuid.uuid4()), "name": "Expired", "status": "active", "is_active": True, "partnership_end": "2020-01-01"}], "meta": {"page": 1, "pages": 2}},
-        2: {"data": [{"id": str(valid_id), "name": "Valid", "status": "active", "is_active": True}], "meta": {"page": 2, "pages": 2}},
+        1: {"data": [{"id": str(uuid.uuid4()), "name": "Expired", "status": "active", "is_active": True, "partnership_end": "2020-01-01"}], "meta": {"page": 1, "pages": 2, "total": 2}},
+        2: {"data": [{"id": str(valid_id), "name": "Valid", "status": "active", "is_active": True}], "meta": {"page": 2, "pages": 2, "total": 2}},
     }
 
     async def remote_page(*, page, **_kwargs):
@@ -456,8 +514,8 @@ async def test_partner_pagination_deduplicates_remote_records_before_counting():
     partner_id = uuid.uuid4()
     record = {"id": str(partner_id), "name": "One Partner", "status": "active", "is_active": True}
     pages = {
-        1: {"data": [record], "meta": {"page": 1, "pages": 2}},
-        2: {"data": [record], "meta": {"page": 2, "pages": 2}},
+        1: {"data": [record], "meta": {"page": 1, "pages": 2, "total": 2}},
+        2: {"data": [record], "meta": {"page": 2, "pages": 2, "total": 2}},
     }
 
     async def remote_page(*, page, **_kwargs):
@@ -470,6 +528,82 @@ async def test_partner_pagination_deduplicates_remote_records_before_counting():
 
     assert [item.id for item in result.items] == [partner_id]
     assert result.meta["total"] == 1
+
+
+@pytest.mark.asyncio
+async def test_partner_pagination_follows_more_than_ten_remote_pages():
+    async def remote_page(*, page, **_kwargs):
+        return {
+            "data": [{"id": str(uuid.uuid5(uuid.NAMESPACE_URL, f"partner:{page}")), "name": f"Partner {page:02d}", "status": "active", "is_active": True}],
+            "meta": {"page": page, "pages": 12, "total": 12},
+        }
+
+    with patch("app.services.page_cms_sources.ResearchPartnersProxyService.list_partners", side_effect=remote_page) as proxy:
+        result = await PageCmsSourceService.search(
+            _Db(), "research_partner", "", "research", uuid.uuid4(), 1, 50,
+        )
+
+    assert proxy.await_count == 12
+    assert result.meta["total"] == 12
+
+
+@pytest.mark.asyncio
+async def test_partner_resolution_follows_more_than_ten_remote_pages():
+    target_id = uuid.uuid5(uuid.NAMESPACE_URL, "partner:12")
+
+    async def remote_page(*, page, **_kwargs):
+        return {
+            "data": [{"id": str(uuid.uuid5(uuid.NAMESPACE_URL, f"partner:{page}")), "name": f"Partner {page:02d}", "status": "active", "is_active": True}],
+            "meta": {"page": page, "pages": 12, "total": 12},
+        }
+
+    with patch("app.services.page_cms_sources.ResearchPartnersProxyService.list_partners", side_effect=remote_page) as proxy:
+        result = await PageCmsSourceService.resolve(
+            _Db(), "research_partner", target_id,
+            destination_scope_type="university", destination_scope_id=None,
+        )
+
+    assert proxy.await_count == 12
+    assert result is not None
+    assert result.id == target_id
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("scope_type", ["school", "library"])
+async def test_partner_adapter_rejects_unsupported_scope(scope_type):
+    with pytest.raises(ValueError, match="not available"):
+        await PageCmsSourceService.search(
+            _Db(), "research_partner", "", scope_type, uuid.uuid4(), 1, 20,
+        )
+
+
+@pytest.mark.asyncio
+async def test_partner_search_excludes_future_partnerships():
+    payload = {
+        "data": [{
+            "id": str(uuid.uuid4()), "name": "Future Partner", "status": "active", "is_active": True,
+            "partnership_start": (date.today() + timedelta(days=30)).isoformat(),
+        }],
+        "meta": {"page": 1, "pages": 1, "total": 1},
+    }
+    with patch("app.services.page_cms_sources.ResearchPartnersProxyService.list_partners", AsyncMock(return_value=payload)):
+        result = await PageCmsSourceService.search(
+            _Db(), "research_partner", "", "university", None, 1, 20,
+        )
+
+    assert result.items == []
+
+
+@pytest.mark.asyncio
+async def test_partner_preview_capability_raises_explicit_unsupported_error():
+    with pytest.raises(PageCmsSourcePreviewUnsupportedError) as error:
+        await PageCmsSourceService.resolve(
+            _Db(), "research_partner", uuid.uuid4(),
+            destination_scope_type="research", destination_scope_id=uuid.uuid4(),
+            preview_capability=_PreviewCapability("research", uuid.uuid4()),
+        )
+
+    assert error.value.status_code == 422
 
 
 def test_source_summary_strips_html_bounds_text_and_rejects_unsafe_thumbnail():

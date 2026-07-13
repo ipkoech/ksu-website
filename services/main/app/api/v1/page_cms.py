@@ -28,7 +28,7 @@ from ...services import (
     PartnershipSpotlightWorkflowService,
 )
 from ...services.page_cms_definitions import SECTION_DEFINITIONS, serialize_section_definitions
-from ...services.page_cms_sources import PageCmsSourceService
+from ...services.page_cms_sources import PageCmsSourceProviderError, PageCmsSourceService
 from ...services._base import apply_updates
 from ._scoped import can_access_scoped_record, require_scoped_record
 
@@ -278,15 +278,18 @@ async def search_page_cms_sources(
         scope_id=scope_id,
         action="item_manage",
     )
-    result = await PageCmsSourceService.search(
-        db,
-        source_type,
-        query=q,
-        scope_type=scope_type,
-        scope_id=scope_id,
-        page=page,
-        per_page=per_page,
-    )
+    try:
+        result = await PageCmsSourceService.search(
+            db,
+            source_type,
+            query=q,
+            scope_type=scope_type,
+            scope_id=scope_id,
+            page=page,
+            per_page=per_page,
+        )
+    except PageCmsSourceProviderError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
     return success(data=result.items, meta=result.meta)
 
 

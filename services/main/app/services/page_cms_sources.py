@@ -15,6 +15,11 @@ from ksu_common import PaginatedResult
 from ..models import Department, Event, News, Person, Programme, School, StaffAssignment
 from ..schemas.page_cms import PageCmsSourceSummary
 from ._base import ilike_any, paginate_query
+from .page_cms_source_errors import (
+    PageCmsSourcePreviewUnsupportedError,
+    PageCmsSourceProviderError,
+)
+from .page_cms_stats import PageCmsStatsProxyService
 from .research_partners import ResearchPartnersProxyService
 from .stats import public_stats
 
@@ -212,6 +217,7 @@ def _partner_date(value: Any) -> date | None:
 
 def _partner_is_public(item: dict[str, Any]) -> bool:
     today = date.today()
+    partnership_start = _partner_date(item.get("partnership_start"))
     expiry_dates = [
         parsed
         for field in ("partnership_end", "mou_expiry_date")
@@ -222,6 +228,7 @@ def _partner_is_public(item: dict[str, Any]) -> bool:
         and item.get("is_active", True)
         and item.get("is_public", True)
         and item.get("status") == "active"
+        and (partnership_start is None or partnership_start <= today)
         and all(expiry >= today for expiry in expiry_dates)
     )
 
@@ -256,22 +263,27 @@ def _stat_id(scope_type: str, scope_identity: str | None, key: str) -> uuid.UUID
     return uuid.uuid5(PUBLIC_STAT_NAMESPACE, f"{_stat_authority(scope_type, scope_identity)}:{key}")
 
 
+def _stat_value(item: Any, key: str, default: Any = None) -> Any:
+    return item.get(key, default) if isinstance(item, dict) else getattr(item, key, default)
+
+
 def _stat_summary(item: Any, scope: str, scope_identity: str | None) -> PageCmsSourceSummary:
-    value = f"{item.value:g}" if isinstance(item.value, float) else str(item.value)
+    raw_value = _stat_value(item, "value")
+    value = f"{raw_value:g}" if isinstance(raw_value, float) else str(raw_value)
+    key = _stat_value(item, "key")
     return PageCmsSourceSummary(
-        id=_stat_id(scope, scope_identity, item.key),
+        id=_stat_id(scope, scope_identity, key),
         source_type="public_stat",
-        label=item.label,
-        secondary_label=f"{value}{item.suffix}",
+        label=_stat_value(item, "label"),
+        secondary_label=f"{value}{_stat_value(item, 'suffix', '')}",
         status="verified",
         metadata={
-            "key": item.key,
-            "value": item.value,
-            "suffix": item.suffix,
-            "description": item.description,
-            "href": item.href,
+            "key": key,
+            "value": raw_value,
+            "suffix": _stat_value(item, "suffix", ""),
+            "description": _stat_value(item, "description"),
+            "href": _stat_value(item, "href"),
             "scope": scope,
-            "scope_authority": _stat_authority(scope, scope_identity),
             "verified": True,
         },
         selectable=True,
@@ -374,6 +386,8 @@ class PageCmsSourceService:
             return _map_page(result, lambda item: _person_summary(item, scope_type, scope_id))
 
         if source_type == "research_partner":
+            if scope_type not in {"university", "research"}:
+                raise ValueError(f"Research partner catalog is not available for scope {scope_type}")
             return await PageCmsSourceService._search_partners(query, page, per_page)
 
         return await PageCmsSourceService._search_stats(db, query, scope_type, scope_id, page, per_page)
@@ -495,9 +509,14 @@ class PageCmsSourceService:
             )
 
         if source_type == "research_partner":
+            if preview_capability is not None:
+                raise PageCmsSourcePreviewUnsupportedError(
+                    "Research partner preview is unsupported because no privileged provider endpoint is available"
+                )
             if destination_scope_type not in {"university", "research"}:
                 return None
-            item = await ResearchPartnersProxyService.find_partner_by_id(source_id, per_page=50)
+            records = await PageCmsSourceService._load_public_partners("")
+            item = next((record for record in records if str(record.get("id")) == str(source_id)), None)
             return _partner_summary(item) if item and _partner_is_public(item) else None
 
         result = await PageCmsSourceService._search_stats(
@@ -524,24 +543,7 @@ class PageCmsSourceService:
 
     @staticmethod
     async def _search_partners(query: str, page: int, per_page: int) -> PaginatedResult:
-        remote_page = 1
-        records: list[dict[str, Any]] = []
-        while remote_page <= 10:
-            payload = await ResearchPartnersProxyService.list_partners(
-                page=remote_page,
-                per_page=50,
-                search=query or None,
-                status="active",
-                is_active=True,
-            )
-            records.extend(item for item in payload.get("data") or [] if _partner_is_public(item))
-            pages = (payload.get("meta") or {}).get("pages")
-            if not isinstance(pages, int) or remote_page >= pages:
-                break
-            remote_page += 1
-        else:
-            raise ValueError("Research partner catalog exceeded 10 remote pages")
-
+        records = await PageCmsSourceService._load_public_partners(query)
         unique_records = {str(item["id"]): item for item in records}
         summaries = [_partner_summary(item) for item in unique_records.values()]
         summaries.sort(key=lambda item: (item.label.casefold(), str(item.id)))
@@ -556,6 +558,49 @@ class PageCmsSourceService:
                 "pages": math.ceil(total / per_page) if total else 0,
             },
         )
+
+    @staticmethod
+    async def _load_public_partners(query: str) -> list[dict[str, Any]]:
+        remote_page = 1
+        records: list[dict[str, Any]] = []
+        expected_pages: int | None = None
+        expected_total: int | None = None
+        traversed_count = 0
+        while True:
+            payload = await ResearchPartnersProxyService.list_partners(
+                page=remote_page,
+                per_page=50,
+                search=query or None,
+                status="active",
+                is_active=True,
+            )
+            remote_records = payload.get("data")
+            meta = payload.get("meta")
+            if not isinstance(remote_records, list) or not isinstance(meta, dict):
+                raise PageCmsSourceProviderError("Research partner provider returned an invalid page")
+            pages = meta.get("pages")
+            total = meta.get("total")
+            provider_page = meta.get("page")
+            if not all(isinstance(value, int) and not isinstance(value, bool) for value in (pages, total, provider_page)):
+                raise PageCmsSourceProviderError("Research partner provider returned invalid pagination metadata")
+            if provider_page != remote_page or pages < 0 or total < 0 or (total > 0 and pages < 1):
+                raise PageCmsSourceProviderError("Research partner provider returned inconsistent pagination metadata")
+            if expected_pages is None:
+                expected_pages, expected_total = pages, total
+            elif pages != expected_pages or total != expected_total:
+                raise PageCmsSourceProviderError("Research partner pagination metadata changed during traversal")
+
+            if remote_page < pages and not remote_records:
+                raise PageCmsSourceProviderError("Research partner pagination made no progress")
+            traversed_count += len(remote_records)
+            records.extend(item for item in remote_records if isinstance(item, dict) and _partner_is_public(item))
+            if remote_page >= pages:
+                break
+            remote_page += 1
+
+        if expected_total is not None and traversed_count != expected_total:
+            raise PageCmsSourceProviderError("Research partner provider total does not match traversed records")
+        return records
 
     @staticmethod
     async def _search_stats(
@@ -580,15 +625,22 @@ class PageCmsSourceService:
             if school is None:
                 return PaginatedResult(items=[], meta={"page": page, "per_page": per_page, "total": 0, "pages": 0})
             slug = school.slug
-        elif scope_type not in {"homepage", "university"}:
+        elif scope_type not in {"homepage", "university", "research", "library"}:
             return PaginatedResult(items=[], meta={"page": page, "per_page": per_page, "total": 0, "pages": 0})
 
-        response = await public_stats(db, scope=stats_scope, slug=slug)
-        scope_identity = slug if stats_scope == "school" else None
+        if scope_type in {"research", "library"}:
+            response = await PageCmsStatsProxyService.get_public_stats(scope_type)
+            response_scope = response["scope"]
+            response_stats = response["stats"]
+        else:
+            response = await public_stats(db, scope=stats_scope, slug=slug)
+            response_scope = response.scope if response else stats_scope
+            response_stats = response.stats if response else []
+        scope_identity = str(scope_id) if scope_id is not None else None
         summaries = [
-            _stat_summary(item, response.scope, scope_identity)
-            for item in response.stats
-        ] if response else []
+            _stat_summary(item, response_scope, scope_identity)
+            for item in response_stats
+        ]
         if query:
             term = query.casefold()
             summaries = [
@@ -610,4 +662,10 @@ class PageCmsSourceService:
         )
 
 
-__all__ = ["PageCmsPreviewCapability", "PageCmsSourceService", "SUPPORTED_SOURCE_TYPES"]
+__all__ = [
+    "PageCmsPreviewCapability",
+    "PageCmsSourcePreviewUnsupportedError",
+    "PageCmsSourceProviderError",
+    "PageCmsSourceService",
+    "SUPPORTED_SOURCE_TYPES",
+]
