@@ -8,6 +8,7 @@ const cocmsRoot = path.join(__dirname, "..");
 const adminSrcRoot = path.resolve(__dirname, "../../../..");
 const adminAppRoot = path.join(adminSrcRoot, "app");
 const dashboardPageCmsRoot = path.join(adminAppRoot, "(dashboard)/page-cms");
+const corporateCommunicationPageCmsRoot = path.join(adminAppRoot, "(protected)/corporate-communication/page-cms");
 
 function assert(condition, message) {
   if (!condition) {
@@ -55,16 +56,26 @@ for (const expectedSnippet of [
 }
 
 const dashboardSource = read("page.tsx", dashboardPageCmsRoot);
-for (const expectedHref of [
-  'href="/corporate-communication/page-cms/sections"',
-  'href={`/corporate-communication/page-cms/sections/${section.id}`}',
-  'href="/corporate-communication/page-cms/spotlights"',
-]) {
-  assert(
-    dashboardSource.includes(expectedHref),
-    `Expected Page CMS dashboard links to use Corporate Communication route: ${expectedHref}`,
-  );
-}
+assert(
+  dashboardSource.includes('redirect("/corporate-communication/page-cms")'),
+  "Expected /page-cms to redirect to /corporate-communication/page-cms",
+);
+
+const canonicalDashboardSource = read("page.tsx", corporateCommunicationPageCmsRoot);
+assert(
+  canonicalDashboardSource.includes("@/components/page-cms/page-cms-dashboard"),
+  "Expected canonical Page CMS route to render the shared dashboard implementation",
+);
+
+const legacyDetailSource = read("page-cms/sections/[id]/page.tsx", cocmsRoot);
+assert(
+  legacyDetailSource.includes("generateStaticParams"),
+  "Expected legacy dynamic Page CMS redirect to export static params",
+);
+assert(
+  legacyDetailSource.includes("@/app/(protected)/corporate-communication/page-cms/sections/[id]/page"),
+  "Expected legacy dynamic Page CMS redirect to share canonical static params",
+);
 
 const sectionsListSource = read("sections/page.tsx", dashboardPageCmsRoot);
 for (const expectedSnippet of [

@@ -48,6 +48,15 @@ for (const requiredSnippet of [
 }
 
 const dashboardSource = fs.readFileSync(path.join(appRoot, "page.tsx"), "utf8");
+assert(
+  dashboardSource.includes('redirect("/corporate-communication/page-cms")'),
+  "Expected legacy /page-cms route to redirect to the canonical Page CMS route",
+);
+
+const sharedDashboardSource = fs.readFileSync(
+  path.join(adminRoot, "components/page-cms/page-cms-dashboard.tsx"),
+  "utf8",
+);
 for (const requiredSnippet of [
   "canViewSections ? (",
   "canManageSpotlights ? (",
@@ -55,8 +64,8 @@ for (const requiredSnippet of [
   "href=\"/corporate-communication/page-cms/spotlights\"",
 ]) {
   assert(
-    dashboardSource.includes(requiredSnippet),
-    `Expected dashboard page to include: ${requiredSnippet}`,
+    sharedDashboardSource.includes(requiredSnippet),
+    `Expected shared dashboard implementation to include: ${requiredSnippet}`,
   );
 }
 

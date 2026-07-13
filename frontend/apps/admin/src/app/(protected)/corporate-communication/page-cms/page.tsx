@@ -1,1 +1,1 @@
-export { default } from "@/app/(dashboard)/page-cms/page";
+export { default } from "@/components/page-cms/page-cms-dashboard";
