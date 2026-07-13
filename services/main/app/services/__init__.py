@@ -56,7 +56,7 @@ from .student_life import (
     SportsFacilityService,
     StudentGovernanceService,
 )
-from .support import ContactService, FAQService, SupportTicketService
+from .support import ContactReferenceError, ContactService, FAQService, SupportTicketService
 from .system import ApiKeyService, SettingService, WebhookService
 from .university import UniversityInfoService
 from .user import UserService
@@ -118,6 +118,7 @@ __all__ = [
     "SliderService",
     "FAQService",
     "ContactService",
+    "ContactReferenceError",
     "SupportTicketService",
     "NotificationService",
     "ContentWorkflowService",

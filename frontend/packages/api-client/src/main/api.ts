@@ -62,6 +62,8 @@ import type {
   FAQ,
   ContactDirectory,
   ContactDirectoryListParams,
+  ContactOwnerOption,
+  ContactOwnerScopeType,
   PublicContactDirectory,
   PublicContactDirectoryParams,
   Testimonial,
@@ -1697,6 +1699,16 @@ export const contactsApi = {
   listAdmin: (params?: ListParams<ContactDirectoryListParams>) =>
     mainApi.get<PaginatedResponse<ContactDirectory>>(
       "/api/v1/contacts/admin",
+      params,
+    ),
+
+  listOwners: (params: {
+    scope_type: ContactOwnerScopeType;
+    q?: string;
+    limit?: number;
+  }) =>
+    mainApi.get<{ data: ContactOwnerOption[] }>(
+      "/api/v1/contacts/owners",
       params,
     ),
 

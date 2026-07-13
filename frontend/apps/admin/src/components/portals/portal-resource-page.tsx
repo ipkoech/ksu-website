@@ -228,6 +228,7 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
       canEdit={canEdit}
       canDelete={canDelete}
       readOnlyMessage={scopedResource.readOnlyMessage}
+      viewInEditor={scopedResource.viewInEditor}
       primaryActionLabel={primaryActionLabel(scopedResource)}
       toolbarSlot={
         resource.portalScope && lockedAccessOptions.length > 1 ? (

@@ -12,8 +12,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common import PaginatedResult
 
-from ..models import ContactDirectory, FAQ, SupportTicket
+from ..models import ContactDirectory, Department, Division, FAQ, Person, School, SupportTicket, Wing
 from ._base import apply_updates, paginate_query
+
+
+class ContactReferenceError(ValueError):
+    """Raised when a contact owner or person reference is invalid."""
+
+
+CONTACT_OWNER_MODELS = {
+    "division": Division,
+    "directorate": Division,
+    "wing": Wing,
+    "school": School,
+    "department": Department,
+}
 
 
 def _apply_scope(query, model, *, scope_type=None, scope_id=None, is_public=None, is_main=None):
@@ -88,6 +101,12 @@ class ContactService:
 
     @staticmethod
     async def create(db: AsyncSession, **data) -> ContactDirectory:
+        await ContactService.validate_references(
+            db,
+            scope_type=data.get("scope_type"),
+            scope_id=data.get("scope_id"),
+            contact_person_id=data.get("contact_person_id"),
+        )
         contact = ContactDirectory(**data)
         db.add(contact)
         await db.flush()
@@ -95,9 +114,64 @@ class ContactService:
 
     @staticmethod
     async def update(db: AsyncSession, contact: ContactDirectory, **data) -> ContactDirectory:
+        if "scope_type" in data or "scope_id" in data:
+            await ContactService.validate_references(
+                db,
+                scope_type=data.get("scope_type", contact.scope_type),
+                scope_id=data.get("scope_id", contact.scope_id),
+                contact_person_id=data.get("contact_person_id", contact.contact_person_id),
+            )
+        elif "contact_person_id" in data:
+            await ContactService._validate_contact_person(db, data["contact_person_id"])
         apply_updates(contact, **data)
         await db.flush()
         return contact
+
+    @staticmethod
+    async def validate_references(
+        db: AsyncSession,
+        *,
+        scope_type: str | None,
+        scope_id: uuid.UUID | None,
+        contact_person_id: uuid.UUID | None = None,
+    ) -> None:
+        if scope_type is None:
+            raise ContactReferenceError("Contact owner scope_type is required")
+        if scope_type == "university":
+            if scope_id is not None:
+                raise ContactReferenceError("scope_id must not be set for university contacts")
+        else:
+            owner_model = CONTACT_OWNER_MODELS.get(scope_type)
+            if owner_model is None:
+                raise ContactReferenceError(f"Unsupported contact owner type: {scope_type}")
+            if scope_id is None:
+                raise ContactReferenceError(f"scope_id is required for {scope_type} contacts")
+            owner_conditions = [
+                owner_model.id == scope_id,
+                owner_model.deleted_at.is_(None),
+            ]
+            if scope_type == "directorate":
+                owner_conditions.append(Division.division_type == "directorate")
+            result = await db.execute(
+                select(owner_model.id).where(*owner_conditions)
+            )
+            if result.scalar_one_or_none() is None:
+                raise ContactReferenceError(f"{scope_type.title()} not found")
+
+        await ContactService._validate_contact_person(db, contact_person_id)
+
+    @staticmethod
+    async def _validate_contact_person(db: AsyncSession, contact_person_id: uuid.UUID | None) -> None:
+        if contact_person_id is None:
+            return
+        result = await db.execute(
+            select(Person.id).where(
+                Person.id == contact_person_id,
+                Person.deleted_at.is_(None),
+            )
+        )
+        if result.scalar_one_or_none() is None:
+            raise ContactReferenceError("Contact person not found")
 
     @staticmethod
     def _list_query(
@@ -180,7 +254,9 @@ class ContactService:
         per_page: int = 20,
         scope_type: str | None = None,
         scope_id: uuid.UUID | None = None,
+        is_public: bool | None = None,
         is_main: bool | None = None,
+        status: str | None = None,
         search: str | None = None,
         contact_type: str | None = None,
         sort: str = "name_asc",
@@ -189,9 +265,9 @@ class ContactService:
         query = ContactService._list_query(
             scope_type=scope_type,
             scope_id=scope_id,
-            is_public=None,
+            is_public=is_public,
             is_main=is_main,
-            status=None,
+            status=status,
             search=search,
             contact_type=contact_type,
             sort=sort,

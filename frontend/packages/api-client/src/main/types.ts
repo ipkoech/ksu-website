@@ -1662,12 +1662,23 @@ export interface ContactDirectory {
   updated_at: string;
 }
 
+export type ContactOwnerScopeType =
+  | "division"
+  | "directorate"
+  | "wing"
+  | "school"
+  | "department";
+
+export type ContactOwnerOption = StaffEntityOption;
+
 export interface ContactDirectoryListParams {
   q?: string;
   contact_type?: string;
   scope_type?: string;
   scope_id?: string;
+  status?: string;
   is_main?: boolean;
+  is_public?: boolean;
   sort?: "name_asc" | "name_desc";
 }
 

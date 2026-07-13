@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status as http_status
 
 from ksu_common import cached_public
 from ksu_common.schemas.responses import success
@@ -15,7 +15,7 @@ from ._scoped import can_access_scoped_record, require_scoped_record
 from ...deps import CurrentUser, DbSession
 from ...models import ContactDirectory
 from ...schemas import ContactDirectoryCreate, ContactDirectoryUpdate
-from ...services import ContactService
+from ...services import ContactReferenceError, ContactService, StaffService
 
 router = APIRouter()
 
@@ -25,6 +25,7 @@ CONTACT_MANAGE_PERMISSIONS = [
     "support.manage_contacts",
     "content.manage_pages",
 ]
+CONTACT_OWNER_PERMISSIONS = [*CONTACT_VIEW_PERMISSIONS, *CONTACT_MANAGE_PERMISSIONS]
 
 
 @router.get("")
@@ -68,7 +69,9 @@ async def list_admin_contacts(
     per_page: int = Query(20, ge=1, le=100),
     scope_type: str | None = None,
     scope_id: uuid.UUID | None = None,
+    is_public: bool | None = None,
     is_main: bool | None = None,
+    status: str | None = Query(default=None, max_length=32),
     q: str | None = Query(default=None, max_length=120),
     contact_type: str | None = Query(default=None, max_length=64),
     sort: Literal["name_asc", "name_desc"] = "name_asc",
@@ -92,7 +95,9 @@ async def list_admin_contacts(
         per_page=per_page,
         scope_type=scope_type,
         scope_id=scope_id,
+        is_public=is_public,
         is_main=is_main,
+        status=status,
         search=q,
         contact_type=contact_type,
         sort=sort,
@@ -123,6 +128,33 @@ async def get_admin_contact(
     return success(data=selector.apply(item))
 
 
+@router.get("/owners")
+async def list_contact_owners(
+    db: DbSession,
+    user: CurrentUser,
+    scope_type: Literal["division", "directorate", "wing", "school", "department"],
+    q: str | None = Query(default=None, max_length=120),
+    limit: int = Query(default=20, ge=1, le=100),
+):
+    items = await StaffService.search_entities(
+        db,
+        entity_type=scope_type,
+        search=q,
+        limit=limit,
+    )
+    authorized_items = []
+    for item in items:
+        if await can_access_scoped_record(
+            db,
+            user,
+            CONTACT_OWNER_PERMISSIONS,
+            item["entity_type"],
+            item["id"],
+        ):
+            authorized_items.append(item)
+    return success(data=authorized_items)
+
+
 @router.get("/{contact_id}")
 @cached_public(timeout=300, vary_on=("contact_id", "fields", "include"))
 async def get_contact(contact_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
@@ -133,7 +165,7 @@ async def get_contact(contact_id: uuid.UUID, db: DbSession, fields: FieldSelecti
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=http_status.HTTP_201_CREATED)
 async def create_contact(data: ContactDirectoryCreate, db: DbSession, user: CurrentUser):
     await require_scoped_record(
         db,
@@ -143,7 +175,10 @@ async def create_contact(data: ContactDirectoryCreate, db: DbSession, user: Curr
         data.scope_id,
         resource_name="contact",
     )
-    item = await ContactService.create(db, **data.model_dump())
+    try:
+        item = await ContactService.create(db, **data.model_dump())
+    except ContactReferenceError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return success(data=item, message="Contact created")
 
 
@@ -169,5 +204,8 @@ async def update_contact(contact_id: uuid.UUID, data: ContactDirectoryUpdate, db
         payload.get("scope_id", item.scope_id),
         resource_name="contact",
     )
-    item = await ContactService.update(db, item, **payload)
+    try:
+        item = await ContactService.update(db, item, **payload)
+    except ContactReferenceError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return success(data=item, message="Contact updated")

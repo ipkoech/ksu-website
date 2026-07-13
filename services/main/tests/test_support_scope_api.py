@@ -6,7 +6,7 @@ from unittest.mock import patch
 from fastapi import HTTPException
 
 from app.api.v1 import contacts, faqs
-from app.schemas import ContactDirectoryCreate, FAQCreate, FAQUpdate
+from app.schemas import ContactDirectoryCreate, FAQUpdate
 
 
 class _FakeSelector:
@@ -59,6 +59,24 @@ class SupportScopeApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual([page.items[0]], response["data"])
         self.assertEqual(1, response["meta"]["total"])
 
+    async def test_admin_contacts_list_passes_visibility_and_status_filters(self):
+        user = SimpleNamespace(id=uuid.uuid4())
+        page = _Page([])
+
+        with (
+            patch.object(contacts, "build_selector", return_value=_FakeSelector()),
+            patch.object(contacts.ContactService, "list_admin_authorized", return_value=page) as list_contacts,
+        ):
+            await contacts.list_admin_contacts(
+                db=None,
+                user=user,
+                is_public=False,
+                status="inactive",
+            )
+
+        self.assertFalse(list_contacts.await_args.kwargs["is_public"])
+        self.assertEqual("inactive", list_contacts.await_args.kwargs["status"])
+
     async def test_create_contact_rejects_unowned_scope(self):
         user = SimpleNamespace(id=uuid.uuid4())
         payload = ContactDirectoryCreate(
@@ -72,6 +90,80 @@ class SupportScopeApiTests(unittest.IsolatedAsyncioTestCase):
                 await contacts.create_contact(payload, db=None, user=user)
 
         self.assertEqual(403, context.exception.status_code)
+
+    async def test_contact_owner_lookup_returns_only_contact_authorized_targets(self):
+        own_school_id = uuid.uuid4()
+        other_school_id = uuid.uuid4()
+        user = SimpleNamespace(id=uuid.uuid4())
+        options = [
+            {
+                "id": own_school_id,
+                "entity_type": "school",
+                "label": "School of Business",
+                "subtitle": "SOB",
+                "is_active": True,
+            },
+            {
+                "id": other_school_id,
+                "entity_type": "school",
+                "label": "School of Law",
+                "subtitle": "SOL",
+                "is_active": True,
+            },
+        ]
+        seen_permissions = []
+
+        async def fake_can_access(_db, _user, permissions, _scope_type, scope_id):
+            seen_permissions.extend(permissions)
+            return scope_id == own_school_id
+
+        with (
+            patch.object(contacts.StaffService, "search_entities", return_value=options) as search_entities,
+            patch.object(contacts, "can_access_scoped_record", side_effect=fake_can_access),
+        ):
+            response = await contacts.list_contact_owners(
+                db=None,
+                user=user,
+                scope_type="school",
+                q="school",
+                limit=10,
+            )
+
+        self.assertEqual([options[0]], response["data"])
+        search_entities.assert_awaited_once_with(
+            None,
+            entity_type="school",
+            search="school",
+            limit=10,
+        )
+        self.assertTrue(set(contacts.CONTACT_VIEW_PERMISSIONS).issubset(seen_permissions))
+        self.assertTrue(set(contacts.CONTACT_MANAGE_PERMISSIONS).issubset(seen_permissions))
+
+    async def test_contact_owner_lookup_preserves_directorate_target_type(self):
+        directorate_id = uuid.uuid4()
+        user = SimpleNamespace(id=uuid.uuid4())
+        option = {
+            "id": directorate_id,
+            "entity_type": "directorate",
+            "label": "Quality Assurance Directorate",
+            "subtitle": "QA",
+            "is_active": True,
+        }
+
+        async def fake_can_access(_db, _user, _permissions, scope_type, scope_id):
+            return scope_type == "directorate" and scope_id == directorate_id
+
+        with (
+            patch.object(contacts.StaffService, "search_entities", return_value=[option]),
+            patch.object(contacts, "can_access_scoped_record", side_effect=fake_can_access),
+        ):
+            response = await contacts.list_contact_owners(
+                db=None,
+                user=user,
+                scope_type="directorate",
+            )
+
+        self.assertEqual([option], response["data"])
 
     async def test_get_admin_contact_rejects_unowned_scope(self):
         user = SimpleNamespace(id=uuid.uuid4())
