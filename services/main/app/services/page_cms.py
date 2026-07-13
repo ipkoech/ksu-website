@@ -441,11 +441,17 @@ class PageSectionService:
         actor_id: uuid.UUID,
         authorize_edit: Callable[[PageSection], None] | None = None,
     ) -> list[PageSection]:
-        query = PageSection.active_query().where(
-            PageSection.page_key == page_key,
-            PageSection.scope_type == scope_type,
-            PageSection.scope_id.is_(None) if scope_id is None else PageSection.scope_id == scope_id,
-        ).order_by(PageSection.display_order.asc(), PageSection.id.asc()).with_for_update()
+        query = (
+            PageSection.active_query()
+            .where(
+                PageSection.page_key == page_key,
+                PageSection.scope_type == scope_type,
+                PageSection.scope_id.is_(None) if scope_id is None else PageSection.scope_id == scope_id,
+            )
+            .order_by(PageSection.display_order.asc(), PageSection.id.asc())
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
         result = await db.execute(query)
         sections = list(result.scalars().all())
         PageSectionService._validate_reorder_entries(sections, entries)
@@ -485,24 +491,31 @@ class PageSectionService:
         section_id: uuid.UUID,
         entries: Sequence[Any],
         actor_id: uuid.UUID,
-        authorize_edit: Callable[[PageSection], None] | None = None,
+        authorize_parent: Callable[[PageSection], Awaitable[None]] | None = None,
     ) -> list[SectionItem]:
-        section_query = PageSection.active_query().where(
-            PageSection.id == section_id,
-        ).with_for_update()
+        section_query = (
+            PageSection.active_query()
+            .where(PageSection.id == section_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
         section_result = await db.execute(section_query)
         section = section_result.scalars().all()
         if len(section) != 1:
             raise PageCmsReorderValidationError("Page section not found")
+        if authorize_parent is not None:
+            await authorize_parent(section[0])
 
-        item_query = SectionItem.active_query().where(
-            SectionItem.page_section_id == section_id,
-        ).order_by(SectionItem.display_order.asc(), SectionItem.id.asc()).with_for_update()
+        item_query = (
+            SectionItem.active_query()
+            .where(SectionItem.page_section_id == section_id)
+            .order_by(SectionItem.display_order.asc(), SectionItem.id.asc())
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
         item_result = await db.execute(item_query)
         items = list(item_result.scalars().all())
         PageSectionService._validate_reorder_entries(items, entries)
-        if authorize_edit is not None:
-            authorize_edit(section[0])
 
         old_order, ordered_entries = PageSectionService._reorder_snapshots(items, entries)
         new_order = [

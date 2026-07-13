@@ -514,13 +514,25 @@ async def reorder_section_items(
         scope_id=section.scope_id,
         action="item_manage",
     )
+
+    async def authorize_locked_parent(locked_section: PageSection) -> None:
+        await _require_page_section_access(
+            db,
+            user,
+            page_key=locked_section.page_key,
+            scope_type=locked_section.scope_type,
+            scope_id=locked_section.scope_id,
+            action="item_manage",
+        )
+        _require_page_authoring_edit(user, locked_section)
+
     try:
         items = await PageSectionService.reorder_section_items(
             db,
             section_id=section_id,
             entries=data.items,
             actor_id=user.id,
-            authorize_edit=lambda locked_section: _require_page_authoring_edit(user, locked_section),
+            authorize_parent=authorize_locked_parent,
         )
     except PageCmsReorderConflictError as exc:
         raise HTTPException(

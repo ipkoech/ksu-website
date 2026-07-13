@@ -49,6 +49,25 @@ class _ReorderDb:
         self.flush_count += 1
 
 
+class _StaleIdentityMapDb(_ReorderDb):
+    def __init__(self, *, loaded_section, current_parent_state, items):
+        super().__init__(sections=[loaded_section], items=items)
+        self.loaded_section = loaded_section
+        self.current_parent_state = current_parent_state
+
+    async def execute(self, statement):
+        self.statements.append(statement)
+        if "section_items" in str(statement):
+            return _ScalarListResult(self.items)
+        if (
+            statement._for_update_arg is not None
+            and statement.get_execution_options().get("populate_existing") is True
+        ):
+            for field, value in self.current_parent_state.items():
+                setattr(self.loaded_section, field, value)
+        return _ScalarListResult([self.loaded_section])
+
+
 def _user(*permissions: str):
     role = SimpleNamespace(
         is_active=True,
@@ -114,6 +133,10 @@ class PageCmsReorderTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual([10, 20], [section.display_order for section in response["data"]])
         self.assertEqual([2, 2], [section.revision for section in response["data"]])
         self.assertTrue(all(statement._for_update_arg is not None for statement in db.statements))
+        self.assertTrue(all(
+            statement.get_execution_options().get("populate_existing") is True
+            for statement in db.statements
+        ))
         self.assertEqual(1, db.flush_count)
         self.assertEqual(1, len(db.added))
         self.assertEqual("draft", db.added[0].from_status)
@@ -145,6 +168,10 @@ class PageCmsReorderTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("draft", db.added[0].from_status)
         self.assertEqual("draft", db.added[0].to_status)
         self.assertIn("section_item_reorder", db.added[0].changed_fields)
+        self.assertTrue(all(
+            statement.get_execution_options().get("populate_existing") is True
+            for statement in db.statements
+        ))
 
     async def test_multiple_published_sections_reset_with_exactly_one_audit_event(self):
         first = _section(order=100, status="published")
@@ -357,6 +384,88 @@ class PageCmsReorderTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual([second.id, first.id], [section.id for section in response["data"]])
         self.assertEqual(["draft", "draft"], [first.status, second.status])
         self.assertEqual(1, len(db.added))
+
+    async def test_item_reorder_rechecks_locked_parent_current_scope_before_item_query(self):
+        section = _section(order=10)
+        first = _item(section, order=100)
+        second = _item(section, order=200)
+        current_scope_id = uuid.uuid4()
+        db = _StaleIdentityMapDb(
+            loaded_section=section,
+            current_parent_state={
+                "page_key": "school-homepage",
+                "scope_type": "school",
+                "scope_id": current_scope_id,
+            },
+            items=[first, second],
+        )
+        request = SectionItemReorderRequest.model_validate({
+            "items": [
+                {"id": str(second.id), "display_order": 10, "revision": 1},
+                {"id": str(first.id), "display_order": 20, "revision": 1},
+            ],
+        })
+        checked_scopes = []
+
+        async def require_access(_db, _user, *, page_key, scope_type, scope_id, action):
+            checked_scopes.append((page_key, scope_type, scope_id, action))
+            if scope_type == "school":
+                raise HTTPException(status_code=403, detail="Current scope denied")
+
+        with patch.object(page_cms, "_require_page_section_access", side_effect=require_access):
+            with self.assertRaises(HTTPException) as context:
+                await page_cms.reorder_section_items(
+                    section.id,
+                    request,
+                    db=db,
+                    user=_user("section_items.manage"),
+                )
+
+        self.assertEqual(403, context.exception.status_code)
+        self.assertEqual([
+            ("homepage", "university", None, "item_manage"),
+            ("school-homepage", "school", current_scope_id, "item_manage"),
+        ], checked_scopes)
+        self.assertFalse(any("section_items" in str(statement) for statement in db.statements))
+        self.assertEqual([(100, 1), (200, 1)], [
+            (item.display_order, item.revision) for item in (first, second)
+        ])
+        self.assertEqual([], db.added)
+        self.assertEqual(0, db.flush_count)
+
+    async def test_item_reorder_rechecks_locked_parent_current_workflow_before_item_query(self):
+        section = _section(order=10)
+        first = _item(section, order=100)
+        second = _item(section, order=200)
+        db = _StaleIdentityMapDb(
+            loaded_section=section,
+            current_parent_state={"status": "approved", "workflow_status": "approved"},
+            items=[first, second],
+        )
+        request = SectionItemReorderRequest.model_validate({
+            "items": [
+                {"id": str(second.id), "display_order": 10, "revision": 1},
+                {"id": str(first.id), "display_order": 20, "revision": 1},
+            ],
+        })
+
+        with patch.object(page_cms, "_require_page_section_access", AsyncMock()):
+            with self.assertRaises(HTTPException) as context:
+                await page_cms.reorder_section_items(
+                    section.id,
+                    request,
+                    db=db,
+                    user=_user("section_items.manage"),
+                )
+
+        self.assertEqual(403, context.exception.status_code)
+        self.assertEqual("Submitted content requires review edit privileges", context.exception.detail)
+        self.assertFalse(any("section_items" in str(statement) for statement in db.statements))
+        self.assertEqual([(100, 1), (200, 1)], [
+            (item.display_order, item.revision) for item in (first, second)
+        ])
+        self.assertEqual([], db.added)
+        self.assertEqual(0, db.flush_count)
 
 
 if __name__ == "__main__":
