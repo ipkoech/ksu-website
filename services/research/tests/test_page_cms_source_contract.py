@@ -12,7 +12,7 @@ from ksu_common import PaginatedResult
 from app.models import PublicMedia, Publication, ResearchProject
 from app.routes.v1 import router as v1_router
 from app.routes.v1.page_cms_source_contract import router
-from app.services.page_cms_source_contract import PageCmsResearchSourceService
+from app.services.page_cms_source_contract import PageCmsResearchSourceService, _safe_thumbnail_url
 
 
 class _ScalarResult:
@@ -165,10 +165,46 @@ def test_project_summary_exposes_only_human_safe_fields_and_public_media_url():
             "published_at": "2024-01-01",
             "thumbnail_url": "https://cdn.example.test/covers/cover-thumb.webp",
             "metadata": {"project_type": "applied", "progress_percentage": 60},
+            "selectable": True,
         }
         assert all(not key.endswith("_id") and key != "id" for key in summary["metadata"])
 
     asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    ("media_updates", "expected_url"),
+    [
+        ({"thumbnail_url": "/media/covers/cover-thumb.webp"}, "/media/covers/cover-thumb.webp"),
+        ({"thumbnail_url": None, "cdn_url": "https://cdn.example.test/covers/cover.webp"}, "https://cdn.example.test/covers/cover.webp"),
+        ({"thumbnail_url": None, "public_url": "/uploads/covers/cover.webp"}, "/uploads/covers/cover.webp"),
+    ],
+)
+def test_safe_thumbnail_url_uses_only_explicit_public_media_urls(media_updates, expected_url):
+    media = _media(uuid.uuid4())
+    for key, value in media_updates.items():
+        setattr(media, key, value)
+
+    assert _safe_thumbnail_url(media) == expected_url
+
+
+@pytest.mark.parametrize(
+    "media_updates",
+    [
+        {"thumbnail_url": None, "cdn_url": None, "public_url": None},
+        {"thumbnail_url": "private/cover-thumb.webp", "cdn_url": None, "public_url": None},
+        {"thumbnail_url": "javascript:alert(1)", "cdn_url": None, "public_url": None},
+        {"thumbnail_url": "//untrusted.example.test/cover.webp", "cdn_url": None, "public_url": None},
+    ],
+)
+def test_safe_thumbnail_url_never_falls_back_to_private_storage_path_or_unsafe_url(media_updates):
+    media = _media(uuid.uuid4())
+    media.storage_path = "private/internal/cover.webp"
+    for key, value in media_updates.items():
+        setattr(media, key, value)
+
+    assert media.url == "/uploads/private/internal/cover.webp"
+    assert _safe_thumbnail_url(media) is None
 
 
 def test_publication_bulk_resolution_keeps_requested_order_and_omits_nonpublic_records():
@@ -209,7 +245,7 @@ def test_public_contract_schema_forbids_internal_fields():
     properties = schema["properties"]
 
     assert set(properties) == {
-        "id", "source_type", "label", "secondary_label", "status", "published_at", "thumbnail_url", "metadata",
+        "id", "source_type", "label", "secondary_label", "status", "published_at", "thumbnail_url", "metadata", "selectable",
     }
     assert "center_id" not in properties
     assert "cover_image_id" not in properties

@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import math
 import uuid
+from datetime import date
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 
@@ -16,6 +19,15 @@ SUPPORTED_RESEARCH_CONTENT_SOURCE_TYPES = frozenset({"research_project", "public
 MAX_RESEARCH_CONTENT_PAGE = 100
 MAX_RESEARCH_CONTENT_PER_PAGE = 50
 MAX_RESEARCH_CONTENT_IDS = 100
+RESEARCH_CONTENT_STATUSES = {
+    "research_project": frozenset({"approved", "ongoing", "completed"}),
+    "publication": frozenset({"published"}),
+}
+RESEARCH_CONTENT_METADATA_KEYS = {
+    "research_project": frozenset({"project_type", "progress_percentage"}),
+    "publication": frozenset({"publication_type", "journal_name", "year", "is_open_access"}),
+}
+FORBIDDEN_RESEARCH_CONTENT_METADATA_KEYS = frozenset({"storage_path", "provider", "public_url", "cdn_url"})
 
 
 class ResearchContentSourcesProxyService:
@@ -100,31 +112,93 @@ class ResearchContentSourcesProxyService:
             value = meta.get(key)
             if not isinstance(value, int) or isinstance(value, bool) or value < 0:
                 raise PageCmsSourceProviderError("Research content provider returned invalid pagination metadata")
+        page = meta["page"]
+        per_page = meta["per_page"]
+        total = meta["total"]
+        pages = meta["pages"]
+        if page < 1 or not 1 <= per_page <= MAX_RESEARCH_CONTENT_PER_PAGE:
+            raise PageCmsSourceProviderError("Research content provider returned invalid pagination metadata")
+        expected_pages = math.ceil(total / per_page) if total else 0
+        if pages != expected_pages:
+            raise PageCmsSourceProviderError("Research content provider returned inconsistent pagination metadata")
+        if (total == 0 and page != 1) or (total > 0 and page > pages):
+            raise PageCmsSourceProviderError("Research content provider returned invalid pagination metadata")
+        remaining_items = max(total - ((page - 1) * per_page), 0)
+        if len(data) > per_page or len(data) > remaining_items:
+            raise PageCmsSourceProviderError("Research content provider returned invalid pagination item count")
         return {"data": [cls._validate_summary(source_type, item) for item in data], "meta": meta}
 
     @staticmethod
     def _validate_summary(source_type: str, item: Any) -> dict[str, Any]:
         if not isinstance(item, dict):
             raise PageCmsSourceProviderError("Research content provider returned an invalid source summary")
-        required_keys = {"id", "source_type", "label", "secondary_label", "status", "published_at", "thumbnail_url", "metadata"}
+        required_keys = {
+            "id", "source_type", "label", "secondary_label", "status", "published_at", "thumbnail_url", "metadata",
+            "selectable",
+        }
         if set(item) != required_keys or item.get("source_type") != source_type:
             raise PageCmsSourceProviderError("Research content provider returned an invalid source summary")
         try:
-            uuid.UUID(str(item["id"]))
+            if not isinstance(item["id"], str):
+                raise ValueError("id must be a UUID string")
+            uuid.UUID(item["id"])
         except (TypeError, ValueError) as exc:
             raise PageCmsSourceProviderError("Research content provider returned an invalid source summary") from exc
-        if not isinstance(item["label"], str) or not isinstance(item["status"], str):
+        if (
+            not isinstance(item["label"], str)
+            or not item["label"].strip()
+            or not isinstance(item["status"], str)
+            or item["status"] not in RESEARCH_CONTENT_STATUSES[source_type]
+        ):
             raise PageCmsSourceProviderError("Research content provider returned an invalid source summary")
-        for key in ("secondary_label", "published_at", "thumbnail_url"):
-            if item[key] is not None and not isinstance(item[key], str):
-                raise PageCmsSourceProviderError("Research content provider returned an invalid source summary")
+        if item["secondary_label"] is not None and (
+            not isinstance(item["secondary_label"], str) or not item["secondary_label"].strip()
+        ):
+            raise PageCmsSourceProviderError("Research content provider returned an invalid source summary")
+        if item["published_at"] is not None and not _is_iso_date(item["published_at"]):
+            raise PageCmsSourceProviderError("Research content provider returned an invalid source summary")
+        if item["thumbnail_url"] is not None and not _is_safe_public_url(item["thumbnail_url"]):
+            raise PageCmsSourceProviderError("Research content provider returned an invalid source summary")
+        if not isinstance(item["selectable"], bool):
+            raise PageCmsSourceProviderError("Research content provider returned an invalid source summary")
         metadata = item["metadata"]
-        if not isinstance(metadata, dict) or any(key == "id" or key.endswith("_id") for key in metadata):
+        if not isinstance(metadata, dict):
             raise PageCmsSourceProviderError("Research content provider returned an invalid source summary")
-        allowed_value_types = (str, int, bool, type(None))
-        if any(not isinstance(value, allowed_value_types) for value in metadata.values()):
+        metadata_keys = set(metadata)
+        if (
+            metadata_keys & FORBIDDEN_RESEARCH_CONTENT_METADATA_KEYS
+            or not metadata_keys <= RESEARCH_CONTENT_METADATA_KEYS[source_type]
+            or any(not _is_safe_metadata_value(value) for value in metadata.values())
+        ):
             raise PageCmsSourceProviderError("Research content provider returned an invalid source summary")
         return item
+
+
+def _is_iso_date(value: Any) -> bool:
+    if not isinstance(value, str):
+        return False
+    try:
+        return date.fromisoformat(value).isoformat() == value
+    except ValueError:
+        return False
+
+
+def _is_safe_public_url(value: Any) -> bool:
+    if not isinstance(value, str) or not value or value != value.strip() or "\\" in value:
+        return False
+    parsed = urlparse(value)
+    if parsed.scheme in {"http", "https"}:
+        return bool(parsed.netloc)
+    return value.startswith("/") and not value.startswith("//") and not parsed.scheme and not parsed.netloc
+
+
+def _is_safe_metadata_value(value: Any) -> bool:
+    allowed_primitive_types = (str, int, bool)
+    if value is None or isinstance(value, allowed_primitive_types):
+        return True
+    return isinstance(value, list) and all(
+        item is None or isinstance(item, allowed_primitive_types) for item in value
+    )
 
 
 __all__ = [

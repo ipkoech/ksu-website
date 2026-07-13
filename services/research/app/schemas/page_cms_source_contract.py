@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import uuid
 from datetime import date
-from typing import Literal
+from typing import Literal, TypeAlias
 
 from pydantic import Field
 
 from .base import BaseSchema
 
 PageCmsResearchSourceType = Literal["research_project", "publication"]
+PageCmsResearchMetadataPrimitive: TypeAlias = str | int | bool | None
+PageCmsResearchMetadataValue: TypeAlias = PageCmsResearchMetadataPrimitive | list[PageCmsResearchMetadataPrimitive]
 
 
 class PageCmsResearchSourceSummary(BaseSchema):
@@ -23,7 +25,8 @@ class PageCmsResearchSourceSummary(BaseSchema):
     status: str
     published_at: date | None = None
     thumbnail_url: str | None = None
-    metadata: dict[str, str | int | bool | None] = Field(default_factory=dict)
+    metadata: dict[str, PageCmsResearchMetadataValue] = Field(default_factory=dict)
+    selectable: bool = True
 
 
 class PageCmsResearchSourceResolveRequest(BaseSchema):
@@ -33,6 +36,7 @@ class PageCmsResearchSourceResolveRequest(BaseSchema):
 
 __all__ = [
     "PageCmsResearchSourceResolveRequest",
+    "PageCmsResearchMetadataValue",
     "PageCmsResearchSourceSummary",
     "PageCmsResearchSourceType",
 ]

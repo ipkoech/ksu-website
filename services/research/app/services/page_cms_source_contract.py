@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Iterable
 from typing import Any
+from urllib.parse import urlparse
 
 import sqlalchemy as sa
 from ksu_common.pagination import PaginatedResult, paginate
@@ -30,13 +31,19 @@ def _source_model(source_type: str):
 def _safe_thumbnail_url(media: PublicMedia | None) -> str | None:
     if media is None:
         return None
-    value = media.thumbnail_url or media.url
-    if not value:
-        return None
-    if value.startswith(("http://", "https://", "/")):
-        return value
-    path = "/".join(part for part in value.replace("\\", "/").split("/") if part and part not in {".", ".."})
-    return f"/uploads/{path}" if path else None
+    for value in (media.thumbnail_url, media.cdn_url, media.public_url):
+        if _is_safe_public_url(value):
+            return value
+    return None
+
+
+def _is_safe_public_url(value: str | None) -> bool:
+    if not isinstance(value, str) or not value or value != value.strip() or "\\" in value:
+        return False
+    parsed = urlparse(value)
+    if parsed.scheme in {"http", "https"}:
+        return bool(parsed.netloc)
+    return value.startswith("/") and not value.startswith("//") and not parsed.scheme and not parsed.netloc
 
 
 class PageCmsResearchSourceService:
@@ -174,6 +181,7 @@ class PageCmsResearchSourceService:
                 published_at=project.start_date,
                 thumbnail_url=_safe_thumbnail_url(media),
                 metadata={"project_type": project.project_type, "progress_percentage": project.progress_percentage},
+                selectable=True,
             )
 
         publication = record
@@ -191,6 +199,7 @@ class PageCmsResearchSourceService:
                 "year": publication.year,
                 "is_open_access": publication.is_open_access,
             },
+            selectable=True,
         )
 
     @staticmethod

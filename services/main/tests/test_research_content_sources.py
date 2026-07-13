@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 import uuid
 from unittest.mock import AsyncMock, patch
 
@@ -11,16 +12,22 @@ from app.services.research_content_sources import ResearchContentSourcesProxySer
 
 
 def _summary(source_type: str, source_id: uuid.UUID) -> dict:
-    return {
+    summary = {
         "id": str(source_id),
         "source_type": source_type,
         "label": "Climate Resilience Initiative",
         "secondary_label": "CRI-24 | Applied",
-        "status": "ongoing",
+        "status": "ongoing" if source_type == "research_project" else "published",
         "published_at": "2024-01-01",
         "thumbnail_url": "https://cdn.example.test/cover.webp",
-        "metadata": {"project_type": "applied", "progress_percentage": 60},
+        "metadata": (
+            {"project_type": "applied", "progress_percentage": 60}
+            if source_type == "research_project"
+            else {"publication_type": "journal_article", "journal_name": "East African Research Journal", "year": 2024, "is_open_access": True}
+        ),
+        "selectable": True,
     }
+    return summary
 
 
 @pytest.mark.asyncio
@@ -32,7 +39,7 @@ async def test_proxy_search_uses_public_contract_and_bounds_pagination():
         json={
             "status": "success",
             "data": [_summary("research_project", source_id)],
-            "meta": {"page": 100, "per_page": 50, "total": 1, "pages": 1},
+            "meta": {"page": 1, "per_page": 50, "total": 1, "pages": 1},
         },
     )
     with patch(
@@ -100,3 +107,86 @@ async def test_proxy_rejects_unsupported_source_types_and_excessive_ids():
         await ResearchContentSourcesProxyService.resolve_many(
             "publication", [uuid.uuid4() for _ in range(101)],
         )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "meta",
+    [
+        {"page": 0, "per_page": 20, "total": 1, "pages": 1},
+        {"page": 1, "per_page": 0, "total": 1, "pages": 1},
+        {"page": 1, "per_page": 51, "total": 1, "pages": 1},
+        {"page": 1, "per_page": 20, "total": -1, "pages": 0},
+        {"page": 1, "per_page": 20, "total": 21, "pages": 1},
+        {"page": 2, "per_page": 20, "total": 1, "pages": 1},
+        {"page": 1, "per_page": 20, "total": 0, "pages": 1},
+    ],
+)
+async def test_proxy_rejects_malformed_provider_pagination(meta):
+    payload = {"status": "success", "data": [_summary("research_project", uuid.uuid4())], "meta": meta}
+
+    with pytest.raises(PageCmsSourceProviderError, match="pagination"):
+        ResearchContentSourcesProxyService._validate_page_payload("research_project", payload)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("data", "meta"),
+    [
+        ([_summary("research_project", uuid.uuid4()) for _ in range(2)], {"page": 1, "per_page": 1, "total": 2, "pages": 2}),
+        ([_summary("research_project", uuid.uuid4()) for _ in range(2)], {"page": 2, "per_page": 20, "total": 1, "pages": 1}),
+        ([_summary("research_project", uuid.uuid4())], {"page": 1, "per_page": 20, "total": 0, "pages": 0}),
+    ],
+)
+async def test_proxy_rejects_provider_pages_with_impossible_item_counts(data, meta):
+    payload = {"status": "success", "data": data, "meta": meta}
+
+    with pytest.raises(PageCmsSourceProviderError, match="pagination"):
+        ResearchContentSourcesProxyService._validate_page_payload("research_project", payload)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("source_type", "updates"),
+    [
+        ("research_project", {"id": "not-a-uuid"}),
+        ("research_project", {"label": "   "}),
+        ("research_project", {"status": "draft"}),
+        ("publication", {"status": "ongoing"}),
+        ("research_project", {"published_at": "not-a-date"}),
+        ("research_project", {"published_at": "2024-01-01T00:00:00Z"}),
+        ("research_project", {"thumbnail_url": "private/cover.webp"}),
+        ("research_project", {"thumbnail_url": "javascript:alert(1)"}),
+        ("research_project", {"thumbnail_url": "//untrusted.example.test/cover.webp"}),
+        ("research_project", {"selectable": 1}),
+        ("research_project", {"metadata": {"storage_path": "private/cover.webp"}}),
+        ("research_project", {"metadata": {"provider": "s3"}}),
+        ("research_project", {"metadata": {"public_url": "/uploads/cover.webp"}}),
+        ("research_project", {"metadata": {"cdn_url": "https://cdn.example.test/cover.webp"}}),
+        ("research_project", {"metadata": {"unexpected": "value"}}),
+        ("publication", {"metadata": {"project_type": "applied"}}),
+        ("research_project", {"metadata": {"project_type": {"unsafe": "nested"}}}),
+        ("research_project", {"metadata": {"project_type": ["safe", {"unsafe": "nested"}]}}),
+    ],
+)
+async def test_proxy_rejects_malformed_provider_summary_fields(source_type, updates):
+    summary = _summary(source_type, uuid.uuid4())
+    summary.update(deepcopy(updates))
+
+    with pytest.raises(PageCmsSourceProviderError, match="invalid source summary"):
+        ResearchContentSourcesProxyService._validate_summary(source_type, summary)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("source_type", "metadata"),
+    [
+        ("research_project", {"project_type": "applied", "progress_percentage": [25, 50]}),
+        ("publication", {"publication_type": "journal_article", "journal_name": None, "year": 2025, "is_open_access": True}),
+    ],
+)
+async def test_proxy_accepts_whitelisted_primitive_and_list_metadata(source_type, metadata):
+    summary = _summary(source_type, uuid.uuid4())
+    summary["metadata"] = metadata
+
+    assert ResearchContentSourcesProxyService._validate_summary(source_type, summary) == summary
