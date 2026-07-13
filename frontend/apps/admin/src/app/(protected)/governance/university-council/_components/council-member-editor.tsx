@@ -26,7 +26,6 @@ import { PersonPicker } from "@/components/relationships";
 import { governanceAdminApi, type CouncilMember, type GovernanceRole } from "@/lib/api/organization";
 
 type MemberForm = Partial<CouncilMember> & {
-  photo_id?: string | null;
   publish_without_portrait_override?: boolean;
   publication_notes?: string | null;
 };
@@ -51,7 +50,7 @@ const defaultForm: MemberForm = {
   is_voting_member: true,
   show_contact_publicly: false,
   publish_without_portrait_override: false,
-  photo_id: "",
+  portrait_media_id: "",
   publication_notes: "",
 };
 
@@ -92,6 +91,7 @@ function compactPayload(values: MemberForm): Partial<CouncilMember> {
     is_ex_officio: Boolean(values.is_ex_officio),
     is_voting_member: Boolean(values.is_voting_member),
     show_contact_publicly: Boolean(values.show_contact_publicly),
+    portrait_media_id: values.portrait_media_id || null,
     publish_without_portrait_override: Boolean(values.publish_without_portrait_override),
     publication_notes: values.publication_notes || null,
   };
@@ -151,7 +151,7 @@ export function CouncilMemberEditor({ archivedOnly = false }: { archivedOnly?: b
       ...defaultForm,
       ...editing,
       governance_role_id: editing.governance_role_id ?? "",
-      photo_id: "",
+      portrait_media_id: editing.portrait_media_id ?? "",
       term_number: editing.term_number ?? null,
       publish_without_portrait_override: editing.publish_without_portrait_override ?? false,
     });
@@ -294,8 +294,8 @@ export function CouncilMemberEditor({ archivedOnly = false }: { archivedOnly?: b
                   />
                 </div>
                 <MediaPicker
-                  value={values.photo_id ?? ""}
-                  onChange={(value) => setField("photo_id", value)}
+                  value={values.portrait_media_id ?? ""}
+                  onChange={(value) => setField("portrait_media_id", value)}
                   mediaType="image"
                   accept="image/*"
                   label="Portrait"

@@ -98,6 +98,12 @@ export interface CouncilMember {
     is_ex_officio?: boolean;
     is_voting_member?: boolean;
     show_contact_publicly?: boolean;
+    portrait_media_id?: string | null;
+    portrait_media?: {
+        id?: string;
+        url?: string | null;
+        alt_text?: string | null;
+    } | null;
     start_date?: string | null;
     end_date?: string | null;
     term_number?: number | null;

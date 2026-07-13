@@ -6179,8 +6179,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
         scope: ["governance.view", "administration.view", "office.view"],
       },
       {
-        title: "Council & Committees",
-        href: "/admin/council",
+        title: "University Council",
+        href: "/admin/university-council",
         icon: Landmark,
         scope: "governance.manage_boards",
       },
@@ -6244,9 +6244,9 @@ export const portalConfigs: Record<string, PortalConfig> = {
       "Manage university governance and institutional administration from one workspace.",
       [
         stat(
-          "Council & Committees",
-          "Governance bodies",
-          "/admin/council",
+          "University Council",
+          "Council workspace",
+          "/admin/university-council",
           Landmark,
           ["governance.view", "administration.view"],
           ["admin", "portal-stats", "boards_count"],

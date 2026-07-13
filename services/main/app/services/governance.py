@@ -409,6 +409,7 @@ class GovernanceService:
             .join(StaffAssignment.person)
             .options(
                 selectinload(StaffAssignment.person).selectinload(Person.photo),
+                selectinload(StaffAssignment.portrait_media),
                 selectinload(StaffAssignment.governance_role),
                 selectinload(StaffAssignment.reports_to).selectinload(StaffAssignment.person),
             )
@@ -442,6 +443,7 @@ class GovernanceService:
             select(StaffAssignment)
             .options(
                 selectinload(StaffAssignment.person).selectinload(Person.photo),
+                selectinload(StaffAssignment.portrait_media),
                 selectinload(StaffAssignment.governance_role),
                 selectinload(StaffAssignment.reports_to).selectinload(StaffAssignment.person),
             )
@@ -620,16 +622,22 @@ class GovernanceService:
     @staticmethod
     def _member_card(assignment: StaffAssignment) -> dict:
         person = assignment.person
+        portrait_media = getattr(assignment, "portrait_media", None)
         photo = getattr(person, "photo", None)
-        photo_url = getattr(person, "photo_url", None) or getattr(photo, "url", None)
+        photo_url = (
+            getattr(portrait_media, "url", None)
+            or getattr(person, "photo_url", None)
+            or getattr(photo, "url", None)
+        )
         role = getattr(assignment, "public_role_label", None) or getattr(assignment.governance_role, "public_label", None) or assignment.title or StaffService.role_label(assignment.role)
+        portrait_alt = getattr(portrait_media, "alt_text", None) or f"{person.display_name}, {role}"
         return {
             "id": assignment.id,
             "name": person.display_name,
             "role": role,
             "slug": assignment.profile_slug,
             "portrait": (
-                {"url": photo_url, "alt": f"{person.display_name}, {role}"}
+                {"url": photo_url, "alt": portrait_alt}
                 if photo_url
                 else None
             ),

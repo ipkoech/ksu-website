@@ -110,6 +110,7 @@ class CouncilMemberCreate(BaseSchema):
     is_voting_member: bool = True
     is_acting: bool = False
     show_contact_publicly: bool = False
+    portrait_media_id: uuid.UUID | None = None
     profile_slug: SlugStr | None = None
     profile_summary: str | None = None
     appointment_status: str = Field(default="draft", max_length=32)
@@ -138,6 +139,7 @@ class CouncilMemberUpdate(BaseSchema):
     is_voting_member: bool | None = None
     is_acting: bool | None = None
     show_contact_publicly: bool | None = None
+    portrait_media_id: uuid.UUID | None = None
     profile_slug: SlugStr | None = None
     profile_summary: str | None = None
     appointment_status: str | None = Field(default=None, max_length=32)
@@ -175,6 +177,8 @@ class CouncilMemberRead(BaseReadSchema):
     is_voting_member: bool
     is_acting: bool
     show_contact_publicly: bool
+    portrait_media_id: uuid.UUID | None = None
+    portrait_media: dict[str, Any] | None = None
     profile_slug: str | None = None
     profile_summary: str | None = None
     appointment_status: str

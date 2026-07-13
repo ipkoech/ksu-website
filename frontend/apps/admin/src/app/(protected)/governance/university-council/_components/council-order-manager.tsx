@@ -36,6 +36,7 @@ function normalizeOrder(nodes: CouncilOrderNode[]) {
 export function CouncilOrderManager() {
   const queryClient = useQueryClient();
   const [nodes, setNodes] = useState<CouncilOrderNode[]>([]);
+  const [dragging, setDragging] = useState<{ group: DisplayGroup; assignmentId: string } | null>(null);
 
   const orderQuery = useQuery({
     queryKey: ["governance", "university-council", "order"],
@@ -75,6 +76,25 @@ export function CouncilOrderManager() {
     const index = groupNodes.findIndex((node) => node.assignment_id === assignmentId);
     const nextIndex = index + direction;
     if (index < 0 || nextIndex < 0 || nextIndex >= groupNodes.length) return;
+
+    const reordered = [...groupNodes];
+    const [item] = reordered.splice(index, 1);
+    reordered.splice(nextIndex, 0, item);
+
+    setNodes((current) => {
+      const otherGroups = current.filter((node) => node.display_group !== group);
+      const updatedGroup = reordered.map((node, orderIndex) => ({
+        ...node,
+        display_order: orderIndex + 1,
+      }));
+      return normalizeOrder([...otherGroups, ...updatedGroup]);
+    });
+  };
+
+  const moveToIndex = (group: DisplayGroup, assignmentId: string, nextIndex: number) => {
+    const groupNodes = grouped[group];
+    const index = groupNodes.findIndex((node) => node.assignment_id === assignmentId);
+    if (index < 0 || nextIndex < 0 || nextIndex >= groupNodes.length || index === nextIndex) return;
 
     const reordered = [...groupNodes];
     const [item] = reordered.splice(index, 1);
@@ -134,7 +154,20 @@ export function CouncilOrderManager() {
               {grouped[group].map((node, index) => {
                 const member = membersByAssignment.get(node.assignment_id);
                 return (
-                  <div key={node.assignment_id} className="rounded-md border bg-background p-3">
+                  <div
+                    key={node.assignment_id}
+                    className="rounded-md border bg-background p-3"
+                    draggable
+                    onDragStart={() => setDragging({ group, assignmentId: node.assignment_id })}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      if (!dragging || dragging.group !== group) return;
+                      moveToIndex(group, dragging.assignmentId, index);
+                      setDragging(null);
+                    }}
+                    onDragEnd={() => setDragging(null)}
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="font-medium">{getMemberName(member)}</p>

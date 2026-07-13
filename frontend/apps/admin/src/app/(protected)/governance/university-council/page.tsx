@@ -1,5 +1,5 @@
-import { CouncilDashboard } from "./_components/council-dashboard";
+import { redirect } from "next/navigation";
 
 export default function UniversityCouncilPage() {
-  return <CouncilDashboard />;
+  redirect("/admin/university-council");
 }

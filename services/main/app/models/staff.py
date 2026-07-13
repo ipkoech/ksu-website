@@ -13,6 +13,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ksu_common.models.base import Base
 
 if TYPE_CHECKING:
+    from .media import Media
     from .governance import GovernanceRole
     from .person import Person
     from .auth import User
@@ -308,6 +309,9 @@ class StaffAssignment(Base):
     is_ex_officio: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
     is_voting_member: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
     show_contact_publicly: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
+    portrait_media_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("media.id", ondelete="SET NULL"), nullable=True
+    )
     profile_slug: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
     profile_summary: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
     appointment_status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="draft")
@@ -344,6 +348,7 @@ class StaffAssignment(Base):
     governance_role: Mapped[Optional["GovernanceRole"]] = relationship(
         "GovernanceRole", foreign_keys=[governance_role_id]
     )
+    portrait_media: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[portrait_media_id])
     reports_to: Mapped[Optional["StaffAssignment"]] = relationship(
         "StaffAssignment",
         remote_side="StaffAssignment.id",

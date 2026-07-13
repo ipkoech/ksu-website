@@ -66,7 +66,16 @@ test("portal registry links to university council workspace", () => {
   const source = read("src/lib/portals/registry.ts");
 
   assert.match(source, /University Council/);
-  assert.match(source, /\/governance\/university-council/);
+  assert.match(source, /\/admin\/university-council/);
+  assert.doesNotMatch(source, /"\/admin\/council"/);
+});
+
+test("admin route is canonical and legacy governance route redirects", () => {
+  const adminRoute = read("src/app/(protected)/admin/university-council/page.tsx");
+  const legacyRoute = read("src/app/(protected)/governance/university-council/page.tsx");
+
+  assert.match(adminRoute, /CouncilDashboard/);
+  assert.match(legacyRoute, /redirect\("\/admin\/university-council"\)/);
 });
 
 test("member editor uses readable relationship and media controls", () => {
@@ -81,11 +90,12 @@ test("member editor uses readable relationship and media controls", () => {
     "Publish without approved portrait",
     "submit-review",
     "Select a governance role before saving",
+    "portrait_media_id",
   ]) {
     assert.match(source, new RegExp(fragment));
   }
 
-  assert.doesNotMatch(source, /photo_id: values\.photo_id/);
+  assert.match(source, /portrait_media_id: values\.portrait_media_id \|\| null/);
 });
 
 test("order manager persists explicit backend order and supports keyboard users", () => {
@@ -100,6 +110,9 @@ test("order manager persists explicit backend order and supports keyboard users"
     "Secretary to Council",
     "Loading Council order",
     "could not be loaded",
+    "draggable",
+    "onDragStart",
+    "onDrop",
   ]) {
     assert.match(source, new RegExp(fragment));
   }

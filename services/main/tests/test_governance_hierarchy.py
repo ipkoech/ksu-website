@@ -5,6 +5,8 @@ from unittest.mock import AsyncMock, patch
 
 from sqlalchemy.dialects import postgresql
 
+from app.models import StaffAssignment
+from app.schemas.governance import CouncilMemberCreate, CouncilMemberUpdate
 from app.api.v1 import governance
 from app.seeders import seed_governance as governance_seeder
 from app.services.governance import GovernanceService
@@ -64,6 +66,41 @@ class _FakeSelector:
 
 
 class GovernanceHierarchyTests(unittest.IsolatedAsyncioTestCase):
+    def test_council_member_portrait_is_persisted_on_assignment_contract(self):
+        self.assertIn("portrait_media_id", StaffAssignment.__table__.c)
+
+        portrait_id = uuid.uuid4()
+        create = CouncilMemberCreate(
+            person_id=uuid.uuid4(),
+            governance_role_id=uuid.uuid4(),
+            public_role_label="Council Member",
+            portrait_media_id=portrait_id,
+        )
+        update = CouncilMemberUpdate(portrait_media_id=portrait_id)
+
+        self.assertEqual(portrait_id, create.portrait_media_id)
+        self.assertEqual(portrait_id, update.portrait_media_id)
+
+    def test_public_member_card_prefers_council_portrait_over_person_photo(self):
+        assignment = SimpleNamespace(
+            id=uuid.uuid4(),
+            person=SimpleNamespace(display_name="Dr. Council Member", photo=SimpleNamespace(url="/person.jpg")),
+            portrait_media=SimpleNamespace(url="/council.jpg", alt_text="Official Council portrait"),
+            public_role_label="Council Member",
+            governance_role=None,
+            title=None,
+            role="member",
+            profile_slug="dr-council-member",
+            display_order=1,
+            is_acting=False,
+            profile_summary=None,
+        )
+
+        card = GovernanceService._member_card(assignment)
+
+        self.assertEqual("/council.jpg", card["portrait"]["url"])
+        self.assertEqual("Official Council portrait", card["portrait"]["alt"])
+
     async def test_boards_list_by_display_order_then_name(self):
         db = _RecordingDb()
 
