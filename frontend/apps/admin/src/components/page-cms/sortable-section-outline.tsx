@@ -7,7 +7,7 @@ export type SortableSectionOutlineProps = {
   sections: PageSection[];
   selectedSectionId?: string | null;
   onSelect: (id: string) => void;
-  onOrderChange: (sections: PageSection[]) => void;
+  onOrderChange: (sections: PageSection[]) => void | Promise<void>;
 };
 
 export function SortableSectionOutline({

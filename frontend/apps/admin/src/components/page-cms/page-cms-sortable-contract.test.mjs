@@ -18,6 +18,7 @@ function readComponent(fileName) {
 
 const itemListSource = readComponent("sortable-item-list.tsx");
 const sectionOutlineSource = readComponent("sortable-section-outline.tsx");
+const orderStateSource = readComponent("sortable-order-state.ts");
 
 for (const requiredSnippet of [
   "PointerSensor",
@@ -37,12 +38,26 @@ for (const requiredSnippet of [
   "Unsaved order",
   "Save Order",
   "Cancel Order",
-  "normalizeDisplayOrders",
-  "display_order: (index + 1) * 10",
   "arrayMove(",
-  "onOrderChange(normalizedItems)",
+  "onOrderChange: (items: T[]) => void | Promise<void>;",
+  "const handleSaveOrder = async () => {",
+  "await onOrderChange(normalizedItems);",
+  "receiveServerOrder",
+  "role=\"alert\"",
 ]) {
   assert(itemListSource.includes(requiredSnippet), `Expected sortable item list to include: ${requiredSnippet}`);
+}
+
+for (const requiredSnippet of [
+  "normalizeDisplayOrders",
+  "display_order: (index + 1) * 10",
+  "orderSignature",
+  "confirmOrderSave",
+  "rejectOrderSave",
+  "cancelOrderEdit",
+  "receiveServerOrder",
+]) {
+  assert(orderStateSource.includes(requiredSnippet), `Expected sortable order state to include: ${requiredSnippet}`);
 }
 
 for (const requiredSnippet of [
@@ -51,6 +66,7 @@ for (const requiredSnippet of [
   "selectedSectionId",
   "onSelect",
   "onOrderChange",
+  "void | Promise<void>",
   "SortableOutlineList",
 ]) {
   assert(sectionOutlineSource.includes(requiredSnippet), `Expected sortable section outline to include: ${requiredSnippet}`);
