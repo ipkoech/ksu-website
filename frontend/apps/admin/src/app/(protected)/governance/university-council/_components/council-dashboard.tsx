@@ -6,10 +6,8 @@ import {
   Archive,
   ArrowUpDown,
   Eye,
-  FileText,
   Plus,
   Send,
-  Users,
 } from "lucide-react";
 import {
   Badge,
