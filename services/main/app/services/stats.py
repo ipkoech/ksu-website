@@ -79,12 +79,6 @@ PORTAL_STAT_CONTRACTS: dict[str, tuple[str, ...]] = {
         "active_regulations_count",
         "loans_count",
     ),
-    "publications": (
-        "draft_count",
-        "submitted_count",
-        "school_approved_count",
-        "published_count",
-    ),
 }
 
 PORTAL_ALIASES = {
@@ -110,16 +104,6 @@ async def _sum_publications_for_people(
         select(func.coalesce(func.sum(Person.publications_count), 0)).where(
             Person.deleted_at.is_(None),
             Person.id.in_(person_ids_query),
-        )
-    )
-    return int(result.scalar_one() or 0)
-
-
-async def _sum(db: AsyncSession, field, model, *conditions) -> int:
-    result = await db.execute(
-        select(func.coalesce(func.sum(field), 0)).where(
-            model.deleted_at.is_(None),
-            *conditions,
         )
     )
     return int(result.scalar_one() or 0)
@@ -743,17 +727,6 @@ async def portal_stats(
             ),
         }
         title = "Department administration counters"
-    elif portal == "student-clubs":
-        stats = {
-            "active_clubs_count": await _count(db, Club, Club.is_active.is_(True)),
-            "active_members_count": await _sum(
-                db,
-                Club.membership_count,
-                Club,
-                Club.is_active.is_(True),
-            ),
-        }
-        title = "Student club counters"
     else:
         return None
 

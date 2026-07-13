@@ -1,5 +1,13 @@
 import unittest
+import uuid
+from types import SimpleNamespace
 
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from app.api.v1 import stats as stats_api
+from app.deps import get_db
+from app.helpers.jwt import create_access_token
 from app.services.stats import PORTAL_STAT_CONTRACTS, portal_stats
 
 
@@ -14,6 +22,53 @@ class _CountResult:
 class _FakeDb:
     async def execute(self, _statement):
         return _CountResult()
+
+
+class _AuthResult(_CountResult):
+    def __init__(self, user):
+        super().__init__()
+        self.user = user
+
+    def scalar_one_or_none(self):
+        return self.user
+
+
+class _AuthStatsDb:
+    def __init__(self, user):
+        self.user = user
+        self.query_count = 0
+
+    async def execute(self, _statement):
+        self.query_count += 1
+        if self.query_count == 1:
+            return _AuthResult(self.user)
+        return _CountResult()
+
+
+def _user_with_scopes(*scopes: str):
+    permissions = [
+        SimpleNamespace(permission=SimpleNamespace(name=scope, is_active=True))
+        for scope in scopes
+    ]
+    role = SimpleNamespace(is_active=True, role_permissions=permissions)
+    return SimpleNamespace(
+        id=uuid.uuid4(),
+        is_active=True,
+        deleted_at=None,
+        role_assignments=[SimpleNamespace(is_active=True, role=role)],
+        person=None,
+    )
+
+
+def _portal_stats_client(db) -> TestClient:
+    app = FastAPI()
+    app.include_router(stats_api.router, prefix="/api/v1/stats")
+
+    async def _override_db():
+        yield db
+
+    app.dependency_overrides[get_db] = _override_db
+    return TestClient(app)
 
 
 class _WorkflowCountDb:
@@ -75,7 +130,6 @@ class PortalStatsTests(unittest.IsolatedAsyncioTestCase):
                 "programmes_count",
                 "unpublished_count",
             },
-            "student-clubs": {"active_clubs_count", "active_members_count"},
         }
 
         for portal, keys in expected_keys.items():
@@ -91,7 +145,6 @@ class PortalStatsTests(unittest.IsolatedAsyncioTestCase):
             "departments",
             "research",
             "library",
-            "publications",
         }
 
         self.assertEqual(expected, set(PORTAL_STAT_CONTRACTS))
@@ -104,6 +157,43 @@ class PortalStatsTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertIsNotNone(result)
         self.assertEqual("corporate-communication", result.portal)
+
+    async def test_student_clubs_stats_are_not_a_standalone_portal_surface(self):
+        result = await portal_stats(_FakeDb(), "student-clubs")
+
+        self.assertIsNone(result)
+
+
+class PortalStatsApiTests(unittest.TestCase):
+    def test_portal_stats_permission_map_uses_canonical_main_service_keys(self):
+        self.assertEqual(
+            {"admin", "corporate-communication", "schools", "departments"},
+            set(stats_api.PORTAL_STAT_SCOPES),
+        )
+
+    def test_corporate_communication_api_authorizes_canonical_portal_key(self):
+        user = _user_with_scopes("content.view")
+        db = _AuthStatsDb(user)
+        token, _ = create_access_token(str(user.id), ["corporate-communication"], permissions=[])
+
+        response = _portal_stats_client(db).get(
+            "/api/v1/stats/portal/corporate-communication",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        self.assertEqual(200, response.status_code)
+        data = response.json()["data"]
+        self.assertEqual("corporate-communication", data["portal"])
+        self.assertEqual(
+            {
+                "pending_review_count",
+                "published_count",
+                "draft_count",
+                "scheduled_count",
+                "media_count",
+            },
+            set(data["stats"]),
+        )
 
 
 if __name__ == "__main__":

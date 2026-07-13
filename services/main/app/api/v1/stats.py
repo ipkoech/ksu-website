@@ -8,7 +8,7 @@ from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ...deps import CurrentUser, DbSession, require_scope, user_has_scope
-from ...services.stats import admin_stats, portal_stats, public_stats
+from ...services.stats import PORTAL_ALIASES, admin_stats, portal_stats, public_stats
 
 router = APIRouter()
 
@@ -38,10 +38,9 @@ async def get_admin_stats(
 
 PORTAL_STAT_SCOPES = {
     "admin": ("governance.view", "administration.view", "office.view"),
-    "cocms": ("content.view", "media.view"),
+    "corporate-communication": ("content.view", "media.view"),
     "schools": ("academic.view",),
     "departments": ("academic.view",),
-    "student-clubs": ("clubs.view", "clubs.manage_own"),
 }
 
 
@@ -51,6 +50,7 @@ async def get_portal_stats(
     db: DbSession,
     user: CurrentUser,
 ):
+    portal = PORTAL_ALIASES.get(portal, portal)
     required_scopes = PORTAL_STAT_SCOPES.get(portal)
     if required_scopes is None:
         raise HTTPException(status_code=404, detail="Portal stats not found")
