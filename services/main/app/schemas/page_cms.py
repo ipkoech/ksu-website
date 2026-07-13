@@ -353,6 +353,7 @@ class PageSectionUpdate(BaseSchema):
         extra="forbid",
     )
 
+    revision: int | None = Field(default=None, ge=1)
     page_key: str | None = Field(default=None, min_length=1, max_length=64)
     scope_type: str | None = Field(default=None, max_length=32)
     scope_id: uuid.UUID | None = None
@@ -367,6 +368,7 @@ class PageSectionUpdate(BaseSchema):
     valid_from: datetime | None = None
     valid_to: datetime | None = None
     items: list[SectionItemUpdate] | None = None
+    media_links: list["PageSectionMediaLinkUpdate"] | None = None
 
     @field_validator("scope_type")
     @classmethod
@@ -385,6 +387,14 @@ class PageSectionUpdate(BaseSchema):
         if self.valid_from and self.valid_to and self.valid_to < self.valid_from:
             raise ValueError("valid_to must be greater than or equal to valid_from")
         return self
+
+
+class PageSectionMediaLinkUpdate(BaseSchema):
+    id: uuid.UUID | None = None
+    media_id: uuid.UUID
+    role: str = Field(min_length=1, max_length=64)
+    display_order: int = 100
+    is_public: bool = True
 
 
 class PageSectionRead(BaseReadSchema):

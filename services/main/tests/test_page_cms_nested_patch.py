@@ -38,6 +38,8 @@ def _user(*permissions: str):
 class _Db:
     def __init__(self):
         self.added = []
+        self.deleted = []
+        self.execute_count = 0
 
     def add(self, value):
         self.added.append(value)
@@ -47,6 +49,18 @@ class _Db:
 
     async def refresh(self, _value):
         return None
+
+    async def rollback(self):
+        return None
+
+    async def execute(self, _statement):
+        self.execute_count += 1
+        result = SimpleNamespace(scalar_one_or_none=lambda: self.locked_section)
+        result.unique = lambda: result
+        return result
+
+    async def delete(self, value):
+        self.deleted.append(value)
 
 
 def _item(section: PageSection, *, title: str, revision: int = 1) -> SectionItem:
@@ -74,9 +88,10 @@ def _section(*items: SectionItem) -> PageSection:
 
 
 class PageCmsNestedPatchTests(unittest.IsolatedAsyncioTestCase):
-    async def _update(self, section: PageSection, payload: dict):
+    async def _update(self, section: PageSection, payload: dict, db: _Db | None = None):
         user = _user("page_sections.update")
-        db = _Db()
+        db = db or _Db()
+        db.locked_section = section
         with (
             patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
             patch("app.api.v1._scoped._can_access_scope", return_value=True),
@@ -162,6 +177,126 @@ class PageCmsNestedPatchTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual("New title", response["data"].title)
         self.assertEqual([existing.id], [item.id for item in response["data"].items])
+
+    async def test_stale_section_revision_cannot_delete_a_concurrently_added_item(self):
+        section = _section()
+        existing = _item(section, title="Original")
+        concurrent = _item(section, title="Concurrent", revision=2)
+        section.items = [existing, concurrent]
+        section.revision = 5
+
+        with self.assertRaises(HTTPException) as context:
+            await self._update(section, {
+                "revision": 4,
+                "title": "Stale overwrite",
+                "media_links": [],
+                "items": [{
+                    "id": str(existing.id),
+                    "revision": 1,
+                    "item_type": "card",
+                    "title": "Changed",
+                    "display_order": 10,
+                    "is_enabled": True,
+                }],
+            })
+
+        self.assertEqual(409, context.exception.status_code)
+        self.assertEqual(5, section.revision)
+        self.assertEqual("Original", existing.title)
+        self.assertEqual([existing.id, concurrent.id], [item.id for item in section.items])
+
+
+class _MediaDb(_Db):
+    def __init__(self, section: PageSection, links, media):
+        super().__init__()
+        self.locked_section = section
+        self.links = links
+        self.media = media
+
+    async def execute(self, _statement):
+        self.execute_count += 1
+        if self.execute_count == 1:
+            result = SimpleNamespace(scalar_one_or_none=lambda: self.locked_section)
+            result.unique = lambda: result
+            return result
+        rows = self.links if self.execute_count == 2 else self.media
+        return SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: rows))
+
+
+class PageCmsMediaReconciliationTests(unittest.TestCase):
+    def test_reconciliation_rejects_invalid_role_without_mutating_existing_links(self):
+        section_id = uuid.uuid4()
+        existing = SimpleNamespace(
+            id=uuid.uuid4(), media_id=uuid.uuid4(), entity_type="page_section", entity_id=section_id,
+            role="hero_image", display_order=10, is_public=True,
+        )
+        definition = SimpleNamespace(media_roles={
+            "hero_image": SimpleNamespace(media_type="image", multiple=False),
+        })
+        media = SimpleNamespace(id=existing.media_id, media_type="image", is_public=True)
+
+        with self.assertRaises(HTTPException) as context:
+            page_cms.reconcile_section_media_links(
+                [existing],
+                [{"id": existing.id, "media_id": existing.media_id, "role": "unknown", "display_order": 10, "is_public": True}],
+                definition,
+                {media.id: media},
+            )
+
+        self.assertEqual(422, context.exception.status_code)
+        self.assertEqual("hero_image", existing.role)
+
+    def test_reconciliation_rejects_duplicate_singleton_role(self):
+        definition = SimpleNamespace(media_roles={
+            "hero_image": SimpleNamespace(media_type="image", multiple=False),
+        })
+        first_media = SimpleNamespace(id=uuid.uuid4(), media_type="image", is_public=True)
+        second_media = SimpleNamespace(id=uuid.uuid4(), media_type="image", is_public=True)
+
+        with self.assertRaises(HTTPException) as context:
+            page_cms.reconcile_section_media_links(
+                [],
+                [
+                    {"media_id": first_media.id, "role": "hero_image", "display_order": 10, "is_public": True},
+                    {"media_id": second_media.id, "role": "hero_image", "display_order": 20, "is_public": True},
+                ],
+                definition,
+                {first_media.id: first_media, second_media.id: second_media},
+            )
+
+        self.assertEqual(422, context.exception.status_code)
+
+
+class PageCmsMediaPatchTests(PageCmsNestedPatchTests):
+    async def test_published_media_edit_resets_workflow_once_and_increments_section_revision_once(self):
+        section = _section()
+        section.layout_variant = "hero_admissions"
+        old_media_id = uuid.uuid4()
+        new_media_id = uuid.uuid4()
+        link = SimpleNamespace(
+            id=uuid.uuid4(), media_id=old_media_id, entity_type="page_section", entity_id=section.id,
+            role="hero_image", display_order=10, is_public=True,
+        )
+        media = SimpleNamespace(id=new_media_id, media_type="image", is_public=True)
+        db = _MediaDb(section, [link], [media])
+
+        response, _ = await self._update(section, {
+            "revision": 4,
+            "media_links": [{
+                "id": str(link.id),
+                "media_id": str(new_media_id),
+                "role": "hero_image",
+                "display_order": 20,
+                "is_public": True,
+            }],
+        }, db=db)
+
+        self.assertEqual("draft", response["data"].status)
+        self.assertEqual("draft", response["data"].workflow_status)
+        self.assertEqual(5, response["data"].revision)
+        self.assertEqual(new_media_id, link.media_id)
+        self.assertEqual(20, link.display_order)
+        self.assertEqual(1, len([entry for entry in db.added if entry.__class__.__name__ == "ContentWorkflowLog"]))
 
 
 if __name__ == "__main__":

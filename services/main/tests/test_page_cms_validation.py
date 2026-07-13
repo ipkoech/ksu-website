@@ -253,7 +253,7 @@ def test_unknown_media_role_is_blocking_instead_of_silently_dropped():
     assert any(issue.code == "unknown_media_role" and issue.field == "mysteryRole" for issue in issues)
 
 
-def test_unknown_and_incompatible_settings_are_blocking():
+def test_unknown_settings_warn_but_known_invalid_settings_remain_blocking():
     section = _section(
         "programme_finder",
         items=[_item(item_type="cta", cta_label="Browse", cta_url="/programmes")],
@@ -262,9 +262,11 @@ def test_unknown_and_incompatible_settings_are_blocking():
 
     issues = PageSectionValidationService.validate(section, [], _media_groups())
 
-    assert any(issue.code == "unknown_setting" and issue.field == "settings.unknown" for issue in issues)
-    assert any(issue.code == "invalid_setting_type" and issue.field == "settings.filters" for issue in issues)
-    assert any(issue.code == "setting_limit_exceeded" and issue.field == "settings.pathway_steps" for issue in issues)
+    unknown = next(issue for issue in issues if issue.code == "unknown_setting" and issue.field == "settings.unknown")
+    assert unknown.severity == "warning"
+    assert unknown.blocking is False
+    assert next(issue for issue in issues if issue.code == "invalid_setting_type" and issue.field == "settings.filters").blocking is True
+    assert next(issue for issue in issues if issue.code == "setting_limit_exceeded" and issue.field == "settings.pathway_steps").blocking is True
 
 
 def test_settings_schema_enforces_required_enum_and_numeric_range():

@@ -67,7 +67,7 @@ SECTION_DEFINITIONS: dict[str, SectionDefinition] = {
         min_items=1,
         max_items=4,
         allowed_item_types=("card",),
-        allowed_source_types=("news", "event", "research_project", "club_activity"),
+        allowed_source_types=("news", "event", "research_project", "club_activity", "intake"),
         media_roles={},
         settings_schema={
             "priority": {"type": "integer"},

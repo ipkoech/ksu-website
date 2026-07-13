@@ -859,6 +859,7 @@ class PageSectionValidationService:
                 "unknown_setting",
                 "Setting is not supported by this section layout.",
                 field=f"settings.{key}",
+                blocking=False,
             ))
 
         for key, rules in definition.settings_schema.items():

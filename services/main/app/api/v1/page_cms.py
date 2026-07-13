@@ -3,15 +3,19 @@
 from __future__ import annotations
 
 import uuid
+from dataclasses import dataclass
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from ksu_common.schemas.responses import success
 
 from ...deps import CurrentUser, DbSession, require_scope, user_has_scope
-from ...models import PageSection, PartnershipSpotlight, SectionItem
+from ...models import Media, MediaLink, PageSection, PartnershipSpotlight, SectionItem
 from ...schemas import (
     PageSectionCreate,
+    PageSectionMediaLinkUpdate,
     PageSectionUpdate,
     PartnershipSpotlightCreate,
     PartnershipSpotlightUpdate,
@@ -133,8 +137,8 @@ def _unprocessable_nested_items(detail: str) -> HTTPException:
     return HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=detail)
 
 
-def _reconcile_section_items(section: PageSection, updates: list[SectionItemUpdate]) -> None:
-    """Apply a fully-authoritative nested item payload after validating every change."""
+def _prepare_section_item_reconciliation(section: PageSection, updates: list[SectionItemUpdate]) -> list[tuple[SectionItem | None, dict]]:
+    """Validate a fully-authoritative nested item payload before it mutates the section."""
     existing_by_id = {item.id: item for item in section.items}
     seen_ids: set[uuid.UUID] = set()
     prepared: list[tuple[SectionItemUpdate, SectionItem | None, dict]] = []
@@ -174,16 +178,88 @@ def _reconcile_section_items(section: PageSection, updates: list[SectionItemUpda
             raise _unprocessable_nested_items(str(exc)) from exc
         prepared.append((update, existing, payload))
 
+    return [(existing, payload) for _update, existing, payload in prepared]
+
+
+def _apply_section_item_reconciliation(section: PageSection, prepared: list[tuple[SectionItem | None, dict]]) -> None:
     next_items: list[SectionItem] = []
-    for _update, existing, payload in prepared:
+    for existing, payload in prepared:
         if existing is None:
             next_items.append(SectionItem(page_section_id=section.id, **payload))
             continue
         apply_updates(existing, **payload)
         existing.revision = (existing.revision or 1) + 1
         next_items.append(existing)
-
     section.items[:] = next_items
+
+
+@dataclass(frozen=True)
+class _MediaLinkReconciliation:
+    retained: list[tuple[MediaLink | None, dict]]
+    removed: list[MediaLink]
+
+
+def reconcile_section_media_links(
+    existing_links: list[MediaLink],
+    updates: list[dict],
+    definition,
+    media_by_id: dict[uuid.UUID, Media],
+) -> _MediaLinkReconciliation:
+    """Purely validate and plan an authoritative section-media replacement."""
+    existing_by_id = {link.id: link for link in existing_links}
+    seen_link_ids: set[uuid.UUID] = set()
+    seen_media_roles: set[tuple[uuid.UUID, str]] = set()
+    role_counts: dict[str, int] = {}
+    retained: list[tuple[MediaLink | None, dict]] = []
+
+    for update in updates:
+        link_id = update.get("id")
+        media_id = update["media_id"]
+        role = update["role"]
+        if link_id is not None:
+            if link_id in seen_link_ids:
+                raise _unprocessable_nested_items("Nested media link IDs must be unique")
+            seen_link_ids.add(link_id)
+            if link_id not in existing_by_id:
+                raise _unprocessable_nested_items("Nested media link does not belong to this section")
+        role_definition = definition.media_roles.get(role)
+        if role_definition is None:
+            raise _unprocessable_nested_items("Media role is not allowed for this section")
+        if (media_id, role) in seen_media_roles:
+            raise _unprocessable_nested_items("Duplicate media and role selections are not allowed")
+        seen_media_roles.add((media_id, role))
+        role_counts[role] = role_counts.get(role, 0) + 1
+        if not role_definition.multiple and role_counts[role] > 1:
+            raise _unprocessable_nested_items("This media role only accepts one attachment")
+        media = media_by_id.get(media_id)
+        if media is None or not media.is_public:
+            raise _unprocessable_nested_items("Selected media must exist and be public")
+        if media.media_type != role_definition.media_type:
+            raise _unprocessable_nested_items("Selected media type is not allowed for this role")
+        retained.append((existing_by_id.get(link_id), {
+            "media_id": media_id,
+            "role": role,
+            "display_order": update["display_order"],
+            "is_public": update["is_public"],
+        }))
+    return _MediaLinkReconciliation(
+        retained=retained,
+        removed=[link for link in existing_links if link.id not in seen_link_ids],
+    )
+
+
+async def _apply_section_media_reconciliation(
+    db: DbSession,
+    section: PageSection,
+    reconciliation: _MediaLinkReconciliation,
+) -> None:
+    for link in reconciliation.removed:
+        await db.delete(link)
+    for existing, payload in reconciliation.retained:
+        if existing is None:
+            db.add(MediaLink(entity_type="page_section", entity_id=section.id, **payload))
+        else:
+            apply_updates(existing, **payload)
 
 
 def _page_specific_permissions(*, page_key: str, scope_type: str, action: str) -> list[str]:
@@ -343,6 +419,19 @@ def _validate_page_scope(scope_type: str, scope_id: uuid.UUID | None) -> None:
 
 async def _get_page_section_or_404(db: DbSession, section_id: uuid.UUID) -> PageSection:
     item = await PageSection.get_by_id(db, section_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Page section not found")
+    return item
+
+
+async def _get_page_section_for_update_or_404(db: DbSession, section_id: uuid.UUID) -> PageSection:
+    result = await db.execute(
+        select(PageSection)
+        .options(selectinload(PageSection.items))
+        .where(PageSection.id == section_id)
+        .with_for_update()
+    )
+    item = result.unique().scalar_one_or_none()
     if item is None:
         raise HTTPException(status_code=404, detail="Page section not found")
     return item
@@ -611,7 +700,13 @@ async def update_page_section(
     db: DbSession,
     user: CurrentUser,
 ):
-    item = await _get_page_section_or_404(db, section_id)
+    item = (
+        await _get_page_section_for_update_or_404(db, section_id)
+        if data.revision is not None
+        else await _get_page_section_or_404(db, section_id)
+    )
+    if data.revision is not None and data.revision != item.revision:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Page section has changed; reload required")
     await _require_page_section_access(
         db,
         user,
@@ -621,8 +716,11 @@ async def update_page_section(
         action="update",
     )
     payload = data.model_dump(exclude_unset=True)
+    payload.pop("revision", None)
     item_updates = data.items if "items" in data.model_fields_set else None
+    media_link_updates = data.media_links if "media_links" in data.model_fields_set else None
     payload.pop("items", None)
+    payload.pop("media_links", None)
     await _require_page_section_access(
         db,
         user,
@@ -632,23 +730,52 @@ async def update_page_section(
         action="update",
     )
     payload["updated_by_id"] = user.id
+    prepared_items = _prepare_section_item_reconciliation(item, item_updates) if item_updates is not None else None
+    prepared_media = None
+    if media_link_updates is not None:
+        definition = SECTION_DEFINITIONS[item.layout_variant]
+        existing_result = await db.execute(
+            select(MediaLink).where(
+                MediaLink.entity_type == "page_section",
+                MediaLink.entity_id == item.id,
+            )
+        )
+        existing_links = list(existing_result.scalars().all())
+        media_ids = {update.media_id for update in media_link_updates}
+        media_by_id: dict[uuid.UUID, Media] = {}
+        if media_ids:
+            media_result = await db.execute(select(Media).where(Media.id.in_(media_ids)))
+            media_by_id = {media.id: media for media in media_result.scalars().all()}
+        prepared_media = reconcile_section_media_links(
+            existing_links,
+            [update.model_dump() for update in media_link_updates],
+            definition,
+            media_by_id,
+        )
     _require_page_authoring_edit(user, item)
-    if item_updates is not None:
-        _reconcile_section_items(item, item_updates)
-    await ContentWorkflowService.reset_after_authoring_edit(
-        db,
-        item,
-        "page-sections",
-        user.id,
-        changed_fields={
-            **payload,
-            **({"section_items_reconciled": len(item_updates)} if item_updates is not None else {}),
-        },
-    )
-    apply_updates(item, **payload)
-    item.revision = (item.revision or 1) + 1
-    await db.flush()
-    await db.refresh(item)
+    try:
+        await ContentWorkflowService.reset_after_authoring_edit(
+            db,
+            item,
+            "page-sections",
+            user.id,
+            changed_fields={
+                **payload,
+                **({"section_items_reconciled": len(item_updates)} if item_updates is not None else {}),
+                **({"section_media_links_reconciled": len(media_link_updates)} if media_link_updates is not None else {}),
+            },
+        )
+        apply_updates(item, **payload)
+        if prepared_items is not None:
+            _apply_section_item_reconciliation(item, prepared_items)
+        if prepared_media is not None:
+            await _apply_section_media_reconciliation(db, item, prepared_media)
+        item.revision = (item.revision or 1) + 1
+        await db.flush()
+        await db.refresh(item)
+    except Exception:
+        await db.rollback()
+        raise
     return success(data=item, message="Page section updated")
 
 

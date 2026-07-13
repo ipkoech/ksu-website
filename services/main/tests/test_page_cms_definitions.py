@@ -21,6 +21,13 @@ def test_hero_definition_requires_desktop_and_mobile_media():
     assert hero.max_items == 3
 
 
+def test_pulse_definition_supports_intake_application_updates_and_manual_cards():
+    pulse = SECTION_DEFINITIONS["pulse_strip"]
+
+    assert "intake" in pulse.allowed_source_types
+    assert "card" in pulse.allowed_item_types
+
+
 def test_definitions_only_advertise_current_section_item_types():
     advertised_item_types = {
         item_type

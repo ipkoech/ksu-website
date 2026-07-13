@@ -37,6 +37,7 @@ export type AttachmentRoleOption = {
 };
 
 export type PendingMediaAttachment = {
+  id?: string | null;
   media_id: string;
   role: string;
   folder_id?: string | null;
@@ -219,6 +220,7 @@ export type AttachmentManagerProps = {
   allowVisibilityChange?: boolean;
   uploadEntityType?: string;
   uploadEntityId?: string | null;
+  mode?: "persisted" | "pending";
 };
 
 export function AttachmentManager({
@@ -235,6 +237,7 @@ export function AttachmentManager({
   allowVisibilityChange = true,
   uploadEntityType,
   uploadEntityId,
+  mode = "persisted",
 }: AttachmentManagerProps) {
   const [role, setRole] = React.useState(defaultRole);
   const [removeTarget, setRemoveTarget] = React.useState<null | { id: string; label: string; pending: boolean }>(null);
@@ -242,7 +245,7 @@ export function AttachmentManager({
   const deleteMediaLink = useDeleteMediaLink();
   const updateMediaLink = useUpdateMediaLink();
   const selectedRole = roles.find((item) => item.value === role) ?? roles[0] ?? defaultRoles[0];
-  const canPersist = Boolean(entityType && entityId);
+  const canPersist = mode === "persisted" && Boolean(entityType && entityId);
 
   const linksQuery = useMediaLinks(
     {
@@ -308,7 +311,7 @@ export function AttachmentManager({
   const confirmRemove = async () => {
     if (!removeTarget) return;
     if (removeTarget.pending) {
-      onPendingAttachmentsChange?.(pendingAttachments.filter((item) => item.media_id !== removeTarget.id));
+      onPendingAttachmentsChange?.(pendingAttachments.filter((item) => (item.id ?? item.media_id) !== removeTarget.id));
       setRemoveTarget(null);
       return;
     }
@@ -335,10 +338,10 @@ export function AttachmentManager({
     await linksQuery.refetch();
   };
 
-  const updatePendingAttachment = (mediaId: string, role: string, changes: Partial<PendingMediaAttachment>) => {
+  const updatePendingAttachment = (attachmentId: string, changes: Partial<PendingMediaAttachment>) => {
     onPendingAttachmentsChange?.(
       pendingAttachments.map((attachment) =>
-        attachment.media_id === mediaId && attachment.role === role ? { ...attachment, ...changes } : attachment,
+        (attachment.id ?? attachment.media_id) === attachmentId ? { ...attachment, ...changes } : attachment,
       ),
     );
   };
@@ -423,7 +426,7 @@ export function AttachmentManager({
 
         {pendingAttachments.map((attachment, index) => (
           <AttachmentRow
-            key={`${attachment.media_id}-${attachment.role}`}
+            key={attachment.id ?? `${attachment.media_id}-${attachment.role}`}
             mediaId={attachment.media_id}
             media={attachment.media}
             role={attachment.role}
@@ -432,11 +435,11 @@ export function AttachmentManager({
             canMoveUp={index > 0}
             canMoveDown={index < pendingAttachments.length - 1}
             disabled={disabled}
-            onRoleChange={(nextRole) => updatePendingAttachment(attachment.media_id, attachment.role, { role: nextRole })}
-            onVisibilityChange={allowVisibilityChange ? (nextPublic) => updatePendingAttachment(attachment.media_id, attachment.role, { is_public: nextPublic }) : undefined}
+            onRoleChange={(nextRole) => updatePendingAttachment(attachment.id ?? attachment.media_id, { role: nextRole })}
+            onVisibilityChange={allowVisibilityChange ? (nextPublic) => updatePendingAttachment(attachment.id ?? attachment.media_id, { is_public: nextPublic }) : undefined}
             onMoveUp={() => movePendingAttachment(index, -1)}
             onMoveDown={() => movePendingAttachment(index, 1)}
-            onRemove={() => setRemoveTarget({ id: attachment.media_id, label: attachment.media ? getMediaLabel(attachment.media) : "queued attachment", pending: true })}
+            onRemove={() => setRemoveTarget({ id: attachment.id ?? attachment.media_id, label: attachment.media ? getMediaLabel(attachment.media) : "queued attachment", pending: true })}
           />
         ))}
 

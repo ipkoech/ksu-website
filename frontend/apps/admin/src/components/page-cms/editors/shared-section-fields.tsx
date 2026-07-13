@@ -1,11 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { useMediaLinks, useUpdateMedia } from "@ksu/api-client";
+import { useMediaLinks } from "@ksu/api-client";
 import { Alert, AlertDescription, Button, Input, Switch, Textarea } from "@ksu/ui/components";
 import { AttachmentManager, type AttachmentRoleOption } from "@/components/media/attachment-manager";
 import type { SourceRecordPickerValue } from "@/components/page-cms/source-record-picker";
-import type { PageCmsSectionDefinition, PageSection, PageSectionPayload, SectionItemPayload } from "@/lib/api/page-cms";
+import type { PageCmsSectionDefinition, PageSection, PageSectionMediaLinkPayload, PageSectionPayload, SectionItemPayload } from "@/lib/api/page-cms";
 import type { PageCmsSourceType, SectionItem } from "@/lib/api/page-cms";
 
 export type SectionSettings = Record<string, unknown>;
@@ -19,6 +19,7 @@ export type TypedSectionDraft = {
   valid_to: string;
   settings: SectionSettings;
   items: SectionItemPayload[];
+  media_links: PageSectionMediaLinkPayload[];
 };
 
 export type SectionEditorProps = {
@@ -77,6 +78,29 @@ export function createReferenceItem(sourceType: PageCmsSourceType, sourceId: str
   return { item_type: "reference", source_type: sourceType, source_id: sourceId, display_order: displayOrder, is_enabled: true };
 }
 
+export function createProgrammeReferenceItem(sourceId: string, displayOrder: number): SectionItemPayload {
+  return { item_type: "reference", source_type: "programme", source_id: sourceId, display_order: displayOrder, is_enabled: true };
+}
+
+export function resetMediaDraft(links: PageSectionMediaLinkPayload[]): PageSectionMediaLinkPayload[] {
+  return links.map((link) => ({ ...link }));
+}
+
+export function validateMediaDraft(links: PageSectionMediaLinkPayload[], roles: Record<string, { multiple: boolean }>): string | null {
+  const seen = new Set<string>();
+  const roleCounts = new Map<string, number>();
+  for (const link of links) {
+    if (!roles[link.role]) return "A selected media role is not allowed for this section.";
+    const key = `${link.media_id}:${link.role}`;
+    if (seen.has(key)) return "Duplicate media and role selections are not allowed.";
+    seen.add(key);
+    const count = (roleCounts.get(link.role) ?? 0) + 1;
+    roleCounts.set(link.role, count);
+    if (!roles[link.role].multiple && count > 1) return "This media role only accepts one attachment.";
+  }
+  return null;
+}
+
 export function moveRow<T>(rows: T[], index: number, direction: -1 | 1): T[] {
   const nextIndex = index + direction;
   if (nextIndex < 0 || nextIndex >= rows.length) return rows;
@@ -85,7 +109,7 @@ export function moveRow<T>(rows: T[], index: number, direction: -1 | 1): T[] {
   return next;
 }
 
-function draftFromSection(section: PageSection): TypedSectionDraft {
+function draftFromSection(section: PageSection, mediaLinks: PageSectionMediaLinkPayload[] = []): TypedSectionDraft {
   return {
     title: section.title ?? "",
     subtitle: section.subtitle ?? "",
@@ -113,6 +137,7 @@ function draftFromSection(section: PageSection): TypedSectionDraft {
       display_order: item.display_order,
       is_enabled: item.is_enabled,
     })),
+    media_links: resetMediaDraft(mediaLinks),
   };
 }
 
@@ -146,6 +171,10 @@ export function validateDefinitionItems(draft: TypedSectionDraft, definition: Pa
 }
 
 export function useTypedSectionEditor({ section, definition, onSave, onDirtyChange, ownedSettingKeys }: SectionEditorProps & { ownedSettingKeys: readonly string[] }) {
+  const mediaLinksQuery = useMediaLinks({ entity_type: "page_section", entity_id: section.id, include: "media" }, { enabled: Boolean(section.id) });
+  const loadedMediaLinks = React.useMemo(() => ((mediaLinksQuery.data?.data ?? []) as Array<{ id: string; media_id: string; role: PageSectionMediaLinkPayload["role"]; display_order: number; is_public: boolean }>).map((link) => ({ id: link.id, media_id: link.media_id, role: link.role, display_order: link.display_order, is_public: link.is_public })), [mediaLinksQuery.data]);
+  const mediaLoadKey = `${section.id}:${section.revision}`;
+  const initializedMediaKey = React.useRef<string | null>(null);
   const initialRef = React.useRef(draftFromSection(section));
   const [draft, setDraft] = React.useState<TypedSectionDraft>(initialRef.current);
   const [isSaving, setIsSaving] = React.useState(false);
@@ -158,7 +187,16 @@ export function useTypedSectionEditor({ section, definition, onSave, onDirtyChan
     initialRef.current = next;
     setDraft(next);
     setSaveError(null);
+    initializedMediaKey.current = null;
   }, [section]);
+
+  React.useEffect(() => {
+    if (!mediaLinksQuery.isSuccess || initializedMediaKey.current === mediaLoadKey) return;
+    initializedMediaKey.current = mediaLoadKey;
+    const media_links = resetMediaDraft(loadedMediaLinks);
+    initialRef.current = { ...initialRef.current, media_links };
+    setDraft((current) => ({ ...current, media_links }));
+  }, [loadedMediaLinks, mediaLinksQuery.isSuccess, mediaLoadKey]);
 
   React.useEffect(() => {
     onDirtyChange(dirty);
@@ -166,13 +204,15 @@ export function useTypedSectionEditor({ section, definition, onSave, onDirtyChan
   }, [dirty, onDirtyChange]);
 
   const reset = React.useCallback(() => {
-    setDraft(initialRef.current);
+    setDraft({ ...initialRef.current, media_links: resetMediaDraft(initialRef.current.media_links) });
     setSaveError(null);
   }, []);
 
   const save = React.useCallback(async (validate: (next: TypedSectionDraft) => string | null) => {
     const sharedError = validateSharedDraft(draft, definition);
-    const error = sharedError ?? validateDefinitionItems(draft, definition) ?? validate(draft);
+    const error = !mediaLinksQuery.isSuccess
+      ? "Section media is still loading."
+      : sharedError ?? validateDefinitionItems(draft, definition) ?? validateMediaDraft(draft.media_links, definition.media_roles) ?? validate(draft);
     if (error) {
       setSaveError(error);
       return false;
@@ -182,6 +222,7 @@ export function useTypedSectionEditor({ section, definition, onSave, onDirtyChan
     setSaveError(null);
     try {
       await onSave({
+        revision: section.revision,
         title: draft.title.trim() || null,
         subtitle: draft.subtitle.trim() || null,
         description: draft.description.trim() || null,
@@ -190,6 +231,7 @@ export function useTypedSectionEditor({ section, definition, onSave, onDirtyChan
         valid_to: fromDateTimeInput(draft.valid_to),
         settings: mergeSectionSettings(section.settings, ownedSettingKeys, draft.settings),
         items: draft.items,
+        media_links: draft.media_links.map(({ id, media_id, role, display_order, is_public }) => ({ id, media_id, role, display_order, is_public })),
       });
       initialRef.current = draft;
       return true;
@@ -199,9 +241,9 @@ export function useTypedSectionEditor({ section, definition, onSave, onDirtyChan
     } finally {
       setIsSaving(false);
     }
-  }, [definition, draft, onSave, ownedSettingKeys, section.settings]);
+  }, [definition, draft, mediaLinksQuery.isSuccess, onSave, ownedSettingKeys, section.revision, section.settings]);
 
-  return { draft, setDraft, dirty, isSaving, saveError, reset, save };
+  return { draft, setDraft, dirty, isSaving, mediaReady: mediaLinksQuery.isSuccess, saveError, reset, save };
 }
 
 export function SharedSectionFields({ draft, setDraft, readOnly }: { draft: TypedSectionDraft; setDraft: React.Dispatch<React.SetStateAction<TypedSectionDraft>>; readOnly?: boolean }) {
@@ -233,23 +275,10 @@ export function CtaFields({ label, value, onChange, readOnly }: { label: string;
   );
 }
 
-function MediaAltTextControls({ sectionId, readOnly }: { sectionId: string; readOnly?: boolean }) {
-  const linksQuery = useMediaLinks({ entity_type: "page_section", entity_id: sectionId, include: "media" }, { enabled: Boolean(sectionId) });
-  const updateMedia = useUpdateMedia();
-  const links = (linksQuery.data?.data ?? []) as Array<{ id: string; role?: string; media?: { id: string; alt_text?: string | null; title?: string | null } | null }>;
-
-  if (!links.length) return null;
-  return <div className="space-y-3">{links.map((link) => {
-    const media = link.media;
-    if (!media) return null;
-    return <label key={link.id} className="block space-y-2 text-sm font-medium">{link.role?.replace(/_/g, " ") ?? "Media"} alt text<Input defaultValue={media.alt_text ?? ""} disabled={readOnly || updateMedia.isPending} onBlur={(event) => { const alt_text = event.target.value.trim() || null; if (alt_text !== (media.alt_text ?? null)) void updateMedia.mutateAsync({ id: media.id, data: { alt_text } }); }} /></label>;
-  })}</div>;
-}
-
-export function SectionMediaRoles({ section, definition, readOnly }: Pick<SectionEditorProps, "section" | "definition" | "readOnly">) {
+export function SectionMediaRoles({ definition, mediaLinks, onMediaLinksChange, readOnly }: Pick<SectionEditorProps, "definition" | "readOnly"> & { mediaLinks: PageSectionMediaLinkPayload[]; onMediaLinksChange: (links: PageSectionMediaLinkPayload[]) => void }) {
   const roles: AttachmentRoleOption[] = Object.entries(definition.media_roles).map(([value, role]) => ({ value, label: role.label, mediaType: role.media_type, accept: role.media_type === "video" ? "video/*" : "image/*", description: role.required ? "Required for this template." : undefined }));
   if (!roles.length) return null;
-  return <section aria-label="Section media" className="space-y-3 border-t border-border pt-4"><AttachmentManager entityType="page_section" entityId={section.id} roles={roles} title="Section media" description="Choose media by role. The picker includes a preview; update alternative text below." disabled={readOnly} allowVisibilityChange={false} /><MediaAltTextControls sectionId={section.id} readOnly={readOnly} /></section>;
+  return <section aria-label="Section media" className="space-y-3 border-t border-border pt-4"><AttachmentManager entityType="page_section" mode="pending" roles={roles} title="Section media" description="Choose media by role. Attachments are linked only when this section is saved." pendingAttachments={mediaLinks} onPendingAttachmentsChange={(links) => onMediaLinksChange(links.map(({ id, media_id, role, display_order, is_public }) => ({ id, media_id, role: role as PageSectionMediaLinkPayload["role"], display_order: display_order ?? 100, is_public: is_public ?? true })))} disabled={readOnly} allowVisibilityChange={false} /></section>;
 }
 
 export function EditorActions({ section, dirty, isSaving, saveError, readOnly, onSave, onReset }: { section: PageSection; dirty: boolean; isSaving: boolean; saveError: string | null; readOnly?: boolean; onSave: () => void; onReset: () => void }) {

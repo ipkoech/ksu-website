@@ -169,6 +169,7 @@ export interface PageSection {
 }
 
 export interface PageSectionPayload {
+  revision?: number;
   page_key?: string;
   scope_type?: PageScopeType;
   scope_id?: string | null;
@@ -183,6 +184,15 @@ export interface PageSectionPayload {
   valid_from?: string | null;
   valid_to?: string | null;
   items?: SectionItemPayload[];
+  media_links?: PageSectionMediaLinkPayload[];
+}
+
+export interface PageSectionMediaLinkPayload {
+  id?: string | null;
+  media_id: string;
+  role: PageCmsMediaRole;
+  display_order: number;
+  is_public: boolean;
 }
 
 export interface PageSectionListParams extends ListParams {

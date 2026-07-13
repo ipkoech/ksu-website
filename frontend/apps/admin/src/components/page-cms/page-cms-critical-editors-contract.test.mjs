@@ -31,6 +31,8 @@ expectSnippets(sharedSource, "editors/shared-section-fields.tsx", [
   "Reset",
   "id: item.id",
   "revision: item.revision",
+  "revision: section.revision",
+  "media_links",
   "validateDefinitionItems",
   "definition.allowed_item_types",
   "definition.allowed_source_types",
@@ -69,6 +71,43 @@ assert.equal(adapters.toDateTimeInput("2026-07-13T12:00:00.000Z"), "2026-07-13T1
 assert.equal(adapters.itemLimitError(1, 2, 6, "Pillars"), "Pillars requires at least 2 items.");
 assert.equal(adapters.itemLimitError(7, 2, 6, "Pillars"), "Pillars supports no more than 6 items.");
 assert.equal(adapters.itemLimitError(4, 2, 6, "Pillars"), null);
+
+const programmeAdapterSource = sharedSource
+  .match(/export function createProgrammeReferenceItem[\s\S]*?\n}/)?.[0]
+  .replaceAll("export function", "function")
+  .replace(/: number/g, "")
+  .replace(/: string/g, "")
+  .replace(/: SectionItemPayload/g, "");
+assert.ok(programmeAdapterSource, "Expected executable programme item adapter");
+const { createProgrammeReferenceItem } = Function(`${programmeAdapterSource}; return { createProgrammeReferenceItem };`)();
+assert.deepEqual(createProgrammeReferenceItem("programme-1", 10), {
+  item_type: "reference",
+  source_type: "programme",
+  source_id: "programme-1",
+  display_order: 10,
+  is_enabled: true,
+});
+
+const mediaAdapterSource = sharedSource
+  .match(/export function resetMediaDraft[\s\S]*?\n}\n\nexport function validateMediaDraft[\s\S]*?\n}/)?.[0]
+  .replaceAll("export function", "function")
+  .replace(/: Record<string, \{ multiple: boolean \}>/g, "")
+  .replace(/: [A-Za-z][A-Za-z0-9_<> \[\]\|]*/g, "")
+  .replace(/new Set<string>\(\)/g, "new Set()")
+  .replace(/new Map<string, number>\(\)/g, "new Map()")
+  .replace(/: string \| null/g, "")
+  .replace(/: string/g, "")
+  .replace(/ as const/g, "");
+assert.ok(mediaAdapterSource, "Expected executable media draft adapters");
+const { resetMediaDraft, validateMediaDraft } = Function(`${mediaAdapterSource}; return { resetMediaDraft, validateMediaDraft };`)();
+const savedMedia = [{ id: "link-1", media_id: "media-1", role: "hero_image", display_order: 10, is_public: true }];
+const mediaReset = resetMediaDraft(savedMedia);
+mediaReset[0].role = "poster";
+assert.equal(savedMedia[0].role, "hero_image", "Reset media draft must not mutate the saved snapshot");
+assert.equal(validateMediaDraft([
+  ...savedMedia,
+  { media_id: "media-2", role: "hero_image", display_order: 20, is_public: true },
+], { hero_image: { multiple: false } }), "This media role only accepts one attachment.");
 
 const inspectorSource = read("section-inspector.tsx");
 expectSnippets(inspectorSource, "section-inspector.tsx", [
@@ -113,7 +152,7 @@ expectSnippets(pulseSource, "editors/pulse-editor.tsx", [
   "Move source up",
   "definition.allowed_source_types",
 ]);
-assert.ok(!pulseSource.includes('"announcement"'), "Pulse must not introduce an announcement source type");
+assert.ok(pulseSource.includes("Manual announcement"), "Pulse manual cards must be labelled as announcements");
 
 const partnershipSource = read("editors/partnership-editor.tsx");
 expectSnippets(partnershipSource, "editors/partnership-editor.tsx", [
@@ -142,6 +181,9 @@ expectSnippets(programmeSource, "editors/programme-pathway-editor.tsx", [
   "PATHWAY_STEP_COUNT",
   "pathway_steps",
   "Move pathway step up",
+  "SourceRecordPicker",
+  "Browse all programmes",
+  "createProgrammeReferenceItem",
 ]);
 
 const datesSource = read("editors/academic-dates-editor.tsx");

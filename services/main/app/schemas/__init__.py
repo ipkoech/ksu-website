@@ -93,6 +93,7 @@ from .public_page import PublicSitePageCreate, PublicSitePageRead, PublicSitePag
 from .page_cms import (
     PageCompositionResponse,
     PageSectionCreate,
+    PageSectionMediaLinkUpdate,
     PageSectionRead,
     PageSectionUpdate,
     PageSectionWorkflowAction,
@@ -394,6 +395,7 @@ __all__ = [
     "PublicSitePageUpdate",
     "PublicSitePageRead",
     "PageSectionCreate",
+    "PageSectionMediaLinkUpdate",
     "PageSectionUpdate",
     "PageSectionRead",
     "SectionItemCreate",
