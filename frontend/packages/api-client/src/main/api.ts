@@ -61,6 +61,7 @@ import type {
   ContactDirectory,
   ContactDirectoryListParams,
   PublicContactDirectory,
+  PublicContactDirectoryParams,
   Testimonial,
   Role,
   Permission,
@@ -1697,11 +1698,7 @@ export const contactsApi = {
 };
 
 export const contactDirectoryApi = {
-  get: (
-    params?: ListParams<
-      Omit<ContactDirectoryListParams, "is_main" | "sort">
-    >,
-  ) =>
+  get: (params?: PublicContactDirectoryParams) =>
     mainApi.get<{ data: PublicContactDirectory }>(
       "/api/v1/contact-directory",
       params,
