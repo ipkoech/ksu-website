@@ -241,20 +241,29 @@ async def search_page_cms_sources(
     scope_id: uuid.UUID | None = None,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=50),
-    layout_variant: str | None = None,
+    layout_variant: str = Query(..., min_length=1, max_length=64),
 ):
     try:
         PageCmsSourceService.validate_source_type(source_type)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
 
-    if layout_variant is not None:
-        definition = SECTION_DEFINITIONS.get(layout_variant)
-        if definition is None or source_type not in definition.allowed_source_types:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail=f"Source type {source_type} is not allowed for layout variant {layout_variant}",
-            )
+    definition = SECTION_DEFINITIONS.get(layout_variant)
+    if definition is None or source_type not in definition.allowed_source_types:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=f"Source type {source_type} is not allowed for layout variant {layout_variant}",
+        )
+    if scope_type not in definition.allowed_scopes:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=f"Layout variant {layout_variant} is not allowed for scope {scope_type}",
+        )
+    if scope_type == "university" and scope_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="scope_id must be null when scope_type is university",
+        )
     if scope_type != "university" and scope_id is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,

@@ -5,6 +5,8 @@ from __future__ import annotations
 import uuid
 from collections.abc import Mapping
 from datetime import datetime
+from html import unescape
+from html.parser import HTMLParser
 from typing import Any
 
 from pydantic import ConfigDict, Field, field_validator, model_validator
@@ -22,6 +24,46 @@ from .base import BaseReadSchema, BaseSchema
 
 PAGE_SECTION_WORKFLOW_ACTIONS = ("submit", "approve", "request_changes", "publish", "archive", "unpublish")
 EDITORIAL_OVERRIDE_FIELDS = ("title", "subtitle", "summary", "cta_label", "cta_url", "badge", "image_media_id")
+
+
+class _DisplayTextParser(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+        self.suppressed_depth = 0
+
+    def handle_starttag(self, tag: str, attrs) -> None:
+        if tag.lower() in {"script", "style"}:
+            self.suppressed_depth += 1
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() in {"script", "style"} and self.suppressed_depth:
+            self.suppressed_depth -= 1
+
+    def handle_data(self, data: str) -> None:
+        if not self.suppressed_depth:
+            self.parts.append(data)
+
+
+def _plain_display_text(value: str) -> str:
+    parser = _DisplayTextParser()
+    parser.feed(unescape(value))
+    parser.close()
+    return " ".join("".join(parser.parts).split())
+
+
+def _sanitize_source_metadata(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: _sanitize_source_metadata(item)
+            for key, item in value.items()
+            if key != "id" and not key.endswith("_id")
+        }
+    if isinstance(value, list):
+        return [_sanitize_source_metadata(item) for item in value]
+    if isinstance(value, str):
+        return _plain_display_text(value)[:1000]
+    return value
 
 
 def _validate_choice(value: str | None, allowed: tuple[str, ...], field_name: str) -> str | None:
@@ -501,14 +543,37 @@ class PageCmsSourceSummary(BaseSchema):
     """Stable, compact representation of a record selectable by Page CMS."""
 
     id: uuid.UUID
-    source_type: str
-    label: str
-    secondary_label: str | None = None
-    status: str
+    source_type: str = Field(max_length=64)
+    label: str = Field(min_length=1, max_length=255)
+    secondary_label: str | None = Field(default=None, max_length=500)
+    status: str = Field(max_length=64)
     published_at: datetime | None = None
-    thumbnail_url: str | None = None
+    thumbnail_url: str | None = Field(default=None, max_length=1024)
     metadata: dict[str, Any] = Field(default_factory=dict)
     selectable: bool = True
+
+    @field_validator("label", "secondary_label", "status", mode="before")
+    @classmethod
+    def normalize_display_text(cls, value: Any, info):
+        if value is None:
+            return None
+        limits = {"label": 255, "secondary_label": 500, "status": 64}
+        normalized = _plain_display_text(str(value))[:limits[info.field_name]].strip()
+        return normalized or None
+
+    @field_validator("thumbnail_url")
+    @classmethod
+    def validate_thumbnail_url(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        if not value.startswith(("/", "https://", "http://")):
+            raise ValueError("thumbnail_url must be an HTTP(S) or root-relative URL")
+        return value
+
+    @field_validator("metadata", mode="before")
+    @classmethod
+    def sanitize_metadata(cls, value: Any) -> dict[str, Any]:
+        return _sanitize_source_metadata(value if isinstance(value, dict) else {})
 
 
 __all__ = [

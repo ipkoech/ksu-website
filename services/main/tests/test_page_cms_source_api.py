@@ -99,6 +99,41 @@ def test_source_type_must_be_compatible_with_layout_variant():
     assert response.status_code == 422
 
 
+def test_layout_variant_is_required():
+    user = _user("section_items.manage")
+    client, headers = _client(user)
+
+    response = client.get("/api/v1/page-section-sources/news", headers=headers)
+
+    assert response.status_code == 422
+
+
+def test_layout_variant_scope_must_be_compatible():
+    user = _user("section_items.manage")
+    client, headers = _client(user)
+
+    response = client.get(
+        "/api/v1/page-section-sources/programme",
+        params={"layout_variant": "programme_finder", "scope_type": "research", "scope_id": str(uuid.uuid4())},
+        headers=headers,
+    )
+
+    assert response.status_code == 422
+
+
+def test_university_scope_rejects_scope_id():
+    user = _user("section_items.manage")
+    client, headers = _client(user)
+
+    response = client.get(
+        "/api/v1/page-section-sources/news",
+        params={"layout_variant": "news_grid", "scope_id": str(uuid.uuid4())},
+        headers=headers,
+    )
+
+    assert response.status_code == 422
+
+
 def test_per_page_over_50_returns_422_before_service_call():
     user = _user("section_items.manage")
     client, headers = _client(user)
@@ -106,7 +141,7 @@ def test_per_page_over_50_returns_422_before_service_call():
 
     with patch.object(page_cms.PageCmsSourceService, "search", search):
         response = client.get(
-            "/api/v1/page-section-sources/news?per_page=51",
+            "/api/v1/page-section-sources/news?layout_variant=news_grid&per_page=51",
             headers=headers,
         )
 
@@ -126,7 +161,7 @@ def test_inaccessible_scoped_catalog_returns_403():
         ):
             response = client.get(
                 "/api/v1/page-section-sources/news",
-                params={"scope_type": scope_type, "scope_id": str(uuid.uuid4())},
+                params={"layout_variant": "news_grid", "scope_type": scope_type, "scope_id": str(uuid.uuid4())},
                 headers=headers,
             )
 
@@ -159,7 +194,7 @@ def test_source_catalog_returns_standard_paginated_envelope():
         patch.object(page_cms.PageCmsSourceService, "search", AsyncMock(return_value=result)) as search,
     ):
         response = client.get(
-            "/api/v1/page-section-sources/news?q=graduation",
+            "/api/v1/page-section-sources/news?q=graduation&layout_variant=news_grid",
             headers=headers,
         )
 

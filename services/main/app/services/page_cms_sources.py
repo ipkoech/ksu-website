@@ -5,9 +5,9 @@ from __future__ import annotations
 import math
 import uuid
 from datetime import date, datetime, timezone
-from typing import Any
+from typing import Any, Protocol
 
-from sqlalchemy import false, or_, select
+from sqlalchemy import false, func, or_, select
 from sqlalchemy.orm import selectinload
 
 from ksu_common import PaginatedResult
@@ -22,6 +22,17 @@ SUPPORTED_SOURCE_TYPES = frozenset(
     {"programme", "news", "event", "person", "research_partner", "public_stat"}
 )
 PUBLIC_STAT_NAMESPACE = uuid.UUID("64a394c9-9dab-4807-90ef-e05cbf3dde8e")
+
+
+class PageCmsPreviewCapability(Protocol):
+    async def allows(
+        self,
+        *,
+        source_scope_type: str,
+        source_scope_id: uuid.UUID | None,
+        destination_scope_type: str,
+        destination_scope_id: uuid.UUID | None,
+    ) -> bool: ...
 
 
 def _media_url(media: Any | None) -> str | None:
@@ -85,9 +96,10 @@ def _programme_summary(item: Programme) -> PageCmsSourceSummary:
             "code": item.code,
             "level": item.level,
             "duration": item.duration,
-            "department_id": str(item.department_id),
+            "department": item.department.name if item.department else None,
+            "school": item.department.school.name if item.department and item.department.school else None,
         },
-        selectable=bool(item.is_active and item.deleted_at is None),
+        selectable=_programme_is_public(item),
     )
 
 
@@ -100,7 +112,7 @@ def _news_summary(item: News, now: datetime) -> PageCmsSourceSummary:
         status=item.status,
         published_at=item.published_at,
         thumbnail_url=_media_url(item.featured_media),
-        metadata={"slug": item.slug, "scope_type": item.scope_type, "scope_id": item.scope_id},
+        metadata={"slug": item.slug, "scope": item.scope_type or "university"},
         selectable=_content_is_selectable(item, now),
     )
 
@@ -120,28 +132,53 @@ def _event_summary(item: Event, now: datetime) -> PageCmsSourceSummary:
             "start_date": item.start_date,
             "end_date": item.end_date,
             "location": item.location,
-            "scope_type": item.scope_type,
-            "scope_id": item.scope_id,
+            "scope": item.scope_type or "university",
         },
         selectable=_content_is_selectable(item, now),
     )
 
 
-def _current_assignment(person: Person) -> StaffAssignment | None:
+def _programme_is_public(item: Programme) -> bool:
+    department = item.department
+    school = department.school if department else None
+    return bool(
+        item.deleted_at is None and item.is_active
+        and department and department.deleted_at is None and department.is_active and department.is_public
+        and school and school.deleted_at is None and school.is_active and school.is_public
+    )
+
+
+def _assignment_for_scope(
+    person: Person,
+    scope_type: str,
+    scope_id: uuid.UUID | None,
+    *,
+    include_private: bool = False,
+) -> StaffAssignment | None:
+    today = date.today()
     assignments = [
         assignment
         for assignment in person.assignments
         if assignment.deleted_at is None
         and assignment.status == "active"
-        and assignment.is_public
-        and (assignment.end_date is None or assignment.end_date >= datetime.now(timezone.utc).date())
+        and (include_private or assignment.is_public)
+        and assignment.entity_type == scope_type
+        and assignment.entity_id == scope_id
+        and (assignment.start_date is None or assignment.start_date <= today)
+        and (assignment.end_date is None or assignment.end_date >= today)
     ]
     assignments.sort(key=lambda item: (not item.is_primary, item.hierarchy_level, item.display_order, str(item.id)))
     return assignments[0] if assignments else None
 
 
-def _person_summary(item: Person) -> PageCmsSourceSummary:
-    assignment = _current_assignment(item)
+def _person_summary(
+    item: Person,
+    scope_type: str,
+    scope_id: uuid.UUID | None,
+    *,
+    include_private_assignment: bool = False,
+) -> PageCmsSourceSummary:
+    assignment = _assignment_for_scope(item, scope_type, scope_id, include_private=include_private_assignment)
     secondary = (
         assignment.title if assignment and assignment.title
         else item.institutional_role or item.academic_rank
@@ -154,11 +191,9 @@ def _person_summary(item: Person) -> PageCmsSourceSummary:
         status="active" if item.is_active else "inactive",
         thumbnail_url=_media_url(item.photo),
         metadata={
-            "department_id": str(item.department_id) if item.department_id else None,
-            "assignment_id": str(assignment.id) if assignment else None,
-            "role": assignment.role if assignment else item.institutional_role,
+            "role": _format_level(assignment.role) if assignment else _format_level(item.institutional_role or ""),
         },
-        selectable=bool(item.deleted_at is None and item.is_active and item.is_public),
+        selectable=bool(item.deleted_at is None and item.is_active and item.is_public and assignment),
     )
 
 
@@ -213,14 +248,18 @@ def _partner_summary(item: dict[str, Any]) -> PageCmsSourceSummary:
     )
 
 
-def _stat_id(key: str) -> uuid.UUID:
-    return uuid.uuid5(PUBLIC_STAT_NAMESPACE, key)
+def _stat_authority(scope_type: str, scope_identity: str | None) -> str:
+    return f"{scope_type}:{scope_identity or '-'}"
 
 
-def _stat_summary(item: Any, scope: str) -> PageCmsSourceSummary:
+def _stat_id(scope_type: str, scope_identity: str | None, key: str) -> uuid.UUID:
+    return uuid.uuid5(PUBLIC_STAT_NAMESPACE, f"{_stat_authority(scope_type, scope_identity)}:{key}")
+
+
+def _stat_summary(item: Any, scope: str, scope_identity: str | None) -> PageCmsSourceSummary:
     value = f"{item.value:g}" if isinstance(item.value, float) else str(item.value)
     return PageCmsSourceSummary(
-        id=_stat_id(item.key),
+        id=_stat_id(scope, scope_identity, item.key),
         source_type="public_stat",
         label=item.label,
         secondary_label=f"{value}{item.suffix}",
@@ -232,6 +271,7 @@ def _stat_summary(item: Any, scope: str) -> PageCmsSourceSummary:
             "description": item.description,
             "href": item.href,
             "scope": scope,
+            "scope_authority": _stat_authority(scope, scope_identity),
             "verified": True,
         },
         selectable=True,
@@ -267,11 +307,16 @@ class PageCmsSourceService:
         query = query.strip()
 
         if source_type == "programme":
-            statement = select(Programme).options(selectinload(Programme.cover_image)).where(
-                Programme.deleted_at.is_(None), Programme.is_active.is_(True)
+            statement = select(Programme).join(Department).join(School).options(
+                selectinload(Programme.cover_image),
+                selectinload(Programme.department).selectinload(Department.school),
+            ).where(
+                Programme.deleted_at.is_(None), Programme.is_active.is_(True),
+                Department.deleted_at.is_(None), Department.is_active.is_(True), Department.is_public.is_(True),
+                School.deleted_at.is_(None), School.is_active.is_(True), School.is_public.is_(True),
             )
             if scope_type == "school":
-                statement = statement.join(Department).where(Department.school_id == scope_id)
+                statement = statement.where(Department.school_id == scope_id)
             elif scope_type != "university":
                 statement = statement.where(false())
             if query:
@@ -292,6 +337,7 @@ class PageCmsSourceService:
                 statement = statement.order_by(News.published_at.desc().nullslast(), News.title.asc(), News.id.asc())
                 mapper = lambda item: _news_summary(item, now)
             else:
+                statement = statement.where(func.coalesce(Event.end_date, Event.start_date) >= now)
                 statement = statement.order_by(Event.start_date.asc(), Event.title.asc(), Event.id.asc())
                 mapper = lambda item: _event_summary(item, now)
             result = await paginate_query(db, statement, page=page, per_page=per_page)
@@ -308,30 +354,27 @@ class PageCmsSourceService:
                     StaffAssignment.entity_id == scope_id,
                     StaffAssignment.status == "active",
                     StaffAssignment.is_public.is_(True),
+                    or_(StaffAssignment.start_date.is_(None), StaffAssignment.start_date <= date.today()),
+                    or_(StaffAssignment.end_date.is_(None), StaffAssignment.end_date >= date.today()),
+                ).distinct()
+            else:
+                statement = statement.join(StaffAssignment).where(
+                    StaffAssignment.deleted_at.is_(None),
+                    StaffAssignment.entity_type == "university",
+                    StaffAssignment.entity_id.is_(None),
+                    StaffAssignment.status == "active",
+                    StaffAssignment.is_public.is_(True),
+                    or_(StaffAssignment.start_date.is_(None), StaffAssignment.start_date <= date.today()),
                     or_(StaffAssignment.end_date.is_(None), StaffAssignment.end_date >= date.today()),
                 ).distinct()
             if query:
                 statement = statement.where(ilike_any(query, Person.full_name, Person.academic_rank))
             statement = statement.order_by(Person.full_name.asc(), Person.id.asc())
             result = await paginate_query(db, statement, page=page, per_page=per_page)
-            return _map_page(result, _person_summary)
+            return _map_page(result, lambda item: _person_summary(item, scope_type, scope_id))
 
         if source_type == "research_partner":
-            payload = await ResearchPartnersProxyService.list_partners(
-                page=page,
-                per_page=per_page,
-                search=query or None,
-                status="active",
-                is_active=True,
-            )
-            return PaginatedResult(
-                items=[
-                    _partner_summary(item)
-                    for item in payload.get("data") or []
-                    if _partner_is_public(item)
-                ],
-                meta=payload.get("meta") or {"page": page, "per_page": per_page},
-            )
+            return await PageCmsSourceService._search_partners(query, page, per_page)
 
         return await PageCmsSourceService._search_stats(db, query, scope_type, scope_id, page, per_page)
 
@@ -340,19 +383,45 @@ class PageCmsSourceService:
         db,
         source_type: str,
         source_id: uuid.UUID,
-        preview: bool = False,
+        *,
+        destination_scope_type: str,
+        destination_scope_id: uuid.UUID | None,
+        preview_capability: PageCmsPreviewCapability | None = None,
     ) -> PageCmsSourceSummary | None:
         PageCmsSourceService.validate_source_type(source_type)
         now = datetime.now(timezone.utc)
 
         if source_type == "programme":
-            statement = select(Programme).options(selectinload(Programme.cover_image)).where(
+            statement = select(Programme).options(
+                selectinload(Programme.cover_image),
+                selectinload(Programme.department).selectinload(Department.school),
+            ).where(
                 Programme.id == source_id, Programme.deleted_at.is_(None)
             )
-            if not preview:
-                statement = statement.where(Programme.is_active.is_(True))
+            if preview_capability is None:
+                statement = statement.join(Department).join(School).where(
+                    Programme.is_active.is_(True),
+                    Department.deleted_at.is_(None), Department.is_active.is_(True), Department.is_public.is_(True),
+                    School.deleted_at.is_(None), School.is_active.is_(True), School.is_public.is_(True),
+                )
+                if destination_scope_type == "school":
+                    statement = statement.where(Department.school_id == destination_scope_id)
             item = (await db.execute(statement)).scalar_one_or_none()
-            return _programme_summary(item) if item else None
+            if item is None:
+                return None
+            school_id = item.department.school_id if item.department else None
+            scope_matches = destination_scope_type == "university" or (
+                destination_scope_type == "school" and destination_scope_id == school_id
+            )
+            if not scope_matches:
+                return None
+            if _programme_is_public(item):
+                return _programme_summary(item)
+            if not await PageCmsSourceService._preview_allowed(
+                preview_capability, "school", school_id, destination_scope_type, destination_scope_id,
+            ):
+                return None
+            return _programme_summary(item)
 
         if source_type in {"news", "event"}:
             model = News if source_type == "news" else Event
@@ -360,10 +429,30 @@ class PageCmsSourceService:
             statement = select(model).options(selectinload(media_relation)).where(
                 model.id == source_id, model.deleted_at.is_(None)
             )
-            if not preview:
+            if preview_capability is None:
                 statement = statement.where(*_public_content_filters(model, now))
+                statement = _apply_content_scope(
+                    statement, model, destination_scope_type, destination_scope_id,
+                )
+                if model is Event:
+                    statement = statement.where(func.coalesce(Event.end_date, Event.start_date) >= now)
             item = (await db.execute(statement)).scalar_one_or_none()
             if item is None:
+                return None
+            source_scope_type = item.scope_type or "university"
+            source_scope_id = item.scope_id
+            if source_scope_type != destination_scope_type or source_scope_id != destination_scope_id:
+                return None
+            is_public = _content_is_selectable(item, now)
+            if model is Event:
+                is_public = is_public and (item.end_date or item.start_date) >= now
+            if not is_public and not await PageCmsSourceService._preview_allowed(
+                preview_capability,
+                source_scope_type,
+                source_scope_id,
+                destination_scope_type,
+                destination_scope_id,
+            ):
                 return None
             return _news_summary(item, now) if model is News else _event_summary(item, now)
 
@@ -371,21 +460,102 @@ class PageCmsSourceService:
             statement = select(Person).options(
                 selectinload(Person.photo), selectinload(Person.assignments)
             ).where(Person.id == source_id, Person.deleted_at.is_(None))
-            if not preview:
-                statement = statement.where(Person.is_active.is_(True), Person.is_public.is_(True))
+            if preview_capability is None:
+                statement = statement.join(StaffAssignment).where(
+                    Person.is_active.is_(True),
+                    Person.is_public.is_(True),
+                    StaffAssignment.deleted_at.is_(None),
+                    StaffAssignment.entity_type == destination_scope_type,
+                    StaffAssignment.entity_id == destination_scope_id,
+                    StaffAssignment.status == "active",
+                    StaffAssignment.is_public.is_(True),
+                    or_(StaffAssignment.start_date.is_(None), StaffAssignment.start_date <= date.today()),
+                    or_(StaffAssignment.end_date.is_(None), StaffAssignment.end_date >= date.today()),
+                )
             item = (await db.execute(statement)).scalar_one_or_none()
-            return _person_summary(item) if item else None
+            if item is None:
+                return None
+            public_assignment = _assignment_for_scope(item, destination_scope_type, destination_scope_id)
+            person_is_public = bool(item.is_active and item.is_public and public_assignment)
+            if person_is_public:
+                return _person_summary(item, destination_scope_type, destination_scope_id)
+            private_assignment = _assignment_for_scope(
+                item, destination_scope_type, destination_scope_id, include_private=True,
+            )
+            if private_assignment is None or not await PageCmsSourceService._preview_allowed(
+                preview_capability,
+                destination_scope_type,
+                destination_scope_id,
+                destination_scope_type,
+                destination_scope_id,
+            ):
+                return None
+            return _person_summary(
+                item, destination_scope_type, destination_scope_id, include_private_assignment=True,
+            )
 
         if source_type == "research_partner":
+            if destination_scope_type not in {"university", "research"}:
+                return None
             item = await ResearchPartnersProxyService.find_partner_by_id(source_id, per_page=50)
             return _partner_summary(item) if item and _partner_is_public(item) else None
 
-        for scope_type in ("university", "homepage"):
-            result = await PageCmsSourceService._search_stats(db, "", scope_type, None, 1, 50)
-            match = next((item for item in result.items if item.id == source_id), None)
-            if match:
-                return match
-        return None
+        result = await PageCmsSourceService._search_stats(
+            db, "", destination_scope_type, destination_scope_id, 1, 50,
+        )
+        return next((item for item in result.items if item.id == source_id), None)
+
+    @staticmethod
+    async def _preview_allowed(
+        capability: PageCmsPreviewCapability | None,
+        source_scope_type: str,
+        source_scope_id: uuid.UUID | None,
+        destination_scope_type: str,
+        destination_scope_id: uuid.UUID | None,
+    ) -> bool:
+        if capability is None:
+            return False
+        return await capability.allows(
+            source_scope_type=source_scope_type,
+            source_scope_id=source_scope_id,
+            destination_scope_type=destination_scope_type,
+            destination_scope_id=destination_scope_id,
+        )
+
+    @staticmethod
+    async def _search_partners(query: str, page: int, per_page: int) -> PaginatedResult:
+        remote_page = 1
+        records: list[dict[str, Any]] = []
+        while remote_page <= 10:
+            payload = await ResearchPartnersProxyService.list_partners(
+                page=remote_page,
+                per_page=50,
+                search=query or None,
+                status="active",
+                is_active=True,
+            )
+            records.extend(item for item in payload.get("data") or [] if _partner_is_public(item))
+            pages = (payload.get("meta") or {}).get("pages")
+            if not isinstance(pages, int) or remote_page >= pages:
+                break
+            remote_page += 1
+        else:
+            raise ValueError("Research partner catalog exceeded 10 remote pages")
+
+        unique_records = {str(item["id"]): item for item in records}
+        summaries = [_partner_summary(item) for item in unique_records.values()]
+        summaries.sort(key=lambda item: (item.label.casefold(), str(item.id)))
+        total = len(summaries)
+        start = (page - 1) * per_page
+        return PaginatedResult(
+            items=summaries[start:start + per_page],
+            meta={
+                "page": page,
+                "per_page": per_page,
+                "total": total,
+                "pages": math.ceil(total / per_page) if total else 0,
+            },
+        )
 
     @staticmethod
     async def _search_stats(
@@ -400,7 +570,12 @@ class PageCmsSourceService:
         slug = None
         if scope_type == "school":
             school = (await db.execute(
-                select(School).where(School.id == scope_id, School.deleted_at.is_(None), School.is_active.is_(True))
+                select(School).where(
+                    School.id == scope_id,
+                    School.deleted_at.is_(None),
+                    School.is_active.is_(True),
+                    School.is_public.is_(True),
+                )
             )).scalar_one_or_none()
             if school is None:
                 return PaginatedResult(items=[], meta={"page": page, "per_page": per_page, "total": 0, "pages": 0})
@@ -409,7 +584,11 @@ class PageCmsSourceService:
             return PaginatedResult(items=[], meta={"page": page, "per_page": per_page, "total": 0, "pages": 0})
 
         response = await public_stats(db, scope=stats_scope, slug=slug)
-        summaries = [_stat_summary(item, response.scope) for item in response.stats] if response else []
+        scope_identity = slug if stats_scope == "school" else None
+        summaries = [
+            _stat_summary(item, response.scope, scope_identity)
+            for item in response.stats
+        ] if response else []
         if query:
             term = query.casefold()
             summaries = [
@@ -431,4 +610,4 @@ class PageCmsSourceService:
         )
 
 
-__all__ = ["PageCmsSourceService", "SUPPORTED_SOURCE_TYPES"]
+__all__ = ["PageCmsPreviewCapability", "PageCmsSourceService", "SUPPORTED_SOURCE_TYPES"]
