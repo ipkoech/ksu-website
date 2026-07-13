@@ -439,6 +439,7 @@ class PageSectionService:
         scope_id: uuid.UUID | None,
         entries: Sequence[Any],
         actor_id: uuid.UUID,
+        authorize_edit: Callable[[PageSection], None] | None = None,
     ) -> list[PageSection]:
         query = PageSection.active_query().where(
             PageSection.page_key == page_key,
@@ -448,6 +449,9 @@ class PageSectionService:
         result = await db.execute(query)
         sections = list(result.scalars().all())
         PageSectionService._validate_reorder_entries(sections, entries)
+        if authorize_edit is not None:
+            for section in sections:
+                authorize_edit(section)
 
         old_order, ordered_entries = PageSectionService._reorder_snapshots(sections, entries)
         new_order = [
@@ -456,14 +460,13 @@ class PageSectionService:
         ]
         audit_fields = {"section_reorder": {"old_order": old_order, "new_order": new_order}}
 
-        for section in sections:
-            await ContentWorkflowService.reset_after_authoring_edit(
-                db,
-                section,
-                "page-sections",
-                actor_id,
-                changed_fields=audit_fields,
-            )
+        await ContentWorkflowService.reset_after_batch_reorder(
+            db,
+            sections,
+            "page-sections",
+            actor_id,
+            changed_fields=audit_fields,
+        )
 
         by_id = {section.id: section for section in sections}
         for index, entry in enumerate(ordered_entries, start=1):
@@ -482,6 +485,7 @@ class PageSectionService:
         section_id: uuid.UUID,
         entries: Sequence[Any],
         actor_id: uuid.UUID,
+        authorize_edit: Callable[[PageSection], None] | None = None,
     ) -> list[SectionItem]:
         section_query = PageSection.active_query().where(
             PageSection.id == section_id,
@@ -497,15 +501,17 @@ class PageSectionService:
         item_result = await db.execute(item_query)
         items = list(item_result.scalars().all())
         PageSectionService._validate_reorder_entries(items, entries)
+        if authorize_edit is not None:
+            authorize_edit(section[0])
 
         old_order, ordered_entries = PageSectionService._reorder_snapshots(items, entries)
         new_order = [
             {"id": str(PageSectionService._entry_value(entry, "id")), "display_order": (index + 1) * 10}
             for index, entry in enumerate(ordered_entries)
         ]
-        await ContentWorkflowService.reset_after_authoring_edit(
+        await ContentWorkflowService.reset_after_batch_reorder(
             db,
-            section[0],
+            section,
             "page-sections",
             actor_id,
             changed_fields={"section_item_reorder": {"old_order": old_order, "new_order": new_order}},

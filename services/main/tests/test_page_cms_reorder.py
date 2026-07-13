@@ -50,7 +50,17 @@ class _ReorderDb:
 
 
 def _user(*permissions: str):
-    return SimpleNamespace(id=uuid.uuid4(), permissions=permissions)
+    role = SimpleNamespace(
+        is_active=True,
+        role_permissions=[
+            SimpleNamespace(permission=SimpleNamespace(name=permission, is_active=True))
+            for permission in permissions
+        ],
+    )
+    return SimpleNamespace(
+        id=uuid.uuid4(),
+        role_assignments=[SimpleNamespace(is_active=True, role=role)],
+    )
 
 
 def _section(*, order: int, revision: int = 1, status: str = "draft") -> PageSection:
@@ -105,6 +115,60 @@ class PageCmsReorderTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual([2, 2], [section.revision for section in response["data"]])
         self.assertTrue(all(statement._for_update_arg is not None for statement in db.statements))
         self.assertEqual(1, db.flush_count)
+        self.assertEqual(1, len(db.added))
+        self.assertEqual("draft", db.added[0].from_status)
+        self.assertEqual("draft", db.added[0].to_status)
+        self.assertIn("section_reorder", db.added[0].changed_fields)
+
+    async def test_draft_item_reorder_records_exactly_one_audit_event(self):
+        section = _section(order=10)
+        first = _item(section, order=100)
+        second = _item(section, order=200)
+        db = _ReorderDb(sections=[section], items=[first, second])
+        request = SectionItemReorderRequest.model_validate({
+            "items": [
+                {"id": str(second.id), "display_order": 10, "revision": 1},
+                {"id": str(first.id), "display_order": 20, "revision": 1},
+            ],
+        })
+
+        with (
+            patch.object(page_cms, "_get_page_section_or_404", AsyncMock(return_value=section)),
+            patch.object(page_cms, "_require_page_section_access", AsyncMock()),
+        ):
+            await page_cms.reorder_section_items(
+                section.id, request, db=db, user=_user("section_items.manage"),
+            )
+
+        self.assertEqual(1, len(db.added))
+        self.assertEqual(section.id, db.added[0].content_id)
+        self.assertEqual("draft", db.added[0].from_status)
+        self.assertEqual("draft", db.added[0].to_status)
+        self.assertIn("section_item_reorder", db.added[0].changed_fields)
+
+    async def test_multiple_published_sections_reset_with_exactly_one_audit_event(self):
+        first = _section(order=100, status="published")
+        second = _section(order=200, status="published")
+        db = _ReorderDb(sections=[first, second])
+        request = PageSectionReorderRequest.model_validate({
+            "scope_type": "university",
+            "items": [
+                {"id": str(second.id), "display_order": 10, "revision": 1},
+                {"id": str(first.id), "display_order": 20, "revision": 1},
+            ],
+        })
+
+        with patch.object(page_cms, "_require_page_section_access", AsyncMock()):
+            await page_cms.reorder_page_sections(
+                "homepage", request, db=db, user=_user("page_sections.update"),
+            )
+
+        self.assertEqual(["draft", "draft"], [first.status, second.status])
+        self.assertEqual(["draft", "draft"], [first.workflow_status, second.workflow_status])
+        self.assertEqual(1, len(db.added))
+        self.assertEqual(first.id, db.added[0].content_id)
+        self.assertEqual("published", db.added[0].from_status)
+        self.assertIn("section_reorder", db.added[0].changed_fields)
 
     async def test_item_reorder_resets_published_parent_and_records_old_and_new_order_once(self):
         section = _section(order=10, status="published")
@@ -214,6 +278,85 @@ class PageCmsReorderTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(403, context.exception.status_code)
         reorder_sections.assert_not_awaited()
+
+    async def test_section_reorder_rejects_submitted_section_before_any_mutation(self):
+        first = _section(order=100)
+        second = _section(order=200, status="in_review")
+        db = _ReorderDb(sections=[first, second])
+        request = PageSectionReorderRequest.model_validate({
+            "scope_type": "university",
+            "items": [
+                {"id": str(second.id), "display_order": 10, "revision": 1},
+                {"id": str(first.id), "display_order": 20, "revision": 1},
+            ],
+        })
+
+        with patch.object(page_cms, "_require_page_section_access", AsyncMock()):
+            with self.assertRaises(HTTPException) as context:
+                await page_cms.reorder_page_sections(
+                    "homepage", request, db=db, user=_user("page_sections.update"),
+                )
+
+        self.assertEqual(403, context.exception.status_code)
+        self.assertEqual([(100, 1, "draft"), (200, 1, "in_review")], [
+            (section.display_order, section.revision, section.status)
+            for section in (first, second)
+        ])
+        self.assertEqual([], db.added)
+        self.assertEqual(0, db.flush_count)
+
+    async def test_item_reorder_rejects_approved_parent_before_any_mutation(self):
+        section = _section(order=10, status="approved")
+        first = _item(section, order=100)
+        second = _item(section, order=200)
+        db = _ReorderDb(sections=[section], items=[first, second])
+        request = SectionItemReorderRequest.model_validate({
+            "items": [
+                {"id": str(second.id), "display_order": 10, "revision": 1},
+                {"id": str(first.id), "display_order": 20, "revision": 1},
+            ],
+        })
+
+        with (
+            patch.object(page_cms, "_get_page_section_or_404", AsyncMock(return_value=section)),
+            patch.object(page_cms, "_require_page_section_access", AsyncMock()),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await page_cms.reorder_section_items(
+                    section.id, request, db=db, user=_user("section_items.manage"),
+                )
+
+        self.assertEqual(403, context.exception.status_code)
+        self.assertEqual([(100, 1), (200, 1)], [
+            (item.display_order, item.revision) for item in (first, second)
+        ])
+        self.assertEqual("approved", section.status)
+        self.assertEqual([], db.added)
+        self.assertEqual(0, db.flush_count)
+
+    async def test_review_editor_can_reorder_submitted_sections(self):
+        first = _section(order=100, status="in_review")
+        second = _section(order=200, status="approved")
+        db = _ReorderDb(sections=[first, second])
+        request = PageSectionReorderRequest.model_validate({
+            "scope_type": "university",
+            "items": [
+                {"id": str(second.id), "display_order": 10, "revision": 1},
+                {"id": str(first.id), "display_order": 20, "revision": 1},
+            ],
+        })
+
+        with patch.object(page_cms, "_require_page_section_access", AsyncMock()):
+            response = await page_cms.reorder_page_sections(
+                "homepage",
+                request,
+                db=db,
+                user=_user("page_sections.update", "content.edit_submitted"),
+            )
+
+        self.assertEqual([second.id, first.id], [section.id for section in response["data"]])
+        self.assertEqual(["draft", "draft"], [first.status, second.status])
+        self.assertEqual(1, len(db.added))
 
 
 if __name__ == "__main__":

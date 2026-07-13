@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Sequence
 from datetime import datetime, timezone
 from typing import Any
 
@@ -90,6 +91,50 @@ class ContentWorkflowService:
         if from_status == "draft":
             return False
 
+        cls._reset_to_draft(content)
+
+        db.add(ContentWorkflowLog(
+            content_type=content_type,
+            content_id=content.id,
+            from_status=from_status,
+            to_status="draft",
+            action="edit_reset",
+            actor_id=actor_id,
+            changed_fields=changed_fields,
+        ))
+        return True
+
+    @classmethod
+    async def reset_after_batch_reorder(
+        cls,
+        db: AsyncSession,
+        contents: Sequence[Any],
+        content_type: str,
+        actor_id: uuid.UUID,
+        *,
+        changed_fields: dict[str, Any],
+    ) -> None:
+        """Reset a reordered collection and record exactly one anchored audit event."""
+        if not contents:
+            raise ValueError("Batch reorder contents are required")
+
+        anchor = contents[0]
+        from_status = getattr(anchor, "workflow_status", None) or getattr(anchor, "status", "draft")
+        for content in contents:
+            cls._reset_to_draft(content)
+
+        db.add(ContentWorkflowLog(
+            content_type=content_type,
+            content_id=anchor.id,
+            from_status=from_status,
+            to_status="draft",
+            action="edit_reset",
+            actor_id=actor_id,
+            changed_fields=changed_fields,
+        ))
+
+    @staticmethod
+    def _reset_to_draft(content: Any) -> None:
         content.status = "draft"
         content.workflow_status = "draft"
         for field, value in (
@@ -111,17 +156,6 @@ class ContentWorkflowService:
         ):
             if hasattr(content, field):
                 setattr(content, field, value)
-
-        db.add(ContentWorkflowLog(
-            content_type=content_type,
-            content_id=content.id,
-            from_status=from_status,
-            to_status="draft",
-            action="edit_reset",
-            actor_id=actor_id,
-            changed_fields=changed_fields,
-        ))
-        return True
 
     @classmethod
     async def transition(

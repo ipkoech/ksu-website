@@ -455,6 +455,7 @@ async def reorder_page_sections(
             scope_id=data.scope_id,
             entries=data.items,
             actor_id=user.id,
+            authorize_edit=lambda section: _require_page_authoring_edit(user, section),
         )
     except PageCmsReorderConflictError as exc:
         raise HTTPException(
@@ -519,6 +520,7 @@ async def reorder_section_items(
             section_id=section_id,
             entries=data.items,
             actor_id=user.id,
+            authorize_edit=lambda locked_section: _require_page_authoring_edit(user, locked_section),
         )
     except PageCmsReorderConflictError as exc:
         raise HTTPException(
