@@ -39,7 +39,7 @@ async def get_admin_stats(
 
 PORTAL_STAT_SCOPES = {
     "admin": ("governance.view", "administration.view", "office.view"),
-    "cocms": PAGE_SECTION_ADMIN_LIST_PERMISSIONS,
+    "cocms": PAGE_SECTION_ADMIN_LIST_PERMISSIONS + ("partnership_spotlights.manage",),
     "schools": ("academic.view",),
     "departments": ("academic.view",),
     "student-clubs": ("clubs.view", "clubs.manage_own"),

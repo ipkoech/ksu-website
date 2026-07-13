@@ -303,6 +303,21 @@ class PageCmsStatsTests(unittest.IsolatedAsyncioTestCase):
 
 
 class PageCmsStatsAuthorizationTests(unittest.TestCase):
+    def test_portal_stats_allows_partnership_spotlight_manager(self):
+        user = _stats_user("partnership_spotlights.manage")
+        client, headers = _stats_client(user)
+        portal = AsyncMock(return_value=SimpleNamespace(model_dump=lambda: {
+            "portal": "cocms",
+            "title": "CoCMS publishing counters",
+            "stats": {},
+        }))
+
+        with patch.object(stats_api, "portal_stats", portal):
+            response = client.get("/api/v1/stats/portal/cocms", headers=headers)
+
+        self.assertEqual(200, response.status_code)
+        portal.assert_awaited_once()
+
     def test_portal_stats_allows_page_cms_viewer(self):
         user = _stats_user("page_sections.view")
         client, headers = _stats_client(user)
