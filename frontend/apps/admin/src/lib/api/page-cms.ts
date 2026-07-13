@@ -121,6 +121,8 @@ export interface SectionItem {
 }
 
 export interface SectionItemPayload {
+  id?: string | null;
+  revision?: number | null;
   page_section_id?: string | null;
   item_type?: SectionItemType;
   title?: string | null;

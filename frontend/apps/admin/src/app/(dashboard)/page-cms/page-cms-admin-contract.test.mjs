@@ -89,6 +89,8 @@ const apiHelperPath = path.join(adminRoot, "lib/api/page-cms.ts");
 assert(fs.existsSync(apiHelperPath), "Expected page CMS API helper to exist");
 
 const apiSource = fs.readFileSync(apiHelperPath, "utf8");
+assert(apiSource.includes("id?: string | null;"), "Nested section item payloads must retain persisted item IDs");
+assert(apiSource.includes("revision?: number | null;"), "Nested section item payloads must retain persisted item revisions");
 for (const exportName of [
   "pageCmsStatsApi",
   "pageSectionsApi",

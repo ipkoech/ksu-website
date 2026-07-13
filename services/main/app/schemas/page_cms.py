@@ -192,6 +192,8 @@ class SectionItemCreate(BaseSchema):
 
 
 class SectionItemUpdate(BaseSchema):
+    id: uuid.UUID | None = None
+    revision: int | None = Field(default=None, ge=1)
     page_section_id: uuid.UUID | None = None
     item_type: str | None = Field(default=None, max_length=32)
     title: str | None = Field(default=None, max_length=255)
@@ -234,6 +236,10 @@ class SectionItemUpdate(BaseSchema):
 
     @model_validator(mode="after")
     def validate_source_reference(self):
+        if self.id is not None and self.revision is None:
+            raise ValueError("revision is required when id is supplied")
+        if self.id is None and self.revision is not None:
+            raise ValueError("id is required when revision is supplied")
         source_type_supplied = "source_type" in self.model_fields_set
         source_id_supplied = "source_id" in self.model_fields_set
         if source_type_supplied != source_id_supplied:

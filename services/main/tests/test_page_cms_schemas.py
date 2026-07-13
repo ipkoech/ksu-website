@@ -309,6 +309,18 @@ class PageCmsSchemaTests(unittest.TestCase):
         self.assertEqual(update.source_type, None)
         self.assertEqual(update.source_id, None)
 
+    def test_nested_section_item_update_accepts_persisted_identity_and_revision(self):
+        item_id = uuid.uuid4()
+
+        update = SectionItemUpdate(id=item_id, revision=3, title="Updated title")
+
+        self.assertEqual(item_id, update.id)
+        self.assertEqual(3, update.revision)
+
+    def test_nested_section_item_update_requires_revision_when_identity_is_supplied(self):
+        with self.assertRaises(ValidationError):
+            SectionItemUpdate(id=uuid.uuid4(), title="Updated title")
+
     def test_partial_reference_update_rejects_generic_content(self):
         with self.assertRaises(ValidationError):
             SectionItemUpdate(item_type="reference", title="Duplicate title")

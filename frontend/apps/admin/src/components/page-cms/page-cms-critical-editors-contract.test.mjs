@@ -29,6 +29,11 @@ expectSnippets(sharedSource, "editors/shared-section-fields.tsx", [
   "onDirtyChange",
   "Save changes",
   "Reset",
+  "id: item.id",
+  "revision: item.revision",
+  "validateDefinitionItems",
+  "definition.allowed_item_types",
+  "definition.allowed_source_types",
 ]);
 
 // Exercise the source adapter itself. The exported functions deliberately use
@@ -90,28 +95,29 @@ expectSnippets(heroSource, "editors/hero-admissions-editor.tsx", [
   "mobile_image",
   "video",
   "poster",
-  "Array.from({ length: 3 }",
+  "CTA_SETTING_KEYS.map",
   "Hero CTA ${index + 1}",
+  "primary_cta",
+  "secondary_cta",
+  "tertiary_cta",
 ]);
+assert.ok(!heroSource.includes('item_type: "cta"'), "Hero CTA slots must be stored in canonical settings, not items");
 
 const pulseSource = read("editors/pulse-editor.tsx");
 expectSnippets(pulseSource, "editors/pulse-editor.tsx", [
   "MAX_PULSE_SOURCES",
   "definition.max_items",
-  "news",
-  "event",
-  "research_project",
-  "club_activity",
   "priority",
   "expires_at",
   "icon_key",
   "Move source up",
+  "definition.allowed_source_types",
 ]);
+assert.ok(!pulseSource.includes('"announcement"'), "Pulse must not introduce an announcement source type");
 
 const partnershipSource = read("editors/partnership-editor.tsx");
 expectSnippets(partnershipSource, "editors/partnership-editor.tsx", [
   "sourceType=\"research_partner\"",
-  "CTA source",
   "CTA label",
   "CTA URL",
   "pillars",
@@ -119,7 +125,11 @@ expectSnippets(partnershipSource, "editors/partnership-editor.tsx", [
   "Move ${name} up",
   "name=\"pillar\"",
   "name=\"opportunity\"",
+  "editorial_overrides",
+  "cta_label",
+  "cta_url",
 ]);
+assert.ok(!partnershipSource.includes('item_type === "cta"'), "Partnership CTA belongs on its research partner reference");
 
 const programmeSource = read("editors/programme-pathway-editor.tsx");
 expectSnippets(programmeSource, "editors/programme-pathway-editor.tsx", [
@@ -139,9 +149,9 @@ expectSnippets(datesSource, "editors/academic-dates-editor.tsx", [
   "sourceType=\"intake\"",
   "sourceType=\"academic_calendar\"",
   "timezone",
-  "display_format",
   "toDateTimeInput",
 ]);
+assert.ok(!datesSource.includes("display_format"), "Academic dates only owns the canonical timezone setting");
 
 const pillarsSource = read("editors/pillar-grid-editor.tsx");
 expectSnippets(pillarsSource, "editors/pillar-grid-editor.tsx", [
@@ -155,7 +165,9 @@ expectSnippets(pillarsSource, "editors/pillar-grid-editor.tsx", [
   "function defaultPillars(): SectionItemPayload[]",
   "const visiblePillars: SectionItemPayload[]",
   "const updatePillars = (next: SectionItemPayload[])",
+  "Use recommended pillars",
 ]);
+assert.ok(!pillarsSource.includes("useEffect"), "Empty pillar sections must not become dirty on mount");
 
 for (const source of [heroSource, pulseSource, partnershipSource, programmeSource, datesSource, pillarsSource]) {
   assert.ok(!source.includes("JSON"), "Typed critical editors must not expose raw JSON controls");

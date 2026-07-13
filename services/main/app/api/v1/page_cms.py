@@ -107,6 +107,84 @@ PAGE_SECTION_ADMIN_WORKFLOW_ROW_ACTIONS = {
     "published": ("publish",),
 }
 
+_SECTION_ITEM_MUTABLE_FIELDS = (
+    "item_type",
+    "title",
+    "subtitle",
+    "body_text",
+    "content",
+    "cta_label",
+    "cta_url",
+    "cta_description",
+    "media_caption",
+    "media_alt_text",
+    "video_provider",
+    "video_url",
+    "video_duration_seconds",
+    "source_type",
+    "source_id",
+    "editorial_overrides",
+    "display_order",
+    "is_enabled",
+)
+
+
+def _unprocessable_nested_items(detail: str) -> HTTPException:
+    return HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=detail)
+
+
+def _reconcile_section_items(section: PageSection, updates: list[SectionItemUpdate]) -> None:
+    """Apply a fully-authoritative nested item payload after validating every change."""
+    existing_by_id = {item.id: item for item in section.items}
+    seen_ids: set[uuid.UUID] = set()
+    prepared: list[tuple[SectionItemUpdate, SectionItem | None, dict]] = []
+
+    for update in updates:
+        payload = update.model_dump(exclude_unset=True)
+        item_id = payload.pop("id", None)
+        revision = payload.pop("revision", None)
+        requested_section_id = payload.pop("page_section_id", None)
+        if requested_section_id is not None and requested_section_id != section.id:
+            raise _unprocessable_nested_items("Nested item page_section_id must match the target section")
+
+        if item_id is None:
+            if "item_type" not in payload:
+                raise _unprocessable_nested_items("New nested items require item_type")
+            try:
+                validate_section_item_state(payload)
+            except ValueError as exc:
+                raise _unprocessable_nested_items(str(exc)) from exc
+            prepared.append((update, None, payload))
+            continue
+
+        if item_id in seen_ids:
+            raise _unprocessable_nested_items("Nested item IDs must be unique")
+        seen_ids.add(item_id)
+        existing = existing_by_id.get(item_id)
+        if existing is None:
+            raise _unprocessable_nested_items("Nested item does not belong to this section")
+        if existing.revision != revision:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Section item has changed; reload required")
+
+        merged_state = {field: getattr(existing, field, None) for field in _SECTION_ITEM_MUTABLE_FIELDS}
+        merged_state.update(payload)
+        try:
+            validate_section_item_state(merged_state)
+        except ValueError as exc:
+            raise _unprocessable_nested_items(str(exc)) from exc
+        prepared.append((update, existing, payload))
+
+    next_items: list[SectionItem] = []
+    for _update, existing, payload in prepared:
+        if existing is None:
+            next_items.append(SectionItem(page_section_id=section.id, **payload))
+            continue
+        apply_updates(existing, **payload)
+        existing.revision = (existing.revision or 1) + 1
+        next_items.append(existing)
+
+    section.items[:] = next_items
+
 
 def _page_specific_permissions(*, page_key: str, scope_type: str, action: str) -> list[str]:
     if page_key != "homepage":
@@ -543,6 +621,7 @@ async def update_page_section(
         action="update",
     )
     payload = data.model_dump(exclude_unset=True)
+    item_updates = data.items if "items" in data.model_fields_set else None
     payload.pop("items", None)
     await _require_page_section_access(
         db,
@@ -554,10 +633,20 @@ async def update_page_section(
     )
     payload["updated_by_id"] = user.id
     _require_page_authoring_edit(user, item)
+    if item_updates is not None:
+        _reconcile_section_items(item, item_updates)
     await ContentWorkflowService.reset_after_authoring_edit(
-        db, item, "page-sections", user.id, changed_fields=payload,
+        db,
+        item,
+        "page-sections",
+        user.id,
+        changed_fields={
+            **payload,
+            **({"section_items_reconciled": len(item_updates)} if item_updates is not None else {}),
+        },
     )
     apply_updates(item, **payload)
+    item.revision = (item.revision or 1) + 1
     await db.flush()
     await db.refresh(item)
     return success(data=item, message="Page section updated")
@@ -728,6 +817,12 @@ async def update_section_item(
         action="item_manage",
     )
     payload = data.model_dump(exclude_unset=True)
+    supplied_item_id = payload.pop("id", None)
+    supplied_revision = payload.pop("revision", None)
+    if supplied_item_id is not None and supplied_item_id != item.id:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Item ID does not match route")
+    if supplied_revision is not None and supplied_revision != item.revision:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Section item has changed; reload required")
     _require_page_authoring_edit(user, section)
     merged_state = {
         field: getattr(item, field, None)
@@ -782,6 +877,7 @@ async def update_section_item(
         changed_fields={"section_item_update": payload},
     )
     apply_updates(item, **payload)
+    item.revision = (item.revision or 1) + 1
     await db.flush()
     await db.refresh(item)
     return success(data=item, message="Section item updated")

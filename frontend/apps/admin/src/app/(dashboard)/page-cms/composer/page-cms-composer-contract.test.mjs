@@ -35,6 +35,7 @@ const routeSource = read("[pageKey]/page.tsx");
 const composerSource = read("[pageKey]/client-page.tsx");
 const templatePickerSource = fs.readFileSync(path.join(adminRoot, "components/page-cms/section-template-picker.tsx"), "utf8");
 const completenessSource = fs.readFileSync(path.join(adminRoot, "components/page-cms/completeness-panel.tsx"), "utf8");
+const inspectorSource = fs.readFileSync(path.join(adminRoot, "components/page-cms/section-inspector.tsx"), "utf8");
 
 assert(pageSource.includes("/page-cms/composer/homepage"), "Composer entry route must open the homepage composition");
 assert(routeSource.includes("ComposerClientPage"), "Page-key route must render the client composer");
@@ -49,6 +50,8 @@ for (const requiredSnippet of [
   "pageCmsApi.reorderSections(",
   "pageSectionsApi.create(",
   "pageSectionsApi.workflow(",
+  "pageSectionsApi.update(",
+  "SectionInspector",
   "scope_type",
   "scope_id",
   "section",
@@ -67,6 +70,19 @@ for (const requiredSnippet of [
 ]) {
   assert(composerSource.includes(requiredSnippet), `Expected composer behavior: ${requiredSnippet}`);
 }
+
+for (const requiredSnippet of [
+  "definitions.find",
+  "onSave={handleSectionSave}",
+  "onDirtyChange={setIsFormDirty}",
+  "readOnly={!canUpdate}",
+  "isReloadRequiredConflict(requestError)",
+]) {
+  assert(composerSource.includes(requiredSnippet), `Expected inspector persistence behavior: ${requiredSnippet}`);
+}
+assert(!composerSource.includes("Editor slot"), "Composer must mount the typed inspector instead of a placeholder");
+assert(!composerSource.includes("Save section <ExternalLink"), "Composer must not route primary editing through the legacy generic editor");
+assert(inspectorSource.includes("onSave"), "Inspector must receive the composer save callback");
 
 assert(!/Scope ID|scope ID|scope_id[^\n]{0,90}placeholder/i.test(composerSource), "Composer must not expose raw scope IDs");
 

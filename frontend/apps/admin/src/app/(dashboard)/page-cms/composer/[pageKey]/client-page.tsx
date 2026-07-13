@@ -1,12 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ExternalLink, Eye, RefreshCw, ShieldAlert } from "lucide-react";
+import { Eye, RefreshCw, ShieldAlert } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle, Badge, Button } from "@ksu/ui/components";
 import { CompletenessPanel } from "@/components/page-cms/completeness-panel";
 import { PageScopePicker, type PageScopePickerValue } from "@/components/page-cms/page-scope-picker";
+import { SectionInspector } from "@/components/page-cms/section-inspector";
 import { SectionTemplatePicker } from "@/components/page-cms/section-template-picker";
 import { SortableSectionOutline } from "@/components/page-cms/sortable-section-outline";
 import { PageHeader } from "@/components/shared/page-header";
@@ -95,6 +95,9 @@ export default function ComposerClientPage() {
   const hasCompleteCurrentScope = !pendingScope && isScopeComplete(currentScope);
   const requiresScopeSelection = !isScopeComplete(scope);
   const selectedSection = sections.find((section) => section.id === sectionId) ?? null;
+  const selectedDefinition = selectedSection
+    ? definitions.find((definition) => definition.key === selectedSection.layout_variant) ?? null
+    : null;
   const pageParams = useMemo(() => ({ scope_type: scopeType, scope_id: scopeId ?? undefined }), [scopeId, scopeType]);
   const replaceLocation = useCallback((next: Partial<{ scopeType: PageScopeType; scopeId: string | null; sectionId: string | null }>) => {
     router.replace(composerHref(pageKey, {
@@ -350,6 +353,21 @@ export default function ComposerClientPage() {
     }
   };
 
+  const handleSectionSave = async (payload: Parameters<typeof pageSectionsApi.update>[1]) => {
+    if (!selectedSection || !canUpdate) throw new Error("Section editing is unavailable.");
+    if (conflict) throw new Error("Reload required before saving this section.");
+    setError(null);
+    try {
+      const response = await pageSectionsApi.update(selectedSection.id, payload);
+      setSections((current) => current.map((section) => section.id === response.data.id ? response.data : section));
+      setIsFormDirty(false);
+    } catch (requestError) {
+      if (isReloadRequiredConflict(requestError)) setConflict(true);
+      else setError("The section could not be saved. Your edits are still available to retry.");
+      throw requestError;
+    }
+  };
+
   const actionButtons = selectedSection ? workflowActionsFor(selectedSection, canUpdate, canReview, canPublish) : [];
 
   if (!canView) {
@@ -385,7 +403,7 @@ export default function ComposerClientPage() {
 
         <main aria-labelledby="editor-heading" className="min-w-0 border border-border p-4">
           <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-4"><div><h2 id="editor-heading" className="text-sm font-semibold">Section editor</h2><p className="mt-1 text-sm text-muted-foreground">{selectedSection ? selectedSection.title || selectedSection.section_key : "Select a section from the outline."}</p></div>{selectedSection ? <Badge variant={selectedSection.status === "published" ? "default" : "secondary"}>{selectedSection.status.replace(/_/g, " ")}</Badge> : null}</div>
-          {selectedSection ? <div className="space-y-4 py-4"><div className="border-l-2 border-primary p-4"><p className="font-medium">Editor slot</p><p className="mt-1 text-sm text-muted-foreground">Section fields and item editors are provided here by the dedicated inspector work in Task 10.</p></div><div className="flex flex-wrap gap-2">{canUpdate ? <Button asChild type="button" variant="outline"><Link href={`/page-cms/sections/${selectedSection.id}`}>Save section <ExternalLink /></Link></Button> : null}{actionButtons.map((action) => <Button key={action} type="button" variant={action === "publish" ? "default" : "outline"} disabled={workflowBusy !== null || conflict} onClick={() => void handleWorkflow(action)}>{workflowBusy === action ? "Working..." : action.replace(/_/g, " ")}</Button>)}</div></div> : <div className="py-8 text-sm text-muted-foreground">Choose a section to inspect its workflow and editing controls.</div>}
+          {selectedSection ? <div className="space-y-4 py-4">{selectedDefinition ? <SectionInspector key={`${selectedSection.id}:${selectedSection.revision}`} section={selectedSection} definition={selectedDefinition} onSave={handleSectionSave} onDirtyChange={setIsFormDirty} readOnly={!canUpdate} /> : <Alert variant="warning"><AlertTitle>Section definition unavailable</AlertTitle><AlertDescription>This section cannot be edited until its definition is available.</AlertDescription></Alert>}<div className="flex flex-wrap gap-2">{actionButtons.map((action) => <Button key={action} type="button" variant={action === "publish" ? "default" : "outline"} disabled={workflowBusy !== null || conflict} onClick={() => void handleWorkflow(action)}>{workflowBusy === action ? "Working..." : action.replace(/_/g, " ")}</Button>)}</div></div> : <div className="py-8 text-sm text-muted-foreground">Choose a section to inspect its workflow and editing controls.</div>}
           <SectionTemplatePicker scopeType={scope.scopeType} definitions={definitions} allowedScopes={PAGE_SCOPE_TYPES} disabled={!canCreate || !hasCompleteCurrentScope || isCreating || Boolean(conflict)} disabledMessage={requiresScopeSelection ? `Select ${scopeDisplayName(scope)} first.` : undefined} onSelect={handleCreate} />
           {preview ? <section aria-label="Preview result" className="mt-4 border-t border-border pt-4"><h2 className="text-sm font-semibold">Preview</h2><p className="mt-1 text-sm text-muted-foreground">{preview.sections.length} sections resolved for preview.</p><ul className="mt-3 space-y-2 text-sm">{preview.sections.map((section) => <li key={section.id} className="border-l-2 border-primary/60 pl-3">{section.title || section.section_key}</li>)}</ul></section> : null}
         </main>

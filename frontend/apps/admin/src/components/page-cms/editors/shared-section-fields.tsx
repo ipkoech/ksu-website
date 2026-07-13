@@ -108,6 +108,8 @@ function draftFromSection(section: PageSection): TypedSectionDraft {
       source_type: item.source_type ?? null,
       source_id: item.source_id ?? null,
       editorial_overrides: item.editorial_overrides ?? null,
+      id: item.id,
+      revision: item.revision,
       display_order: item.display_order,
       is_enabled: item.is_enabled,
     })),
@@ -125,6 +127,21 @@ export function validateSharedDraft(draft: TypedSectionDraft, definition: PageCm
   if (draft.valid_from && !startsAt) return "Valid from must be a valid UTC date and time.";
   if (draft.valid_to && !endsAt) return "Valid to must be a valid UTC date and time.";
   if (startsAt && endsAt && endsAt < startsAt) return "Valid to must be after valid from.";
+  return null;
+}
+
+export function validateDefinitionItems(draft: TypedSectionDraft, definition: PageCmsSectionDefinition) {
+  const activeItems = draft.items.filter((item) => item.is_enabled !== false);
+  const limitError = itemLimitError(activeItems.length, definition.min_items, definition.max_items, definition.label);
+  if (limitError) return limitError;
+  for (const item of activeItems) {
+    if (item.item_type === "reference") {
+      if (!item.source_type || !item.source_id) return "Each reference item needs a source.";
+      if (!definition.allowed_source_types.includes(item.source_type)) return "A selected source is not allowed for this section.";
+    } else if (!item.item_type || !definition.allowed_item_types.includes(item.item_type)) {
+      return "An item type is not allowed for this section.";
+    }
+  }
   return null;
 }
 
@@ -155,7 +172,7 @@ export function useTypedSectionEditor({ section, definition, onSave, onDirtyChan
 
   const save = React.useCallback(async (validate: (next: TypedSectionDraft) => string | null) => {
     const sharedError = validateSharedDraft(draft, definition);
-    const error = sharedError ?? validate(draft);
+    const error = sharedError ?? validateDefinitionItems(draft, definition) ?? validate(draft);
     if (error) {
       setSaveError(error);
       return false;
