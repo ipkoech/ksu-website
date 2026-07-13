@@ -19,19 +19,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 import { Badge, Button } from "@ksu/ui/components";
 import type { SectionItem } from "@/lib/api/page-cms";
-import {
-  beginOrderSave,
-  cancelOrderEdit,
-  confirmOrderSave,
-  createOrderState,
-  normalizeDisplayOrders,
-  orderSignature,
-  receiveServerOrder,
-  rejectOrderSave,
-  replaceDraftOrder,
-  type SortableOrderRecord,
-  type SortableOrderState,
-} from "./sortable-order-state";
+import { createOrderState, orderSignature, SortableOrderController, type SortableOrderRecord, type SortableOrderState } from "./sortable-order-state";
 
 export type SortableOutlineRecord = SortableOrderRecord;
 
@@ -114,26 +102,17 @@ export function SortableOutlineList<T extends SortableOutlineRecord>({
   getDescription,
 }: SortableOutlineListProps<T>) {
   const [orderState, setOrderState] = useState<SortableOrderState<T>>(() => createOrderState(items));
-  const orderStateRef = useRef(orderState);
-  const incomingItemsRef = useRef(items);
-  const serverRevisionRef = useRef(0);
+  const orderControllerRef = useRef<SortableOrderController<T> | null>(null);
+  if (!orderControllerRef.current) {
+    orderControllerRef.current = new SortableOrderController(items, setOrderState);
+  }
+  const orderController = orderControllerRef.current;
   const incomingSignature = useMemo(() => orderSignature(items), [items]);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
-  incomingItemsRef.current = items;
-
-  const updateOrderState = useCallback((updater: (current: SortableOrderState<T>) => SortableOrderState<T>) => {
-    const next = updater(orderStateRef.current);
-    orderStateRef.current = next;
-    setOrderState(next);
-  }, []);
 
   useEffect(() => {
-    updateOrderState((current) => {
-      const next = receiveServerOrder(current, incomingItemsRef.current);
-      if (next !== current) serverRevisionRef.current += 1;
-      return next;
-    });
-  }, [incomingSignature, updateOrderState]);
+    orderController.receiveServerOrder(items);
+  }, [incomingSignature, items, orderController]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -170,48 +149,30 @@ export function SortableOutlineList<T extends SortableOutlineRecord>({
   );
 
   const handleDragStart = (event: DragStartEvent) => {
-    if (orderStateRef.current.isSaving) return;
+    if (orderController.state.isSaving) return;
     setActiveId(event.active.id);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
-    if (orderStateRef.current.isSaving || !over || active.id === over.id) return;
+    if (orderController.state.isSaving || !over || active.id === over.id) return;
 
-    updateOrderState((current) => {
-      const oldIndex = current.orderedItems.findIndex((item) => item.id === active.id);
-      const newIndex = current.orderedItems.findIndex((item) => item.id === over.id);
-      if (oldIndex < 0 || newIndex < 0) return current;
-      return replaceDraftOrder(current, arrayMove(current.orderedItems, oldIndex, newIndex));
-    });
+    const currentItems = orderController.state.orderedItems;
+    const oldIndex = currentItems.findIndex((item) => item.id === active.id);
+    const newIndex = currentItems.findIndex((item) => item.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    orderController.replaceDraftOrder(arrayMove(currentItems, oldIndex, newIndex));
   };
 
   const handleDragCancel = () => {
     setActiveId(null);
   };
 
-  const handleSaveOrder = async () => {
-    const current = orderStateRef.current;
-    if (!current.isDirty || current.isSaving) return;
-
-    const normalizedItems = normalizeDisplayOrders(current.orderedItems);
-    const saveRevision = serverRevisionRef.current;
-    updateOrderState(beginOrderSave);
-
-    try {
-      await onOrderChange(normalizedItems);
-      if (serverRevisionRef.current !== saveRevision) return;
-      updateOrderState((state) => confirmOrderSave(state, normalizedItems));
-    } catch {
-      if (serverRevisionRef.current !== saveRevision) return;
-      updateOrderState((state) => rejectOrderSave(state, "Unable to save order. Try again or cancel to restore the saved order."));
-    }
-  };
+  const handleSaveOrder = () => orderController.save(onOrderChange);
 
   const handleCancelOrder = () => {
-    if (orderStateRef.current.isSaving) return;
-    updateOrderState(cancelOrderEdit);
+    orderController.cancelOrderEdit();
   };
 
   const activeLabel = activeId ? labelForId(activeId) : null;

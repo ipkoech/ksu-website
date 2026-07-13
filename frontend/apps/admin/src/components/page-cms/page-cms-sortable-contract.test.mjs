@@ -40,9 +40,8 @@ for (const requiredSnippet of [
   "Cancel Order",
   "arrayMove(",
   "onOrderChange: (items: T[]) => void | Promise<void>;",
-  "const handleSaveOrder = async () => {",
-  "await onOrderChange(normalizedItems);",
-  "receiveServerOrder",
+  "SortableOrderController",
+  "orderController.save(onOrderChange)",
   "role=\"alert\"",
 ]) {
   assert(itemListSource.includes(requiredSnippet), `Expected sortable item list to include: ${requiredSnippet}`);
@@ -56,6 +55,8 @@ for (const requiredSnippet of [
   "rejectOrderSave",
   "cancelOrderEdit",
   "receiveServerOrder",
+  "SortableOrderController",
+  "serverRevision",
 ]) {
   assert(orderStateSource.includes(requiredSnippet), `Expected sortable order state to include: ${requiredSnippet}`);
 }
