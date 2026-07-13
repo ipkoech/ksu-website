@@ -457,4 +457,3 @@ The feature is accepted when:
 - the homepage returns a predictable resolved hero response;
 - the contextual header CTA and hero panel use the same resolved primary action;
 - all relevant checks pass and implementation is committed through the project commit helper.
-

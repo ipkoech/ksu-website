@@ -1,5 +1,6 @@
 import {
   academicCalendarsApi,
+  contactsApi,
   departmentsApi,
   divisionsApi,
   governanceApi,
@@ -16,6 +17,7 @@ import {
   wingsApi,
   type AcademicCalendar,
   type Board,
+  type ContactOwnerScopeType,
   type Department,
   type Division,
   type Intake,
@@ -637,6 +639,40 @@ export const staffEntityRelationshipAdapter: RelationshipAdapter<{ entity_type: 
     });
     const option = (response.data ?? []).map(staffEntityOption).find((item) => item.id === id);
     return option ?? null;
+  },
+};
+
+export const contactOwnerRelationshipAdapter: RelationshipAdapter<{
+  entity_type: ContactOwnerScopeType;
+}> = {
+  key: "contact-owner",
+  entityType: "contact_owner",
+  label: "Contact owner",
+  pluralLabel: "Contact owners",
+  searchPlaceholder: "Search authorized contact owners",
+  emptyLabel: "No authorized contact owners found.",
+  requiredFilterMessage: (filters) =>
+    filters?.entity_type ? null : "Choose an owner type first.",
+  async search({ search, filters, limit = defaultLimit }) {
+    if (!filters?.entity_type) return [];
+    const response = await contactsApi.listOwners({
+      scope_type: filters.entity_type,
+      q: search?.trim() || undefined,
+      limit,
+    });
+    return (response.data ?? []).map(staffEntityOption);
+  },
+  async get(id, filters) {
+    if (!filters?.entity_type) return null;
+    const response = await contactsApi.listOwners({
+      scope_type: filters.entity_type,
+      limit: 100,
+    });
+    return (
+      (response.data ?? [])
+        .map(staffEntityOption)
+        .find((option) => option.id === id) ?? null
+    );
   },
 };
 
@@ -1282,6 +1318,7 @@ export const relationshipAdapters = {
   media: mediaRelationshipAdapter,
   mediaFolder: mediaFolderRelationshipAdapter,
   staffEntity: staffEntityRelationshipAdapter,
+  contactOwner: contactOwnerRelationshipAdapter,
   libraryBranch: libraryBranchRelationshipAdapter,
   libraryResource: libraryResourceRelationshipAdapter,
   libraryStaff: libraryStaffRelationshipAdapter,

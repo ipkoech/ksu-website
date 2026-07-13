@@ -17,6 +17,7 @@ from .auth import router as auth_router
 from .blogs import router as blogs_router
 from .campuses import router as campuses_router
 from .clubs import router as clubs_router
+from .contact_directory import router as contact_directory_router
 from .contacts import router as contacts_router
 from .content_workflow import router as content_workflow_router
 from .departments import router as departments_router
@@ -112,6 +113,7 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(alumni_associations_router, prefix="/api/v1/alumni-associations", tags=["Alumni"])
     app.include_router(exchange_programmes_router, prefix="/api/v1/exchange-programmes", tags=["Exchange"])
     app.include_router(faqs_router, prefix="/api/v1/faqs", tags=["Support"])
+    app.include_router(contact_directory_router, prefix="/api/v1/contact-directory", tags=["Support"])
     app.include_router(contacts_router, prefix="/api/v1/contacts", tags=["Support"])
     app.include_router(support_router, prefix="/api/v1/support", tags=["Support"])
     app.include_router(media_router, prefix="/api/v1/media", tags=["Media"])

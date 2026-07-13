@@ -1662,6 +1662,135 @@ export interface ContactDirectory {
   updated_at: string;
 }
 
+export type ContactOwnerScopeType =
+  | "division"
+  | "directorate"
+  | "wing"
+  | "school"
+  | "department";
+
+export type ContactOwnerOption = StaffEntityOption;
+
+export interface ContactDirectoryListParams {
+  q?: string;
+  contact_type?: string;
+  scope_type?: string;
+  scope_id?: string;
+  status?: string;
+  is_main?: boolean;
+  is_public?: boolean;
+  sort?: "name_asc" | "name_desc";
+}
+
+export type PublicContactDirectoryParams = {
+  q?: string;
+  contact_type?: string;
+  scope_type?: string;
+  scope_id?: string;
+  page?: number;
+  per_page?: number;
+};
+
+export interface PublicUniversityContactSummary {
+  id: string;
+  name: string;
+  short_name: string | null;
+  acronym: string | null;
+  email: string | null;
+  phone: string | null;
+  alternate_phone: string | null;
+  website: string | null;
+  postal_address: string | null;
+  physical_address: string | null;
+  city: string | null;
+  county: string | null;
+  country: string | null;
+  social_links: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PublicContactDirectoryEntry {
+  id: string;
+  name: string;
+  contact_type: string | null;
+  email: string | null;
+  phone: string[] | null;
+  extension: string | null;
+  physical_address: string | null;
+  building: string | null;
+  room_number: string | null;
+  operating_hours: Record<string, unknown> | null;
+  contact_person_id: string | null;
+  scope_type: string | null;
+  scope_id: string | null;
+  is_main: boolean;
+  is_public: boolean;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Campus {
+  id: string;
+  name: string;
+  slug: string;
+  code: string;
+  campus_type: string;
+  address: string | null;
+  city: string | null;
+  county: string | null;
+  postal_code: string | null;
+  gps_latitude: number | null;
+  gps_longitude: number | null;
+  description: string | null;
+  email: string | null;
+  phone: string | null;
+  cover_image_id: string | null;
+  is_active: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PublicContactFAQ {
+  id: string;
+  question: string;
+  answer_plain_text: string | null;
+  answer_rich_text: string | null;
+  answer_structured: Record<string, unknown> | null;
+  category: string | null;
+  scope_type: string | null;
+  scope_id: string | null;
+  is_main: boolean;
+  is_public: boolean;
+  status: string;
+  display_order: number;
+  views_count: number;
+  helpful_count: number;
+  deleted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PublicContactDirectoryPage {
+  items: PublicContactDirectoryEntry[];
+  meta: {
+    page: number;
+    per_page: number;
+    total: number;
+    pages: number;
+  };
+}
+
+export interface PublicContactDirectory {
+  institution: PublicUniversityContactSummary | null;
+  main_contacts: PublicContactDirectoryEntry[];
+  contacts: PublicContactDirectoryPage;
+  campuses: Campus[];
+  faqs: PublicContactFAQ[];
+}
+
 export interface SearchPayload {
   q: string;
   limit_per_type: number;

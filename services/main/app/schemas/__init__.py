@@ -104,6 +104,14 @@ from .content_workflow import (
     ContentWorkflowActionRequest,
     ContentWorkflowLogRead,
 )
+from .contact_directory import (
+    ContactDirectoryPaginationMeta,
+    PublicCampusContactSummary,
+    PublicContactDirectoryEntry,
+    PublicContactDirectoryPage,
+    PublicContactDirectoryRead,
+    PublicUniversityContactSummary,
+)
 from .document import (
     DocumentCreate,
     DocumentRead,
@@ -502,6 +510,12 @@ __all__ = [
     "ContactDirectoryCreate",
     "ContactDirectoryUpdate",
     "ContactDirectoryRead",
+    "ContactDirectoryPaginationMeta",
+    "PublicCampusContactSummary",
+    "PublicContactDirectoryEntry",
+    "PublicContactDirectoryPage",
+    "PublicContactDirectoryRead",
+    "PublicUniversityContactSummary",
     "SupportTicketCreate",
     "SupportTicketUpdate",
     "SupportTicketRead",

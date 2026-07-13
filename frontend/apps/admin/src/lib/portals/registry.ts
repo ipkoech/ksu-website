@@ -228,7 +228,8 @@ type PortalEntityScope =
   | "wing"
   | "division"
   | "university"
-  | "administration";
+  | "administration"
+  | "contact-directory";
 
 const portalScopeConfigs = [
   {
@@ -258,6 +259,61 @@ const portalScopeConfigs = [
   },
 ];
 
+const contactOwnerConfigs = [
+  {
+    value: "university",
+    label: "University",
+    adapter: "staffEntity" as const,
+    filters: { entity_type: "university" },
+    recordRequired: false,
+  },
+  {
+    value: "division",
+    label: "Division",
+    adapter: "contactOwner" as const,
+    filters: { entity_type: "division" },
+  },
+  {
+    value: "directorate",
+    label: "Directorate",
+    adapter: "contactOwner" as const,
+    filters: { entity_type: "directorate" },
+  },
+  {
+    value: "wing",
+    label: "Office / Wing",
+    adapter: "contactOwner" as const,
+    filters: { entity_type: "wing" },
+  },
+  {
+    value: "school",
+    label: "School / Faculty",
+    adapter: "contactOwner" as const,
+    filters: { entity_type: "school" },
+  },
+  {
+    value: "department",
+    label: "Department",
+    adapter: "contactOwner" as const,
+    filters: { entity_type: "department" },
+  },
+];
+
+const contactTypeOptions = [
+  { label: "Main Office", value: "main" },
+  { label: "Admissions", value: "admissions" },
+  { label: "Academic Affairs", value: "academic_affairs" },
+  { label: "Finance", value: "finance" },
+  { label: "Examinations", value: "examinations" },
+  { label: "Student Support", value: "support" },
+  { label: "Student Affairs / Life", value: "student_life" },
+  { label: "ICT", value: "ict" },
+  { label: "Library", value: "library" },
+  { label: "Research", value: "research" },
+  { label: "Security / Emergency", value: "security" },
+  { label: "General", value: "general" },
+];
+
 function normalizeScopePayload(
   values: PortalPayload,
   fallbackScopeType?: string,
@@ -282,7 +338,55 @@ function validateScopeValues(values: PortalPayload) {
   return errors;
 }
 
+function validateContactOwnerValues(values: PortalPayload) {
+  const errors: Record<string, string> = {};
+  const ownerTypes = new Set(contactOwnerConfigs.map((config) => config.value));
+  if (!ownerTypes.has(String(values.scope_type ?? ""))) {
+    errors.scope = "Choose the university, office, school, or department that owns this contact.";
+  } else if (values.scope_type !== "university" && !values.scope_id) {
+    errors.scope = "Choose the specific organizational owner for this contact.";
+  }
+  return errors;
+}
+
+function normalizeContactPayload(values: PortalPayload) {
+  const { scope: _scope, search: _search, ...payload } = values;
+  const normalizedPhone = splitList(values.phone);
+  const phone = Array.isArray(normalizedPhone)
+    ? normalizedPhone.map((item) => String(item).trim()).filter(Boolean)
+    : normalizedPhone;
+
+  return {
+    ...payload,
+    ...normalizeScopePayload(values),
+    phone: Array.isArray(phone) && phone.length === 0 ? null : phone,
+    contact_person_id: normalizeText(values.contact_person_id),
+    is_main: values.is_main ?? false,
+    is_public: values.is_public ?? true,
+    status: values.status || "active",
+  };
+}
+
 function scopeEntityFields(scopeType?: PortalEntityScope): EditableField[] {
+  if (scopeType === "contact-directory") {
+    return [
+      {
+        name: "scope",
+        label: "Organizational Owner",
+        type: "entity-record",
+        entityRecord: {
+          typeName: "scope_type",
+          idName: "scope_id",
+          configs: contactOwnerConfigs,
+          description:
+            "Attach this contact to the university, a division or directorate, an office or wing, a school, or a department.",
+          typePlaceholder: "Select owner type",
+          recordPlaceholder: "Select organizational owner",
+          allowNone: false,
+        },
+      },
+    ];
+  }
   if (scopeType === "administration") {
     return [
       {
@@ -2572,25 +2676,61 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       "Manage public contact directory entries for corporate communication.",
     backHref: "/corporate-communication",
     queryKey: ["corporate", "contacts"],
-    fields: contactFields(),
+    fields: contactFields("contact-directory"),
     listFilters: [
+      {
+        name: "search",
+        label: "Search",
+        type: "text",
+        placeholder: "Search contacts, email, location, or extension",
+      },
+      {
+        name: "scope_type",
+        label: "Owner Type",
+        type: "select",
+        options: contactOwnerConfigs.map((config) => ({
+          label: config.label,
+          value: config.value,
+        })),
+      },
+      {
+        name: "contact_type",
+        label: "Contact Type",
+        type: "select",
+        options: contactTypeOptions,
+      },
+      {
+        name: "status",
+        label: "Status",
+        type: "select",
+        options: contactStatusOptions,
+      },
       { name: "is_public", label: "Public", type: "boolean" },
       { name: "is_main", label: "Main Site", type: "boolean" },
     ],
-    list: (filters) =>
-      contactsApi.listAdmin({ ...pageParams, is_main: true, ...filters }),
+    list: (filters) => {
+      const { search: _search, ...params } = filters ?? {};
+      return contactsApi.listAdmin({
+        ...pageParams,
+        ...params,
+        q: typeof filters?.search === "string" ? filters.search : undefined,
+      });
+    },
     create: (payload) => contactsApi.create(payload),
     update: (id, payload) => contactsApi.update(id, payload),
+    viewInEditor: true,
     getRecordTitle: (record) => record.name,
     getRecordMeta: (record) =>
-      metaOf(record, ["contact_type", "email", "status"]),
+      metaOf(record, [
+        "scope_type",
+        "contact_type",
+        "email",
+        "building",
+        "status",
+      ]),
     emptyMessage: "No contact entries were returned.",
-    buildPayload: (values) => ({
-      ...values,
-      phone: splitList(values.phone),
-      is_main: values.is_main ?? true,
-      status: values.status || "active",
-    }),
+    buildPayload: (values) => normalizeContactPayload(values),
+    validate: validateContactOwnerValues,
     viewScopes: ["content.view"],
     manageScopes: ["support.manage_contacts", "content.manage_pages", "content.publish"],
     canDelete: false,
