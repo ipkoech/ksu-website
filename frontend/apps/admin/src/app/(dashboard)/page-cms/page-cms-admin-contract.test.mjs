@@ -30,7 +30,7 @@ expectDefaultPageExport("sections/page.tsx");
 expectDefaultPageExport("sections/[id]/page.tsx");
 expectDefaultPageExport("spotlights/page.tsx");
 
-const sectionDetailSource = fs.readFileSync(path.join(appRoot, "sections/[id]/page.tsx"), "utf8");
+const sectionDetailSource = fs.readFileSync(path.join(appRoot, "sections/[id]/client-page.tsx"), "utf8");
 for (const requiredSnippet of [
   "pageSectionsApi.get(",
   "Subtitle",
@@ -51,8 +51,8 @@ const dashboardSource = fs.readFileSync(path.join(appRoot, "page.tsx"), "utf8");
 for (const requiredSnippet of [
   "canViewSections ? (",
   "canManageSpotlights ? (",
-  "href=\"/page-cms/sections\"",
-  "href=\"/page-cms/spotlights\"",
+  "href=\"/cocms/page-cms/sections\"",
+  "href=\"/cocms/page-cms/spotlights\"",
 ]) {
   assert(
     dashboardSource.includes(requiredSnippet),

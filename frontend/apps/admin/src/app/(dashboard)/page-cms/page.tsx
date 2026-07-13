@@ -138,7 +138,7 @@ export default function PageCmsDashboardPage() {
             </div>
             {canViewSections ? (
               <Button asChild>
-                <Link href="/page-cms/sections">Open Sections</Link>
+                <Link href="/cocms/page-cms/sections">Open Sections</Link>
               </Button>
             ) : null}
           </CardHeader>
@@ -153,7 +153,7 @@ export default function PageCmsDashboardPage() {
               sections.slice(0, 6).map((section) => (
                 <Link
                   key={section.id}
-                  href={`/page-cms/sections/${section.id}`}
+                  href={`/cocms/page-cms/sections/${section.id}`}
                   className="flex items-center justify-between gap-4 rounded-lg border p-3 transition-colors hover:border-primary"
                 >
                   <div className="min-w-0">
@@ -183,7 +183,7 @@ export default function PageCmsDashboardPage() {
             </div>
             {canManageSpotlights ? (
               <Button variant="outline" asChild>
-                <Link href="/page-cms/spotlights">Open Spotlights</Link>
+                <Link href="/cocms/page-cms/spotlights">Open Spotlights</Link>
               </Button>
             ) : null}
           </CardHeader>

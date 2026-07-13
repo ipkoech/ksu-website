@@ -390,7 +390,7 @@ export default function PageCmsSectionDetailPage() {
       toast.success(isNew ? "Page section created." : "Page section updated.");
 
       if (isNew) {
-        router.replace(`/page-cms/sections/${savedSection.id}`);
+        router.replace(`/cocms/page-cms/sections/${savedSection.id}`);
       }
     } catch {
       toast.error("Failed to save the page section.");
@@ -433,7 +433,7 @@ export default function PageCmsSectionDetailPage() {
       <PageHeader
         title={isNew ? "Create Page Section" : "Edit Page Section"}
         description={isNew ? "Compose section settings, items, attachments, and workflow metadata." : `Editing: ${sectionTitle}`}
-        backHref="/page-cms/sections"
+        backHref="/cocms/page-cms/sections"
         actions={(
           <div className="flex flex-wrap gap-2">
             {availableWorkflowActions.map((action) => (

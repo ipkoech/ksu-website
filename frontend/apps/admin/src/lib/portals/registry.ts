@@ -6165,6 +6165,35 @@ export const portalConfigs: Record<string, PortalConfig> = {
         scope: ["content.review", "content.publish"],
       },
       {
+        title: "Page CMS",
+        href: "/cocms/page-cms",
+        icon: PanelsTopLeft,
+        scope: [
+          "page_sections.view",
+          "page_sections.manage",
+          "homepage.view",
+          "homepage.manage",
+          "partnership_spotlights.manage",
+        ],
+      },
+      {
+        title: "Page Sections",
+        href: "/cocms/page-cms/sections",
+        icon: PanelsTopLeft,
+        scope: [
+          "page_sections.view",
+          "page_sections.manage",
+          "homepage.view",
+          "homepage.manage",
+        ],
+      },
+      {
+        title: "Partnership Spotlights",
+        href: "/cocms/page-cms/spotlights",
+        icon: ImageIcon,
+        scope: ["partnership_spotlights.manage", "homepage.manage"],
+      },
+      {
         title: "Newsroom",
         href: "/cocms/news",
         icon: Newspaper,

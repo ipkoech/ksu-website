@@ -280,7 +280,7 @@ export default function PageCmsSpotlightsPage() {
       <PageHeader
         title="Partnership Spotlights"
         description="Manage spotlight copy, CTA strategy, media roles, and enabled windows for research partner highlights."
-        backHref="/page-cms"
+        backHref="/cocms/page-cms"
         actions={(
           <div className="flex flex-wrap gap-2">
             {availableWorkflowActions.map((action) => (
