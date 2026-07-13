@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Eye, RefreshCw, ShieldAlert } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle, Badge, Button } from "@ksu/ui/components";
 import { CompletenessPanel } from "@/components/page-cms/completeness-panel";
+import { ComposerPreview } from "@/components/page-cms/composer-preview";
 import { PageScopePicker, type PageScopePickerValue } from "@/components/page-cms/page-scope-picker";
 import { SectionInspector } from "@/components/page-cms/section-inspector";
 import { SectionTemplatePicker } from "@/components/page-cms/section-template-picker";
@@ -66,6 +67,7 @@ export default function ComposerClientPage() {
   const [validation, setValidation] = useState<PageCmsValidationResult | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [preview, setPreview] = useState<PageCmsPreview | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isValidating, setIsValidating] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
@@ -259,6 +261,7 @@ export default function ComposerClientPage() {
     setValidation(null);
     setValidationError(null);
     setPreview(null);
+    setPreviewError(null);
     if (!isScopeComplete(nextScope)) {
       setPendingScope(nextScope);
       return;
@@ -326,18 +329,29 @@ export default function ComposerClientPage() {
     }
   };
 
-  const handlePreview = async () => {
+  const refreshPreviewAndValidation = async () => {
     if (!hasCompleteCurrentScope) return;
     setIsPreviewing(true);
-    try {
-      const response = await pageCmsApi.previewPage(pageKey, pageParams);
-      setPreview(response.data);
-    } catch {
-      setError("Preview could not be loaded.");
-    } finally {
-      setIsPreviewing(false);
+    setIsValidating(true);
+    setPreviewError(null);
+    setValidationError(null);
+    const [previewResult, validationResult] = await Promise.allSettled([
+      Promise.resolve().then(() => pageCmsApi.previewPage(pageKey, pageParams)),
+      Promise.resolve().then(() => pageCmsApi.validatePage(pageKey, pageParams)),
+    ]);
+    if (previewResult.status === "fulfilled") setPreview(previewResult.value.data);
+    else setPreviewError("Preview could not be loaded.");
+    if (validationResult.status === "fulfilled") {
+      setValidation(validationResult.value.data);
+      setValidationOpen(true);
+    } else {
+      setValidationError("Validation could not be completed.");
     }
+    setIsPreviewing(false);
+    setIsValidating(false);
   };
+
+  const handlePreview = async () => refreshPreviewAndValidation();
 
   const handleWorkflow = async (action: PageSectionWorkflowAction) => {
     if (!selectedSection || workflowBusy) return;
@@ -361,6 +375,7 @@ export default function ComposerClientPage() {
       const response = await pageSectionsApi.update(selectedSection.id, payload);
       setSections((current) => current.map((section) => section.id === response.data.id ? response.data : section));
       setIsFormDirty(false);
+      await refreshPreviewAndValidation();
     } catch (requestError) {
       if (isReloadRequiredConflict(requestError)) setConflict(true);
       else setError("The section could not be saved. Your edits are still available to retry.");
@@ -405,7 +420,7 @@ export default function ComposerClientPage() {
           <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-4"><div><h2 id="editor-heading" className="text-sm font-semibold">Section editor</h2><p className="mt-1 text-sm text-muted-foreground">{selectedSection ? selectedSection.title || selectedSection.section_key : "Select a section from the outline."}</p></div>{selectedSection ? <Badge variant={selectedSection.status === "published" ? "default" : "secondary"}>{selectedSection.status.replace(/_/g, " ")}</Badge> : null}</div>
           {selectedSection ? <div className="space-y-4 py-4">{selectedDefinition ? <SectionInspector key={`${selectedSection.id}:${selectedSection.revision}`} section={selectedSection} definition={selectedDefinition} onSave={handleSectionSave} onDirtyChange={setIsFormDirty} readOnly={!canUpdate} /> : <Alert variant="warning"><AlertTitle>Section definition unavailable</AlertTitle><AlertDescription>This section cannot be edited until its definition is available.</AlertDescription></Alert>}<div className="flex flex-wrap gap-2">{actionButtons.map((action) => <Button key={action} type="button" variant={action === "publish" ? "default" : "outline"} disabled={workflowBusy !== null || conflict} onClick={() => void handleWorkflow(action)}>{workflowBusy === action ? "Working..." : action.replace(/_/g, " ")}</Button>)}</div></div> : <div className="py-8 text-sm text-muted-foreground">Choose a section to inspect its workflow and editing controls.</div>}
           <SectionTemplatePicker scopeType={scope.scopeType} definitions={definitions} allowedScopes={PAGE_SCOPE_TYPES} disabled={!canCreate || !hasCompleteCurrentScope || isCreating || Boolean(conflict)} disabledMessage={requiresScopeSelection ? `Select ${scopeDisplayName(scope)} first.` : undefined} onSelect={handleCreate} />
-          {preview ? <section aria-label="Preview result" className="mt-4 border-t border-border pt-4"><h2 className="text-sm font-semibold">Preview</h2><p className="mt-1 text-sm text-muted-foreground">{preview.sections.length} sections resolved for preview.</p><ul className="mt-3 space-y-2 text-sm">{preview.sections.map((section) => <li key={section.id} className="border-l-2 border-primary/60 pl-3">{section.title || section.section_key}</li>)}</ul></section> : null}
+          <ComposerPreview preview={preview} isLoading={isPreviewing} error={previewError} validationIssues={validation?.issues} isDirty={isOrderDirty || isFormDirty} />
         </main>
 
         <aside className="hidden border border-border p-4 xl:block">{validationPanel}</aside>
