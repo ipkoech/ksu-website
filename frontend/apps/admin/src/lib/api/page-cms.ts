@@ -194,11 +194,27 @@ export interface PageCompositionParams {
   scope_id?: string;
 }
 
+export interface PageCmsStats {
+  draft_count: number;
+  in_review_count: number;
+  changes_requested_count: number;
+  approved_count: number;
+  scheduled_count: number;
+  published_count: number;
+  expired_count: number;
+  validation_blocker_count: number;
+  spotlight_count: number;
+}
+
 export const pageCmsApi = {
   getHomepage: (params?: PageCompositionParams) =>
     api.get<PageComposition>("/homepage", { params }),
   getPage: (pageKey: string, params?: PageCompositionParams) =>
     api.get<PageComposition>(`/pages/${pageKey}`, { params }),
+};
+
+export const pageCmsStatsApi = {
+  get: () => api.get<PageCmsStats>("/stats/portal/cocms"),
 };
 
 export const pageSectionsApi = {

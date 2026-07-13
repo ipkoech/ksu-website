@@ -1,13 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { FileStack, Image as ImageIcon, LayoutTemplate, Workflow } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle, Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
 import { PageHeader } from "@/components/shared/page-header";
 import { usePermissions } from "@/hooks/use-permissions";
 import { PageTransition } from "@/lib/animations";
-import { pageSectionsApi, partnershipSpotlightsApi, type PageSection, type PartnershipSpotlight } from "@/lib/api/page-cms";
+import {
+  pageCmsStatsApi,
+  pageSectionsApi,
+  partnershipSpotlightsApi,
+  type PageCmsStats,
+  type PageSection,
+  type PartnershipSpotlight,
+} from "@/lib/api/page-cms";
 
 function StatCard({
   title,
@@ -16,7 +23,7 @@ function StatCard({
   icon: Icon,
 }: {
   title: string;
-  value: number;
+  value: number | string;
   description: string;
   icon: typeof LayoutTemplate;
 }) {
@@ -40,6 +47,8 @@ export default function PageCmsDashboardPage() {
   const { hasAnyPermission } = usePermissions();
   const [sections, setSections] = useState<PageSection[]>([]);
   const [spotlights, setSpotlights] = useState<PartnershipSpotlight[]>([]);
+  const [stats, setStats] = useState<PageCmsStats | null>(null);
+  const [statsUnavailable, setStatsUnavailable] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,22 +76,32 @@ export default function PageCmsDashboardPage() {
     const load = async () => {
       setIsLoading(true);
       setError(null);
-      try {
-        const [sectionsResponse, spotlightsResponse] = await Promise.all([
-          canViewSections ? pageSectionsApi.listAdmin({ page: 1, per_page: 100 }) : Promise.resolve({ data: [] }),
-          canManageSpotlights ? partnershipSpotlightsApi.listAdmin({ page: 1, per_page: 100 }) : Promise.resolve({ data: [] }),
-        ]);
-        if (cancelled) return;
+      setStatsUnavailable(false);
+      const [statsResult, activityResult] = await Promise.allSettled([
+        pageCmsStatsApi.get(),
+        Promise.all([
+          canViewSections ? pageSectionsApi.listAdmin({ page: 1, per_page: 6 }) : Promise.resolve({ data: [] }),
+          canManageSpotlights ? partnershipSpotlightsApi.listAdmin({ page: 1, per_page: 6 }) : Promise.resolve({ data: [] }),
+        ]),
+      ]);
+      if (cancelled) return;
+
+      if (statsResult.status === "fulfilled") {
+        setStats(statsResult.value.data);
+      } else {
+        setStats(null);
+        setStatsUnavailable(true);
+      }
+
+      if (activityResult.status === "fulfilled") {
+        const [sectionsResponse, spotlightsResponse] = activityResult.value;
         setSections(sectionsResponse.data ?? []);
         setSpotlights(spotlightsResponse.data ?? []);
-      } catch {
-        if (!cancelled) {
-          setError("Failed to load page CMS overview.");
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
+      } else {
+        setError("Failed to load page CMS activity.");
+      }
+      if (!cancelled) {
+        setIsLoading(false);
       }
     };
 
@@ -92,19 +111,7 @@ export default function PageCmsDashboardPage() {
     };
   }, [canManageSpotlights, canViewSections]);
 
-  const stats = useMemo(() => {
-    const inReview = sections.filter((section) => section.status === "in_review").length;
-    const published = sections.filter((section) => section.status === "published").length;
-    const enabled = sections.filter((section) => section.is_enabled).length;
-
-    return {
-      total: sections.length,
-      inReview,
-      published,
-      enabled,
-      spotlights: spotlights.length,
-    };
-  }, [sections, spotlights.length]);
+  const statValue = (value: number | undefined) => (statsUnavailable ? "Unavailable" : value ?? 0);
 
   return (
     <PageTransition>
@@ -121,10 +128,15 @@ export default function PageCmsDashboardPage() {
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Sections" value={stats.total} description="Structured sections available across managed pages." icon={LayoutTemplate} />
-        <StatCard title="In Review" value={stats.inReview} description="Sections waiting on editorial review." icon={Workflow} />
-        <StatCard title="Published" value={stats.published} description="Sections currently live in public composition." icon={FileStack} />
-        <StatCard title="Spotlights" value={stats.spotlights} description="Homepage partnership spotlights currently returned by composition." icon={ImageIcon} />
+        <StatCard title="Drafts" value={statValue(stats?.draft_count)} description="Sections awaiting editorial submission." icon={LayoutTemplate} />
+        <StatCard title="In Review" value={statValue(stats?.in_review_count)} description="Sections waiting on editorial review." icon={Workflow} />
+        <StatCard title="Changes Requested" value={statValue(stats?.changes_requested_count)} description="Sections returned for revision." icon={Workflow} />
+        <StatCard title="Approved" value={statValue(stats?.approved_count)} description="Sections ready for publication." icon={FileStack} />
+        <StatCard title="Scheduled" value={statValue(stats?.scheduled_count)} description="Sections with a future publication window." icon={Workflow} />
+        <StatCard title="Published" value={statValue(stats?.published_count)} description="Sections currently live in public composition." icon={FileStack} />
+        <StatCard title="Expired" value={statValue(stats?.expired_count)} description="Sections outside their publication window." icon={FileStack} />
+        <StatCard title="Validation Blockers" value={statValue(stats?.validation_blocker_count)} description="Sections that cannot progress until blockers are resolved." icon={LayoutTemplate} />
+        <StatCard title="Spotlights" value={statValue(stats?.spotlight_count)} description="Partnership spotlight records in Page CMS." icon={ImageIcon} />
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
@@ -195,7 +207,7 @@ export default function PageCmsDashboardPage() {
             ) : isLoading ? (
               <p className="text-sm text-muted-foreground">Loading spotlight activity...</p>
             ) : spotlights.length ? (
-              spotlights.slice(0, 5).map((spotlight) => (
+              spotlights.slice(0, 6).map((spotlight) => (
                 <div key={spotlight.id} className="rounded-lg border p-3">
                   <div className="flex items-center justify-between gap-3">
                     <p className="truncate font-medium">{spotlight.headline}</p>

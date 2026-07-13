@@ -30,7 +30,7 @@ expectDefaultPageExport("sections/page.tsx");
 expectDefaultPageExport("sections/[id]/page.tsx");
 expectDefaultPageExport("spotlights/page.tsx");
 
-const sectionDetailSource = fs.readFileSync(path.join(appRoot, "sections/[id]/page.tsx"), "utf8");
+const sectionDetailSource = fs.readFileSync(path.join(appRoot, "sections/[id]/client-page.tsx"), "utf8");
 for (const requiredSnippet of [
   "pageSectionsApi.get(",
   "Subtitle",
@@ -53,6 +53,10 @@ for (const requiredSnippet of [
   "canManageSpotlights ? (",
   "href=\"/page-cms/sections\"",
   "href=\"/page-cms/spotlights\"",
+  "pageCmsStatsApi.get()",
+  "value={statValue(stats?.draft_count)}",
+  "value={statValue(stats?.validation_blocker_count)}",
+  "spotlights.slice(0, 6)",
 ]) {
   assert(
     dashboardSource.includes(requiredSnippet),
@@ -80,6 +84,7 @@ assert(fs.existsSync(apiHelperPath), "Expected page CMS API helper to exist");
 
 const apiSource = fs.readFileSync(apiHelperPath, "utf8");
 for (const exportName of [
+  "pageCmsStatsApi",
   "pageSectionsApi",
   "sectionItemsApi",
   "partnershipSpotlightsApi",
@@ -87,6 +92,26 @@ for (const exportName of [
   assert(
     apiSource.includes(`export const ${exportName}`),
     `Expected ${exportName} export in lib/api/page-cms.ts`,
+  );
+}
+
+for (const expectedSnippet of [
+  "export interface PageCmsStats",
+  'api.get<PageCmsStats>("/stats/portal/cocms")',
+]) {
+  assert(
+    apiSource.includes(expectedSnippet),
+    `Expected Page CMS stats API helper to include: ${expectedSnippet}`,
+  );
+}
+
+for (const forbiddenSnippet of [
+  "const stats = useMemo(() =>",
+  "sections.filter((section) => section.status",
+]) {
+  assert(
+    !dashboardSource.includes(forbiddenSnippet),
+    `Expected dashboard statistics to avoid list-derived values: ${forbiddenSnippet}`,
   );
 }
 

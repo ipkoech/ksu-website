@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from ..models import (
     Announcement,
@@ -60,6 +63,12 @@ PORTAL_STAT_CONTRACTS: dict[str, tuple[str, ...]] = {
         "draft_count",
         "scheduled_count",
         "media_count",
+        "in_review_count",
+        "changes_requested_count",
+        "approved_count",
+        "expired_count",
+        "validation_blocker_count",
+        "spotlight_count",
     ),
     "schools": ("schools_count", "programmes_count", "departments_count"),
     "departments": (
@@ -117,6 +126,130 @@ async def _sum(db: AsyncSession, field, model, *conditions) -> int:
         )
     )
     return int(result.scalar_one() or 0)
+
+
+class _PageCmsStatsPreviewCapability:
+    """Authorize validation only within the section's own page scope."""
+
+    def __init__(self, scope_type: str, scope_id):
+        self.scope_type = scope_type
+        self.scope_id = scope_id
+
+    async def allows(
+        self,
+        *,
+        source_scope_type: str,
+        source_scope_id,
+        destination_scope_type: str,
+        destination_scope_id,
+    ) -> bool:
+        return (
+            source_scope_type == self.scope_type == destination_scope_type
+            and source_scope_id == self.scope_id == destination_scope_id
+        )
+
+
+def _page_cms_active_publication_window(model, now):
+    return (
+        or_(model.valid_from.is_(None), model.valid_from <= now),
+        or_(model.valid_to.is_(None), model.valid_to >= now),
+        or_(model.scheduled_publish_at.is_(None), model.scheduled_publish_at <= now),
+        or_(model.expires_at.is_(None), model.expires_at >= now),
+    )
+
+
+async def _page_cms_workflow_stats(db: AsyncSession) -> dict[str, int]:
+    now = datetime.now(timezone.utc)
+    scheduled = and_(
+        PageSection.status != "archived",
+        or_(
+            PageSection.valid_from > now,
+            PageSection.scheduled_publish_at > now,
+        ),
+    )
+    expired = and_(
+        PageSection.status != "archived",
+        or_(
+            PageSection.valid_to < now,
+            PageSection.expires_at < now,
+        ),
+    )
+    result = await db.execute(
+        select(
+            func.count(PageSection.id)
+            .filter(PageSection.workflow_status == "draft")
+            .label("draft_count"),
+            func.count(PageSection.id)
+            .filter(PageSection.workflow_status == "in_review")
+            .label("in_review_count"),
+            func.count(PageSection.id)
+            .filter(PageSection.workflow_status == "changes_requested")
+            .label("changes_requested_count"),
+            func.count(PageSection.id)
+            .filter(PageSection.workflow_status == "approved")
+            .label("approved_count"),
+            func.count(PageSection.id).filter(scheduled).label("scheduled_count"),
+            func.count(PageSection.id)
+            .filter(
+                PageSection.workflow_status == "published",
+                *_page_cms_active_publication_window(PageSection, now),
+            )
+            .label("published_count"),
+            func.count(PageSection.id).filter(expired).label("expired_count"),
+        ).where(PageSection.deleted_at.is_(None))
+    )
+    return {key: int(value or 0) for key, value in result.mappings().one().items()}
+
+
+async def _page_cms_validation_blocker_count(db: AsyncSession) -> int:
+    from .page_cms import PageSectionValidationService, group_preview_media_links_many
+
+    result = await db.execute(
+        select(PageSection)
+        .options(selectinload(PageSection.items))
+        .where(
+            PageSection.deleted_at.is_(None),
+            PageSection.status != "archived",
+        )
+    )
+    sections = list(result.scalars().all())
+    if not sections:
+        return 0
+
+    media_by_section = await group_preview_media_links_many(
+        db,
+        "page_section",
+        [section.id for section in sections],
+    )
+    sections_by_scope = {}
+    for section in sections:
+        key = (section.page_key, section.scope_type, section.scope_id)
+        sections_by_scope.setdefault(key, []).append(section)
+
+    blocker_count = 0
+    for (_, scope_type, scope_id), scoped_sections in sections_by_scope.items():
+        resolved_by_section = await PageSectionValidationService.resolve_items_for_sections(
+            db,
+            scoped_sections,
+            _PageCmsStatsPreviewCapability(scope_type, scope_id),
+        )
+        for section in scoped_sections:
+            issues = PageSectionValidationService.validate(
+                section,
+                resolved_by_section.get(section.id, []),
+                media_by_section.get(section.id, {}),
+            )
+            blocker_count += int(any(issue.blocking for issue in issues))
+    return blocker_count
+
+
+async def _page_cms_spotlight_count(db: AsyncSession) -> int:
+    result = await db.execute(
+        select(func.count(PartnershipSpotlight.id).label("spotlight_count")).where(
+            PartnershipSpotlight.deleted_at.is_(None)
+        )
+    )
+    return int(result.mappings().one()["spotlight_count"] or 0)
 
 
 def _item(
@@ -689,26 +822,11 @@ async def portal_stats(
                     for model, extra_filters in content_sources
                 ]
             ),
-            "published_count": sum(
-                [
-                    await _count(db, model, model.workflow_status == "published", *extra_filters)
-                    for model, extra_filters in content_sources
-                ]
-            ),
-            "draft_count": sum(
-                [
-                    await _count(db, model, model.workflow_status == "draft", *extra_filters)
-                    for model, extra_filters in content_sources
-                ]
-            ),
-            "scheduled_count": sum(
-                [
-                    await _count(db, model, model.workflow_status == "scheduled", *extra_filters)
-                    for model, extra_filters in content_sources
-                ]
-            ),
             "media_count": await _count(db, Media),
         }
+        stats.update(await _page_cms_workflow_stats(db))
+        stats["validation_blocker_count"] = await _page_cms_validation_blocker_count(db)
+        stats["spotlight_count"] = await _page_cms_spotlight_count(db)
         title = "CoCMS publishing counters"
     elif portal == "schools":
         stats = {

@@ -11,8 +11,42 @@ class _CountResult:
         return self.value
 
 
+class _MappingResult:
+    def __init__(self, value):
+        self.value = value
+
+    def mappings(self):
+        return self
+
+    def one(self):
+        return self.value
+
+
+class _PageSectionResult:
+    def scalars(self):
+        return self
+
+    def all(self):
+        return []
+
+
 class _FakeDb:
-    async def execute(self, _statement):
+    async def execute(self, statement):
+        sql = str(statement).lower()
+        if "draft_count" in sql:
+            return _MappingResult({
+                "draft_count": 0,
+                "in_review_count": 0,
+                "changes_requested_count": 0,
+                "approved_count": 0,
+                "scheduled_count": 0,
+                "published_count": 0,
+                "expired_count": 0,
+            })
+        if "spotlight_count" in sql:
+            return _MappingResult({"spotlight_count": 0})
+        if "select page_sections." in sql:
+            return _PageSectionResult()
         return _CountResult()
 
 
@@ -21,6 +55,21 @@ class _WorkflowCountDb:
         self.pending_tables = []
 
     async def execute(self, statement):
+        sql = str(statement).lower()
+        if "draft_count" in sql:
+            return _MappingResult({
+                "draft_count": 0,
+                "in_review_count": 0,
+                "changes_requested_count": 0,
+                "approved_count": 0,
+                "scheduled_count": 0,
+                "published_count": 0,
+                "expired_count": 0,
+            })
+        if "spotlight_count" in sql:
+            return _MappingResult({"spotlight_count": 0})
+        if "select page_sections." in sql:
+            return _PageSectionResult()
         compiled = statement.compile()
         values = {
             value
@@ -68,6 +117,12 @@ class PortalStatsTests(unittest.IsolatedAsyncioTestCase):
                 "draft_count",
                 "scheduled_count",
                 "media_count",
+                "in_review_count",
+                "changes_requested_count",
+                "approved_count",
+                "expired_count",
+                "validation_blocker_count",
+                "spotlight_count",
             },
             "schools": {"schools_count", "programmes_count", "departments_count"},
             "departments": {
