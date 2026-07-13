@@ -26,6 +26,7 @@ from ...services import (
     PartnershipSpotlightService,
     PartnershipSpotlightWorkflowService,
 )
+from ...services.page_cms_definitions import serialize_section_definitions
 from ...services._base import apply_updates
 from ._scoped import can_access_scoped_record, require_scoped_record
 
@@ -220,6 +221,12 @@ def _workflow_action_scope(action: str) -> str:
     if action == "archive":
         return "delete"
     return "update"
+
+
+@router.get("/page-section-definitions")
+async def list_page_cms_definitions(user: CurrentUser):
+    _authorize_page_section_admin_list_access(user)
+    return success(data=serialize_section_definitions())
 
 
 @router.get("/pages/{page_key}")

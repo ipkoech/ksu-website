@@ -38,6 +38,27 @@ def _validate_link_target(value: str | None, field_name: str) -> str | None:
     raise ValueError(f"{field_name} must start with http://, https://, or /")
 
 
+class MediaRoleDefinitionRead(BaseSchema):
+    label: str
+    media_type: str
+    required: bool = False
+    multiple: bool = False
+
+
+class SectionDefinitionRead(BaseSchema):
+    key: str
+    label: str
+    description: str
+    allowed_scopes: tuple[str, ...]
+    min_items: int
+    max_items: int
+    allowed_item_types: tuple[str, ...]
+    allowed_source_types: tuple[str, ...]
+    media_roles: dict[str, MediaRoleDefinitionRead]
+    settings_schema: dict[str, Any]
+    required_fields: tuple[str, ...]
+
+
 class SectionItemCreate(BaseSchema):
     page_section_id: uuid.UUID | None = None
     item_type: str = Field(default=SECTION_ITEM_TYPES[0], max_length=32)
@@ -388,6 +409,8 @@ class PageCompositionResponse(BaseSchema):
 __all__ = [
     "PARTNERSHIP_CTA_SOURCES",
     "PAGE_SECTION_WORKFLOW_ACTIONS",
+    "MediaRoleDefinitionRead",
+    "SectionDefinitionRead",
     "SectionItemCreate",
     "SectionItemUpdate",
     "SectionItemRead",
