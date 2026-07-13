@@ -29,6 +29,7 @@ import {
   Switch,
 } from "@ksu/ui/components";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
+import { formatInstantInTimeZone, zonedDateTimeToIso } from "./homepage-admission-timezone";
 
 type ActionKey =
   | "apply"
@@ -37,66 +38,58 @@ type ActionKey =
   | "admission_letter"
   | "reporting_instructions";
 
-function toLocalDateTime(value?: string | null) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-  return local.toISOString().slice(0, 16);
-}
-
-function toIso(value: string) {
-  return value ? new Date(value).toISOString() : null;
-}
-
-function actionValues(action?: IntakeHomepageActionConfig | null): IntakeHomepageActionConfig {
+function actionValues(action: IntakeHomepageActionConfig | null | undefined, timezone: string): IntakeHomepageActionConfig {
   return {
     enabled: action?.enabled ?? false,
     label: action?.label ?? "",
     url: action?.url ?? "",
-    starts_at: toLocalDateTime(action?.starts_at),
-    ends_at: toLocalDateTime(action?.ends_at),
+    starts_at: formatInstantInTimeZone(action?.starts_at, timezone),
+    ends_at: formatInstantInTimeZone(action?.ends_at, timezone),
   };
 }
 
 function formValues(data: IntakeHomepageAdmission): IntakeHomepageAdmission {
+  const timezone = data.timezone || "Africa/Nairobi";
   return {
     ...data,
-    application_opens_at: toLocalDateTime(data.application_opens_at),
-    application_closes_at: toLocalDateTime(data.application_closes_at),
-    late_application_closes_at: toLocalDateTime(data.late_application_closes_at),
-    override_expires_at: toLocalDateTime(data.override_expires_at),
-    apply: actionValues(data.apply),
-    check_requirements: actionValues(data.check_requirements),
-    explore_programmes: actionValues(data.explore_programmes),
-    admission_letter: actionValues(data.admission_letter),
-    reporting_instructions: actionValues(data.reporting_instructions),
+    timezone,
+    application_opens_at: formatInstantInTimeZone(data.application_opens_at, timezone),
+    application_closes_at: formatInstantInTimeZone(data.application_closes_at, timezone),
+    late_application_closes_at: formatInstantInTimeZone(data.late_application_closes_at, timezone),
+    override_expires_at: formatInstantInTimeZone(data.override_expires_at, timezone),
+    apply: actionValues(data.apply, timezone),
+    check_requirements: actionValues(data.check_requirements, timezone),
+    explore_programmes: actionValues(data.explore_programmes, timezone),
+    admission_letter: actionValues(data.admission_letter, timezone),
+    reporting_instructions: actionValues(data.reporting_instructions, timezone),
     reporting: {
       ...data.reporting,
-      starts_at: toLocalDateTime(data.reporting.starts_at),
-      ends_at: toLocalDateTime(data.reporting.ends_at),
+      starts_at: formatInstantInTimeZone(data.reporting.starts_at, timezone),
+      ends_at: formatInstantInTimeZone(data.reporting.ends_at, timezone),
       location: data.reporting.location ?? "",
       instructions_url: data.reporting.instructions_url ?? "",
     },
   };
 }
 
-function actionPayload(action: IntakeHomepageActionConfig) {
-  return {
-    enabled: action.enabled,
-    label: action.label || null,
-    url: action.url || null,
-    starts_at: toIso(action.starts_at ?? ""),
-    ends_at: toIso(action.ends_at ?? ""),
-  };
-}
-
 function validate(values: IntakeHomepageAdmission) {
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: values.timezone }).format();
+  } catch {
+    return "Enter a valid IANA timezone, such as Africa/Nairobi.";
+  }
   if (!values.application_opens_at || !values.application_closes_at) {
     return "Application opening and closing times are required.";
   }
   if (new Date(values.application_closes_at) < new Date(values.application_opens_at)) {
     return "Applications must close after they open.";
+  }
+  if (
+    values.late_applications_enabled &&
+    values.late_application_closes_at &&
+    values.late_application_closes_at < values.application_closes_at
+  ) {
+    return "Late applications must close after the normal application deadline.";
   }
   if (values.application_override !== "automatic" && !values.override_expires_at) {
     return "An override expiry is required for a manual application override.";
@@ -113,11 +106,60 @@ function validate(values: IntakeHomepageAdmission) {
     if (action.enabled && (!action.label?.trim() || !action.url?.trim())) {
       return `${title} requires both a label and URL when enabled.`;
     }
+    if (action.starts_at && action.ends_at && action.ends_at < action.starts_at) {
+      return `${title} must end after it starts.`;
+    }
   }
   if (values.reporting.enabled && (!values.reporting.title.trim() || !values.reporting.starts_at)) {
     return "Reporting requires a title and reporting date when enabled.";
   }
+  if (values.reporting.starts_at && values.reporting.ends_at && values.reporting.ends_at < values.reporting.starts_at) {
+    return "Reporting must end after it starts.";
+  }
   return null;
+}
+
+function changed<T>(current: T, baseline: T) {
+  return current !== baseline;
+}
+
+function buildPatch(current: IntakeHomepageAdmission, baseline: IntakeHomepageAdmission): IntakeHomepageAdmissionUpdate {
+  const patch: IntakeHomepageAdmissionUpdate = {};
+  const timezoneChanged = current.timezone !== baseline.timezone;
+  for (const key of ["is_featured_on_homepage", "homepage_priority", "late_applications_enabled", "application_override", "timezone"] as const) {
+    if (changed(current[key], baseline[key])) Object.assign(patch, { [key]: current[key] });
+  }
+  for (const key of ["application_opens_at", "application_closes_at"] as const) {
+    if (timezoneChanged || changed(current[key], baseline[key])) patch[key] = zonedDateTimeToIso(current[key], current.timezone) ?? undefined;
+  }
+  for (const key of ["late_application_closes_at", "override_expires_at"] as const) {
+    if (timezoneChanged || changed(current[key], baseline[key])) patch[key] = zonedDateTimeToIso(current[key] ?? "", current.timezone);
+  }
+
+  for (const key of ["apply", "check_requirements", "explore_programmes", "admission_letter", "reporting_instructions"] as const) {
+    const next: Partial<IntakeHomepageActionConfig> = {};
+    for (const field of ["enabled", "label", "url"] as const) {
+      if (changed(current[key][field], baseline[key][field])) Object.assign(next, { [field]: current[key][field] });
+    }
+    for (const field of ["starts_at", "ends_at"] as const) {
+      if (timezoneChanged || changed(current[key][field], baseline[key][field])) {
+        next[field] = zonedDateTimeToIso(current[key][field] ?? "", current.timezone);
+      }
+    }
+    if (Object.keys(next).length) patch[key] = next;
+  }
+
+  const reporting: NonNullable<IntakeHomepageAdmissionUpdate["reporting"]> = {};
+  for (const field of ["enabled", "title", "location", "instructions_url"] as const) {
+    if (changed(current.reporting[field], baseline.reporting[field])) Object.assign(reporting, { [field]: current.reporting[field] });
+  }
+  for (const field of ["starts_at", "ends_at"] as const) {
+    if (timezoneChanged || changed(current.reporting[field], baseline.reporting[field])) {
+      reporting[field] = zonedDateTimeToIso(current.reporting[field] ?? "", current.timezone);
+    }
+  }
+  if (Object.keys(reporting).length) patch.reporting = reporting;
+  return patch;
 }
 
 function ActionEditor({
@@ -195,25 +237,39 @@ export function HomepageAdmissionForm({ intakeId }: { intakeId: string }) {
   const query = useIntakeHomepageAdmission(intakeId);
   const update = useUpdateIntakeHomepageAdmission();
   const [values, setValues] = useState<IntakeHomepageAdmission | null>(null);
+  const [baseline, setBaseline] = useState<IntakeHomepageAdmission | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
 
   useEffect(() => {
-    if (query.data?.data) setValues(formValues(query.data.data));
-  }, [query.data]);
+    if (query.data?.data && !isDirty) {
+      const next = formValues(query.data.data);
+      setValues(next);
+      setBaseline(next);
+    }
+  }, [isDirty, query.data]);
 
   if (query.isLoading || !values) {
     if (query.isError) {
       return (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Homepage admission settings could not be loaded. Please try again.</AlertDescription>
+          <AlertDescription className="flex items-center justify-between gap-4">
+            <span>Homepage admission settings could not be loaded.</span>
+            <Button type="button" variant="outline" size="sm" onClick={() => query.refetch()}>Retry</Button>
+          </AlertDescription>
         </Alert>
       );
     }
     return <LoadingSkeleton rows={6} />;
   }
 
+  const updateValues = (updater: (current: IntakeHomepageAdmission) => IntakeHomepageAdmission) => {
+    setValues((current) => current ? updater(current) : current);
+    setIsDirty(true);
+  };
+
   const setAction = (key: ActionKey, action: IntakeHomepageActionConfig) => {
-    setValues((current) => current ? { ...current, [key]: action } : current);
+    updateValues((current) => ({ ...current, [key]: action }));
   };
 
   const save = async () => {
@@ -222,36 +278,22 @@ export function HomepageAdmissionForm({ intakeId }: { intakeId: string }) {
       toast.error(error);
       return;
     }
-    const payload: IntakeHomepageAdmissionUpdate = {
-      is_featured_on_homepage: values.is_featured_on_homepage,
-      homepage_priority: Number(values.homepage_priority),
-      application_opens_at: toIso(values.application_opens_at) ?? undefined,
-      application_closes_at: toIso(values.application_closes_at) ?? undefined,
-      late_application_closes_at: toIso(values.late_application_closes_at ?? ""),
-      late_applications_enabled: values.late_applications_enabled,
-      application_override: values.application_override,
-      override_expires_at: toIso(values.override_expires_at ?? ""),
-      timezone: values.timezone,
-      apply: actionPayload(values.apply),
-      check_requirements: actionPayload(values.check_requirements),
-      explore_programmes: actionPayload(values.explore_programmes),
-      admission_letter: actionPayload(values.admission_letter),
-      reporting_instructions: actionPayload(values.reporting_instructions),
-      reporting: {
-        enabled: values.reporting.enabled,
-        title: values.reporting.title,
-        starts_at: toIso(values.reporting.starts_at ?? ""),
-        ends_at: toIso(values.reporting.ends_at ?? ""),
-        location: values.reporting.location || null,
-        instructions_url: values.reporting.instructions_url || null,
-      },
-    };
+    if (!baseline) return;
+    const payload = buildPatch(values, baseline);
+    if (!Object.keys(payload).length) {
+      setIsDirty(false);
+      toast.info("No changes to save");
+      return;
+    }
     try {
       const response = await update.mutateAsync({ id: intakeId, data: payload });
-      setValues(formValues(response.data));
+      const next = formValues(response.data);
+      setValues(next);
+      setBaseline(next);
+      setIsDirty(false);
       toast.success("Homepage admission settings updated");
-    } catch {
-      toast.error("Failed to update homepage admission settings");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update homepage admission settings");
     }
   };
 
@@ -278,7 +320,7 @@ export function HomepageAdmissionForm({ intakeId }: { intakeId: string }) {
             <Switch
               id="homepage-featured"
               checked={values.is_featured_on_homepage}
-              onCheckedChange={(is_featured_on_homepage) => setValues({ ...values, is_featured_on_homepage })}
+              onCheckedChange={(is_featured_on_homepage) => updateValues((current) => ({ ...current, is_featured_on_homepage }))}
             />
           </div>
           <div className="space-y-2">
@@ -288,7 +330,7 @@ export function HomepageAdmissionForm({ intakeId }: { intakeId: string }) {
               type="number"
               min={0}
               value={values.homepage_priority}
-              onChange={(event) => setValues({ ...values, homepage_priority: Number(event.target.value) })}
+              onChange={(event) => updateValues((current) => ({ ...current, homepage_priority: Number(event.target.value) }))}
             />
           </div>
           <div className="space-y-2">
@@ -296,7 +338,7 @@ export function HomepageAdmissionForm({ intakeId }: { intakeId: string }) {
             <Input
               id="homepage-timezone"
               value={values.timezone}
-              onChange={(event) => setValues({ ...values, timezone: event.target.value })}
+              onChange={(event) => updateValues((current) => ({ ...current, timezone: event.target.value }))}
             />
           </div>
         </CardContent>
@@ -310,25 +352,25 @@ export function HomepageAdmissionForm({ intakeId }: { intakeId: string }) {
         <CardContent className="grid gap-5 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="applications-open-at">Applications open</Label>
-            <Input id="applications-open-at" type="datetime-local" value={values.application_opens_at} onChange={(event) => setValues({ ...values, application_opens_at: event.target.value })} />
+            <Input id="applications-open-at" type="datetime-local" value={values.application_opens_at} onChange={(event) => updateValues((current) => ({ ...current, application_opens_at: event.target.value }))} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="applications-close-at">Applications close</Label>
-            <Input id="applications-close-at" type="datetime-local" value={values.application_closes_at} onChange={(event) => setValues({ ...values, application_closes_at: event.target.value })} />
+            <Input id="applications-close-at" type="datetime-local" value={values.application_closes_at} onChange={(event) => updateValues((current) => ({ ...current, application_closes_at: event.target.value }))} />
           </div>
           <div className="flex items-center justify-between rounded-lg border p-4 md:col-span-2">
             <Label htmlFor="late-applications-enabled">Enable late applications</Label>
-            <Switch id="late-applications-enabled" checked={values.late_applications_enabled} onCheckedChange={(late_applications_enabled) => setValues({ ...values, late_applications_enabled })} />
+            <Switch id="late-applications-enabled" checked={values.late_applications_enabled} onCheckedChange={(late_applications_enabled) => updateValues((current) => ({ ...current, late_applications_enabled }))} />
           </div>
           {values.late_applications_enabled ? (
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="late-applications-close-at">Late applications close</Label>
-              <Input id="late-applications-close-at" type="datetime-local" value={values.late_application_closes_at ?? ""} onChange={(event) => setValues({ ...values, late_application_closes_at: event.target.value })} />
+              <Input id="late-applications-close-at" type="datetime-local" value={values.late_application_closes_at ?? ""} onChange={(event) => updateValues((current) => ({ ...current, late_application_closes_at: event.target.value }))} />
             </div>
           ) : null}
           <div className="space-y-2">
             <Label>Application override</Label>
-            <Select value={values.application_override} onValueChange={(application_override) => setValues({ ...values, application_override: application_override as IntakeHomepageAdmission["application_override"] })}>
+            <Select value={values.application_override} onValueChange={(application_override) => updateValues((current) => ({ ...current, application_override: application_override as IntakeHomepageAdmission["application_override"] }))}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="automatic">Automatic</SelectItem>
@@ -340,7 +382,7 @@ export function HomepageAdmissionForm({ intakeId }: { intakeId: string }) {
           {values.application_override !== "automatic" ? (
             <div className="space-y-2">
               <Label htmlFor="override-expires-at">Override expires</Label>
-              <Input id="override-expires-at" type="datetime-local" value={values.override_expires_at ?? ""} onChange={(event) => setValues({ ...values, override_expires_at: event.target.value })} />
+              <Input id="override-expires-at" type="datetime-local" value={values.override_expires_at ?? ""} onChange={(event) => updateValues((current) => ({ ...current, override_expires_at: event.target.value }))} />
             </div>
           ) : null}
         </CardContent>
@@ -376,25 +418,25 @@ export function HomepageAdmissionForm({ intakeId }: { intakeId: string }) {
         <CardContent className="space-y-5">
           <div className="flex items-center justify-between rounded-lg border p-4">
             <Label htmlFor="reporting-enabled">Publish reporting information</Label>
-            <Switch id="reporting-enabled" checked={values.reporting.enabled} onCheckedChange={(enabled) => setValues({ ...values, reporting: { ...values.reporting, enabled } })} />
+            <Switch id="reporting-enabled" checked={values.reporting.enabled} onCheckedChange={(enabled) => updateValues((current) => ({ ...current, reporting: { ...current.reporting, enabled } }))} />
           </div>
           {values.reporting.enabled ? (
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="reporting-title">Title</Label>
-                <Input id="reporting-title" value={values.reporting.title} onChange={(event) => setValues({ ...values, reporting: { ...values.reporting, title: event.target.value } })} />
+                <Input id="reporting-title" value={values.reporting.title} onChange={(event) => updateValues((current) => ({ ...current, reporting: { ...current.reporting, title: event.target.value } }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="reporting-starts-at">Reporting date</Label>
-                <Input id="reporting-starts-at" type="datetime-local" value={values.reporting.starts_at ?? ""} onChange={(event) => setValues({ ...values, reporting: { ...values.reporting, starts_at: event.target.value } })} />
+                <Input id="reporting-starts-at" type="datetime-local" value={values.reporting.starts_at ?? ""} onChange={(event) => updateValues((current) => ({ ...current, reporting: { ...current.reporting, starts_at: event.target.value } }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="reporting-location">Location</Label>
-                <Input id="reporting-location" value={values.reporting.location ?? ""} onChange={(event) => setValues({ ...values, reporting: { ...values.reporting, location: event.target.value } })} />
+                <Input id="reporting-location" value={values.reporting.location ?? ""} onChange={(event) => updateValues((current) => ({ ...current, reporting: { ...current.reporting, location: event.target.value } }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="reporting-url">Instructions URL</Label>
-                <Input id="reporting-url" type="url" placeholder="https://" value={values.reporting.instructions_url ?? ""} onChange={(event) => setValues({ ...values, reporting: { ...values.reporting, instructions_url: event.target.value } })} />
+                <Input id="reporting-url" type="url" placeholder="https://" value={values.reporting.instructions_url ?? ""} onChange={(event) => updateValues((current) => ({ ...current, reporting: { ...current.reporting, instructions_url: event.target.value } }))} />
               </div>
             </div>
           ) : null}
@@ -403,7 +445,7 @@ export function HomepageAdmissionForm({ intakeId }: { intakeId: string }) {
       </Card>
 
       <div className="flex justify-end">
-        <Button type="button" onClick={save} disabled={update.isPending}>
+        <Button type="button" onClick={save} disabled={update.isPending || !isDirty}>
           {update.isPending ? "Saving..." : "Save Homepage Admission"}
         </Button>
       </div>
