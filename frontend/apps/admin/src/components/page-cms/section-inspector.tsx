@@ -1,13 +1,22 @@
 "use client";
 
+import type { ComponentType } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@ksu/ui/components";
-import type { PageCmsSectionDefinition, PageSection, PageSectionPayload } from "@/lib/api/page-cms";
+import type { PageCmsSectionDefinition, PageSection, PageSectionLayoutVariant, PageSectionPayload } from "@/lib/api/page-cms";
 import { AcademicDatesEditor } from "./editors/academic-dates-editor";
+import { AlumniEditor } from "./editors/alumni-editor";
+import { EventsEditor } from "./editors/events-editor";
+import { FactsEditor } from "./editors/facts-editor";
 import { HeroAdmissionsEditor } from "./editors/hero-admissions-editor";
+import { LeadershipEditor } from "./editors/leadership-editor";
+import { MediaMosaicEditor } from "./editors/media-mosaic-editor";
+import { NewsEditor } from "./editors/news-editor";
+import { PartnerCarouselEditor } from "./editors/partner-carousel-editor";
 import { PartnershipEditor } from "./editors/partnership-editor";
 import { PillarGridEditor } from "./editors/pillar-grid-editor";
 import { ProgrammePathwayEditor } from "./editors/programme-pathway-editor";
 import { PulseEditor } from "./editors/pulse-editor";
+import { ResearchEditor } from "./editors/research-editor";
 
 export type SectionInspectorProps = {
   section: PageSection;
@@ -17,24 +26,27 @@ export type SectionInspectorProps = {
   readOnly?: boolean;
 };
 
+type SectionEditor = ComponentType<SectionInspectorProps>;
+
+const SECTION_EDITORS = {
+  hero_admissions: HeroAdmissionsEditor,
+  pulse_strip: PulseEditor,
+  featured_partnership: PartnershipEditor,
+  programme_finder: ProgrammePathwayEditor,
+  date_timeline: AcademicDatesEditor,
+  pillar_grid: PillarGridEditor,
+  media_mosaic: MediaMosaicEditor,
+  leadership_activity: LeadershipEditor,
+  research_cards: ResearchEditor,
+  news_grid: NewsEditor,
+  events_list: EventsEditor,
+  logo_carousel: PartnerCarouselEditor,
+  alumni_story: AlumniEditor,
+  facts_strip: FactsEditor,
+} satisfies Record<PageSectionLayoutVariant, SectionEditor>;
+
 export function SectionInspector(props: SectionInspectorProps) {
-  switch (props.section.layout_variant) {
-    case "hero_admissions": return <HeroAdmissionsEditor {...props} />;
-    case "pulse_strip": return <PulseEditor {...props} />;
-    case "featured_partnership": return <PartnershipEditor {...props} />;
-    case "programme_finder": return <ProgrammePathwayEditor {...props} />;
-    case "date_timeline": return <AcademicDatesEditor {...props} />;
-    case "pillar_grid": return <PillarGridEditor {...props} />;
-    case "media_mosaic":
-    case "leadership_activity":
-    case "research_cards":
-    case "news_grid":
-    case "events_list":
-    case "logo_carousel":
-    case "alumni_story":
-    case "facts_strip":
-      return <Alert><AlertTitle>Unsupported section template</AlertTitle><AlertDescription>{props.definition.label} is scheduled for the remaining domain editor work. No changes will be made to this section.</AlertDescription></Alert>;
-    default:
-      return <Alert><AlertTitle>Unsupported section template</AlertTitle><AlertDescription>This section cannot be edited here. No changes will be made to this section.</AlertDescription></Alert>;
-  }
+  const Editor = SECTION_EDITORS[props.section.layout_variant];
+  if (props.definition.key !== props.section.layout_variant) return <Alert><AlertTitle>Template definition mismatch</AlertTitle><AlertDescription>The selected section does not match its definition. No changes will be made to this section.</AlertDescription></Alert>;
+  return <Editor {...props} />;
 }
