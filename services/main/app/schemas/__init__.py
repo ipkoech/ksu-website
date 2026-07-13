@@ -88,6 +88,12 @@ from .auth import (
 )
 from .base import APIResponse, BaseReadSchema, BaseSchema, PaginatedResponse
 from .content_workflow import ContentWorkflowAction, ContentWorkflowActionRequest, ContentWorkflowLogRead
+from .contact_directory import (
+    ContactDirectoryPaginationMeta,
+    PublicContactDirectoryPage,
+    PublicContactDirectoryRead,
+    PublicUniversityContactSummary,
+)
 from .document import DocumentCreate, DocumentRead, DocumentUpdate, PolicyCreate, PolicyRead, PolicyUpdate
 from .public_page import PublicSitePageCreate, PublicSitePageRead, PublicSitePageUpdate
 from .page_cms import (
@@ -449,6 +455,10 @@ __all__ = [
     "ContactDirectoryCreate",
     "ContactDirectoryUpdate",
     "ContactDirectoryRead",
+    "ContactDirectoryPaginationMeta",
+    "PublicContactDirectoryPage",
+    "PublicContactDirectoryRead",
+    "PublicUniversityContactSummary",
     "SupportTicketCreate",
     "SupportTicketUpdate",
     "SupportTicketRead",
