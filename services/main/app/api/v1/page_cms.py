@@ -27,7 +27,8 @@ from ...services import (
     PartnershipSpotlightService,
     PartnershipSpotlightWorkflowService,
 )
-from ...services.page_cms_definitions import serialize_section_definitions
+from ...services.page_cms_definitions import SECTION_DEFINITIONS, serialize_section_definitions
+from ...services.page_cms_sources import PageCmsSourceService
 from ...services._base import apply_updates
 from ._scoped import can_access_scoped_record, require_scoped_record
 
@@ -228,6 +229,56 @@ def _workflow_action_scope(action: str) -> str:
 async def list_page_cms_definitions(user: CurrentUser):
     _authorize_page_section_admin_list_access(user)
     return success(data=serialize_section_definitions())
+
+
+@router.get("/page-section-sources/{source_type}")
+async def search_page_cms_sources(
+    source_type: str,
+    db: DbSession,
+    user: CurrentUser,
+    q: str = Query("", max_length=120),
+    scope_type: str = Query("university", pattern="^(university|school|research|library)$"),
+    scope_id: uuid.UUID | None = None,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=50),
+    layout_variant: str | None = None,
+):
+    try:
+        PageCmsSourceService.validate_source_type(source_type)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
+
+    if layout_variant is not None:
+        definition = SECTION_DEFINITIONS.get(layout_variant)
+        if definition is None or source_type not in definition.allowed_source_types:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=f"Source type {source_type} is not allowed for layout variant {layout_variant}",
+            )
+    if scope_type != "university" and scope_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=f"scope_id is required when scope_type is {scope_type}",
+        )
+
+    await _require_page_section_access(
+        db,
+        user,
+        page_key="homepage",
+        scope_type=scope_type,
+        scope_id=scope_id,
+        action="item_manage",
+    )
+    result = await PageCmsSourceService.search(
+        db,
+        source_type,
+        query=q,
+        scope_type=scope_type,
+        scope_id=scope_id,
+        page=page,
+        per_page=per_page,
+    )
+    return success(data=result.items, meta=result.meta)
 
 
 @router.get("/pages/{page_key}")

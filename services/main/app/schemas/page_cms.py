@@ -497,6 +497,20 @@ class PageCompositionResponse(BaseSchema):
     partnership_spotlights: list[PartnershipSpotlightRead] = Field(default_factory=list)
 
 
+class PageCmsSourceSummary(BaseSchema):
+    """Stable, compact representation of a record selectable by Page CMS."""
+
+    id: uuid.UUID
+    source_type: str
+    label: str
+    secondary_label: str | None = None
+    status: str
+    published_at: datetime | None = None
+    thumbnail_url: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    selectable: bool = True
+
+
 __all__ = [
     "PARTNERSHIP_CTA_SOURCES",
     "PAGE_SECTION_WORKFLOW_ACTIONS",
@@ -513,4 +527,5 @@ __all__ = [
     "PartnershipSpotlightRead",
     "PageSectionWorkflowAction",
     "PageCompositionResponse",
+    "PageCmsSourceSummary",
 ]
