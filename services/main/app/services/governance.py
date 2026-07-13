@@ -106,7 +106,11 @@ class GovernanceService:
             )
         )
         if public_only:
-            query = query.where(StaffAssignment.is_public.is_(True))
+            query = query.where(
+                StaffAssignment.is_public.is_(True),
+                StaffAssignment.workflow_status == "published",
+                StaffAssignment.appointment_status == "published",
+            )
         result = await db.execute(query)
         return list(result.scalars().all())
 

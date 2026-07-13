@@ -1,11 +1,12 @@
 import unittest
 import uuid
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from sqlalchemy.dialects import postgresql
 
 from app.api.v1 import governance
+from app.seeders import seed_governance as governance_seeder
 from app.services.governance import GovernanceService
 
 
@@ -25,6 +26,14 @@ class _Result:
         return _ScalarRows(self._rows)
 
 
+class _ScalarOneResult:
+    def __init__(self, row):
+        self._row = row
+
+    def scalar_one_or_none(self):
+        return self._row
+
+
 class _RecordingDb:
     def __init__(self, rows=()):
         self.rows = list(rows)
@@ -33,6 +42,18 @@ class _RecordingDb:
     async def execute(self, query):
         self.query = query
         return _Result(self.rows)
+
+
+class _SeederRecordingDb:
+    def __init__(self, existing_roles, existing_page_content):
+        self._results = [*(_ScalarOneResult(role) for role in existing_roles), _ScalarOneResult(existing_page_content)]
+        self.added = []
+
+    async def execute(self, query):
+        return self._results.pop(0)
+
+    def add(self, value):
+        self.added.append(value)
 
 
 class _FakeSelector:
@@ -71,6 +92,54 @@ class GovernanceHierarchyTests(unittest.IsolatedAsyncioTestCase):
             "order by staff_assignments.hierarchy_level asc, staff_assignments.display_order asc, persons.full_name asc",
             query,
         )
+
+    async def test_public_board_members_require_published_governance_workflow(self):
+        db = _RecordingDb()
+
+        await GovernanceService.get_members(db, uuid.uuid4(), public_only=True)
+
+        query = str(
+            db.query.compile(
+                dialect=postgresql.dialect(),
+                compile_kwargs={"literal_binds": True},
+            )
+        ).lower()
+        self.assertIn("staff_assignments.is_public is true", query)
+        self.assertIn("staff_assignments.workflow_status = 'published'", query)
+        self.assertIn("staff_assignments.appointment_status = 'published'", query)
+
+    async def test_governance_seed_preserves_existing_role_and_page_content(self):
+        existing_roles = [
+            SimpleNamespace(name=f"Custom {slug}", public_label=f"Custom {slug}", is_active=False)
+            for _, slug, *_ in governance_seeder.GOVERNANCE_ROLE_SPECS
+        ]
+        existing_page_content = SimpleNamespace(
+            title="Custom Council Page",
+            mandate_body="Custom mandate",
+            workflow_status="draft",
+        )
+        db = _SeederRecordingDb(existing_roles, existing_page_content)
+        people = {key: SimpleNamespace(id=uuid.uuid4()) for key in ("council_chair", "vice_chancellor")}
+        board = SimpleNamespace(id=uuid.uuid4(), mandate="Seed mandate")
+
+        with (
+            patch.object(
+                governance_seeder,
+                "get_or_create_person",
+                new_callable=AsyncMock,
+                side_effect=lambda _db, _ctx, key, **_kwargs: people.setdefault(key, SimpleNamespace(id=uuid.uuid4())),
+            ),
+            patch.object(governance_seeder, "upsert_board", new_callable=AsyncMock, return_value=board),
+        ):
+            await governance_seeder.seed_governance(db, ctx=SimpleNamespace())
+
+        self.assertEqual([], db.added)
+        self.assertEqual("Custom chairperson", existing_roles[0].name)
+        self.assertEqual("Custom chairperson", existing_roles[0].public_label)
+        self.assertFalse(existing_roles[0].is_active)
+        self.assertEqual("Custom Council Page", existing_page_content.title)
+        self.assertEqual("Custom mandate", existing_page_content.mandate_body)
+        self.assertEqual("draft", existing_page_content.workflow_status)
 
     async def test_council_returns_members_with_display_and_reporting_data(self):
         chair_id = uuid.uuid4()

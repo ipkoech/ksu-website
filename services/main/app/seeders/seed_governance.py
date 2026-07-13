@@ -71,9 +71,6 @@ async def seed_governance(db: AsyncSession, ctx: SeedContext) -> None:
         }
         if role is None:
             db.add(GovernanceRole(id=uuid.uuid4(), **payload))
-        else:
-            for field_name, value in payload.items():
-                setattr(role, field_name, value)
 
     result = await db.execute(
         select(GovernancePageContent).where(
@@ -96,6 +93,3 @@ async def seed_governance(db: AsyncSession, ctx: SeedContext) -> None:
     }
     if page_content is None:
         db.add(GovernancePageContent(id=uuid.uuid4(), **payload))
-    else:
-        for field_name, value in payload.items():
-            setattr(page_content, field_name, value)
