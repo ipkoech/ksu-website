@@ -215,6 +215,17 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(403, response.status_code)
         self.assertEqual(0, list_admin_authorized.await_count)
 
+    def test_section_definitions_require_page_cms_permission(self):
+        user = _user()
+        client = _build_test_app(_AuthDb(user))
+
+        response = client.get(
+            "/api/v1/page-section-definitions",
+            headers=_bearer_for(user.id),
+        )
+
+        self.assertEqual(403, response.status_code)
+
     def test_create_section_item_route_is_not_shadowed_by_workflow_action(self):
         user = _user("section_items.manage")
         client = _build_test_app(_AuthDb(user))
