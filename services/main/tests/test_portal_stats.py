@@ -191,6 +191,18 @@ class PortalStatsTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(result)
         self.assertEqual("corporate-communication", result.portal)
 
+    async def test_legacy_governance_portal_stats_resolve_to_admin(self):
+        result = await portal_stats(_FakeDb(), "governance")
+
+        self.assertIsNotNone(result)
+        self.assertEqual("admin", result.portal)
+
+    async def test_legacy_institutional_administration_portal_stats_resolve_to_admin(self):
+        result = await portal_stats(_FakeDb(), "institutional-administration")
+
+        self.assertIsNotNone(result)
+        self.assertEqual("admin", result.portal)
+
     async def test_publications_legacy_portal_stats_resolve_to_research_with_published_publication_counter(self):
         with patch.object(
             stats_service,
@@ -268,6 +280,58 @@ class PortalStatsApiTests(unittest.TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertEqual("corporate-communication", response.json()["data"]["portal"])
+
+    def test_corporate_communication_api_authorizes_news_manager(self):
+        user = _user_with_scopes("content.manage_news")
+        db = _AuthStatsDb(user)
+        token, _ = create_access_token(str(user.id), ["corporate-communication"], permissions=[])
+
+        response = _portal_stats_client(db).get(
+            "/api/v1/stats/portal/corporate-communication",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("corporate-communication", response.json()["data"]["portal"])
+
+    def test_corporate_communication_api_authorizes_media_uploader(self):
+        user = _user_with_scopes("media.upload")
+        db = _AuthStatsDb(user)
+        token, _ = create_access_token(str(user.id), ["corporate-communication"], permissions=[])
+
+        response = _portal_stats_client(db).get(
+            "/api/v1/stats/portal/corporate-communication",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("corporate-communication", response.json()["data"]["portal"])
+
+    def test_governance_api_uses_canonical_admin_stats(self):
+        user = _user_with_scopes("governance.view")
+        db = _AuthStatsDb(user)
+        token, _ = create_access_token(str(user.id), ["admin"], permissions=[])
+
+        response = _portal_stats_client(db).get(
+            "/api/v1/stats/portal/governance",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("admin", response.json()["data"]["portal"])
+
+    def test_institutional_administration_api_uses_canonical_admin_stats(self):
+        user = _user_with_scopes("administration.view")
+        db = _AuthStatsDb(user)
+        token, _ = create_access_token(str(user.id), ["admin"], permissions=[])
+
+        response = _portal_stats_client(db).get(
+            "/api/v1/stats/portal/institutional-administration",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("admin", response.json()["data"]["portal"])
 
     def test_publications_api_uses_canonical_research_stats(self):
         user = _user_with_scopes("research.view")
