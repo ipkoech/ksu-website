@@ -11,8 +11,8 @@ from fastapi.testclient import TestClient
 from app.api.v1 import page_cms
 from app.deps import get_db
 from app.helpers.jwt import create_access_token
-from app.models import PageSection, PartnershipSpotlight
-from app.schemas import PageSectionCreate, PageSectionUpdate
+from app.models import PageSection, PartnershipSpotlight, SectionItem
+from app.schemas import PageSectionCreate, PageSectionUpdate, SectionItemUpdate
 from ksu_common import PaginatedResult
 
 
@@ -256,6 +256,171 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(201, response.status_code)
         self.assertEqual(0, workflow_transition.await_count)
+
+    async def test_update_section_item_rejects_reference_to_text_without_clearing_source(self):
+        user = _user("section_items.manage")
+        db = _AuthDb(user)
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="draft",
+        )
+        section.id = uuid.uuid4()
+        item = SectionItem(
+            page_section_id=section.id,
+            item_type="reference",
+            source_type="news",
+            source_id=uuid.uuid4(),
+        )
+        item.id = uuid.uuid4()
+        reset = AsyncMock()
+
+        with (
+            patch.object(page_cms, "_get_section_item_or_404", AsyncMock(return_value=item)),
+            patch.object(page_cms, "_get_page_section_or_404", AsyncMock(return_value=section)),
+            patch.object(page_cms, "_require_page_section_access", AsyncMock()),
+            patch.object(page_cms.ContentWorkflowService, "reset_after_authoring_edit", reset),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await page_cms.update_section_item(
+                    item.id,
+                    SectionItemUpdate(item_type="text"),
+                    db=db,
+                    user=user,
+                )
+
+        self.assertEqual(422, context.exception.status_code)
+        reset.assert_not_awaited()
+        self.assertEqual("reference", item.item_type)
+
+    async def test_update_section_item_rejects_manual_source_without_reference_type(self):
+        user = _user("section_items.manage")
+        db = _AuthDb(user)
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="draft",
+        )
+        section.id = uuid.uuid4()
+        item = SectionItem(page_section_id=section.id, item_type="text", title="Manual item")
+        item.id = uuid.uuid4()
+        reset = AsyncMock()
+
+        with (
+            patch.object(page_cms, "_get_section_item_or_404", AsyncMock(return_value=item)),
+            patch.object(page_cms, "_get_page_section_or_404", AsyncMock(return_value=section)),
+            patch.object(page_cms, "_require_page_section_access", AsyncMock()),
+            patch.object(page_cms.ContentWorkflowService, "reset_after_authoring_edit", reset),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await page_cms.update_section_item(
+                    item.id,
+                    SectionItemUpdate(source_type="news", source_id=uuid.uuid4()),
+                    db=db,
+                    user=user,
+                )
+
+        self.assertEqual(422, context.exception.status_code)
+        reset.assert_not_awaited()
+        self.assertIsNone(item.source_type)
+
+    async def test_update_section_item_can_atomically_convert_manual_to_reference(self):
+        user = _user("section_items.manage")
+        db = _AuthDb(user)
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="draft",
+        )
+        section.id = uuid.uuid4()
+        item = SectionItem(
+            page_section_id=section.id,
+            item_type="text",
+            title="Manual title",
+            body_text="Manual body",
+            content={"body": "Manual content"},
+        )
+        item.id = uuid.uuid4()
+        reset = AsyncMock()
+        source_id = uuid.uuid4()
+        update = SectionItemUpdate(
+            item_type="reference",
+            title=None,
+            subtitle=None,
+            body_text=None,
+            content=None,
+            cta_label=None,
+            cta_url=None,
+            cta_description=None,
+            media_caption=None,
+            media_alt_text=None,
+            video_provider=None,
+            video_url=None,
+            video_duration_seconds=None,
+            source_type="news",
+            source_id=source_id,
+            editorial_overrides={"title": "Curated title"},
+        )
+
+        with (
+            patch.object(page_cms, "_get_section_item_or_404", AsyncMock(return_value=item)),
+            patch.object(page_cms, "_get_page_section_or_404", AsyncMock(return_value=section)),
+            patch.object(page_cms, "_require_page_section_access", AsyncMock()),
+            patch.object(page_cms.ContentWorkflowService, "reset_after_authoring_edit", reset),
+        ):
+            await page_cms.update_section_item(item.id, update, db=db, user=user)
+
+        self.assertEqual("reference", item.item_type)
+        self.assertEqual("news", item.source_type)
+        self.assertEqual(source_id, item.source_id)
+        self.assertIsNone(item.title)
+        self.assertEqual({"title": "Curated title"}, item.editorial_overrides)
+        reset.assert_awaited_once()
+
+    async def test_update_section_item_can_atomically_convert_reference_to_manual(self):
+        user = _user("section_items.manage")
+        db = _AuthDb(user)
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="draft",
+        )
+        section.id = uuid.uuid4()
+        item = SectionItem(
+            page_section_id=section.id,
+            item_type="reference",
+            source_type="news",
+            source_id=uuid.uuid4(),
+        )
+        item.id = uuid.uuid4()
+        reset = AsyncMock()
+
+        with (
+            patch.object(page_cms, "_get_section_item_or_404", AsyncMock(return_value=item)),
+            patch.object(page_cms, "_get_page_section_or_404", AsyncMock(return_value=section)),
+            patch.object(page_cms, "_require_page_section_access", AsyncMock()),
+            patch.object(page_cms.ContentWorkflowService, "reset_after_authoring_edit", reset),
+        ):
+            await page_cms.update_section_item(
+                item.id,
+                SectionItemUpdate(item_type="text", source_type=None, source_id=None, title="Manual title"),
+                db=db,
+                user=user,
+            )
+
+        self.assertEqual("text", item.item_type)
+        self.assertIsNone(item.source_type)
+        self.assertIsNone(item.source_id)
+        self.assertEqual("Manual title", item.title)
+        reset.assert_awaited_once()
 
     def test_section_detail_route_returns_single_admin_record(self):
         user = _user("page_sections.view")

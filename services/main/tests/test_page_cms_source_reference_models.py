@@ -24,6 +24,7 @@ def _index(table: sa.Table, name: str) -> sa.Index:
 def test_section_items_persist_typed_source_references():
     columns = SectionItem.__table__.c
     source_constraint = _check_constraint(SectionItem.__table__, "ck_section_items_source_reference")
+    content_constraint = _check_constraint(SectionItem.__table__, "ck_section_items_reference_content_empty")
     item_type_constraint = _check_constraint(SectionItem.__table__, "ck_section_items_item_type")
     source_index = _index(SectionItem.__table__, "ix_section_items_source")
     source_id = uuid.uuid4()
@@ -42,6 +43,23 @@ def test_section_items_persist_typed_source_references():
     assert str(columns["revision"].server_default.arg) == "1"
     assert "source_type" in str(source_constraint.sqltext).lower()
     assert "source_id" in str(source_constraint.sqltext).lower()
+    content_sql = str(content_constraint.sqltext).lower()
+    assert "item_type" in content_sql
+    for field in (
+        "title",
+        "subtitle",
+        "body_text",
+        "content",
+        "cta_label",
+        "cta_url",
+        "cta_description",
+        "media_caption",
+        "media_alt_text",
+        "video_provider",
+        "video_url",
+        "video_duration_seconds",
+    ):
+        assert field in content_sql
     assert "reference" in str(item_type_constraint.sqltext).lower()
     assert [column.name for column in source_index.columns] == ["source_type", "source_id"]
     assert item.source_type == "news"

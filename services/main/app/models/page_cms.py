@@ -51,6 +51,20 @@ SECTION_ITEM_SOURCE_TYPES = (
     "public_stat",
     "club_activity",
 )
+SECTION_ITEM_REFERENCE_CONTENT_FIELDS = (
+    "title",
+    "subtitle",
+    "body_text",
+    "content",
+    "cta_label",
+    "cta_url",
+    "cta_description",
+    "media_caption",
+    "media_alt_text",
+    "video_provider",
+    "video_url",
+    "video_duration_seconds",
+)
 PARTNERSHIP_CTA_SOURCES = ("manual", "partner_website", "generated_detail_page")
 
 
@@ -207,6 +221,23 @@ class SectionItem(Base):
             "source_type IS NULL OR item_type = 'reference'",
             name="ck_section_items_source_reference_item_type",
         ),
+        sa.CheckConstraint(
+            "item_type != 'reference' OR ("
+            "(title IS NULL OR btrim(title) = '') AND "
+            "(subtitle IS NULL OR btrim(subtitle) = '') AND "
+            "(body_text IS NULL OR btrim(body_text) = '') AND "
+            "(content IS NULL OR content = '{}'::jsonb) AND "
+            "(cta_label IS NULL OR btrim(cta_label) = '') AND "
+            "(cta_url IS NULL OR btrim(cta_url) = '') AND "
+            "(cta_description IS NULL OR btrim(cta_description) = '') AND "
+            "(media_caption IS NULL OR btrim(media_caption) = '') AND "
+            "(media_alt_text IS NULL OR btrim(media_alt_text) = '') AND "
+            "(video_provider IS NULL OR btrim(video_provider) = '') AND "
+            "(video_url IS NULL OR btrim(video_url) = '') AND "
+            "(video_duration_seconds IS NULL OR video_duration_seconds = 0)"
+            ")",
+            name="ck_section_items_reference_content_empty",
+        ),
         sa.Index("ix_section_items_section_order", "page_section_id", "display_order"),
         sa.Index("ix_section_items_source", "source_type", "source_id"),
     )
@@ -320,6 +351,7 @@ __all__ = [
     "PAGE_SECTION_LAYOUT_VARIANTS",
     "SECTION_ITEM_TYPES",
     "SECTION_ITEM_SOURCE_TYPES",
+    "SECTION_ITEM_REFERENCE_CONTENT_FIELDS",
     "PARTNERSHIP_CTA_SOURCES",
     "PageSection",
     "SectionItem",

@@ -41,6 +41,22 @@ SOURCE_REFERENCE_CHECK = (
 )
 SOURCE_TYPE_CHECK = f"source_type IS NULL OR source_type IN ({SOURCE_TYPES_SQL})"
 SOURCE_REFERENCE_ITEM_TYPE_CHECK = "source_type IS NULL OR item_type = 'reference'"
+REFERENCE_CONTENT_EMPTY_CHECK = (
+    "item_type != 'reference' OR ("
+    "(title IS NULL OR btrim(title) = '') AND "
+    "(subtitle IS NULL OR btrim(subtitle) = '') AND "
+    "(body_text IS NULL OR btrim(body_text) = '') AND "
+    "(content IS NULL OR content = '{}'::jsonb) AND "
+    "(cta_label IS NULL OR btrim(cta_label) = '') AND "
+    "(cta_url IS NULL OR btrim(cta_url) = '') AND "
+    "(cta_description IS NULL OR btrim(cta_description) = '') AND "
+    "(media_caption IS NULL OR btrim(media_caption) = '') AND "
+    "(media_alt_text IS NULL OR btrim(media_alt_text) = '') AND "
+    "(video_provider IS NULL OR btrim(video_provider) = '') AND "
+    "(video_url IS NULL OR btrim(video_url) = '') AND "
+    "(video_duration_seconds IS NULL OR video_duration_seconds = 0)"
+    ")"
+)
 REFERENCE_ITEM_TYPE_CHECK = "item_type IN ('text', 'card', 'stat', 'cta', 'media', 'video', 'reference')"
 ORIGINAL_ITEM_TYPE_CHECK = "item_type IN ('text', 'card', 'stat', 'cta', 'media', 'video')"
 
@@ -99,6 +115,12 @@ def upgrade() -> None:
             "section_items",
             SOURCE_REFERENCE_ITEM_TYPE_CHECK,
         )
+    if "ck_section_items_reference_content_empty" not in constraints:
+        op.create_check_constraint(
+            "ck_section_items_reference_content_empty",
+            "section_items",
+            REFERENCE_CONTENT_EMPTY_CHECK,
+        )
 
     if "ix_section_items_source" not in _indexes("section_items"):
         op.create_index("ix_section_items_source", "section_items", ["source_type", "source_id"], unique=False)
@@ -114,6 +136,7 @@ def downgrade() -> None:
 
         constraints = _check_constraints("section_items")
         for constraint_name in (
+            "ck_section_items_reference_content_empty",
             "ck_section_items_source_reference_item_type",
             "ck_section_items_source_type",
             "ck_section_items_source_reference",

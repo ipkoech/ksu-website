@@ -18,6 +18,7 @@ from ...schemas import (
     SectionItemCreate,
     SectionItemUpdate,
 )
+from ...schemas.page_cms import validate_section_item_state
 from ...services import (
     ContentWorkflowService,
     HomepageCompositionService,
@@ -435,6 +436,31 @@ async def update_section_item(
     )
     payload = data.model_dump(exclude_unset=True)
     _require_page_authoring_edit(user, section)
+    merged_state = {
+        field: getattr(item, field, None)
+        for field in (
+            "item_type",
+            "source_type",
+            "source_id",
+            "title",
+            "subtitle",
+            "body_text",
+            "content",
+            "cta_label",
+            "cta_url",
+            "cta_description",
+            "media_caption",
+            "media_alt_text",
+            "video_provider",
+            "video_url",
+            "video_duration_seconds",
+        )
+    }
+    merged_state.update(payload)
+    try:
+        validate_section_item_state(merged_state)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
     next_section_id = payload.pop("page_section_id", item.page_section_id)
     if next_section_id != item.page_section_id:
         next_section = await _get_page_section_or_404(db, next_section_id)

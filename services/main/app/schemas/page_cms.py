@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Mapping
 from datetime import datetime
 from typing import Any
 
@@ -15,7 +16,7 @@ from app.models import (
     PARTNERSHIP_CTA_SOURCES,
     SECTION_ITEM_TYPES,
 )
-from app.models.page_cms import SECTION_ITEM_SOURCE_TYPES
+from app.models.page_cms import SECTION_ITEM_REFERENCE_CONTENT_FIELDS, SECTION_ITEM_SOURCE_TYPES
 
 from .base import BaseReadSchema, BaseSchema
 
@@ -35,6 +36,8 @@ def _validate_choice(value: str | None, allowed: tuple[str, ...], field_name: st
 def _validate_link_target(value: str | None, field_name: str) -> str | None:
     if value is None:
         return value
+    if value == "":
+        return value
     if value.startswith(("http://", "https://", "/")):
         return value
     raise ValueError(f"{field_name} must start with http://, https://, or /")
@@ -48,6 +51,34 @@ def _validate_editorial_overrides(value: dict[str, Any] | None) -> dict[str, Any
         fields = ", ".join(sorted(unsupported_fields))
         raise ValueError(f"editorial_overrides contains unsupported fields: {fields}")
     return value
+
+
+def _is_empty_reference_content(value: Any) -> bool:
+    return value is None or value == "" or value == {} or value == 0
+
+
+def validate_section_item_state(state: Mapping[str, Any]) -> None:
+    """Validate a complete section-item state, including merged PATCH values."""
+    item_type = state.get("item_type")
+    source_type = state.get("source_type")
+    source_id = state.get("source_id")
+
+    if (source_type is None) != (source_id is None):
+        raise ValueError("source_type and source_id must be provided together")
+    if source_type is not None and item_type != "reference":
+        raise ValueError("source references require item_type to be reference")
+
+    if item_type != "reference":
+        return
+
+    populated_fields = [
+        field
+        for field in SECTION_ITEM_REFERENCE_CONTENT_FIELDS
+        if not _is_empty_reference_content(state.get(field))
+    ]
+    if populated_fields:
+        fields = ", ".join(populated_fields)
+        raise ValueError(f"reference items cannot populate generic fields: {fields}")
 
 
 class MediaRoleDefinitionRead(BaseSchema):
@@ -114,10 +145,7 @@ class SectionItemCreate(BaseSchema):
 
     @model_validator(mode="after")
     def validate_source_reference(self):
-        if (self.source_type is None) != (self.source_id is None):
-            raise ValueError("source_type and source_id must be provided together")
-        if self.source_type is not None and self.item_type != "reference":
-            raise ValueError("source references require item_type to be reference")
+        validate_section_item_state(self.model_dump())
         return self
 
 
@@ -170,6 +198,8 @@ class SectionItemUpdate(BaseSchema):
             raise ValueError("source_type and source_id must be updated together")
         if self.source_type is not None and self.item_type not in (None, "reference"):
             raise ValueError("source references require item_type to be reference")
+        if self.item_type == "reference":
+            validate_section_item_state(self.model_dump(exclude_unset=True))
         return self
 
 

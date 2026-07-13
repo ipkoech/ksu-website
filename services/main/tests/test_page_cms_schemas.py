@@ -16,6 +16,7 @@ from app.schemas.page_cms import (
     PartnershipSpotlightRead,
     PartnershipSpotlightUpdate,
     SectionItemCreate,
+    SectionItemUpdate,
 )
 
 
@@ -229,6 +230,78 @@ class PageCmsSchemaTests(unittest.TestCase):
         self.assertEqual(item.source_type, "news")
         self.assertEqual(item.source_id, source_id)
         self.assertEqual(item.editorial_overrides, {"title": "Editorial headline", "cta_url": "/news/latest"})
+
+    def test_reference_item_rejects_generic_content_fields(self):
+        generic_fields = {
+            "title": "Duplicate title",
+            "subtitle": "Duplicate subtitle",
+            "body_text": "Duplicate body",
+            "content": {"duplicate": True},
+            "cta_label": "Duplicate CTA",
+            "cta_url": "/duplicate",
+            "cta_description": "Duplicate description",
+            "media_caption": "Duplicate caption",
+            "media_alt_text": "Duplicate alt text",
+            "video_provider": "youtube",
+            "video_url": "https://video.example.test/duplicate",
+            "video_duration_seconds": 60,
+        }
+
+        for field, value in generic_fields.items():
+            with self.subTest(field=field), self.assertRaises(ValidationError):
+                SectionItemCreate(
+                    item_type="reference",
+                    source_type="news",
+                    source_id=uuid.uuid4(),
+                    **{field: value},
+                )
+
+    def test_reference_item_accepts_empty_generic_fields_and_editorial_overrides(self):
+        item = SectionItemCreate(
+            item_type="reference",
+            source_type="news",
+            source_id=uuid.uuid4(),
+            title="",
+            subtitle="",
+            body_text="",
+            content={},
+            cta_label="",
+            cta_url="",
+            cta_description="",
+            media_caption="",
+            media_alt_text="",
+            video_provider="",
+            video_url="",
+            editorial_overrides={"title": "Curated title"},
+        )
+
+        self.assertEqual(item.item_type, "reference")
+        self.assertEqual(item.editorial_overrides, {"title": "Curated title"})
+
+    def test_manual_item_preserves_generic_content_fields(self):
+        item = SectionItemCreate(
+            item_type="text",
+            title="Manual title",
+            body_text="Manual body",
+            content={"key": "value"},
+            cta_label="Read more",
+            cta_url="/manual",
+            video_duration_seconds=60,
+        )
+
+        self.assertEqual(item.title, "Manual title")
+        self.assertEqual(item.content, {"key": "value"})
+        self.assertEqual(item.video_duration_seconds, 60)
+
+    def test_partial_update_schema_keeps_source_fields_pairable(self):
+        update = SectionItemUpdate(source_type=None, source_id=None, item_type="text")
+
+        self.assertEqual(update.source_type, None)
+        self.assertEqual(update.source_id, None)
+
+    def test_partial_reference_update_rejects_generic_content(self):
+        with self.assertRaises(ValidationError):
+            SectionItemUpdate(item_type="reference", title="Duplicate title")
 
     def test_page_section_read_requires_persisted_revision(self):
         now = _utc_now()
