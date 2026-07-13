@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Sequence
 
@@ -14,8 +15,12 @@ from sqlalchemy.orm import selectinload
 from ksu_common import PaginatedResult
 
 from ..models import ContentWorkflowLog, Media, MediaLink, PageSection, PartnershipSpotlight, SectionItem
+from ..schemas.page_cms import PageCmsSourceSummary, PageValidationIssue
 from ._base import ilike_any, paginate_query
 from .content_workflow import ContentWorkflowService
+from .page_cms_definitions import SECTION_DEFINITIONS
+from .page_cms_source_errors import PageCmsSourcePreviewUnsupportedError, PageCmsSourceProviderError
+from .page_cms_sources import PageCmsPreviewCapability, PageCmsSourceService
 from .research_partners import ResearchPartnersProxyService
 
 ALLOWED_TRANSITIONS = {
@@ -53,6 +58,22 @@ class PageCmsReorderValidationError(ValueError):
 
 class PageCmsReorderConflictError(ValueError):
     """Raised when a reorder request carries an outdated record revision."""
+
+
+class PageCmsValidationError(ValueError):
+    """Raised when completeness blockers prevent a forward workflow transition."""
+
+    def __init__(self, issues: Sequence[PageValidationIssue]):
+        super().__init__("Page section has blocking validation issues")
+        self.issues = list(issues)
+
+
+@dataclass(frozen=True)
+class ResolvedSectionItem:
+    item: SectionItem
+    source: PageCmsSourceSummary | None = None
+    failure: str | None = None
+    message: str | None = None
 
 
 def _active_window_filter(model, now: datetime):
@@ -185,6 +206,43 @@ def _serialize_section(section: PageSection, media_groups: dict[str, list[dict[s
         ],
         "media": media_groups,
     }
+
+
+def _active_section_items(section: PageSection) -> list[SectionItem]:
+    return sorted(
+        (
+            item
+            for item in section.items
+            if item.is_enabled and getattr(item, "deleted_at", None) is None
+        ),
+        key=lambda item: (item.display_order, str(item.id)),
+    )
+
+
+def _serialize_preview_section(
+    section: PageSection,
+    media_groups: dict[str, list[dict[str, Any]]],
+    resolved_items: Sequence[ResolvedSectionItem],
+) -> dict[str, Any]:
+    payload = _serialize_section(section, media_groups)
+    payload["workflow_status"] = section.workflow_status
+    payload["revision"] = section.revision
+    resolved_by_id = {entry.item.id: entry for entry in resolved_items}
+    items_by_id = {item.id: item for item in _active_section_items(section)}
+    for item_payload in payload["items"]:
+        item = items_by_id[item_payload["id"]]
+        resolution = resolved_by_id.get(item.id)
+        item_payload.update({
+            "source_type": item.source_type,
+            "source_id": item.source_id,
+            "editorial_overrides": item.editorial_overrides,
+            "source": (
+                resolution.source.model_dump(mode="json")
+                if resolution is not None and resolution.source is not None
+                else None
+            ),
+        })
+    return payload
 
 
 def _serialize_spotlight(
@@ -431,6 +489,30 @@ class PageSectionService:
         return await paginate_query(db, query, page=page, per_page=per_page)
 
     @staticmethod
+    async def list_preview_authorized(
+        db: AsyncSession,
+        *,
+        page_key: str,
+        scope_type: str,
+        scope_id: uuid.UUID | None,
+        is_visible: Callable[[PageSection], Awaitable[bool]],
+    ) -> list[PageSection]:
+        query = PageSectionService._admin_query(
+            page_key=page_key,
+            scope_type=scope_type,
+            scope_id=scope_id,
+        ).where(
+            PageSection.scope_id.is_(None) if scope_id is None else PageSection.scope_id == scope_id,
+            PageSection.status != "archived",
+        )
+        result = await db.execute(query)
+        visible: list[PageSection] = []
+        for section in result.scalars().all():
+            if await is_visible(section):
+                visible.append(section)
+        return visible
+
+    @staticmethod
     async def reorder_sections(
         db: AsyncSession,
         *,
@@ -622,6 +704,270 @@ class PartnershipSpotlightService:
         return await paginate_query(db, query, page=page, per_page=per_page)
 
 
+class PageSectionValidationService:
+    """Validate section completeness against canonical section definitions."""
+
+    SOURCE_FAILURE_CODES = {
+        "unavailable": "source_unavailable",
+        "expired": "source_expired",
+        "inaccessible": "source_inaccessible",
+        "preview_unsupported": "source_preview_unsupported",
+    }
+
+    @staticmethod
+    def _issue(
+        section: PageSection,
+        code: str,
+        message: str,
+        *,
+        item: SectionItem | None = None,
+        field: str | None = None,
+        blocking: bool = True,
+    ) -> PageValidationIssue:
+        return PageValidationIssue(
+            code=code,
+            severity="error" if blocking else "warning",
+            section_id=section.id,
+            item_id=item.id if item is not None else None,
+            field=field,
+            message=message,
+            blocking=blocking,
+        )
+
+    @staticmethod
+    def _valid_cta(label: Any, target: Any) -> bool:
+        return bool(
+            isinstance(label, str)
+            and label.strip()
+            and isinstance(target, str)
+            and target.strip().startswith(("/", "https://", "http://"))
+        )
+
+    @staticmethod
+    def _summary_is_expired(source: PageCmsSourceSummary) -> bool:
+        if source.status.casefold() in {"expired", "inactive", "archived"}:
+            return True
+        now = datetime.now(timezone.utc)
+        for field in ("expires_at", "valid_to", "partnership_end", "mou_expiry_date"):
+            value = source.metadata.get(field)
+            if value is None:
+                continue
+            if isinstance(value, datetime):
+                parsed = value if value.tzinfo is not None else value.replace(tzinfo=timezone.utc)
+            elif isinstance(value, str):
+                try:
+                    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+                except ValueError:
+                    continue
+                if parsed.tzinfo is None:
+                    parsed = parsed.replace(tzinfo=timezone.utc)
+            else:
+                continue
+            if parsed < now:
+                return True
+        return False
+
+    @staticmethod
+    def validate(
+        section: PageSection,
+        resolved_items: Sequence[ResolvedSectionItem],
+        media_groups: dict[str, list[dict[str, Any]]],
+    ) -> list[PageValidationIssue]:
+        definition = SECTION_DEFINITIONS.get(section.layout_variant)
+        if definition is None:
+            return [PageSectionValidationService._issue(
+                section,
+                "unknown_layout_variant",
+                f"Layout variant {section.layout_variant} has no canonical definition.",
+                field="layout_variant",
+            )]
+
+        issues: list[PageValidationIssue] = []
+        items = _active_section_items(section)
+        for field in definition.required_fields:
+            value = getattr(section, field, None)
+            if value is None or (isinstance(value, str) and not value.strip()):
+                issues.append(PageSectionValidationService._issue(
+                    section,
+                    "missing_required_field",
+                    f"{field.replace('_', ' ').title()} is required.",
+                    field=field,
+                ))
+
+        if len(items) < definition.min_items:
+            issues.append(PageSectionValidationService._issue(
+                section,
+                "empty_required_section",
+                f"This section requires at least {definition.min_items} item(s).",
+                field="items",
+            ))
+        if len(items) > definition.max_items:
+            issues.append(PageSectionValidationService._issue(
+                section,
+                "too_many_items",
+                f"This section allows at most {definition.max_items} item(s).",
+                field="items",
+            ))
+
+        for role, media_definition in definition.media_roles.items():
+            bucket = _normalize_role(role) or role
+            linked_media = media_groups.get(bucket, [])
+            if media_definition.required and not linked_media:
+                issues.append(PageSectionValidationService._issue(
+                    section,
+                    f"missing_{role}",
+                    f"{media_definition.label} is required.",
+                    field=role,
+                ))
+            if not media_definition.multiple and len(linked_media) > 1:
+                issues.append(PageSectionValidationService._issue(
+                    section,
+                    "too_many_media",
+                    f"{media_definition.label} accepts only one attachment.",
+                    field=role,
+                ))
+            if media_definition.media_type != "image":
+                continue
+            for linked in linked_media:
+                media = linked.get("media") if isinstance(linked, dict) else None
+                alt_text = media.get("alt_text") if isinstance(media, dict) else None
+                if not isinstance(alt_text, str) or not alt_text.strip():
+                    issues.append(PageSectionValidationService._issue(
+                        section,
+                        "missing_media_alt",
+                        f"{media_definition.label} is missing alt text.",
+                        field=f"{role}.alt_text",
+                        blocking=False,
+                    ))
+
+        for item in items:
+            if item.item_type == "cta" and not PageSectionValidationService._valid_cta(item.cta_label, item.cta_url):
+                issues.append(PageSectionValidationService._issue(
+                    section,
+                    "invalid_cta",
+                    "CTA items require a label and a root-relative or HTTP(S) URL.",
+                    item=item,
+                    field="cta_url",
+                ))
+
+        settings = section.settings if isinstance(section.settings, dict) else {}
+        for field, field_definition in definition.settings_schema.items():
+            if field_definition.get("type") != "cta" or field not in settings:
+                continue
+            value = settings[field]
+            label = value.get("label") if isinstance(value, dict) else None
+            target = value.get("href") if isinstance(value, dict) else None
+            if not PageSectionValidationService._valid_cta(label, target):
+                issues.append(PageSectionValidationService._issue(
+                    section,
+                    "invalid_cta",
+                    f"{field.replace('_', ' ').title()} requires a label and valid URL.",
+                    field=f"settings.{field}",
+                ))
+
+        resolved_by_item_id = {entry.item.id: entry for entry in resolved_items}
+        seen_sources: set[tuple[str, uuid.UUID]] = set()
+        for item in items:
+            if item.source_type is None or item.source_id is None:
+                continue
+            source_key = (item.source_type, item.source_id)
+            if source_key in seen_sources:
+                issues.append(PageSectionValidationService._issue(
+                    section,
+                    "duplicate_source",
+                    "The same source record cannot be selected more than once.",
+                    item=item,
+                    field="source_id",
+                ))
+            seen_sources.add(source_key)
+
+            resolution = resolved_by_item_id.get(item.id)
+            failure = resolution.failure if resolution is not None else "unavailable"
+            source = resolution.source if resolution is not None else None
+            if failure is None and source is None:
+                failure = "unavailable"
+            if failure is None and source is not None and PageSectionValidationService._summary_is_expired(source):
+                failure = "expired"
+            if failure is None and source is not None and not source.selectable and source.status == "published":
+                failure = "expired"
+            if failure is None and source is not None and not source.selectable:
+                failure = "unavailable"
+            if failure is not None:
+                code = PageSectionValidationService.SOURCE_FAILURE_CODES.get(failure, "source_unavailable")
+                message = resolution.message if resolution is not None and resolution.message else {
+                    "source_expired": "The selected source has expired.",
+                    "source_inaccessible": "The selected source is outside the authorised scope.",
+                    "source_preview_unsupported": "Draft preview is unsupported for this source type.",
+                }.get(code, "The selected source is unavailable.")
+                issues.append(PageSectionValidationService._issue(
+                    section,
+                    code,
+                    message,
+                    item=item,
+                    field="source_id",
+                ))
+
+            if item.source_type == "public_stat" and (
+                source is None or source.metadata.get("verified") is not True
+            ):
+                issues.append(PageSectionValidationService._issue(
+                    section,
+                    "unverified_fact",
+                    "Institutional facts must come from a verified source.",
+                    item=item,
+                    field="source_id",
+                ))
+
+        return issues
+
+    @staticmethod
+    async def resolve_items(
+        db: AsyncSession,
+        section: PageSection,
+        preview_capability: PageCmsPreviewCapability | None,
+    ) -> list[ResolvedSectionItem]:
+        resolved: list[ResolvedSectionItem] = []
+        for item in _active_section_items(section):
+            if item.source_type is None or item.source_id is None:
+                continue
+            try:
+                source = await PageCmsSourceService.resolve(
+                    db,
+                    item.source_type,
+                    item.source_id,
+                    destination_scope_type=section.scope_type,
+                    destination_scope_id=section.scope_id,
+                    preview_capability=preview_capability,
+                )
+            except PageCmsSourcePreviewUnsupportedError as exc:
+                resolved.append(ResolvedSectionItem(
+                    item,
+                    failure="preview_unsupported",
+                    message=str(exc),
+                ))
+            except PermissionError as exc:
+                resolved.append(ResolvedSectionItem(item, failure="inaccessible", message=str(exc)))
+            except (PageCmsSourceProviderError, ValueError) as exc:
+                resolved.append(ResolvedSectionItem(item, failure="unavailable", message=str(exc)))
+            else:
+                resolved.append(ResolvedSectionItem(
+                    item,
+                    source=source,
+                    failure=None if source is not None else "unavailable",
+                ))
+        return resolved
+
+    @staticmethod
+    async def validate_for_section(
+        db: AsyncSession,
+        section: PageSection,
+        preview_capability: PageCmsPreviewCapability | None,
+    ) -> list[PageValidationIssue]:
+        resolved_items = await PageSectionValidationService.resolve_items(db, section, preview_capability)
+        media_groups = await group_preview_media_links(db, "page_section", section.id)
+        return PageSectionValidationService.validate(section, resolved_items, media_groups)
+
+
 class PageSectionWorkflowService:
     """Apply the approved editorial workflow map to page sections."""
 
@@ -633,12 +979,23 @@ class PageSectionWorkflowService:
         note: str | None = None,
         *,
         db: AsyncSession | None = None,
+        preview_capability: PageCmsPreviewCapability | None = None,
     ) -> PageSection:
         previous_status = section.status
         transitions = ALLOWED_TRANSITIONS.get(section.status, set())
         next_status = transitions.get(action) if isinstance(transitions, dict) else None
         if next_status is None:
             raise ValueError(f"Invalid workflow transition: {section.status} -> {action}")
+
+        should_validate = preview_capability is not None or isinstance(db, AsyncSession)
+        if action in {"submit", "approve", "publish"} and db is not None and should_validate:
+            issues = await PageSectionValidationService.validate_for_section(
+                db,
+                section,
+                preview_capability,
+            )
+            if any(issue.blocking for issue in issues):
+                raise PageCmsValidationError(issues)
 
         now = datetime.now(timezone.utc)
         section.status = next_status
@@ -769,6 +1126,74 @@ async def group_media_links(
     return grouped
 
 
+async def group_preview_media_links(
+    db: AsyncSession,
+    entity_type: str,
+    entity_id: uuid.UUID,
+) -> dict[str, list[dict[str, Any]]]:
+    query = (
+        select(MediaLink)
+        .options(selectinload(MediaLink.media))
+        .join(Media, MediaLink.media_id == Media.id)
+        .where(
+            MediaLink.deleted_at.is_(None),
+            Media.deleted_at.is_(None),
+            MediaLink.entity_type == entity_type,
+            MediaLink.entity_id == entity_id,
+        )
+        .order_by(MediaLink.display_order.asc(), MediaLink.created_at.asc())
+    )
+    result = await db.execute(query)
+    grouped = _default_media_groups()
+    for link in result.scalars().all():
+        bucket = _normalize_role(link.role)
+        if bucket is not None:
+            grouped[bucket].append(_serialize_media_link(link))
+    return grouped
+
+
+class PagePreviewCompositionService:
+    """Compose an authorised draft page without changing public publication filters."""
+
+    @staticmethod
+    async def compose(
+        db: AsyncSession,
+        page_key: str,
+        scope_type: str,
+        scope_id: uuid.UUID | None,
+        *,
+        is_visible: Callable[[PageSection], Awaitable[bool]],
+        preview_capability: PageCmsPreviewCapability,
+    ) -> dict[str, Any]:
+        sections = await PageSectionService.list_preview_authorized(
+            db,
+            page_key=page_key,
+            scope_type=scope_type,
+            scope_id=scope_id,
+            is_visible=is_visible,
+        )
+        section_payloads: list[dict[str, Any]] = []
+        issues: list[PageValidationIssue] = []
+        for section in sorted(sections, key=_section_display_order):
+            resolved_items = await PageSectionValidationService.resolve_items(
+                db,
+                section,
+                preview_capability,
+            )
+            media_groups = await group_preview_media_links(db, "page_section", section.id)
+            section_issues = PageSectionValidationService.validate(section, resolved_items, media_groups)
+            issues.extend(section_issues)
+            section_payloads.append(_serialize_preview_section(section, media_groups, resolved_items))
+
+        return {
+            "page_key": page_key,
+            "scope_type": scope_type,
+            "scope_id": scope_id,
+            "sections": section_payloads,
+            "issues": [issue.model_dump(mode="json") for issue in issues],
+        }
+
+
 class HomepageCompositionService:
     """Compose page sections and partnership spotlights for public rendering."""
 
@@ -816,9 +1241,14 @@ class HomepageCompositionService:
 __all__ = [
     "ALLOWED_TRANSITIONS",
     "PageSectionService",
+    "ResolvedSectionItem",
+    "PageCmsValidationError",
+    "PageSectionValidationService",
+    "PagePreviewCompositionService",
     "PageSectionWorkflowService",
     "PartnershipSpotlightService",
     "PartnershipSpotlightWorkflowService",
     "HomepageCompositionService",
     "group_media_links",
+    "group_preview_media_links",
 ]

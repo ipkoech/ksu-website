@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common.schemas.responses import success
 
@@ -33,7 +34,12 @@ from ...services import (
 )
 from ...services.page_cms_definitions import SECTION_DEFINITIONS, serialize_section_definitions
 from ...services.page_cms_sources import PageCmsSourceProviderError, PageCmsSourceService
-from ...services.page_cms import PageCmsReorderConflictError, PageCmsReorderValidationError
+from ...services.page_cms import (
+    PageCmsReorderConflictError,
+    PageCmsReorderValidationError,
+    PageCmsValidationError,
+    PagePreviewCompositionService,
+)
 from ...services._base import apply_updates
 from ._scoped import can_access_scoped_record, require_scoped_record
 
@@ -199,6 +205,63 @@ async def _can_access_page_section_admin_row(db: DbSession, user: CurrentUser, s
     return False
 
 
+async def _require_page_preview_access(
+    db: DbSession,
+    user: CurrentUser,
+    *,
+    page_key: str,
+    scope_type: str,
+    scope_id: uuid.UUID | None,
+) -> None:
+    for action in ("view", "create", "update", "item_manage", "review", "publish"):
+        if await can_access_scoped_record(
+            db,
+            user,
+            _page_section_permissions(page_key=page_key, scope_type=scope_type, action=action),
+            scope_type,
+            scope_id,
+        ):
+            return
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Insufficient privileges for this page scope",
+    )
+
+
+class _AuthorizedPagePreviewCapability:
+    def __init__(self, scope_type: str, scope_id: uuid.UUID | None):
+        self.scope_type = scope_type
+        self.scope_id = scope_id
+
+    async def allows(
+        self,
+        *,
+        source_scope_type: str,
+        source_scope_id: uuid.UUID | None,
+        destination_scope_type: str,
+        destination_scope_id: uuid.UUID | None,
+    ) -> bool:
+        return (
+            source_scope_type == self.scope_type == destination_scope_type
+            and source_scope_id == self.scope_id == destination_scope_id
+        )
+
+
+def _validate_page_scope(scope_type: str, scope_id: uuid.UUID | None) -> None:
+    if scope_type not in {"university", "school", "research", "library"}:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Unsupported page scope")
+    if scope_type == "university" and scope_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="scope_id must be null when scope_type is university",
+        )
+    if scope_type != "university" and scope_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=f"scope_id is required when scope_type is {scope_type}",
+        )
+
+
 async def _get_page_section_or_404(db: DbSession, section_id: uuid.UUID) -> PageSection:
     item = await PageSection.get_by_id(db, section_id)
     if item is None:
@@ -317,6 +380,73 @@ async def get_homepage(
 ):
     composition = await HomepageCompositionService.compose(db, "homepage", scope_type, scope_id)
     return success(data=composition)
+
+
+async def _compose_authorized_page_preview(
+    page_key: str,
+    db: DbSession,
+    user: CurrentUser,
+    scope_type: str,
+    scope_id: uuid.UUID | None,
+):
+    _validate_page_scope(scope_type, scope_id)
+    await _require_page_preview_access(
+        db,
+        user,
+        page_key=page_key,
+        scope_type=scope_type,
+        scope_id=scope_id,
+    )
+    capability = _AuthorizedPagePreviewCapability(scope_type, scope_id)
+    return await PagePreviewCompositionService.compose(
+        db,
+        page_key,
+        scope_type,
+        scope_id,
+        is_visible=lambda section: _can_access_page_section_admin_row(db, user, section),
+        preview_capability=capability,
+    )
+
+
+@router.get("/pages/{page_key}/preview")
+async def get_page_preview(
+    page_key: str,
+    db: DbSession,
+    user: CurrentUser,
+    scope_type: str = Query("university"),
+    scope_id: uuid.UUID | None = None,
+):
+    composition = await _compose_authorized_page_preview(
+        page_key,
+        db,
+        user,
+        scope_type,
+        scope_id,
+    )
+    return success(data=composition)
+
+
+@router.get("/pages/{page_key}/validate")
+async def validate_page(
+    page_key: str,
+    db: DbSession,
+    user: CurrentUser,
+    scope_type: str = Query("university"),
+    scope_id: uuid.UUID | None = None,
+):
+    composition = await _compose_authorized_page_preview(
+        page_key,
+        db,
+        user,
+        scope_type,
+        scope_id,
+    )
+    return success(data={
+        "page_key": page_key,
+        "scope_type": scope_type,
+        "scope_id": scope_id,
+        "issues": composition["issues"],
+    })
 
 
 @router.get("/page-sections/admin")
@@ -560,7 +690,24 @@ async def run_page_section_workflow_action(
         scope_id=item.scope_id,
         action=_workflow_action_scope(action),
     )
-    item = await PageSectionWorkflowService.transition(item, action, user.id, db=db)
+    capability = (
+        _AuthorizedPagePreviewCapability(item.scope_type, item.scope_id)
+        if isinstance(db, AsyncSession)
+        else None
+    )
+    try:
+        item = await PageSectionWorkflowService.transition(
+            item,
+            action,
+            user.id,
+            db=db,
+            preview_capability=capability,
+        )
+    except PageCmsValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=[issue.model_dump(mode="json") for issue in exc.issues],
+        ) from exc
     await db.flush()
     await db.refresh(item)
     return success(data=item, message="Page section updated")

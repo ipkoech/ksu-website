@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from datetime import datetime
 from html import unescape
 from html.parser import HTMLParser
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import ConfigDict, Field, field_validator, model_validator
 
@@ -568,6 +568,27 @@ class PageCompositionResponse(BaseSchema):
     partnership_spotlights: list[PartnershipSpotlightRead] = Field(default_factory=list)
 
 
+class PageValidationIssue(BaseSchema):
+    code: str = Field(min_length=1, max_length=64)
+    severity: Literal["error", "warning"]
+    section_id: uuid.UUID
+    item_id: uuid.UUID | None = None
+    field: str | None = Field(default=None, max_length=255)
+    message: str = Field(min_length=1, max_length=1000)
+    blocking: bool
+
+
+class PageValidationResponse(BaseSchema):
+    page_key: str = Field(min_length=1, max_length=64)
+    scope_type: str = Field(max_length=32)
+    scope_id: uuid.UUID | None = None
+    issues: list[PageValidationIssue] = Field(default_factory=list)
+
+
+class PagePreviewResponse(PageValidationResponse):
+    sections: list[dict[str, Any]] = Field(default_factory=list)
+
+
 class PageCmsSourceSummary(BaseSchema):
     """Stable, compact representation of a record selectable by Page CMS."""
 
@@ -624,5 +645,8 @@ __all__ = [
     "PartnershipSpotlightRead",
     "PageSectionWorkflowAction",
     "PageCompositionResponse",
+    "PageValidationIssue",
+    "PageValidationResponse",
+    "PagePreviewResponse",
     "PageCmsSourceSummary",
 ]
