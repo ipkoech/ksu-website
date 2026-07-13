@@ -20,10 +20,10 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 import { MiniHeader, PublicFooter, PublicHeader } from "@ksu/ui/layout/public";
-import { LandingHero } from "@/components/home/landing-hero";
 import { CountdownStrip } from "@/components/home/countdown-strip";
 import { AnimatedStatRow } from "@/components/home/animated-stat-row";
 import { HomepageSections } from "@/components/home/section-renderer";
+import { HeroAdmissionsSection } from "@/components/home/sections/composed-section-variants";
 import { AnnouncementHeader } from "@/components/site-shell";
 import {
   ProgressiveImageCard,
@@ -37,13 +37,50 @@ import {
   type HomePartner,
   type HomeSchoolCard,
 } from "@/lib/homepage-data";
-import { getComposedHomepage } from "@/lib/homepage-sections";
+import {
+  getComposedHomepage,
+  type HomepageSection,
+} from "@/lib/homepage-sections";
 import { getNavData } from "@/lib/nav-data";
 import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
 
 export const revalidate = 300;
 
 const researchHref = researchFrontendUrl;
+
+const fallbackHomeHeroSection: HomepageSection = {
+  id: "homepage-hero-fallback",
+  page_key: "homepage",
+  scope_type: "university",
+  section_key: "hero-admissions-fallback",
+  layout_variant: "hero_admissions",
+  title: "Shaping Tomorrow. Inspiring Innovation.",
+  subtitle: "Kisii University",
+  description:
+    "A leading public university committed to academic excellence, innovative research and transforming communities.",
+  items: [
+    {
+      id: "explore-programmes",
+      item_type: "cta",
+      title: "Explore programmes",
+      cta_label: "Explore programmes",
+      cta_url: "/academics/programmes",
+      display_order: 10,
+      is_enabled: true,
+      content: { intent: "primary" },
+    },
+    {
+      id: "discover-kisii",
+      item_type: "cta",
+      title: "Discover Kisii University",
+      cta_label: "Discover Kisii University",
+      cta_url: "/about",
+      display_order: 20,
+      is_enabled: true,
+      content: { intent: "secondary" },
+    },
+  ],
+};
 
 const campusLife = [
   {
@@ -149,9 +186,15 @@ export default async function HomePage() {
       <main id="main-content" className="overflow-x-clip" tabIndex={-1}>
         {composedHomepage.hasRenderableSections ? (
           <>
-            {hasComposedHero ? null : <LandingHero {...homepage.hero} />}
+            {hasComposedHero ? null : (
+              <HeroAdmissionsSection
+                section={fallbackHomeHeroSection}
+                hero={composedHomepage.data?.hero}
+              />
+            )}
             <HomepageSections
               sections={composedHomepage.sections}
+              hero={composedHomepage.data?.hero}
               partnershipSpotlights={
                 composedHomepage.data?.partnership_spotlights ?? []
               }
@@ -159,7 +202,10 @@ export default async function HomePage() {
           </>
         ) : (
           <>
-        <LandingHero {...homepage.hero} />
+        <HeroAdmissionsSection
+          section={fallbackHomeHeroSection}
+          hero={composedHomepage.data?.hero}
+        />
 
         {/* Hero value proposition + secondary CTAs */}
         <section className="border-b border-white/10 bg-primary py-3 text-white">

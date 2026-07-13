@@ -41,6 +41,19 @@ test("homepage section fetcher unwraps the backend success envelope and tolerate
   assert.match(fetcherSource, /const composition = unwrapHomepageCompositionResponse\(response\);/);
 });
 
+test("homepage section fetcher exposes the optional backend-resolved hero contract", () => {
+  assert.match(fetcherSource, /hero\?: HomepageResolvedHero \| null/);
+  assert.match(
+    fetcherSource,
+    /state: "applications_open" \| "admission_letters_available" \| "hidden"/,
+  );
+  assert.match(fetcherSource, /countdown_target\?: string \| null/);
+  assert.equal(
+    (fetcherSource.match(/"\/api\/v1\/homepage"/g) ?? []).length,
+    1,
+  );
+});
+
 test("homepage section fetcher exposes fallback state when composition is missing or empty", () => {
   assert.match(fetcherSource, /if \(!composition\) \{/);
   assert.match(fetcherSource, /data: null,[\s\S]*sections: \[\],[\s\S]*hasRenderableSections: false/);

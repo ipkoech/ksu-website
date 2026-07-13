@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import {
   ArrowRight,
   CalendarDays,
+  FileDown,
   GraduationCap,
   Landmark,
   Newspaper,
@@ -10,6 +11,7 @@ import {
   Search,
   Users,
 } from "lucide-react";
+import { AdmissionsCountdown } from "@/components/home/admissions-countdown";
 import { PublicImage } from "@/components/public/public-image";
 import {
   background,
@@ -18,52 +20,262 @@ import {
   logos,
   mediaAlt,
   mediaUrl,
-  mobileImage,
   poster,
   video,
+  type HomepageHeroAction,
   type HomepagePartnershipSpotlight,
+  type HomepageResolvedHero,
   type HomepageSection,
   type HomepageSectionItem,
 } from "@/lib/homepage-sections";
 
 type SectionVariantProps = {
   section: HomepageSection;
+  hero?: HomepageResolvedHero | null;
   partnershipSpotlights?: HomepagePartnershipSpotlight[];
 };
 
-export function HeroAdmissionsSection({ section }: SectionVariantProps) {
-  const image = heroImage(section) ?? background(section);
-  const mobile = mobileImage(section);
-  const primary = firstCta(section.items);
+const campusHeroImage =
+  "/images/homepage/kisii-administration-campus.jpg";
+
+export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
+  const content = hero?.content;
+  const admissions = hero?.admissions;
+  const showAdmissions = Boolean(
+    hero?.admissions.visible &&
+      (admissions?.state === "applications_open" ||
+        admissions?.state === "admission_letters_available"),
+  );
+  const headline =
+    content?.headline ??
+    (section.title && section.title !== "Kisii University"
+      ? section.title
+      : "Shaping Tomorrow. Inspiring Innovation.");
+  const highlight = content?.highlight ?? "Transforming Communities.";
+  const description =
+    content?.description ??
+    section.description ??
+    "A leading public university committed to academic excellence, innovative research and transforming communities.";
+  const actions = heroActions(content?.actions, section.items);
 
   return (
-    <section className="relative min-h-[520px] overflow-hidden bg-primary text-white">
+    <section className="relative isolate min-h-[610px] overflow-hidden bg-primary text-white">
       <PublicImage
-        src={mediaUrl(image)}
-        alt={mediaAlt(image, section.title ?? "Kisii University")}
+        src={campusHeroImage}
+        alt="Kisii University central administration campus"
         ratio="fill"
         priority
         className="absolute inset-0 h-full w-full"
-        imageClassName="object-cover"
+        imageClassName="scale-[1.22] object-cover object-[52%_58%] md:scale-100"
+        sizes="100vw"
       />
-      {mobile ? (
-        <span className="sr-only">
-          Mobile image available: {mediaAlt(mobile, section.title ?? "")}
-        </span>
-      ) : null}
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.82),rgba(2,20,49,0.28)_60%,rgba(2,20,49,0.06))]" />
-      <div className="relative z-10 mx-auto flex min-h-[520px] max-w-[1680px] items-end px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="max-w-3xl">
-          <SectionEyebrow value={section.subtitle ?? "Admissions"} light />
-          <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
-            {section.title ?? "Kisii University"}
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,hsl(var(--primary)/.94)_0%,rgba(15,23,42,.82)_43%,rgba(15,23,42,.32)_72%,rgba(15,23,42,.18)_100%)]" />
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-transparent to-slate-950/15" />
+
+      <div
+        className={`relative z-10 mx-auto grid min-h-[610px] max-w-[1680px] items-end gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20 xl:px-10 2xl:px-12 ${
+          showAdmissions
+            ? "lg:grid-cols-[minmax(0,1fr)_minmax(320px,390px)]"
+            : "lg:grid-cols-1"
+        }`}
+      >
+        <div className={showAdmissions ? "max-w-4xl" : "max-w-5xl"}>
+          <SectionEyebrow
+            value={content?.eyebrow ?? section.subtitle ?? "Kisii University"}
+            light
+          />
+          <h1 className="mt-4 max-w-4xl text-balance font-[family-name:var(--font-display)] text-4xl font-bold leading-[1.08] sm:text-5xl lg:text-6xl xl:text-[4.25rem]">
+            {headline}
+            {highlight ? (
+              <span className="mt-1 block text-secondary">{highlight}</span>
+            ) : null}
           </h1>
-          <SectionBody value={section.description} light className="mt-5 max-w-2xl text-base sm:text-lg" />
-          {primary ? <CtaLink item={primary} className="mt-8" prominent /> : null}
+          <SectionBody
+            value={description}
+            light
+            className="mt-5 max-w-2xl text-base sm:text-lg"
+          />
+          {actions.length ? (
+            <div className="mt-8 flex flex-wrap gap-3">
+              {actions.slice(0, 2).map((action, index) => (
+                <HeroActionLink
+                  key={action.key ?? `${action.href}-${index}`}
+                  action={action}
+                  prominent={action.style === "primary" || index === 0}
+                />
+              ))}
+            </div>
+          ) : null}
         </div>
+
+        {showAdmissions && admissions ? (
+          <AdmissionsPanel admissions={admissions} />
+        ) : null}
       </div>
     </section>
   );
+}
+
+function AdmissionsPanel({
+  admissions,
+}: {
+  admissions: HomepageResolvedHero["admissions"];
+}) {
+  const isApplicationsOpen = admissions.state === "applications_open";
+  const isLettersAvailable =
+    admissions.state === "admission_letters_available";
+  const intakeName = admissions.intake?.name ?? "Current intake";
+
+  return (
+    <aside
+      aria-label="Admissions update"
+      className="self-end rounded-md border border-white/20 bg-primary p-5 shadow-xl shadow-slate-950/25 sm:p-7 lg:mb-1"
+    >
+      <div className="flex items-center gap-3 border-b border-white/15 pb-5">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-secondary text-white">
+          {isLettersAvailable ? (
+            <FileDown className="h-5 w-5" aria-hidden />
+          ) : (
+            <CalendarDays className="h-5 w-5" aria-hidden />
+          )}
+        </span>
+        <div className="min-w-0">
+          <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/70">
+            Admissions update
+          </p>
+          <h2 className="mt-1 text-balance font-[family-name:var(--font-display)] text-xl font-semibold text-white">
+            {intakeName}
+          </h2>
+        </div>
+      </div>
+
+      {isApplicationsOpen ? (
+        <div className="pt-5">
+          <p className="text-center text-xs font-bold uppercase tracking-[0.14em] text-white/75">
+            Applications close in
+          </p>
+          {admissions.countdown_target ? (
+            <div className="mt-4">
+              <AdmissionsCountdown target={admissions.countdown_target} />
+            </div>
+          ) : admissions.closing_at ? (
+            <p className="mt-3 text-center text-sm font-semibold text-white">
+              {formatPublicDate(admissions.closing_at)}
+            </p>
+          ) : null}
+          {admissions.application_phase === "late" ? (
+            <p className="mt-4 rounded-md bg-white/10 px-3 py-2 text-center text-xs font-semibold text-white/85">
+              Late applications are currently being accepted.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {isLettersAvailable ? (
+        <div className="pt-5 text-center">
+          <p className="font-[family-name:var(--font-display)] text-2xl font-semibold text-white">
+            Admission letters are available
+          </p>
+          {admissions.reporting?.starts_at ? (
+            <p className="mt-3 text-sm leading-6 text-white/75">
+              {admissions.reporting.title ?? "Reporting"}: {" "}
+              <span className="font-semibold text-white">
+                {formatPublicDate(admissions.reporting.starts_at)}
+              </span>
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {admissions.primary_action ? (
+        <div className="mt-6">
+          <HeroActionLink
+            action={admissions.primary_action}
+            prominent
+            fullWidth
+          />
+        </div>
+      ) : null}
+
+      {(admissions.secondary_actions?.length ?? 0) > 0 ? (
+        <div className="mt-4 flex flex-col items-center gap-3">
+          {admissions.secondary_actions?.slice(0, 2).map((action, index) => (
+            <HeroActionLink
+              key={action.key ?? `${action.href}-${index}`}
+              action={action}
+              subtle
+            />
+          ))}
+        </div>
+      ) : null}
+    </aside>
+  );
+}
+
+function HeroActionLink({
+  action,
+  prominent = false,
+  subtle = false,
+  fullWidth = false,
+}: {
+  action: HomepageHeroAction;
+  prominent?: boolean;
+  subtle?: boolean;
+  fullWidth?: boolean;
+}) {
+  return (
+    <Link
+      href={action.href}
+      target={action.open_in_new_tab ? "_blank" : undefined}
+      rel={action.open_in_new_tab ? "noopener noreferrer" : undefined}
+      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${
+        fullWidth ? "w-full" : ""
+      } ${
+        prominent
+          ? "bg-secondary text-white shadow-sm hover:bg-secondary/90"
+          : subtle
+            ? "px-2 py-1 text-white/85 hover:text-white"
+            : "border border-white/35 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
+      }`}
+    >
+      {action.label}
+      <ArrowRight className="h-4 w-4" aria-hidden />
+    </Link>
+  );
+}
+
+function heroActions(
+  resolvedActions: HomepageHeroAction[] | undefined,
+  items: HomepageSectionItem[] | undefined,
+) {
+  if (resolvedActions?.length) {
+    return resolvedActions.filter((action) => action.label && action.href);
+  }
+  return (items ?? [])
+    .filter((item) => item.is_enabled !== false)
+    .filter(
+      (item) =>
+        item.cta_label &&
+        item.cta_url &&
+        !/apply|admission letter/i.test(`${item.title} ${item.cta_label}`),
+    )
+    .map(
+      (item): HomepageHeroAction => ({
+        key: item.id,
+        label: item.cta_label!,
+        href: item.cta_url!,
+        style: item.content?.intent === "primary" ? "primary" : "secondary",
+      }),
+    );
+}
+
+function formatPublicDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-KE", {
+    dateStyle: "long",
+    timeZone: "Africa/Nairobi",
+  }).format(date);
 }
 
 export function PulseStripSection({ section }: SectionVariantProps) {

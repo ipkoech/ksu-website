@@ -19,12 +19,14 @@ import {
   HOMEPAGE_SECTION_LAYOUT_VARIANTS,
   isKnownHomepageLayoutVariant,
   type HomepagePartnershipSpotlight,
+  type HomepageResolvedHero,
   type HomepageSection,
   type HomepageSectionLayoutVariant,
 } from "@/lib/homepage-sections";
 
 type SectionComponent = (props: {
   section: HomepageSection;
+  hero?: HomepageResolvedHero | null;
   partnershipSpotlights?: HomepagePartnershipSpotlight[];
 }) => ReactElement | null;
 
@@ -50,9 +52,11 @@ export const HOMEPAGE_SECTION_RENDERERS: Record<
 
 export function HomepageSectionRenderer({
   section,
+  hero,
   partnershipSpotlights,
 }: {
   section: HomepageSection;
+  hero?: HomepageResolvedHero | null;
   partnershipSpotlights?: HomepagePartnershipSpotlight[];
 }) {
   if (!isKnownHomepageLayoutVariant(section.layout_variant)) {
@@ -66,6 +70,7 @@ export function HomepageSectionRenderer({
   return (
     <Renderer
       section={section}
+      hero={hero}
       partnershipSpotlights={partnershipSpotlights}
     />
   );
@@ -73,9 +78,11 @@ export function HomepageSectionRenderer({
 
 export function HomepageSections({
   sections,
+  hero,
   partnershipSpotlights,
 }: {
   sections: HomepageSection[];
+  hero?: HomepageResolvedHero | null;
   partnershipSpotlights?: HomepagePartnershipSpotlight[];
 }) {
   return (
@@ -84,6 +91,7 @@ export function HomepageSections({
         <HomepageSectionRenderer
           key={section.id}
           section={section}
+          hero={hero}
           partnershipSpotlights={partnershipSpotlights}
         />
       ))}

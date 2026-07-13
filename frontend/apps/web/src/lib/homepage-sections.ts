@@ -115,10 +115,63 @@ export type HomepagePartnershipSpotlight = {
   media?: Partial<HomepageMediaGroups> | null;
 };
 
+export type HomepageHeroAction = {
+  key?: string | null;
+  type?: string | null;
+  label: string;
+  href: string;
+  style?: "primary" | "secondary" | null;
+  open_in_new_tab?: boolean;
+};
+
+export type HomepageHeroContent = {
+  eyebrow?: string | null;
+  headline?: string | null;
+  highlight?: string | null;
+  description?: string | null;
+  actions?: HomepageHeroAction[];
+};
+
+export type HomepageHeroAdmissions = {
+  state: "applications_open" | "admission_letters_available" | "hidden";
+  visible: boolean;
+  intake?: {
+    id?: string | null;
+    name?: string | null;
+    slug?: string | null;
+  } | null;
+  application_phase?: "standard" | "late" | null;
+  closing_at?: string | null;
+  countdown_target?: string | null;
+  reporting?: {
+    title?: string | null;
+    starts_at?: string | null;
+    location?: string | null;
+    instructions_url?: string | null;
+  } | null;
+  primary_action?: HomepageHeroAction | null;
+  secondary_actions?: HomepageHeroAction[];
+};
+
+export type HomepageResolvedHero = {
+  content?: HomepageHeroContent | null;
+  media?: {
+    desktop?: HomepageMedia | null;
+    mobile?: HomepageMedia | null;
+    video?: HomepageMedia | null;
+    poster?: HomepageMedia | null;
+    focal_point?: Record<string, unknown> | null;
+  } | null;
+  admissions: HomepageHeroAdmissions;
+  facts?: Array<Record<string, unknown>>;
+};
+
 export type HomepageCompositionResponse = {
   page_key: string;
   scope_type: string;
   scope_id?: string | null;
+  resolved_at?: string | null;
+  hero?: HomepageResolvedHero | null;
   sections: HomepageSection[];
   partnership_spotlights: HomepagePartnershipSpotlight[];
 };
