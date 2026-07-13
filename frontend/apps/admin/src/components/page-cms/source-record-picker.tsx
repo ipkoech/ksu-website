@@ -19,16 +19,26 @@ import {
 import { cn } from "@ksu/ui";
 import {
   pageCmsApi,
+  PAGE_CMS_CATALOG_SOURCE_TYPES,
   type PageCmsSourceSummary,
   type PageCmsSourceType,
   type PageScopeType,
   type PageSectionLayoutVariant,
 } from "@/lib/api/page-cms";
+import {
+  isCatalogSearchableSourceType,
+  nextSelectableIndex,
+  selectionMatchesContext,
+  selectionInvalidationKey,
+  shouldNotifySelectionInvalidation,
+  type SourceSelectionContext,
+} from "./source-record-picker-state";
 
 export type SourceRecordPickerValue = {
   sourceType: PageCmsSourceType;
   sourceId: string;
   summary: PageCmsSourceSummary;
+  selectionContext: SourceSelectionContext;
 };
 
 export type SourceRecordPickerProps = {
@@ -69,44 +79,72 @@ export function SourceRecordPicker({
 }: SourceRecordPickerProps) {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
-  const [activeIndex, setActiveIndex] = React.useState(0);
+  const [activeIndex, setActiveIndex] = React.useState(-1);
+  const invalidatedSelectionRef = React.useRef<string | null>(null);
   const debouncedSearch = useDebouncedSearch(search);
   const inputId = React.useId();
   const listboxId = React.useId();
+  const selectionContext = React.useMemo<SourceSelectionContext>(() => ({
+    sourceType,
+    layoutVariant,
+    scopeType,
+    scopeId: scopeId ?? null,
+  }), [layoutVariant, scopeId, scopeType, sourceType]);
+  const supportsCatalogSearch = isCatalogSearchableSourceType(sourceType, PAGE_CMS_CATALOG_SOURCE_TYPES);
+  const requiresScope = scopeType !== "university" && !scopeId;
+  const hasCurrentSelection = value ? selectionMatchesContext(value, selectionContext) : false;
+  const displayedValue = hasCurrentSelection ? value : null;
 
   const sourceQuery = useQuery({
     queryKey: ["page-cms", "sources", sourceType, layoutVariant, scopeType, scopeId ?? null, debouncedSearch],
-    queryFn: () => pageCmsApi.searchSources(sourceType, {
-      q: debouncedSearch.trim() || undefined,
-      scope_type: scopeType,
-      scope_id: scopeId ?? null,
-      layout_variant: layoutVariant,
-      page: 1,
-      per_page: 20,
-    }),
-    enabled: open && (scopeType === "university" || Boolean(scopeId)),
+    queryFn: ({ signal }) => {
+      if (!isCatalogSearchableSourceType(sourceType, PAGE_CMS_CATALOG_SOURCE_TYPES)) {
+        throw new Error("This Page CMS source type is not catalog searchable.");
+      }
+      return pageCmsApi.searchSources(sourceType, {
+        q: debouncedSearch.trim() || undefined,
+        scope_type: scopeType,
+        scope_id: scopeId ?? null,
+        layout_variant: layoutVariant,
+        page: 1,
+        per_page: 20,
+      }, { signal });
+    },
+    enabled: open && supportsCatalogSearch && !requiresScope,
   });
 
   const sources = React.useMemo(() => sourceQuery.data?.data ?? [], [sourceQuery.data]);
   const selectableSources = React.useMemo(() => sources.filter(canSelectPageCmsSource), [sources]);
 
   React.useEffect(() => {
-    setActiveIndex(0);
-  }, [debouncedSearch, sourceType, layoutVariant, scopeType, scopeId]);
+    setActiveIndex(nextSelectableIndex(sources, -1, 1));
+  }, [sources]);
+
+  React.useEffect(() => {
+    if (!value || hasCurrentSelection) {
+      invalidatedSelectionRef.current = null;
+      return;
+    }
+
+    if (!shouldNotifySelectionInvalidation(value, selectionContext, invalidatedSelectionRef.current)) return;
+
+    invalidatedSelectionRef.current = selectionInvalidationKey(value, selectionContext);
+    onChange(null);
+  }, [hasCurrentSelection, onChange, selectionContext, value]);
 
   const selectSource = (source: PageCmsSourceSummary) => {
     if (!canSelectPageCmsSource(source)) return;
-    onChange({ sourceType, sourceId: source.id, summary: source });
+    onChange({ sourceType, sourceId: source.id, summary: source, selectionContext });
     setOpen(false);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      setActiveIndex((current) => Math.min(current + 1, Math.max(sources.length - 1, 0)));
+      setActiveIndex((current) => nextSelectableIndex(sources, current, 1));
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
-      setActiveIndex((current) => Math.max(current - 1, 0));
+      setActiveIndex((current) => nextSelectableIndex(sources, current, -1));
     } else if (event.key === "Enter") {
       const source = sources[activeIndex];
       if (source && canSelectPageCmsSource(source)) {
@@ -118,8 +156,10 @@ export function SourceRecordPicker({
     }
   };
 
-  const selectionLabel = value?.summary.label ?? `Select ${sourceType.replace(/_/g, " ")}`;
-  const requiresScope = scopeType !== "university" && !scopeId;
+  const activeSource = sources[activeIndex] && canSelectPageCmsSource(sources[activeIndex])
+    ? sources[activeIndex]
+    : null;
+  const selectionLabel = displayedValue?.summary.label ?? `Select ${sourceType.replace(/_/g, " ")}`;
 
   return (
     <div className="space-y-2">
@@ -129,13 +169,13 @@ export function SourceRecordPicker({
           <span className={cn("truncate text-left", !value && "text-muted-foreground")}>{selectionLabel}</span>
           <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
         </Button>
-        {value ? (
+        {displayedValue ? (
           <Button type="button" variant="outline" size="icon" disabled={disabled} onClick={() => onChange(null)} aria-label="Clear selected source">
             <X className="size-4" aria-hidden="true" />
           </Button>
         ) : null}
       </div>
-      {value?.summary.secondary_label ? <p className="text-xs text-muted-foreground">{value.summary.secondary_label}</p> : null}
+      {displayedValue?.summary.secondary_label ? <p className="text-xs text-muted-foreground">{displayedValue.summary.secondary_label}</p> : null}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-3xl">
@@ -143,7 +183,9 @@ export function SourceRecordPicker({
             <DialogTitle>Select {sourceType.replace(/_/g, " ")}</DialogTitle>
             <DialogDescription>Search records available to the selected page scope.</DialogDescription>
           </DialogHeader>
-          {requiresScope ? (
+          {!supportsCatalogSearch ? (
+            <Alert><AlertDescription>This source type is not yet available in the searchable catalog.</AlertDescription></Alert>
+          ) : requiresScope ? (
             <Alert><AlertDescription>Select a page scope before searching source records.</AlertDescription></Alert>
           ) : (
             <div className="space-y-3">
@@ -155,7 +197,7 @@ export function SourceRecordPicker({
                   aria-autocomplete="list"
                   aria-controls={listboxId}
                   aria-expanded={open}
-                  aria-activedescendant={sources[activeIndex] ? `${listboxId}-${sources[activeIndex].id}` : undefined}
+                  aria-activedescendant={activeSource ? `${listboxId}-${activeSource.id}` : undefined}
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   onKeyDown={handleKeyDown}
@@ -173,7 +215,7 @@ export function SourceRecordPicker({
                 ) : sources.length ? (
                   <div className="divide-y">
                     {sources.map((source, index) => {
-                      const selected = source.id === value?.sourceId;
+                      const selected = source.id === displayedValue?.sourceId;
                       return (
                         <button
                           key={source.id}
@@ -183,7 +225,9 @@ export function SourceRecordPicker({
                           aria-selected={selected}
                           disabled={!source.selectable}
                           className={cn("flex w-full items-center gap-3 p-3 text-left hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-60", selected && "bg-primary/5", index === activeIndex && "outline-none ring-2 ring-inset ring-ring")}
-                          onMouseMove={() => setActiveIndex(index)}
+                          onMouseMove={() => {
+                            if (canSelectPageCmsSource(source)) setActiveIndex(index);
+                          }}
                           onClick={() => selectSource(source)}
                         >
                           <span className="min-w-0 flex-1">

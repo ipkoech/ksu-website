@@ -7,6 +7,7 @@ import {
   researchCenterRelationshipAdapter,
   schoolRelationshipAdapter,
   type RelationshipAdapter,
+  type RelationshipFilters,
   type RelationshipOption,
 } from "@/components/relationships/relationship-adapters";
 import { PAGE_SCOPE_TYPES, type PageScopeType } from "@/lib/api/page-cms";
@@ -32,10 +33,38 @@ const scopeLabels: Record<PageScopeType, string> = {
   library: "Library branch",
 };
 
+function isActiveScopeOption(option: RelationshipOption) {
+  const raw = option.raw;
+  return !raw
+    || typeof raw !== "object"
+    || !("is_active" in raw)
+    || (raw as { is_active?: boolean }).is_active !== false;
+}
+
+function createActiveScopeAdapter<TFilters extends RelationshipFilters>(
+  adapter: RelationshipAdapter<TFilters>,
+  activeFilters: TFilters,
+): RelationshipAdapter {
+  return {
+    ...adapter,
+    key: `page-cms-active-${adapter.key}`,
+    requiredFilterMessage: typeof adapter.requiredFilterMessage === "string"
+      ? adapter.requiredFilterMessage
+      : undefined,
+    search: async ({ search, limit }) => (
+      await adapter.search({ search, filters: activeFilters, limit })
+    ).filter(isActiveScopeOption),
+    get: async (id) => {
+      const option = await adapter.get(id, activeFilters);
+      return option && isActiveScopeOption(option) ? option : null;
+    },
+  };
+}
+
 const scopeAdapters: Partial<Record<PageScopeType, RelationshipAdapter>> = {
-  school: schoolRelationshipAdapter,
-  research: researchCenterRelationshipAdapter,
-  library: libraryBranchRelationshipAdapter,
+  school: createActiveScopeAdapter(schoolRelationshipAdapter, { is_active: true }),
+  research: createActiveScopeAdapter(researchCenterRelationshipAdapter, { is_active: true }),
+  library: createActiveScopeAdapter(libraryBranchRelationshipAdapter, { active_only: true }),
 };
 
 function labelForScope(scopeType: PageScopeType, option?: RelationshipOption | null) {

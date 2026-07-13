@@ -1,3 +1,4 @@
+import type { AxiosRequestConfig } from "axios";
 import api, { type ListParams } from "./client";
 
 export const PAGE_SCOPE_TYPES = ["university", "school", "research", "library"] as const;
@@ -42,6 +43,14 @@ export const PAGE_CMS_SOURCE_TYPES = [
   "public_stat",
   "club_activity",
 ] as const;
+export const PAGE_CMS_CATALOG_SOURCE_TYPES = [
+  "programme",
+  "news",
+  "event",
+  "person",
+  "research_partner",
+  "public_stat",
+] as const satisfies readonly PageCmsSourceType[];
 export const PARTNERSHIP_CTA_SOURCES = [
   "manual",
   "partner_website",
@@ -71,6 +80,7 @@ export type PageSectionStatus = (typeof PAGE_SECTION_STATUSES)[number];
 export type PageSectionLayoutVariant = (typeof PAGE_SECTION_LAYOUT_VARIANTS)[number];
 export type SectionItemType = (typeof SECTION_ITEM_TYPES)[number];
 export type PageCmsSourceType = (typeof PAGE_CMS_SOURCE_TYPES)[number];
+export type PageCmsCatalogSourceType = (typeof PAGE_CMS_CATALOG_SOURCE_TYPES)[number];
 export type PartnershipCtaSource = (typeof PARTNERSHIP_CTA_SOURCES)[number];
 export type PageSectionWorkflowAction = (typeof PAGE_SECTION_WORKFLOW_ACTIONS)[number];
 export type PartnershipSpotlightWorkflowAction = PageSectionWorkflowAction;
@@ -257,10 +267,11 @@ export type PageCmsSourceSummary = {
   source_type: PageCmsSourceType;
   label: string;
   secondary_label?: string | null;
-  status?: string | null;
+  status: string;
+  published_at?: string | null;
   thumbnail_url?: string | null;
+  metadata: Record<string, unknown>;
   selectable: boolean;
-  metadata: Record<string, string | number | boolean | null>;
 };
 
 export interface PageCmsSourceSearchParams {
@@ -289,8 +300,90 @@ export interface PageCmsValidationResult {
   issues: PageCmsValidationIssue[];
 }
 
-export interface PageCmsPreview extends PageCmsValidationResult {
-  sections: PageSection[];
+export interface PagePreviewResolvedSource extends PageCmsSourceSummary {}
+
+export interface PagePreviewMedia {
+  id: string;
+  filename: string;
+  original_filename: string;
+  mime_type: string;
+  media_type: string;
+  url: string;
+  public_url?: string | null;
+  cdn_url?: string | null;
+  thumbnail_url?: string | null;
+  alt_text?: string | null;
+  title?: string | null;
+  caption?: string | null;
+  width?: number | null;
+  height?: number | null;
+  duration?: number | null;
+}
+
+export interface PagePreviewMediaLink {
+  id: string;
+  media_id: string;
+  entity_type: string;
+  entity_id: string;
+  role: string;
+  display_order: number;
+  media: PagePreviewMedia;
+}
+
+export interface PagePreviewItem {
+  id: string;
+  page_section_id: string;
+  item_type: string;
+  title?: string | null;
+  subtitle?: string | null;
+  body_text?: string | null;
+  content?: Record<string, unknown> | null;
+  cta_label?: string | null;
+  cta_url?: string | null;
+  cta_description?: string | null;
+  media_caption?: string | null;
+  media_alt_text?: string | null;
+  video_provider?: string | null;
+  video_url?: string | null;
+  video_duration_seconds?: number | null;
+  source_type?: string | null;
+  source_id?: string | null;
+  editorial_overrides?: Record<string, unknown> | null;
+  source?: PagePreviewResolvedSource | null;
+  display_order: number;
+  is_enabled: boolean;
+}
+
+export interface PagePreviewSection {
+  id: string;
+  page_key: string;
+  scope_type: string;
+  scope_id?: string | null;
+  section_key: string;
+  title?: string | null;
+  subtitle?: string | null;
+  description?: string | null;
+  settings?: Record<string, unknown> | null;
+  display_order: number;
+  revision: number;
+  is_enabled: boolean;
+  layout_variant: string;
+  status: string;
+  workflow_status: string;
+  valid_from?: string | null;
+  valid_to?: string | null;
+  approved_at?: string | null;
+  published_at?: string | null;
+  items: PagePreviewItem[];
+  media: Record<string, PagePreviewMediaLink[]>;
+}
+
+export interface PageCmsPreview {
+  page_key: string;
+  scope_type: string;
+  scope_id?: string | null;
+  issues: PageCmsValidationIssue[];
+  sections: PagePreviewSection[];
 }
 
 export interface PageCmsReorderEntry {
@@ -316,8 +409,12 @@ export const pageCmsApi = {
     api.get<PageComposition>(`/pages/${pageKey}`, { params }),
   definitions: () =>
     api.get<PageCmsSectionDefinition[]>("/page-section-definitions"),
-  searchSources: (sourceType: PageCmsSourceType, params: PageCmsSourceSearchParams) =>
-    api.get<PageCmsSourceSummary[]>(`/page-section-sources/${sourceType}`, { params }),
+  searchSources: (
+    sourceType: PageCmsCatalogSourceType,
+    params: PageCmsSourceSearchParams,
+    config?: AxiosRequestConfig,
+  ) =>
+    api.get<PageCmsSourceSummary[]>(`/page-section-sources/${sourceType}`, { ...config, params }),
   previewPage: (pageKey: string, params: PageCompositionParams) =>
     api.get<PageCmsPreview>(`/pages/${pageKey}/preview`, { params }),
   validatePage: (pageKey: string, params: PageCompositionParams) =>
