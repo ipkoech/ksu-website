@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -10,18 +9,10 @@ import {
   FileText,
   Plus,
   Send,
-  ShieldCheck,
-  UserCheck,
   Users,
 } from "lucide-react";
 import {
   Badge,
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
   Tabs,
   TabsContent,
   TabsList,
@@ -29,6 +20,10 @@ import {
 } from "@ksu/ui/components";
 import { PageHeader } from "@/components/layout";
 import { governanceAdminApi, type CouncilDashboard as CouncilDashboardStats } from "@/lib/api/organization";
+import { CouncilMemberEditor } from "./council-member-editor";
+import { CouncilOrderManager } from "./council-order-manager";
+import { CouncilPageContentEditor } from "./council-page-content-editor";
+import { CouncilPreview } from "./council-preview";
 
 const statItems: Array<{
   key: keyof CouncilDashboardStats;
@@ -181,89 +176,22 @@ export function CouncilDashboard() {
           </TabsList>
 
           <TabsContent id="members" value="members">
-            <WorkspacePanel
-              icon={Users}
-              title="Council Members"
-              description="Create profiles, review appointment details, and move records through the publication workflow."
-              actionLabel="Add Council Member"
-            />
+            <CouncilMemberEditor />
           </TabsContent>
           <TabsContent id="order" value="order">
-            <WorkspacePanel
-              icon={ArrowUpDown}
-              title="Official Display Order"
-              description="Arrange the Chairperson, Council Members, and Secretary in the order used on the public page."
-              actionLabel="Manage Display Order"
-            />
+            <CouncilOrderManager />
           </TabsContent>
           <TabsContent id="page-content" value="page-content">
-            <WorkspacePanel
-              icon={FileText}
-              title="Hero And Mandate"
-              description="Manage the Council page title, introductory copy, hero image, mandate, and document CTA."
-              actionLabel="Edit Page Content"
-            />
+            <CouncilPageContentEditor />
           </TabsContent>
           <TabsContent id="preview" value="preview">
-            <WorkspacePanel
-              icon={Eye}
-              title="Public Preview"
-              description="Review the Council page using the same grouping and card structure visitors will see."
-              actionLabel="Preview Public Page"
-            />
+            <CouncilPreview />
           </TabsContent>
           <TabsContent id="archive" value="archive">
-            <WorkspacePanel
-              icon={Archive}
-              title="Archived Members"
-              description="Review former members, ended terms, inactive appointments, and archived profiles."
-              actionLabel="View Archived Members"
-            />
+            <CouncilMemberEditor archivedOnly />
           </TabsContent>
         </Tabs>
       </div>
     </div>
-  );
-}
-
-function WorkspacePanel({
-  icon: Icon,
-  title,
-  description,
-  actionLabel,
-}: {
-  icon: typeof ShieldCheck;
-  title: string;
-  description: string;
-  actionLabel: string;
-}) {
-  return (
-    <Card>
-      <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-            <Icon className="size-5" />
-          </div>
-          <div>
-            <CardTitle>{title}</CardTitle>
-            <CardDescription className="mt-1 max-w-2xl">{description}</CardDescription>
-          </div>
-        </div>
-        <Button type="button" variant="outline">
-          <UserCheck className="size-4" />
-          {actionLabel}
-        </Button>
-      </CardHeader>
-      <CardContent>
-        <div className="rounded-md border border-dashed bg-muted/20 p-6 text-sm text-muted-foreground">
-          This workspace is ready for Council operations. Select a primary action above to continue.
-        </div>
-        <div className="mt-4">
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/governance">Back to governance dashboard</Link>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
   );
 }

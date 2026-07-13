@@ -68,3 +68,59 @@ test("portal registry links to university council workspace", () => {
   assert.match(source, /University Council/);
   assert.match(source, /\/governance\/university-council/);
 });
+
+test("member editor uses readable relationship and media controls", () => {
+  const source = read("src/app/(protected)/governance/university-council/_components/council-member-editor.tsx");
+
+  for (const fragment of [
+    "PersonPicker",
+    "MediaPicker",
+    "Public role label",
+    "Appointment category",
+    "Represented institution",
+    "Publish without approved portrait",
+    "submit-review",
+  ]) {
+    assert.match(source, new RegExp(fragment));
+  }
+
+  assert.doesNotMatch(source, /photo_id: values\.photo_id/);
+});
+
+test("order manager persists explicit backend order and supports keyboard users", () => {
+  const source = read("src/app/(protected)/governance/university-council/_components/council-order-manager.tsx");
+
+  for (const fragment of [
+    "updateCouncilOrder",
+    "Move up",
+    "Move down",
+    "Chairperson",
+    "Council Members",
+    "Secretary to Council",
+  ]) {
+    assert.match(source, new RegExp(fragment));
+  }
+});
+
+test("page content editor manages hero and mandate content", () => {
+  const source = read("src/app/(protected)/governance/university-council/_components/council-page-content-editor.tsx");
+
+  for (const fragment of [
+    "Hero background image",
+    "Overlay intensity",
+    "Our Mandate",
+    "Council Charter",
+    "updateCouncilPageContent",
+  ]) {
+    assert.match(source, new RegExp(fragment));
+  }
+});
+
+test("preview shows clickable public-style member cards", () => {
+  const source = read("src/app/(protected)/governance/university-council/_components/council-preview.tsx");
+
+  assert.match(source, /Preview Public Page/);
+  assert.match(source, /View profile of/);
+  assert.match(source, /chairperson/i);
+  assert.match(source, /secretary/i);
+});

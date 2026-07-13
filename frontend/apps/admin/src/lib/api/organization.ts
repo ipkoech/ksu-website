@@ -101,6 +101,8 @@ export interface CouncilMember {
     start_date?: string | null;
     end_date?: string | null;
     term_number?: number | null;
+    publish_without_portrait_override?: boolean;
+    publication_notes?: string | null;
     published_at?: string | null;
 }
 
