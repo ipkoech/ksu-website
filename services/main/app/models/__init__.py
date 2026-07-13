@@ -14,7 +14,7 @@ from .person import Person
 from .staff import ACADEMIC_RANK_ORDER, ENTITY_ROLES, ROLE_HIERARCHY, HierarchyLevel, StaffAssignment
 
 # Governance
-from .governance import Board
+from .governance import Board, GovernancePageContent, GovernanceRole
 
 # Organization
 from .organization import Division, Wing
@@ -103,6 +103,8 @@ __all__ = [
     "ACADEMIC_RANK_ORDER",
     # Governance
     "Board",
+    "GovernanceRole",
+    "GovernancePageContent",
     # Organization
     "Division",
     "Wing",

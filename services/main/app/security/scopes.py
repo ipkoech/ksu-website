@@ -139,6 +139,18 @@ CLUB_ASSIGNMENT_PERMISSIONS = frozenset(
     }
 )
 
+GOVERNANCE_PERMISSIONS = frozenset(
+    {
+        "governance.manage_roles",
+        "governance.manage_members",
+        "governance.manage_order",
+        "governance.review",
+        "governance.approve",
+        "governance.publish",
+        "governance.archive",
+    }
+)
+
 
 @dataclass(frozen=True)
 class ScopedGrant:

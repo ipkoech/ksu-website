@@ -104,7 +104,22 @@ from .page_cms import (
     SectionItemUpdate,
 )
 from .exchange import ExchangeProgrammeCreate, ExchangeProgrammeRead, ExchangeProgrammeUpdate
-from .governance import BoardCreate, BoardMemberCreate, BoardRead, BoardUpdate
+from .governance import (
+    BoardCreate,
+    BoardMemberCreate,
+    BoardRead,
+    BoardUpdate,
+    CouncilDashboardRead,
+    CouncilMemberCreate,
+    CouncilMemberRead,
+    CouncilMemberUpdate,
+    CouncilOrderUpdate,
+    GovernancePageContentRead,
+    GovernancePageContentUpdate,
+    GovernanceRoleCreate,
+    GovernanceRoleRead,
+    GovernanceRoleUpdate,
+)
 from .imports import (
     ImportColumnRead,
     ImportCommitRead,
@@ -281,6 +296,16 @@ __all__ = [
     "BoardMemberCreate",
     "BoardUpdate",
     "BoardRead",
+    "GovernanceRoleCreate",
+    "GovernanceRoleUpdate",
+    "GovernanceRoleRead",
+    "GovernancePageContentUpdate",
+    "GovernancePageContentRead",
+    "CouncilMemberCreate",
+    "CouncilMemberUpdate",
+    "CouncilMemberRead",
+    "CouncilOrderUpdate",
+    "CouncilDashboardRead",
     "ImportColumnRead",
     "ImportResourceRead",
     "ImportPreviewRow",

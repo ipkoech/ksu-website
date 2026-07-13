@@ -13,6 +13,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ksu_common.models.base import Base
 
 if TYPE_CHECKING:
+    from .governance import GovernanceRole
     from .person import Person
     from .auth import User
 
@@ -292,6 +293,44 @@ class StaffAssignment(Base):
     # Assignment notes
     notes: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
 
+    # ─── Governance Appointment ───
+    governance_role_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("governance_roles.id", ondelete="SET NULL"), nullable=True
+    )
+    appointment_category: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True)
+    official_designation: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    public_role_label: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    represented_institution: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    current_office: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    appointing_authority: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    appointment_reference: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    term_number: Mapped[Optional[int]] = mapped_column(sa.Integer, nullable=True)
+    is_ex_officio: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
+    is_voting_member: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
+    show_contact_publicly: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
+    profile_slug: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
+    profile_summary: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    appointment_status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="draft")
+    workflow_status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="draft")
+    submitted_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    approved_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    published_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    submitted_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    approved_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    published_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    unpublished_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    archived_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    publish_without_portrait_override: Mapped[bool] = mapped_column(
+        sa.Boolean, nullable=False, server_default=sa.text("false")
+    )
+    publication_notes: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+
     # ─── Relationships ───
     person: Mapped["Person"] = relationship(
         "Person",
@@ -301,6 +340,9 @@ class StaffAssignment(Base):
     user: Mapped[Optional["User"]] = relationship(
         "User",
         foreign_keys=[user_id],
+    )
+    governance_role: Mapped[Optional["GovernanceRole"]] = relationship(
+        "GovernanceRole", foreign_keys=[governance_role_id]
     )
     reports_to: Mapped[Optional["StaffAssignment"]] = relationship(
         "StaffAssignment",
@@ -320,6 +362,13 @@ class StaffAssignment(Base):
         sa.Index("ix_staff_assignments_entity_role", "entity_type", "entity_id", "role"),
         sa.Index("ix_staff_assignments_hierarchy", "entity_type", "entity_id", "hierarchy_level"),
         sa.Index("ix_staff_assignments_active", "status", "entity_type"),
+        sa.Index("ix_staff_assignments_governance_workflow", "entity_type", "entity_id", "workflow_status"),
+        sa.Index(
+            "uq_staff_assignments_governance_profile_slug",
+            "profile_slug",
+            unique=True,
+            postgresql_where=sa.text("profile_slug IS NOT NULL AND deleted_at IS NULL"),
+        ),
         sa.Index(
             "uq_staff_assignments_active_school_dean",
             "entity_type",
