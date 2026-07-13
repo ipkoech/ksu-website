@@ -54,7 +54,7 @@ PORTAL_STAT_CONTRACTS: dict[str, tuple[str, ...]] = {
         "staff_assignments_count",
         "documents_count",
     ),
-    "cocms": (
+    "corporate-communication": (
         "pending_review_count",
         "published_count",
         "draft_count",
@@ -67,7 +67,6 @@ PORTAL_STAT_CONTRACTS: dict[str, tuple[str, ...]] = {
         "programmes_count",
         "unpublished_count",
     ),
-    "student-clubs": ("active_clubs_count", "active_members_count"),
     "research": (
         "active_projects_count",
         "grants_count",
@@ -86,6 +85,13 @@ PORTAL_STAT_CONTRACTS: dict[str, tuple[str, ...]] = {
         "school_approved_count",
         "published_count",
     ),
+}
+
+PORTAL_ALIASES = {
+    "cocms": "corporate-communication",
+    "publications": "research",
+    "governance": "admin",
+    "institutional-administration": "admin",
 }
 
 
@@ -656,6 +662,8 @@ async def portal_stats(
 ) -> PortalStatsResponse | None:
     """Return definite counters for Main-service admin portal dashboards."""
 
+    portal = PORTAL_ALIASES.get(portal, portal)
+
     if portal == "admin":
         stats = {
             "boards_count": await _count(db, Board),
@@ -665,7 +673,7 @@ async def portal_stats(
             "documents_count": await _count(db, Document),
         }
         title = "Admin operational counters"
-    elif portal == "cocms":
+    elif portal == "corporate-communication":
         content_sources = (
             (News, ()),
             (Blog, ()),
@@ -709,7 +717,7 @@ async def portal_stats(
             ),
             "media_count": await _count(db, Media),
         }
-        title = "CoCMS publishing counters"
+        title = "Corporate Communication publishing counters"
     elif portal == "schools":
         stats = {
             "schools_count": await _count(db, School),

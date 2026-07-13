@@ -34,10 +34,10 @@ class _WorkflowCountDb:
 
 
 class PortalStatsTests(unittest.IsolatedAsyncioTestCase):
-    async def test_cocms_pending_review_counts_all_emitted_queue_states_and_club_content(self):
+    async def test_corporate_communication_pending_review_counts_all_emitted_queue_states_and_club_content(self):
         db = _WorkflowCountDb()
 
-        result = await portal_stats(db, "cocms")
+        result = await portal_stats(db, "corporate-communication")
 
         self.assertEqual(9, result.stats["pending_review_count"])
         pending_sql = "\n".join(db.pending_tables)
@@ -62,7 +62,7 @@ class PortalStatsTests(unittest.IsolatedAsyncioTestCase):
                 "staff_assignments_count",
                 "documents_count",
             },
-            "cocms": {
+            "corporate-communication": {
                 "pending_review_count",
                 "published_count",
                 "draft_count",
@@ -86,10 +86,9 @@ class PortalStatsTests(unittest.IsolatedAsyncioTestCase):
     def test_all_dashboard_portals_have_named_stats_contracts(self):
         expected = {
             "admin",
-            "cocms",
+            "corporate-communication",
             "schools",
             "departments",
-            "student-clubs",
             "research",
             "library",
             "publications",
@@ -99,6 +98,12 @@ class PortalStatsTests(unittest.IsolatedAsyncioTestCase):
         for portal, keys in PORTAL_STAT_CONTRACTS.items():
             self.assertTrue(keys, portal)
             self.assertTrue(all(key.endswith("_count") for key in keys), portal)
+
+    async def test_legacy_portal_stats_names_resolve_to_canonical_portals(self):
+        result = await portal_stats(_FakeDb(), "cocms")
+
+        self.assertIsNotNone(result)
+        self.assertEqual("corporate-communication", result.portal)
 
 
 if __name__ == "__main__":

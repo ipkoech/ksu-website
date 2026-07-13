@@ -148,7 +148,7 @@ class PortalAccessTests(unittest.TestCase):
             record.permissions,
         )
 
-    def test_content_media_and_homepage_permissions_emit_cocms(self):
+    def test_content_media_and_homepage_permissions_emit_corporate_communication(self):
         user = _user(
             role_assignments=[
                 _assignment(
@@ -162,14 +162,14 @@ class PortalAccessTests(unittest.TestCase):
 
         self.assertEqual(1, len(records))
         record = records[0]
-        self.assertEqual("cocms", record.key)
-        self.assertEqual("/cocms", record.href)
+        self.assertEqual("corporate-communication", record.key)
+        self.assertEqual("/corporate-communication", record.href)
         self.assertEqual(
             ["content.review", "homepage.manage", "media.manage"],
             record.permissions,
         )
 
-    def test_club_role_assignment_emits_locked_student_clubs_access(self):
+    def test_club_role_assignment_emits_locked_corporate_communication_access(self):
         club_id = uuid.uuid4()
         user = _user(
             role_assignments=[
@@ -189,14 +189,14 @@ class PortalAccessTests(unittest.TestCase):
 
         self.assertEqual(1, len(records))
         record = records[0]
-        self.assertEqual("student-clubs", record.key)
+        self.assertEqual("corporate-communication", record.key)
         self.assertEqual("club", record.scope_type)
         self.assertEqual(club_id, record.scope_id)
         self.assertEqual("KSU Debate Club", record.scope_label)
         self.assertTrue(record.locked_scope)
         self.assertEqual(["clubs.events_manage", "clubs.manage_own"], record.permissions)
 
-    def test_club_person_assignment_infers_locked_student_clubs_access(self):
+    def test_club_person_assignment_infers_locked_corporate_communication_access(self):
         club_id = uuid.uuid4()
         user = _user(
             staff_assignments=[
@@ -211,7 +211,7 @@ class PortalAccessTests(unittest.TestCase):
 
         self.assertEqual(1, len(records))
         record = records[0]
-        self.assertEqual("student-clubs", record.key)
+        self.assertEqual("corporate-communication", record.key)
         self.assertEqual("club", record.scope_type)
         self.assertEqual(club_id, record.scope_id)
         self.assertTrue(record.locked_scope)

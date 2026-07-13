@@ -103,10 +103,10 @@ PORTAL_DEFINITIONS = {
         "href": "/departments",
         "permissions": {"academic.view", "academic.manage_departments"},
     },
-    "cocms": {
-        "label": "CoCMS",
+    "corporate-communication": {
+        "label": "Corporate Communication",
         "service": "main",
-        "href": "/cocms",
+        "href": "/corporate-communication",
         "permissions": {
             "content.view",
             "content.review",
@@ -117,33 +117,40 @@ PORTAL_DEFINITIONS = {
             "content.unpublish",
             "media.view",
             "media.manage",
+            "homepage.view",
             "homepage.manage",
+            "homepage.publish",
             "marketing.view",
+            "marketing.manage_sliders",
+            "page_sections.view",
+            "page_sections.manage",
+            "partnership_spotlights.manage",
+            "clubs.view",
+            "clubs.content_submit",
+            "clubs.manage_own",
+            "clubs.events_manage",
+            "clubs.stories_manage",
         },
     },
     "research": {
         "label": "Research Portal",
         "service": "research",
         "href": "/research",
-        "permissions": {"research.view", "research.view_projects"},
+        "permissions": {
+            "research.view",
+            "research.view_projects",
+            "publications.view",
+            "publications.submit",
+            "publications.review",
+            "publications.approve",
+            "publications.manage",
+        },
     },
     "library": {
         "label": "Library Portal",
         "service": "library",
         "href": "/library",
         "permissions": {"library.view"},
-    },
-    "publications": {
-        "label": "Publications Portal",
-        "service": "research",
-        "href": "/publications",
-        "permissions": {"publications.view", "publications.submit", "publications.review", "publications.approve"},
-    },
-    "student-clubs": {
-        "label": "Student Clubs Portal",
-        "service": "main",
-        "href": "/student-clubs",
-        "permissions": STUDENT_CLUB_ASSIGNMENT_PERMISSIONS,
     },
 }
 
@@ -389,7 +396,7 @@ def build_portal_access_records(user: User, scope_labels: Mapping[ScopeKey, str]
         elif entity_type == "club":
             _add_or_merge(
                 records,
-                key="student-clubs",
+                key="corporate-communication",
                 scope_type=entity_type,
                 scope_id=entity_id,
                 permissions=STUDENT_CLUB_ASSIGNMENT_PERMISSIONS,
