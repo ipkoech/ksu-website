@@ -77,8 +77,11 @@ export function RealtimeProvider({
       return;
     }
 
-    client.connect();
-    return () => client.disconnect();
+    const connectTimer = setTimeout(() => client.connect(), 0);
+    return () => {
+      clearTimeout(connectTimer);
+      client.disconnect();
+    };
   }, [client, enabled]);
 
   const value = useMemo(() => ({ status, notifications }), [status, notifications]);

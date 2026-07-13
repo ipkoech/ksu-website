@@ -3,7 +3,7 @@ import unittest
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocketDisconnect
 
 from app.api.v1 import register_routes
 from app.api.v1 import realtime
@@ -119,6 +119,39 @@ class RealtimeEndpointTests(unittest.TestCase):
         self.assertIn("notifications", payload["channels"])
         self.assertIn("research", payload["channels"])
         self.assertGreater(payload["heartbeat_seconds"], 0)
+
+
+class RealtimeConnectionLifecycleTests(unittest.IsolatedAsyncioTestCase):
+    async def test_authenticated_handshake_is_accepted_before_database_lookup(self):
+        events = []
+
+        class HandshakeWebSocket(_WebSocket):
+            async def accept(self):
+                events.append("accept")
+
+            async def send_json(self, payload):
+                events.append("send")
+                raise WebSocketDisconnect()
+
+        async def resolve_user(token):
+            events.append("resolve")
+            return SimpleNamespace(id=uuid.uuid4())
+
+        async def latest_notifications(user_id):
+            return []
+
+        websocket = HandshakeWebSocket(query_params={"access_token": "valid-token"})
+        original_resolver = realtime._resolve_websocket_user
+        original_latest = realtime._latest_unread_notifications
+        realtime._resolve_websocket_user = resolve_user
+        realtime._latest_unread_notifications = latest_notifications
+        try:
+            await realtime.realtime(websocket)
+        finally:
+            realtime._resolve_websocket_user = original_resolver
+            realtime._latest_unread_notifications = original_latest
+
+        self.assertEqual(["accept", "resolve", "send"], events)
 
 
 if __name__ == "__main__":

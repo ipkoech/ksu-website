@@ -70,7 +70,6 @@ export const realtimeApi = {
 
 type Listener = (event: RealtimeEvent) => void;
 type StatusListener = (status: RealtimeStatus) => void;
-const MAX_WEBSOCKET_QUERY_TOKEN_LENGTH = 2048;
 
 export class RealtimeClient {
   private socket: WebSocket | null = null;
@@ -105,7 +104,7 @@ export class RealtimeClient {
 
     this.closedByClient = false;
     this.emitStatus("connecting");
-    const url = this.buildUrl(token);
+    const url = this.buildUrl();
     this.socket = new WebSocket(url);
 
     this.socket.addEventListener("open", () => {
@@ -152,13 +151,10 @@ export class RealtimeClient {
     return () => this.statusListeners.delete(listener);
   }
 
-  private buildUrl(token: string) {
+  private buildUrl() {
     const baseUrl = this.options.baseUrl ?? getMainApiBaseUrl();
     const url = new URL("/api/v1/realtime", baseUrl);
     url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-    if (token.length <= MAX_WEBSOCKET_QUERY_TOKEN_LENGTH) {
-      url.searchParams.set("access_token", token);
-    }
     return url.toString();
   }
 

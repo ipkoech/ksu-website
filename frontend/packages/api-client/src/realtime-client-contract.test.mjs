@@ -21,10 +21,10 @@ assert(
   "Realtime research config should not be coupled to the main service base URL.",
 );
 assert(
-  source.includes("MAX_WEBSOCKET_QUERY_TOKEN_LENGTH"),
-  "Realtime websocket client must cap query-token size and rely on the auth cookie for oversized JWTs.",
+  !source.includes('url.searchParams.set("access_token"'),
+  "Realtime websocket client must rely on the HttpOnly auth cookie instead of exposing JWTs in URLs.",
 );
 assert(
-  source.includes("token.length <= MAX_WEBSOCKET_QUERY_TOKEN_LENGTH"),
-  "Realtime websocket client must not append oversized JWTs to the websocket URL.",
+  source.includes("this.buildUrl()"),
+  "Realtime websocket URL construction must not receive an access token.",
 );

@@ -124,13 +124,13 @@ async def realtime(websocket: WebSocket):
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
-    user = await _resolve_websocket_user(token)
-    if user is None:
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-        return
-
     try:
         await websocket.accept()
+        user = await _resolve_websocket_user(token)
+        if user is None:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
+
         await websocket.send_json(
             {
                 "type": "connected",
