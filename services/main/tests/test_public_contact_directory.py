@@ -200,6 +200,114 @@ async def test_contact_directory_empty_state_is_stable(empty_db):
 
 
 @pytest.mark.anyio
+async def test_contact_directory_loads_every_main_contact_and_faq_page(db):
+    main_contacts = [
+        _record(
+            name=f"Main contact {index:03d}",
+            contact_type="office",
+            email=f"main-{index}@example.edu",
+            phone=[],
+            extension=None,
+            physical_address=None,
+            building=None,
+            room_number=None,
+            operating_hours=None,
+            contact_person_id=None,
+            scope_type=None,
+            scope_id=None,
+            is_main=True,
+            is_public=True,
+            status="active",
+            deleted_at=None,
+        )
+        for index in range(101)
+    ]
+    faqs = [
+        _record(
+            question=f"Contact question {index:03d}?",
+            answer_plain_text=f"Contact answer {index:03d}.",
+            answer_rich_text=None,
+            answer_structured=None,
+            category="contacts",
+            scope_type=None,
+            scope_id=None,
+            is_main=True,
+            is_public=True,
+            status="published",
+            display_order=index,
+            views_count=0,
+            helpful_count=0,
+            deleted_at=None,
+        )
+        for index in range(101)
+    ]
+    empty_contacts = SimpleNamespace(
+        items=[],
+        meta={"page": 1, "per_page": 20, "total": 0, "pages": 0},
+    )
+
+    async def list_contacts(_db, **kwargs):
+        if not kwargs.get("is_main"):
+            return empty_contacts
+        page = kwargs["page"]
+        return SimpleNamespace(
+            items=main_contacts[(page - 1) * 100 : page * 100],
+            meta={"page": page, "per_page": 100, "total": 101, "pages": 2},
+        )
+
+    async def list_faqs(_db, **kwargs):
+        page = kwargs["page"]
+        return SimpleNamespace(
+            items=faqs[(page - 1) * 100 : page * 100],
+            meta={"page": page, "per_page": 100, "total": 101, "pages": 2},
+        )
+
+    list_contacts_mock = AsyncMock(side_effect=list_contacts)
+    list_faqs_mock = AsyncMock(side_effect=list_faqs)
+    with (
+        patch(
+            "app.services.public_contact_directory.UniversityInfoService.get_current",
+            AsyncMock(return_value=None),
+        ),
+        patch(
+            "app.services.public_contact_directory.ContactService.list",
+            list_contacts_mock,
+        ),
+        patch(
+            "app.services.public_contact_directory.CampusService.list",
+            AsyncMock(return_value=[]),
+        ),
+        patch(
+            "app.services.public_contact_directory.FAQService.list",
+            list_faqs_mock,
+        ),
+    ):
+        result = await PublicContactDirectoryService.compose(db)
+
+    assert [item.name for item in result.main_contacts] == [
+        item.name for item in main_contacts
+    ]
+    assert [item.question for item in result.faqs] == [item.question for item in faqs]
+    assert list_contacts_mock.await_args_list == [
+        call(db, page=1, per_page=100, is_main=True),
+        call(db, page=2, per_page=100, is_main=True),
+        call(
+            db,
+            page=1,
+            per_page=20,
+            search=None,
+            contact_type=None,
+            scope_type=None,
+            scope_id=None,
+        ),
+    ]
+    assert list_faqs_mock.await_args_list == [
+        call(db, page=1, per_page=100, is_main=True),
+        call(db, page=2, per_page=100, is_main=True),
+    ]
+
+
+@pytest.mark.anyio
 async def test_public_contact_directory_route_returns_envelope_and_varies_cache():
     class _Redis:
         def __init__(self):
