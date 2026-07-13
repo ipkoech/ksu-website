@@ -158,6 +158,13 @@ class PortalStatsTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(result)
         self.assertEqual("corporate-communication", result.portal)
 
+    async def test_publications_legacy_portal_stats_resolve_to_research_with_publication_counter(self):
+        result = await portal_stats(_FakeDb(), "publications")
+
+        self.assertIsNotNone(result)
+        self.assertEqual("research", result.portal)
+        self.assertIn("publication_records_count", result.stats)
+
     async def test_student_clubs_stats_are_not_a_standalone_portal_surface(self):
         result = await portal_stats(_FakeDb(), "student-clubs")
 
@@ -167,7 +174,7 @@ class PortalStatsTests(unittest.IsolatedAsyncioTestCase):
 class PortalStatsApiTests(unittest.TestCase):
     def test_portal_stats_permission_map_uses_canonical_main_service_keys(self):
         self.assertEqual(
-            {"admin", "corporate-communication", "schools", "departments"},
+            {"admin", "corporate-communication", "schools", "departments", "research"},
             set(stats_api.PORTAL_STAT_SCOPES),
         )
 
@@ -194,6 +201,21 @@ class PortalStatsApiTests(unittest.TestCase):
             },
             set(data["stats"]),
         )
+
+    def test_publications_api_uses_canonical_research_stats(self):
+        user = _user_with_scopes("research.view")
+        db = _AuthStatsDb(user)
+        token, _ = create_access_token(str(user.id), ["research"], permissions=[])
+
+        response = _portal_stats_client(db).get(
+            "/api/v1/stats/portal/publications",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        self.assertEqual(200, response.status_code)
+        data = response.json()["data"]
+        self.assertEqual("research", data["portal"])
+        self.assertIn("publication_records_count", data["stats"])
 
 
 if __name__ == "__main__":

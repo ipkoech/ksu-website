@@ -68,10 +68,8 @@ PORTAL_STAT_CONTRACTS: dict[str, tuple[str, ...]] = {
         "unpublished_count",
     ),
     "research": (
-        "active_projects_count",
-        "grants_count",
-        "centres_count",
-        "outputs_count",
+        "researchers_count",
+        "publication_records_count",
     ),
     "library": (
         "active_branches_count",
@@ -727,6 +725,23 @@ async def portal_stats(
             ),
         }
         title = "Department administration counters"
+    elif portal == "research":
+        researcher_ids = select(Person.id).where(
+            Person.deleted_at.is_(None),
+            Person.is_researcher.is_(True),
+        )
+        stats = {
+            "researchers_count": await _count(
+                db,
+                Person,
+                Person.is_researcher.is_(True),
+            ),
+            "publication_records_count": await _sum_publications_for_people(
+                db,
+                researcher_ids,
+            ),
+        }
+        title = "Research and publications counters"
     else:
         return None
 

@@ -41,6 +41,7 @@ PORTAL_STAT_SCOPES = {
     "corporate-communication": ("content.view", "media.view"),
     "schools": ("academic.view",),
     "departments": ("academic.view",),
+    "research": ("research.view", "publications.view"),
 }
 
 
