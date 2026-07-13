@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Request, Response
 
 from ksu_common.schemas.responses import success
 
@@ -63,7 +63,7 @@ def _serialize_auth_user(user: User) -> dict:
         {
             permission
             for assignment in user.role_assignments
-            if assignment.role and assignment.role.is_active
+            if assignment.is_active and assignment.role and assignment.role.is_active
             for permission in assignment.role.permissions
         }
     )
