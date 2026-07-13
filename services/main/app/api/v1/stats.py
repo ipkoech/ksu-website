@@ -38,10 +38,30 @@ async def get_admin_stats(
 
 PORTAL_STAT_SCOPES = {
     "admin": ("governance.view", "administration.view", "office.view"),
-    "corporate-communication": ("content.view", "media.view"),
+    "corporate-communication": (
+        "content.view",
+        "content.review",
+        "content.publish",
+        "media.view",
+        "media.manage",
+        "homepage.view",
+        "homepage.manage",
+        "partnership_spotlights.manage",
+        "clubs.view",
+        "clubs.content_submit",
+        "clubs.manage_own",
+    ),
     "schools": ("academic.view",),
     "departments": ("academic.view",),
-    "research": ("research.view", "publications.view"),
+    "research": (
+        "research.view",
+        "research.view_projects",
+        "publications.view",
+        "publications.submit",
+        "publications.review",
+        "publications.approve",
+        "publications.manage",
+    ),
 }
 
 

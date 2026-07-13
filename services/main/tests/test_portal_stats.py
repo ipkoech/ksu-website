@@ -256,6 +256,19 @@ class PortalStatsApiTests(unittest.TestCase):
             set(data["stats"]),
         )
 
+    def test_corporate_communication_api_authorizes_homepage_manager(self):
+        user = _user_with_scopes("homepage.manage")
+        db = _AuthStatsDb(user)
+        token, _ = create_access_token(str(user.id), ["corporate-communication"], permissions=[])
+
+        response = _portal_stats_client(db).get(
+            "/api/v1/stats/portal/corporate-communication",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("corporate-communication", response.json()["data"]["portal"])
+
     def test_publications_api_uses_canonical_research_stats(self):
         user = _user_with_scopes("research.view")
         db = _AuthStatsDb(user)
@@ -276,6 +289,24 @@ class PortalStatsApiTests(unittest.TestCase):
         self.assertEqual("research", data["portal"])
         self.assertEqual(7, data["stats"]["published_publications_count"])
         self.assertNotIn("publication_records_count", data["stats"])
+
+    def test_publications_api_authorizes_publication_submitter(self):
+        user = _user_with_scopes("publications.submit")
+        db = _AuthStatsDb(user)
+        token, _ = create_access_token(str(user.id), ["research"], permissions=[])
+
+        with patch.object(
+            stats_service,
+            "_published_publications_count",
+            new=AsyncMock(return_value=3),
+        ):
+            response = _portal_stats_client(db).get(
+                "/api/v1/stats/portal/publications",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("research", response.json()["data"]["portal"])
 
 
 if __name__ == "__main__":
