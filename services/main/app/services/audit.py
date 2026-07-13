@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from typing import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common import PaginatedResult
@@ -48,7 +48,12 @@ class AuditService:
         if resource_type is not None:
             query = query.where(AuditLog.resource_type == resource_type)
         if request_path_prefix is not None:
-            query = query.where(AuditLog.request_path.startswith(request_path_prefix))
+            query = query.where(
+                or_(
+                    AuditLog.request_path == request_path_prefix,
+                    AuditLog.request_path.startswith(f"{request_path_prefix}/"),
+                )
+            )
         if status is not None:
             query = query.where(AuditLog.status == status)
         return await paginate_query(db, query, page=page, per_page=per_page)

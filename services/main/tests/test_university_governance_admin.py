@@ -125,7 +125,7 @@ class UniversityGovernanceAdminSchemaTests(unittest.TestCase):
 
 
 class UniversityGovernanceAdminServiceTests(unittest.IsolatedAsyncioTestCase):
-    async def test_public_page_content_query_requires_published_workflow(self):
+    async def test_public_page_content_query_requires_consistent_publication_state(self):
         class RecordingDb:
             query = None
 
@@ -139,6 +139,52 @@ class UniversityGovernanceAdminServiceTests(unittest.IsolatedAsyncioTestCase):
 
         compiled = str(db.query.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True})).lower()
         self.assertIn("governance_page_content.workflow_status = 'published'", compiled)
+        self.assertIn("governance_page_content.status = 'published'", compiled)
+        self.assertIn("governance_page_content.published_at is not null", compiled)
+
+    async def test_page_content_workflow_submit_approve_publish_unpublish_and_archive(self):
+        user_id = uuid.uuid4()
+        page = SimpleNamespace(
+            workflow_status="draft",
+            status="draft",
+            submitted_by_id=None,
+            submitted_at=None,
+            approved_by_id=None,
+            approved_at=None,
+            published_by_id=None,
+            published_at=None,
+            unpublished_at=None,
+        )
+        db = SimpleNamespace(flush=AsyncMock())
+
+        await GovernanceService.transition_council_page_content(db, page, "submit-review", user_id)
+        self.assertEqual("submitted", page.workflow_status)
+        self.assertEqual("submitted", page.status)
+
+        await GovernanceService.transition_council_page_content(db, page, "approve", user_id)
+        self.assertEqual("approved", page.workflow_status)
+        self.assertEqual("approved", page.status)
+
+        await GovernanceService.transition_council_page_content(db, page, "publish", user_id)
+        self.assertEqual("published", page.workflow_status)
+        self.assertEqual("published", page.status)
+        self.assertEqual(user_id, page.published_by_id)
+        self.assertIsNotNone(page.published_at)
+
+        await GovernanceService.transition_council_page_content(db, page, "unpublish", user_id)
+        self.assertEqual("approved", page.workflow_status)
+        self.assertEqual("approved", page.status)
+        self.assertIsNotNone(page.unpublished_at)
+
+        await GovernanceService.transition_council_page_content(db, page, "archive", user_id)
+        self.assertEqual("archived", page.workflow_status)
+        self.assertEqual("archived", page.status)
+
+    async def test_page_content_workflow_rejects_publish_before_approval(self):
+        page = SimpleNamespace(workflow_status="draft", status="draft")
+
+        with self.assertRaisesRegex(ValueError, "Invalid workflow transition"):
+            await GovernanceService.transition_council_page_content(object(), page, "publish", uuid.uuid4())
 
     async def test_public_council_groups_members_by_display_group_in_order(self):
         board = SimpleNamespace(
@@ -334,6 +380,27 @@ class UniversityGovernanceAdminServiceTests(unittest.IsolatedAsyncioTestCase):
             per_page=10,
             request_path_prefix="/api/v1/governance/admin/council",
         )
+
+    async def test_council_audit_path_scope_requires_a_segment_boundary(self):
+        captured = None
+
+        async def capture_paginate(db, query, *, page, per_page):
+            nonlocal captured
+            captured = query
+            return SimpleNamespace(items=[], meta={})
+
+        with patch("app.services.audit.paginate_query", side_effect=capture_paginate):
+            await AuditService.list(
+                object(),
+                request_path_prefix="/api/v1/governance/admin/council",
+            )
+
+        compiled = str(
+            captured.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True})
+        ).lower()
+        self.assertIn("audit_logs.request_path = '/api/v1/governance/admin/council'", compiled)
+        self.assertIn("/api/v1/governance/admin/council/", compiled)
+        self.assertNotIn("councilors", compiled)
 
     def test_admin_member_read_includes_readable_reports_to_summary(self):
         chair = SimpleNamespace(

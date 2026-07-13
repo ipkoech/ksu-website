@@ -341,6 +341,60 @@ async def update_council_page_content(data: GovernancePageContentUpdate, db: DbS
     return success(data=page, message="Council page content updated")
 
 
+async def _transition_council_page_content(action: str, db: DbSession, user: CurrentUser):
+    board = await GovernanceService.get_university_council_board(db)
+    if board is None:
+        raise HTTPException(status_code=404, detail="University Council not found")
+    page = await GovernanceService.get_council_page_content(db, board.id)
+    if page is None:
+        raise HTTPException(status_code=404, detail="Council page content not found")
+    try:
+        page = await GovernanceService.transition_council_page_content(db, page, action, user.id)
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    return success(data=page, message=f"Council page content {action}")
+
+
+@router.post(
+    "/admin/council/page-content/submit-review",
+    dependencies=[Depends(require_scope("governance.manage_members"))],
+)
+async def submit_council_page_content_for_review(db: DbSession, user: CurrentUser):
+    return await _transition_council_page_content("submit-review", db, user)
+
+
+@router.post(
+    "/admin/council/page-content/approve",
+    dependencies=[Depends(require_scope("governance.approve"))],
+)
+async def approve_council_page_content(db: DbSession, user: CurrentUser):
+    return await _transition_council_page_content("approve", db, user)
+
+
+@router.post(
+    "/admin/council/page-content/publish",
+    dependencies=[Depends(require_scope("governance.publish"))],
+)
+async def publish_council_page_content(db: DbSession, user: CurrentUser):
+    return await _transition_council_page_content("publish", db, user)
+
+
+@router.post(
+    "/admin/council/page-content/unpublish",
+    dependencies=[Depends(require_scope("governance.publish"))],
+)
+async def unpublish_council_page_content(db: DbSession, user: CurrentUser):
+    return await _transition_council_page_content("unpublish", db, user)
+
+
+@router.post(
+    "/admin/council/page-content/archive",
+    dependencies=[Depends(require_scope("governance.archive"))],
+)
+async def archive_council_page_content(db: DbSession, user: CurrentUser):
+    return await _transition_council_page_content("archive", db, user)
+
+
 @router.get("/admin/council/preview", dependencies=[Depends(require_scope("governance.view"))])
 async def preview_council(db: DbSession, _: CurrentUser):
     try:

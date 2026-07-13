@@ -319,7 +319,11 @@ class GovernanceService:
             .where(GovernancePageContent.board_id == board_id, GovernancePageContent.page_key == "overview")
         )
         if published_only:
-            query = query.where(GovernancePageContent.workflow_status == "published")
+            query = query.where(
+                GovernancePageContent.status == "published",
+                GovernancePageContent.workflow_status == "published",
+                GovernancePageContent.published_at.is_not(None),
+            )
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
@@ -352,6 +356,42 @@ class GovernanceService:
                 page.updated_by_id = user_id
         await db.flush()
         await db.refresh(page)
+        return page
+
+    @staticmethod
+    async def transition_council_page_content(
+        db: AsyncSession,
+        page: GovernancePageContent,
+        action: str,
+        user_id: uuid.UUID,
+    ) -> GovernancePageContent:
+        now = datetime.now(timezone.utc)
+        current = page.workflow_status
+        if action == "submit-review" and current == "draft":
+            page.workflow_status = "submitted"
+            page.status = "submitted"
+            page.submitted_by_id = user_id
+            page.submitted_at = now
+        elif action == "approve" and current == "submitted":
+            page.workflow_status = "approved"
+            page.status = "approved"
+            page.approved_by_id = user_id
+            page.approved_at = now
+        elif action == "publish" and current == "approved":
+            page.workflow_status = "published"
+            page.status = "published"
+            page.published_by_id = user_id
+            page.published_at = now
+        elif action == "unpublish" and current == "published":
+            page.workflow_status = "approved"
+            page.status = "approved"
+            page.unpublished_at = now
+        elif action == "archive" and current != "published":
+            page.workflow_status = "archived"
+            page.status = "archived"
+        else:
+            raise ValueError("Invalid workflow transition")
+        await db.flush()
         return page
 
     @staticmethod
