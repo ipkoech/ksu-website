@@ -22,6 +22,14 @@ const defaults: Partial<CouncilPageContent> = {
   document_cta_url: "",
 };
 
+function contentPayload(values: Partial<CouncilPageContent>): Partial<CouncilPageContent> {
+  return {
+    ...values,
+    hero_image_id: values.hero_image_id || null,
+    overlay_intensity: Number(values.overlay_intensity ?? 0),
+  };
+}
+
 export function CouncilPageContentEditor() {
   const queryClient = useQueryClient();
   const [values, setValues] = useState<Partial<CouncilPageContent>>(defaults);
@@ -43,10 +51,7 @@ export function CouncilPageContentEditor() {
 
   const updateMutation = useMutation({
     mutationFn: () =>
-      governanceAdminApi.updateCouncilPageContent({
-        ...values,
-        overlay_intensity: Number(values.overlay_intensity ?? 0),
-      }),
+      governanceAdminApi.updateCouncilPageContent(contentPayload(values)),
     onSuccess: async () => {
       toast.success("Council page content saved");
       await Promise.all([

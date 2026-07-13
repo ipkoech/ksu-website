@@ -116,6 +116,7 @@ test("page content editor manages hero and mandate content", () => {
     "updateCouncilPageContent",
     "Loading Council page content",
     "could not be loaded",
+    "hero_image_id: values.hero_image_id || null",
   ]) {
     assert.match(source, new RegExp(fragment));
   }
