@@ -6541,6 +6541,12 @@ export const portalConfigs: Record<string, PortalConfig> = {
         scope: "governance.manage_boards",
       },
       {
+        title: "University Council",
+        href: "/governance/university-council",
+        icon: ShieldCheck,
+        scope: ["governance.view", "governance.manage_members"],
+      },
+      {
         title: "Divisions",
         href: "/governance/divisions",
         icon: Building2,
@@ -6608,6 +6614,16 @@ export const portalConfigs: Record<string, PortalConfig> = {
       ],
       governanceResources,
       ["governance.manage_boards", "policy.publish", "workflow.approve"],
+      [
+        {
+          title: "University Council",
+          description:
+            "Manage Council members, page content, official order, preview, and publication workflow.",
+          href: "/governance/university-council",
+          icon: ShieldCheck,
+          scopes: ["governance.view", "governance.manage_members"],
+        },
+      ],
     ),
     resources: governanceResources,
   },
@@ -7678,19 +7694,23 @@ function dashboard(
   stats: PortalConfig["dashboard"]["stats"],
   resources: Record<string, PortalResourceConfig<any, any>>,
   scopeBadges: string[],
+  extraPanels: PortalConfig["dashboard"]["panels"] = [],
 ) {
   return {
     title,
     description,
     stats,
     scopeBadges,
-    panels: Object.values(resources).map((resource) => ({
-      title: resource.title,
-      description: resource.description,
-      href: `${resource.backHref}/${resource.key}`,
-      icon: FileText,
-      scopes: resource.viewScopes,
-    })),
+    panels: [
+      ...extraPanels,
+      ...Object.values(resources).map((resource) => ({
+        title: resource.title,
+        description: resource.description,
+        href: `${resource.backHref}/${resource.key}`,
+        icon: FileText,
+        scopes: resource.viewScopes,
+      })),
+    ],
   };
 }
 
