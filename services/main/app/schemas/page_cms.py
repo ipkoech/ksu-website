@@ -332,8 +332,8 @@ class PageSectionCreate(BaseSchema):
 
     @model_validator(mode="after")
     def validate_scope_and_window(self):
-        if self.scope_type == "school" and self.scope_id is None:
-            raise ValueError("scope_id is required when scope_type is school")
+        if self.scope_type != "university" and self.scope_id is None:
+            raise ValueError(f"scope_id is required when scope_type is {self.scope_type}")
         if self.valid_from and self.valid_to and self.valid_to < self.valid_from:
             raise ValueError("valid_to must be greater than or equal to valid_from")
         return self
@@ -374,8 +374,8 @@ class PageSectionUpdate(BaseSchema):
 
     @model_validator(mode="after")
     def validate_scope_and_window(self):
-        if self.scope_type == "school" and self.scope_id is None:
-            raise ValueError("scope_id is required when scope_type is school")
+        if self.scope_type is not None and self.scope_type != "university" and self.scope_id is None:
+            raise ValueError(f"scope_id is required when scope_type is {self.scope_type}")
         if self.valid_from and self.valid_to and self.valid_to < self.valid_from:
             raise ValueError("valid_to must be greater than or equal to valid_from")
         return self

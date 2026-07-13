@@ -11,6 +11,7 @@ export type SectionTemplatePickerProps = {
   definitions?: PageCmsSectionDefinition[];
   allowedScopes?: readonly PageScopeType[];
   disabled?: boolean;
+  disabledMessage?: string;
 };
 
 export function SectionTemplatePicker({
@@ -19,6 +20,7 @@ export function SectionTemplatePicker({
   definitions: providedDefinitions,
   allowedScopes,
   disabled,
+  disabledMessage,
 }: SectionTemplatePickerProps) {
   const [loadedDefinitions, setLoadedDefinitions] = useState<PageCmsSectionDefinition[]>([]);
   const [isLoading, setIsLoading] = useState(!providedDefinitions);
@@ -68,6 +70,7 @@ export function SectionTemplatePicker({
         <p className="mt-1 text-sm text-muted-foreground">Choose a template available for this page scope.</p>
       </div>
       {error ? <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert> : null}
+      {disabledMessage ? <p className="text-sm text-muted-foreground">{disabledMessage}</p> : null}
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-56 flex-1">
           <Select value={selectedKey} onValueChange={setSelectedKey} disabled={disabled || isLoading || !availableDefinitions.length}>

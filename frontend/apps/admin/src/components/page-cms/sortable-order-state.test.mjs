@@ -99,6 +99,20 @@ assert.deepEqual(
   "a dirty rebase removes deleted IDs and appends new IDs in server order",
 );
 
+const resetController = new SortableOrderController(serverOrder);
+resetController.replaceDraftOrder([resetController.state.orderedItems[1], resetController.state.orderedItems[0], resetController.state.orderedItems[2]]);
+resetController.resetServerOrder([
+  { id: "section-c", display_order: 10, revision: 9 },
+  { id: "section-a", display_order: 20, revision: 8 },
+  { id: "section-b", display_order: 30, revision: 7 },
+]);
+assert.equal(resetController.state.isDirty, false, "an explicit reset discards a dirty local draft");
+assert.deepEqual(
+  resetController.state.orderedItems.map((item) => [item.id, item.revision]),
+  [["section-c", 9], ["section-a", 8], ["section-b", 7]],
+  "an explicit reset adopts the reloaded server order and revisions instead of rebasing",
+);
+
 const saving = beginOrderSave(localDraft);
 assert.equal(saving.isSaving, true, "saving begins without accepting the draft as confirmed");
 assert.equal(saving.isDirty, true, "saving keeps the draft dirty until confirmation");

@@ -405,10 +405,10 @@ export interface ReorderItemsPayload {
 export const pageCmsApi = {
   getHomepage: (params?: PageCompositionParams) =>
     api.get<PageComposition>("/homepage", { params }),
-  getPage: (pageKey: string, params?: PageCompositionParams) =>
-    api.get<PageComposition>(`/pages/${pageKey}`, { params }),
-  definitions: () =>
-    api.get<PageCmsSectionDefinition[]>("/page-section-definitions"),
+  getPage: (pageKey: string, params?: PageCompositionParams, config?: AxiosRequestConfig) =>
+    api.get<PageComposition>(`/pages/${pageKey}`, { ...config, params }),
+  definitions: (config?: AxiosRequestConfig) =>
+    api.get<PageCmsSectionDefinition[]>("/page-section-definitions", config),
   searchSources: (
     sourceType: PageCmsCatalogSourceType,
     params: PageCmsSourceSearchParams,

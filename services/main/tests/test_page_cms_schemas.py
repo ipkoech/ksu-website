@@ -34,6 +34,16 @@ class PageCmsSchemaTests(unittest.TestCase):
                 layout_variant=PAGE_SECTION_LAYOUT_VARIANTS[0],
             )
 
+    def test_page_section_create_requires_scope_id_for_every_non_university_scope(self):
+        for scope_type in ("school", "research", "library"):
+            with self.subTest(scope_type=scope_type), self.assertRaises(ValidationError):
+                PageSectionCreate(
+                    page_key="homepage",
+                    scope_type=scope_type,
+                    section_key="hero",
+                    layout_variant=PAGE_SECTION_LAYOUT_VARIANTS[0],
+                )
+
     def test_page_section_create_rejects_unknown_layout_variant(self):
         with self.assertRaises(ValidationError):
             PageSectionCreate(

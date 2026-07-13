@@ -6,6 +6,22 @@ export type ComposerLocation = {
   sectionId: string | null;
 };
 
+export type ScopeSelection = Pick<ComposerLocation, "scopeType" | "scopeId">;
+export type ValidationDisplayState = "unvalidated" | "loading" | "validated" | "error";
+
+type NavigationIntent = {
+  dirty: boolean;
+  href: string;
+  currentOrigin: string;
+  button: number;
+  altKey?: boolean;
+  ctrlKey?: boolean;
+  metaKey?: boolean;
+  shiftKey?: boolean;
+  target?: string | null;
+  download?: boolean;
+};
+
 type ScopedDefinition = Pick<PageCmsSectionDefinition, "key" | "allowed_scopes" | "label" | "settings_schema">;
 
 type CreateSectionContext = {
@@ -40,6 +56,70 @@ export function composerHref(pageKey: string, location: ComposerLocation) {
   if (location.scopeId) query.set("scope_id", location.scopeId);
   if (location.sectionId) query.set("section", location.sectionId);
   return `/page-cms/composer/${encodeURIComponent(pageKey)}?${query.toString()}`;
+}
+
+export function isScopeComplete(scope: ScopeSelection) {
+  return scope.scopeType === "university" || Boolean(scope.scopeId);
+}
+
+export function createRequestSequence() {
+  let sequence = 0;
+  let activeController: AbortController | null = null;
+
+  return {
+    begin() {
+      activeController?.abort();
+      activeController = new AbortController();
+      const id = ++sequence;
+      return { id, signal: activeController.signal };
+    },
+    isCurrent(id: number) {
+      return id === sequence;
+    },
+    cancel() {
+      activeController?.abort();
+      activeController = null;
+      sequence += 1;
+    },
+  };
+}
+
+export function validationDisplayState({
+  validation,
+  isLoading,
+  error,
+}: {
+  validation: { issues: unknown[] } | null;
+  isLoading: boolean;
+  error: string | null;
+}): ValidationDisplayState {
+  if (isLoading) return "loading";
+  if (error) return "error";
+  return validation ? "validated" : "unvalidated";
+}
+
+export function composerCapabilities(hasAnyPermission: (permissions: string[]) => boolean) {
+  const managePermissions = [
+    "page_sections.manage",
+    "homepage.manage",
+    "school_homepage.manage",
+    "research_homepage.manage",
+    "library_homepage.manage",
+  ];
+
+  return {
+    canCreate: hasAnyPermission(["page_sections.create", ...managePermissions]),
+    canUpdate: hasAnyPermission(["page_sections.update", ...managePermissions]),
+  };
+}
+
+export function shouldConfirmComposerNavigation(intent: NavigationIntent) {
+  if (!intent.dirty || intent.button !== 0 || intent.altKey || intent.ctrlKey || intent.metaKey || intent.shiftKey) return false;
+  if (intent.target && intent.target !== "_self") return false;
+  if (intent.download) return false;
+
+  const target = new URL(intent.href, intent.currentOrigin);
+  return target.origin === intent.currentOrigin;
 }
 
 export function filterDefinitionsForScope<T extends ScopedDefinition>(definitions: readonly T[], scopeType: PageScopeType) {

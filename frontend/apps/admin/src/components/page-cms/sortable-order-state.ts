@@ -154,6 +154,11 @@ export class SortableOrderController<T extends SortableOrderRecord> {
     this.setState(next);
   }
 
+  resetServerOrder(items: readonly T[]) {
+    this.serverRevision += 1;
+    this.setState(createOrderState(items));
+  }
+
   async save(onOrderChange: (items: T[]) => void | Promise<void>) {
     if (!this.orderState.isDirty || this.orderState.isSaving) return;
 

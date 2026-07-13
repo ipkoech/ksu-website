@@ -100,6 +100,48 @@ assert(
     === "/page-cms/composer/homepage?scope_type=university",
   "University URLs must omit empty scope and selection values",
 );
+assert(state.isScopeComplete({ scopeType: "university", scopeId: null }), "University is a complete scope without a relationship");
+assert(!state.isScopeComplete({ scopeType: "research", scopeId: null }), "Research cannot load before a relationship is selected");
+assert(!state.isScopeComplete({ scopeType: "library", scopeId: null }), "Library cannot load before a relationship is selected");
+assert(state.isScopeComplete({ scopeType: "research", scopeId: "research-1" }), "Research becomes complete after a relationship is selected");
+
+const sequence = state.createRequestSequence();
+const firstRequest = sequence.begin();
+const secondRequest = sequence.begin();
+assert(firstRequest.signal.aborted, "starting a new composition load aborts the older request");
+assert(!sequence.isCurrent(firstRequest.id), "older composition responses are stale");
+assert(sequence.isCurrent(secondRequest.id), "only the newest composition response may update state");
+sequence.cancel();
+assert(!sequence.isCurrent(secondRequest.id), "cancelling invalidates an in-flight composition response");
+
+assert(state.validationDisplayState({ validation: null, isLoading: false, error: null }) === "unvalidated", "validation begins unvalidated");
+assert(state.validationDisplayState({ validation: null, isLoading: true, error: null }) === "loading", "validation reports loading while the request is active");
+assert(state.validationDisplayState({ validation: null, isLoading: false, error: "failed" }) === "error", "validation reports request failures");
+assert(state.validationDisplayState({ validation: { issues: [] }, isLoading: false, error: null }) === "validated", "only a successful response is validated");
+
+const permissionSet = new Set(["page_sections.create"]);
+const capabilities = state.composerCapabilities((permissions) => permissions.some((permission) => permissionSet.has(permission)));
+assert(capabilities.canCreate, "create permission enables section creation");
+assert(!capabilities.canUpdate, "create permission does not enable section editing");
+assert(state.shouldConfirmComposerNavigation({
+  dirty: true,
+  href: "https://admin.example.test/page-cms",
+  currentOrigin: "https://admin.example.test",
+  button: 0,
+}), "a dirty primary-click internal link requires confirmation");
+assert(!state.shouldConfirmComposerNavigation({
+  dirty: true,
+  href: "https://admin.example.test/page-cms",
+  currentOrigin: "https://admin.example.test",
+  button: 0,
+  ctrlKey: true,
+}), "modifier-click navigation remains browser controlled");
+assert(!state.shouldConfirmComposerNavigation({
+  dirty: true,
+  href: "https://external.example.test/page-cms",
+  currentOrigin: "https://admin.example.test",
+  button: 0,
+}), "external navigation is not intercepted by the composer");
 
 const definitions = [
   { key: "hero_admissions", allowed_scopes: ["university", "school"] },

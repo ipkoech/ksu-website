@@ -31,6 +31,7 @@ type SortableOutlineListProps<T extends SortableOutlineRecord> = {
   entityName: string;
   getLabel: (item: T) => string;
   getDescription?: (item: T) => string | null | undefined;
+  resetKey?: string | number;
 };
 
 type SortableOutlineRowProps<T extends SortableOutlineRecord> = {
@@ -100,6 +101,7 @@ export function SortableOutlineList<T extends SortableOutlineRecord>({
   entityName,
   getLabel,
   getDescription,
+  resetKey,
 }: SortableOutlineListProps<T>) {
   const [orderState, setOrderState] = useState<SortableOrderState<T>>(() => createOrderState(items));
   const orderControllerRef = useRef<SortableOrderController<T> | null>(null);
@@ -108,7 +110,14 @@ export function SortableOutlineList<T extends SortableOutlineRecord>({
   }
   const orderController = orderControllerRef.current;
   const incomingSignature = useMemo(() => orderSignature(items), [items]);
+  const resetKeyRef = useRef(resetKey);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+
+  useEffect(() => {
+    if (resetKeyRef.current === resetKey) return;
+    resetKeyRef.current = resetKey;
+    orderController.resetServerOrder(items);
+  }, [items, orderController, resetKey]);
 
   useEffect(() => {
     orderController.receiveServerOrder(items);
