@@ -89,7 +89,7 @@ async def get_board_members(slug: str, db: DbSession, fields: FieldSelection = F
     board = await GovernanceService.get_board_by_slug(db, slug)
     if board is None:
         raise HTTPException(status_code=404, detail="Board not found")
-    members = await GovernanceService.get_members(db, board.id)
+    members = await GovernanceService.get_members(db, board.id, public_only=True)
     selector = build_selector(StaffAssignment, fields)
     return success(data=with_person_photo_urls(selector.apply(members), members))
 

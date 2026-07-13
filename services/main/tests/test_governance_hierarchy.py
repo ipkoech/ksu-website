@@ -108,6 +108,20 @@ class GovernanceHierarchyTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("staff_assignments.workflow_status = 'published'", query)
         self.assertIn("staff_assignments.appointment_status = 'published'", query)
 
+    async def test_public_board_members_route_requests_published_members_only(self):
+        board = SimpleNamespace(id=uuid.uuid4())
+        get_members = AsyncMock(return_value=[])
+
+        with (
+            patch.object(GovernanceService, "get_board_by_slug", new_callable=AsyncMock, return_value=board),
+            patch.object(GovernanceService, "get_members", get_members),
+            patch.object(governance, "build_selector", return_value=_FakeSelector()),
+            patch.object(governance, "with_person_photo_urls", side_effect=lambda payload, _members: payload),
+        ):
+            await governance.get_board_members.__wrapped__(slug="university-council", db=None, fields=None)
+
+        get_members.assert_awaited_once_with(None, board.id, public_only=True)
+
     async def test_governance_seed_preserves_existing_role_and_page_content(self):
         existing_roles = [
             SimpleNamespace(name=f"Custom {slug}", public_label=f"Custom {slug}", is_active=False)
