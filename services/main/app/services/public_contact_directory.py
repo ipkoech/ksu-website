@@ -7,10 +7,10 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..schemas import (
-    CampusRead,
     ContactDirectoryPaginationMeta,
-    ContactDirectoryRead,
     FAQRead,
+    PublicCampusContactSummary,
+    PublicContactDirectoryEntry,
     PublicContactDirectoryPage,
     PublicContactDirectoryRead,
     PublicUniversityContactSummary,
@@ -55,16 +55,19 @@ class PublicContactDirectoryService:
                 else None
             ),
             main_contacts=[
-                ContactDirectoryRead.model_validate(item) for item in main_result.items
+                PublicContactDirectoryEntry.model_validate(item)
+                for item in main_result.items
             ],
             contacts=PublicContactDirectoryPage(
                 items=[
-                    ContactDirectoryRead.model_validate(item)
+                    PublicContactDirectoryEntry.model_validate(item)
                     for item in contact_result.items
                 ],
                 meta=ContactDirectoryPaginationMeta(**contact_result.meta),
             ),
-            campuses=[CampusRead.model_validate(item) for item in campuses],
+            campuses=[
+                PublicCampusContactSummary.model_validate(item) for item in campuses
+            ],
             faqs=[FAQRead.model_validate(item) for item in faq_result.items],
         )
 

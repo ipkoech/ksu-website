@@ -90,6 +90,8 @@ from .base import APIResponse, BaseReadSchema, BaseSchema, PaginatedResponse
 from .content_workflow import ContentWorkflowAction, ContentWorkflowActionRequest, ContentWorkflowLogRead
 from .contact_directory import (
     ContactDirectoryPaginationMeta,
+    PublicCampusContactSummary,
+    PublicContactDirectoryEntry,
     PublicContactDirectoryPage,
     PublicContactDirectoryRead,
     PublicUniversityContactSummary,
@@ -456,6 +458,8 @@ __all__ = [
     "ContactDirectoryUpdate",
     "ContactDirectoryRead",
     "ContactDirectoryPaginationMeta",
+    "PublicCampusContactSummary",
+    "PublicContactDirectoryEntry",
     "PublicContactDirectoryPage",
     "PublicContactDirectoryRead",
     "PublicUniversityContactSummary",
