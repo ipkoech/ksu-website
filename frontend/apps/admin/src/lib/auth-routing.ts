@@ -49,12 +49,30 @@ const serviceFallbacks: Record<Service, string> = {
   system: "/super-admin",
 };
 
+const legacyPortalDestinations: Record<string, string> = {
+  cocms: "/corporate-communication",
+  "/cocms": "/corporate-communication",
+  publications: "/research",
+  "/publications": "/research",
+  "student-clubs": "/corporate-communication",
+  "/student-clubs": "/corporate-communication",
+  governance: "/admin",
+  "/governance": "/admin",
+  "institutional-administration": "/admin",
+  "/institutional-administration": "/admin",
+};
+
 function normalizeRole(role: string) {
   return role.trim().toLowerCase().replace(/_/g, "-");
 }
 
 function userHasService(user: User, service: Service) {
   return user.services.some((access) => access.service === service);
+}
+
+function normalizePortalAccess(portal: PortalAccess): PortalAccess {
+  const href = legacyPortalDestinations[portal.key] ?? legacyPortalDestinations[portal.href];
+  return href ? { ...portal, href } : portal;
 }
 
 export function resolvePostLoginDestination(user: User, redirect?: string | null) {
@@ -92,7 +110,7 @@ export function resolvePortalAccessDestination(
     return { href: redirect, service: null };
   }
 
-  const available = portals ?? [];
+  const available = (portals ?? []).map(normalizePortalAccess);
   const staffProfileOnly =
     available.length === 1 && available[0]?.key === "staff-profile";
 

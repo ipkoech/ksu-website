@@ -22,3 +22,20 @@ self-review notes:
 
 concerns:
 - The required frontend lint command reports pre-existing warnings across several packages, including 11 warnings in the admin app; it exits successfully with no lint errors.
+
+---
+
+STATUS: FIXED
+
+review follow-up:
+- Normalized legacy portal-access records before single-portal selection and multi-portal priority evaluation.
+- `/cocms` and `cocms` now resolve to `/corporate-communication`.
+- `/publications` and `publications` now resolve to `/research`.
+- `/student-clubs` and `student-clubs` now resolve to `/corporate-communication`.
+- `/governance`, `governance`, `/institutional-administration`, and `institutional-administration` now resolve to `/admin`.
+- Replaced source-text assertions with an executable contract test that transpiles and imports the production routing module, then verifies the three required single-legacy-record routes and canonical `/admin` priority over Corporate Communication for multiple records.
+
+tests run with results:
+- `node frontend/apps/admin/src/lib/auth-routing-consolidation-contract.test.mjs` - initially failed as expected with legacy `/cocms`; passed after normalization was added.
+- `pnpm typecheck` from `frontend/` - passed: 7 of 7 workspace typecheck tasks successful.
+- `scripts/commit-changes.sh --run-full-checks` - lint and typecheck passed; the build phase was blocked because port `3001` is in use and the admin build script refuses to rewrite build output while its dev server may be running.
