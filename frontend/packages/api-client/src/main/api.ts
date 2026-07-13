@@ -59,6 +59,8 @@ import type {
   MediaLink,
   FAQ,
   ContactDirectory,
+  ContactDirectoryListParams,
+  PublicContactDirectory,
   Testimonial,
   Role,
   Permission,
@@ -95,10 +97,9 @@ import type {
 import type { FieldSelectionParams, QueryParams } from "../client";
 
 type ListParams<
-  T extends Record<string, string | number | boolean | undefined> = Record<
-    string,
-    string | number | boolean | undefined
-  >,
+  T extends Partial<
+    Record<keyof T, string | number | boolean | undefined>
+  > = Record<string, string | number | boolean | undefined>,
 > = QueryParams & T;
 type EventFieldSelectionParams = FieldSelectionParams & {
   include_scope?: boolean;
@@ -1667,25 +1668,13 @@ export const faqsApi = {
 };
 
 export const contactsApi = {
-  list: (
-    params?: ListParams<{
-      scope_type?: string;
-      scope_id?: string;
-      is_main?: boolean;
-    }>,
-  ) =>
+  list: (params?: ListParams<ContactDirectoryListParams>) =>
     mainApi.get<PaginatedResponse<ContactDirectory>>(
       "/api/v1/contacts",
       params,
     ),
 
-  listAdmin: (
-    params?: ListParams<{
-      scope_type?: string;
-      scope_id?: string;
-      is_main?: boolean;
-    }>,
-  ) =>
+  listAdmin: (params?: ListParams<ContactDirectoryListParams>) =>
     mainApi.get<PaginatedResponse<ContactDirectory>>(
       "/api/v1/contacts/admin",
       params,
@@ -1705,6 +1694,18 @@ export const contactsApi = {
 
   update: (id: string, data: Partial<ContactDirectory>) =>
     mainApi.patch<{ data: ContactDirectory }>(`/api/v1/contacts/${id}`, data),
+};
+
+export const contactDirectoryApi = {
+  get: (
+    params?: ListParams<
+      Omit<ContactDirectoryListParams, "is_main" | "sort">
+    >,
+  ) =>
+    mainApi.get<{ data: PublicContactDirectory }>(
+      "/api/v1/contact-directory",
+      params,
+    ),
 };
 
 export const searchApi = {

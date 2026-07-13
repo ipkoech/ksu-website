@@ -1608,6 +1608,70 @@ export interface ContactDirectory {
   updated_at: string;
 }
 
+export interface ContactDirectoryListParams {
+  q?: string;
+  contact_type?: string;
+  scope_type?: string;
+  scope_id?: string;
+  is_main?: boolean;
+  sort?: "name_asc" | "name_desc";
+}
+
+export interface PublicUniversityContactSummary {
+  id: string;
+  name: string;
+  short_name?: string | null;
+  acronym?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  alternate_phone?: string | null;
+  website?: string | null;
+  postal_address?: string | null;
+  physical_address?: string | null;
+  city?: string | null;
+  county?: string | null;
+  country?: string | null;
+  social_links?: Record<string, string> | null;
+}
+
+export interface Campus {
+  id: string;
+  name: string;
+  slug: string;
+  code: string;
+  campus_type: string;
+  address?: string | null;
+  city?: string | null;
+  county?: string | null;
+  postal_code?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  description?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  cover_image_id?: string | null;
+  is_active: boolean;
+  display_order: number;
+}
+
+export interface PublicContactDirectoryPage {
+  items: ContactDirectory[];
+  meta: {
+    page: number;
+    per_page: number;
+    total: number;
+    pages: number;
+  };
+}
+
+export interface PublicContactDirectory {
+  institution: PublicUniversityContactSummary | null;
+  main_contacts: ContactDirectory[];
+  contacts: PublicContactDirectoryPage;
+  campuses: Campus[];
+  faqs: FAQ[];
+}
+
 export interface SearchPayload {
   q: string;
   limit_per_type: number;
