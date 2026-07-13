@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const cocmsPageCmsRoot = __dirname;
+const cocmsRoot = path.join(__dirname, "..");
 const adminSrcRoot = path.resolve(__dirname, "../../../..");
 const adminAppRoot = path.join(adminSrcRoot, "app");
 const dashboardPageCmsRoot = path.join(adminAppRoot, "(dashboard)/page-cms");
@@ -20,24 +21,19 @@ function read(relativePath, root = cocmsPageCmsRoot) {
   return fs.readFileSync(fullPath, "utf8");
 }
 
-for (const routeFile of [
-  "page.tsx",
-  "sections/page.tsx",
-  "sections/[id]/page.tsx",
-  "spotlights/page.tsx",
+for (const [routeFile, target] of [
+  ["page-cms/page.tsx", "/corporate-communication/page-cms"],
+  ["page-cms/sections/page.tsx", "/corporate-communication/page-cms/sections"],
+  ["page-cms/sections/[id]/page.tsx", "/corporate-communication/page-cms/sections/${id}"],
+  ["page-cms/spotlights/page.tsx", "/corporate-communication/page-cms/spotlights"],
+  ["review-queue/page.tsx", "/corporate-communication/review-queue"],
 ]) {
-  const source = read(routeFile);
+  const source = read(routeFile, cocmsRoot);
   assert(
-    source.includes("@/app/(dashboard)/page-cms"),
-    `Expected /cocms/page-cms/${routeFile} to reuse the Page CMS implementation`,
+    source.includes(`redirect(\`${target}`) || source.includes(`redirect("${target}`),
+    `Expected /cocms/${routeFile} to redirect to ${target}`,
   );
 }
-
-const cocmsDashboardSource = read("page.tsx");
-assert(
-  cocmsDashboardSource.includes("@/app/(dashboard)/page-cms/page"),
-  "Expected /cocms/page-cms to render the Page CMS dashboard",
-);
 
 const sidebarSource = read("components/layout/sidebar.tsx", adminSrcRoot);
 assert(

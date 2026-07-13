@@ -1,1 +1,5 @@
-export { default } from "@/app/(dashboard)/page-cms/spotlights/page";
+import { redirect } from "next/navigation";
+
+export default function CoCmsPageCmsSpotlightsPage() {
+  redirect("/corporate-communication/page-cms/spotlights");
+}

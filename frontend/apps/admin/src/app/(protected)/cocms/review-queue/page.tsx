@@ -1,5 +1,5 @@
-import { ReviewQueue } from "@/components/workflow/review-queue";
+import { redirect } from "next/navigation";
 
 export default function CoCmsReviewQueuePage() {
-  return <ReviewQueue />;
+  redirect("/corporate-communication/review-queue");
 }
