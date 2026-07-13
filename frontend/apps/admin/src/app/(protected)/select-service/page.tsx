@@ -130,14 +130,15 @@ function directoryItemFromAccess(access: PortalAccess): PortalDirectoryItem {
   const canonicalKey = portalAliases.get(access.key) ?? access.key;
   const fallback = portalFallbacks.get(canonicalKey);
   if (fallback) {
+    const isAlias = canonicalKey !== access.key;
     return {
       ...fallback,
-      title: access.label || fallback.title,
+      title: isAlias ? fallback.title : access.label || fallback.title,
       description:
         access.scope_type === "global"
           ? fallback.description
           : `${fallback.description} Current scope: ${access.scope_label}.`,
-      baseHref: access.href || fallback.baseHref,
+      baseHref: isAlias ? fallback.baseHref : access.href || fallback.baseHref,
       access,
     };
   }
