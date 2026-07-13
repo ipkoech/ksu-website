@@ -71,6 +71,22 @@ def _page_cms_column(name: str) -> sa.Column:
     return sa.Column(name, sa.Text(), nullable=True)
 
 
+def _published_predicate(table_name: str) -> str:
+    if table_name == "sliders":
+        return (
+            "is_public IS TRUE AND is_active IS TRUE "
+            "AND archived_at IS NULL "
+            "AND (start_datetime IS NULL OR start_datetime <= CURRENT_TIMESTAMP) "
+            "AND (end_datetime IS NULL OR end_datetime >= CURRENT_TIMESTAMP)"
+        )
+    return (
+        "is_public IS TRUE AND is_published IS TRUE "
+        "AND archived_at IS NULL "
+        "AND (valid_from IS NULL OR valid_from <= CURRENT_TIMESTAMP) "
+        "AND (valid_to IS NULL OR valid_to >= CURRENT_TIMESTAMP)"
+    )
+
+
 def upgrade() -> None:
     for table_name in PUBLISHABLE_TABLES:
         for column in _columns():
@@ -83,10 +99,7 @@ def upgrade() -> None:
         op.execute(
             sa.text(
                 f"UPDATE {table_name} SET workflow_status = 'published' "
-                "WHERE is_public IS TRUE AND is_published IS TRUE "
-                "AND archived_at IS NULL "
-                "AND (valid_from IS NULL OR valid_from <= CURRENT_TIMESTAMP) "
-                "AND (valid_to IS NULL OR valid_to >= CURRENT_TIMESTAMP)"
+                f"WHERE {_published_predicate(table_name)}"
             )
         )
         op.execute(

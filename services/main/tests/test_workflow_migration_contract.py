@@ -1,7 +1,32 @@
 from pathlib import Path
+import importlib.util
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _load_migration(filename: str):
+    path = ROOT / "migrations/versions" / filename
+    spec = importlib.util.spec_from_file_location(filename.removesuffix(".py"), path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_slider_workflow_backfill_uses_slider_publication_columns():
+    migration = _load_migration(
+        "20260712_0017_attach_publishable_content_workflow_metadata.py"
+    )
+
+    predicate = migration._published_predicate("sliders")
+
+    assert "is_public IS TRUE" in predicate
+    assert "is_active IS TRUE" in predicate
+    assert "start_datetime" in predicate
+    assert "end_datetime" in predicate
+    assert "is_published" not in predicate
+    assert "valid_from" not in predicate
 
 
 def test_workflow_actor_foreign_key_migration_covers_declared_models():
