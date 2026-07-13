@@ -13,8 +13,8 @@ from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession
 from ...models import Intake
 from ...security.scopes import can_access_scope
-from ...schemas import IntakeCreate, IntakeUpdate
-from ...services import IntakeService
+from ...schemas import IntakeCreate, IntakeHomepageAdmissionUpdate, IntakeUpdate
+from ...services import IntakeHomepageAdmissionService, IntakeService
 
 router = APIRouter()
 
@@ -46,7 +46,17 @@ async def _require_intake_scope(
 
 
 @router.get("")
-@cached_public(timeout=300, vary_on=("page", "per_page", "academic_calendar_id", "is_open", "fields", "include"))
+@cached_public(
+    timeout=300,
+    vary_on=(
+        "page",
+        "per_page",
+        "academic_calendar_id",
+        "is_open",
+        "fields",
+        "include",
+    ),
+)
 async def list_intakes(
     db: DbSession,
     page: int = Query(1, ge=1),
@@ -96,19 +106,56 @@ async def list_admin_intakes(
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_intake(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Intake, fields)
-    intake = await IntakeService.get_by_slug(db, slug, load_options=selector.load_options)
+    intake = await IntakeService.get_by_slug(
+        db, slug, load_options=selector.load_options
+    )
     if intake is None:
         raise HTTPException(status_code=404, detail="Intake not found")
     return success(data=selector.apply(intake))
 
 
 @router.get("/id/{intake_id}")
-async def get_intake_by_id(intake_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+async def get_intake_by_id(
+    intake_id: uuid.UUID,
+    db: DbSession,
+    _: CurrentUser,
+    fields: FieldSelection = FieldsDep,
+):
     selector = build_selector(Intake, fields)
-    intake = await IntakeService.get_by_id(db, intake_id, load_options=selector.load_options)
+    intake = await IntakeService.get_by_id(
+        db, intake_id, load_options=selector.load_options
+    )
     if intake is None:
         raise HTTPException(status_code=404, detail="Intake not found")
     return success(data=selector.apply(intake))
+
+
+@router.get("/id/{intake_id}/homepage-admission")
+async def get_homepage_admission(
+    intake_id: uuid.UUID, db: DbSession, user: CurrentUser
+):
+    await _require_intake_scope(db, user, INTAKE_MANAGE_PERMISSIONS)
+    config = await IntakeHomepageAdmissionService.get_config(db, intake_id)
+    if config is None:
+        raise HTTPException(status_code=404, detail="Intake not found")
+    return success(data=config)
+
+
+@router.patch("/id/{intake_id}/homepage-admission")
+async def update_homepage_admission(
+    intake_id: uuid.UUID,
+    data: IntakeHomepageAdmissionUpdate,
+    db: DbSession,
+    user: CurrentUser,
+):
+    await _require_intake_scope(db, user, INTAKE_MANAGE_PERMISSIONS)
+    intake = await IntakeHomepageAdmissionService.get_intake(db, intake_id)
+    if intake is None:
+        raise HTTPException(status_code=404, detail="Intake not found")
+    config = await IntakeHomepageAdmissionService.update_config(
+        db, intake, data, user.id
+    )
+    return success(data=config, message="Homepage admission configuration updated")
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
@@ -119,12 +166,16 @@ async def create_intake(data: IntakeCreate, db: DbSession, user: CurrentUser):
 
 
 @router.patch("/{intake_id}")
-async def update_intake(intake_id: uuid.UUID, data: IntakeUpdate, db: DbSession, user: CurrentUser):
+async def update_intake(
+    intake_id: uuid.UUID, data: IntakeUpdate, db: DbSession, user: CurrentUser
+):
     intake = await IntakeService.get_by_id(db, intake_id)
     if intake is None:
         raise HTTPException(status_code=404, detail="Intake not found")
     await _require_intake_scope(db, user, INTAKE_MANAGE_PERMISSIONS)
-    intake = await IntakeService.update(db, intake, **data.model_dump(exclude_unset=True))
+    intake = await IntakeService.update(
+        db, intake, **data.model_dump(exclude_unset=True)
+    )
     return success(data=intake, message="Intake updated")
 
 

@@ -1,7 +1,12 @@
 """Main service layer exports."""
 
 from .admissions import AdmissionInfoService, IntakeService, ProgrammeService
-from .academic import CampusService, DepartmentService, DepartmentServiceCatalogService, SchoolService
+from .academic import (
+    CampusService,
+    DepartmentService,
+    DepartmentServiceCatalogService,
+    SchoolService,
+)
 from .alumni import AlumniAssociationService, AlumniService
 from .audit import AuditService
 from .analytics import AnalyticsService
@@ -18,6 +23,7 @@ from .content_workflow import ContentWorkflowService
 from .documents import DocumentService, PolicyService
 from .exchange import ExchangeProgrammeService
 from .governance import GovernanceService
+from .homepage_admissions import IntakeHomepageAdmissionService
 from .imports import ImportService
 from .marketing import (
     NewsletterService,
@@ -42,7 +48,13 @@ from .public_page import PublicSitePageService
 from .rbac import RBACService
 from .search import SearchService
 from .staff import StaffService
-from .student_life import AccommodationService, ArtsCultureService, ClubService, SportsFacilityService, StudentGovernanceService
+from .student_life import (
+    AccommodationService,
+    ArtsCultureService,
+    ClubService,
+    SportsFacilityService,
+    StudentGovernanceService,
+)
 from .support import ContactService, FAQService, SupportTicketService
 from .system import ApiKeyService, SettingService, WebhookService
 from .university import UniversityInfoService
@@ -63,6 +75,7 @@ __all__ = [
     "PublicSitePageService",
     "StaffService",
     "GovernanceService",
+    "IntakeHomepageAdmissionService",
     "ImportService",
     "DivisionService",
     "WingService",
