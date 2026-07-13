@@ -108,6 +108,12 @@ def _is_safe_public_url(value: str | None) -> bool:
 class PageCmsResearchSourceService:
     """Expose only public projects and publications needed by Page CMS."""
 
+    @staticmethod
+    def validate_source_type(source_type: str) -> str:
+        if source_type not in SUPPORTED_PAGE_CMS_RESEARCH_SOURCE_TYPES:
+            raise ValueError(f"Unsupported Page CMS research source type: {source_type}")
+        return source_type
+
     @classmethod
     async def search(
         cls,
@@ -119,7 +125,7 @@ class PageCmsResearchSourceService:
         search: str | None = None,
         center_id: uuid.UUID | None = None,
     ) -> PaginatedResult:
-        model = _source_model(source_type)
+        model = _source_model(cls.validate_source_type(source_type))
         query = cls._public_query(model, source_type, search=search, center_id=center_id)
         result = await paginate(db, query, page=page, per_page=per_page, max_per_page=50)
         return PaginatedResult(
@@ -136,6 +142,7 @@ class PageCmsResearchSourceService:
         ids: list[uuid.UUID],
         center_id: uuid.UUID | None = None,
     ) -> list[PageCmsResearchSourceSummary]:
+        cls.validate_source_type(source_type)
         if len(ids) > MAX_PAGE_CMS_SOURCE_IDS:
             raise ValueError(f"Page CMS source resolution accepts at most {MAX_PAGE_CMS_SOURCE_IDS} ids")
         records = await cls._load_records(db, source_type=source_type, ids=ids, center_id=center_id)

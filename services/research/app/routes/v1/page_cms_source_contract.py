@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from ksu_common.schemas.responses import success
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,6 +24,10 @@ async def search_page_cms_sources(
     center_id: uuid.UUID | None = None,
     db: AsyncSession = Depends(get_db),
 ):
+    try:
+        PageCmsResearchSourceService.validate_source_type(source_type)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
     result = await PageCmsResearchSourceService.search(
         db,
         source_type=source_type,
@@ -41,6 +45,10 @@ async def resolve_page_cms_sources(
     request: PageCmsResearchSourceResolveRequest,
     db: AsyncSession = Depends(get_db),
 ):
+    try:
+        PageCmsResearchSourceService.validate_source_type(source_type)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
     summaries = await PageCmsResearchSourceService.resolve_many(
         db,
         source_type=source_type,

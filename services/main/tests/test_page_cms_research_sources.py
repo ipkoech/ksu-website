@@ -160,3 +160,66 @@ async def test_research_content_search_preserves_stable_provider_error():
             await PageCmsSourceService.search(
                 object(), "publication", "", "university", None, 1, 20,
             )
+
+
+@pytest.mark.anyio
+async def test_research_content_search_maps_overlong_thumbnail_to_a_stable_provider_error():
+    source_id = uuid.uuid4()
+    unsafe_payload = _summary("research_project", source_id)
+    unsafe_payload["thumbnail_url"] = "/" + ("a" * 1024)
+
+    with patch(
+        "app.services.page_cms_sources.ResearchContentSourcesProxyService.search",
+        AsyncMock(return_value={
+            "data": [unsafe_payload],
+            "meta": {"page": 1, "per_page": 20, "total": 1, "pages": 1},
+        }),
+    ):
+        with pytest.raises(PageCmsSourceProviderError, match="Research content provider is unavailable") as exc_info:
+            await PageCmsSourceService.search(
+                object(), "research_project", "", "university", None, 1, 20,
+            )
+
+    assert "a" * 64 not in str(exc_info.value)
+
+
+@pytest.mark.anyio
+async def test_research_content_single_resolution_bounds_overlong_provider_labels():
+    source_id = uuid.uuid4()
+    provider_payload = _summary("research_project", source_id)
+    provider_payload["label"] = "Research " * 100
+
+    with patch(
+        "app.services.page_cms_sources.ResearchContentSourcesProxyService.resolve_many",
+        AsyncMock(return_value=[provider_payload]),
+    ):
+        result = await PageCmsSourceService.resolve(
+            object(), "research_project", source_id,
+            destination_scope_type="university", destination_scope_id=None,
+        )
+
+    assert result is not None
+    assert result.label == ("Research " * 100)[:255].strip()
+
+
+@pytest.mark.anyio
+async def test_research_content_bulk_resolution_marks_every_requested_reference_as_provider_error_for_invalid_metadata():
+    valid_id = uuid.uuid4()
+    invalid_id = uuid.uuid4()
+    invalid_payload = _summary("research_project", invalid_id)
+    invalid_payload["metadata"] = {1: "not a string key"}
+
+    with patch(
+        "app.services.page_cms_sources.ResearchContentSourcesProxyService.resolve_many",
+        AsyncMock(return_value=[_summary("research_project", valid_id), invalid_payload]),
+    ):
+        results = await PageCmsSourceService.resolve_many(
+            object(),
+            [("research_project", valid_id), ("research_project", invalid_id)],
+            destination_scope_type="university",
+            destination_scope_id=None,
+        )
+
+    assert all(result.state is PageCmsSourceResolutionState.PROVIDER_ERROR for result in results.values())
+    assert all(result.source is None for result in results.values())
+    assert all(result.message == "Source provider is unavailable." for result in results.values())

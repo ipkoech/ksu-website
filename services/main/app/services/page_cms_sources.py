@@ -11,6 +11,7 @@ from enum import Enum
 from typing import Any, Protocol
 
 import httpx
+from pydantic import ValidationError
 from sqlalchemy import String, and_, false, func, or_, select
 from sqlalchemy.orm import aliased, selectinload
 
@@ -804,7 +805,10 @@ def _map_page(result: PaginatedResult, mapper) -> PaginatedResult:
 
 def _research_content_summary(item: dict[str, Any]) -> PageCmsSourceSummary:
     """Re-validate provider data at the Page CMS boundary and sanitize display metadata."""
-    return PageCmsSourceSummary.model_validate(item)
+    try:
+        return PageCmsSourceSummary.model_validate(item)
+    except (AttributeError, TypeError, ValidationError) as exc:
+        raise PageCmsSourceProviderError("Research content provider returned an invalid source summary") from exc
 
 
 def _research_content_center_id(
@@ -1073,10 +1077,11 @@ class PageCmsSourceService:
                     per_page=per_page,
                     center_id=_research_content_center_id(scope_type, scope_id),
                 )
+                items = [_research_content_summary(item) for item in provider_page["data"]]
             except PageCmsSourceProviderError as exc:
                 raise _research_content_provider_error(exc) from exc
             return PaginatedResult(
-                items=[_research_content_summary(item) for item in provider_page["data"]],
+                items=items,
                 meta=provider_page["meta"],
             )
 
@@ -1240,13 +1245,14 @@ class PageCmsSourceService:
                     [source_id],
                     center_id=_research_content_center_id(destination_scope_type, destination_scope_id),
                 )
+                summaries = [_research_content_summary(item) for item in records]
             except PageCmsSourceProviderError as exc:
                 raise _research_content_provider_error(exc) from exc
             source = next(
                 (
-                    _research_content_summary(item)
-                    for item in records
-                    if str(item["id"]) == str(source_id)
+                    summary
+                    for summary in summaries
+                    if summary.id == source_id
                 ),
                 None,
             )
@@ -1515,16 +1521,16 @@ class PageCmsSourceService:
                     source_ids,
                     center_id=_research_content_center_id(destination_scope_type, destination_scope_id),
                 )
+                records_by_id = {
+                    summary.id: summary
+                    for summary in (_research_content_summary(item) for item in records)
+                }
             except PageCmsSourceProviderError:
                 for source_id in source_ids:
                     results[(source_type, source_id)] = _source_resolution(
                         source_type, source_id, PageCmsSourceResolutionState.PROVIDER_ERROR,
                     )
                 continue
-            records_by_id = {
-                uuid.UUID(str(item["id"])): _research_content_summary(item)
-                for item in records
-            }
             for source_id in source_ids:
                 source = records_by_id.get(source_id)
                 if source is not None and source.selectable:

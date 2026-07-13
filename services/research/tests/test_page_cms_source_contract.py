@@ -6,9 +6,12 @@ from datetime import date
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 from fastapi.routing import APIRoute
 from ksu_common import PaginatedResult
 
+from app.core.database import get_db
 from app.models import PublicMedia, Publication, ResearchProject
 from app.routes.v1 import router as v1_router
 from app.routes.v1.page_cms_source_contract import router
@@ -107,6 +110,17 @@ def _paths(api_router):
             yield from _paths(route.original_router)
 
 
+def _client() -> TestClient:
+    app = FastAPI()
+    app.include_router(router, prefix="/api/v1")
+
+    async def override_db():
+        yield _Db()
+
+    app.dependency_overrides[get_db] = override_db
+    return TestClient(app)
+
+
 def test_source_contract_routes_are_public_and_registered():
     contract_paths = {(path, method) for path, route in _paths(router) for method in route.methods}
     v1_paths = {path for path, _ in _paths(v1_router)}
@@ -115,6 +129,28 @@ def test_source_contract_routes_are_public_and_registered():
     assert ("/page-cms-sources/{source_type}/resolve", "POST") in contract_paths
     assert "/page-cms-sources/{source_type}" in v1_paths
     assert "/page-cms-sources/{source_type}/resolve" in v1_paths
+
+
+@pytest.mark.parametrize(
+    ("method", "path", "request_kwargs", "service_method"),
+    [
+        ("get", "/api/v1/page-cms-sources/not-supported", {}, "search"),
+        (
+            "post",
+            "/api/v1/page-cms-sources/not-supported/resolve",
+            {"json": {"ids": [str(uuid.uuid4())]}},
+            "resolve_many",
+        ),
+    ],
+)
+def test_source_contract_routes_reject_unsupported_source_types(method, path, request_kwargs, service_method):
+    client = _client()
+
+    with patch.object(PageCmsResearchSourceService, service_method, AsyncMock()) as service:
+        response = getattr(client, method)(path, **request_kwargs)
+
+    assert response.status_code == 422
+    service.assert_not_awaited()
 
 
 @pytest.mark.parametrize(
