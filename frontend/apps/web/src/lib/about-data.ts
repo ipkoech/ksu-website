@@ -1,6 +1,7 @@
 import {
   documentsApi,
   governanceApi,
+  mainApi,
   personsApi,
   schoolsApi,
   universityInfoApi,
@@ -59,6 +60,52 @@ export type QualityAssurancePageData = {
   documents: Document[];
   brochureUrl: string | null;
 };
+
+export type UniversityCouncilMemberCard = {
+  id?: string;
+  name: string;
+  role: string;
+  slug?: string | null;
+  portrait?: {
+    url?: string | null;
+    alt?: string | null;
+  } | null;
+  display_order?: number | null;
+  is_acting?: boolean;
+  profile_summary?: string | null;
+  official_designation?: string | null;
+  represented_institution?: string | null;
+  current_office?: string | null;
+  appointment_category?: string | null;
+  is_ex_officio?: boolean;
+  is_voting_member?: boolean;
+};
+
+export type UniversityCouncilPageData = {
+  page: {
+    title?: string | null;
+    description?: string | null;
+    hero_image?: {
+      url?: string | null;
+      alt?: string | null;
+    } | null;
+    breadcrumb?: string[];
+  };
+  mandate?: {
+    label?: string | null;
+    heading?: string | null;
+    description?: string | null;
+    document_cta?: {
+      label?: string | null;
+      href?: string | null;
+    } | null;
+  } | null;
+  chairperson?: UniversityCouncilMemberCard | null;
+  members: UniversityCouncilMemberCard[];
+  secretary?: UniversityCouncilMemberCard | null;
+};
+
+export type UniversityCouncilProfileData = UniversityCouncilMemberCard;
 
 const universityInfoFields = [
   "id",
@@ -279,6 +326,72 @@ function isNotFoundError(error: unknown) {
     "status" in error &&
     (error as { status?: unknown }).status === 404
   );
+}
+
+function normalizeCouncilMember(member?: UniversityCouncilMemberCard | null): UniversityCouncilMemberCard | null {
+  if (!member) return null;
+  return {
+    ...member,
+    name: present(member.name) ?? "Council member",
+    role: present(member.role) ?? "Council member",
+    portrait: member.portrait
+      ? {
+          ...member.portrait,
+          url: resolvePublicMediaUrl(member.portrait.url) ?? null,
+        }
+      : null,
+  };
+}
+
+function normalizeCouncilPage(data: UniversityCouncilPageData): UniversityCouncilPageData {
+  return {
+    ...data,
+    page: {
+      ...data.page,
+      title: present(data.page?.title) ?? "University Council",
+      description: present(data.page?.description),
+      hero_image: data.page?.hero_image
+        ? {
+            ...data.page.hero_image,
+            url: resolvePublicMediaUrl(data.page.hero_image.url),
+          }
+        : null,
+    },
+    chairperson: normalizeCouncilMember(data.chairperson),
+    members: (data.members ?? [])
+      .map(normalizeCouncilMember)
+      .filter((member): member is UniversityCouncilMemberCard => Boolean(member))
+      .sort((first, second) => (first.display_order ?? 100) - (second.display_order ?? 100)),
+    secretary: normalizeCouncilMember(data.secretary),
+  };
+}
+
+export async function getUniversityCouncilPage(): Promise<UniversityCouncilPageData | null> {
+  try {
+    const response = await mainApi.get<{ data: UniversityCouncilPageData }>(
+      "/api/v1/governance/public/university-council",
+    );
+    return normalizeCouncilPage(response.data);
+  } catch (error) {
+    if (!isNotFoundError(error)) {
+      console.error("Failed to fetch University Council page:", error);
+    }
+    return null;
+  }
+}
+
+export async function getUniversityCouncilProfile(slug: string): Promise<UniversityCouncilProfileData | null> {
+  try {
+    const response = await mainApi.get<{ data: UniversityCouncilProfileData }>(
+      `/api/v1/governance/public/university-council/${slug}`,
+    );
+    return normalizeCouncilMember(response.data);
+  } catch (error) {
+    if (!isNotFoundError(error)) {
+      console.error(`Failed to fetch University Council profile ${slug}:`, error);
+    }
+    return null;
+  }
 }
 
 export function splitCoreValues(value?: string | null) {

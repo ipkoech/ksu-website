@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { Eye, Landmark, ShieldCheck, Target, type LucideIcon } from "lucide-react";
 import GovernanceChart from "@/components/about/GovernanceChart";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
@@ -132,6 +133,12 @@ export default async function GovernancePage() {
                 <p>
                   {councilDescription}
                 </p>
+                <Link
+                  href="/about/university-council"
+                  className="mt-5 inline-flex rounded-md bg-primary px-4 py-3 text-sm font-bold text-white transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                >
+                  View University Council
+                </Link>
               </SectionHeading>
 
               <aside className="rounded-lg border border-slate-200 bg-slate-50 p-5">
