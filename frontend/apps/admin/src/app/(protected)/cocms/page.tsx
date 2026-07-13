@@ -1,5 +1,5 @@
-import { PortalDashboard } from "@/components/portals/portal-dashboard";
+import { redirect } from "next/navigation";
 
 export default function CoCmsPage() {
-  return <PortalDashboard portalKey="cocms" />;
+  redirect("/corporate-communication");
 }
