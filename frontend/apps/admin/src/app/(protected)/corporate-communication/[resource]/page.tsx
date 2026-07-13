@@ -9,6 +9,7 @@ export function generateStaticParams() {
     { resource: "homepage-features" },
     { resource: "sliders" },
     { resource: "media-folders" },
+    { resource: "student-clubs" },
     { resource: "faqs" },
     { resource: "contacts" },
     { resource: "testimonials" },

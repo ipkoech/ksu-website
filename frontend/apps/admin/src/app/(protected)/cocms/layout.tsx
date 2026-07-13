@@ -1,7 +1,5 @@
-"use client";
+import type { ReactNode } from "react";
 
-import { PortalShell } from "@/components/portals/portal-shell";
-
-export default function CoCmsLayout({ children }: { children: React.ReactNode }) {
-  return <PortalShell portalKey="cocms">{children}</PortalShell>;
+export default function CoCmsLayout({ children }: { children: ReactNode }) {
+  return children;
 }

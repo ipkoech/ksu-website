@@ -1,5 +1,5 @@
-import { PortalDashboard } from "@/components/portals/portal-dashboard";
+import { redirect } from "next/navigation";
 
 export default function PublicationsPage() {
-  return <PortalDashboard portalKey="publications" />;
+  redirect("/research/publications");
 }

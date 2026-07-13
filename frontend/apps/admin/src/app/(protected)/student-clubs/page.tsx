@@ -1,5 +1,5 @@
-import { PortalDashboard } from "@/components/portals/portal-dashboard";
+import { redirect } from "next/navigation";
 
 export default function StudentClubsPage() {
-  return <PortalDashboard portalKey="student-clubs" />;
+  redirect("/corporate-communication/student-clubs");
 }

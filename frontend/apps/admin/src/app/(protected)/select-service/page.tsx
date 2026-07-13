@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowRight, Landmark, Megaphone, Settings, Trophy, UserCheck } from "lucide-react";
+import { ArrowRight, Landmark, Settings, UserCheck } from "lucide-react";
 import { useAuth, getHighestRole, formatRoleName } from "@ksu/auth";
 import type { Service } from "@ksu/auth";
 import { usePortalAccess, type PortalAccess } from "@ksu/api-client";
@@ -49,44 +49,45 @@ const portalItems: PortalDirectoryItem[] = [
     requiredScopes: ["governance.view", "administration.view", "office.manage_content", "policy.manage"],
   },
   {
-    key: "cocms",
-    title: "CoCMS",
-    description: "Homepage CMS, publishing review, news, notices, events, and media management.",
-    service: "main",
-    baseHref: "/cocms",
-    icon: Megaphone,
-    accentClassName: "text-orange-700 bg-orange-50 border-orange-100",
-    requiredScopes: ["content.review", "content.publish", "media.manage", "homepage.manage"],
+    ...portalConfigs["corporate-communication"],
+    key: "corporate-communication",
+    title: "Corporate Communication Portal",
+    baseHref: "/corporate-communication",
+    requiredScopes: [
+      "content.view",
+      "content.review",
+      "content.publish",
+      "homepage.manage",
+      "media.view",
+      "media.manage",
+      "page_sections.view",
+      "partnership_spotlights.manage",
+      "clubs.view",
+    ],
   },
   {
     ...portalConfigs.schools,
+    key: "schools",
+    baseHref: "/schools",
     requiredScopes: ["academic.view", "academic.manage_schools"],
   },
   {
     ...portalConfigs.departments,
+    key: "departments",
+    baseHref: "/departments",
     requiredScopes: ["academic.view", "academic.manage_departments"],
   },
   {
-    key: "student-clubs",
-    title: "Student Clubs Portal",
-    description: "Club-scoped events, stories, announcements, galleries, and member content.",
-    service: "main",
-    baseHref: "/student-clubs",
-    icon: Trophy,
-    accentClassName: "text-violet-700 bg-violet-50 border-violet-100",
-    requiredScopes: ["clubs.view", "clubs.manage_own", "clubs.content_submit", "clubs.events_manage", "clubs.stories_manage"],
-  },
-  {
     ...portalConfigs.research,
-    requiredScopes: ["research.view", "research.view_projects"],
+    key: "research",
+    baseHref: "/research",
+    requiredScopes: ["research.view", "research.view_projects", "publications.view"],
   },
   {
     ...portalConfigs.library,
+    key: "library",
+    baseHref: "/library",
     requiredScopes: ["library.view"],
-  },
-  {
-    ...portalConfigs.publications,
-    requiredScopes: ["publications.view", "publications.submit", "publications.review"],
   },
   {
     key: "staff-profile",

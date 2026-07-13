@@ -195,7 +195,13 @@ export const statsApi = {
   admin: () =>
     mainApi.get<{ data: PublicStatsResponse }>("/api/v1/stats/admin"),
   portal: (
-    portal: "admin" | "cocms" | "schools" | "departments" | "student-clubs",
+    portal:
+      | "admin"
+      | "corporate-communication"
+      | "schools"
+      | "departments"
+      | "research"
+      | "library",
   ) =>
     mainApi.get<{ data: PortalStatsResponse }>(
       `/api/v1/stats/portal/${portal}`,
