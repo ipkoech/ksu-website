@@ -66,8 +66,6 @@ class GovernancePageContentUpdate(BaseSchema):
     mandate_icon: str | None = Field(default=None, max_length=64)
     document_cta_label: str | None = Field(default=None, max_length=255)
     document_cta_url: str | None = Field(default=None, max_length=1024)
-    status: str | None = Field(default=None, max_length=32)
-    workflow_status: str | None = Field(default=None, max_length=32)
 
 
 class GovernancePageContentRead(BaseReadSchema):

@@ -24,7 +24,7 @@ from ...schemas import (
     GovernanceRoleCreate,
     GovernanceRoleUpdate,
 )
-from ...services import GovernanceService
+from ...services import AuditService, GovernanceService
 
 router = APIRouter()
 
@@ -402,7 +402,13 @@ async def archive_council_member(assignment_id: uuid.UUID, db: DbSession, user: 
 
 @router.get("/admin/council/audit-log", dependencies=[Depends(require_scope("governance.view"))])
 async def list_council_audit_log(db: DbSession, _: CurrentUser, page: int = 1, per_page: int = 20):
-    return success(data=[], meta={"page": page, "per_page": per_page, "total": 0, "pages": 0})
+    result = await AuditService.list(
+        db,
+        page=page,
+        per_page=per_page,
+        request_path_prefix="/api/v1/governance/admin/council",
+    )
+    return success(data=result.items, meta=result.meta)
 
 
 @router.get("/public/university-council")

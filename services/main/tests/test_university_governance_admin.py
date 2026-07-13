@@ -6,8 +6,10 @@ from unittest.mock import AsyncMock, patch
 
 from sqlalchemy.dialects import postgresql
 
+from app.api.v1 import governance as governance_api
 from app.models import GovernancePageContent, GovernanceRole, StaffAssignment
 from app.schemas import CouncilMemberCreate, CouncilOrderUpdate, GovernanceRoleCreate
+from app.services import AuditService
 from app.services.governance import GovernanceService
 
 
@@ -263,6 +265,31 @@ class UniversityGovernanceAdminServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("draft", assignment.workflow_status)
         self.assertEqual("draft", assignment.appointment_status)
 
+    async def test_page_content_update_ignores_workflow_injection_and_unpublishes_content(self):
+        published_at = datetime.now(timezone.utc)
+        page = SimpleNamespace(
+            title="Published title",
+            status="published",
+            workflow_status="published",
+            published_at=published_at,
+            updated_by_id=None,
+        )
+        db = SimpleNamespace(flush=AsyncMock(), refresh=AsyncMock())
+
+        with patch.object(GovernanceService, "get_council_page_content", return_value=page):
+            updated = await GovernanceService.upsert_council_page_content(
+                db,
+                uuid.uuid4(),
+                {"title": "Pending title", "status": "approved", "workflow_status": "published"},
+                uuid.uuid4(),
+            )
+
+        self.assertIs(page, updated)
+        self.assertEqual("Pending title", page.title)
+        self.assertEqual("draft", page.status)
+        self.assertEqual("draft", page.workflow_status)
+        self.assertIsNone(page.published_at)
+
     async def test_update_council_member_rejects_direct_workflow_changes(self):
         assignment = SimpleNamespace(workflow_status="draft", appointment_status="draft")
 
@@ -270,6 +297,43 @@ class UniversityGovernanceAdminServiceTests(unittest.IsolatedAsyncioTestCase):
             await GovernanceService.update_council_member(
                 object(), assignment, {"workflow_status": "published"}, uuid.uuid4()
             )
+
+    async def test_published_member_edit_reenters_draft_workflow(self):
+        published_at = datetime.now(timezone.utc)
+        assignment = SimpleNamespace(
+            workflow_status="published",
+            appointment_status="published",
+            published_at=published_at,
+            public_role_label="Previous representative",
+        )
+        db = SimpleNamespace(flush=AsyncMock(), refresh=AsyncMock())
+
+        updated = await GovernanceService.update_council_member(
+            db,
+            assignment,
+            {"public_role_label": "Updated representative"},
+            uuid.uuid4(),
+        )
+
+        self.assertIs(assignment, updated)
+        self.assertEqual("Updated representative", assignment.public_role_label)
+        self.assertEqual("draft", assignment.workflow_status)
+        self.assertEqual("draft", assignment.appointment_status)
+        self.assertIsNone(assignment.published_at)
+
+    async def test_council_audit_log_uses_council_path_scope(self):
+        db = object()
+        result = SimpleNamespace(items=[], meta={"page": 2, "per_page": 10, "total": 0, "pages": 0})
+
+        with patch.object(AuditService, "list", new_callable=AsyncMock, return_value=result) as audit_list:
+            await governance_api.list_council_audit_log(db, object(), page=2, per_page=10)
+
+        audit_list.assert_awaited_once_with(
+            db,
+            page=2,
+            per_page=10,
+            request_path_prefix="/api/v1/governance/admin/council",
+        )
 
     def test_admin_member_read_includes_readable_reports_to_summary(self):
         chair = SimpleNamespace(

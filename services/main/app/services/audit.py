@@ -35,6 +35,7 @@ class AuditService:
         service_name: str | None = None,
         user_id: uuid.UUID | None = None,
         resource_type: str | None = None,
+        request_path_prefix: str | None = None,
         status: str | None = None,
         load_options: Sequence = (),
     ) -> PaginatedResult:
@@ -46,6 +47,8 @@ class AuditService:
             query = query.where(AuditLog.user_id == user_id)
         if resource_type is not None:
             query = query.where(AuditLog.resource_type == resource_type)
+        if request_path_prefix is not None:
+            query = query.where(AuditLog.request_path.startswith(request_path_prefix))
         if status is not None:
             query = query.where(AuditLog.status == status)
         return await paginate_query(db, query, page=page, per_page=per_page)

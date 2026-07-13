@@ -327,15 +327,29 @@ class GovernanceService:
     async def upsert_council_page_content(
         db: AsyncSession, board_id: uuid.UUID, data: dict, user_id: uuid.UUID
     ) -> GovernancePageContent:
+        payload = dict(data)
+        for field in ("status", "workflow_status"):
+            payload.pop(field, None)
         page = await GovernanceService.get_council_page_content(db, board_id)
         if page is None:
-            page = GovernancePageContent(board_id=board_id, page_key="overview", created_by_id=user_id, **data)
+            page = GovernancePageContent(
+                board_id=board_id,
+                page_key="overview",
+                created_by_id=user_id,
+                status="draft",
+                workflow_status="draft",
+                **payload,
+            )
             db.add(page)
         else:
-            for key, value in data.items():
+            for key, value in payload.items():
                 if hasattr(page, key):
                     setattr(page, key, value)
-            page.updated_by_id = user_id
+            if payload:
+                page.status = "draft"
+                page.workflow_status = "draft"
+                page.published_at = None
+                page.updated_by_id = user_id
         await db.flush()
         await db.refresh(page)
         return page
@@ -450,6 +464,10 @@ class GovernanceService:
         for key, value in payload.items():
             if hasattr(assignment, key):
                 setattr(assignment, key, value)
+        if payload and assignment.workflow_status == "published":
+            assignment.workflow_status = "draft"
+            assignment.appointment_status = "draft"
+            assignment.published_at = None
         await db.flush()
         await db.refresh(assignment)
         return assignment
