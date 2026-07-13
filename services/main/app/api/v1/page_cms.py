@@ -15,7 +15,6 @@ from ...deps import CurrentUser, DbSession, require_scope, user_has_scope
 from ...models import Media, MediaLink, PageSection, PartnershipSpotlight, SectionItem
 from ...schemas import (
     PageSectionCreate,
-    PageSectionMediaLinkUpdate,
     PageSectionUpdate,
     PartnershipSpotlightCreate,
     PartnershipSpotlightUpdate,
@@ -430,11 +429,51 @@ async def _get_page_section_for_update_or_404(db: DbSession, section_id: uuid.UU
         .options(selectinload(PageSection.items))
         .where(PageSection.id == section_id)
         .with_for_update()
+        .execution_options(populate_existing=True)
     )
     item = result.unique().scalar_one_or_none()
     if item is None:
         raise HTTPException(status_code=404, detail="Page section not found")
     return item
+
+
+async def _get_page_sections_for_update_or_404(
+    db: DbSession,
+    section_ids: set[uuid.UUID],
+) -> dict[uuid.UUID, PageSection]:
+    """Lock a set of section parents in a stable order before child mutations."""
+    if not section_ids:
+        return {}
+    result = await db.execute(
+        select(PageSection)
+        .options(selectinload(PageSection.items))
+        .where(PageSection.id.in_(section_ids))
+        .order_by(PageSection.id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    sections = {section.id: section for section in result.unique().scalars().all()}
+    if set(sections) != section_ids:
+        raise HTTPException(status_code=404, detail="Page section not found")
+    return sections
+
+
+async def _touch_page_section_after_child_mutation(
+    db: DbSession,
+    section: PageSection,
+    user: CurrentUser,
+    *,
+    changed_fields: dict,
+) -> None:
+    await ContentWorkflowService.reset_after_authoring_edit(
+        db,
+        section,
+        "page-sections",
+        user.id,
+        changed_fields=changed_fields,
+    )
+    section.revision = (section.revision or 1) + 1
+    section.updated_by_id = user.id
 
 
 async def _get_section_item_or_404(db: DbSession, item_id: uuid.UUID) -> SectionItem:
@@ -821,7 +860,7 @@ async def create_section_item(
     db: DbSession,
     user: CurrentUser,
 ):
-    section = await _get_page_section_or_404(db, section_id)
+    section = await _get_page_section_for_update_or_404(db, section_id)
     await _require_page_section_access(
         db,
         user,
@@ -831,11 +870,10 @@ async def create_section_item(
         action="item_manage",
     )
     _require_page_authoring_edit(user, section)
-    await ContentWorkflowService.reset_after_authoring_edit(
+    await _touch_page_section_after_child_mutation(
         db,
         section,
-        "page-sections",
-        user.id,
+        user,
         changed_fields={"section_item_create": data.model_dump(exclude={"page_section_id"})},
     )
     item = SectionItem(page_section_id=section.id, **data.model_dump(exclude={"page_section_id"}))
@@ -934,15 +972,6 @@ async def update_section_item(
     user: CurrentUser,
 ):
     item = await _get_section_item_or_404(db, item_id)
-    section = await _get_page_section_or_404(db, item.page_section_id)
-    await _require_page_section_access(
-        db,
-        user,
-        page_key=section.page_key,
-        scope_type=section.scope_type,
-        scope_id=section.scope_id,
-        action="item_manage",
-    )
     payload = data.model_dump(exclude_unset=True)
     supplied_item_id = payload.pop("id", None)
     supplied_revision = payload.pop("revision", None)
@@ -950,7 +979,20 @@ async def update_section_item(
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Item ID does not match route")
     if supplied_revision is not None and supplied_revision != item.revision:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Section item has changed; reload required")
-    _require_page_authoring_edit(user, section)
+    next_section_id = payload.pop("page_section_id", item.page_section_id)
+    sections = await _get_page_sections_for_update_or_404(db, {item.page_section_id, next_section_id})
+    section = sections[item.page_section_id]
+    next_section = sections[next_section_id]
+    for parent in sections.values():
+        await _require_page_section_access(
+            db,
+            user,
+            page_key=parent.page_key,
+            scope_type=parent.scope_type,
+            scope_id=parent.scope_id,
+            action="item_manage",
+        )
+        _require_page_authoring_edit(user, parent)
     merged_state = {
         field: getattr(item, field, None)
         for field in (
@@ -976,31 +1018,18 @@ async def update_section_item(
         validate_section_item_state(merged_state)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
-    next_section_id = payload.pop("page_section_id", item.page_section_id)
     if next_section_id != item.page_section_id:
-        next_section = await _get_page_section_or_404(db, next_section_id)
-        await _require_page_section_access(
-            db,
-            user,
-            page_key=next_section.page_key,
-            scope_type=next_section.scope_type,
-            scope_id=next_section.scope_id,
-            action="item_manage",
-        )
-        _require_page_authoring_edit(user, next_section)
-        await ContentWorkflowService.reset_after_authoring_edit(
+        await _touch_page_section_after_child_mutation(
             db,
             next_section,
-            "page-sections",
-            user.id,
+            user,
             changed_fields={"section_item_move": str(item.id)},
         )
         item.page_section_id = next_section_id
-    await ContentWorkflowService.reset_after_authoring_edit(
+    await _touch_page_section_after_child_mutation(
         db,
         section,
-        "page-sections",
-        user.id,
+        user,
         changed_fields={"section_item_update": payload},
     )
     apply_updates(item, **payload)

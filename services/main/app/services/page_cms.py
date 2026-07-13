@@ -654,6 +654,10 @@ class PageSectionService:
             item.display_order = index * 10
             item.revision += 1
 
+        parent = section[0]
+        parent.revision = (parent.revision or 1) + 1
+        parent.updated_by_id = actor_id
+
         await db.flush()
         return sorted(items, key=lambda item: (item.display_order, item.id))
 

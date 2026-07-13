@@ -209,17 +209,20 @@ class PageCmsReorderTests(unittest.IsolatedAsyncioTestCase):
             ],
         })
 
+        user = _user("section_items.manage")
         with (
             patch.object(page_cms, "_get_page_section_or_404", AsyncMock(return_value=section)),
             patch.object(page_cms, "_require_page_section_access", AsyncMock()),
         ):
             response = await page_cms.reorder_section_items(
-                section.id, request, db=db, user=_user("section_items.manage"),
+                section.id, request, db=db, user=user,
             )
 
         self.assertEqual([second.id, first.id], [item.id for item in response["data"]])
         self.assertEqual([10, 20], [item.display_order for item in response["data"]])
         self.assertEqual([2, 2], [item.revision for item in response["data"]])
+        self.assertEqual(2, section.revision)
+        self.assertEqual(user.id, section.updated_by_id)
         self.assertEqual("draft", section.status)
         self.assertEqual("draft", section.workflow_status)
         self.assertEqual(1, len(db.added))

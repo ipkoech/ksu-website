@@ -1,13 +1,14 @@
 import unittest
 import uuid
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import ANY, AsyncMock, patch
 
 from fastapi import HTTPException
 
 from app.api.v1 import media
+from app.models import PageSection
 from app.models.media import MEDIA_ATTACHMENT_ROLES
-from app.schemas import MediaLinkCreate
+from app.schemas import MediaLinkCreate, MediaLinkUpdate
 from app.services.media import MediaService
 
 
@@ -37,6 +38,17 @@ class _ScopeDb(_Db):
 
     async def execute(self, statement):
         return _ScalarResult(self.value)
+
+
+class _PageSectionDb(_Db):
+    def __init__(self, *sections):
+        super().__init__()
+        self.sections = list(sections)
+
+    async def execute(self, _statement):
+        return SimpleNamespace(
+            scalars=lambda: SimpleNamespace(all=lambda: list(self.sections)),
+        )
 
 
 class _Upload:
@@ -308,6 +320,112 @@ class MediaAttachmentContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("student-clubs", call["owner_portal"])
         self.assertEqual("club", call["owner_scope_type"])
         self.assertEqual(club_id, call["owner_scope_id"])
+
+    async def test_create_page_section_link_advances_parent_revision_and_resets_workflow_once(self):
+        user = SimpleNamespace(id=uuid.uuid4())
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="published",
+            workflow_status="published",
+            revision=4,
+        )
+        section.id = uuid.uuid4()
+        payload = MediaLinkCreate(
+            media_id=uuid.uuid4(),
+            entity_type="page_section",
+            entity_id=section.id,
+            role="hero_image",
+        )
+        linked = SimpleNamespace(
+            id=uuid.uuid4(),
+            media_id=payload.media_id,
+            entity_type=payload.entity_type,
+            entity_id=payload.entity_id,
+            role=payload.role,
+            folder_id=None,
+            display_order=100,
+            is_public=True,
+            media=None,
+        )
+
+        with (
+            patch.object(media, "_authorized_media_entity_scope", new_callable=AsyncMock, return_value=("university", None)),
+            patch.object(media.MediaService, "get_authorized_by_id", new_callable=AsyncMock, return_value=_media(id=payload.media_id)),
+            patch.object(media.MediaService, "link_media", new_callable=AsyncMock, return_value=linked),
+            patch("app.api.v1._scoped._can_access_scope", return_value=True),
+        ):
+            await media.create_media_link(payload, db=_PageSectionDb(section), user=user)
+
+        self.assertEqual(5, section.revision)
+        self.assertEqual(user.id, section.updated_by_id)
+        self.assertEqual("draft", section.workflow_status)
+
+    async def test_relinking_between_page_sections_advances_each_parent_once(self):
+        user = SimpleNamespace(id=uuid.uuid4())
+        source = PageSection(
+            page_key="homepage", scope_type="university", section_key="hero",
+            layout_variant="hero_admissions", status="published", workflow_status="published", revision=4,
+        )
+        destination = PageSection(
+            page_key="homepage", scope_type="university", section_key="news",
+            layout_variant="news_grid", status="published", workflow_status="published", revision=8,
+        )
+        source.id = uuid.uuid4()
+        destination.id = uuid.uuid4()
+        link = SimpleNamespace(
+            id=uuid.uuid4(), media_id=uuid.uuid4(), entity_type="page_section", entity_id=source.id,
+            role="hero_image", folder_id=None, display_order=100, is_public=True, media=_media(),
+        )
+
+        async def update_link(_db, record, **changes):
+            for field, value in changes.items():
+                setattr(record, field, value)
+            return record
+
+        with (
+            patch.object(media.MediaService, "get_link_by_id", new_callable=AsyncMock, return_value=link),
+            patch.object(media, "_require_media_entity_scope", new_callable=AsyncMock),
+            patch.object(media, "_authorized_media_entity_scope", new_callable=AsyncMock, return_value=("university", None)),
+            patch.object(media.MediaService, "update_link", side_effect=update_link),
+            patch("app.api.v1._scoped._can_access_scope", return_value=True),
+        ):
+            await media.update_media_link(
+                link.id,
+                MediaLinkUpdate(entity_type="page_section", entity_id=destination.id),
+                db=_PageSectionDb(source, destination),
+                user=user,
+            )
+
+        self.assertEqual((5, 9), (source.revision, destination.revision))
+        self.assertEqual((user.id, user.id), (source.updated_by_id, destination.updated_by_id))
+        self.assertEqual(("draft", "draft"), (source.workflow_status, destination.workflow_status))
+
+    async def test_delete_page_section_link_advances_parent_revision_before_link_deletion(self):
+        user = SimpleNamespace(id=uuid.uuid4())
+        section = PageSection(
+            page_key="homepage", scope_type="university", section_key="hero",
+            layout_variant="hero_admissions", status="published", workflow_status="published", revision=4,
+        )
+        section.id = uuid.uuid4()
+        link = SimpleNamespace(
+            id=uuid.uuid4(), media_id=uuid.uuid4(), entity_type="page_section", entity_id=section.id,
+        )
+        delete_link = AsyncMock()
+
+        with (
+            patch.object(media.MediaService, "get_link_by_id", new_callable=AsyncMock, return_value=link),
+            patch.object(media, "_require_media_entity_scope", new_callable=AsyncMock),
+            patch.object(media.MediaService, "delete_link", delete_link),
+            patch("app.api.v1._scoped._can_access_scope", return_value=True),
+        ):
+            await media.delete_media_link(link.id, db=_PageSectionDb(section), user=user)
+
+        self.assertEqual(5, section.revision)
+        self.assertEqual(user.id, section.updated_by_id)
+        delete_link.assert_awaited_once_with(ANY, link)
 
     async def test_club_activity_attachment_scope_resolves_to_owning_club(self):
         club_id = uuid.uuid4()

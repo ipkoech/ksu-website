@@ -249,6 +249,7 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
+            patch.object(page_cms, "_get_page_section_for_update_or_404", AsyncMock(return_value=section)),
             patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
             patch.object(page_cms.PageSectionWorkflowService, "transition", workflow_transition),
         ):
@@ -283,7 +284,7 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch.object(page_cms, "_get_section_item_or_404", AsyncMock(return_value=item)),
-            patch.object(page_cms, "_get_page_section_or_404", AsyncMock(return_value=section)),
+            patch.object(page_cms, "_get_page_sections_for_update_or_404", AsyncMock(return_value={section.id: section})),
             patch.object(page_cms, "_require_page_section_access", AsyncMock()),
             patch.object(page_cms.ContentWorkflowService, "reset_after_authoring_edit", reset),
         ):
@@ -316,7 +317,7 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch.object(page_cms, "_get_section_item_or_404", AsyncMock(return_value=item)),
-            patch.object(page_cms, "_get_page_section_or_404", AsyncMock(return_value=section)),
+            patch.object(page_cms, "_get_page_sections_for_update_or_404", AsyncMock(return_value={section.id: section})),
             patch.object(page_cms, "_require_page_section_access", AsyncMock()),
             patch.object(page_cms.ContentWorkflowService, "reset_after_authoring_edit", reset),
         ):
@@ -374,7 +375,7 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch.object(page_cms, "_get_section_item_or_404", AsyncMock(return_value=item)),
-            patch.object(page_cms, "_get_page_section_or_404", AsyncMock(return_value=section)),
+            patch.object(page_cms, "_get_page_sections_for_update_or_404", AsyncMock(return_value={section.id: section})),
             patch.object(page_cms, "_require_page_section_access", AsyncMock()),
             patch.object(page_cms.ContentWorkflowService, "reset_after_authoring_edit", reset),
         ):
@@ -409,7 +410,7 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch.object(page_cms, "_get_section_item_or_404", AsyncMock(return_value=item)),
-            patch.object(page_cms, "_get_page_section_or_404", AsyncMock(return_value=section)),
+            patch.object(page_cms, "_get_page_sections_for_update_or_404", AsyncMock(return_value={section.id: section})),
             patch.object(page_cms, "_require_page_section_access", AsyncMock()),
             patch.object(page_cms.ContentWorkflowService, "reset_after_authoring_edit", reset),
         ):

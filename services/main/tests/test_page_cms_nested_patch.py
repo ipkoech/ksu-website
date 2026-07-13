@@ -7,9 +7,9 @@ from unittest.mock import AsyncMock, patch
 
 from fastapi import HTTPException
 
-from app.api.v1 import page_cms
+from app.api.v1 import media, page_cms
 from app.models import PageSection, SectionItem
-from app.schemas import PageSectionUpdate
+from app.schemas import MediaLinkCreate, PageSectionUpdate, SectionItemCreate
 
 
 def _permission(name: str):
@@ -61,6 +61,15 @@ class _Db:
 
     async def delete(self, value):
         self.deleted.append(value)
+
+
+class _PageSectionParentDb(_Db):
+    def __init__(self, section: PageSection):
+        super().__init__()
+        self.section = section
+
+    async def execute(self, _statement):
+        return SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: [self.section]))
 
 
 def _item(section: PageSection, *, title: str, revision: int = 1) -> SectionItem:
@@ -204,6 +213,89 @@ class PageCmsNestedPatchTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(5, section.revision)
         self.assertEqual("Original", existing.title)
         self.assertEqual([existing.id, concurrent.id], [item.id for item in section.items])
+
+    async def test_standalone_item_create_advances_parent_revision_before_stale_nested_patch(self):
+        section = _section()
+        section.status = "published"
+        section.workflow_status = "published"
+        section.revision = 4
+        db = _Db()
+        db.locked_section = section
+        user = _user("section_items.manage")
+
+        with (
+            patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
+            patch("app.api.v1._scoped._can_access_scope", return_value=True),
+        ):
+            response = await page_cms.create_section_item(
+                section.id,
+                SectionItemCreate(item_type="card", title="Concurrent item"),
+                db=db,
+                user=user,
+            )
+
+        child = response["data"]
+        section.items = [child]
+
+        self.assertEqual(5, section.revision)
+        self.assertEqual(user.id, section.updated_by_id)
+        self.assertEqual("draft", section.workflow_status)
+        self.assertEqual(1, len([entry for entry in db.added if entry.__class__.__name__ == "ContentWorkflowLog"]))
+
+        with self.assertRaises(HTTPException) as context:
+            await self._update(section, {"revision": 4, "items": []})
+
+        self.assertEqual(409, context.exception.status_code)
+        self.assertEqual([child.id], [item.id for item in section.items])
+
+    async def test_standalone_media_link_create_advances_parent_revision_before_stale_nested_patch(self):
+        section = _section()
+        payload = MediaLinkCreate(
+            media_id=uuid.uuid4(),
+            entity_type="page_section",
+            entity_id=section.id,
+            role="attachment",
+        )
+        media_record = SimpleNamespace(
+            id=payload.media_id,
+            title="Attachment",
+            filename="attachment.pdf",
+            original_filename="attachment.pdf",
+            mime_type="application/pdf",
+            media_type="document",
+            file_size=100,
+            thumbnail_url=None,
+            is_public=True,
+            url="/media/attachment.pdf",
+        )
+        link = SimpleNamespace(
+            id=uuid.uuid4(),
+            media_id=payload.media_id,
+            entity_type="page_section",
+            entity_id=section.id,
+            role="attachment",
+            folder_id=None,
+            display_order=100,
+            is_public=True,
+            media=None,
+        )
+        user = _user("section_items.manage", "media.manage")
+
+        with (
+            patch.object(media, "_authorized_media_entity_scope", AsyncMock(return_value=("university", None))),
+            patch.object(media.MediaService, "get_authorized_by_id", AsyncMock(return_value=media_record)),
+            patch.object(media.MediaService, "link_media", AsyncMock(return_value=link)),
+            patch("app.api.v1._scoped._can_access_scope", return_value=True),
+        ):
+            await media.create_media_link(payload, db=_PageSectionParentDb(section), user=user)
+
+        self.assertEqual(5, section.revision)
+        stale_db = _MediaDb(section, [link], [])
+        with self.assertRaises(HTTPException) as context:
+            await self._update(section, {"revision": 4, "media_links": []}, db=stale_db)
+
+        self.assertEqual(409, context.exception.status_code)
+        self.assertEqual([], stale_db.deleted)
 
 
 class _MediaDb(_Db):

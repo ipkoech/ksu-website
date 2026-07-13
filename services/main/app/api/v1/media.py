@@ -6,20 +6,76 @@ import uuid
 from types import SimpleNamespace
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from sqlalchemy import select
 
 from ksu_common.schemas.responses import success
 
 from ...deps import CurrentUser, DbSession, require_scope
-from ...models import Media, MediaFolder, MediaLink
+from ...models import Media, MediaFolder, MediaLink, PageSection
 from ...security.scopes import can_access_scope
 from ...schemas import MediaFolderCreate, MediaFolderUpdate, MediaLinkCreate, MediaLinkUpdate, MediaUpdate
-from ...services import MediaService
+from ...services import ContentWorkflowService, MediaService
 from ._fields import FieldSelection, FieldsDep, build_selector
+from .page_cms import _require_page_authoring_edit, _require_page_section_access
 
 router = APIRouter()
 
 MEDIA_FOLDER_MANAGE_PERMISSIONS = ["media.manage", "media.upload"]
 MEDIA_LINK_MANAGE_PERMISSIONS = ["media.manage"]
+
+
+def _page_section_entity_id(entity_type: str, entity_id: uuid.UUID) -> uuid.UUID | None:
+    normalized_type = entity_type.replace("-", "_")
+    return entity_id if normalized_type in {"page_section", "page_sections"} else None
+
+
+async def _touch_page_section_media_parents(
+    db: DbSession,
+    user: CurrentUser,
+    *,
+    entity_targets: list[tuple[str, uuid.UUID]],
+    changed_fields: dict,
+) -> None:
+    section_ids = {
+        section_id
+        for entity_type, entity_id in entity_targets
+        if (section_id := _page_section_entity_id(entity_type, entity_id)) is not None
+    }
+    if not section_ids:
+        return
+
+    result = await db.execute(
+        select(PageSection)
+        .where(PageSection.id.in_(section_ids))
+        .order_by(PageSection.id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    sections = list(result.scalars().all())
+    if {section.id for section in sections} != section_ids:
+        raise HTTPException(status_code=404, detail="Page section not found")
+
+    for section in sections:
+        await _require_page_section_access(
+            db,
+            user,
+            page_key=section.page_key,
+            scope_type=section.scope_type,
+            scope_id=section.scope_id,
+            action="item_manage",
+        )
+        _require_page_authoring_edit(user, section)
+
+    for section in sections:
+        await ContentWorkflowService.reset_after_authoring_edit(
+            db,
+            section,
+            "page-sections",
+            user.id,
+            changed_fields=changed_fields,
+        )
+        section.revision = (section.revision or 1) + 1
+        section.updated_by_id = user.id
 
 
 def _media_folder_scope(scope_type: str | None, scope_id: uuid.UUID | None) -> tuple[str, uuid.UUID | None]:
@@ -294,6 +350,12 @@ async def create_media_link(data: MediaLinkCreate, db: DbSession, user: CurrentU
     if media is None:
         raise HTTPException(status_code=404, detail="Media not found")
     payload = data.model_dump()
+    await _touch_page_section_media_parents(
+        db,
+        user,
+        entity_targets=[(data.entity_type, data.entity_id)],
+        changed_fields={"media_link_create": payload},
+    )
     if scope_type == "club":
         payload.update(
             is_public=False,
@@ -344,6 +406,16 @@ async def update_media_link(link_id: uuid.UUID, data: MediaLinkUpdate, db: DbSes
         media = await MediaService.get_authorized_by_id(db, payload["media_id"], user)
         if media is None:
             raise HTTPException(status_code=404, detail="Media not found")
+    if payload:
+        await _touch_page_section_media_parents(
+            db,
+            user,
+            entity_targets=[
+                (link.entity_type, link.entity_id),
+                (next_entity_type, next_entity_id),
+            ],
+            changed_fields={"media_link_update": payload},
+        )
     link = await MediaService.update_link(db, link, **payload)
     if "media_id" in payload:
         link.media = media
@@ -356,6 +428,12 @@ async def delete_media_link(link_id: uuid.UUID, db: DbSession, user: CurrentUser
     if link is None:
         raise HTTPException(status_code=404, detail="Media link not found")
     await _require_media_entity_scope(db, user, MEDIA_LINK_MANAGE_PERMISSIONS, link.entity_type, link.entity_id)
+    await _touch_page_section_media_parents(
+        db,
+        user,
+        entity_targets=[(link.entity_type, link.entity_id)],
+        changed_fields={"media_link_delete": {"id": str(link.id)}},
+    )
     await MediaService.delete_link(db, link)
 
 
