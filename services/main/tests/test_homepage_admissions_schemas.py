@@ -5,10 +5,15 @@ from pydantic import ValidationError
 
 from app.schemas.admissions import (
     IntakeMilestoneCreate,
+    IntakeMilestoneUpdate,
     IntakePublicActionCreate,
     IntakePublicActionUpdate,
     IntakeUpdate,
 )
+
+
+AWARE = datetime(2026, 9, 1, tzinfo=timezone.utc)
+NAIVE = datetime(2026, 9, 1)
 
 
 def test_public_action_rejects_unsafe_external_url():
@@ -105,4 +110,72 @@ def test_intake_rejects_reversed_timestamp_windows():
         IntakeUpdate(
             application_opens_at=datetime(2026, 9, 2, tzinfo=timezone.utc),
             application_closes_at=datetime(2026, 9, 1, tzinfo=timezone.utc),
+        )
+
+
+@pytest.mark.parametrize(
+    "field_name",
+    (
+        "application_opens_at",
+        "application_closes_at",
+        "late_application_closes_at",
+        "override_expires_at",
+    ),
+)
+def test_intake_update_rejects_naive_operational_timestamps(field_name: str):
+    with pytest.raises(ValidationError, match="timezone-aware"):
+        IntakeUpdate(**{field_name: NAIVE})
+
+
+@pytest.mark.parametrize("schema", (IntakePublicActionCreate, IntakePublicActionUpdate))
+@pytest.mark.parametrize("field_name", ("starts_at", "ends_at", "scheduled_publish_at", "expires_at"))
+def test_public_action_schemas_reject_naive_operational_timestamps(schema: type, field_name: str):
+    values = {field_name: NAIVE}
+    if schema is IntakePublicActionCreate:
+        values.update(action_type="apply", label="Apply Now", target_url="/apply")
+    with pytest.raises(ValidationError, match="timezone-aware"):
+        schema(**values)
+
+
+@pytest.mark.parametrize("schema", (IntakeMilestoneCreate, IntakeMilestoneUpdate))
+@pytest.mark.parametrize("field_name", ("starts_at", "ends_at", "scheduled_publish_at", "expires_at"))
+def test_milestone_schemas_reject_naive_operational_timestamps(schema: type, field_name: str):
+    values = {"starts_at": AWARE, field_name: NAIVE}
+    if schema is IntakeMilestoneCreate:
+        values.update(milestone_type="reporting", title="Reporting")
+    with pytest.raises(ValidationError, match="timezone-aware"):
+        schema(**values)
+
+
+@pytest.mark.parametrize(
+    "schema, required",
+    (
+        (IntakePublicActionCreate, {"action_type": "apply", "label": "Apply Now", "target_url": "/apply"}),
+        (IntakePublicActionUpdate, {}),
+        (IntakeMilestoneCreate, {"milestone_type": "reporting", "title": "Reporting", "starts_at": AWARE}),
+        (IntakeMilestoneUpdate, {}),
+    ),
+)
+def test_action_and_milestone_schemas_expose_valid_publication_window(schema: type, required: dict):
+    expires_at = datetime(2026, 9, 30, tzinfo=timezone.utc)
+    record = schema(scheduled_publish_at=AWARE, expires_at=expires_at, **required)
+    assert record.scheduled_publish_at == AWARE
+    assert record.expires_at == expires_at
+
+
+@pytest.mark.parametrize(
+    "schema, required",
+    (
+        (IntakePublicActionCreate, {"action_type": "apply", "label": "Apply Now", "target_url": "/apply"}),
+        (IntakePublicActionUpdate, {}),
+        (IntakeMilestoneCreate, {"milestone_type": "reporting", "title": "Reporting", "starts_at": AWARE}),
+        (IntakeMilestoneUpdate, {}),
+    ),
+)
+def test_action_and_milestone_schemas_reject_reversed_publication_window(schema: type, required: dict):
+    with pytest.raises(ValidationError):
+        schema(
+            scheduled_publish_at=datetime(2026, 10, 1, tzinfo=timezone.utc),
+            expires_at=datetime(2026, 9, 30, tzinfo=timezone.utc),
+            **required,
         )

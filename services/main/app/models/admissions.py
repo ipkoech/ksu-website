@@ -231,6 +231,10 @@ class Intake(Base):
             "application_override = 'automatic' OR override_expires_at IS NOT NULL",
             name="ck_intakes_manual_override_expiry",
         ),
+        sa.CheckConstraint(
+            "NOT is_featured_on_homepage OR is_active",
+            name="ck_intakes_featured_homepage_requires_active",
+        ),
         sa.Index("ix_intakes_calendar_active_open", "academic_calendar_id", "is_active", "is_open"),
         sa.Index(
             "ix_intakes_homepage_resolution",

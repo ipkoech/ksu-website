@@ -29,6 +29,11 @@ def test_intake_has_timezone_aware_homepage_fields():
     assert Intake.__table__.c.timezone.server_default.arg == "Africa/Nairobi"
 
 
+def test_featured_homepage_intake_must_be_active_at_database_boundary():
+    sql = _constraint_sql(Intake)
+    assert "NOT is_featured_on_homepage OR is_active" in sql
+
+
 def test_public_action_has_current_action_partial_unique_index():
     index = next(index for index in IntakePublicAction.__table__.indexes if index.name == "uq_intake_public_actions_current_type")
     assert index.unique is True
@@ -51,4 +56,4 @@ def test_homepage_admissions_migration_has_expected_revision_chain():
     assert '"intake_public_actions"' in source
     assert '"intake_milestones"' in source
     assert "AT TIME ZONE 'Africa/Nairobi'" in source
-
+    assert "ck_intakes_featured_homepage_requires_active" in source

@@ -142,6 +142,11 @@ def upgrade() -> None:
         "intakes",
         "application_override = 'automatic' OR override_expires_at IS NOT NULL",
     )
+    op.create_check_constraint(
+        "ck_intakes_featured_homepage_requires_active",
+        "intakes",
+        "NOT is_featured_on_homepage OR is_active",
+    )
     op.create_index("ix_intakes_is_featured_on_homepage", "intakes", ["is_featured_on_homepage"])
     op.create_index(
         "ix_intakes_homepage_resolution",
@@ -268,6 +273,7 @@ def downgrade() -> None:
     op.drop_index("ix_intakes_homepage_resolution", table_name="intakes")
     op.drop_index("ix_intakes_is_featured_on_homepage", table_name="intakes")
     for constraint_name in (
+        "ck_intakes_featured_homepage_requires_active",
         "ck_intakes_manual_override_expiry",
         "ck_intakes_late_application_timestamp_window",
         "ck_intakes_application_timestamp_window",

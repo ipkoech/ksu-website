@@ -46,6 +46,12 @@ def _validate_timestamp_window(
         raise ValueError(f"{end_name} cannot be before {start_name}")
 
 
+def _validate_aware_timestamp(value: datetime | None, field_name: str) -> datetime | None:
+    if value is not None and (value.tzinfo is None or value.utcoffset() is None):
+        raise ValueError(f"{field_name} must be timezone-aware")
+    return value
+
+
 def _validate_timezone(value: str) -> str:
     try:
         ZoneInfo(value)
@@ -216,6 +222,16 @@ class IntakeCreate(BaseSchema):
     def validate_timezone(cls, value: str) -> str:
         return _validate_timezone(value)
 
+    @field_validator(
+        "application_opens_at",
+        "application_closes_at",
+        "late_application_closes_at",
+        "override_expires_at",
+    )
+    @classmethod
+    def validate_operational_timestamp(cls, value: datetime | None, info) -> datetime | None:
+        return _validate_aware_timestamp(value, info.field_name)
+
     @model_validator(mode="after")
     def validate_dates(self) -> "IntakeCreate":
         if self.application_end < self.application_start:
@@ -280,6 +296,16 @@ class IntakeUpdate(BaseSchema):
     def validate_timezone(cls, value: str | None) -> str | None:
         return _validate_timezone(value) if value is not None else None
 
+    @field_validator(
+        "application_opens_at",
+        "application_closes_at",
+        "late_application_closes_at",
+        "override_expires_at",
+    )
+    @classmethod
+    def validate_operational_timestamp(cls, value: datetime | None, info) -> datetime | None:
+        return _validate_aware_timestamp(value, info.field_name)
+
     @model_validator(mode="after")
     def validate_dates(self) -> "IntakeUpdate":
         if self.application_start and self.application_end and self.application_end < self.application_start:
@@ -341,6 +367,8 @@ class IntakePublicActionCreate(BaseSchema):
     is_enabled: bool = True
     priority: int = 100
     open_in_new_tab: bool = False
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
 
     @field_validator("action_type")
     @classmethod
@@ -352,9 +380,20 @@ class IntakePublicActionCreate(BaseSchema):
     def validate_target_url(cls, value: str) -> str:
         return _validate_safe_target(value, "target_url") or value
 
+    @field_validator("starts_at", "ends_at", "scheduled_publish_at", "expires_at")
+    @classmethod
+    def validate_operational_timestamp(cls, value: datetime | None, info) -> datetime | None:
+        return _validate_aware_timestamp(value, info.field_name)
+
     @model_validator(mode="after")
     def validate_window(self) -> "IntakePublicActionCreate":
         _validate_timestamp_window(self.starts_at, self.ends_at, "starts_at", "ends_at")
+        _validate_timestamp_window(
+            self.scheduled_publish_at,
+            self.expires_at,
+            "scheduled_publish_at",
+            "expires_at",
+        )
         return self
 
 
@@ -368,6 +407,8 @@ class IntakePublicActionUpdate(BaseSchema):
     is_enabled: bool | None = None
     priority: int | None = None
     open_in_new_tab: bool | None = None
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
 
     @field_validator("action_type")
     @classmethod
@@ -379,9 +420,20 @@ class IntakePublicActionUpdate(BaseSchema):
     def validate_target_url(cls, value: str | None) -> str | None:
         return _validate_safe_target(value, "target_url")
 
+    @field_validator("starts_at", "ends_at", "scheduled_publish_at", "expires_at")
+    @classmethod
+    def validate_operational_timestamp(cls, value: datetime | None, info) -> datetime | None:
+        return _validate_aware_timestamp(value, info.field_name)
+
     @model_validator(mode="after")
     def validate_window(self) -> "IntakePublicActionUpdate":
         _validate_timestamp_window(self.starts_at, self.ends_at, "starts_at", "ends_at")
+        _validate_timestamp_window(
+            self.scheduled_publish_at,
+            self.expires_at,
+            "scheduled_publish_at",
+            "expires_at",
+        )
         return self
 
 
@@ -425,6 +477,8 @@ class IntakeMilestoneCreate(BaseSchema):
     instructions_url: str | None = Field(default=None, max_length=1024)
     is_public: bool = True
     display_order: int = 100
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
 
     @field_validator("milestone_type")
     @classmethod
@@ -436,9 +490,20 @@ class IntakeMilestoneCreate(BaseSchema):
     def validate_instructions_url(cls, value: str | None) -> str | None:
         return _validate_safe_target(value, "instructions_url")
 
+    @field_validator("starts_at", "ends_at", "scheduled_publish_at", "expires_at")
+    @classmethod
+    def validate_operational_timestamp(cls, value: datetime | None, info) -> datetime | None:
+        return _validate_aware_timestamp(value, info.field_name)
+
     @model_validator(mode="after")
     def validate_window(self) -> "IntakeMilestoneCreate":
         _validate_timestamp_window(self.starts_at, self.ends_at, "starts_at", "ends_at")
+        _validate_timestamp_window(
+            self.scheduled_publish_at,
+            self.expires_at,
+            "scheduled_publish_at",
+            "expires_at",
+        )
         return self
 
 
@@ -452,6 +517,8 @@ class IntakeMilestoneUpdate(BaseSchema):
     instructions_url: str | None = Field(default=None, max_length=1024)
     is_public: bool | None = None
     display_order: int | None = None
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
 
     @field_validator("milestone_type")
     @classmethod
@@ -463,9 +530,20 @@ class IntakeMilestoneUpdate(BaseSchema):
     def validate_instructions_url(cls, value: str | None) -> str | None:
         return _validate_safe_target(value, "instructions_url")
 
+    @field_validator("starts_at", "ends_at", "scheduled_publish_at", "expires_at")
+    @classmethod
+    def validate_operational_timestamp(cls, value: datetime | None, info) -> datetime | None:
+        return _validate_aware_timestamp(value, info.field_name)
+
     @model_validator(mode="after")
     def validate_window(self) -> "IntakeMilestoneUpdate":
         _validate_timestamp_window(self.starts_at, self.ends_at, "starts_at", "ends_at")
+        _validate_timestamp_window(
+            self.scheduled_publish_at,
+            self.expires_at,
+            "scheduled_publish_at",
+            "expires_at",
+        )
         return self
 
 
