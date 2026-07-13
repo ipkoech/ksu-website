@@ -49,7 +49,7 @@ def _user(*, role_assignments=None, staff_assignments=None):
 
 
 class PortalAccessTests(unittest.TestCase):
-    def test_staff_role_only_gets_profile_portal(self):
+    def test_staff_role_with_media_upload_gets_profile_and_corporate_communication_portals(self):
         user = _user(
             role_assignments=[
                 _assignment("staff", permissions=["profile.self_edit", "media.upload"]),
@@ -58,12 +58,14 @@ class PortalAccessTests(unittest.TestCase):
 
         records = build_portal_access_records(user, scope_labels={})
 
-        self.assertEqual(1, len(records))
-        self.assertEqual("staff-profile", records[0].key)
-        self.assertEqual("profile", records[0].scope_type)
-        self.assertEqual(user.id, records[0].scope_id)
-        self.assertEqual("My Staff Profile", records[0].scope_label)
-        self.assertEqual(["profile.self_edit"], records[0].permissions)
+        records_by_key = {record.key: record for record in records}
+        self.assertEqual({"corporate-communication", "staff-profile"}, set(records_by_key))
+        self.assertEqual("main", records_by_key["corporate-communication"].service)
+        self.assertEqual(["media.upload"], records_by_key["corporate-communication"].permissions)
+        self.assertEqual("profile", records_by_key["staff-profile"].scope_type)
+        self.assertEqual(user.id, records_by_key["staff-profile"].scope_id)
+        self.assertEqual("My Staff Profile", records_by_key["staff-profile"].scope_label)
+        self.assertEqual(["profile.self_edit"], records_by_key["staff-profile"].permissions)
 
     def test_scoped_office_role_gets_admin_with_label(self):
         wing_id = uuid.uuid4()

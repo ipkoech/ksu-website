@@ -367,7 +367,7 @@ class PortalStatsApiTests(unittest.TestCase):
         self.assertEqual("corporate-communication", response.json()["data"]["portal"])
 
     def test_corporate_communication_api_authorizes_page_section_manager(self):
-        user = _user_with_scopes("page_sections.manage")
+        user = _user_with_scopes("page_sections.review")
         db = _AuthStatsDb(user)
         token, _ = create_access_token(str(user.id), ["corporate-communication"], permissions=[])
 
