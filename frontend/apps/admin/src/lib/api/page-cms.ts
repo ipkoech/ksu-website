@@ -25,7 +25,23 @@ export const PAGE_SECTION_LAYOUT_VARIANTS = [
   "alumni_story",
   "facts_strip",
 ] as const;
-export const SECTION_ITEM_TYPES = ["text", "card", "stat", "cta", "media", "video"] as const;
+export const SECTION_ITEM_TYPES = ["text", "card", "stat", "cta", "media", "video", "reference"] as const;
+export const PAGE_CMS_SOURCE_TYPES = [
+  "intake",
+  "programme",
+  "academic_calendar",
+  "person",
+  "staff_assignment",
+  "research_project",
+  "publication",
+  "news",
+  "event",
+  "research_partner",
+  "alumni",
+  "testimonial",
+  "public_stat",
+  "club_activity",
+] as const;
 export const PARTNERSHIP_CTA_SOURCES = [
   "manual",
   "partner_website",
@@ -54,6 +70,7 @@ export type PageScopeType = (typeof PAGE_SCOPE_TYPES)[number];
 export type PageSectionStatus = (typeof PAGE_SECTION_STATUSES)[number];
 export type PageSectionLayoutVariant = (typeof PAGE_SECTION_LAYOUT_VARIANTS)[number];
 export type SectionItemType = (typeof SECTION_ITEM_TYPES)[number];
+export type PageCmsSourceType = (typeof PAGE_CMS_SOURCE_TYPES)[number];
 export type PartnershipCtaSource = (typeof PARTNERSHIP_CTA_SOURCES)[number];
 export type PageSectionWorkflowAction = (typeof PAGE_SECTION_WORKFLOW_ACTIONS)[number];
 export type PartnershipSpotlightWorkflowAction = PageSectionWorkflowAction;
@@ -75,7 +92,11 @@ export interface SectionItem {
   video_provider?: string | null;
   video_url?: string | null;
   video_duration_seconds?: number | null;
+  source_type?: PageCmsSourceType | null;
+  source_id?: string | null;
+  editorial_overrides?: Record<string, unknown> | null;
   display_order: number;
+  revision: number;
   is_enabled: boolean;
   created_at?: string;
   updated_at?: string;
@@ -96,6 +117,9 @@ export interface SectionItemPayload {
   video_provider?: string | null;
   video_url?: string | null;
   video_duration_seconds?: number | null;
+  source_type?: PageCmsSourceType | null;
+  source_id?: string | null;
+  editorial_overrides?: Record<string, unknown> | null;
   display_order?: number;
   is_enabled?: boolean;
 }
@@ -111,6 +135,7 @@ export interface PageSection {
   description?: string | null;
   settings?: Record<string, unknown> | null;
   display_order: number;
+  revision: number;
   is_enabled: boolean;
   layout_variant: PageSectionLayoutVariant;
   status: PageSectionStatus;
@@ -206,11 +231,101 @@ export interface PageCmsStats {
   spotlight_count: number;
 }
 
+export interface PageCmsMediaRoleDefinition {
+  label: string;
+  media_type: string;
+  required: boolean;
+  multiple: boolean;
+}
+
+export interface PageCmsSectionDefinition {
+  key: PageSectionLayoutVariant;
+  label: string;
+  description: string;
+  allowed_scopes: PageScopeType[];
+  min_items: number;
+  max_items: number;
+  allowed_item_types: SectionItemType[];
+  allowed_source_types: PageCmsSourceType[];
+  media_roles: Record<string, PageCmsMediaRoleDefinition>;
+  settings_schema: Record<string, unknown>;
+  required_fields: string[];
+}
+
+export type PageCmsSourceSummary = {
+  id: string;
+  source_type: PageCmsSourceType;
+  label: string;
+  secondary_label?: string | null;
+  status?: string | null;
+  thumbnail_url?: string | null;
+  selectable: boolean;
+  metadata: Record<string, string | number | boolean | null>;
+};
+
+export interface PageCmsSourceSearchParams {
+  q?: string;
+  scope_type: PageScopeType;
+  scope_id?: string | null;
+  layout_variant: PageSectionLayoutVariant;
+  page?: number;
+  per_page?: number;
+}
+
+export interface PageCmsValidationIssue {
+  code: string;
+  severity: "error" | "warning";
+  section_id: string;
+  item_id?: string | null;
+  field?: string | null;
+  message: string;
+  blocking: boolean;
+}
+
+export interface PageCmsValidationResult {
+  page_key: string;
+  scope_type: PageScopeType;
+  scope_id?: string | null;
+  issues: PageCmsValidationIssue[];
+}
+
+export interface PageCmsPreview extends PageCmsValidationResult {
+  sections: PageSection[];
+}
+
+export interface PageCmsReorderEntry {
+  id: string;
+  display_order: number;
+  revision: number;
+}
+
+export interface ReorderSectionsPayload {
+  scope_type: PageScopeType;
+  scope_id?: string | null;
+  items: PageCmsReorderEntry[];
+}
+
+export interface ReorderItemsPayload {
+  items: PageCmsReorderEntry[];
+}
+
 export const pageCmsApi = {
   getHomepage: (params?: PageCompositionParams) =>
     api.get<PageComposition>("/homepage", { params }),
   getPage: (pageKey: string, params?: PageCompositionParams) =>
     api.get<PageComposition>(`/pages/${pageKey}`, { params }),
+  definitions: () =>
+    api.get<PageCmsSectionDefinition[]>("/page-section-definitions"),
+  searchSources: (sourceType: PageCmsSourceType, params: PageCmsSourceSearchParams) =>
+    api.get<PageCmsSourceSummary[]>(`/page-section-sources/${sourceType}`, { params }),
+  previewPage: (pageKey: string, params: PageCompositionParams) =>
+    api.get<PageCmsPreview>(`/pages/${pageKey}/preview`, { params }),
+  validatePage: (pageKey: string, params: PageCompositionParams) =>
+    api.get<PageCmsValidationResult>(`/pages/${pageKey}/validate`, { params }),
+  reorderSections: (pageKey: string, data: ReorderSectionsPayload) =>
+    api.patch<PageSection[]>(`/pages/${pageKey}/sections/reorder`, data),
+  reorderItems: (sectionId: string, data: ReorderItemsPayload) =>
+    api.patch<SectionItem[]>(`/page-sections/${sectionId}/items/reorder`, data),
 };
 
 export const pageCmsStatsApi = {
