@@ -38,6 +38,18 @@ def _safe_thumbnail_url(media: PublicMedia | None) -> str | None:
     return None
 
 
+def _is_numeric_hostname_candidate(hostname: str) -> bool:
+    return all(
+        component.isdecimal()
+        or (
+            component.startswith("0x")
+            and len(component) > 2
+            and all(character in "0123456789abcdef" for character in component[2:])
+        )
+        for component in hostname.split(".")
+    )
+
+
 def _is_safe_public_url(value: str | None) -> bool:
     if not isinstance(value, str) or not value or value != value.strip() or "\\" in value:
         return False
@@ -61,6 +73,8 @@ def _is_safe_public_url(value: str | None) -> bool:
         try:
             address = ipaddress.ip_address(hostname)
         except ValueError:
+            if _is_numeric_hostname_candidate(hostname):
+                return False
             return True
         return address.is_global and not any(
             (
