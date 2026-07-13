@@ -12,7 +12,11 @@ from ksu_common import PaginatedResult
 from app.models import PublicMedia, Publication, ResearchProject
 from app.routes.v1 import router as v1_router
 from app.routes.v1.page_cms_source_contract import router
-from app.services.page_cms_source_contract import PageCmsResearchSourceService, _safe_thumbnail_url
+from app.services.page_cms_source_contract import (
+    PageCmsResearchSourceService,
+    _is_safe_public_url,
+    _safe_thumbnail_url,
+)
 
 
 class _ScalarResult:
@@ -205,6 +209,42 @@ def test_safe_thumbnail_url_never_falls_back_to_private_storage_path_or_unsafe_u
 
     assert media.url == "/uploads/private/internal/cover.webp"
     assert _safe_thumbnail_url(media) is None
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "http://127.0.0.1/cover.webp",
+        "https://10.0.0.1/cover.webp",
+        "https://169.254.1.1/cover.webp",
+        "https://224.0.0.1/cover.webp",
+        "https://0.0.0.0/cover.webp",
+        "https://[::1]/cover.webp",
+        "https://[fc00::1]/cover.webp",
+        "https://[fe80::1]/cover.webp",
+        "https://[ff00::1]/cover.webp",
+        "https://[::]/cover.webp",
+        "https://localhost/cover.webp",
+        "https://media.local/cover.webp",
+        "https://media.internal/cover.webp",
+        "https://user:password@cdn.example.test/cover.webp",
+        "//cdn.example.test/cover.webp",
+    ],
+)
+def test_safe_thumbnail_url_rejects_nonpublic_external_urls(value):
+    assert not _is_safe_public_url(value)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "/media/covers/cover.webp",
+        "https://cdn.example.test/covers/cover.webp",
+        "http://images.example.test/covers/cover.webp",
+    ],
+)
+def test_safe_thumbnail_url_accepts_public_urls(value):
+    assert _is_safe_public_url(value)
 
 
 def test_publication_bulk_resolution_keeps_requested_order_and_omits_nonpublic_records():

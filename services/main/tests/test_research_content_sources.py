@@ -8,7 +8,10 @@ import httpx
 import pytest
 
 from app.services.page_cms_source_errors import PageCmsSourceProviderError
-from app.services.research_content_sources import ResearchContentSourcesProxyService
+from app.services.research_content_sources import (
+    ResearchContentSourcesProxyService,
+    _is_safe_public_url,
+)
 
 
 def _summary(source_type: str, source_id: uuid.UUID) -> dict:
@@ -38,8 +41,8 @@ async def test_proxy_search_uses_public_contract_and_bounds_pagination():
         request=httpx.Request("GET", "http://research/api/v1/page-cms-sources/research_project"),
         json={
             "status": "success",
-            "data": [_summary("research_project", source_id)],
-            "meta": {"page": 1, "per_page": 50, "total": 1, "pages": 1},
+            "data": [],
+            "meta": {"page": 100, "per_page": 50, "total": 1, "pages": 1},
         },
     )
     with patch(
@@ -54,7 +57,7 @@ async def test_proxy_search_uses_public_contract_and_bounds_pagination():
     assert get.await_args.kwargs["params"]["page"] == 100
     assert get.await_args.kwargs["params"]["per_page"] == 50
     assert get.await_args.kwargs["params"]["search"] == "climate"
-    assert result["data"][0]["id"] == str(source_id)
+    assert result["meta"] == {"page": 100, "per_page": 50, "total": 1, "pages": 1}
 
 
 @pytest.mark.asyncio
@@ -118,8 +121,8 @@ async def test_proxy_rejects_unsupported_source_types_and_excessive_ids():
         {"page": 1, "per_page": 51, "total": 1, "pages": 1},
         {"page": 1, "per_page": 20, "total": -1, "pages": 0},
         {"page": 1, "per_page": 20, "total": 21, "pages": 1},
-        {"page": 2, "per_page": 20, "total": 1, "pages": 1},
         {"page": 1, "per_page": 20, "total": 0, "pages": 1},
+        {"page": 101, "per_page": 20, "total": 0, "pages": 0},
     ],
 )
 async def test_proxy_rejects_malformed_provider_pagination(meta):
@@ -143,6 +146,71 @@ async def test_proxy_rejects_provider_pages_with_impossible_item_counts(data, me
 
     with pytest.raises(PageCmsSourceProviderError, match="pagination"):
         ResearchContentSourcesProxyService._validate_page_payload("research_project", payload)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("meta", "data"),
+    [
+        ({"page": 2, "per_page": 20, "total": 1, "pages": 1}, []),
+        ({"page": 100, "per_page": 20, "total": 0, "pages": 0}, []),
+    ],
+)
+async def test_proxy_accepts_empty_pages_beyond_provider_total(meta, data):
+    payload = {"status": "success", "data": data, "meta": meta}
+
+    assert ResearchContentSourcesProxyService._validate_page_payload("research_project", payload) == {
+        "data": data,
+        "meta": meta,
+    }
+
+
+@pytest.mark.asyncio
+async def test_proxy_rejects_nonempty_pages_beyond_provider_total():
+    payload = {
+        "status": "success",
+        "data": [_summary("research_project", uuid.uuid4())],
+        "meta": {"page": 2, "per_page": 20, "total": 1, "pages": 1},
+    }
+
+    with pytest.raises(PageCmsSourceProviderError, match="pagination"):
+        ResearchContentSourcesProxyService._validate_page_payload("research_project", payload)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "http://127.0.0.1/cover.webp",
+        "https://10.0.0.1/cover.webp",
+        "https://169.254.1.1/cover.webp",
+        "https://224.0.0.1/cover.webp",
+        "https://0.0.0.0/cover.webp",
+        "https://[::1]/cover.webp",
+        "https://[fc00::1]/cover.webp",
+        "https://[fe80::1]/cover.webp",
+        "https://[ff00::1]/cover.webp",
+        "https://[::]/cover.webp",
+        "https://localhost/cover.webp",
+        "https://media.local/cover.webp",
+        "https://media.internal/cover.webp",
+        "https://user:password@cdn.example.test/cover.webp",
+        "//cdn.example.test/cover.webp",
+    ],
+)
+def test_proxy_rejects_nonpublic_external_urls(value):
+    assert not _is_safe_public_url(value)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "/media/covers/cover.webp",
+        "https://cdn.example.test/covers/cover.webp",
+        "http://images.example.test/covers/cover.webp",
+    ],
+)
+def test_proxy_accepts_public_media_urls(value):
+    assert _is_safe_public_url(value)
 
 
 @pytest.mark.asyncio

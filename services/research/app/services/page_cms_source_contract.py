@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 import uuid
 from collections.abc import Iterable
 from typing import Any
@@ -40,9 +41,37 @@ def _safe_thumbnail_url(media: PublicMedia | None) -> str | None:
 def _is_safe_public_url(value: str | None) -> bool:
     if not isinstance(value, str) or not value or value != value.strip() or "\\" in value:
         return False
-    parsed = urlparse(value)
+    try:
+        parsed = urlparse(value)
+    except ValueError:
+        return False
     if parsed.scheme in {"http", "https"}:
-        return bool(parsed.netloc)
+        if not parsed.netloc or parsed.username is not None or parsed.password is not None:
+            return False
+        try:
+            hostname = parsed.hostname
+            parsed.port
+        except ValueError:
+            return False
+        if hostname is None:
+            return False
+        hostname = hostname.rstrip(".").lower()
+        if hostname == "localhost" or hostname.endswith((".localhost", ".local", ".internal")):
+            return False
+        try:
+            address = ipaddress.ip_address(hostname)
+        except ValueError:
+            return True
+        return address.is_global and not any(
+            (
+                address.is_loopback,
+                address.is_private,
+                address.is_link_local,
+                address.is_multicast,
+                address.is_reserved,
+                address.is_unspecified,
+            )
+        )
     return value.startswith("/") and not value.startswith("//") and not parsed.scheme and not parsed.netloc
 
 

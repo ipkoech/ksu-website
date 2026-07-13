@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 import math
 import uuid
 from datetime import date
@@ -116,12 +117,12 @@ class ResearchContentSourcesProxyService:
         per_page = meta["per_page"]
         total = meta["total"]
         pages = meta["pages"]
-        if page < 1 or not 1 <= per_page <= MAX_RESEARCH_CONTENT_PER_PAGE:
+        if not 1 <= page <= MAX_RESEARCH_CONTENT_PAGE or not 1 <= per_page <= MAX_RESEARCH_CONTENT_PER_PAGE:
             raise PageCmsSourceProviderError("Research content provider returned invalid pagination metadata")
         expected_pages = math.ceil(total / per_page) if total else 0
         if pages != expected_pages:
             raise PageCmsSourceProviderError("Research content provider returned inconsistent pagination metadata")
-        if (total == 0 and page != 1) or (total > 0 and page > pages):
+        if page > pages and data:
             raise PageCmsSourceProviderError("Research content provider returned invalid pagination metadata")
         remaining_items = max(total - ((page - 1) * per_page), 0)
         if len(data) > per_page or len(data) > remaining_items:
@@ -186,9 +187,37 @@ def _is_iso_date(value: Any) -> bool:
 def _is_safe_public_url(value: Any) -> bool:
     if not isinstance(value, str) or not value or value != value.strip() or "\\" in value:
         return False
-    parsed = urlparse(value)
+    try:
+        parsed = urlparse(value)
+    except ValueError:
+        return False
     if parsed.scheme in {"http", "https"}:
-        return bool(parsed.netloc)
+        if not parsed.netloc or parsed.username is not None or parsed.password is not None:
+            return False
+        try:
+            hostname = parsed.hostname
+            parsed.port
+        except ValueError:
+            return False
+        if hostname is None:
+            return False
+        hostname = hostname.rstrip(".").lower()
+        if hostname == "localhost" or hostname.endswith((".localhost", ".local", ".internal")):
+            return False
+        try:
+            address = ipaddress.ip_address(hostname)
+        except ValueError:
+            return True
+        return address.is_global and not any(
+            (
+                address.is_loopback,
+                address.is_private,
+                address.is_link_local,
+                address.is_multicast,
+                address.is_reserved,
+                address.is_unspecified,
+            )
+        )
     return value.startswith("/") and not value.startswith("//") and not parsed.scheme and not parsed.netloc
 
 
