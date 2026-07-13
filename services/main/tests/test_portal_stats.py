@@ -1,6 +1,8 @@
+import inspect
 import unittest
 import uuid
 from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -8,6 +10,7 @@ from fastapi.testclient import TestClient
 from app.api.v1 import stats as stats_api
 from app.deps import get_db
 from app.helpers.jwt import create_access_token
+from app.services import stats as stats_service
 from app.services.stats import PORTAL_STAT_CONTRACTS, portal_stats
 
 
@@ -17,6 +20,36 @@ class _CountResult:
 
     def scalar_one(self):
         return self.value
+
+
+class _ResearchStatsResponse:
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return {
+            "status": "success",
+            "data": {
+                "stats": [
+                    {"key": "publications", "value": 11},
+                ],
+            },
+        }
+
+
+class _ResearchStatsClient:
+    def __init__(self):
+        self.request_path = None
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, traceback):
+        return False
+
+    async def get(self, path):
+        self.request_path = path
+        return _ResearchStatsResponse()
 
 
 class _FakeDb:
@@ -158,12 +191,33 @@ class PortalStatsTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(result)
         self.assertEqual("corporate-communication", result.portal)
 
-    async def test_publications_legacy_portal_stats_resolve_to_research_with_publication_counter(self):
-        result = await portal_stats(_FakeDb(), "publications")
+    async def test_publications_legacy_portal_stats_resolve_to_research_with_published_publication_counter(self):
+        with patch.object(
+            stats_service,
+            "_published_publications_count",
+            new=AsyncMock(return_value=7),
+        ):
+            result = await portal_stats(_FakeDb(), "publications")
 
         self.assertIsNotNone(result)
         self.assertEqual("research", result.portal)
-        self.assertIn("publication_records_count", result.stats)
+        self.assertEqual(7, result.stats["published_publications_count"])
+        self.assertNotIn("publication_records_count", result.stats)
+
+    async def test_published_publication_count_comes_from_research_stats_api(self):
+        client = _ResearchStatsClient()
+
+        with patch.object(stats_service.httpx, "AsyncClient", return_value=client):
+            count = await stats_service._published_publications_count()
+
+        self.assertEqual(11, count)
+        self.assertEqual("/api/v1/stats", client.request_path)
+
+    def test_research_portal_stats_do_not_sum_person_publication_counters(self):
+        self.assertNotIn(
+            "func.sum(Person.publications_count)",
+            inspect.getsource(stats_service.portal_stats),
+        )
 
     async def test_student_clubs_stats_are_not_a_standalone_portal_surface(self):
         result = await portal_stats(_FakeDb(), "student-clubs")
@@ -207,15 +261,21 @@ class PortalStatsApiTests(unittest.TestCase):
         db = _AuthStatsDb(user)
         token, _ = create_access_token(str(user.id), ["research"], permissions=[])
 
-        response = _portal_stats_client(db).get(
-            "/api/v1/stats/portal/publications",
-            headers={"Authorization": f"Bearer {token}"},
-        )
+        with patch.object(
+            stats_service,
+            "_published_publications_count",
+            new=AsyncMock(return_value=7),
+        ):
+            response = _portal_stats_client(db).get(
+                "/api/v1/stats/portal/publications",
+                headers={"Authorization": f"Bearer {token}"},
+            )
 
         self.assertEqual(200, response.status_code)
         data = response.json()["data"]
         self.assertEqual("research", data["portal"])
-        self.assertIn("publication_records_count", data["stats"])
+        self.assertEqual(7, data["stats"]["published_publications_count"])
+        self.assertNotIn("publication_records_count", data["stats"])
 
 
 if __name__ == "__main__":

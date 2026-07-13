@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import httpx
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..core.config import get_settings
 from ..models import (
     Announcement,
     ArtsCulture,
@@ -69,7 +71,7 @@ PORTAL_STAT_CONTRACTS: dict[str, tuple[str, ...]] = {
     ),
     "research": (
         "researchers_count",
-        "publication_records_count",
+        "published_publications_count",
     ),
     "library": (
         "active_branches_count",
@@ -86,12 +88,39 @@ PORTAL_ALIASES = {
     "institutional-administration": "admin",
 }
 
+settings = get_settings()
+
 
 async def _count(db: AsyncSession, model, *conditions) -> int:
     result = await db.execute(
         select(func.count(model.id)).where(model.deleted_at.is_(None), *conditions)
     )
     return int(result.scalar_one() or 0)
+
+
+async def _published_publications_count() -> int:
+    """Read the public publication count from the owning Research service."""
+
+    async with httpx.AsyncClient(
+        base_url=settings.RESEARCH_SERVICE_URL.rstrip("/"),
+        timeout=httpx.Timeout(20.0, connect=5.0),
+        headers={"X-KSU-Proxy": "main-stats"},
+    ) as client:
+        response = await client.get("/api/v1/stats")
+        response.raise_for_status()
+        payload = response.json()
+
+    if not isinstance(payload, dict) or payload.get("status") != "success":
+        raise ValueError("Research service returned an unexpected stats payload")
+    data = payload.get("data")
+    if not isinstance(data, dict) or not isinstance(data.get("stats"), list):
+        raise ValueError("Research service returned an unexpected stats payload")
+
+    for item in data["stats"]:
+        if item.get("key") == "publications" and isinstance(item.get("value"), int):
+            return item["value"]
+
+    raise ValueError("Research service did not return a publications count")
 
 
 async def _sum_publications_for_people(
@@ -726,20 +755,13 @@ async def portal_stats(
         }
         title = "Department administration counters"
     elif portal == "research":
-        researcher_ids = select(Person.id).where(
-            Person.deleted_at.is_(None),
-            Person.is_researcher.is_(True),
-        )
         stats = {
             "researchers_count": await _count(
                 db,
                 Person,
                 Person.is_researcher.is_(True),
             ),
-            "publication_records_count": await _sum_publications_for_people(
-                db,
-                researcher_ids,
-            ),
+            "published_publications_count": await _published_publications_count(),
         }
         title = "Research and publications counters"
     else:
