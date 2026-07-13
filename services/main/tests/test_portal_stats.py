@@ -126,6 +126,25 @@ def _user_with_scopes(*scopes: str):
     )
 
 
+def _user_with_club_assignment():
+    return SimpleNamespace(
+        id=uuid.uuid4(),
+        is_active=True,
+        deleted_at=None,
+        role_assignments=[],
+        person=SimpleNamespace(
+            assignments=[
+                SimpleNamespace(
+                    entity_type="club",
+                    entity_id=uuid.uuid4(),
+                    role="chairperson",
+                    status="active",
+                )
+            ]
+        ),
+    )
+
+
 def _portal_stats_client(db) -> TestClient:
     app = FastAPI()
     app.include_router(stats_api.router, prefix="/api/v1/stats")
@@ -394,6 +413,19 @@ class PortalStatsApiTests(unittest.TestCase):
 
     def test_corporate_communication_api_authorizes_club_event_manager(self):
         user = _user_with_scopes("clubs.events_manage")
+        db = _AuthStatsDb(user)
+        token, _ = create_access_token(str(user.id), ["corporate-communication"], permissions=[])
+
+        response = _portal_stats_client(db).get(
+            "/api/v1/stats/portal/corporate-communication",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("corporate-communication", response.json()["data"]["portal"])
+
+    def test_corporate_communication_api_authorizes_inferred_club_assignment(self):
+        user = _user_with_club_assignment()
         db = _AuthStatsDb(user)
         token, _ = create_access_token(str(user.id), ["corporate-communication"], permissions=[])
 

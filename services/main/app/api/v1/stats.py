@@ -8,6 +8,7 @@ from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ...deps import CurrentUser, DbSession, require_scope, user_has_scope
+from ...services.portal_access import build_portal_access_records
 from ...services.stats import PORTAL_ALIASES, admin_stats, portal_stats, public_stats
 
 router = APIRouter()
@@ -99,6 +100,15 @@ PORTAL_STAT_SCOPES = {
 }
 
 
+def _user_has_portal_stats_access(user: CurrentUser, portal: str, required_scopes: tuple[str, ...]) -> bool:
+    if any(user_has_scope(user, scope) for scope in required_scopes):
+        return True
+    return any(
+        record.key == portal
+        for record in build_portal_access_records(user, scope_labels={})
+    )
+
+
 @router.get("/portal/{portal}")
 async def get_portal_stats(
     portal: str,
@@ -109,7 +119,7 @@ async def get_portal_stats(
     required_scopes = PORTAL_STAT_SCOPES.get(portal)
     if required_scopes is None:
         raise HTTPException(status_code=404, detail="Portal stats not found")
-    if not any(user_has_scope(user, scope) for scope in required_scopes):
+    if not _user_has_portal_stats_access(user, portal, required_scopes):
         raise HTTPException(status_code=403, detail="Insufficient privileges")
 
     result = await portal_stats(db, portal)
