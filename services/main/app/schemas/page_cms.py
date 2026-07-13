@@ -585,10 +585,6 @@ class PageValidationResponse(BaseSchema):
     issues: list[PageValidationIssue] = Field(default_factory=list)
 
 
-class PagePreviewResponse(PageValidationResponse):
-    sections: list[dict[str, Any]] = Field(default_factory=list)
-
-
 class PageCmsSourceSummary(BaseSchema):
     """Stable, compact representation of a record selectable by Page CMS."""
 
@@ -626,6 +622,90 @@ class PageCmsSourceSummary(BaseSchema):
         return _sanitize_source_metadata(value if isinstance(value, dict) else {})
 
 
+class PagePreviewResolvedSource(PageCmsSourceSummary):
+    """Resolved source data that is safe to render in an authorised preview."""
+
+
+class PagePreviewMedia(BaseSchema):
+    id: uuid.UUID
+    filename: str
+    original_filename: str
+    mime_type: str
+    media_type: str
+    url: str
+    public_url: str | None = None
+    cdn_url: str | None = None
+    thumbnail_url: str | None = None
+    alt_text: str | None = None
+    title: str | None = None
+    caption: str | None = None
+    width: int | None = None
+    height: int | None = None
+    duration: int | None = None
+
+
+class PagePreviewMediaLink(BaseSchema):
+    id: uuid.UUID
+    media_id: uuid.UUID
+    entity_type: str
+    entity_id: uuid.UUID
+    role: str
+    display_order: int
+    media: PagePreviewMedia
+
+
+class PagePreviewItem(BaseSchema):
+    id: uuid.UUID
+    page_section_id: uuid.UUID
+    item_type: str
+    title: str | None = None
+    subtitle: str | None = None
+    body_text: str | None = None
+    content: dict[str, Any] | None = None
+    cta_label: str | None = None
+    cta_url: str | None = None
+    cta_description: str | None = None
+    media_caption: str | None = None
+    media_alt_text: str | None = None
+    video_provider: str | None = None
+    video_url: str | None = None
+    video_duration_seconds: int | None = None
+    source_type: str | None = None
+    source_id: uuid.UUID | None = None
+    editorial_overrides: dict[str, Any] | None = None
+    source: PagePreviewResolvedSource | None = None
+    display_order: int
+    is_enabled: bool
+
+
+class PagePreviewSection(BaseSchema):
+    id: uuid.UUID
+    page_key: str
+    scope_type: str
+    scope_id: uuid.UUID | None = None
+    section_key: str
+    title: str | None = None
+    subtitle: str | None = None
+    description: str | None = None
+    settings: dict[str, Any] | None = None
+    display_order: int
+    revision: int
+    is_enabled: bool
+    layout_variant: str
+    status: str
+    workflow_status: str
+    valid_from: datetime | None = None
+    valid_to: datetime | None = None
+    approved_at: datetime | None = None
+    published_at: datetime | None = None
+    items: list[PagePreviewItem] = Field(default_factory=list)
+    media: dict[str, list[PagePreviewMediaLink]] = Field(default_factory=dict)
+
+
+class PagePreviewResponse(PageValidationResponse):
+    sections: list[PagePreviewSection] = Field(default_factory=list)
+
+
 __all__ = [
     "PARTNERSHIP_CTA_SOURCES",
     "PAGE_SECTION_WORKFLOW_ACTIONS",
@@ -647,6 +727,11 @@ __all__ = [
     "PageCompositionResponse",
     "PageValidationIssue",
     "PageValidationResponse",
-    "PagePreviewResponse",
     "PageCmsSourceSummary",
+    "PagePreviewResolvedSource",
+    "PagePreviewMedia",
+    "PagePreviewMediaLink",
+    "PagePreviewItem",
+    "PagePreviewSection",
+    "PagePreviewResponse",
 ]

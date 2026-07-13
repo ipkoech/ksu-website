@@ -15,12 +15,21 @@ from sqlalchemy.orm import selectinload
 from ksu_common import PaginatedResult
 
 from ..models import ContentWorkflowLog, Media, MediaLink, PageSection, PartnershipSpotlight, SectionItem
-from ..schemas.page_cms import PageCmsSourceSummary, PageValidationIssue
+from ..schemas.page_cms import (
+    PageCmsSourceSummary,
+    PagePreviewResponse,
+    PagePreviewSection,
+    PageValidationIssue,
+)
 from ._base import ilike_any, paginate_query
 from .content_workflow import ContentWorkflowService
 from .page_cms_definitions import SECTION_DEFINITIONS
-from .page_cms_source_errors import PageCmsSourcePreviewUnsupportedError, PageCmsSourceProviderError
-from .page_cms_sources import PageCmsPreviewCapability, PageCmsSourceService
+from .page_cms_sources import (
+    PageCmsPreviewCapability,
+    PageCmsSourceResolution,
+    PageCmsSourceResolutionState,
+    PageCmsSourceService,
+)
 from .research_partners import ResearchPartnersProxyService
 
 ALLOWED_TRANSITIONS = {
@@ -47,9 +56,21 @@ MEDIA_ROLE_BUCKETS = {
     "video": "video",
     "background": "background",
     "poster": "poster",
+    "signingphoto": "signingPhoto",
+    "signing-photo": "signingPhoto",
+    "signing_photo": "signingPhoto",
 }
 
-MEDIA_GROUP_KEYS = ("heroImage", "mobileImage", "logos", "gallery", "video", "background", "poster")
+MEDIA_GROUP_KEYS = (
+    "heroImage",
+    "mobileImage",
+    "logos",
+    "gallery",
+    "video",
+    "background",
+    "poster",
+    "signingPhoto",
+)
 
 
 class PageCmsReorderValidationError(ValueError):
@@ -72,8 +93,21 @@ class PageCmsValidationError(ValueError):
 class ResolvedSectionItem:
     item: SectionItem
     source: PageCmsSourceSummary | None = None
-    failure: str | None = None
+    failure: PageCmsSourceResolutionState | str | None = None
     message: str | None = None
+
+    @classmethod
+    def from_resolution(
+        cls,
+        item: SectionItem,
+        resolution: PageCmsSourceResolution,
+    ) -> "ResolvedSectionItem":
+        return cls(
+            item=item,
+            source=resolution.source,
+            failure=None if resolution.state is PageCmsSourceResolutionState.RESOLVED else resolution.state,
+            message=resolution.message,
+        )
 
 
 def _active_window_filter(model, now: datetime):
@@ -96,13 +130,13 @@ def _published_workflow_filter(model, now: datetime):
 def _published_media_link_filter(now: datetime):
     return (
         MediaLink.is_public.is_(True),
+        MediaLink.archived_at.is_(None),
         or_(
             MediaLink.owner_scope_type != "club",
             MediaLink.owner_scope_type.is_(None),
             and_(
                 MediaLink.is_published.is_(True),
                 MediaLink.workflow_status == "published",
-                MediaLink.archived_at.is_(None),
                 or_(MediaLink.scheduled_publish_at.is_(None), MediaLink.scheduled_publish_at <= now),
                 or_(MediaLink.expires_at.is_(None), MediaLink.expires_at >= now),
             ),
@@ -223,10 +257,11 @@ def _serialize_preview_section(
     section: PageSection,
     media_groups: dict[str, list[dict[str, Any]]],
     resolved_items: Sequence[ResolvedSectionItem],
-) -> dict[str, Any]:
+) -> PagePreviewSection:
     payload = _serialize_section(section, media_groups)
     payload["workflow_status"] = section.workflow_status
-    payload["revision"] = section.revision
+    payload["revision"] = section.revision or 1
+    payload["is_enabled"] = section.is_enabled if section.is_enabled is not None else True
     resolved_by_id = {entry.item.id: entry for entry in resolved_items}
     items_by_id = {item.id: item for item in _active_section_items(section)}
     for item_payload in payload["items"]:
@@ -237,12 +272,12 @@ def _serialize_preview_section(
             "source_id": item.source_id,
             "editorial_overrides": item.editorial_overrides,
             "source": (
-                resolution.source.model_dump(mode="json")
+                resolution.source.model_dump()
                 if resolution is not None and resolution.source is not None
                 else None
             ),
         })
-    return payload
+    return PagePreviewSection.model_validate(payload)
 
 
 def _serialize_spotlight(
@@ -489,13 +524,12 @@ class PageSectionService:
         return await paginate_query(db, query, page=page, per_page=per_page)
 
     @staticmethod
-    async def list_preview_authorized(
+    async def list_preview(
         db: AsyncSession,
         *,
         page_key: str,
         scope_type: str,
         scope_id: uuid.UUID | None,
-        is_visible: Callable[[PageSection], Awaitable[bool]],
     ) -> list[PageSection]:
         query = PageSectionService._admin_query(
             page_key=page_key,
@@ -506,11 +540,7 @@ class PageSectionService:
             PageSection.status != "archived",
         )
         result = await db.execute(query)
-        visible: list[PageSection] = []
-        for section in result.scalars().all():
-            if await is_visible(section):
-                visible.append(section)
-        return visible
+        return list(result.scalars().all())
 
     @staticmethod
     async def reorder_sections(
@@ -711,7 +741,18 @@ class PageSectionValidationService:
         "unavailable": "source_unavailable",
         "expired": "source_expired",
         "inaccessible": "source_inaccessible",
+        "provider_error": "source_provider_error",
+        "unsupported_type": "source_unsupported_type",
         "preview_unsupported": "source_preview_unsupported",
+    }
+
+    SOURCE_ISSUE_MESSAGES = {
+        "source_unavailable": "Source is unavailable.",
+        "source_expired": "Source has expired.",
+        "source_inaccessible": "Source is inaccessible.",
+        "source_provider_error": "Source provider is unavailable.",
+        "source_unsupported_type": "Source type is unsupported.",
+        "source_preview_unsupported": "Draft preview is unsupported for this source type.",
     }
 
     @staticmethod
@@ -768,6 +809,126 @@ class PageSectionValidationService:
         return False
 
     @staticmethod
+    def _setting_type_matches(value: Any, expected_type: str) -> bool:
+        if expected_type == "string":
+            return isinstance(value, str)
+        if expected_type == "integer":
+            return isinstance(value, int) and not isinstance(value, bool)
+        if expected_type == "number":
+            return isinstance(value, (int, float)) and not isinstance(value, bool)
+        if expected_type == "boolean":
+            return isinstance(value, bool)
+        if expected_type in {"repeatable", "list"}:
+            return isinstance(value, list)
+        if expected_type == "string_list":
+            return isinstance(value, list) and all(isinstance(item, str) for item in value)
+        if expected_type == "cta":
+            return isinstance(value, dict)
+        if expected_type == "datetime":
+            if isinstance(value, datetime):
+                return True
+            if not isinstance(value, str):
+                return False
+            try:
+                datetime.fromisoformat(value.replace("Z", "+00:00"))
+            except ValueError:
+                return False
+            return True
+        return False
+
+    @staticmethod
+    def _validate_settings(section: PageSection, definition) -> list[PageValidationIssue]:
+        issues: list[PageValidationIssue] = []
+        if section.settings is not None and not isinstance(section.settings, dict):
+            return [PageSectionValidationService._issue(
+                section,
+                "invalid_setting_type",
+                "Section settings must be an object.",
+                field="settings",
+            )]
+        settings = section.settings or {}
+        for key in sorted(set(settings) - set(definition.settings_schema)):
+            issues.append(PageSectionValidationService._issue(
+                section,
+                "unknown_setting",
+                "Setting is not supported by this section layout.",
+                field=f"settings.{key}",
+            ))
+
+        for key, rules in definition.settings_schema.items():
+            field = f"settings.{key}"
+            if key not in settings:
+                if rules.get("required"):
+                    issues.append(PageSectionValidationService._issue(
+                        section,
+                        "missing_required_setting",
+                        "Required setting is missing.",
+                        field=field,
+                    ))
+                continue
+            value = settings[key]
+            expected_type = rules.get("type")
+            if not isinstance(expected_type, str) or not PageSectionValidationService._setting_type_matches(
+                value,
+                expected_type,
+            ):
+                issues.append(PageSectionValidationService._issue(
+                    section,
+                    "invalid_setting_type",
+                    "Setting has an invalid value type.",
+                    field=field,
+                ))
+                continue
+            enum_values = rules.get("enum")
+            if enum_values is not None and value not in enum_values:
+                issues.append(PageSectionValidationService._issue(
+                    section,
+                    "invalid_setting_value",
+                    "Setting value is not one of the allowed options.",
+                    field=field,
+                ))
+            if isinstance(value, (int, float)) and not isinstance(value, bool):
+                minimum = rules.get("minimum")
+                maximum = rules.get("maximum")
+                if (minimum is not None and value < minimum) or (maximum is not None and value > maximum):
+                    issues.append(PageSectionValidationService._issue(
+                        section,
+                        "setting_out_of_range",
+                        "Setting value is outside the allowed range.",
+                        field=field,
+                    ))
+            if isinstance(value, (list, str)):
+                min_items = rules.get("min_items")
+                max_items = rules.get("max_items")
+                min_length = rules.get("min_length")
+                max_length = rules.get("max_length")
+                if (
+                    (min_items is not None and len(value) < min_items)
+                    or (max_items is not None and len(value) > max_items)
+                    or (min_length is not None and len(value) < min_length)
+                    or (max_length is not None and len(value) > max_length)
+                ):
+                    issues.append(PageSectionValidationService._issue(
+                        section,
+                        "setting_limit_exceeded",
+                        "Setting exceeds the allowed size.",
+                        field=field,
+                    ))
+            if expected_type == "cta":
+                allowed_cta_keys = {"label", "href"}
+                if set(value) - allowed_cta_keys or not PageSectionValidationService._valid_cta(
+                    value.get("label"),
+                    value.get("href"),
+                ):
+                    issues.append(PageSectionValidationService._issue(
+                        section,
+                        "invalid_cta",
+                        "CTA setting requires only a label and valid URL.",
+                        field=field,
+                    ))
+        return issues
+
+    @staticmethod
     def validate(
         section: PageSection,
         resolved_items: Sequence[ResolvedSectionItem],
@@ -784,6 +945,13 @@ class PageSectionValidationService:
 
         issues: list[PageValidationIssue] = []
         items = _active_section_items(section)
+        if section.scope_type not in definition.allowed_scopes:
+            issues.append(PageSectionValidationService._issue(
+                section,
+                "layout_scope_not_allowed",
+                "Section layout is not allowed for this page scope.",
+                field="scope_type",
+            ))
         for field in definition.required_fields:
             value = getattr(section, field, None)
             if value is None or (isinstance(value, str) and not value.strip()):
@@ -809,6 +977,37 @@ class PageSectionValidationService:
                 field="items",
             ))
 
+        for item in items:
+            if item.item_type == "reference":
+                if item.source_type not in definition.allowed_source_types:
+                    issues.append(PageSectionValidationService._issue(
+                        section,
+                        "source_type_not_allowed",
+                        "Source type is not allowed for this section layout.",
+                        item=item,
+                        field="source_type",
+                    ))
+            elif item.item_type not in definition.allowed_item_types:
+                issues.append(PageSectionValidationService._issue(
+                    section,
+                    "item_type_not_allowed",
+                    "Item type is not allowed for this section layout.",
+                    item=item,
+                    field="item_type",
+                ))
+
+        allowed_media_buckets = {
+            _normalize_role(role) or role
+            for role in definition.media_roles
+        }
+        for bucket, linked_media in media_groups.items():
+            if linked_media and bucket not in allowed_media_buckets:
+                issues.append(PageSectionValidationService._issue(
+                    section,
+                    "unknown_media_role",
+                    "Media role is not allowed for this section layout.",
+                    field=bucket,
+                ))
         for role, media_definition in definition.media_roles.items():
             bucket = _normalize_role(role) or role
             linked_media = media_groups.get(bucket, [])
@@ -827,9 +1026,25 @@ class PageSectionValidationService:
                     field=role,
                 ))
             if media_definition.media_type != "image":
-                continue
+                mime_prefix = f"{media_definition.media_type}/"
+            else:
+                mime_prefix = "image/"
             for linked in linked_media:
                 media = linked.get("media") if isinstance(linked, dict) else None
+                actual_type = media.get("media_type") if isinstance(media, dict) else None
+                mime_type = media.get("mime_type") if isinstance(media, dict) else None
+                if actual_type != media_definition.media_type or not (
+                    isinstance(mime_type, str) and mime_type.startswith(mime_prefix)
+                ):
+                    issues.append(PageSectionValidationService._issue(
+                        section,
+                        "invalid_media_type",
+                        "Media type is not allowed for this role.",
+                        field=role,
+                    ))
+                    continue
+                if media_definition.media_type != "image":
+                    continue
                 alt_text = media.get("alt_text") if isinstance(media, dict) else None
                 if not isinstance(alt_text, str) or not alt_text.strip():
                     issues.append(PageSectionValidationService._issue(
@@ -850,25 +1065,14 @@ class PageSectionValidationService:
                     field="cta_url",
                 ))
 
-        settings = section.settings if isinstance(section.settings, dict) else {}
-        for field, field_definition in definition.settings_schema.items():
-            if field_definition.get("type") != "cta" or field not in settings:
-                continue
-            value = settings[field]
-            label = value.get("label") if isinstance(value, dict) else None
-            target = value.get("href") if isinstance(value, dict) else None
-            if not PageSectionValidationService._valid_cta(label, target):
-                issues.append(PageSectionValidationService._issue(
-                    section,
-                    "invalid_cta",
-                    f"{field.replace('_', ' ').title()} requires a label and valid URL.",
-                    field=f"settings.{field}",
-                ))
+        issues.extend(PageSectionValidationService._validate_settings(section, definition))
 
         resolved_by_item_id = {entry.item.id: entry for entry in resolved_items}
         seen_sources: set[tuple[str, uuid.UUID]] = set()
         for item in items:
             if item.source_type is None or item.source_id is None:
+                continue
+            if item.source_type not in definition.allowed_source_types:
                 continue
             source_key = (item.source_type, item.source_id)
             if source_key in seen_sources:
@@ -883,6 +1087,8 @@ class PageSectionValidationService:
 
             resolution = resolved_by_item_id.get(item.id)
             failure = resolution.failure if resolution is not None else "unavailable"
+            if isinstance(failure, PageCmsSourceResolutionState):
+                failure = failure.value
             source = resolution.source if resolution is not None else None
             if failure is None and source is None:
                 failure = "unavailable"
@@ -894,15 +1100,10 @@ class PageSectionValidationService:
                 failure = "unavailable"
             if failure is not None:
                 code = PageSectionValidationService.SOURCE_FAILURE_CODES.get(failure, "source_unavailable")
-                message = resolution.message if resolution is not None and resolution.message else {
-                    "source_expired": "The selected source has expired.",
-                    "source_inaccessible": "The selected source is outside the authorised scope.",
-                    "source_preview_unsupported": "Draft preview is unsupported for this source type.",
-                }.get(code, "The selected source is unavailable.")
                 issues.append(PageSectionValidationService._issue(
                     section,
                     code,
-                    message,
+                    PageSectionValidationService.SOURCE_ISSUE_MESSAGES[code],
                     item=item,
                     field="source_id",
                 ))
@@ -926,36 +1127,47 @@ class PageSectionValidationService:
         section: PageSection,
         preview_capability: PageCmsPreviewCapability | None,
     ) -> list[ResolvedSectionItem]:
-        resolved: list[ResolvedSectionItem] = []
-        for item in _active_section_items(section):
-            if item.source_type is None or item.source_id is None:
-                continue
-            try:
-                source = await PageCmsSourceService.resolve(
-                    db,
-                    item.source_type,
-                    item.source_id,
-                    destination_scope_type=section.scope_type,
-                    destination_scope_id=section.scope_id,
-                    preview_capability=preview_capability,
+        resolved_by_section = await PageSectionValidationService.resolve_items_for_sections(
+            db,
+            [section],
+            preview_capability,
+        )
+        return resolved_by_section.get(section.id, [])
+
+    @staticmethod
+    async def resolve_items_for_sections(
+        db: AsyncSession,
+        sections: Sequence[PageSection],
+        preview_capability: PageCmsPreviewCapability | None,
+    ) -> dict[uuid.UUID, list[ResolvedSectionItem]]:
+        references = [
+            (item.source_type, item.source_id)
+            for section in sections
+            for item in _active_section_items(section)
+            if item.source_type is not None and item.source_id is not None
+        ]
+        if not sections:
+            return {}
+        destination_scope_type = sections[0].scope_type
+        destination_scope_id = sections[0].scope_id
+        resolutions = await PageCmsSourceService.resolve_many(
+            db,
+            references,
+            destination_scope_type=destination_scope_type,
+            destination_scope_id=destination_scope_id,
+            preview_capability=preview_capability,
+        ) if references else {}
+        return {
+            section.id: [
+                ResolvedSectionItem.from_resolution(
+                    item,
+                    resolutions[(item.source_type, item.source_id)],
                 )
-            except PageCmsSourcePreviewUnsupportedError as exc:
-                resolved.append(ResolvedSectionItem(
-                    item,
-                    failure="preview_unsupported",
-                    message=str(exc),
-                ))
-            except PermissionError as exc:
-                resolved.append(ResolvedSectionItem(item, failure="inaccessible", message=str(exc)))
-            except (PageCmsSourceProviderError, ValueError) as exc:
-                resolved.append(ResolvedSectionItem(item, failure="unavailable", message=str(exc)))
-            else:
-                resolved.append(ResolvedSectionItem(
-                    item,
-                    source=source,
-                    failure=None if source is not None else "unavailable",
-                ))
-        return resolved
+                for item in _active_section_items(section)
+                if item.source_type is not None and item.source_id is not None
+            ]
+            for section in sections
+        }
 
     @staticmethod
     async def validate_for_section(
@@ -978,7 +1190,7 @@ class PageSectionWorkflowService:
         user_id: uuid.UUID,
         note: str | None = None,
         *,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
         preview_capability: PageCmsPreviewCapability | None = None,
     ) -> PageSection:
         previous_status = section.status
@@ -987,8 +1199,7 @@ class PageSectionWorkflowService:
         if next_status is None:
             raise ValueError(f"Invalid workflow transition: {section.status} -> {action}")
 
-        should_validate = preview_capability is not None or isinstance(db, AsyncSession)
-        if action in {"submit", "approve", "publish"} and db is not None and should_validate:
+        if action in {"submit", "approve", "publish"}:
             issues = await PageSectionValidationService.validate_for_section(
                 db,
                 section,
@@ -1024,16 +1235,15 @@ class PageSectionWorkflowService:
             section.unpublished_by_id = user_id
             section.unpublished_at = now
 
-        if db is not None:
-            db.add(ContentWorkflowLog(
-                content_type="page-sections",
-                content_id=section.id,
-                from_status=previous_status,
-                to_status=next_status,
-                action=action,
-                actor_id=user_id,
-                comments=note,
-            ))
+        db.add(ContentWorkflowLog(
+            content_type="page-sections",
+            content_id=section.id,
+            from_status=previous_status,
+            to_status=next_status,
+            action=action,
+            actor_id=user_id,
+            comments=note,
+        ))
 
         return section
 
@@ -1119,10 +1329,8 @@ async def group_media_links(
     result = await db.execute(query)
     grouped = _default_media_groups()
     for link in result.scalars().all():
-        bucket = _normalize_role(link.role)
-        if bucket is None:
-            continue
-        grouped[bucket].append(_serialize_media_link(link))
+        bucket = _normalize_role(link.role) or link.role
+        grouped.setdefault(bucket, []).append(_serialize_media_link(link))
     return grouped
 
 
@@ -1131,24 +1339,37 @@ async def group_preview_media_links(
     entity_type: str,
     entity_id: uuid.UUID,
 ) -> dict[str, list[dict[str, Any]]]:
+    grouped = await group_preview_media_links_many(db, entity_type, [entity_id])
+    return grouped.get(entity_id, _default_media_groups())
+
+
+async def group_preview_media_links_many(
+    db: AsyncSession,
+    entity_type: str,
+    entity_ids: Sequence[uuid.UUID],
+) -> dict[uuid.UUID, dict[str, list[dict[str, Any]]]]:
+    if not entity_ids:
+        return {}
     query = (
         select(MediaLink)
         .options(selectinload(MediaLink.media))
         .join(Media, MediaLink.media_id == Media.id)
         .where(
             MediaLink.deleted_at.is_(None),
+            MediaLink.archived_at.is_(None),
             Media.deleted_at.is_(None),
             MediaLink.entity_type == entity_type,
-            MediaLink.entity_id == entity_id,
+            MediaLink.entity_id.in_(entity_ids),
         )
-        .order_by(MediaLink.display_order.asc(), MediaLink.created_at.asc())
+        .order_by(MediaLink.entity_id.asc(), MediaLink.display_order.asc(), MediaLink.created_at.asc())
     )
     result = await db.execute(query)
-    grouped = _default_media_groups()
+    grouped = {entity_id: _default_media_groups() for entity_id in entity_ids}
     for link in result.scalars().all():
-        bucket = _normalize_role(link.role)
-        if bucket is not None:
-            grouped[bucket].append(_serialize_media_link(link))
+        bucket = _normalize_role(link.role) or link.role
+        grouped.setdefault(link.entity_id, _default_media_groups()).setdefault(bucket, []).append(
+            _serialize_media_link(link)
+        )
     return grouped
 
 
@@ -1162,36 +1383,41 @@ class PagePreviewCompositionService:
         scope_type: str,
         scope_id: uuid.UUID | None,
         *,
-        is_visible: Callable[[PageSection], Awaitable[bool]],
         preview_capability: PageCmsPreviewCapability,
-    ) -> dict[str, Any]:
-        sections = await PageSectionService.list_preview_authorized(
+    ) -> PagePreviewResponse:
+        sections = await PageSectionService.list_preview(
             db,
             page_key=page_key,
             scope_type=scope_type,
             scope_id=scope_id,
-            is_visible=is_visible,
         )
-        section_payloads: list[dict[str, Any]] = []
+        sections = sorted(sections, key=_section_display_order)
+        resolved_by_section = await PageSectionValidationService.resolve_items_for_sections(
+            db,
+            sections,
+            preview_capability,
+        )
+        media_by_section = await group_preview_media_links_many(
+            db,
+            "page_section",
+            [section.id for section in sections],
+        )
+        section_payloads: list[PagePreviewSection] = []
         issues: list[PageValidationIssue] = []
-        for section in sorted(sections, key=_section_display_order):
-            resolved_items = await PageSectionValidationService.resolve_items(
-                db,
-                section,
-                preview_capability,
-            )
-            media_groups = await group_preview_media_links(db, "page_section", section.id)
+        for section in sections:
+            resolved_items = resolved_by_section.get(section.id, [])
+            media_groups = media_by_section.get(section.id, _default_media_groups())
             section_issues = PageSectionValidationService.validate(section, resolved_items, media_groups)
             issues.extend(section_issues)
             section_payloads.append(_serialize_preview_section(section, media_groups, resolved_items))
 
-        return {
-            "page_key": page_key,
-            "scope_type": scope_type,
-            "scope_id": scope_id,
-            "sections": section_payloads,
-            "issues": [issue.model_dump(mode="json") for issue in issues],
-        }
+        return PagePreviewResponse(
+            page_key=page_key,
+            scope_type=scope_type,
+            scope_id=scope_id,
+            sections=section_payloads,
+            issues=issues,
+        )
 
 
 class HomepageCompositionService:
@@ -1251,4 +1477,5 @@ __all__ = [
     "HomepageCompositionService",
     "group_media_links",
     "group_preview_media_links",
+    "group_preview_media_links_many",
 ]

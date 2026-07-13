@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 import uuid
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from app.models import PageSection, PartnershipSpotlight
 from app.services import PageSectionService, PageSectionWorkflowService, PartnershipSpotlightWorkflowService
@@ -32,6 +32,14 @@ class _ListDb:
     async def execute(self, query):
         self.queries.append(query)
         return _ScalarListResult(self._items)
+
+
+class _WorkflowDb:
+    def __init__(self):
+        self.added = []
+
+    def add(self, record):
+        self.added.append(record)
 
 
 class PageCmsWorkflowTests(unittest.IsolatedAsyncioTestCase):
@@ -125,7 +133,9 @@ class PageCmsWorkflowTests(unittest.IsolatedAsyncioTestCase):
         )
 
         with self.assertRaisesRegex(ValueError, "Invalid workflow transition"):
-            await PageSectionWorkflowService.transition(section, "publish", uuid.uuid4())
+            await PageSectionWorkflowService.transition(
+                section, "publish", uuid.uuid4(), db=_WorkflowDb(),
+            )
 
     async def test_workflow_accepts_submit_approve_publish_sequence(self):
         user_id = uuid.uuid4()
@@ -137,22 +147,29 @@ class PageCmsWorkflowTests(unittest.IsolatedAsyncioTestCase):
             status="draft",
         )
 
-        await PageSectionWorkflowService.transition(section, "submit", user_id)
-        self.assertEqual("in_review", section.status)
-        self.assertEqual("in_review", section.workflow_status)
-        self.assertEqual(user_id, section.submitted_by_id)
-        self.assertIsNotNone(section.submitted_at)
-        self.assertEqual(user_id, section.updated_by_id)
+        db = _WorkflowDb()
+        with patch.object(
+            page_cms.PageSectionValidationService,
+            "validate_for_section",
+            AsyncMock(return_value=[]),
+        ) as validate:
+            await PageSectionWorkflowService.transition(section, "submit", user_id, db=db)
+            self.assertEqual("in_review", section.status)
+            self.assertEqual("in_review", section.workflow_status)
+            self.assertEqual(user_id, section.submitted_by_id)
+            self.assertIsNotNone(section.submitted_at)
+            self.assertEqual(user_id, section.updated_by_id)
 
-        await PageSectionWorkflowService.transition(section, "approve", user_id)
-        self.assertEqual("approved", section.status)
-        self.assertEqual("approved", section.workflow_status)
-        self.assertEqual(user_id, section.reviewed_by_id)
-        self.assertIsNotNone(section.reviewed_at)
-        self.assertEqual(user_id, section.approved_by_id)
-        self.assertIsNotNone(section.approved_at)
+            await PageSectionWorkflowService.transition(section, "approve", user_id, db=db)
+            self.assertEqual("approved", section.status)
+            self.assertEqual("approved", section.workflow_status)
+            self.assertEqual(user_id, section.reviewed_by_id)
+            self.assertIsNotNone(section.reviewed_at)
+            self.assertEqual(user_id, section.approved_by_id)
+            self.assertIsNotNone(section.approved_at)
 
-        await PageSectionWorkflowService.transition(section, "publish", user_id)
+            await PageSectionWorkflowService.transition(section, "publish", user_id, db=db)
+        self.assertEqual(3, validate.await_count)
         self.assertEqual("published", section.status)
         self.assertEqual("published", section.workflow_status)
         self.assertEqual(user_id, section.published_by_id)
@@ -168,7 +185,9 @@ class PageCmsWorkflowTests(unittest.IsolatedAsyncioTestCase):
         )
 
         with self.assertRaisesRegex(ValueError, "Invalid workflow transition"):
-            await PageSectionWorkflowService.transition(section, "publish", uuid.uuid4())
+            await PageSectionWorkflowService.transition(
+                section, "publish", uuid.uuid4(), db=_WorkflowDb(),
+            )
 
     async def test_unpublish_returns_published_section_to_approved(self):
         section = PageSection(
@@ -179,7 +198,9 @@ class PageCmsWorkflowTests(unittest.IsolatedAsyncioTestCase):
             status="published",
         )
 
-        await PageSectionWorkflowService.transition(section, "unpublish", uuid.uuid4())
+        await PageSectionWorkflowService.transition(
+            section, "unpublish", uuid.uuid4(), db=_WorkflowDb(),
+        )
 
         self.assertEqual("approved", section.status)
         self.assertEqual("approved", section.workflow_status)

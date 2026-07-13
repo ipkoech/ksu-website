@@ -14,6 +14,7 @@ from app.schemas.page_cms import PageCmsSourceSummary
 from app.services.page_cms_sources import (
     PageCmsSourcePreviewUnsupportedError,
     PageCmsSourceProviderError,
+    PageCmsSourceResolutionState,
     PageCmsSourceService,
 )
 from ksu_common import PaginatedResult
@@ -25,6 +26,14 @@ class _ScalarResult:
 
     def scalar_one_or_none(self):
         return self.value
+
+    def scalars(self):
+        return self
+
+    def all(self):
+        if self.value is None:
+            return []
+        return list(self.value) if isinstance(self.value, (list, tuple)) else [self.value]
 
 
 class _Db:
@@ -596,7 +605,10 @@ async def test_partner_search_excludes_future_partnerships():
 
 @pytest.mark.asyncio
 async def test_partner_preview_capability_raises_explicit_unsupported_error():
-    with pytest.raises(PageCmsSourcePreviewUnsupportedError) as error:
+    with (
+        patch.object(PageCmsSourceService, "_load_public_partners", AsyncMock(return_value=[])),
+        pytest.raises(PageCmsSourcePreviewUnsupportedError) as error,
+    ):
         await PageCmsSourceService.resolve(
             _Db(), "research_partner", uuid.uuid4(),
             destination_scope_type="research", destination_scope_id=uuid.uuid4(),
@@ -604,6 +616,139 @@ async def test_partner_preview_capability_raises_explicit_unsupported_error():
         )
 
     assert error.value.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_partner_preview_resolves_public_record_before_requiring_privileged_preview():
+    partner_id = uuid.uuid4()
+    public_partner = {
+        "id": str(partner_id),
+        "name": "Public Research Partner",
+        "status": "active",
+        "is_active": True,
+        "is_public": True,
+    }
+
+    with patch.object(
+        PageCmsSourceService,
+        "_load_public_partners",
+        AsyncMock(return_value=[public_partner]),
+    ) as load:
+        result = await PageCmsSourceService.resolve(
+            _Db(),
+            "research_partner",
+            partner_id,
+            destination_scope_type="research",
+            destination_scope_id=uuid.uuid4(),
+            preview_capability=_PreviewCapability("research", uuid.uuid4()),
+        )
+
+    assert result is not None
+    assert result.id == partner_id
+    load.assert_awaited_once_with("")
+
+
+@pytest.mark.asyncio
+async def test_resolve_many_batches_sql_sources_and_returns_typed_states_without_leaking_cross_scope_data():
+    destination_school_id = uuid.uuid4()
+    accessible = News(
+        title="Accessible draft",
+        slug="accessible-draft",
+        status="draft",
+        workflow_status="draft",
+        is_public=False,
+        is_published=False,
+        scope_type="school",
+        scope_id=destination_school_id,
+    )
+    accessible.id = uuid.uuid4()
+    inaccessible = News(
+        title="Secret cross-scope title",
+        slug="secret-cross-scope-title",
+        status="draft",
+        workflow_status="draft",
+        is_public=False,
+        is_published=False,
+        scope_type="school",
+        scope_id=uuid.uuid4(),
+    )
+    inaccessible.id = uuid.uuid4()
+    missing_id = uuid.uuid4()
+    db = _Db([accessible, inaccessible])
+
+    resolutions = await PageCmsSourceService.resolve_many(
+        db,
+        [
+            ("news", accessible.id),
+            ("news", inaccessible.id),
+            ("news", missing_id),
+        ],
+        destination_scope_type="school",
+        destination_scope_id=destination_school_id,
+        preview_capability=_PreviewCapability("school", destination_school_id),
+    )
+
+    assert len(db.statements) == 1
+    assert resolutions[("news", accessible.id)].state is PageCmsSourceResolutionState.RESOLVED
+    inaccessible_result = resolutions[("news", inaccessible.id)]
+    assert inaccessible_result.state is PageCmsSourceResolutionState.INACCESSIBLE
+    assert inaccessible_result.source is None
+    assert "Secret" not in inaccessible_result.message
+    assert resolutions[("news", missing_id)].state is PageCmsSourceResolutionState.UNAVAILABLE
+
+
+@pytest.mark.asyncio
+async def test_resolve_many_preserves_provider_unsupported_and_preview_taxonomy():
+    partner_id = uuid.uuid4()
+    unsupported_id = uuid.uuid4()
+
+    with patch.object(
+        PageCmsSourceService,
+        "_load_public_partners",
+        AsyncMock(side_effect=PageCmsSourceProviderError("provider detail must not leak")),
+    ) as load:
+        resolutions = await PageCmsSourceService.resolve_many(
+            _Db(),
+            [
+                ("research_partner", partner_id),
+                ("research_partner", uuid.uuid4()),
+                ("intake", unsupported_id),
+            ],
+            destination_scope_type="research",
+            destination_scope_id=uuid.uuid4(),
+            preview_capability=_PreviewCapability("research", uuid.uuid4()),
+        )
+
+    load.assert_awaited_once_with("")
+    assert resolutions[("research_partner", partner_id)].state is PageCmsSourceResolutionState.PROVIDER_ERROR
+    assert resolutions[("research_partner", partner_id)].message == "Source provider is unavailable."
+    assert resolutions[("intake", unsupported_id)].state is PageCmsSourceResolutionState.UNSUPPORTED_TYPE
+
+
+@pytest.mark.asyncio
+async def test_resolve_many_fetches_public_partner_provider_once_for_multiple_references():
+    first_id = uuid.uuid4()
+    second_id = uuid.uuid4()
+    records = [
+        {"id": str(first_id), "name": "First", "status": "active", "is_active": True, "is_public": True},
+        {"id": str(second_id), "name": "Second", "status": "active", "is_active": True, "is_public": True},
+    ]
+
+    with patch.object(
+        PageCmsSourceService,
+        "_load_public_partners",
+        AsyncMock(return_value=records),
+    ) as load:
+        resolutions = await PageCmsSourceService.resolve_many(
+            _Db(),
+            [("research_partner", first_id), ("research_partner", second_id)],
+            destination_scope_type="research",
+            destination_scope_id=uuid.uuid4(),
+            preview_capability=_PreviewCapability("research", uuid.uuid4()),
+        )
+
+    load.assert_awaited_once_with("")
+    assert all(result.state is PageCmsSourceResolutionState.RESOLVED for result in resolutions.values())
 
 
 def test_source_summary_strips_html_bounds_text_and_rejects_unsafe_thumbnail():

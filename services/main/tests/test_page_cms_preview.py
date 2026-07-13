@@ -7,12 +7,27 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import HTTPException
+from pydantic import ValidationError
 
 from app.api.v1 import page_cms
-from app.models import PageSection, SectionItem
-from app.schemas.page_cms import PageCmsSourceSummary
-from app.services.page_cms import PagePreviewCompositionService, PageSectionService
-from app.services.page_cms_source_errors import PageCmsSourcePreviewUnsupportedError
+from app.models import Media, MediaLink, PageSection, SectionItem
+from app.schemas.page_cms import (
+    PageCmsSourceSummary,
+    PagePreviewItem,
+    PagePreviewMediaLink,
+    PagePreviewResolvedSource,
+    PagePreviewResponse,
+    PagePreviewSection,
+)
+from app.services.page_cms import (
+    PagePreviewCompositionService,
+    PageSectionService,
+    group_preview_media_links_many,
+)
+from app.services.page_cms_sources import (
+    PageCmsSourceResolution,
+    PageCmsSourceResolutionState,
+)
 
 
 class _ScalarRows:
@@ -36,14 +51,21 @@ class _Db:
         return _ScalarRows(self.rows)
 
 
-def _section(*, status="draft", scope_type="school", scope_id=None, source_type="news"):
+def _section(
+    *,
+    status="draft",
+    scope_type="school",
+    scope_id=None,
+    source_type="news",
+    layout_variant="news_grid",
+):
     scope_id = scope_id or uuid.uuid4()
     section = PageSection(
         page_key="homepage",
         scope_type=scope_type,
         scope_id=scope_id,
         section_key="news",
-        layout_variant="news_grid",
+        layout_variant=layout_variant,
         title="School news",
         status=status,
         workflow_status=status,
@@ -68,12 +90,11 @@ def _section(*, status="draft", scope_type="school", scope_id=None, source_type=
 async def test_preview_query_excludes_archived_sections_before_authorization():
     db = _Db()
 
-    await PageSectionService.list_preview_authorized(
+    await PageSectionService.list_preview(
         db,
         page_key="homepage",
         scope_type="university",
         scope_id=None,
-        is_visible=AsyncMock(return_value=True),
     )
 
     query = str(db.statements[0]).lower()
@@ -95,21 +116,33 @@ async def test_preview_includes_authorized_draft_and_resolves_source_in_destinat
     )
 
     with (
-        patch.object(PageSectionService, "list_preview_authorized", AsyncMock(return_value=[section])),
-        patch("app.services.page_cms.group_preview_media_links", AsyncMock(return_value={})),
-        patch("app.services.page_cms.PageCmsSourceService.resolve", AsyncMock(return_value=source)) as resolve,
+        patch.object(PageSectionService, "list_preview", AsyncMock(return_value=[section])),
+        patch(
+            "app.services.page_cms.group_preview_media_links_many",
+            AsyncMock(return_value={section.id: {}}),
+        ),
+        patch(
+            "app.services.page_cms.PageCmsSourceService.resolve_many",
+            AsyncMock(return_value={
+                ("news", section.items[0].source_id): PageCmsSourceResolution(
+                    source_type="news",
+                    source_id=section.items[0].source_id,
+                    state=PageCmsSourceResolutionState.RESOLVED,
+                    source=source,
+                ),
+            }),
+        ) as resolve,
     ):
         result = await PagePreviewCompositionService.compose(
             object(),
             "homepage",
             "school",
             school_id,
-            is_visible=AsyncMock(return_value=True),
             preview_capability=capability,
         )
 
-    assert result["sections"][0]["status"] == "draft"
-    assert result["sections"][0]["items"][0]["source"]["label"] == "Draft graduation update"
+    assert result.sections[0].status == "draft"
+    assert result.sections[0].items[0].source.label == "Draft graduation update"
     assert resolve.await_args.kwargs == {
         "destination_scope_type": "school",
         "destination_scope_id": school_id,
@@ -119,14 +152,27 @@ async def test_preview_includes_authorized_draft_and_resolves_source_in_destinat
 
 @pytest.mark.asyncio
 async def test_preview_surfaces_unsupported_partner_draft_resolution():
-    section = _section(scope_type="research", source_type="research_partner")
+    section = _section(
+        scope_type="research",
+        source_type="research_partner",
+        layout_variant="featured_partnership",
+    )
 
     with (
-        patch.object(PageSectionService, "list_preview_authorized", AsyncMock(return_value=[section])),
-        patch("app.services.page_cms.group_preview_media_links", AsyncMock(return_value={})),
+        patch.object(PageSectionService, "list_preview", AsyncMock(return_value=[section])),
         patch(
-            "app.services.page_cms.PageCmsSourceService.resolve",
-            AsyncMock(side_effect=PageCmsSourcePreviewUnsupportedError("Research partner preview is unsupported")),
+            "app.services.page_cms.group_preview_media_links_many",
+            AsyncMock(return_value={section.id: {}}),
+        ),
+        patch(
+            "app.services.page_cms.PageCmsSourceService.resolve_many",
+            AsyncMock(return_value={
+                ("research_partner", section.items[0].source_id): PageCmsSourceResolution(
+                    source_type="research_partner",
+                    source_id=section.items[0].source_id,
+                    state=PageCmsSourceResolutionState.PREVIEW_UNSUPPORTED,
+                ),
+            }),
         ),
     ):
         result = await PagePreviewCompositionService.compose(
@@ -134,13 +180,102 @@ async def test_preview_surfaces_unsupported_partner_draft_resolution():
             "homepage",
             "research",
             section.scope_id,
-            is_visible=AsyncMock(return_value=True),
             preview_capability=SimpleNamespace(),
         )
 
-    issue = next(issue for issue in result["issues"] if issue["code"] == "source_preview_unsupported")
-    assert issue["blocking"] is True
-    assert "unsupported" in issue["message"].lower()
+    issue = next(issue for issue in result.issues if issue.code == "source_preview_unsupported")
+    assert issue.blocking is True
+    assert "unsupported" in issue.message.lower()
+
+
+def _media_link(entity_id: uuid.UUID, role: str, *, media_type: str = "image", mime_type: str = "image/jpeg"):
+    media = Media(
+        filename=f"{role}.bin",
+        original_filename=f"{role}.bin",
+        mime_type=mime_type,
+        file_size=100,
+        storage_path=f"uploads/{role}.bin",
+        media_type=media_type,
+        is_public=False,
+    )
+    media.id = uuid.uuid4()
+    link = MediaLink(
+        media=media,
+        media_id=media.id,
+        entity_type="page_section",
+        entity_id=entity_id,
+        role=role,
+        display_order=10,
+    )
+    link.id = uuid.uuid4()
+    return link
+
+
+@pytest.mark.asyncio
+async def test_preview_media_bulk_query_filters_lifecycle_and_preserves_signing_and_unknown_roles():
+    section_id = uuid.uuid4()
+    db = _Db([
+        _media_link(section_id, "signing_photo"),
+        _media_link(section_id, "custom_editorial_role"),
+    ])
+
+    grouped = await group_preview_media_links_many(db, "page_section", [section_id])
+
+    assert len(db.statements) == 1
+    query = str(db.statements[0]).lower()
+    assert "media_links.archived_at is null" in query
+    assert "media_links.deleted_at is null" in query
+    assert "media.deleted_at is null" in query
+    assert grouped[section_id]["signingPhoto"][0]["role"] == "signing_photo"
+    assert grouped[section_id]["custom_editorial_role"][0]["role"] == "custom_editorial_role"
+
+
+@pytest.mark.asyncio
+async def test_preview_bulk_loads_media_once_and_resolves_all_sources_once():
+    school_id = uuid.uuid4()
+    first = _section(scope_id=school_id)
+    second = _section(scope_id=school_id)
+    source_resolutions = {
+        ("news", section.items[0].source_id): PageCmsSourceResolution(
+            source_type="news",
+            source_id=section.items[0].source_id,
+            state=PageCmsSourceResolutionState.RESOLVED,
+            source=PageCmsSourceSummary(
+                id=section.items[0].source_id,
+                source_type="news",
+                label=f"Source {index}",
+                status="published",
+            ),
+        )
+        for index, section in enumerate((first, second), start=1)
+    }
+    resolve_many = AsyncMock(return_value=source_resolutions)
+    media_many = AsyncMock(return_value={first.id: {}, second.id: {}})
+    db = object()
+
+    with (
+        patch.object(PageSectionService, "list_preview", AsyncMock(return_value=[first, second])),
+        patch("app.services.page_cms.PageCmsSourceService.resolve_many", resolve_many),
+        patch("app.services.page_cms.group_preview_media_links_many", media_many),
+    ):
+        result = await PagePreviewCompositionService.compose(
+            db,
+            "homepage",
+            "school",
+            school_id,
+            preview_capability=SimpleNamespace(),
+        )
+
+    assert len(result.sections) == 2
+    resolve_many.assert_awaited_once()
+    media_many.assert_awaited_once_with(db, "page_section", [first.id, second.id])
+
+
+def test_preview_response_uses_typed_section_item_media_and_source_contracts():
+    assert PagePreviewResponse.model_fields["sections"].annotation == list[PagePreviewSection]
+    assert PagePreviewSection.model_fields["items"].annotation == list[PagePreviewItem]
+    assert PagePreviewItem.model_fields["source"].annotation == PagePreviewResolvedSource | None
+    assert PagePreviewSection.model_fields["media"].annotation == dict[str, list[PagePreviewMediaLink]]
 
 
 @pytest.mark.asyncio
@@ -184,14 +319,44 @@ async def test_preview_endpoint_returns_standard_success_envelope():
 
 
 @pytest.mark.asyncio
+async def test_preview_endpoint_rejects_malformed_service_payload_at_typed_boundary():
+    user = SimpleNamespace(id=uuid.uuid4())
+    malformed = {
+        "page_key": "homepage",
+        "scope_type": "university",
+        "scope_id": None,
+        "sections": [{"id": str(uuid.uuid4()), "items": "not-a-list"}],
+        "issues": [],
+    }
+
+    with (
+        patch.object(page_cms, "_require_page_preview_access", AsyncMock()),
+        patch.object(page_cms.PagePreviewCompositionService, "compose", AsyncMock(return_value=malformed)),
+    ):
+        with pytest.raises(ValidationError):
+            await page_cms.get_page_preview(
+                "homepage", db=object(), user=user, scope_type="university", scope_id=None,
+            )
+
+
+@pytest.mark.asyncio
 async def test_validate_endpoint_returns_only_authorized_preview_validation_contract():
     user = SimpleNamespace(id=uuid.uuid4())
+    section_id = uuid.uuid4()
     payload = {
         "page_key": "homepage",
         "scope_type": "university",
         "scope_id": None,
-        "sections": [{"id": str(uuid.uuid4())}],
-        "issues": [{"code": "missing_title"}],
+        "sections": [],
+        "issues": [{
+            "code": "missing_title",
+            "severity": "error",
+            "section_id": str(section_id),
+            "item_id": None,
+            "field": "title",
+            "message": "Title is required.",
+            "blocking": True,
+        }],
     }
 
     with (
@@ -206,7 +371,7 @@ async def test_validate_endpoint_returns_only_authorized_preview_validation_cont
         "page_key": "homepage",
         "scope_type": "university",
         "scope_id": None,
-        "issues": payload["issues"],
+        "issues": [{**payload["issues"][0], "section_id": str(section_id)}],
     }
 
 

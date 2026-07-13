@@ -137,6 +137,10 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
             patch("app.api.v1._scoped._can_access_scope", return_value=True),
+            patch(
+                "app.services.page_cms.PageSectionValidationService.validate_for_section",
+                AsyncMock(return_value=[]),
+            ),
         ):
             await page_cms.run_page_section_workflow_action(
                 section.id, "approve", db=db, user=user,
@@ -612,6 +616,10 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
             patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+            patch(
+                "app.services.page_cms.PageSectionValidationService.validate_for_section",
+                AsyncMock(return_value=[]),
+            ),
         ):
             response = await page_cms.run_page_section_workflow_action(
                 section.id,
@@ -640,6 +648,10 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
             patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+            patch(
+                "app.services.page_cms.PageSectionValidationService.validate_for_section",
+                AsyncMock(return_value=[]),
+            ),
         ):
             response = await page_cms.run_page_section_workflow_action(
                 section.id,
@@ -756,6 +768,10 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
             patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+            patch(
+                "app.services.page_cms.PageSectionValidationService.validate_for_section",
+                AsyncMock(return_value=[]),
+            ),
         ):
             response = await page_cms.run_page_section_workflow_action(
                 section.id,

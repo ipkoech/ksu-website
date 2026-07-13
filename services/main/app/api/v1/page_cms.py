@@ -5,7 +5,6 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common.schemas.responses import success
 
@@ -20,7 +19,9 @@ from ...schemas import (
     SectionItemUpdate,
 )
 from ...schemas.page_cms import (
+    PagePreviewResponse,
     PageSectionReorderRequest,
+    PageValidationResponse,
     SectionItemReorderRequest,
     validate_section_item_state,
 )
@@ -403,7 +404,6 @@ async def _compose_authorized_page_preview(
         page_key,
         scope_type,
         scope_id,
-        is_visible=lambda section: _can_access_page_section_admin_row(db, user, section),
         preview_capability=capability,
     )
 
@@ -416,14 +416,14 @@ async def get_page_preview(
     scope_type: str = Query("university"),
     scope_id: uuid.UUID | None = None,
 ):
-    composition = await _compose_authorized_page_preview(
+    composition = PagePreviewResponse.model_validate(await _compose_authorized_page_preview(
         page_key,
         db,
         user,
         scope_type,
         scope_id,
-    )
-    return success(data=composition)
+    ))
+    return success(data=composition.model_dump(mode="json"))
 
 
 @router.get("/pages/{page_key}/validate")
@@ -434,19 +434,20 @@ async def validate_page(
     scope_type: str = Query("university"),
     scope_id: uuid.UUID | None = None,
 ):
-    composition = await _compose_authorized_page_preview(
+    composition = PagePreviewResponse.model_validate(await _compose_authorized_page_preview(
         page_key,
         db,
         user,
         scope_type,
         scope_id,
+    ))
+    validation = PageValidationResponse(
+        page_key=page_key,
+        scope_type=scope_type,
+        scope_id=scope_id,
+        issues=composition.issues,
     )
-    return success(data={
-        "page_key": page_key,
-        "scope_type": scope_type,
-        "scope_id": scope_id,
-        "issues": composition["issues"],
-    })
+    return success(data=validation.model_dump(mode="json"))
 
 
 @router.get("/page-sections/admin")
@@ -690,11 +691,7 @@ async def run_page_section_workflow_action(
         scope_id=item.scope_id,
         action=_workflow_action_scope(action),
     )
-    capability = (
-        _AuthorizedPagePreviewCapability(item.scope_type, item.scope_id)
-        if isinstance(db, AsyncSession)
-        else None
-    )
+    capability = _AuthorizedPagePreviewCapability(item.scope_type, item.scope_id)
     try:
         item = await PageSectionWorkflowService.transition(
             item,

@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import math
 import uuid
+from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import date, datetime, timezone
+from enum import Enum
 from typing import Any, Protocol
 
 from sqlalchemy import false, func, or_, select
@@ -38,6 +41,52 @@ class PageCmsPreviewCapability(Protocol):
         destination_scope_type: str,
         destination_scope_id: uuid.UUID | None,
     ) -> bool: ...
+
+
+class PageCmsSourceResolutionState(str, Enum):
+    RESOLVED = "resolved"
+    INACCESSIBLE = "inaccessible"
+    UNAVAILABLE = "unavailable"
+    PROVIDER_ERROR = "provider_error"
+    UNSUPPORTED_TYPE = "unsupported_type"
+    PREVIEW_UNSUPPORTED = "preview_unsupported"
+
+
+SOURCE_STATE_MESSAGES = {
+    PageCmsSourceResolutionState.RESOLVED: "",
+    PageCmsSourceResolutionState.INACCESSIBLE: "Source is inaccessible.",
+    PageCmsSourceResolutionState.UNAVAILABLE: "Source is unavailable.",
+    PageCmsSourceResolutionState.PROVIDER_ERROR: "Source provider is unavailable.",
+    PageCmsSourceResolutionState.UNSUPPORTED_TYPE: "Source type is unsupported.",
+    PageCmsSourceResolutionState.PREVIEW_UNSUPPORTED: "Draft preview is unsupported for this source type.",
+}
+
+
+@dataclass(frozen=True)
+class PageCmsSourceResolution:
+    source_type: str
+    source_id: uuid.UUID
+    state: PageCmsSourceResolutionState
+    source: PageCmsSourceSummary | None = None
+    message: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.message:
+            object.__setattr__(self, "message", SOURCE_STATE_MESSAGES[self.state])
+
+
+def _source_resolution(
+    source_type: str,
+    source_id: uuid.UUID,
+    state: PageCmsSourceResolutionState,
+    source: PageCmsSourceSummary | None = None,
+) -> PageCmsSourceResolution:
+    return PageCmsSourceResolution(
+        source_type=source_type,
+        source_id=source_id,
+        state=state,
+        source=source,
+    )
 
 
 def _media_url(media: Any | None) -> str | None:
@@ -509,20 +558,252 @@ class PageCmsSourceService:
             )
 
         if source_type == "research_partner":
-            if preview_capability is not None:
-                raise PageCmsSourcePreviewUnsupportedError(
-                    "Research partner preview is unsupported because no privileged provider endpoint is available"
-                )
             if destination_scope_type not in {"university", "research"}:
                 return None
             records = await PageCmsSourceService._load_public_partners("")
             item = next((record for record in records if str(record.get("id")) == str(source_id)), None)
-            return _partner_summary(item) if item and _partner_is_public(item) else None
+            if item and _partner_is_public(item):
+                return _partner_summary(item)
+            if preview_capability is not None:
+                raise PageCmsSourcePreviewUnsupportedError(
+                    "Research partner preview is unsupported because no privileged provider endpoint is available"
+                )
+            return None
 
         result = await PageCmsSourceService._search_stats(
             db, "", destination_scope_type, destination_scope_id, 1, 50,
         )
         return next((item for item in result.items if item.id == source_id), None)
+
+    @staticmethod
+    async def resolve_many(
+        db,
+        references: Sequence[tuple[str, uuid.UUID]],
+        *,
+        destination_scope_type: str,
+        destination_scope_id: uuid.UUID | None,
+        preview_capability: PageCmsPreviewCapability | None = None,
+    ) -> dict[tuple[str, uuid.UUID], PageCmsSourceResolution]:
+        unique_references = list(dict.fromkeys(references))
+        results: dict[tuple[str, uuid.UUID], PageCmsSourceResolution] = {}
+        grouped: dict[str, list[uuid.UUID]] = {}
+        for source_type, source_id in unique_references:
+            if source_type not in SUPPORTED_SOURCE_TYPES:
+                results[(source_type, source_id)] = _source_resolution(
+                    source_type,
+                    source_id,
+                    PageCmsSourceResolutionState.UNSUPPORTED_TYPE,
+                )
+                continue
+            grouped.setdefault(source_type, []).append(source_id)
+
+        capability_cache: dict[tuple[str, uuid.UUID | None], bool] = {}
+
+        async def preview_allowed(source_scope_type: str, source_scope_id: uuid.UUID | None) -> bool:
+            key = (source_scope_type, source_scope_id)
+            if key not in capability_cache:
+                capability_cache[key] = await PageCmsSourceService._preview_allowed(
+                    preview_capability,
+                    source_scope_type,
+                    source_scope_id,
+                    destination_scope_type,
+                    destination_scope_id,
+                )
+            return capability_cache[key]
+
+        programme_ids = grouped.get("programme", [])
+        if programme_ids:
+            statement = select(Programme).options(
+                selectinload(Programme.cover_image),
+                selectinload(Programme.department).selectinload(Department.school),
+            ).where(Programme.id.in_(programme_ids), Programme.deleted_at.is_(None))
+            programmes = {item.id: item for item in (await db.execute(statement)).scalars().all()}
+            for source_id in programme_ids:
+                item = programmes.get(source_id)
+                if item is None:
+                    state = PageCmsSourceResolutionState.UNAVAILABLE
+                    results[("programme", source_id)] = _source_resolution("programme", source_id, state)
+                    continue
+                school_id = item.department.school_id if item.department else None
+                scope_matches = destination_scope_type == "university" or (
+                    destination_scope_type == "school" and destination_scope_id == school_id
+                )
+                if not scope_matches:
+                    results[("programme", source_id)] = _source_resolution(
+                        "programme", source_id, PageCmsSourceResolutionState.INACCESSIBLE,
+                    )
+                    continue
+                is_public = _programme_is_public(item)
+                if is_public or await preview_allowed("school", school_id):
+                    results[("programme", source_id)] = _source_resolution(
+                        "programme",
+                        source_id,
+                        PageCmsSourceResolutionState.RESOLVED,
+                        _programme_summary(item),
+                    )
+                else:
+                    results[("programme", source_id)] = _source_resolution(
+                        "programme", source_id, PageCmsSourceResolutionState.UNAVAILABLE,
+                    )
+
+        for source_type, model in (("news", News), ("event", Event)):
+            source_ids = grouped.get(source_type, [])
+            if not source_ids:
+                continue
+            media_relation = News.featured_media if model is News else Event.featured_media
+            statement = select(model).options(selectinload(media_relation)).where(
+                model.id.in_(source_ids),
+                model.deleted_at.is_(None),
+            )
+            records = {item.id: item for item in (await db.execute(statement)).scalars().all()}
+            now = datetime.now(timezone.utc)
+            for source_id in source_ids:
+                item = records.get(source_id)
+                if item is None:
+                    results[(source_type, source_id)] = _source_resolution(
+                        source_type, source_id, PageCmsSourceResolutionState.UNAVAILABLE,
+                    )
+                    continue
+                source_scope_type = item.scope_type or "university"
+                source_scope_id = item.scope_id
+                if source_scope_type != destination_scope_type or source_scope_id != destination_scope_id:
+                    results[(source_type, source_id)] = _source_resolution(
+                        source_type, source_id, PageCmsSourceResolutionState.INACCESSIBLE,
+                    )
+                    continue
+                if item.archived_at is not None:
+                    results[(source_type, source_id)] = _source_resolution(
+                        source_type, source_id, PageCmsSourceResolutionState.UNAVAILABLE,
+                    )
+                    continue
+                is_public = _content_is_selectable(item, now)
+                if model is Event:
+                    is_public = is_public and (item.end_date or item.start_date) >= now
+                if is_public or await preview_allowed(source_scope_type, source_scope_id):
+                    summary = _news_summary(item, now) if model is News else _event_summary(item, now)
+                    results[(source_type, source_id)] = _source_resolution(
+                        source_type,
+                        source_id,
+                        PageCmsSourceResolutionState.RESOLVED,
+                        summary,
+                    )
+                else:
+                    results[(source_type, source_id)] = _source_resolution(
+                        source_type, source_id, PageCmsSourceResolutionState.UNAVAILABLE,
+                    )
+
+        person_ids = grouped.get("person", [])
+        if person_ids:
+            statement = select(Person).options(
+                selectinload(Person.photo),
+                selectinload(Person.assignments),
+            ).where(Person.id.in_(person_ids), Person.deleted_at.is_(None))
+            people = {item.id: item for item in (await db.execute(statement)).scalars().all()}
+            for source_id in person_ids:
+                item = people.get(source_id)
+                if item is None:
+                    results[("person", source_id)] = _source_resolution(
+                        "person", source_id, PageCmsSourceResolutionState.UNAVAILABLE,
+                    )
+                    continue
+                public_assignment = _assignment_for_scope(item, destination_scope_type, destination_scope_id)
+                private_assignment = _assignment_for_scope(
+                    item,
+                    destination_scope_type,
+                    destination_scope_id,
+                    include_private=True,
+                )
+                if private_assignment is None:
+                    results[("person", source_id)] = _source_resolution(
+                        "person", source_id, PageCmsSourceResolutionState.INACCESSIBLE,
+                    )
+                    continue
+                if item.is_active and item.is_public and public_assignment:
+                    summary = _person_summary(item, destination_scope_type, destination_scope_id)
+                    results[("person", source_id)] = _source_resolution(
+                        "person", source_id, PageCmsSourceResolutionState.RESOLVED, summary,
+                    )
+                elif await preview_allowed(destination_scope_type, destination_scope_id):
+                    summary = _person_summary(
+                        item,
+                        destination_scope_type,
+                        destination_scope_id,
+                        include_private_assignment=True,
+                    )
+                    results[("person", source_id)] = _source_resolution(
+                        "person", source_id, PageCmsSourceResolutionState.RESOLVED, summary,
+                    )
+                else:
+                    results[("person", source_id)] = _source_resolution(
+                        "person", source_id, PageCmsSourceResolutionState.UNAVAILABLE,
+                    )
+
+        partner_ids = grouped.get("research_partner", [])
+        if partner_ids:
+            if destination_scope_type not in {"university", "research"}:
+                for source_id in partner_ids:
+                    results[("research_partner", source_id)] = _source_resolution(
+                        "research_partner", source_id, PageCmsSourceResolutionState.INACCESSIBLE,
+                    )
+            else:
+                try:
+                    partner_records = await PageCmsSourceService._load_public_partners("")
+                except PageCmsSourceProviderError:
+                    for source_id in partner_ids:
+                        results[("research_partner", source_id)] = _source_resolution(
+                            "research_partner", source_id, PageCmsSourceResolutionState.PROVIDER_ERROR,
+                        )
+                else:
+                    partners_by_id = {str(item.get("id")): item for item in partner_records}
+                    for source_id in partner_ids:
+                        item = partners_by_id.get(str(source_id))
+                        if item is not None and _partner_is_public(item):
+                            results[("research_partner", source_id)] = _source_resolution(
+                                "research_partner",
+                                source_id,
+                                PageCmsSourceResolutionState.RESOLVED,
+                                _partner_summary(item),
+                            )
+                        else:
+                            state = (
+                                PageCmsSourceResolutionState.PREVIEW_UNSUPPORTED
+                                if preview_capability is not None
+                                else PageCmsSourceResolutionState.UNAVAILABLE
+                            )
+                            results[("research_partner", source_id)] = _source_resolution(
+                                "research_partner", source_id, state,
+                            )
+
+        stat_ids = grouped.get("public_stat", [])
+        if stat_ids:
+            try:
+                stat_page = await PageCmsSourceService._search_stats(
+                    db,
+                    "",
+                    destination_scope_type,
+                    destination_scope_id,
+                    1,
+                    50,
+                )
+            except PageCmsSourceProviderError:
+                for source_id in stat_ids:
+                    results[("public_stat", source_id)] = _source_resolution(
+                        "public_stat", source_id, PageCmsSourceResolutionState.PROVIDER_ERROR,
+                    )
+            else:
+                stats_by_id = {item.id: item for item in stat_page.items}
+                for source_id in stat_ids:
+                    source = stats_by_id.get(source_id)
+                    state = (
+                        PageCmsSourceResolutionState.RESOLVED
+                        if source is not None
+                        else PageCmsSourceResolutionState.UNAVAILABLE
+                    )
+                    results[("public_stat", source_id)] = _source_resolution(
+                        "public_stat", source_id, state, source,
+                    )
+
+        return results
 
     @staticmethod
     async def _preview_allowed(
@@ -664,6 +945,8 @@ class PageCmsSourceService:
 
 __all__ = [
     "PageCmsPreviewCapability",
+    "PageCmsSourceResolution",
+    "PageCmsSourceResolutionState",
     "PageCmsSourcePreviewUnsupportedError",
     "PageCmsSourceProviderError",
     "PageCmsSourceService",
