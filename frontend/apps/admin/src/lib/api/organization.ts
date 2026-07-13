@@ -48,17 +48,17 @@ export interface GovernanceRole {
 }
 
 export interface CouncilDashboard {
-    active_members_count: number;
-    chairperson_count: number;
-    council_members_count: number;
-    government_representatives_count: number;
-    other_representatives_count: number;
-    secretary_count: number;
-    draft_profiles_count: number;
-    published_profiles_count: number;
-    inactive_profiles_count: number;
-    vacant_positions_count: number;
-    last_update_date?: string | null;
+    total_active_members: number;
+    chairperson?: CouncilMember | null;
+    member_count: number;
+    government_representative_count: number;
+    other_representative_count: number;
+    secretary?: CouncilMember | null;
+    draft_profile_count: number;
+    published_profile_count: number;
+    inactive_profile_count: number;
+    vacant_position_count: number;
+    last_updated_at?: string | null;
 }
 
 export interface CouncilMember {
@@ -200,5 +200,7 @@ export const governanceAdminApi = {
     previewCouncil: () =>
         api.get<CouncilPublicPreview>("/governance/admin/council/preview"),
     transitionCouncilMember: (id: string, action: string, data?: { comment?: string }) =>
-        api.post<CouncilMember>(`/governance/admin/council/members/${id}/${action}`, data),
+        api.post<CouncilMember>(`/governance/admin/council/members/${id}/${action}`, undefined, {
+            params: data?.comment ? { comment: data.comment } : undefined,
+        }),
 };

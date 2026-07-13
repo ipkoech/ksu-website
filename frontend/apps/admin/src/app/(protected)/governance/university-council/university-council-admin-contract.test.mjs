@@ -21,6 +21,23 @@ test("governance admin api exposes council workspace endpoints", () => {
   }
 });
 
+test("governance admin api matches backend dashboard and transition contracts", () => {
+  const source = read("src/lib/api/organization.ts");
+
+  for (const fragment of [
+    "total_active_members",
+    "published_profile_count",
+    "last_updated_at",
+    "params: data?.comment",
+  ]) {
+    assert.match(source, new RegExp(fragment.replaceAll("?", "\\?")));
+  }
+
+  assert.doesNotMatch(source, /active_members_count/);
+  assert.doesNotMatch(source, /published_profiles_count/);
+  assert.doesNotMatch(source, /last_update_date/);
+});
+
 test("university council workspace route renders seamless primary actions", () => {
   const source = read("src/app/(protected)/governance/university-council/_components/council-dashboard.tsx");
 
@@ -35,6 +52,14 @@ test("university council workspace route renders seamless primary actions", () =
   }
 
   assert.doesNotMatch(source, /raw uuid/i);
+});
+
+test("university council primary actions control workspace tabs", () => {
+  const source = read("src/app/(protected)/governance/university-council/_components/council-dashboard.tsx");
+
+  assert.match(source, /useState\("members"\)/);
+  assert.match(source, /setActiveTab\(item\.tab\)/);
+  assert.match(source, /<Tabs value=\{activeTab\} onValueChange=\{setActiveTab\}/);
 });
 
 test("portal registry links to university council workspace", () => {

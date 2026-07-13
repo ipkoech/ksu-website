@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Archive,
@@ -35,27 +36,27 @@ const statItems: Array<{
   description: string;
 }> = [
   {
-    key: "active_members_count",
+    key: "total_active_members",
     label: "Active Members",
     description: "Current Council appointments",
   },
   {
-    key: "published_profiles_count",
+    key: "published_profile_count",
     label: "Published Profiles",
     description: "Visible on the public site",
   },
   {
-    key: "draft_profiles_count",
+    key: "draft_profile_count",
     label: "Draft Profiles",
     description: "Needs review before publishing",
   },
   {
-    key: "inactive_profiles_count",
+    key: "inactive_profile_count",
     label: "Inactive Members",
     description: "Ended or archived appointments",
   },
   {
-    key: "vacant_positions_count",
+    key: "vacant_position_count",
     label: "Vacant Positions",
     description: "Configured open seats",
   },
@@ -95,6 +96,7 @@ const actionItems = [
 ];
 
 export function CouncilDashboard() {
+  const [activeTab, setActiveTab] = useState("members");
   const dashboardQuery = useQuery({
     queryKey: ["governance", "university-council", "dashboard"],
     queryFn: () => governanceAdminApi.dashboard(),
@@ -124,7 +126,7 @@ export function CouncilDashboard() {
             <div className="text-sm text-muted-foreground">
               Last update{" "}
               <span className="font-medium text-foreground">
-                {stats?.last_update_date ? new Date(stats.last_update_date).toLocaleDateString() : "Unavailable"}
+                {stats?.last_updated_at ? new Date(stats.last_updated_at).toLocaleDateString() : "Unavailable"}
               </span>
             </div>
           </div>
@@ -150,9 +152,10 @@ export function CouncilDashboard() {
           {actionItems.map((item) => {
             const Icon = item.icon;
             return (
-              <a
+              <button
+                type="button"
                 key={item.label}
-                href={`#${item.tab}`}
+                onClick={() => setActiveTab(item.tab)}
                 className="group flex min-h-28 flex-col justify-between rounded-lg border bg-background p-4 transition hover:border-primary/50 hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <div className="flex items-start justify-between gap-3">
@@ -163,12 +166,12 @@ export function CouncilDashboard() {
                   <h3 className="text-sm font-semibold">{item.label}</h3>
                   <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{item.description}</p>
                 </div>
-              </a>
+              </button>
             );
           })}
         </section>
 
-        <Tabs defaultValue="members" className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="grid h-auto w-full grid-cols-2 gap-1 lg:w-fit lg:grid-cols-5">
             <TabsTrigger value="members">Members</TabsTrigger>
             <TabsTrigger value="order">Order</TabsTrigger>
