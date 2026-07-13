@@ -52,6 +52,39 @@ class _ResearchStatsClient:
         return _ResearchStatsResponse()
 
 
+class _LibraryStatsResponse:
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return {
+            "status": "success",
+            "data": {
+                "stats": [
+                    {"key": "active_branches", "value": 3},
+                    {"key": "catalogue_resources", "value": 1200},
+                    {"key": "active_regulations", "value": 5},
+                    {"key": "loans", "value": 42},
+                ],
+            },
+        }
+
+
+class _LibraryStatsClient:
+    def __init__(self):
+        self.request_path = None
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, traceback):
+        return False
+
+    async def get(self, path):
+        self.request_path = path
+        return _LibraryStatsResponse()
+
+
 class _FakeDb:
     async def execute(self, _statement):
         return _CountResult()
@@ -225,6 +258,25 @@ class PortalStatsTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(11, count)
         self.assertEqual("/api/v1/stats", client.request_path)
 
+    async def test_library_portal_stats_come_from_library_stats_api(self):
+        client = _LibraryStatsClient()
+
+        with patch.object(stats_service.httpx, "AsyncClient", return_value=client):
+            result = await portal_stats(_FakeDb(), "library")
+
+        self.assertIsNotNone(result)
+        self.assertEqual("library", result.portal)
+        self.assertEqual(
+            {
+                "active_branches_count": 3,
+                "catalogue_resources_count": 1200,
+                "active_regulations_count": 5,
+                "loans_count": 42,
+            },
+            result.stats,
+        )
+        self.assertEqual("/api/v1/stats/admin", client.request_path)
+
     def test_research_portal_stats_do_not_sum_person_publication_counters(self):
         self.assertNotIn(
             "func.sum(Person.publications_count)",
@@ -240,7 +292,14 @@ class PortalStatsTests(unittest.IsolatedAsyncioTestCase):
 class PortalStatsApiTests(unittest.TestCase):
     def test_portal_stats_permission_map_uses_canonical_main_service_keys(self):
         self.assertEqual(
-            {"admin", "corporate-communication", "schools", "departments", "research"},
+            {
+                "admin",
+                "corporate-communication",
+                "schools",
+                "departments",
+                "research",
+                "library",
+            },
             set(stats_api.PORTAL_STAT_SCOPES),
         )
 
@@ -306,6 +365,59 @@ class PortalStatsApiTests(unittest.TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertEqual("corporate-communication", response.json()["data"]["portal"])
+
+    def test_corporate_communication_api_authorizes_page_section_manager(self):
+        user = _user_with_scopes("page_sections.manage")
+        db = _AuthStatsDb(user)
+        token, _ = create_access_token(str(user.id), ["corporate-communication"], permissions=[])
+
+        response = _portal_stats_client(db).get(
+            "/api/v1/stats/portal/corporate-communication",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("corporate-communication", response.json()["data"]["portal"])
+
+    def test_corporate_communication_api_authorizes_club_event_manager(self):
+        user = _user_with_scopes("clubs.events_manage")
+        db = _AuthStatsDb(user)
+        token, _ = create_access_token(str(user.id), ["corporate-communication"], permissions=[])
+
+        response = _portal_stats_client(db).get(
+            "/api/v1/stats/portal/corporate-communication",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("corporate-communication", response.json()["data"]["portal"])
+
+    def test_library_api_uses_canonical_library_stats(self):
+        user = _user_with_scopes("library.view")
+        db = _AuthStatsDb(user)
+        token, _ = create_access_token(str(user.id), ["library"], permissions=[])
+
+        with patch.object(
+            stats_service,
+            "_library_portal_stat_counts",
+            new=AsyncMock(
+                return_value={
+                    "active_branches_count": 3,
+                    "catalogue_resources_count": 1200,
+                    "active_regulations_count": 5,
+                    "loans_count": 42,
+                },
+            ),
+        ):
+            response = _portal_stats_client(db).get(
+                "/api/v1/stats/portal/library",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+
+        self.assertEqual(200, response.status_code)
+        data = response.json()["data"]
+        self.assertEqual("library", data["portal"])
+        self.assertEqual(42, data["stats"]["loans_count"])
 
     def test_governance_api_uses_canonical_admin_stats(self):
         user = _user_with_scopes("governance.view")

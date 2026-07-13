@@ -123,6 +123,39 @@ async def _published_publications_count() -> int:
     raise ValueError("Research service did not return a publications count")
 
 
+async def _library_portal_stat_counts() -> dict[str, int]:
+    """Read dashboard counters from the owning Library service."""
+
+    async with httpx.AsyncClient(
+        base_url=settings.LIBRARY_SERVICE_URL.rstrip("/"),
+        timeout=httpx.Timeout(20.0, connect=5.0),
+        headers={"X-KSU-Proxy": "main-stats"},
+    ) as client:
+        response = await client.get("/api/v1/stats/admin")
+        response.raise_for_status()
+        payload = response.json()
+
+    if not isinstance(payload, dict) or payload.get("status") != "success":
+        raise ValueError("Library service returned an unexpected stats payload")
+    data = payload.get("data")
+    if not isinstance(data, dict) or not isinstance(data.get("stats"), list):
+        raise ValueError("Library service returned an unexpected stats payload")
+
+    service_values: dict[str, int] = {}
+    for item in data["stats"]:
+        if isinstance(item, dict) and isinstance(item.get("value"), int):
+            key = item.get("key")
+            if isinstance(key, str):
+                service_values[key] = item["value"]
+
+    return {
+        "active_branches_count": service_values.get("active_branches", 0),
+        "catalogue_resources_count": service_values.get("catalogue_resources", 0),
+        "active_regulations_count": service_values.get("active_regulations", 0),
+        "loans_count": service_values.get("loans", 0),
+    }
+
+
 async def _sum_publications_for_people(
     db: AsyncSession,
     person_ids_query,
@@ -764,6 +797,9 @@ async def portal_stats(
             "published_publications_count": await _published_publications_count(),
         }
         title = "Research and publications counters"
+    elif portal == "library":
+        stats = await _library_portal_stat_counts()
+        title = "Library administration counters"
     else:
         return None
 
