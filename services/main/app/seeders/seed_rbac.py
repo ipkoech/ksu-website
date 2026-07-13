@@ -125,6 +125,14 @@ COCMS_PERMISSION_NAMES = [
     "support.manage_contacts",
 ]
 
+PUBLICATIONS_ADMIN_PERMISSION_NAMES = [
+    "publications.manage",
+    "publications.view",
+    "publications.submit",
+    "publications.review",
+    "publications.approve",
+]
+
 
 # Reconcile roles whose publication authority changed so stale grants are
 # removed idempotently when existing databases are reseeded.
@@ -134,6 +142,7 @@ RECONCILED_ROLE_NAMES = frozenset({
     "library_admin",
     "research_content_admin",
     "research_content",
+    "research_admin",
     "sustainability_admin",
     "research_sustainability",
     "university_farm_admin",
@@ -164,9 +173,9 @@ ROLE_SPECS = [
         "permission_names": COCMS_PERMISSION_NAMES,
     },
     {
-        "name": "cocms_admin",
-        "display_name": "CoCMS Admin",
-        "description": "Administrator for the consolidated corporate communications and CMS portal.",
+        "name": "corporate_communication_admin",
+        "display_name": "Corporate Communication Admin",
+        "description": "Administrator for homepage CMS, public publishing, media, and communications review.",
         "is_system": True,
         "permission_names": COCMS_PERMISSION_NAMES,
     },
@@ -210,32 +219,6 @@ ROLE_SPECS = [
             "notifications:send",
         ],
     },
-    {
-        "name": "publications_admin",
-        "display_name": "Publications Admin",
-        "description": "Administrator for publications submissions, review, and approval.",
-        "is_system": True,
-        "permission_names": [
-            "publications.manage",
-            "publications.view",
-            "publications.submit",
-            "publications.review",
-            "publications.approve",
-        ],
-    },
-    {
-        "name": "student_clubs_admin",
-        "display_name": "Student Clubs Admin",
-        "description": "Administrator for student club profiles and club-scoped content submission.",
-        "is_system": True,
-        "permission_names": [
-            "clubs.view",
-            "clubs.manage_own",
-            "clubs.content_submit",
-            "clubs.events_manage",
-            "clubs.stories_manage",
-        ],
-    },
 ]
 
 _permission_names = {spec[0] for spec in PERMISSION_SPECS}
@@ -255,6 +238,14 @@ for role_name, definition in ROLE_DEFINITIONS.items():
         "permission_names": permission_names,
     })
     _existing_role_names.add(seed_name)
+
+for spec in ROLE_SPECS:
+    if spec["name"] == "research_admin":
+        spec["permission_names"] = list(dict.fromkeys([
+            *spec["permission_names"],
+            *PUBLICATIONS_ADMIN_PERMISSION_NAMES,
+        ]))
+        break
 
 
 async def seed_rbac(db: AsyncSession, ctx: SeedContext) -> None:

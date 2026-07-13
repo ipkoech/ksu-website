@@ -22,7 +22,7 @@ from app.seeders.seed_handbook import (
     HANDBOOK_STUDENT_AFFAIRS_SERVICES,
 )
 from app.seeders.programme_catalogue import BROCHURE_PROGRAMMES
-from app.seeders.seed_portal_users import PORTAL_USER_SPECS, STUDENT_CLUBS_PORTAL_CLUB_SLUG
+from app.seeders.seed_portal_users import PORTAL_USER_SPECS
 from app.seeders.seed_rbac import RECONCILED_ROLE_NAMES, ROLE_SPECS
 from app.seeders.seed_programmes import programme_code
 from app.seeders.seed_public_records import CLUB_SPECS, CONTACT_SPECS, DOWNLOAD_SPECS, FAQ_SPECS
@@ -344,20 +344,6 @@ class SeederDataTests(unittest.TestCase):
         self.assertEqual([], duplicates(programme_slugs))
         self.assertEqual([], duplicates(programme_codes))
 
-    def test_portal_staff_profile_editor_user_is_seeded(self):
-        portal_emails = [spec["email"] for spec in PORTAL_USER_SPECS]
-        portal_keys = [spec["key"] for spec in PORTAL_USER_SPECS]
-        staff_profile_user = next(
-            spec
-            for spec in PORTAL_USER_SPECS
-            if spec["key"] == "portal_staff_profile_editor"
-        )
-
-        self.assertEqual([], duplicates(portal_emails))
-        self.assertEqual([], duplicates(portal_keys))
-        self.assertEqual("staff.profile@example.invalid", staff_profile_user["email"])
-        self.assertEqual("staff", staff_profile_user["role"])
-
     def test_consolidated_portal_roles_and_users_are_seeded(self):
         roles_by_name = {spec["name"]: spec for spec in ROLE_SPECS}
         users_by_key = {spec["key"]: spec for spec in PORTAL_USER_SPECS}
@@ -365,52 +351,42 @@ class SeederDataTests(unittest.TestCase):
         expected_roles = {
             "super_admin",
             "admin",
-            "cocms_admin",
+            "corporate_communication_admin",
             "research_admin",
             "library_admin",
             "school_admin",
             "dept_admin",
-            "publications_admin",
-            "student_clubs_admin",
         }
         self.assertEqual(set(), expected_roles - set(roles_by_name))
         self.assertTrue({"content.review", "media.manage", "homepage.manage"}.issubset(
-            roles_by_name["cocms_admin"]["permission_names"]
+            roles_by_name["corporate_communication_admin"]["permission_names"]
         ))
         self.assertTrue({"page_sections.review", "page_sections.publish"}.issubset(
-            roles_by_name["cocms_admin"]["permission_names"]
+            roles_by_name["corporate_communication_admin"]["permission_names"]
         ))
-        self.assertTrue({"clubs.manage_own", "clubs.content_submit"}.issubset(
-            roles_by_name["student_clubs_admin"]["permission_names"]
+        self.assertTrue({
+            "publications.manage",
+            "publications.view",
+            "publications.submit",
+            "publications.review",
+            "publications.approve",
+        }.issubset(
+            roles_by_name["research_admin"]["permission_names"]
         ))
 
         expected_user_roles = {
-            "portal_super_admin": "super_admin",
             "portal_system_admin": "admin",
-            "portal_corporate_admin": "cocms_admin",
+            "portal_super_admin": "super_admin",
+            "portal_corporate_admin": "corporate_communication_admin",
             "portal_research_admin": "research_admin",
             "portal_library_admin": "library_admin",
             "portal_school_admin": "school_admin",
             "portal_department_admin": "dept_admin",
-            "portal_publications_admin": "publications_admin",
-            "portal_student_clubs_admin": "student_clubs_admin",
         }
         self.assertEqual(
             expected_user_roles,
             {key: users_by_key[key]["role"] for key in expected_user_roles},
         )
-
-    def test_student_clubs_portal_user_is_scoped_to_a_seeded_club(self):
-        student_clubs_user = next(
-            spec
-            for spec in PORTAL_USER_SPECS
-            if spec["key"] == "portal_student_clubs_admin"
-        )
-        seeded_club_slugs = {spec["slug"] for spec in CLUB_SPECS}
-
-        self.assertEqual("club", student_clubs_user["scope_type"])
-        self.assertEqual(STUDENT_CLUBS_PORTAL_CLUB_SLUG, student_clubs_user["scope_key"])
-        self.assertIn(student_clubs_user["scope_key"], seeded_club_slugs)
 
     def test_legacy_content_admin_is_explicitly_reconciled_after_reseeding(self):
         roles_by_name = {spec["name"]: spec for spec in ROLE_SPECS}
@@ -418,8 +394,8 @@ class SeederDataTests(unittest.TestCase):
         self.assertIn("content_admin", RECONCILED_ROLE_NAMES)
         self.assertNotIn("admin:*", roles_by_name["content_admin"]["permission_names"])
 
-    def test_only_cocms_and_system_admin_roles_receive_content_publication_authority(self):
-        allowed_roles = {"super_admin", "admin", "cocms_admin", "content_admin"}
+    def test_only_corporate_communication_and_system_admin_roles_receive_content_publication_authority(self):
+        allowed_roles = {"super_admin", "admin", "corporate_communication_admin", "content_admin"}
         publication_permissions = {
             "content.review",
             "content.approve",
