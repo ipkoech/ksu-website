@@ -148,6 +148,7 @@ class PageCmsSchemaTests(unittest.TestCase):
                 "description": "Primary homepage section copy",
                 "settings": {"theme": "dark"},
                 "display_order": 11,
+                "revision": 2,
                 "is_enabled": True,
                 "layout_variant": PAGE_SECTION_LAYOUT_VARIANTS[0],
                 "status": "published",
@@ -178,6 +179,7 @@ class PageCmsSchemaTests(unittest.TestCase):
         self.assertEqual(result.description, "Primary homepage section copy")
         self.assertEqual(result.settings, {"theme": "dark"})
         self.assertEqual(result.display_order, 11)
+        self.assertEqual(result.revision, 2)
 
     def test_section_item_create_rejects_external_cta_urls_without_http_scheme(self):
         with self.assertRaises(ValidationError):
@@ -196,6 +198,60 @@ class PageCmsSchemaTests(unittest.TestCase):
                 cta_label="View programme",
                 cta_url="programmes/computer-science",
             )
+
+    def test_source_id_requires_source_type(self):
+        with self.assertRaises(ValidationError):
+            SectionItemCreate(source_id=uuid.uuid4())
+
+    def test_manual_item_cannot_include_source_reference(self):
+        with self.assertRaises(ValidationError):
+            SectionItemCreate(item_type="text", source_type="news", source_id=uuid.uuid4())
+
+    def test_editorial_overrides_are_limited_to_safe_fields(self):
+        with self.assertRaises(ValidationError):
+            SectionItemCreate(
+                item_type="reference",
+                source_type="news",
+                source_id=uuid.uuid4(),
+                editorial_overrides={"unsafe_html": "<script>"},
+            )
+
+    def test_section_item_create_accepts_typed_source_reference(self):
+        source_id = uuid.uuid4()
+
+        item = SectionItemCreate(
+            item_type="reference",
+            source_type="news",
+            source_id=source_id,
+            editorial_overrides={"title": "Editorial headline", "cta_url": "/news/latest"},
+        )
+
+        self.assertEqual(item.source_type, "news")
+        self.assertEqual(item.source_id, source_id)
+        self.assertEqual(item.editorial_overrides, {"title": "Editorial headline", "cta_url": "/news/latest"})
+
+    def test_page_section_read_requires_persisted_revision(self):
+        now = _utc_now()
+        section_like = type(
+            "PageSectionLike",
+            (),
+            {
+                "id": uuid.uuid4(),
+                "created_at": now,
+                "updated_at": now,
+                "page_key": "homepage",
+                "scope_type": "university",
+                "scope_id": None,
+                "section_key": "hero",
+                "display_order": 100,
+                "is_enabled": True,
+                "layout_variant": "hero_admissions",
+                "status": "draft",
+            },
+        )()
+
+        with self.assertRaises(ValidationError):
+            PageSectionRead.model_validate(section_like)
 
     def test_partnership_spotlight_create_accepts_supported_primary_cta_sources(self):
         payload = {

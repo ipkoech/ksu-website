@@ -15,10 +15,12 @@ from app.models import (
     PARTNERSHIP_CTA_SOURCES,
     SECTION_ITEM_TYPES,
 )
+from app.models.page_cms import SECTION_ITEM_SOURCE_TYPES
 
 from .base import BaseReadSchema, BaseSchema
 
 PAGE_SECTION_WORKFLOW_ACTIONS = ("submit", "approve", "request_changes", "publish", "archive", "unpublish")
+EDITORIAL_OVERRIDE_FIELDS = ("title", "subtitle", "summary", "cta_label", "cta_url", "badge", "image_media_id")
 
 
 def _validate_choice(value: str | None, allowed: tuple[str, ...], field_name: str) -> str | None:
@@ -36,6 +38,16 @@ def _validate_link_target(value: str | None, field_name: str) -> str | None:
     if value.startswith(("http://", "https://", "/")):
         return value
     raise ValueError(f"{field_name} must start with http://, https://, or /")
+
+
+def _validate_editorial_overrides(value: dict[str, Any] | None) -> dict[str, Any] | None:
+    if value is None:
+        return value
+    unsupported_fields = set(value) - set(EDITORIAL_OVERRIDE_FIELDS)
+    if unsupported_fields:
+        fields = ", ".join(sorted(unsupported_fields))
+        raise ValueError(f"editorial_overrides contains unsupported fields: {fields}")
+    return value
 
 
 class MediaRoleDefinitionRead(BaseSchema):
@@ -74,6 +86,9 @@ class SectionItemCreate(BaseSchema):
     video_provider: str | None = Field(default=None, max_length=64)
     video_url: str | None = Field(default=None, max_length=1024)
     video_duration_seconds: int | None = None
+    source_type: str | None = Field(default=None, max_length=64)
+    source_id: uuid.UUID | None = None
+    editorial_overrides: dict[str, Any] | None = None
     display_order: int = 100
     is_enabled: bool = True
 
@@ -82,10 +97,28 @@ class SectionItemCreate(BaseSchema):
     def validate_item_type(cls, value: str) -> str:
         return _validate_choice(value, SECTION_ITEM_TYPES, "item_type") or value
 
+    @field_validator("source_type")
+    @classmethod
+    def validate_source_type(cls, value: str | None) -> str | None:
+        return _validate_choice(value, SECTION_ITEM_SOURCE_TYPES, "source_type")
+
+    @field_validator("editorial_overrides")
+    @classmethod
+    def validate_editorial_overrides(cls, value: dict[str, Any] | None) -> dict[str, Any] | None:
+        return _validate_editorial_overrides(value)
+
     @field_validator("cta_url")
     @classmethod
     def validate_cta_url(cls, value: str | None) -> str | None:
         return _validate_link_target(value, "cta_url")
+
+    @model_validator(mode="after")
+    def validate_source_reference(self):
+        if (self.source_type is None) != (self.source_id is None):
+            raise ValueError("source_type and source_id must be provided together")
+        if self.source_type is not None and self.item_type != "reference":
+            raise ValueError("source references require item_type to be reference")
+        return self
 
 
 class SectionItemUpdate(BaseSchema):
@@ -103,6 +136,9 @@ class SectionItemUpdate(BaseSchema):
     video_provider: str | None = Field(default=None, max_length=64)
     video_url: str | None = Field(default=None, max_length=1024)
     video_duration_seconds: int | None = None
+    source_type: str | None = Field(default=None, max_length=64)
+    source_id: uuid.UUID | None = None
+    editorial_overrides: dict[str, Any] | None = None
     display_order: int | None = None
     is_enabled: bool | None = None
 
@@ -111,10 +147,30 @@ class SectionItemUpdate(BaseSchema):
     def validate_item_type(cls, value: str | None) -> str | None:
         return _validate_choice(value, SECTION_ITEM_TYPES, "item_type")
 
+    @field_validator("source_type")
+    @classmethod
+    def validate_source_type(cls, value: str | None) -> str | None:
+        return _validate_choice(value, SECTION_ITEM_SOURCE_TYPES, "source_type")
+
+    @field_validator("editorial_overrides")
+    @classmethod
+    def validate_editorial_overrides(cls, value: dict[str, Any] | None) -> dict[str, Any] | None:
+        return _validate_editorial_overrides(value)
+
     @field_validator("cta_url")
     @classmethod
     def validate_cta_url(cls, value: str | None) -> str | None:
         return _validate_link_target(value, "cta_url")
+
+    @model_validator(mode="after")
+    def validate_source_reference(self):
+        source_type_supplied = "source_type" in self.model_fields_set
+        source_id_supplied = "source_id" in self.model_fields_set
+        if source_type_supplied != source_id_supplied:
+            raise ValueError("source_type and source_id must be updated together")
+        if self.source_type is not None and self.item_type not in (None, "reference"):
+            raise ValueError("source references require item_type to be reference")
+        return self
 
 
 class SectionItemRead(BaseReadSchema):
@@ -132,7 +188,11 @@ class SectionItemRead(BaseReadSchema):
     video_provider: str | None = None
     video_url: str | None = None
     video_duration_seconds: int | None = None
+    source_type: str | None = None
+    source_id: uuid.UUID | None = None
+    editorial_overrides: dict[str, Any] | None = None
     display_order: int
+    revision: int
     is_enabled: bool
 
 
@@ -230,6 +290,7 @@ class PageSectionRead(BaseReadSchema):
     description: str | None = None
     settings: dict[str, Any] | None = None
     display_order: int
+    revision: int
     is_enabled: bool
     layout_variant: str
     status: str
