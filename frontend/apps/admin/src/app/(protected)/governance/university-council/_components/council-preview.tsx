@@ -47,10 +47,16 @@ export function CouncilPreview() {
         <Badge variant="outline">Admin preview</Badge>
       </CardHeader>
       <CardContent className="space-y-8">
+        {previewQuery.isLoading ? (
+          <StateMessage label="Loading Council preview..." />
+        ) : null}
+        {previewQuery.isError ? (
+          <StateMessage label="Council preview could not be loaded. Check your connection and try again." tone="error" />
+        ) : null}
         <section className="rounded-lg border bg-muted/20 p-6 text-center">
           <p className="text-xs font-semibold uppercase text-primary">chairperson</p>
           <div className="mx-auto mt-4 max-w-sm">
-            {chairperson ? <PreviewCard member={chairperson} featured /> : <EmptyPreview label="No chairperson ready for preview" />}
+            {chairperson ? <PreviewCard member={chairperson} featured /> : !previewQuery.isLoading && !previewQuery.isError ? <EmptyPreview label="No chairperson ready for preview" /> : null}
           </div>
         </section>
 
@@ -67,15 +73,17 @@ export function CouncilPreview() {
                 <PreviewCard key={member.profile_slug ?? member.slug ?? index} member={member} />
               ))}
             </div>
-          ) : (
+          ) : !previewQuery.isLoading && !previewQuery.isError ? (
             <EmptyPreview label="No council members ready for preview" />
+          ) : (
+            <div className="min-h-24" />
           )}
         </section>
 
         <section className="rounded-lg border bg-muted/20 p-6 text-center">
           <p className="text-xs font-semibold uppercase text-primary">secretary</p>
           <div className="mx-auto mt-4 max-w-sm">
-            {secretary ? <PreviewCard member={secretary} featured /> : <EmptyPreview label="No secretary ready for preview" />}
+            {secretary ? <PreviewCard member={secretary} featured /> : !previewQuery.isLoading && !previewQuery.isError ? <EmptyPreview label="No secretary ready for preview" /> : null}
           </div>
         </section>
       </CardContent>
@@ -110,4 +118,12 @@ function PreviewCard({ member, featured = false }: { member: PreviewMember; feat
 
 function EmptyPreview({ label }: { label: string }) {
   return <p className="rounded-md border border-dashed bg-background p-4 text-sm text-muted-foreground">{label}</p>;
+}
+
+function StateMessage({ label, tone = "neutral" }: { label: string; tone?: "neutral" | "error" }) {
+  return (
+    <p className={`rounded-md border p-4 text-sm ${tone === "error" ? "border-destructive/30 bg-destructive/5 text-destructive" : "bg-muted/20 text-muted-foreground"}`}>
+      {label}
+    </p>
+  );
 }

@@ -80,6 +80,7 @@ test("member editor uses readable relationship and media controls", () => {
     "Represented institution",
     "Publish without approved portrait",
     "submit-review",
+    "Select a governance role before saving",
   ]) {
     assert.match(source, new RegExp(fragment));
   }
@@ -97,6 +98,8 @@ test("order manager persists explicit backend order and supports keyboard users"
     "Chairperson",
     "Council Members",
     "Secretary to Council",
+    "Loading Council order",
+    "could not be loaded",
   ]) {
     assert.match(source, new RegExp(fragment));
   }
@@ -111,6 +114,8 @@ test("page content editor manages hero and mandate content", () => {
     "Our Mandate",
     "Council Charter",
     "updateCouncilPageContent",
+    "Loading Council page content",
+    "could not be loaded",
   ]) {
     assert.match(source, new RegExp(fragment));
   }
@@ -123,4 +128,6 @@ test("preview shows clickable public-style member cards", () => {
   assert.match(source, /View profile of/);
   assert.match(source, /chairperson/i);
   assert.match(source, /secretary/i);
+  assert.match(source, /Loading Council preview/);
+  assert.match(source, /could not be loaded/);
 });

@@ -208,6 +208,10 @@ export function CouncilMemberEditor({ archivedOnly = false }: { archivedOnly?: b
       setError("Select a person before saving this Council appointment.");
       return;
     }
+    if (!values.governance_role_id) {
+      setError("Select a governance role before saving this Council appointment.");
+      return;
+    }
     if (!values.public_role_label) {
       setError("Public role label is required for public cards and profile pages.");
       return;

@@ -116,7 +116,14 @@ export function CouncilOrderManager() {
           {saveMutation.isPending ? "Saving..." : "Save Order"}
         </Button>
       </CardHeader>
-      <CardContent className="grid gap-4 xl:grid-cols-3">
+      <CardContent className="space-y-4">
+        {orderQuery.isLoading || membersQuery.isLoading ? (
+          <StateMessage label="Loading Council order..." />
+        ) : null}
+        {orderQuery.isError || membersQuery.isError ? (
+          <StateMessage label="Council order could not be loaded. Check your connection and try again." tone="error" />
+        ) : null}
+        <div className="grid gap-4 xl:grid-cols-3">
         {groupOrder.map((group) => (
           <section key={group} className="rounded-lg border">
             <div className="border-b p-4">
@@ -160,7 +167,7 @@ export function CouncilOrderManager() {
                   </div>
                 );
               })}
-              {!grouped[group].length ? (
+              {!grouped[group].length && !orderQuery.isLoading && !membersQuery.isLoading && !orderQuery.isError && !membersQuery.isError ? (
                 <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
                   No records assigned to this group yet.
                 </p>
@@ -168,7 +175,16 @@ export function CouncilOrderManager() {
             </div>
           </section>
         ))}
+        </div>
       </CardContent>
     </Card>
+  );
+}
+
+function StateMessage({ label, tone = "neutral" }: { label: string; tone?: "neutral" | "error" }) {
+  return (
+    <p className={`rounded-md border p-4 text-sm ${tone === "error" ? "border-destructive/30 bg-destructive/5 text-destructive" : "bg-muted/20 text-muted-foreground"}`}>
+      {label}
+    </p>
   );
 }

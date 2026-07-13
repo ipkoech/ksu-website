@@ -77,6 +77,12 @@ export function CouncilPageContentEditor() {
           </Button>
         </CardHeader>
         <CardContent className="space-y-5">
+          {contentQuery.isLoading ? (
+            <StateMessage label="Loading Council page content..." />
+          ) : null}
+          {contentQuery.isError ? (
+            <StateMessage label="Council page content could not be loaded. You can retry after the connection is restored." tone="error" />
+          ) : null}
           <div className="grid gap-4 lg:grid-cols-2">
             <TextField label="Title" value={values.title} onChange={(value) => setField("title", value)} />
             <TextField label="Breadcrumb label" value={values.breadcrumb_label} onChange={(value) => setField("breadcrumb_label", value)} />
@@ -176,5 +182,13 @@ function TextField({
       <span>{label}</span>
       <Input value={value ?? ""} onChange={(event) => onChange(event.target.value)} />
     </label>
+  );
+}
+
+function StateMessage({ label, tone = "neutral" }: { label: string; tone?: "neutral" | "error" }) {
+  return (
+    <p className={`rounded-md border p-4 text-sm ${tone === "error" ? "border-destructive/30 bg-destructive/5 text-destructive" : "bg-muted/20 text-muted-foreground"}`}>
+      {label}
+    </p>
   );
 }
