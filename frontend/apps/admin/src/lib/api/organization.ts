@@ -1,4 +1,4 @@
-import api, { ListParams } from "./client";
+import api, { type ApiResponse, ListParams } from "./client";
 
 export interface Division {
     id: string;
@@ -149,6 +149,34 @@ export interface CouncilPublicPreview {
     secretary?: Record<string, any> | null;
 }
 
+export interface GovernanceWorkspaceProfile {
+    key: string;
+    badgeLabel: string;
+    overviewTitle: string;
+    title: string;
+    description: string;
+    memberSingular: string;
+    memberPlural: string;
+    memberFallbackName: string;
+    roleFallbackLabel: string;
+    defaultDocumentCtaLabel: string;
+    publicProfileBasePath: string;
+    groupLabels: Record<CouncilOrderNode["display_group"], string>;
+    api: {
+        dashboard: () => Promise<ApiResponse<CouncilDashboard>>;
+        listMembers: (params?: ListParams) => Promise<ApiResponse<CouncilMember[]>>;
+        createMember: (data: Partial<CouncilMember>) => Promise<ApiResponse<CouncilMember>>;
+        updateMember: (id: string, data: Partial<CouncilMember>) => Promise<ApiResponse<CouncilMember>>;
+        deleteMember: (id: string) => Promise<ApiResponse<void>>;
+        getOrder: () => Promise<ApiResponse<CouncilOrderNode[]>>;
+        updateOrder: (data: { nodes: CouncilOrderNode[] }) => Promise<ApiResponse<CouncilOrderNode[]>>;
+        getPageContent: () => Promise<ApiResponse<CouncilPageContent>>;
+        updatePageContent: (data: Partial<CouncilPageContent>) => Promise<ApiResponse<CouncilPageContent>>;
+        preview: () => Promise<ApiResponse<CouncilPublicPreview>>;
+        transitionMember: (id: string, action: string, data?: { comment?: string }) => Promise<ApiResponse<CouncilMember>>;
+    };
+}
+
 export const divisionsApi = {
     list: (params?: ListParams) =>
         api.get<Division[]>("/divisions", { params }),
@@ -211,4 +239,92 @@ export const governanceAdminApi = {
         api.post<CouncilMember>(`/governance/admin/council/members/${id}/${action}`, undefined, {
             params: data?.comment ? { comment: data.comment } : undefined,
         }),
+    managementBoardDashboard: () =>
+        api.get<CouncilDashboard>("/governance/admin/management-board/dashboard"),
+    listManagementBoardMembers: (params?: ListParams) =>
+        api.get<CouncilMember[]>("/governance/admin/management-board/members", { params }),
+    createManagementBoardMember: (data: Partial<CouncilMember>) =>
+        api.post<CouncilMember>("/governance/admin/management-board/members", data),
+    updateManagementBoardMember: (id: string, data: Partial<CouncilMember>) =>
+        api.patch<CouncilMember>(`/governance/admin/management-board/members/${id}`, data),
+    deleteManagementBoardMember: (id: string) =>
+        api.delete<void>(`/governance/admin/management-board/members/${id}`),
+    getManagementBoardOrder: () =>
+        api.get<CouncilOrderNode[]>("/governance/admin/management-board/order"),
+    updateManagementBoardOrder: (data: { nodes: CouncilOrderNode[] }) =>
+        api.put<CouncilOrderNode[]>("/governance/admin/management-board/order", data),
+    getManagementBoardPageContent: () =>
+        api.get<CouncilPageContent>("/governance/admin/management-board/page-content"),
+    updateManagementBoardPageContent: (data: Partial<CouncilPageContent>) =>
+        api.patch<CouncilPageContent>("/governance/admin/management-board/page-content", data),
+    previewManagementBoard: () =>
+        api.get<CouncilPublicPreview>("/governance/admin/management-board/preview"),
+    transitionManagementBoardMember: (id: string, action: string, data?: { comment?: string }) =>
+        api.post<CouncilMember>(`/governance/admin/management-board/members/${id}/${action}`, undefined, {
+            params: data?.comment ? { comment: data.comment } : undefined,
+        }),
+};
+
+export const councilGovernanceProfile: GovernanceWorkspaceProfile = {
+    key: "university-council",
+    badgeLabel: "University Council",
+    overviewTitle: "Council Overview",
+    title: "University Governance",
+    description: "Manage Council members, page content, official order, preview, and publication workflow.",
+    memberSingular: "Council Member",
+    memberPlural: "Council Members",
+    memberFallbackName: "Council member",
+    roleFallbackLabel: "Council role",
+    defaultDocumentCtaLabel: "Council Charter",
+    publicProfileBasePath: "/about/university-council",
+    groupLabels: {
+        chairperson: "Chairperson",
+        member: "Council Members",
+        secretary: "Secretary to Council",
+    },
+    api: {
+        dashboard: governanceAdminApi.dashboard,
+        listMembers: governanceAdminApi.listCouncilMembers,
+        createMember: governanceAdminApi.createCouncilMember,
+        updateMember: governanceAdminApi.updateCouncilMember,
+        deleteMember: governanceAdminApi.deleteCouncilMember,
+        getOrder: governanceAdminApi.getCouncilOrder,
+        updateOrder: governanceAdminApi.updateCouncilOrder,
+        getPageContent: governanceAdminApi.getCouncilPageContent,
+        updatePageContent: governanceAdminApi.updateCouncilPageContent,
+        preview: governanceAdminApi.previewCouncil,
+        transitionMember: governanceAdminApi.transitionCouncilMember,
+    },
+};
+
+export const managementBoardGovernanceProfile: GovernanceWorkspaceProfile = {
+    key: "university-management",
+    badgeLabel: "University Management",
+    overviewTitle: "Management Overview",
+    title: "University Management",
+    description: "Manage Management Board members, page content, official order, preview, and publication workflow.",
+    memberSingular: "Management Member",
+    memberPlural: "Management Board Members",
+    memberFallbackName: "Management member",
+    roleFallbackLabel: "Management role",
+    defaultDocumentCtaLabel: "Management Documents",
+    publicProfileBasePath: "/about/university-management",
+    groupLabels: {
+        chairperson: "Vice Chancellor",
+        member: "Management Board Members",
+        secretary: "Secretary",
+    },
+    api: {
+        dashboard: governanceAdminApi.managementBoardDashboard,
+        listMembers: governanceAdminApi.listManagementBoardMembers,
+        createMember: governanceAdminApi.createManagementBoardMember,
+        updateMember: governanceAdminApi.updateManagementBoardMember,
+        deleteMember: governanceAdminApi.deleteManagementBoardMember,
+        getOrder: governanceAdminApi.getManagementBoardOrder,
+        updateOrder: governanceAdminApi.updateManagementBoardOrder,
+        getPageContent: governanceAdminApi.getManagementBoardPageContent,
+        updatePageContent: governanceAdminApi.updateManagementBoardPageContent,
+        preview: governanceAdminApi.previewManagementBoard,
+        transitionMember: governanceAdminApi.transitionManagementBoardMember,
+    },
 };

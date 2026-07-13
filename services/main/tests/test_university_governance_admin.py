@@ -306,6 +306,43 @@ class UniversityGovernanceAdminServiceTests(unittest.IsolatedAsyncioTestCase):
         list_members.assert_awaited_once_with(db, active_only=True)
         self.assertEqual(member_id, response["data"][0]["assignment_id"])
 
+    async def test_management_order_read_uses_management_board_scope(self):
+        member_id = uuid.uuid4()
+        member = SimpleNamespace(
+            id=member_id,
+            governance_role=SimpleNamespace(display_group="member"),
+            display_order=10,
+            hierarchy_level=2,
+            reports_to_id=None,
+        )
+
+        db = object()
+
+        with patch.object(
+            GovernanceService,
+            "list_board_members",
+            new_callable=AsyncMock,
+            return_value=[member],
+        ) as list_members:
+            response = await governance_api.get_management_board_order(db, object())
+
+        list_members.assert_awaited_once_with(db, "management-board", active_only=True)
+        self.assertEqual(member_id, response["data"][0]["assignment_id"])
+
+    async def test_management_dashboard_uses_management_board_slug(self):
+        db = object()
+
+        with patch.object(
+            GovernanceService,
+            "board_dashboard",
+            new_callable=AsyncMock,
+            return_value={"total_active_members": 0},
+        ) as dashboard:
+            response = await governance_api.management_board_dashboard(db, object())
+
+        dashboard.assert_awaited_once_with(db, "management-board")
+        self.assertEqual(0, response["data"]["total_active_members"])
+
     async def test_create_council_member_forces_draft_workflow_state(self):
         board = SimpleNamespace(id=uuid.uuid4())
         role = SimpleNamespace(

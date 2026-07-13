@@ -6185,6 +6185,12 @@ export const portalConfigs: Record<string, PortalConfig> = {
         scope: "governance.manage_boards",
       },
       {
+        title: "University Management",
+        href: "/admin/university-management",
+        icon: Landmark,
+        scope: "governance.manage_boards",
+      },
+      {
         title: "DVC Divisions",
         href: "/admin/divisions",
         icon: Building2,
@@ -6247,6 +6253,15 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "University Council",
           "Council workspace",
           "/admin/university-council",
+          Landmark,
+          ["governance.view", "administration.view"],
+          ["admin", "portal-stats", "boards_count"],
+          () => mainPortalCount("admin", "boards_count"),
+        ),
+        stat(
+          "University Management",
+          "Management workspace",
+          "/admin/university-management",
           Landmark,
           ["governance.view", "administration.view"],
           ["admin", "portal-stats", "boards_count"],

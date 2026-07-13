@@ -21,6 +21,21 @@ test("governance admin api exposes council workspace endpoints", () => {
   }
 });
 
+test("governance admin api exposes management board workspace endpoints", () => {
+  const source = read("src/lib/api/organization.ts");
+
+  for (const fragment of [
+    "/governance/admin/management-board/dashboard",
+    "/governance/admin/management-board/members",
+    "/governance/admin/management-board/order",
+    "/governance/admin/management-board/page-content",
+    "/governance/admin/management-board/preview",
+    "managementBoardGovernanceProfile",
+  ]) {
+    assert.match(source, new RegExp(fragment.replaceAll("/", "\\/")));
+  }
+});
+
 test("governance admin api matches backend dashboard and transition contracts", () => {
   const source = read("src/lib/api/organization.ts");
 
@@ -42,7 +57,7 @@ test("university council workspace route renders seamless primary actions", () =
   const source = read("src/app/(protected)/governance/university-council/_components/council-dashboard.tsx");
 
   for (const label of [
-    "Add Council Member",
+    "profile.memberSingular",
     "Manage Display Order",
     "Preview Public Page",
     "Publish Changes",
@@ -78,6 +93,13 @@ test("admin route is canonical and legacy governance route redirects", () => {
   assert.match(legacyRoute, /redirect\("\/admin\/university-council"\)/);
 });
 
+test("management route uses the shared seamless governance workspace", () => {
+  const adminRoute = read("src/app/(protected)/admin/university-management/page.tsx");
+
+  assert.match(adminRoute, /CouncilDashboard/);
+  assert.match(adminRoute, /managementBoardGovernanceProfile/);
+});
+
 test("member editor uses readable relationship and media controls", () => {
   const source = read("src/app/(protected)/governance/university-council/_components/council-member-editor.tsx");
 
@@ -102,13 +124,11 @@ test("order manager persists explicit backend order and supports keyboard users"
   const source = read("src/app/(protected)/governance/university-council/_components/council-order-manager.tsx");
 
   for (const fragment of [
-    "updateCouncilOrder",
+    "profile.api.updateOrder",
     "Move up",
     "Move down",
-    "Chairperson",
-    "Council Members",
-    "Secretary to Council",
-    "Loading Council order",
+    "profile.groupLabels",
+    "Loading",
     "could not be loaded",
     "draggable",
     "GripVertical",
@@ -118,6 +138,8 @@ test("order manager persists explicit backend order and supports keyboard users"
     "onDragEnter",
     "onDrop",
     "dropTarget",
+    "profile",
+    "profile.api.updateOrder",
   ]) {
     assert.match(source, new RegExp(fragment));
   }
@@ -130,9 +152,9 @@ test("page content editor manages hero and mandate content", () => {
     "Hero background image",
     "Overlay intensity",
     "Our Mandate",
-    "Council Charter",
-    "updateCouncilPageContent",
-    "Loading Council page content",
+    "defaultDocumentCtaLabel",
+    "profile.api.updatePageContent",
+    "profile.badgeLabel",
     "could not be loaded",
     "hero_image_id: values.hero_image_id || null",
   ]) {
@@ -145,8 +167,8 @@ test("preview shows clickable public-style member cards", () => {
 
   assert.match(source, /Preview Public Page/);
   assert.match(source, /View profile of/);
-  assert.match(source, /chairperson/i);
-  assert.match(source, /secretary/i);
-  assert.match(source, /Loading Council preview/);
+  assert.match(source, /profile\.groupLabels\.chairperson/);
+  assert.match(source, /profile\.groupLabels\.secretary/);
+  assert.match(source, /profile\.api\.preview/);
   assert.match(source, /could not be loaded/);
 });

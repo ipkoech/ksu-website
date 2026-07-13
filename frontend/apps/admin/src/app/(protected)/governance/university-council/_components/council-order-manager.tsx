@@ -5,24 +5,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, GripVertical, Save } from "lucide-react";
 import { toast } from "@ksu/ui";
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ksu/ui/components";
-import { governanceAdminApi, type CouncilMember, type CouncilOrderNode } from "@/lib/api/organization";
+import { councilGovernanceProfile, type CouncilMember, type CouncilOrderNode, type GovernanceWorkspaceProfile } from "@/lib/api/organization";
 
 type DisplayGroup = CouncilOrderNode["display_group"];
 
-const groupLabels: Record<DisplayGroup, string> = {
-  chairperson: "Chairperson",
-  member: "Council Members",
-  secretary: "Secretary to Council",
-};
-
 const groupOrder: DisplayGroup[] = ["chairperson", "member", "secretary"];
 
-function getMemberName(member?: CouncilMember) {
-  return member?.person?.display_name ?? member?.person?.full_name ?? "Council member";
+function getMemberName(member: CouncilMember | undefined, profile: GovernanceWorkspaceProfile) {
+  return member?.person?.display_name ?? member?.person?.full_name ?? profile.memberFallbackName;
 }
 
-function getMemberRole(member?: CouncilMember) {
-  return member?.public_role_label || member?.governance_role?.public_label || member?.role || "Council role";
+function getMemberRole(member: CouncilMember | undefined, profile: GovernanceWorkspaceProfile) {
+  return member?.public_role_label || member?.governance_role?.public_label || member?.role || profile.roleFallbackLabel;
 }
 
 function normalizeOrder(nodes: CouncilOrderNode[]) {
@@ -33,19 +27,19 @@ function normalizeOrder(nodes: CouncilOrderNode[]) {
   }));
 }
 
-export function CouncilOrderManager() {
+export function CouncilOrderManager({ profile = councilGovernanceProfile }: { profile?: GovernanceWorkspaceProfile }) {
   const queryClient = useQueryClient();
   const [nodes, setNodes] = useState<CouncilOrderNode[]>([]);
   const [dragging, setDragging] = useState<{ group: DisplayGroup; assignmentId: string } | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
 
   const orderQuery = useQuery({
-    queryKey: ["governance", "university-council", "order"],
-    queryFn: () => governanceAdminApi.getCouncilOrder(),
+    queryKey: ["governance", profile.key, "order"],
+    queryFn: () => profile.api.getOrder(),
   });
   const membersQuery = useQuery({
-    queryKey: ["governance", "university-council", "members"],
-    queryFn: () => governanceAdminApi.listCouncilMembers({ page: 1, per_page: 100 }),
+    queryKey: ["governance", profile.key, "members"],
+    queryFn: () => profile.api.listMembers({ page: 1, per_page: 100 }),
   });
 
   useEffect(() => {
@@ -112,15 +106,15 @@ export function CouncilOrderManager() {
   };
 
   const saveMutation = useMutation({
-    mutationFn: () => governanceAdminApi.updateCouncilOrder({ nodes: normalizeOrder(nodes) }),
+    mutationFn: () => profile.api.updateOrder({ nodes: normalizeOrder(nodes) }),
     onSuccess: async () => {
-      toast.success("Council order saved");
+      toast.success(`${profile.badgeLabel} order saved`);
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["governance", "university-council", "order"] }),
-        queryClient.invalidateQueries({ queryKey: ["governance", "university-council", "preview"] }),
+        queryClient.invalidateQueries({ queryKey: ["governance", profile.key, "order"] }),
+        queryClient.invalidateQueries({ queryKey: ["governance", profile.key, "preview"] }),
       ]);
     },
-    onError: () => toast.error("Unable to save Council order"),
+    onError: () => toast.error(`Unable to save ${profile.badgeLabel} order`),
   });
 
   return (
@@ -129,7 +123,7 @@ export function CouncilOrderManager() {
         <div>
           <CardTitle>Official Display Order</CardTitle>
           <CardDescription>
-            Arrange the Chairperson, Council Members, and Secretary to Council exactly as the public page should render them.
+            Arrange the {profile.groupLabels.chairperson}, {profile.groupLabels.member}, and {profile.groupLabels.secretary} exactly as the public page should render them.
           </CardDescription>
         </div>
         <Button type="button" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !nodes.length}>
@@ -139,16 +133,16 @@ export function CouncilOrderManager() {
       </CardHeader>
       <CardContent className="space-y-4">
         {orderQuery.isLoading || membersQuery.isLoading ? (
-          <StateMessage label="Loading Council order..." />
+          <StateMessage label={`Loading ${profile.badgeLabel} order...`} />
         ) : null}
         {orderQuery.isError || membersQuery.isError ? (
-          <StateMessage label="Council order could not be loaded. Check your connection and try again." tone="error" />
+          <StateMessage label={`${profile.badgeLabel} order could not be loaded. Check your connection and try again.`} tone="error" />
         ) : null}
         <div className="grid gap-4 xl:grid-cols-3">
         {groupOrder.map((group) => (
           <section key={group} className="rounded-lg border">
             <div className="border-b p-4">
-              <h3 className="font-semibold">{groupLabels[group]}</h3>
+              <h3 className="font-semibold">{profile.groupLabels[group]}</h3>
               <p className="mt-1 text-sm text-muted-foreground">{grouped[group].length} ordered records</p>
             </div>
             <div className="space-y-3 p-3">
@@ -191,14 +185,14 @@ export function CouncilOrderManager() {
                       <div className="flex min-w-0 items-start gap-3">
                         <span
                           className="mt-0.5 inline-flex size-8 shrink-0 cursor-grab items-center justify-center rounded-md border bg-muted/40 text-muted-foreground active:cursor-grabbing"
-                          aria-label={`Drag to reorder ${getMemberName(member)}`}
+                          aria-label={`Drag to reorder ${getMemberName(member, profile)}`}
                           title="Drag to reorder"
                         >
                           <GripVertical className="size-4" />
                         </span>
                         <div className="min-w-0">
-                          <p className="truncate font-medium">{getMemberName(member)}</p>
-                          <p className="text-sm text-muted-foreground">{getMemberRole(member)}</p>
+                          <p className="truncate font-medium">{getMemberName(member, profile)}</p>
+                          <p className="text-sm text-muted-foreground">{getMemberRole(member, profile)}</p>
                         </div>
                       </div>
                       <Badge variant="outline">{member?.workflow_status ?? "ordered"}</Badge>

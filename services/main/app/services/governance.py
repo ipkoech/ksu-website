@@ -14,6 +14,7 @@ from ..models import Board, GovernancePageContent, GovernanceRole, Person, Staff
 from .staff import StaffService
 
 _COUNCIL_SLUG = "university-council"
+_MANAGEMENT_BOARD_SLUG = "management-board"
 
 
 class GovernanceService:
@@ -231,9 +232,13 @@ class GovernanceService:
 
     @staticmethod
     async def council_dashboard(db: AsyncSession) -> dict:
-        board = await GovernanceService.get_university_council_board(db)
+        return await GovernanceService.board_dashboard(db, _COUNCIL_SLUG)
+
+    @staticmethod
+    async def board_dashboard(db: AsyncSession, board_slug: str) -> dict:
+        board = await GovernanceService.get_board_by_slug(db, board_slug)
         if board is None:
-            raise ValueError("University Council not found")
+            raise ValueError("Governance board not found")
 
         scope = (
             StaffAssignment.entity_type == "board",
@@ -250,7 +255,7 @@ class GovernanceService:
             ).where(*scope)
         )
         total_active, draft, published, inactive, last_updated = result.one()
-        members = await GovernanceService.list_council_members(db)
+        members = await GovernanceService.list_board_members(db, board_slug)
         chairperson = next((member for member in members if GovernanceService._role_group(member) == "chairperson"), None)
         secretary = next((member for member in members if GovernanceService._role_group(member) == "secretary"), None)
         member_roles = [member for member in members if GovernanceService._role_group(member) == "member"]
@@ -401,9 +406,25 @@ class GovernanceService:
         workflow_status: str | None = None,
         active_only: bool = False,
     ) -> list[StaffAssignment]:
-        board = await GovernanceService.get_university_council_board(db)
+        return await GovernanceService.list_board_members(
+            db,
+            _COUNCIL_SLUG,
+            public_only=public_only,
+            workflow_status=workflow_status,
+            active_only=active_only,
+        )
+
+    @staticmethod
+    async def list_board_members(
+        db: AsyncSession,
+        board_slug: str,
+        public_only: bool = False,
+        workflow_status: str | None = None,
+        active_only: bool = False,
+    ) -> list[StaffAssignment]:
+        board = await GovernanceService.get_board_by_slug(db, board_slug)
         if board is None:
-            raise ValueError("University Council not found")
+            raise ValueError("Governance board not found")
         query = (
             select(StaffAssignment)
             .join(StaffAssignment.person)
@@ -436,7 +457,11 @@ class GovernanceService:
 
     @staticmethod
     async def get_council_member(db: AsyncSession, assignment_id: uuid.UUID) -> StaffAssignment | None:
-        board = await GovernanceService.get_university_council_board(db)
+        return await GovernanceService.get_board_member(db, _COUNCIL_SLUG, assignment_id)
+
+    @staticmethod
+    async def get_board_member(db: AsyncSession, board_slug: str, assignment_id: uuid.UUID) -> StaffAssignment | None:
+        board = await GovernanceService.get_board_by_slug(db, board_slug)
         if board is None:
             return None
         result = await db.execute(
@@ -461,6 +486,21 @@ class GovernanceService:
         board = await GovernanceService.get_university_council_board(db)
         if board is None:
             raise ValueError("University Council not found")
+        return await GovernanceService._create_board_member_for_board(db, board, data, user_id)
+
+    @staticmethod
+    async def create_board_member(
+        db: AsyncSession, board_slug: str, data: dict, user_id: uuid.UUID
+    ) -> StaffAssignment:
+        board = await GovernanceService.get_board_by_slug(db, board_slug)
+        if board is None:
+            raise ValueError("Governance board not found")
+        return await GovernanceService._create_board_member_for_board(db, board, data, user_id)
+
+    @staticmethod
+    async def _create_board_member_for_board(
+        db: AsyncSession, board: Board, data: dict, user_id: uuid.UUID
+    ) -> StaffAssignment:
         payload = dict(data)
         role_id = payload.pop("governance_role_id")
         for field in ("appointment_status", "workflow_status", "reports_to_id", "hierarchy_level", "display_order"):
@@ -552,6 +592,22 @@ class GovernanceService:
     @staticmethod
     async def update_council_order(db: AsyncSession, nodes, user_id: uuid.UUID) -> list[StaffAssignment]:
         members = await GovernanceService.list_council_members(db, active_only=True)
+        assignments_by_id = {member.id: member for member in members}
+        await GovernanceService.validate_council_order_nodes(nodes, assignments_by_id)
+        for node in nodes:
+            value = node if isinstance(node, dict) else node.model_dump()
+            assignment = assignments_by_id[value["assignment_id"]]
+            assignment.display_order = value["display_order"]
+            assignment.hierarchy_level = value["hierarchy_level"]
+            assignment.reports_to_id = value["reports_to_id"]
+        await db.flush()
+        return [assignments_by_id[node["assignment_id"] if isinstance(node, dict) else node.assignment_id] for node in nodes]
+
+    @staticmethod
+    async def update_board_order(
+        db: AsyncSession, board_slug: str, nodes, user_id: uuid.UUID
+    ) -> list[StaffAssignment]:
+        members = await GovernanceService.list_board_members(db, board_slug, active_only=True)
         assignments_by_id = {member.id: member for member in members}
         await GovernanceService.validate_council_order_nodes(nodes, assignments_by_id)
         for node in nodes:
@@ -698,11 +754,15 @@ class GovernanceService:
 
     @staticmethod
     async def preview_university_council(db: AsyncSession) -> dict:
-        board = await GovernanceService.get_university_council_board(db)
+        return await GovernanceService.preview_board(db, _COUNCIL_SLUG)
+
+    @staticmethod
+    async def preview_board(db: AsyncSession, board_slug: str) -> dict:
+        board = await GovernanceService.get_board_by_slug(db, board_slug)
         if board is None:
-            raise ValueError("University Council not found")
+            raise ValueError("Governance board not found")
         page = await GovernanceService.get_council_page_content(db, board.id)
-        members = await GovernanceService.list_council_members(db, active_only=True)
+        members = await GovernanceService.list_board_members(db, board_slug, active_only=True)
         grouped = {"chairperson": [], "member": [], "secretary": []}
         for member in members:
             grouped[GovernanceService._role_group(member)].append(GovernanceService._member_card(member))

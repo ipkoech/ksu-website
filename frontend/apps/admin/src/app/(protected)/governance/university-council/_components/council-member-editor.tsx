@@ -23,7 +23,7 @@ import {
 } from "@ksu/ui/components";
 import { MediaPicker } from "@/components/media";
 import { PersonPicker } from "@/components/relationships";
-import { governanceAdminApi, type CouncilMember, type GovernanceRole } from "@/lib/api/organization";
+import { councilGovernanceProfile, governanceAdminApi, type CouncilMember, type GovernanceRole, type GovernanceWorkspaceProfile } from "@/lib/api/organization";
 
 type MemberForm = Partial<CouncilMember> & {
   publish_without_portrait_override?: boolean;
@@ -63,12 +63,12 @@ const statusLabels: Record<string, string> = {
   archived: "Archived",
 };
 
-function memberName(member: CouncilMember) {
-  return member.person?.display_name ?? member.person?.full_name ?? "Unnamed council member";
+function memberName(member: CouncilMember, profile: GovernanceWorkspaceProfile) {
+  return member.person?.display_name ?? member.person?.full_name ?? `Unnamed ${profile.memberSingular.toLowerCase()}`;
 }
 
-function roleLabel(member: CouncilMember) {
-  return member.public_role_label || member.governance_role?.public_label || member.role || "Council member";
+function roleLabel(member: CouncilMember, profile: GovernanceWorkspaceProfile) {
+  return member.public_role_label || member.governance_role?.public_label || member.role || profile.memberFallbackName;
 }
 
 function compactPayload(values: MemberForm): Partial<CouncilMember> {
@@ -122,15 +122,21 @@ const workflowLabels: Record<string, string> = {
   archive: "Archive",
 };
 
-export function CouncilMemberEditor({ archivedOnly = false }: { archivedOnly?: boolean }) {
+export function CouncilMemberEditor({
+  archivedOnly = false,
+  profile = councilGovernanceProfile,
+}: {
+  archivedOnly?: boolean;
+  profile?: GovernanceWorkspaceProfile;
+}) {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<CouncilMember | null>(null);
   const [values, setValues] = useState<MemberForm>(defaultForm);
   const [error, setError] = useState("");
 
   const membersQuery = useQuery({
-    queryKey: ["governance", "university-council", "members"],
-    queryFn: () => governanceAdminApi.listCouncilMembers({ page: 1, per_page: 100 }),
+    queryKey: ["governance", profile.key, "members"],
+    queryFn: () => profile.api.listMembers({ page: 1, per_page: 100 }),
   });
   const rolesQuery = useQuery({
     queryKey: ["governance", "roles"],
@@ -159,16 +165,16 @@ export function CouncilMemberEditor({ archivedOnly = false }: { archivedOnly?: b
 
   const invalidateCouncil = async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["governance", "university-council"] }),
+      queryClient.invalidateQueries({ queryKey: ["governance", profile.key] }),
       queryClient.invalidateQueries({ queryKey: ["governance", "roles"] }),
     ]);
   };
 
   const saveMutation = useMutation({
     mutationFn: (payload: Partial<CouncilMember>) =>
-      editing ? governanceAdminApi.updateCouncilMember(editing.id, payload) : governanceAdminApi.createCouncilMember(payload),
+      editing ? profile.api.updateMember(editing.id, payload) : profile.api.createMember(payload),
     onSuccess: async () => {
-      toast.success(editing ? "Council member updated" : "Council member created");
+      toast.success(editing ? `${profile.memberSingular} updated` : `${profile.memberSingular} created`);
       setEditing(null);
       setValues(defaultForm);
       setError("");
@@ -179,8 +185,8 @@ export function CouncilMemberEditor({ archivedOnly = false }: { archivedOnly?: b
 
   const transitionMutation = useMutation({
     mutationFn: ({ member, action }: { member: CouncilMember; action: string }) =>
-      governanceAdminApi.transitionCouncilMember(member.id, action, {
-        comment: values.publication_notes || `Council member ${action}`,
+      profile.api.transitionMember(member.id, action, {
+        comment: values.publication_notes || `${profile.memberSingular} ${action}`,
       }),
     onSuccess: async () => {
       toast.success("Workflow status updated");
@@ -205,11 +211,11 @@ export function CouncilMemberEditor({ archivedOnly = false }: { archivedOnly?: b
 
   const save = () => {
     if (!values.person_id) {
-      setError("Select a person before saving this Council appointment.");
+      setError(`Select a person before saving this ${profile.badgeLabel} appointment.`);
       return;
     }
     if (!values.governance_role_id) {
-      setError("Select a governance role before saving this Council appointment.");
+      setError(`Select a governance role before saving this ${profile.badgeLabel} appointment.`);
       return;
     }
     if (!values.public_role_label) {
@@ -223,7 +229,7 @@ export function CouncilMemberEditor({ archivedOnly = false }: { archivedOnly?: b
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
       <Card>
         <CardHeader>
-          <CardTitle>{editing ? "Edit Council Member" : archivedOnly ? "Archived Council Members" : "Add Council Member"}</CardTitle>
+          <CardTitle>{editing ? `Edit ${profile.memberSingular}` : archivedOnly ? `Archived ${profile.memberPlural}` : `Add ${profile.memberSingular}`}</CardTitle>
           <CardDescription>
             Use readable relationship controls for the person, portrait, appointment details, and publication workflow.
           </CardDescription>
@@ -231,7 +237,7 @@ export function CouncilMemberEditor({ archivedOnly = false }: { archivedOnly?: b
         <CardContent className="space-y-5">
           {archivedOnly ? (
             <p className="rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground">
-              Archived records are shown on the right for review. Select a member to inspect or restore through available workflow actions.
+              Archived records are shown on the right for review. Select a member to inspect available workflow actions.
             </p>
           ) : null}
 
@@ -290,7 +296,7 @@ export function CouncilMemberEditor({ archivedOnly = false }: { archivedOnly?: b
                     rows={6}
                     value={values.profile_summary ?? ""}
                     onChange={(event) => setField("profile_summary", event.target.value)}
-                    placeholder="Short public biography and Council contribution"
+                    placeholder={`Short public biography and ${profile.badgeLabel} contribution`}
                   />
                 </div>
                 <MediaPicker
@@ -299,7 +305,7 @@ export function CouncilMemberEditor({ archivedOnly = false }: { archivedOnly?: b
                   mediaType="image"
                   accept="image/*"
                   label="Portrait"
-                  helperText="Attach or upload a portrait for media readiness. Public cards use the selected person's approved photo until the Council API exposes a dedicated portrait field."
+                  helperText={`Attach or upload a portrait for media readiness. Public cards use the selected person's approved photo until a dedicated ${profile.badgeLabel} portrait is selected.`}
                 />
               </div>
 
@@ -351,9 +357,9 @@ export function CouncilMemberEditor({ archivedOnly = false }: { archivedOnly?: b
           <CardContent>
             <div className="rounded-lg border p-4">
               <div className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary">
-                {(editing ? memberName(editing) : "New").slice(0, 1)}
+                {(editing ? memberName(editing, profile) : "New").slice(0, 1)}
               </div>
-              <h3 className="mt-4 font-semibold">{editing ? memberName(editing) : "Selected person"}</h3>
+              <h3 className="mt-4 font-semibold">{editing ? memberName(editing, profile) : "Selected person"}</h3>
               <p className="text-sm text-muted-foreground">{values.public_role_label || "Public role label"}</p>
               {values.represented_institution ? <p className="mt-2 text-xs text-muted-foreground">{values.represented_institution}</p> : null}
             </div>
@@ -370,8 +376,8 @@ export function CouncilMemberEditor({ archivedOnly = false }: { archivedOnly?: b
               <div key={member.id} className="rounded-md border p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-medium">{memberName(member)}</p>
-                    <p className="text-sm text-muted-foreground">{roleLabel(member)}</p>
+                    <p className="font-medium">{memberName(member, profile)}</p>
+                    <p className="text-sm text-muted-foreground">{roleLabel(member, profile)}</p>
                     {member.represented_institution ? <p className="mt-1 text-xs text-muted-foreground">{member.represented_institution}</p> : null}
                   </div>
                   <Badge variant={member.workflow_status === "published" ? "default" : "outline"}>
@@ -403,7 +409,7 @@ export function CouncilMemberEditor({ archivedOnly = false }: { archivedOnly?: b
               </div>
             ))}
             {!members.length && !membersQuery.isLoading ? (
-              <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">No Council members found for this view.</p>
+              <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">No {profile.memberPlural.toLowerCase()} found for this view.</p>
             ) : null}
           </CardContent>
         </Card>

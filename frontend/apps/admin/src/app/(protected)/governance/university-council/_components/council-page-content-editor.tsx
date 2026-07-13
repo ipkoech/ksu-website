@@ -6,9 +6,9 @@ import { Save } from "lucide-react";
 import { toast } from "@ksu/ui";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Textarea } from "@ksu/ui/components";
 import { MediaPicker } from "@/components/media";
-import { governanceAdminApi, type CouncilPageContent } from "@/lib/api/organization";
+import { councilGovernanceProfile, type CouncilPageContent, type GovernanceWorkspaceProfile } from "@/lib/api/organization";
 
-const defaults: Partial<CouncilPageContent> = {
+const baseDefaults: Partial<CouncilPageContent> = {
   title: "",
   intro: "",
   breadcrumb_label: "",
@@ -18,9 +18,15 @@ const defaults: Partial<CouncilPageContent> = {
   mandate_label: "Our Mandate",
   mandate_heading: "",
   mandate_body: "",
-  document_cta_label: "Council Charter",
   document_cta_url: "",
 };
+
+function defaultsForProfile(profile: GovernanceWorkspaceProfile): Partial<CouncilPageContent> {
+  return {
+    ...baseDefaults,
+    document_cta_label: profile.defaultDocumentCtaLabel,
+  };
+}
 
 function contentPayload(values: Partial<CouncilPageContent>): Partial<CouncilPageContent> {
   return {
@@ -30,36 +36,36 @@ function contentPayload(values: Partial<CouncilPageContent>): Partial<CouncilPag
   };
 }
 
-export function CouncilPageContentEditor() {
+export function CouncilPageContentEditor({ profile = councilGovernanceProfile }: { profile?: GovernanceWorkspaceProfile }) {
   const queryClient = useQueryClient();
-  const [values, setValues] = useState<Partial<CouncilPageContent>>(defaults);
+  const [values, setValues] = useState<Partial<CouncilPageContent>>(() => defaultsForProfile(profile));
 
   const contentQuery = useQuery({
-    queryKey: ["governance", "university-council", "page-content"],
-    queryFn: () => governanceAdminApi.getCouncilPageContent(),
+    queryKey: ["governance", profile.key, "page-content"],
+    queryFn: () => profile.api.getPageContent(),
   });
 
   useEffect(() => {
     if (contentQuery.data?.data) {
       setValues({
-        ...defaults,
+        ...defaultsForProfile(profile),
         ...contentQuery.data.data,
-        overlay_intensity: contentQuery.data.data.overlay_intensity ?? defaults.overlay_intensity,
+        overlay_intensity: contentQuery.data.data.overlay_intensity ?? baseDefaults.overlay_intensity,
       });
     }
-  }, [contentQuery.data?.data]);
+  }, [contentQuery.data?.data, profile]);
 
   const updateMutation = useMutation({
     mutationFn: () =>
-      governanceAdminApi.updateCouncilPageContent(contentPayload(values)),
+      profile.api.updatePageContent(contentPayload(values)),
     onSuccess: async () => {
-      toast.success("Council page content saved");
+      toast.success(`${profile.badgeLabel} page content saved`);
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["governance", "university-council", "page-content"] }),
-        queryClient.invalidateQueries({ queryKey: ["governance", "university-council", "preview"] }),
+        queryClient.invalidateQueries({ queryKey: ["governance", profile.key, "page-content"] }),
+        queryClient.invalidateQueries({ queryKey: ["governance", profile.key, "preview"] }),
       ]);
     },
-    onError: () => toast.error("Unable to save Council page content"),
+    onError: () => toast.error(`Unable to save ${profile.badgeLabel} page content`),
   });
 
   const setField = <K extends keyof CouncilPageContent>(key: K, value: CouncilPageContent[K]) => {
@@ -73,7 +79,7 @@ export function CouncilPageContentEditor() {
           <div>
             <CardTitle>Hero And Mandate</CardTitle>
             <CardDescription>
-              Manage public University Council page content, including hero imagery, Our Mandate copy, and Council Charter CTA.
+              Manage public {profile.badgeLabel} page content, including hero imagery, mandate copy, and document CTA.
             </CardDescription>
           </div>
           <Button type="button" onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}>
@@ -83,10 +89,10 @@ export function CouncilPageContentEditor() {
         </CardHeader>
         <CardContent className="space-y-5">
           {contentQuery.isLoading ? (
-            <StateMessage label="Loading Council page content..." />
+            <StateMessage label={`Loading ${profile.badgeLabel} page content...`} />
           ) : null}
           {contentQuery.isError ? (
-            <StateMessage label="Council page content could not be loaded. You can retry after the connection is restored." tone="error" />
+            <StateMessage label={`${profile.badgeLabel} page content could not be loaded. You can retry after the connection is restored.`} tone="error" />
           ) : null}
           <div className="grid gap-4 lg:grid-cols-2">
             <TextField label="Title" value={values.title} onChange={(value) => setField("title", value)} />
@@ -105,7 +111,7 @@ export function CouncilPageContentEditor() {
               mediaType="image"
               accept="image/*"
               label="Hero background image"
-              helperText="Select the public image used behind the Council page hero."
+              helperText={`Select the public image used behind the ${profile.badgeLabel} page hero.`}
             />
             <div className="space-y-4">
               <TextField label="Image focal point" value={values.hero_focal_point} onChange={(value) => setField("hero_focal_point", value)} />
@@ -132,8 +138,8 @@ export function CouncilPageContentEditor() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <TextField label="Council Charter" value={values.document_cta_label} onChange={(value) => setField("document_cta_label", value)} />
-            <TextField label="Council Charter URL" value={values.document_cta_url} onChange={(value) => setField("document_cta_url", value)} />
+            <TextField label="Document CTA label" value={values.document_cta_label} onChange={(value) => setField("document_cta_label", value)} />
+            <TextField label="Document CTA URL" value={values.document_cta_url} onChange={(value) => setField("document_cta_url", value)} />
           </div>
         </CardContent>
       </Card>
@@ -153,8 +159,8 @@ export function CouncilPageContentEditor() {
                 className="rounded-md p-4"
                 style={{ backgroundColor: `rgb(0 0 0 / ${Math.min(Number(values.overlay_intensity ?? 0), 100) / 100})` }}
               >
-                <p className="text-xs font-semibold uppercase">{values.breadcrumb_label || "University Council"}</p>
-                <h3 className="mt-3 text-2xl font-semibold">{values.title || "University Council"}</h3>
+                <p className="text-xs font-semibold uppercase">{values.breadcrumb_label || profile.badgeLabel}</p>
+                <h3 className="mt-3 text-2xl font-semibold">{values.title || profile.badgeLabel}</h3>
                 <p className="mt-2 text-sm opacity-90">{values.intro || "Council page introduction will appear here."}</p>
               </div>
             </div>
@@ -163,7 +169,7 @@ export function CouncilPageContentEditor() {
               <h4 className="mt-2 font-semibold">{values.mandate_heading || "Mandate heading"}</h4>
               <p className="mt-2 text-sm text-muted-foreground">{values.mandate_body || "Mandate body copy will appear here."}</p>
               <Button type="button" variant="outline" size="sm" className="mt-4">
-                {values.document_cta_label || "Council Charter"}
+                {values.document_cta_label || profile.defaultDocumentCtaLabel}
               </Button>
             </div>
           </div>
