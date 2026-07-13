@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -24,6 +24,7 @@ from app.models import (
 from app.services.page_cms_sources import (
     PageCmsSourceResolutionState,
     PageCmsSourceService,
+    _media_url,
 )
 from ksu_common import PaginatedResult
 
@@ -102,7 +103,8 @@ def _person(name: str = "Amina Otieno"):
 
 
 def _intake(school_id: uuid.UUID):
-    _, department, programme = _school_tree()
+    school, department, programme = _school_tree()
+    school.id = school_id
     department.school_id = school_id
     programme.department = department
     calendar = AcademicCalendar(
@@ -128,12 +130,12 @@ def _intake(school_id: uuid.UUID):
 @pytest.mark.parametrize(
     ("source_type", "factory", "scope_type", "scope_id", "expected_sql"),
     [
-        ("intake", lambda school_id: _intake(school_id), "school", lambda school_id: school_id, ("intakes.deleted_at is null", "intakes.is_active is true", "programme_intakes.is_active is true", "departments.school_id")),
-        ("academic_calendar", lambda school_id: _intake(school_id).academic_calendar, "school", lambda school_id: school_id, ("academic_calendars.deleted_at is null", "academic_calendars.status", "intakes", "programme_intakes", "departments.school_id")),
-        ("staff_assignment", None, "school", lambda school_id: school_id, ("staff_assignments.deleted_at is null", "staff_assignments.status", "staff_assignments.is_public is true", "persons.is_active is true", "persons.is_public is true", "staff_assignments.entity_id")),
+        ("intake", lambda school_id: _intake(school_id), "school", lambda school_id: school_id, ("intakes.deleted_at is null", "intakes.is_active is true", "programme_intakes.deleted_at is null", "programme_intakes.is_active is true", "programmes.deleted_at is null", "programmes.is_active is true", "departments.deleted_at is null", "departments.is_active is true", "schools.deleted_at is null", "schools.is_active is true", "schools.is_public is true", "departments.school_id")),
+        ("academic_calendar", lambda school_id: _intake(school_id).academic_calendar, "school", lambda school_id: school_id, ("academic_calendars.deleted_at is null", "academic_calendars.status", "intakes.deleted_at is null", "programme_intakes.deleted_at is null", "programmes.deleted_at is null", "departments.deleted_at is null", "schools.deleted_at is null", "schools.is_public is true", "departments.school_id")),
+        ("staff_assignment", None, "school", lambda school_id: school_id, ("staff_assignments.deleted_at is null", "staff_assignments.status", "staff_assignments.is_public is true", "staff_assignments.workflow_status", "staff_assignments.published_at is not null", "staff_assignments.unpublished_at is null", "staff_assignments.archived_at is null", "persons.is_active is true", "persons.is_public is true", "staff_assignments.entity_id")),
         ("alumni", None, "university", lambda _school_id: None, ("alumni.deleted_at is null", "alumni.is_public is true", "alumni.is_verified is true", "persons.is_active is true", "persons.is_public is true")),
         ("testimonial", None, "university", lambda _school_id: None, ("testimonials.deleted_at is null", "testimonials.is_public is true", "testimonials.is_approved is true")),
-        ("club_activity", None, "school", lambda school_id: school_id, ("club_activities.deleted_at is null", "club_activities.is_public is true", "club_activities.is_published is true", "club_activities.status", "clubs.is_active is true", "clubs.is_public is true")),
+        ("club_activity", None, "school", lambda school_id: school_id, ("club_activities.deleted_at is null", "club_activities.is_public is true", "club_activities.is_published is true", "club_activities.workflow_status", "club_activities.unpublished_at is null", "club_activities.scheduled_publish_at is null", "club_activities.expires_at is null", "club_activities.status", "clubs.deleted_at is null", "clubs.is_active is true", "clubs.is_public is true")),
     ],
 )
 async def test_local_source_searches_filter_public_records_and_return_sanitized_summaries(
@@ -145,6 +147,7 @@ async def test_local_source_searches_filter_public_records_and_return_sanitized_
         item = StaffAssignment(
             person_id=person.id, entity_type="school", entity_id=school_id, role="dean",
             title="Dean of Computing", status="active", is_public=True,
+            workflow_status="published", published_at=datetime.now(timezone.utc) - timedelta(days=1),
         )
         item.id = uuid.uuid4()
         item.person = person
@@ -166,7 +169,8 @@ async def test_local_source_searches_filter_public_records_and_return_sanitized_
         club.id = uuid.uuid4()
         item = ClubActivity(
             club_id=club.id, title="Robotics Showcase", slug="showcase", description="Public demo",
-            activity_type="event", start_datetime=date.today(), status="published", is_public=True, is_published=True,
+            activity_type="event", start_datetime=datetime.now(timezone.utc), status="published", is_public=True,
+            is_published=True, workflow_status="published",
         )
         item.id = uuid.uuid4()
         item.club = club
@@ -194,7 +198,8 @@ async def test_local_source_summaries_expose_human_metadata_only():
     person = _person()
     assignment = StaffAssignment(
         person_id=person.id, entity_type="university", role="director", title="Director of Quality",
-        status="active", is_public=True,
+        status="active", is_public=True, workflow_status="published",
+        published_at=datetime.now(timezone.utc) - timedelta(days=1),
     )
     assignment.id = uuid.uuid4()
     assignment.person = person
@@ -212,7 +217,8 @@ async def test_local_source_summaries_expose_human_metadata_only():
     club.id = uuid.uuid4()
     activity = ClubActivity(
         club_id=club.id, title="Robotics Showcase", slug="showcase-human", description="Public demo",
-        activity_type="event", start_datetime=date.today(), status="published", is_public=True, is_published=True,
+        activity_type="event", start_datetime=datetime.now(timezone.utc), status="published", is_public=True,
+        is_published=True, workflow_status="published",
     )
     activity.id = uuid.uuid4()
     activity.club = club
@@ -319,3 +325,203 @@ async def test_resolve_many_marks_nonpublic_local_sources_unavailable_without_ex
     result = resolutions[("testimonial", testimonial.id)]
     assert result.state is PageCmsSourceResolutionState.UNAVAILABLE
     assert result.source is None
+
+
+def test_local_source_media_urls_require_public_nondeleted_media_and_never_fall_back_to_storage():
+    private_storage_only = SimpleNamespace(
+        deleted_at=None,
+        is_public=False,
+        thumbnail_url=None,
+        cdn_url=None,
+        public_url=None,
+        url="/private-storage/internal-photo.jpg",
+    )
+    deleted_cdn = SimpleNamespace(
+        deleted_at=datetime.now(timezone.utc),
+        is_public=True,
+        thumbnail_url=None,
+        cdn_url="https://cdn.example.test/deleted.jpg",
+        public_url=None,
+        url="/private-storage/deleted.jpg",
+    )
+    public_media = SimpleNamespace(
+        deleted_at=None,
+        is_public=True,
+        thumbnail_url=None,
+        cdn_url="https://cdn.example.test/public.jpg",
+        public_url="https://media.example.test/public.jpg",
+        url="/private-storage/public.jpg",
+    )
+
+    assert _media_url(private_storage_only) is None
+    assert _media_url(deleted_cdn) is None
+    assert _media_url(public_media) == "https://cdn.example.test/public.jpg"
+
+
+@pytest.mark.asyncio
+async def test_local_adapter_does_not_expose_private_media_storage_url():
+    school_id = uuid.uuid4()
+    intake = _intake(school_id)
+    intake.cover_image = SimpleNamespace(
+        deleted_at=None,
+        is_public=False,
+        thumbnail_url=None,
+        cdn_url=None,
+        public_url=None,
+        url="/private-storage/intake.jpg",
+    )
+
+    result = await PageCmsSourceService.resolve(
+        _Db(intake), "intake", intake.id,
+        destination_scope_type="school", destination_scope_id=school_id,
+    )
+
+    assert result is not None
+    assert result.thumbnail_url is None
+
+
+def _published_assignment(school_id: uuid.UUID, *, workflow_status: str = "published") -> StaffAssignment:
+    person = _person()
+    assignment = StaffAssignment(
+        person_id=person.id,
+        entity_type="school",
+        entity_id=school_id,
+        role="dean",
+        title="Dean of Computing",
+        status="active",
+        is_public=True,
+        workflow_status=workflow_status,
+        published_at=datetime.now(timezone.utc) - timedelta(days=1),
+    )
+    assignment.id = uuid.uuid4()
+    assignment.person = person
+    return assignment
+
+
+@pytest.mark.asyncio
+async def test_staff_assignment_public_resolution_and_bulk_require_published_workflow():
+    school_id = uuid.uuid4()
+    assignment = _published_assignment(school_id, workflow_status="draft")
+
+    public = await PageCmsSourceService.resolve(
+        _Db(assignment), "staff_assignment", assignment.id,
+        destination_scope_type="school", destination_scope_id=school_id,
+    )
+    bulk = await PageCmsSourceService.resolve_many(
+        _Db([assignment]), [("staff_assignment", assignment.id)],
+        destination_scope_type="school", destination_scope_id=school_id,
+    )
+    preview = await PageCmsSourceService.resolve(
+        _Db(assignment), "staff_assignment", assignment.id,
+        destination_scope_type="school", destination_scope_id=school_id,
+        preview_capability=_PreviewCapability("school", school_id),
+    )
+
+    assert public is None
+    assert bulk[("staff_assignment", assignment.id)].state is PageCmsSourceResolutionState.UNAVAILABLE
+    assert preview is not None
+    assert preview.selectable is False
+
+
+def _published_activity(school_id: uuid.UUID, *, scheduled_publish_at=None) -> ClubActivity:
+    club = Club(
+        name="Robotics Club",
+        slug=f"robotics-{uuid.uuid4()}",
+        club_type="academic",
+        school_id=school_id,
+        is_active=True,
+        is_public=True,
+    )
+    club.id = uuid.uuid4()
+    activity = ClubActivity(
+        club_id=club.id,
+        title="Robotics Showcase",
+        slug=f"showcase-{uuid.uuid4()}",
+        activity_type="event",
+        start_datetime=datetime.now(timezone.utc),
+        status="published",
+        is_public=True,
+        is_published=True,
+        workflow_status="published",
+        scheduled_publish_at=scheduled_publish_at,
+    )
+    activity.id = uuid.uuid4()
+    activity.club = club
+    return activity
+
+
+@pytest.mark.asyncio
+async def test_club_activity_public_resolution_and_bulk_reject_future_scheduled_content():
+    school_id = uuid.uuid4()
+    activity = _published_activity(school_id, scheduled_publish_at=datetime.now(timezone.utc) + timedelta(days=1))
+
+    public = await PageCmsSourceService.resolve(
+        _Db(activity), "club_activity", activity.id,
+        destination_scope_type="school", destination_scope_id=school_id,
+    )
+    bulk = await PageCmsSourceService.resolve_many(
+        _Db([activity]), [("club_activity", activity.id)],
+        destination_scope_type="school", destination_scope_id=school_id,
+    )
+    preview = await PageCmsSourceService.resolve(
+        _Db(activity), "club_activity", activity.id,
+        destination_scope_type="school", destination_scope_id=school_id,
+        preview_capability=_PreviewCapability("school", school_id),
+    )
+
+    assert public is None
+    assert bulk[("club_activity", activity.id)].state is PageCmsSourceResolutionState.UNAVAILABLE
+    assert preview is not None
+    assert preview.selectable is False
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("source_type", ["intake", "academic_calendar"])
+async def test_school_scoped_preview_requires_a_current_public_school_relationship(source_type):
+    school_id = uuid.uuid4()
+    other_school_id = uuid.uuid4()
+    intake = _intake(school_id)
+    item = intake if source_type == "intake" else intake.academic_calendar
+    if source_type == "intake":
+        intake.is_active = False
+    else:
+        item.status = "draft"
+        item.intakes = [intake]
+
+    allowed = await PageCmsSourceService.resolve(
+        _Db(item), source_type, item.id,
+        destination_scope_type="school", destination_scope_id=school_id,
+        preview_capability=_PreviewCapability("school", school_id),
+    )
+    denied = await PageCmsSourceService.resolve(
+        _Db(item), source_type, item.id,
+        destination_scope_type="school", destination_scope_id=other_school_id,
+        preview_capability=_PreviewCapability("school", other_school_id),
+    )
+
+    assert allowed is not None
+    assert allowed.selectable is False
+    assert denied is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("source_type", ["intake", "academic_calendar"])
+async def test_school_scope_rejects_deleted_or_inactive_programme_links(source_type):
+    school_id = uuid.uuid4()
+    intake = _intake(school_id)
+    intake.programmes[0].deleted_at = datetime.now(timezone.utc)
+    item = intake if source_type == "intake" else intake.academic_calendar
+    if source_type == "academic_calendar":
+        item.intakes = [intake]
+
+    result = await PageCmsSourceService.resolve(
+        _Db(item), source_type, item.id,
+        destination_scope_type="school", destination_scope_id=school_id,
+    )
+    bulk = await PageCmsSourceService.resolve_many(
+        _Db([item]), [(source_type, item.id)],
+        destination_scope_type="school", destination_scope_id=school_id,
+    )
+
+    assert result is None
+    assert bulk[(source_type, item.id)].state is PageCmsSourceResolutionState.INACCESSIBLE

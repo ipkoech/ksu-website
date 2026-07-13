@@ -118,9 +118,13 @@ def _source_resolution(
 
 
 def _media_url(media: Any | None) -> str | None:
-    if media is None:
+    if media is None or not _not_deleted(media) or not getattr(media, "is_public", False):
         return None
-    return getattr(media, "thumbnail_url", None) or getattr(media, "url", None)
+    return (
+        getattr(media, "thumbnail_url", None)
+        or getattr(media, "cdn_url", None)
+        or getattr(media, "public_url", None)
+    )
 
 
 def _public_content_filters(model, now: datetime):
@@ -292,10 +296,19 @@ def _intake_school_ids(item: Intake) -> set[uuid.UUID]:
     return {
         programme_intake.programme.department.school_id
         for programme_intake in item.programmes
-        if programme_intake.is_active
+        if _not_deleted(programme_intake)
+        and programme_intake.is_active
         and programme_intake.programme is not None
+        and _not_deleted(programme_intake.programme)
+        and programme_intake.programme.is_active
         and programme_intake.programme.department is not None
+        and _not_deleted(programme_intake.programme.department)
+        and programme_intake.programme.department.is_active
         and programme_intake.programme.department.school_id is not None
+        and programme_intake.programme.department.school is not None
+        and _not_deleted(programme_intake.programme.department.school)
+        and programme_intake.programme.department.school.is_active
+        and programme_intake.programme.department.school.is_public
     }
 
 
@@ -319,10 +332,16 @@ def _calendar_is_public(item: AcademicCalendar) -> bool:
 def _staff_assignment_is_public(item: StaffAssignment) -> bool:
     person = item.person
     today = date.today()
+    now = datetime.now(timezone.utc)
     return bool(
         _not_deleted(item)
         and item.status == "active"
         and item.is_public
+        and item.workflow_status == "published"
+        and item.archived_at is None
+        and item.unpublished_at is None
+        and item.published_at is not None
+        and item.published_at <= now
         and (item.start_date is None or item.start_date <= today)
         and (item.end_date is None or item.end_date >= today)
         and person is not None
@@ -351,12 +370,17 @@ def _testimonial_is_public(item: Testimonial) -> bool:
 
 def _club_activity_is_public(item: ClubActivity) -> bool:
     club = item.club
+    now = datetime.now(timezone.utc)
     return bool(
         _not_deleted(item)
         and item.archived_at is None
         and item.status == "published"
         and item.is_public
         and item.is_published
+        and item.workflow_status == "published"
+        and item.unpublished_at is None
+        and (item.scheduled_publish_at is None or item.scheduled_publish_at <= now)
+        and (item.expires_at is None or item.expires_at >= now)
         and club is not None
         and _not_deleted(club)
         and club.is_active
@@ -534,6 +558,17 @@ def _local_scope(source_type: str, item: Any) -> tuple[str, uuid.UUID | None]:
     return "university", None
 
 
+def _local_preview_scope(
+    source_type: str,
+    item: Any,
+    destination_scope_type: str,
+    destination_scope_id: uuid.UUID | None,
+) -> tuple[str, uuid.UUID | None]:
+    if source_type in {"intake", "academic_calendar"} and destination_scope_type == "school":
+        return "school", destination_scope_id
+    return _local_scope(source_type, item)
+
+
 def _local_scope_matches(
     source_type: str,
     item: Any,
@@ -558,14 +593,18 @@ def _local_source_statement(source_type: str):
     if source_type == "intake":
         return select(Intake).options(
             selectinload(Intake.cover_image),
-            selectinload(Intake.programmes).selectinload(ProgrammeIntake.programme).selectinload(Programme.department),
+            selectinload(Intake.programmes)
+            .selectinload(ProgrammeIntake.programme)
+            .selectinload(Programme.department)
+            .selectinload(Department.school),
         )
     if source_type == "academic_calendar":
         return select(AcademicCalendar).options(
             selectinload(AcademicCalendar.intakes)
             .selectinload(Intake.programmes)
             .selectinload(ProgrammeIntake.programme)
-            .selectinload(Programme.department),
+            .selectinload(Programme.department)
+            .selectinload(Department.school),
         )
     if source_type == "staff_assignment":
         return select(StaffAssignment).options(selectinload(StaffAssignment.person).selectinload(Person.photo))
@@ -790,8 +829,12 @@ class PageCmsSourceService:
                 Intake.deleted_at.is_(None), Intake.is_active.is_(True),
             )
             if scope_type == "school":
-                statement = statement.join(ProgrammeIntake).join(Programme).join(Department).where(
-                    ProgrammeIntake.is_active.is_(True), Department.school_id == scope_id,
+                statement = statement.join(ProgrammeIntake).join(Programme).join(Department).join(School).where(
+                    ProgrammeIntake.deleted_at.is_(None), ProgrammeIntake.is_active.is_(True),
+                    Programme.deleted_at.is_(None), Programme.is_active.is_(True),
+                    Department.deleted_at.is_(None), Department.is_active.is_(True),
+                    School.deleted_at.is_(None), School.is_active.is_(True), School.is_public.is_(True),
+                    Department.school_id == scope_id,
                 ).distinct()
             elif scope_type != "university":
                 statement = statement.where(false())
@@ -806,9 +849,13 @@ class PageCmsSourceService:
                 AcademicCalendar.deleted_at.is_(None), AcademicCalendar.status.in_(("published", "current")),
             )
             if scope_type == "school":
-                statement = statement.join(Intake).join(ProgrammeIntake).join(Programme).join(Department).where(
+                statement = statement.join(Intake).join(ProgrammeIntake).join(Programme).join(Department).join(School).where(
                     Intake.deleted_at.is_(None), Intake.is_active.is_(True),
-                    ProgrammeIntake.is_active.is_(True), Department.school_id == scope_id,
+                    ProgrammeIntake.deleted_at.is_(None), ProgrammeIntake.is_active.is_(True),
+                    Programme.deleted_at.is_(None), Programme.is_active.is_(True),
+                    Department.deleted_at.is_(None), Department.is_active.is_(True),
+                    School.deleted_at.is_(None), School.is_active.is_(True), School.is_public.is_(True),
+                    Department.school_id == scope_id,
                 ).distinct()
             elif scope_type != "university":
                 statement = statement.where(false())
@@ -819,9 +866,13 @@ class PageCmsSourceService:
             return _map_page(result, _calendar_summary)
 
         if source_type == "staff_assignment":
+            now = datetime.now(timezone.utc)
             statement = _local_source_statement("staff_assignment").join(Person).where(
                 StaffAssignment.deleted_at.is_(None), StaffAssignment.status == "active",
                 StaffAssignment.is_public.is_(True),
+                StaffAssignment.workflow_status == "published",
+                StaffAssignment.archived_at.is_(None), StaffAssignment.unpublished_at.is_(None),
+                StaffAssignment.published_at.is_not(None), StaffAssignment.published_at <= now,
                 or_(StaffAssignment.start_date.is_(None), StaffAssignment.start_date <= date.today()),
                 or_(StaffAssignment.end_date.is_(None), StaffAssignment.end_date >= date.today()),
                 Person.deleted_at.is_(None), Person.is_active.is_(True), Person.is_public.is_(True),
@@ -860,11 +911,15 @@ class PageCmsSourceService:
             return _map_page(result, _testimonial_summary)
 
         if source_type == "club_activity":
+            now = datetime.now(timezone.utc)
             statement = _local_source_statement("club_activity").join(Club).outerjoin(
                 Department, Club.department_id == Department.id,
             ).where(
                 ClubActivity.deleted_at.is_(None), ClubActivity.archived_at.is_(None),
                 ClubActivity.status == "published", ClubActivity.is_public.is_(True), ClubActivity.is_published.is_(True),
+                ClubActivity.workflow_status == "published", ClubActivity.unpublished_at.is_(None),
+                or_(ClubActivity.scheduled_publish_at.is_(None), ClubActivity.scheduled_publish_at <= now),
+                or_(ClubActivity.expires_at.is_(None), ClubActivity.expires_at >= now),
                 Club.deleted_at.is_(None), Club.is_active.is_(True), Club.is_public.is_(True),
             )
             if scope_type == "school":
@@ -873,7 +928,9 @@ class PageCmsSourceService:
                 statement = statement.where(false())
             if query:
                 statement = statement.where(ilike_any(query, ClubActivity.title, ClubActivity.description, Club.name))
-            statement = statement.order_by(ClubActivity.start_datetime.asc(), ClubActivity.title.asc(), ClubActivity.id.asc())
+            statement = statement.distinct().order_by(
+                ClubActivity.start_datetime.asc(), ClubActivity.title.asc(), ClubActivity.id.asc(),
+            )
             result = await paginate_query(db, statement, page=page, per_page=per_page)
             return _map_page(result, _club_activity_summary)
 
@@ -1020,7 +1077,9 @@ class PageCmsSourceService:
                 return None
             if _local_is_public(source_type, item):
                 return _local_summary(source_type, item)
-            source_scope_type, source_scope_id = _local_scope(source_type, item)
+            source_scope_type, source_scope_id = _local_preview_scope(
+                source_type, item, destination_scope_type, destination_scope_id,
+            )
             if not await PageCmsSourceService._preview_allowed(
                 preview_capability,
                 source_scope_type,
@@ -1259,7 +1318,9 @@ class PageCmsSourceService:
                         _local_summary(source_type, item),
                     )
                     continue
-                source_scope_type, source_scope_id = _local_scope(source_type, item)
+                source_scope_type, source_scope_id = _local_preview_scope(
+                    source_type, item, destination_scope_type, destination_scope_id,
+                )
                 if await preview_allowed(source_scope_type, source_scope_id):
                     results[(source_type, source_id)] = _source_resolution(
                         source_type, source_id, PageCmsSourceResolutionState.RESOLVED,
