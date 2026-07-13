@@ -45,9 +45,13 @@ class SupportScopeApiTests(unittest.IsolatedAsyncioTestCase):
         async def fake_can_access(_db, _user, _permission, _scope_type, scope_id):
             return scope_id == own_wing_id
 
+        async def fake_list_admin_authorized(_db, *, is_visible, **_kwargs):
+            visible = [item for item in page.items if await is_visible(item.scope_type, item.scope_id)]
+            return _Page(visible)
+
         with (
             patch.object(contacts, "build_selector", return_value=_FakeSelector()),
-            patch.object(contacts.ContactService, "list", return_value=page),
+            patch.object(contacts.ContactService, "list_admin_authorized", side_effect=fake_list_admin_authorized),
             patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
         ):
             response = await contacts.list_admin_contacts(db=None, user=user)

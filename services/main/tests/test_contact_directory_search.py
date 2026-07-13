@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import inspect
+import uuid
 from datetime import datetime, timezone
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, load_only
 
+from app.api.v1 import contacts
 from app.models import ContactDirectory
 from app.services import ContactService
 
@@ -157,3 +162,119 @@ async def test_contact_search_supports_descending_name_sort(db):
 async def test_contact_search_rejects_unsupported_sort(db):
     with pytest.raises(ValueError, match="Unsupported contact sort"):
         await ContactService.list(db, sort="created_desc")
+
+
+@pytest.mark.anyio
+async def test_admin_contact_scope_authorization_filters_before_pagination(db):
+    authorized_scope_id = uuid.uuid4()
+    unauthorized_scope_id = uuid.uuid4()
+    await _insert(
+        db,
+        ContactDirectory(name="Alpha", scope_type="wing", scope_id=unauthorized_scope_id),
+        ContactDirectory(name="Bravo", scope_type="wing", scope_id=authorized_scope_id),
+        ContactDirectory(name="Charlie", scope_type="wing", scope_id=unauthorized_scope_id),
+        ContactDirectory(name="Delta", scope_type="wing", scope_id=authorized_scope_id),
+        ContactDirectory(name="Echo", scope_type="wing", scope_id=authorized_scope_id),
+    )
+
+    async def is_visible(scope_type, scope_id):
+        return scope_type == "wing" and scope_id == authorized_scope_id
+
+    result = await ContactService.list_admin_authorized(
+        db,
+        page=1,
+        per_page=2,
+        is_visible=is_visible,
+    )
+
+    assert [item.name for item in result.items] == ["Bravo", "Delta"]
+    assert result.meta == {"page": 1, "per_page": 2, "total": 3, "pages": 2}
+
+
+@pytest.mark.anyio
+async def test_admin_contact_scope_authorization_preserves_field_selection(db):
+    scope_id = uuid.uuid4()
+    await _insert(db, ContactDirectory(name="Admissions", scope_type="wing", scope_id=scope_id))
+
+    async def is_visible(_scope_type, _scope_id):
+        return True
+
+    result = await ContactService.list_admin_authorized(
+        db,
+        is_visible=is_visible,
+        load_options=(load_only(ContactDirectory.id, ContactDirectory.name),),
+    )
+
+    assert [item.name for item in result.items] == ["Admissions"]
+
+
+class _Selector:
+    load_options = ()
+
+    def apply(self, value):
+        return value
+
+
+@pytest.mark.anyio
+async def test_public_route_forwards_contact_query_parameters():
+    page = SimpleNamespace(items=[], meta={"page": 2, "per_page": 5, "total": 0, "pages": 0})
+    list_contacts = AsyncMock(return_value=page)
+
+    with (
+        patch.object(contacts, "build_selector", return_value=_Selector()),
+        patch.object(contacts.ContactService, "list", list_contacts),
+    ):
+        await contacts.list_contacts.__wrapped__(
+            db=None,
+            page=2,
+            per_page=5,
+            q="admissions",
+            contact_type="office",
+            sort="name_desc",
+        )
+
+    list_contacts.assert_awaited_once()
+    assert list_contacts.await_args.kwargs["search"] == "admissions"
+    assert list_contacts.await_args.kwargs["contact_type"] == "office"
+    assert list_contacts.await_args.kwargs["sort"] == "name_desc"
+
+
+@pytest.mark.anyio
+async def test_admin_route_forwards_contact_query_parameters():
+    page = SimpleNamespace(items=[], meta={"page": 2, "per_page": 5, "total": 0, "pages": 0})
+    list_contacts = AsyncMock(return_value=page)
+
+    with (
+        patch.object(contacts, "build_selector", return_value=_Selector()),
+        patch.object(contacts.ContactService, "list_admin_authorized", list_contacts),
+    ):
+        await contacts.list_admin_contacts(
+            db=None,
+            user=SimpleNamespace(),
+            page=2,
+            per_page=5,
+            q="admissions",
+            contact_type="office",
+            sort="name_desc",
+        )
+
+    list_contacts.assert_awaited_once()
+    assert list_contacts.await_args.kwargs["search"] == "admissions"
+    assert list_contacts.await_args.kwargs["contact_type"] == "office"
+    assert list_contacts.await_args.kwargs["sort"] == "name_desc"
+
+
+def test_contact_routes_reject_invalid_sort_through_fastapi_typing():
+    for path in {"", "/admin"}:
+        route = next(route for route in contacts.router.routes if route.path == path)
+        sort_field = next(field for field in route.dependant.query_params if field.name == "sort")
+
+        _, errors = sort_field.validate("created_desc", {}, loc=("query", "sort"))
+
+        assert errors
+
+
+def test_public_contact_cache_varies_on_contact_query_parameters():
+    vary_on = inspect.getclosurevars(contacts.list_contacts).nonlocals["vary_on"]
+
+    assert {"q", "contact_type", "sort"}.issubset(vary_on)

@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Awaitable, Callable
 from datetime import datetime, timezone
 from typing import Sequence
 
-from sqlalchemy import or_, select
+from sqlalchemy import and_, false, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common import PaginatedResult
@@ -99,11 +100,8 @@ class ContactService:
         return contact
 
     @staticmethod
-    async def list(
-        db: AsyncSession,
+    def _list_query(
         *,
-        page: int = 1,
-        per_page: int = 20,
         scope_type: str | None = None,
         scope_id: uuid.UUID | None = None,
         is_public: bool | None = True,
@@ -113,7 +111,7 @@ class ContactService:
         contact_type: str | None = None,
         sort: str = "name_asc",
         load_options: Sequence = (),
-    ) -> PaginatedResult:
+    ):
         query = ContactDirectory.active_query()
         if load_options:
             query = query.options(*load_options)
@@ -142,6 +140,89 @@ class ContactService:
             query = query.order_by(ContactDirectory.name.asc(), ContactDirectory.id.asc())
         else:
             raise ValueError("Unsupported contact sort")
+        return query
+
+    @staticmethod
+    async def list(
+        db: AsyncSession,
+        *,
+        page: int = 1,
+        per_page: int = 20,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
+        is_public: bool | None = True,
+        is_main: bool | None = None,
+        status: str | None = "active",
+        search: str | None = None,
+        contact_type: str | None = None,
+        sort: str = "name_asc",
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        query = ContactService._list_query(
+            scope_type=scope_type,
+            scope_id=scope_id,
+            is_public=is_public,
+            is_main=is_main,
+            status=status,
+            search=search,
+            contact_type=contact_type,
+            sort=sort,
+            load_options=load_options,
+        )
+        return await paginate_query(db, query, page=page, per_page=per_page)
+
+    @staticmethod
+    async def list_admin_authorized(
+        db: AsyncSession,
+        *,
+        is_visible: Callable[[str | None, uuid.UUID | None], Awaitable[bool]],
+        page: int = 1,
+        per_page: int = 20,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
+        is_main: bool | None = None,
+        search: str | None = None,
+        contact_type: str | None = None,
+        sort: str = "name_asc",
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        query = ContactService._list_query(
+            scope_type=scope_type,
+            scope_id=scope_id,
+            is_public=None,
+            is_main=is_main,
+            status=None,
+            search=search,
+            contact_type=contact_type,
+            sort=sort,
+            load_options=load_options,
+        )
+        scope_query = query.with_only_columns(
+            ContactDirectory.scope_type,
+            ContactDirectory.scope_id,
+        ).order_by(None).distinct()
+        scope_result = await db.execute(scope_query)
+        allowed_scopes = [
+            (candidate_scope_type, candidate_scope_id)
+            for candidate_scope_type, candidate_scope_id in scope_result.all()
+            if await is_visible(candidate_scope_type, candidate_scope_id)
+        ]
+
+        allowed_predicates = []
+        for allowed_scope_type, allowed_scope_id in allowed_scopes:
+            type_predicate = (
+                ContactDirectory.scope_type.is_(None)
+                if allowed_scope_type is None
+                else ContactDirectory.scope_type == allowed_scope_type
+            )
+            id_predicate = (
+                ContactDirectory.scope_id.is_(None)
+                if allowed_scope_id is None
+                else ContactDirectory.scope_id == allowed_scope_id
+            )
+            allowed_predicates.append(and_(type_predicate, id_predicate))
+
+        query = query.where(or_(*allowed_predicates) if allowed_predicates else false())
         return await paginate_query(db, query, page=page, per_page=per_page)
 
     @staticmethod

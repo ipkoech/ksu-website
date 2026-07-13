@@ -75,33 +75,30 @@ async def list_admin_contacts(
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(ContactDirectory, fields)
-    result = await ContactService.list(
+
+    async def is_visible(candidate_scope_type, candidate_scope_id):
+        return await can_access_scoped_record(
+            db,
+            user,
+            CONTACT_VIEW_PERMISSIONS,
+            candidate_scope_type,
+            candidate_scope_id,
+        )
+
+    result = await ContactService.list_admin_authorized(
         db,
+        is_visible=is_visible,
         page=page,
         per_page=per_page,
         scope_type=scope_type,
         scope_id=scope_id,
         is_main=is_main,
-        is_public=None,
-        status=None,
         search=q,
         contact_type=contact_type,
         sort=sort,
         load_options=selector.load_options,
     )
-    items = []
-    for item in result.items:
-        if await can_access_scoped_record(
-            db,
-            user,
-            CONTACT_VIEW_PERMISSIONS,
-            item.scope_type,
-            item.scope_id,
-        ):
-            items.append(item)
-    meta = dict(result.meta)
-    meta["total"] = len(items)
-    return success(data=selector.apply(items), meta=meta)
+    return success(data=selector.apply(result.items), meta=result.meta)
 
 
 @router.get("/admin/{contact_id}")
