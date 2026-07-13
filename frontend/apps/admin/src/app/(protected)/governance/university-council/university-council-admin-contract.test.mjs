@@ -111,8 +111,13 @@ test("order manager persists explicit backend order and supports keyboard users"
     "Loading Council order",
     "could not be loaded",
     "draggable",
+    "GripVertical",
+    "Drag to reorder",
+    "aria-grabbed",
     "onDragStart",
+    "onDragEnter",
     "onDrop",
+    "dropTarget",
   ]) {
     assert.match(source, new RegExp(fragment));
   }

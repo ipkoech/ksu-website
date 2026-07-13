@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, Save } from "lucide-react";
+import { ArrowDown, ArrowUp, GripVertical, Save } from "lucide-react";
 import { toast } from "@ksu/ui";
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ksu/ui/components";
 import { governanceAdminApi, type CouncilMember, type CouncilOrderNode } from "@/lib/api/organization";
@@ -37,6 +37,7 @@ export function CouncilOrderManager() {
   const queryClient = useQueryClient();
   const [nodes, setNodes] = useState<CouncilOrderNode[]>([]);
   const [dragging, setDragging] = useState<{ group: DisplayGroup; assignmentId: string } | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
 
   const orderQuery = useQuery({
     queryKey: ["governance", "university-council", "order"],
@@ -156,22 +157,49 @@ export function CouncilOrderManager() {
                 return (
                   <div
                     key={node.assignment_id}
-                    className="rounded-md border bg-background p-3"
+                    className={`rounded-md border bg-background p-3 transition ${
+                      dropTarget === node.assignment_id ? "border-primary bg-primary/5 ring-2 ring-primary/30" : ""
+                    } ${dragging?.assignmentId === node.assignment_id ? "opacity-60" : ""}`}
                     draggable
-                    onDragStart={() => setDragging({ group, assignmentId: node.assignment_id })}
+                    aria-grabbed={dragging?.assignmentId === node.assignment_id}
+                    onDragStart={(event) => {
+                      event.dataTransfer.effectAllowed = "move";
+                      event.dataTransfer.setData("text/plain", node.assignment_id);
+                      setDragging({ group, assignmentId: node.assignment_id });
+                    }}
+                    onDragEnter={(event) => {
+                      event.preventDefault();
+                      if (dragging?.group === group) setDropTarget(node.assignment_id);
+                    }}
                     onDragOver={(event) => event.preventDefault()}
                     onDrop={(event) => {
                       event.preventDefault();
                       if (!dragging || dragging.group !== group) return;
                       moveToIndex(group, dragging.assignmentId, index);
                       setDragging(null);
+                      setDropTarget(null);
                     }}
-                    onDragEnd={() => setDragging(null)}
+                    onDragLeave={() => {
+                      if (dropTarget === node.assignment_id) setDropTarget(null);
+                    }}
+                    onDragEnd={() => {
+                      setDragging(null);
+                      setDropTarget(null);
+                    }}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-medium">{getMemberName(member)}</p>
-                        <p className="text-sm text-muted-foreground">{getMemberRole(member)}</p>
+                      <div className="flex min-w-0 items-start gap-3">
+                        <span
+                          className="mt-0.5 inline-flex size-8 shrink-0 cursor-grab items-center justify-center rounded-md border bg-muted/40 text-muted-foreground active:cursor-grabbing"
+                          aria-label={`Drag to reorder ${getMemberName(member)}`}
+                          title="Drag to reorder"
+                        >
+                          <GripVertical className="size-4" />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{getMemberName(member)}</p>
+                          <p className="text-sm text-muted-foreground">{getMemberRole(member)}</p>
+                        </div>
                       </div>
                       <Badge variant="outline">{member?.workflow_status ?? "ordered"}</Badge>
                     </div>
