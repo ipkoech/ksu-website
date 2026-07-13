@@ -1107,6 +1107,60 @@ export interface Intake {
   updated_at: string;
 }
 
+export type IntakeApplicationOverride = "automatic" | "force_open" | "force_hidden";
+
+export interface IntakeHomepageActionConfig {
+  enabled: boolean;
+  label: string | null;
+  url: string | null;
+  starts_at?: string | null;
+  ends_at?: string | null;
+}
+
+export interface IntakeHomepageReportingConfig {
+  enabled: boolean;
+  title: string;
+  starts_at: string | null;
+  ends_at?: string | null;
+  location?: string | null;
+  instructions_url?: string | null;
+}
+
+export interface IntakeHomepageAdmission {
+  intake_id: string;
+  intake_name: string;
+  intake_code: string;
+  is_featured_on_homepage: boolean;
+  homepage_priority: number;
+  application_opens_at: string;
+  application_closes_at: string;
+  late_application_closes_at: string | null;
+  late_applications_enabled: boolean;
+  application_override: IntakeApplicationOverride;
+  override_expires_at: string | null;
+  timezone: string;
+  apply: IntakeHomepageActionConfig;
+  check_requirements: IntakeHomepageActionConfig;
+  explore_programmes: IntakeHomepageActionConfig;
+  admission_letter: IntakeHomepageActionConfig;
+  reporting_instructions: IntakeHomepageActionConfig;
+  reporting: IntakeHomepageReportingConfig;
+}
+
+export type IntakeHomepageAdmissionUpdate = Partial<
+  Omit<
+    IntakeHomepageAdmission,
+    "intake_id" | "apply" | "check_requirements" | "explore_programmes" | "admission_letter" | "reporting_instructions" | "reporting"
+  >
+> & {
+  apply?: Partial<IntakeHomepageActionConfig>;
+  check_requirements?: Partial<IntakeHomepageActionConfig>;
+  explore_programmes?: Partial<IntakeHomepageActionConfig>;
+  admission_letter?: Partial<IntakeHomepageActionConfig>;
+  reporting_instructions?: Partial<IntakeHomepageActionConfig>;
+  reporting?: Partial<IntakeHomepageReportingConfig>;
+};
+
 export interface AcademicCalendar {
   id: string;
   academic_year: string;

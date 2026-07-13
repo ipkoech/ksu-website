@@ -107,7 +107,7 @@ function getColumns(): ColumnDef<PageSection>[] {
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link href={`/cocms/page-cms/sections/${row.original.id}`}>Edit section</Link>
+                <Link href={`/corporate-communication/page-cms/sections/${row.original.id}`}>Edit section</Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
@@ -177,9 +177,9 @@ export default function PageCmsSectionsPage() {
       <PageHeader
         title="Page Sections"
         description="Manage scoped page sections, section items, media roles, and workflow transitions."
-        createHref={canCreateSections ? "/cocms/page-cms/sections/new" : undefined}
+        createHref={canCreateSections ? "/corporate-communication/page-cms/sections/new" : undefined}
         createLabel="New Section"
-        backHref="/cocms/page-cms"
+        backHref="/corporate-communication/page-cms"
       />
 
       <DataTable

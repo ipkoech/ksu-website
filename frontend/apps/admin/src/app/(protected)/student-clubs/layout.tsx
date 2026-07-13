@@ -1,11 +1,9 @@
-"use client";
-
-import { PortalShell } from "@/components/portals/portal-shell";
+import type { ReactNode } from "react";
 
 export default function StudentClubsLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
-  return <PortalShell portalKey="student-clubs">{children}</PortalShell>;
+  return children;
 }

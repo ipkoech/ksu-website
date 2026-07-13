@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { PortalResourcePage } from "@/components/portals/portal-resource-page";
 
 export function generateStaticParams() {
   return [
@@ -9,6 +9,7 @@ export function generateStaticParams() {
     { resource: "homepage-features" },
     { resource: "sliders" },
     { resource: "media-folders" },
+    { resource: "student-clubs" },
     { resource: "faqs" },
     { resource: "contacts" },
     { resource: "testimonials" },
@@ -21,5 +22,10 @@ export default async function CorporateCommunicationResourcePage({
   params: Promise<{ resource: string }>;
 }) {
   const { resource } = await params;
-  redirect(`/cocms/${resource}`);
+  return (
+    <PortalResourcePage
+      portalKey="corporate-communication"
+      resourceKey={resource}
+    />
+  );
 }

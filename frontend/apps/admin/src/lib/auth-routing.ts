@@ -10,17 +10,27 @@ type RoleDestination = {
 const roleDestinations: RoleDestination[] = [
   { roles: ["super-admin", "system-admin"], href: "/super-admin", service: "system" },
   { roles: ["admin", "institution-admin", "office-admin", "office-editor", "office-staff-manager", "staff-admin"], href: "/admin", service: "main" },
+  { roles: ["content-admin", "content-manager", "content-staff", "cocms-admin", "corporate-admin"], href: "/corporate-communication", service: "main" },
   { roles: ["library-admin", "library-manager", "library-staff"], href: "/library", service: "library" },
   { roles: ["research-content"], href: "/research/content", service: "research" },
   { roles: ["research-farm"], href: "/research/farm", service: "research" },
   { roles: ["research-sustainability"], href: "/research/sustainability", service: "research" },
-  { roles: ["research-admin", "research-manager", "research-staff", "innovation-officer"], href: "/research", service: "research" },
-  { roles: ["researcher", "lecturer"], href: "/publications/submissions", service: "research" },
+  { roles: ["research-admin", "research-manager", "research-staff", "innovation-officer", "publications-admin"], href: "/research", service: "research" },
+  { roles: ["researcher", "lecturer"], href: "/research/publications/submissions", service: "research" },
   { roles: ["school-admin", "academic-admin"], href: "/schools", service: "main" },
   { roles: ["dept-admin", "dept-staff"], href: "/departments", service: "main" },
-  { roles: ["content-admin", "content-manager", "content-staff"], href: "/cocms", service: "main" },
-  { roles: ["club-admin", "club-manager", "club-official", "club-editor", "club-leader"], href: "/student-clubs", service: "main" },
   { roles: ["staff"], href: "/settings/profile", service: "main" },
+];
+
+const portalPriority = [
+  "/super-admin",
+  "/admin",
+  "/corporate-communication",
+  "/research",
+  "/schools",
+  "/departments",
+  "/library",
+  "/settings/profile",
 ];
 
 const broadAdminRoles = new Set(["super-admin"]);
@@ -33,10 +43,23 @@ const broaderPortalRoles = new Set(
 export const staffProfileHref = "/settings/profile";
 
 const serviceFallbacks: Record<Service, string> = {
-  main: "/select-service",
+  main: "/admin",
   research: "/research",
   library: "/library",
   system: "/super-admin",
+};
+
+const legacyPortalDestinations: Record<string, string> = {
+  cocms: "/corporate-communication",
+  "/cocms": "/corporate-communication",
+  publications: "/research",
+  "/publications": "/research",
+  "student-clubs": "/corporate-communication",
+  "/student-clubs": "/corporate-communication",
+  governance: "/admin",
+  "/governance": "/admin",
+  "institutional-administration": "/admin",
+  "/institutional-administration": "/admin",
 };
 
 function normalizeRole(role: string) {
@@ -45,6 +68,11 @@ function normalizeRole(role: string) {
 
 function userHasService(user: User, service: Service) {
   return user.services.some((access) => access.service === service);
+}
+
+function normalizePortalAccess(portal: PortalAccess): PortalAccess {
+  const href = legacyPortalDestinations[portal.key] ?? legacyPortalDestinations[portal.href];
+  return href ? { ...portal, href } : portal;
 }
 
 export function resolvePostLoginDestination(user: User, redirect?: string | null) {
@@ -70,7 +98,7 @@ export function resolvePostLoginDestination(user: User, redirect?: string | null
     return { href: serviceFallbacks[service], service };
   }
 
-  return { href: "/select-service", service: null };
+  return { href: serviceFallbacks.main, service: "main" as Service };
 }
 
 export function resolvePortalAccessDestination(
@@ -82,7 +110,7 @@ export function resolvePortalAccessDestination(
     return { href: redirect, service: null };
   }
 
-  const available = portals ?? [];
+  const available = (portals ?? []).map(normalizePortalAccess);
   const staffProfileOnly =
     available.length === 1 && available[0]?.key === "staff-profile";
 
@@ -99,14 +127,15 @@ export function resolvePortalAccessDestination(
   }
 
   if (nonProfilePortals.length > 1) {
-    const roleDestination = resolvePostLoginDestination(user, null);
-    const matchingPortal = nonProfilePortals.find(
-      (portal) => portal.href === roleDestination.href,
+    const ordered = [...nonProfilePortals].sort(
+      (left, right) =>
+        portalPriority.indexOf(left.href) - portalPriority.indexOf(right.href),
     );
-    if (matchingPortal) {
-      return { href: matchingPortal.href, service: matchingPortal.service };
+    const preferred = ordered.find((portal) => portalPriority.includes(portal.href));
+    if (preferred) {
+      return { href: preferred.href, service: preferred.service };
     }
-    return { href: "/select-service", service: null };
+    return { href: nonProfilePortals[0].href, service: nonProfilePortals[0].service };
   }
 
   return resolvePostLoginDestination(user, null);

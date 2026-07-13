@@ -1,11 +1,9 @@
-"use client";
-
-import { PortalShell } from "@/components/portals/portal-shell";
+import type { ReactNode } from "react";
 
 export default function GovernanceLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
-  return <PortalShell portalKey="governance">{children}</PortalShell>;
+  return children;
 }

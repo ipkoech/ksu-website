@@ -29,7 +29,19 @@ from .academic import (
 )
 
 # Admissions
-from .admissions import AdmissionInfo, Intake, Programme, ProgrammeIntake, ProgrammeTutor
+from .admissions import (
+    INTAKE_APPLICATION_OVERRIDES,
+    INTAKE_MILESTONE_TYPES,
+    INTAKE_PUBLIC_ACTION_TYPES,
+    INTAKE_WORKFLOW_STATUSES,
+    AdmissionInfo,
+    Intake,
+    IntakeMilestone,
+    IntakePublicAction,
+    Programme,
+    ProgrammeIntake,
+    ProgrammeTutor,
+)
 
 # Student life
 from .student_life import Accommodation, ArtsCulture, Club, ClubActivity, SportsFacility, StudentGovernance
@@ -120,6 +132,12 @@ __all__ = [
     "Intake",
     "ProgrammeIntake",
     "AdmissionInfo",
+    "IntakePublicAction",
+    "IntakeMilestone",
+    "INTAKE_APPLICATION_OVERRIDES",
+    "INTAKE_PUBLIC_ACTION_TYPES",
+    "INTAKE_MILESTONE_TYPES",
+    "INTAKE_WORKFLOW_STATUSES",
     # Student life
     "Club",
     "ClubActivity",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowRight, Landmark, Megaphone, Settings, Trophy, UserCheck } from "lucide-react";
+import { ArrowRight, Landmark, Settings, UserCheck } from "lucide-react";
 import { useAuth, getHighestRole, formatRoleName } from "@ksu/auth";
 import type { Service } from "@ksu/auth";
 import { usePortalAccess, type PortalAccess } from "@ksu/api-client";
@@ -49,44 +49,45 @@ const portalItems: PortalDirectoryItem[] = [
     requiredScopes: ["governance.view", "administration.view", "office.manage_content", "policy.manage"],
   },
   {
-    key: "cocms",
-    title: "CoCMS",
-    description: "Homepage CMS, publishing review, news, notices, events, and media management.",
-    service: "main",
-    baseHref: "/cocms",
-    icon: Megaphone,
-    accentClassName: "text-orange-700 bg-orange-50 border-orange-100",
-    requiredScopes: ["content.review", "content.publish", "media.manage", "homepage.manage"],
+    ...portalConfigs["corporate-communication"],
+    key: "corporate-communication",
+    title: "Corporate Communication Portal",
+    baseHref: "/corporate-communication",
+    requiredScopes: [
+      "content.view",
+      "content.review",
+      "content.publish",
+      "homepage.manage",
+      "media.view",
+      "media.manage",
+      "page_sections.view",
+      "partnership_spotlights.manage",
+      "clubs.view",
+    ],
   },
   {
     ...portalConfigs.schools,
+    key: "schools",
+    baseHref: "/schools",
     requiredScopes: ["academic.view", "academic.manage_schools"],
   },
   {
     ...portalConfigs.departments,
+    key: "departments",
+    baseHref: "/departments",
     requiredScopes: ["academic.view", "academic.manage_departments"],
   },
   {
-    key: "student-clubs",
-    title: "Student Clubs Portal",
-    description: "Club-scoped events, stories, announcements, galleries, and member content.",
-    service: "main",
-    baseHref: "/student-clubs",
-    icon: Trophy,
-    accentClassName: "text-violet-700 bg-violet-50 border-violet-100",
-    requiredScopes: ["clubs.view", "clubs.manage_own", "clubs.content_submit", "clubs.events_manage", "clubs.stories_manage"],
-  },
-  {
     ...portalConfigs.research,
-    requiredScopes: ["research.view", "research.view_projects"],
+    key: "research",
+    baseHref: "/research",
+    requiredScopes: ["research.view", "research.view_projects", "publications.view"],
   },
   {
     ...portalConfigs.library,
+    key: "library",
+    baseHref: "/library",
     requiredScopes: ["library.view"],
-  },
-  {
-    ...portalConfigs.publications,
-    requiredScopes: ["publications.view", "publications.submit", "publications.review"],
   },
   {
     key: "staff-profile",
@@ -104,17 +105,40 @@ const portalFallbacks = new Map<string, PortalDirectoryItem>(
   portalItems.map((item) => [item.key, item]),
 );
 
+const canonicalPortalKeys = new Set([
+  "super-admin",
+  "admin",
+  "corporate-communication",
+  "research",
+  "schools",
+  "departments",
+  "library",
+  "staff-profile",
+]);
+
+const portalAliases = new Map<string, string>([
+  ["cocms", "corporate-communication"],
+  ["page-cms", "corporate-communication"],
+  ["student-clubs", "corporate-communication"],
+  ["governance", "admin"],
+  ["institutional-administration", "admin"],
+  ["publications", "research"],
+  ["system", "super-admin"],
+]);
+
 function directoryItemFromAccess(access: PortalAccess): PortalDirectoryItem {
-  const fallback = portalFallbacks.get(access.key);
+  const canonicalKey = portalAliases.get(access.key) ?? access.key;
+  const fallback = portalFallbacks.get(canonicalKey);
   if (fallback) {
+    const isAlias = canonicalKey !== access.key;
     return {
       ...fallback,
-      title: access.label || fallback.title,
+      title: isAlias ? fallback.title : access.label || fallback.title,
       description:
         access.scope_type === "global"
           ? fallback.description
           : `${fallback.description} Current scope: ${access.scope_label}.`,
-      baseHref: access.href || fallback.baseHref,
+      baseHref: isAlias ? fallback.baseHref : access.href || fallback.baseHref,
       access,
     };
   }
@@ -130,6 +154,18 @@ function directoryItemFromAccess(access: PortalAccess): PortalDirectoryItem {
     requiredScopes: access.permissions,
     access,
   };
+}
+
+function directoryItemsFromAccess(accessRecords: PortalAccess[]) {
+  const byKey = new Map<string, PortalDirectoryItem>();
+  for (const access of accessRecords) {
+    const canonicalKey = portalAliases.get(access.key) ?? access.key;
+    if (!canonicalPortalKeys.has(canonicalKey)) continue;
+    if (!byKey.has(canonicalKey)) {
+      byKey.set(canonicalKey, directoryItemFromAccess(access));
+    }
+  }
+  return [...byKey.values()];
 }
 
 export default function SelectServicePage() {
@@ -156,7 +192,7 @@ export default function SelectServicePage() {
 
   const backendPortals = portalAccessQuery.data?.data.portals;
   const visiblePortals = backendPortals?.length
-    ? backendPortals.map(directoryItemFromAccess)
+    ? directoryItemsFromAccess(backendPortals)
     : portalItems.filter(canAccess);
 
   const handleSelect = (service: Service, href: string) => {

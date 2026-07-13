@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import httpx
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..core.config import get_settings
 from ..models import (
     Announcement,
     ArtsCulture,
@@ -54,7 +56,7 @@ PORTAL_STAT_CONTRACTS: dict[str, tuple[str, ...]] = {
         "staff_assignments_count",
         "documents_count",
     ),
-    "cocms": (
+    "corporate-communication": (
         "pending_review_count",
         "published_count",
         "draft_count",
@@ -67,12 +69,9 @@ PORTAL_STAT_CONTRACTS: dict[str, tuple[str, ...]] = {
         "programmes_count",
         "unpublished_count",
     ),
-    "student-clubs": ("active_clubs_count", "active_members_count"),
     "research": (
-        "active_projects_count",
-        "grants_count",
-        "centres_count",
-        "outputs_count",
+        "researchers_count",
+        "published_publications_count",
     ),
     "library": (
         "active_branches_count",
@@ -80,13 +79,16 @@ PORTAL_STAT_CONTRACTS: dict[str, tuple[str, ...]] = {
         "active_regulations_count",
         "loans_count",
     ),
-    "publications": (
-        "draft_count",
-        "submitted_count",
-        "school_approved_count",
-        "published_count",
-    ),
 }
+
+PORTAL_ALIASES = {
+    "cocms": "corporate-communication",
+    "publications": "research",
+    "governance": "admin",
+    "institutional-administration": "admin",
+}
+
+settings = get_settings()
 
 
 async def _count(db: AsyncSession, model, *conditions) -> int:
@@ -94,6 +96,64 @@ async def _count(db: AsyncSession, model, *conditions) -> int:
         select(func.count(model.id)).where(model.deleted_at.is_(None), *conditions)
     )
     return int(result.scalar_one() or 0)
+
+
+async def _published_publications_count() -> int:
+    """Read the public publication count from the owning Research service."""
+
+    async with httpx.AsyncClient(
+        base_url=settings.RESEARCH_SERVICE_URL.rstrip("/"),
+        timeout=httpx.Timeout(20.0, connect=5.0),
+        headers={"X-KSU-Proxy": "main-stats"},
+    ) as client:
+        response = await client.get("/api/v1/stats")
+        response.raise_for_status()
+        payload = response.json()
+
+    if not isinstance(payload, dict) or payload.get("status") != "success":
+        raise ValueError("Research service returned an unexpected stats payload")
+    data = payload.get("data")
+    if not isinstance(data, dict) or not isinstance(data.get("stats"), list):
+        raise ValueError("Research service returned an unexpected stats payload")
+
+    for item in data["stats"]:
+        if item.get("key") == "publications" and isinstance(item.get("value"), int):
+            return item["value"]
+
+    raise ValueError("Research service did not return a publications count")
+
+
+async def _library_portal_stat_counts() -> dict[str, int]:
+    """Read dashboard counters from the owning Library service."""
+
+    async with httpx.AsyncClient(
+        base_url=settings.LIBRARY_SERVICE_URL.rstrip("/"),
+        timeout=httpx.Timeout(20.0, connect=5.0),
+        headers={"X-KSU-Proxy": "main-stats"},
+    ) as client:
+        response = await client.get("/api/v1/stats/admin")
+        response.raise_for_status()
+        payload = response.json()
+
+    if not isinstance(payload, dict) or payload.get("status") != "success":
+        raise ValueError("Library service returned an unexpected stats payload")
+    data = payload.get("data")
+    if not isinstance(data, dict) or not isinstance(data.get("stats"), list):
+        raise ValueError("Library service returned an unexpected stats payload")
+
+    service_values: dict[str, int] = {}
+    for item in data["stats"]:
+        if isinstance(item, dict) and isinstance(item.get("value"), int):
+            key = item.get("key")
+            if isinstance(key, str):
+                service_values[key] = item["value"]
+
+    return {
+        "active_branches_count": service_values.get("active_branches", 0),
+        "catalogue_resources_count": service_values.get("catalogue_resources", 0),
+        "active_regulations_count": service_values.get("active_regulations", 0),
+        "loans_count": service_values.get("loans", 0),
+    }
 
 
 async def _sum_publications_for_people(
@@ -104,16 +164,6 @@ async def _sum_publications_for_people(
         select(func.coalesce(func.sum(Person.publications_count), 0)).where(
             Person.deleted_at.is_(None),
             Person.id.in_(person_ids_query),
-        )
-    )
-    return int(result.scalar_one() or 0)
-
-
-async def _sum(db: AsyncSession, field, model, *conditions) -> int:
-    result = await db.execute(
-        select(func.coalesce(func.sum(field), 0)).where(
-            model.deleted_at.is_(None),
-            *conditions,
         )
     )
     return int(result.scalar_one() or 0)
@@ -656,6 +706,8 @@ async def portal_stats(
 ) -> PortalStatsResponse | None:
     """Return definite counters for Main-service admin portal dashboards."""
 
+    portal = PORTAL_ALIASES.get(portal, portal)
+
     if portal == "admin":
         stats = {
             "boards_count": await _count(db, Board),
@@ -665,7 +717,7 @@ async def portal_stats(
             "documents_count": await _count(db, Document),
         }
         title = "Admin operational counters"
-    elif portal == "cocms":
+    elif portal == "corporate-communication":
         content_sources = (
             (News, ()),
             (Blog, ()),
@@ -709,7 +761,7 @@ async def portal_stats(
             ),
             "media_count": await _count(db, Media),
         }
-        title = "CoCMS publishing counters"
+        title = "Corporate Communication publishing counters"
     elif portal == "schools":
         stats = {
             "schools_count": await _count(db, School),
@@ -735,17 +787,19 @@ async def portal_stats(
             ),
         }
         title = "Department administration counters"
-    elif portal == "student-clubs":
+    elif portal == "research":
         stats = {
-            "active_clubs_count": await _count(db, Club, Club.is_active.is_(True)),
-            "active_members_count": await _sum(
+            "researchers_count": await _count(
                 db,
-                Club.membership_count,
-                Club,
-                Club.is_active.is_(True),
+                Person,
+                Person.is_researcher.is_(True),
             ),
+            "published_publications_count": await _published_publications_count(),
         }
-        title = "Student club counters"
+        title = "Research and publications counters"
+    elif portal == "library":
+        stats = await _library_portal_stat_counts()
+        title = "Library administration counters"
     else:
         return None
 

@@ -128,7 +128,7 @@ function statCount(value?: number) {
 }
 
 async function mainPortalCount(
-  portal: "admin" | "cocms" | "schools" | "departments" | "student-clubs",
+  portal: "admin" | "corporate-communication" | "schools" | "departments",
   key: string,
 ) {
   const response = await statsApi.portal(portal);
@@ -2690,7 +2690,7 @@ const adminResources: Record<string, PortalResourceConfig<any, any>> = {
   },
 };
 
-const cocmsResources: Record<string, PortalResourceConfig<any, any>> =
+const _cocmsResources: Record<string, PortalResourceConfig<any, any>> =
   Object.fromEntries(
     Object.entries(corporateResources).map(([key, resource]) => [
       key,
@@ -3157,6 +3157,23 @@ const studentClubResources: Record<string, PortalResourceConfig<any, any>> = {
     canEdit: false,
     canDelete: false,
     portalScope: { idField: "club_id", allowedScopeTypes: ["club"] },
+  },
+};
+
+const corporateCommunicationResources: Record<string, PortalResourceConfig<any, any>> = {
+  ...corporateResources,
+  ["student-clubs"]: {
+    ...studentClubResources.profiles,
+    key: "student-clubs",
+    title: "Student Club Submissions",
+    description:
+      "Review student club profiles and scoped content submitted for Corporate Communication approval.",
+    backHref: "/corporate-communication",
+    queryKey: ["corporate-communication", "student-clubs"],
+    viewScopes: ["content.review", "clubs.view", "clubs.manage_own", "admin:*"],
+    manageScopes: ["content.review", "content.manage", "admin:*"],
+    canCreate: false,
+    canDelete: false,
   },
 };
 
@@ -5702,7 +5719,7 @@ function libraryGenericResource<
   };
 }
 
-const publicationResources: Record<string, PortalResourceConfig<any, any>> = {
+const _publicationResources: Record<string, PortalResourceConfig<any, any>> = {
   submissions: publicationResource(
     "submissions",
     "My Submissions",
@@ -6141,521 +6158,6 @@ export const portalConfigs: Record<string, PortalConfig> = {
     ),
     resources: adminResources,
   },
-  cocms: {
-    key: "cocms",
-    title: "CoCMS Portal",
-    shortTitle: "CoCMS",
-    description:
-      "Homepage CMS, public publishing review, newsroom content, public notices, events, media, and testimonials.",
-    service: "main",
-    baseHref: "/cocms",
-    icon: Megaphone,
-    accentClassName: "text-orange-700 bg-orange-50 border-orange-100",
-    nav: [
-      {
-        title: "Dashboard",
-        href: "/cocms",
-        icon: PanelsTopLeft,
-        scope: "content.view",
-      },
-      {
-        title: "Review Queue",
-        href: "/cocms/review-queue",
-        icon: ClipboardCheck,
-        scope: ["content.review", "content.publish"],
-      },
-      {
-        title: "Page CMS",
-        href: "/cocms/page-cms",
-        icon: PanelsTopLeft,
-        scope: [
-          "page_sections.view",
-          "page_sections.manage",
-          "homepage.view",
-          "homepage.manage",
-          "partnership_spotlights.manage",
-        ],
-      },
-      {
-        title: "Page Sections",
-        href: "/cocms/page-cms/sections",
-        icon: PanelsTopLeft,
-        scope: [
-          "page_sections.view",
-          "page_sections.manage",
-          "homepage.view",
-          "homepage.manage",
-        ],
-      },
-      {
-        title: "Partnership Spotlights",
-        href: "/cocms/page-cms/spotlights",
-        icon: ImageIcon,
-        scope: ["partnership_spotlights.manage", "homepage.manage"],
-      },
-      {
-        title: "Newsroom",
-        href: "/cocms/news",
-        icon: Newspaper,
-        scope: "content.manage_news",
-      },
-      {
-        title: "Press Releases",
-        href: "/cocms/press-releases",
-        icon: FileText,
-        scope: "content.manage_blogs",
-      },
-      {
-        title: "Public Notices",
-        href: "/cocms/notices",
-        icon: Megaphone,
-        scope: "content.manage_announcements",
-      },
-      {
-        title: "Events",
-        href: "/cocms/events",
-        icon: CalendarDays,
-        scope: "content.manage_events",
-      },
-      {
-        title: "Homepage Features",
-        href: "/cocms/homepage-features",
-        icon: PanelsTopLeft,
-        scope: ["homepage.manage", "marketing.manage_sliders"],
-      },
-      {
-        title: "Slider Items",
-        href: "/cocms/sliders",
-        icon: PanelsTopLeft,
-        scope: ["homepage.manage", "marketing.manage_sliders"],
-      },
-      {
-        title: "Media Folders",
-        href: "/cocms/media-folders",
-        icon: ImageIcon,
-        scope: "media.manage",
-      },
-      {
-        title: "Media Assets",
-        href: "/cocms/media-assets",
-        icon: ImageIcon,
-        scope: "media.view",
-      },
-      {
-        title: "FAQs",
-        href: "/cocms/faqs",
-        icon: ScrollText,
-        scope: "content.manage",
-      },
-      {
-        title: "Contacts",
-        href: "/cocms/contacts",
-        icon: Users,
-        scope: "content.manage",
-      },
-      {
-        title: "Testimonials",
-        href: "/cocms/testimonials",
-        icon: BadgeCheck,
-        scope: "content.manage",
-      },
-    ],
-    dashboard: dashboard(
-      "CoCMS Dashboard",
-      "Coordinate public publishing, homepage features, and media readiness.",
-      [
-        stat(
-          "Review Queue",
-          "Content awaiting editorial review",
-          "/cocms/review-queue",
-          ClipboardCheck,
-          ["content.view"],
-          ["cocms", "portal-stats", "pending_review_count"],
-          () => mainPortalCount("cocms", "pending_review_count"),
-        ),
-        stat(
-          "Published Content",
-          "Live main-site content",
-          "/cocms/news",
-          Newspaper,
-          ["content.view"],
-          ["cocms", "portal-stats", "published_count"],
-          () => mainPortalCount("cocms", "published_count"),
-        ),
-        stat(
-          "Scheduled Content",
-          "Future-dated main-site content",
-          "/cocms/events",
-          CalendarDays,
-          ["content.view"],
-          ["cocms", "portal-stats", "scheduled_count"],
-          () => mainPortalCount("cocms", "scheduled_count"),
-        ),
-        stat(
-          "Media",
-          "Media assets",
-          "/cocms/media-assets",
-          ImageIcon,
-          ["media.view"],
-          ["cocms", "portal-stats", "media_count"],
-          () => mainPortalCount("cocms", "media_count"),
-        ),
-      ],
-      cocmsResources,
-      ["content.publish", "content.review", "media.manage", "homepage.manage"],
-    ),
-    resources: cocmsResources,
-  },
-  "student-clubs": {
-    key: "student-clubs",
-    title: "Student Clubs Portal",
-    shortTitle: "Student Clubs",
-    description:
-      "Club-scoped profiles, events, stories, announcements, galleries, and member content submitted for CoCMS review.",
-    service: "main",
-    baseHref: "/student-clubs",
-    icon: Trophy,
-    accentClassName: "text-violet-700 bg-violet-50 border-violet-100",
-    nav: [
-      {
-        title: "Dashboard",
-        href: "/student-clubs",
-        icon: PanelsTopLeft,
-        scope: ["clubs.view", "clubs.manage_own"],
-      },
-      {
-        title: "Club Profiles",
-        href: "/student-clubs/profiles",
-        icon: Trophy,
-        scope: ["clubs.view", "clubs.manage_own"],
-      },
-      {
-        title: "Events",
-        href: "/student-clubs/events",
-        icon: CalendarDays,
-        scope: ["clubs.events_manage", "clubs.manage_own"],
-      },
-      {
-        title: "Stories",
-        href: "/student-clubs/stories",
-        icon: Newspaper,
-        scope: ["clubs.stories_manage", "clubs.manage_own"],
-      },
-      {
-        title: "Announcements",
-        href: "/student-clubs/announcements",
-        icon: Bell,
-        scope: ["clubs.stories_manage", "clubs.manage_own"],
-      },
-      {
-        title: "Gallery",
-        href: "/student-clubs/gallery",
-        icon: ImageIcon,
-        scope: ["clubs.manage_own"],
-      },
-      {
-        title: "Leaders",
-        href: "/student-clubs/leaders",
-        icon: UserCheck,
-        scope: ["clubs.view", "clubs.manage_own"],
-      },
-    ],
-    dashboard: dashboard(
-      "Student Clubs Dashboard",
-      "Manage club identity and prepare student-led content for CoCMS approval.",
-      [
-        stat(
-          "Club Profiles",
-          "Active clubs",
-          "/student-clubs/profiles",
-          Trophy,
-          ["clubs.view", "clubs.manage_own"],
-          ["student-clubs", "portal-stats", "active_clubs_count"],
-          () => mainPortalCount("student-clubs", "active_clubs_count"),
-        ),
-      ],
-      studentClubResources,
-      ["clubs.manage_own", "clubs.content_submit"],
-    ),
-    resources: studentClubResources,
-  },
-  "institutional-administration": {
-    key: "institutional-administration",
-    title: "Institutional Administration Portal",
-    shortTitle: "Administration",
-    description:
-      "VC office, DVC divisions, registrar offices, directorates, administrative wings, documents, services, contacts, and staff assignments.",
-    service: "main",
-    baseHref: "/institutional-administration",
-    icon: Building2,
-    accentClassName: "text-sky-700 bg-sky-50 border-sky-100",
-    nav: [
-      {
-        title: "Dashboard",
-        href: "/institutional-administration",
-        icon: PanelsTopLeft,
-        scope: "administration.view",
-      },
-      {
-        title: "DVC Divisions",
-        href: "/institutional-administration/divisions",
-        icon: Building2,
-        scope: "administration.manage_units",
-      },
-      {
-        title: "Registrar Offices",
-        href: "/institutional-administration/offices",
-        icon: Landmark,
-        scope: ["office.view", "office.manage_content"],
-      },
-      {
-        title: "Staff Assignments",
-        href: "/institutional-administration/staff-assignments",
-        icon: UserCheck,
-        scope: ["office.manage_staff", "staff.view_assignments"],
-      },
-      {
-        title: "Office News",
-        href: "/institutional-administration/news",
-        icon: Newspaper,
-        scope: ["office.manage_content", "content.manage_news"],
-      },
-      {
-        title: "Office Notices",
-        href: "/institutional-administration/notices",
-        icon: Megaphone,
-        scope: ["office.manage_content", "content.manage_announcements"],
-      },
-      {
-        title: "Office Events",
-        href: "/institutional-administration/events",
-        icon: CalendarDays,
-        scope: ["office.manage_content", "content.manage_events"],
-      },
-      {
-        title: "Documents & Media",
-        href: "/institutional-administration/documents",
-        icon: ScrollText,
-        scope: ["office.manage_content", "administration.manage_content", "policy.view"],
-      },
-      {
-        title: "Office FAQs",
-        href: "/institutional-administration/faqs",
-        icon: ClipboardCheck,
-        scope: ["office.manage_content", "support.manage_faqs"],
-      },
-      {
-        title: "Office Contacts",
-        href: "/institutional-administration/contacts",
-        icon: Users,
-        scope: ["office.manage_content", "support.manage_contacts"],
-      },
-    ],
-    dashboard: dashboard(
-      "Institutional Administration",
-      "Manage administrative offices with scoped ownership instead of one shared governance workspace.",
-      [
-        stat(
-          "DVC Divisions",
-          "Divisions and directorates",
-          "/institutional-administration/divisions",
-          Building2,
-          ["administration.view"],
-          ["institutional-administration", "divisions"],
-          () => divisionsApi.listAdmin(countParams),
-        ),
-        stat(
-          "Registrar Offices",
-          "Wings and offices",
-          "/institutional-administration/offices",
-          Landmark,
-          ["office.view"],
-          ["institutional-administration", "offices"],
-          () => wingsApi.listAdmin(countParams),
-        ),
-        stat(
-          "Assignments",
-          "Office staff roles",
-          "/institutional-administration/staff-assignments",
-          UserCheck,
-          ["staff.view_assignments"],
-          ["institutional-administration", "staff"],
-          () => staffApi.listAssignments({ entity_type: "division" }),
-        ),
-        stat(
-          "Office News",
-          "Scoped updates",
-          "/institutional-administration/news",
-          Newspaper,
-          ["office.view"],
-          ["institutional-administration", "news"],
-          () => newsApi.listAdmin({ ...countParams }),
-        ),
-        stat(
-          "Office Notices",
-          "Scoped announcements",
-          "/institutional-administration/notices",
-          Megaphone,
-          ["office.view"],
-          ["institutional-administration", "notices"],
-          () => announcementsApi.listAdmin({ ...countParams }),
-        ),
-        stat(
-          "Office Events",
-          "Scoped calendar",
-          "/institutional-administration/events",
-          CalendarDays,
-          ["office.view"],
-          ["institutional-administration", "events"],
-          () => eventsApi.listAdmin({ ...countParams }),
-        ),
-        stat(
-          "Documents",
-          "Office files",
-          "/institutional-administration/documents",
-          ScrollText,
-          ["office.view"],
-          ["institutional-administration", "documents"],
-          () => documentsApi.listAdmin({ ...countParams }),
-        ),
-        stat(
-          "Office FAQs",
-          "Public help content",
-          "/institutional-administration/faqs",
-          ClipboardCheck,
-          ["office.view"],
-          ["institutional-administration", "faqs"],
-          () => faqsApi.listAdmin({ ...countParams }),
-        ),
-        stat(
-          "Office Contacts",
-          "Public contact entries",
-          "/institutional-administration/contacts",
-          Users,
-          ["office.view"],
-          ["institutional-administration", "contacts"],
-          () => contactsApi.listAdmin({ ...countParams }),
-        ),
-      ],
-      administrationResources,
-      [
-        "administration.manage_units",
-        "office.manage_content",
-        "office.manage_staff",
-      ],
-    ),
-    resources: administrationResources,
-  },
-  governance: {
-    key: "governance",
-    title: "Governance Portal",
-    shortTitle: "Governance",
-    description:
-      "Council, UMB, DVCs, registrars, deputy registrars, policies, and governance approvals.",
-    service: "main",
-    baseHref: "/governance",
-    icon: Landmark,
-    accentClassName: "text-blue-700 bg-blue-50 border-blue-100",
-    nav: [
-      {
-        title: "Dashboard",
-        href: "/governance",
-        icon: PanelsTopLeft,
-        scope: "governance.view",
-      },
-      {
-        title: "Council & Boards",
-        href: "/governance/council",
-        icon: Landmark,
-        scope: "governance.manage_boards",
-      },
-      {
-        title: "University Council",
-        href: "/governance/university-council",
-        icon: ShieldCheck,
-        scope: ["governance.view", "governance.manage_members"],
-      },
-      {
-        title: "Divisions",
-        href: "/governance/divisions",
-        icon: Building2,
-        scope: ["governance.manage_divisions", "organization.manage_divisions"],
-      },
-      {
-        title: "Division Wings",
-        href: "/governance/wings",
-        icon: Building2,
-        scope: ["governance.manage_divisions", "organization.manage_divisions"],
-      },
-      {
-        title: "Staff Assignments",
-        href: "/governance/staff-assignments",
-        icon: UserCheck,
-        scope: "staff.manage_assignments",
-      },
-      {
-        title: "Policies & Documents",
-        href: "/governance/documents",
-        icon: ScrollText,
-        scope: ["policy.manage", "policy.view"],
-      },
-    ],
-    dashboard: dashboard(
-      "Governance Dashboard",
-      "Manage leadership structures, governance documents, and approval state.",
-      [
-        stat(
-          "Council & Boards",
-          "Governance bodies",
-          "/governance/council",
-          Landmark,
-          ["governance.view"],
-          ["governance", "boards"],
-          () => governanceApi.listBoards(),
-        ),
-        stat(
-          "Divisions",
-          "Administrative divisions",
-          "/governance/divisions",
-          Building2,
-          ["governance.view"],
-          ["governance", "divisions"],
-          () => divisionsApi.listAdmin(countParams),
-        ),
-        stat(
-          "Documents",
-          "Policies and charters",
-          "/governance/documents",
-          ScrollText,
-          ["policy.view"],
-          ["governance", "documents"],
-          () => documentsApi.listAdmin({ ...countParams, scope_type: "governance" }),
-        ),
-        stat(
-          "Assignments",
-          "Leadership assignments",
-          "/governance/staff-assignments",
-          UserCheck,
-          ["staff.view_assignments"],
-          ["governance", "staff"],
-          () => staffApi.listAssignments({ entity_type: "board" }),
-        ),
-      ],
-      governanceResources,
-      ["governance.manage_boards", "policy.publish", "workflow.approve"],
-      [
-        {
-          title: "University Council",
-          description:
-            "Manage Council members, page content, official order, preview, and publication workflow.",
-          href: "/governance/university-council",
-          icon: ShieldCheck,
-          scopes: ["governance.view", "governance.manage_members"],
-        },
-      ],
-    ),
-    resources: governanceResources,
-  },
   schools: {
     key: "schools",
     title: "Schools Portal",
@@ -6925,6 +6427,41 @@ export const portalConfigs: Record<string, PortalConfig> = {
         scope: "content.view",
       },
       {
+        title: "Review Queue",
+        href: "/corporate-communication/review-queue",
+        icon: ClipboardCheck,
+        scope: ["content.review", "content.publish"],
+      },
+      {
+        title: "Page CMS",
+        href: "/corporate-communication/page-cms",
+        icon: PanelsTopLeft,
+        scope: [
+          "page_sections.view",
+          "page_sections.manage",
+          "homepage.view",
+          "homepage.manage",
+          "partnership_spotlights.manage",
+        ],
+      },
+      {
+        title: "Page Sections",
+        href: "/corporate-communication/page-cms/sections",
+        icon: PanelsTopLeft,
+        scope: [
+          "page_sections.view",
+          "page_sections.manage",
+          "homepage.view",
+          "homepage.manage",
+        ],
+      },
+      {
+        title: "Partnership Spotlights",
+        href: "/corporate-communication/page-cms/spotlights",
+        icon: ImageIcon,
+        scope: ["partnership_spotlights.manage", "homepage.manage"],
+      },
+      {
         title: "Newsroom",
         href: "/corporate-communication/news",
         icon: Newspaper,
@@ -6990,19 +6527,34 @@ export const portalConfigs: Record<string, PortalConfig> = {
         icon: BadgeCheck,
         scope: "content.manage",
       },
+      {
+        title: "Student Club Submissions",
+        href: "/corporate-communication/student-clubs",
+        icon: Trophy,
+        scope: ["content.review", "clubs.view", "clubs.manage_own"],
+      },
     ],
     dashboard: dashboard(
       "Newsroom Dashboard",
       "Coordinate public publishing, homepage features, and media assets.",
       [
         stat(
+          "Review Queue",
+          "Content awaiting editorial review",
+          "/corporate-communication/review-queue",
+          ClipboardCheck,
+          ["content.view"],
+          ["corporate-communication", "portal-stats", "pending_review_count"],
+          () => mainPortalCount("corporate-communication", "pending_review_count"),
+        ),
+        stat(
           "News",
           "Newsroom records",
           "/corporate-communication/news",
           Newspaper,
           ["content.view"],
-          ["corporate", "news"],
-          () => newsApi.listAdmin({ ...countParams, is_main: true }),
+          ["corporate-communication", "portal-stats", "published_count"],
+          () => mainPortalCount("corporate-communication", "published_count"),
         ),
         stat(
           "Public Notices",
@@ -7019,8 +6571,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/corporate-communication/events",
           CalendarDays,
           ["content.view"],
-          ["corporate", "events"],
-          () => eventsApi.listAdmin({ ...countParams, is_main: true }),
+          ["corporate-communication", "portal-stats", "scheduled_count"],
+          () => mainPortalCount("corporate-communication", "scheduled_count"),
         ),
         stat(
           "Media",
@@ -7028,14 +6580,14 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/corporate-communication/media-assets",
           ImageIcon,
           ["media.view"],
-          ["corporate", "media"],
-          () => mediaApi.list(countParams),
+          ["corporate-communication", "portal-stats", "media_count"],
+          () => mainPortalCount("corporate-communication", "media_count"),
         ),
       ],
-      corporateResources,
+      corporateCommunicationResources,
       ["content.publish", "media.manage", "marketing.manage_sliders"],
     ),
-    resources: corporateResources,
+    resources: corporateCommunicationResources,
   },
   research: {
     key: "research",
@@ -7158,6 +6710,13 @@ export const portalConfigs: Record<string, PortalConfig> = {
         href: "/research/innovations?tab=transfers",
         icon: BadgeCheck,
         scope: "innovation.manage_transfers",
+        group: "Innovation & Output",
+      },
+      {
+        title: "Publications",
+        href: "/research/publications",
+        icon: FileText,
+        scope: ["publications.view", "publications.manage", "research.manage_publications"],
         group: "Innovation & Output",
       },
       {
@@ -7573,122 +7132,6 @@ export const portalConfigs: Record<string, PortalConfig> = {
       ],
     ),
     resources: libraryResources,
-  },
-  publications: {
-    key: "publications",
-    title: "Publications Portal",
-    shortTitle: "Publications",
-    description:
-      "Researcher submissions, school validation, research office approval, and public publication records.",
-    service: "research",
-    baseHref: "/publications",
-    icon: BookOpen,
-    accentClassName: "text-blue-700 bg-blue-50 border-blue-100",
-    nav: [
-      {
-        title: "Dashboard",
-        href: "/publications",
-        icon: PanelsTopLeft,
-        scope: "publications.view",
-      },
-      {
-        title: "My Submissions",
-        href: "/publications/submissions",
-        icon: FileText,
-        scope: "publications.submit",
-      },
-      {
-        title: "School Review",
-        href: "/publications/school-review",
-        icon: ClipboardCheck,
-        scope: "publications.review",
-      },
-      {
-        title: "Office Review",
-        href: "/publications/office-review",
-        icon: ShieldCheck,
-        scope: "publications.approve",
-      },
-      {
-        title: "Published Records",
-        href: "/publications/published",
-        icon: BookOpen,
-        scope: "publications.manage",
-      },
-      {
-        title: "Journals",
-        href: "/publications/journals",
-        icon: Library,
-        scope: "research.manage_journals",
-      },
-      {
-        title: "Authors",
-        href: "/publications/authors",
-        icon: Users,
-        scope: "persons.view",
-      },
-    ],
-    dashboard: dashboard(
-      "Publication Pipeline",
-      "Run submission, school validation, research office approval, and publishing as its own portal.",
-      [
-        stat(
-          "Submissions",
-          "Draft and submitted papers",
-          "/publications/submissions",
-          FileText,
-          ["publications.submit"],
-          ["publications", "draft_count"],
-          () =>
-            researchServiceApi.publications.list({
-              ...countParams,
-              status: "draft",
-            }),
-        ),
-        stat(
-          "School Review",
-          "School validation",
-          "/publications/school-review",
-          ClipboardCheck,
-          ["publications.review"],
-          ["publications", "submitted_count"],
-          () =>
-            researchServiceApi.publications.list({
-              ...countParams,
-              status: "submitted",
-            }),
-        ),
-        stat(
-          "Office Review",
-          "Research office approval",
-          "/publications/office-review",
-          ShieldCheck,
-          ["publications.approve"],
-          ["publications", "school_approved_count"],
-          () =>
-            researchServiceApi.publications.list({
-              ...countParams,
-              status: "school_approved",
-            }),
-        ),
-        stat(
-          "Published",
-          "Publications page records",
-          "/publications/published",
-          BookOpen,
-          ["publications.view"],
-          ["publications", "published_count"],
-          () =>
-            researchServiceApi.publications.list({
-              ...countParams,
-              status: "published",
-            }),
-        ),
-      ],
-      publicationResources,
-      ["publications.submit", "publications.review", "publications.approve"],
-    ),
-    resources: publicationResources,
   },
 };
 

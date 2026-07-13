@@ -1,5 +1,11 @@
-import { redirect } from "next/navigation";
+"use client";
 
-export default function CorporateCommunicationLayout() {
-  redirect("/cocms");
+import { PortalShell } from "@/components/portals/portal-shell";
+
+export default function CorporateCommunicationLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <PortalShell portalKey="corporate-communication">{children}</PortalShell>;
 }

@@ -10,17 +10,12 @@ import type {
 export type PortalKey =
   | "super-admin"
   | "admin"
-  | "cocms"
-  | "student-clubs"
   | "staff-profile"
-  | "institutional-administration"
-  | "governance"
   | "schools"
   | "departments"
   | "corporate-communication"
   | "research"
-  | "library"
-  | "publications";
+  | "library";
 
 export type PortalRecord = Record<string, any> & { id: string };
 export type PortalPayload = Record<string, any>;

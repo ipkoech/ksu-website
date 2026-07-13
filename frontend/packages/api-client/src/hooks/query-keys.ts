@@ -95,6 +95,7 @@ export const queryKeys = {
     all: ["intakes"] as const,
     list: (params?: Record<string, unknown>) => ["intakes", "list", params] as const,
     detail: (id: string) => ["intakes", "detail", id] as const,
+    homepageAdmission: (id: string) => ["intakes", "detail", id, "homepage-admission"] as const,
     bySlug: (slug: string) => ["intakes", "slug", slug] as const,
   },
 

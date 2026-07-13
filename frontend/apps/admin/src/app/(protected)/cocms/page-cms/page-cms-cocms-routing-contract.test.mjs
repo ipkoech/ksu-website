@@ -41,62 +41,62 @@ assert(
 
 const sidebarSource = read("components/layout/sidebar.tsx", adminSrcRoot);
 assert(
-  sidebarSource.includes('href: "/cocms/page-cms"'),
-  "Expected global sidebar Page CMS link to point at /cocms/page-cms",
+  sidebarSource.includes('href: "/corporate-communication/page-cms"'),
+  "Expected global sidebar Page CMS link to point at /corporate-communication/page-cms",
 );
 
 const portalRegistrySource = read("lib/portals/registry.ts", adminSrcRoot);
 for (const expectedSnippet of [
   'title: "Page CMS"',
-  'href: "/cocms/page-cms"',
-  'href: "/cocms/page-cms/sections"',
-  'href: "/cocms/page-cms/spotlights"',
+  'href: "/corporate-communication/page-cms"',
+  'href: "/corporate-communication/page-cms/sections"',
+  'href: "/corporate-communication/page-cms/spotlights"',
 ]) {
   assert(
     portalRegistrySource.includes(expectedSnippet),
-    `Expected CoCMS portal registry to include ${expectedSnippet}`,
+    `Expected Corporate Communication portal registry to include ${expectedSnippet}`,
   );
 }
 
 const dashboardSource = read("page.tsx", dashboardPageCmsRoot);
 for (const expectedHref of [
-  'href="/cocms/page-cms/sections"',
-  'href={`/cocms/page-cms/sections/${section.id}`}',
-  'href="/cocms/page-cms/spotlights"',
+  'href="/corporate-communication/page-cms/sections"',
+  'href={`/corporate-communication/page-cms/sections/${section.id}`}',
+  'href="/corporate-communication/page-cms/spotlights"',
 ]) {
   assert(
     dashboardSource.includes(expectedHref),
-    `Expected Page CMS dashboard links to use CoCMS route: ${expectedHref}`,
+    `Expected Page CMS dashboard links to use Corporate Communication route: ${expectedHref}`,
   );
 }
 
 const sectionsListSource = read("sections/page.tsx", dashboardPageCmsRoot);
 for (const expectedSnippet of [
-  'href={`/cocms/page-cms/sections/${row.original.id}`}',
-  'createHref={canCreateSections ? "/cocms/page-cms/sections/new" : undefined}',
-  'backHref="/cocms/page-cms"',
+  'href={`/corporate-communication/page-cms/sections/${row.original.id}`}',
+  'createHref={canCreateSections ? "/corporate-communication/page-cms/sections/new" : undefined}',
+  'backHref="/corporate-communication/page-cms"',
 ]) {
   assert(
     sectionsListSource.includes(expectedSnippet),
-    `Expected Page CMS sections list to use CoCMS route: ${expectedSnippet}`,
+    `Expected Page CMS sections list to use Corporate Communication route: ${expectedSnippet}`,
   );
 }
 
 const sectionDetailSource = read("sections/[id]/client-page.tsx", dashboardPageCmsRoot);
 for (const expectedSnippet of [
-  "router.replace(`/cocms/page-cms/sections/${savedSection.id}`)",
-  'backHref="/cocms/page-cms/sections"',
+  "router.replace(`/corporate-communication/page-cms/sections/${savedSection.id}`)",
+  'backHref="/corporate-communication/page-cms/sections"',
 ]) {
   assert(
     sectionDetailSource.includes(expectedSnippet),
-    `Expected Page CMS section detail to use CoCMS route: ${expectedSnippet}`,
+    `Expected Page CMS section detail to use Corporate Communication route: ${expectedSnippet}`,
   );
 }
 
 const spotlightsSource = read("spotlights/page.tsx", dashboardPageCmsRoot);
 assert(
-  spotlightsSource.includes('backHref="/cocms/page-cms"'),
-  "Expected Page CMS spotlight page to return to /cocms/page-cms",
+  spotlightsSource.includes('backHref="/corporate-communication/page-cms"'),
+  "Expected Page CMS spotlight page to return to /corporate-communication/page-cms",
 );
 
 for (const legacyRoute of [

@@ -115,7 +115,7 @@ export function ReviewQueue() {
         <PageHeader
           title="Review Queue"
           description="Editorial review and publishing workspace."
-          backHref="/cocms"
+          backHref="/corporate-communication"
         />
         <div className="p-4 sm:p-6">
           <Card>
@@ -137,7 +137,7 @@ export function ReviewQueue() {
       <PageHeader
         title="Review Queue"
         description="Review submitted public content before approval, scheduling, or publishing."
-        backHref="/cocms"
+        backHref="/corporate-communication"
       />
       <div className="space-y-5 p-4 sm:p-6">
         <Card>

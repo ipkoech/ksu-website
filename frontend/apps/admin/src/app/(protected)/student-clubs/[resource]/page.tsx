@@ -1,4 +1,4 @@
-import { PortalResourcePage } from "@/components/portals/portal-resource-page";
+import { redirect } from "next/navigation";
 
 export function generateStaticParams() {
   return [{ resource: "profiles" }];
@@ -9,6 +9,6 @@ export default async function StudentClubsResourcePage({
 }: {
   params: Promise<{ resource: string }>;
 }) {
-  const { resource } = await params;
-  return <PortalResourcePage portalKey="student-clubs" resourceKey={resource} />;
+  await params;
+  redirect("/corporate-communication/student-clubs");
 }

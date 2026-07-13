@@ -51,8 +51,8 @@ const dashboardSource = fs.readFileSync(path.join(appRoot, "page.tsx"), "utf8");
 for (const requiredSnippet of [
   "canViewSections ? (",
   "canManageSpotlights ? (",
-  "href=\"/cocms/page-cms/sections\"",
-  "href=\"/cocms/page-cms/spotlights\"",
+  "href=\"/corporate-communication/page-cms/sections\"",
+  "href=\"/corporate-communication/page-cms/spotlights\"",
 ]) {
   assert(
     dashboardSource.includes(requiredSnippet),

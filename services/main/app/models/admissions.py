@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date
+from datetime import date, datetime
 from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy as sa
@@ -16,6 +16,35 @@ if TYPE_CHECKING:
     from .academic import AcademicCalendar, Department, School
     from .media import Media
     from .person import Person
+
+
+INTAKE_APPLICATION_OVERRIDES = ("automatic", "force_open", "force_hidden")
+INTAKE_PUBLIC_ACTION_TYPES = (
+    "apply",
+    "check_requirements",
+    "explore_programmes",
+    "download_admission_letter",
+    "reporting_instructions",
+    "student_portal",
+    "contact_admissions",
+)
+INTAKE_MILESTONE_TYPES = (
+    "applications_open",
+    "applications_close",
+    "admission_letters_release",
+    "reporting",
+    "orientation",
+    "registration",
+    "semester_opening",
+)
+INTAKE_WORKFLOW_STATUSES = (
+    "draft",
+    "in_review",
+    "changes_requested",
+    "approved",
+    "published",
+    "archived",
+)
 
 
 class Programme(Base):
@@ -137,6 +166,22 @@ class Intake(Base):
     application_end: Mapped[date] = mapped_column(sa.Date, nullable=False)
     late_application_end: Mapped[Optional[date]] = mapped_column(sa.Date, nullable=True)
 
+    application_opens_at: Mapped[datetime] = mapped_column(sa.DateTime(timezone=True), nullable=False)
+    application_closes_at: Mapped[datetime] = mapped_column(sa.DateTime(timezone=True), nullable=False)
+    late_application_closes_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    application_override: Mapped[str] = mapped_column(
+        sa.String(32), nullable=False, server_default=INTAKE_APPLICATION_OVERRIDES[0]
+    )
+    override_expires_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    late_applications_enabled: Mapped[bool] = mapped_column(
+        sa.Boolean, nullable=False, server_default=sa.text("false")
+    )
+    is_featured_on_homepage: Mapped[bool] = mapped_column(
+        sa.Boolean, nullable=False, server_default=sa.text("false"), index=True
+    )
+    homepage_priority: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
+    timezone: Mapped[str] = mapped_column(sa.String(64), nullable=False, server_default="Africa/Nairobi")
+
     max_students: Mapped[Optional[int]] = mapped_column(sa.Integer, nullable=True)
 
     cover_image_id: Mapped[Optional[uuid.UUID]] = mapped_column(
@@ -156,9 +201,190 @@ class Intake(Base):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
+    public_actions: Mapped[list["IntakePublicAction"]] = relationship(
+        "IntakePublicAction",
+        back_populates="intake",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    milestones: Mapped[list["IntakeMilestone"]] = relationship(
+        "IntakeMilestone",
+        back_populates="intake",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
 
     __table_args__ = (
+        sa.CheckConstraint(
+            "application_override IN ('automatic', 'force_open', 'force_hidden')",
+            name="ck_intakes_application_override",
+        ),
+        sa.CheckConstraint(
+            "application_closes_at >= application_opens_at",
+            name="ck_intakes_application_timestamp_window",
+        ),
+        sa.CheckConstraint(
+            "late_application_closes_at IS NULL OR late_application_closes_at >= application_closes_at",
+            name="ck_intakes_late_application_timestamp_window",
+        ),
+        sa.CheckConstraint(
+            "application_override = 'automatic' OR override_expires_at IS NOT NULL",
+            name="ck_intakes_manual_override_expiry",
+        ),
+        sa.CheckConstraint(
+            "NOT is_featured_on_homepage OR is_active",
+            name="ck_intakes_featured_homepage_requires_active",
+        ),
         sa.Index("ix_intakes_calendar_active_open", "academic_calendar_id", "is_active", "is_open"),
+        sa.Index(
+            "ix_intakes_homepage_resolution",
+            "is_active",
+            "is_featured_on_homepage",
+            "homepage_priority",
+            "application_opens_at",
+            "application_closes_at",
+        ),
+    )
+
+
+class IntakePublicAction(Base):
+    """Workflow-managed operational CTA attached to an intake."""
+
+    __tablename__ = "intake_public_actions"
+
+    intake_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("intakes.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    action_type: Mapped[str] = mapped_column(sa.String(64), nullable=False)
+    label: Mapped[str] = mapped_column(sa.String(255), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    target_url: Mapped[str] = mapped_column(sa.String(1024), nullable=False)
+    starts_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    ends_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    is_enabled: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
+    priority: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
+    open_in_new_tab: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
+    status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default=INTAKE_WORKFLOW_STATUSES[0])
+    workflow_status: Mapped[str] = mapped_column(
+        sa.String(32), nullable=False, server_default=INTAKE_WORKFLOW_STATUSES[0], index=True
+    )
+    scheduled_publish_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    expires_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    submitted_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    approved_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    published_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    unpublished_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    rejection_reason: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    revision_notes: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    created_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("users.id", ondelete="SET NULL"))
+    updated_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("users.id", ondelete="SET NULL"))
+    submitted_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("users.id", ondelete="SET NULL"))
+    reviewed_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("users.id", ondelete="SET NULL"))
+    approved_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("users.id", ondelete="SET NULL"))
+    published_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("users.id", ondelete="SET NULL"))
+
+    intake: Mapped["Intake"] = relationship("Intake", back_populates="public_actions")
+
+    __table_args__ = (
+        sa.CheckConstraint(
+            "action_type IN ('apply', 'check_requirements', 'explore_programmes', "
+            "'download_admission_letter', 'reporting_instructions', 'student_portal', "
+            "'contact_admissions')",
+            name="ck_intake_public_actions_action_type",
+        ),
+        sa.CheckConstraint(
+            "status IN ('draft', 'in_review', 'changes_requested', 'approved', 'published', 'archived')",
+            name="ck_intake_public_actions_status",
+        ),
+        sa.CheckConstraint(
+            "workflow_status IN ('draft', 'in_review', 'changes_requested', 'approved', 'published', 'archived')",
+            name="ck_intake_public_actions_workflow_status",
+        ),
+        sa.CheckConstraint("ends_at IS NULL OR starts_at IS NULL OR ends_at >= starts_at", name="ck_intake_public_actions_window"),
+        sa.Index(
+            "uq_intake_public_actions_current_type",
+            "intake_id",
+            "action_type",
+            unique=True,
+            postgresql_where=sa.text("deleted_at IS NULL AND workflow_status != 'archived'"),
+        ),
+        sa.Index(
+            "ix_intake_public_actions_public_window",
+            "intake_id",
+            "workflow_status",
+            "is_enabled",
+            "starts_at",
+            "ends_at",
+            "expires_at",
+        ),
+    )
+
+
+class IntakeMilestone(Base):
+    """Workflow-managed, cohort-specific admissions milestone."""
+
+    __tablename__ = "intake_milestones"
+
+    intake_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("intakes.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    milestone_type: Mapped[str] = mapped_column(sa.String(64), nullable=False)
+    title: Mapped[str] = mapped_column(sa.String(255), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    starts_at: Mapped[datetime] = mapped_column(sa.DateTime(timezone=True), nullable=False)
+    ends_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    location: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    instructions_url: Mapped[Optional[str]] = mapped_column(sa.String(1024), nullable=True)
+    is_public: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
+    display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
+    status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default=INTAKE_WORKFLOW_STATUSES[0])
+    workflow_status: Mapped[str] = mapped_column(
+        sa.String(32), nullable=False, server_default=INTAKE_WORKFLOW_STATUSES[0], index=True
+    )
+    scheduled_publish_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    expires_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    submitted_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    approved_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    published_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    unpublished_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    rejection_reason: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    revision_notes: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    created_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("users.id", ondelete="SET NULL"))
+    updated_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("users.id", ondelete="SET NULL"))
+    submitted_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("users.id", ondelete="SET NULL"))
+    reviewed_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("users.id", ondelete="SET NULL"))
+    approved_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("users.id", ondelete="SET NULL"))
+    published_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("users.id", ondelete="SET NULL"))
+
+    intake: Mapped["Intake"] = relationship("Intake", back_populates="milestones")
+
+    __table_args__ = (
+        sa.CheckConstraint(
+            "milestone_type IN ('applications_open', 'applications_close', "
+            "'admission_letters_release', 'reporting', 'orientation', 'registration', "
+            "'semester_opening')",
+            name="ck_intake_milestones_milestone_type",
+        ),
+        sa.CheckConstraint(
+            "status IN ('draft', 'in_review', 'changes_requested', 'approved', 'published', 'archived')",
+            name="ck_intake_milestones_status",
+        ),
+        sa.CheckConstraint(
+            "workflow_status IN ('draft', 'in_review', 'changes_requested', 'approved', 'published', 'archived')",
+            name="ck_intake_milestones_workflow_status",
+        ),
+        sa.CheckConstraint("ends_at IS NULL OR ends_at >= starts_at", name="ck_intake_milestones_window"),
+        sa.Index(
+            "ix_intake_milestones_public_window",
+            "intake_id",
+            "workflow_status",
+            "is_public",
+            "starts_at",
+            "expires_at",
+        ),
+        sa.Index("ix_intake_milestones_intake_order", "intake_id", "display_order"),
     )
 
 
@@ -230,9 +456,15 @@ class AdmissionInfo(Base):
 
 
 __all__ = [
+    "INTAKE_APPLICATION_OVERRIDES",
+    "INTAKE_PUBLIC_ACTION_TYPES",
+    "INTAKE_MILESTONE_TYPES",
+    "INTAKE_WORKFLOW_STATUSES",
     "Programme",
     "ProgrammeTutor",
     "Intake",
     "ProgrammeIntake",
     "AdmissionInfo",
+    "IntakePublicAction",
+    "IntakeMilestone",
 ]

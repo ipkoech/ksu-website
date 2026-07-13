@@ -40,6 +40,8 @@ import type {
   AlumniAssociation,
   Document,
   Intake,
+  IntakeHomepageAdmission,
+  IntakeHomepageAdmissionUpdate,
   AcademicCalendar,
   AdmissionInfo,
   News,
@@ -197,7 +199,13 @@ export const statsApi = {
   admin: () =>
     mainApi.get<{ data: PublicStatsResponse }>("/api/v1/stats/admin"),
   portal: (
-    portal: "admin" | "cocms" | "schools" | "departments" | "student-clubs",
+    portal:
+      | "admin"
+      | "corporate-communication"
+      | "schools"
+      | "departments"
+      | "research"
+      | "library",
   ) =>
     mainApi.get<{ data: PortalStatsResponse }>(
       `/api/v1/stats/portal/${portal}`,
@@ -1145,6 +1153,11 @@ export const intakesApi = {
   get: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Intake }>(`/api/v1/intakes/id/${id}`, params),
 
+  getHomepageAdmission: (id: string) =>
+    mainApi.get<{ data: IntakeHomepageAdmission }>(
+      `/api/v1/intakes/id/${id}/homepage-admission`,
+    ),
+
   getBySlug: (slug: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Intake }>(`/api/v1/intakes/${slug}`, params),
 
@@ -1153,6 +1166,12 @@ export const intakesApi = {
 
   update: (id: string, data: Partial<Intake>) =>
     mainApi.patch<{ data: Intake }>(`/api/v1/intakes/${id}`, data),
+
+  updateHomepageAdmission: (id: string, data: IntakeHomepageAdmissionUpdate) =>
+    mainApi.patch<{ data: IntakeHomepageAdmission }>(
+      `/api/v1/intakes/id/${id}/homepage-admission`,
+      data,
+    ),
 
   delete: (id: string) => mainApi.delete<void>(`/api/v1/intakes/${id}`),
 };

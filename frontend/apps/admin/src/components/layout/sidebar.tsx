@@ -111,7 +111,7 @@ const mainNavigation: NavItem[] = [
       },
       {
         title: "Page CMS",
-        href: "/cocms/page-cms",
+        href: "/corporate-communication/page-cms",
         icon: LayoutTemplate,
         scope: [
           "page_sections.view",
