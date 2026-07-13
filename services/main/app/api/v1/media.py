@@ -202,6 +202,20 @@ async def upload_media(
             entity_type,
             entity_id,
         )
+        if _page_section_entity_id(entity_type, entity_id) is not None:
+            await _touch_page_section_media_parents(
+                db,
+                user,
+                entity_targets=[(entity_type, entity_id)],
+                changed_fields={
+                    "media_link_create": {
+                        "entity_type": entity_type,
+                        "entity_id": str(entity_id),
+                        "role": role or "attachment",
+                        "is_public": is_public,
+                    },
+                },
+            )
     elif folder_id is None:
         await _require_media_folder_scope(db, user, MEDIA_FOLDER_MANAGE_PERMISSIONS, "global", None)
     if folder_id is not None:
@@ -381,10 +395,9 @@ async def get_media_link(link_id: uuid.UUID, db: DbSession, user: CurrentUser, f
 
 @router.patch("/links/{link_id}")
 async def update_media_link(link_id: uuid.UUID, data: MediaLinkUpdate, db: DbSession, user: CurrentUser):
-    link = await MediaService.get_link_by_id(db, link_id)
+    link = await MediaService.get_link_for_update(db, link_id)
     if link is None:
         raise HTTPException(status_code=404, detail="Media link not found")
-    await _require_media_entity_scope(db, user, MEDIA_LINK_MANAGE_PERMISSIONS, link.entity_type, link.entity_id)
     payload = data.model_dump(exclude_unset=True)
     if "is_public" in payload and _is_workflow_managed_link(link):
         raise HTTPException(
@@ -393,6 +406,17 @@ async def update_media_link(link_id: uuid.UUID, data: MediaLinkUpdate, db: DbSes
         )
     next_entity_type = payload.get("entity_type", link.entity_type)
     next_entity_id = payload.get("entity_id", link.entity_id)
+    if payload:
+        await _touch_page_section_media_parents(
+            db,
+            user,
+            entity_targets=[
+                (link.entity_type, link.entity_id),
+                (next_entity_type, next_entity_id),
+            ],
+            changed_fields={"media_link_update": payload},
+        )
+    await _require_media_entity_scope(db, user, MEDIA_LINK_MANAGE_PERMISSIONS, link.entity_type, link.entity_id)
     next_scope_type, next_scope_id = await _authorized_media_entity_scope(
         db, user, MEDIA_LINK_MANAGE_PERMISSIONS, next_entity_type, next_entity_id,
     )
@@ -406,16 +430,6 @@ async def update_media_link(link_id: uuid.UUID, data: MediaLinkUpdate, db: DbSes
         media = await MediaService.get_authorized_by_id(db, payload["media_id"], user)
         if media is None:
             raise HTTPException(status_code=404, detail="Media not found")
-    if payload:
-        await _touch_page_section_media_parents(
-            db,
-            user,
-            entity_targets=[
-                (link.entity_type, link.entity_id),
-                (next_entity_type, next_entity_id),
-            ],
-            changed_fields={"media_link_update": payload},
-        )
     link = await MediaService.update_link(db, link, **payload)
     if "media_id" in payload:
         link.media = media
@@ -424,16 +438,16 @@ async def update_media_link(link_id: uuid.UUID, data: MediaLinkUpdate, db: DbSes
 
 @router.delete("/links/{link_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_media_link(link_id: uuid.UUID, db: DbSession, user: CurrentUser):
-    link = await MediaService.get_link_by_id(db, link_id)
+    link = await MediaService.get_link_for_update(db, link_id)
     if link is None:
         raise HTTPException(status_code=404, detail="Media link not found")
-    await _require_media_entity_scope(db, user, MEDIA_LINK_MANAGE_PERMISSIONS, link.entity_type, link.entity_id)
     await _touch_page_section_media_parents(
         db,
         user,
         entity_targets=[(link.entity_type, link.entity_id)],
         changed_fields={"media_link_delete": {"id": str(link.id)}},
     )
+    await _require_media_entity_scope(db, user, MEDIA_LINK_MANAGE_PERMISSIONS, link.entity_type, link.entity_id)
     await MediaService.delete_link(db, link)
 
 

@@ -284,6 +284,7 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch.object(page_cms, "_get_section_item_or_404", AsyncMock(return_value=item)),
+            patch.object(page_cms, "_get_section_item_for_update_or_404", AsyncMock(return_value=item)),
             patch.object(page_cms, "_get_page_sections_for_update_or_404", AsyncMock(return_value={section.id: section})),
             patch.object(page_cms, "_require_page_section_access", AsyncMock()),
             patch.object(page_cms.ContentWorkflowService, "reset_after_authoring_edit", reset),
@@ -299,6 +300,46 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(422, context.exception.status_code)
         reset.assert_not_awaited()
         self.assertEqual("reference", item.item_type)
+
+    async def test_update_section_item_checks_revision_after_parent_and_child_locks(self):
+        user = _user("section_items.manage")
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            revision=2,
+        )
+        section.id = uuid.uuid4()
+        stale_item = SectionItem(page_section_id=section.id, item_type="text", revision=1)
+        stale_item.id = uuid.uuid4()
+        locked_item = SectionItem(page_section_id=section.id, item_type="text", revision=2)
+        locked_item.id = stale_item.id
+        events: list[str] = []
+
+        async def lock_parents(*_args):
+            events.append("parents")
+            return {section.id: section}
+
+        async def lock_item(*_args):
+            events.append("item")
+            return locked_item
+
+        with (
+            patch.object(page_cms, "_get_section_item_or_404", AsyncMock(return_value=stale_item)),
+            patch.object(page_cms, "_get_page_sections_for_update_or_404", lock_parents),
+            patch.object(page_cms, "_get_section_item_for_update_or_404", lock_item),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await page_cms.update_section_item(
+                    stale_item.id,
+                    SectionItemUpdate(id=stale_item.id, revision=1, title="Stale write"),
+                    db=_AuthDb(user),
+                    user=user,
+                )
+
+        self.assertEqual(409, context.exception.status_code)
+        self.assertEqual(["parents", "item"], events)
 
     async def test_update_section_item_rejects_manual_source_without_reference_type(self):
         user = _user("section_items.manage")
@@ -317,6 +358,7 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch.object(page_cms, "_get_section_item_or_404", AsyncMock(return_value=item)),
+            patch.object(page_cms, "_get_section_item_for_update_or_404", AsyncMock(return_value=item)),
             patch.object(page_cms, "_get_page_sections_for_update_or_404", AsyncMock(return_value={section.id: section})),
             patch.object(page_cms, "_require_page_section_access", AsyncMock()),
             patch.object(page_cms.ContentWorkflowService, "reset_after_authoring_edit", reset),
@@ -375,6 +417,7 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch.object(page_cms, "_get_section_item_or_404", AsyncMock(return_value=item)),
+            patch.object(page_cms, "_get_section_item_for_update_or_404", AsyncMock(return_value=item)),
             patch.object(page_cms, "_get_page_sections_for_update_or_404", AsyncMock(return_value={section.id: section})),
             patch.object(page_cms, "_require_page_section_access", AsyncMock()),
             patch.object(page_cms.ContentWorkflowService, "reset_after_authoring_edit", reset),
@@ -410,6 +453,7 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch.object(page_cms, "_get_section_item_or_404", AsyncMock(return_value=item)),
+            patch.object(page_cms, "_get_section_item_for_update_or_404", AsyncMock(return_value=item)),
             patch.object(page_cms, "_get_page_sections_for_update_or_404", AsyncMock(return_value={section.id: section})),
             patch.object(page_cms, "_require_page_section_access", AsyncMock()),
             patch.object(page_cms.ContentWorkflowService, "reset_after_authoring_edit", reset),

@@ -483,6 +483,19 @@ async def _get_section_item_or_404(db: DbSession, item_id: uuid.UUID) -> Section
     return item
 
 
+async def _get_section_item_for_update_or_404(db: DbSession, item_id: uuid.UUID) -> SectionItem:
+    result = await db.execute(
+        select(SectionItem)
+        .where(SectionItem.id == item_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    item = result.scalar_one_or_none()
+    if item is None:
+        raise HTTPException(status_code=404, detail="Section item not found")
+    return item
+
+
 async def _get_partnership_spotlight_or_404(db: DbSession, spotlight_id: uuid.UUID) -> PartnershipSpotlight:
     item = await PartnershipSpotlight.get_by_id(db, spotlight_id)
     if item is None:
@@ -971,16 +984,20 @@ async def update_section_item(
     db: DbSession,
     user: CurrentUser,
 ):
-    item = await _get_section_item_or_404(db, item_id)
+    initial_item = await _get_section_item_or_404(db, item_id)
+    initial_parent_id = initial_item.page_section_id
     payload = data.model_dump(exclude_unset=True)
     supplied_item_id = payload.pop("id", None)
     supplied_revision = payload.pop("revision", None)
-    if supplied_item_id is not None and supplied_item_id != item.id:
+    if supplied_item_id is not None and supplied_item_id != initial_item.id:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Item ID does not match route")
+    next_section_id = payload.pop("page_section_id", initial_parent_id)
+    sections = await _get_page_sections_for_update_or_404(db, {initial_parent_id, next_section_id})
+    item = await _get_section_item_for_update_or_404(db, item_id)
+    if item.page_section_id not in sections:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Section item has changed; reload required")
     if supplied_revision is not None and supplied_revision != item.revision:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Section item has changed; reload required")
-    next_section_id = payload.pop("page_section_id", item.page_section_id)
-    sections = await _get_page_sections_for_update_or_404(db, {item.page_section_id, next_section_id})
     section = sections[item.page_section_id]
     next_section = sections[next_section_id]
     for parent in sections.values():

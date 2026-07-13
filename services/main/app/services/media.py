@@ -161,45 +161,53 @@ class MediaService:
                 resolved_folder_path = folder.slug
 
         metadata = await upload_file(file, resolved_folder_path)
-        _validate_upload_size(metadata["file_size"])
-        media = Media(
-            folder_id=folder_id,
-            uploaded_by_id=uploaded_by_id,
-            is_public=is_public,
-            is_processed=True,
-            media_type=_infer_media_type(metadata["mime_type"]),
-            **metadata,
-        )
-        db.add(media)
-        await db.flush()
-        if entity_type and entity_id is not None:
-            scope_type, scope_id = await MediaService.get_attachment_scope(
-                db,
-                entity_type=entity_type,
-                entity_id=entity_id,
+        try:
+            _validate_upload_size(metadata["file_size"])
+            media = Media(
+                folder_id=folder_id,
+                uploaded_by_id=uploaded_by_id,
+                is_public=is_public,
+                is_processed=True,
+                media_type=_infer_media_type(metadata["mime_type"]),
+                **metadata,
             )
-            if scope_type == "club":
-                media.is_public = False
-            link_metadata = {"is_public": is_public}
-            if scope_type == "club":
-                link_metadata = {
-                    "is_public": False,
-                    "status": "draft",
-                    "workflow_status": "draft",
-                    "owner_portal": "student-clubs",
-                    "owner_scope_type": "club",
-                    "owner_scope_id": scope_id,
-                    "author_user_id": uploaded_by_id,
-                }
-            await MediaService.link_media(
-                db,
-                media_id=media.id,
-                entity_type=entity_type,
-                entity_id=entity_id,
-                role=role or "attachment",
-                **link_metadata,
-            )
-        return media
+            db.add(media)
+            await db.flush()
+            if entity_type and entity_id is not None:
+                scope_type, scope_id = await MediaService.get_attachment_scope(
+                    db,
+                    entity_type=entity_type,
+                    entity_id=entity_id,
+                )
+                if scope_type == "club":
+                    media.is_public = False
+                link_metadata = {"is_public": is_public}
+                if scope_type == "club":
+                    link_metadata = {
+                        "is_public": False,
+                        "status": "draft",
+                        "workflow_status": "draft",
+                        "owner_portal": "student-clubs",
+                        "owner_scope_type": "club",
+                        "owner_scope_id": scope_id,
+                        "author_user_id": uploaded_by_id,
+                    }
+                await MediaService.link_media(
+                    db,
+                    media_id=media.id,
+                    entity_type=entity_type,
+                    entity_id=entity_id,
+                    role=role or "attachment",
+                    **link_metadata,
+                )
+            return media
+        except Exception:
+            await db.rollback()
+            try:
+                await delete_file(metadata["storage_path"])
+            except Exception:
+                pass
+            raise
 
     @staticmethod
     async def get_attachment_scope(
@@ -486,6 +494,18 @@ class MediaService:
         if load_options:
             query = query.options(*load_options)
         result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_link_for_update(db: AsyncSession, link_id: uuid.UUID) -> MediaLink | None:
+        """Lock and refresh a link before authorizing or mutating it."""
+        result = await db.execute(
+            MediaLink.active_query()
+            .options(selectinload(MediaLink.media), selectinload(MediaLink.folder))
+            .where(MediaLink.id == link_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
         return result.scalar_one_or_none()
 
     @staticmethod
