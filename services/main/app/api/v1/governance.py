@@ -300,7 +300,7 @@ async def delete_council_member(assignment_id: uuid.UUID, db: DbSession, _: Curr
 
 @router.get("/admin/council/order", dependencies=[Depends(require_scope("governance.view"))])
 async def get_council_order(db: DbSession, _: CurrentUser):
-    members = await GovernanceService.list_council_members(db)
+    members = await GovernanceService.list_council_members(db, active_only=True)
     return success(
         data=[
             {

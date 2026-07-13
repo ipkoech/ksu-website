@@ -283,6 +283,29 @@ class UniversityGovernanceAdminServiceTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaisesRegex(ValueError, "outside this board"):
                 await GovernanceService.update_council_order(object(), nodes, uuid.uuid4())
 
+    async def test_council_order_read_uses_active_member_scope(self):
+        member_id = uuid.uuid4()
+        member = SimpleNamespace(
+            id=member_id,
+            governance_role=SimpleNamespace(display_group="member"),
+            display_order=10,
+            hierarchy_level=2,
+            reports_to_id=None,
+        )
+
+        db = object()
+
+        with patch.object(
+            GovernanceService,
+            "list_council_members",
+            new_callable=AsyncMock,
+            return_value=[member],
+        ) as list_members:
+            response = await governance_api.get_council_order(db, object())
+
+        list_members.assert_awaited_once_with(db, active_only=True)
+        self.assertEqual(member_id, response["data"][0]["assignment_id"])
+
     async def test_create_council_member_forces_draft_workflow_state(self):
         board = SimpleNamespace(id=uuid.uuid4())
         role = SimpleNamespace(
