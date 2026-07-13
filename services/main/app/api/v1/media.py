@@ -29,20 +29,18 @@ def _page_section_entity_id(entity_type: str, entity_id: uuid.UUID) -> uuid.UUID
     return entity_id if normalized_type in {"page_section", "page_sections"} else None
 
 
-async def _touch_page_section_media_parents(
+async def _lock_page_section_media_parents(
     db: DbSession,
-    user: CurrentUser,
     *,
     entity_targets: list[tuple[str, uuid.UUID]],
-    changed_fields: dict,
-) -> None:
+) -> dict[uuid.UUID, PageSection]:
     section_ids = {
         section_id
         for entity_type, entity_id in entity_targets
         if (section_id := _page_section_entity_id(entity_type, entity_id)) is not None
     }
     if not section_ids:
-        return
+        return {}
 
     result = await db.execute(
         select(PageSection)
@@ -54,8 +52,24 @@ async def _touch_page_section_media_parents(
     sections = list(result.scalars().all())
     if {section.id for section in sections} != section_ids:
         raise HTTPException(status_code=404, detail="Page section not found")
+    return {section.id: section for section in sections}
 
-    for section in sections:
+
+async def _authorize_locked_page_section_media_parents(
+    db: DbSession,
+    user: CurrentUser,
+    *,
+    sections: dict[uuid.UUID, PageSection],
+    media_permissions: list[str],
+) -> None:
+    for section in sorted(sections.values(), key=lambda item: item.id):
+        await _require_media_folder_scope(
+            db,
+            user,
+            media_permissions,
+            section.scope_type,
+            section.scope_id,
+        )
         await _require_page_section_access(
             db,
             user,
@@ -66,7 +80,15 @@ async def _touch_page_section_media_parents(
         )
         _require_page_authoring_edit(user, section)
 
-    for section in sections:
+
+async def _touch_locked_page_section_media_parents(
+    db: DbSession,
+    user: CurrentUser,
+    *,
+    sections: dict[uuid.UUID, PageSection],
+    changed_fields: dict,
+) -> None:
+    for section in sorted(sections.values(), key=lambda item: item.id):
         await ContentWorkflowService.reset_after_authoring_edit(
             db,
             section,
@@ -76,6 +98,51 @@ async def _touch_page_section_media_parents(
         )
         section.revision = (section.revision or 1) + 1
         section.updated_by_id = user.id
+
+
+async def _touch_page_section_media_parents(
+    db: DbSession,
+    user: CurrentUser,
+    *,
+    entity_targets: list[tuple[str, uuid.UUID]],
+    changed_fields: dict,
+    media_permissions: list[str],
+) -> None:
+    sections = await _lock_page_section_media_parents(db, entity_targets=entity_targets)
+    await _authorize_locked_page_section_media_parents(
+        db,
+        user,
+        sections=sections,
+        media_permissions=media_permissions,
+    )
+    await _touch_locked_page_section_media_parents(
+        db,
+        user,
+        sections=sections,
+        changed_fields=changed_fields,
+    )
+
+
+async def _lock_media_link_after_parent_snapshot(
+    db: DbSession,
+    link_id: uuid.UUID,
+    *,
+    snapshot: tuple[str, uuid.UUID],
+    entity_targets: list[tuple[str, uuid.UUID]],
+) -> tuple[MediaLink, dict[uuid.UUID, PageSection]]:
+    sections = await _lock_page_section_media_parents(db, entity_targets=entity_targets)
+    link = await MediaService.get_link_for_update(db, link_id)
+    if (
+        link is None
+        or link.id != link_id
+        or link.entity_type != snapshot[0]
+        or link.entity_id != snapshot[1]
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Media link changed concurrently; reload and retry",
+        )
+    return link, sections
 
 
 def _media_folder_scope(scope_type: str | None, scope_id: uuid.UUID | None) -> tuple[str, uuid.UUID | None]:
@@ -215,6 +282,7 @@ async def upload_media(
                         "is_public": is_public,
                     },
                 },
+                media_permissions=MEDIA_FOLDER_MANAGE_PERMISSIONS,
             )
     elif folder_id is None:
         await _require_media_folder_scope(db, user, MEDIA_FOLDER_MANAGE_PERMISSIONS, "global", None)
@@ -369,6 +437,7 @@ async def create_media_link(data: MediaLinkCreate, db: DbSession, user: CurrentU
         user,
         entity_targets=[(data.entity_type, data.entity_id)],
         changed_fields={"media_link_create": payload},
+        media_permissions=MEDIA_LINK_MANAGE_PERMISSIONS,
     )
     if scope_type == "club":
         payload.update(
@@ -395,31 +464,46 @@ async def get_media_link(link_id: uuid.UUID, db: DbSession, user: CurrentUser, f
 
 @router.patch("/links/{link_id}")
 async def update_media_link(link_id: uuid.UUID, data: MediaLinkUpdate, db: DbSession, user: CurrentUser):
-    link = await MediaService.get_link_for_update(db, link_id)
-    if link is None:
+    snapshot = await MediaService.get_link_parent_snapshot(db, link_id)
+    if snapshot is None:
         raise HTTPException(status_code=404, detail="Media link not found")
     payload = data.model_dump(exclude_unset=True)
+    next_entity_type = payload.get("entity_type", snapshot[0])
+    next_entity_id = payload.get("entity_id", snapshot[1])
+    entity_targets = [snapshot, (next_entity_type, next_entity_id)]
+    link, sections = await _lock_media_link_after_parent_snapshot(
+        db,
+        link_id,
+        snapshot=snapshot,
+        entity_targets=entity_targets,
+    )
+    await _authorize_locked_page_section_media_parents(
+        db,
+        user,
+        sections=sections,
+        media_permissions=MEDIA_LINK_MANAGE_PERMISSIONS,
+    )
+    if _page_section_entity_id(link.entity_type, link.entity_id) is None:
+        await _require_media_entity_scope(
+            db,
+            user,
+            MEDIA_LINK_MANAGE_PERMISSIONS,
+            link.entity_type,
+            link.entity_id,
+        )
+    next_section_id = _page_section_entity_id(next_entity_type, next_entity_id)
+    if next_section_id is not None:
+        next_section = sections[next_section_id]
+        next_scope_type, next_scope_id = next_section.scope_type, next_section.scope_id
+    else:
+        next_scope_type, next_scope_id = await _authorized_media_entity_scope(
+            db, user, MEDIA_LINK_MANAGE_PERMISSIONS, next_entity_type, next_entity_id,
+        )
     if "is_public" in payload and _is_workflow_managed_link(link):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Workflow-managed media visibility must be changed through publication workflow",
         )
-    next_entity_type = payload.get("entity_type", link.entity_type)
-    next_entity_id = payload.get("entity_id", link.entity_id)
-    if payload:
-        await _touch_page_section_media_parents(
-            db,
-            user,
-            entity_targets=[
-                (link.entity_type, link.entity_id),
-                (next_entity_type, next_entity_id),
-            ],
-            changed_fields={"media_link_update": payload},
-        )
-    await _require_media_entity_scope(db, user, MEDIA_LINK_MANAGE_PERMISSIONS, link.entity_type, link.entity_id)
-    next_scope_type, next_scope_id = await _authorized_media_entity_scope(
-        db, user, MEDIA_LINK_MANAGE_PERMISSIONS, next_entity_type, next_entity_id,
-    )
     if next_scope_type == "club":
         payload.update(
             owner_portal="student-clubs",
@@ -430,6 +514,13 @@ async def update_media_link(link_id: uuid.UUID, data: MediaLinkUpdate, db: DbSes
         media = await MediaService.get_authorized_by_id(db, payload["media_id"], user)
         if media is None:
             raise HTTPException(status_code=404, detail="Media not found")
+    if payload:
+        await _touch_locked_page_section_media_parents(
+            db,
+            user,
+            sections=sections,
+            changed_fields={"media_link_update": payload},
+        )
     link = await MediaService.update_link(db, link, **payload)
     if "media_id" in payload:
         link.media = media
@@ -438,16 +529,35 @@ async def update_media_link(link_id: uuid.UUID, data: MediaLinkUpdate, db: DbSes
 
 @router.delete("/links/{link_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_media_link(link_id: uuid.UUID, db: DbSession, user: CurrentUser):
-    link = await MediaService.get_link_for_update(db, link_id)
-    if link is None:
+    snapshot = await MediaService.get_link_parent_snapshot(db, link_id)
+    if snapshot is None:
         raise HTTPException(status_code=404, detail="Media link not found")
-    await _touch_page_section_media_parents(
+    link, sections = await _lock_media_link_after_parent_snapshot(
+        db,
+        link_id,
+        snapshot=snapshot,
+        entity_targets=[snapshot],
+    )
+    await _authorize_locked_page_section_media_parents(
         db,
         user,
-        entity_targets=[(link.entity_type, link.entity_id)],
+        sections=sections,
+        media_permissions=MEDIA_LINK_MANAGE_PERMISSIONS,
+    )
+    if _page_section_entity_id(link.entity_type, link.entity_id) is None:
+        await _require_media_entity_scope(
+            db,
+            user,
+            MEDIA_LINK_MANAGE_PERMISSIONS,
+            link.entity_type,
+            link.entity_id,
+        )
+    await _touch_locked_page_section_media_parents(
+        db,
+        user,
+        sections=sections,
         changed_fields={"media_link_delete": {"id": str(link.id)}},
     )
-    await _require_media_entity_scope(db, user, MEDIA_LINK_MANAGE_PERMISSIONS, link.entity_type, link.entity_id)
     await MediaService.delete_link(db, link)
 
 

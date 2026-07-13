@@ -497,6 +497,22 @@ class MediaService:
         return result.scalar_one_or_none()
 
     @staticmethod
+    async def get_link_parent_snapshot(
+        db: AsyncSession,
+        link_id: uuid.UUID,
+    ) -> tuple[str, uuid.UUID] | None:
+        result = await db.execute(
+            select(MediaLink.entity_type, MediaLink.entity_id).where(
+                MediaLink.id == link_id,
+                MediaLink.deleted_at.is_(None),
+            )
+        )
+        row = result.one_or_none()
+        if row is None:
+            return None
+        return row.entity_type, row.entity_id
+
+    @staticmethod
     async def get_link_for_update(db: AsyncSession, link_id: uuid.UUID) -> MediaLink | None:
         """Lock and refresh a link before authorizing or mutating it."""
         result = await db.execute(
