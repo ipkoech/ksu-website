@@ -1,11 +1,16 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import {
+  Activity,
   ArrowRight,
+  Award,
+  Bell,
+  BookOpenCheck,
   CalendarDays,
   CheckCircle2,
   FileDown,
   GraduationCap,
+  Handshake,
   Landmark,
   Lightbulb,
   Newspaper,
@@ -13,6 +18,7 @@ import {
   Search,
   Trophy,
   Users,
+  type LucideIcon,
 } from "lucide-react";
 import { AdmissionsCountdown } from "@/components/home/admissions-countdown";
 import { PublicImage } from "@/components/public/public-image";
@@ -365,17 +371,51 @@ function formatPublicDate(value: string) {
 }
 
 export function PulseStripSection({ section }: SectionVariantProps) {
+  const items = displayItems(section);
+  const maxItems =
+    typeof section.settings?.maxItems === "number"
+      ? section.settings.maxItems
+      : 5;
+  const cta = settingCta(section, "cta");
+
   return (
     <section
       aria-label={section.title ?? "University pulse"}
-      className="border-y border-white/10 bg-primary text-white"
+      className="border-y border-primary/10 bg-primary text-white"
     >
-      <div className="mx-auto grid max-w-[1680px] divide-y divide-white/10 px-4 sm:grid-cols-2 sm:divide-x sm:divide-y-0 sm:px-6 lg:grid-cols-5 lg:px-8 xl:px-10 2xl:px-12">
-        {displayItems(section)
-          .slice(0, 5)
-          .map((item, index) => (
+      <div className="mx-auto grid max-w-[1680px] gap-0 px-4 sm:px-6 lg:grid-cols-[260px_minmax(0,1fr)_auto] lg:px-8 xl:px-10 2xl:px-12">
+        <div className="flex min-h-[104px] items-center gap-3 border-b border-white/10 py-5 lg:border-b-0 lg:border-r lg:pr-6">
+          <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/10 text-secondary">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-secondary/30" />
+            <Activity className="relative h-6 w-6" aria-hidden />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/65">
+              {section.subtitle ?? "Live updates"}
+            </p>
+            <h2 className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold text-white">
+              {section.title ?? "University pulse"}
+            </h2>
+          </div>
+        </div>
+
+        <div className="-mx-4 flex snap-x gap-0 overflow-x-auto px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:grid lg:grid-cols-3 lg:divide-x lg:divide-white/10 lg:overflow-visible lg:px-0 xl:grid-cols-5">
+          {items.slice(0, maxItems).map((item, index) => (
             <PulseItem key={item.id} item={item} index={index} />
           ))}
+        </div>
+
+        {cta ? (
+          <div className="flex items-center border-t border-white/10 py-4 lg:border-l lg:border-t-0 lg:pl-5">
+            <LinkWrapper
+              href={cta.href}
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-white/20 px-4 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-white/10"
+            >
+              {cta.label}
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </LinkWrapper>
+          </div>
+        ) : null}
       </div>
     </section>
   );
@@ -1004,16 +1044,25 @@ function PulseItem({
   item: HomepageSectionItem;
   index: number;
 }) {
-  const icons = [CalendarDays, Lightbulb, Users, Trophy, GraduationCap];
-  const Icon = icons[index % icons.length];
+  const Icon = pulseIcon(item, index);
   const body = (
-    <div className="flex min-h-24 items-center gap-3 px-4 py-5 transition hover:bg-white/5">
-      <Icon className="h-6 w-6 shrink-0 text-secondary" aria-hidden />
-      <div>
-        <p className="text-sm font-semibold text-white">{item.title}</p>
-        <p className="mt-1 line-clamp-1 text-xs text-white/65">
+    <div className="group flex min-h-[104px] min-w-[270px] snap-start items-center gap-3 border-r border-white/10 px-4 py-5 transition hover:bg-white/[0.07] sm:min-w-[300px] lg:min-w-0 lg:border-r-0">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white/10 text-secondary transition group-hover:bg-secondary group-hover:text-white">
+        <Icon className="h-5 w-5" aria-hidden />
+      </span>
+      <div className="min-w-0">
+        <p className="line-clamp-1 text-sm font-semibold text-white">
+          {item.title}
+        </p>
+        <p className="mt-1 line-clamp-2 text-xs leading-5 text-white/65">
           {item.body_text ?? item.subtitle}
         </p>
+        {item.cta_label ? (
+          <p className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.08em] text-secondary">
+            {item.cta_label}
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+          </p>
+        ) : null}
       </div>
     </div>
   );
@@ -1022,6 +1071,31 @@ function PulseItem({
   ) : (
     body
   );
+}
+
+function pulseIcon(item: HomepageSectionItem, index: number): LucideIcon {
+  const icon = itemContentText(item, "icon")?.toLowerCase();
+  const icons: Record<string, LucideIcon> = {
+    achievement: Trophy,
+    admissions: CalendarDays,
+    award: Award,
+    calendar: CalendarDays,
+    graduation: GraduationCap,
+    news: Newspaper,
+    partnership: Handshake,
+    research: Lightbulb,
+    students: Users,
+    update: Bell,
+  };
+  const fallback = [
+    CalendarDays,
+    Lightbulb,
+    Handshake,
+    Trophy,
+    GraduationCap,
+    BookOpenCheck,
+  ];
+  return (icon && icons[icon]) || fallback[index % fallback.length];
 }
 
 function SectionEyebrow({
@@ -1148,6 +1222,17 @@ function itemImageUrl(item: HomepageSectionItem | undefined) {
 function settingText(section: HomepageSection, key: string) {
   const value = section.settings?.[key];
   return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+function settingCta(section: HomepageSection, key: string) {
+  const value = section.settings?.[key];
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const label = record.label;
+  const href = record.href;
+  if (typeof label !== "string" || typeof href !== "string") return null;
+  if (!label.trim() || !href.trim()) return null;
+  return { label, href };
 }
 
 function firstCta(items: HomepageSectionItem[] | undefined) {
