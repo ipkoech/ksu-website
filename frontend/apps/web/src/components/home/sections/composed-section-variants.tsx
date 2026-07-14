@@ -472,7 +472,9 @@ export function FeaturedPartnershipSection({
           </div>
 
           <div className="max-w-3xl">
-            <SectionEyebrow value={section.subtitle ?? "Featured partnership"} />
+            <SectionEyebrow
+              value={section.subtitle ?? "Featured partnership"}
+            />
             <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl lg:text-5xl">
               {title ?? "Partnership spotlight"}
             </h2>
@@ -517,108 +519,114 @@ export function ProgrammeFinderSection({ section }: SectionVariantProps) {
     >
       <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(300px,0.75fr)_minmax(280px,0.7fr)]">
-        <div className="bg-white p-5 shadow-sm shadow-blue-100/60 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 sm:p-6 lg:p-8">
-          <SectionEyebrow value={section.subtitle} />
-          <h2 className="mt-2 max-w-xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
-            {section.title ?? "Find a programme"}
-          </h2>
-          <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600">
-            Start with a field of study, then move through the application
-            journey with clear next steps.
-          </p>
-          <label className="mt-7 flex min-h-14 items-center gap-3 border border-slate-200 bg-slate-50 px-4 text-slate-500 transition focus-within:border-primary/30 focus-within:bg-white">
-            <Search className="h-5 w-5" aria-hidden />
-            <span className="text-sm">Search programmes</span>
-          </label>
-          <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden bg-blue-100 sm:grid-cols-3">
-            {categories.slice(0, 6).map((item) => (
-              <LinkWrapper
-                key={item.id}
-                href={item.cta_url ?? "/programmes"}
-                className="bg-white px-3 py-3 text-center text-xs font-semibold text-primary transition hover:bg-blue-50"
-              >
-                {item.title}
-              </LinkWrapper>
-            ))}
+          <div className="bg-white p-5 shadow-sm shadow-blue-100/60 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 sm:p-6 lg:p-8">
+            <SectionEyebrow value={section.subtitle} />
+            <h2 className="mt-2 max-w-xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+              {section.title ?? "Find a programme"}
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600">
+              Start with a field of study, then move through the application
+              journey with clear next steps.
+            </p>
+            <label className="mt-7 flex min-h-14 items-center gap-3 border border-slate-200 bg-slate-50 px-4 text-slate-500 transition focus-within:border-primary/30 focus-within:bg-white">
+              <Search className="h-5 w-5" aria-hidden />
+              <span className="text-sm">Search programmes</span>
+            </label>
+            <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden bg-blue-100 sm:grid-cols-3">
+              {categories.slice(0, 6).map((item) => (
+                <LinkWrapper
+                  key={item.id}
+                  href={item.cta_url ?? "/programmes"}
+                  className="bg-white px-3 py-3 text-center text-xs font-semibold text-primary transition hover:bg-blue-50"
+                >
+                  {item.title}
+                </LinkWrapper>
+              ))}
+            </div>
+            <CtaLink
+              item={{
+                title: "View all programmes",
+                cta_label: "View all programmes",
+                cta_url: "/programmes",
+              }}
+              className="mt-6"
+            />
           </div>
-          <CtaLink
-            item={{
-              title: "View all programmes",
-              cta_label: "View all programmes",
-              cta_url: "/programmes",
-            }}
-            className="mt-6"
-          />
-        </div>
 
-        <div className="bg-white p-5 shadow-sm shadow-blue-100/60 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150 sm:p-6 lg:p-7">
-          <SectionEyebrow value="How to join Kisii University" />
-          <h3 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
-            Your journey to campus
-          </h3>
-          <div className="mt-6 divide-y divide-blue-100 border-y border-blue-100">
-            {journey.slice(0, 5).map((item, index) => (
-              <div key={item.id} className="flex gap-4 py-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-white">
-                  {itemContentNumber(item, "step") ?? index + 1}
-                </span>
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-950">
-                    {item.title}
-                  </h4>
-                  <p className="mt-1 text-xs leading-5 text-slate-600">
-                    {item.body_text}
-                  </p>
+          <div className="bg-white p-5 shadow-sm shadow-blue-100/60 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150 sm:p-6 lg:p-7">
+            <SectionEyebrow value="How to join Kisii University" />
+            <h3 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+              Your journey to campus
+            </h3>
+            <div className="mt-6 divide-y divide-blue-100 border-y border-blue-100">
+              {journey.slice(0, 5).map((item, index) => (
+                <div key={item.id} className="flex gap-4 py-4">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-white">
+                    {itemContentNumber(item, "step") ?? index + 1}
+                  </span>
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-950">
+                      {item.title}
+                    </h4>
+                    <p className="mt-1 text-xs leading-5 text-slate-600">
+                      {item.body_text}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+
+          <div className="grid min-h-[420px] grid-cols-2 grid-rows-5 gap-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-300">
+            <ProgrammeMosaicTile
+              item={categories[0]}
+              className="col-span-2 row-span-2"
+              dark
+            />
+            <ProgrammeMosaicTile
+              item={categories[1]}
+              className="col-span-1 row-span-2"
+            />
+            <ProgrammeMosaicTile
+              item={categories[2]}
+              className="col-span-1 row-span-2"
+            />
+            <LinkWrapper
+              href="/academics/programmes"
+              className="col-span-2 row-span-1 flex items-center justify-between bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90"
+            >
+              Explore all academic pathways
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </LinkWrapper>
           </div>
         </div>
-
-        <div className="grid min-h-[420px] grid-cols-2 grid-rows-5 gap-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-300">
-          <ProgrammeMosaicTile
-            item={categories[0]}
-            className="col-span-2 row-span-2"
-            dark
-          />
-          <ProgrammeMosaicTile
-            item={categories[1]}
-            className="col-span-1 row-span-2"
-          />
-          <ProgrammeMosaicTile
-            item={categories[2]}
-            className="col-span-1 row-span-2"
-          />
-          <LinkWrapper
-            href="/academics/programmes"
-            className="col-span-2 row-span-1 flex items-center justify-between bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90"
-          >
-            Explore all academic pathways
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </LinkWrapper>
-        </div>
-      </div>
       </div>
     </section>
   );
 }
 
 export function DateTimelineSection({ section }: SectionVariantProps) {
+  const items = displayItems(section).slice(0, 4);
   return (
-    <SectionFrame section={section} tinted>
-      <SectionHeading
-        section={section}
-        fallback="Important dates"
-        icon={CalendarDays}
-      />
-      <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {displayItems(section)
-          .slice(0, 4)
-          .map((item) => (
-            <TimelineItem key={item.id} item={item} />
+    <section
+      id={section.section_key}
+      className="border-b border-blue-100 bg-white py-10 lg:py-12"
+    >
+      <div className="mx-auto grid max-w-[1680px] gap-6 px-4 sm:px-6 lg:grid-cols-[minmax(280px,0.36fr)_minmax(0,0.64fr)] lg:px-8 xl:px-10 2xl:px-12">
+        <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
+          <SectionEyebrow value={section.subtitle ?? "Important dates"} />
+          <h2 className="mt-2 max-w-md font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+            {section.title ?? "Important academic dates"}
+          </h2>
+          <SectionBody value={section.description} className="mt-3 max-w-md" />
+        </div>
+        <div className="divide-y divide-blue-100 border-y border-blue-100 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150">
+          {items.map((item, index) => (
+            <DateLineItem key={item.id} item={item} index={index} />
           ))}
+        </div>
       </div>
-    </SectionFrame>
+    </section>
   );
 }
 
@@ -651,31 +659,35 @@ export function PillarGridSection({
 export function MediaMosaicSection({ section }: SectionVariantProps) {
   const items = displayItems(section);
   return (
-    <SectionFrame section={section} tinted>
-      <SectionHeading
-        section={section}
-        fallback="Campus moments"
-        icon={PlayCircle}
-      />
-      <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
-        {items.slice(0, 6).map((item) => (
-          <ImageArticleCard
-            key={item.id}
-            item={item}
-            icon={PlayCircle}
-            compact
-          />
-        ))}
+    <section
+      id={section.section_key}
+      className="border-b border-blue-100 bg-blue-50/35 py-12 lg:py-14"
+    >
+      <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="grid gap-8 lg:grid-cols-[minmax(280px,0.34fr)_minmax(0,0.66fr)] lg:items-end">
+          <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
+            <SectionEyebrow value={section.subtitle ?? "Campus life"} />
+            <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+              {section.title ?? "Experience more. Become more."}
+            </h2>
+            <SectionBody value={section.description} className="mt-3" />
+            <CtaLink
+              item={{
+                title: "Explore campus life",
+                cta_label: "Explore campus life",
+                cta_url: "/campus-life",
+              }}
+              className="mt-6"
+            />
+          </div>
+          <div className="grid min-h-[520px] grid-cols-6 grid-rows-6 gap-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150">
+            {items.slice(0, 6).map((item, index) => (
+              <CampusMosaicTile key={item.id} item={item} index={index} />
+            ))}
+          </div>
+        </div>
       </div>
-      <CtaLink
-        item={{
-          title: "Explore campus life",
-          cta_label: "Explore campus life",
-          cta_url: "/campus-life",
-        }}
-        className="mt-6"
-      />
-    </SectionFrame>
+    </section>
   );
 }
 
@@ -684,20 +696,24 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
   const leaderTitle = settingText(section, "leaderTitle") ?? "Vice Chancellor";
   const leaderImage =
     settingText(section, "leaderImage") ?? mediaUrl(heroImage(section));
+  const activities = displayItems(section).slice(0, 5);
   return (
-    <SectionFrame section={section}>
-      <div className="grid overflow-hidden rounded-lg border border-blue-100 bg-white shadow-sm lg:grid-cols-[0.72fr_1.28fr]">
-        <div className="grid bg-blue-50/50 sm:grid-cols-[0.78fr_1.22fr] lg:grid-cols-1">
+    <section
+      id={section.section_key}
+      className="border-b border-blue-100 bg-white py-12 lg:py-14"
+    >
+      <div className="mx-auto grid max-w-[1680px] gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(280px,0.38fr)_minmax(0,0.62fr)] lg:px-8 xl:px-10 2xl:px-12">
+        <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
           <PublicImage
             src={leaderImage}
             alt={`${leaderName}, ${leaderTitle}`}
             ratio="profile"
-            className="min-h-64 rounded-none"
+            className="min-h-[380px]"
             imageClassName="object-cover object-top"
           />
-          <div className="p-6">
+          <div className="mt-5">
             <SectionEyebrow value={leaderTitle} />
-            <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+            <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
               {leaderName}
             </h2>
             <SectionBody value={section.description} className="mt-3" />
@@ -711,42 +727,36 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
             />
           </div>
         </div>
-        <div className="p-6 sm:p-8">
+        <div className="flex flex-col justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150">
           <SectionEyebrow value={section.title ?? "Leadership in action"} />
-          <h3 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950">
+          <h3 className="mt-2 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
             Recent activities
           </h3>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {displayItems(section)
-              .slice(0, 4)
-              .map((item) => (
-                <ImageArticleCard
-                  key={item.id}
-                  item={item}
-                  icon={Users}
-                  compact
-                />
-              ))}
+          <div className="mt-6 divide-y divide-blue-100 border-y border-blue-100">
+            {activities.map((item, index) => (
+              <ActivityLineItem key={item.id} item={item} index={index} />
+            ))}
           </div>
         </div>
       </div>
-    </SectionFrame>
+    </section>
   );
 }
 
 export function ResearchCardsSection({ section }: SectionVariantProps) {
+  const items = displayItems(section).slice(0, 6);
   return (
     <section
       id={section.section_key}
-      className="border-b border-white/10 bg-primary py-14 text-white lg:py-16"
+      className="overflow-hidden border-b border-white/10 bg-primary py-14 text-white lg:py-16"
     >
       <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <SectionEyebrow
           value={section.subtitle ?? "Research and innovation"}
           light
         />
-        <div className="mt-2 grid gap-7 lg:grid-cols-[0.72fr_1.28fr]">
-          <div>
+        <div className="mt-2 grid gap-8 lg:grid-cols-[minmax(280px,0.34fr)_minmax(0,0.66fr)] lg:items-end">
+          <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
             <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold sm:text-4xl">
               {section.title ?? "Transforming Communities Through Research"}
             </h2>
@@ -761,18 +771,10 @@ export function ResearchCardsSection({ section }: SectionVariantProps) {
               prominent
             />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            {displayItems(section)
-              .slice(0, 5)
-              .map((item) => (
-                <ImageArticleCard
-                  key={item.id}
-                  item={item}
-                  icon={Lightbulb}
-                  compact
-                  dark
-                />
-              ))}
+          <div className="-mr-4 flex snap-x gap-3 overflow-x-auto pb-2 pr-4 sm:-mr-6 sm:pr-6 lg:mr-0 lg:grid lg:grid-cols-3 lg:overflow-visible lg:pr-0 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150">
+            {items.map((item, index) => (
+              <ResearchStoryTile key={item.id} item={item} index={index} />
+            ))}
           </div>
         </div>
       </div>
@@ -781,40 +783,58 @@ export function ResearchCardsSection({ section }: SectionVariantProps) {
 }
 
 export function NewsGridSection({ section }: SectionVariantProps) {
+  const items = displayItems(section).slice(0, 5);
+  const [featured, ...rest] = items;
   return (
-    <SectionFrame section={section}>
-      <SectionHeading
-        section={section}
-        fallback="Latest news"
-        icon={Newspaper}
-      />
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {displayItems(section)
-          .slice(0, 4)
-          .map((item) => (
-            <ImageArticleCard key={item.id} item={item} icon={Newspaper} />
-          ))}
+    <section
+      id={section.section_key}
+      className="border-b border-blue-100 bg-white py-12 lg:py-14"
+    >
+      <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="grid gap-8 lg:grid-cols-[minmax(320px,0.44fr)_minmax(0,0.56fr)]">
+          <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
+            <SectionEyebrow value={section.subtitle ?? "Latest news"} />
+            <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+              {section.title ?? "Latest news and stories"}
+            </h2>
+            <SectionBody value={section.description} className="mt-3" />
+            {featured ? (
+              <NewsLineItem item={featured} index={0} featured />
+            ) : null}
+          </div>
+          <div className="divide-y divide-blue-100 border-y border-blue-100 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150">
+            {rest.map((item, index) => (
+              <NewsLineItem key={item.id} item={item} index={index + 1} />
+            ))}
+          </div>
+        </div>
       </div>
-    </SectionFrame>
+    </section>
   );
 }
 
 export function EventsListSection({ section }: SectionVariantProps) {
+  const items = displayItems(section).slice(0, 4);
   return (
-    <SectionFrame section={section} tinted>
-      <SectionHeading
-        section={section}
-        fallback="Upcoming events"
-        icon={CalendarDays}
-      />
-      <div className="mt-8 grid gap-3 md:grid-cols-3">
-        {displayItems(section)
-          .slice(0, 3)
-          .map((item) => (
-            <TimelineItem key={item.id} item={item} compact />
+    <section
+      id={section.section_key}
+      className="border-b border-blue-100 bg-blue-50/35 py-12 lg:py-14"
+    >
+      <div className="mx-auto grid max-w-[1680px] gap-7 px-4 sm:px-6 lg:grid-cols-[minmax(280px,0.3fr)_minmax(0,0.7fr)] lg:px-8 xl:px-10 2xl:px-12">
+        <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
+          <SectionEyebrow value={section.subtitle ?? "Upcoming events"} />
+          <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+            {section.title ?? "Upcoming events"}
+          </h2>
+          <SectionBody value={section.description} className="mt-3" />
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150">
+          {items.map((item, index) => (
+            <EventLineItem key={item.id} item={item} index={index} />
           ))}
+        </div>
       </div>
-    </SectionFrame>
+    </section>
   );
 }
 
@@ -822,34 +842,47 @@ export function LogoCarouselSection({ section }: SectionVariantProps) {
   const logoItems = logos(section);
   const partnerItems = displayItems(section).slice(0, 8);
   return (
-    <SectionFrame section={section}>
-      <SectionHeading section={section} fallback="Partners and collaborators" />
-      <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
-        {logoItems.length
-          ? logoItems.map((logo, index) => (
-              <div
-                key={logo.id ?? logo.media_id ?? index}
-                className="flex min-h-28 items-center justify-center rounded-md border border-blue-100 bg-white p-4 shadow-sm"
-              >
-                <PublicImage
-                  src={mediaUrl(logo)}
-                  alt={mediaAlt(logo, "Partner logo")}
-                  ratio="logo"
-                  className="bg-white"
-                  imageClassName="object-contain"
-                />
-              </div>
-            ))
-          : partnerItems.map((item) => (
-              <div
-                key={item.id}
-                className="flex min-h-24 items-center justify-center rounded-md border border-blue-100 bg-white px-3 text-center font-[family-name:var(--font-display)] text-lg font-semibold text-primary shadow-sm"
-              >
-                {itemContentText(item, "label") ?? item.title}
-              </div>
-            ))}
+    <section
+      id={section.section_key}
+      className="border-b border-blue-100 bg-white py-10"
+    >
+      <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <SectionEyebrow value={section.subtitle ?? "Our partners"} />
+            <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950 sm:text-3xl">
+              {section.title ?? "Partners and collaborators"}
+            </h2>
+          </div>
+          <SectionBody value={section.description} className="max-w-xl" />
+        </div>
+        <div className="mt-7 flex snap-x gap-8 overflow-x-auto border-y border-blue-100 py-6 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
+          {logoItems.length
+            ? logoItems.map((logo, index) => (
+                <div
+                  key={logo.id ?? logo.media_id ?? index}
+                  className="flex min-h-16 min-w-36 snap-start items-center justify-center sm:min-w-44"
+                >
+                  <PublicImage
+                    src={mediaUrl(logo)}
+                    alt={mediaAlt(logo, "Partner logo")}
+                    ratio="logo"
+                    className="bg-transparent"
+                    imageClassName="object-contain"
+                  />
+                </div>
+              ))
+            : partnerItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex min-h-16 min-w-36 snap-start items-center justify-center text-center font-[family-name:var(--font-display)] text-lg font-semibold text-primary sm:min-w-44"
+                >
+                  {itemContentText(item, "label") ?? item.title}
+                </div>
+              ))}
+        </div>
       </div>
-    </SectionFrame>
+    </section>
   );
 }
 
@@ -859,29 +892,35 @@ export function AlumniStorySection({ section }: SectionVariantProps) {
   const imageUrl =
     itemImageUrl(item) ?? settingText(section, "imageUrl") ?? mediaUrl(image);
   return (
-    <SectionFrame section={section} tinted>
-      <div className="grid items-center gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-        <PublicImage
-          src={imageUrl}
-          alt={mediaAlt(image, section.title ?? "Alumni story")}
-          ratio="news"
-          className="rounded-md border border-blue-100"
-        />
-        <div>
-          <SectionEyebrow value={section.subtitle ?? "Alumni"} />
-          <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950 sm:text-4xl">
-            {item?.title ?? section.title ?? "Alumni story"}
-          </h2>
-          <p className="mt-4 border-l-4 border-secondary pl-5 font-[family-name:var(--font-display)] text-xl leading-8 text-slate-700">
-            “{item?.body_text ?? section.description}”
-          </p>
-          <p className="mt-4 text-sm font-semibold text-primary">
-            {item?.subtitle}
-          </p>
-          {item ? <CtaLink item={item} className="mt-6" /> : null}
+    <section
+      id={section.section_key}
+      className="border-b border-blue-100 bg-blue-50/35 py-12 lg:py-14"
+    >
+      <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="grid overflow-hidden bg-white lg:grid-cols-[0.38fr_0.62fr] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
+          <PublicImage
+            src={imageUrl}
+            alt={mediaAlt(image, section.title ?? "Alumni story")}
+            ratio="news"
+            className="min-h-[320px] rounded-none"
+            imageClassName="object-cover"
+          />
+          <div className="flex flex-col justify-center border border-blue-100 p-6 sm:p-8 lg:border-l-0 lg:p-10">
+            <SectionEyebrow value={section.subtitle ?? "Alumni impact"} />
+            <h2 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+              {item?.title ?? section.title ?? "Alumni story"}
+            </h2>
+            <p className="mt-5 max-w-4xl border-l-4 border-secondary pl-5 font-[family-name:var(--font-display)] text-xl leading-8 text-slate-700">
+              “{item?.body_text ?? section.description}”
+            </p>
+            <p className="mt-4 text-sm font-semibold text-primary">
+              {item?.subtitle}
+            </p>
+            {item ? <CtaLink item={item} className="mt-6" /> : null}
+          </div>
         </div>
       </div>
-    </SectionFrame>
+    </section>
   );
 }
 
@@ -1119,26 +1158,251 @@ function ProgrammeMosaicTile({
   );
 }
 
-function TimelineItem({
+function DateLineItem({
   item,
-  compact = false,
+  index,
 }: {
   item: HomepageSectionItem;
-  compact?: boolean;
+  index: number;
+}) {
+  const date = itemContentText(item, "date") ?? item.subtitle;
+  const body = (
+    <article className="group grid gap-4 py-5 transition hover:bg-blue-50/60 sm:grid-cols-[80px_minmax(0,1fr)_auto] sm:items-center sm:px-4">
+      <span className="font-[family-name:var(--font-display)] text-3xl font-semibold text-primary/25 transition group-hover:text-primary">
+        {String(index + 1).padStart(2, "0")}
+      </span>
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+          {date ?? "Academic date"}
+        </p>
+        <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
+          {item.title}
+        </h3>
+        {item.body_text ? (
+          <p className="mt-1 text-sm leading-6 text-slate-600">
+            {item.body_text}
+          </p>
+        ) : null}
+      </div>
+      <ArrowRight className="hidden h-4 w-4 text-primary opacity-0 transition group-hover:translate-x-1 group-hover:opacity-100 sm:block" />
+    </article>
+  );
+  return item.cta_url ? (
+    <LinkWrapper href={item.cta_url}>{body}</LinkWrapper>
+  ) : (
+    body
+  );
+}
+
+function CampusMosaicTile({
+  item,
+  index,
+}: {
+  item: HomepageSectionItem;
+  index: number;
+}) {
+  const placements = [
+    "col-span-6 row-span-3 sm:col-span-3 sm:row-span-6",
+    "col-span-3 row-span-3",
+    "col-span-3 row-span-3",
+    "col-span-3 row-span-3",
+    "col-span-3 row-span-3",
+    "col-span-6 row-span-2 sm:col-span-2 sm:row-span-3",
+  ];
+  const body = (
+    <article
+      className={`group relative min-h-[150px] overflow-hidden bg-primary ${placements[index] ?? "col-span-3 row-span-3"}`}
+    >
+      <PublicImage
+        src={itemImageUrl(item)}
+        alt={
+          itemContentText(item, "imageAlt") ??
+          item.media_alt_text ??
+          item.title ??
+          "Campus life"
+        }
+        ratio="news"
+        className="absolute inset-0 h-full rounded-none"
+        imageClassName="h-full object-cover transition duration-700 group-hover:scale-105"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/20 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 p-4 text-white">
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+          {item.subtitle ?? "Campus life"}
+        </p>
+        <h3 className="mt-1 font-[family-name:var(--font-display)] text-lg font-semibold leading-tight">
+          {item.title}
+        </h3>
+      </div>
+    </article>
+  );
+  return item.cta_url ? (
+    <LinkWrapper href={item.cta_url}>{body}</LinkWrapper>
+  ) : (
+    body
+  );
+}
+
+function ActivityLineItem({
+  item,
+  index,
+}: {
+  item: HomepageSectionItem;
+  index: number;
+}) {
+  const imageUrl = itemImageUrl(item);
+  const body = (
+    <article className="group grid gap-4 py-5 transition hover:bg-blue-50/60 sm:grid-cols-[64px_minmax(0,1fr)_120px] sm:items-center sm:px-4">
+      <span className="font-[family-name:var(--font-display)] text-2xl font-semibold text-primary/30 transition group-hover:text-primary">
+        {String(index + 1).padStart(2, "0")}
+      </span>
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+          {item.subtitle ?? itemContentText(item, "date") ?? "Activity"}
+        </p>
+        <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
+          {item.title}
+        </h3>
+        {item.body_text ? (
+          <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">
+            {item.body_text}
+          </p>
+        ) : null}
+      </div>
+      {imageUrl ? (
+        <PublicImage
+          src={imageUrl}
+          alt={item.media_alt_text ?? item.title ?? "Activity"}
+          ratio="logo"
+          className="hidden min-h-20 rounded-none sm:block"
+          imageClassName="object-cover"
+        />
+      ) : (
+        <ArrowRight className="hidden h-4 w-4 justify-self-end text-primary opacity-0 transition group-hover:translate-x-1 group-hover:opacity-100 sm:block" />
+      )}
+    </article>
+  );
+  return item.cta_url ? (
+    <LinkWrapper href={item.cta_url}>{body}</LinkWrapper>
+  ) : (
+    body
+  );
+}
+
+function ResearchStoryTile({
+  item,
+  index,
+}: {
+  item: HomepageSectionItem;
+  index: number;
 }) {
   const body = (
-    <article className="rounded-md border border-blue-100 bg-white p-5 shadow-sm">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
-        {item.subtitle ?? item.cta_description ?? "Update"}
-      </p>
-      <h3 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
-        {item.title}
-      </h3>
-      {!compact ? (
-        <p className="mt-2 text-sm leading-6 text-slate-600">
-          {item.body_text}
+    <article className="group relative min-h-[290px] w-[78vw] shrink-0 snap-start overflow-hidden border border-white/15 bg-white/10 sm:w-72 lg:w-auto">
+      <PublicImage
+        src={itemImageUrl(item)}
+        alt={item.media_alt_text ?? item.title ?? "Research story"}
+        ratio="news"
+        className="h-40 rounded-none opacity-85"
+        imageClassName="object-cover transition duration-700 group-hover:scale-105"
+      />
+      <div className="p-4">
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+          {item.subtitle ??
+            itemContentText(item, "category") ??
+            `Impact ${index + 1}`}
         </p>
-      ) : null}
+        <h3 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-white">
+          {item.title}
+        </h3>
+        <p className="mt-2 line-clamp-3 text-sm leading-6 text-white/72">
+          {item.body_text ?? item.cta_description}
+        </p>
+      </div>
+    </article>
+  );
+  return item.cta_url ? (
+    <LinkWrapper href={item.cta_url}>{body}</LinkWrapper>
+  ) : (
+    body
+  );
+}
+
+function NewsLineItem({
+  item,
+  index,
+  featured = false,
+}: {
+  item: HomepageSectionItem;
+  index: number;
+  featured?: boolean;
+}) {
+  const date = itemContentText(item, "date") ?? item.subtitle;
+  const body = featured ? (
+    <article className="group mt-6 overflow-hidden border border-blue-100 bg-blue-50/45 transition hover:bg-blue-50">
+      <PublicImage
+        src={itemImageUrl(item)}
+        alt={item.media_alt_text ?? item.title ?? "News story"}
+        ratio="news"
+        className="rounded-none"
+        imageClassName="object-cover transition duration-700 group-hover:scale-105"
+      />
+      <div className="p-5">
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+          {date ?? "Featured"}
+        </p>
+        <h3 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
+          {item.title}
+        </h3>
+      </div>
+    </article>
+  ) : (
+    <article className="group grid gap-4 py-5 transition hover:bg-blue-50/60 sm:grid-cols-[56px_minmax(0,1fr)_auto] sm:items-center sm:px-4">
+      <span className="font-[family-name:var(--font-display)] text-2xl font-semibold text-primary/25 transition group-hover:text-primary">
+        {String(index + 1).padStart(2, "0")}
+      </span>
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+          {date ?? "News"}
+        </p>
+        <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-slate-950">
+          {item.title}
+        </h3>
+      </div>
+      <ArrowRight className="hidden h-4 w-4 text-primary opacity-0 transition group-hover:translate-x-1 group-hover:opacity-100 sm:block" />
+    </article>
+  );
+  return item.cta_url ? (
+    <LinkWrapper href={item.cta_url}>{body}</LinkWrapper>
+  ) : (
+    body
+  );
+}
+
+function EventLineItem({
+  item,
+  index,
+}: {
+  item: HomepageSectionItem;
+  index: number;
+}) {
+  const date = itemContentText(item, "date") ?? item.subtitle;
+  const venue = itemContentText(item, "venue") ?? item.cta_description;
+  const body = (
+    <article className="group flex min-h-36 gap-4 border border-blue-100 bg-white p-4 transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm">
+      <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center bg-primary text-center text-white">
+        <span className="text-xs font-bold uppercase tracking-[0.12em]">
+          {date?.split(" ")[0] ?? String(index + 1).padStart(2, "0")}
+        </span>
+        <CalendarDays className="mt-1 h-4 w-4 text-secondary" aria-hidden />
+      </div>
+      <div className="min-w-0">
+        <h3 className="font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-slate-950">
+          {item.title}
+        </h3>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          {venue ?? item.body_text}
+        </p>
+      </div>
     </article>
   );
   return item.cta_url ? (
