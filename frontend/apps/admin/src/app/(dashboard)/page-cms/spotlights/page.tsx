@@ -27,6 +27,7 @@ import {
   type PendingMediaAttachment,
   useCommitPendingAttachments,
 } from "@/components/media";
+import { ResearchPartnerPicker } from "@/components/relationships/relationship-pickers";
 import { PageHeader } from "@/components/shared/page-header";
 import { usePermissions } from "@/hooks/use-permissions";
 import { PageTransition } from "@/lib/animations";
@@ -190,7 +191,7 @@ export default function PageCmsSpotlightsPage() {
   }, []);
 
   const spotlightSummary = useMemo(() => {
-    return `${spotlights.length} spotlight${spotlights.length === 1 ? "" : "s"} available in admin, including drafts and disabled records.`;
+    return `${spotlights.length} partnership spotlight${spotlights.length === 1 ? "" : "s"} ready for editorial review.`;
   }, [spotlights.length]);
 
   const availableWorkflowActions = useMemo(() => {
@@ -220,7 +221,7 @@ export default function PageCmsSpotlightsPage() {
     }
 
     if (!form.source_id.trim() || !form.headline.trim()) {
-      toast.error("Source ID and headline are required.");
+      toast.error("Choose a research partner and add a headline.");
       return;
     }
 
@@ -294,7 +295,7 @@ export default function PageCmsSpotlightsPage() {
                 {workflowBusy === action ? "Working..." : action.replace(/_/g, " ")}
               </Button>
             ))}
-            <Button type="button" variant="outline" onClick={handleCreateNew}>
+            <Button type="button" variant="outline" disabled={!canManageSpotlights || isSaving} onClick={handleCreateNew}>
               New Spotlight
             </Button>
             <Button type="button" disabled={!canManageSpotlights || isSaving} onClick={() => void handleSave()}>
@@ -333,7 +334,9 @@ export default function PageCmsSpotlightsPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="truncate font-medium">{spotlight.headline}</p>
-                          <p className="mt-1 truncate text-xs text-muted-foreground">{spotlight.source_id}</p>
+                          <p className="mt-1 truncate text-xs text-muted-foreground">
+                            Research partner spotlight
+                          </p>
                         </div>
                         <Badge variant={spotlight.is_enabled ? "default" : "secondary"}>
                           {spotlight.is_enabled ? "Enabled" : "Disabled"}
@@ -355,12 +358,12 @@ export default function PageCmsSpotlightsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Admin Coverage</CardTitle>
-              <CardDescription>These records come from admin endpoints, not public homepage composition.</CardDescription>
+              <CardTitle>Editorial Focus</CardTitle>
+              <CardDescription>Use the list to move between partnership stories without leaving the editor.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <p>Draft, disabled, expired, and unpublished spotlight records stay visible here for editorial management.</p>
-              <p>Detail editing loads a single admin record so the editor is not tied to whichever list page was fetched first.</p>
+              <p>Select a spotlight to edit its headline, CTA, media, timing, and workflow state.</p>
+              <p>Create a new spotlight when a research partner should be promoted on the homepage.</p>
             </CardContent>
           </Card>
         </div>
@@ -385,12 +388,15 @@ export default function PageCmsSpotlightsPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <p className="text-sm font-medium">Source ID</p>
-                <Input
+                <ResearchPartnerPicker
                   value={form.source_id}
+                  onChange={(id) => setForm((current) => ({ ...current, source_id: id }))}
                   disabled={!canManageSpotlights}
-                  onChange={(event) => setForm((current) => ({ ...current, source_id: event.target.value }))}
-                  placeholder="Research partner UUID"
+                  required
+                  allowClear={false}
+                  label="Research Partner"
+                  description="Choose the partner record this homepage spotlight promotes."
+                  placeholder="Select research partner"
                 />
               </div>
               <div className="space-y-2">

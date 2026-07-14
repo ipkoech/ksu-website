@@ -64,10 +64,7 @@ function getColumns(): ColumnDef<PageSection>[] {
       cell: ({ row }) => (
         <div className="space-y-1 text-sm">
           <p>{row.original.page_key}</p>
-          <p className="text-xs text-muted-foreground">
-            {row.original.scope_type}
-            {row.original.scope_id ? ` · ${row.original.scope_id}` : ""}
-          </p>
+          <p className="text-xs text-muted-foreground">{scopeSummary(row.original)}</p>
         </div>
       ),
     },
@@ -115,6 +112,14 @@ function getColumns(): ColumnDef<PageSection>[] {
       ),
     },
   ];
+}
+
+function scopeSummary(section: PageSection) {
+  if (section.scope_type === "university") return "University-wide";
+  if (section.scope_type === "school") return section.scope_id ? "School-specific" : "School scope";
+  if (section.scope_type === "research") return section.scope_id ? "Research-specific" : "Main research homepage";
+  if (section.scope_type === "library") return section.scope_id ? "Library-specific" : "Main library homepage";
+  return section.scope_type;
 }
 
 export default function PageCmsSectionsPage() {

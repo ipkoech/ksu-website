@@ -28,6 +28,7 @@ import {
   type PendingMediaAttachment,
   useCommitPendingAttachments,
 } from "@/components/media";
+import { LibraryBranchPicker, ResearchCenterPicker, SchoolPicker } from "@/components/relationships/relationship-pickers";
 import { PageHeader } from "@/components/shared/page-header";
 import { usePermissions } from "@/hooks/use-permissions";
 import { PageTransition } from "@/lib/animations";
@@ -219,6 +220,73 @@ function workflowButtonsForStatus(status: PageSectionStatus) {
   if (status === "published") buttons.push("unpublish");
   if (status !== "archived") buttons.push("archive");
   return buttons;
+}
+
+function scopeLabel(scopeType: PageScopeType) {
+  if (scopeType === "school") return "School";
+  if (scopeType === "research") return "Research scope";
+  if (scopeType === "library") return "Library branch";
+  return "University";
+}
+
+function SectionScopePicker({
+  scopeType,
+  value,
+  disabled,
+  onChange,
+}: {
+  scopeType: PageScopeType;
+  value: string;
+  disabled?: boolean;
+  onChange: (value: string) => void;
+}) {
+  if (scopeType === "university") {
+    return (
+      <div className="rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
+        This section is managed at university level and does not need a related record.
+      </div>
+    );
+  }
+
+  if (scopeType === "school") {
+    return (
+      <SchoolPicker
+        value={value}
+        onChange={(id) => onChange(id)}
+        disabled={disabled}
+        required
+        allowClear={false}
+        label="School"
+        description="Choose the school this page section belongs to."
+        placeholder="Select school"
+      />
+    );
+  }
+
+  if (scopeType === "research") {
+    return (
+      <ResearchCenterPicker
+        value={value}
+        onChange={(id) => onChange(id)}
+        disabled={disabled}
+        label="Research scope"
+        description="Optionally bind this section to a research centre. Leave blank for the main research homepage."
+        placeholder="Main research homepage"
+      />
+    );
+  }
+
+  return (
+    <LibraryBranchPicker
+      value={value}
+      onChange={(id) => onChange(id)}
+      disabled={disabled}
+      filters={{ active_only: false }}
+      label="Library branch"
+      description="Optionally bind this section to a library branch. Leave blank for the main library homepage."
+      placeholder="Main library homepage"
+    />
+  );
 }
 
 export default function PageCmsSectionDetailPage() {
@@ -491,7 +559,13 @@ export default function PageCmsSectionDetailPage() {
                 <Select
                   value={form.scope_type}
                   disabled={!canManageSection || isLoading}
-                  onValueChange={(value) => setForm((current) => ({ ...current, scope_type: value as PageScopeType }))}
+                  onValueChange={(value) =>
+                    setForm((current) => ({
+                      ...current,
+                      scope_type: value as PageScopeType,
+                      scope_id: value === current.scope_type ? current.scope_id : "",
+                    }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select scope type" />
@@ -508,12 +582,12 @@ export default function PageCmsSectionDetailPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <p className="text-sm font-medium">Scope ID</p>
-                <Input
+                <p className="text-sm font-medium">{scopeLabel(form.scope_type)}</p>
+                <SectionScopePicker
+                  scopeType={form.scope_type}
                   value={form.scope_id}
                   disabled={!canManageSection || isLoading}
-                  onChange={(event) => setForm((current) => ({ ...current, scope_id: event.target.value }))}
-                  placeholder={form.scope_type === "school" ? "Required UUID for school scope" : "Optional UUID"}
+                  onChange={(scopeId) => setForm((current) => ({ ...current, scope_id: scopeId }))}
                 />
               </div>
               <div className="space-y-2">
@@ -982,13 +1056,13 @@ export default function PageCmsSectionDetailPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Save Notes</CardTitle>
-              <CardDescription>Behavior notes for this admin surface.</CardDescription>
+              <CardTitle>Publishing Guidance</CardTitle>
+              <CardDescription>Use this summary to confirm the section is ready for the public homepage.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <p>Saved items can be disabled directly from this editor. The current backend does not expose a dedicated item delete route.</p>
-              <p>Section details load from the dedicated admin read endpoint, so this editor does not depend on paginated list results.</p>
-              <p>Media links persist after save for both the section record and each saved item.</p>
+              <p>Keep the section enabled when it should render after publication.</p>
+              <p>Use item order to control how calls to action and supporting content appear in the hero layout.</p>
+              <p>Attach media with clear roles so the frontend can select the correct image, background, poster, or gallery asset.</p>
             </CardContent>
           </Card>
         </div>
