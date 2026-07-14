@@ -388,7 +388,7 @@ function formatPublicDate(value?: string | null) {
 }
 
 export function PulseStripSection({ section }: SectionVariantProps) {
-  const items = displayItems(section);
+  const items = officialPulseItems(section);
   const maxItems =
     typeof section.settings?.maxItems === "number"
       ? section.settings.maxItems
@@ -423,6 +423,108 @@ export function PulseStripSection({ section }: SectionVariantProps) {
       </div>
     </section>
   );
+}
+
+const officialPulseFallbackItems: HomepageSectionItem[] = [
+  {
+    id: "official-pulse-admissions",
+    title: "Admissions and reporting",
+    body_text:
+      "Check active intakes, reporting dates and official application guidance.",
+    cta_url: "/admissions",
+    display_order: 10,
+    content: { icon: "admissions" },
+  },
+  {
+    id: "official-pulse-graduation",
+    title: "Graduation updates",
+    body_text:
+      "Follow graduation notices, ceremony dates and clearance information.",
+    cta_url: "/news",
+    display_order: 20,
+    content: { icon: "graduation" },
+  },
+  {
+    id: "official-pulse-research",
+    title: "Research and innovation",
+    body_text:
+      "See grants, research launches and community-impact work from KSU.",
+    cta_url: "/research",
+    display_order: 30,
+    content: { icon: "research" },
+  },
+  {
+    id: "official-pulse-partnerships",
+    title: "Strategic partnerships",
+    body_text:
+      "Track MoUs and collaborations advancing teaching, enterprise and impact.",
+    cta_url: "/research/partnerships",
+    display_order: 40,
+    content: { icon: "partnership" },
+  },
+  {
+    id: "official-pulse-events",
+    title: "Public lectures and events",
+    body_text:
+      "Find official lectures, conferences, student activities and university events.",
+    cta_url: "/events",
+    display_order: 50,
+    content: { icon: "calendar" },
+  },
+];
+
+function officialPulseItems(section: HomepageSection) {
+  const sourceItems = displayItems(section);
+  const officialItems = sourceItems
+    .filter(isHighSignalPulseItem)
+    .sort(
+      (first, second) =>
+        pulsePriority(first) - pulsePriority(second) ||
+        (first.display_order ?? 100) - (second.display_order ?? 100),
+    );
+
+  return officialItems.length ? officialItems : officialPulseFallbackItems;
+}
+
+function isHighSignalPulseItem(item: HomepageSectionItem) {
+  const text = [
+    item.item_type,
+    item.title,
+    item.subtitle,
+    item.body_text,
+    item.cta_label,
+    itemContentText(item, "icon"),
+    itemContentText(item, "category"),
+    itemContentText(item, "type"),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return /admission|intake|application|reporting|graduation|research|grant|innovation|partnership|mou|vice chancellor|\bvc\b|leadership|public lecture|lecture|conference|event|award|achievement/.test(
+    text,
+  );
+}
+
+function pulsePriority(item: HomepageSectionItem) {
+  const text = [
+    item.title,
+    item.subtitle,
+    item.body_text,
+    itemContentText(item, "icon"),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (/admission|intake|application|reporting/.test(text)) return 10;
+  if (/graduation/.test(text)) return 20;
+  if (/research|grant|innovation/.test(text)) return 30;
+  if (/partnership|mou/.test(text)) return 40;
+  if (/vice chancellor|\bvc\b|leadership/.test(text)) return 50;
+  if (/public lecture|lecture|conference|event/.test(text)) return 60;
+  if (/award|achievement/.test(text)) return 70;
+  return 100;
 }
 
 export function FeaturedPartnershipSection({

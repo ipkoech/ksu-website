@@ -50,12 +50,106 @@ const whyKisiiImages = [
   "/images/Home/um-hero.jpg",
 ] as const;
 
+const institutionalReasonCopy: Record<
+  string,
+  {
+    title: string;
+    body: string;
+    href: string;
+    icon: string;
+  }
+> = {
+  "academic excellence": {
+    title: "A public university with academic depth",
+    body: "KSU combines accredited programmes, experienced faculty and practical learning for Kenya’s workforce needs.",
+    href: "/academics",
+    icon: "academic",
+  },
+  "research & innovation": {
+    title: "Research shaped by community priorities",
+    body: "From agriculture and health to digital transformation, KSU turns research into practical regional impact.",
+    href: "/research",
+    icon: "research",
+  },
+  "global partnerships": {
+    title: "Partnerships that open opportunity",
+    body: "Strategic collaborations connect students, researchers and communities to wider networks across Africa and beyond.",
+    href: "/research/partnerships",
+    icon: "partnership",
+  },
+  "student experience": {
+    title: "An inclusive student experience",
+    body: "Students find academic support, leadership, clubs, sports and campus services that help them belong and progress.",
+    href: "/campus-life",
+    icon: "students",
+  },
+};
+
+const fallbackWhyReasons: HomepageSectionItem[] = [
+  {
+    id: "why-ksu-public-university",
+    title: "A public university with academic depth",
+    body_text:
+      "KSU combines accredited programmes, experienced faculty and practical learning for Kenya’s workforce needs.",
+    cta_label: "Explore academics",
+    cta_url: "/academics",
+    display_order: 10,
+    content: {
+      icon: "academic",
+      imageUrl: "/images/Home/OurKSU-82.jpg",
+      imageAlt: "Kisii University academic community",
+    },
+  },
+  {
+    id: "why-ksu-community-research",
+    title: "Research shaped by community priorities",
+    body_text:
+      "From agriculture and health to digital transformation, KSU turns research into practical regional impact.",
+    cta_label: "Explore research",
+    cta_url: "/research",
+    display_order: 20,
+    content: {
+      icon: "research",
+      imageUrl: "/images/about/about-quality-assurance-branded.webp",
+      imageAlt: "Research and innovation at Kisii University",
+    },
+  },
+  {
+    id: "why-ksu-partnerships",
+    title: "Partnerships that open opportunity",
+    body_text:
+      "Strategic collaborations connect students, researchers and communities to wider networks across Africa and beyond.",
+    cta_label: "View partnerships",
+    cta_url: "/research/partnerships",
+    display_order: 30,
+    content: {
+      icon: "partnership",
+      imageUrl: "/images/HERIAfricaLaunch.jpg",
+      imageAlt: "Kisii University partnership launch",
+    },
+  },
+  {
+    id: "why-ksu-student-experience",
+    title: "An inclusive student experience",
+    body_text:
+      "Students find academic support, leadership, clubs, sports and campus services that help them belong and progress.",
+    cta_label: "Explore campus life",
+    cta_url: "/campus-life",
+    display_order: 40,
+    content: {
+      icon: "students",
+      imageUrl: "/images/backgrounds/KSUB-RollPhotos2025-123.jpg",
+      imageAlt: "Kisii University students",
+    },
+  },
+];
+
 export function WhyKisiiSection({
   section,
   factsSection,
 }: WhyKisiiSectionProps) {
   const isVisible = useInViewport<HTMLDivElement>();
-  const reasons = useMemo(() => displayItems(section).slice(0, 4), [section]);
+  const reasons = useMemo(() => whyReasonItems(section), [section]);
   const facts = useMemo(
     () => displayItems(factsSection).slice(0, 7),
     [factsSection],
@@ -105,7 +199,13 @@ export function WhyKisiiSection({
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
                 {section.description}
               </p>
-            ) : null}
+            ) : (
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+                Kisii University brings together public-service education,
+                applied research and inclusive student support for learners and
+                communities in Kenya and beyond.
+              </p>
+            )}
             <div className="mt-5 grid gap-x-6 gap-y-1 sm:grid-cols-2">
               {reasons.map((item, index) => (
                 <ReasonStatement
@@ -237,7 +337,7 @@ function MosaicImage({
   return (
     <div className={`relative overflow-hidden bg-blue-50 ${className}`}>
       <PublicImage
-        src={fallbackSrc}
+        src={contentText(item, "imageUrl") ?? fallbackSrc}
         alt={
           contentText(item, "imageAlt") ??
           item?.media_alt_text ??
@@ -364,6 +464,40 @@ function displayItems(section?: HomepageSection | null) {
       (first, second) =>
         (first.display_order ?? 100) - (second.display_order ?? 100),
     );
+}
+
+function whyReasonItems(section: HomepageSection) {
+  const items = displayItems(section)
+    .slice(0, 4)
+    .map(institutionalizeReasonCopy);
+  const existingTitles = new Set(
+    items.map((item) => normalizeTitle(item.title)).filter(Boolean),
+  );
+  const fillers = fallbackWhyReasons.filter(
+    (item) => !existingTitles.has(normalizeTitle(item.title)),
+  );
+
+  return [...items, ...fillers].slice(0, 4);
+}
+
+function institutionalizeReasonCopy(item: HomepageSectionItem) {
+  const canonical = institutionalReasonCopy[normalizeTitle(item.title)];
+  if (!canonical) return item;
+
+  return {
+    ...item,
+    title: canonical.title,
+    body_text: canonical.body,
+    cta_url: item.cta_url ?? canonical.href,
+    content: {
+      ...(item.content ?? {}),
+      icon: contentText(item, "icon") ?? canonical.icon,
+    },
+  };
+}
+
+function normalizeTitle(value?: string | null) {
+  return value?.trim().toLowerCase().replace(/\s+/g, " ") ?? "";
 }
 
 function reasonIcon(item: HomepageSectionItem, index: number): LucideIcon {
