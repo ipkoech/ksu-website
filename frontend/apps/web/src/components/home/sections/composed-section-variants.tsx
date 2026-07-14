@@ -426,7 +426,11 @@ export function FeaturedPartnershipSection({
         cta_label: spotlight.primary_cta.label ?? "Explore partnership",
         cta_url: spotlight.primary_cta.href,
       }
-    : firstCta(section.items);
+    : {
+        title: "Read More",
+        cta_label: "Read More",
+        cta_url: "/research/partnerships",
+      };
 
   const pillars = spotlight?.pillars?.length
     ? spotlight.pillars
@@ -1211,10 +1215,4 @@ function itemImageUrl(item: HomepageSectionItem | undefined) {
 function settingText(section: HomepageSection, key: string) {
   const value = section.settings?.[key];
   return typeof value === "string" && value.trim() ? value : undefined;
-}
-
-function firstCta(items: HomepageSectionItem[] | undefined) {
-  return displayItems({ items } as HomepageSection).find(
-    (item) => item.cta_url,
-  );
 }
