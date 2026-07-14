@@ -68,16 +68,6 @@ export interface SectionItem {
   body_text?: string | null;
   content?: Record<string, unknown> | null;
   content_enriched?: {
-    staff_profile?: {
-      id: string;
-      title?: string | null;
-      full_name?: string | null;
-      display_name?: string | null;
-      email?: string | null;
-      institutional_role?: string | null;
-      photo_id?: string | null;
-      photo_url?: string | null;
-    } | null;
     linked_content?: {
       id: string;
       type: "news" | "event";
@@ -134,6 +124,18 @@ export interface PageSection {
   subtitle?: string | null;
   description?: string | null;
   settings?: Record<string, unknown> | null;
+  settings_enriched?: {
+    staff_profile?: {
+      id: string;
+      title?: string | null;
+      full_name?: string | null;
+      display_name?: string | null;
+      email?: string | null;
+      institutional_role?: string | null;
+      photo_id?: string | null;
+      photo_url?: string | null;
+    } | null;
+  } | null;
   display_order: number;
   is_enabled: boolean;
   layout_variant: PageSectionLayoutVariant;

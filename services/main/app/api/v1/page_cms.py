@@ -87,20 +87,26 @@ def _content_payload(record: News | Event | None, content_type: str | None) -> d
     }
 
 
+async def _leadership_settings_enrichment(db: DbSession, settings: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not settings:
+        return None
+
+    staff_profile_id = settings.get("staff_profile_id") or settings.get("leader_profile_id")
+    if not staff_profile_id:
+        return None
+    person = await db.get(
+        Person,
+        uuid.UUID(str(staff_profile_id)),
+        options=[selectinload(Person.photo)],
+    )
+    return {"staff_profile": _person_payload(person)}
+
+
 async def _leadership_content_enrichment(db: DbSession, content: dict[str, Any] | None) -> dict[str, Any] | None:
     if not content:
         return None
 
     enriched: dict[str, Any] = {}
-    staff_profile_id = content.get("staff_profile_id")
-    if staff_profile_id:
-        person = await db.get(
-            Person,
-            uuid.UUID(str(staff_profile_id)),
-            options=[selectinload(Person.photo)],
-        )
-        enriched["staff_profile"] = _person_payload(person)
-
     linked_type = content.get("linked_content_type")
     linked_id = content.get("linked_content_id")
     if linked_type and linked_id:
@@ -111,12 +117,24 @@ async def _leadership_content_enrichment(db: DbSession, content: dict[str, Any] 
     return enriched or None
 
 
-async def _validate_leadership_content_references(db: DbSession, content: dict[str, Any] | None) -> None:
-    if not content:
+async def _validate_leadership_settings_references(db: DbSession, settings: dict[str, Any] | None) -> None:
+    if not settings:
         return
-    staff_profile_id = content.get("staff_profile_id")
+    staff_profile_id = settings.get("staff_profile_id") or settings.get("leader_profile_id")
     if staff_profile_id and await db.get(Person, uuid.UUID(str(staff_profile_id))) is None:
         raise HTTPException(status_code=422, detail="Selected staff profile was not found")
+
+
+async def _validate_leadership_content_references(
+    db: DbSession,
+    content: dict[str, Any] | None,
+    *,
+    disallow_item_profile: bool = False,
+) -> None:
+    if not content:
+        return
+    if disallow_item_profile and content.get("staff_profile_id"):
+        raise HTTPException(status_code=422, detail="Leadership profile belongs to the section, not individual activity items")
 
     linked_type = content.get("linked_content_type")
     linked_id = content.get("linked_content_id")
@@ -129,13 +147,23 @@ async def _validate_leadership_content_references(db: DbSession, content: dict[s
         raise HTTPException(status_code=422, detail="Selected linked news/event record was not found")
 
 
-async def _validate_section_items_references(db: DbSession, items: list[dict[str, Any]]) -> None:
+async def _validate_section_items_references(
+    db: DbSession,
+    items: list[dict[str, Any]],
+    *,
+    layout_variant: str | None = None,
+) -> None:
     for item in items:
-        await _validate_leadership_content_references(db, item.get("content"))
+        await _validate_leadership_content_references(
+            db,
+            item.get("content"),
+            disallow_item_profile=layout_variant == "leadership_activity",
+        )
 
 
 async def _serialize_admin_page_section(db: DbSession, section: PageSection) -> dict[str, Any]:
     payload = PageSectionRead.model_validate(section).model_dump(mode="json")
+    payload["settings_enriched"] = await _leadership_settings_enrichment(db, section.settings)
     enriched_items: list[dict[str, Any]] = []
     for item_payload, item in zip(payload.get("items", []), section.items, strict=False):
         item_payload["content_enriched"] = await _leadership_content_enrichment(db, item.content)
@@ -396,7 +424,9 @@ async def create_page_section(data: PageSectionCreate, db: DbSession, user: Curr
         action="create",
     )
     items = payload.pop("items", [])
-    await _validate_section_items_references(db, items)
+    if payload.get("layout_variant") == "leadership_activity":
+        await _validate_leadership_settings_references(db, payload.get("settings"))
+    await _validate_section_items_references(db, items, layout_variant=payload.get("layout_variant"))
     item = PageSection(
         **payload,
         status="draft",
@@ -437,6 +467,9 @@ async def update_page_section(
     )
     payload = data.model_dump(exclude_unset=True)
     payload.pop("items", None)
+    next_layout = payload.get("layout_variant", item.layout_variant)
+    if next_layout == "leadership_activity":
+        await _validate_leadership_settings_references(db, payload.get("settings", item.settings))
     await _require_page_section_access(
         db,
         user,
@@ -481,7 +514,11 @@ async def create_section_item(
         changed_fields={"section_item_create": data.model_dump(exclude={"page_section_id"})},
     )
     item = SectionItem(page_section_id=section.id, **data.model_dump(exclude={"page_section_id"}))
-    await _validate_leadership_content_references(db, item.content)
+    await _validate_leadership_content_references(
+        db,
+        item.content,
+        disallow_item_profile=section.layout_variant == "leadership_activity",
+    )
     db.add(item)
     await db.flush()
     await db.refresh(item)
@@ -528,7 +565,11 @@ async def update_section_item(
         action="item_manage",
     )
     payload = data.model_dump(exclude_unset=True)
-    await _validate_leadership_content_references(db, payload.get("content"))
+    await _validate_leadership_content_references(
+        db,
+        payload.get("content"),
+        disallow_item_profile=section.layout_variant == "leadership_activity",
+    )
     _require_page_authoring_edit(user, section)
     next_section_id = payload.pop("page_section_id", item.page_section_id)
     if next_section_id != item.page_section_id:

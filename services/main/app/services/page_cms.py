@@ -162,11 +162,6 @@ async def _enrich_section_item_content(db: AsyncSession, content: dict[str, Any]
         return None
 
     enriched: dict[str, Any] = {}
-    staff_profile_id = content.get("staff_profile_id")
-    if staff_profile_id:
-        person = await db.get(Person, uuid.UUID(str(staff_profile_id)), options=[selectinload(Person.photo)])
-        enriched["staff_profile"] = _serialize_person(person)
-
     linked_type = content.get("linked_content_type")
     linked_id = content.get("linked_content_id")
     if linked_type and linked_id:
@@ -175,6 +170,17 @@ async def _enrich_section_item_content(db: AsyncSession, content: dict[str, Any]
         enriched["linked_content"] = _serialize_linked_content(linked, str(linked_type))
 
     return enriched or None
+
+
+async def _enrich_section_settings(db: AsyncSession, settings: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not settings:
+        return None
+
+    staff_profile_id = settings.get("staff_profile_id") or settings.get("leader_profile_id")
+    if not staff_profile_id:
+        return None
+    person = await db.get(Person, uuid.UUID(str(staff_profile_id)), options=[selectinload(Person.photo)])
+    return {"staff_profile": _serialize_person(person)}
 
 
 async def _serialize_section(
@@ -200,6 +206,7 @@ async def _serialize_section(
         "subtitle": section.subtitle,
         "description": section.description,
         "settings": section.settings,
+        "settings_enriched": await _enrich_section_settings(db, section.settings),
         "is_enabled": section.is_enabled,
         "layout_variant": section.layout_variant,
         "status": section.status,

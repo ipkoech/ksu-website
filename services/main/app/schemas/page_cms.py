@@ -39,24 +39,11 @@ def _validate_link_target(value: str | None, field_name: str) -> str | None:
 
 
 LEADERSHIP_CONTENT_TYPES = {"news", "event"}
-LEADERSHIP_CONTENT_KEYS = {
-    "staff_profile_id",
-    "linked_content_type",
-    "linked_content_id",
-    "linked_content",
-}
 
 
 def _validate_leadership_activity_content(content: dict[str, Any] | None) -> dict[str, Any] | None:
     if not content:
         return content
-
-    staff_profile_id = content.get("staff_profile_id")
-    if staff_profile_id not in (None, ""):
-        try:
-            content["staff_profile_id"] = str(uuid.UUID(str(staff_profile_id)))
-        except (TypeError, ValueError) as exc:
-            raise ValueError("content.staff_profile_id must be a valid staff profile/person ID") from exc
 
     linked_type = content.get("linked_content_type")
     linked_id = content.get("linked_content_id")
@@ -72,6 +59,21 @@ def _validate_leadership_activity_content(content: dict[str, Any] | None) -> dic
         raise ValueError("content.linked_content_id must be a valid news/event ID") from exc
     content["linked_content_type"] = linked_type
     return content
+
+
+def _validate_leadership_section_settings(settings: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not settings:
+        return settings
+
+    staff_profile_id = settings.get("staff_profile_id") or settings.get("leader_profile_id")
+    if staff_profile_id not in (None, ""):
+        try:
+            normalized = str(uuid.UUID(str(staff_profile_id)))
+        except (TypeError, ValueError) as exc:
+            raise ValueError("settings.staff_profile_id must be a valid staff profile/person ID") from exc
+        settings["staff_profile_id"] = normalized
+        settings.pop("leader_profile_id", None)
+    return settings
 
 
 class SectionItemCreate(BaseSchema):
@@ -195,6 +197,11 @@ class PageSectionCreate(BaseSchema):
     def validate_layout_variant(cls, value: str) -> str:
         return _validate_choice(value, PAGE_SECTION_LAYOUT_VARIANTS, "layout_variant") or value
 
+    @field_validator("settings")
+    @classmethod
+    def validate_settings(cls, value: dict[str, Any] | None) -> dict[str, Any] | None:
+        return _validate_leadership_section_settings(value)
+
     @model_validator(mode="after")
     def validate_scope_and_window(self):
         if self.scope_type == "school" and self.scope_id is None:
@@ -237,6 +244,11 @@ class PageSectionUpdate(BaseSchema):
     def validate_layout_variant(cls, value: str | None) -> str | None:
         return _validate_choice(value, PAGE_SECTION_LAYOUT_VARIANTS, "layout_variant")
 
+    @field_validator("settings")
+    @classmethod
+    def validate_settings(cls, value: dict[str, Any] | None) -> dict[str, Any] | None:
+        return _validate_leadership_section_settings(value)
+
     @model_validator(mode="after")
     def validate_scope_and_window(self):
         if self.scope_type == "school" and self.scope_id is None:
@@ -255,6 +267,7 @@ class PageSectionRead(BaseReadSchema):
     subtitle: str | None = None
     description: str | None = None
     settings: dict[str, Any] | None = None
+    settings_enriched: dict[str, Any] | None = None
     display_order: int
     is_enabled: bool
     layout_variant: str

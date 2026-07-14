@@ -19,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
-  JsonObjectEditor,
+  RichTextEditor,
   Select,
   SelectContent,
   SelectGroup,
@@ -29,6 +29,8 @@ import {
   Switch,
   Textarea,
   ImageRenderer,
+  richTextToPlainText,
+  sanitizeRichText,
 } from "@ksu/ui/components";
 import {
   AttachmentManager,
@@ -192,6 +194,22 @@ function withLeadershipContent(
   return { ...item, content };
 }
 
+function sectionStaffProfileId(form: SectionFormState) {
+  const value = form.settings?.staff_profile_id ?? form.settings?.leader_profile_id;
+  return typeof value === "string" ? value : "";
+}
+
+function withSectionStaffProfile(form: SectionFormState, staffProfileId: string | null): SectionFormState {
+  const settings = { ...(form.settings ?? {}) };
+  delete settings.leader_profile_id;
+  if (staffProfileId) {
+    settings.staff_profile_id = staffProfileId;
+  } else {
+    delete settings.staff_profile_id;
+  }
+  return { ...form, settings };
+}
+
 function formFromSection(section: PageSection): SectionFormState {
   return {
     page_key: section.page_key,
@@ -211,13 +229,18 @@ function formFromSection(section: PageSection): SectionFormState {
   };
 }
 
-function itemPayloadFromDraft(item: SectionItemDraft): SectionItemPayload {
+function itemPayloadFromDraft(item: SectionItemDraft, layoutVariant: PageSectionLayoutVariant): SectionItemPayload {
+  const content = { ...(item.content ?? {}) };
+  if (layoutVariant === "leadership_activity") {
+    delete content.staff_profile_id;
+    delete content.leader_profile_id;
+  }
   return {
     item_type: item.item_type,
     title: item.title || null,
     subtitle: item.subtitle || null,
     body_text: item.body_text || null,
-    content: Object.keys(item.content ?? {}).length ? item.content : {},
+    content: Object.keys(content).length ? content : {},
     cta_label: item.cta_label || null,
     cta_url: item.cta_url || null,
     cta_description: item.cta_description || null,
@@ -336,6 +359,61 @@ function slugifyTitle(value: string) {
   return slug || `leadership-activity-${Date.now()}`;
 }
 
+function LeadershipSectionProfileControls({
+  form,
+  section,
+  disabled,
+  onChange,
+}: {
+  form: SectionFormState;
+  section: PageSection | null;
+  disabled?: boolean;
+  onChange: (form: SectionFormState) => void;
+}) {
+  const staff = section?.settings_enriched?.staff_profile;
+
+  return (
+    <div className="rounded-2xl border bg-primary/5 p-4 lg:col-span-2">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold">Leadership profile</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Select the single VC/staff profile represented by this section. The profile image is resolved automatically from the staff record.
+          </p>
+        </div>
+        <Badge variant="secondary">section relationship</Badge>
+      </div>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+        <PersonPicker
+          value={sectionStaffProfileId(form)}
+          onChange={(value) => onChange(withSectionStaffProfile(form, value || null))}
+          disabled={disabled}
+          filters={{ status: "active" }}
+          label="VC profile"
+          description="This is section-level because every activity here belongs to the same leader."
+          placeholder="Select the Vice Chancellor profile"
+          allowClear
+        />
+        <div className="rounded-xl border bg-background/80 p-3">
+          {staff?.photo_url ? (
+            <div className="flex items-center gap-3">
+              <div className="size-16 overflow-hidden rounded-xl border bg-muted">
+                <ImageRenderer src={staff.photo_url} alt={staff.display_name ?? staff.full_name ?? "Leadership profile"} className="h-full border-0" imageClassName="h-full w-full object-cover" />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{staff.display_name ?? staff.full_name}</p>
+                <p className="truncate text-xs text-muted-foreground">{staff.institutional_role ?? staff.email ?? "Profile image attached"}</p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Save the section after selecting a profile to load the profile image preview.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LeadershipActivityControls({
   item,
   disabled,
@@ -348,7 +426,6 @@ function LeadershipActivityControls({
   const [createType, setCreateType] = useState<"news" | "event" | null>(null);
   const linkedType = leadershipContentValue(item, "linked_content_type") as "news" | "event" | "";
   const linkedId = leadershipContentValue(item, "linked_content_id");
-  const staff = item.content_enriched?.staff_profile;
   const linked = item.content_enriched?.linked_content;
 
   return (
@@ -357,37 +434,13 @@ function LeadershipActivityControls({
         <div>
           <p className="text-sm font-semibold">Leadership activity relationship</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Attach the leader profile and connect the activity to a newsroom story or event record.
+            Connect this VC activity to a newsroom story or event record.
           </p>
         </div>
         <Badge variant="secondary">leadership activity</Badge>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="space-y-2">
-          <PersonPicker
-            value={leadershipContentValue(item, "staff_profile_id")}
-            onChange={(value) => onChange(withLeadershipContent(item, { staff_profile_id: value || null }))}
-            disabled={disabled}
-            filters={{ status: "active" }}
-            label="Staff profile"
-            description="The selected profile image is used automatically for this activity card."
-            placeholder="Select VC, DVC, dean, director, or staff profile"
-            allowClear
-          />
-          {staff?.photo_url ? (
-            <div className="flex items-center gap-3 rounded-xl border bg-background/80 p-3">
-              <div className="size-14 overflow-hidden rounded-xl border bg-muted">
-                <ImageRenderer src={staff.photo_url} alt={staff.display_name ?? staff.full_name ?? "Staff profile"} className="h-full border-0" imageClassName="h-full w-full object-cover" />
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{staff.display_name ?? staff.full_name}</p>
-                <p className="truncate text-xs text-muted-foreground">{staff.institutional_role ?? staff.email ?? "Profile image attached"}</p>
-              </div>
-            </div>
-          ) : null}
-        </div>
-
+      <div className="grid gap-4">
         <div className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-[150px_minmax(0,1fr)]">
             <div className="space-y-2">
@@ -490,16 +543,26 @@ function LeadershipLinkedContentDialog({
   onCreated: (type: "news" | "event", id: string) => void;
 }) {
   const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
   const [summary, setSummary] = useState("");
+  const [content, setContent] = useState("");
   const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [location, setLocation] = useState("");
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [isMain, setIsMain] = useState(true);
 
   useEffect(() => {
     if (!type) return;
     setTitle(seedTitle || "");
+    setSlug(seedTitle ? slugifyTitle(seedTitle) : "");
     setSummary(seedSummary || "");
+    setContent(seedSummary || "");
     setStartDate("");
+    setEndDate("");
     setLocation("");
+    setIsFeatured(false);
+    setIsMain(true);
   }, [seedSummary, seedTitle, type]);
 
   const mutation = useMutation({
@@ -507,14 +570,18 @@ function LeadershipLinkedContentDialog({
       if (!type) throw new Error("Missing content type");
       const cleanTitle = title.trim();
       if (!cleanTitle) throw new Error("Title is required");
+      const cleanContent = sanitizeRichText(content);
       const basePayload = {
         title: cleanTitle,
-        slug: slugifyTitle(cleanTitle),
+        slug: slug.trim() || slugifyTitle(cleanTitle),
         summary: summary.trim() || null,
-        plain_text: summary.trim() || null,
-        is_main: true,
+        plain_text: richTextToPlainText(cleanContent) || summary.trim() || null,
+        rich_text: cleanContent || null,
+        is_featured: isFeatured,
+        is_main: isMain,
         scope_type: "university",
         scope_id: null,
+        display_order: 100,
       };
       if (type === "news") {
         return { type, response: await newsApi.create(basePayload) };
@@ -525,6 +592,7 @@ function LeadershipLinkedContentDialog({
         response: await eventsApi.create({
           ...basePayload,
           start_date: new Date(startDate).toISOString(),
+          end_date: endDate ? new Date(endDate).toISOString() : null,
           location: location.trim() || null,
           is_virtual: false,
         }),
@@ -542,11 +610,11 @@ function LeadershipLinkedContentDialog({
 
   return (
     <Dialog open={Boolean(type)} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Create linked {type === "event" ? "event" : "news"}</DialogTitle>
           <DialogDescription>
-            Creates a draft main-site record and links it to this leadership activity item.
+            Creates the same main-site content record used by the News and Events modules, then links it to this leadership activity.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
@@ -555,8 +623,16 @@ function LeadershipLinkedContentDialog({
             <Input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Leadership activity title" />
           </div>
           <div className="space-y-2">
-            <p className="text-sm font-medium">Summary</p>
+            <p className="text-sm font-medium">Slug</p>
+            <Input value={slug} onChange={(event) => setSlug(event.target.value)} placeholder="article-or-event-slug" />
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Short description</p>
             <Textarea rows={4} value={summary} onChange={(event) => setSummary(event.target.value)} placeholder="Short news/event summary" />
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Body</p>
+            <RichTextEditor value={content} onChange={setContent} minHeight="240px" placeholder="Write the full story or event description..." />
           </div>
           {type === "event" ? (
             <div className="grid gap-4 sm:grid-cols-2">
@@ -565,11 +641,31 @@ function LeadershipLinkedContentDialog({
                 <DateTimePicker mode="datetime-local" value={startDate} onChange={setStartDate} placeholder="Select event date" />
               </div>
               <div className="space-y-2">
+                <p className="text-sm font-medium">End date</p>
+                <DateTimePicker mode="datetime-local" value={endDate} onChange={setEndDate} placeholder="Optional end date" />
+              </div>
+              <div className="space-y-2">
                 <p className="text-sm font-medium">Location</p>
                 <Input value={location} onChange={(event) => setLocation(event.target.value)} placeholder="Venue or campus" />
               </div>
             </div>
           ) : null}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div>
+                <p className="text-sm font-medium">Main site content</p>
+                <p className="text-xs text-muted-foreground">Available to the university website feed.</p>
+              </div>
+              <Switch checked={isMain} onCheckedChange={setIsMain} />
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div>
+                <p className="text-sm font-medium">Featured</p>
+                <p className="text-xs text-muted-foreground">Marks the record for highlighted placement.</p>
+              </div>
+              <Switch checked={isFeatured} onCheckedChange={setIsFeatured} />
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
@@ -738,7 +834,7 @@ export default function PageCmsSectionDetailPage() {
       const creatableItems = items.filter((item) => item.id || !isEmptyItemDraft(item));
       const nextItems: SectionItemDraft[] = [];
       for (const item of creatableItems) {
-        const payload = itemPayloadFromDraft(item);
+        const payload = itemPayloadFromDraft(item, form.layout_variant);
         const savedItem = item.id
           ? (await sectionItemsApi.update(item.id, payload)).data
           : (await sectionItemsApi.create(savedSection.id, payload)).data;
@@ -1002,19 +1098,14 @@ export default function PageCmsSectionDetailPage() {
                   onCheckedChange={(checked) => setForm((current) => ({ ...current, is_enabled: checked }))}
                 />
               </div>
-              <div className="space-y-2 lg:col-span-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium">Settings</p>
-                  <Badge variant="outline">JSON</Badge>
-                </div>
-                <JsonObjectEditor
-                  value={form.settings}
-                  onChange={(value) => setForm((current) => ({ ...current, settings: (value as Record<string, unknown>) ?? {} }))}
-                  allowCustomFields
+              {form.layout_variant === "leadership_activity" ? (
+                <LeadershipSectionProfileControls
+                  form={form}
+                  section={section}
                   disabled={!canManageSection || isLoading}
-                  emptyLabel="No section settings added."
+                  onChange={setForm}
                 />
-              </div>
+              ) : null}
             </CardContent>
           </Card>
 
@@ -1041,7 +1132,7 @@ export default function PageCmsSectionDetailPage() {
             <CardHeader className="flex flex-row items-start justify-between gap-4">
               <div>
                 <CardTitle>Section Items</CardTitle>
-                <CardDescription>Manage item-level title, subtitle, description, settings JSON, CTA data, and attachments.</CardDescription>
+                <CardDescription>Manage item-level title, subtitle, description, CTA data, relationships, and attachments.</CardDescription>
               </div>
               <Button type="button" variant="outline" disabled={!canManageItems || isLoading} onClick={() => setItems((current) => [...current, createItemDraft()])}>
                 Add Item
@@ -1310,28 +1401,6 @@ export default function PageCmsSectionDetailPage() {
                           }
                         />
                       </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium">Settings JSON</p>
-                        <Badge variant="outline">content</Badge>
-                      </div>
-                      <JsonObjectEditor
-                        value={item.content}
-                        onChange={(value) =>
-                          setItems((current) =>
-                            current.map((entry) =>
-                              entry.client_id === item.client_id
-                                ? { ...entry, content: (value as Record<string, unknown>) ?? {} }
-                                : entry,
-                            ),
-                          )
-                        }
-                        allowCustomFields
-                        disabled={!canManageItems || isLoading}
-                        emptyLabel="No item settings added."
-                      />
                     </div>
 
                     <AttachmentManager
