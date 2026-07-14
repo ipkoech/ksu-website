@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { FileStack, Image as ImageIcon, LayoutTemplate, Workflow } from "lucide-react";
+import { ArrowRight, FileStack, Image as ImageIcon, LayoutTemplate, Sparkles, Workflow } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle, Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
 import { PageHeader } from "@/components/shared/page-header";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -22,14 +22,14 @@ function StatCard({
   icon: typeof LayoutTemplate;
 }) {
   return (
-    <Card>
+    <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
       <CardContent className="flex items-start justify-between p-5">
         <div>
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
           <p className="mt-2 text-3xl font-semibold tracking-tight">{value}</p>
           <p className="mt-2 text-sm text-muted-foreground">{description}</p>
         </div>
-        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 shadow-sm">
           <Icon className="h-5 w-5 text-primary" />
         </div>
       </CardContent>
@@ -109,10 +109,27 @@ export default function PageCmsDashboardPage() {
 
   return (
     <PageTransition>
-      <PageHeader
-        title="Page CMS"
-        description="Manage structured page sections, spotlight content, media attachments, and editorial workflow."
-      />
+      <PageHeader title="Page CMS" description="Manage structured page sections, spotlight content, media attachments, and editorial workflow." />
+
+      <section className="mb-6 overflow-hidden rounded-3xl border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.16),transparent_32%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.86))] p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.16),transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.86))] sm:p-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+              <Sparkles className="size-3.5 text-orange-600" />
+              Homepage composition command centre
+            </div>
+            <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">Compose, review, and publish homepage content</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+              Use sections for structured page blocks and spotlights for research partner promotions. Actions here map directly to the Page CMS backend workflow.
+            </p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <MiniMetric label="Enabled" value={stats.enabled} />
+            <MiniMetric label="Published" value={stats.published} />
+            <MiniMetric label="Review" value={stats.inReview} />
+          </div>
+        </div>
+      </section>
 
       {error ? (
         <Alert variant="destructive" className="mb-6">
@@ -129,8 +146,8 @@ export default function PageCmsDashboardPage() {
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-        <Card>
-          <CardHeader className="flex flex-row items-start justify-between gap-4">
+        <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
+          <CardHeader className="flex flex-row items-start justify-between gap-4 border-b bg-muted/20">
             <div>
               <CardTitle>Sections</CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -139,7 +156,10 @@ export default function PageCmsDashboardPage() {
             </div>
             {canViewSections ? (
               <Button asChild>
-                <Link href="/corporate-communication/page-cms/sections">Open Sections</Link>
+                <Link href="/corporate-communication/page-cms/sections">
+                  Open Sections
+                  <ArrowRight data-icon="inline-end" />
+                </Link>
               </Button>
             ) : null}
           </CardHeader>
@@ -155,7 +175,7 @@ export default function PageCmsDashboardPage() {
                 <Link
                   key={section.id}
                   href={`/corporate-communication/page-cms/sections/${section.id}`}
-                  className="flex items-center justify-between gap-4 rounded-lg border p-3 transition-colors hover:border-primary"
+                  className="flex items-center justify-between gap-4 rounded-2xl border bg-background p-3 transition-colors hover:border-primary hover:bg-primary/5"
                 >
                   <div className="min-w-0">
                     <p className="truncate font-medium">{section.title || section.section_key}</p>
@@ -174,8 +194,8 @@ export default function PageCmsDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-start justify-between gap-4">
+        <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
+          <CardHeader className="flex flex-row items-start justify-between gap-4 border-b bg-muted/20">
             <div>
               <CardTitle>Spotlights</CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -184,7 +204,10 @@ export default function PageCmsDashboardPage() {
             </div>
             {canManageSpotlights ? (
               <Button variant="outline" asChild>
-                <Link href="/corporate-communication/page-cms/spotlights">Open Spotlights</Link>
+                <Link href="/corporate-communication/page-cms/spotlights">
+                  Open Spotlights
+                  <ArrowRight data-icon="inline-end" />
+                </Link>
               </Button>
             ) : null}
           </CardHeader>
@@ -197,7 +220,7 @@ export default function PageCmsDashboardPage() {
               <p className="text-sm text-muted-foreground">Loading spotlight activity...</p>
             ) : spotlights.length ? (
               spotlights.slice(0, 5).map((spotlight) => (
-                <div key={spotlight.id} className="rounded-lg border p-3">
+                <div key={spotlight.id} className="rounded-2xl border bg-background p-3">
                   <div className="flex items-center justify-between gap-3">
                     <p className="truncate font-medium">{spotlight.headline}</p>
                     <Badge variant={spotlight.is_enabled ? "default" : "secondary"}>
@@ -218,5 +241,14 @@ export default function PageCmsDashboardPage() {
         </Card>
       </div>
     </PageTransition>
+  );
+}
+
+function MiniMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="min-w-[118px] rounded-2xl border bg-background/80 p-3 shadow-sm">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="mt-1 text-xl font-semibold tracking-tight">{value}</p>
+    </div>
   );
 }

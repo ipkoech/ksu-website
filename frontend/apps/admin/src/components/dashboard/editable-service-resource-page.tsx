@@ -4,7 +4,7 @@ import { useEffect, useId, useMemo, useState, type Dispatch, type KeyboardEvent,
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpDown, ChevronDown, Edit, Eye, FilterX, HelpCircle, MoreHorizontal, Plus, Search, SlidersHorizontal, Trash2 } from "lucide-react";
+import { ArrowUpDown, ChevronDown, Database, Edit, Eye, FilterX, HelpCircle, MoreHorizontal, Plus, Search, ShieldCheck, SlidersHorizontal, Sparkles, Trash2 } from "lucide-react";
 
 const RESEARCH_FRONTEND = process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL;
 
@@ -504,6 +504,8 @@ export function EditableServiceResourcePage<
     return allRecords.slice(start, start + perPage);
   }, [allRecords, page, perPage, recordsQuery.data?.meta?.total]);
   const resolvedEditorMode = viewInEditor ? "dialog" : editorMode === "auto" ? (fields.length > 10 ? "sheet" : "dialog") : editorMode;
+  const visibleFrom = totalRecords === 0 ? 0 : (page - 1) * perPage + 1;
+  const visibleTo = Math.min(page * perPage, totalRecords);
 
   useEffect(() => {
     setPage(1);
@@ -897,11 +899,11 @@ export function EditableServiceResourcePage<
     <div
       className={cn(
         "flex flex-col gap-2 sm:flex-row sm:items-end",
-        tableLayout === "compact" && "flex-wrap rounded-lg border bg-background p-3 sm:items-center",
+        tableLayout === "compact" && "flex-wrap rounded-2xl border border-white/70 bg-white/80 p-3 shadow-sm backdrop-blur sm:items-center dark:border-white/10 dark:bg-background/80",
       )}
     >
       {canCreate ? (
-        <Button type="button" size="sm" onClick={startCreate}>
+        <Button type="button" size="sm" className="shadow-sm" onClick={startCreate}>
           <Plus data-icon="inline-start" />
           {primaryActionLabel ?? "Create Record"}
         </Button>
@@ -1000,21 +1002,38 @@ export function EditableServiceResourcePage<
   return (
     <div>
       {!hideHeader ? <PageHeader title={title} description={description} backHref={backHref} /> : null}
-      <div className={cn("space-y-4 p-4 sm:p-6", hideHeader && "pt-3")}>
+      <div className={cn("space-y-5 p-4 sm:p-6", hideHeader && "pt-3")}>
+        <ResourceCommandPanel
+          title={title}
+          description={description}
+          totalRecords={totalRecords}
+          visibleFrom={visibleFrom}
+          visibleTo={visibleTo}
+          canCreate={canCreate}
+          canEdit={canEdit}
+          canDelete={Boolean(deleteRecord && canDelete)}
+          hasActiveFilters={hasActiveFilters}
+          isFetching={recordsQuery.isFetching}
+          actions={tableLayout === "compact" ? null : actionToolbar}
+        />
         {tableLayout === "compact" ? actionToolbar : null}
         {summarySlot}
-        <Card>
+        <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
           {tableLayout !== "compact" ? (
-            <CardHeader>
+            <CardHeader className="border-b bg-gradient-to-r from-muted/40 via-background to-muted/20">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <CardTitle>Records</CardTitle>
-                {actionToolbar}
+                <div>
+                  <CardTitle className="text-base">Records</CardTitle>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Backend-backed list with scoped filters and permission-aware actions.
+                  </p>
+                </div>
               </div>
             </CardHeader>
           ) : null}
-          <CardContent>
+          <CardContent className="p-4 sm:p-5">
             {tableLayout === "compact" ? (
-              <div className="mb-4 flex flex-col gap-3 rounded-lg border bg-background p-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="mb-4 flex flex-col gap-3 rounded-2xl border bg-muted/20 p-3 lg:flex-row lg:items-center lg:justify-between">
                 <div className="relative min-w-0 flex-1">
                   <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -1099,14 +1118,14 @@ export function EditableServiceResourcePage<
                 </div>
               </div>
             ) : listFilters.length > 0 ? (
-              <div className="mb-4 grid gap-3 rounded-lg border bg-muted/20 p-3 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="mb-4 grid gap-3 rounded-2xl border bg-muted/20 p-3 sm:grid-cols-2 xl:grid-cols-3">
                 {listFilters.map(renderFilterControl)}
               </div>
             ) : null}
             {recordsQuery.isLoading ? (
               <div className="flex flex-col gap-3">
                 {[1, 2, 3].map((item) => (
-                  <Skeleton key={item} className="h-16 rounded-lg" />
+                  <Skeleton key={item} className="h-20 rounded-2xl" />
                 ))}
               </div>
             ) : recordsQuery.isError ? (
@@ -1116,7 +1135,7 @@ export function EditableServiceResourcePage<
                 </AlertDescription>
               </Alert>
             ) : records.length === 0 ? (
-              <div className="rounded-lg border bg-background p-8">
+              <div className="rounded-2xl border bg-gradient-to-br from-background to-muted/25 p-8">
                 <EmptyState
                   title={emptyState?.title ?? "No records found"}
                   description={emptyState?.description ?? emptyMessage}
@@ -1136,9 +1155,9 @@ export function EditableServiceResourcePage<
             ) : (
               <div className="flex flex-col gap-4">
                 {recordColumns.length > 0 ? (
-                  <div className="overflow-x-auto rounded-lg border">
+                  <div className="overflow-x-auto rounded-2xl border bg-background">
                     <table className="hidden w-full min-w-[960px] text-sm md:table">
-                      <thead className="border-b bg-muted/40 text-left text-xs uppercase text-muted-foreground">
+                      <thead className="border-b bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
                         <tr>
                           {recordColumns.map((column) => (
                             <th key={column.key} className={`px-4 py-3 font-semibold ${column.className ?? ""}`}>
@@ -1153,8 +1172,8 @@ export function EditableServiceResourcePage<
                           <tr
                             key={record.id}
                             className={cn(
-                              "align-top",
-                              (viewInEditor || getRecordDetailHref?.(record)) && "cursor-pointer transition-colors hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                              "align-top transition-colors",
+                              (viewInEditor || getRecordDetailHref?.(record)) && "cursor-pointer hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                             )}
                             role={viewInEditor ? "button" : getRecordDetailHref?.(record) ? "link" : undefined}
                             tabIndex={viewInEditor || getRecordDetailHref?.(record) ? 0 : undefined}
@@ -1205,7 +1224,7 @@ export function EditableServiceResourcePage<
                     </div>
                   </div>
                 ) : (
-                  <div className="divide-y rounded-lg border">
+                  <div className="divide-y rounded-2xl border bg-background">
                     {records.map((record) => (
                       renderMobileRecord ? (
                         <div
@@ -1236,15 +1255,15 @@ export function EditableServiceResourcePage<
                     ))}
                   </div>
                 )}
-                <div className="flex flex-col gap-3 rounded-lg border bg-background px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-3 rounded-2xl border bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm text-muted-foreground">
                     Showing{" "}
                     <span className="font-medium text-foreground">
-                      {totalRecords === 0 ? 0 : (page - 1) * perPage + 1}
+                      {visibleFrom}
                     </span>
                     {" - "}
                     <span className="font-medium text-foreground">
-                      {Math.min(page * perPage, totalRecords)}
+                      {visibleTo}
                     </span>{" "}
                     of <span className="font-medium text-foreground">{totalRecords}</span>
                   </p>
@@ -1463,6 +1482,88 @@ export function EditableServiceResourcePage<
   );
 }
 
+function ResourceCommandPanel({
+  title,
+  description,
+  totalRecords,
+  visibleFrom,
+  visibleTo,
+  canCreate,
+  canEdit,
+  canDelete,
+  hasActiveFilters,
+  isFetching,
+  actions,
+}: {
+  title: string;
+  description: string;
+  totalRecords: number;
+  visibleFrom: number;
+  visibleTo: number;
+  canCreate: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  hasActiveFilters: boolean;
+  isFetching: boolean;
+  actions: ReactNode;
+}) {
+  return (
+    <section className="relative overflow-hidden rounded-3xl border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.16),transparent_32%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.86))] p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.16),transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.86))] sm:p-6">
+      <div className="pointer-events-none absolute right-0 top-0 h-28 w-28 rounded-full bg-primary/10 blur-3xl" />
+      <div className="relative flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+        <div className="max-w-3xl">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+            <Sparkles className="size-3.5 text-orange-600" />
+            Corporate Communication workspace
+          </div>
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">{title}</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>
+        </div>
+        <div className="flex flex-col gap-3">
+          <div className="grid gap-2 sm:grid-cols-3">
+            <PremiumMetric icon={Database} label="Records" value={String(totalRecords)} />
+            <PremiumMetric icon={ShieldCheck} label="Actions" value={canEdit ? "Edit" : "View"} />
+            <PremiumMetric icon={SlidersHorizontal} label="Filters" value={hasActiveFilters ? "Active" : "Ready"} />
+          </div>
+          {actions ? <div className="flex justify-start xl:justify-end">{actions}</div> : null}
+        </div>
+      </div>
+      <div className="relative mt-5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <Badge variant="secondary" className="rounded-full">
+          Showing {visibleFrom}-{visibleTo}
+        </Badge>
+        <Badge variant={canCreate ? "default" : "outline"} className="rounded-full">
+          {canCreate ? "Create enabled" : "Create unavailable"}
+        </Badge>
+        <Badge variant={canDelete ? "destructive" : "outline"} className="rounded-full">
+          {canDelete ? "Delete enabled" : "Protected records"}
+        </Badge>
+        {isFetching ? <Badge variant="outline" className="rounded-full">Refreshing</Badge> : null}
+      </div>
+    </section>
+  );
+}
+
+function PremiumMetric({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Database;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="min-w-[132px] rounded-2xl border bg-background/80 p-3 shadow-sm">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <Icon className="size-3.5 text-primary" />
+        {label}
+      </div>
+      <p className="mt-1 text-lg font-semibold tracking-tight">{value}</p>
+    </div>
+  );
+}
+
 function RecordListRow<TRecord extends RecordShape>({
   record,
   getRecordTitle,
@@ -1491,27 +1592,28 @@ function RecordListRow<TRecord extends RecordShape>({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between",
-        isInteractive && "cursor-pointer transition-colors hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "group flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between",
+        isInteractive && "cursor-pointer transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
       )}
       role={openInEditor ? "button" : detailHref ? "link" : undefined}
       tabIndex={isInteractive ? 0 : undefined}
       onClick={isInteractive ? onOpen : undefined}
       onKeyDown={handleKeyDown}
     >
-      <div className="flex min-w-0 flex-1 gap-3">
+      <div className="flex min-w-0 flex-1 gap-4">
         <RecordMediaPreview media={visualMedia} record={record} />
         <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="break-words font-medium">{getRecordTitle(record)}</p>
+          <p className="break-words font-semibold tracking-tight">{getRecordTitle(record)}</p>
           {record.status ? <Badge variant="outline">{record.status}</Badge> : null}
+          {record.workflow_status ? <Badge variant="secondary">{String(record.workflow_status).replace(/_/g, " ")}</Badge> : null}
           {typeof record.is_active === "boolean" ? (
             <Badge variant={record.is_active ? "default" : "secondary"}>
               {record.is_active ? "Active" : "Inactive"}
             </Badge>
           ) : null}
         </div>
-        <p className="mt-1 break-words text-sm text-muted-foreground">
+        <p className="mt-1 break-words text-sm leading-6 text-muted-foreground">
           {getRecordMeta?.(record) ??
             record.updated_at ??
             record.created_at ??
@@ -1538,7 +1640,7 @@ function RecordMediaPreview({
   const label = getMediaLabel(candidate as any);
 
   return (
-    <div className="flex h-14 w-20 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted">
+    <div className="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-muted shadow-sm transition-transform group-hover:scale-[1.02]">
       {url && image ? (
         <ImageRenderer src={url} alt={label} className="h-full border-0" imageClassName="h-full w-full" />
       ) : (

@@ -9,6 +9,7 @@ import {
   History,
   SearchCheck,
   Settings2,
+  Sparkles,
 } from "lucide-react";
 import {
   contentWorkflowApi,
@@ -140,7 +141,27 @@ export function ReviewQueue() {
         backHref="/corporate-communication"
       />
       <div className="space-y-5 p-4 sm:p-6">
-        <Card>
+        <section className="overflow-hidden rounded-3xl border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.16),transparent_32%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.86))] p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.16),transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.86))] sm:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+                <Sparkles className="size-3.5 text-orange-600" />
+                Editorial workflow command centre
+              </div>
+              <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">Approve, request changes, and publish with context</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                The queue reflects backend workflow state across newsroom, Page CMS, slider and student-club submissions.
+              </p>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-3">
+              <QueueMetric label="Visible" value={items.length} />
+              <QueueMetric label="Review" value={items.filter((item) => item.status === "in_review" || item.status === "submitted").length} />
+              <QueueMetric label="Approved" value={items.filter((item) => item.status === "approved").length} />
+            </div>
+          </div>
+        </section>
+
+        <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
           <CardHeader className="pb-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
@@ -250,7 +271,7 @@ export function ReviewQueue() {
         </Card>
 
         <div className="grid gap-5 xl:grid-cols-[minmax(330px,0.82fr)_minmax(0,1.18fr)]">
-          <Card className="min-w-0">
+          <Card className="min-w-0 overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
                 <SearchCheck className="size-4" />
@@ -269,7 +290,7 @@ export function ReviewQueue() {
               ) : items.length === 0 ? (
                 <QueueMessage message="No content matches the current filters." />
               ) : (
-                <div className="divide-y rounded-md border">
+                <div className="divide-y rounded-2xl border bg-background">
                   {items.map((item) => (
                     <button
                       key={item.id}
@@ -277,7 +298,7 @@ export function ReviewQueue() {
                       className={
                         selectedItem?.id === item.id
                           ? "block w-full bg-primary/5 p-4 text-left"
-                          : "block w-full p-4 text-left transition-colors hover:bg-muted/50"
+                          : "block w-full p-4 text-left transition-colors hover:bg-primary/5"
                       }
                       onClick={() => setSelectedId(item.id)}
                     >
@@ -358,7 +379,7 @@ function ReviewDetail({
   }
 
   return (
-    <Card className="min-w-0">
+    <Card className="min-w-0 overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
       <CardHeader className="gap-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
@@ -623,6 +644,15 @@ function QueueMessage({ message }: { message: string }) {
     >
       {message}
     </p>
+  );
+}
+
+function QueueMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="min-w-[112px] rounded-2xl border bg-background/80 p-3 shadow-sm">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="mt-1 text-xl font-semibold tracking-tight">{value}</p>
+    </div>
   );
 }
 

@@ -32,6 +32,7 @@ import { LibraryBranchPicker, ResearchCenterPicker, SchoolPicker } from "@/compo
 import { PageHeader } from "@/components/shared/page-header";
 import { usePermissions } from "@/hooks/use-permissions";
 import { PageTransition } from "@/lib/animations";
+import { cn } from "@ksu/ui/lib";
 import {
   PAGE_CMS_MEDIA_ROLES,
   PAGE_SCOPE_TYPES,
@@ -49,6 +50,7 @@ import {
   type SectionItemPayload,
   type SectionItemType,
 } from "@/lib/api/page-cms";
+import { Sparkles } from "lucide-react";
 
 type SectionFormState = {
   page_key: string;
@@ -522,6 +524,26 @@ export default function PageCmsSectionDetailPage() {
         )}
       />
 
+      <section className="mb-6 overflow-hidden rounded-3xl border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.16),transparent_32%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.86))] p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.16),transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.86))] sm:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+              <Sparkles className="size-3.5 text-orange-600" />
+              Section editor
+            </div>
+            <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">{sectionTitle}</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Configure scope, layout, media roles and item-level content using the Page CMS backend workflow.
+            </p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <DetailMetric label="Items" value={items.filter((item) => !isEmptyItemDraft(item)).length} />
+            <DetailMetric label="Order" value={form.display_order} />
+            <DetailMetric label="Status" value={form.status.replace(/_/g, " ")} />
+          </div>
+        </div>
+      </section>
+
       {error ? (
         <Card className="mb-6 border-destructive/30">
           <CardContent className="p-4 text-sm text-destructive">{error}</CardContent>
@@ -530,7 +552,7 @@ export default function PageCmsSectionDetailPage() {
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.6fr)]">
         <div className="space-y-6">
-          <Card>
+          <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
             <CardHeader>
               <CardTitle>Section Configuration</CardTitle>
               <CardDescription>Define where this section renders and how it behaves in the composition workflow.</CardDescription>
@@ -701,7 +723,7 @@ export default function PageCmsSectionDetailPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
             <CardHeader>
               <CardTitle>Section Media</CardTitle>
               <CardDescription>Attach assets to the page section using supported frontend roles.</CardDescription>
@@ -720,7 +742,7 @@ export default function PageCmsSectionDetailPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
             <CardHeader className="flex flex-row items-start justify-between gap-4">
               <div>
                 <CardTitle>Section Items</CardTitle>
@@ -732,7 +754,7 @@ export default function PageCmsSectionDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {items.map((item, index) => (
-                <Card key={item.client_id} className={!item.is_enabled ? "border-dashed opacity-80" : undefined}>
+                <Card key={item.client_id} className={cn("overflow-hidden bg-background shadow-sm", !item.is_enabled ? "border-dashed opacity-80" : undefined)}>
                   <CardHeader className="flex flex-row items-start justify-between gap-4">
                     <div>
                       <CardTitle className="text-lg">Item {index + 1}</CardTitle>
@@ -1027,7 +1049,7 @@ export default function PageCmsSectionDetailPage() {
         </div>
 
         <div className="space-y-6">
-          <Card>
+          <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
             <CardHeader>
               <CardTitle>Workflow Summary</CardTitle>
               <CardDescription>Current lifecycle status and permission-sensitive actions.</CardDescription>
@@ -1054,7 +1076,7 @@ export default function PageCmsSectionDetailPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
             <CardHeader>
               <CardTitle>Publishing Guidance</CardTitle>
               <CardDescription>Use this summary to confirm the section is ready for the public homepage.</CardDescription>
@@ -1068,5 +1090,14 @@ export default function PageCmsSectionDetailPage() {
         </div>
       </div>
     </PageTransition>
+  );
+}
+
+function DetailMetric({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div className="min-w-[112px] rounded-2xl border bg-background/80 p-3 shadow-sm">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="mt-1 text-lg font-semibold tracking-tight capitalize">{value}</p>
+    </div>
   );
 }

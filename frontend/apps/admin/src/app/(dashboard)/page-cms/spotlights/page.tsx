@@ -40,6 +40,7 @@ import {
   type PartnershipSpotlightPayload,
   type PartnershipSpotlightWorkflowAction,
 } from "@/lib/api/page-cms";
+import { Sparkles } from "lucide-react";
 
 type SpotlightFormState = {
   id?: string;
@@ -305,6 +306,28 @@ export default function PageCmsSpotlightsPage() {
         )}
       />
 
+      <section className="mb-6 overflow-hidden rounded-3xl border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.16),transparent_32%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.86))] p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.16),transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.86))] sm:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+              <Sparkles className="size-3.5 text-orange-600" />
+              Partnership spotlight editor
+            </div>
+            <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+              Promote strategic research partnerships
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Select a partner, shape the homepage story, attach supporting media, and move the spotlight through the backend workflow.
+            </p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <SpotlightMetric label="Loaded" value={spotlights.length} />
+            <SpotlightMetric label="Enabled" value={spotlights.filter((item) => item.is_enabled).length} />
+            <SpotlightMetric label="Status" value={form.status.replace(/_/g, " ")} />
+          </div>
+        </div>
+      </section>
+
       {error ? (
         <Card className="mb-6 border-destructive/30">
           <CardContent className="p-4 text-sm text-destructive">{error}</CardContent>
@@ -313,7 +336,7 @@ export default function PageCmsSpotlightsPage() {
 
       <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
         <div className="space-y-6">
-          <Card>
+          <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
             <CardHeader className="space-y-2">
               <CardTitle>Visible Spotlights</CardTitle>
               <CardDescription>{spotlightSummary}</CardDescription>
@@ -328,7 +351,7 @@ export default function PageCmsSpotlightsPage() {
                     <button
                       key={spotlight.id}
                       type="button"
-                      className={`w-full rounded-lg border p-3 text-left transition-colors ${selected ? "border-primary ring-2 ring-primary/20" : "hover:border-primary/50"}`}
+                      className={`w-full rounded-2xl border bg-background p-3 text-left transition-colors ${selected ? "border-primary ring-2 ring-primary/20" : "hover:border-primary/50 hover:bg-primary/5"}`}
                       onClick={() => void selectSpotlight(spotlight)}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -356,7 +379,7 @@ export default function PageCmsSpotlightsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
             <CardHeader>
               <CardTitle>Editorial Focus</CardTitle>
               <CardDescription>Use the list to move between partnership stories without leaving the editor.</CardDescription>
@@ -369,7 +392,7 @@ export default function PageCmsSpotlightsPage() {
         </div>
 
         <div className="space-y-6">
-          <Card>
+          <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
             <CardHeader>
               <CardTitle>Spotlight Content</CardTitle>
               <CardDescription>Update source mapping, headline content, CTA behavior, validity window, and enabled state.</CardDescription>
@@ -488,7 +511,7 @@ export default function PageCmsSpotlightsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
             <CardHeader>
               <CardTitle>Pillars and Opportunities</CardTitle>
               <CardDescription>Manage structured list content used by the spotlight presentation.</CardDescription>
@@ -523,7 +546,7 @@ export default function PageCmsSpotlightsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
             <CardHeader>
               <CardTitle>Spotlight Media</CardTitle>
               <CardDescription>Attach brand, gallery, background, and video assets using the shared media manager.</CardDescription>
@@ -544,5 +567,14 @@ export default function PageCmsSpotlightsPage() {
         </div>
       </div>
     </PageTransition>
+  );
+}
+
+function SpotlightMetric({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div className="min-w-[112px] rounded-2xl border bg-background/80 p-3 shadow-sm">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="mt-1 text-lg font-semibold tracking-tight capitalize">{value}</p>
+    </div>
   );
 }
