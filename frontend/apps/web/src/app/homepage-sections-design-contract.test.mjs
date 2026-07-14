@@ -9,6 +9,14 @@ const variantsSource = readFileSync(
   ),
   "utf8",
 );
+const campusLifeScrollerSource = readFileSync(
+  new URL(
+    "../components/home/campus-life-horizontal-scroller.tsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const homepageSource = `${variantsSource}\n${campusLifeScrollerSource}`;
 
 test("composed homepage cards consume item-level imagery and metadata", () => {
   assert.match(variantsSource, /function itemImageUrl/);
@@ -36,9 +44,24 @@ test("programme finder receives dynamic academic data and admissions dates", () 
 
 test("programme finder uses desktop sticky stacked scroll panels", () => {
   assert.match(variantsSource, /programme-scroll-scene/);
+  assert.match(variantsSource, /programme-panel/);
   assert.match(variantsSource, /lg:sticky/);
   assert.match(variantsSource, /lg:top-\[calc\(var\(--public-header-offset/);
-  assert.match(variantsSource, /lg:min-h-\[220vh\]/);
+  assert.match(variantsSource, /lg:min-h-\[280vh\]/);
+  assert.match(
+    variantsSource,
+    /lg:min-h-\[calc\(100svh-var\(--public-header-offset/,
+  );
+  assert.match(variantsSource, /lg:w-screen/);
+  assert.match(variantsSource, /lg:ml-\[calc\(50%-50vw\)\]/);
+  assert.doesNotMatch(
+    variantsSource,
+    /programme-journey"[\s\S]*?lg:top-\[calc\(var\(--public-header-offset,96px\)\+5\.5rem\)/,
+  );
+  assert.doesNotMatch(
+    variantsSource,
+    /programme-dates"[\s\S]*?lg:top-\[calc\(var\(--public-header-offset,96px\)\+6\.5rem\)/,
+  );
 });
 
 test("leadership, partner, alumni, and facts sections have complete fallbacks", () => {
@@ -57,4 +80,27 @@ test("campus and research sections render image-led cards from the homepage endp
   assert.match(variantsSource, /function ImageArticleCard/);
   assert.match(variantsSource, /Transforming Communities Through Research/);
   assert.match(variantsSource, /Explore campus life/);
+});
+
+test("campus life renders as a full-width editorial mosaic", () => {
+  assert.match(homepageSource, /campus-life-scroll-scene/);
+  assert.match(homepageSource, /campus-life-sticky-frame/);
+  assert.match(homepageSource, /campus-life-horizontal-track/);
+  assert.match(variantsSource, /campus-life-editorial/);
+  assert.match(variantsSource, /student-life-rhythm/);
+  assert.match(variantsSource, /student-life-lanes/);
+  assert.match(variantsSource, /CampusMosaicFeature/);
+  assert.match(variantsSource, /CampusLifeLane/);
+  assert.match(variantsSource, /Where you belong/);
+  assert.match(variantsSource, /Plan your stay/);
+  assert.match(variantsSource, /Health and support/);
+  assert.match(variantsSource, /Parents and guardians/);
+  assert.match(variantsSource, /Visitors and partners/);
+  assert.match(variantsSource, /Alumni and community/);
+  assert.match(variantsSource, /lg:min-h-\[320vh\]/);
+  assert.match(homepageSource, /lg:sticky/);
+  assert.match(homepageSource, /lg:overflow-x-auto/);
+  assert.match(homepageSource, /lg:snap-x/);
+  assert.match(variantsSource, /lg:w-screen/);
+  assert.match(variantsSource, /displayItems\(section\)/);
 });

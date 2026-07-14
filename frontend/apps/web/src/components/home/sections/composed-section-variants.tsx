@@ -19,6 +19,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { AdmissionsCountdown } from "@/components/home/admissions-countdown";
+import { CampusLifeHorizontalScroller } from "@/components/home/campus-life-horizontal-scroller";
 import { ProgrammeFinderInteractive } from "@/components/home/programme-finder-interactive";
 import { WhyKisiiSection } from "@/components/home/why-kisii-section";
 import { PublicImage } from "@/components/public/public-image";
@@ -546,7 +547,7 @@ export function ProgrammeFinderSection({
   return (
     <section
       id={section.section_key}
-      className="relative isolate overflow-hidden border-b border-blue-100 bg-blue-50/40 py-12 lg:py-16"
+      className="relative isolate border-b border-blue-100 bg-blue-50/40 py-12 lg:py-16"
     >
       <PublicImage
         src="/images/Home/KSUGreenLandscaping.jpg"
@@ -557,7 +558,7 @@ export function ProgrammeFinderSection({
         sizes="100vw"
       />
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(255,255,255,.94),rgba(239,246,255,.88)_48%,rgba(255,255,255,.96))]" />
-      <div className="programme-scroll-scene mx-auto max-w-[1680px] px-4 sm:px-6 lg:min-h-[220vh] lg:px-8 xl:px-10 2xl:px-12">
+      <div className="programme-scroll-scene mx-auto max-w-[1680px] px-4 sm:px-6 lg:min-h-[280vh] lg:px-8 xl:px-10 2xl:px-12">
         <nav
           aria-label="Programme finder steps"
           className="mb-6 flex gap-2 overflow-x-auto scroll-smooth lg:sticky lg:top-[calc(var(--public-header-offset,96px)+1rem)] lg:z-40"
@@ -581,9 +582,9 @@ export function ProgrammeFinderSection({
 
         <div
           id="programme-search"
-          className="scroll-mt-28 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 lg:sticky lg:top-[calc(var(--public-header-offset,96px)+4.5rem)] lg:z-10 lg:pt-2"
+          className="programme-panel scroll-mt-28 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 lg:sticky lg:top-[calc(var(--public-header-offset,96px)+4.5rem)] lg:z-10 lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px)-4.5rem)] lg:w-screen lg:ml-[calc(50%-50vw)] lg:items-center lg:bg-white lg:px-8 lg:py-10 xl:px-10 2xl:px-12"
         >
-          <div className="grid overflow-hidden bg-white shadow-xl shadow-primary/10 transition duration-500 lg:grid-cols-[0.42fr_0.58fr] lg:shadow-2xl lg:shadow-primary/12">
+          <div className="mx-auto grid w-full max-w-[1680px] overflow-hidden bg-white shadow-xl shadow-primary/10 transition duration-500 lg:grid-cols-[0.42fr_0.58fr] lg:shadow-2xl lg:shadow-primary/12">
             <PublicImage
               src="/images/Home/OurKSU-82.jpg"
               alt="Kisii University students in an academic setting"
@@ -616,9 +617,9 @@ export function ProgrammeFinderSection({
 
         <div
           id="programme-journey"
-          className="relative z-20 mt-6 scroll-mt-28 lg:sticky lg:top-[calc(var(--public-header-offset,96px)+5.5rem)] lg:mt-[34vh] lg:ml-[6%] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 motion-safe:delay-150"
+          className="programme-panel relative z-20 mt-6 scroll-mt-28 lg:sticky lg:top-[calc(var(--public-header-offset,96px)+4.5rem)] lg:mt-0 lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px)-4.5rem)] lg:w-screen lg:ml-[calc(50%-50vw)] lg:items-center lg:bg-blue-50 lg:px-8 lg:py-10 xl:px-10 2xl:px-12 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 motion-safe:delay-150"
         >
-          <div className="grid overflow-hidden bg-white shadow-xl shadow-primary/10 transition duration-500 lg:grid-cols-[0.6fr_0.4fr] lg:shadow-2xl lg:shadow-primary/14">
+          <div className="mx-auto grid w-full max-w-[1680px] overflow-hidden bg-white shadow-xl shadow-primary/10 transition duration-500 lg:grid-cols-[0.6fr_0.4fr] lg:shadow-2xl lg:shadow-primary/14">
             <div className="flex flex-col justify-center p-5 sm:p-7 lg:p-8">
               <SectionEyebrow value="How to join Kisii University" />
               <h3 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
@@ -665,9 +666,9 @@ export function ProgrammeFinderSection({
         {hasAdmissionDates ? (
           <div
             id="programme-dates"
-            className="relative z-30 mt-6 scroll-mt-28 lg:sticky lg:top-[calc(var(--public-header-offset,96px)+6.5rem)] lg:mt-[34vh] lg:mr-[6%] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 motion-safe:delay-300"
+            className="programme-panel relative z-30 mt-6 scroll-mt-28 lg:sticky lg:top-[calc(var(--public-header-offset,96px)+4.5rem)] lg:mt-0 lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px)-4.5rem)] lg:w-screen lg:ml-[calc(50%-50vw)] lg:items-center lg:bg-primary lg:px-8 lg:py-10 xl:px-10 2xl:px-12 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 motion-safe:delay-300"
           >
-            <div className="grid overflow-hidden bg-primary text-white shadow-xl shadow-primary/15 transition duration-500 lg:grid-cols-[0.42fr_0.58fr] lg:shadow-2xl lg:shadow-primary/20">
+            <div className="mx-auto grid w-full max-w-[1680px] overflow-hidden bg-primary text-white shadow-xl shadow-primary/15 transition duration-500 lg:grid-cols-[0.42fr_0.58fr] lg:shadow-2xl lg:shadow-primary/20">
               <PublicImage
                 src="/images/Home/KSUGreenLandscaping.jpg"
                 alt="Kisii University green campus"
@@ -772,37 +773,281 @@ export function PillarGridSection({
 
 export function MediaMosaicSection({ section }: SectionVariantProps) {
   const items = displayItems(section);
+  const feature = items[0];
+  const lanes = campusLifeLanes(items);
+  const rhythm = [
+    {
+      label: "Learn",
+      title: "Lectures, labs and study time",
+      body: "Move between class, library time and practical learning spaces.",
+    },
+    {
+      label: "Connect",
+      title: "Clubs, friends and leadership",
+      body: "Find communities that match your interests and ambitions.",
+    },
+    {
+      label: "Recharge",
+      title: "Sports, culture and campus moments",
+      body: "Make room for recreation, creativity, events and wellbeing.",
+    },
+  ];
   return (
     <section
       id={section.section_key}
-      className="border-b border-blue-100 bg-blue-50/35 py-12 lg:py-14"
+      className="campus-life-scroll-scene relative isolate overflow-hidden border-b border-blue-100 bg-white py-12 lg:min-h-[320vh] lg:py-0"
     >
-      <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="grid gap-8 lg:grid-cols-[minmax(280px,0.34fr)_minmax(0,0.66fr)] lg:items-end">
-          <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
-            <SectionEyebrow value={section.subtitle ?? "Campus life"} />
-            <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
-              {section.title ?? "Experience more. Become more."}
-            </h2>
-            <SectionBody value={section.description} className="mt-3" />
-            <CtaLink
-              item={{
-                title: "Explore campus life",
-                cta_label: "Explore campus life",
-                cta_url: "/campus-life",
-              }}
-              className="mt-6"
-            />
+      <div className="absolute inset-y-0 right-0 -z-10 hidden w-1/2 bg-blue-50/70 lg:block" />
+      <div className="campus-life-sticky-frame mx-auto max-w-[1680px] px-4 sm:px-6 lg:sticky lg:top-[var(--public-header-offset,96px)] lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px))] lg:max-w-none lg:items-center lg:px-0 xl:px-0 2xl:px-0">
+        <CampusLifeHorizontalScroller>
+          <div className="lg:flex lg:w-max lg:items-stretch lg:gap-4 lg:pr-[12vw]">
+            <div className="campus-life-editorial lg:w-screen lg:shrink-0 lg:snap-start lg:px-8 xl:px-10 2xl:px-12">
+              <div className="grid gap-8 lg:grid-cols-[minmax(0,0.58fr)_minmax(360px,0.42fr)] lg:items-stretch">
+                <CampusMosaicFeature item={feature} section={section} />
+                <div className="flex flex-col justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-6 motion-safe:delay-150">
+                  <div className="max-w-xl">
+                    <SectionEyebrow value={section.subtitle ?? "Campus life"} />
+                    <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl lg:text-5xl">
+                      Campus life at KSU, clearly mapped.
+                    </h2>
+                    <SectionBody
+                      value={
+                        section.description ??
+                        "See how students belong, stay active, access support and navigate daily life beyond the lecture room."
+                      }
+                      className="mt-4 text-base leading-8"
+                    />
+                    <CtaLink
+                      item={{
+                        title: "Explore campus life",
+                        cta_label: "Explore campus life",
+                        cta_url: "/campus-life",
+                      }}
+                      className="mt-7"
+                    />
+                  </div>
+                  <div className="student-life-rhythm mt-8 border-y border-blue-100">
+                    {rhythm.map((item, index) => (
+                      <div
+                        key={item.label}
+                        className="grid gap-3 py-4 sm:grid-cols-[96px_minmax(0,1fr)]"
+                      >
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
+                          {item.label}
+                        </p>
+                        <div>
+                          <h3 className="font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-slate-950">
+                            {item.title}
+                          </h3>
+                          <p className="mt-1 text-sm leading-6 text-slate-600">
+                            {item.body}
+                          </p>
+                        </div>
+                        <span
+                          className="hidden"
+                          aria-hidden="true"
+                          style={{ animationDelay: `${index * 80}ms` }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="student-life-lanes mt-7 grid gap-3 sm:grid-cols-2 lg:mt-0 lg:flex lg:w-max lg:gap-4">
+              {lanes.map((lane, index) => (
+                <CampusLifeLane key={lane.title} lane={lane} index={index} />
+              ))}
+            </div>
           </div>
-          <div className="grid min-h-[520px] grid-cols-6 grid-rows-6 gap-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150">
-            {items.slice(0, 6).map((item, index) => (
-              <CampusMosaicTile key={item.id} item={item} index={index} />
-            ))}
-          </div>
-        </div>
+        </CampusLifeHorizontalScroller>
       </div>
     </section>
   );
+}
+
+function CampusMosaicFeature({
+  item,
+  section,
+}: {
+  item?: HomepageSectionItem;
+  section: HomepageSection;
+}) {
+  const body = (
+    <article className="group relative min-h-[420px] overflow-hidden bg-primary text-white shadow-2xl shadow-primary/15 sm:min-h-[520px] lg:min-h-[640px] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-left-6">
+      <PublicImage
+        src={itemImageUrl(item) ?? mediaUrl(heroImage(section))}
+        alt={
+          itemContentText(item, "imageAlt") ??
+          item?.media_alt_text ??
+          item?.title ??
+          "Kisii University campus life"
+        }
+        ratio="fill"
+        className="absolute inset-0 h-full rounded-none"
+        imageClassName="h-full object-cover transition duration-700 group-hover:scale-[1.03]"
+        sizes="(min-width: 1024px) 58vw, 100vw"
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,23,57,.04),rgba(3,23,57,.22)_35%,rgba(3,23,57,.86))]" />
+      <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7 lg:p-8">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
+          {item?.subtitle ?? "Campus life"}
+        </p>
+        <h3 className="mt-2 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white sm:text-4xl">
+          {item?.title ?? "A campus built for belonging"}
+        </h3>
+        <p className="mt-3 max-w-xl text-sm leading-7 text-white/76">
+          {item?.body_text ??
+            item?.cta_description ??
+            "Student communities, sports, culture, accommodation and support services shape everyday life at Kisii University."}
+        </p>
+        <span className="mt-5 inline-flex min-h-10 items-center gap-2 border border-white/25 bg-white/10 px-4 text-sm font-semibold text-white backdrop-blur transition group-hover:bg-white/15">
+          {item?.cta_label ?? "See campus life"}
+          <ArrowRight className="h-4 w-4" aria-hidden />
+        </span>
+      </div>
+    </article>
+  );
+
+  return item?.cta_url ? (
+    <LinkWrapper href={item.cta_url}>{body}</LinkWrapper>
+  ) : (
+    body
+  );
+}
+
+function CampusLifeLane({
+  lane,
+  index,
+}: {
+  lane: CampusLifeLaneData;
+  index: number;
+}) {
+  const body = (
+    <article
+      className="group flex min-h-[250px] flex-col overflow-hidden border border-blue-100 bg-white transition duration-500 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg hover:shadow-primary/10 lg:min-h-[560px] lg:w-[min(420px,78vw)] lg:snap-start motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
+      style={{ animationDelay: `${Math.min(index, 5) * 80}ms` }}
+    >
+      <PublicImage
+        src={lane.imageUrl}
+        alt={
+          lane.imageAlt ??
+          lane.source?.media_alt_text ??
+          lane.source?.title ??
+          "Campus life"
+        }
+        ratio="fill"
+        className="min-h-36 rounded-none lg:min-h-64"
+        imageClassName="object-cover transition duration-700 group-hover:scale-105"
+        sizes="(min-width: 1024px) 20vw, 50vw"
+      />
+      <div className="flex flex-1 flex-col p-4 sm:p-5">
+        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-secondary">
+          {lane.audience}
+        </p>
+        <h3 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-slate-950">
+          {lane.title}
+        </h3>
+        <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
+          {lane.body}
+        </p>
+        <span className="mt-auto inline-flex pt-4 text-sm font-semibold text-primary">
+          {lane.ctaLabel}
+        </span>
+      </div>
+    </article>
+  );
+
+  return lane.href ? <LinkWrapper href={lane.href}>{body}</LinkWrapper> : body;
+}
+
+type CampusLifeLaneData = {
+  title: string;
+  audience: string;
+  body: string;
+  ctaLabel: string;
+  href: string;
+  imageUrl?: string;
+  imageAlt?: string;
+  source?: HomepageSectionItem;
+};
+
+function campusLifeLanes(items: HomepageSectionItem[]): CampusLifeLaneData[] {
+  const fallbackImages = [
+    "/images/Home/OurKSU-82.jpg",
+    "/images/Home/KSUGreenLandscaping.jpg",
+    "/images/Home/um-hero.jpg",
+  ];
+  const sourceItems = items.slice(1);
+  const laneDefaults = [
+    {
+      title: "Where you belong",
+      audience: "Prospective students",
+      body: "Explore clubs, societies and peer communities where students build friendships and confidence.",
+      ctaLabel: "Find clubs and societies",
+      href: "/campus-life/clubs",
+    },
+    {
+      title: "Sports and recreation",
+      audience: "Current students",
+      body: "Join teams, train, compete or use recreation to balance academic life.",
+      ctaLabel: "Explore sports",
+      href: "/campus-life/sports",
+    },
+    {
+      title: "Plan your stay",
+      audience: "Parents and guardians",
+      body: "Understand accommodation options and the practical steps around settling into campus.",
+      ctaLabel: "View accommodation",
+      href: "/campus-life/accommodation",
+    },
+    {
+      title: "Health and support",
+      audience: "Current students",
+      body: "Access wellness, counselling, accessibility and student-support services when you need help.",
+      ctaLabel: "Get support",
+      href: "/campus-life/support",
+    },
+    {
+      title: "Culture and arts",
+      audience: "Visitors and partners",
+      body: "Take part in performances, cultural activities and creative spaces that make campus memorable.",
+      ctaLabel: "See gallery",
+      href: "/campus-life/gallery",
+    },
+    {
+      title: "Student leadership",
+      audience: "Student leaders",
+      body: "Understand representation, student governance and opportunities to lead within the university.",
+      ctaLabel: "Student life",
+      href: "/campus-life/student-life",
+    },
+    {
+      title: "Innovation and talent",
+      audience: "Alumni and community",
+      body: "Build ideas, showcase talent and connect academic learning with practical opportunities.",
+      ctaLabel: "Explore opportunities",
+      href: "/campus-life",
+    },
+    {
+      title: "Daily campus moments",
+      audience: "Life on campus",
+      body: "Preview the spaces, routines and activities that shape everyday student experience at KSU.",
+      ctaLabel: "View campus life",
+      href: "/campus-life",
+    },
+  ];
+
+  return laneDefaults.map((lane, index) => {
+    const source = sourceItems[index];
+    return {
+      ...lane,
+      imageUrl:
+        itemImageUrl(source) ?? fallbackImages[index % fallbackImages.length],
+      imageAlt: itemContentText(source, "imageAlt"),
+      source,
+    };
+  });
 }
 
 export function LeadershipActivitySection({ section }: SectionVariantProps) {
@@ -1281,55 +1526,6 @@ function formatDateRange(start?: string | null, end?: string | null) {
   const endDate = formatPublicDate(end);
   if (startDate && endDate) return `${startDate} – ${endDate}`;
   return startDate ?? endDate ?? "See admission notice";
-}
-
-function CampusMosaicTile({
-  item,
-  index,
-}: {
-  item: HomepageSectionItem;
-  index: number;
-}) {
-  const placements = [
-    "col-span-6 row-span-3 sm:col-span-3 sm:row-span-6",
-    "col-span-3 row-span-3",
-    "col-span-3 row-span-3",
-    "col-span-3 row-span-3",
-    "col-span-3 row-span-3",
-    "col-span-6 row-span-2 sm:col-span-2 sm:row-span-3",
-  ];
-  const body = (
-    <article
-      className={`group relative min-h-[150px] overflow-hidden bg-primary ${placements[index] ?? "col-span-3 row-span-3"}`}
-    >
-      <PublicImage
-        src={itemImageUrl(item)}
-        alt={
-          itemContentText(item, "imageAlt") ??
-          item.media_alt_text ??
-          item.title ??
-          "Campus life"
-        }
-        ratio="news"
-        className="absolute inset-0 h-full rounded-none"
-        imageClassName="h-full object-cover transition duration-700 group-hover:scale-105"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/20 to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
-          {item.subtitle ?? "Campus life"}
-        </p>
-        <h3 className="mt-1 font-[family-name:var(--font-display)] text-lg font-semibold leading-tight">
-          {item.title}
-        </h3>
-      </div>
-    </article>
-  );
-  return item.cta_url ? (
-    <LinkWrapper href={item.cta_url}>{body}</LinkWrapper>
-  ) : (
-    body
-  );
 }
 
 function ActivityLineItem({
