@@ -302,6 +302,13 @@ from .university import (
     UniversityInfoRead,
     UniversityInfoUpdate,
 )
+from .about_content import (
+    AboutPageContentCreate, AboutPageContentRead, AboutPageContentUpdate,
+    AboutWorkflowAction, FactEditionClone, FactEditionCreate, FactEditionUpdate,
+    FactGroupCreate, FactGroupUpdate, FactItemCreate, FactItemUpdate,
+    HistoryMilestoneCreate, HistoryMilestoneRead, HistoryMilestoneUpdate,
+    PublicAboutRead, PublicFactsRead, PublicHistoryRead, ReorderRequest,
+)
 
 __all__ = [
     "APIResponse",
@@ -553,6 +560,24 @@ __all__ = [
     "UniversityInfoCreate",
     "UniversityInfoUpdate",
     "UniversityInfoRead",
+    "AboutPageContentCreate",
+    "AboutPageContentRead",
+    "AboutPageContentUpdate",
+    "AboutWorkflowAction",
+    "HistoryMilestoneCreate",
+    "HistoryMilestoneRead",
+    "HistoryMilestoneUpdate",
+    "FactEditionCreate",
+    "FactEditionUpdate",
+    "FactEditionClone",
+    "FactGroupCreate",
+    "FactGroupUpdate",
+    "FactItemCreate",
+    "FactItemUpdate",
+    "PublicAboutRead",
+    "PublicHistoryRead",
+    "PublicFactsRead",
+    "ReorderRequest",
     "NotificationCreate",
     "NotificationBroadcastCreate",
     "NotificationUpdate",
