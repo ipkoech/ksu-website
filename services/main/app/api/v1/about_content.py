@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
-from ...deps import CurrentUser, DbSession, require_scope
+from ...deps import CurrentUser, DbSession, permissions_for_user, require_scope
 from ...models import AboutPageContent, FactEdition, FactGroup, FactItem, HistoryMilestone
 from ...schemas import (
     AboutPageContentCreate, AboutPageContentUpdate, AboutWorkflowAction,
@@ -229,7 +229,7 @@ async def transition_about_content(kind: str, item_id: uuid.UUID, data: AboutWor
     if model is None:
         raise HTTPException(status_code=404, detail="Unknown About content kind")
     item = await _item_or_404(db, model, item_id)
-    permissions = set(getattr(user, "scopes", []) or [])
+    permissions = permissions_for_user(user)
     required = "content.publish" if data.action in {"publish", "unpublish"} else "content.review" if data.action in {"approve", "request_changes"} else "about.manage"
     if required not in permissions and "admin:*" not in permissions:
         raise HTTPException(status_code=403, detail="Insufficient workflow permission")

@@ -108,6 +108,7 @@ PORTAL_DEFINITIONS = {
         "service": "main",
         "href": "/corporate-communication",
         "permissions": {
+            "about.manage",
             "content.view",
             "content.manage",
             "content.manage_pages",

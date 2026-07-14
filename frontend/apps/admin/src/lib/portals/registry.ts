@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   BadgeCheck,
   Bell,
   BookOpen,
@@ -6688,6 +6689,18 @@ export const portalConfigs: Record<string, PortalConfig> = {
             href: "/corporate-communication/page-cms/spotlights",
             icon: ImageIcon,
             scope: ["partnership_spotlights.manage", "homepage.manage"],
+          },
+          {
+            title: "About KSU",
+            href: "/corporate-communication/page-cms/about",
+            icon: Landmark,
+            scope: ["about.manage", "admin:*"],
+          },
+          {
+            title: "Numbers & Facts",
+            href: "/corporate-communication/page-cms/numbers-facts",
+            icon: BarChart3,
+            scope: ["about.manage", "admin:*"],
           },
           {
             title: "Homepage Features",

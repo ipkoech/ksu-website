@@ -60,6 +60,7 @@ PERMISSION_SPECS = [
     ("content.approve", "Approve public content", "content", "approve"),
     ("content.schedule", "Schedule public content", "content", "schedule"),
     ("content.unpublish", "Unpublish public content", "content", "unpublish"),
+    ("about.manage", "Manage About KSU and institutional facts", "about", "manage"),
     ("clubs.view", "View student club records", "clubs", "view"),
     ("clubs.manage_own", "Manage assigned student club records", "clubs", "manage_own"),
     ("clubs.content_submit", "Submit student club content for review", "clubs", "content_submit"),
@@ -93,6 +94,7 @@ for permission_name in ALL_PERMISSIONS:
 
 
 COCMS_PERMISSION_NAMES = [
+    "about.manage",
     "content.view",
     "content.manage",
     "content.manage_pages",
