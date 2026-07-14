@@ -99,8 +99,11 @@ test("campus life renders as a full-width editorial mosaic", () => {
   assert.match(variantsSource, /Alumni and community/);
   assert.match(variantsSource, /lg:min-h-\[320vh\]/);
   assert.match(homepageSource, /lg:sticky/);
-  assert.match(homepageSource, /lg:overflow-x-auto/);
-  assert.match(homepageSource, /lg:snap-x/);
+  assert.match(homepageSource, /campus-life-horizontal-rail/);
+  assert.match(homepageSource, /requestAnimationFrame/);
+  assert.match(homepageSource, /translate3d/);
+  assert.match(homepageSource, /closest\("\.campus-life-scroll-scene"\)/);
+  assert.doesNotMatch(homepageSource, /addEventListener\("wheel"/);
   assert.match(variantsSource, /lg:w-screen/);
   assert.match(variantsSource, /displayItems\(section\)/);
 });
