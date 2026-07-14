@@ -33,9 +33,9 @@ function MemberGroup({
   children: React.ReactNode;
 }) {
   return (
-    <section className="bg-white px-4 py-6 sm:px-6 lg:px-8" aria-label={title}>
+    <section className="bg-white px-4 py-5 sm:px-6 lg:px-8" aria-label={title}>
       <AboutReveal className="mx-auto w-full">
-        <div className="mb-5 text-center">
+        <div className="mb-4 text-center">
           <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold uppercase text-primary">
             {title}
           </h2>
@@ -132,9 +132,11 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
 
       <MemberGroup title="Council Members" description="Council members are shown in the official order published by the University.">
         {data.members.length ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="mx-auto flex max-w-[1160px] flex-wrap justify-center gap-4">
             {data.members.map((member) => (
-              <UniversityCouncilCard key={member.slug || member.id || member.name} member={member} />
+              <div key={member.slug || member.id || member.name} className="w-full sm:w-[190px] lg:w-[200px]">
+                <UniversityCouncilCard member={member} />
+              </div>
             ))}
           </div>
         ) : (

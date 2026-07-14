@@ -1,60 +1,171 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  Award,
-  BookOpen,
-  CalendarDays,
-  CheckCircle2,
-  FileText,
-  Landmark,
-  MapPin,
-  School,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import type { PublicFactsData } from "@/lib/public-about-data";
+import { ArrowRight, CheckCircle2, FileText } from "lucide-react";
+import { PublicImage } from "@/components/public/public-image";
+import type { PublicFactItem, PublicFactsData } from "@/lib/public-about-data";
 import { AboutReveal } from "./about-reveal";
 
-const iconMap: Record<string, LucideIcon> = {
-  award: Award,
-  calendar: CalendarDays,
-  landmark: Landmark,
-  "map-pin": MapPin,
-  school: School,
-  "book-open": BookOpen,
-};
+const groupFallbackImages = [
+  "/images/backgrounds/KSUGreenLandscapingMay2026-3885.jpg",
+  "/images/backgrounds/VCKSUMedicalSchoolInspectionApril1,2026-5704.jpg",
+  "/images/backgrounds/KSUB-RollPhotos2025-123.jpg",
+  "/images/backgrounds/KSUGreenLandscapingMay2026-7456.jpg",
+];
+
+function factValue(item: PublicFactItem) {
+  return `${item.prefix || ""}${item.display_value}${item.suffix || ""}${item.unit ? ` ${item.unit}` : ""}`;
+}
+
+function FactGroupCard({
+  group,
+  index,
+}: {
+  group: PublicFactsData["groups"][number];
+  index: number;
+}) {
+  const image = group.image?.url || groupFallbackImages[index % groupFallbackImages.length];
+
+  return (
+    <article className="group flex h-full flex-col overflow-hidden border border-slate-200 bg-white transition duration-300 hover:border-primary/25 hover:shadow-lg">
+      <PublicImage
+        src={image}
+        alt={group.image?.alt || group.image_alt_text || `${group.heading} at Kisii University`}
+        ratio="news"
+        className="overflow-hidden bg-slate-100"
+        sizes="(min-width: 1024px) 50vw, 100vw"
+        imageClassName="object-cover transition duration-700 group-hover:scale-[1.025]"
+      />
+      <div className="flex flex-1 flex-col p-6 sm:p-7">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
+          {String(index + 1).padStart(2, "0")}
+        </p>
+        <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-primary sm:text-3xl">
+          {group.heading}
+        </h2>
+        {group.summary ? (
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{group.summary}</p>
+        ) : null}
+        <ul className="mt-5 divide-y divide-slate-200 border-y border-slate-200">
+          {group.items.map((item) => (
+            <li key={item.id} className="py-4">
+              <div className="flex items-baseline justify-between gap-5">
+                <span className="text-sm font-semibold leading-6 text-slate-700">{item.label}</span>
+                <span className="max-w-[60%] text-right font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-slate-950 sm:text-2xl">
+                  {factValue(item)}
+                </span>
+              </div>
+              {item.explanation ? <p className="mt-2 text-sm leading-6 text-slate-500">{item.explanation}</p> : null}
+              {item.source_title ? (
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  Source: {item.source_url ? <Link href={item.source_url} className="font-semibold text-primary underline-offset-4 hover:underline">{item.source_title}</Link> : item.source_title}
+                </p>
+              ) : null}
+              {item.link_url ? (
+                <Link href={item.link_url} className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-primary underline-offset-4 hover:underline">
+                  {item.link_label || "Learn more"}<ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                </Link>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </article>
+  );
+}
 
 export function NumbersFactsPage({ data }: { data: PublicFactsData }) {
   const edition = data.edition;
+
   return (
-    <div className="bg-[#fbfaf6]">
-      <section className="relative overflow-hidden bg-primary px-5 py-16 text-white sm:px-8 lg:px-10 lg:py-24">
-        <div aria-hidden className="absolute inset-0 bg-[url('/images/backgrounds/KSUGreenLandscapingMay2026-3810.jpg')] bg-cover bg-center opacity-25" />
-        <div aria-hidden className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,55,39,.98)_0%,rgba(0,55,39,.9)_54%,rgba(0,55,39,.62)_100%),radial-gradient(circle_at_85%_30%,rgba(245,158,11,.25),transparent_35%)]" />
-        <div className="relative mx-auto w-full">
-          <nav aria-label="Breadcrumb" className="text-sm text-white/70"><Link href="/" className="hover:text-white">Home</Link><span className="mx-2">/</span><Link href="/about" className="hover:text-white">About KSU</Link><span className="mx-2">/</span><span>Numbers & Facts</span></nav>
-          <div className="mt-14 grid gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
-            <div className="max-w-4xl"><p className="text-xs font-bold uppercase tracking-[0.22em] text-secondary">Institutional profile</p><h1 className="mt-4 font-[family-name:var(--font-display)] text-5xl font-semibold leading-tight sm:text-6xl">{edition.title}</h1><p className="mt-6 max-w-3xl text-lg leading-8 text-white/80">{edition.introduction || "Verified facts about Kisii University, published with clear reporting context."}</p></div>
-            <div className="rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur"><p className="text-xs font-bold uppercase tracking-wider text-white/60">Reporting year</p><p className="mt-2 font-[family-name:var(--font-display)] text-4xl font-semibold text-secondary">{edition.reporting_year}</p>{edition.verified_on ? <p className="mt-2 flex items-center gap-2 text-xs text-white/70"><CheckCircle2 className="h-4 w-4" aria-hidden /> Verified {new Date(edition.verified_on).toLocaleDateString("en-KE", { dateStyle: "medium" })}</p> : null}</div>
+    <main className="bg-white">
+      <header className="border-b border-slate-200 bg-[#f6f4ef] px-5 py-10 sm:px-8 lg:px-10 lg:py-14">
+        <div className="w-full">
+          <nav aria-label="Breadcrumb" className="text-sm text-slate-600">
+            <Link href="/" className="font-semibold text-primary hover:underline">Home</Link>
+            <span className="mx-2" aria-hidden>/</span>
+            <Link href="/about" className="font-semibold text-primary hover:underline">About KSU</Link>
+            <span className="mx-2" aria-hidden>/</span>
+            <span>Numbers &amp; Facts</span>
+          </nav>
+          <div className="mt-8 max-w-5xl">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">About Kisii University</p>
+            <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-primary sm:text-5xl lg:text-6xl">
+              {edition.title}
+            </h1>
+            <p className="mt-5 max-w-4xl text-base leading-7 text-slate-700 sm:text-lg sm:leading-8">
+              {edition.introduction || "Kisii University at a glance: verified institutional figures, academic organisation and public reporting context."}
+            </p>
+          </div>
+        </div>
+      </header>
+
+      {data.available_years.length ? (
+        <section className="border-b border-slate-200 bg-white px-5 py-4 sm:px-8 lg:px-10" aria-label="Facts by reporting year">
+          <div className="flex w-full items-center gap-3 overflow-x-auto pb-1">
+            <span className="shrink-0 text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Reporting year</span>
+            {data.available_years.map((year) => (
+              <Link
+                key={year}
+                href={year === data.available_years[0] ? "/about/numbers-and-facts" : `/about/numbers-and-facts?year=${year}`}
+                aria-current={year === edition.reporting_year ? "page" : undefined}
+                className={`shrink-0 border px-4 py-2 text-sm font-bold transition ${year === edition.reporting_year ? "border-primary bg-primary text-white" : "border-slate-300 text-slate-700 hover:border-primary hover:text-primary"}`}
+              >
+                {year}
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      <section className="px-5 py-12 sm:px-8 lg:px-10 lg:py-16" aria-labelledby="facts-heading">
+        <div className="w-full">
+          <AboutReveal>
+            <div className="mb-8 grid gap-4 border-b border-primary/20 pb-6 md:grid-cols-[1fr_auto] md:items-end">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Annual institutional snapshot</p>
+                <h2 id="facts-heading" className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-primary sm:text-4xl">
+                  KSU in numbers — {edition.reporting_year}
+                </h2>
+              </div>
+              {edition.verified_on ? (
+                <p className="flex items-center gap-2 text-sm font-semibold text-slate-600">
+                  <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden />
+                  Verified {new Date(edition.verified_on).toLocaleDateString("en-KE", { dateStyle: "medium" })}
+                </p>
+              ) : null}
+            </div>
+          </AboutReveal>
+
+          <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,28rem),1fr))]">
+            {data.groups.map((group, index) => (
+              <AboutReveal key={group.id} className="h-full">
+                <FactGroupCard group={group} index={index} />
+              </AboutReveal>
+            ))}
           </div>
         </div>
       </section>
 
-      {data.available_years.length ? <section className="border-b border-slate-200 bg-white px-5 py-4 sm:px-8 lg:px-10"><div className="mx-auto flex w-full items-center gap-3 overflow-x-auto"><span className="shrink-0 text-xs font-bold uppercase tracking-wider text-slate-500">View year</span>{data.available_years.map((year) => <Link key={year} href={year === data.available_years[0] ? "/about/numbers-and-facts" : `/about/numbers-and-facts?year=${year}`} aria-current={year === edition.reporting_year ? "page" : undefined} className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold ${year === edition.reporting_year ? "bg-primary text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}>{year}</Link>)}</div></section> : null}
-
-      <div className="mx-auto w-full space-y-12 px-5 py-12 sm:px-8 lg:px-10">
-        {data.groups.map((group, groupIndex) => (
-          <AboutReveal key={group.id} className="w-full">
-          <section aria-labelledby={`facts-${group.slug}`}>
-            <div className="grid gap-6 border-b border-primary/15 pb-6 md:grid-cols-[5rem_1fr]"><p className="font-[family-name:var(--font-display)] text-5xl text-secondary/60">{String(groupIndex + 1).padStart(2, "0")}</p><div><h2 id={`facts-${group.slug}`} className="font-[family-name:var(--font-display)] text-3xl font-semibold text-primary sm:text-4xl">{group.heading}</h2>{group.summary ? <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">{group.summary}</p> : null}</div></div>
-            <div className="mt-7 grid gap-px overflow-hidden rounded-2xl border border-slate-200 bg-slate-200 sm:grid-cols-2 lg:grid-cols-3">
-              {group.items.map((item) => { const Icon = iconMap[item.icon_key || ""] || FileText; return <article key={item.id} className="min-h-52 bg-white p-7"><Icon className="h-7 w-7 text-primary" aria-hidden /><p className="mt-8 text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{item.label}</p><p className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">{item.prefix}{item.display_value}{item.suffix} {item.unit}</p>{item.explanation ? <p className="mt-4 text-sm leading-6 text-slate-600">{item.explanation}</p> : null}{item.source_title ? <p className="mt-5 border-t border-slate-100 pt-4 text-xs leading-5 text-slate-500">Source: {item.source_url ? <Link href={item.source_url} className="font-semibold text-primary hover:underline">{item.source_title}</Link> : item.source_title}</p> : null}{item.link_url ? <Link href={item.link_url} className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline">{item.link_label || "Learn more"}<ArrowRight className="h-4 w-4" /></Link> : null}</article>; })}
-            </div>
-          </section>
-          </AboutReveal>
-        ))}
-
-        {edition.methodology_note ? <aside className="rounded-2xl border border-primary/15 bg-white p-7"><p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">How to read these facts</p><p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600">{edition.methodology_note}</p></aside> : null}
-      </div>
-    </div>
+      <section className="bg-primary px-5 py-12 text-white sm:px-8 lg:px-10" aria-labelledby="context-heading">
+        <AboutReveal className="grid w-full gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,.8fr)] lg:items-center">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Reporting context</p>
+            <h2 id="context-heading" className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold sm:text-4xl">Facts with clear context</h2>
+            <p className="mt-4 max-w-3xl text-sm leading-7 text-white/80">
+              {edition.methodology_note || "Figures are published by reporting year and reviewed against the University’s institutional records."}
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+            {edition.source_document?.url ? (
+              <Link href={edition.source_document.url} className="inline-flex min-h-12 items-center justify-between gap-4 border border-white/30 px-4 py-3 text-sm font-bold transition hover:border-secondary hover:bg-white/10">
+                <span className="inline-flex items-center gap-2"><FileText className="h-4 w-4" aria-hidden />{edition.source_document.title || "Source document"}</span><ArrowRight className="h-4 w-4" aria-hidden />
+              </Link>
+            ) : null}
+            <Link href="/about/strategic-plan" className="inline-flex min-h-12 items-center justify-between gap-4 border border-white/30 px-4 py-3 text-sm font-bold transition hover:border-secondary hover:bg-white/10">
+              Strategy and institutional direction<ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          </div>
+        </AboutReveal>
+      </section>
+    </main>
   );
 }

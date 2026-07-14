@@ -689,6 +689,7 @@ class GovernanceService:
         portrait_alt = getattr(portrait_media, "alt_text", None) or f"{person.display_name}, {role}"
         return {
             "id": assignment.id,
+            "person_id": person.id,
             "name": person.display_name,
             "role": role,
             "slug": assignment.profile_slug,

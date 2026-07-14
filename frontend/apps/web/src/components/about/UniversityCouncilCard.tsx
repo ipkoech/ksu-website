@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
 import { PublicImage } from "@/components/public/public-image";
 import type { UniversityCouncilMemberCard as UniversityCouncilMemberCardData } from "@/lib/about-data";
 
 function profileHref(member: UniversityCouncilMemberCardData) {
-  return member.slug ? `/about/university-council/${member.slug}` : "/about/university-council";
+  if (member.person_id) return `/staff/${member.person_id}`;
+  return member.slug ? `/about/university-council/${member.slug}` : null;
 }
 
 export function UniversityCouncilCard({
@@ -17,47 +17,57 @@ export function UniversityCouncilCard({
   const featured = variant === "featured";
   const secretary = variant === "secretary";
   const summary = member.profile_summary?.trim();
+  const href = profileHref(member);
 
-  return (
-    <Link
-      href={profileHref(member)}
-      aria-label={`View profile of ${member.name}, ${member.role}`}
-      className={`group block overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-        featured ? "mx-auto max-w-[230px]" : secretary ? "mx-auto max-w-md" : ""
+  const card = (
+    <article
+      className={`group relative overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl ${
+        featured ? "mx-auto w-full max-w-[310px]" : secretary ? "mx-auto w-full max-w-[420px]" : "w-full"
       }`}
     >
-      <div className={secretary ? "grid gap-0 sm:grid-cols-[9rem_minmax(0,1fr)]" : ""}>
+      <div className={secretary ? "grid gap-0 sm:grid-cols-[8.5rem_minmax(0,1fr)]" : ""}>
         <PublicImage
           src={member.portrait?.url}
           alt={member.portrait?.alt || `${member.name}, ${member.role}`}
           ratio="profile"
-          className={secretary ? "h-full min-h-40" : "aspect-[4/3]"}
-          sizes={secretary ? "144px" : featured ? "230px" : "(min-width: 1280px) 18vw, (min-width: 640px) 33vw, 100vw"}
+          className={secretary ? "h-full min-h-36" : featured ? "aspect-[4/3]" : "aspect-[4/3]"}
+          sizes={secretary ? "136px" : featured ? "310px" : "200px"}
+          imageClassName="object-cover object-top transition duration-500 group-hover:scale-[1.025]"
         />
-        <div className="p-3.5">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className="font-[family-name:var(--font-display)] text-base font-semibold leading-tight text-slate-950">
-                {member.name}
-              </h3>
-              <p className="mt-2 inline-flex rounded-md bg-primary/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">
-                {member.role}
-              </p>
-            </div>
-            <ExternalLink aria-hidden className="mt-1 h-4 w-4 shrink-0 text-slate-400 transition group-hover:text-primary" />
-          </div>
+        <div className={featured ? "p-5 text-center" : "p-3 text-center"}>
+          <h3 className={`font-[family-name:var(--font-display)] font-semibold leading-tight text-slate-950 ${featured ? "text-xl" : "text-sm"}`}>
+            {member.name}
+          </h3>
+          <p className={`mt-2 font-bold uppercase tracking-[0.08em] text-secondary ${featured ? "text-xs" : "text-[10px]"}`}>
+            {member.role}
+          </p>
           {member.is_acting ? (
-            <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-secondary">
+            <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-secondary">
               Acting appointment
             </p>
           ) : null}
           {summary ? (
-            <p className="mt-3 line-clamp-2 text-xs leading-5 text-slate-600">
+            <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600">
               {summary}
             </p>
           ) : null}
         </div>
       </div>
-    </Link>
+      {href ? (
+        <span className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-full bg-primary/95 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-[0.14em] text-white transition-transform duration-300 group-hover:translate-y-0 group-focus-within:translate-y-0">
+          View staff profile
+        </span>
+      ) : null}
+    </article>
   );
+
+  return href ? (
+    <Link
+      href={href}
+      aria-label={`View staff profile of ${member.name}, ${member.role}`}
+      className={`block rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${featured || secretary ? "mx-auto" : ""}`}
+    >
+      {card}
+    </Link>
+  ) : card;
 }

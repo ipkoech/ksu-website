@@ -62,6 +62,7 @@ export type QualityAssurancePageData = {
 
 export type UniversityCouncilMemberCard = {
   id?: string;
+  person_id?: string | null;
   name: string;
   role: string;
   slug?: string | null;
