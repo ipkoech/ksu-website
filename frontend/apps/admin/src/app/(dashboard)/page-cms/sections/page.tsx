@@ -1,24 +1,34 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { FilterX, Layers3, MoreHorizontal, Sparkles } from "lucide-react";
+import { FilterX, Layers3, MoreHorizontal, Plus, Sparkles } from "lucide-react";
+import { toast } from "@ksu/ui";
 import {
   Badge,
   Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  Input,
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Switch,
 } from "@ksu/ui/components";
 import { DataTable } from "@/components/data-table/data-table";
 import { TableSearch } from "@/components/shared/table-search";
@@ -27,14 +37,38 @@ import { usePermissions } from "@/hooks/use-permissions";
 import { PageTransition } from "@/lib/animations";
 import {
   PAGE_SCOPE_TYPES,
+  PAGE_SECTION_LAYOUT_VARIANTS,
   PAGE_SECTION_STATUSES,
   pageSectionsApi,
   type PageScopeType,
   type PageSection,
+  type PageSectionLayoutVariant,
   type PageSectionStatus,
 } from "@/lib/api/page-cms";
 
 const pageOptions = ["all", "homepage", "about", "research", "library"] as const;
+
+type NewSectionForm = {
+  page_key: string;
+  scope_type: PageScopeType;
+  section_key: string;
+  title: string;
+  layout_variant: PageSectionLayoutVariant;
+  display_order: number;
+  is_enabled: boolean;
+};
+
+function emptyNewSectionForm(): NewSectionForm {
+  return {
+    page_key: "homepage",
+    scope_type: "university",
+    section_key: "",
+    title: "",
+    layout_variant: PAGE_SECTION_LAYOUT_VARIANTS[0],
+    display_order: 100,
+    is_enabled: true,
+  };
+}
 
 function getColumns(): ColumnDef<PageSection>[] {
   return [
@@ -123,12 +157,16 @@ function scopeSummary(section: PageSection) {
 }
 
 export default function PageCmsSectionsPage() {
+  const router = useRouter();
   const { hasPermission } = usePermissions();
   const [search, setSearch] = useState("");
   const [pageKey, setPageKey] = useState<(typeof pageOptions)[number]>("all");
   const [scopeType, setScopeType] = useState<"all" | PageScopeType>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | PageSectionStatus>("all");
   const [isLoading, setIsLoading] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newSection, setNewSection] = useState<NewSectionForm>(() => emptyNewSectionForm());
   const [error, setError] = useState<string | null>(null);
   const [sections, setSections] = useState<PageSection[]>([]);
 
@@ -177,13 +215,57 @@ export default function PageCmsSectionsPage() {
     hasPermission("library_homepage.manage");
   const hasFilters = Boolean(search) || pageKey !== "all" || scopeType !== "all" || statusFilter !== "all";
 
+  const handleCreateSection = async () => {
+    if (!canCreateSections) {
+      toast.error("You do not have permission to create page sections.");
+      return;
+    }
+    if (!newSection.page_key.trim() || !newSection.section_key.trim()) {
+      toast.error("Page and section key are required.");
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const response = await pageSectionsApi.create({
+        page_key: newSection.page_key.trim(),
+        scope_type: newSection.scope_type,
+        scope_id: null,
+        section_key: newSection.section_key.trim(),
+        title: newSection.title.trim() || null,
+        subtitle: null,
+        description: null,
+        settings: {},
+        layout_variant: newSection.layout_variant,
+        display_order: newSection.display_order,
+        is_enabled: newSection.is_enabled,
+        valid_from: null,
+        valid_to: null,
+      });
+      const created = response.data;
+      setSections((current) => [created, ...current]);
+      setCreateOpen(false);
+      setNewSection(emptyNewSectionForm());
+      toast.success("Section created");
+      router.push(`/corporate-communication/page-cms/sections/${created.id}`);
+    } catch {
+      toast.error("Failed to create section.");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   return (
     <PageTransition>
       <PageHeader
         title="Page Sections"
         description="Manage scoped page sections, section items, media roles, and workflow transitions."
-        createHref={canCreateSections ? "/corporate-communication/page-cms/sections/new" : undefined}
-        createLabel="New Section"
+        actions={canCreateSections ? (
+          <Button type="button" onClick={() => setCreateOpen(true)}>
+            <Plus data-icon="inline-start" />
+            New Section
+          </Button>
+        ) : undefined}
         backHref="/corporate-communication/page-cms"
       />
 
@@ -292,6 +374,109 @@ export default function PageCmsSectionsPage() {
         )}
         emptyMessage={error || (search ? "No sections match this search." : "No page sections found.")}
       />
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Create page section</DialogTitle>
+            <DialogDescription>
+              Start with the section identity and layout. Items, media, timing, and workflow are edited on the detail page after creation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-2 sm:grid-cols-2">
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Page</p>
+              <Input
+                value={newSection.page_key}
+                onChange={(event) => setNewSection((current) => ({ ...current, page_key: event.target.value }))}
+                placeholder="homepage"
+              />
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Scope</p>
+              <Select
+                value={newSection.scope_type}
+                onValueChange={(value) => setNewSection((current) => ({ ...current, scope_type: value as PageScopeType }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose scope" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {PAGE_SCOPE_TYPES.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option.replace(/_/g, " ")}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Section Key</p>
+              <Input
+                value={newSection.section_key}
+                onChange={(event) => setNewSection((current) => ({ ...current, section_key: event.target.value }))}
+                placeholder="homepage.hero"
+              />
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Layout</p>
+              <Select
+                value={newSection.layout_variant}
+                onValueChange={(value) => setNewSection((current) => ({ ...current, layout_variant: value as PageSectionLayoutVariant }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose layout" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {PAGE_SECTION_LAYOUT_VARIANTS.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option.replace(/_/g, " ")}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <p className="text-sm font-medium">Title</p>
+              <Input
+                value={newSection.title}
+                onChange={(event) => setNewSection((current) => ({ ...current, title: event.target.value }))}
+                placeholder="Public section title"
+              />
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Display Order</p>
+              <Input
+                type="number"
+                value={newSection.display_order}
+                onChange={(event) => setNewSection((current) => ({ ...current, display_order: Number(event.target.value || 0) }))}
+              />
+            </div>
+            <div className="flex items-center justify-between rounded-xl border p-3">
+              <div>
+                <p className="text-sm font-medium">Enabled</p>
+                <p className="text-xs text-muted-foreground">Allow this section to participate in composition.</p>
+              </div>
+              <Switch
+                checked={newSection.is_enabled}
+                onCheckedChange={(checked) => setNewSection((current) => ({ ...current, is_enabled: checked }))}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" disabled={isCreating} onClick={() => void handleCreateSection()}>
+              {isCreating ? "Creating..." : "Create and continue"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageTransition>
   );
 }
