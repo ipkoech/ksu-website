@@ -1,11 +1,8 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import type { EntityHeaderNavItem } from "@ksu/ui/layout/public";
 import {
-  ArrowRight,
   Building2,
   CalendarDays,
-  Download,
   Eye,
   FileText,
   Globe,
@@ -13,11 +10,9 @@ import {
   Landmark,
   Mail,
   MapPin,
-  Newspaper,
   Phone,
   Quote,
   ShieldCheck,
-  Sparkles,
   Target,
   Users,
 } from "lucide-react";
@@ -25,14 +20,14 @@ import type { LucideIcon } from "lucide-react";
 import { ScrollReveal } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { PublicImage } from "@/components/public/public-image";
+import {
+  ExploreMorePanel,
+  MobileSchoolLinksGrid,
+  SchoolLinksPanel,
+  buildSchoolQuickLinks,
+} from "@/components/public/school-detail-navigation";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import type { SchoolDetailOverviewData } from "@/lib/school-detail-data";
-
-type QuickLink = {
-  label: string;
-  href: string;
-  icon: LucideIcon;
-};
 
 type StatementCard = {
   title: string;
@@ -96,10 +91,6 @@ function formatDate(value?: string | null) {
   }).format(date);
 }
 
-function navHas(navItems: EntityHeaderNavItem[] | undefined, label: string) {
-  return Boolean(navItems?.some((item) => item.label === label));
-}
-
 function DeanPortrait({
   name,
   image,
@@ -131,140 +122,6 @@ function SectionKicker({ children }: { children: string }) {
     <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
       {children}
     </p>
-  );
-}
-
-function buildQuickLinks({
-  baseHref,
-  navItems,
-  counts,
-}: {
-  baseHref: string;
-  navItems?: EntityHeaderNavItem[];
-  counts: SchoolDetailOverviewData["counts"];
-}) {
-  const links: QuickLink[] = [
-    {
-      label: "Programmes",
-      href: `${baseHref}/programmes`,
-      icon: GraduationCap,
-    },
-    { label: "Team", href: `${baseHref}/team`, icon: Users },
-  ];
-
-  if (counts.publications > 0 || navHas(navItems, "Publications")) {
-    links.push({
-      label: "Publications",
-      href: `${baseHref}/publications`,
-      icon: FileText,
-    });
-  }
-
-  links.push(
-    { label: "News", href: `${baseHref}/news`, icon: Newspaper },
-    { label: "Downloads", href: `${baseHref}/downloads`, icon: Download },
-  );
-
-  if (counts.clubs > 0 || navHas(navItems, "Clubs")) {
-    links.push({
-      label: "Clubs & Societies",
-      href: `${baseHref}/clubs`,
-      icon: Sparkles,
-    });
-  }
-
-  links.push({ label: "Contact", href: `${baseHref}/contact`, icon: Phone });
-
-  return links;
-}
-
-function QuickLinksPanel({ links }: { links: QuickLink[] }) {
-  return (
-    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
-      <SectionKicker>Quick Links</SectionKicker>
-      <nav aria-label="School quick links" className="mt-3">
-        <ul className="divide-y divide-slate-100">
-          {links.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className="group flex min-h-10 items-center gap-3 py-2 text-sm font-medium text-slate-700 transition hover:text-primary"
-                >
-                  <Icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
-                  <span className="min-w-0 flex-1">{item.label}</span>
-                  <ArrowRight
-                    aria-hidden
-                    className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
-                  />
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-    </section>
-  );
-}
-
-function ExploreMorePanel() {
-  const links: QuickLink[] = [
-    {
-      label: "Academic Calendar",
-      href: "/academics/calendar",
-      icon: CalendarDays,
-    },
-    { label: "Admissions", href: "/admissions", icon: GraduationCap },
-  ];
-
-  return (
-    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
-      <SectionKicker>Explore More</SectionKicker>
-      <ul className="mt-3 divide-y divide-slate-100">
-        {links.map((item) => {
-          const Icon = item.icon;
-
-          return (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                className="group flex min-h-10 items-center gap-3 py-2 text-sm font-medium text-slate-700 transition hover:text-primary"
-              >
-                <Icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
-                <span className="min-w-0 flex-1">{item.label}</span>
-                <ArrowRight
-                  aria-hidden
-                  className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
-                />
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
-  );
-}
-
-function MobileQuickGrid({ links }: { links: QuickLink[] }) {
-  return (
-    <section className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:hidden">
-      {links.map((item) => {
-        const Icon = item.icon;
-
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="flex min-h-[5rem] flex-col items-center justify-center gap-2 rounded-[1.1rem] border border-slate-200 bg-white p-2 text-center text-[0.72rem] font-semibold leading-4 text-slate-700 shadow-sm transition hover:border-primary/30 hover:text-primary"
-          >
-            <Icon aria-hidden className="h-5 w-5 text-primary" />
-            <span>{item.label}</span>
-          </Link>
-        );
-      })}
-    </section>
   );
 }
 
@@ -543,7 +400,7 @@ export function SchoolDetailOverview({
   const phone = present(school.phone);
   const office = present(school.office_location);
   const website = present(school.website);
-  const quickLinks = buildQuickLinks({ baseHref, navItems, counts });
+  const quickLinks = buildSchoolQuickLinks({ baseHref, navItems, counts });
   const established =
     formatDate(school.establishment_date) ?? school.founded_year ?? null;
 
@@ -595,7 +452,7 @@ export function SchoolDetailOverview({
           </div>
           <div className="grid w-full gap-4 xl:grid-cols-[minmax(220px,0.2fr)_minmax(0,1fr)_minmax(260px,0.22fr)] 2xl:grid-cols-[minmax(240px,0.18fr)_minmax(0,1fr)_minmax(300px,0.22fr)] xl:items-start">
             <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
-              <QuickLinksPanel links={quickLinks} />
+              <SchoolLinksPanel links={quickLinks} />
               <ExploreMorePanel />
             </aside>
 
@@ -610,7 +467,7 @@ export function SchoolDetailOverview({
                   deanEmail={deanEmail}
                 />
               ) : null}
-              <MobileQuickGrid links={quickLinks} />
+              <MobileSchoolLinksGrid links={quickLinks} />
               {overview ? (
                 <AboutCard schoolName={schoolName} overview={overview} />
               ) : null}

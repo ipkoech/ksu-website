@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import type { EntityHeaderNavItem } from "@ksu/ui/layout/public";
 import {
   ArrowRight,
-  CalendarDays,
   Download,
   FileText,
   Globe,
@@ -19,6 +18,13 @@ import type { LucideIcon } from "lucide-react";
 import { ScrollReveal } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { EntityTeamSection } from "@/components/public/entity-team-section";
+import {
+  ExploreMorePanel,
+  MobileSchoolLinksGrid,
+  SchoolLinksPanel,
+  buildSchoolMediaLinks,
+  buildSchoolQuickLinks,
+} from "@/components/public/school-detail-navigation";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import type { SchoolDetailOverviewData } from "@/lib/school-detail-data";
 import {
@@ -37,13 +43,6 @@ export type SchoolDetailSectionKey =
   | "downloads"
   | "clubs"
   | "contact";
-
-type QuickLink = {
-  label: string;
-  href: string;
-  icon: LucideIcon;
-  section: SchoolDetailSectionKey | EntityMediaType;
-};
 
 type SectionMeta = {
   eyebrow: string;
@@ -148,24 +147,6 @@ function SectionKicker({ children }: { children: string }) {
       {children}
     </p>
   );
-}
-
-function buildMediaTypeLinks(baseHref: string): QuickLink[] {
-  return [
-    { label: "News", href: `${baseHref}/media/news`, icon: Newspaper, section: "news" },
-    {
-      label: "Events",
-      href: `${baseHref}/media/events`,
-      icon: CalendarDays,
-      section: "events",
-    },
-    {
-      label: "Gallery",
-      href: `${baseHref}/media/gallery`,
-      icon: Sparkles,
-      section: "gallery",
-    },
-  ];
 }
 
 function PageIntro({ meta }: { meta: SectionMeta }) {
@@ -395,35 +376,6 @@ function mediaLabel(item: SchoolDetailOverviewData["updates"][number]) {
   return "News";
 }
 
-function LinkedMediaCategory({ item }: { item: QuickLink }) {
-  const Icon = item.icon;
-
-  return (
-    <Link
-      href={item.href}
-      className="group rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
-    >
-      <div className="flex gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
-          <Icon aria-hidden className="h-5 w-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
-            Media category
-          </p>
-          <h2 className="mt-1 text-base font-bold text-slate-950 group-hover:text-primary">
-            {item.label}
-          </h2>
-        </div>
-        <ArrowRight
-          aria-hidden
-          className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
-        />
-      </div>
-    </Link>
-  );
-}
-
 function MediaSection({
   data,
   mediaType,
@@ -439,15 +391,6 @@ function MediaSection({
 
   return (
     <section className="grid gap-3">
-      {!mediaType ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {buildMediaTypeLinks(`/academics/schools/${data.school.slug}`).map(
-            (item) => (
-              <LinkedMediaCategory key={item.href} item={item} />
-            ),
-          )}
-        </div>
-      ) : null}
       {fallbackCount > 0 && scopedCount === 0 && mediaType !== "gallery" ? (
         <p className="rounded-[1.25rem] border border-dashed border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
           No records are currently published for this school, so the latest
@@ -633,6 +576,7 @@ export function SchoolDetailSection({
   data,
   section,
   header,
+  navItems,
   mediaType,
 }: {
   data: SchoolDetailOverviewData;
@@ -641,6 +585,7 @@ export function SchoolDetailSection({
   navItems?: EntityHeaderNavItem[];
   mediaType?: EntityMediaType;
 }) {
+  const baseHref = `/academics/schools/${data.school.slug}`;
   const baseMeta = sectionMeta[section];
   const meta =
     section === "media"
@@ -650,11 +595,17 @@ export function SchoolDetailSection({
         body: entityMediaTypeBody(mediaType),
       }
       : baseMeta;
+  const navigationLinks =
+    section === "media"
+      ? buildSchoolMediaLinks(baseHref)
+      : buildSchoolQuickLinks({ baseHref, navItems, counts: data.counts });
+  const activeSection = section === "media" ? (mediaType ?? "media") : section;
+  const navTitle = section === "media" ? "Content Items" : "Quick Links";
 
   return (
     <PageShell header={header}>
       <AboutPageLenis>
-        <section className="w-full bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_70%)] px-4 py-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <section className="w-full bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_68%,#f6f8fc_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="mb-4">
             <BreadcrumbTrail
               items={[
@@ -669,18 +620,36 @@ export function SchoolDetailSection({
               ]}
             />
           </div>
-          <div className="grid w-full gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(240px,0.24fr)] 2xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.22fr)] xl:items-start">
-            <ScrollReveal as="main" className="grid min-w-0 gap-3">
+          <div className="grid w-full gap-4 xl:grid-cols-[minmax(220px,0.2fr)_minmax(0,1fr)_minmax(260px,0.22fr)] 2xl:grid-cols-[minmax(240px,0.18fr)_minmax(0,1fr)_minmax(300px,0.22fr)] xl:items-start">
+            <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
+              <SchoolLinksPanel
+                links={navigationLinks}
+                activeSection={activeSection}
+                title={navTitle}
+                ariaLabel={
+                  section === "media"
+                    ? "School media content navigation"
+                    : "School quick links"
+                }
+              />
+              {section === "media" ? null : <ExploreMorePanel />}
+            </aside>
+
+            <ScrollReveal as="main" className="grid min-w-0 gap-4">
               <PageIntro meta={meta} />
+              <MobileSchoolLinksGrid
+                links={navigationLinks}
+                activeSection={activeSection}
+              />
               {renderSection(section, data, mediaType)}
             </ScrollReveal>
 
-            <aside className="hidden min-w-0 space-y-3 xl:block xl:sticky xl:top-28">
+            <aside className="hidden min-w-0 space-y-4 xl:block xl:sticky xl:top-28">
               <ContactPanel data={data} />
               <SchoolInfoPanel data={data} />
             </aside>
 
-            <aside className="grid gap-3 xl:hidden">
+            <aside className="grid gap-4 xl:hidden">
               <ContactPanel data={data} />
               <SchoolInfoPanel data={data} />
             </aside>
