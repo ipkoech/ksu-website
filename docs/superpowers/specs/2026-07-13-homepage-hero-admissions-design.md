@@ -32,6 +32,27 @@ The composed homepage endpoint does not currently resolve an admissions state. T
 - Calculating or publishing unverified institutional statistics.
 - Redesigning homepage sections after the hero in this implementation slice.
 
+## Clean Static Hero Revision
+
+The approved visual direction for the next implementation slice is a clean, static media-led hero. The hero should use the Kisii University theme tokens, keep the campus background image or video clear, and avoid the current heavy darkened treatment.
+
+The first viewport should prioritize institutional identity over dense operational widgets:
+
+- Use one strong campus image or video as the full-bleed background.
+- Prefer `hero.media.video` with `hero.media.poster` when supplied by `/api/v1/homepage`.
+- Prefer `hero.media.desktop` and `hero.media.mobile` when supplied.
+- Use the provided Kisii administration campus image as the local fallback.
+- Render text directly over the media, not inside a card.
+- Use a subtle directional primary overlay only where text needs contrast.
+- Do not blur the background image.
+- Keep copy short: eyebrow when available, "Kisii University" or the backend headline, one concise supporting sentence, and two primary actions.
+- Keep CTAs limited to "Apply Now" and "Explore Programmes" unless the backend provides a stronger pair.
+- Do not render a large admissions panel, countdown card, or hero metrics in this top section.
+- Keep detailed admissions state in the following homepage band or pulse section.
+- Keep institutional stats in the lower "Kisii University at a Glance" section.
+
+Verification for this revision must confirm desktop and mobile readability, clear media rendering, theme-token colors, no horizontal overflow, and that the next section is visible or nearly visible below the hero.
+
 ## Approved Public Behaviour
 
 The admissions panel has exactly three resolved states:
