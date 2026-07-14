@@ -376,46 +376,33 @@ export function PulseStripSection({ section }: SectionVariantProps) {
     typeof section.settings?.maxItems === "number"
       ? section.settings.maxItems
       : 5;
-  const cta = settingCta(section, "cta");
 
   return (
     <section
       aria-label={section.title ?? "University pulse"}
       className="border-y border-primary/10 bg-primary text-white"
     >
-      <div className="mx-auto grid max-w-[1680px] gap-0 px-4 sm:px-6 lg:grid-cols-[260px_minmax(0,1fr)_auto] lg:px-8 xl:px-10 2xl:px-12">
-        <div className="flex min-h-[104px] items-center gap-3 border-b border-white/10 py-5 lg:border-b-0 lg:border-r lg:pr-6">
-          <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/10 text-secondary">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-secondary/30" />
-            <Activity className="relative h-6 w-6" aria-hidden />
+      <div className="mx-auto grid max-w-[1680px] gap-0 px-4 sm:px-6 lg:grid-cols-[190px_minmax(0,1fr)] lg:px-8 xl:px-10 2xl:px-12">
+        <div className="flex min-h-[86px] items-center gap-3 border-b border-white/10 py-4 lg:border-b-0 lg:border-r lg:pr-5">
+          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-secondary">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-secondary/25" />
+            <Activity className="relative h-5 w-5" aria-hidden />
           </span>
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/65">
-              {section.subtitle ?? "Live updates"}
-            </p>
-            <h2 className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold text-white">
+            <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold leading-tight text-white">
               {section.title ?? "University pulse"}
             </h2>
+            <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/55">
+              Live updates
+            </p>
           </div>
         </div>
 
-        <div className="-mx-4 flex snap-x gap-0 overflow-x-auto px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:grid lg:grid-cols-3 lg:divide-x lg:divide-white/10 lg:overflow-visible lg:px-0 xl:grid-cols-5">
+        <div className="-mx-4 flex snap-x gap-0 overflow-x-auto px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:grid lg:auto-cols-fr lg:grid-flow-col lg:divide-x lg:divide-white/10 lg:overflow-visible lg:px-0">
           {items.slice(0, maxItems).map((item, index) => (
             <PulseItem key={item.id} item={item} index={index} />
           ))}
         </div>
-
-        {cta ? (
-          <div className="flex items-center border-t border-white/10 py-4 lg:border-l lg:border-t-0 lg:pl-5">
-            <LinkWrapper
-              href={cta.href}
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-white/20 px-4 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-white/10"
-            >
-              {cta.label}
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </LinkWrapper>
-          </div>
-        ) : null}
       </div>
     </section>
   );
@@ -1046,9 +1033,9 @@ function PulseItem({
 }) {
   const Icon = pulseIcon(item, index);
   const body = (
-    <div className="group flex min-h-[104px] min-w-[270px] snap-start items-center gap-3 border-r border-white/10 px-4 py-5 transition hover:bg-white/[0.07] sm:min-w-[300px] lg:min-w-0 lg:border-r-0">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white/10 text-secondary transition group-hover:bg-secondary group-hover:text-white">
-        <Icon className="h-5 w-5" aria-hidden />
+    <div className="group flex min-h-[86px] min-w-[250px] snap-start items-center gap-3 border-r border-white/10 px-4 py-4 transition hover:bg-white/[0.06] sm:min-w-[285px] lg:min-w-0 lg:border-r-0">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white/10 text-secondary transition group-hover:bg-white/15">
+        <Icon className="h-[18px] w-[18px]" aria-hidden />
       </span>
       <div className="min-w-0">
         <p className="line-clamp-1 text-sm font-semibold text-white">
@@ -1057,12 +1044,6 @@ function PulseItem({
         <p className="mt-1 line-clamp-2 text-xs leading-5 text-white/65">
           {item.body_text ?? item.subtitle}
         </p>
-        {item.cta_label ? (
-          <p className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.08em] text-secondary">
-            {item.cta_label}
-            <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-          </p>
-        ) : null}
       </div>
     </div>
   );
@@ -1222,17 +1203,6 @@ function itemImageUrl(item: HomepageSectionItem | undefined) {
 function settingText(section: HomepageSection, key: string) {
   const value = section.settings?.[key];
   return typeof value === "string" && value.trim() ? value : undefined;
-}
-
-function settingCta(section: HomepageSection, key: string) {
-  const value = section.settings?.[key];
-  if (!value || typeof value !== "object") return null;
-  const record = value as Record<string, unknown>;
-  const label = record.label;
-  const href = record.href;
-  if (typeof label !== "string" || typeof href !== "string") return null;
-  if (!label.trim() || !href.trim()) return null;
-  return { label, href };
 }
 
 function firstCta(items: HomepageSectionItem[] | undefined) {
