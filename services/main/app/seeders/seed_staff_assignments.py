@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ._shared import LEADERSHIP_PEOPLE, SeedContext, get_or_create_person, upsert_staff_assignment
 
 
 async def seed_staff_assignments(db: AsyncSession, ctx: SeedContext) -> None:
+    published_at = datetime.now(timezone.utc)
     for key, spec in LEADERSHIP_PEOPLE.items():
         if key not in ctx.people:
             await get_or_create_person(db, ctx, key, **spec)
@@ -51,6 +54,13 @@ async def seed_staff_assignments(db: AsyncSession, ctx: SeedContext) -> None:
         status="active",
         display_order=1,
         notes="Top-level governance authority.",
+        public_role_label="Chairperson",
+        official_designation="Chairperson, University Council",
+        appointment_category="chairperson",
+        appointment_status="published",
+        workflow_status="published",
+        published_at=published_at,
+        publish_without_portrait_override=True,
     )
 
     await upsert_staff_assignment(
@@ -71,6 +81,13 @@ async def seed_staff_assignments(db: AsyncSession, ctx: SeedContext) -> None:
         status="active",
         display_order=2,
         notes="Board assignment for the Vice Chancellor.",
+        public_role_label="Secretary to Council",
+        official_designation="Vice Chancellor, University Council Secretary",
+        appointment_category="secretary",
+        appointment_status="published",
+        workflow_status="published",
+        published_at=published_at,
+        publish_without_portrait_override=True,
     )
 
     for idx, key in enumerate(
@@ -103,6 +120,13 @@ async def seed_staff_assignments(db: AsyncSession, ctx: SeedContext) -> None:
             status="active",
             display_order=idx,
             notes="Council membership seeded from public governance listing.",
+            public_role_label="Council Member",
+            official_designation="Member, University Council",
+            appointment_category="member",
+            appointment_status="published",
+            workflow_status="published",
+            published_at=published_at,
+            publish_without_portrait_override=True,
         )
 
     vc_assignment = await upsert_staff_assignment(
@@ -172,7 +196,7 @@ async def seed_staff_assignments(db: AsyncSession, ctx: SeedContext) -> None:
         entity_type="board",
         entity_id=management.id,
         role="chairperson",
-        title="Chairperson, Management Board",
+        title="Vice Chancellor",
         hierarchy_level=2,
         reports_to_id=vc_assignment.id,
         is_primary=False,
@@ -181,17 +205,23 @@ async def seed_staff_assignments(db: AsyncSession, ctx: SeedContext) -> None:
         status="active",
         display_order=1,
         notes=None,
+        public_role_label="Vice Chancellor",
+        official_designation="Vice Chancellor",
+        appointment_category="chairperson",
+        appointment_status="published",
+        workflow_status="published",
+        published_at=published_at,
+        publish_without_portrait_override=True,
     )
-    for idx, key in enumerate(
-        (
-            "dvc_apf",
-            "dvc_arsa",
-            "registrar_admin",
-            "registrar_academic",
-            "finance_officer",
-        ),
-        start=2,
-    ):
+    management_specs = (
+        ("dvc_arsa", "Deputy Vice Chancellor (ARSA)"),
+        ("dvc_apf", "Deputy Vice Chancellor (AP&F)"),
+        ("registrar_admin", "Ag. Registrar (AHRCS)"),
+        ("registrar_academic", "Ag. Registrar (AA)"),
+        ("registrar_reirm", "Registrar (REIRM)"),
+        ("finance_officer", "Finance Officer"),
+    )
+    for idx, (key, official_title) in enumerate(management_specs, start=2):
         await upsert_staff_assignment(
             db,
             ctx,
@@ -201,7 +231,7 @@ async def seed_staff_assignments(db: AsyncSession, ctx: SeedContext) -> None:
             entity_type="board",
             entity_id=management.id,
             role="member",
-            title="Management Board Member",
+            title=official_title,
             hierarchy_level=4 if "registrar" in key or key == "finance_officer" else 3,
             reports_to_id=vc_assignment.id,
             is_primary=False,
@@ -210,6 +240,13 @@ async def seed_staff_assignments(db: AsyncSession, ctx: SeedContext) -> None:
             status="active",
             display_order=idx,
             notes="Management Board membership seeded from public university management listing.",
+            public_role_label=official_title,
+            official_designation=official_title,
+            appointment_category="member",
+            appointment_status="published",
+            workflow_status="published",
+            published_at=published_at,
+            publish_without_portrait_override=True,
         )
 
     registrar_admin_assignment = await upsert_staff_assignment(

@@ -12,9 +12,10 @@ export function UniversityCouncilCard({
   variant = "member",
 }: {
   member: UniversityCouncilMemberCardData;
-  variant?: "featured" | "member";
+  variant?: "featured" | "member" | "secretary";
 }) {
   const featured = variant === "featured";
+  const secretary = variant === "secretary";
   const summary = member.profile_summary?.trim();
 
   return (
@@ -22,24 +23,24 @@ export function UniversityCouncilCard({
       href={profileHref(member)}
       aria-label={`View profile of ${member.name}, ${member.role}`}
       className={`group block overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-        featured ? "mx-auto max-w-md" : ""
+        featured ? "mx-auto max-w-[230px]" : secretary ? "mx-auto max-w-md" : ""
       }`}
     >
-      <div className={featured ? "grid gap-0 sm:grid-cols-[11rem_minmax(0,1fr)]" : ""}>
+      <div className={secretary ? "grid gap-0 sm:grid-cols-[9rem_minmax(0,1fr)]" : ""}>
         <PublicImage
           src={member.portrait?.url}
           alt={member.portrait?.alt || `${member.name}, ${member.role}`}
           ratio="profile"
-          className={featured ? "h-full min-h-48" : ""}
-          sizes={featured ? "(min-width: 640px) 12rem, 100vw" : "(min-width: 1280px) 20vw, (min-width: 640px) 33vw, 100vw"}
+          className={secretary ? "h-full min-h-40" : "aspect-[4/3]"}
+          sizes={secretary ? "144px" : featured ? "230px" : "(min-width: 1280px) 18vw, (min-width: 640px) 33vw, 100vw"}
         />
-        <div className="p-5">
+        <div className="p-3.5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-slate-950">
+              <h3 className="font-[family-name:var(--font-display)] text-base font-semibold leading-tight text-slate-950">
                 {member.name}
               </h3>
-              <p className="mt-2 inline-flex rounded-md bg-primary/10 px-2.5 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
+              <p className="mt-2 inline-flex rounded-md bg-primary/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">
                 {member.role}
               </p>
             </div>
@@ -51,7 +52,7 @@ export function UniversityCouncilCard({
             </p>
           ) : null}
           {summary ? (
-            <p className="mt-4 line-clamp-4 text-sm leading-6 text-slate-600">
+            <p className="mt-3 line-clamp-2 text-xs leading-5 text-slate-600">
               {summary}
             </p>
           ) : null}

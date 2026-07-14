@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -90,6 +91,10 @@ async def seed_governance(db: AsyncSession, ctx: SeedContext) -> None:
         "mandate_body": board.mandate,
         "status": "published",
         "workflow_status": "published",
+        "published_at": datetime.now(timezone.utc),
     }
     if page_content is None:
         db.add(GovernancePageContent(id=uuid.uuid4(), **payload))
+    else:
+        for field_name, value in payload.items():
+            setattr(page_content, field_name, value)

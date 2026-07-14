@@ -245,7 +245,12 @@ function present(value?: string | number | null) {
 function displayName(person?: Person | null) {
   if (!person) return null;
   const fullName = present(person.full_name);
-  if (fullName) return fullName;
+  if (fullName) {
+    const title = present(person.title);
+    return title && !fullName.toLowerCase().startsWith(title.toLowerCase())
+      ? `${title} ${fullName}`
+      : fullName;
+  }
   return [person.title, person.first_name, person.middle_name, person.last_name]
     .map((item) => present(item))
     .filter(Boolean)

@@ -3,6 +3,7 @@ import { Download, Landmark } from "lucide-react";
 import { PublicImage } from "@/components/public/public-image";
 import type { UniversityCouncilPageData } from "@/lib/about-data";
 import { UniversityCouncilCard } from "./UniversityCouncilCard";
+import { AboutReveal } from "./about-reveal";
 
 function text(value?: string | null, fallback = "") {
   const trimmed = value?.trim();
@@ -32,21 +33,19 @@ function MemberGroup({
   children: React.ReactNode;
 }) {
   return (
-    <section className="bg-white px-4 py-12 sm:px-6 lg:px-8" aria-label={title}>
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-8 text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">
-            University Council
-          </p>
-          <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950">
+    <section className="bg-white px-4 py-6 sm:px-6 lg:px-8" aria-label={title}>
+      <AboutReveal className="mx-auto w-full">
+        <div className="mb-5 text-center">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold uppercase text-primary">
             {title}
           </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+          <div className="mx-auto mt-2 h-0.5 w-10 bg-secondary" />
+          <p className="sr-only">
             {description}
           </p>
         </div>
         {children}
-      </div>
+      </AboutReveal>
     </section>
   );
 }
@@ -64,15 +63,15 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
     <div className="bg-white">
       <section className="relative overflow-hidden bg-slate-950 text-white">
         <PublicImage
-          src={data.page.hero_image?.url}
+          src={data.page.hero_image?.url || "/images/backgrounds/KSUB-RollPhotos2025-122.jpg"}
           alt={data.page.hero_image?.alt || title}
           ratio="hero"
           priority
-          className="absolute inset-0 h-full w-full opacity-75"
+          className="absolute inset-0 h-full min-h-[340px] w-full opacity-75"
           imageClassName="object-cover"
         />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,51,35,0.92),rgba(0,51,35,0.58),rgba(0,0,0,0.18))]" />
-        <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+        <div className="relative mx-auto min-h-[340px] w-full px-4 py-7 sm:px-6 lg:px-8">
           <nav aria-label="Breadcrumb" className="text-xs font-semibold text-white/75">
             <Link href="/" className="hover:text-white">Home</Link>
             <span className="mx-2">/</span>
@@ -80,14 +79,14 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
             <span className="mx-2">/</span>
             <span>{title}</span>
           </nav>
-          <div className="mt-12 max-w-2xl">
+          <div className="mt-8 max-w-xl">
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-secondary">
               Governance
             </p>
-            <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight sm:text-5xl">
+            <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight">
               {title}
             </h1>
-            <p className="mt-6 max-w-xl text-base leading-8 text-white/90">
+            <p className="mt-4 max-w-lg text-sm leading-7 text-white/90">
               {description}
             </p>
           </div>
@@ -95,19 +94,16 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
       </section>
 
       {mandate ? (
-        <section className="bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
-          <div className="mx-auto grid max-w-7xl gap-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[4rem_minmax(0,1fr)_auto] lg:items-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white">
-              <Landmark aria-hidden className="h-7 w-7" />
+        <section className="relative z-10 -mt-8 px-4 pb-5 sm:px-6 lg:px-8">
+          <AboutReveal className="mx-auto grid w-full gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-md lg:grid-cols-[3.5rem_minmax(0,1fr)_auto] lg:items-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-secondary">
+              <Landmark aria-hidden className="h-6 w-6" />
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
                 {text(mandate.label, "Our Mandate")}
               </p>
-              <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
-                {text(mandate.heading, "Our Mandate")}
-              </h2>
-              <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-700">
+              <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-700">
                 {text(mandate.description, description)}
               </p>
             </div>
@@ -120,7 +116,7 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
                 <Download aria-hidden className="h-4 w-4" />
               </Link>
             ) : null}
-          </div>
+          </AboutReveal>
         </section>
       ) : null}
 
@@ -136,7 +132,7 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
 
       <MemberGroup title="Council Members" description="Council members are shown in the official order published by the University.">
         {data.members.length ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
             {data.members.map((member) => (
               <UniversityCouncilCard key={member.slug || member.id || member.name} member={member} />
             ))}
@@ -150,7 +146,7 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
 
       <MemberGroup title="Secretary to Council" description="The secretary supports Council governance records, meetings, and official communication.">
         {data.secretary ? (
-          <UniversityCouncilCard member={data.secretary} variant="featured" />
+          <UniversityCouncilCard member={data.secretary} variant="secretary" />
         ) : (
           <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-600">
             Secretary to Council profile is not currently published.

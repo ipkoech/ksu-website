@@ -32,6 +32,7 @@ import type {
   PublicHistoryMilestone,
 } from "@/lib/public-about-data";
 import { ImageComparison } from "./image-comparison";
+import { AboutReveal } from "./about-reveal";
 
 const heroFallback = "/images/backgrounds/KSUGreenLandscapingMay2026-3885.jpg";
 const identityFallback = "/images/backgrounds/KSUGreenLandscapingMay2026-7456.jpg";
@@ -159,7 +160,7 @@ export function PublicAboutPage({ data, historyInitiallyOpen = false }: { data: 
   const historyTriggerRef = useRef<HTMLButtonElement>(null);
   const content = data.content;
   const university = data.university;
-  const heroParagraphs = paragraphs(content?.hero_introduction || university.overview).slice(0, 2);
+  const heroParagraphs = paragraphs(content?.hero_introduction || university.overview).slice(0, 1);
   const coreValues = (university.core_values ?? "").split(/[;|\n]+/).map((item) => item.trim()).filter(Boolean);
   const quickFacts = university.quick_facts ?? {};
 
@@ -180,68 +181,68 @@ export function PublicAboutPage({ data, historyInitiallyOpen = false }: { data: 
 
   return (
     <div className="bg-[#fbfaf6] text-slate-950">
-      <section className="relative isolate min-h-[650px] overflow-hidden bg-primary text-white">
+      <section className="relative isolate min-h-[440px] overflow-hidden bg-primary text-white">
         <Image src={mediaUrl(content?.hero_media, heroFallback)} alt={content?.hero_media?.alt || "Aerial view of Kisii University campus"} fill priority sizes="100vw" className="object-cover motion-safe:animate-[kenburns_24s_ease-in-out_infinite_alternate]" />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,45,30,.96)_0%,rgba(0,45,30,.83)_42%,rgba(0,45,30,.18)_78%)]" />
-        <div className="relative mx-auto flex min-h-[650px] max-w-7xl flex-col justify-center px-5 py-16 sm:px-8 lg:px-10">
-          <nav aria-label="Breadcrumb" className="mb-14 text-sm font-semibold text-white/80"><Link href="/" className="hover:text-white">Home</Link><span className="mx-2">/</span><span>{content?.hero_eyebrow || "About Kisii University"}</span></nav>
-          <div className="max-w-3xl">
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-secondary">{content?.hero_eyebrow || "About Kisii University"}</p>
-            <h1 className="mt-5 whitespace-pre-line font-[family-name:var(--font-display)] text-5xl font-semibold leading-[1.02] sm:text-6xl lg:text-7xl">{(content?.hero_headline || "A Legacy of Excellence. A Future of Impact.").replace(". A Future", ".\nA Future")}</h1>
-            <div className="mt-7 max-w-2xl space-y-3 text-base leading-7 text-white/88">{heroParagraphs.map((item) => <p key={item}>{item}</p>)}</div>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <button ref={historyTriggerRef} type="button" onClick={() => setHistory(true)} className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-secondary px-5 py-3 text-sm font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-amber-400 focus:outline-none focus:ring-2 focus:ring-white motion-reduce:transform-none">Discover Our Journey <ArrowRight className="h-4 w-4" aria-hidden /></button>
-              {content?.video_url ? <button type="button" onClick={() => setVideoOpen(true)} className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-white/60 bg-white/5 px-5 py-3 text-sm font-bold text-white backdrop-blur transition hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white"><Play className="h-4 w-4" aria-hidden /> Watch Our Story</button> : null}
+        <div className="relative mx-auto flex min-h-[440px] w-full flex-col justify-center px-5 py-7 sm:px-8 lg:px-10">
+          <nav aria-label="Breadcrumb" className="mb-7 text-xs font-semibold text-white/80"><Link href="/" className="hover:text-white">Home</Link><span className="mx-2">/</span><span>{content?.hero_eyebrow || "About Kisii University"}</span></nav>
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">{content?.hero_eyebrow || "About Kisii University"}</p>
+            <h1 className="mt-3 whitespace-pre-line font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.04] sm:text-5xl lg:text-6xl">{(content?.hero_headline || "A Legacy of Excellence. A Future of Impact.").replace(". A Future", ".\nA Future")}</h1>
+            <div className="mt-4 max-w-xl text-sm leading-6 text-white/88">{heroParagraphs.map((item) => <p key={item}>{item}</p>)}</div>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button ref={historyTriggerRef} type="button" onClick={() => setHistory(true)} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-secondary px-4 py-2.5 text-xs font-bold uppercase text-slate-950 transition hover:-translate-y-0.5 hover:bg-amber-400 focus:outline-none focus:ring-2 focus:ring-white motion-reduce:transform-none">Discover Our Journey <ArrowRight className="h-4 w-4" aria-hidden /></button>
+              {content?.video_url ? <button type="button" onClick={() => setVideoOpen(true)} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-white/60 bg-white/5 px-4 py-2.5 text-xs font-bold uppercase text-white backdrop-blur transition hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white"><Play className="h-4 w-4" aria-hidden /> Watch Our Story</button> : null}
             </div>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-7xl gap-10 px-5 py-20 sm:px-8 lg:grid-cols-[.8fr_1.2fr] lg:items-center lg:px-10">
+      <AboutReveal className="mx-auto grid w-full gap-8 px-5 py-12 sm:px-8 lg:grid-cols-[.8fr_1.2fr] lg:items-center lg:px-10">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Our identity</p>
-          <h2 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-primary sm:text-5xl">{content?.identity_heading || "More Than a University, A Force for Good."}</h2>
-          <p className="mt-6 text-base leading-8 text-slate-700">{content?.identity_narrative || university.overview}</p>
-          <Link href="/about/numbers-and-facts" className="mt-7 inline-flex min-h-11 items-center gap-2 font-bold text-primary hover:underline">Read More About Kisii University <ArrowRight className="h-4 w-4" aria-hidden /></Link>
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-primary sm:text-4xl">{content?.identity_heading || "More Than a University, A Force for Good."}</h2>
+          <p className="mt-4 text-sm leading-7 text-slate-700">{content?.identity_narrative || university.overview}</p>
+          <Link href="/about/numbers-and-facts" className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-primary hover:underline">Read More About Kisii University <ArrowRight className="h-4 w-4" aria-hidden /></Link>
         </div>
-        <div className="relative min-h-[460px] overflow-hidden rounded-3xl bg-primary shadow-2xl">
+        <div className="relative min-h-[320px] overflow-hidden rounded-xl bg-primary shadow-lg">
           <Image src={mediaUrl(content?.identity_media, identityFallback)} alt={content?.identity_media?.alt || "Kisii University campus and learning environment"} fill sizes="(min-width:1024px) 58vw, 100vw" className="object-cover transition duration-1000 hover:scale-[1.03] motion-reduce:transition-none" />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-primary via-primary/85 to-transparent px-6 pb-6 pt-20 text-white">
             <p className="font-[family-name:var(--font-display)] text-2xl font-semibold">Discover Kisii University</p>
             <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold"><span className="rounded-full bg-white/12 px-3 py-2">Chartered in 2013</span><span className="rounded-full bg-white/12 px-3 py-2">Public University</span><span className="rounded-full bg-white/12 px-3 py-2">Kisii County</span><span className="rounded-full bg-white/12 px-3 py-2">Serving Kenya and Beyond</span></div>
           </div>
         </div>
-      </section>
+      </AboutReveal>
 
-      <section className="border-y border-primary/10 bg-white px-5 py-20 sm:px-8 lg:px-10">
-        <div className="mx-auto max-w-7xl">
+      <section className="border-y border-primary/10 bg-white px-5 py-10 sm:px-8 lg:px-10">
+        <AboutReveal className="mx-auto w-full">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Our beliefs</p>
           <div className="mt-7 grid gap-5 md:grid-cols-3">
             {[{ title: "Our Mission", body: university.mission, icon: Target }, { title: "Our Vision", body: university.vision, icon: Eye }, { title: "Our Philosophy", body: university.philosophy, icon: Sparkles }].map(({ title, body, icon: Icon }) => (
-              <article key={title} className="rounded-2xl border border-primary/10 bg-[#fbfaf6] p-7 transition hover:-translate-y-1 hover:shadow-xl motion-reduce:transform-none"><span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-secondary"><Icon className="h-6 w-6" aria-hidden /></span><h3 className="mt-6 font-[family-name:var(--font-display)] text-2xl font-semibold text-primary">{title}</h3><p className="mt-4 text-sm leading-7 text-slate-700">{body || "This institutional statement will appear when published."}</p></article>
+              <article key={title} className="rounded-xl border border-primary/10 bg-[#fbfaf6] p-5 transition hover:-translate-y-1 hover:shadow-lg motion-reduce:transform-none"><span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-secondary"><Icon className="h-5 w-5" aria-hidden /></span><h3 className="mt-4 font-[family-name:var(--font-display)] text-xl font-semibold text-primary">{title}</h3><p className="mt-3 text-sm leading-6 text-slate-700">{body || "This institutional statement will appear when published."}</p></article>
             ))}
           </div>
-        </div>
+        </AboutReveal>
       </section>
 
-      <section className="mx-auto grid max-w-7xl gap-12 px-5 py-20 sm:px-8 lg:grid-cols-2 lg:px-10">
+      <AboutReveal className="mx-auto grid w-full gap-8 px-5 py-10 sm:px-8 lg:grid-cols-2 lg:px-10">
         <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Core values</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-primary">What guides how we work</h2><div className="mt-7 grid gap-5 sm:grid-cols-2">{valueDetails.filter((item) => !coreValues.length || coreValues.some((value) => value.toLowerCase().includes(item.title.toLowerCase()))).map(({ title, body, icon: Icon }) => <article key={title} className="flex gap-4"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/20 text-primary"><Icon className="h-5 w-5" aria-hidden /></span><div><h3 className="font-bold text-slate-950">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{body}</p></div></article>)}</div></div>
         <div className="border-t border-primary/15 pt-10 lg:border-l lg:border-t-0 lg:pl-12 lg:pt-0"><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Our mandate</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-primary">Knowledge in service of society</h2><p className="mt-4 text-sm leading-7 text-slate-600">{content?.mandate_introduction}</p><div className="mt-7 grid gap-5 sm:grid-cols-2">{mandateDetails.map(({ title, body, icon: Icon }) => <article key={title} className="flex gap-4"><Icon className="mt-1 h-5 w-5 shrink-0 text-primary" aria-hidden /><div><h3 className="font-bold text-slate-950">{title}</h3><p className="mt-1 text-sm leading-6 text-slate-600">{body}</p></div></article>)}</div></div>
-      </section>
+      </AboutReveal>
 
-      <section className="bg-primary px-5 py-16 text-white sm:px-8 lg:px-10">
-        <div className="mx-auto grid max-w-7xl overflow-hidden rounded-3xl border border-white/15 bg-white/5 lg:grid-cols-[.7fr_1.3fr]">
-          <div className="p-8 lg:p-10"><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Campus transformation</p><h2 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight">From Our Roots.<br />To Our Future.</h2><p className="mt-5 text-sm leading-7 text-white/75">Our campus continues to evolve with our teaching, research and public mission.</p><button type="button" onClick={() => setHistory(true)} className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-xl bg-secondary px-4 py-3 text-sm font-bold text-slate-950">See the Transformation <ArrowRight className="h-4 w-4" aria-hidden /></button></div>
+      <section className="bg-primary px-5 py-8 text-white sm:px-8 lg:px-10">
+        <AboutReveal className="mx-auto grid w-full overflow-hidden rounded-xl border border-white/15 bg-white/5 lg:grid-cols-[.7fr_1.3fr]">
+          <div className="p-6 lg:p-7"><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Campus transformation</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight">From Our Roots.<br />To Our Future.</h2><p className="mt-3 text-sm leading-6 text-white/75">Our campus continues to evolve with our teaching, research and public mission.</p><button type="button" onClick={() => setHistory(true)} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-lg bg-secondary px-4 py-2.5 text-xs font-bold uppercase text-slate-950">See the Transformation <ArrowRight className="h-4 w-4" aria-hidden /></button></div>
           {content?.old_campus_media?.url && content?.modern_campus_media?.url ? (
             <ImageComparison before={content.old_campus_media.url} after={content.modern_campus_media.url} beforeAlt={content.old_campus_media.alt || "Historic Kisii University campus"} afterAlt={content.modern_campus_media.alt || "Modern Kisii University campus"} />
           ) : (
-            <div className="relative min-h-[380px]"><Image src={mediaUrl(content?.modern_campus_media, heroFallback)} alt={content?.modern_campus_media?.alt || "Modern Kisii University campus"} fill sizes="(min-width:1024px) 65vw, 100vw" className="object-cover" /><div className="absolute inset-0 bg-gradient-to-r from-primary/45 to-transparent" /><span className="absolute bottom-5 right-5 rounded-full bg-primary/85 px-4 py-2 text-xs font-bold uppercase tracking-wider">Today</span></div>
+            <div className="relative min-h-[280px]"><Image src={mediaUrl(content?.modern_campus_media, heroFallback)} alt={content?.modern_campus_media?.alt || "Modern Kisii University campus"} fill sizes="(min-width:1024px) 65vw, 100vw" className="object-cover" /><div className="absolute inset-0 bg-gradient-to-r from-primary/45 to-transparent" /><span className="absolute bottom-5 right-5 rounded-full bg-primary/85 px-4 py-2 text-xs font-bold uppercase tracking-wider">Today</span></div>
           )}
-        </div>
+        </AboutReveal>
       </section>
 
-      <section className="bg-white px-5 py-16 sm:px-8 lg:px-10">
-        <div className="mx-auto max-w-7xl"><div className="flex flex-col gap-5 border-b border-slate-200 pb-6 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Institutional profile</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-primary">Kisii University at a glance</h2></div><Link href="/about/numbers-and-facts" className="inline-flex min-h-11 items-center gap-2 font-bold text-primary hover:underline">KSU Numbers & Facts <ArrowRight className="h-4 w-4" aria-hidden /></Link></div><div className="grid sm:grid-cols-2 lg:grid-cols-3">{profile.map(({ label, value, icon: Icon }) => <div key={label} className="flex min-h-28 items-center gap-4 border-b border-slate-200 py-6 sm:px-5 sm:first:pl-0 lg:border-r lg:last:border-r-0"><Icon className="h-7 w-7 shrink-0 text-primary" aria-hidden /><div><p className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</p><p className="mt-1 text-sm font-semibold text-slate-950">{value}</p></div></div>)}</div></div>
+      <section className="bg-white px-5 py-9 sm:px-8 lg:px-10">
+        <AboutReveal className="mx-auto w-full"><div className="flex flex-col gap-5 border-b border-slate-200 pb-6 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Institutional profile</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-primary">Kisii University at a glance</h2></div><Link href="/about/numbers-and-facts" className="inline-flex min-h-11 items-center gap-2 font-bold text-primary hover:underline">KSU Numbers & Facts <ArrowRight className="h-4 w-4" aria-hidden /></Link></div><div className="grid sm:grid-cols-2 lg:grid-cols-3">{profile.map(({ label, value, icon: Icon }) => <div key={label} className="flex min-h-28 items-center gap-4 border-b border-slate-200 py-6 sm:px-5 sm:first:pl-0 lg:border-r lg:last:border-r-0"><Icon className="h-7 w-7 shrink-0 text-primary" aria-hidden /><div><p className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</p><p className="mt-1 text-sm font-semibold text-slate-950">{value}</p></div></div>)}</div></AboutReveal>
       </section>
 
       <HistoryDrawer open={historyOpen} milestones={data.history.milestones} historyDocument={data.history.document} onClose={() => setHistory(false)} />

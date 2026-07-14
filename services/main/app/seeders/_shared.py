@@ -121,6 +121,12 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "institutional_role": "registrar_academic_affairs",
         "bio": "Acting Registrar in charge of Academic Affairs.",
     },
+    "registrar_reirm": {
+        "full_name": "Onchari O. Ogara",
+        "title": "Prof.",
+        "institutional_role": "registrar_research_extension_innovation_resource_mobilization",
+        "bio": "Registrar in charge of Research, Extension, Innovation and Resource Mobilization.",
+    },
     "finance_officer": {
         "full_name": "Charles M. Mwangi",
         "title": "CPA",
@@ -278,8 +284,9 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "bio": "University Council member as listed on the governance page.",
     },
     "council_member_josphat_sawe": {
-        "full_name": "Josphat Sawe",
+        "full_name": "Josphat Sowe",
         "title": "Mr.",
+        "email": "josphat.sawe@kisiiuniversity.ac.ke",
         "institutional_role": "university_council_member_josphat_sawe",
         "bio": "University Council member as listed on the governance page.",
     },

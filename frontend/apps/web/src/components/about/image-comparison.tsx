@@ -18,7 +18,7 @@ export function ImageComparison({
   const [position, setPosition] = useState(50);
 
   return (
-    <div className="relative min-h-[380px] overflow-hidden bg-slate-900">
+    <div className="relative min-h-[280px] overflow-hidden bg-slate-900">
       <Image
         src={after}
         alt={afterAlt}
