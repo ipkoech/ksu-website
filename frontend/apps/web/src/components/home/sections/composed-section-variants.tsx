@@ -7,7 +7,6 @@ import {
   Bell,
   BookOpenCheck,
   CalendarDays,
-  CheckCircle2,
   FileDown,
   GraduationCap,
   Handshake,
@@ -446,48 +445,57 @@ export function FeaturedPartnershipSection({
   return (
     <section
       id={section.section_key}
-      className="border-b border-blue-100 bg-blue-50/45 py-5"
+      className="border-b border-blue-100 bg-white py-10 lg:py-12"
     >
       <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="overflow-hidden rounded-lg border border-blue-100 bg-white shadow-sm">
-          <div className="grid items-stretch lg:grid-cols-[0.82fr_1.18fr]">
+        <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+          <div className="relative">
             <PublicImage
               src={mediaUrl(image) ?? heriAfricaLaunchImage}
               alt={mediaAlt(
                 image,
                 title ?? "Kisii University and Heri Africa partnership",
               )}
-              ratio="fill"
-              className="h-40 rounded-none sm:h-48 lg:h-[240px]"
+              ratio="news"
+              className="min-h-[280px] rounded-none lg:min-h-[360px]"
               imageClassName="object-cover object-[50%_38%]"
             />
-            <div className="p-4 sm:p-5">
-              <SectionEyebrow
-                value={section.subtitle ?? "Featured partnership"}
-              />
-              <h2 className="mt-2 max-w-3xl font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-slate-950 sm:text-2xl">
-                {title ?? "Partnership spotlight"}
-              </h2>
-              <SectionBody
-                value={summary}
-                className="mt-2 max-w-3xl line-clamp-2 leading-6"
-              />
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                {pillars.slice(0, 4).map((pillar, index) => (
-                  <div
-                    key={`${String(pillar.label)}-${index}`}
-                    className="flex min-h-9 items-center gap-2 rounded-md border border-blue-100 bg-blue-50/50 px-2.5 py-1.5 text-xs font-semibold leading-4 text-primary"
-                  >
-                    <CheckCircle2
-                      className="h-3.5 w-3.5 shrink-0 text-secondary"
-                      aria-hidden
-                    />
-                    {String(pillar.label ?? "Partnership opportunity")}
-                  </div>
-                ))}
-              </div>
-              {cta ? <CtaLink item={cta} className="mt-4" /> : null}
+            <div className="absolute bottom-0 left-0 right-0 bg-primary/88 p-4 text-white backdrop-blur-sm sm:left-auto sm:right-5 sm:w-[min(360px,calc(100%-2.5rem))]">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
+                Strategic partnership
+              </p>
+              <p className="mt-1 text-sm leading-6 text-white/78">
+                Building Africa together through research, enterprise and
+                community impact.
+              </p>
             </div>
+          </div>
+
+          <div className="max-w-3xl">
+            <SectionEyebrow value={section.subtitle ?? "Featured partnership"} />
+            <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl lg:text-5xl">
+              {title ?? "Partnership spotlight"}
+            </h2>
+            <SectionBody
+              value={summary}
+              className="mt-4 max-w-2xl text-base leading-7"
+            />
+            <div className="mt-7 divide-y divide-blue-100 border-y border-blue-100">
+              {pillars.slice(0, 4).map((pillar, index) => (
+                <div
+                  key={`${String(pillar.label)}-${index}`}
+                  className="flex items-center gap-4 py-3"
+                >
+                  <span className="font-[family-name:var(--font-display)] text-sm font-semibold text-secondary">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <p className="text-sm font-semibold leading-6 text-primary">
+                    {String(pillar.label ?? "Partnership opportunity")}
+                  </p>
+                </div>
+              ))}
+            </div>
+            {cta ? <CtaLink item={cta} className="mt-7" /> : null}
           </div>
         </div>
       </div>

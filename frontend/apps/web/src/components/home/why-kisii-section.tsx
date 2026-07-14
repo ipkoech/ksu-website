@@ -58,70 +58,82 @@ export function WhyKisiiSection({
   return (
     <section
       id={section.section_key}
-      className="overflow-hidden border-b border-blue-100 bg-white py-8 lg:py-10"
+      className="overflow-hidden border-b border-blue-100 bg-white py-10 lg:py-12"
     >
       <div
         ref={isVisible.ref}
         data-visible={isVisible.visible ? "true" : "false"}
-        className="mx-auto grid max-w-[1680px] gap-5 px-4 transition duration-700 motion-safe:translate-y-4 motion-safe:opacity-0 data-[visible=true]:translate-y-0 data-[visible=true]:opacity-100 sm:px-6 lg:grid-cols-[minmax(0,7fr)_minmax(300px,3fr)] lg:px-8 xl:px-10 2xl:px-12"
+        className="mx-auto max-w-[1680px] px-4 transition duration-700 motion-safe:translate-y-4 motion-safe:opacity-0 data-[visible=true]:translate-y-0 data-[visible=true]:opacity-100 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
       >
-        <div className="rounded-xl border border-blue-100 bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_100%)] p-4 shadow-sm shadow-blue-100/60 sm:p-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div className="max-w-3xl">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,0.58fr)_minmax(0,0.42fr)]">
+          <div className="relative min-h-[440px] overflow-hidden bg-primary">
+            <PublicImage
+              src={itemImageUrl(reasons[0])}
+              alt={
+                contentText(reasons[0], "imageAlt") ??
+                reasons[0]?.media_alt_text ??
+                section.title ??
+                "Kisii University"
+              }
+              ratio="fill"
+              className="absolute inset-0 h-full w-full"
+              imageClassName="object-cover object-[50%_42%]"
+              sizes="(min-width: 1024px) 58vw, 100vw"
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.08),rgba(0,61,43,0.82))]" />
+            <div className="absolute inset-x-0 bottom-0 p-5 text-white sm:p-7 lg:p-8">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
                 {section.subtitle ?? "Why choose KSU"}
               </p>
-              <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
+              <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
                 {section.title ?? "Why Kisii University?"}
               </h2>
               {section.description ? (
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                <p className="mt-4 max-w-2xl text-base leading-7 text-white/78">
                   {section.description}
                 </p>
               ) : null}
             </div>
-            <span className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-sm shadow-primary/20 sm:flex">
-              <Landmark className="h-5 w-5" aria-hidden />
-            </span>
           </div>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="flex flex-col justify-center">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
+              Reasons to choose KSU
+            </p>
+            <div className="mt-4 divide-y divide-blue-100 border-y border-blue-100">
             {reasons.map((item, index) => (
-              <ReasonCard
+              <ReasonStatement
                 key={item.id}
                 item={item}
                 index={index}
                 active={isVisible.visible}
               />
             ))}
+            </div>
           </div>
         </div>
 
         {facts.length ? (
-          <aside className="relative flex overflow-hidden rounded-xl bg-primary p-4 text-white shadow-sm shadow-primary/20 sm:p-5">
-            <div className="absolute -right-14 -top-16 h-40 w-40 rounded-full bg-secondary/20 blur-3xl" />
-            <div className="absolute -bottom-20 left-6 h-36 w-36 rounded-full bg-white/10 blur-3xl" />
-            <div className="relative flex min-h-full w-full flex-col">
+          <aside className="relative mt-8 overflow-hidden bg-primary p-4 text-white sm:p-5 lg:p-6">
+            <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-secondary/20 blur-3xl" />
+            <div className="relative">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
                 {factsSection?.title ?? "KSU at a glance"}
               </p>
-              <h3 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight">
-                Proof in numbers
-              </h3>
 
-              <div className="mt-4 grid flex-1 grid-cols-2 gap-2">
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-7">
                 {facts.map((fact, index) => {
                   const Icon = statIcons[index % statIcons.length];
                   return (
                     <div
                       key={fact.id}
-                      className="group flex min-h-[74px] flex-col justify-center rounded-lg border border-white/10 bg-white/[0.08] p-3 backdrop-blur transition duration-300 hover:-translate-y-0.5 hover:bg-white/[0.13]"
+                      className="group border-l border-white/15 pl-3 transition duration-300 first:border-l-0 first:pl-0 hover:-translate-y-0.5 sm:first:border-l sm:first:pl-3 lg:first:border-l-0 lg:first:pl-0"
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-primary shadow-sm shadow-secondary/20 ring-1 ring-white/10">
-                          <Icon className="h-4 w-4" aria-hidden />
+                      <div className="flex items-center gap-2.5">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-primary">
+                          <Icon className="h-[18px] w-[18px]" aria-hidden />
                         </span>
-                        <span className="block font-[family-name:var(--font-display)] text-xl font-semibold leading-none sm:text-2xl">
+                        <span className="block font-[family-name:var(--font-display)] text-2xl font-semibold leading-none">
                           <CountUpValue
                             value={fact.title ?? ""}
                             active={isVisible.visible}
@@ -129,7 +141,7 @@ export function WhyKisiiSection({
                           />
                         </span>
                       </div>
-                      <span className="mt-2 line-clamp-2 block text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] text-white/68">
+                      <span className="mt-2 block text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] text-white/68">
                         {factSubtitle(fact)}
                       </span>
                     </div>
@@ -139,7 +151,7 @@ export function WhyKisiiSection({
 
               <Link
                 href="/about"
-                className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/15 bg-white text-sm font-semibold text-primary shadow-sm transition hover:bg-white/90"
+                className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 border border-white/15 bg-white px-5 text-sm font-semibold text-primary shadow-sm transition hover:bg-white/90"
               >
                 Explore more facts
                 <ArrowRight className="h-4 w-4" aria-hidden />
@@ -152,7 +164,7 @@ export function WhyKisiiSection({
   );
 }
 
-function ReasonCard({
+function ReasonStatement({
   item,
   index,
   active,
@@ -162,40 +174,30 @@ function ReasonCard({
   active: boolean;
 }) {
   const Icon = reasonIcon(item, index);
-  const imageUrl = itemImageUrl(item);
   const content = (
-    <article
-      className="group h-full overflow-hidden rounded-lg border border-blue-100 bg-white shadow-sm shadow-blue-100/50 transition duration-500 hover:-translate-y-1 hover:border-primary/25 hover:shadow-md motion-safe:translate-y-3 motion-safe:opacity-0 data-[visible=true]:translate-y-0 data-[visible=true]:opacity-100"
+    <div
+      className="group flex gap-4 py-5 transition duration-500 hover:pl-2 motion-safe:translate-y-3 motion-safe:opacity-0 data-[visible=true]:translate-y-0 data-[visible=true]:opacity-100"
       data-visible={active ? "true" : "false"}
       style={{ transitionDelay: active ? `${120 + index * 85}ms` : "0ms" }}
     >
-      <div className="relative h-28 overflow-hidden bg-blue-50">
-        <PublicImage
-          src={imageUrl}
-          alt={
-            contentText(item, "imageAlt") ??
-            item.media_alt_text ??
-            item.title ??
-            "Kisii University"
-          }
-          ratio="fill"
-          className="absolute inset-0 h-full w-full"
-          imageClassName="object-cover transition duration-500 group-hover:scale-[1.04]"
-          sizes="(min-width: 1024px) 34vw, (min-width: 640px) 50vw, 100vw"
-        />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.02),rgba(2,6,23,0.48))]" />
-        <span className="absolute bottom-3 left-3 flex h-9 w-9 items-center justify-center rounded-lg bg-white/92 text-primary shadow-sm ring-1 ring-white/30 transition duration-300 group-hover:bg-secondary">
-          <Icon className="h-5 w-5" aria-hidden />
+      <div>
+        <span className="block font-[family-name:var(--font-display)] text-sm font-semibold text-secondary">
+          {String(index + 1).padStart(2, "0")}
         </span>
       </div>
-      <div className="p-3.5">
-        <div className="min-w-0">
-          <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold leading-snug text-slate-950">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-primary ring-1 ring-blue-100 transition group-hover:bg-primary group-hover:text-white">
+          <Icon className="h-5 w-5" aria-hidden />
+        </span>
+          <div className="min-w-0">
+          <h3 className="font-[family-name:var(--font-display)] text-xl font-semibold leading-snug text-slate-950">
             {item.title ?? "Kisii University advantage"}
           </h3>
-          <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">
+          <p className="mt-1 text-sm leading-6 text-slate-600">
             {item.body_text ?? item.subtitle}
           </p>
+        </div>
         </div>
         {item.cta_url ? (
           <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.1em] text-primary">
@@ -204,7 +206,7 @@ function ReasonCard({
           </span>
         ) : null}
       </div>
-    </article>
+    </div>
   );
 
   return item.cta_url ? (
