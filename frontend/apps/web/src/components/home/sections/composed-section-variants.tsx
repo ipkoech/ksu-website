@@ -77,87 +77,88 @@ export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
   const actions = heroActions(content?.actions, section.items, admissions);
 
   return (
-    <section className="relative isolate min-h-[clamp(390px,calc(100svh-13rem),580px)] overflow-hidden bg-primary text-white">
-      {videoSrc ? (
-        <video
-          className="absolute inset-0 h-full w-full object-cover object-[50%_55%]"
-          autoPlay
-          muted
-          loop
-          playsInline
-          poster={mediaUrl(posterMedia) ?? desktopImageSrc}
-          aria-hidden="true"
-        >
-          <source src={videoSrc} />
-        </video>
-      ) : (
-        <>
-          {mobileImageSrc ? (
-            <PublicImage
-              src={mobileImageSrc}
-              alt={mediaAlt(mobileMedia, mediaAltText)}
-              ratio="fill"
-              priority
-              className="absolute inset-0 h-full w-full md:hidden"
-              imageClassName="object-cover object-[50%_54%]"
-              sizes="100vw"
+    <section className="relative isolate overflow-hidden border-b border-blue-100 bg-white">
+      <div className="grid min-h-[clamp(520px,calc(100svh-9rem),700px)] lg:grid-cols-[minmax(0,0.47fr)_minmax(0,0.53fr)]">
+        <div className="relative flex items-center bg-primary text-white">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_18%,rgba(255,184,28,0.18),transparent_30%),linear-gradient(135deg,hsl(var(--primary))_0%,#022719_100%)]" />
+          <div className="absolute left-0 top-0 h-full w-1 bg-secondary" />
+          <div className="relative mx-auto w-full max-w-3xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16 xl:px-10 2xl:px-12">
+            <p className="max-w-xl text-xs font-bold uppercase tracking-[0.18em] text-secondary">
+              {content?.eyebrow ?? section.subtitle ?? "Kisii University"}
+            </p>
+            <h1 className="mt-5 text-balance font-[family-name:var(--font-display)] text-4xl font-bold leading-[1.02] sm:text-5xl xl:text-6xl">
+              {headline}
+              {highlight ? (
+                <span className="mt-1 block text-secondary">{highlight}</span>
+              ) : null}
+            </h1>
+            <SectionBody
+              value={description}
+              light
+              className="mt-5 max-w-xl text-base leading-7 text-white/82 sm:text-lg sm:leading-8"
             />
-          ) : null}
-          <PublicImage
-            src={desktopImageSrc}
-            alt={mediaAltText}
-            ratio="fill"
-            priority
-            className={`absolute inset-0 h-full w-full ${
-              mobileImageSrc ? "hidden md:block" : ""
-            }`}
-            imageClassName="object-cover object-[50%_55%]"
-            sizes="100vw"
-          />
-        </>
-      )}
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,hsl(var(--primary)/.78)_0%,hsl(var(--primary)/.58)_36%,rgba(2,6,23,.18)_64%,rgba(2,6,23,.04)_100%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,.24)_0%,rgba(2,6,23,0)_38%,rgba(2,6,23,.2)_100%)]" />
-
-      <div
-        className={`relative z-10 mx-auto grid min-h-[clamp(390px,calc(100svh-13rem),580px)] max-w-[1680px] items-center gap-8 px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-16 xl:px-10 2xl:px-12 ${
-          showAdmissions
-            ? "lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]"
-            : "lg:grid-cols-1"
-        }`}
-      >
-        <div className="max-w-3xl">
-          <SectionEyebrow
-            value={content?.eyebrow ?? section.subtitle ?? "Kisii University"}
-            light
-          />
-          <h1 className="mt-4 max-w-3xl text-balance font-[family-name:var(--font-display)] text-4xl font-bold leading-[1.05] sm:text-5xl lg:text-6xl">
-            {headline}
-            {highlight ? (
-              <span className="mt-1 block text-secondary">{highlight}</span>
+            {actions.length ? (
+              <div className="mt-8 flex flex-wrap gap-3">
+                {actions.slice(0, 2).map((action, index) => (
+                  <HeroActionLink
+                    key={action.key ?? `${action.href}-${index}`}
+                    action={action}
+                    prominent={action.style === "primary" || index === 0}
+                  />
+                ))}
+              </div>
             ) : null}
-          </h1>
-          <SectionBody
-            value={description}
-            light
-            className="mt-5 max-w-2xl text-base leading-7 text-white/90 sm:text-lg sm:leading-8"
-          />
-          {actions.length ? (
-            <div className="mt-8 flex flex-wrap gap-3">
-              {actions.slice(0, 2).map((action, index) => (
-                <HeroActionLink
-                  key={action.key ?? `${action.href}-${index}`}
-                  action={action}
-                  prominent={action.style === "primary" || index === 0}
-                />
-              ))}
-            </div>
-          ) : null}
+
+            {showAdmissions && admissions ? (
+              <AdmissionsPanel admissions={admissions} />
+            ) : null}
+          </div>
         </div>
 
-        {showAdmissions && admissions ? (
-          <AdmissionsPanel admissions={admissions} />
-        ) : null}
+        <div className="relative min-h-[320px] overflow-hidden bg-blue-50 lg:min-h-full">
+          {videoSrc ? (
+            <video
+              className="absolute inset-0 h-full w-full object-cover object-[50%_55%]"
+              autoPlay
+              muted
+              loop
+              playsInline
+              poster={mediaUrl(posterMedia) ?? desktopImageSrc}
+              aria-hidden="true"
+            >
+              <source src={videoSrc} />
+            </video>
+          ) : (
+            <>
+              {mobileImageSrc ? (
+                <PublicImage
+                  src={mobileImageSrc}
+                  alt={mediaAlt(mobileMedia, mediaAltText)}
+                  ratio="fill"
+                  priority
+                  className="absolute inset-0 h-full w-full md:hidden"
+                  imageClassName="object-cover object-[50%_54%]"
+                  sizes="100vw"
+                />
+              ) : null}
+              <PublicImage
+                src={desktopImageSrc}
+                alt={mediaAltText}
+                ratio="fill"
+                priority
+                className={`absolute inset-0 h-full w-full ${
+                  mobileImageSrc ? "hidden md:block" : ""
+                }`}
+                imageClassName="object-cover object-[50%_55%]"
+                sizes="(min-width: 1024px) 53vw, 100vw"
+              />
+            </>
+          )}
+          <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-primary/35 to-transparent" />
+          <div className="absolute bottom-4 right-4 hidden max-w-xs border-l-2 border-secondary bg-primary/82 px-4 py-3 text-sm font-semibold leading-6 text-white backdrop-blur-sm sm:block">
+            Inclusivity and Borderlessness
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -175,7 +176,7 @@ function AdmissionsPanel({
   return (
     <aside
       aria-label="Admissions update"
-      className="w-full max-w-md justify-self-start rounded-md border border-white/20 bg-primary/95 p-5 shadow-xl shadow-slate-950/20 sm:p-6 lg:justify-self-end"
+      className="mt-8 w-full max-w-xl border-l-4 border-secondary bg-white/10 p-4 shadow-sm shadow-slate-950/10 backdrop-blur-sm sm:p-5"
     >
       <div className="flex items-center gap-3 border-b border-white/15 pb-4">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-secondary text-white">
