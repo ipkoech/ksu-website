@@ -44,6 +44,7 @@ type SectionVariantProps = {
 };
 
 const campusHeroImage = "/images/homepage/kisii-administration-campus.jpg";
+const heriAfricaLaunchImage = "/images/HERIAfricaLaunch.jpg";
 
 export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
   const content = hero?.content;
@@ -437,47 +438,54 @@ export function FeaturedPartnershipSection({
       ];
 
   return (
-    <SectionFrame section={section} tinted>
-      <div className="overflow-hidden rounded-lg border border-blue-100 bg-white shadow-sm">
-        <div className="grid items-stretch lg:grid-cols-[0.92fr_1.08fr]">
-          <PublicImage
-            src={
-              mediaUrl(image) ?? "/images/about/about-governance-branded.webp"
-            }
-            alt={mediaAlt(
-              image,
-              title ?? "Kisii University and Heri Africa partnership",
-            )}
-            ratio="news"
-            className="min-h-72 rounded-none lg:min-h-full"
-          />
-          <div className="p-6 sm:p-8 lg:p-10">
-            <SectionEyebrow
-              value={section.subtitle ?? "Featured partnership"}
+    <section
+      id={section.section_key}
+      className="border-b border-blue-100 bg-blue-50/45 py-5"
+    >
+      <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="overflow-hidden rounded-lg border border-blue-100 bg-white shadow-sm">
+          <div className="grid items-stretch lg:grid-cols-[0.82fr_1.18fr]">
+            <PublicImage
+              src={mediaUrl(image) ?? heriAfricaLaunchImage}
+              alt={mediaAlt(
+                image,
+                title ?? "Kisii University and Heri Africa partnership",
+              )}
+              ratio="fill"
+              className="h-40 rounded-none sm:h-48 lg:h-[240px]"
+              imageClassName="object-cover object-[50%_38%]"
             />
-            <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950 sm:text-4xl">
-              {title ?? "Partnership spotlight"}
-            </h2>
-            <SectionBody value={summary} className="mt-4 max-w-3xl" />
-            <div className="mt-6 grid gap-2 sm:grid-cols-2">
-              {pillars.slice(0, 4).map((pillar, index) => (
-                <div
-                  key={`${String(pillar.label)}-${index}`}
-                  className="flex items-center gap-3 rounded-md border border-blue-100 bg-blue-50/50 px-4 py-3 text-sm font-semibold text-primary"
-                >
-                  <CheckCircle2
-                    className="h-4 w-4 shrink-0 text-secondary"
-                    aria-hidden
-                  />
-                  {String(pillar.label ?? "Partnership opportunity")}
-                </div>
-              ))}
+            <div className="p-4 sm:p-5">
+              <SectionEyebrow
+                value={section.subtitle ?? "Featured partnership"}
+              />
+              <h2 className="mt-2 max-w-3xl font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-slate-950 sm:text-2xl">
+                {title ?? "Partnership spotlight"}
+              </h2>
+              <SectionBody
+                value={summary}
+                className="mt-2 max-w-3xl line-clamp-2 leading-6"
+              />
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {pillars.slice(0, 4).map((pillar, index) => (
+                  <div
+                    key={`${String(pillar.label)}-${index}`}
+                    className="flex min-h-9 items-center gap-2 rounded-md border border-blue-100 bg-blue-50/50 px-2.5 py-1.5 text-xs font-semibold leading-4 text-primary"
+                  >
+                    <CheckCircle2
+                      className="h-3.5 w-3.5 shrink-0 text-secondary"
+                      aria-hidden
+                    />
+                    {String(pillar.label ?? "Partnership opportunity")}
+                  </div>
+                ))}
+              </div>
+              {cta ? <CtaLink item={cta} className="mt-4" /> : null}
             </div>
-            {cta ? <CtaLink item={cta} className="mt-6" /> : null}
           </div>
         </div>
       </div>
-    </SectionFrame>
+    </section>
   );
 }
 

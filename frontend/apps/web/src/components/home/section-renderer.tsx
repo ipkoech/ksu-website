@@ -85,9 +85,11 @@ export function HomepageSections({
   hero?: HomepageResolvedHero | null;
   partnershipSpotlights?: HomepagePartnershipSpotlight[];
 }) {
+  const orderedSections = orderHomepageSections(sections);
+
   return (
     <>
-      {sections.map((section) => (
+      {orderedSections.map((section) => (
         <HomepageSectionRenderer
           key={section.id}
           section={section}
@@ -97,6 +99,31 @@ export function HomepageSections({
       ))}
     </>
   );
+}
+
+function orderHomepageSections(sections: HomepageSection[]) {
+  const pulseIndex = sections.findIndex(
+    (section) => section.layout_variant === "pulse_strip",
+  );
+  const partnershipIndex = sections.findIndex(
+    (section) => section.layout_variant === "featured_partnership",
+  );
+
+  if (
+    pulseIndex < 0 ||
+    partnershipIndex < 0 ||
+    partnershipIndex === pulseIndex + 1
+  ) {
+    return sections;
+  }
+
+  const nextSections = [...sections];
+  const [partnership] = nextSections.splice(partnershipIndex, 1);
+  const nextPulseIndex = nextSections.findIndex(
+    (section) => section.layout_variant === "pulse_strip",
+  );
+  nextSections.splice(nextPulseIndex + 1, 0, partnership);
+  return nextSections;
 }
 
 export const SUPPORTED_HOMEPAGE_SECTION_VARIANTS =
