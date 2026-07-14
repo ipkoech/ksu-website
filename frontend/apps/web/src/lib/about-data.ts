@@ -17,13 +17,12 @@ import type { LeaderCardData } from "@/components/about/LeaderCard";
 import { publicFileUrl, resolvePublicMediaUrl } from "@/lib/public-media";
 
 export const aboutNavigation = [
-  { title: "About Us", href: "/about" },
-  { title: "History", href: "/about/history" },
-  { title: "The Chancellor", href: "/about/chancellor" },
-  { title: "The Vice Chancellor", href: "/about/vice-chancellor" },
-  { title: "Governance", href: "/about/governance" },
-  { title: "Management", href: "/about/university-management" },
-  { title: "Quality Assurance", href: "/about/quality-assurance" },
+  { title: "About KSU", href: "/about" },
+  { title: "University Council", href: "/about/university-council" },
+  { title: "University Management", href: "/about/university-management" },
+  { title: "University Service Charter", href: "/about/service-charter" },
+  { title: "Strategic Plan", href: "/about/strategic-plan" },
+  { title: "KSU Numbers & Facts", href: "/about/numbers-and-facts" },
 ];
 
 export type BackendBoard = Board & { members: BoardMember[] };

@@ -323,39 +323,34 @@ function buildNavigation(
     href: "/about",
     children: [
       {
-        label: "ABOUT US",
+        label: "ABOUT KSU",
         href: "/about",
-        description: "University profile and institutional statements",
+        description: "Our identity, beliefs, mandate, and journey",
       },
       {
-        label: "HISTORY",
-        href: "/about/history",
-        description: "Published institutional history",
+        label: "UNIVERSITY COUNCIL",
+        href: "/about/university-council",
+        description: "The University’s supreme governing body",
       },
       {
-        label: "THE CHANCELLOR",
-        href: "/about/chancellor",
-        description: "Message and role of the Chancellor",
-      },
-      {
-        label: "THE VICE CHANCELLOR",
-        href: "/about/vice-chancellor",
-        description: "Message from executive university leadership",
-      },
-      {
-        label: "GOVERNANCE",
-        href: "/about/governance",
-        description: "Public boards, mandates, and membership",
-      },
-      {
-        label: "MANAGEMENT",
+        label: "UNIVERSITY MANAGEMENT",
         href: "/about/university-management",
-        description: "Executive leadership and management board",
+        description: "Executive leadership and administration",
       },
       {
-        label: "QUALITY ASSURANCE",
-        href: "/about/quality-assurance",
-        description: "Quality, planning, and service accountability",
+        label: "UNIVERSITY SERVICE CHARTER",
+        href: "/about/service-charter",
+        description: "Our public service commitments",
+      },
+      {
+        label: "STRATEGIC PLAN",
+        href: "/about/strategic-plan",
+        description: "Priorities guiding the University’s future",
+      },
+      {
+        label: "KSU NUMBERS & FACTS",
+        href: "/about/numbers-and-facts",
+        description: "Verified institutional facts by reporting year",
       },
     ],
   };
@@ -562,8 +557,7 @@ function MegaMenuDropdown({
   const isStructuredMegaMenu =
     item.label === "PROGRAMMES" ||
     item.label === "CAMPUS LIFE" ||
-    item.label === "MEDIA DESK" ||
-    item.label === "ABOUT US";
+    item.label === "MEDIA DESK";
   const isProgrammesMenu = item.label === "PROGRAMMES";
   const isMegaMenu =
     isStructuredMegaMenu ||
@@ -587,7 +581,7 @@ function MegaMenuDropdown({
       ?.getBoundingClientRect();
     const gutter = 16;
     const availableWidth = Math.max(260, window.innerWidth - gutter * 2);
-    const targetWidth = isMegaMenu ? 1500 : 288;
+    const targetWidth = isMegaMenu ? 1500 : item.label === "ABOUT US" ? 360 : 288;
     const width = Math.min(targetWidth, availableWidth);
     const maxLeft = Math.max(gutter, window.innerWidth - width - gutter);
     const preferredLeft =
