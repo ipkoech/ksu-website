@@ -69,6 +69,15 @@ async def seed_university_info(db: AsyncSession, ctx: SeedContext) -> None:
             "College in 1983, was taken over by Egerton University in 1994, introduced its first degree programme "
             "in 1999, became a constituent college in 2007, and attained full university status in 2013."
         ),
+        philosophy=(
+            "World-class education in an atmosphere of academic freedom, civility, social responsiveness, "
+            "integrity and accountability."
+        ),
+        strategic_plan_summary=(
+            "Kisii University's strategic direction advances quality education and training, knowledge "
+            "generation and preservation, research and innovation, partnerships and community outreach, "
+            "sustainable infrastructure, financial resilience, and its niche in cancer management and research."
+        ),
         email="info@kisiiuniversity.ac.ke",
         phone="+254720875082",
         alternate_phone=None,
