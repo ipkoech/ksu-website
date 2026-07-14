@@ -295,7 +295,15 @@ export function AttachmentManager({
     if (!mediaId) return;
     if (canPersist) {
       if (source === "upload") {
-        await linksQuery.refetch();
+        const result = await linksQuery.refetch();
+        const nextLinks = (result.data?.data ?? []) as MediaLinkWithMedia[];
+        const alreadyLinked = nextLinks.some(
+          (item) => item.media_id === mediaId && item.role === selectedRole.value,
+        );
+        if (!alreadyLinked) {
+          await addPersisted(mediaId);
+          await linksQuery.refetch();
+        }
         toast.success("Attachment uploaded and linked");
         return;
       }

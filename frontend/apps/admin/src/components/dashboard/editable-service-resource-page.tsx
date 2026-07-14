@@ -20,7 +20,7 @@ async function revalidateResearch(resource: string) {
 }
 
 import { PageHeader } from "@/components/layout";
-import { AttachmentManager, MediaPicker, useCommitPendingAttachments, type AttachmentRoleOption, type PendingMediaAttachment } from "@/components/media";
+import { AttachmentManager, MediaPicker, getMediaLabel, getMediaUrl, isImageMedia, useCommitPendingAttachments, type AttachmentRoleOption, type PendingMediaAttachment } from "@/components/media";
 import { EntityPicker, EntityTypeRecordPicker, MultiEntityPicker } from "@/components/relationships/entity-picker";
 import { relationshipAdapters, type RelationshipFilters } from "@/components/relationships/relationship-adapters";
 import {
@@ -69,6 +69,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  ImageRenderer,
   richTextToPlainText,
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
@@ -1303,7 +1304,7 @@ export function EditableServiceResourcePage<
         >
           <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-3xl">
             <SheetHeader>
-              <SheetTitle>{editingRecord ? "Edit Record" : "Create Record"}</SheetTitle>
+              <SheetTitle>{editorTitle(title, editingRecord, editorIntent)}</SheetTitle>
               <SheetDescription>{editorDescription(title, editingRecord, getRecordTitle, editorIntent)}</SheetDescription>
             </SheetHeader>
             <EditorFormBody
@@ -1340,9 +1341,9 @@ export function EditableServiceResourcePage<
             if (!open) closeEditor();
           }}
         >
-          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
             <DialogHeader>
-              <DialogTitle>{editorIntent === "view" ? "View Record" : editingRecord ? "Edit Record" : "Create Record"}</DialogTitle>
+              <DialogTitle>{editorTitle(title, editingRecord, editorIntent)}</DialogTitle>
               <DialogDescription>{editorDescription(title, editingRecord, getRecordTitle, editorIntent)}</DialogDescription>
             </DialogHeader>
             <EditorFormBody
@@ -1480,6 +1481,7 @@ function RecordListRow<TRecord extends RecordShape>({
   onOpen?: () => void;
 }) {
   const isInteractive = openInEditor || Boolean(detailHref);
+  const visualMedia = getRecordVisualMedia(record);
   const handleKeyDown = (event: KeyboardEvent) => {
     if (!isInteractive || (event.key !== "Enter" && event.key !== " ")) return;
     event.preventDefault();
@@ -1497,7 +1499,9 @@ function RecordListRow<TRecord extends RecordShape>({
       onClick={isInteractive ? onOpen : undefined}
       onKeyDown={handleKeyDown}
     >
-      <div className="min-w-0">
+      <div className="flex min-w-0 flex-1 gap-3">
+        <RecordMediaPreview media={visualMedia} record={record} />
+        <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="break-words font-medium">{getRecordTitle(record)}</p>
           {record.status ? <Badge variant="outline">{record.status}</Badge> : null}
@@ -1513,10 +1517,59 @@ function RecordListRow<TRecord extends RecordShape>({
             record.created_at ??
             "No metadata"}
         </p>
+        </div>
       </div>
       {actions}
     </div>
   );
+}
+
+function RecordMediaPreview({
+  media,
+  record,
+}: {
+  media?: RecordShape | null;
+  record: RecordShape;
+}) {
+  const candidate = media ?? (isMediaLikeRecord(record) ? record : null);
+  if (!candidate) return null;
+  const url = getMediaUrl(candidate as any);
+  const image = isImageMedia(candidate as any);
+  const label = getMediaLabel(candidate as any);
+
+  return (
+    <div className="flex h-14 w-20 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted">
+      {url && image ? (
+        <ImageRenderer src={url} alt={label} className="h-full border-0" imageClassName="h-full w-full" />
+      ) : (
+        <span className="px-2 text-center text-[11px] font-medium uppercase text-muted-foreground">
+          {image ? "Image" : String(candidate.media_type ?? "File")}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function getRecordVisualMedia(record: RecordShape): RecordShape | null {
+  const keys = [
+    "media",
+    "featured_media",
+    "featured_image",
+    "cover_image",
+    "image",
+    "logo",
+    "photo",
+    "thumbnail",
+  ];
+  for (const key of keys) {
+    const value = record[key];
+    if (value && typeof value === "object") return value as RecordShape;
+  }
+  return null;
+}
+
+function isMediaLikeRecord(record: RecordShape) {
+  return Boolean(record.media_type || record.mime_type || record.storage_path || record.public_url || record.cdn_url || record.thumbnail_url);
 }
 
 function editorDescription<TRecord extends RecordShape>(
@@ -1531,6 +1584,15 @@ function editorDescription<TRecord extends RecordShape>(
   return editingRecord
     ? `Update ${getRecordTitle(editingRecord)} without leaving this list.`
     : `Create a ${title.toLowerCase()} record without leaving this list.`;
+}
+
+function editorTitle<TRecord extends RecordShape>(
+  title: string,
+  editingRecord: TRecord | null,
+  editorIntent: "create" | "view" | "edit",
+) {
+  if (editorIntent === "view") return `View ${title}`;
+  return editingRecord ? `Edit ${title}` : `Create ${title}`;
 }
 
 function EditorFormBody<TRecord extends RecordShape>({
@@ -1605,6 +1667,7 @@ function EditorFormBody<TRecord extends RecordShape>({
                         field={field}
                         value={values[field.name]}
                         values={values}
+                        entityId={editingRecord?.id}
                       />
                     ) : (
                       <EditableFieldControl
@@ -1633,12 +1696,59 @@ function ReadOnlyFieldControl({
   field,
   value,
   values,
+  entityId,
 }: {
   field: EditableField;
   value: unknown;
   values: RecordShape;
+  entityId?: string | null;
 }) {
   const wideField = field.type === "textarea" || field.type === "richtext" || field.type === "attachments" || field.type === "entity-record" || field.type === "entity-multi";
+
+  if (field.type === "media") {
+    return (
+      <div className="flex flex-col gap-2 md:col-span-2">
+        <p className="text-sm font-medium">{field.label}</p>
+        {value ? (
+          <MediaPicker
+            value={String(value)}
+            onChange={() => undefined}
+            label={field.label}
+            mediaType={field.media?.mediaType}
+            folderId={field.media?.folderId}
+            helperText={field.media?.helperText}
+            accept={field.media?.accept}
+            allowUpload={false}
+            allowClear={false}
+            disabled
+          />
+        ) : (
+          <ReadOnlyEmptyValue />
+        )}
+      </div>
+    );
+  }
+
+  if (field.type === "attachments" && field.attachments) {
+    return (
+      <div className="flex flex-col gap-2 md:col-span-2">
+        <p className="text-sm font-medium">{field.label}</p>
+        {entityId ? (
+          <AttachmentManager
+            entityType={field.attachments.entityType}
+            entityId={entityId}
+            roles={field.attachments.roles}
+            defaultRole={field.attachments.defaultRole}
+            disabled
+            isPublic={field.attachments.isPublic}
+            allowVisibilityChange={false}
+          />
+        ) : (
+          <ReadOnlyEmptyValue />
+        )}
+      </div>
+    );
+  }
 
   if (field.type === "entity" && field.relation) {
     return (

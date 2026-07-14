@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { EditableServiceResourcePage } from "@/components/dashboard/editable-service-resource-page";
 import { getPortalResource } from "@/lib/portals/registry";
 import type { PortalPayload, PortalResourceConfig } from "@/lib/portals/types";
-import { usePortalAccess, type PortalAccess } from "@ksu/api-client";
+import { usePortalAccess, useUploadMedia, type PortalAccess } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
 import {
   Badge,
+  Button,
   Card,
   CardContent,
   CardDescription,
@@ -20,6 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ksu/ui/components";
+import { toast } from "@ksu/ui";
+import { Loader2, UploadCloud } from "lucide-react";
 import { PageHeader } from "@/components/layout";
 
 interface PortalResourcePageProps {
@@ -231,17 +235,22 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
       viewInEditor={scopedResource.viewInEditor}
       primaryActionLabel={primaryActionLabel(scopedResource)}
       toolbarSlot={
-        resource.portalScope && lockedAccessOptions.length > 1 ? (
-          <ScopeSelector
-            accessOptions={lockedAccessOptions}
-            value={accessKey(selectedLockedAccess)}
-            onChange={setSelectedScopeKey}
-          />
-        ) : selectedLockedAccess ? (
-          <Badge variant="secondary">{selectedLockedAccess.scope_label}</Badge>
-        ) : resource.portalScope && hasGlobalPortalAccess ? (
-          <Badge variant="secondary">All scopes</Badge>
-        ) : null
+        <>
+          {scopedResource.key === "media-assets" && canManage ? (
+            <MediaAssetsUploadButton queryKey={scopedResource.queryKey} />
+          ) : null}
+          {resource.portalScope && lockedAccessOptions.length > 1 ? (
+            <ScopeSelector
+              accessOptions={lockedAccessOptions}
+              value={accessKey(selectedLockedAccess)}
+              onChange={setSelectedScopeKey}
+            />
+          ) : selectedLockedAccess ? (
+            <Badge variant="secondary">{selectedLockedAccess.scope_label}</Badge>
+          ) : resource.portalScope && hasGlobalPortalAccess ? (
+            <Badge variant="secondary">All scopes</Badge>
+          ) : null}
+        </>
       }
     />
   );
@@ -250,8 +259,55 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
 function primaryActionLabel(resource: PortalResourceConfig<any, any>) {
   if (resource.key === "submissions") return "Submit Publication";
   if (/(review|validation)/.test(resource.key)) return "Review Records";
+  if (resource.key === "media-assets") return "Upload Media";
   if (resource.key.includes("media")) return "Attach Media";
-  return "Create Record";
+  return `Create ${resource.title}`;
+}
+
+function MediaAssetsUploadButton({ queryKey }: { queryKey: readonly unknown[] }) {
+  const inputId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const uploadMedia = useUploadMedia();
+  const queryClient = useQueryClient();
+
+  const uploadFile = async (file?: File | null) => {
+    if (!file) return;
+    try {
+      await uploadMedia.mutateAsync({
+        file,
+        isPublic: false,
+      });
+      await queryClient.invalidateQueries({ queryKey });
+      toast.success("Media uploaded");
+    } catch {
+      toast.error("Failed to upload media");
+    } finally {
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  return (
+    <>
+      <input
+        ref={inputRef}
+        id={inputId}
+        type="file"
+        className="hidden"
+        disabled={uploadMedia.isPending}
+        onChange={(event) => void uploadFile(event.target.files?.[0])}
+      />
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        disabled={uploadMedia.isPending}
+        onClick={() => inputRef.current?.click()}
+      >
+        {uploadMedia.isPending ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <UploadCloud data-icon="inline-start" />}
+        Upload Media
+      </Button>
+    </>
+  );
 }
 
 function accessKey(access: PortalAccess | null) {

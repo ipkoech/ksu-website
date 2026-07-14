@@ -1,4 +1,6 @@
 import { PortalResourcePage } from "@/components/portals/portal-resource-page";
+import { getCanonicalPortalResourceHref, resolvePortalResourceKey } from "@/lib/portals/registry";
+import { redirect } from "next/navigation";
 
 export function generateStaticParams() {
   return [
@@ -22,10 +24,14 @@ export default async function CorporateCommunicationResourcePage({
   params: Promise<{ resource: string }>;
 }) {
   const { resource } = await params;
+  const canonicalHref = getCanonicalPortalResourceHref("corporate-communication", resource);
+  if (canonicalHref !== `/corporate-communication/${resource}`) {
+    redirect(canonicalHref);
+  }
   return (
     <PortalResourcePage
       portalKey="corporate-communication"
-      resourceKey={resource}
+      resourceKey={resolvePortalResourceKey("corporate-communication", resource)}
     />
   );
 }

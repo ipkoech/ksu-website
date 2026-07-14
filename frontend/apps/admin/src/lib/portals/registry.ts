@@ -868,11 +868,12 @@ function contentFields(
     {
       name: "featured_media_id",
       label: "Featured Image",
-      type: "entity" as const,
-      relation: {
-        adapter: "media" as const,
-        filters: { media_type: "image" },
-        allowClear: true,
+      type: "media" as const,
+      media: {
+        mediaType: "image",
+        accept: "image/*",
+        helperText: "Choose or upload a public image for cards, previews, and featured placements.",
+        isPublic: true,
       },
     },
     { name: "is_featured", label: "Featured", type: "boolean" as const },
@@ -3315,6 +3316,58 @@ const corporateCommunicationResources: Record<string, PortalResourceConfig<any, 
     canCreate: false,
     canDelete: false,
   },
+};
+
+const corporateResourceHrefs: Record<string, string> = {
+  news: "/corporate-communication/newsroom/news",
+  "press-releases": "/corporate-communication/newsroom/press-releases",
+  notices: "/corporate-communication/newsroom/notices",
+  events: "/corporate-communication/newsroom/events",
+  "homepage-features": "/corporate-communication/website/homepage-features",
+  sliders: "/corporate-communication/media/sliders",
+  "media-folders": "/corporate-communication/media/folders",
+  "media-assets": "/corporate-communication/media/assets",
+  faqs: "/corporate-communication/engagement/faqs",
+  contacts: "/corporate-communication/engagement/contacts",
+  testimonials: "/corporate-communication/engagement/testimonials",
+  "student-clubs": "/corporate-communication/student-life/club-submissions",
+};
+
+for (const [key, href] of Object.entries(corporateResourceHrefs)) {
+  if (corporateCommunicationResources[key]) {
+    corporateCommunicationResources[key] = {
+      ...corporateCommunicationResources[key],
+      href,
+      viewInEditor: true,
+    };
+  }
+}
+
+const corporateResourceRouteAliases: Record<string, string> = {
+  news: "news",
+  "press-releases": "press-releases",
+  notices: "notices",
+  events: "events",
+  "homepage-features": "homepage-features",
+  sliders: "sliders",
+  "media-folders": "media-folders",
+  "media-assets": "media-assets",
+  faqs: "faqs",
+  contacts: "contacts",
+  testimonials: "testimonials",
+  "student-clubs": "student-clubs",
+  "newsroom/news": "news",
+  "newsroom/press-releases": "press-releases",
+  "newsroom/notices": "notices",
+  "newsroom/events": "events",
+  "website/homepage-features": "homepage-features",
+  "media/sliders": "sliders",
+  "media/folders": "media-folders",
+  "media/assets": "media-assets",
+  "engagement/faqs": "faqs",
+  "engagement/contacts": "contacts",
+  "engagement/testimonials": "testimonials",
+  "student-life/club-submissions": "student-clubs",
 };
 
 async function firstSliderGroupId() {
@@ -6582,13 +6635,21 @@ export const portalConfigs: Record<string, PortalConfig> = {
         scope: "content.view",
       },
       {
-        title: "Review Queue",
+        title: "Workflow",
         href: "/corporate-communication/review-queue",
         icon: ClipboardCheck,
         scope: ["content.review", "content.publish"],
+        children: [
+          {
+            title: "Review Queue",
+            href: "/corporate-communication/review-queue",
+            icon: ClipboardCheck,
+            scope: ["content.review", "content.publish"],
+          },
+        ],
       },
       {
-        title: "Page CMS",
+        title: "Website Content",
         href: "/corporate-communication/page-cms",
         icon: PanelsTopLeft,
         scope: [
@@ -6598,95 +6659,141 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "homepage.manage",
           "partnership_spotlights.manage",
         ],
-      },
-      {
-        title: "Page Sections",
-        href: "/corporate-communication/page-cms/sections",
-        icon: PanelsTopLeft,
-        scope: [
-          "page_sections.view",
-          "page_sections.manage",
-          "homepage.view",
-          "homepage.manage",
+        children: [
+          {
+            title: "Page CMS",
+            href: "/corporate-communication/page-cms",
+            icon: PanelsTopLeft,
+            scope: [
+              "page_sections.view",
+              "page_sections.manage",
+              "homepage.view",
+              "homepage.manage",
+              "partnership_spotlights.manage",
+            ],
+          },
+          {
+            title: "Page Sections",
+            href: "/corporate-communication/page-cms/sections",
+            icon: PanelsTopLeft,
+            scope: [
+              "page_sections.view",
+              "page_sections.manage",
+              "homepage.view",
+              "homepage.manage",
+            ],
+          },
+          {
+            title: "Partnership Spotlights",
+            href: "/corporate-communication/page-cms/spotlights",
+            icon: ImageIcon,
+            scope: ["partnership_spotlights.manage", "homepage.manage"],
+          },
+          {
+            title: "Homepage Features",
+            href: "/corporate-communication/website/homepage-features",
+            icon: PanelsTopLeft,
+            scope: "marketing.manage_sliders",
+          },
         ],
       },
       {
-        title: "Partnership Spotlights",
-        href: "/corporate-communication/page-cms/spotlights",
-        icon: ImageIcon,
-        scope: ["partnership_spotlights.manage", "homepage.manage"],
-      },
-      {
         title: "Newsroom",
-        href: "/corporate-communication/news",
+        href: "/corporate-communication/newsroom/news",
         icon: Newspaper,
-        scope: "content.manage_news",
+        scope: ["content.manage_news", "content.manage_blogs", "content.manage_announcements", "content.manage_events"],
+        children: [
+          {
+            title: "News",
+            href: "/corporate-communication/newsroom/news",
+            icon: Newspaper,
+            scope: "content.manage_news",
+          },
+          {
+            title: "Press Releases",
+            href: "/corporate-communication/newsroom/press-releases",
+            icon: FileText,
+            scope: "content.manage_blogs",
+          },
+          {
+            title: "Public Notices",
+            href: "/corporate-communication/newsroom/notices",
+            icon: Megaphone,
+            scope: "content.manage_announcements",
+          },
+          {
+            title: "Events",
+            href: "/corporate-communication/newsroom/events",
+            icon: CalendarDays,
+            scope: "content.manage_events",
+          },
+        ],
       },
       {
-        title: "Press Releases",
-        href: "/corporate-communication/press-releases",
-        icon: FileText,
-        scope: "content.manage_blogs",
-      },
-      {
-        title: "Public Notices",
-        href: "/corporate-communication/notices",
-        icon: Megaphone,
-        scope: "content.manage_announcements",
-      },
-      {
-        title: "Events",
-        href: "/corporate-communication/events",
-        icon: CalendarDays,
-        scope: "content.manage_events",
-      },
-      {
-        title: "Homepage Features",
-        href: "/corporate-communication/homepage-features",
-        icon: PanelsTopLeft,
-        scope: "marketing.manage_sliders",
-      },
-      {
-        title: "Slider Items",
-        href: "/corporate-communication/sliders",
-        icon: PanelsTopLeft,
-        scope: "marketing.manage_sliders",
-      },
-      {
-        title: "Media Folders",
-        href: "/corporate-communication/media-folders",
+        title: "Media Library",
+        href: "/corporate-communication/media/assets",
         icon: ImageIcon,
-        scope: "media.manage",
+        scope: ["media.view", "media.manage", "marketing.manage_sliders"],
+        children: [
+          {
+            title: "Media Assets",
+            href: "/corporate-communication/media/assets",
+            icon: ImageIcon,
+            scope: "media.view",
+          },
+          {
+            title: "Media Folders",
+            href: "/corporate-communication/media/folders",
+            icon: ImageIcon,
+            scope: "media.manage",
+          },
+          {
+            title: "Slider Items",
+            href: "/corporate-communication/media/sliders",
+            icon: PanelsTopLeft,
+            scope: "marketing.manage_sliders",
+          },
+        ],
       },
       {
-        title: "Media Assets",
-        href: "/corporate-communication/media-assets",
-        icon: ImageIcon,
-        scope: "media.view",
-      },
-      {
-        title: "FAQs",
-        href: "/corporate-communication/faqs",
+        title: "Engagement",
+        href: "/corporate-communication/engagement/faqs",
         icon: ScrollText,
         scope: "content.manage",
+        children: [
+          {
+            title: "FAQs",
+            href: "/corporate-communication/engagement/faqs",
+            icon: ScrollText,
+            scope: "content.manage",
+          },
+          {
+            title: "Contacts",
+            href: "/corporate-communication/engagement/contacts",
+            icon: Users,
+            scope: "content.manage",
+          },
+          {
+            title: "Testimonials",
+            href: "/corporate-communication/engagement/testimonials",
+            icon: BadgeCheck,
+            scope: "content.manage",
+          },
+        ],
       },
       {
-        title: "Contacts",
-        href: "/corporate-communication/contacts",
-        icon: Users,
-        scope: "content.manage",
-      },
-      {
-        title: "Testimonials",
-        href: "/corporate-communication/testimonials",
-        icon: BadgeCheck,
-        scope: "content.manage",
-      },
-      {
-        title: "Student Club Submissions",
-        href: "/corporate-communication/student-clubs",
+        title: "Student Life",
+        href: "/corporate-communication/student-life/club-submissions",
         icon: Trophy,
         scope: ["content.review", "clubs.view", "clubs.manage_own"],
+        children: [
+          {
+            title: "Club Submissions",
+            href: "/corporate-communication/student-life/club-submissions",
+            icon: Trophy,
+            scope: ["content.review", "clubs.view", "clubs.manage_own"],
+          },
+        ],
       },
     ],
     dashboard: dashboard(
@@ -6705,7 +6812,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
         stat(
           "News",
           "Newsroom records",
-          "/corporate-communication/news",
+          "/corporate-communication/newsroom/news",
           Newspaper,
           ["content.view"],
           ["corporate-communication", "portal-stats", "published_count"],
@@ -6714,7 +6821,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
         stat(
           "Public Notices",
           "Announcements",
-          "/corporate-communication/notices",
+          "/corporate-communication/newsroom/notices",
           Megaphone,
           ["content.view"],
           ["corporate", "notices"],
@@ -6723,7 +6830,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
         stat(
           "Events",
           "Public calendar",
-          "/corporate-communication/events",
+          "/corporate-communication/newsroom/events",
           CalendarDays,
           ["content.view"],
           ["corporate-communication", "portal-stats", "scheduled_count"],
@@ -6732,7 +6839,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
         stat(
           "Media",
           "Media assets",
-          "/corporate-communication/media-assets",
+          "/corporate-communication/media/assets",
           ImageIcon,
           ["media.view"],
           ["corporate-communication", "portal-stats", "media_count"],
@@ -7333,7 +7440,7 @@ function dashboard(
       ...Object.values(resources).map((resource) => ({
         title: resource.title,
         description: resource.description,
-        href: `${resource.backHref}/${resource.key}`,
+        href: resource.href ?? `${resource.backHref}/${resource.key}`,
         icon: FileText,
         scopes: resource.viewScopes,
       })),
@@ -7346,5 +7453,20 @@ export function getPortalConfig(key: string) {
 }
 
 export function getPortalResource(portalKey: string, resourceKey: string) {
-  return portalConfigs[portalKey]?.resources[resourceKey];
+  return portalConfigs[portalKey]?.resources[resolvePortalResourceKey(portalKey, resourceKey)];
+}
+
+export function resolvePortalResourceKey(portalKey: string, resourcePath: string | string[]) {
+  const normalized = Array.isArray(resourcePath)
+    ? resourcePath.filter(Boolean).join("/")
+    : resourcePath;
+  if (portalKey === "corporate-communication") {
+    return corporateResourceRouteAliases[normalized] ?? normalized;
+  }
+  return normalized;
+}
+
+export function getCanonicalPortalResourceHref(portalKey: string, resourcePath: string | string[]) {
+  const resourceKey = resolvePortalResourceKey(portalKey, resourcePath);
+  return portalConfigs[portalKey]?.resources[resourceKey]?.href ?? `/${portalKey}/${resourceKey}`;
 }

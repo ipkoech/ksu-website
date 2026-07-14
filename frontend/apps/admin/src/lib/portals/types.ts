@@ -26,6 +26,7 @@ export interface PortalNavItem {
   icon: LucideIcon;
   scope?: string | string[];
   group?: string;
+  children?: PortalNavItem[];
 }
 
 export interface PortalDashboardStat {
@@ -51,6 +52,7 @@ export interface PortalResourceConfig<
   TPayload extends PortalPayload = PortalPayload,
 > {
   key: string;
+  href?: string;
   title: string;
   description: string;
   backHref: string;

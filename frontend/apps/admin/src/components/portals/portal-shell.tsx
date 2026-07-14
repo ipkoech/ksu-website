@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, LogOut, Menu, Minus, Plus } from "lucide-react";
+import { ChevronDown, ChevronLeft, LogOut, Menu, Minus, Plus } from "lucide-react";
 import { useAuth, usePermissions, ServiceGuard } from "@ksu/auth";
 import {
   Avatar,
@@ -112,6 +112,7 @@ function PortalSidebar({
   const { hasScope } = usePermissions();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set());
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(() => new Set());
 
   const hasItemScope = useCallback((item: PortalNavItem) => {
     if (!item.scope) return true;
@@ -120,9 +121,17 @@ function PortalSidebar({
       : hasScope(item.scope);
   }, [hasScope]);
 
+  const filterNavItem = useCallback(function filter(item: PortalNavItem): PortalNavItem | null {
+    const children = item.children
+      ?.map(filter)
+      .filter((child): child is PortalNavItem => child !== null);
+    if (!hasItemScope(item) && (!children || children.length === 0)) return null;
+    return children && children.length > 0 ? { ...item, children } : { ...item, children: undefined };
+  }, [hasItemScope]);
+
   const filteredNav = useMemo(
-    () => portal.nav.filter(hasItemScope),
-    [hasItemScope, portal.nav],
+    () => portal.nav.map(filterNavItem).filter((item): item is PortalNavItem => item !== null),
+    [filterNavItem, portal.nav],
   );
 
   const grouped = useMemo(
@@ -148,7 +157,7 @@ function PortalSidebar({
 
   useEffect(() => {
     const activeGroups = grouped
-      .filter((section) => section.group && section.items.some((item) => item.href === activeHref))
+      .filter((section) => section.group && section.items.some((item) => navItemContainsHref(item, activeHref)))
       .map((section) => section.group as string);
     if (activeGroups.length === 0) return;
     setExpandedGroups((current) => {
@@ -164,6 +173,22 @@ function PortalSidebar({
     });
   }, [activeHref, grouped]);
 
+  useEffect(() => {
+    const activeParents = filteredNav.flatMap((item) => collectActiveParents(item, activeHref));
+    if (activeParents.length === 0) return;
+    setExpandedItems((current) => {
+      let changed = false;
+      const next = new Set(current);
+      for (const href of activeParents) {
+        if (!next.has(href)) {
+          next.add(href);
+          changed = true;
+        }
+      }
+      return changed ? next : current;
+    });
+  }, [activeHref, filteredNav]);
+
   const toggleGroup = (group: string) => {
     setExpandedGroups((current) => {
       const next = new Set(current);
@@ -171,6 +196,18 @@ function PortalSidebar({
         next.delete(group);
       } else {
         next.add(group);
+      }
+      return next;
+    });
+  };
+
+  const toggleItem = (href: string) => {
+    setExpandedItems((current) => {
+      const next = new Set(current);
+      if (next.has(href)) {
+        next.delete(href);
+      } else {
+        next.add(href);
       }
       return next;
     });
@@ -250,48 +287,18 @@ function PortalSidebar({
                     {expandedGroups.has(section.group) ? <Minus className="size-3" /> : <Plus className="size-3" />}
                   </button>
                 ) : null}
-                {(section.group && (!collapsed || isMobileOpen) && !expandedGroups.has(section.group) ? [] : section.items).map((item) => {
-                  const Icon = item.icon;
-                  const active = item.href === activeHref;
-                  const className = cn(
-                    "flex items-center gap-3 rounded-lg text-sm font-medium transition-colors",
-                    collapsed && !isMobileOpen
-                      ? "size-10 justify-center px-0 [&_svg]:size-5"
-                      : "px-3 py-2 [&_svg]:size-4",
-                    active
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent",
-                  );
-
-                  if (collapsed && !isMobileOpen) {
-                    return (
-                      <Tooltip key={item.href}>
-                        <TooltipTrigger asChild>
-                          <Link
-                            href={item.href}
-                            onClick={onMobileClose}
-                            className={className}
-                          >
-                            <Icon />
-                          </Link>
-                        </TooltipTrigger>
-                        <TooltipContent side="right">{item.title}</TooltipContent>
-                      </Tooltip>
-                    );
-                  }
-
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={onMobileClose}
-                      className={className}
-                    >
-                      <Icon />
-                      <span className="truncate">{item.title}</span>
-                    </Link>
-                  );
-                })}
+                {(section.group && (!collapsed || isMobileOpen) && !expandedGroups.has(section.group) ? [] : section.items).map((item) => (
+                  <PortalNavItemNode
+                    key={item.href}
+                    item={item}
+                    activeHref={activeHref}
+                    collapsed={collapsed}
+                    isMobileOpen={isMobileOpen}
+                    expandedItems={expandedItems}
+                    onToggleItem={toggleItem}
+                    onMobileClose={onMobileClose}
+                  />
+                ))}
               </div>
             ))}
           </nav>
@@ -358,6 +365,108 @@ function PortalSidebar({
   );
 }
 
+function PortalNavItemNode({
+  item,
+  activeHref,
+  collapsed,
+  isMobileOpen,
+  expandedItems,
+  onToggleItem,
+  onMobileClose,
+  depth = 0,
+}: {
+  item: PortalNavItem;
+  activeHref: string;
+  collapsed: boolean;
+  isMobileOpen: boolean;
+  expandedItems: Set<string>;
+  onToggleItem: (href: string) => void;
+  onMobileClose: () => void;
+  depth?: number;
+}) {
+  const Icon = item.icon;
+  const hasChildren = Boolean(item.children?.length);
+  const active = item.href === activeHref;
+  const activeChild = Boolean(item.children?.some((child) => navItemContainsHref(child, activeHref)));
+  const expanded = expandedItems.has(item.href) || activeChild;
+  const className = cn(
+    "flex w-full items-center gap-3 rounded-lg text-sm font-medium transition-colors",
+    collapsed && !isMobileOpen
+      ? "size-10 justify-center px-0 [&_svg]:size-5"
+      : depth > 0
+        ? "px-2 py-1.5 text-xs [&_svg]:size-3.5"
+        : "px-3 py-2 [&_svg]:size-4",
+    active
+      ? "bg-sidebar-primary text-sidebar-primary-foreground"
+      : activeChild
+        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+  );
+
+  if (collapsed && !isMobileOpen) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link href={item.href} onClick={onMobileClose} className={className}>
+            <Icon />
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent side="right">{item.title}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <div>
+      {hasChildren ? (
+        <button
+          type="button"
+          className={className}
+          aria-expanded={expanded}
+          onClick={() => onToggleItem(item.href)}
+        >
+          <Icon />
+          <span className="min-w-0 flex-1 truncate text-left">{item.title}</span>
+          <ChevronDown className={cn("size-3.5 shrink-0 transition-transform", expanded && "rotate-180")} />
+        </button>
+      ) : (
+        <Link href={item.href} onClick={onMobileClose} className={className}>
+          <Icon />
+          <span className="truncate">{item.title}</span>
+        </Link>
+      )}
+      {hasChildren && expanded ? (
+        <div className="ml-5 mt-1 flex flex-col gap-1 border-l border-sidebar-border pl-2">
+          {item.children?.map((child) => (
+            <PortalNavItemNode
+              key={child.href}
+              item={child}
+              activeHref={activeHref}
+              collapsed={collapsed}
+              isMobileOpen={isMobileOpen}
+              expandedItems={expandedItems}
+              onToggleItem={onToggleItem}
+              onMobileClose={onMobileClose}
+              depth={depth + 1}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function navItemContainsHref(item: PortalNavItem, href: string): boolean {
+  return item.href === href || Boolean(item.children?.some((child) => navItemContainsHref(child, href)));
+}
+
+function collectActiveParents(item: PortalNavItem, activeHref: string): string[] {
+  if (!item.children?.length) return [];
+  const childParents = item.children.flatMap((child) => collectActiveParents(child, activeHref));
+  const hasActiveChild = item.children.some((child) => child.href === activeHref || navItemContainsHref(child, activeHref));
+  return hasActiveChild ? [item.href, ...childParents] : childParents;
+}
+
 function getBestActiveHref(
   items: PortalNavItem[],
   pathname: string,
@@ -365,7 +474,7 @@ function getBestActiveHref(
 ) {
   let best: { href: string; score: number } | null = null;
 
-  for (const item of items) {
+  for (const item of flattenPortalNav(items)) {
     const score = activeScore(item.href, pathname, searchParams);
     if (score === null) continue;
     if (!best || score > best.score) {
@@ -374,6 +483,10 @@ function getBestActiveHref(
   }
 
   return best?.href ?? "";
+}
+
+function flattenPortalNav(items: PortalNavItem[]): PortalNavItem[] {
+  return items.flatMap((item) => [item, ...flattenPortalNav(item.children ?? [])]);
 }
 
 function activeScore(
