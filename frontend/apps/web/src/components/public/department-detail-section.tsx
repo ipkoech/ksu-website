@@ -25,6 +25,9 @@ import type { LucideIcon } from "lucide-react";
 import { ScrollReveal } from "@ksu/ui/components";
 import { PageShell } from "@/components/site-shell";
 import {
+  MobileQuickGrid,
+  QuickLinksPanel,
+  buildEntityQuickLinks,
   buildMediaTypeLinks,
   type EntityQuickLink,
 } from "./entity-quick-links";
@@ -224,6 +227,10 @@ function programmeTutors(
         ? "Lead"
         : formatLabel(tutor.role) ?? formatLabel(tutor.person?.academic_rank) ?? "Tutor",
     }));
+}
+
+function navHas(navItems: EntityHeaderNavItem[] | undefined, label: string) {
+  return Boolean(navItems?.some((item) => item.label === label));
 }
 
 function isRegistrarOffice(data: DepartmentDetailData) {
@@ -1203,11 +1210,9 @@ function mediaLabel(item: DepartmentDetailData["updates"][number]) {
 function MediaSection({
   data,
   mediaType,
-  baseHref,
 }: {
   data: DepartmentDetailData;
   mediaType?: EntityMediaType;
-  baseHref: string;
 }) {
   const updates = data.updates.filter((item) =>
     entityMediaTypeMatches(item, mediaType),
@@ -1217,13 +1222,6 @@ function MediaSection({
 
   return (
     <section className="grid gap-3">
-      {!mediaType ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {buildMediaTypeLinks(baseHref).map((item) => (
-            <LinkedMediaCategory key={item.href} item={item} />
-          ))}
-        </div>
-      ) : null}
       {fallbackCount > 0 && scopedCount === 0 && mediaType !== "gallery" ? (
         <p className="rounded-[1.25rem] border border-dashed border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
           No records are currently published for this department, so the latest
@@ -1263,35 +1261,6 @@ function MediaSection({
         ))}
       </div>
     </section>
-  );
-}
-
-function LinkedMediaCategory({ item }: { item: EntityQuickLink }) {
-  const Icon = item.icon;
-
-  return (
-    <Link
-      href={item.href}
-      className="group rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
-    >
-      <div className="flex gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
-          <Icon aria-hidden className="h-5 w-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
-            Media category
-          </p>
-          <h2 className="mt-1 text-base font-bold text-slate-950 group-hover:text-primary">
-            {item.label}
-          </h2>
-        </div>
-        <ArrowRight
-          aria-hidden
-          className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
-        />
-      </div>
-    </Link>
   );
 }
 
@@ -1444,7 +1413,7 @@ function renderSection(
     case "services":
       return <ServicesSection data={data} />;
     case "media":
-      return <MediaSection data={data} mediaType={mediaType} baseHref={baseHref} />;
+      return <MediaSection data={data} mediaType={mediaType} />;
     case "downloads":
       return <DownloadsSection data={data} />;
     case "contact":
@@ -1457,6 +1426,7 @@ export function DepartmentDetailSection({
   section,
   baseHref,
   header,
+  navItems,
   mediaType,
 }: {
   data: DepartmentDetailData;
@@ -1478,6 +1448,22 @@ export function DepartmentDetailSection({
         body: entityMediaTypeBody(mediaType),
       }
       : baseMeta;
+  const navigationLinks =
+    section === "media"
+      ? buildMediaTypeLinks(baseHref)
+      : buildEntityQuickLinks({
+          baseHref,
+          isAcademic: data.isAcademic,
+          showPublications:
+            data.counts.publications > 0 || navHas(navItems, "Publications"),
+        });
+  const activeSection = section === "media" ? (mediaType ?? "media") : section;
+  const navTitle =
+    section === "media"
+      ? "Content Items"
+      : registrarOffice
+        ? "Office Navigation"
+        : "Quick Links";
   const contactPanel = <ContactPanel data={data} />;
   const infoPanel = <DepartmentInfoPanel data={data} />;
 
@@ -1485,15 +1471,29 @@ export function DepartmentDetailSection({
     <PageShell header={header}>
       <AboutPageLenis>
         <section className="w-full bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_68%,#f6f8fc_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="grid w-full gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(260px,0.22fr)] 2xl:grid-cols-[minmax(0,1fr)_minmax(300px,0.22fr)] xl:items-start">
+          <div className="grid w-full gap-4 xl:grid-cols-[minmax(220px,0.2fr)_minmax(0,1fr)_minmax(260px,0.22fr)] 2xl:grid-cols-[minmax(240px,0.18fr)_minmax(0,1fr)_minmax(300px,0.22fr)] xl:items-start">
             <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
-              <ExploreMorePanel data={data} />
+              <QuickLinksPanel
+                links={navigationLinks}
+                activeSection={activeSection}
+                title={navTitle}
+                ariaLabel={
+                  section === "media"
+                    ? "Department media content navigation"
+                    : "Department quick links"
+                }
+              />
+              {section === "media" ? null : <ExploreMorePanel data={data} />}
             </aside>
 
             <ScrollReveal as="main" className="grid min-w-0 gap-4">
               {section === "about" || section === "team" ? null : (
                 <PageIntro meta={meta} />
               )}
+              <MobileQuickGrid
+                links={navigationLinks}
+                activeSection={activeSection}
+              />
               {renderSection(section, data, baseHref, mediaType)}
             </ScrollReveal>
 
