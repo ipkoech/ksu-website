@@ -29,6 +29,7 @@ import {
   useCommitPendingAttachments,
 } from "@/components/media";
 import { LibraryBranchPicker, ResearchCenterPicker, SchoolPicker } from "@/components/relationships/relationship-pickers";
+import { DateTimePicker } from "@/components/shared/date-time-picker";
 import { PageHeader } from "@/components/shared/page-header";
 import { usePermissions } from "@/hooks/use-permissions";
 import { PageTransition } from "@/lib/animations";
@@ -680,20 +681,22 @@ export default function PageCmsSectionDetailPage() {
               </div>
               <div className="space-y-2">
                 <p className="text-sm font-medium">Valid From</p>
-                <Input
-                  type="datetime-local"
+                <DateTimePicker
+                  mode="datetime-local"
                   value={form.valid_from}
                   disabled={!canManageSection || isLoading}
-                  onChange={(event) => setForm((current) => ({ ...current, valid_from: event.target.value }))}
+                  onChange={(value) => setForm((current) => ({ ...current, valid_from: value }))}
+                  placeholder="Select start date"
                 />
               </div>
               <div className="space-y-2">
                 <p className="text-sm font-medium">Valid To</p>
-                <Input
-                  type="datetime-local"
+                <DateTimePicker
+                  mode="datetime-local"
                   value={form.valid_to}
                   disabled={!canManageSection || isLoading}
-                  onChange={(event) => setForm((current) => ({ ...current, valid_to: event.target.value }))}
+                  onChange={(value) => setForm((current) => ({ ...current, valid_to: value }))}
+                  placeholder="Select end date"
                 />
               </div>
               <div className="flex items-center justify-between rounded-lg border p-3 lg:col-span-2">

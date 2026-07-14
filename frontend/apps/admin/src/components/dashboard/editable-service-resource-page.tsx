@@ -20,6 +20,7 @@ async function revalidateResearch(resource: string) {
 }
 
 import { PageHeader } from "@/components/layout";
+import { DateTimePicker } from "@/components/shared/date-time-picker";
 import { AttachmentManager, MediaPicker, getMediaLabel, getMediaUrl, isImageMedia, useCommitPendingAttachments, type AttachmentRoleOption, type PendingMediaAttachment } from "@/components/media";
 import { EntityPicker, EntityTypeRecordPicker, MultiEntityPicker } from "@/components/relationships/entity-picker";
 import { relationshipAdapters, type RelationshipFilters } from "@/components/relationships/relationship-adapters";
@@ -969,10 +970,10 @@ export function EditableServiceResourcePage<
           onChange={(event) => updateFilter(filter.name, event.target.value || null)}
         />
       ) : filter.type === "date" ? (
-        <Input
-          type="date"
+        <DateTimePicker
           value={filterValues[filter.name] ?? ""}
-          onChange={(event) => updateFilter(filter.name, event.target.value || null)}
+          onChange={(nextValue) => updateFilter(filter.name, nextValue || null)}
+          placeholder={filter.placeholder ?? filter.label}
         />
       ) : (
         <Select
@@ -2173,17 +2174,24 @@ function EditableFieldControl({
             onCheckedChange={setFieldValue}
           />
         </div>
+      ) : field.type === "date" || field.type === "datetime-local" ? (
+        <DateTimePicker
+          id={id}
+          mode={field.type}
+          value={stringValue}
+          onChange={setFieldValue}
+          placeholder={field.placeholder ?? field.label}
+          required={field.required}
+          ariaInvalid={Boolean(error)}
+          ariaDescribedby={describedBy}
+        />
       ) : (
         <Input
           id={id}
           type={
             resolvedType === "number"
               ? "number"
-              : resolvedType === "date"
-                ? "date"
-                : resolvedType === "datetime-local"
-                  ? "datetime-local"
-                  : resolvedType === "email"
+              : resolvedType === "email"
                     ? "email"
                     : resolvedType === "url"
                       ? "url"

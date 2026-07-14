@@ -250,8 +250,12 @@ class MediaService:
 
         content_model = CONTENT_ATTACHMENT_MODELS.get(normalized_type)
         if content_model is not None:
+            scope_type_column = getattr(content_model, "scope_type", None) or getattr(content_model, "owner_scope_type", None)
+            scope_id_column = getattr(content_model, "scope_id", None) or getattr(content_model, "owner_scope_id", None)
+            if scope_type_column is None or scope_id_column is None:
+                return "global", None
             result = await db.execute(
-                select(content_model.scope_type, content_model.scope_id).where(
+                select(scope_type_column, scope_id_column).where(
                     content_model.id == entity_id,
                     content_model.deleted_at.is_(None),
                 )

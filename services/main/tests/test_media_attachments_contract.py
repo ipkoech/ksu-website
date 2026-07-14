@@ -321,6 +321,18 @@ class MediaAttachmentContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("club", scope_type)
         self.assertEqual(club_id, scope_id)
 
+    async def test_partnership_spotlight_attachment_scope_uses_owner_scope(self):
+        scope_id = uuid.uuid4()
+
+        scope_type, resolved_scope_id = await MediaService.get_attachment_scope(
+            _ScopeDb(("global", scope_id)),
+            entity_type="partnership_spotlight",
+            entity_id=uuid.uuid4(),
+        )
+
+        self.assertEqual("global", scope_type)
+        self.assertEqual(scope_id, resolved_scope_id)
+
 
 if __name__ == "__main__":
     unittest.main()

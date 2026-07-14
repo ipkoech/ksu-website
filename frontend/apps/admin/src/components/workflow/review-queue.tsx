@@ -25,7 +25,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Input,
   Label,
   RichTextRenderer,
   Select,
@@ -41,6 +40,7 @@ import {
   TabsTrigger,
 } from "@ksu/ui/components";
 import { PageHeader } from "@/components/layout";
+import { DateTimePicker } from "@/components/shared/date-time-picker";
 import { WorkflowActions } from "./workflow-actions";
 
 const statusOptions = [
@@ -577,10 +577,10 @@ function DateFilter({
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      <Input
-        type="date"
+      <DateTimePicker
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={onChange}
+        placeholder={`Select ${label.toLowerCase()}`}
       />
     </div>
   );
