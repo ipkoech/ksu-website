@@ -280,7 +280,7 @@ function ProgrammesSection({ data }: { data: SchoolDetailOverviewData }) {
   if (!data.programmes.length) return null;
 
   return (
-    <section className="grid gap-3 md:grid-cols-2">
+    <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {data.programmes.map((programme) => {
         const meta = compactMeta([
           programme.level,
@@ -334,7 +334,7 @@ function PublicationsSection({ data }: { data: SchoolDetailOverviewData }) {
   if (!publicationHolders.length) return null;
 
   return (
-    <section className="grid gap-3 md:grid-cols-2">
+    <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {publicationHolders.map((person) => {
         const name = personDisplayName(person);
 
@@ -460,7 +460,7 @@ function MediaSection({
           are currently published for this school.
         </p>
       ) : null}
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {updates.map((item) => (
           <Link
             key={`${item.recordType}-${item.id}`}
@@ -544,7 +544,7 @@ function ClubsSection({ data }: { data: SchoolDetailOverviewData }) {
   if (!data.clubs.length) return null;
 
   return (
-    <section className="grid gap-3 md:grid-cols-2">
+    <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {data.clubs.map((club) => (
         <article
           key={club.id}
@@ -583,7 +583,7 @@ function ContactSection({ data }: { data: SchoolDetailOverviewData }) {
   if (!rows.length) return null;
 
   return (
-    <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+    <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {rows.map((item) => {
         const Icon = item.icon;
 

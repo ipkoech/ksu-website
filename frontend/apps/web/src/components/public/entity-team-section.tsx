@@ -33,7 +33,7 @@ function TeamCard({ member }: { member: PublicEntityTeamMember }) {
     <Link
       href={`/staff/${encodeURIComponent(profileId)}`}
       aria-label={`View ${member.name}, ${member.position}`}
-      className="group flex min-w-0 items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition hover:border-primary/30 hover:shadow-md sm:flex-col sm:text-center lg:w-[calc((100%-1.5rem)/3)]"
+      className="group flex min-w-0 items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition hover:border-primary/30 hover:shadow-md sm:flex-col sm:text-center"
     >
       <span className="block h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 sm:h-24 sm:w-24">
         {photoUrl ? (
@@ -112,7 +112,7 @@ export function EntityTeamSection({
             </h3>
             <span className="h-px flex-1 bg-slate-200" />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:flex lg:flex-wrap lg:justify-center">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {tier.members.map((member) => (
               <TeamCard key={member.person_id} member={member} />
             ))}

@@ -779,7 +779,7 @@ function RegistrarPathways({
   if (!pathways.length) return null;
 
   return (
-    <section className="grid gap-3 md:grid-cols-2">
+    <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {pathways.map((item) => {
         const Icon = item.icon;
 
@@ -1052,7 +1052,7 @@ function PublicationsSection({ data }: { data: DepartmentDetailData }) {
   if (!publicationHolders.length) return null;
 
   return (
-    <section className="grid gap-3 md:grid-cols-2">
+    <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {publicationHolders.map((person) => {
         const name = personDisplayName(person);
         const count = Number(person.publications_count ?? 0);
@@ -1084,7 +1084,7 @@ function ServicesSection({ data }: { data: DepartmentDetailData }) {
   return (
     <div className="grid gap-3">
       {charter || guidelines ? (
-        <section className="grid gap-3 md:grid-cols-2">
+        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {charter ? (
             <article className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm">
               <SectionKicker>Service Charter</SectionKicker>
@@ -1103,7 +1103,7 @@ function ServicesSection({ data }: { data: DepartmentDetailData }) {
       ) : null}
 
       {data.services.length ? (
-        <section className="grid gap-3 md:grid-cols-2">
+        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {data.services.map((service) => {
             const meta = compactMeta([
               service.turnaround_time,
@@ -1236,7 +1236,7 @@ function MediaSection({
           are currently published for this department.
         </p>
       ) : null}
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {updates.map((item) => (
           <Link
             key={`${item.recordType}-${item.id}`}
@@ -1366,7 +1366,7 @@ function ContactSection({ data }: { data: DepartmentDetailData }) {
   if (!rows.length) return null;
 
   return (
-    <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+    <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {rows.map((item) => {
         const Icon = item.icon;
 

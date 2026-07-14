@@ -783,7 +783,7 @@ export function ContentListingPage({ data }: { data: ContentListingData }) {
 
               {records.length ? (
                 <ScrollRevealGroup
-                  className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+                  className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
                   staggerDelay={70}
                 >
                   {records.map((record) => (
@@ -1134,7 +1134,7 @@ function RelatedContentSection({ data }: { data: ContentDetailData }) {
         </Link>
       </div>
       <ScrollRevealGroup
-        className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+        className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
         staggerDelay={70}
       >
         {data.related.map((record) => (
