@@ -31,6 +31,7 @@ import type {
   PublicAboutData,
   PublicHistoryMilestone,
 } from "@/lib/public-about-data";
+import { ImageComparison } from "./image-comparison";
 
 const heroFallback = "/images/backgrounds/KSUGreenLandscapingMay2026-3885.jpg";
 const identityFallback = "/images/backgrounds/KSUGreenLandscapingMay2026-7456.jpg";
@@ -231,7 +232,11 @@ export function PublicAboutPage({ data, historyInitiallyOpen = false }: { data: 
       <section className="bg-primary px-5 py-16 text-white sm:px-8 lg:px-10">
         <div className="mx-auto grid max-w-7xl overflow-hidden rounded-3xl border border-white/15 bg-white/5 lg:grid-cols-[.7fr_1.3fr]">
           <div className="p-8 lg:p-10"><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Campus transformation</p><h2 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight">From Our Roots.<br />To Our Future.</h2><p className="mt-5 text-sm leading-7 text-white/75">Our campus continues to evolve with our teaching, research and public mission.</p><button type="button" onClick={() => setHistory(true)} className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-xl bg-secondary px-4 py-3 text-sm font-bold text-slate-950">See the Transformation <ArrowRight className="h-4 w-4" aria-hidden /></button></div>
-          <div className="relative min-h-[380px]"><Image src={mediaUrl(content?.modern_campus_media, heroFallback)} alt={content?.modern_campus_media?.alt || "Modern Kisii University campus"} fill sizes="(min-width:1024px) 65vw, 100vw" className="object-cover" /><div className="absolute inset-0 bg-gradient-to-r from-primary/45 to-transparent" /><span className="absolute bottom-5 right-5 rounded-full bg-primary/85 px-4 py-2 text-xs font-bold uppercase tracking-wider">Today</span></div>
+          {content?.old_campus_media?.url && content?.modern_campus_media?.url ? (
+            <ImageComparison before={content.old_campus_media.url} after={content.modern_campus_media.url} beforeAlt={content.old_campus_media.alt || "Historic Kisii University campus"} afterAlt={content.modern_campus_media.alt || "Modern Kisii University campus"} />
+          ) : (
+            <div className="relative min-h-[380px]"><Image src={mediaUrl(content?.modern_campus_media, heroFallback)} alt={content?.modern_campus_media?.alt || "Modern Kisii University campus"} fill sizes="(min-width:1024px) 65vw, 100vw" className="object-cover" /><div className="absolute inset-0 bg-gradient-to-r from-primary/45 to-transparent" /><span className="absolute bottom-5 right-5 rounded-full bg-primary/85 px-4 py-2 text-xs font-bold uppercase tracking-wider">Today</span></div>
+          )}
         </div>
       </section>
 
