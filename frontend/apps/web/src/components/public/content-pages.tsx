@@ -25,6 +25,7 @@ import {
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import {
   categoryLabel,
+  mediaPlaybackUrl,
   mediaUrl,
   present,
   recordDate,
@@ -59,6 +60,8 @@ function listingBaseHref(data: ContentListingData) {
   const sp = new URLSearchParams();
   if (data.filters.q) sp.set("q", data.filters.q);
   if (data.filters.type) sp.set("type", data.filters.type);
+  if (data.filters.entity_type) sp.set("entity_type", data.filters.entity_type);
+  if (data.filters.entity_id) sp.set("entity_id", data.filters.entity_id);
   const search = sp.toString();
   return `${data.href}${search ? `?${search}` : ""}`;
 }
@@ -585,6 +588,48 @@ function ContentFilters({
           } satisfies ListFilterOption;
         }).filter((item) => item.value)
       : [];
+  const entityTypeOptions: ListFilterOption[] = [
+    { value: "school", label: "School" },
+    { value: "department", label: "Department" },
+  ];
+  const entityOptions =
+    data.filters.entity_type === "department"
+      ? (data.entityOptions?.departments ?? [])
+      : (data.entityOptions?.schools ?? []);
+  const entitySelects: Array<{
+    name: string;
+    label: string;
+    value?: string;
+    allLabel: string;
+    options: ListFilterOption[];
+  }> =
+    data.kind === "news" || data.kind === "events" || data.kind === "media"
+      ? [
+          {
+            name: "entity_type",
+            label: "Entity",
+            value: data.filters.entity_type,
+            allLabel: "All entities",
+            options: entityTypeOptions,
+          },
+          {
+            name: "entity_id",
+            label:
+              data.filters.entity_type === "department"
+                ? "Department"
+                : "School",
+            value: data.filters.entity_id,
+            allLabel:
+              data.filters.entity_type === "department"
+                ? "All departments"
+                : "All schools",
+            options: entityOptions.map((item) => ({
+              value: item.href,
+              label: item.label,
+            })),
+          },
+        ]
+      : [];
 
   return (
     <PublicListFilterForm
@@ -592,17 +637,20 @@ function ContentFilters({
       searchValue={data.filters.q}
       searchPlaceholder={`Search ${kindLabel(data.kind).toLowerCase()}`}
       selects={
-        typeOptions.length
-          ? [
-              {
-                name: "type",
-                label: "Type",
-                value: data.filters.type,
-                allLabel: "All types",
-                options: typeOptions,
-              },
-            ]
-          : []
+        [
+          ...entitySelects,
+          ...(typeOptions.length
+            ? [
+                {
+                  name: "type",
+                  label: "Type",
+                  value: data.filters.type,
+                  allLabel: "All types",
+                  options: typeOptions,
+                },
+              ]
+            : []),
+        ]
       }
       clearHref={data.href}
       total={data.total}
@@ -629,17 +677,19 @@ function galleryBentoItems(records: ContentRecord[]): MediaGalleryBentoItem[] {
         record.media_type === "video" || record.mime_type?.startsWith("video/");
       const isImage =
         record.media_type === "image" || record.mime_type?.startsWith("image/");
+      if (!isVideo && !isImage) return null;
 
       return {
         id: record.id,
-        type: isVideo ? "video" : isImage ? "image" : "file",
+        type: isVideo ? "video" : "image",
         title: recordTitle(record),
         description: summarize(record, null),
-        url,
+        url: isVideo ? mediaPlaybackUrl(record) : url,
         href: recordHref(record),
         span: gallerySpanPattern[index % gallerySpanPattern.length]!,
       };
-    });
+    })
+    .filter(Boolean) as MediaGalleryBentoItem[];
 }
 
 function MediaDeskListingPage({ data }: { data: ContentListingData }) {

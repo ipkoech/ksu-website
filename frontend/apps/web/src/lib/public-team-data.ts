@@ -1,4 +1,10 @@
-import { mainApi } from "@ksu/api-client";
+import {
+  mainApi,
+  publicEntityApi,
+  type PublicEntityTeam,
+} from "@ksu/api-client";
+
+export type { PublicEntityTeam } from "@ksu/api-client";
 
 export type PublicTeamEntityType =
   | "school"
@@ -91,6 +97,24 @@ export async function getPublicTeam(
     return response.data ?? null;
   } catch (error) {
     console.error("Failed to load public team:", error);
+    return null;
+  }
+}
+
+export async function getPublicEntityTeam(
+  entityType: "school" | "department",
+  entityId?: string | null,
+): Promise<PublicEntityTeam | null> {
+  if (!entityId) return null;
+
+  try {
+    const response =
+      entityType === "school"
+        ? await publicEntityApi.schoolTeam(entityId)
+        : await publicEntityApi.departmentTeam(entityId);
+    return response.data ?? null;
+  } catch (error) {
+    console.error(`Failed to load public ${entityType} team:`, error);
     return null;
   }
 }

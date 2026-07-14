@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Download } from "lucide-react";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { getContentDetailData } from "@/lib/content-page-data";
+import { resolvePublicMediaUrl } from "@/lib/public-media";
 
 export const metadata = {
   title: "Gallery",
@@ -28,7 +29,17 @@ export default async function GalleryDetailPage({
   const data = await getContentDetailData("media", id);
   if (!data) notFound();
 
-  const hasImage = Boolean(data.heroImage);
+  const isVideo =
+    data.record.contentKind === "media" &&
+    (data.record.media_type === "video" ||
+      data.record.mime_type?.startsWith("video/"));
+  const mediaSource =
+    data.record.contentKind === "media"
+      ? (resolvePublicMediaUrl(data.record.cdn_url) ??
+        resolvePublicMediaUrl(data.record.public_url) ??
+        resolvePublicMediaUrl(data.record.url))
+      : data.heroImage;
+  const hasMedia = Boolean(mediaSource || data.heroImage);
 
   return (
     <PageShell>
@@ -89,9 +100,9 @@ export default async function GalleryDetailPage({
               )}
             </dl>
 
-            {data.heroImage ? (
+            {mediaSource || data.heroImage ? (
               <a
-                href={data.heroImage}
+                href={mediaSource ?? data.heroImage ?? "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
@@ -111,14 +122,25 @@ export default async function GalleryDetailPage({
           </aside>
         </div>
 
-        {hasImage ? (
+        {hasMedia ? (
           <figure className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
             <div className="relative min-h-[300px] sm:min-h-[420px] lg:min-h-[520px]">
-              <img
-                src={data.heroImage!}
-                alt={data.title}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
+              {isVideo && mediaSource ? (
+                <video
+                  controls
+                  preload="metadata"
+                  poster={data.heroImage ?? undefined}
+                  className="absolute inset-0 h-full w-full bg-slate-950 object-contain"
+                >
+                  <source src={mediaSource} />
+                </video>
+              ) : data.heroImage ? (
+                <img
+                  src={data.heroImage}
+                  alt={data.title}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : null}
             </div>
             <figcaption className="px-5 py-3 text-sm text-slate-600">
               {data.title}

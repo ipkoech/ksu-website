@@ -25,14 +25,11 @@ import type { LucideIcon } from "lucide-react";
 import { ScrollReveal } from "@ksu/ui/components";
 import { PageShell } from "@/components/site-shell";
 import {
-  QuickLinksPanel,
-  MobileQuickGrid,
-  buildEntityQuickLinks,
   buildMediaTypeLinks,
   type EntityQuickLink,
 } from "./entity-quick-links";
 import { PublicImage } from "@/components/public/public-image";
-import { PublicTeamSection } from "@/components/public/public-team-section";
+import { EntityTeamSection } from "@/components/public/entity-team-section";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import type { DepartmentDetailData } from "@/lib/department-detail-data";
 import {
@@ -227,10 +224,6 @@ function programmeTutors(
         ? "Lead"
         : formatLabel(tutor.role) ?? formatLabel(tutor.person?.academic_rank) ?? "Tutor",
     }));
-}
-
-function navHas(navItems: EntityHeaderNavItem[] | undefined, label: string) {
-  return Boolean(navItems?.some((item) => item.label === label));
 }
 
 function isRegistrarOffice(data: DepartmentDetailData) {
@@ -755,7 +748,7 @@ function RegistrarPathways({
       body: "Published registrar office staff and role assignments.",
       href: `${baseHref}/team`,
       icon: Users,
-      show: data.counts.staff > 0 || Boolean(data.team?.assignments.length),
+      show: data.counts.staff > 0 || Boolean(data.team?.counts.members),
     },
     {
       title: "Services",
@@ -877,7 +870,7 @@ function TeamSection({ data }: { data: DepartmentDetailData }) {
   const registrarOffice = isRegistrarOffice(data);
 
   return (
-    <PublicTeamSection
+    <EntityTeamSection
       team={data.team}
       title={
         registrarOffice
@@ -1464,7 +1457,6 @@ export function DepartmentDetailSection({
   section,
   baseHref,
   header,
-  navItems,
   mediaType,
 }: {
   data: DepartmentDetailData;
@@ -1475,9 +1467,6 @@ export function DepartmentDetailSection({
   mediaType?: EntityMediaType;
 }) {
   const registrarOffice = isRegistrarOffice(data);
-  const quickLinks =
-    section === "media" ? buildMediaTypeLinks(baseHref) : buildEntityQuickLinks({ baseHref, isAcademic: data.isAcademic, showPublications: data.counts.publications > 0 || navHas(navItems, "Publications") });
-  const activeSection = mediaType ?? section;
   const baseMeta = registrarOffice
     ? registrarSectionMeta(section, mediaType)
     : sectionMeta[section];
@@ -1496,19 +1485,8 @@ export function DepartmentDetailSection({
     <PageShell header={header}>
       <AboutPageLenis>
         <section className="w-full bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_68%,#f6f8fc_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="grid w-full gap-4 xl:grid-cols-[minmax(220px,0.2fr)_minmax(0,1fr)_minmax(260px,0.22fr)] 2xl:grid-cols-[minmax(240px,0.18fr)_minmax(0,1fr)_minmax(300px,0.22fr)] xl:items-start">
+          <div className="grid w-full gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(260px,0.22fr)] 2xl:grid-cols-[minmax(0,1fr)_minmax(300px,0.22fr)] xl:items-start">
             <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
-              <QuickLinksPanel
-                links={quickLinks}
-                activeSection={activeSection}
-                title={
-                  section === "media"
-                    ? "Content Types"
-                    : registrarOffice
-                      ? "Office Navigation"
-                      : "Quick Links"
-                }
-              />
               <ExploreMorePanel data={data} />
             </aside>
 
@@ -1516,7 +1494,6 @@ export function DepartmentDetailSection({
               {section === "about" || section === "team" ? null : (
                 <PageIntro meta={meta} />
               )}
-              <MobileQuickGrid links={quickLinks} activeSection={activeSection} />
               {renderSection(section, data, baseHref, mediaType)}
             </ScrollReveal>
 

@@ -106,18 +106,6 @@ export function buildMediaTypeLinks(baseHref: string): EntityQuickLink[] {
       section: "events",
     },
     {
-      label: "Blogs",
-      href: `${baseHref}/media/blogs`,
-      icon: FileText,
-      section: "blogs",
-    },
-    {
-      label: "Announcements",
-      href: `${baseHref}/media/announcements`,
-      icon: Quote,
-      section: "announcements",
-    },
-    {
       label: "Gallery",
       href: `${baseHref}/media/gallery`,
       icon: Download,

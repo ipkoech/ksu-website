@@ -7,15 +7,17 @@ from collections import defaultdict
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, Request, status
+import sqlalchemy as sa
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from ksu_common import cached_public
+from ksu_common import apply_field_selection, cached_public
 from ksu_common.schemas.responses import success
 
 from ...deps import DbSession
 from ...helpers.storage import get_media_public_url
 from ...models import Board, Department, Division, Media, Person, School, StaffAssignment, UniversityInfo, Wing
+from ._fields import FieldSelection, FieldsDep
 
 router = APIRouter()
 
@@ -221,7 +223,7 @@ def _build_hierarchy(assignments: list[dict[str, Any]]) -> list[dict[str, Any]]:
     ]
 
 
-@router.get("")
+@router.get("/team")
 @cached_public(timeout=300, vary_on=("entity_type", "entity_id"))
 async def get_public_team(
     request: Request,
@@ -286,3 +288,265 @@ async def get_public_team(
             },
         }
     )
+
+
+ACADEMIC_TEAM_ROLES = {
+    "professor",
+    "associate_professor",
+    "senior_lecturer",
+    "lecturer",
+    "assistant_lecturer",
+    "tutorial_fellow",
+    "graduate_assistant",
+}
+DEPARTMENT_HEAD_ROLES = {"cod", "hod", "head"}
+ADMIN_ASSISTANT_ROLES = {"admin_assistant", "assistant", "admin"}
+DEPUTY_ROLES = {"deputy_director", "deputy_hod", "deputy_registrar", "deputy_dean"}
+
+
+def _display_name(person: Person) -> str:
+    full_name = (person.full_name or "").strip()
+    title = (person.title or "").strip()
+    if title and full_name and not full_name.lower().startswith(title.lower()):
+        return f"{title} {full_name}"
+    return full_name or title or "Staff profile"
+
+
+def _member_payload(
+    assignment: StaffAssignment,
+    person: Person,
+    photo_url: str | None,
+    *,
+    position: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "id": str(assignment.id),
+        "person_id": str(person.id),
+        "profile_slug": getattr(person, "slug", None) or str(person.id),
+        "name": _display_name(person),
+        "title": person.title,
+        "position": position or assignment.role_display,
+        "photo_url": photo_url,
+        "hierarchy_level": assignment.hierarchy_level,
+        "display_order": assignment.display_order,
+    }
+
+
+def _assignment_rank(assignment: StaffAssignment) -> tuple[int, int, str]:
+    return (assignment.hierarchy_level, assignment.display_order, str(assignment.id))
+
+
+def _deduplicate_assignments(assignments: list[StaffAssignment]) -> list[StaffAssignment]:
+    winners: dict[uuid.UUID, StaffAssignment] = {}
+    for assignment in assignments:
+        current = winners.get(assignment.person_id)
+        if current is None or _assignment_rank(assignment) < _assignment_rank(current):
+            winners[assignment.person_id] = assignment
+    return sorted(winners.values(), key=_assignment_rank)
+
+
+async def _load_entity_assignments(
+    db: DbSession,
+    scope_pairs: list[tuple[str, uuid.UUID]],
+) -> list[StaffAssignment]:
+    if not scope_pairs:
+        return []
+    scope_filter = sa.or_(
+        *(
+            sa.and_(StaffAssignment.entity_type == entity_type, StaffAssignment.entity_id == entity_id)
+            for entity_type, entity_id in scope_pairs
+        )
+    )
+    query = (
+        select(StaffAssignment)
+        .join(Person, StaffAssignment.person_id == Person.id)
+        .options(selectinload(StaffAssignment.person))
+        .where(
+            scope_filter,
+            StaffAssignment.status == "active",
+            StaffAssignment.is_public.is_(True),
+            StaffAssignment.deleted_at.is_(None),
+            Person.deleted_at.is_(None),
+            Person.is_active.is_(True),
+            Person.is_public.is_(True),
+            Person.show_on_directory.is_(True),
+        )
+        .order_by(StaffAssignment.hierarchy_level, StaffAssignment.display_order, Person.full_name)
+    )
+    result = await db.execute(query)
+    return list(result.scalars().unique().all())
+
+
+def _tier(key: str, label: str, assignments: list[StaffAssignment], photos: dict[uuid.UUID, str | None]):
+    return {
+        "key": key,
+        "label": label,
+        "members": [
+            _member_payload(item, item.person, photos.get(item.person_id))
+            for item in assignments
+            if item.person is not None
+        ],
+    }
+
+
+async def _school_team_payload(db: DbSession, school_id: uuid.UUID) -> dict[str, Any]:
+    school_result = await db.execute(
+        select(School).where(
+            School.id == school_id,
+            School.deleted_at.is_(None),
+            School.is_active.is_(True),
+            School.is_public.is_(True),
+        )
+    )
+    school = school_result.scalar_one_or_none()
+    if school is None:
+        raise HTTPException(status_code=404, detail="School not found")
+
+    department_result = await db.execute(
+        select(Department).where(
+            Department.school_id == school.id,
+            Department.deleted_at.is_(None),
+            Department.is_active.is_(True),
+            Department.is_public.is_(True),
+        )
+    )
+    departments = list(department_result.scalars().all())
+    assignments = await _load_entity_assignments(
+        db,
+        [("school", school.id), *(("department", item.id) for item in departments)],
+    )
+    eligible = [
+        item
+        for item in assignments
+        if item.role == "dean"
+        or item.role in DEPARTMENT_HEAD_ROLES
+        or item.role == "postgraduate_coordinator"
+    ]
+
+    canonical_people = {item.person_id for item in eligible}
+    legacy_department_by_person = {
+        item.postgraduate_coordinator_id: item.id
+        for item in departments
+        if item.postgraduate_coordinator_id and item.postgraduate_coordinator_id not in canonical_people
+    }
+    legacy_ids = set(legacy_department_by_person)
+    if legacy_ids:
+        people_result = await db.execute(
+            select(Person).where(
+                Person.id.in_(legacy_ids),
+                Person.deleted_at.is_(None),
+                Person.is_active.is_(True),
+                Person.is_public.is_(True),
+                Person.show_on_directory.is_(True),
+            )
+        )
+        for index, person in enumerate(people_result.scalars().all(), start=1):
+            legacy = StaffAssignment(
+                id=uuid.uuid5(uuid.NAMESPACE_URL, f"legacy-postgraduate-coordinator:{school.id}:{person.id}"),
+                person_id=person.id,
+                entity_type="department",
+                entity_id=legacy_department_by_person[person.id],
+                role="postgraduate_coordinator",
+                title="Postgraduate Coordinator",
+                hierarchy_level=8,
+                display_order=900 + index,
+                status="active",
+                is_public=True,
+            )
+            legacy.person = person
+            eligible.append(legacy)
+
+    winners = _deduplicate_assignments(eligible)
+    people = [item.person for item in winners if item.person is not None]
+    photos = await _photo_urls(db, people)
+    tier_specs = [
+        ("dean", "Dean", [item for item in winners if item.role == "dean"]),
+        ("cod", "Chairpersons of Department", [item for item in winners if item.role in DEPARTMENT_HEAD_ROLES]),
+        (
+            "postgraduate_coordinator",
+            "Postgraduate Coordinators",
+            [item for item in winners if item.role == "postgraduate_coordinator"],
+        ),
+    ]
+    tiers = [_tier(key, label, members, photos) for key, label, members in tier_specs if members]
+    return {
+        "entity": {"id": str(school.id), "type": "school", "name": school.name, "slug": school.slug},
+        "tiers": tiers,
+        "counts": {"members": len(winners), "tiers": len(tiers)},
+    }
+
+
+async def _department_team_payload(db: DbSession, department_id: uuid.UUID) -> dict[str, Any]:
+    department_result = await db.execute(
+        select(Department).where(
+            Department.id == department_id,
+            Department.deleted_at.is_(None),
+            Department.is_active.is_(True),
+            Department.is_public.is_(True),
+        )
+    )
+    department = department_result.scalar_one_or_none()
+    if department is None:
+        raise HTTPException(status_code=404, detail="Department not found")
+
+    winners = _deduplicate_assignments(
+        await _load_entity_assignments(db, [("department", department.id)])
+    )
+    people = [item.person for item in winners if item.person is not None]
+    photos = await _photo_urls(db, people)
+    if department.department_type == "academic":
+        head = [item for item in winners if item.role in DEPARTMENT_HEAD_ROLES]
+        academic = [
+            item
+            for item in winners
+            if item not in head and (item.role in ACADEMIC_TEAM_ROLES or bool(item.person and item.person.academic_rank))
+        ]
+        assistants = [item for item in winners if item not in head and item not in academic and item.role in ADMIN_ASSISTANT_ROLES]
+        tier_specs = [
+            ("head", "Chairperson of Department", head),
+            ("academic", "Academic Staff", academic),
+            ("administrative_assistants", "Administrative Assistants", assistants),
+        ]
+    else:
+        head_roles = DEPARTMENT_HEAD_ROLES | {"director", "manager", "librarian", "university_librarian"}
+        head = [item for item in winners if item.role in head_roles and item.role not in DEPUTY_ROLES]
+        deputies = [item for item in winners if item.role in DEPUTY_ROLES or item.role.startswith("deputy_")]
+        staff = [item for item in winners if item not in head and item not in deputies]
+        tier_specs = [("head", "Head of Department", head), ("deputies", "Deputies", deputies), ("staff", "Staff", staff)]
+
+    tiers = [_tier(key, label, members, photos) for key, label, members in tier_specs if members]
+    return {
+        "entity": {
+            "id": str(department.id),
+            "type": "department",
+            "name": department.name,
+            "slug": department.slug,
+            "department_type": department.department_type,
+        },
+        "tiers": tiers,
+        "counts": {"members": sum(len(item[2]) for item in tier_specs), "tiers": len(tiers)},
+    }
+
+
+@router.get("/schools/{school_id}/team")
+@cached_public(timeout=300, vary_on=("school_id", "fields", "include"))
+async def get_public_school_team(
+    request: Request,
+    school_id: uuid.UUID,
+    db: DbSession,
+    fields: FieldSelection = FieldsDep,
+):
+    payload = await _school_team_payload(db, school_id)
+    return success(data=apply_field_selection(payload, fields, always_include={"id"}))
+
+
+@router.get("/departments/{department_id}/team")
+@cached_public(timeout=300, vary_on=("department_id", "fields", "include"))
+async def get_public_department_team(
+    request: Request,
+    department_id: uuid.UUID,
+    db: DbSession,
+    fields: FieldSelection = FieldsDep,
+):
+    payload = await _department_team_payload(db, department_id)
+    return success(data=apply_field_selection(payload, fields, always_include={"id"}))

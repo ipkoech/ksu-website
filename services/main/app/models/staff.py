@@ -108,6 +108,7 @@ ROLE_HIERARCHY = {
     "coordinator": HierarchyLevel.COORDINATOR,
     "program_coordinator": HierarchyLevel.COORDINATOR,
     "project_coordinator": HierarchyLevel.COORDINATOR,
+    "postgraduate_coordinator": HierarchyLevel.COORDINATOR,
     "branch_librarian": HierarchyLevel.COORDINATOR,
     "principal_investigator": HierarchyLevel.COORDINATOR,
     "project_lead": HierarchyLevel.COORDINATOR,
@@ -155,6 +156,7 @@ ENTITY_ROLES = {
     ],
     "department": [
         "hod", "head", "cod", "deputy_hod", "section_head", "coordinator",
+        "postgraduate_coordinator",
         "professor", "associate_professor", "senior_lecturer", "lecturer",
         "assistant_lecturer", "tutorial_fellow", "graduate_assistant",
         "admin", "technician", "officer", "assistant", "staff",

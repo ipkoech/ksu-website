@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { FileText, X } from "lucide-react";
+import { FileText, PlayCircle, X } from "lucide-react";
 
 export type MediaGalleryBentoItem = {
   id: string;
@@ -307,6 +307,12 @@ export function MediaGalleryBento({
           >
             <GalleryMedia item={item} className="absolute inset-0" priority={index < 2} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-85 transition group-hover:opacity-100" />
+            {item.type === "video" ? (
+              <div className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-white backdrop-blur">
+                <PlayCircle className="h-3.5 w-3.5" aria-hidden />
+                Video
+              </div>
+            ) : null}
             <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
               <h2 className="line-clamp-1 text-sm font-bold text-white sm:text-base">
                 {item.title}

@@ -18,7 +18,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { ScrollReveal } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
-import { PublicTeamSection } from "@/components/public/public-team-section";
+import { EntityTeamSection } from "@/components/public/entity-team-section";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import type { SchoolDetailOverviewData } from "@/lib/school-detail-data";
 import {
@@ -142,146 +142,11 @@ function compactMeta(values: Array<string | number | null | undefined>) {
     .join(" · ");
 }
 
-function navHas(navItems: EntityHeaderNavItem[] | undefined, label: string) {
-  return Boolean(navItems?.some((item) => item.label === label));
-}
-
-function buildQuickLinks({
-  baseHref,
-  navItems,
-  counts,
-}: {
-  baseHref: string;
-  navItems?: EntityHeaderNavItem[];
-  counts: SchoolDetailOverviewData["counts"];
-}) {
-  const links: QuickLink[] = [
-    {
-      label: "Programmes",
-      href: `${baseHref}/programmes`,
-      icon: GraduationCap,
-      section: "programmes",
-    },
-    { label: "Team", href: `${baseHref}/team`, icon: Users, section: "team" },
-  ];
-
-  if (counts.publications > 0 || navHas(navItems, "Publications")) {
-    links.push({
-      label: "Publications",
-      href: `${baseHref}/publications`,
-      icon: FileText,
-      section: "publications",
-    });
-  }
-
-  links.push(
-    { label: "Media", href: `${baseHref}/media`, icon: Newspaper, section: "media" },
-    {
-      label: "Downloads",
-      href: `${baseHref}/downloads`,
-      icon: Download,
-      section: "downloads",
-    },
-  );
-
-  if (counts.clubs > 0 || navHas(navItems, "Clubs")) {
-    links.push({
-      label: "Clubs & Societies",
-      href: `${baseHref}/clubs`,
-      icon: Sparkles,
-      section: "clubs",
-    });
-  }
-
-  links.push({
-    label: "Contact",
-    href: `${baseHref}/contact`,
-    icon: Phone,
-    section: "contact",
-  });
-
-  return links;
-}
-
 function SectionKicker({ children }: { children: string }) {
   return (
     <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
       {children}
     </p>
-  );
-}
-
-function QuickLinksPanel({
-  links,
-  activeSection,
-  title = "Quick Links",
-}: {
-  links: QuickLink[];
-  activeSection: SchoolDetailSectionKey | EntityMediaType;
-  title?: string;
-}) {
-  return (
-    <section className="rounded-[1.25rem] border border-slate-200 bg-white p-3 shadow-sm">
-      <SectionKicker>{title}</SectionKicker>
-      <nav aria-label="School quick links" className="mt-3">
-        <ul className="divide-y divide-slate-100">
-          {links.map((item) => {
-            const Icon = item.icon;
-            const active = item.section === activeSection;
-
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={`group flex min-h-10 items-center gap-3 py-2 text-sm font-medium transition ${active ? "text-primary" : "text-slate-700 hover:text-primary"
-                    }`}
-                >
-                  <Icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
-                  <span className="min-w-0 flex-1">{item.label}</span>
-                  <ArrowRight
-                    aria-hidden
-                    className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
-                  />
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-    </section>
-  );
-}
-
-function MobileQuickGrid({
-  links,
-  activeSection,
-}: {
-  links: QuickLink[];
-  activeSection: SchoolDetailSectionKey | EntityMediaType;
-}) {
-  return (
-    <section className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:hidden">
-      {links.map((item) => {
-        const Icon = item.icon;
-        const active = item.section === activeSection;
-
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            aria-current={active ? "page" : undefined}
-            className={`flex min-h-[4.5rem] flex-col items-center justify-center gap-2 rounded-[1.1rem] border bg-white p-2 text-center text-[0.72rem] font-semibold leading-4 shadow-sm transition ${active
-                ? "border-primary/30 text-primary"
-                : "border-slate-200 text-slate-700 hover:border-primary/30 hover:text-primary"
-              }`}
-          >
-            <Icon aria-hidden className="h-5 w-5 text-primary" />
-            <span>{item.label}</span>
-          </Link>
-        );
-      })}
-    </section>
   );
 }
 
@@ -293,13 +158,6 @@ function buildMediaTypeLinks(baseHref: string): QuickLink[] {
       href: `${baseHref}/media/events`,
       icon: CalendarDays,
       section: "events",
-    },
-    { label: "Blogs", href: `${baseHref}/media/blogs`, icon: FileText, section: "blogs" },
-    {
-      label: "Announcements",
-      href: `${baseHref}/media/announcements`,
-      icon: Download,
-      section: "announcements",
     },
     {
       label: "Gallery",
@@ -406,7 +264,7 @@ function SchoolInfoPanel({ data }: { data: SchoolDetailOverviewData }) {
 
 function TeamSection({ data }: { data: SchoolDetailOverviewData }) {
   return (
-    <PublicTeamSection
+    <EntityTeamSection
       team={data.team}
       title="School Team"
       emptyTitle="No public school team records are available yet."
@@ -775,7 +633,6 @@ export function SchoolDetailSection({
   data,
   section,
   header,
-  navItems,
   mediaType,
 }: {
   data: SchoolDetailOverviewData;
@@ -784,16 +641,6 @@ export function SchoolDetailSection({
   navItems?: EntityHeaderNavItem[];
   mediaType?: EntityMediaType;
 }) {
-  const baseHref = `/academics/schools/${data.school.slug}`;
-  const quickLinks =
-    section === "media"
-      ? buildMediaTypeLinks(baseHref)
-      : buildQuickLinks({
-        baseHref,
-        navItems,
-        counts: data.counts,
-      });
-  const activeSection = mediaType ?? section;
   const baseMeta = sectionMeta[section];
   const meta =
     section === "media"
@@ -822,18 +669,9 @@ export function SchoolDetailSection({
               ]}
             />
           </div>
-          <div className="grid w-full gap-3 xl:grid-cols-[minmax(220px,0.22fr)_minmax(0,1fr)_minmax(240px,0.24fr)] 2xl:grid-cols-[minmax(240px,0.2fr)_minmax(0,1fr)_minmax(280px,0.22fr)] xl:items-start">
-            <aside className="hidden min-w-0 space-y-3 xl:block xl:sticky xl:top-28">
-              <QuickLinksPanel
-                links={quickLinks}
-                activeSection={activeSection}
-                title={section === "media" ? "Content Types" : "Quick Links"}
-              />
-            </aside>
-
+          <div className="grid w-full gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(240px,0.24fr)] 2xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.22fr)] xl:items-start">
             <ScrollReveal as="main" className="grid min-w-0 gap-3">
               <PageIntro meta={meta} />
-              <MobileQuickGrid links={quickLinks} activeSection={activeSection} />
               {renderSection(section, data, mediaType)}
             </ScrollReveal>
 

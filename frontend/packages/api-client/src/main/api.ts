@@ -100,6 +100,10 @@ import type {
   PublicResearchContextResponse,
   PublicResearchContextUpdatePayload,
   PublicTeamResponse,
+  PublicEntityContent,
+  PublicEntityContentType,
+  PublicEntityTeam,
+  PublicEntityType,
 } from "./types";
 import type { FieldSelectionParams, QueryParams } from "../client";
 
@@ -355,6 +359,38 @@ export const publicTeamApi = {
     entity_id?: string;
   }) =>
     mainApi.get<{ data: PublicTeamResponse }>("/api/v1/public/team", params),
+};
+
+const publicEntityTeamFields =
+  "entity(id,type,name,slug,department_type),tiers(key,label,members(id,person_id,profile_slug,name,title,position,photo_url,hierarchy_level,display_order)),counts(members,tiers)";
+
+export const publicEntityApi = {
+  schoolTeam: (schoolId: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: PublicEntityTeam }>(
+      `/api/v1/public/schools/${schoolId}/team`,
+      { fields: publicEntityTeamFields, ...params },
+    ),
+
+  departmentTeam: (departmentId: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: PublicEntityTeam }>(
+      `/api/v1/public/departments/${departmentId}/team`,
+      { fields: publicEntityTeamFields, ...params },
+    ),
+
+  content: (
+    entityType: PublicEntityType,
+    entityId: string,
+    params?: FieldSelectionParams & {
+      content_type?: PublicEntityContentType;
+      page?: number;
+      per_page?: number;
+      search?: string;
+    },
+  ) =>
+    mainApi.get<{ data: PublicEntityContent; meta?: PublicEntityContent["meta"] }>(
+      `/api/v1/public/content/${entityType}/${entityId}`,
+      params,
+    ),
 };
 
 export const publicResearchContextApi = {

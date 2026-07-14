@@ -12,10 +12,14 @@ import type {
 import type { Leader } from "@ksu/ui/components";
 import { getHOD, getLeaderByRole } from "@/lib/get-leadership";
 import {
-  getScopedEntityMedia,
+  getEntityDownloads,
+  getEntityMediaRecords,
   type EntityMediaRecord,
 } from "@/lib/entity-media-data";
-import { getPublicTeam, type PublicTeamData } from "@/lib/public-team-data";
+import {
+  getPublicEntityTeam,
+  type PublicEntityTeam,
+} from "@/lib/public-team-data";
 
 type DepartmentResponse = {
   data?: DepartmentWithRelations;
@@ -266,22 +270,6 @@ const departmentServiceFields = [
   "updated_at",
 ].join(",");
 
-const documentFields = [
-  "id",
-  "title",
-  "slug",
-  "document_type",
-  "category",
-  "description",
-  "file_id",
-  "version",
-  "download_count",
-  "is_active",
-  "is_public",
-  "created_at",
-  "updated_at",
-].join(",");
-
 const newsFields = [
   "id",
   "title",
@@ -486,24 +474,19 @@ async function getDepartmentRelatedRecords(
       fields: staffAssignmentFields,
       include: `person:${staffAssignmentPersonFields}`,
     }),
-    getPublicTeam("department", department.id),
+    getPublicEntityTeam("department", department.id),
     getList<DepartmentServiceRecord>(
       `/api/v1/departments/${department.slug}/services`,
       { fields: departmentServiceFields },
     ),
-    getList<Document>("/api/v1/documents", {
-      scope_type: "department",
-      scope_id: department.id,
-      fields: documentFields,
-      per_page: 40,
-    }),
+    getEntityDownloads("department", department.id).then((data) => ({ data })),
     getList<News>("/api/v1/news", {
       scope_type: "department",
       scope_id: department.id,
       fields: newsFields,
       per_page: 40,
     }),
-    getScopedEntityMedia("department", department.id, department.name),
+    getEntityMediaRecords("department", department.id),
   ]);
 
   const sortedProgrammes = sortByDisplayOrder(programmes.data ?? []);
@@ -549,7 +532,7 @@ export type DepartmentDetailData = {
   programmeSearchQuery: string | null;
   staff: Person[];
   staffAssignments: StaffAssignment[];
-  team: PublicTeamData | null;
+  team: PublicEntityTeam | null;
   services: DepartmentServiceRecord[];
   documents: Document[];
   news: News[];

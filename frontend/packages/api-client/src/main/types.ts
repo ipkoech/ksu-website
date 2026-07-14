@@ -457,6 +457,101 @@ export interface PublicTeamResponse {
   };
 }
 
+export type PublicEntityType = "school" | "department";
+export type PublicEntityContentType =
+  | "all"
+  | "news"
+  | "events"
+  | "gallery"
+  | "downloads";
+
+export interface PublicEntitySummary {
+  id: string;
+  type: PublicEntityType;
+  name: string;
+  slug: string;
+  department_type?: string | null;
+}
+
+export interface PublicEntityTeamMember {
+  id: string;
+  person_id: string;
+  profile_slug?: string | null;
+  name: string;
+  title?: string | null;
+  position: string;
+  photo_url?: string | null;
+  hierarchy_level: number;
+  display_order: number;
+}
+
+export interface PublicEntityTeamTier {
+  key: string;
+  label: string;
+  members: PublicEntityTeamMember[];
+}
+
+export interface PublicEntityTeam {
+  entity: PublicEntitySummary;
+  tiers: PublicEntityTeamTier[];
+  counts: {
+    members: number;
+    tiers: number;
+  };
+}
+
+export interface PublicEntityContentRecord {
+  id: string;
+  record_type: "news" | "event" | "gallery" | "download";
+  title?: string | null;
+  slug?: string | null;
+  summary?: string | null;
+  description?: string | null;
+  caption?: string | null;
+  alt_text?: string | null;
+  filename?: string | null;
+  original_filename?: string | null;
+  featured_media_id?: string | null;
+  featured_media_url?: string | null;
+  file_id?: string | null;
+  file_url?: string | null;
+  media_type?: string | null;
+  mime_type?: string | null;
+  public_url?: string | null;
+  url?: string | null;
+  thumbnail_url?: string | null;
+  document_type?: string | null;
+  category?: string | null;
+  version?: string | null;
+  location?: string | null;
+  is_virtual?: boolean;
+  start_date?: string | null;
+  end_date?: string | null;
+  published_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  scope_type?: string | null;
+  scope_id?: string | null;
+  width?: number | null;
+  height?: number | null;
+  duration?: number | null;
+  display_order?: number | null;
+  download_count?: number | null;
+  credit?: string | null;
+}
+
+export interface PublicEntityContent {
+  entity: PublicEntitySummary;
+  content_type: PublicEntityContentType;
+  records: PublicEntityContentRecord[];
+  meta: {
+    page: number;
+    per_page: number;
+    total: number;
+    pages: number;
+  };
+}
+
 export interface PublicResearchContextEntity {
   id?: string | null;
   entity_type: string;

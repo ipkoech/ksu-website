@@ -47,6 +47,7 @@ from .page_cms import (
 )
 from .public_page import PublicSitePageService
 from .public_contact_directory import PublicContactDirectoryService
+from .public_entity_content import PublicEntityContentService
 from .rbac import RBACService
 from .search import SearchService
 from .staff import StaffService
@@ -77,6 +78,7 @@ __all__ = [
     "group_media_links",
     "PublicSitePageService",
     "PublicContactDirectoryService",
+    "PublicEntityContentService",
     "StaffService",
     "GovernanceService",
     "IntakeHomepageAdmissionService",
