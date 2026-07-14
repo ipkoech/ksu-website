@@ -31,7 +31,6 @@ import {
   Textarea,
 } from "@ksu/ui/components";
 import { MediaPicker } from "@/components/media";
-import { PageHeader } from "@/components/shared/page-header";
 import { usePermissions } from "@/hooks/use-permissions";
 import { PageTransition } from "@/lib/animations";
 import {
@@ -148,18 +147,12 @@ export function NumbersFactsWorkspace() {
 
   return (
     <PageTransition>
-      <PageHeader
-        title="KSU Numbers & Facts"
-        description="Maintain sourced institutional facts through evergreen records and verified annual reporting editions."
-        backHref="/corporate-communication/page-cms"
-      />
-
-      <section className="mb-6 overflow-hidden rounded-3xl border bg-[radial-gradient(circle_at_top_right,rgba(217,119,6,0.2),transparent_34%),linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.88))] p-5 shadow-sm dark:bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.16),transparent_34%),linear-gradient(135deg,rgba(15,23,42,0.98),rgba(2,6,23,0.9))] sm:p-6">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <section className="mb-5 overflow-hidden rounded-2xl border bg-[radial-gradient(circle_at_top_right,rgba(217,119,6,0.18),transparent_32%),linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.88))] p-4 shadow-sm dark:bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.14),transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.98),rgba(2,6,23,0.9))]">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border bg-background/75 px-3 py-1 text-xs font-medium text-muted-foreground"><BarChart3 className="size-3.5 text-amber-600" />Verified institutional reporting</div>
-            <h2 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">Facts with a year, source, and editorial owner</h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">Evergreen identity remains stable across editions. Annual figures stay attached to the reporting year that verified them.</p>
+            <div className="inline-flex items-center gap-2 rounded-full border bg-background/75 px-2.5 py-0.5 text-xs font-medium text-muted-foreground"><BarChart3 className="size-3.5 text-amber-600" />Verified institutional reporting</div>
+            <h1 className="mt-2 text-xl font-semibold tracking-tight md:text-2xl">KSU Numbers & Facts</h1>
+            <p className="mt-1 text-sm leading-5 text-muted-foreground">Evergreen identity remains stable across editions. Annual figures stay attached to the reporting year that verified them.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline"><Link href="/about/numbers-and-facts" target="_blank">Public preview <ExternalLink className="size-4" /></Link></Button>

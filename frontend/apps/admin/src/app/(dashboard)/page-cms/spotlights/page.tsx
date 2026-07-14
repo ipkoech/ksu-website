@@ -29,7 +29,6 @@ import {
 } from "@/components/media";
 import { ResearchPartnerPicker } from "@/components/relationships/relationship-pickers";
 import { DateTimePicker } from "@/components/shared/date-time-picker";
-import { PageHeader } from "@/components/shared/page-header";
 import { usePermissions } from "@/hooks/use-permissions";
 import { PageTransition } from "@/lib/animations";
 import {
@@ -280,51 +279,44 @@ export default function PageCmsSpotlightsPage() {
 
   return (
     <PageTransition>
-      <PageHeader
-        title="Partnership Spotlights"
-        description="Manage spotlight copy, CTA strategy, media roles, and enabled windows for research partner highlights."
-        backHref="/corporate-communication/page-cms"
-        actions={(
-          <div className="flex flex-wrap gap-2">
-            {availableWorkflowActions.map((action) => (
-              <Button
-                key={action}
-                type="button"
-                variant={action === "publish" ? "default" : action === "archive" ? "destructive" : "outline"}
-                disabled={workflowBusy !== null || isSaving}
-                onClick={() => void handleWorkflow(action)}
-              >
-                {workflowBusy === action ? "Working..." : action.replace(/_/g, " ")}
-              </Button>
-            ))}
-            <Button type="button" variant="outline" disabled={!canManageSpotlights || isSaving} onClick={handleCreateNew}>
-              New Spotlight
-            </Button>
-            <Button type="button" disabled={!canManageSpotlights || isSaving} onClick={() => void handleSave()}>
-              {isSaving ? "Saving..." : form.id ? "Save Changes" : "Create Spotlight"}
-            </Button>
-          </div>
-        )}
-      />
-
-      <section className="mb-6 overflow-hidden rounded-3xl border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.16),transparent_32%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.86))] p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.16),transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.86))] sm:p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <section className="mb-5 overflow-hidden rounded-2xl border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.14),transparent_30%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.86))] p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.14),transparent_30%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.86))]">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-3xl">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border bg-background/80 px-2.5 py-0.5 text-xs font-medium text-muted-foreground shadow-sm">
               <Sparkles className="size-3.5 text-orange-600" />
               Partnership spotlight editor
             </div>
-            <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
-              Promote strategic research partnerships
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Partnership Spotlights</h1>
+            <p className="mt-1 text-sm leading-5 text-muted-foreground">
               Select a partner, shape the homepage story, attach supporting media, and move the spotlight through the backend workflow.
             </p>
           </div>
-          <div className="grid gap-2 sm:grid-cols-3">
-            <SpotlightMetric label="Loaded" value={spotlights.length} />
-            <SpotlightMetric label="Enabled" value={spotlights.filter((item) => item.is_enabled).length} />
-            <SpotlightMetric label="Status" value={form.status.replace(/_/g, " ")} />
+          <div className="flex flex-col gap-2 lg:items-end">
+            <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
+              {availableWorkflowActions.map((action) => (
+                <Button
+                  key={action}
+                  type="button"
+                  size="sm"
+                  variant={action === "publish" ? "default" : action === "archive" ? "destructive" : "outline"}
+                  disabled={workflowBusy !== null || isSaving}
+                  onClick={() => void handleWorkflow(action)}
+                >
+                  {workflowBusy === action ? "Working..." : action.replace(/_/g, " ")}
+                </Button>
+              ))}
+              <Button type="button" size="sm" variant="outline" disabled={!canManageSpotlights || isSaving} onClick={handleCreateNew}>
+                New Spotlight
+              </Button>
+              <Button type="button" size="sm" disabled={!canManageSpotlights || isSaving} onClick={() => void handleSave()}>
+                {isSaving ? "Saving..." : form.id ? "Save Changes" : "Create Spotlight"}
+              </Button>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-3">
+              <SpotlightMetric label="Loaded" value={spotlights.length} />
+              <SpotlightMetric label="Enabled" value={spotlights.filter((item) => item.is_enabled).length} />
+              <SpotlightMetric label="Status" value={form.status.replace(/_/g, " ")} />
+            </div>
           </div>
         </div>
       </section>

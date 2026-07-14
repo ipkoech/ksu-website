@@ -3345,6 +3345,7 @@ for (const [key, href] of Object.entries(corporateResourceHrefs)) {
 }
 
 const corporateResourceRouteAliases: Record<string, string> = {
+  newsroom: "news",
   news: "news",
   "press-releases": "press-releases",
   notices: "notices",

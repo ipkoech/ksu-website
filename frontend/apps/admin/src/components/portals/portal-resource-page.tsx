@@ -239,6 +239,7 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
       readOnlyMessage={scopedResource.readOnlyMessage}
       viewInEditor={scopedResource.viewInEditor}
       primaryActionLabel={primaryActionLabel(scopedResource)}
+      hideHeader={portalKey === "corporate-communication"}
       recordColumns={displayOptions.recordColumns}
       tableLayout={displayOptions.tableLayout}
       actionsInMenuOnly={displayOptions.actionsInMenuOnly}

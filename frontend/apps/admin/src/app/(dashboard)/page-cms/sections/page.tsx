@@ -32,7 +32,6 @@ import {
 } from "@ksu/ui/components";
 import { DataTable } from "@/components/data-table/data-table";
 import { TableSearch } from "@/components/shared/table-search";
-import { PageHeader } from "@/components/shared/page-header";
 import { usePermissions } from "@/hooks/use-permissions";
 import { PageTransition } from "@/lib/animations";
 import {
@@ -257,34 +256,30 @@ export default function PageCmsSectionsPage() {
 
   return (
     <PageTransition>
-      <PageHeader
-        title="Page Sections"
-        description="Manage scoped page sections, section items, media roles, and workflow transitions."
-        actions={canCreateSections ? (
-          <Button type="button" onClick={() => setCreateOpen(true)}>
-            <Plus data-icon="inline-start" />
-            New Section
-          </Button>
-        ) : undefined}
-        backHref="/corporate-communication/page-cms"
-      />
-
-      <section className="mb-6 overflow-hidden rounded-3xl border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.16),transparent_32%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.86))] p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.16),transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.86))] sm:p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <section className="mb-5 overflow-hidden rounded-2xl border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.14),transparent_30%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.86))] p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.14),transparent_30%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.86))]">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-3xl">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border bg-background/80 px-2.5 py-0.5 text-xs font-medium text-muted-foreground shadow-sm">
               <Sparkles className="size-3.5 text-orange-600" />
               Structured homepage sections
             </div>
-            <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">Manage composition blocks with workflow context</h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Page Sections</h1>
+            <p className="mt-1 text-sm leading-5 text-muted-foreground">
               Sections control where public content appears, which scope owns it, and how item-level CTAs, media and layout settings are published.
             </p>
           </div>
-          <div className="grid gap-2 sm:grid-cols-3">
-            <ScopeMetric label="Loaded" value={sections.length} />
-            <ScopeMetric label="Published" value={sections.filter((section) => section.status === "published").length} />
-            <ScopeMetric label="Enabled" value={sections.filter((section) => section.is_enabled).length} />
+          <div className="flex flex-col gap-2 lg:items-end">
+            {canCreateSections ? (
+              <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
+                <Plus data-icon="inline-start" />
+                New Section
+              </Button>
+            ) : null}
+            <div className="grid gap-2 sm:grid-cols-3">
+              <ScopeMetric label="Loaded" value={sections.length} />
+              <ScopeMetric label="Published" value={sections.filter((section) => section.status === "published").length} />
+              <ScopeMetric label="Enabled" value={sections.filter((section) => section.is_enabled).length} />
+            </div>
           </div>
         </div>
       </section>

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, FileStack, Image as ImageIcon, LayoutTemplate, Sparkles, Workflow } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle, Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
-import { PageHeader } from "@/components/shared/page-header";
 import { usePermissions } from "@/hooks/use-permissions";
 import { PageTransition } from "@/lib/animations";
 import { pageSectionsApi, partnershipSpotlightsApi, type PageSection, type PartnershipSpotlight } from "@/lib/api/page-cms";
@@ -109,17 +108,15 @@ export default function PageCmsDashboardPage() {
 
   return (
     <PageTransition>
-      <PageHeader title="Page CMS" description="Manage structured page sections, spotlight content, media attachments, and editorial workflow." />
-
-      <section className="mb-6 overflow-hidden rounded-3xl border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.16),transparent_32%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.86))] p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.16),transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.86))] sm:p-6">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <section className="mb-5 overflow-hidden rounded-2xl border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.14),transparent_30%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.86))] p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.14),transparent_30%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.86))]">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-3xl">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border bg-background/80 px-2.5 py-0.5 text-xs font-medium text-muted-foreground shadow-sm">
               <Sparkles className="size-3.5 text-orange-600" />
               Homepage composition command centre
             </div>
-            <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">Compose, review, and publish homepage content</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+            <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Page CMS</h1>
+            <p className="mt-1 max-w-2xl text-sm leading-5 text-muted-foreground">
               Use sections for structured page blocks and spotlights for research partner promotions. Actions here map directly to the Page CMS backend workflow.
             </p>
           </div>

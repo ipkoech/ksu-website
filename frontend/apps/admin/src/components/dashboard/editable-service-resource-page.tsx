@@ -900,7 +900,7 @@ export function EditableServiceResourcePage<
     <div
       className={cn(
         "flex flex-col gap-2 sm:flex-row sm:items-end",
-        tableLayout === "compact" && "flex-wrap rounded-2xl border border-white/70 bg-white/80 p-3 shadow-sm backdrop-blur sm:items-center dark:border-white/10 dark:bg-background/80",
+        tableLayout === "compact" && "flex-wrap sm:items-center sm:justify-end",
       )}
     >
       {canCreate ? (
@@ -1015,9 +1015,9 @@ export function EditableServiceResourcePage<
           canDelete={Boolean(deleteRecord && canDelete)}
           hasActiveFilters={hasActiveFilters}
           isFetching={recordsQuery.isFetching}
-          actions={tableLayout === "compact" ? null : actionToolbar}
+          actions={actionToolbar}
+          compact={tableLayout === "compact"}
         />
-        {tableLayout === "compact" ? actionToolbar : null}
         {summarySlot}
         <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
           {tableLayout !== "compact" ? (
@@ -1506,6 +1506,7 @@ function ResourceCommandPanel({
   hasActiveFilters,
   isFetching,
   actions,
+  compact = false,
 }: {
   title: string;
   description: string;
@@ -1518,38 +1519,54 @@ function ResourceCommandPanel({
   hasActiveFilters: boolean;
   isFetching: boolean;
   actions: ReactNode;
+  compact?: boolean;
 }) {
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.16),transparent_32%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.86))] p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.16),transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.86))] sm:p-6">
-      <div className="pointer-events-none absolute right-0 top-0 h-28 w-28 rounded-full bg-primary/10 blur-3xl" />
-      <div className="relative flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-        <div className="max-w-3xl">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+    <section
+      className={cn(
+        "relative overflow-hidden border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.14),transparent_30%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.86))] shadow-sm backdrop-blur dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.14),transparent_30%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.86))]",
+        compact ? "rounded-2xl p-4" : "rounded-3xl p-5 sm:p-6",
+      )}
+    >
+      <div className={cn("pointer-events-none absolute right-0 top-0 rounded-full bg-primary/10 blur-3xl", compact ? "h-20 w-20" : "h-28 w-28")} />
+      <div className={cn("relative flex flex-col justify-between", compact ? "gap-3 lg:flex-row lg:items-center" : "gap-5 xl:flex-row xl:items-end")}>
+        <div className={cn("min-w-0", compact ? "max-w-2xl" : "max-w-3xl")}>
+          <div className={cn("inline-flex items-center gap-2 rounded-full border bg-background/80 text-xs font-medium text-muted-foreground shadow-sm", compact ? "mb-2 px-2.5 py-0.5" : "mb-3 px-3 py-1")}>
             <Sparkles className="size-3.5 text-orange-600" />
             Corporate Communication workspace
           </div>
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">{title}</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>
+          <h2 className={cn("font-semibold tracking-tight text-foreground", compact ? "text-xl md:text-2xl" : "text-2xl md:text-3xl")}>{title}</h2>
+          <p className={cn("max-w-2xl text-sm text-muted-foreground", compact ? "mt-1 line-clamp-2 leading-5" : "mt-2 leading-6")}>{description}</p>
         </div>
-        <div className="flex flex-col gap-3">
-          <div className="grid gap-2 sm:grid-cols-3">
-            <PremiumMetric icon={Database} label="Records" value={String(totalRecords)} />
-            <PremiumMetric icon={ShieldCheck} label="Actions" value={canEdit ? "Edit" : "View"} />
-            <PremiumMetric icon={SlidersHorizontal} label="Filters" value={hasActiveFilters ? "Active" : "Ready"} />
-          </div>
-          {actions ? <div className="flex justify-start xl:justify-end">{actions}</div> : null}
+        <div className={cn("flex flex-col", compact ? "gap-2 lg:items-end" : "gap-3")}>
+          {!compact ? (
+            <div className="grid gap-2 sm:grid-cols-3">
+              <PremiumMetric icon={Database} label="Records" value={String(totalRecords)} />
+              <PremiumMetric icon={ShieldCheck} label="Actions" value={canEdit ? "Edit" : "View"} />
+              <PremiumMetric icon={SlidersHorizontal} label="Filters" value={hasActiveFilters ? "Active" : "Ready"} />
+            </div>
+          ) : null}
+          {actions ? <div className="flex justify-start lg:justify-end">{actions}</div> : null}
         </div>
       </div>
-      <div className="relative mt-5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      <div className={cn("relative flex flex-wrap items-center gap-2 text-xs text-muted-foreground", compact ? "mt-3" : "mt-5")}>
         <Badge variant="secondary" className="rounded-full">
-          Showing {visibleFrom}-{visibleTo}
+          {compact ? `${visibleFrom}-${visibleTo} of ${totalRecords}` : `Showing ${visibleFrom}-${visibleTo}`}
         </Badge>
-        <Badge variant={canCreate ? "default" : "outline"} className="rounded-full">
-          {canCreate ? "Create enabled" : "Create unavailable"}
+        <Badge variant="outline" className="rounded-full">
+          {canEdit ? "Editable" : "Read only"}
         </Badge>
-        <Badge variant={canDelete ? "destructive" : "outline"} className="rounded-full">
-          {canDelete ? "Delete enabled" : "Protected records"}
-        </Badge>
+        {!compact ? (
+          <>
+            <Badge variant={canCreate ? "default" : "outline"} className="rounded-full">
+              {canCreate ? "Create enabled" : "Create unavailable"}
+            </Badge>
+            <Badge variant={canDelete ? "destructive" : "outline"} className="rounded-full">
+              {canDelete ? "Delete enabled" : "Protected records"}
+            </Badge>
+          </>
+        ) : null}
+        {compact && hasActiveFilters ? <Badge variant="secondary" className="rounded-full">Filters active</Badge> : null}
         {isFetching ? <Badge variant="outline" className="rounded-full">Refreshing</Badge> : null}
       </div>
     </section>
