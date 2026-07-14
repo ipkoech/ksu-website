@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid
 from datetime import datetime, timezone
 from typing import Any
 
@@ -177,4 +178,153 @@ class FactsService:
         }
 
 
-__all__ = ["AboutContentService", "FactsService", "is_publicly_publishable"]
+class AboutContentAdminService:
+    """Authorised editorial operations with explicit lifecycle transitions."""
+
+    @staticmethod
+    async def get(db: AsyncSession, model: type, item_id: uuid.UUID):
+        item = await db.get(model, item_id)
+        return item if item is not None and getattr(item, "deleted_at", None) is None else None
+
+    @staticmethod
+    async def list(db: AsyncSession, model: type, *filters):
+        result = await db.execute(
+            select(model).where(model.deleted_at.is_(None), *filters).order_by(
+                getattr(model, "display_order", model.created_at).asc(), model.created_at.asc()
+            )
+        )
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def create(db: AsyncSession, model: type, payload: dict, actor_id: uuid.UUID):
+        item = model(**payload, created_by_id=actor_id, updated_by_id=actor_id, status="draft", workflow_status="draft")
+        db.add(item)
+        await db.flush()
+        await db.refresh(item)
+        return item
+
+    @staticmethod
+    async def update(db: AsyncSession, item: Any, payload: dict, actor_id: uuid.UUID):
+        for key, value in payload.items():
+            if key not in {"status", "workflow_status", "published_at"} and hasattr(item, key):
+                setattr(item, key, value)
+        item.updated_by_id = actor_id
+        if item.workflow_status == "published":
+            item.status = "draft"
+            item.workflow_status = "draft"
+            item.published_at = None
+        await db.flush()
+        await db.refresh(item)
+        return item
+
+    @staticmethod
+    async def soft_delete(db: AsyncSession, item: Any):
+        if item.workflow_status == "published":
+            raise ValueError("Published content must be unpublished before deletion")
+        item.soft_delete()
+        await db.flush()
+
+    @staticmethod
+    def _validate_publish(item: Any):
+        if isinstance(item, AboutPageContent):
+            required = (item.hero_headline, item.hero_introduction, item.identity_narrative)
+            if not all(value and str(value).strip() for value in required):
+                raise ValueError("Hero headline, introduction and identity narrative are required")
+            if bool(item.old_campus_media_id) != bool(item.modern_campus_media_id):
+                raise ValueError("Transformation requires old and modern campus media")
+            if item.video_url and not item.video_transcript_url:
+                raise ValueError("Video transcript URL is required")
+        elif isinstance(item, HistoryMilestone):
+            if not item.source_title and not item.source_document_id:
+                raise ValueError("Milestone source is required")
+        elif isinstance(item, FactEdition):
+            if item.verified_on is None:
+                raise ValueError("Edition verification date is required")
+        elif isinstance(item, FactItem):
+            if not item.source_title or item.verified_on is None:
+                raise ValueError("Fact source and verification date are required")
+
+    @staticmethod
+    async def transition(db: AsyncSession, item: Any, action: str, actor_id: uuid.UUID, reason: str | None = None):
+        now = datetime.now(timezone.utc)
+        current = item.workflow_status
+        if action == "submit" and current in {"draft", "changes_requested"}:
+            item.status = item.workflow_status = "in_review"
+            item.submitted_by_id, item.submitted_at = actor_id, now
+        elif action == "request_changes" and current == "in_review":
+            item.status = item.workflow_status = "changes_requested"
+            item.reviewed_by_id, item.reviewed_at, item.rejection_reason = actor_id, now, reason
+        elif action == "approve" and current == "in_review":
+            item.status = item.workflow_status = "approved"
+            item.approved_by_id, item.approved_at = actor_id, now
+        elif action == "publish" and current == "approved":
+            AboutContentAdminService._validate_publish(item)
+            if isinstance(item, FactEdition) and item.is_current:
+                result = await db.execute(
+                    select(FactEdition).where(
+                        FactEdition.id != item.id, FactEdition.is_current.is_(True),
+                        FactEdition.workflow_status == "published", FactEdition.deleted_at.is_(None),
+                    ).with_for_update()
+                )
+                for previous in result.scalars().all():
+                    previous.is_current = False
+            item.status = item.workflow_status = "published"
+            item.published_by_id, item.published_at = actor_id, now
+        elif action == "unpublish" and current == "published":
+            item.status = item.workflow_status = "approved"
+            item.unpublished_by_id, item.unpublished_at = actor_id, now
+        elif action == "archive" and current != "published":
+            item.status = item.workflow_status = "archived"
+        else:
+            raise ValueError(f"Invalid workflow transition from {current} using {action}")
+        await db.flush()
+        return item
+
+    @staticmethod
+    async def reorder(db: AsyncSession, model: type, parent_field: str, parent_id: uuid.UUID, ordered: list[tuple[uuid.UUID, int]]):
+        records = await AboutContentAdminService.list(db, model, getattr(model, parent_field) == parent_id)
+        by_id = {record.id: record for record in records}
+        if set(by_id) != {item_id for item_id, _ in ordered}:
+            raise ValueError("Reorder request must contain every record exactly once")
+        for item_id, display_order in ordered:
+            by_id[item_id].display_order = display_order
+        await db.flush()
+        return sorted(records, key=lambda record: record.display_order)
+
+    @staticmethod
+    async def clone_edition(db: AsyncSession, source: FactEdition, reporting_year: int, actor_id: uuid.UUID):
+        exists = (await db.execute(select(FactEdition.id).where(FactEdition.reporting_year == reporting_year))).scalar_one_or_none()
+        if exists:
+            raise ValueError("A facts edition already exists for that year")
+        target = FactEdition(
+            reporting_year=reporting_year, title=source.title.replace(str(source.reporting_year), str(reporting_year)),
+            introduction=source.introduction, methodology_note=source.methodology_note,
+            is_current=False, status="draft", workflow_status="draft", created_by_id=actor_id, updated_by_id=actor_id,
+        )
+        db.add(target)
+        await db.flush()
+        for group in source.groups:
+            cloned_group = FactGroup(
+                fact_edition_id=target.id, slug=group.slug, heading=group.heading, summary=group.summary,
+                image_id=group.image_id, image_alt_text=group.image_alt_text, display_order=group.display_order,
+                status="draft", workflow_status="draft", created_by_id=actor_id, updated_by_id=actor_id,
+            )
+            db.add(cloned_group)
+            await db.flush()
+            for item in group.items:
+                values = {
+                    column.name: getattr(item, column.name)
+                    for column in FactItem.__table__.columns
+                    if column.name not in {"id", "fact_group_id", "created_at", "updated_at", "deleted_at", "status", "workflow_status", "published_at"}
+                    and not column.name.endswith("_by_id")
+                }
+                db.add(FactItem(
+                    **values, fact_group_id=cloned_group.id, status="draft", workflow_status="draft",
+                    created_by_id=actor_id, updated_by_id=actor_id,
+                ))
+        await db.flush()
+        await db.refresh(target)
+        return target
+
+
+__all__ = ["AboutContentService", "FactsService", "AboutContentAdminService", "is_publicly_publishable"]
