@@ -24,7 +24,6 @@ import { CountdownStrip } from "@/components/home/countdown-strip";
 import { AnimatedStatRow } from "@/components/home/animated-stat-row";
 import { HomepageSections } from "@/components/home/section-renderer";
 import { HeroAdmissionsSection } from "@/components/home/sections/composed-section-variants";
-import { AnnouncementHeader } from "@/components/site-shell";
 import {
   ProgressiveImageCard,
   PublicImage,
@@ -171,7 +170,6 @@ export default async function HomePage() {
       <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
-      <AnnouncementHeader announcements={homepage.announcements} />
       <MiniHeader
         contactInfo={homepage.contactInfo}
         quickLinks={homepage.miniQuickLinks}

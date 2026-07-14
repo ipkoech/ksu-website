@@ -3,13 +3,8 @@ import {
   MiniHeader,
   PublicHeader,
   PublicFooter,
-  Announcements,
   type MegaMenuData,
 } from "@ksu/ui/layout/public";
-import {
-  getLandingAnnouncements,
-  type LandingAnnouncement,
-} from "@/lib/landing-data";
 import { getNavData } from "@/lib/nav-data";
 import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
 
@@ -62,23 +57,6 @@ interface PageShellProps {
   header?: React.ReactNode;
 }
 
-export async function AnnouncementHeader({
-  announcements,
-}: {
-  announcements?: LandingAnnouncement[];
-}) {
-  const items = announcements ?? (await getLandingAnnouncements());
-
-  return (
-    <Announcements
-      announcements={items}
-      rotating={items.length > 1}
-      intervalMs={6500}
-      background="secondary"
-    />
-  );
-}
-
 export async function PageShell({
   children,
   transparent = false,
@@ -94,7 +72,6 @@ export async function PageShell({
       <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
-      <AnnouncementHeader />
       <MiniHeader
         contactInfo={contactInfo}
         quickLinks={miniQuickLinks}

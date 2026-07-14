@@ -172,7 +172,7 @@ export function PublicHeader({
         )}
       >
         <nav className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="flex h-[89px] items-center justify-between lg:h-[82px]">
+          <div className="flex h-[107px] items-center justify-between lg:h-[98px]">
             {/* Logo */}
             <Link
               href="/"
