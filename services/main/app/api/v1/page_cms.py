@@ -3,19 +3,23 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import selectinload
 
 from ksu_common.schemas.responses import success
 
 from ...deps import CurrentUser, DbSession, require_scope, user_has_scope
-from ...models import PageSection, PartnershipSpotlight, SectionItem
+from ...models import Event, News, PageSection, PartnershipSpotlight, Person, SectionItem
 from ...schemas import (
     PageSectionCreate,
+    PageSectionRead,
     PageSectionUpdate,
     PartnershipSpotlightCreate,
     PartnershipSpotlightUpdate,
     SectionItemCreate,
+    SectionItemRead,
     SectionItemUpdate,
 )
 from ...services import (
@@ -49,6 +53,101 @@ PAGE_SECTION_ADMIN_LIST_PERMISSIONS = (
     "research_homepage.manage",
     "library_homepage.manage",
 )
+
+
+def _person_payload(person: Person | None) -> dict[str, Any] | None:
+    if person is None:
+        return None
+    return {
+        "id": str(person.id),
+        "title": person.title,
+        "full_name": person.full_name,
+        "display_name": person.display_name,
+        "email": person.email,
+        "institutional_role": person.institutional_role,
+        "photo_id": str(person.photo_id) if person.photo_id else None,
+        "photo_url": person.photo_url,
+    }
+
+
+def _content_payload(record: News | Event | None, content_type: str | None) -> dict[str, Any] | None:
+    if record is None or content_type is None:
+        return None
+    return {
+        "id": str(record.id),
+        "type": content_type,
+        "title": record.title,
+        "slug": record.slug,
+        "summary": getattr(record, "summary", None),
+        "status": getattr(record, "status", None),
+        "is_published": getattr(record, "is_published", None),
+        "published_at": getattr(record, "published_at", None),
+        "start_date": getattr(record, "start_date", None),
+        "href": f"/{'news' if content_type == 'news' else 'events'}/{record.slug}",
+    }
+
+
+async def _leadership_content_enrichment(db: DbSession, content: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not content:
+        return None
+
+    enriched: dict[str, Any] = {}
+    staff_profile_id = content.get("staff_profile_id")
+    if staff_profile_id:
+        person = await db.get(
+            Person,
+            uuid.UUID(str(staff_profile_id)),
+            options=[selectinload(Person.photo)],
+        )
+        enriched["staff_profile"] = _person_payload(person)
+
+    linked_type = content.get("linked_content_type")
+    linked_id = content.get("linked_content_id")
+    if linked_type and linked_id:
+        model = News if linked_type == "news" else Event if linked_type == "event" else None
+        linked = await db.get(model, uuid.UUID(str(linked_id))) if model is not None else None
+        enriched["linked_content"] = _content_payload(linked, str(linked_type))
+
+    return enriched or None
+
+
+async def _validate_leadership_content_references(db: DbSession, content: dict[str, Any] | None) -> None:
+    if not content:
+        return
+    staff_profile_id = content.get("staff_profile_id")
+    if staff_profile_id and await db.get(Person, uuid.UUID(str(staff_profile_id))) is None:
+        raise HTTPException(status_code=422, detail="Selected staff profile was not found")
+
+    linked_type = content.get("linked_content_type")
+    linked_id = content.get("linked_content_id")
+    if not linked_type and not linked_id:
+        return
+    model = News if linked_type == "news" else Event if linked_type == "event" else None
+    if model is None:
+        raise HTTPException(status_code=422, detail="Linked content type must be news or event")
+    if not linked_id or await db.get(model, uuid.UUID(str(linked_id))) is None:
+        raise HTTPException(status_code=422, detail="Selected linked news/event record was not found")
+
+
+async def _validate_section_items_references(db: DbSession, items: list[dict[str, Any]]) -> None:
+    for item in items:
+        await _validate_leadership_content_references(db, item.get("content"))
+
+
+async def _serialize_admin_page_section(db: DbSession, section: PageSection) -> dict[str, Any]:
+    payload = PageSectionRead.model_validate(section).model_dump(mode="json")
+    enriched_items: list[dict[str, Any]] = []
+    for item_payload, item in zip(payload.get("items", []), section.items, strict=False):
+        item_payload["content_enriched"] = await _leadership_content_enrichment(db, item.content)
+        enriched_items.append(item_payload)
+    payload["items"] = enriched_items
+    return payload
+
+
+async def _serialize_admin_section_item(db: DbSession, item: SectionItem) -> dict[str, Any]:
+    payload = SectionItemRead.model_validate(item).model_dump(mode="json")
+    payload["content_enriched"] = await _leadership_content_enrichment(db, item.content)
+    return payload
 
 
 def _require_page_authoring_edit(user: CurrentUser, record) -> None:
@@ -267,7 +366,7 @@ async def list_admin_page_sections(
         status=status_filter,
         search=search,
     )
-    return success(data=result.items, meta=result.meta)
+    return success(data=[await _serialize_admin_page_section(db, item) for item in result.items], meta=result.meta)
 
 
 @router.get("/page-sections/{section_id}")
@@ -282,7 +381,7 @@ async def get_admin_page_section(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Insufficient privileges for this page section scope",
         )
-    return success(data=item)
+    return success(data=await _serialize_admin_page_section(db, item))
 
 
 @router.post("/page-sections", status_code=status.HTTP_201_CREATED)
@@ -297,6 +396,7 @@ async def create_page_section(data: PageSectionCreate, db: DbSession, user: Curr
         action="create",
     )
     items = payload.pop("items", [])
+    await _validate_section_items_references(db, items)
     item = PageSection(
         **payload,
         status="draft",
@@ -316,7 +416,7 @@ async def create_page_section(data: PageSectionCreate, db: DbSession, user: Curr
     db.add(item)
     await db.flush()
     await db.refresh(item)
-    return success(data=item, message="Page section created")
+    return success(data=await _serialize_admin_page_section(db, item), message="Page section created")
 
 
 @router.patch("/page-sections/{section_id}")
@@ -353,7 +453,7 @@ async def update_page_section(
     apply_updates(item, **payload)
     await db.flush()
     await db.refresh(item)
-    return success(data=item, message="Page section updated")
+    return success(data=await _serialize_admin_page_section(db, item), message="Page section updated")
 
 
 @router.post("/page-sections/{section_id}/items", status_code=status.HTTP_201_CREATED)
@@ -381,10 +481,11 @@ async def create_section_item(
         changed_fields={"section_item_create": data.model_dump(exclude={"page_section_id"})},
     )
     item = SectionItem(page_section_id=section.id, **data.model_dump(exclude={"page_section_id"}))
+    await _validate_leadership_content_references(db, item.content)
     db.add(item)
     await db.flush()
     await db.refresh(item)
-    return success(data=item, message="Section item created")
+    return success(data=await _serialize_admin_section_item(db, item), message="Section item created")
 
 
 @router.post("/page-sections/{section_id}/{action}")
@@ -406,7 +507,7 @@ async def run_page_section_workflow_action(
     item = await PageSectionWorkflowService.transition(item, action, user.id, db=db)
     await db.flush()
     await db.refresh(item)
-    return success(data=item, message="Page section updated")
+    return success(data=await _serialize_admin_page_section(db, item), message="Page section updated")
 
 
 @router.patch("/section-items/{item_id}")
@@ -427,6 +528,7 @@ async def update_section_item(
         action="item_manage",
     )
     payload = data.model_dump(exclude_unset=True)
+    await _validate_leadership_content_references(db, payload.get("content"))
     _require_page_authoring_edit(user, section)
     next_section_id = payload.pop("page_section_id", item.page_section_id)
     if next_section_id != item.page_section_id:
@@ -458,7 +560,7 @@ async def update_section_item(
     apply_updates(item, **payload)
     await db.flush()
     await db.refresh(item)
-    return success(data=item, message="Section item updated")
+    return success(data=await _serialize_admin_section_item(db, item), message="Section item updated")
 
 
 @router.post(

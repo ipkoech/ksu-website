@@ -38,6 +38,42 @@ def _validate_link_target(value: str | None, field_name: str) -> str | None:
     raise ValueError(f"{field_name} must start with http://, https://, or /")
 
 
+LEADERSHIP_CONTENT_TYPES = {"news", "event"}
+LEADERSHIP_CONTENT_KEYS = {
+    "staff_profile_id",
+    "linked_content_type",
+    "linked_content_id",
+    "linked_content",
+}
+
+
+def _validate_leadership_activity_content(content: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not content:
+        return content
+
+    staff_profile_id = content.get("staff_profile_id")
+    if staff_profile_id not in (None, ""):
+        try:
+            content["staff_profile_id"] = str(uuid.UUID(str(staff_profile_id)))
+        except (TypeError, ValueError) as exc:
+            raise ValueError("content.staff_profile_id must be a valid staff profile/person ID") from exc
+
+    linked_type = content.get("linked_content_type")
+    linked_id = content.get("linked_content_id")
+    if linked_type in (None, "") and linked_id in (None, ""):
+        return content
+    if linked_type not in LEADERSHIP_CONTENT_TYPES:
+        raise ValueError("content.linked_content_type must be either news or event")
+    if linked_id in (None, ""):
+        raise ValueError("content.linked_content_id is required when linked_content_type is set")
+    try:
+        content["linked_content_id"] = str(uuid.UUID(str(linked_id)))
+    except (TypeError, ValueError) as exc:
+        raise ValueError("content.linked_content_id must be a valid news/event ID") from exc
+    content["linked_content_type"] = linked_type
+    return content
+
+
 class SectionItemCreate(BaseSchema):
     page_section_id: uuid.UUID | None = None
     item_type: str = Field(default=SECTION_ITEM_TYPES[0], max_length=32)
@@ -65,6 +101,11 @@ class SectionItemCreate(BaseSchema):
     @classmethod
     def validate_cta_url(cls, value: str | None) -> str | None:
         return _validate_link_target(value, "cta_url")
+
+    @field_validator("content")
+    @classmethod
+    def validate_content(cls, value: dict[str, Any] | None) -> dict[str, Any] | None:
+        return _validate_leadership_activity_content(value)
 
 
 class SectionItemUpdate(BaseSchema):
@@ -95,6 +136,11 @@ class SectionItemUpdate(BaseSchema):
     def validate_cta_url(cls, value: str | None) -> str | None:
         return _validate_link_target(value, "cta_url")
 
+    @field_validator("content")
+    @classmethod
+    def validate_content(cls, value: dict[str, Any] | None) -> dict[str, Any] | None:
+        return _validate_leadership_activity_content(value)
+
 
 class SectionItemRead(BaseReadSchema):
     page_section_id: uuid.UUID
@@ -113,6 +159,7 @@ class SectionItemRead(BaseReadSchema):
     video_duration_seconds: int | None = None
     display_order: int
     is_enabled: bool
+    content_enriched: dict[str, Any] | None = None
 
 
 class PageSectionCreate(BaseSchema):

@@ -67,6 +67,30 @@ export interface SectionItem {
   subtitle?: string | null;
   body_text?: string | null;
   content?: Record<string, unknown> | null;
+  content_enriched?: {
+    staff_profile?: {
+      id: string;
+      title?: string | null;
+      full_name?: string | null;
+      display_name?: string | null;
+      email?: string | null;
+      institutional_role?: string | null;
+      photo_id?: string | null;
+      photo_url?: string | null;
+    } | null;
+    linked_content?: {
+      id: string;
+      type: "news" | "event";
+      title: string;
+      slug?: string | null;
+      summary?: string | null;
+      status?: string | null;
+      is_published?: boolean | null;
+      published_at?: string | null;
+      start_date?: string | null;
+      href?: string | null;
+    } | null;
+  } | null;
   cta_label?: string | null;
   cta_url?: string | null;
   cta_description?: string | null;

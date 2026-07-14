@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "@ksu/ui";
 import {
@@ -11,6 +12,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   Input,
   JsonObjectEditor,
   Select,
@@ -21,6 +28,7 @@ import {
   SelectValue,
   Switch,
   Textarea,
+  ImageRenderer,
 } from "@ksu/ui/components";
 import {
   AttachmentManager,
@@ -51,7 +59,11 @@ import {
   type SectionItemPayload,
   type SectionItemType,
 } from "@/lib/api/page-cms";
-import { Sparkles } from "lucide-react";
+import { ExternalLink, Sparkles } from "lucide-react";
+import { EntityPicker } from "@/components/relationships/entity-picker";
+import { PersonPicker } from "@/components/relationships/relationship-pickers";
+import { relationshipAdapters } from "@/components/relationships/relationship-adapters";
+import { eventsApi, newsApi } from "@ksu/api-client";
 
 type SectionFormState = {
   page_key: string;
@@ -78,6 +90,7 @@ type SectionItemDraft = {
   subtitle: string;
   body_text: string;
   content: Record<string, unknown>;
+  content_enriched?: SectionItem["content_enriched"];
   cta_label: string;
   cta_url: string;
   cta_description: string;
@@ -141,6 +154,7 @@ function createItemDraft(item?: SectionItem): SectionItemDraft {
     subtitle: item?.subtitle ?? "",
     body_text: item?.body_text ?? "",
     content: (item?.content as Record<string, unknown> | null) ?? {},
+    content_enriched: item?.content_enriched ?? null,
     cta_label: item?.cta_label ?? "",
     cta_url: item?.cta_url ?? "",
     cta_description: item?.cta_description ?? "",
@@ -156,6 +170,26 @@ function createItemDraft(item?: SectionItem): SectionItemDraft {
     is_enabled: item?.is_enabled ?? true,
     pending_attachments: [],
   };
+}
+
+function leadershipContentValue(item: SectionItemDraft, key: string) {
+  const value = item.content?.[key];
+  return typeof value === "string" ? value : "";
+}
+
+function withLeadershipContent(
+  item: SectionItemDraft,
+  patch: Record<string, string | null>,
+): SectionItemDraft {
+  const content = { ...(item.content ?? {}) };
+  for (const [key, value] of Object.entries(patch)) {
+    if (value) {
+      content[key] = value;
+    } else {
+      delete content[key];
+    }
+  }
+  return { ...item, content };
 }
 
 function formFromSection(section: PageSection): SectionFormState {
@@ -289,6 +323,264 @@ function SectionScopePicker({
       description="Optionally bind this section to a library branch. Leave blank for the main library homepage."
       placeholder="Main library homepage"
     />
+  );
+}
+
+function slugifyTitle(value: string) {
+  const slug = value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/[\s-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug || `leadership-activity-${Date.now()}`;
+}
+
+function LeadershipActivityControls({
+  item,
+  disabled,
+  onChange,
+}: {
+  item: SectionItemDraft;
+  disabled?: boolean;
+  onChange: (item: SectionItemDraft) => void;
+}) {
+  const [createType, setCreateType] = useState<"news" | "event" | null>(null);
+  const linkedType = leadershipContentValue(item, "linked_content_type") as "news" | "event" | "";
+  const linkedId = leadershipContentValue(item, "linked_content_id");
+  const staff = item.content_enriched?.staff_profile;
+  const linked = item.content_enriched?.linked_content;
+
+  return (
+    <div className="rounded-2xl border bg-primary/5 p-4">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold">Leadership activity relationship</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Attach the leader profile and connect the activity to a newsroom story or event record.
+          </p>
+        </div>
+        <Badge variant="secondary">leadership activity</Badge>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="space-y-2">
+          <PersonPicker
+            value={leadershipContentValue(item, "staff_profile_id")}
+            onChange={(value) => onChange(withLeadershipContent(item, { staff_profile_id: value || null }))}
+            disabled={disabled}
+            filters={{ status: "active" }}
+            label="Staff profile"
+            description="The selected profile image is used automatically for this activity card."
+            placeholder="Select VC, DVC, dean, director, or staff profile"
+            allowClear
+          />
+          {staff?.photo_url ? (
+            <div className="flex items-center gap-3 rounded-xl border bg-background/80 p-3">
+              <div className="size-14 overflow-hidden rounded-xl border bg-muted">
+                <ImageRenderer src={staff.photo_url} alt={staff.display_name ?? staff.full_name ?? "Staff profile"} className="h-full border-0" imageClassName="h-full w-full object-cover" />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{staff.display_name ?? staff.full_name}</p>
+                <p className="truncate text-xs text-muted-foreground">{staff.institutional_role ?? staff.email ?? "Profile image attached"}</p>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-[150px_minmax(0,1fr)]">
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Linked record type</p>
+              <Select
+                value={linkedType || "news"}
+                disabled={disabled}
+                onValueChange={(value) =>
+                  onChange(withLeadershipContent(item, {
+                    linked_content_type: value,
+                    linked_content_id: null,
+                  }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="news">News</SelectItem>
+                    <SelectItem value="event">Event</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Linked news/event</p>
+              <EntityPicker
+                adapter={relationshipAdapters[linkedType === "event" ? "event" : "news"] as any}
+                value={linkedId}
+                onChange={(value) =>
+                  onChange(withLeadershipContent(item, {
+                    linked_content_type: linkedType || "news",
+                    linked_content_id: value || null,
+                  }))
+                }
+                filters={{ is_main: true }}
+                disabled={disabled}
+                placeholder={linkedType === "event" ? "Select related event" : "Select related news"}
+                allowClear
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" size="sm" disabled={disabled} onClick={() => setCreateType("news")}>
+              Create news
+            </Button>
+            <Button type="button" variant="outline" size="sm" disabled={disabled} onClick={() => setCreateType("event")}>
+              Create event
+            </Button>
+            {linked?.href ? (
+              <Button type="button" variant="ghost" size="sm" asChild>
+                <a href={linked.href} target="_blank" rel="noreferrer">
+                  <ExternalLink data-icon="inline-start" />
+                  Preview linked
+                </a>
+              </Button>
+            ) : null}
+          </div>
+
+          {linked ? (
+            <p className="rounded-xl border bg-background/80 p-3 text-sm text-muted-foreground">
+              Linked to <span className="font-medium text-foreground">{linked.title}</span>
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <LeadershipLinkedContentDialog
+        type={createType}
+        seedTitle={item.title}
+        seedSummary={item.body_text}
+        onOpenChange={(open) => {
+          if (!open) setCreateType(null);
+        }}
+        onCreated={(type, id) => {
+          onChange(withLeadershipContent(item, {
+            linked_content_type: type,
+            linked_content_id: id,
+          }));
+          setCreateType(null);
+        }}
+      />
+    </div>
+  );
+}
+
+function LeadershipLinkedContentDialog({
+  type,
+  seedTitle,
+  seedSummary,
+  onOpenChange,
+  onCreated,
+}: {
+  type: "news" | "event" | null;
+  seedTitle: string;
+  seedSummary: string;
+  onOpenChange: (open: boolean) => void;
+  onCreated: (type: "news" | "event", id: string) => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [summary, setSummary] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [location, setLocation] = useState("");
+
+  useEffect(() => {
+    if (!type) return;
+    setTitle(seedTitle || "");
+    setSummary(seedSummary || "");
+    setStartDate("");
+    setLocation("");
+  }, [seedSummary, seedTitle, type]);
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      if (!type) throw new Error("Missing content type");
+      const cleanTitle = title.trim();
+      if (!cleanTitle) throw new Error("Title is required");
+      const basePayload = {
+        title: cleanTitle,
+        slug: slugifyTitle(cleanTitle),
+        summary: summary.trim() || null,
+        plain_text: summary.trim() || null,
+        is_main: true,
+        scope_type: "university",
+        scope_id: null,
+      };
+      if (type === "news") {
+        return { type, response: await newsApi.create(basePayload) };
+      }
+      if (!startDate) throw new Error("Event start date is required");
+      return {
+        type,
+        response: await eventsApi.create({
+          ...basePayload,
+          start_date: new Date(startDate).toISOString(),
+          location: location.trim() || null,
+          is_virtual: false,
+        }),
+      };
+    },
+    onSuccess: ({ type: createdType, response }) => {
+      const created = response.data;
+      toast.success(`${createdType === "news" ? "News" : "Event"} draft created`);
+      onCreated(createdType, created.id);
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to create linked content");
+    },
+  });
+
+  return (
+    <Dialog open={Boolean(type)} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Create linked {type === "event" ? "event" : "news"}</DialogTitle>
+          <DialogDescription>
+            Creates a draft main-site record and links it to this leadership activity item.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4">
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Title</p>
+            <Input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Leadership activity title" />
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Summary</p>
+            <Textarea rows={4} value={summary} onChange={(event) => setSummary(event.target.value)} placeholder="Short news/event summary" />
+          </div>
+          {type === "event" ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Start date</p>
+                <DateTimePicker mode="datetime-local" value={startDate} onChange={setStartDate} placeholder="Select event date" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Location</p>
+                <Input value={location} onChange={(event) => setLocation(event.target.value)} placeholder="Venue or campus" />
+              </div>
+            </div>
+          ) : null}
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button type="button" disabled={mutation.isPending} onClick={() => mutation.mutate()}>
+            {mutation.isPending ? "Creating..." : `Create ${type === "event" ? "event" : "news"} draft`}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -883,6 +1175,20 @@ export default function PageCmsSectionDetailPage() {
                         placeholder="Body copy or description for this item"
                       />
                     </div>
+
+                    {form.layout_variant === "leadership_activity" ? (
+                      <LeadershipActivityControls
+                        item={item}
+                        disabled={!canManageItems || isLoading}
+                        onChange={(nextItem) =>
+                          setItems((current) =>
+                            current.map((entry) =>
+                              entry.client_id === item.client_id ? nextItem : entry,
+                            ),
+                          )
+                        }
+                      />
+                    ) : null}
 
                     <div className="grid gap-4 lg:grid-cols-3">
                       <div className="space-y-2">

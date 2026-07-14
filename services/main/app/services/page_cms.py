@@ -13,7 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from ksu_common import PaginatedResult
 
-from ..models import ContentWorkflowLog, Media, MediaLink, PageSection, PartnershipSpotlight
+from ..models import ContentWorkflowLog, Event, Media, MediaLink, News, PageSection, PartnershipSpotlight, Person
 from ._base import ilike_any, paginate_query
 from .research_partners import ResearchPartnersProxyService
 
@@ -125,7 +125,63 @@ def _serialize_media_link(link: MediaLink) -> dict[str, Any]:
     }
 
 
-def _serialize_section(section: PageSection, media_groups: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
+def _serialize_person(person: Person | None) -> dict[str, Any] | None:
+    if person is None:
+        return None
+    return {
+        "id": str(person.id),
+        "title": person.title,
+        "full_name": person.full_name,
+        "display_name": person.display_name,
+        "email": person.email,
+        "institutional_role": person.institutional_role,
+        "photo_id": str(person.photo_id) if person.photo_id else None,
+        "photo_url": person.photo_url,
+    }
+
+
+def _serialize_linked_content(record: News | Event | None, content_type: str | None) -> dict[str, Any] | None:
+    if record is None or content_type is None:
+        return None
+    return {
+        "id": str(record.id),
+        "type": content_type,
+        "title": record.title,
+        "slug": record.slug,
+        "summary": getattr(record, "summary", None),
+        "status": getattr(record, "status", None),
+        "is_published": getattr(record, "is_published", None),
+        "published_at": getattr(record, "published_at", None),
+        "start_date": getattr(record, "start_date", None),
+        "href": f"/{'news' if content_type == 'news' else 'events'}/{record.slug}",
+    }
+
+
+async def _enrich_section_item_content(db: AsyncSession, content: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not content:
+        return None
+
+    enriched: dict[str, Any] = {}
+    staff_profile_id = content.get("staff_profile_id")
+    if staff_profile_id:
+        person = await db.get(Person, uuid.UUID(str(staff_profile_id)), options=[selectinload(Person.photo)])
+        enriched["staff_profile"] = _serialize_person(person)
+
+    linked_type = content.get("linked_content_type")
+    linked_id = content.get("linked_content_id")
+    if linked_type and linked_id:
+        model = News if linked_type == "news" else Event if linked_type == "event" else None
+        linked = await db.get(model, uuid.UUID(str(linked_id))) if model is not None else None
+        enriched["linked_content"] = _serialize_linked_content(linked, str(linked_type))
+
+    return enriched or None
+
+
+async def _serialize_section(
+    db: AsyncSession,
+    section: PageSection,
+    media_groups: dict[str, list[dict[str, Any]]],
+) -> dict[str, Any]:
     public_items = sorted(
         (
             item
@@ -171,6 +227,7 @@ def _serialize_section(section: PageSection, media_groups: dict[str, list[dict[s
                 "video_duration_seconds": item.video_duration_seconds,
                 "display_order": item.display_order,
                 "is_enabled": item.is_enabled,
+                "content_enriched": await _enrich_section_item_content(db, item.content),
             }
             for item in public_items
         ],
@@ -631,7 +688,7 @@ class HomepageCompositionService:
         section_payloads = []
         for section in sections:
             section_media = await group_media_links(db, "page_section", section.id)
-            section_payloads.append(_serialize_section(section, section_media))
+            section_payloads.append(await _serialize_section(db, section, section_media))
 
         spotlights = await _list_active_partnership_spotlights(db)
         spotlight_payloads = []

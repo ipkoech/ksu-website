@@ -8,6 +8,7 @@ import {
   libraryServiceApi,
   researchServiceApi,
   mediaApi,
+  newsApi,
   personsApi,
   programmesApi,
   schoolsApi,
@@ -15,6 +16,7 @@ import {
   staffApi,
   usersApi,
   wingsApi,
+  eventsApi,
   type AcademicCalendar,
   type Board,
   type ContactOwnerScopeType,
@@ -27,6 +29,8 @@ import {
   type LibraryStaff,
   type Media,
   type MediaFolder,
+  type News,
+  type Event,
   type Person,
   type Programme,
   type ResearchDonor,
@@ -103,6 +107,26 @@ function personOption(person: Person): RelationshipOption {
     eyebrow: person.title,
     imageUrl: person.photo_url,
     raw: person,
+  };
+}
+
+function newsOption(news: News): RelationshipOption {
+  return {
+    id: news.id,
+    label: news.title,
+    description: joinDescription([news.summary, news.status, news.is_published ? "Published" : "Draft"]),
+    eyebrow: "News",
+    raw: news,
+  };
+}
+
+function eventOption(event: Event): RelationshipOption {
+  return {
+    id: event.id,
+    label: event.title,
+    description: joinDescription([event.summary, event.location, event.start_date]),
+    eyebrow: "Event",
+    raw: event,
   };
 }
 
@@ -345,6 +369,57 @@ export const personRelationshipAdapter: RelationshipAdapter<{ status?: string; s
       include: "department:id,name,code,school_id",
     });
     return response.data ? personOption(response.data) : null;
+  },
+};
+
+export const newsRelationshipAdapter: RelationshipAdapter<{ is_main?: boolean; status?: string }> = {
+  key: "news",
+  entityType: "news",
+  label: "News",
+  pluralLabel: "News",
+  searchPlaceholder: "Search news by title or summary",
+  emptyLabel: "No news records found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await newsApi.listAdmin({
+      per_page: limit,
+      search: search?.trim() || undefined,
+      is_main: filters?.is_main,
+      status: typeof filters?.status === "string" ? filters.status : undefined,
+      fields: "id,title,slug,summary,status,is_published,published_at,updated_at",
+    });
+    return (response.data ?? []).map(newsOption);
+  },
+  async get(id) {
+    const response = await newsApi.get(id, {
+      fields: "id,title,slug,summary,status,is_published,published_at,updated_at",
+    });
+    return response.data ? newsOption(response.data) : null;
+  },
+};
+
+export const eventRelationshipAdapter: RelationshipAdapter<{ is_main?: boolean; status?: string; upcoming?: boolean }> = {
+  key: "event",
+  entityType: "event",
+  label: "Event",
+  pluralLabel: "Events",
+  searchPlaceholder: "Search events by title, summary, or location",
+  emptyLabel: "No event records found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await eventsApi.listAdmin({
+      per_page: limit,
+      search: search?.trim() || undefined,
+      is_main: filters?.is_main,
+      status: typeof filters?.status === "string" ? filters.status : undefined,
+      upcoming: typeof filters?.upcoming === "boolean" ? filters.upcoming : undefined,
+      fields: "id,title,slug,summary,status,is_published,start_date,location,updated_at",
+    });
+    return (response.data ?? []).map(eventOption);
+  },
+  async get(id) {
+    const response = await eventsApi.get(id, {
+      fields: "id,title,slug,summary,status,is_published,start_date,location,updated_at",
+    });
+    return response.data ? eventOption(response.data) : null;
   },
 };
 
@@ -1305,6 +1380,8 @@ export const staffAssignmentRelationshipAdapter: RelationshipAdapter<{ status?: 
 
 export const relationshipAdapters = {
   person: personRelationshipAdapter,
+  news: newsRelationshipAdapter,
+  event: eventRelationshipAdapter,
   user: userRelationshipAdapter,
   school: schoolRelationshipAdapter,
   department: departmentRelationshipAdapter,
