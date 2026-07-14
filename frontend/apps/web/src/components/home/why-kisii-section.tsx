@@ -47,6 +47,7 @@ const statIcons = [
 const whyKisiiImages = [
   "/images/Home/KSUGreenLandscaping.jpg",
   "/images/Home/OurKSU-82.jpg",
+  "/images/Home/um-hero.jpg",
   "/images/Home/VCProfSUKUBA.jpg",
 ] as const;
 
@@ -72,25 +73,31 @@ export function WhyKisiiSection({
         className="mx-auto max-w-[1680px] px-4 transition duration-700 motion-safe:translate-y-4 motion-safe:opacity-0 data-[visible=true]:translate-y-0 data-[visible=true]:opacity-100 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
       >
         <div className="grid gap-5 lg:min-h-[390px] lg:grid-cols-[minmax(300px,0.36fr)_minmax(0,0.64fr)] lg:items-stretch">
-          <div className="grid min-h-[380px] grid-cols-5 grid-rows-5 gap-2.5 lg:min-h-0">
+          <div className="grid min-h-[380px] grid-cols-5 grid-rows-6 gap-2.5 lg:min-h-0">
             <MosaicImage
               item={reasons[0]}
               fallbackSrc={whyKisiiImages[0]}
               fallbackTitle={section.title}
-              className="col-span-5 row-span-3 sm:col-span-3 sm:row-span-5"
+              className="col-span-5 row-span-3 sm:col-span-3 sm:row-span-6"
               priority
             />
             <MosaicImage
               item={reasons[1]}
               fallbackSrc={whyKisiiImages[1]}
               fallbackTitle={section.title}
-              className="col-span-3 row-span-2 sm:col-span-2 sm:row-span-3"
+              className="col-span-3 row-span-1 sm:col-span-2 sm:row-span-2"
             />
             <MosaicImage
               item={reasons[2]}
               fallbackSrc={whyKisiiImages[2]}
               fallbackTitle={section.title}
-              className="col-span-2 row-span-2 sm:col-span-2 sm:row-span-2"
+              className="col-span-2 row-span-1 sm:col-span-2 sm:row-span-2"
+            />
+            <MosaicImage
+              item={reasons[3]}
+              fallbackSrc={whyKisiiImages[3]}
+              fallbackTitle={section.title}
+              className="col-span-5 row-span-2 sm:col-span-2 sm:row-span-2"
             />
           </div>
 
