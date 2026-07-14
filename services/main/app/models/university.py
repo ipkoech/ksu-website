@@ -13,6 +13,7 @@ from ksu_common.models.base import Base
 
 if TYPE_CHECKING:
     from .academic import Campus
+    from .about_content import AboutPageContent
     from .media import Media
     from .person import Person
 
@@ -36,6 +37,8 @@ class UniversityInfo(Base):
     institution_type: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True)
     charter_summary: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
     history_summary: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    philosophy: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    strategic_plan_summary: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
 
     email: Mapped[Optional[str]] = mapped_column(sa.String(320), nullable=True)
     phone: Mapped[Optional[str]] = mapped_column(sa.String(24), nullable=True)
@@ -81,6 +84,9 @@ class UniversityInfo(Base):
     main_campus: Mapped[Optional["Campus"]] = relationship("Campus", foreign_keys=[main_campus_id])
     chancellor: Mapped[Optional["Person"]] = relationship("Person", foreign_keys=[chancellor_id])
     vc: Mapped[Optional["Person"]] = relationship("Person", foreign_keys=[vc_id])
+    about_page_content: Mapped[Optional["AboutPageContent"]] = relationship(
+        "AboutPageContent", back_populates="university_info", uselist=False
+    )
     council_chair: Mapped[Optional["Person"]] = relationship("Person", foreign_keys=[council_chair_id])
 
     __table_args__ = (

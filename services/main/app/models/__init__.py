@@ -67,6 +67,15 @@ from .exchange import ExchangeProgramme
 
 # University profile
 from .university import UniversityInfo
+from .about_content import (
+    ABOUT_WORKFLOW_STATUSES,
+    FACT_KINDS,
+    AboutPageContent,
+    FactEdition,
+    FactGroup,
+    FactItem,
+    HistoryMilestone,
+)
 
 # System
 from .system import ApiKey, Setting, UserPreference, Webhook
@@ -162,6 +171,13 @@ __all__ = [
     # Exchange
     "ExchangeProgramme",
     "UniversityInfo",
+    "ABOUT_WORKFLOW_STATUSES",
+    "FACT_KINDS",
+    "AboutPageContent",
+    "HistoryMilestone",
+    "FactEdition",
+    "FactGroup",
+    "FactItem",
     "Setting",
     "UserPreference",
     "ApiKey",
