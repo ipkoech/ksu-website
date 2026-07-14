@@ -78,8 +78,17 @@ class PageCmsSeederTests(unittest.IsolatedAsyncioTestCase):
             {
                 "hero-admissions",
                 "pulse",
+                "why-kisii",
                 "featured-partnership",
                 "programme-finder",
+                "academic-dates",
+                "campus-life",
+                "leadership-activity",
+                "research-impact",
+                "latest-news",
+                "upcoming-events",
+                "partners",
+                "alumni-impact",
                 "facts",
             },
             set(sections_by_key),
@@ -91,6 +100,7 @@ class PageCmsSeederTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(hero.scope_id)
         self.assertEqual("hero_admissions", hero.layout_variant)
         self.assertEqual("published", hero.status)
+        self.assertEqual("published", hero.workflow_status)
         self.assertTrue(hero.is_enabled)
         self.assertEqual("page-cms-homepage-v1", hero.settings["seed"]["owner"])
         self.assertGreaterEqual(len(hero.items), 2)
@@ -100,6 +110,49 @@ class PageCmsSeederTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("programme_finder", sections_by_key["programme-finder"].layout_variant)
         self.assertEqual("facts_strip", sections_by_key["facts"].layout_variant)
         self.assertTrue(sections_by_key["programme-finder"].settings["filters"])
+
+        ordered_variants = [
+            section.layout_variant
+            for section in sorted(db.sections, key=lambda item: item.display_order)
+        ]
+        self.assertEqual(
+            [
+                "hero_admissions",
+                "pulse_strip",
+                "pillar_grid",
+                "featured_partnership",
+                "programme_finder",
+                "date_timeline",
+                "media_mosaic",
+                "leadership_activity",
+                "research_cards",
+                "news_grid",
+                "events_list",
+                "logo_carousel",
+                "alumni_story",
+                "facts_strip",
+            ],
+            ordered_variants,
+        )
+
+        programme_items = sections_by_key["programme-finder"].items
+        self.assertEqual(
+            [1, 2, 3, 4, 5],
+            [item.content["step"] for item in programme_items if item.content.get("group") == "journey"],
+        )
+        research_items = sections_by_key["research-impact"].items
+        self.assertEqual(5, len(research_items))
+        self.assertTrue(all(item.content.get("imageUrl") for item in research_items))
+        self.assertEqual(4, len(sections_by_key["leadership-activity"].items))
+        self.assertEqual(1, len(sections_by_key["alumni-impact"].items))
+        self.assertEqual(7, len(sections_by_key["facts"].items))
+        self.assertTrue(
+            all(
+                item.item_type in {"text", "card", "stat", "cta", "media", "video"}
+                for section in db.sections
+                for item in section.items
+            )
+        )
 
         self.assertEqual(1, len(db.spotlights))
         spotlight = db.spotlights[0]
@@ -134,7 +187,7 @@ class PageCmsSeederTests(unittest.IsolatedAsyncioTestCase):
             await seed_page_cms(db, SeedContext())
             await seed_page_cms(db, SeedContext())
 
-        self.assertEqual(5, len(db.sections))
+        self.assertEqual(14, len(db.sections))
         self.assertEqual(1, len(db.spotlights))
         self.assertEqual(
             sorted(section.section_key for section in db.sections),
@@ -178,8 +231,34 @@ class PageCmsSeederTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("published", seed_owned_draft.status)
         self.assertEqual("Editor facts", manual_published.title)
         self.assertEqual({"edited_by": "admin"}, manual_published.settings)
-        self.assertEqual(5, len(db.sections))
+        self.assertEqual(14, len(db.sections))
         self.assertIs(_section_by_key(db, "facts"), manual_published)
+
+    async def test_seed_upgrades_an_older_seed_owned_published_section(self):
+        db = _MemoryDb()
+        legacy_pulse = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            scope_id=None,
+            section_key="pulse",
+            title="Legacy pulse",
+            settings={"seed": {"owner": "page-cms-homepage-v1", "version": 1}},
+            layout_variant="pulse_strip",
+            status="published",
+            published_at=datetime.now(timezone.utc),
+            is_enabled=True,
+        )
+        db.sections.append(legacy_pulse)
+
+        with patch(
+            "app.seeders.seed_page_cms.ResearchPartnersProxyService.list_partners",
+            AsyncMock(return_value={"status": "success", "data": [], "meta": {"pages": 1}}),
+        ):
+            await seed_page_cms(db, SeedContext())
+
+        self.assertEqual("University pulse", legacy_pulse.title)
+        self.assertEqual(3, legacy_pulse.settings["seed"]["version"])
+        self.assertEqual(5, len(legacy_pulse.items))
 
     async def test_seed_does_not_overwrite_published_seeded_section_after_manual_edits(self):
         db = _MemoryDb()
