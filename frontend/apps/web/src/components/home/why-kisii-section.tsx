@@ -65,50 +65,54 @@ export function WhyKisiiSection({
         data-visible={isVisible.visible ? "true" : "false"}
         className="mx-auto max-w-[1680px] px-4 transition duration-700 motion-safe:translate-y-4 motion-safe:opacity-0 data-[visible=true]:translate-y-0 data-[visible=true]:opacity-100 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
       >
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,0.58fr)_minmax(0,0.42fr)]">
-          <div className="relative min-h-[440px] overflow-hidden bg-primary">
-            <PublicImage
-              src={itemImageUrl(reasons[0])}
-              alt={
-                contentText(reasons[0], "imageAlt") ??
-                reasons[0]?.media_alt_text ??
-                section.title ??
-                "Kisii University"
-              }
-              ratio="fill"
-              className="absolute inset-0 h-full w-full"
-              imageClassName="object-cover object-[50%_42%]"
-              sizes="(min-width: 1024px) 58vw, 100vw"
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(380px,0.95fr)] lg:items-center">
+          <div className="grid min-h-[520px] grid-cols-5 grid-rows-6 gap-3">
+            <MosaicImage
+              item={reasons[0]}
+              fallbackTitle={section.title}
+              className="col-span-5 row-span-4 sm:col-span-3 sm:row-span-6"
+              priority
             />
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.08),rgba(0,61,43,0.82))]" />
-            <div className="absolute inset-x-0 bottom-0 p-5 text-white sm:p-7 lg:p-8">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
-                {section.subtitle ?? "Why choose KSU"}
-              </p>
-              <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
-                {section.title ?? "Why Kisii University?"}
-              </h2>
-              {section.description ? (
-                <p className="mt-4 max-w-2xl text-base leading-7 text-white/78">
-                  {section.description}
+            <MosaicImage
+              item={reasons[1]}
+              fallbackTitle={section.title}
+              className="col-span-3 row-span-2 sm:col-span-2 sm:row-span-3"
+            />
+            <div className="relative col-span-2 row-span-2 overflow-hidden bg-primary p-4 text-white sm:col-span-2 sm:row-span-3 sm:p-5">
+              <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-secondary/20 blur-2xl" />
+              <div className="relative flex h-full flex-col justify-end">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
+                  {section.subtitle ?? "Why choose KSU"}
                 </p>
-              ) : null}
+                <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight sm:text-3xl">
+                  {section.title ?? "Why Kisii University?"}
+                </h2>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-col justify-center">
+          <div className="flex min-h-[520px] flex-col justify-center">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
               Reasons to choose KSU
             </p>
-            <div className="mt-4 divide-y divide-blue-100 border-y border-blue-100">
-            {reasons.map((item, index) => (
-              <ReasonStatement
-                key={item.id}
-                item={item}
-                index={index}
-                active={isVisible.visible}
-              />
-            ))}
+            <h2 className="mt-3 max-w-xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+              Learn, discover and create impact in an inclusive academic
+              community.
+            </h2>
+            {section.description ? (
+              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
+                {section.description}
+              </p>
+            ) : null}
+            <div className="mt-6 divide-y divide-blue-100 border-y border-blue-100">
+              {reasons.map((item, index) => (
+                <ReasonStatement
+                  key={item.id}
+                  item={item}
+                  index={index}
+                  active={isVisible.visible}
+                />
+              ))}
             </div>
           </div>
         </div>
@@ -215,6 +219,39 @@ function ReasonStatement({
     </Link>
   ) : (
     content
+  );
+}
+
+function MosaicImage({
+  item,
+  fallbackTitle,
+  className,
+  priority = false,
+}: {
+  item?: HomepageSectionItem;
+  fallbackTitle?: string | null;
+  className: string;
+  priority?: boolean;
+}) {
+  return (
+    <div className={`relative overflow-hidden bg-blue-50 ${className}`}>
+      <PublicImage
+        src={itemImageUrl(item)}
+        alt={
+          contentText(item, "imageAlt") ??
+          item?.media_alt_text ??
+          item?.title ??
+          fallbackTitle ??
+          "Kisii University"
+        }
+        ratio="fill"
+        priority={priority}
+        className="absolute inset-0 h-full w-full"
+        imageClassName="object-cover transition duration-700 hover:scale-[1.03]"
+        sizes="(min-width: 1024px) 62vw, 100vw"
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.02),rgba(2,6,23,0.22))]" />
+    </div>
   );
 }
 
@@ -334,12 +371,12 @@ function reasonIcon(item: HomepageSectionItem, index: number): LucideIcon {
   return (key && reasonIcons[key]) || fallbacks[index % fallbacks.length];
 }
 
-function contentText(item: HomepageSectionItem, key: string) {
-  const value = item.content?.[key];
+function contentText(item: HomepageSectionItem | undefined, key: string) {
+  const value = item?.content?.[key];
   return typeof value === "string" && value.trim() ? value : undefined;
 }
 
-function itemImageUrl(item: HomepageSectionItem) {
+function itemImageUrl(item: HomepageSectionItem | undefined) {
   return contentText(item, "imageUrl");
 }
 
