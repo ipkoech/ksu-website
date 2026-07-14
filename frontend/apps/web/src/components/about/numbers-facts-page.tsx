@@ -4,76 +4,86 @@ import { PublicImage } from "@/components/public/public-image";
 import type { PublicFactItem, PublicFactsData } from "@/lib/public-about-data";
 import { AboutReveal } from "./about-reveal";
 
-const groupFallbackImages = [
+const figureFallbackImages = [
   "/images/backgrounds/KSUGreenLandscapingMay2026-3885.jpg",
-  "/images/backgrounds/VCKSUMedicalSchoolInspectionApril1,2026-5704.jpg",
-  "/images/backgrounds/KSUB-RollPhotos2025-123.jpg",
+  "/images/backgrounds/KSUB-RollPhotos2025-122.jpg",
+  "/images/backgrounds/KSUGreenLandscapingMay2026-3810.jpg",
   "/images/backgrounds/KSUGreenLandscapingMay2026-7456.jpg",
+  "/images/backgrounds/KSUMessengersofPeaceTrainingJune27,2026-4440.jpg",
+  "/images/backgrounds/bg-history.jpg",
 ];
 
 function factValue(item: PublicFactItem) {
   return `${item.prefix || ""}${item.display_value}${item.suffix || ""}${item.unit ? ` ${item.unit}` : ""}`;
 }
 
-function FactGroupCard({
+function FactFigure({
   group,
+  items,
   index,
 }: {
   group: PublicFactsData["groups"][number];
+  items: PublicFactItem[];
   index: number;
 }) {
-  const image = group.image?.url || groupFallbackImages[index % groupFallbackImages.length];
+  const image = (index === 0 ? group.image?.url : null) || figureFallbackImages[index % figureFallbackImages.length];
+  const sources = Array.from(
+    new Map(
+      items
+        .filter((item) => item.source_title)
+        .map((item) => [item.source_title, { title: item.source_title!, url: item.source_url }]),
+    ).values(),
+  );
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden border border-slate-200 bg-white transition duration-300 hover:border-primary/25 hover:shadow-lg">
+    <article className="group h-full">
       <PublicImage
         src={image}
         alt={group.image?.alt || group.image_alt_text || `${group.heading} at Kisii University`}
         ratio="news"
         className="overflow-hidden bg-slate-100"
-        sizes="(min-width: 1024px) 50vw, 100vw"
+        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+        unoptimized
         imageClassName="object-cover transition duration-700 group-hover:scale-[1.025]"
       />
-      <div className="flex flex-1 flex-col p-6 sm:p-7">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
-          {String(index + 1).padStart(2, "0")}
-        </p>
-        <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-primary sm:text-3xl">
-          {group.heading}
-        </h2>
-        {group.summary ? (
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{group.summary}</p>
-        ) : null}
-        <ul className="mt-5 divide-y divide-slate-200 border-y border-slate-200">
-          {group.items.map((item) => (
-            <li key={item.id} className="py-4">
-              <div className="flex items-baseline justify-between gap-5">
-                <span className="text-sm font-semibold leading-6 text-slate-700">{item.label}</span>
-                <span className="max-w-[60%] text-right font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-slate-950 sm:text-2xl">
-                  {factValue(item)}
-                </span>
-              </div>
-              {item.explanation ? <p className="mt-2 text-sm leading-6 text-slate-500">{item.explanation}</p> : null}
-              {item.source_title ? (
-                <p className="mt-2 text-xs leading-5 text-slate-500">
-                  Source: {item.source_url ? <Link href={item.source_url} className="font-semibold text-primary underline-offset-4 hover:underline">{item.source_title}</Link> : item.source_title}
-                </p>
-              ) : null}
-              {item.link_url ? (
-                <Link href={item.link_url} className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-primary underline-offset-4 hover:underline">
-                  {item.link_label || "Learn more"}<ArrowRight className="h-3.5 w-3.5" aria-hidden />
-                </Link>
-              ) : null}
-            </li>
+      <h3 className="sr-only">{group.heading}</h3>
+      <ul className="mt-5 list-square space-y-3 pl-5 marker:text-primary">
+        {items.map((item) => (
+          <li key={item.id} className="pl-1 text-base leading-7 text-slate-900">
+            <span className="font-semibold">{item.label}:</span>{" "}
+            <span>{factValue(item)}</span>
+            {item.explanation ? <span className="mt-1 block text-sm leading-6 text-slate-600">{item.explanation}</span> : null}
+            {item.link_url ? (
+              <Link href={item.link_url} className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-primary underline-offset-4 hover:underline">
+                {item.link_label || "Learn more"}<ArrowRight className="h-3.5 w-3.5" aria-hidden />
+              </Link>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+      {sources.length ? (
+        <p className="mt-4 text-xs leading-5 text-slate-500">
+          Source: {sources.map((source, sourceIndex) => (
+            <span key={source.title}>
+              {sourceIndex ? ", " : null}
+              {source.url ? <Link href={source.url} className="underline-offset-4 hover:text-primary hover:underline">{source.title}</Link> : source.title}
+            </span>
           ))}
-        </ul>
-      </div>
+        </p>
+      ) : null}
     </article>
   );
 }
 
 export function NumbersFactsPage({ data }: { data: PublicFactsData }) {
   const edition = data.edition;
+  const figures = data.groups.flatMap((group) => {
+    const chunks: Array<{ group: typeof group; items: PublicFactItem[] }> = [];
+    for (let index = 0; index < group.items.length; index += 2) {
+      chunks.push({ group, items: group.items.slice(index, index + 2) });
+    }
+    return chunks;
+  });
 
   return (
     <main className="bg-white">
@@ -119,13 +129,10 @@ export function NumbersFactsPage({ data }: { data: PublicFactsData }) {
       <section className="px-5 py-12 sm:px-8 lg:px-10 lg:py-16" aria-labelledby="facts-heading">
         <div className="w-full">
           <AboutReveal>
-            <div className="mb-8 grid gap-4 border-b border-primary/20 pb-6 md:grid-cols-[1fr_auto] md:items-end">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Annual institutional snapshot</p>
-                <h2 id="facts-heading" className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-primary sm:text-4xl">
-                  KSU in numbers — {edition.reporting_year}
-                </h2>
-              </div>
+            <div className="mb-8 grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
+              <h2 id="facts-heading" className="font-[family-name:var(--font-display)] text-3xl font-semibold text-primary sm:text-4xl">
+                KSU in numbers — {edition.reporting_year}
+              </h2>
               {edition.verified_on ? (
                 <p className="flex items-center gap-2 text-sm font-semibold text-slate-600">
                   <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden />
@@ -135,10 +142,10 @@ export function NumbersFactsPage({ data }: { data: PublicFactsData }) {
             </div>
           </AboutReveal>
 
-          <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,28rem),1fr))]">
-            {data.groups.map((group, index) => (
-              <AboutReveal key={group.id} className="h-full">
-                <FactGroupCard group={group} index={index} />
+          <div className="grid gap-x-8 gap-y-16 md:grid-cols-2 lg:grid-cols-3">
+            {figures.map((figure, index) => (
+              <AboutReveal key={`${figure.group.id}-${index}`} className="h-full">
+                <FactFigure group={figure.group} items={figure.items} index={index} />
               </AboutReveal>
             ))}
           </div>
