@@ -44,6 +44,12 @@ const statIcons = [
   Sparkles,
 ] satisfies LucideIcon[];
 
+const whyKisiiImages = [
+  "/images/Home/KSUGreenLandscaping.jpg",
+  "/images/Home/OurKSU-82.jpg",
+  "/images/Home/VCProfSUKUBA.jpg",
+] as const;
+
 export function WhyKisiiSection({
   section,
   factsSection,
@@ -58,53 +64,49 @@ export function WhyKisiiSection({
   return (
     <section
       id={section.section_key}
-      className="overflow-hidden border-b border-blue-100 bg-white py-10 lg:py-12"
+      className="overflow-hidden border-b border-blue-100 bg-white py-8 lg:py-10"
     >
       <div
         ref={isVisible.ref}
         data-visible={isVisible.visible ? "true" : "false"}
         className="mx-auto max-w-[1680px] px-4 transition duration-700 motion-safe:translate-y-4 motion-safe:opacity-0 data-[visible=true]:translate-y-0 data-[visible=true]:opacity-100 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
       >
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(380px,0.95fr)] lg:items-center">
-          <div className="grid min-h-[520px] grid-cols-5 grid-rows-6 gap-3">
+        <div className="grid gap-5 lg:min-h-[390px] lg:grid-cols-[minmax(300px,0.36fr)_minmax(0,0.64fr)] lg:items-stretch">
+          <div className="grid min-h-[380px] grid-cols-5 grid-rows-5 gap-2.5 lg:min-h-0">
             <MosaicImage
               item={reasons[0]}
+              fallbackSrc={whyKisiiImages[0]}
               fallbackTitle={section.title}
-              className="col-span-5 row-span-4 sm:col-span-3 sm:row-span-6"
+              className="col-span-5 row-span-3 sm:col-span-3 sm:row-span-5"
               priority
             />
             <MosaicImage
               item={reasons[1]}
+              fallbackSrc={whyKisiiImages[1]}
               fallbackTitle={section.title}
               className="col-span-3 row-span-2 sm:col-span-2 sm:row-span-3"
             />
-            <div className="relative col-span-2 row-span-2 overflow-hidden bg-primary p-4 text-white sm:col-span-2 sm:row-span-3 sm:p-5">
-              <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-secondary/20 blur-2xl" />
-              <div className="relative flex h-full flex-col justify-end">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
-                  {section.subtitle ?? "Why choose KSU"}
-                </p>
-                <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight sm:text-3xl">
-                  {section.title ?? "Why Kisii University?"}
-                </h2>
-              </div>
-            </div>
+            <MosaicImage
+              item={reasons[2]}
+              fallbackSrc={whyKisiiImages[2]}
+              fallbackTitle={section.title}
+              className="col-span-2 row-span-2 sm:col-span-2 sm:row-span-2"
+            />
           </div>
 
-          <div className="flex min-h-[520px] flex-col justify-center">
+          <div className="flex flex-col justify-center border-y border-blue-100 py-4 lg:border-y-0 lg:py-0">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
-              Reasons to choose KSU
+              {section.subtitle ?? "Why choose KSU"}
             </p>
-            <h2 className="mt-3 max-w-xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
-              Learn, discover and create impact in an inclusive academic
-              community.
+            <h2 className="mt-2 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+              {section.title ?? "Why Kisii University?"}
             </h2>
             {section.description ? (
-              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
                 {section.description}
               </p>
             ) : null}
-            <div className="mt-6 divide-y divide-blue-100 border-y border-blue-100">
+            <div className="mt-5 grid gap-x-6 gap-y-1 sm:grid-cols-2">
               {reasons.map((item, index) => (
                 <ReasonStatement
                   key={item.id}
@@ -118,46 +120,43 @@ export function WhyKisiiSection({
         </div>
 
         {facts.length ? (
-          <aside className="relative mt-8 overflow-hidden border-y border-blue-100 bg-white py-5 text-primary">
-            <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-blue-100/60 blur-3xl" />
-            <div className="relative">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
+          <aside className="mt-4 border-y border-blue-100 py-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+              <p className="shrink-0 text-xs font-bold uppercase tracking-[0.16em] text-secondary lg:max-w-32">
                 {factsSection?.title ?? "KSU at a glance"}
               </p>
-
-              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-7">
-                {facts.map((fact, index) => {
+              <div className="flex flex-1 snap-x gap-3 overflow-x-auto lg:grid lg:grid-cols-7 lg:overflow-visible">
+                {facts.slice(0, 7).map((fact, index) => {
                   const Icon = statIcons[index % statIcons.length];
                   return (
                     <div
                       key={fact.id}
-                      className="group border-l border-blue-100 pl-3 transition duration-300 first:border-l-0 first:pl-0 hover:-translate-y-0.5 sm:first:border-l sm:first:pl-3 lg:first:border-l-0 lg:first:pl-0"
+                      className="group flex min-w-40 snap-start items-center gap-2.5 text-primary transition duration-300 hover:-translate-y-0.5 lg:min-w-0"
                     >
-                      <div className="flex items-center gap-2.5">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-primary ring-1 ring-blue-100">
-                          <Icon className="h-[18px] w-[18px]" aria-hidden />
-                        </span>
-                        <span className="block font-[family-name:var(--font-display)] text-2xl font-semibold leading-none">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 ring-1 ring-blue-100">
+                        <Icon className="h-[18px] w-[18px]" aria-hidden />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block font-[family-name:var(--font-display)] text-xl font-semibold leading-none lg:text-2xl">
                           <CountUpValue
                             value={fact.title ?? ""}
                             active={isVisible.visible}
                             delay={index * 90}
                           />
                         </span>
-                      </div>
-                      <span className="mt-2 block text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] text-slate-500">
-                        {factSubtitle(fact)}
+                        <span className="mt-1 line-clamp-2 block text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] text-slate-500">
+                          {factSubtitle(fact)}
+                        </span>
                       </span>
                     </div>
                   );
                 })}
               </div>
-
               <Link
                 href="/about"
-                className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 border border-primary/15 bg-primary px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
+                className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 bg-primary px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
               >
-                Explore more facts
+                Explore facts
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
             </div>
@@ -180,7 +179,7 @@ function ReasonStatement({
   const Icon = reasonIcon(item, index);
   const content = (
     <div
-      className="group flex gap-4 py-5 transition duration-500 hover:pl-2 motion-safe:translate-y-3 motion-safe:opacity-0 data-[visible=true]:translate-y-0 data-[visible=true]:opacity-100"
+      className="group flex gap-3 py-3 transition duration-500 hover:pl-1 motion-safe:translate-y-3 motion-safe:opacity-0 data-[visible=true]:translate-y-0 data-[visible=true]:opacity-100"
       data-visible={active ? "true" : "false"}
       style={{ transitionDelay: active ? `${120 + index * 85}ms` : "0ms" }}
     >
@@ -191,17 +190,17 @@ function ReasonStatement({
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-primary ring-1 ring-blue-100 transition group-hover:bg-primary group-hover:text-white">
-          <Icon className="h-5 w-5" aria-hidden />
-        </span>
+          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-primary ring-1 ring-blue-100 transition group-hover:bg-primary group-hover:text-white">
+            <Icon className="h-4 w-4" aria-hidden />
+          </span>
           <div className="min-w-0">
-          <h3 className="font-[family-name:var(--font-display)] text-xl font-semibold leading-snug text-slate-950">
-            {item.title ?? "Kisii University advantage"}
-          </h3>
-          <p className="mt-1 text-sm leading-6 text-slate-600">
-            {item.body_text ?? item.subtitle}
-          </p>
-        </div>
+            <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold leading-snug text-slate-950">
+              {item.title ?? "Kisii University advantage"}
+            </h3>
+            <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">
+              {item.body_text ?? item.subtitle}
+            </p>
+          </div>
         </div>
         {item.cta_url ? (
           <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.1em] text-primary">
@@ -224,11 +223,13 @@ function ReasonStatement({
 
 function MosaicImage({
   item,
+  fallbackSrc,
   fallbackTitle,
   className,
   priority = false,
 }: {
   item?: HomepageSectionItem;
+  fallbackSrc: string;
   fallbackTitle?: string | null;
   className: string;
   priority?: boolean;
@@ -236,7 +237,7 @@ function MosaicImage({
   return (
     <div className={`relative overflow-hidden bg-blue-50 ${className}`}>
       <PublicImage
-        src={itemImageUrl(item)}
+        src={fallbackSrc}
         alt={
           contentText(item, "imageAlt") ??
           item?.media_alt_text ??
@@ -376,12 +377,10 @@ function contentText(item: HomepageSectionItem | undefined, key: string) {
   return typeof value === "string" && value.trim() ? value : undefined;
 }
 
-function itemImageUrl(item: HomepageSectionItem | undefined) {
-  return contentText(item, "imageUrl");
-}
-
 function factSubtitle(item: HomepageSectionItem) {
-  return contentText(item, "label") ?? item.subtitle ?? item.body_text ?? "Fact";
+  return (
+    contentText(item, "label") ?? item.subtitle ?? item.body_text ?? "Fact"
+  );
 }
 
 function parseStatValue(value: string) {
