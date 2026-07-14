@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { AdmissionsCountdown } from "@/components/home/admissions-countdown";
+import { WhyKisiiSection } from "@/components/home/why-kisii-section";
 import { PublicImage } from "@/components/public/public-image";
 import {
   background,
@@ -40,6 +41,7 @@ import {
 type SectionVariantProps = {
   section: HomepageSection;
   hero?: HomepageResolvedHero | null;
+  factsSection?: HomepageSection | null;
   partnershipSpotlights?: HomepagePartnershipSpotlight[];
 };
 
@@ -577,7 +579,14 @@ export function DateTimelineSection({ section }: SectionVariantProps) {
   );
 }
 
-export function PillarGridSection({ section }: SectionVariantProps) {
+export function PillarGridSection({
+  section,
+  factsSection,
+}: SectionVariantProps) {
+  if (section.section_key === "why-kisii") {
+    return <WhyKisiiSection section={section} factsSection={factsSection} />;
+  }
+
   return (
     <SectionFrame section={section}>
       <SectionHeading

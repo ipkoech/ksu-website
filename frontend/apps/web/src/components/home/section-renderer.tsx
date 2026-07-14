@@ -27,6 +27,7 @@ import {
 type SectionComponent = (props: {
   section: HomepageSection;
   hero?: HomepageResolvedHero | null;
+  factsSection?: HomepageSection | null;
   partnershipSpotlights?: HomepagePartnershipSpotlight[];
 }) => ReactElement | null;
 
@@ -53,10 +54,12 @@ export const HOMEPAGE_SECTION_RENDERERS: Record<
 export function HomepageSectionRenderer({
   section,
   hero,
+  factsSection,
   partnershipSpotlights,
 }: {
   section: HomepageSection;
   hero?: HomepageResolvedHero | null;
+  factsSection?: HomepageSection | null;
   partnershipSpotlights?: HomepagePartnershipSpotlight[];
 }) {
   if (!isKnownHomepageLayoutVariant(section.layout_variant)) {
@@ -71,6 +74,7 @@ export function HomepageSectionRenderer({
     <Renderer
       section={section}
       hero={hero}
+      factsSection={factsSection}
       partnershipSpotlights={partnershipSpotlights}
     />
   );
@@ -86,17 +90,33 @@ export function HomepageSections({
   partnershipSpotlights?: HomepagePartnershipSpotlight[];
 }) {
   const orderedSections = orderHomepageSections(sections);
+  const factsSection = sections.find(
+    (section) =>
+      section.layout_variant === "facts_strip" || section.section_key === "facts",
+  );
+  const hasMergedWhySection = sections.some(
+    (section) =>
+      section.layout_variant === "pillar_grid" &&
+      section.section_key === "why-kisii",
+  );
 
   return (
     <>
-      {orderedSections.map((section) => (
-        <HomepageSectionRenderer
-          key={section.id}
-          section={section}
-          hero={hero}
-          partnershipSpotlights={partnershipSpotlights}
-        />
-      ))}
+      {orderedSections.map((section) => {
+        if (hasMergedWhySection && section.layout_variant === "facts_strip") {
+          return null;
+        }
+
+        return (
+          <HomepageSectionRenderer
+            key={section.id}
+            section={section}
+            hero={hero}
+            factsSection={factsSection}
+            partnershipSpotlights={partnershipSpotlights}
+          />
+        );
+      })}
     </>
   );
 }
