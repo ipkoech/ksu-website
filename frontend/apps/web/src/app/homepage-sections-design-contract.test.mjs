@@ -34,6 +34,13 @@ test("programme finder receives dynamic academic data and admissions dates", () 
   assert.match(variantsSource, /intakes/);
 });
 
+test("programme finder uses desktop sticky stacked scroll panels", () => {
+  assert.match(variantsSource, /programme-scroll-scene/);
+  assert.match(variantsSource, /lg:sticky/);
+  assert.match(variantsSource, /lg:top-\[calc\(var\(--public-header-offset/);
+  assert.match(variantsSource, /lg:min-h-\[220vh\]/);
+});
+
 test("leadership, partner, alumni, and facts sections have complete fallbacks", () => {
   assert.match(variantsSource, /settingText\(section, "leaderName"\)/);
   assert.match(variantsSource, /settingText\(section, "leaderImage"\)/);

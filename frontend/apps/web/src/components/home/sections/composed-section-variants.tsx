@@ -557,10 +557,10 @@ export function ProgrammeFinderSection({
         sizes="100vw"
       />
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(255,255,255,.94),rgba(239,246,255,.88)_48%,rgba(255,255,255,.96))]" />
-      <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="programme-scroll-scene mx-auto max-w-[1680px] px-4 sm:px-6 lg:min-h-[220vh] lg:px-8 xl:px-10 2xl:px-12">
         <nav
           aria-label="Programme finder steps"
-          className="mb-6 flex gap-2 overflow-x-auto scroll-smooth"
+          className="mb-6 flex gap-2 overflow-x-auto scroll-smooth lg:sticky lg:top-[calc(var(--public-header-offset,96px)+1rem)] lg:z-40"
         >
           {[
             ["Find programme", "#programme-search"],
@@ -581,9 +581,9 @@ export function ProgrammeFinderSection({
 
         <div
           id="programme-search"
-          className="scroll-mt-28 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6"
+          className="scroll-mt-28 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 lg:sticky lg:top-[calc(var(--public-header-offset,96px)+4.5rem)] lg:z-10 lg:pt-2"
         >
-          <div className="grid overflow-hidden bg-white shadow-xl shadow-primary/10 lg:grid-cols-[0.42fr_0.58fr]">
+          <div className="grid overflow-hidden bg-white shadow-xl shadow-primary/10 transition duration-500 lg:grid-cols-[0.42fr_0.58fr] lg:shadow-2xl lg:shadow-primary/12">
             <PublicImage
               src="/images/Home/OurKSU-82.jpg"
               alt="Kisii University students in an academic setting"
@@ -616,9 +616,9 @@ export function ProgrammeFinderSection({
 
         <div
           id="programme-journey"
-          className="relative z-10 mt-6 scroll-mt-28 lg:-mt-10 lg:ml-[6%] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 motion-safe:delay-150"
+          className="relative z-20 mt-6 scroll-mt-28 lg:sticky lg:top-[calc(var(--public-header-offset,96px)+5.5rem)] lg:mt-[34vh] lg:ml-[6%] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 motion-safe:delay-150"
         >
-          <div className="grid overflow-hidden bg-white shadow-xl shadow-primary/10 lg:grid-cols-[0.6fr_0.4fr]">
+          <div className="grid overflow-hidden bg-white shadow-xl shadow-primary/10 transition duration-500 lg:grid-cols-[0.6fr_0.4fr] lg:shadow-2xl lg:shadow-primary/14">
             <div className="flex flex-col justify-center p-5 sm:p-7 lg:p-8">
               <SectionEyebrow value="How to join Kisii University" />
               <h3 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
@@ -665,9 +665,9 @@ export function ProgrammeFinderSection({
         {hasAdmissionDates ? (
           <div
             id="programme-dates"
-            className="relative z-20 mt-6 scroll-mt-28 lg:-mt-10 lg:mr-[6%] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 motion-safe:delay-300"
+            className="relative z-30 mt-6 scroll-mt-28 lg:sticky lg:top-[calc(var(--public-header-offset,96px)+6.5rem)] lg:mt-[34vh] lg:mr-[6%] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 motion-safe:delay-300"
           >
-            <div className="grid overflow-hidden bg-primary text-white shadow-xl shadow-primary/15 lg:grid-cols-[0.42fr_0.58fr]">
+            <div className="grid overflow-hidden bg-primary text-white shadow-xl shadow-primary/15 transition duration-500 lg:grid-cols-[0.42fr_0.58fr] lg:shadow-2xl lg:shadow-primary/20">
               <PublicImage
                 src="/images/Home/KSUGreenLandscaping.jpg"
                 alt="Kisii University green campus"
