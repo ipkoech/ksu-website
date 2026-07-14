@@ -511,23 +511,31 @@ export function ProgrammeFinderSection({ section }: SectionVariantProps) {
     (item) => itemContentText(item, "group") === "journey",
   );
   return (
-    <SectionFrame section={section}>
-      <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-        <div className="rounded-lg border border-blue-100 bg-white p-6 shadow-sm sm:p-8">
+    <section
+      id={section.section_key}
+      className="border-b border-blue-100 bg-blue-50/35 py-12 lg:py-14"
+    >
+      <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(300px,0.75fr)_minmax(280px,0.7fr)]">
+        <div className="bg-white p-5 shadow-sm shadow-blue-100/60 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 sm:p-6 lg:p-8">
           <SectionEyebrow value={section.subtitle} />
-          <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950">
+          <h2 className="mt-2 max-w-xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
             {section.title ?? "Find a programme"}
           </h2>
-          <label className="mt-6 flex min-h-12 items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-4 text-slate-500">
+          <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600">
+            Start with a field of study, then move through the application
+            journey with clear next steps.
+          </p>
+          <label className="mt-7 flex min-h-14 items-center gap-3 border border-slate-200 bg-slate-50 px-4 text-slate-500 transition focus-within:border-primary/30 focus-within:bg-white">
             <Search className="h-5 w-5" aria-hidden />
             <span className="text-sm">Search programmes</span>
           </label>
-          <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden bg-blue-100 sm:grid-cols-3">
             {categories.slice(0, 6).map((item) => (
               <LinkWrapper
                 key={item.id}
                 href={item.cta_url ?? "/programmes"}
-                className="rounded-md border border-blue-100 px-3 py-3 text-center text-xs font-semibold text-primary transition hover:bg-blue-50"
+                className="bg-white px-3 py-3 text-center text-xs font-semibold text-primary transition hover:bg-blue-50"
               >
                 {item.title}
               </LinkWrapper>
@@ -542,29 +550,56 @@ export function ProgrammeFinderSection({ section }: SectionVariantProps) {
             className="mt-6"
           />
         </div>
-        <div className="rounded-lg border border-blue-100 bg-blue-50/45 p-6 sm:p-8">
+
+        <div className="bg-white p-5 shadow-sm shadow-blue-100/60 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150 sm:p-6 lg:p-7">
           <SectionEyebrow value="How to join Kisii University" />
           <h3 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
             Your journey to campus
           </h3>
-          <div className="mt-7 grid gap-5 sm:grid-cols-5">
+          <div className="mt-6 divide-y divide-blue-100 border-y border-blue-100">
             {journey.slice(0, 5).map((item, index) => (
-              <div key={item.id} className="relative text-center">
-                <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-primary/20 bg-white font-semibold text-primary shadow-sm">
+              <div key={item.id} className="flex gap-4 py-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-white">
                   {itemContentNumber(item, "step") ?? index + 1}
                 </span>
-                <h4 className="mt-3 text-sm font-semibold text-slate-950">
-                  {item.title}
-                </h4>
-                <p className="mt-2 text-xs leading-5 text-slate-600">
-                  {item.body_text}
-                </p>
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-950">
+                    {item.title}
+                  </h4>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">
+                    {item.body_text}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
         </div>
+
+        <div className="grid min-h-[420px] grid-cols-2 grid-rows-5 gap-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-300">
+          <ProgrammeMosaicTile
+            item={categories[0]}
+            className="col-span-2 row-span-2"
+            dark
+          />
+          <ProgrammeMosaicTile
+            item={categories[1]}
+            className="col-span-1 row-span-2"
+          />
+          <ProgrammeMosaicTile
+            item={categories[2]}
+            className="col-span-1 row-span-2"
+          />
+          <LinkWrapper
+            href="/academics/programmes"
+            className="col-span-2 row-span-1 flex items-center justify-between bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90"
+          >
+            Explore all academic pathways
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </LinkWrapper>
+        </div>
       </div>
-    </SectionFrame>
+      </div>
+    </section>
   );
 }
 
@@ -1021,6 +1056,66 @@ function ImageArticleCard({
     <LinkWrapper href={item.cta_url}>{content}</LinkWrapper>
   ) : (
     content
+  );
+}
+
+function ProgrammeMosaicTile({
+  item,
+  className,
+  dark = false,
+}: {
+  item: HomepageSectionItem | undefined;
+  className?: string;
+  dark?: boolean;
+}) {
+  const href = item?.cta_url ?? "/academics/programmes";
+  const body = (
+    <div
+      className={[
+        "group relative flex h-full min-h-0 overflow-hidden p-4 transition duration-300 hover:-translate-y-0.5",
+        dark
+          ? "bg-primary text-white"
+          : "border border-blue-100 bg-white text-slate-950",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-secondary/20 blur-2xl" />
+      <div className="relative mt-auto">
+        <span
+          className={[
+            "inline-flex h-9 w-9 items-center justify-center rounded-full",
+            dark ? "bg-white/10 text-secondary" : "bg-blue-50 text-primary",
+          ].join(" ")}
+        >
+          <GraduationCap className="h-[18px] w-[18px]" aria-hidden />
+        </span>
+        <h4
+          className={[
+            "mt-3 font-[family-name:var(--font-display)] text-lg font-semibold leading-tight",
+            dark ? "text-white" : "text-slate-950",
+          ].join(" ")}
+        >
+          {item?.title ?? "Academic pathway"}
+        </h4>
+        <p
+          className={[
+            "mt-2 line-clamp-2 text-xs leading-5",
+            dark ? "text-white/68" : "text-slate-600",
+          ].join(" ")}
+        >
+          {item?.body_text ??
+            item?.subtitle ??
+            "Explore programmes aligned to your interests and goals."}
+        </p>
+      </div>
+    </div>
+  );
+
+  return (
+    <LinkWrapper href={href} className={className}>
+      {body}
+    </LinkWrapper>
   );
 }
 

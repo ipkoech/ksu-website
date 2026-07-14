@@ -118,8 +118,8 @@ export function WhyKisiiSection({
         </div>
 
         {facts.length ? (
-          <aside className="relative mt-8 overflow-hidden bg-primary p-4 text-white sm:p-5 lg:p-6">
-            <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-secondary/20 blur-3xl" />
+          <aside className="relative mt-8 overflow-hidden border-y border-blue-100 bg-white py-5 text-primary">
+            <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-blue-100/60 blur-3xl" />
             <div className="relative">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
                 {factsSection?.title ?? "KSU at a glance"}
@@ -131,10 +131,10 @@ export function WhyKisiiSection({
                   return (
                     <div
                       key={fact.id}
-                      className="group border-l border-white/15 pl-3 transition duration-300 first:border-l-0 first:pl-0 hover:-translate-y-0.5 sm:first:border-l sm:first:pl-3 lg:first:border-l-0 lg:first:pl-0"
+                      className="group border-l border-blue-100 pl-3 transition duration-300 first:border-l-0 first:pl-0 hover:-translate-y-0.5 sm:first:border-l sm:first:pl-3 lg:first:border-l-0 lg:first:pl-0"
                     >
                       <div className="flex items-center gap-2.5">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-primary">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-primary ring-1 ring-blue-100">
                           <Icon className="h-[18px] w-[18px]" aria-hidden />
                         </span>
                         <span className="block font-[family-name:var(--font-display)] text-2xl font-semibold leading-none">
@@ -145,7 +145,7 @@ export function WhyKisiiSection({
                           />
                         </span>
                       </div>
-                      <span className="mt-2 block text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] text-white/68">
+                      <span className="mt-2 block text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] text-slate-500">
                         {factSubtitle(fact)}
                       </span>
                     </div>
@@ -155,7 +155,7 @@ export function WhyKisiiSection({
 
               <Link
                 href="/about"
-                className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 border border-white/15 bg-white px-5 text-sm font-semibold text-primary shadow-sm transition hover:bg-white/90"
+                className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 border border-primary/15 bg-primary px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
               >
                 Explore more facts
                 <ArrowRight className="h-4 w-4" aria-hidden />
