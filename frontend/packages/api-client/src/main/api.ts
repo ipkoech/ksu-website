@@ -75,6 +75,8 @@ import type {
   AnalyticsEventPayload,
   ApiKey,
   ContentReport,
+  CorporateDashboardParams,
+  CorporateDashboardResponse,
   ImportCommitRequest,
   ImportCommitResult,
   ImportJob,
@@ -212,6 +214,21 @@ export const statsApi = {
     mainApi.get<{ data: PortalStatsResponse }>(
       `/api/v1/stats/portal/${portal}`,
     ),
+  corporateDashboard: (params?: CorporateDashboardParams) =>
+    mainApi.get<{ data: CorporateDashboardResponse }>(
+      "/api/v1/stats/portal/corporate-communication/dashboard",
+      params ? { ...params } : undefined,
+    ),
+  corporateDashboardExportUrl: (params?: CorporateDashboardParams) => {
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(params ?? {})) {
+      if (value !== undefined && value !== null && value !== "") {
+        query.set(key, String(value));
+      }
+    }
+    const suffix = query.toString();
+    return `${MAIN_API_BASE_URL}/api/v1/stats/portal/corporate-communication/dashboard/export${suffix ? `?${suffix}` : ""}`;
+  },
 };
 
 // Users

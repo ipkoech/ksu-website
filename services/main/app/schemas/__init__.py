@@ -104,6 +104,15 @@ from .content_workflow import (
     ContentWorkflowActionRequest,
     ContentWorkflowLogRead,
 )
+from .corporate_dashboard import (
+    CorporateDashboardResponse,
+    DashboardAttentionItem,
+    DashboardBreakdown,
+    DashboardInsight,
+    DashboardMetric,
+    DashboardPeriod,
+    DashboardSeriesPoint,
+)
 from .contact_directory import (
     ContactDirectoryPaginationMeta,
     PublicCampusContactSummary,
@@ -465,6 +474,13 @@ __all__ = [
     "ContentWorkflowAction",
     "ContentWorkflowActionRequest",
     "ContentWorkflowLogRead",
+    "CorporateDashboardResponse",
+    "DashboardAttentionItem",
+    "DashboardBreakdown",
+    "DashboardInsight",
+    "DashboardMetric",
+    "DashboardPeriod",
+    "DashboardSeriesPoint",
     "AlumniCreate",
     "AlumniUpdate",
     "AlumniRead",

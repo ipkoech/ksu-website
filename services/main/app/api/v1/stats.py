@@ -2,12 +2,23 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+import csv
+import io
+import json
+from datetime import date, timedelta
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 
 from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ...deps import CurrentUser, DbSession, require_scope, user_has_scope
+from ...services.corporate_dashboard import (
+    CONTENT_MODELS,
+    SUPPORTED_OWNER_PORTALS,
+    CorporateCommunicationDashboardService,
+    build_dashboard_range,
+)
 from ...services.portal_access import build_portal_access_records
 from ...services.stats import PORTAL_ALIASES, admin_stats, portal_stats, public_stats
 
@@ -106,6 +117,148 @@ def _user_has_portal_stats_access(user: CurrentUser, portal: str, required_scope
     return any(
         record.key == portal
         for record in build_portal_access_records(user, scope_labels={})
+    )
+
+
+def _corporate_dashboard_period(
+    date_from: date | None,
+    date_to: date | None,
+    bucket: str,
+):
+    resolved_to = date_to or date.today()
+    resolved_from = date_from or (resolved_to - timedelta(days=29))
+    days = (resolved_to - resolved_from).days + 1
+    if days < 1:
+        raise HTTPException(status_code=422, detail="date_from must not be after date_to")
+    if days > 366:
+        raise HTTPException(status_code=422, detail="Dashboard date range cannot exceed 366 days")
+    return build_dashboard_range(resolved_from, resolved_to, bucket)
+
+
+def _authorize_corporate_dashboard(user: CurrentUser) -> None:
+    required_scopes = PORTAL_STAT_SCOPES["corporate-communication"]
+    if not _user_has_portal_stats_access(user, "corporate-communication", required_scopes):
+        raise HTTPException(status_code=403, detail="Insufficient privileges")
+
+
+async def _corporate_dashboard_data(
+    db: DbSession,
+    user: CurrentUser,
+    *,
+    date_from: date | None,
+    date_to: date | None,
+    compare: str,
+    bucket: str,
+    content_type: str | None,
+    owner_portal: str | None,
+):
+    _authorize_corporate_dashboard(user)
+    if content_type and content_type not in CONTENT_MODELS:
+        raise HTTPException(status_code=422, detail="Unsupported dashboard content type")
+    if owner_portal and owner_portal not in SUPPORTED_OWNER_PORTALS:
+        raise HTTPException(status_code=422, detail="Unsupported dashboard owner portal")
+    period = _corporate_dashboard_period(date_from, date_to, bucket)
+    return await CorporateCommunicationDashboardService.build(
+        db,
+        period=period,
+        compare=compare == "previous",
+        content_type=content_type,
+        owner_portal=owner_portal,
+    )
+
+
+@router.get("/portal/corporate-communication/dashboard")
+async def get_corporate_communication_dashboard(
+    db: DbSession,
+    user: CurrentUser,
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
+    compare: str = Query("previous", pattern="^(previous|none)$"),
+    bucket: str = Query("auto", pattern="^(auto|day|week|month)$"),
+    content_type: str | None = Query(None),
+    owner_portal: str | None = Query(None),
+):
+    dashboard = await _corporate_dashboard_data(
+        db,
+        user,
+        date_from=date_from,
+        date_to=date_to,
+        compare=compare,
+        bucket=bucket,
+        content_type=content_type,
+        owner_portal=owner_portal,
+    )
+    return success(data=dashboard.model_dump(mode="json"))
+
+
+@router.get("/portal/corporate-communication/dashboard/export")
+async def export_corporate_communication_dashboard(
+    db: DbSession,
+    user: CurrentUser,
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
+    compare: str = Query("previous", pattern="^(previous|none)$"),
+    bucket: str = Query("auto", pattern="^(auto|day|week|month)$"),
+    content_type: str | None = Query(None),
+    owner_portal: str | None = Query(None),
+):
+    dashboard = await _corporate_dashboard_data(
+        db,
+        user,
+        date_from=date_from,
+        date_to=date_to,
+        compare=compare,
+        bucket=bucket,
+        content_type=content_type,
+        owner_portal=owner_portal,
+    )
+    data = dashboard.model_dump(mode="json")
+    rows: list[dict[str, object]] = []
+    for metric in data["activity"]["metrics"]:
+        rows.append({"section": "activity", **metric})
+    for item in data["snapshot"]["status_distribution"]:
+        rows.append({"section": "status_distribution", **item})
+    for item in data["workflow"]["backlog_aging"]:
+        rows.append({"section": "backlog_aging", **item})
+    for item in data["workflow"]["by_content_type"]:
+        rows.append({"section": "content_type", **item})
+    for item in data["workflow"]["by_owner_portal"]:
+        rows.append({"section": "owner_portal", **item})
+    for item in data["workflow"]["series"]:
+        rows.append({
+            "section": "workflow_series",
+            "period": item["period"],
+            "value": item["total"],
+            "details": json.dumps(item["values"], sort_keys=True),
+        })
+    for item in data["publishing"]["series"]:
+        rows.append({
+            "section": "publishing_series",
+            "period": item["period"],
+            "value": item["total"],
+            "details": json.dumps(item["values"], sort_keys=True),
+        })
+    for item in data["readiness"]["checks"]:
+        rows.append({"section": "readiness", **item})
+    for item in data["insights"]:
+        rows.append({"section": "insight", **item})
+    for item in data["attention_items"]:
+        rows.append({
+            "section": "attention",
+            **item,
+            "issue_codes": ",".join(item["issue_codes"]),
+        })
+
+    fieldnames = sorted({key for row in rows for key in row}) if rows else ["section", "value"]
+    buffer = io.StringIO()
+    writer = csv.DictWriter(buffer, fieldnames=fieldnames, extrasaction="ignore")
+    writer.writeheader()
+    writer.writerows(rows)
+    filename = f"corporate-communication-dashboard-{data['period']['date_from']}-{data['period']['date_to']}.csv"
+    return Response(
+        content=buffer.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 

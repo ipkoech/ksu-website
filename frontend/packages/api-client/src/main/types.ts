@@ -36,6 +36,116 @@ export interface PortalStatsResponse {
   stats: Record<string, number>;
 }
 
+export interface CorporateDashboardParams {
+  date_from?: string;
+  date_to?: string;
+  compare?: "previous" | "none";
+  bucket?: "auto" | "day" | "week" | "month";
+  content_type?: string;
+  owner_portal?: string;
+}
+
+export interface CorporateDashboardMetric {
+  key: string;
+  label: string;
+  value: number;
+  unit: "items" | "hours" | "percent" | string;
+  previous_value?: number | null;
+  change?: number | null;
+  change_percent?: number | null;
+  trend: "up" | "down" | "flat" | "unavailable";
+  favourability: "positive" | "negative" | "neutral";
+}
+
+export interface CorporateDashboardSeriesPoint {
+  period: string;
+  total: number;
+  values: Record<string, number>;
+}
+
+export interface CorporateDashboardBreakdown {
+  key: string;
+  label: string;
+  value: number;
+  submitted: number;
+  approved: number;
+  published: number;
+  changes_requested: number;
+  rejected: number;
+  approval_rate?: number | null;
+  median_decision_hours?: number | null;
+}
+
+export interface CorporateDashboardInsight {
+  code: string;
+  severity: "info" | "success" | "warning" | "critical";
+  title: string;
+  description: string;
+  value?: number | null;
+  total?: number | null;
+  href?: string | null;
+}
+
+export interface CorporateDashboardAttentionItem {
+  id: string;
+  title: string;
+  content_type: string;
+  content_type_label: string;
+  status: string;
+  age_hours?: number | null;
+  issue_codes: string[];
+  severity: "info" | "warning" | "critical";
+  source_label: string;
+  href: string;
+}
+
+export interface CorporateDashboardResponse {
+  generated_at: string;
+  period: { date_from: string; date_to: string; bucket: "day" | "week" | "month" };
+  comparison_period?: { date_from: string; date_to: string; bucket: "day" | "week" | "month" } | null;
+  filters: { content_type?: string | null; owner_portal?: string | null };
+  snapshot: {
+    review_backlog: { total: number; submitted: number; in_review: number; overdue: number };
+    scheduled: { next_7_days: number; next_30_days: number };
+    drafts: { total: number; stale: number };
+    status_distribution: Array<{ key: string; label: string; value: number }>;
+    content_type_distribution: Array<{ key: string; label: string; value: number }>;
+  };
+  activity: {
+    metrics: CorporateDashboardMetric[];
+    values: Record<string, number>;
+  };
+  workflow: {
+    series: CorporateDashboardSeriesPoint[];
+    previous_series: CorporateDashboardSeriesPoint[];
+    backlog_aging: Array<{ key: string; label: string; value: number }>;
+    by_content_type: CorporateDashboardBreakdown[];
+    by_owner_portal: CorporateDashboardBreakdown[];
+  };
+  publishing: {
+    series: CorporateDashboardSeriesPoint[];
+    previous_series: CorporateDashboardSeriesPoint[];
+    calendar: {
+      upcoming: Array<{ id: string; title: string; content_type: string; scheduled_at: string; href: string }>;
+      covered_days: number;
+      longest_gap_days: number;
+    };
+  };
+  readiness: {
+    checks: Array<{ key: string; label: string; value: number; href?: string | null }>;
+    issue_total: number;
+    media: { total: number; images_missing_alt: number; unprocessed: number; unlinked: number };
+  };
+  insights: CorporateDashboardInsight[];
+  attention_items: CorporateDashboardAttentionItem[];
+  data_quality: {
+    workflow_logs_available: boolean;
+    audience_analytics_available: boolean;
+    excluded_metrics: string[];
+    warnings: string[];
+  };
+}
+
 export interface UserPreference {
   id?: string | null;
   user_id: string;
@@ -1706,6 +1816,7 @@ export interface PublicUniversityContactSummary {
   county: string | null;
   country: string | null;
   social_links: Record<string, unknown> | null;
+  cover_image_id: string | null;
   created_at: string;
   updated_at: string;
 }
