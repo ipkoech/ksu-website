@@ -14,14 +14,19 @@ import {
   Lightbulb,
   Newspaper,
   PlayCircle,
-  Search,
   Trophy,
   Users,
   type LucideIcon,
 } from "lucide-react";
 import { AdmissionsCountdown } from "@/components/home/admissions-countdown";
+import { ProgrammeFinderInteractive } from "@/components/home/programme-finder-interactive";
 import { WhyKisiiSection } from "@/components/home/why-kisii-section";
 import { PublicImage } from "@/components/public/public-image";
+import type {
+  HomeIntake,
+  HomeProgrammeCard,
+  HomeSchoolCard,
+} from "@/lib/homepage-data";
 import {
   background,
   heroImage,
@@ -42,6 +47,14 @@ type SectionVariantProps = {
   hero?: HomepageResolvedHero | null;
   factsSection?: HomepageSection | null;
   partnershipSpotlights?: HomepagePartnershipSpotlight[];
+  academicDatesSection?: HomepageSection | null;
+  programmeFinderData?: ProgrammeFinderData;
+};
+
+export type ProgrammeFinderData = {
+  schools: HomeSchoolCard[];
+  programmes: HomeProgrammeCard[];
+  intakes: HomeIntake[];
 };
 
 const campusHeroImage = "/images/homepage/kisii-administration-campus.jpg";
@@ -363,7 +376,8 @@ function normalizeHeroHref(href: string) {
   return href;
 }
 
-function formatPublicDate(value: string) {
+function formatPublicDate(value?: string | null) {
+  if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat("en-KE", {
@@ -505,101 +519,201 @@ export function FeaturedPartnershipSection({
   );
 }
 
-export function ProgrammeFinderSection({ section }: SectionVariantProps) {
+export function ProgrammeFinderSection({
+  section,
+  academicDatesSection,
+  programmeFinderData,
+}: SectionVariantProps) {
   const categories = displayItems(section).filter(
     (item) => itemContentText(item, "group") === "category",
   );
   const journey = displayItems(section).filter(
     (item) => itemContentText(item, "group") === "journey",
   );
+  const dateItems = academicDatesSection
+    ? displayItems(academicDatesSection).slice(0, 4)
+    : [];
+  const intakes = programmeFinderData?.intakes ?? [];
+  const programmes = programmeFinderData?.programmes ?? [];
+  const schools = programmeFinderData?.schools ?? [];
+  const categoryLinks = categories.map((item) => ({
+    id: item.id,
+    title: item.title,
+    href: item.cta_url ?? "/academics/programmes",
+  }));
+  const hasAdmissionDates = dateItems.length > 0 || intakes.length > 0;
+
   return (
     <section
       id={section.section_key}
-      className="border-b border-blue-100 bg-blue-50/35 py-12 lg:py-14"
+      className="relative isolate overflow-hidden border-b border-blue-100 bg-blue-50/40 py-12 lg:py-16"
     >
+      <PublicImage
+        src="/images/Home/KSUGreenLandscaping.jpg"
+        alt=""
+        ratio="fill"
+        className="absolute inset-0 -z-20 h-full w-full opacity-10"
+        imageClassName="object-cover"
+        sizes="100vw"
+      />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(255,255,255,.94),rgba(239,246,255,.88)_48%,rgba(255,255,255,.96))]" />
       <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(300px,0.75fr)_minmax(280px,0.7fr)]">
-          <div className="bg-white p-5 shadow-sm shadow-blue-100/60 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 sm:p-6 lg:p-8">
-            <SectionEyebrow value={section.subtitle} />
-            <h2 className="mt-2 max-w-xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
-              {section.title ?? "Find a programme"}
-            </h2>
-            <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600">
-              Start with a field of study, then move through the application
-              journey with clear next steps.
-            </p>
-            <label className="mt-7 flex min-h-14 items-center gap-3 border border-slate-200 bg-slate-50 px-4 text-slate-500 transition focus-within:border-primary/30 focus-within:bg-white">
-              <Search className="h-5 w-5" aria-hidden />
-              <span className="text-sm">Search programmes</span>
-            </label>
-            <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden bg-blue-100 sm:grid-cols-3">
-              {categories.slice(0, 6).map((item) => (
-                <LinkWrapper
-                  key={item.id}
-                  href={item.cta_url ?? "/programmes"}
-                  className="bg-white px-3 py-3 text-center text-xs font-semibold text-primary transition hover:bg-blue-50"
-                >
-                  {item.title}
-                </LinkWrapper>
-              ))}
-            </div>
-            <CtaLink
-              item={{
-                title: "View all programmes",
-                cta_label: "View all programmes",
-                cta_url: "/programmes",
-              }}
-              className="mt-6"
-            />
-          </div>
-
-          <div className="bg-white p-5 shadow-sm shadow-blue-100/60 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150 sm:p-6 lg:p-7">
-            <SectionEyebrow value="How to join Kisii University" />
-            <h3 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
-              Your journey to campus
-            </h3>
-            <div className="mt-6 divide-y divide-blue-100 border-y border-blue-100">
-              {journey.slice(0, 5).map((item, index) => (
-                <div key={item.id} className="flex gap-4 py-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-white">
-                    {itemContentNumber(item, "step") ?? index + 1}
-                  </span>
-                  <div>
-                    <h4 className="text-sm font-semibold text-slate-950">
-                      {item.title}
-                    </h4>
-                    <p className="mt-1 text-xs leading-5 text-slate-600">
-                      {item.body_text}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid min-h-[420px] grid-cols-2 grid-rows-5 gap-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-300">
-            <ProgrammeMosaicTile
-              item={categories[0]}
-              className="col-span-2 row-span-2"
-              dark
-            />
-            <ProgrammeMosaicTile
-              item={categories[1]}
-              className="col-span-1 row-span-2"
-            />
-            <ProgrammeMosaicTile
-              item={categories[2]}
-              className="col-span-1 row-span-2"
-            />
-            <LinkWrapper
-              href="/academics/programmes"
-              className="col-span-2 row-span-1 flex items-center justify-between bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90"
+        <nav
+          aria-label="Programme finder steps"
+          className="mb-6 flex gap-2 overflow-x-auto scroll-smooth"
+        >
+          {[
+            ["Find programme", "#programme-search"],
+            ["How to join", "#programme-journey"],
+            ...(hasAdmissionDates
+              ? ([["Admissions dates", "#programme-dates"]] as const)
+              : []),
+          ].map(([label, href]) => (
+            <a
+              key={href}
+              href={href}
+              className="inline-flex min-h-9 shrink-0 items-center rounded-full border border-blue-100 bg-white/85 px-3 text-xs font-bold text-primary shadow-sm transition hover:border-primary/25 hover:bg-white"
             >
-              Explore all academic pathways
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </LinkWrapper>
+              {label}
+            </a>
+          ))}
+        </nav>
+
+        <div
+          id="programme-search"
+          className="scroll-mt-28 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6"
+        >
+          <div className="grid overflow-hidden bg-white shadow-xl shadow-primary/10 lg:grid-cols-[0.42fr_0.58fr]">
+            <PublicImage
+              src="/images/Home/OurKSU-82.jpg"
+              alt="Kisii University students in an academic setting"
+              ratio="news"
+              className="hidden min-h-[440px] rounded-none lg:block"
+              imageClassName="object-cover"
+            />
+            <div className="flex flex-col justify-center p-5 sm:p-7 lg:p-8">
+              <SectionEyebrow value={section.subtitle} />
+              <h2 className="mt-2 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+                {section.title ?? "Find a programme"}
+              </h2>
+              <SectionBody
+                value={
+                  section.description ??
+                  "Search programmes, compare schools and choose the route that fits your goals."
+                }
+                className="mt-3 max-w-2xl"
+              />
+              <div className="mt-7">
+                <ProgrammeFinderInteractive
+                  programmes={programmes}
+                  schools={schools}
+                  categories={categoryLinks}
+                />
+              </div>
+            </div>
           </div>
         </div>
+
+        <div
+          id="programme-journey"
+          className="relative z-10 mt-6 scroll-mt-28 lg:-mt-10 lg:ml-[6%] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 motion-safe:delay-150"
+        >
+          <div className="grid overflow-hidden bg-white shadow-xl shadow-primary/10 lg:grid-cols-[0.6fr_0.4fr]">
+            <div className="flex flex-col justify-center p-5 sm:p-7 lg:p-8">
+              <SectionEyebrow value="How to join Kisii University" />
+              <h3 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
+                From choice to campus reporting.
+              </h3>
+              <div className="mt-7 grid gap-3 sm:grid-cols-5 lg:grid-cols-1">
+                {journey.slice(0, 5).map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="group flex gap-4 border-l-2 border-blue-100 py-2 pl-4 transition hover:border-primary sm:block sm:border-l-0 sm:border-t-2 sm:pl-0 sm:pt-4 lg:flex lg:border-l-2 lg:border-t-0 lg:py-2 lg:pl-4 lg:pt-2"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-white transition group-hover:bg-secondary">
+                      {itemContentNumber(item, "step") ?? index + 1}
+                    </span>
+                    <div className="min-w-0 sm:mt-3 lg:mt-0">
+                      <h4 className="text-sm font-semibold text-slate-950">
+                        {item.title}
+                      </h4>
+                      <p className="mt-1 text-xs leading-5 text-slate-600">
+                        {item.body_text}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <LinkWrapper
+                href="/admissions/how-to-apply"
+                className="mt-7 inline-flex min-h-11 w-fit items-center justify-center gap-2 bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90"
+              >
+                View application guide
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </LinkWrapper>
+            </div>
+            <PublicImage
+              src="/images/Home/um-hero.jpg"
+              alt="Kisii University administration building"
+              ratio="news"
+              className="hidden min-h-[360px] rounded-none lg:block"
+              imageClassName="object-cover"
+            />
+          </div>
+        </div>
+
+        {hasAdmissionDates ? (
+          <div
+            id="programme-dates"
+            className="relative z-20 mt-6 scroll-mt-28 lg:-mt-10 lg:mr-[6%] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 motion-safe:delay-300"
+          >
+            <div className="grid overflow-hidden bg-primary text-white shadow-xl shadow-primary/15 lg:grid-cols-[0.42fr_0.58fr]">
+              <PublicImage
+                src="/images/Home/KSUGreenLandscaping.jpg"
+                alt="Kisii University green campus"
+                ratio="news"
+                className="hidden min-h-[320px] rounded-none lg:block"
+                imageClassName="object-cover"
+              />
+              <div className="p-5 sm:p-7 lg:p-8">
+                <SectionEyebrow
+                  value={
+                    academicDatesSection?.subtitle ?? "Admissions and reporting"
+                  }
+                  light
+                />
+                <h3 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white">
+                  Key admission dates
+                </h3>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  {intakes.slice(0, 2).map((intake) => (
+                    <LinkWrapper
+                      key={intake.id}
+                      href={intake.href}
+                      className="border border-white/15 bg-white/10 p-4 transition hover:bg-white/15"
+                    >
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+                        {intake.isOpen ? "Open intake" : "Intake"}
+                      </p>
+                      <h4 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold text-white">
+                        {intake.name}
+                      </h4>
+                      <p className="mt-2 text-sm leading-6 text-white/72">
+                        {formatDateRange(
+                          intake.applicationStart,
+                          intake.applicationEnd ?? intake.lateApplicationEnd,
+                        )}
+                      </p>
+                    </LinkWrapper>
+                  ))}
+                  {dateItems.map((item, index) => (
+                    <DateMiniItem key={item.id} item={item} index={index} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </section>
   );
@@ -1098,66 +1212,6 @@ function ImageArticleCard({
   );
 }
 
-function ProgrammeMosaicTile({
-  item,
-  className,
-  dark = false,
-}: {
-  item: HomepageSectionItem | undefined;
-  className?: string;
-  dark?: boolean;
-}) {
-  const href = item?.cta_url ?? "/academics/programmes";
-  const body = (
-    <div
-      className={[
-        "group relative flex h-full min-h-0 overflow-hidden p-4 transition duration-300 hover:-translate-y-0.5",
-        dark
-          ? "bg-primary text-white"
-          : "border border-blue-100 bg-white text-slate-950",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
-      <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-secondary/20 blur-2xl" />
-      <div className="relative mt-auto">
-        <span
-          className={[
-            "inline-flex h-9 w-9 items-center justify-center rounded-full",
-            dark ? "bg-white/10 text-secondary" : "bg-blue-50 text-primary",
-          ].join(" ")}
-        >
-          <GraduationCap className="h-[18px] w-[18px]" aria-hidden />
-        </span>
-        <h4
-          className={[
-            "mt-3 font-[family-name:var(--font-display)] text-lg font-semibold leading-tight",
-            dark ? "text-white" : "text-slate-950",
-          ].join(" ")}
-        >
-          {item?.title ?? "Academic pathway"}
-        </h4>
-        <p
-          className={[
-            "mt-2 line-clamp-2 text-xs leading-5",
-            dark ? "text-white/68" : "text-slate-600",
-          ].join(" ")}
-        >
-          {item?.body_text ??
-            item?.subtitle ??
-            "Explore programmes aligned to your interests and goals."}
-        </p>
-      </div>
-    </div>
-  );
-
-  return (
-    <LinkWrapper href={href} className={className}>
-      {body}
-    </LinkWrapper>
-  );
-}
-
 function DateLineItem({
   item,
   index,
@@ -1192,6 +1246,41 @@ function DateLineItem({
   ) : (
     body
   );
+}
+
+function DateMiniItem({
+  item,
+  index,
+}: {
+  item: HomepageSectionItem;
+  index: number;
+}) {
+  const body = (
+    <article className="group border border-white/15 bg-white/10 p-4 transition hover:bg-white/15">
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+        {itemContentText(item, "date") ?? item.subtitle ?? `Date ${index + 1}`}
+      </p>
+      <h4 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold text-white">
+        {item.title}
+      </h4>
+      <p className="mt-2 text-sm leading-6 text-white/72">
+        {item.body_text ?? item.cta_description}
+      </p>
+    </article>
+  );
+
+  return item.cta_url ? (
+    <LinkWrapper href={item.cta_url}>{body}</LinkWrapper>
+  ) : (
+    body
+  );
+}
+
+function formatDateRange(start?: string | null, end?: string | null) {
+  const startDate = formatPublicDate(start);
+  const endDate = formatPublicDate(end);
+  if (startDate && endDate) return `${startDate} – ${endDate}`;
+  return startDate ?? endDate ?? "See admission notice";
 }
 
 function CampusMosaicTile({

@@ -138,7 +138,13 @@ function LandingReveal({
 }: {
   children: ReactNode;
   className?: string;
-  variant?: "fade-up" | "fade-down" | "fade-left" | "fade-right" | "zoom-in" | "zoom-out";
+  variant?:
+    | "fade-up"
+    | "fade-down"
+    | "fade-left"
+    | "fade-right"
+    | "zoom-in"
+    | "zoom-out";
   delay?: number;
 }) {
   return (
@@ -196,146 +202,235 @@ export default async function HomePage() {
               partnershipSpotlights={
                 composedHomepage.data?.partnership_spotlights ?? []
               }
+              programmeFinderData={{
+                schools: homepage.schools,
+                programmes: homepage.featuredProgrammes,
+                intakes: homepage.activeIntakes,
+              }}
             />
           </>
         ) : (
           <>
-        <HeroAdmissionsSection
-          section={fallbackHomeHeroSection}
-          hero={composedHomepage.data?.hero}
-        />
-
-        {/* Hero value proposition + secondary CTAs */}
-        <section className="border-b border-white/10 bg-primary py-3 text-white">
-          <div className="mx-auto flex max-w-[1680px] flex-wrap items-center justify-center gap-2 px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-            <p className="text-center text-xs font-medium text-white/70 sm:text-sm">
-              A public university advancing inclusive education, applied research, and community transformation in Kenya.
-            </p>
-            <span className="hidden text-white/30 sm:inline">|</span>
-            <div className="flex flex-wrap justify-center gap-2">
-              <Link href={homepage.activeIntakes[0]?.href ?? "/admissions/how-to-apply"} className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full bg-secondary px-3 text-xs font-semibold text-white transition hover:bg-secondary/90">
-                Apply Now <ArrowRight className="h-3 w-3" aria-hidden />
-              </Link>
-              <Link href="/academics/programmes" className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-semibold text-white transition hover:bg-white/20">
-                Explore Programmes <ArrowRight className="h-3 w-3" aria-hidden />
-              </Link>
-              <Link href="/campus-life" className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-semibold text-white transition hover:bg-white/20">
-                Explore Campus Life <ArrowRight className="h-3 w-3" aria-hidden />
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* Audience / Action Band */}
-        <section className="border-y border-blue-100 bg-white py-8 lg:py-12">
-          <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-            <div className="grid gap-5 sm:grid-cols-3">
-              {/* Prospective Students */}
-              <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-5">
-                <p className="text-xs font-bold uppercase tracking-[0.1em] text-primary">Prospective Students</p>
-                <div className="mt-4 space-y-1">
-                  {[
-                    { label: "Apply Now", href: homepage.activeIntakes[0]?.href ?? "/admissions/how-to-apply", icon: ClipboardCheck, accent: true },
-                    { label: "Explore Programmes", href: "/academics/programmes", icon: GraduationCap },
-                    { label: "Entry Requirements", href: "/admissions/requirements", icon: BookOpen },
-                  ].map((item) => (
-                    <Link key={item.label} href={item.href}
-                      className={`flex min-h-[44px] items-center gap-3 rounded-md px-2.5 py-2.5 text-sm font-semibold transition ${item.accent ? "bg-secondary/10 text-secondary hover:bg-secondary/20" : "text-slate-700 hover:bg-blue-100 hover:text-primary"}`}>
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              {/* Current Students & Staff */}
-              <div className="rounded-xl border border-blue-100 bg-white p-5 shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-[0.1em] text-primary">Students & Staff</p>
-                <div className="mt-4 space-y-1">
-                  {[
-                    { label: "Student Portal", href: "https://portal.kisiiuniversity.ac.ke", icon: Users, external: true },
-                    { label: "Staff Portal", href: "https://digital.kisiiuniversity.ac.ke/staff/services/login", icon: Building2, external: true },
-                    { label: "Library", href: libraryFrontendUrl, icon: BookOpen, external: true },
-                  ].map((item) => (
-                    <a key={item.label} href={item.href} target="_blank" rel="noopener noreferrer"
-                      className="flex min-h-[44px] items-center gap-3 rounded-md px-2.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-primary">
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      {item.label}
-                    </a>
-                  ))}
-                </div>
-              </div>
-
-              {/* Parents & Guardians */}
-              <div className="rounded-xl border border-blue-100 bg-white p-5 shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-[0.1em] text-primary">Parents & Guardians</p>
-                <div className="mt-4 space-y-1">
-                  {[
-                    { label: "Safety & Wellbeing", href: "/campus-life/support", icon: ShieldCheck },
-                    { label: "Fees & Scholarships", href: "/admissions/fees", icon: CalendarDays },
-                    { label: "Contact Admissions", href: "/contact", icon: Phone },
-                  ].map((item) => (
-                    <Link key={item.label} href={item.href}
-                      className="flex min-h-[44px] items-center gap-3 rounded-md px-2.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-primary">
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {isContentDegraded ? <ContentDegradedNotice /> : null}
-
-        <WhyChooseSection
-          facts={homepage.facts}
-          applyHref={
-            homepage.activeIntakes[0]?.href ?? "/admissions/how-to-apply"
-          }
-        />
-
-        <section className="relative z-10 pb-0">
-          <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-            <AcademicsPathwaySection
-              schools={homepage.schools}
-              activeIntakes={homepage.activeIntakes}
+            <HeroAdmissionsSection
+              section={fallbackHomeHeroSection}
+              hero={composedHomepage.data?.hero}
             />
-            <LandingReveal variant="fade-left">
-              <LatestContentSection
-                newsItems={homepage.latestNews}
-                events={homepage.upcomingEvents}
-                blog={homepage.latestBlog}
-              />
-            </LandingReveal>
-            <LandingReveal variant="zoom-out">
-              <ResearchSection />
-            </LandingReveal>
-            <LandingReveal>
-              <CampusLifeSection />
-            </LandingReveal>
-            <LandingReveal>
-              <PartnersSection partners={homepage.partners} />
-            </LandingReveal>
-            <LandingReveal>
-              <JourneyCta />
-            </LandingReveal>
-          </div>
-        </section>
+
+            {/* Hero value proposition + secondary CTAs */}
+            <section className="border-b border-white/10 bg-primary py-3 text-white">
+              <div className="mx-auto flex max-w-[1680px] flex-wrap items-center justify-center gap-2 px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+                <p className="text-center text-xs font-medium text-white/70 sm:text-sm">
+                  A public university advancing inclusive education, applied
+                  research, and community transformation in Kenya.
+                </p>
+                <span className="hidden text-white/30 sm:inline">|</span>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Link
+                    href={
+                      homepage.activeIntakes[0]?.href ??
+                      "/admissions/how-to-apply"
+                    }
+                    className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full bg-secondary px-3 text-xs font-semibold text-white transition hover:bg-secondary/90"
+                  >
+                    Apply Now <ArrowRight className="h-3 w-3" aria-hidden />
+                  </Link>
+                  <Link
+                    href="/academics/programmes"
+                    className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-semibold text-white transition hover:bg-white/20"
+                  >
+                    Explore Programmes{" "}
+                    <ArrowRight className="h-3 w-3" aria-hidden />
+                  </Link>
+                  <Link
+                    href="/campus-life"
+                    className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-semibold text-white transition hover:bg-white/20"
+                  >
+                    Explore Campus Life{" "}
+                    <ArrowRight className="h-3 w-3" aria-hidden />
+                  </Link>
+                </div>
+              </div>
+            </section>
+
+            {/* Audience / Action Band */}
+            <section className="border-y border-blue-100 bg-white py-8 lg:py-12">
+              <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+                <div className="grid gap-5 sm:grid-cols-3">
+                  {/* Prospective Students */}
+                  <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-5">
+                    <p className="text-xs font-bold uppercase tracking-[0.1em] text-primary">
+                      Prospective Students
+                    </p>
+                    <div className="mt-4 space-y-1">
+                      {[
+                        {
+                          label: "Apply Now",
+                          href:
+                            homepage.activeIntakes[0]?.href ??
+                            "/admissions/how-to-apply",
+                          icon: ClipboardCheck,
+                          accent: true,
+                        },
+                        {
+                          label: "Explore Programmes",
+                          href: "/academics/programmes",
+                          icon: GraduationCap,
+                        },
+                        {
+                          label: "Entry Requirements",
+                          href: "/admissions/requirements",
+                          icon: BookOpen,
+                        },
+                      ].map((item) => (
+                        <Link
+                          key={item.label}
+                          href={item.href}
+                          className={`flex min-h-[44px] items-center gap-3 rounded-md px-2.5 py-2.5 text-sm font-semibold transition ${item.accent ? "bg-secondary/10 text-secondary hover:bg-secondary/20" : "text-slate-700 hover:bg-blue-100 hover:text-primary"}`}
+                        >
+                          <item.icon className="h-4 w-4 shrink-0" />
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Current Students & Staff */}
+                  <div className="rounded-xl border border-blue-100 bg-white p-5 shadow-sm">
+                    <p className="text-xs font-bold uppercase tracking-[0.1em] text-primary">
+                      Students & Staff
+                    </p>
+                    <div className="mt-4 space-y-1">
+                      {[
+                        {
+                          label: "Student Portal",
+                          href: "https://portal.kisiiuniversity.ac.ke",
+                          icon: Users,
+                          external: true,
+                        },
+                        {
+                          label: "Staff Portal",
+                          href: "https://digital.kisiiuniversity.ac.ke/staff/services/login",
+                          icon: Building2,
+                          external: true,
+                        },
+                        {
+                          label: "Library",
+                          href: libraryFrontendUrl,
+                          icon: BookOpen,
+                          external: true,
+                        },
+                      ].map((item) => (
+                        <a
+                          key={item.label}
+                          href={item.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex min-h-[44px] items-center gap-3 rounded-md px-2.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-primary"
+                        >
+                          <item.icon className="h-4 w-4 shrink-0" />
+                          {item.label}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Parents & Guardians */}
+                  <div className="rounded-xl border border-blue-100 bg-white p-5 shadow-sm">
+                    <p className="text-xs font-bold uppercase tracking-[0.1em] text-primary">
+                      Parents & Guardians
+                    </p>
+                    <div className="mt-4 space-y-1">
+                      {[
+                        {
+                          label: "Safety & Wellbeing",
+                          href: "/campus-life/support",
+                          icon: ShieldCheck,
+                        },
+                        {
+                          label: "Fees & Scholarships",
+                          href: "/admissions/fees",
+                          icon: CalendarDays,
+                        },
+                        {
+                          label: "Contact Admissions",
+                          href: "/contact",
+                          icon: Phone,
+                        },
+                      ].map((item) => (
+                        <Link
+                          key={item.label}
+                          href={item.href}
+                          className="flex min-h-[44px] items-center gap-3 rounded-md px-2.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-primary"
+                        >
+                          <item.icon className="h-4 w-4 shrink-0" />
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {isContentDegraded ? <ContentDegradedNotice /> : null}
+
+            <WhyChooseSection
+              facts={homepage.facts}
+              applyHref={
+                homepage.activeIntakes[0]?.href ?? "/admissions/how-to-apply"
+              }
+            />
+
+            <section className="relative z-10 pb-0">
+              <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+                <AcademicsPathwaySection
+                  schools={homepage.schools}
+                  activeIntakes={homepage.activeIntakes}
+                />
+                <LandingReveal variant="fade-left">
+                  <LatestContentSection
+                    newsItems={homepage.latestNews}
+                    events={homepage.upcomingEvents}
+                    blog={homepage.latestBlog}
+                  />
+                </LandingReveal>
+                <LandingReveal variant="zoom-out">
+                  <ResearchSection />
+                </LandingReveal>
+                <LandingReveal>
+                  <CampusLifeSection />
+                </LandingReveal>
+                <LandingReveal>
+                  <PartnersSection partners={homepage.partners} />
+                </LandingReveal>
+                <LandingReveal>
+                  <JourneyCta />
+                </LandingReveal>
+              </div>
+            </section>
           </>
         )}
       </main>
 
       {/* Mobile Sticky CTA Bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex items-stretch gap-1 border-t border-blue-100 bg-white/95 px-2 py-2 backdrop-blur sm:hidden" aria-label="Quick actions" style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}>
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 flex items-stretch gap-1 border-t border-blue-100 bg-white/95 px-2 py-2 backdrop-blur sm:hidden"
+        aria-label="Quick actions"
+        style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+      >
         {[
-          { label: "Apply", href: homepage.activeIntakes[0]?.href ?? "/admissions/how-to-apply" },
+          {
+            label: "Apply",
+            href: homepage.activeIntakes[0]?.href ?? "/admissions/how-to-apply",
+          },
           { label: "Programmes", href: "/academics/programmes" },
           { label: "Contact", href: "/contact" },
         ].map((item) => (
-          <Link key={item.label} href={item.href}
-            className="flex flex-1 items-center justify-center rounded-md bg-primary px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-primary/90">
+          <Link
+            key={item.label}
+            href={item.href}
+            className="flex flex-1 items-center justify-center rounded-md bg-primary px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-primary/90"
+          >
             {item.label}
           </Link>
         ))}
@@ -532,9 +627,10 @@ function AcademicsPathwaySection({
     {
       step: "03",
       title: "Confirm intake",
-      body: activeIntake && shouldShowCountdown
-        ? `Apply for the ${intakeLabel(activeIntake)} before the deadline.`
-        : "Review the admission guide and prepare your application documents.",
+      body:
+        activeIntake && shouldShowCountdown
+          ? `Apply for the ${intakeLabel(activeIntake)} before the deadline.`
+          : "Review the admission guide and prepare your application documents.",
       href: activeIntake?.href ?? "/admissions/intakes",
     },
     {
@@ -559,8 +655,8 @@ function AcademicsPathwaySection({
                 Schools, programmes, and your application journey
               </h2>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-                Browse schools with sample programmes, scan highlighted
-                academic routes, and move straight into the admission steps.
+                Browse schools with sample programmes, scan highlighted academic
+                routes, and move straight into the admission steps.
               </p>
             </div>
             <Link
@@ -610,7 +706,10 @@ function AcademicsPathwaySection({
 
           <LandingReveal variant="fade-left" delay={80}>
             <div className="h-full rounded-md border border-blue-100 bg-slate-950 p-4 text-white shadow-lg shadow-blue-950/10">
-              <SectionKicker title="Application Journey" className="text-white" />
+              <SectionKicker
+                title="Application Journey"
+                className="text-white"
+              />
               <div className="mt-5 grid gap-3">
                 {journey.map((item) => (
                   <Link
@@ -695,7 +794,11 @@ function hasFutureDeadline(value?: string | null) {
 function SchoolCard({ school }: { school: HomeSchoolCard }) {
   return (
     <article className="group h-full overflow-hidden rounded-md border border-blue-100 bg-white shadow-sm shadow-blue-100/60 transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md hover:shadow-blue-200">
-      <Link href={school.href} className="block" aria-label={`View ${school.title}`}>
+      <Link
+        href={school.href}
+        className="block"
+        aria-label={`View ${school.title}`}
+      >
         <PublicImage
           src={school.imageUrl}
           alt=""
@@ -866,7 +969,10 @@ function NewsLead({ item }: { item: HomeCard }) {
       </h3>
       <span className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-primary">
         Read more
-        <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" aria-hidden />
+        <ArrowRight
+          className="h-3.5 w-3.5 transition group-hover:translate-x-1"
+          aria-hidden
+        />
       </span>
     </Link>
   );
@@ -1022,9 +1128,18 @@ function ResearchSection() {
           staggerDelay={80}
         >
           {[
-            ["Health and wellbeing", "Applied research for stronger communities."],
-            ["Agriculture and environment", "Knowledge for resilient livelihoods."],
-            ["Technology and society", "Innovation for public service and enterprise."],
+            [
+              "Health and wellbeing",
+              "Applied research for stronger communities.",
+            ],
+            [
+              "Agriculture and environment",
+              "Knowledge for resilient livelihoods.",
+            ],
+            [
+              "Technology and society",
+              "Innovation for public service and enterprise.",
+            ],
           ].map(([title, body]) => (
             <div
               key={title}
@@ -1097,7 +1212,10 @@ function CampusLifeSection() {
               </p>
               <span className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-primary">
                 Open section
-                <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" aria-hidden />
+                <ArrowRight
+                  className="h-3.5 w-3.5 transition group-hover:translate-x-1"
+                  aria-hidden
+                />
               </span>
             </div>
           </Link>
@@ -1258,7 +1376,10 @@ function JourneyCta() {
               </p>
               <span className="mt-5 inline-flex min-h-11 w-fit items-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-primary transition group-hover:bg-white/90">
                 {route.label}
-                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" aria-hidden />
+                <ArrowRight
+                  className="h-4 w-4 transition group-hover:translate-x-1"
+                  aria-hidden
+                />
               </span>
             </div>
           </Link>

@@ -11,6 +11,7 @@ import {
   MediaMosaicSection,
   PillarGridSection,
   ProgrammeFinderSection,
+  type ProgrammeFinderData,
   PulseStripSection,
   ResearchCardsSection,
   NewsGridSection,
@@ -29,6 +30,8 @@ type SectionComponent = (props: {
   hero?: HomepageResolvedHero | null;
   factsSection?: HomepageSection | null;
   partnershipSpotlights?: HomepagePartnershipSpotlight[];
+  academicDatesSection?: HomepageSection | null;
+  programmeFinderData?: ProgrammeFinderData;
 }) => ReactElement | null;
 
 export const HOMEPAGE_SECTION_RENDERERS: Record<
@@ -56,11 +59,15 @@ export function HomepageSectionRenderer({
   hero,
   factsSection,
   partnershipSpotlights,
+  academicDatesSection,
+  programmeFinderData,
 }: {
   section: HomepageSection;
   hero?: HomepageResolvedHero | null;
   factsSection?: HomepageSection | null;
   partnershipSpotlights?: HomepagePartnershipSpotlight[];
+  academicDatesSection?: HomepageSection | null;
+  programmeFinderData?: ProgrammeFinderData;
 }) {
   if (!isKnownHomepageLayoutVariant(section.layout_variant)) {
     console.warn(
@@ -76,6 +83,8 @@ export function HomepageSectionRenderer({
       hero={hero}
       factsSection={factsSection}
       partnershipSpotlights={partnershipSpotlights}
+      academicDatesSection={academicDatesSection}
+      programmeFinderData={programmeFinderData}
     />
   );
 }
@@ -84,26 +93,43 @@ export function HomepageSections({
   sections,
   hero,
   partnershipSpotlights,
+  programmeFinderData,
 }: {
   sections: HomepageSection[];
   hero?: HomepageResolvedHero | null;
   partnershipSpotlights?: HomepagePartnershipSpotlight[];
+  programmeFinderData?: ProgrammeFinderData;
 }) {
   const orderedSections = orderHomepageSections(sections);
   const factsSection = sections.find(
     (section) =>
-      section.layout_variant === "facts_strip" || section.section_key === "facts",
+      section.layout_variant === "facts_strip" ||
+      section.section_key === "facts",
   );
   const hasMergedWhySection = sections.some(
     (section) =>
       section.layout_variant === "pillar_grid" &&
       section.section_key === "why-kisii",
   );
+  const academicDatesSection = sections.find(
+    (section) =>
+      section.layout_variant === "date_timeline" ||
+      section.section_key === "academic-dates",
+  );
+  const hasMergedProgrammeDates = sections.some(
+    (section) => section.layout_variant === "programme_finder",
+  );
 
   return (
     <>
       {orderedSections.map((section) => {
         if (hasMergedWhySection && section.layout_variant === "facts_strip") {
+          return null;
+        }
+        if (
+          hasMergedProgrammeDates &&
+          section.layout_variant === "date_timeline"
+        ) {
           return null;
         }
 
@@ -114,6 +140,8 @@ export function HomepageSections({
             hero={hero}
             factsSection={factsSection}
             partnershipSpotlights={partnershipSpotlights}
+            academicDatesSection={academicDatesSection}
+            programmeFinderData={programmeFinderData}
           />
         );
       })}

@@ -25,6 +25,15 @@ test("programme finder separates pathways from the five-step joining journey", (
   assert.match(variantsSource, /Search programmes/);
 });
 
+test("programme finder receives dynamic academic data and admissions dates", () => {
+  assert.match(variantsSource, /programmeFinderData/);
+  assert.match(variantsSource, /academicDatesSection/);
+  assert.match(variantsSource, /ProgrammeFinderInteractive/);
+  assert.match(variantsSource, /schools/);
+  assert.match(variantsSource, /programmes/);
+  assert.match(variantsSource, /intakes/);
+});
+
 test("leadership, partner, alumni, and facts sections have complete fallbacks", () => {
   assert.match(variantsSource, /settingText\(section, "leaderName"\)/);
   assert.match(variantsSource, /settingText\(section, "leaderImage"\)/);
