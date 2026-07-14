@@ -4,6 +4,7 @@ import {
   ArrowRight,
   CalendarDays,
   CheckCircle2,
+  FileDown,
   GraduationCap,
   Landmark,
   Lightbulb,
@@ -13,6 +14,7 @@ import {
   Trophy,
   Users,
 } from "lucide-react";
+import { AdmissionsCountdown } from "@/components/home/admissions-countdown";
 import { PublicImage } from "@/components/public/public-image";
 import {
   background,
@@ -40,6 +42,11 @@ const campusHeroImage = "/images/homepage/kisii-administration-campus.jpg";
 export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
   const content = hero?.content;
   const admissions = hero?.admissions;
+  const showAdmissions = Boolean(
+    admissions?.visible &&
+    (admissions.state === "applications_open" ||
+      admissions.state === "admission_letters_available"),
+  );
   const desktopMedia = hero?.media?.desktop ?? heroImage(section);
   const mobileMedia = hero?.media?.mobile;
   const videoMedia = hero?.media?.video;
@@ -103,7 +110,13 @@ export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
       <div className="absolute inset-0 bg-[linear-gradient(90deg,hsl(var(--primary)/.78)_0%,hsl(var(--primary)/.58)_36%,rgba(2,6,23,.18)_64%,rgba(2,6,23,.04)_100%)]" />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,.24)_0%,rgba(2,6,23,0)_38%,rgba(2,6,23,.2)_100%)]" />
 
-      <div className="relative z-10 mx-auto flex min-h-[clamp(390px,calc(100svh-13rem),580px)] max-w-[1680px] items-center px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-16 xl:px-10 2xl:px-12">
+      <div
+        className={`relative z-10 mx-auto grid min-h-[clamp(390px,calc(100svh-13rem),580px)] max-w-[1680px] items-center gap-8 px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-16 xl:px-10 2xl:px-12 ${
+          showAdmissions
+            ? "lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]"
+            : "lg:grid-cols-1"
+        }`}
+      >
         <div className="max-w-3xl">
           <SectionEyebrow
             value={content?.eyebrow ?? section.subtitle ?? "Kisii University"}
@@ -132,8 +145,110 @@ export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
             </div>
           ) : null}
         </div>
+
+        {showAdmissions && admissions ? (
+          <AdmissionsPanel admissions={admissions} />
+        ) : null}
       </div>
     </section>
+  );
+}
+
+function AdmissionsPanel({
+  admissions,
+}: {
+  admissions: HomepageResolvedHero["admissions"];
+}) {
+  const isApplicationsOpen = admissions.state === "applications_open";
+  const isLettersAvailable = admissions.state === "admission_letters_available";
+  const intakeName = admissions.intake?.name ?? "Current intake";
+
+  return (
+    <aside
+      aria-label="Admissions update"
+      className="w-full max-w-md justify-self-start rounded-md border border-white/20 bg-primary/95 p-5 shadow-xl shadow-slate-950/20 sm:p-6 lg:justify-self-end"
+    >
+      <div className="flex items-center gap-3 border-b border-white/15 pb-4">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-secondary text-white">
+          {isLettersAvailable ? (
+            <FileDown className="h-5 w-5" aria-hidden />
+          ) : (
+            <CalendarDays className="h-5 w-5" aria-hidden />
+          )}
+        </span>
+        <div className="min-w-0">
+          <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/70">
+            Admissions update
+          </p>
+          <h2 className="mt-1 text-balance font-[family-name:var(--font-display)] text-xl font-semibold text-white">
+            {intakeName}
+          </h2>
+        </div>
+      </div>
+
+      {isApplicationsOpen ? (
+        <div className="pt-5">
+          <p className="text-center text-xs font-bold uppercase tracking-[0.14em] text-white/75">
+            Applications close in
+          </p>
+          {admissions.countdown_target ? (
+            <div className="mt-4">
+              <AdmissionsCountdown target={admissions.countdown_target} />
+            </div>
+          ) : admissions.closing_at ? (
+            <p className="mt-3 text-center text-sm font-semibold text-white">
+              {formatPublicDate(admissions.closing_at)}
+            </p>
+          ) : null}
+          {admissions.application_phase === "late" ? (
+            <p className="mt-4 rounded-md bg-white/10 px-3 py-2 text-center text-xs font-semibold text-white/85">
+              Late applications are currently being accepted.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {isLettersAvailable ? (
+        <div className="pt-5 text-center">
+          <p className="font-[family-name:var(--font-display)] text-2xl font-semibold text-white">
+            Admission letters are available
+          </p>
+          {admissions.reporting?.starts_at ? (
+            <p className="mt-3 text-sm leading-6 text-white/75">
+              {admissions.reporting.title ?? "Reporting"}:{" "}
+              <span className="font-semibold text-white">
+                {formatPublicDate(admissions.reporting.starts_at)}
+              </span>
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {admissions.primary_action ? (
+        <div className="mt-6">
+          <HeroActionLink
+            action={{
+              ...admissions.primary_action,
+              href: normalizeHeroHref(admissions.primary_action.href),
+            }}
+            prominent
+            fullWidth
+          />
+        </div>
+      ) : null}
+
+      {(admissions.secondary_actions?.length ?? 0) > 0 ? (
+        <div className="mt-4 flex flex-col items-center gap-3">
+          {admissions.secondary_actions?.slice(0, 2).map((action, index) => (
+            <HeroActionLink
+              key={action.key ?? `${action.href}-${index}`}
+              action={{ ...action, href: normalizeHeroHref(action.href) }}
+              subtle
+            />
+          ))}
+        </div>
+      ) : null}
+    </aside>
   );
 }
 
@@ -238,6 +353,15 @@ function normalizeHeroHref(href: string) {
     return "/academics/programmes";
   }
   return href;
+}
+
+function formatPublicDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-KE", {
+    dateStyle: "long",
+    timeZone: "Africa/Nairobi",
+  }).format(date);
 }
 
 export function PulseStripSection({ section }: SectionVariantProps) {
