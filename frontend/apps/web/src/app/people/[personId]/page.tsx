@@ -942,7 +942,6 @@ export default async function PublicPersonPage({
               <BreadcrumbTrail
                 items={[
                   { label: "Home", href: "/" },
-                  { label: "Staff" },
                   { label: name },
                 ]}
               />
