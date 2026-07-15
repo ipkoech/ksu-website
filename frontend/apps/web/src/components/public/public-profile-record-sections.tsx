@@ -254,11 +254,7 @@ export function PublicationRecordBrowser({
                     Open publication
                     <ExternalLink aria-hidden className="h-4 w-4" />
                   </a>
-                ) : (
-                  <span className="mt-auto pt-5 text-xs font-semibold text-slate-400">
-                    Listed from profile record
-                  </span>
-                )}
+                ) : null}
               </article>
             );
           })}
