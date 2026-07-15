@@ -216,7 +216,7 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
         "section_key": "leadership-activity",
         "layout_variant": "leadership_activity",
         "display_order": 80,
-        "title": "VC’s Corner",
+        "title": "Leadership in action",
         "subtitle": "Vice Chancellor",
         "description": "Our leadership advances knowledge, nurtures talent and transforms communities.",
         "settings": {"leaderName": "Prof. Charles O. Ong’ondo, PhD", "leaderTitle": "Vice Chancellor", "leaderImage": "/logos/vc3.jpg", "cta": {"label": "Meet our leadership", "href": "/about/vice-chancellor"}},

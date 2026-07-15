@@ -1184,13 +1184,14 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
       (item) => item.content_enriched?.linked_content?.is_published === true,
     )
     .slice(0, 4);
+  const [featuredActivity, ...supportingActivities] = activities;
   return (
     <section
       id={section.section_key}
       className="overflow-hidden border-b border-primary/10 bg-[#fbfaf6]"
     >
-      <div className="mx-auto grid max-w-[1680px] lg:h-[576px] lg:grid-cols-[minmax(300px,0.34fr)_minmax(0,0.66fr)] xl:h-[592px] 2xl:h-[608px]">
-        <div className="relative border-b border-primary/10 lg:grid lg:h-full lg:min-h-0 lg:grid-rows-[56%_44%] lg:border-b-0 lg:border-r">
+      <div className="mx-auto grid max-w-[1680px] lg:h-[720px] lg:grid-cols-[minmax(300px,0.34fr)_minmax(0,0.66fr)] xl:h-[740px] 2xl:h-[760px]">
+        <div className="relative border-b border-primary/10 lg:grid lg:h-full lg:min-h-0 lg:grid-rows-[52%_48%] lg:border-b-0 lg:border-r">
           <div className="relative min-h-[300px] overflow-hidden bg-primary lg:min-h-0">
             <div className="absolute -left-24 top-10 h-72 w-72 rounded-full border border-secondary/20" />
             <div className="absolute left-10 top-20 h-56 w-56 border border-secondary/15 [clip-path:polygon(50%_0,100%_28%,100%_100%,0_100%,0_28%)]" />
@@ -1203,55 +1204,54 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
               sizes="(min-width: 1024px) 34vw, 100vw"
             />
           </div>
-          <div className="flex h-full min-h-0 flex-col px-5 py-6 sm:px-8 lg:overflow-hidden lg:px-8 lg:py-4 xl:px-10 xl:py-5">
-            <SectionEyebrow value="Leadership in action" />
-            <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
+          <div className="flex h-full min-h-0 flex-col px-5 py-6 sm:px-8 lg:overflow-hidden lg:px-8 lg:py-6 xl:px-10">
+            <SectionEyebrow value={section.title ?? "Leadership in action"} />
+            <p className="mt-3 text-xs font-bold uppercase tracking-[0.16em] text-primary">
               {leaderTitle}
             </p>
-            <h2 className="mt-1.5 max-w-md font-[family-name:var(--font-display)] text-3xl font-semibold leading-[1.05] text-slate-950 sm:text-4xl lg:text-[1.75rem] xl:text-[2rem]">
+            <h2 className="mt-2 max-w-md font-[family-name:var(--font-display)] text-3xl font-semibold leading-[1.05] text-slate-950 sm:text-4xl lg:text-[2rem] xl:text-4xl">
               {leaderName}
             </h2>
-            <div className="mt-2.5 h-px w-12 bg-secondary" />
-            <p className="mt-2.5 max-w-md text-sm leading-5 text-slate-600 lg:line-clamp-2">
+            <div className="mt-3 h-px w-12 bg-secondary" />
+            <p className="mt-3 max-w-md text-sm leading-6 text-slate-600 lg:line-clamp-3">
               {leaderMessage}
             </p>
             <Link
               href={leaderHref}
-              className="mt-4 inline-flex min-h-9 w-fit items-center gap-3 border-b border-secondary pb-1 text-sm font-bold text-primary transition hover:gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:mt-auto"
+              className="mt-5 inline-flex min-h-10 w-fit items-center gap-3 border-b border-secondary pb-1 text-sm font-bold text-primary transition hover:gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:mt-auto"
             >
               Meet the Vice Chancellor
               <ArrowRight className="h-4 w-4 text-secondary" aria-hidden />
             </Link>
           </div>
         </div>
-        <div className="flex min-h-0 flex-col px-4 py-8 sm:px-8 lg:h-full lg:overflow-hidden lg:px-8 lg:py-5 xl:px-10 xl:py-6 2xl:px-12">
+        <div className="flex min-h-0 flex-col px-4 py-8 sm:px-8 lg:h-full lg:overflow-hidden lg:px-10 lg:py-7 xl:px-12 xl:py-8 2xl:px-14">
           <div className="shrink-0">
-            <h3 className="font-[family-name:var(--font-display)] text-4xl font-semibold leading-none text-primary sm:text-5xl lg:text-[2.35rem] xl:text-[2.65rem]">
-              VC&apos;s Corner
+            <h3 className="font-[family-name:var(--font-display)] text-4xl font-semibold leading-none text-primary sm:text-5xl lg:text-[2.75rem] xl:text-5xl">
+              Recent activities
             </h3>
-            <div className="mt-2.5 h-0.5 w-14 bg-secondary" />
+            <div className="mt-3 h-0.5 w-14 bg-secondary" />
           </div>
-          {activities.length ? (
-            <div className="mt-3 grid min-h-0 flex-1 gap-2 sm:grid-cols-2 lg:grid-cols-12 lg:grid-rows-3">
-              {activities.map((item, index) => (
-                <LeadershipActivityTile
-                  key={item.id}
-                  item={item}
-                  featured={index === 0}
-                />
-              ))}
-            </div>
+          {featuredActivity ? (
+            <FeaturedActivity item={featuredActivity} />
           ) : (
-            <p className="mt-5 flex-1 border-y border-primary/10 py-6 text-sm text-slate-600">
+            <p className="mt-7 border-y border-primary/10 py-6 text-sm text-slate-600">
               Published leadership activities will appear here.
             </p>
           )}
+          {supportingActivities.length ? (
+            <div className="min-h-0 divide-y divide-primary/15 border-b border-primary/15 lg:flex lg:flex-1 lg:flex-col">
+              {supportingActivities.map((item, index) => (
+                <ActivityLineItem key={item.id} item={item} index={index + 1} />
+              ))}
+            </div>
+          ) : null}
           {activities.length ? (
             <Link
-              href="/media"
-              className="mt-2 inline-flex min-h-8 w-fit shrink-0 items-center gap-3 border-b border-secondary pb-0.5 text-sm font-bold text-primary transition hover:gap-4"
+              href="/media/news"
+              className="mt-4 inline-flex min-h-10 w-fit shrink-0 items-center gap-3 border-b border-secondary pb-1 text-sm font-bold text-primary transition hover:gap-4 lg:mt-auto"
             >
-              Explore news &amp; events
+              View all activities
               <ArrowRight className="h-4 w-4 text-secondary" aria-hidden />
             </Link>
           ) : null}
@@ -1919,8 +1919,6 @@ function formatDateRange(start?: string | null, end?: string | null) {
 function activityDetails(item: HomepageSectionItem) {
   const linked = item.content_enriched?.linked_content;
   if (!linked?.is_published || !linked.title || !linked.href) return null;
-  const rawDate =
-    linked.type === "event" ? linked.start_date : linked.published_at;
   return {
     href: linked.href,
     title: linked.title,
@@ -1938,157 +1936,104 @@ function activityDetails(item: HomepageSectionItem) {
         : linked.type === "event"
           ? "Event"
           : "News",
-    isEvent: linked.type === "event",
-    rawDate,
-    date: formatPublicDate(rawDate),
+    date: formatPublicDate(
+      linked.type === "event" ? linked.start_date : linked.published_at,
+    ),
   };
 }
 
-function leadershipEventDateParts(value?: string | null) {
-  if (!value) return { day: "—", month: "Upcoming" };
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return { day: "—", month: value };
-  return {
-    day: new Intl.DateTimeFormat("en-KE", {
-      day: "2-digit",
-      timeZone: "Africa/Nairobi",
-    }).format(date),
-    month: new Intl.DateTimeFormat("en-KE", {
-      month: "short",
-      timeZone: "Africa/Nairobi",
-    })
-      .format(date)
-      .toUpperCase(),
-  };
-}
-
-function LeadershipActivityTile({
-  item,
-  featured,
-}: {
-  item: HomepageSectionItem;
-  featured: boolean;
-}) {
+function FeaturedActivity({ item }: { item: HomepageSectionItem }) {
   const details = activityDetails(item);
   if (!details) return null;
-  const {
-    href,
-    title,
-    summary,
-    altText,
-    imageUrl,
-    typeLabel,
-    isEvent,
-    rawDate,
-    date,
-  } = details;
-  const placement = featured
-    ? "min-h-[280px] sm:col-span-2 lg:col-span-7 lg:row-span-3 lg:min-h-0"
-    : "min-h-[170px] lg:col-span-5 lg:min-h-0";
-
-  if (isEvent) {
-    const eventDate = leadershipEventDateParts(rawDate);
-    return (
-      <Link
-        href={href}
-        className={`group relative isolate overflow-hidden bg-primary text-white transition-colors hover:bg-primary/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 ${placement}`}
-      >
+  const { href, title, summary, altText, imageUrl, typeLabel, date } = details;
+  return (
+    <Link
+      href={href}
+      className="group mt-5 block shrink-0 border-b border-primary/15 pb-4"
+    >
+      <div className="relative h-[190px] overflow-hidden bg-primary/8 sm:h-[230px] lg:h-[180px] xl:h-[185px] 2xl:h-[200px]">
         {imageUrl ? (
           <PublicImage
             src={imageUrl}
             alt={altText}
             ratio="fill"
-            className="absolute inset-y-0 right-0 -z-20 h-full w-[48%] rounded-none opacity-35"
-            imageClassName="object-cover transition duration-700 group-hover:scale-[1.025]"
-            sizes={featured ? "32vw" : "18vw"}
+            className="absolute inset-0 rounded-none"
+            imageClassName="object-cover object-top transition duration-700 group-hover:scale-[1.025]"
+            sizes="(min-width: 1024px) 66vw, 100vw"
           />
-        ) : null}
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,hsl(var(--primary))_0%,hsl(var(--primary))_54%,hsl(var(--primary)/.72)_100%)]" />
-        <div className="absolute -bottom-12 -right-8 -z-10 h-40 w-40 rounded-full border border-secondary/25" />
-        <article className="flex h-full min-h-0 flex-col p-4 xl:p-5">
-          <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-secondary">
-            <CalendarDays className="h-3.5 w-3.5" aria-hidden />
-            Event
-          </p>
-          <div
-            className={`mt-auto grid items-end gap-3 ${featured ? "grid-cols-[72px_minmax(0,1fr)] xl:grid-cols-[82px_minmax(0,1fr)]" : "grid-cols-[58px_minmax(0,1fr)]"}`}
-          >
-            <div className="border-l-2 border-secondary pl-3">
-              <span
-                className={`block font-[family-name:var(--font-display)] font-semibold leading-none text-white ${featured ? "text-5xl" : "text-3xl"}`}
-              >
-                {eventDate.day}
-              </span>
-              <span className="mt-1 block text-[10px] font-bold tracking-[0.16em] text-secondary">
-                {eventDate.month}
-              </span>
-            </div>
-            <div className="min-w-0">
-              <h4
-                className={`line-clamp-2 font-[family-name:var(--font-display)] font-semibold leading-tight text-white ${featured ? "text-2xl xl:text-3xl" : "text-base xl:text-lg"}`}
-              >
-                {title}
-              </h4>
-              {featured && summary ? (
-                <p className="mt-2 line-clamp-2 text-sm leading-5 text-white/72">
-                  {summary}
-                </p>
-              ) : null}
-            </div>
+        ) : (
+          <div className="absolute inset-0 bg-primary">
+            <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(135deg,transparent_40%,rgba(255,255,255,.15)_40%,rgba(255,255,255,.15)_42%,transparent_42%)] [background-size:28px_28px]" />
           </div>
-          <ArrowRight
-            className="absolute right-4 top-4 h-5 w-5 text-secondary transition group-hover:translate-x-1"
-            aria-hidden
-          />
-        </article>
-      </Link>
-    );
-  }
+        )}
+      </div>
+      <div className="grid gap-3 pt-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.15em] text-primary">
+            {typeLabel}
+            {date ? (
+              <span className="ml-4 font-medium text-slate-500">{date}</span>
+            ) : null}
+          </p>
+          <h4 className="mt-1.5 line-clamp-2 max-w-4xl font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 transition group-hover:text-primary lg:text-[1.45rem] xl:text-2xl">
+            {title}
+          </h4>
+          {summary ? (
+            <p className="mt-1.5 line-clamp-2 max-w-3xl text-sm leading-5 text-slate-600 lg:line-clamp-1 xl:line-clamp-2">
+              {summary}
+            </p>
+          ) : null}
+        </div>
+        <ArrowRight
+          className="h-7 w-7 text-primary transition group-hover:translate-x-1"
+          aria-hidden
+        />
+      </div>
+    </Link>
+  );
+}
 
-  return (
-    <Link
-      href={href}
-      className={`group relative isolate overflow-hidden bg-slate-950 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 ${placement}`}
-    >
+function ActivityLineItem({
+  item,
+  index,
+}: {
+  item: HomepageSectionItem;
+  index: number;
+}) {
+  const details = activityDetails(item);
+  if (!details) return null;
+  const { href, title, altText, imageUrl, typeLabel, date } = details;
+  const body = (
+    <article className="group grid gap-3 py-2 transition sm:grid-cols-[104px_minmax(0,1fr)_auto] sm:items-center lg:h-full lg:min-h-0 lg:overflow-hidden xl:grid-cols-[116px_minmax(0,1fr)_auto]">
       {imageUrl ? (
         <PublicImage
           src={imageUrl}
           alt={altText}
           ratio="fill"
-          className="absolute inset-0 -z-20 rounded-none"
-          imageClassName="object-cover object-top transition duration-700 group-hover:scale-[1.03]"
-          sizes={featured ? "46vw" : "28vw"}
+          className="hidden h-16 rounded-none sm:block"
+          imageClassName="object-cover transition duration-500 group-hover:scale-[1.03]"
+          sizes="116px"
         />
       ) : (
-        <div className="absolute inset-0 -z-20 bg-primary" />
-      )}
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(2,6,23,.12)_5%,rgba(2,6,23,.32)_45%,rgba(2,6,23,.92)_100%)]" />
-      <article className="flex h-full min-h-0 flex-col p-4 xl:p-5">
-        <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white/90">
-          <Newspaper className="h-3.5 w-3.5 text-secondary" aria-hidden />
-          {typeLabel}
-          {date ? <span className="font-medium text-white/65">{date}</span> : null}
-        </p>
-        <div className="mt-auto grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
-          <div className="min-w-0">
-            <h4
-              className={`line-clamp-2 font-[family-name:var(--font-display)] font-semibold leading-tight text-white ${featured ? "text-2xl sm:text-3xl xl:text-[2rem]" : "text-base xl:text-lg"}`}
-            >
-              {title}
-            </h4>
-            {featured && summary ? (
-              <p className="mt-2 line-clamp-2 max-w-2xl text-sm leading-5 text-white/72">
-                {summary}
-              </p>
-            ) : null}
-          </div>
-          <ArrowRight
-            className="h-5 w-5 shrink-0 text-secondary transition group-hover:translate-x-1"
-            aria-hidden
-          />
+        <div className="hidden h-16 items-center justify-center bg-primary text-xs font-bold tracking-[0.18em] text-white sm:flex">
+          {String(index + 1).padStart(2, "0")}
         </div>
-      </article>
-    </Link>
+      )}
+      <div>
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
+          {[typeLabel, date].filter(Boolean).join(" · ")}
+        </p>
+        <h4 className="mt-1 line-clamp-2 font-[family-name:var(--font-display)] text-lg font-semibold leading-tight text-slate-950 transition group-hover:text-primary lg:text-base xl:text-[1.05rem]">
+          {title}
+        </h4>
+      </div>
+      <ArrowRight className="hidden h-5 w-5 justify-self-end text-primary transition group-hover:translate-x-1 sm:block" />
+    </article>
+  );
+  return (
+    <LinkWrapper href={href} className="lg:block lg:min-h-0 lg:flex-1">
+      {body}
+    </LinkWrapper>
   );
 }
 

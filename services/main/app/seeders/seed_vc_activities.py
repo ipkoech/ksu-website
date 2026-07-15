@@ -280,7 +280,7 @@ async def seed_vc_activities(db: AsyncSession, ctx: SeedContext) -> None:
     if section is None or not activities:
         return
 
-    section.title = "VC’s Corner"
+    section.title = "Leadership in action"
     has_curated_links = any(
         isinstance(item.content, dict)
         and item.content.get("linked_content_type")
