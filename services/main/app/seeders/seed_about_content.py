@@ -279,7 +279,7 @@ async def seed_about_content(db: AsyncSession, ctx: SeedContext) -> None:
             "figures published in official University records. Each figure states its reporting period."
         ),
         methodology_note=(
-            "Evergreen institutional facts are combined with the most recently published figures in "
+            "Institutional facts are combined with the most recently published figures in "
             "the Kisii University Strategic Plan 2024–2028. Reporting periods are retained because "
             "these figures are not live operational totals."
         ),
