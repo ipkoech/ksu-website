@@ -115,6 +115,172 @@ type PublicPersonResponse = {
   data?: PublicPersonProfile;
 };
 
+const VC_PROFILE_ID = "9bddbf62-fddd-4d60-82e8-dd43be3bbf9f";
+
+const officialVcProfile: Partial<PublicPersonProfile> = {
+  email: "nogechi@kisiiuniversity.ac.ke",
+  phone: "+254726297952",
+  office_location: "Office of the Vice Chancellor, Kisii University",
+  office_phone: "+254726297952",
+  bio: "Prof. Dr. Nathan Oyori Ogechi is the Vice-Chancellor of Kisii University, serving as secretary to Council, day-to-day administrative and academic head, chair of the University Management Board, and chair of Senate.",
+  full_bio:
+    "Prof. Dr. Nathan Oyori Ogechi is the Vice-Chancellor of Kisii University. His career spans university leadership, research, teaching, publishing, translation, and language policy work. Before joining Kisii University as Vice-Chancellor in September 2023, he served Moi University in senior leadership roles including Deputy Vice Chancellor for Student Affairs, Acting Deputy Vice Chancellor for Administration, Planning and Development, Acting Deputy Vice Chancellor for Academics, Research and Extension, Dean of the School of Arts and Social Sciences, and Head of the Department of Kiswahili and Other African Languages. He is a Professor of African Linguistics whose work focuses on African languages, Kiswahili, Ekegusii, Sheng, language contact, communication, linguistic human rights, language planning, and transformative leadership.",
+  academic_rank: "professor",
+  specialization:
+    "Linguistics and African Languages with a focus on Kiswahili, Ekegusii and Sheng codes; Translation and Communication",
+  is_researcher: true,
+  cv_file_url:
+    "https://kisiiuniversity.ac.ke/storage/public/downloads//CV%20Nathan%20Ogechi.pdf",
+  publications_count: 59,
+  qualifications: [
+    {
+      degree: "PhD",
+      field: "African Linguistics",
+      institution: "University of Hamburg, Germany",
+      year: 2000,
+    },
+    {
+      degree: "MPhil.",
+      field: "Kiswahili Studies",
+      institution: "Moi University, Eldoret",
+      year: 1993,
+    },
+    {
+      degree: "B.Ed (Arts)",
+      field: "Arts",
+      institution: "Moi University, Eldoret",
+      year: 1990,
+    },
+  ],
+  research_interests: [
+    "Language contact phenomena",
+    "Language and culture",
+    "Language education",
+    "Morphosyntax",
+    "Phonology",
+    "African languages and publishing",
+    "Ethno-semantics",
+    "Onomastics",
+    "Communication",
+    "Linguistic human rights",
+    "Language and HIV/Aids",
+    "Language and politics",
+    "Language and new communication technologies",
+    "Language and peace",
+    "Language, ethnicity and identity",
+    "Language planning",
+    "Transformative leadership",
+    "Language and race",
+  ],
+  publications: [
+    {
+      title: "Taratibu za Kuendesha Utafiti na Masuala Mengine",
+      citation:
+        "Ogechi, N. O. (2024). Taratibu za Kuendesha Utafiti na Masuala Mengine. Nairobi: Jomo Kenyatta Foundation.",
+      year: 2024,
+      source: "Book",
+    },
+    {
+      title: "Trilingual Codeswitching in Kenya",
+      citation:
+        "N. O. Ogechi. 2005. Trilingual Codeswitching in Kenya – Evidence from Ekegusii, Kiswahili, English and Sheng.",
+      year: 2005,
+      source: "Book",
+      url: "http://www.sub.uni-hamburg.de/opus/volltexte/2005/2749/",
+    },
+    {
+      title:
+        "Learning transformative leadership through student activism in Kenya",
+      citation:
+        "Ogechi, N. O. 2024. Learning transformative leadership through student activism in Kenya. In Transformative Leadership in African Contexts: Strategies for Social Change. Durban: HSRC. Pp. 207-222.",
+      year: 2024,
+      source: "Book chapter",
+    },
+    {
+      title: "Legitimization and leadership communication during crisis",
+      citation:
+        "G. E. Aberi & N. O. Ogechi. 2025. Legitimization and leadership communication during crisis: A case study of President Uhuru Kenyatta’s political speeches on the COVID-19 pandemic. Journal of Linguistic and Communication Studies 4 (2): 1-17.",
+      year: 2025,
+      venue: "Journal of Linguistic and Communication Studies",
+      source: "Journal article",
+    },
+    {
+      title: "Ethnicity, language and identity in Kenya",
+      citation:
+        "N. O. Ogechi. 2019. Ethnicity, language and identity in Kenya. Modern Africa: Politics, History and Society 7 (1): 113-137.",
+      year: 2019,
+      venue: "Modern Africa: Politics, History and Society",
+      source: "Journal article",
+    },
+    {
+      title: "On Language Rights in Kenya",
+      citation:
+        "N. O. Ogechi. 2003. On Language Rights in Kenya. Nordic Journal of African Studies 12 (3): 277-295.",
+      year: 2003,
+      venue: "Nordic Journal of African Studies",
+      source: "Journal article",
+    },
+  ],
+  research_grants_won: [
+    {
+      title:
+        "Linguistic Human Rights and Language Policy in the Kenyan Educational System",
+      funder:
+        "Organization of Social Science Research in Eastern Africa (OSSREA)",
+      amount: "US$ 21,000",
+      role: "Project preparation and fund management",
+      source: "Official CV",
+    },
+    {
+      title: "Africa Multiple Cluster Centre of Excellence in African Studies",
+      funder: "Deutsche Forschungs Gemeinschaft (DFG)",
+      amount: "US$ 1,270,000",
+      role: "Member",
+      year: 2019,
+      source: "Official CV",
+    },
+    {
+      title: "Research Chair on language education in HERI-Africa",
+      funder: "Harnessing Educational Research for Impact in Africa",
+      role: "Research Chair",
+      source: "Official CV",
+    },
+  ],
+  awards_honors: [
+    {
+      award: "DAAD scholarship for PhD studies",
+      organization: "Deutsche Akademischer Austausch Dienst (DAAD)",
+      year: 2000,
+    },
+    {
+      award: "Senior Scholars Research Grant",
+      organization:
+        "Organization of Social Science Research in Eastern Africa (OSSREA)",
+      year: 2004,
+    },
+    {
+      award: "World Bank travel and subsistence award",
+      organization: "World Bank",
+      year: 2017,
+    },
+  ],
+};
+
+function enrichPublicPersonProfile(
+  person: PublicPersonProfile,
+): PublicPersonProfile {
+  if (person.id !== VC_PROFILE_ID) return person;
+
+  return {
+    ...person,
+    ...officialVcProfile,
+    qualifications: officialVcProfile.qualifications ?? person.qualifications,
+    assignments: person.assignments,
+    photo_id: person.photo_id,
+    photo_url: person.photo_url,
+  };
+}
+
 export async function getPublicPersonProfile(
   personId: string,
 ): Promise<PublicPersonProfile | null> {
@@ -123,7 +289,7 @@ export async function getPublicPersonProfile(
       `/api/v1/public/people/${encodeURIComponent(personId)}`,
     );
 
-    return response.data ?? null;
+    return response.data ? enrichPublicPersonProfile(response.data) : null;
   } catch (error) {
     console.error("Failed to load public person profile:", error);
     return null;

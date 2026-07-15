@@ -19,11 +19,11 @@ export function PublicPersonTabs({ tabs }: { tabs: PublicPersonTab[] }) {
   if (!activeTab) return null;
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
+    <section className="grid gap-4">
       <div
         role="tablist"
         aria-label="Staff profile sections"
-        className="flex gap-1 overflow-x-auto border-b border-slate-200 px-3"
+        className="flex gap-3 overflow-x-auto rounded-lg border border-slate-200 bg-white px-4 shadow-sm"
       >
         {tabs.map((tab) => {
           const isActive = tab.id === activeTab.id;
@@ -37,7 +37,7 @@ export function PublicPersonTabs({ tabs }: { tabs: PublicPersonTab[] }) {
               id={`person-tab-${tab.id}`}
               onClick={() => setActiveId(tab.id)}
               className={[
-                "inline-flex min-h-12 shrink-0 items-center border-b-2 px-3 text-sm font-bold transition",
+                "inline-flex min-h-14 shrink-0 items-center border-b-2 px-2 text-sm font-semibold transition",
                 isActive
                   ? "border-primary text-primary"
                   : "border-transparent text-slate-600 hover:border-primary/40 hover:text-primary",
@@ -52,7 +52,6 @@ export function PublicPersonTabs({ tabs }: { tabs: PublicPersonTab[] }) {
         role="tabpanel"
         id={`person-panel-${activeTab.id}`}
         aria-labelledby={`person-tab-${activeTab.id}`}
-        className="p-5"
       >
         {activeTab.content}
       </div>

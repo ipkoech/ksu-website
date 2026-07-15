@@ -300,37 +300,26 @@ function PillList({ items }: { items: string[] }) {
 }
 
 function ProfileActionRail({
-  email,
   links,
   cvUrl,
 }: {
-  email?: string | null;
   links: ProfileLink[];
   cvUrl?: string | null;
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-col items-stretch gap-2 sm:items-end">
       {cvUrl ? (
         <a
           href={cvUrl}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary/90"
+          className="inline-flex h-12 items-center justify-center gap-3 rounded-lg bg-primary px-6 text-sm font-bold text-white shadow-sm transition hover:bg-primary/90"
         >
-          <Download aria-hidden className="h-4 w-4" />
+          <Download aria-hidden className="h-5 w-5" />
           Download CV
         </a>
       ) : null}
-      {email ? (
-        <a
-          href={`mailto:${email}`}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-primary/20 bg-white px-4 text-sm font-bold text-primary transition hover:bg-primary hover:text-white"
-        >
-          <Mail aria-hidden className="h-4 w-4" />
-          Email
-        </a>
-      ) : null}
-      {links.slice(0, 3).map((item) => (
+      {links.slice(0, cvUrl ? 2 : 3).map((item) => (
         <a
           key={item.label}
           href={item.href ?? undefined}
@@ -342,6 +331,77 @@ function ProfileActionRail({
           {item.label}
         </a>
       ))}
+    </div>
+  );
+}
+
+function ContactRow({
+  email,
+  phone,
+  office,
+}: {
+  email?: string | null;
+  phone?: string | null;
+  office?: string | null;
+}) {
+  const items = [
+    email
+      ? {
+          key: "email",
+          icon: Mail,
+          label: email,
+          href: `mailto:${email}`,
+        }
+      : null,
+    phone
+      ? {
+          key: "phone",
+          icon: Phone,
+          label: phone,
+          href: `tel:${phone.replace(/\s+/g, "")}`,
+        }
+      : null,
+    office
+      ? {
+          key: "office",
+          icon: Building2,
+          label: `Office: ${office}`,
+          href: null,
+        }
+      : null,
+  ].filter(Boolean) as Array<{
+    key: string;
+    icon: ProfileFact["icon"];
+    label: string;
+    href: string | null;
+  }>;
+
+  if (!items.length) return null;
+
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-600">
+      {items.map((item) => {
+        const Icon = item.icon;
+        const content = (
+          <>
+            <Icon aria-hidden className="h-4 w-4 text-primary" />
+            <span>{item.label}</span>
+          </>
+        );
+        return item.href ? (
+          <a
+            key={item.key}
+            href={item.href}
+            className="inline-flex items-center gap-2 transition hover:text-primary"
+          >
+            {content}
+          </a>
+        ) : (
+          <span key={item.key} className="inline-flex items-center gap-2">
+            {content}
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -378,78 +438,54 @@ function ProfileHero({
   person,
   name,
   role,
-  assignment,
   schoolName,
   departmentName,
   links,
-  facts,
   cvUrl,
 }: {
   person: PublicPersonProfile;
   name: string;
   role: string;
-  assignment?: PublicPersonAssignment | null;
   schoolName?: string | null;
   departmentName?: string | null;
   links: ProfileLink[];
-  facts: ProfileFact[];
   cvUrl?: string | null;
 }) {
   return (
-    <section
-      className={[
-        "rounded-lg border border-slate-200 bg-white p-4 shadow-sm",
-        facts.length ? "" : "lg:max-w-4xl",
-      ].join(" ")}
-    >
-      <div
-        className={[
-          "grid gap-4",
-          facts.length
-            ? "lg:grid-cols-[160px_minmax(0,1fr)_300px]"
-            : "lg:grid-cols-[160px_minmax(0,1fr)]",
-        ].join(" ")}
-      >
+    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="grid gap-5 lg:grid-cols-[180px_minmax(0,1fr)_260px] lg:items-center">
         <div className="max-w-[180px]">
-          <div className="aspect-[4/5] overflow-hidden rounded-lg bg-slate-100">
+          <div className="aspect-[4/5] overflow-hidden rounded-xl bg-slate-100">
             <ProfileImage person={person} name={name} />
           </div>
         </div>
         <div className="min-w-0 self-center py-1">
-          <span className="inline-flex rounded bg-primary px-2 py-1 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-white">
-            {assignment?.entity?.entity_type === "school"
-              ? "Leadership"
-              : person.is_researcher
-                ? "Researcher Profile"
-                : "Staff Profile"}
-          </span>
-          <h1 className="mt-3 max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-[2.15rem]">
+          <h1 className="max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-[2.4rem]">
             {name}
           </h1>
-          <p className="mt-2 text-base font-semibold leading-6 text-primary">
+          <p className="mt-2 text-lg font-bold leading-6 text-amber-600">
             {role}
           </p>
           {schoolName || departmentName ? (
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              {[departmentName, schoolName].filter(Boolean).join(" | ")}
+            <p className="mt-1 max-w-3xl text-base font-semibold leading-6 text-slate-700">
+              {departmentName}
+              {departmentName && schoolName ? (
+                <span className="mx-2 text-slate-300">|</span>
+              ) : null}
+              {schoolName ? (
+                <span className="text-primary">{schoolName}</span>
+              ) : null}
             </p>
           ) : null}
-          <div className="mt-4">
-            <ProfileActionRail
-              email={person.email}
-              links={links}
-              cvUrl={cvUrl}
-            />
-          </div>
+          <ContactRow
+            email={person.email}
+            phone={person.phone ?? person.office_phone}
+            office={person.office_location}
+          />
         </div>
-        {facts.length ? (
-          <aside className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <h2 className="text-sm font-bold text-slate-950">At a Glance</h2>
-            <div className="mt-3">
-              <ProfileFactGrid facts={facts} />
-            </div>
-          </aside>
-        ) : null}
+        <div className="flex lg:justify-end">
+          <ProfileActionRail links={links} cvUrl={cvUrl} />
+        </div>
       </div>
     </section>
   );
@@ -467,6 +503,99 @@ function ContentBlock({
       <h2 className="text-base font-bold text-slate-950">{title}</h2>
       <div className="mt-3">{children}</div>
     </section>
+  );
+}
+
+function PanelCard({ children }: { children: ReactNode }) {
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      {children}
+    </section>
+  );
+}
+
+function SidebarCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <aside className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <h2 className="text-base font-bold text-slate-950">{title}</h2>
+      <div className="mt-4">{children}</div>
+    </aside>
+  );
+}
+
+function ProfileMetricsCard({
+  publicationsCount,
+  hIndex,
+}: {
+  publicationsCount?: number | null;
+  hIndex?: number | null;
+}) {
+  if (!publicationsCount && !hIndex) return null;
+
+  return (
+    <SidebarCard title="Profile Metrics">
+      <dl className="grid grid-cols-2 gap-3 text-center">
+        {publicationsCount ? (
+          <div className="rounded-lg bg-primary/[0.06] p-3">
+            <dt className="text-xs font-semibold text-slate-600">
+              Publications
+            </dt>
+            <dd className="mt-1 text-2xl font-bold text-slate-950">
+              {publicationsCount}
+            </dd>
+          </div>
+        ) : null}
+        {hIndex ? (
+          <div className="rounded-lg bg-amber-50 p-3">
+            <dt className="text-xs font-semibold text-slate-600">h-index</dt>
+            <dd className="mt-1 text-2xl font-bold text-slate-950">{hIndex}</dd>
+          </div>
+        ) : null}
+      </dl>
+    </SidebarCard>
+  );
+}
+
+function ProfileSidebar({
+  facts,
+  links,
+  publicationsCount,
+  hIndex,
+}: {
+  facts: ProfileFact[];
+  links: ProfileLink[];
+  publicationsCount?: number | null;
+  hIndex?: number | null;
+}) {
+  const hasMetrics = Boolean(publicationsCount || hIndex);
+  const hasLinks = links.length > 0;
+  const hasFacts = facts.length > 0;
+
+  if (!hasMetrics && !hasLinks && !hasFacts) return null;
+
+  return (
+    <div className="grid content-start gap-4">
+      <ProfileMetricsCard
+        publicationsCount={publicationsCount}
+        hIndex={hIndex}
+      />
+      {hasLinks ? (
+        <SidebarCard title="Research Links">
+          <ExternalProfileLinks links={links} />
+        </SidebarCard>
+      ) : null}
+      {hasFacts ? (
+        <SidebarCard title="Contact Details">
+          <ProfileFactGrid facts={facts} />
+        </SidebarCard>
+      ) : null}
+    </div>
   );
 }
 
@@ -763,40 +892,48 @@ export default async function PublicPersonPage({
           id: "bio",
           label: "Bio",
           content: (
-            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-              <div className="grid gap-5">
-                {bio ? (
-                  <ContentBlock title="Biography">
-                    <ExpandableRichText text={bio} collapsedLines={8} />
-                  </ContentBlock>
-                ) : null}
-                {qualifications.length ? (
-                  <QualificationTimeline items={qualifications} />
-                ) : null}
-                {teachingAreas.length || courses.length ? (
-                  <ContentBlock title="Teaching">
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      {teachingAreas.length ? (
-                        <div>
-                          <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
-                            Teaching Areas
-                          </p>
-                          <PillList items={teachingAreas} />
-                        </div>
-                      ) : null}
-                      {courses.length ? (
-                        <div>
-                          <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
-                            Courses
-                          </p>
-                          <PillList items={courses} />
-                        </div>
-                      ) : null}
-                    </div>
-                  </ContentBlock>
-                ) : null}
-              </div>
-              <div className="grid content-start gap-3">
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+              <PanelCard>
+                <div className="grid gap-5">
+                  {bio ? (
+                    <ContentBlock title="Biography">
+                      <ExpandableRichText text={bio} collapsedLines={8} />
+                    </ContentBlock>
+                  ) : null}
+                  {qualifications.length ? (
+                    <QualificationTimeline items={qualifications} />
+                  ) : null}
+                  {teachingAreas.length || courses.length ? (
+                    <ContentBlock title="Teaching">
+                      <div className="grid gap-4 lg:grid-cols-2">
+                        {teachingAreas.length ? (
+                          <div>
+                            <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+                              Teaching Areas
+                            </p>
+                            <PillList items={teachingAreas} />
+                          </div>
+                        ) : null}
+                        {courses.length ? (
+                          <div>
+                            <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+                              Courses
+                            </p>
+                            <PillList items={courses} />
+                          </div>
+                        ) : null}
+                      </div>
+                    </ContentBlock>
+                  ) : null}
+                </div>
+              </PanelCard>
+              <div className="grid content-start gap-4">
+                <ProfileSidebar
+                  facts={facts}
+                  links={publicationLinks}
+                  publicationsCount={person.publications_count}
+                  hIndex={person.h_index}
+                />
                 <RoleRelationshipGrid assignments={person.assignments ?? []} />
               </div>
             </div>
@@ -807,7 +944,13 @@ export default async function PublicPersonPage({
       ? {
           id: "research-interests",
           label: "Research Interests",
-          content: <PillList items={researchInterests} />,
+          content: (
+            <PanelCard>
+              <ContentBlock title="Research Interests">
+                <PillList items={researchInterests} />
+              </ContentBlock>
+            </PanelCard>
+          ),
         }
       : null,
     publicationRecords.length ||
@@ -818,65 +961,39 @@ export default async function PublicPersonPage({
           id: "publications",
           label: "Publications",
           content: (
-            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-              {publicationRecords.length ? (
-                <RecordGrid records={publicationRecords} icon={BookOpenCheck} />
-              ) : (
-                <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
-                  Publication records are summarized from this profile.
-                </p>
-              )}
-              {person.publications_count ||
-              person.h_index ||
-              publicationLinks.length ? (
-                <aside className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                  {person.publications_count || person.h_index ? (
-                    <>
-                      <h2 className="text-sm font-bold text-slate-950">
-                        Publication Metrics
-                      </h2>
-                      <dl className="mt-4 grid gap-3 text-sm">
-                        {person.publications_count ? (
-                          <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-3">
-                            <dt className="font-semibold text-slate-700">
-                              Publications
-                            </dt>
-                            <dd className="font-bold text-slate-950">
-                              {person.publications_count}
-                            </dd>
-                          </div>
-                        ) : null}
-                        {person.h_index ? (
-                          <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-3">
-                            <dt className="font-semibold text-slate-700">
-                              H-index
-                            </dt>
-                            <dd className="font-bold text-slate-950">
-                              {person.h_index}
-                            </dd>
-                          </div>
-                        ) : null}
-                      </dl>
-                    </>
-                  ) : null}
-                  {publicationLinks.length ? (
-                    <div
-                      className={
-                        person.publications_count || person.h_index
-                          ? "mt-5 border-t border-slate-200 pt-4"
-                          : ""
-                      }
-                    >
-                      <h3 className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
-                        Research Profiles
-                      </h3>
-                      <div className="mt-3">
-                        <ExternalProfileLinks links={publicationLinks} />
-                      </div>
-                    </div>
-                  ) : null}
-                </aside>
-              ) : null}
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+              <PanelCard>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-950">
+                      Publications
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {publicationRecords.length
+                        ? `Showing ${publicationRecords.length} publication records`
+                        : "Publication records are summarized from this profile."}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-5">
+                  {publicationRecords.length ? (
+                    <RecordGrid
+                      records={publicationRecords}
+                      icon={BookOpenCheck}
+                    />
+                  ) : (
+                    <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
+                      Publication records are summarized from this profile.
+                    </p>
+                  )}
+                </div>
+              </PanelCard>
+              <ProfileSidebar
+                facts={facts}
+                links={publicationLinks}
+                publicationsCount={person.publications_count}
+                hIndex={person.h_index}
+              />
             </div>
           ),
         }
@@ -886,7 +1003,12 @@ export default async function PublicPersonPage({
           id: "innovations",
           label: "Innovations",
           content: (
-            <RecordGrid records={genericRecords(innovations)} icon={Sparkles} />
+            <PanelCard>
+              <RecordGrid
+                records={genericRecords(innovations)}
+                icon={Sparkles}
+              />
+            </PanelCard>
           ),
         }
       : null,
@@ -894,7 +1016,11 @@ export default async function PublicPersonPage({
       ? {
           id: "grants-funding",
           label: "Grants/Funding",
-          content: <RecordGrid records={grantRecords} icon={Sparkles} />,
+          content: (
+            <PanelCard>
+              <RecordGrid records={grantRecords} icon={Sparkles} />
+            </PanelCard>
+          ),
         }
       : null,
     bookPublicationRecords.length
@@ -902,7 +1028,12 @@ export default async function PublicPersonPage({
           id: "book-publications",
           label: "Book Publications",
           content: (
-            <RecordGrid records={bookPublicationRecords} icon={BookOpenCheck} />
+            <PanelCard>
+              <RecordGrid
+                records={bookPublicationRecords}
+                icon={BookOpenCheck}
+              />
+            </PanelCard>
           ),
         }
       : null,
@@ -910,7 +1041,11 @@ export default async function PublicPersonPage({
       ? {
           id: "awards-recognitions",
           label: "Awards / Recognitions",
-          content: <RecordGrid records={genericRecords(awards)} icon={Award} />,
+          content: (
+            <PanelCard>
+              <RecordGrid records={genericRecords(awards)} icon={Award} />
+            </PanelCard>
+          ),
         }
       : null,
     outreach.length
@@ -918,7 +1053,9 @@ export default async function PublicPersonPage({
           id: "community-outreach",
           label: "Community Outreach",
           content: (
-            <RecordGrid records={genericRecords(outreach)} icon={Users} />
+            <PanelCard>
+              <RecordGrid records={genericRecords(outreach)} icon={Users} />
+            </PanelCard>
           ),
         }
       : null,
@@ -927,7 +1064,9 @@ export default async function PublicPersonPage({
           id: "referees",
           label: "Referees",
           content: (
-            <RecordGrid records={genericRecords(referees)} icon={Users} />
+            <PanelCard>
+              <RecordGrid records={genericRecords(referees)} icon={Users} />
+            </PanelCard>
           ),
         }
       : null,
@@ -940,10 +1079,7 @@ export default async function PublicPersonPage({
           <div className="w-full max-w-none">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <BreadcrumbTrail
-                items={[
-                  { label: "Home", href: "/" },
-                  { label: name },
-                ]}
+                items={[{ label: "Home", href: "/" }, { label: name }]}
               />
               <Link
                 href={teamHref(assignment)}
@@ -959,11 +1095,9 @@ export default async function PublicPersonPage({
                 person={person}
                 name={name}
                 role={role}
-                assignment={assignment}
                 schoolName={schoolName}
                 departmentName={departmentName}
                 links={links}
-                facts={facts}
                 cvUrl={cvUrl}
               />
 
