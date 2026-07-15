@@ -647,6 +647,10 @@ function LeadershipLinkedContentDialog({
   const [isFeatured, setIsFeatured] = useState(false);
   const [isMain, setIsMain] = useState(true);
   const [featuredMediaId, setFeaturedMediaId] = useState("");
+  const [relatedLinkLabel, setRelatedLinkLabel] = useState("");
+  const [relatedLinkUrl, setRelatedLinkUrl] = useState("");
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
   const [pendingAttachments, setPendingAttachments] = useState<
     PendingMediaAttachment[]
   >([]);
@@ -664,6 +668,10 @@ function LeadershipLinkedContentDialog({
     setIsFeatured(false);
     setIsMain(true);
     setFeaturedMediaId("");
+    setRelatedLinkLabel("");
+    setRelatedLinkUrl("");
+    setMetaTitle("");
+    setMetaDescription("");
     setPendingAttachments([]);
   }, [seedSummary, seedTitle, type]);
 
@@ -685,6 +693,16 @@ function LeadershipLinkedContentDialog({
         scope_id: null,
         display_order: 100,
         featured_media_id: featuredMediaId || null,
+        related_links: relatedLinkUrl.trim()
+          ? [
+              {
+                title: relatedLinkLabel.trim() || "Related link",
+                url: relatedLinkUrl.trim(),
+              },
+            ]
+          : null,
+        meta_title: metaTitle.trim() || null,
+        meta_description: metaDescription.trim() || null,
       };
       if (type === "news") {
         const response = await newsApi.create(basePayload);
@@ -836,6 +854,42 @@ function LeadershipLinkedContentDialog({
               </div>
             </div>
           ) : null}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Related link label</p>
+              <Input
+                value={relatedLinkLabel}
+                onChange={(event) => setRelatedLinkLabel(event.target.value)}
+                placeholder="Optional link label"
+              />
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Related link URL</p>
+              <Input
+                type="url"
+                value={relatedLinkUrl}
+                onChange={(event) => setRelatedLinkUrl(event.target.value)}
+                placeholder="https://..."
+              />
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium">SEO title</p>
+              <Input
+                value={metaTitle}
+                onChange={(event) => setMetaTitle(event.target.value)}
+                placeholder="Optional search title"
+              />
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium">SEO description</p>
+              <Textarea
+                rows={3}
+                value={metaDescription}
+                onChange={(event) => setMetaDescription(event.target.value)}
+                placeholder="Optional search description"
+              />
+            </div>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
