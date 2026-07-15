@@ -13,7 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from ksu_common import PaginatedResult
 
-from ..models import Blog, ContentWorkflowLog, Event, Media, MediaLink, News, PageSection, PartnershipSpotlight, Person
+from ..models import Blog, ContentWorkflowLog, Event, Media, MediaLink, News, PageSection, PartnershipSpotlight, Person, StaffAssignment
 from ._base import ilike_any, paginate_query
 from .research_partners import ResearchPartnersProxyService
 
@@ -138,7 +138,7 @@ def _serialize_person(person: Person | None) -> dict[str, Any] | None:
         "leadership_message": person.leadership_message,
         "photo_id": str(person.photo_id) if person.photo_id else None,
         "photo_url": person.photo_url,
-        "profile_href": f"/people/{person.id}",
+        "profile_href": f"/staff/{person.id}",
     }
 
 
@@ -181,14 +181,165 @@ async def _enrich_section_item_content(db: AsyncSession, content: dict[str, Any]
     return enriched or None
 
 
-async def _enrich_section_settings(db: AsyncSession, settings: dict[str, Any] | None) -> dict[str, Any] | None:
-    if not settings:
+def _nested_text(payload: dict[str, Any] | None, *keys: str) -> str | None:
+    if not isinstance(payload, dict):
+        return None
+    for key in keys:
+        value = payload.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
+def _partner_logo_url(partner: dict[str, Any]) -> str | None:
+    logo = partner.get("logo")
+    if isinstance(logo, dict):
+        logo_url = _nested_text(logo, "public_url", "cdn_url", "url", "thumbnail_url")
+        if logo_url:
+            return logo_url
+
+    logo_url = _nested_text(partner, "logo_url", "logoUrl")
+    if logo_url:
+        return logo_url
+
+    social_links = partner.get("social_links")
+    if isinstance(social_links, dict):
+        return _nested_text(social_links, "logo_url", "logoUrl", "asset_path", "assetPath")
+
+    return None
+
+
+def _research_partner_href(partner: dict[str, Any]) -> str:
+    return _nested_text(partner, "website", "url") or "/research/partnerships"
+
+
+def _serialize_research_partner_item(
+    partner: dict[str, Any],
+    section: PageSection,
+    index: int,
+) -> dict[str, Any] | None:
+    name = _nested_text(partner, "name", "title")
+    acronym = _nested_text(partner, "acronym", "short_name", "shortName")
+    label = acronym or name
+    if not name and not label:
         return None
 
-    staff_profile_id = settings.get("staff_profile_id") or settings.get("leader_profile_id")
-    if not staff_profile_id:
+    partner_id = partner.get("id")
+    slug = _nested_text(partner, "slug")
+    logo_url = _partner_logo_url(partner)
+    website = _nested_text(partner, "website", "url")
+    href = website or "/research/partnerships"
+    display_order = partner.get("display_order")
+    if not isinstance(display_order, int):
+        display_order = 10 + index * 10
+
+    content: dict[str, Any] = {
+        "label": label or name,
+        "name": name or label,
+        "acronym": acronym,
+        "slug": slug,
+        "url": href,
+        "partnerType": _nested_text(partner, "partner_type", "partnerType"),
+        "country": _nested_text(partner, "country"),
+        "source": "research_partner",
+    }
+    if logo_url:
+        content["logoUrl"] = logo_url
+
+    return {
+        "id": f"research-partner-{partner_id or slug or index}",
+        "page_section_id": section.id,
+        "item_type": "research_partner",
+        "title": name or label,
+        "subtitle": _nested_text(partner, "partner_type", "partnerType", "country"),
+        "body_text": _nested_text(partner, "about", "description", "collaboration_areas", "collaborationAreas"),
+        "content": content,
+        "cta_label": "Visit partner" if website else "Read more",
+        "cta_url": href,
+        "cta_description": _nested_text(partner, "collaboration_areas", "collaborationAreas"),
+        "media_caption": None,
+        "media_alt_text": f"{name or label} logo",
+        "video_provider": None,
+        "video_url": None,
+        "video_duration_seconds": None,
+        "display_order": display_order,
+        "is_enabled": True,
+        "content_enriched": {
+            "research_partner": {
+                "id": str(partner_id) if partner_id is not None else None,
+                "name": name or label,
+                "acronym": acronym,
+                "slug": slug,
+                "website": website,
+                "logo_url": logo_url,
+                "partner_type": _nested_text(partner, "partner_type", "partnerType"),
+                "country": _nested_text(partner, "country"),
+            }
+        },
+    }
+
+
+def _should_attach_research_partners(section: PageSection) -> bool:
+    settings = section.settings if isinstance(section.settings, dict) else {}
+    return section.section_key == "partners" or settings.get("source") == "research_partners"
+
+
+async def _research_partner_section_items(section: PageSection) -> list[dict[str, Any]]:
+    if section.layout_variant != "logo_carousel" or not _should_attach_research_partners(section):
+        return []
+
+    try:
+        payload = await ResearchPartnersProxyService.list_partners(per_page=24, status="active", is_active=True)
+    except Exception:
+        return []
+
+    partners = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(partners, list):
+        return []
+
+    items: list[dict[str, Any]] = []
+    for index, partner in enumerate(partners):
+        if not isinstance(partner, dict):
+            continue
+        item = _serialize_research_partner_item(partner, section, index)
+        if item is not None:
+            items.append(item)
+
+    return sorted(items, key=lambda item: (item["display_order"], item["title"] or ""))
+
+
+async def _enrich_section_settings(
+    db: AsyncSession,
+    settings: dict[str, Any] | None,
+    *,
+    resolve_default_vc: bool = False,
+) -> dict[str, Any] | None:
+    staff_profile_id = (settings or {}).get("staff_profile_id") or (settings or {}).get("leader_profile_id")
+    person = None
+    if staff_profile_id:
+        person = await db.get(Person, uuid.UUID(str(staff_profile_id)), options=[selectinload(Person.photo)])
+    elif resolve_default_vc:
+        assignment = (
+            await db.execute(
+                select(StaffAssignment)
+                .options(selectinload(StaffAssignment.person).selectinload(Person.photo))
+                .where(
+                    StaffAssignment.entity_type == "university",
+                    StaffAssignment.role.in_(("vc", "vice_chancellor")),
+                    StaffAssignment.status == "active",
+                    StaffAssignment.is_public.is_(True),
+                    StaffAssignment.deleted_at.is_(None),
+                )
+                .order_by(
+                    StaffAssignment.is_primary.desc(),
+                    StaffAssignment.is_acting.asc(),
+                    StaffAssignment.hierarchy_level.asc(),
+                )
+            )
+        ).scalars().first()
+        person = assignment.person if assignment is not None else None
+    if person is None:
         return None
-    person = await db.get(Person, uuid.UUID(str(staff_profile_id)), options=[selectinload(Person.photo)])
     return {"staff_profile": _serialize_person(person)}
 
 
@@ -205,6 +356,30 @@ async def _serialize_section(
         ),
         key=lambda item: (item.display_order, item.created_at or datetime.min.replace(tzinfo=timezone.utc)),
     )
+    partner_items = await _research_partner_section_items(section)
+    section_items = partner_items or [
+        {
+            "id": item.id,
+            "page_section_id": item.page_section_id,
+            "item_type": item.item_type,
+            "title": item.title,
+            "subtitle": item.subtitle,
+            "body_text": item.body_text,
+            "content": item.content,
+            "cta_label": item.cta_label,
+            "cta_url": item.cta_url,
+            "cta_description": item.cta_description,
+            "media_caption": item.media_caption,
+            "media_alt_text": item.media_alt_text,
+            "video_provider": item.video_provider,
+            "video_url": item.video_url,
+            "video_duration_seconds": item.video_duration_seconds,
+            "display_order": item.display_order,
+            "is_enabled": item.is_enabled,
+            "content_enriched": await _enrich_section_item_content(db, item.content),
+        }
+        for item in public_items
+    ]
     return {
         "id": section.id,
         "page_key": section.page_key,
@@ -215,7 +390,11 @@ async def _serialize_section(
         "subtitle": section.subtitle,
         "description": section.description,
         "settings": section.settings,
-        "settings_enriched": await _enrich_section_settings(db, section.settings),
+        "settings_enriched": await _enrich_section_settings(
+            db,
+            section.settings,
+            resolve_default_vc=section.layout_variant == "leadership_activity",
+        ),
         "is_enabled": section.is_enabled,
         "layout_variant": section.layout_variant,
         "status": section.status,
@@ -224,29 +403,7 @@ async def _serialize_section(
         "approved_at": section.approved_at,
         "published_at": section.published_at,
         "display_order": _section_display_order(section),
-        "items": [
-            {
-                "id": item.id,
-                "page_section_id": item.page_section_id,
-                "item_type": item.item_type,
-                "title": item.title,
-                "subtitle": item.subtitle,
-                "body_text": item.body_text,
-                "content": item.content,
-                "cta_label": item.cta_label,
-                "cta_url": item.cta_url,
-                "cta_description": item.cta_description,
-                "media_caption": item.media_caption,
-                "media_alt_text": item.media_alt_text,
-                "video_provider": item.video_provider,
-                "video_url": item.video_url,
-                "video_duration_seconds": item.video_duration_seconds,
-                "display_order": item.display_order,
-                "is_enabled": item.is_enabled,
-                "content_enriched": await _enrich_section_item_content(db, item.content),
-            }
-            for item in public_items
-        ],
+        "items": section_items,
         "media": media_groups,
     }
 

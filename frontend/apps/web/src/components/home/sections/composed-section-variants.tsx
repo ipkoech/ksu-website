@@ -1161,7 +1161,8 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
     settingText(section, "leaderName") ??
     "Prof. Charles O. Ong’ondo, PhD";
   const leaderTitle =
-    staff?.institutional_role === "vc"
+    staff?.institutional_role === "vc" ||
+    staff?.institutional_role === "vice_chancellor"
       ? "Vice Chancellor"
       : (staff?.institutional_role ??
         settingText(section, "leaderTitle") ??
@@ -1177,7 +1178,7 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
     "Guiding Kisii University with integrity, vision and a commitment to academic excellence and community impact.";
   const leaderHref =
     staff?.profile_href ??
-    (staff?.id ? `/people/${staff.id}` : "/about/vice-chancellor");
+    (staff?.id ? `/staff/${staff.id}` : "/about/vice-chancellor");
   const activities = displayItems(section)
     .filter(
       (item) => item.content_enriched?.linked_content?.is_published === true,
