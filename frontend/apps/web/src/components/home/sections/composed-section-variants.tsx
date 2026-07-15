@@ -1231,8 +1231,8 @@ export function ResearchCardsSection({ section }: SectionVariantProps) {
         imageClassName="object-cover object-center"
         sizes="100vw"
       />
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,hsl(var(--primary)/.96)_0%,hsl(var(--primary)/.9)_36%,hsl(var(--primary)/.68)_68%,hsl(var(--primary)/.8)_100%)]" />
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_75%_35%,rgba(226,166,25,.16),transparent_34%),linear-gradient(180deg,rgba(2,6,23,.12),rgba(2,6,23,.42))]" />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,hsl(var(--primary)/.86)_0%,hsl(var(--primary)/.72)_34%,hsl(var(--primary)/.34)_66%,hsl(var(--primary)/.42)_100%)]" />
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_76%_34%,rgba(226,166,25,.1),transparent_32%),linear-gradient(180deg,rgba(2,6,23,.08),rgba(2,6,23,.24))]" />
 
       <div className="mx-auto grid max-w-[1680px] gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(280px,0.38fr)_minmax(0,0.62fr)] lg:items-end lg:px-8 xl:px-10 2xl:px-12">
         <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
@@ -1333,7 +1333,7 @@ function ResearchFocusArea({
   index: number;
 }) {
   const body = (
-    <article className="group border border-white/14 bg-white/[0.075] p-4 text-white backdrop-blur-md transition duration-300 hover:-translate-y-0.5 hover:border-secondary/45 hover:bg-white/[0.11]">
+    <article className="group border border-white/14 bg-primary/50 p-4 text-white transition duration-300 hover:-translate-y-0.5 hover:border-secondary/45 hover:bg-primary/62">
       <div className="flex gap-4">
         <span className="font-[family-name:var(--font-display)] text-sm font-semibold text-secondary">
           {String(index + 1).padStart(2, "0")}
