@@ -1183,16 +1183,16 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
     .filter(
       (item) => item.content_enriched?.linked_content?.is_published === true,
     )
-    .slice(0, 5);
+    .slice(0, 4);
   const [featuredActivity, ...supportingActivities] = activities;
   return (
     <section
       id={section.section_key}
       className="overflow-hidden border-b border-primary/10 bg-[#fbfaf6]"
     >
-      <div className="mx-auto grid max-w-[1680px] lg:grid-cols-[minmax(280px,0.34fr)_minmax(0,0.66fr)]">
-        <div className="relative border-b border-primary/10 lg:border-b-0 lg:border-r">
-          <div className="relative min-h-[300px] overflow-hidden bg-primary lg:min-h-[350px]">
+      <div className="mx-auto grid max-w-[1680px] lg:h-[720px] lg:grid-cols-[minmax(300px,0.34fr)_minmax(0,0.66fr)] xl:h-[740px] 2xl:h-[760px]">
+        <div className="relative border-b border-primary/10 lg:grid lg:h-full lg:min-h-0 lg:grid-rows-[52%_48%] lg:border-b-0 lg:border-r">
+          <div className="relative min-h-[300px] overflow-hidden bg-primary lg:min-h-0">
             <div className="absolute -left-24 top-10 h-72 w-72 rounded-full border border-secondary/20" />
             <div className="absolute left-10 top-20 h-56 w-56 border border-secondary/15 [clip-path:polygon(50%_0,100%_28%,100%_100%,0_100%,0_28%)]" />
             <PublicImage
@@ -1204,32 +1204,34 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
               sizes="(min-width: 1024px) 34vw, 100vw"
             />
           </div>
-          <div className="px-5 py-6 sm:px-8 lg:px-10 lg:py-7">
+          <div className="flex h-full min-h-0 flex-col px-5 py-6 sm:px-8 lg:overflow-hidden lg:px-8 lg:py-6 xl:px-10">
             <SectionEyebrow value={section.title ?? "Leadership in action"} />
-            <p className="mt-4 text-xs font-bold uppercase tracking-[0.16em] text-primary">
+            <p className="mt-3 text-xs font-bold uppercase tracking-[0.16em] text-primary">
               {leaderTitle}
             </p>
-            <h2 className="mt-2 max-w-md font-[family-name:var(--font-display)] text-3xl font-semibold leading-[1.05] text-slate-950 sm:text-4xl">
+            <h2 className="mt-2 max-w-md font-[family-name:var(--font-display)] text-3xl font-semibold leading-[1.05] text-slate-950 sm:text-4xl lg:text-[2rem] xl:text-4xl">
               {leaderName}
             </h2>
             <div className="mt-3 h-px w-12 bg-secondary" />
-            <p className="mt-4 max-w-md text-sm leading-6 text-slate-600">
+            <p className="mt-3 max-w-md text-sm leading-6 text-slate-600 lg:line-clamp-3">
               {leaderMessage}
             </p>
             <Link
               href={leaderHref}
-              className="mt-5 inline-flex min-h-10 items-center gap-3 border-b border-secondary pb-1 text-sm font-bold text-primary transition hover:gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="mt-5 inline-flex min-h-10 w-fit items-center gap-3 border-b border-secondary pb-1 text-sm font-bold text-primary transition hover:gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:mt-auto"
             >
               Meet the Vice Chancellor
               <ArrowRight className="h-4 w-4 text-secondary" aria-hidden />
             </Link>
           </div>
         </div>
-        <div className="px-4 py-8 sm:px-8 lg:px-12 lg:py-10 xl:px-16">
-          <h3 className="font-[family-name:var(--font-display)] text-4xl font-semibold leading-none text-primary sm:text-5xl">
-            Recent activities
-          </h3>
-          <div className="mt-4 h-0.5 w-14 bg-secondary" />
+        <div className="flex min-h-0 flex-col px-4 py-8 sm:px-8 lg:h-full lg:overflow-hidden lg:px-10 lg:py-7 xl:px-12 xl:py-8 2xl:px-14">
+          <div className="shrink-0">
+            <h3 className="font-[family-name:var(--font-display)] text-4xl font-semibold leading-none text-primary sm:text-5xl lg:text-[2.75rem] xl:text-5xl">
+              Recent activities
+            </h3>
+            <div className="mt-3 h-0.5 w-14 bg-secondary" />
+          </div>
           {featuredActivity ? (
             <FeaturedActivity item={featuredActivity} />
           ) : (
@@ -1238,7 +1240,7 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
             </p>
           )}
           {supportingActivities.length ? (
-            <div className="divide-y divide-primary/15 border-y border-primary/15">
+            <div className="min-h-0 divide-y divide-primary/15 border-b border-primary/15 lg:flex lg:flex-1 lg:flex-col">
               {supportingActivities.map((item, index) => (
                 <ActivityLineItem key={item.id} item={item} index={index + 1} />
               ))}
@@ -1247,7 +1249,7 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
           {activities.length ? (
             <Link
               href="/media/news"
-              className="mt-5 inline-flex min-h-10 items-center gap-3 border-b border-secondary pb-1 text-sm font-bold text-primary transition hover:gap-4"
+              className="mt-4 inline-flex min-h-10 w-fit shrink-0 items-center gap-3 border-b border-secondary pb-1 text-sm font-bold text-primary transition hover:gap-4 lg:mt-auto"
             >
               View all activities
               <ArrowRight className="h-4 w-4 text-secondary" aria-hidden />
@@ -1947,16 +1949,16 @@ function FeaturedActivity({ item }: { item: HomepageSectionItem }) {
   return (
     <Link
       href={href}
-      className="group mt-6 block border-b border-primary/15 pb-5"
+      className="group mt-5 block shrink-0 border-b border-primary/15 pb-4"
     >
-      <div className="relative aspect-[16/6] overflow-hidden bg-primary/8">
+      <div className="relative h-[190px] overflow-hidden bg-primary/8 sm:h-[230px] lg:h-[180px] xl:h-[185px] 2xl:h-[200px]">
         {imageUrl ? (
           <PublicImage
             src={imageUrl}
             alt={altText}
             ratio="fill"
             className="absolute inset-0 rounded-none"
-            imageClassName="object-cover transition duration-700 group-hover:scale-[1.025]"
+            imageClassName="object-cover object-top transition duration-700 group-hover:scale-[1.025]"
             sizes="(min-width: 1024px) 66vw, 100vw"
           />
         ) : (
@@ -1965,7 +1967,7 @@ function FeaturedActivity({ item }: { item: HomepageSectionItem }) {
           </div>
         )}
       </div>
-      <div className="grid gap-4 pt-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+      <div className="grid gap-3 pt-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.15em] text-primary">
             {typeLabel}
@@ -1973,11 +1975,11 @@ function FeaturedActivity({ item }: { item: HomepageSectionItem }) {
               <span className="ml-4 font-medium text-slate-500">{date}</span>
             ) : null}
           </p>
-          <h4 className="mt-2 max-w-4xl font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 transition group-hover:text-primary">
+          <h4 className="mt-1.5 line-clamp-2 max-w-4xl font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 transition group-hover:text-primary lg:text-[1.45rem] xl:text-2xl">
             {title}
           </h4>
           {summary ? (
-            <p className="mt-2 line-clamp-2 max-w-3xl text-sm leading-6 text-slate-600">
+            <p className="mt-1.5 line-clamp-2 max-w-3xl text-sm leading-5 text-slate-600 lg:line-clamp-1 xl:line-clamp-2">
               {summary}
             </p>
           ) : null}
@@ -2002,17 +2004,18 @@ function ActivityLineItem({
   if (!details) return null;
   const { href, title, altText, imageUrl, typeLabel, date } = details;
   const body = (
-    <article className="group grid gap-4 py-3 transition sm:grid-cols-[112px_minmax(0,1fr)_auto] sm:items-center">
+    <article className="group grid gap-3 py-2 transition sm:grid-cols-[104px_minmax(0,1fr)_auto] sm:items-center lg:h-full lg:min-h-0 lg:overflow-hidden xl:grid-cols-[116px_minmax(0,1fr)_auto]">
       {imageUrl ? (
         <PublicImage
           src={imageUrl}
           alt={altText}
-          ratio="logo"
-          className="hidden min-h-16 rounded-none sm:block"
+          ratio="fill"
+          className="hidden h-16 rounded-none sm:block"
           imageClassName="object-cover transition duration-500 group-hover:scale-[1.03]"
+          sizes="116px"
         />
       ) : (
-        <div className="hidden min-h-16 items-center justify-center bg-primary text-xs font-bold tracking-[0.18em] text-white sm:flex">
+        <div className="hidden h-16 items-center justify-center bg-primary text-xs font-bold tracking-[0.18em] text-white sm:flex">
           {String(index + 1).padStart(2, "0")}
         </div>
       )}
@@ -2020,14 +2023,18 @@ function ActivityLineItem({
         <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
           {[typeLabel, date].filter(Boolean).join(" · ")}
         </p>
-        <h4 className="mt-1 font-[family-name:var(--font-display)] text-lg font-semibold leading-snug text-slate-950 transition group-hover:text-primary sm:text-xl">
+        <h4 className="mt-1 line-clamp-2 font-[family-name:var(--font-display)] text-lg font-semibold leading-tight text-slate-950 transition group-hover:text-primary lg:text-base xl:text-[1.05rem]">
           {title}
         </h4>
       </div>
       <ArrowRight className="hidden h-5 w-5 justify-self-end text-primary transition group-hover:translate-x-1 sm:block" />
     </article>
   );
-  return <LinkWrapper href={href}>{body}</LinkWrapper>;
+  return (
+    <LinkWrapper href={href} className="lg:block lg:min-h-0 lg:flex-1">
+      {body}
+    </LinkWrapper>
+  );
 }
 
 function NewsLineItem({
