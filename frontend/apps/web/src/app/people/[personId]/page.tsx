@@ -621,36 +621,6 @@ function QualificationTimeline({ items }: { items: string[] }) {
   );
 }
 
-function RoleRelationshipGrid({
-  assignments,
-}: {
-  assignments: PublicPersonAssignment[];
-}) {
-  if (!assignments.length) return null;
-
-  return (
-    <ContentBlock title="Current Roles">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {assignments.map((item) => (
-          <article
-            key={item.id}
-            className="rounded-lg border border-slate-200 bg-slate-50 p-4"
-          >
-            <p className="text-sm font-bold capitalize text-slate-950">
-              {roleLabel(item) ?? "Staff role"}
-            </p>
-            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
-              {present(item.entity?.name) ??
-                present(item.entity_type) ??
-                "Unit"}
-            </p>
-          </article>
-        ))}
-      </div>
-    </ContentBlock>
-  );
-}
-
 function ExternalProfileLinks({ links }: { links: ProfileLink[] }) {
   if (!links.length) return null;
 
@@ -934,7 +904,6 @@ export default async function PublicPersonPage({
                   publicationsCount={person.publications_count}
                   hIndex={person.h_index}
                 />
-                <RoleRelationshipGrid assignments={person.assignments ?? []} />
               </div>
             </div>
           ),
