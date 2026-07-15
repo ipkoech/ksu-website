@@ -18,6 +18,7 @@ from app.models import (
     DepartmentService,
     Division,
     Intake,
+    Media,
     Person,
     Permission,
     Programme,
@@ -75,27 +76,196 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "full_name": "Nathan Oyori Ogechi",
         "title": "Prof. Dr.",
         "institutional_role": "vice_chancellor",
-        "bio": "Vice Chancellor and University Council Secretary as listed on the governance and management pages.",
+        "bio": (
+            "Prof. Dr. Nathan Oyori Ogechi is the Vice-Chancellor of Kisii University, serving as secretary "
+            "to Council, day-to-day administrative and academic head, chair of the University Management "
+            "Board, and chair of Senate."
+        ),
+        "full_bio": (
+            "Prof. Dr. Nathan Oyori Ogechi is the Vice-Chancellor of Kisii University. His career spans "
+            "university leadership, research, teaching, publishing, translation, and language policy work. "
+            "Before joining Kisii University as Vice-Chancellor in September 2023, he served Moi University "
+            "in senior leadership roles including Deputy Vice Chancellor for Student Affairs, Acting Deputy "
+            "Vice Chancellor for Administration, Planning and Development, Acting Deputy Vice Chancellor for "
+            "Academics, Research and Extension, Dean of the School of Arts and Social Sciences, and Head of "
+            "the Department of Kiswahili and Other African Languages. He is a Professor of African "
+            "Linguistics whose work focuses on African languages, Kiswahili, Ekegusii, Sheng, language "
+            "contact, communication, linguistic human rights, language planning, and transformative "
+            "leadership."
+        ),
+        "email": "nogechi@kisiiuniversity.ac.ke",
+        "phone": "+254726297952",
+        "office_location": "Office of the Vice Chancellor, Kisii University",
+        "office_phone": "+254726297952",
+        "academic_rank": "professor",
+        "specialization": (
+            "Linguistics and African Languages with a focus on Kiswahili, Ekegusii and Sheng codes; "
+            "Translation and Communication"
+        ),
+        "is_researcher": True,
+        "publications_count": 59,
+        "research_interests": [
+            "Language contact phenomena",
+            "Language and culture",
+            "Language education",
+            "Morphosyntax",
+            "Phonology",
+            "African languages and publishing",
+            "Ethno-semantics",
+            "Onomastics",
+            "Communication",
+            "Linguistic human rights",
+            "Language and HIV/Aids",
+            "Language and politics",
+            "Language and new communication technologies",
+            "Language and peace",
+            "Language, ethnicity and identity",
+            "Language planning",
+            "Transformative leadership",
+            "Language and race",
+        ],
         "qualifications": [
             {
                 "degree": "PhD",
                 "field": "African Linguistics",
                 "institution": "University of Hamburg, Germany",
-                "year": 0,
+                "year": 2000,
             },
             {
                 "degree": "MPhil.",
                 "field": "Kiswahili Studies",
                 "institution": "Moi University, Eldoret",
-                "year": 0,
+                "year": 1993,
             },
             {
                 "degree": "B.Ed (Arts)",
                 "field": "Arts",
                 "institution": "Moi University, Eldoret",
-                "year": 0,
+                "year": 1990,
             },
         ],
+        "publication_records": [
+            {
+                "title": "Taratibu za Kuendesha Utafiti na Masuala Mengine",
+                "citation": "Ogechi, N. O. (2024). Taratibu za Kuendesha Utafiti na Masuala Mengine. Nairobi: Jomo Kenyatta Foundation.",
+                "year": 2024,
+                "source": "Book",
+            },
+            {
+                "title": "Trilingual Codeswitching in Kenya",
+                "citation": "N. O. Ogechi. 2005. Trilingual Codeswitching in Kenya – Evidence from Ekegusii, Kiswahili, English and Sheng.",
+                "year": 2005,
+                "source": "Book",
+                "url": "http://www.sub.uni-hamburg.de/opus/volltexte/2005/2749/",
+            },
+            {
+                "title": "Themes in Language, Education and Development in Kenya",
+                "citation": "N. O. Ogechi (ed.). 2011. Themes in Language, Education and Development in Kenya. Ontario: Nsemia Publishers.",
+                "year": 2011,
+                "source": "Book",
+            },
+            {
+                "title": "Linguistic Human Rights and the Language Policy in the Kenyan Education System",
+                "citation": "Kembo-Sure & N. O. Ogechi. 2009. Linguistic Human Rights and the Language Policy in the Kenyan Education System. Addis Ababa: OSSREA.",
+                "year": 2009,
+                "source": "Book",
+            },
+            {
+                "title": "Learning transformative leadership through student activism in Kenya",
+                "citation": "Ogechi, N. O. 2024. Learning transformative leadership through student activism in Kenya. In Transformative Leadership in African Contexts: Strategies for Social Change. Durban: HSRC. Pp. 207-222.",
+                "year": 2024,
+                "source": "Book chapter",
+            },
+            {
+                "title": "Legitimization and leadership communication during crisis",
+                "citation": "G. E. Aberi & N. O. Ogechi. 2025. Legitimization and leadership communication during crisis: A case study of President Uhuru Kenyatta’s political speeches on the COVID-19 pandemic. Journal of Linguistic and Communication Studies 4 (2): 1-17.",
+                "year": 2025,
+                "venue": "Journal of Linguistic and Communication Studies",
+                "source": "Journal article",
+            },
+            {
+                "title": "Ethnicity, language and identity in Kenya",
+                "citation": "N. O. Ogechi. 2019. Ethnicity, language and identity in Kenya. Modern Africa: Politics, History and Society 7 (1): 113-137.",
+                "year": 2019,
+                "venue": "Modern Africa: Politics, History and Society",
+                "source": "Journal article",
+            },
+            {
+                "title": "Literacy through a foreign language and children’s rights to education",
+                "citation": "N. O. Ogechi & Kembo-Sure. 2016. Literacy through a foreign language and children’s rights to education: An examination of Kenya’s medium of instruction policy. Nordic Journal of African Studies 25 (1): 92-106.",
+                "year": 2016,
+                "venue": "Nordic Journal of African Studies",
+                "source": "Journal article",
+            },
+            {
+                "title": "On Language Rights in Kenya",
+                "citation": "N. O. Ogechi. 2003. On Language Rights in Kenya. Nordic Journal of African Studies 12 (3): 277-295.",
+                "year": 2003,
+                "venue": "Nordic Journal of African Studies",
+                "source": "Journal article",
+            },
+            {
+                "title": "Lexicalization in Sheng",
+                "citation": "N. O. Ogechi. 2004. Lexicalization in Sheng. Alternation 11 (2): 325-342.",
+                "year": 2004,
+                "venue": "Alternation",
+                "source": "Journal article",
+            },
+        ],
+        "research_grants_won": [
+            {
+                "title": "Linguistic Human Rights and Language Policy in the Kenyan Educational System",
+                "funder": "Organization of Social Science Research in Eastern Africa (OSSREA)",
+                "amount": "US$ 21,000",
+                "role": "Project preparation and fund management",
+                "source": "Official CV",
+            },
+            {
+                "title": "Harmonization, standardization and other aspects of Kenyan and cross-border languages",
+                "funder": "Centre for the Advanced Study of African Society (CASAS)",
+                "amount": "US$ 3,000",
+                "role": "Initiator and coordinator",
+                "source": "Official CV",
+            },
+            {
+                "title": "Africa Multiple Cluster Centre of Excellence in African Studies",
+                "funder": "Deutsche Forschungs Gemeinschaft (DFG)",
+                "amount": "US$ 1,270,000",
+                "role": "Member",
+                "year": 2019,
+                "source": "Official CV",
+            },
+            {
+                "title": "Research Chair on language education in HERI-Africa",
+                "funder": "Harnessing Educational Research for Impact in Africa",
+                "role": "Research Chair",
+                "source": "Official CV",
+            },
+        ],
+        "awards_honors": [
+            {
+                "award": "DAAD scholarship for PhD studies",
+                "organization": "Deutsche Akademischer Austausch Dienst (DAAD)",
+                "year": 2000,
+            },
+            {
+                "award": "Senior Scholars Research Grant",
+                "organization": "Organization of Social Science Research in Eastern Africa (OSSREA)",
+                "year": 2004,
+            },
+            {
+                "award": "World Bank travel and subsistence award",
+                "organization": "World Bank",
+                "year": 2017,
+            },
+            {
+                "award": "Confucius Institute travel award",
+                "organization": "Confucius Institute",
+                "year": 2018,
+            },
+        ],
+        "cv_public_url": "https://kisiiuniversity.ac.ke/storage/public/downloads//CV%20Nathan%20Ogechi.pdf",
+        "cv_file_size": 581632,
     },
     "dvc_apf": {
         "full_name": "Nathan Oyaro",
@@ -662,11 +832,32 @@ async def get_or_create_person(session: AsyncSession, ctx: SeedContext, key: str
         "email": email,
         "phone": spec.get("phone"),
         "bio": spec.get("bio"),
+        "full_bio": spec.get("full_bio"),
         "qualifications": spec.get("qualifications"),
+        "education_background": spec.get("education_background"),
+        "professional_memberships": spec.get("professional_memberships"),
+        "awards_honors": spec.get("awards_honors"),
         "academic_rank": spec.get("academic_rank"),
         "specialization": spec.get("specialization"),
         "research_interests": spec.get("research_interests"),
+        "teaching_areas": spec.get("teaching_areas"),
+        "publication_records": spec.get("publication_records"),
+        "research_grants_won": spec.get("research_grants_won"),
+        "publications_count": spec.get("publications_count"),
+        "h_index": spec.get("h_index"),
+        "office_location": spec.get("office_location"),
+        "office_hours": spec.get("office_hours"),
+        "office_phone": spec.get("office_phone"),
+        "courses_taught": spec.get("courses_taught"),
         "institutional_role": spec.get("institutional_role"),
+        "leadership_message": spec.get("leadership_message"),
+        "website_url": spec.get("website_url"),
+        "linkedin_url": spec.get("linkedin_url"),
+        "google_scholar_id": spec.get("google_scholar_id"),
+        "google_scholar_url": spec.get("google_scholar_url"),
+        "orcid": spec.get("orcid"),
+        "researchgate_url": spec.get("researchgate_url"),
+        "scopus_id": spec.get("scopus_id"),
         "employment_type": spec.get("employment_type", "full_time"),
         "is_researcher": spec.get("is_researcher", False),
         "is_active": True,
@@ -679,6 +870,39 @@ async def get_or_create_person(session: AsyncSession, ctx: SeedContext, key: str
         for field_name, value in payload.items():
             if value is not None:
                 setattr(person, field_name, value)
+    cv_public_url = spec.get("cv_public_url")
+    if cv_public_url:
+        media = await fetch_one(session, Media, public_url=cv_public_url)
+        media_payload = {
+            "filename": spec.get("cv_filename") or f"{slugify(full_name)}-cv.pdf",
+            "original_filename": spec.get("cv_original_filename") or f"CV {full_name}.pdf",
+            "mime_type": "application/pdf",
+            "file_size": spec.get("cv_file_size", 0),
+            "storage_provider": "external",
+            "storage_path": cv_public_url,
+            "public_url": cv_public_url,
+            "title": spec.get("cv_title") or f"Curriculum Vitae - {full_name}",
+            "alt_text": spec.get("cv_alt_text") or f"Curriculum vitae for {full_name}",
+            "description": spec.get("cv_description") or "Official curriculum vitae published by Kisii University.",
+            "tags": ["kisii-university", "staff-profile", "curriculum-vitae"],
+            "credit": "Kisii University",
+            "media_type": "document",
+            "is_public": True,
+            "is_processed": True,
+            "extra_metadata": {
+                "source": "kisiiuniversity.ac.ke",
+                "seed_asset": True,
+                "source_url": cv_public_url,
+            },
+        }
+        if media is None:
+            media = Media(id=uuid.uuid4(), **media_payload)
+            session.add(media)
+        else:
+            for field_name, value in media_payload.items():
+                setattr(media, field_name, value)
+        await session.flush()
+        person.cv_file_id = media.id
     await session.flush()
     ctx.people[key] = person
     return person
