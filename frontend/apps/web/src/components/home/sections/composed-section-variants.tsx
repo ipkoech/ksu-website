@@ -1563,13 +1563,21 @@ function partnerDisplayItems(section: HomepageSection): PartnerDisplayItem[] {
 
   return displayItems(section)
     .slice(0, 16)
-    .map((item) => ({
-      id: item.id,
-      name: itemContentText(item, "label") ?? item.title ?? "Partner",
-      href: item.cta_url ?? itemContentText(item, "url"),
-      logoUrl: itemContentText(item, "logoUrl") ?? itemImageUrl(item),
-      logoAlt: item.media_alt_text ?? item.title ?? "Partner logo",
-    }));
+    .map((item) => {
+      const partner = item.content_enriched?.research_partner;
+      const partnerName = partner?.acronym ?? partner?.name ?? null;
+      const logoUrl =
+        partner?.logo_url ?? itemContentText(item, "logoUrl") ?? itemImageUrl(item) ?? undefined;
+      const name = itemContentText(item, "label") ?? partnerName ?? item.title ?? "Partner";
+
+      return {
+        id: item.id,
+        name,
+        href: item.cta_url ?? partner?.website ?? itemContentText(item, "url") ?? undefined,
+        logoUrl,
+        logoAlt: item.media_alt_text ?? partner?.name ?? item.title ?? "Partner logo",
+      };
+    });
 }
 
 function PartnerLogoRailItem({

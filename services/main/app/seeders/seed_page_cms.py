@@ -282,7 +282,7 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
         "title": "A network advancing learning, research and community impact.",
         "subtitle": "Our partners",
         "description": "Kisii University works with academic, industry, government and development partners to expand opportunity and translate knowledge into public value.",
-        "settings": {"presentation": "wordmarks"},
+        "settings": {"presentation": "wordmarks", "source": "research_partners"},
         "items": tuple(
             {"item_type": "card", "title": name, "display_order": order, "content": {"label": name}}
             for order, name in enumerate(("UNESCO", "World Health Organization", "Google", "KEMRI", "JICA", "Microsoft", "USAID", "Safaricom"), start=10)

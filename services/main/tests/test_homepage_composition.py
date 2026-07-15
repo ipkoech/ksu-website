@@ -347,6 +347,85 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
             [item["display_order"] for item in composition["sections"][0]["items"]],
         )
 
+    async def test_compose_attaches_active_research_partners_to_partners_section(self):
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="partners",
+            layout_variant="logo_carousel",
+            status="published",
+            display_order=95,
+            settings={"source": "research_partners"},
+        )
+        section.items = [
+            SectionItem(
+                page_section=section,
+                page_section_id=section.id,
+                item_type="card",
+                title="Static fallback partner",
+                display_order=10,
+                is_enabled=True,
+                content={"label": "Static fallback partner"},
+            )
+        ]
+        partner_id = uuid.uuid4()
+
+        with (
+            patch(
+                "app.services.page_cms.PageSectionService.list_public",
+                AsyncMock(return_value=[section]),
+            ),
+            patch(
+                "app.services.page_cms._list_active_partnership_spotlights",
+                AsyncMock(return_value=[]),
+            ),
+            patch(
+                "app.services.page_cms.group_media_links",
+                AsyncMock(
+                    return_value={
+                        "heroImage": [],
+                        "mobileImage": [],
+                        "logos": [],
+                        "gallery": [],
+                        "video": [],
+                        "background": [],
+                        "poster": [],
+                    }
+                ),
+            ),
+            patch(
+                "app.services.page_cms.ResearchPartnersProxyService.list_partners",
+                AsyncMock(
+                    return_value={
+                        "status": "success",
+                        "data": [
+                            {
+                                "id": str(partner_id),
+                                "name": "University of Minnesota",
+                                "acronym": "UMN",
+                                "slug": "university-of-minnesota",
+                                "website": "https://twin-cities.umn.edu/",
+                                "logo_url": "https://cdn.example.test/umn.svg",
+                                "partner_type": "Academic",
+                                "country": "United States",
+                                "display_order": 20,
+                            }
+                        ],
+                    }
+                ),
+            ),
+        ):
+            composition = await HomepageCompositionService.compose(object(), "homepage", "university")
+
+        item = composition["sections"][0]["items"][0]
+
+        self.assertEqual("research_partner", item["item_type"])
+        self.assertEqual("University of Minnesota", item["title"])
+        self.assertEqual("UMN", item["content"]["label"])
+        self.assertEqual("https://cdn.example.test/umn.svg", item["content"]["logoUrl"])
+        self.assertEqual("https://twin-cities.umn.edu/", item["cta_url"])
+        self.assertEqual("university-of-minnesota", item["content_enriched"]["research_partner"]["slug"])
+
     async def test_partner_lookup_is_not_limited_to_the_first_page(self):
         target_id = uuid.uuid4()
         other_id = uuid.uuid4()

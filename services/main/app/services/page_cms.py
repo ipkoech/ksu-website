@@ -209,10 +209,6 @@ def _partner_logo_url(partner: dict[str, Any]) -> str | None:
     return None
 
 
-def _research_partner_href(partner: dict[str, Any]) -> str:
-    return _nested_text(partner, "website", "url") or "/research/partnerships"
-
-
 def _serialize_research_partner_item(
     partner: dict[str, Any],
     section: PageSection,

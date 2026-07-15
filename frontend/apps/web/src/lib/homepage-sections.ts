@@ -91,6 +91,16 @@ export type HomepageSectionItem = {
       href?: string | null;
       featured_media?: HomepageMedia["media"] | null;
     } | null;
+    research_partner?: {
+      id?: string | null;
+      name?: string | null;
+      acronym?: string | null;
+      slug?: string | null;
+      website?: string | null;
+      logo_url?: string | null;
+      partner_type?: string | null;
+      country?: string | null;
+    } | null;
   } | null;
 };
 
