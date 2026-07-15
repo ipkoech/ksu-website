@@ -39,6 +39,7 @@ type ProfileLink = { label: string; href: string | null };
 type ProfileRecord = {
   title: string;
   meta: string[];
+  category?: string | null;
   description?: string | null;
   href?: string | null;
 };
@@ -651,6 +652,14 @@ function publicationTitle(item: PublicPersonPublication) {
   );
 }
 
+function recordCategory(record: ProfileRecord) {
+  return present(record.category) || "Records";
+}
+
+function compactMeta(meta: string[]) {
+  return Array.from(new Set(meta.map((item) => item.trim()).filter(Boolean)));
+}
+
 function grantTitle(item: PublicPersonResearchGrant) {
   return present(item.title) || "Research grant";
 }
@@ -725,6 +734,110 @@ function RecordGrid({
   );
 }
 
+function GroupedRecordList({
+  records,
+  icon: Icon,
+}: {
+  records: ProfileRecord[];
+  icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+}) {
+  const groups = records.reduce<
+    Array<{ title: string; items: ProfileRecord[] }>
+  >((collection, record) => {
+    const title = recordCategory(record);
+    const existing = collection.find((item) => item.title === title);
+    if (existing) {
+      existing.items.push(record);
+      return collection;
+    }
+    collection.push({ title, items: [record] });
+    return collection;
+  }, []);
+
+  let itemNumber = 0;
+
+  return (
+    <div className="grid gap-5">
+      {groups.map((group) => (
+        <section
+          key={group.title}
+          className="overflow-hidden rounded-xl border border-slate-200 bg-white"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="inline-flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/[0.08] text-primary">
+                <Icon aria-hidden className="h-4 w-4" />
+              </span>
+              <h3 className="text-sm font-bold text-slate-950">
+                {group.title}
+              </h3>
+            </div>
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-600 ring-1 ring-slate-200">
+              {group.items.length}{" "}
+              {group.items.length === 1 ? "record" : "records"}
+            </span>
+          </div>
+          <ol className="divide-y divide-slate-100">
+            {group.items.map((record) => {
+              itemNumber += 1;
+              const meta = compactMeta(
+                record.meta.filter((item) => item !== group.title),
+              );
+              const rowContent = (
+                <div className="grid gap-3 px-4 py-4 transition hover:bg-primary/[0.03] sm:grid-cols-[3rem_minmax(0,1fr)]">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-sm font-bold text-slate-700">
+                    {itemNumber}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold leading-6 text-slate-950">
+                      {record.title}
+                    </p>
+                    {record.description &&
+                    record.description !== record.title ? (
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {record.description}
+                      </p>
+                    ) : null}
+                    {meta.length ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {meta.map((item) => (
+                          <span
+                            key={item}
+                            className="rounded-full bg-slate-100 px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.06em] text-slate-600"
+                          >
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              );
+
+              return (
+                <li key={`${record.title}-${itemNumber}`}>
+                  {record.href ? (
+                    <a
+                      href={record.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block"
+                    >
+                      {rowContent}
+                    </a>
+                  ) : (
+                    rowContent
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      ))}
+    </div>
+  );
+}
+
 export default async function PublicPersonPage({
   params,
 }: {
@@ -787,6 +900,7 @@ export default async function PublicPersonPage({
   const publicationRecords: ProfileRecord[] = articlePublications.map(
     (item) => ({
       title: publicationTitle(item),
+      category: present(item.source) || "Publication",
       meta: [
         present(item.venue),
         present(normalizedYear(item.year)),
@@ -800,6 +914,7 @@ export default async function PublicPersonPage({
   const bookPublicationRecords: ProfileRecord[] = bookPublications.map(
     (item) => ({
       title: publicationTitle(item),
+      category: present(item.source) || "Book publication",
       meta: [
         present(item.venue),
         present(normalizedYear(item.year)),
@@ -812,6 +927,7 @@ export default async function PublicPersonPage({
   );
   const grantRecords: ProfileRecord[] = grants.map((item) => ({
     title: grantTitle(item),
+    category: present(item.status) || present(item.source) || "Research grant",
     meta: [
       present(item.funder),
       present(item.role),
@@ -826,6 +942,11 @@ export default async function PublicPersonPage({
   ): ProfileRecord[] =>
     items.map((item) => ({
       title: genericRecordTitle(item),
+      category:
+        present(item.category) ||
+        present(item.type) ||
+        present(item.source) ||
+        "Profile record",
       meta: genericRecordMeta(item),
       description: genericRecordDescription(item),
       href: externalHref(item.url),
@@ -946,7 +1067,7 @@ export default async function PublicPersonPage({
                 </div>
                 <div className="mt-5">
                   {publicationRecords.length ? (
-                    <RecordGrid
+                    <GroupedRecordList
                       records={publicationRecords}
                       icon={BookOpenCheck}
                     />
@@ -987,7 +1108,7 @@ export default async function PublicPersonPage({
           label: "Grants/Funding",
           content: (
             <PanelCard>
-              <RecordGrid records={grantRecords} icon={Sparkles} />
+              <GroupedRecordList records={grantRecords} icon={Sparkles} />
             </PanelCard>
           ),
         }
@@ -998,7 +1119,7 @@ export default async function PublicPersonPage({
           label: "Book Publications",
           content: (
             <PanelCard>
-              <RecordGrid
+              <GroupedRecordList
                 records={bookPublicationRecords}
                 icon={BookOpenCheck}
               />
@@ -1012,7 +1133,10 @@ export default async function PublicPersonPage({
           label: "Awards / Recognitions",
           content: (
             <PanelCard>
-              <RecordGrid records={genericRecords(awards)} icon={Award} />
+              <GroupedRecordList
+                records={genericRecords(awards)}
+                icon={Award}
+              />
             </PanelCard>
           ),
         }
