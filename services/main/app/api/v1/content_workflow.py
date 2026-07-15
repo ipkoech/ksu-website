@@ -77,15 +77,15 @@ PREVIEW_PATH_PREFIXES = {
     "events": "/events",
 }
 EDIT_PATHS = {
-    "news": "/content/news",
-    "blogs": "/content/blogs",
-    "announcements": "/content/announcements",
-    "events": "/content/events",
+    "news": "/corporate-communication/newsroom/news",
+    "blogs": "/corporate-communication/newsroom/press-releases",
+    "announcements": "/corporate-communication/newsroom/notices",
+    "events": "/corporate-communication/newsroom/events",
     "club-events": "/student-clubs/events",
-    "club-media": "/cocms/review-queue",
-    "page-sections": "/page-cms/sections/{id}",
-    "partnership-spotlights": "/page-cms/spotlights",
-    "sliders": "/content/sliders/{id}",
+    "club-media": "/corporate-communication/review-queue",
+    "page-sections": "/corporate-communication/page-cms/sections/{id}",
+    "partnership-spotlights": "/corporate-communication/page-cms/spotlights",
+    "sliders": "/corporate-communication/media/sliders",
 }
 WORKFLOW_ACTION_PATHS = {
     "page-sections": "/api/v1/page-sections/{id}/{action}",

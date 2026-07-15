@@ -110,6 +110,8 @@ export interface EditableField {
   name: string;
   label: string;
   type?: FieldType;
+  sourceNames?: string[];
+  defaultValue?: any;
   required?: boolean;
   helpText?: string;
   placeholder?: string;
@@ -267,6 +269,7 @@ interface EditableServiceResourcePageProps<
 }
 
 function defaultValue(field: EditableField) {
+  if (field.defaultValue !== undefined) return field.defaultValue;
   if (field.type === "boolean") return true;
   if (field.type === "entity-multi") return [];
   if (field.type === "attachments") return [];
@@ -286,7 +289,10 @@ function recordToValues(fields: EditableField[], record?: RecordShape | null) {
       continue;
     }
 
-    const value = record?.[field.name];
+    const sourceNames = [field.name, ...(field.sourceNames ?? [])];
+    const value = sourceNames
+      .map((name) => record?.[name])
+      .find((candidate) => candidate !== undefined && candidate !== null);
     if (field.type === "boolean") {
       values[field.name] = Boolean(value);
     } else if (field.type === "date" && typeof value === "string") {

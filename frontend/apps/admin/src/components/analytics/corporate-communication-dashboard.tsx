@@ -106,6 +106,7 @@ const contentOptions = [
 
 const ownerOptions = [
   { value: "all", label: "All sources" },
+  { value: "corporate-communication", label: "Corporate Communication" },
   { value: "main", label: "Main site" },
   { value: "schools", label: "Schools" },
   { value: "departments", label: "Departments" },

@@ -548,7 +548,7 @@ function scopeEntityFilters(scopeType?: PortalEntityScope): EditableListFilter[]
 function faqFields(scopeType?: PortalEntityScope): EditableField[] {
   return [
   { name: "question", label: "Question", required: true },
-  { name: "answer", label: "Answer", type: "textarea" as const },
+  { name: "answer_rich_text", label: "Answer", type: "richtext" as const, sourceNames: ["answer_rich_text", "answer_plain_text", "answer"] },
   { name: "category", label: "Category" },
   ...scopeEntityFields(scopeType),
   {
@@ -561,6 +561,13 @@ function faqFields(scopeType?: PortalEntityScope): EditableField[] {
   { name: "is_main", label: "Main Site", type: "boolean" as const },
   { name: "is_public", label: "Public", type: "boolean" as const },
   ];
+}
+
+function faqPayload(values: PortalPayload) {
+  return {
+    ...values,
+    answer_plain_text: plainTextFromRichText(values.answer_rich_text),
+  };
 }
 
 function contactFields(scopeType?: PortalEntityScope): EditableField[] {
@@ -812,12 +819,32 @@ function splitList(value: unknown) {
   return items.length ? items : null;
 }
 
+function plainTextFromRichText(value: unknown) {
+  if (typeof value !== "string") return value;
+  const withoutBlocks = value
+    .replace(/<\/(p|div|li|h[1-6]|blockquote)>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n");
+  return (
+    withoutBlocks
+      .replace(/<[^>]*>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/[ \t]+\n/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim() || null
+  );
+}
+
 function commonContentPayload(values: PortalPayload, scopeType?: string) {
   return {
     title: values.title,
     slug: values.slug,
     summary: values.excerpt,
-    plain_text: values.content,
+    plain_text: plainTextFromRichText(values.content),
     rich_text: values.content,
     is_featured: values.is_featured,
     is_main: values.is_main ?? !scopeType,
@@ -838,8 +865,8 @@ function contentFields(
       placeholder: "Public title",
     },
     { name: "slug", label: "Slug", placeholder: "public-title" },
-    { name: "excerpt", label: "Excerpt", type: "textarea" as const },
-    { name: "content", label: "Content", type: "textarea" as const },
+    { name: "excerpt", label: "Excerpt", type: "textarea" as const, sourceNames: ["summary"] },
+    { name: "content", label: "Content", type: "richtext" as const, sourceNames: ["rich_text", "plain_text"] },
     ...(scopeType === "school"
       ? [
           {
@@ -877,8 +904,32 @@ function contentFields(
         isPublic: true,
       },
     },
-    { name: "is_featured", label: "Featured", type: "boolean" as const },
+    { name: "is_featured", label: "Featured", type: "boolean" as const, defaultValue: false },
   ];
+}
+
+function eventFields(
+  scopeType?: "school" | "department" | "research" | "corporate",
+) {
+  return [
+    ...contentFields(scopeType),
+    { name: "start_date", label: "Start Date", type: "datetime-local" as const, required: true },
+    { name: "end_date", label: "End Date", type: "datetime-local" as const },
+    { name: "location", label: "Location" },
+    { name: "is_virtual", label: "Virtual Event", type: "boolean" as const, defaultValue: false },
+    { name: "meeting_link", label: "Meeting Link", type: "url" as const },
+  ];
+}
+
+function commonEventPayload(values: PortalPayload, scopeType?: string) {
+  return {
+    ...commonContentPayload(values, scopeType),
+    start_date: values.start_date,
+    end_date: values.end_date,
+    location: normalizeText(values.location),
+    is_virtual: values.is_virtual ?? false,
+    meeting_link: normalizeText(values.meeting_link),
+  };
 }
 
 function contentResource<TRecord extends PortalRecord>({
@@ -894,6 +945,8 @@ function contentResource<TRecord extends PortalRecord>({
   unpublish,
   scopeType,
   manageScopes,
+  fields,
+  buildPayload,
 }: {
   key: string;
   title: string;
@@ -907,6 +960,8 @@ function contentResource<TRecord extends PortalRecord>({
   unpublish?: (id: string) => Promise<unknown>;
   scopeType?: "school" | "department" | "research" | "corporate";
   manageScopes: string[];
+  fields?: EditableField[];
+  buildPayload?: (values: PortalPayload) => PortalPayload;
 }): PortalResourceConfig<TRecord, PortalPayload> {
   return {
     key,
@@ -922,7 +977,7 @@ function contentResource<TRecord extends PortalRecord>({
             allowedScopeTypes: [scopeType],
           }
         : undefined,
-    fields: contentFields(scopeType),
+    fields: fields ?? contentFields(scopeType),
     listFilters: [
       {
         name: "status",
@@ -988,11 +1043,13 @@ function contentResource<TRecord extends PortalRecord>({
     getRecordMeta: (record) =>
       metaOf(record, ["status", "published_at", "updated_at"]),
     emptyMessage: `No ${title.toLowerCase()} records were returned.`,
-    buildPayload: (values) =>
-      commonContentPayload(
-        values,
-        scopeType === "corporate" ? undefined : scopeType,
-      ),
+    buildPayload:
+      buildPayload ??
+      ((values) =>
+        commonContentPayload(
+          values,
+          scopeType === "corporate" ? undefined : scopeType,
+        )),
     viewScopes: ["content.view", ...manageScopes],
     manageScopes,
     deleteScopes: ["content.publish", ...manageScopes],
@@ -1005,6 +1062,8 @@ function administrationContentResource<TRecord extends PortalRecord>({
   description,
   api,
   manageScopes,
+  fields,
+  buildPayload,
 }: {
   key: string;
   title: string;
@@ -1018,6 +1077,8 @@ function administrationContentResource<TRecord extends PortalRecord>({
     unpublish: (id: string) => Promise<unknown>;
   };
   manageScopes: string[];
+  fields?: EditableField[];
+  buildPayload?: (values: PortalPayload) => PortalPayload;
 }): PortalResourceConfig<TRecord, PortalPayload> {
   return {
     key,
@@ -1030,7 +1091,7 @@ function administrationContentResource<TRecord extends PortalRecord>({
       idField: "scope_id",
       allowedScopeTypes: ["university", "division", "wing", "department"],
     },
-    fields: [...contentFields(), ...scopeEntityFields("administration")],
+    fields: fields ?? [...contentFields(), ...scopeEntityFields("administration")],
     listFilters: [
       {
         name: "status",
@@ -1064,11 +1125,13 @@ function administrationContentResource<TRecord extends PortalRecord>({
     getRecordMeta: (record) =>
       metaOf(record, ["scope_type", "status", "is_published", "updated_at"]),
     emptyMessage: `No ${title.toLowerCase()} records were returned.`,
-    buildPayload: (values) => ({
-      ...commonContentPayload(values),
-      ...normalizeScopePayload(values),
-      is_main: values.is_main ?? values.scope_type === "university",
-    }),
+    buildPayload:
+      buildPayload ??
+      ((values) => ({
+        ...commonContentPayload(values),
+        ...normalizeScopePayload(values),
+        is_main: values.is_main ?? values.scope_type === "university",
+      })),
     validate: validateScopeValues,
     viewScopes: ["administration.view", "office.view", "content.view"],
     manageScopes,
@@ -1473,6 +1536,12 @@ const administrationResources: Record<string, PortalResourceConfig<any, any>> = 
       "Manage events, deadlines, and public calendars for administrative offices.",
     api: eventsApi,
     manageScopes: ["office.manage_content", "administration.manage_content", "content.manage_events"],
+    fields: [...eventFields(), ...scopeEntityFields("administration")],
+    buildPayload: (values) => ({
+      ...commonEventPayload(values),
+      ...normalizeScopePayload(values),
+      is_main: values.is_main ?? values.scope_type === "university",
+    }),
   }),
   documents: {
     ...governanceResources.documents,
@@ -1540,7 +1609,7 @@ const administrationResources: Record<string, PortalResourceConfig<any, any>> = 
       metaOf(record, ["scope_type", "category", "status", "updated_at"]),
     emptyMessage: "No office FAQs were returned.",
     buildPayload: (values) => ({
-      ...values,
+      ...faqPayload(values),
       ...normalizeScopePayload(values),
       status: values.status || "published",
     }),
@@ -1887,6 +1956,8 @@ const schoolResources: Record<string, PortalResourceConfig<any, any>> = {
     publish: (id) => eventsApi.publish(id),
     unpublish: (id) => eventsApi.unpublish(id),
     manageScopes: ["content.manage_events", "academic.manage_schools"],
+    fields: eventFields("school"),
+    buildPayload: (values) => commonEventPayload(values, "school"),
   }),
   validation: {
     key: "validation",
@@ -2255,6 +2326,8 @@ const departmentalResources: Record<string, PortalResourceConfig<any, any>> = {
     publish: (id) => eventsApi.publish(id),
     unpublish: (id) => eventsApi.unpublish(id),
     manageScopes: ["content.manage_events", "academic.manage_departments"],
+    fields: eventFields("department"),
+    buildPayload: (values) => commonEventPayload(values, "department"),
   }),
   resources: {
     ...governanceResources.documents,
@@ -2360,7 +2433,7 @@ const departmentalResources: Record<string, PortalResourceConfig<any, any>> = {
       metaOf(record, ["category", "status", "updated_at"]),
     emptyMessage: "No department FAQs were returned.",
     buildPayload: (values) => ({
-      ...values,
+      ...faqPayload(values),
       scope_type: "department",
       status: values.status || "published",
     }),
@@ -2433,6 +2506,10 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     publish: (id) => blogsApi.publish(id),
     unpublish: (id) => blogsApi.unpublish(id),
     manageScopes: ["content.manage_blogs", "content.publish"],
+    buildPayload: (values) => ({
+      ...commonContentPayload(values),
+      excerpt: values.excerpt,
+    }),
   }),
   notices: contentResource<Announcement>({
     key: "notices",
@@ -2463,6 +2540,8 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     publish: (id) => eventsApi.publish(id),
     unpublish: (id) => eventsApi.unpublish(id),
     manageScopes: ["content.manage_events", "content.publish"],
+    fields: eventFields("corporate"),
+    buildPayload: (values) => commonEventPayload(values),
   }),
   "homepage-features": {
     key: "homepage-features",
@@ -2474,9 +2553,15 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       { name: "name", label: "Name", required: true },
       { name: "slug", label: "Slug" },
       { name: "location", label: "Location" },
-      { name: "description", label: "Description", type: "textarea" },
-      { name: "is_main", label: "Main", type: "boolean" },
-      { name: "is_active", label: "Active", type: "boolean" },
+      { name: "is_main", label: "Main", type: "boolean", defaultValue: true },
+      { name: "is_public", label: "Public", type: "boolean", defaultValue: true },
+      { name: "is_active", label: "Active", type: "boolean", defaultValue: true },
+      { name: "max_slides", label: "Maximum Slides", type: "number" },
+      { name: "auto_play", label: "Auto Play", type: "boolean", defaultValue: false },
+      { name: "auto_play_duration", label: "Auto Play Duration (ms)", type: "number" },
+      { name: "show_navigation_dots", label: "Navigation Dots", type: "boolean", defaultValue: true },
+      { name: "show_arrows", label: "Arrows", type: "boolean", defaultValue: true },
+      { name: "transition_effect", label: "Transition Effect" },
     ],
     listFilters: [
       { name: "is_main", label: "Main", type: "boolean" },
@@ -2514,12 +2599,37 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       },
       { name: "title", label: "Title", required: true },
       { name: "subtitle", label: "Subtitle" },
-      { name: "description", label: "Description", type: "textarea" },
-      { name: "button_text", label: "Button Text" },
-      { name: "button_url", label: "Button URL", type: "url" },
-      { name: "link_url", label: "Link URL", type: "url" },
+      { name: "rich_text", label: "Slide Copy", type: "richtext", sourceNames: ["rich_text", "plain_text"] },
+      {
+        name: "desktop_media_id",
+        label: "Desktop Image",
+        type: "media",
+        media: {
+          mediaType: "image",
+          accept: "image/*",
+          helperText: "Choose or upload the main desktop slide image.",
+          isPublic: true,
+        },
+      },
+      {
+        name: "mobile_media_id",
+        label: "Mobile Image",
+        type: "media",
+        media: {
+          mediaType: "image",
+          accept: "image/*",
+          helperText: "Optional mobile-specific slide image.",
+          isPublic: true,
+        },
+      },
+      { name: "link_text", label: "Link Text" },
+      { name: "external_url", label: "External Link", type: "url" },
+      { name: "open_in_new_tab", label: "Open Link in New Tab", type: "boolean", defaultValue: false },
+      { name: "start_datetime", label: "Start Date", type: "datetime-local" },
+      { name: "end_datetime", label: "End Date", type: "datetime-local" },
       { name: "display_order", label: "Display Order", type: "number" },
-      { name: "is_active", label: "Active", type: "boolean" },
+      { name: "is_main", label: "Main Site", type: "boolean", defaultValue: true },
+      { name: "is_active", label: "Active", type: "boolean", defaultValue: true },
     ],
     listFilters: [
       {
@@ -2554,6 +2664,8 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     emptyMessage: "No homepage slider items were returned.",
     buildPayload: (values) => ({
       ...values,
+      plain_text: plainTextFromRichText(values.rich_text),
+      is_main: values.is_main ?? true,
       display_order: values.display_order ?? 0,
     }),
     viewScopes: ["marketing.view", "marketing.manage_sliders"],
@@ -2664,7 +2776,7 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       metaOf(record, ["category", "status", "updated_at"]),
     emptyMessage: "No public FAQs were returned.",
     buildPayload: (values) => ({
-      ...values,
+      ...faqPayload(values),
       is_main: values.is_main ?? true,
       status: values.status || "published",
     }),
