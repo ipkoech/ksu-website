@@ -1183,8 +1183,7 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
     .filter(
       (item) => item.content_enriched?.linked_content?.is_published === true,
     )
-    .slice(0, 4);
-  const [featuredActivity, ...supportingActivities] = activities;
+    .slice(0, 3);
   return (
     <section
       id={section.section_key}
@@ -1232,20 +1231,21 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
             </h3>
             <div className="mt-3 h-0.5 w-14 bg-secondary" />
           </div>
-          {featuredActivity ? (
-            <FeaturedActivity item={featuredActivity} />
+          {activities.length ? (
+            <div className="mt-5 grid min-h-0 flex-1 gap-px overflow-hidden border-y border-primary/15 bg-primary/15 sm:grid-cols-2 lg:grid-cols-3">
+              {activities.map((item, index) => (
+                <LeadershipActivityColumn
+                  key={item.id}
+                  item={item}
+                  index={index}
+                />
+              ))}
+            </div>
           ) : (
             <p className="mt-7 border-y border-primary/10 py-6 text-sm text-slate-600">
               Published leadership activities will appear here.
             </p>
           )}
-          {supportingActivities.length ? (
-            <div className="min-h-0 divide-y divide-primary/15 border-b border-primary/15 lg:flex lg:flex-1 lg:flex-col">
-              {supportingActivities.map((item, index) => (
-                <ActivityLineItem key={item.id} item={item} index={index + 1} />
-              ))}
-            </div>
-          ) : null}
           {activities.length ? (
             <Link
               href="/media/news"
@@ -1942,58 +1942,7 @@ function activityDetails(item: HomepageSectionItem) {
   };
 }
 
-function FeaturedActivity({ item }: { item: HomepageSectionItem }) {
-  const details = activityDetails(item);
-  if (!details) return null;
-  const { href, title, summary, altText, imageUrl, typeLabel, date } = details;
-  return (
-    <Link
-      href={href}
-      className="group mt-5 block shrink-0 border-b border-primary/15 pb-4"
-    >
-      <div className="relative h-[190px] overflow-hidden bg-primary/8 sm:h-[230px] lg:h-[180px] xl:h-[185px] 2xl:h-[200px]">
-        {imageUrl ? (
-          <PublicImage
-            src={imageUrl}
-            alt={altText}
-            ratio="fill"
-            className="absolute inset-0 rounded-none"
-            imageClassName="object-cover object-top transition duration-700 group-hover:scale-[1.025]"
-            sizes="(min-width: 1024px) 66vw, 100vw"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-primary">
-            <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(135deg,transparent_40%,rgba(255,255,255,.15)_40%,rgba(255,255,255,.15)_42%,transparent_42%)] [background-size:28px_28px]" />
-          </div>
-        )}
-      </div>
-      <div className="grid gap-3 pt-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.15em] text-primary">
-            {typeLabel}
-            {date ? (
-              <span className="ml-4 font-medium text-slate-500">{date}</span>
-            ) : null}
-          </p>
-          <h4 className="mt-1.5 line-clamp-2 max-w-4xl font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 transition group-hover:text-primary lg:text-[1.45rem] xl:text-2xl">
-            {title}
-          </h4>
-          {summary ? (
-            <p className="mt-1.5 line-clamp-2 max-w-3xl text-sm leading-5 text-slate-600 lg:line-clamp-1 xl:line-clamp-2">
-              {summary}
-            </p>
-          ) : null}
-        </div>
-        <ArrowRight
-          className="h-7 w-7 text-primary transition group-hover:translate-x-1"
-          aria-hidden
-        />
-      </div>
-    </Link>
-  );
-}
-
-function ActivityLineItem({
+function LeadershipActivityColumn({
   item,
   index,
 }: {
@@ -2002,38 +1951,50 @@ function ActivityLineItem({
 }) {
   const details = activityDetails(item);
   if (!details) return null;
-  const { href, title, altText, imageUrl, typeLabel, date } = details;
-  const body = (
-    <article className="group grid gap-3 py-2 transition sm:grid-cols-[104px_minmax(0,1fr)_auto] sm:items-center lg:h-full lg:min-h-0 lg:overflow-hidden xl:grid-cols-[116px_minmax(0,1fr)_auto]">
-      {imageUrl ? (
-        <PublicImage
-          src={imageUrl}
-          alt={altText}
-          ratio="fill"
-          className="hidden h-16 rounded-none sm:block"
-          imageClassName="object-cover transition duration-500 group-hover:scale-[1.03]"
-          sizes="116px"
-        />
-      ) : (
-        <div className="hidden h-16 items-center justify-center bg-primary text-xs font-bold tracking-[0.18em] text-white sm:flex">
-          {String(index + 1).padStart(2, "0")}
-        </div>
-      )}
-      <div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
-          {[typeLabel, date].filter(Boolean).join(" · ")}
+  const { href, title, summary, altText, imageUrl, typeLabel, date } = details;
+  return (
+    <Link
+      href={href}
+      className="group flex min-h-[360px] flex-col bg-[#fbfaf6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary lg:min-h-0"
+    >
+      <div className="relative h-48 shrink-0 overflow-hidden bg-primary sm:h-52 lg:h-[42%] lg:min-h-[190px]">
+        {imageUrl ? (
+          <PublicImage
+            src={imageUrl}
+            alt={altText}
+            ratio="fill"
+            className="absolute inset-0 rounded-none"
+            imageClassName="object-cover object-center transition duration-700 ease-out group-hover:scale-[1.035]"
+            sizes="(min-width: 1024px) 22vw, (min-width: 640px) 50vw, 100vw"
+          />
+        ) : (
+          <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(135deg,transparent_40%,rgba(255,255,255,.15)_40%,rgba(255,255,255,.15)_42%,transparent_42%)] [background-size:28px_28px]" />
+        )}
+        <span className="absolute left-4 top-4 inline-flex bg-primary px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white">
+          {typeLabel}
+        </span>
+      </div>
+      <article className="flex min-h-0 flex-1 flex-col px-4 py-5 xl:px-5">
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
+          {date ?? `Activity ${String(index + 1).padStart(2, "0")}`}
         </p>
-        <h4 className="mt-1 line-clamp-2 font-[family-name:var(--font-display)] text-lg font-semibold leading-tight text-slate-950 transition group-hover:text-primary lg:text-base xl:text-[1.05rem]">
+        <h4 className="mt-3 line-clamp-3 font-[family-name:var(--font-display)] text-xl font-semibold leading-[1.15] text-slate-950 transition-colors group-hover:text-primary lg:text-[1.2rem] xl:text-[1.35rem]">
           {title}
         </h4>
-      </div>
-      <ArrowRight className="hidden h-5 w-5 justify-self-end text-primary transition group-hover:translate-x-1 sm:block" />
-    </article>
-  );
-  return (
-    <LinkWrapper href={href} className="lg:block lg:min-h-0 lg:flex-1">
-      {body}
-    </LinkWrapper>
+        {summary ? (
+          <p className="mt-3 line-clamp-3 text-sm leading-5 text-slate-600 lg:line-clamp-4">
+            {summary}
+          </p>
+        ) : null}
+        <span className="mt-auto flex items-center justify-between gap-3 border-t border-primary/10 pt-4 text-xs font-bold uppercase tracking-[0.12em] text-primary">
+          Read {typeLabel}
+          <ArrowRight
+            className="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-1"
+            aria-hidden
+          />
+        </span>
+      </article>
+    </Link>
   );
 }
 
