@@ -280,6 +280,7 @@ async def seed_vc_activities(db: AsyncSession, ctx: SeedContext) -> None:
     if section is None or not activities:
         return
 
+    section.title = "VC’s Corner"
     has_curated_links = any(
         isinstance(item.content, dict)
         and item.content.get("linked_content_type")
@@ -287,6 +288,16 @@ async def seed_vc_activities(db: AsyncSession, ctx: SeedContext) -> None:
         for item in section.items
     )
     if has_curated_links:
+        for item in section.items:
+            if not isinstance(item.content, dict):
+                continue
+            if not item.content.get("linked_content_type"):
+                continue
+            item.content = {
+                **item.content,
+                "activity_context": "leadership-activity",
+            }
+        await db.flush()
         return
 
     section.items = [
@@ -296,6 +307,7 @@ async def seed_vc_activities(db: AsyncSession, ctx: SeedContext) -> None:
             content={
                 "linked_content_type": "news",
                 "linked_content_id": str(activity.id),
+                "activity_context": "leadership-activity",
             },
             media_alt_text=f"{activity.title} cover image",
             display_order=10 + index * 10,

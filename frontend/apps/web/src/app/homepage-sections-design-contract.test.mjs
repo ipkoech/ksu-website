@@ -71,7 +71,7 @@ test("programme finder uses desktop sticky stacked scroll panels", () => {
 test("leadership, partner, alumni, and facts sections have complete fallbacks", () => {
   assert.match(variantsSource, /settingText\(section, "leaderName"\)/);
   assert.match(variantsSource, /settingText\(section, "leaderImage"\)/);
-  assert.match(variantsSource, /Recent activities/);
+  assert.match(variantsSource, /VC&apos;s Corner/);
   assert.match(variantsSource, /partnerDisplayItems\(section\)/);
   assert.match(
     variantsSource,

@@ -216,7 +216,7 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
         "section_key": "leadership-activity",
         "layout_variant": "leadership_activity",
         "display_order": 80,
-        "title": "Leadership in action",
+        "title": "VC’s Corner",
         "subtitle": "Vice Chancellor",
         "description": "Our leadership advances knowledge, nurtures talent and transforms communities.",
         "settings": {"leaderName": "Prof. Charles O. Ong’ondo, PhD", "leaderTitle": "Vice Chancellor", "leaderImage": "/logos/vc3.jpg", "cta": {"label": "Meet our leadership", "href": "/about/vice-chancellor"}},
@@ -460,6 +460,7 @@ async def _seed_homepage_sections(db: AsyncSession) -> None:
                     "content": {
                         "linked_content_type": "news",
                         "linked_content_id": str(leadership_news[item_spec["title"]]),
+                        "activity_context": "leadership-activity",
                     },
                 }
                 for item_spec in item_specs
