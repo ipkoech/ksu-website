@@ -135,8 +135,10 @@ def _serialize_person(person: Person | None) -> dict[str, Any] | None:
         "display_name": person.display_name,
         "email": person.email,
         "institutional_role": person.institutional_role,
+        "leadership_message": person.leadership_message,
         "photo_id": str(person.photo_id) if person.photo_id else None,
         "photo_url": person.photo_url,
+        "profile_href": f"/people/{person.id}",
     }
 
 

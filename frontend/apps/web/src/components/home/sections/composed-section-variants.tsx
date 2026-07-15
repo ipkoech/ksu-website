@@ -1154,58 +1154,104 @@ function campusLifeLanes(items: HomepageSectionItem[]): CampusLifeLaneData[] {
 }
 
 export function LeadershipActivitySection({ section }: SectionVariantProps) {
+  const staff = section.settings_enriched?.staff_profile;
   const leaderName =
-    settingText(section, "leaderName") ?? "Prof. Charles O. Ong’ondo, PhD";
-  const leaderTitle = settingText(section, "leaderTitle") ?? "Vice Chancellor";
+    staff?.display_name ??
+    staff?.full_name ??
+    settingText(section, "leaderName") ??
+    "Prof. Charles O. Ong’ondo, PhD";
+  const leaderTitle =
+    staff?.institutional_role === "vc"
+      ? "Vice Chancellor"
+      : (staff?.institutional_role ??
+        settingText(section, "leaderTitle") ??
+        "Vice Chancellor");
   const leaderImage =
+    staff?.photo_url ??
     settingText(section, "leaderImage") ??
     mediaUrl(heroImage(section)) ??
     "/images/Home/VCProfSUKUBA.jpg";
+  const leaderMessage =
+    staff?.leadership_message ??
+    section.description ??
+    "Guiding Kisii University with integrity, vision and a commitment to academic excellence and community impact.";
+  const leaderHref =
+    staff?.profile_href ??
+    (staff?.id ? `/people/${staff.id}` : "/about/vice-chancellor");
   const activities = displayItems(section)
     .filter(
       (item) => item.content_enriched?.linked_content?.is_published === true,
     )
     .slice(0, 5);
+  const [featuredActivity, ...supportingActivities] = activities;
   return (
     <section
       id={section.section_key}
-      className="border-b border-blue-100 bg-white py-12 lg:py-14"
+      className="overflow-hidden border-b border-primary/10 bg-[#fbfaf6]"
     >
-      <div className="mx-auto grid max-w-[1680px] gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(250px,0.33fr)_minmax(0,0.67fr)] lg:px-8 xl:px-10 2xl:px-12">
-        <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
-          <PublicImage
-            src={leaderImage}
-            alt={`${leaderName}, ${leaderTitle}`}
-            ratio="profile"
-            className="min-h-[300px] max-h-[430px]"
-            imageClassName="object-cover object-top"
-          />
-          <div className="mt-5">
-            <SectionEyebrow value={leaderTitle} />
-            <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
-              {leaderName}
-            </h2>
-            <SectionBody value={section.description} className="mt-3" />
-            <CtaLink
-              item={{
-                title: "Meet our leadership",
-                cta_label: "Meet our leadership",
-                cta_url: "/about/vice-chancellor",
-              }}
-              className="mt-5"
+      <div className="mx-auto grid max-w-[1680px] lg:grid-cols-[minmax(280px,0.34fr)_minmax(0,0.66fr)]">
+        <div className="relative border-b border-primary/10 lg:border-b-0 lg:border-r">
+          <div className="relative min-h-[390px] overflow-hidden bg-primary lg:min-h-[470px]">
+            <div className="absolute -left-24 top-10 h-72 w-72 rounded-full border border-secondary/20" />
+            <div className="absolute left-10 top-20 h-56 w-56 border border-secondary/15 [clip-path:polygon(50%_0,100%_28%,100%_100%,0_100%,0_28%)]" />
+            <PublicImage
+              src={leaderImage}
+              alt={`${leaderName}, ${leaderTitle}`}
+              ratio="fill"
+              className="absolute inset-x-0 bottom-0 h-[94%] rounded-none bg-transparent"
+              imageClassName="object-contain object-bottom"
+              sizes="(min-width: 1024px) 34vw, 100vw"
             />
           </div>
+          <div className="px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
+            <SectionEyebrow value={section.title ?? "Leadership in action"} />
+            <p className="mt-6 text-xs font-bold uppercase tracking-[0.16em] text-primary">
+              {leaderTitle}
+            </p>
+            <h2 className="mt-2 max-w-md font-[family-name:var(--font-display)] text-3xl font-semibold leading-[1.05] text-slate-950 sm:text-4xl">
+              {leaderName}
+            </h2>
+            <div className="mt-4 h-px w-12 bg-secondary" />
+            <p className="mt-5 max-w-md text-sm leading-7 text-slate-600">
+              {leaderMessage}
+            </p>
+            <Link
+              href={leaderHref}
+              className="mt-7 inline-flex min-h-11 items-center gap-3 border-b border-secondary pb-1 text-sm font-bold text-primary transition hover:gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              Meet the Vice Chancellor
+              <ArrowRight className="h-4 w-4 text-secondary" aria-hidden />
+            </Link>
+          </div>
         </div>
-        <div className="flex flex-col justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150">
-          <SectionEyebrow value={section.title ?? "Leadership in action"} />
-          <h3 className="mt-2 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+        <div className="px-4 py-10 sm:px-8 lg:px-12 lg:py-14 xl:px-16">
+          <h3 className="font-[family-name:var(--font-display)] text-4xl font-semibold leading-none text-primary sm:text-5xl lg:text-6xl">
             Recent activities
           </h3>
-          <div className="mt-6 divide-y divide-blue-100 border-y border-blue-100">
-            {activities.map((item, index) => (
-              <ActivityLineItem key={item.id} item={item} index={index} />
-            ))}
-          </div>
+          <div className="mt-4 h-0.5 w-14 bg-secondary" />
+          {featuredActivity ? (
+            <FeaturedActivity item={featuredActivity} />
+          ) : (
+            <p className="mt-10 border-y border-primary/10 py-8 text-sm text-slate-600">
+              Published leadership activities will appear here.
+            </p>
+          )}
+          {supportingActivities.length ? (
+            <div className="divide-y divide-primary/15 border-y border-primary/15">
+              {supportingActivities.map((item, index) => (
+                <ActivityLineItem key={item.id} item={item} index={index + 1} />
+              ))}
+            </div>
+          ) : null}
+          {activities.length ? (
+            <Link
+              href="/media/news"
+              className="mt-7 inline-flex min-h-11 items-center gap-3 border-b border-secondary pb-1 text-sm font-bold text-primary transition hover:gap-4"
+            >
+              View all activities
+              <ArrowRight className="h-4 w-4 text-secondary" aria-hidden />
+            </Link>
+          ) : null}
         </div>
       </div>
     </section>
@@ -1744,6 +1790,83 @@ function formatDateRange(start?: string | null, end?: string | null) {
   return startDate ?? endDate ?? "See admission notice";
 }
 
+function activityDetails(item: HomepageSectionItem) {
+  const linked = item.content_enriched?.linked_content;
+  if (!linked?.is_published || !linked.title || !linked.href) return null;
+  return {
+    href: linked.href,
+    title: linked.title,
+    summary: linked.summary,
+    altText: linked.featured_media?.alt_text ?? linked.title,
+    imageUrl:
+      linked.featured_media?.cdn_url ??
+      linked.featured_media?.public_url ??
+      linked.featured_media?.url ??
+      linked.featured_media?.thumbnail_url ??
+      null,
+    typeLabel:
+      linked.type === "blog"
+        ? "Story"
+        : linked.type === "event"
+          ? "Event"
+          : "News",
+    date: formatPublicDate(
+      linked.type === "event" ? linked.start_date : linked.published_at,
+    ),
+  };
+}
+
+function FeaturedActivity({ item }: { item: HomepageSectionItem }) {
+  const details = activityDetails(item);
+  if (!details) return null;
+  const { href, title, summary, altText, imageUrl, typeLabel, date } = details;
+  return (
+    <Link
+      href={href}
+      className="group mt-8 block border-b border-primary/15 pb-7"
+    >
+      <div className="relative aspect-[16/7] overflow-hidden bg-primary/8">
+        {imageUrl ? (
+          <PublicImage
+            src={imageUrl}
+            alt={altText}
+            ratio="fill"
+            className="absolute inset-0 rounded-none"
+            imageClassName="object-cover transition duration-700 group-hover:scale-[1.025]"
+            sizes="(min-width: 1024px) 66vw, 100vw"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-primary">
+            <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(135deg,transparent_40%,rgba(255,255,255,.15)_40%,rgba(255,255,255,.15)_42%,transparent_42%)] [background-size:28px_28px]" />
+          </div>
+        )}
+      </div>
+      <div className="grid gap-4 pt-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.15em] text-primary">
+            {typeLabel}
+            {date ? (
+              <span className="ml-4 font-medium text-slate-500">{date}</span>
+            ) : null}
+          </p>
+          <h4 className="mt-3 max-w-4xl font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 transition group-hover:text-primary sm:text-3xl">
+            {title}
+          </h4>
+          {summary ? (
+            <p className="mt-3 line-clamp-2 max-w-3xl text-sm leading-6 text-slate-600">
+              {summary}
+            </p>
+          ) : null}
+        </div>
+        <ArrowRight
+          className="h-7 w-7 text-primary transition group-hover:translate-x-1"
+          aria-hidden
+        />
+      </div>
+    </Link>
+  );
+}
+
 function ActivityLineItem({
   item,
   index,
@@ -1751,55 +1874,36 @@ function ActivityLineItem({
   item: HomepageSectionItem;
   index: number;
 }) {
-  const linked = item.content_enriched?.linked_content;
-  if (!linked?.is_published || !linked.title || !linked.href) return null;
-  const imageUrl =
-    linked.featured_media?.thumbnail_url ??
-    linked.featured_media?.cdn_url ??
-    linked.featured_media?.public_url ??
-    linked.featured_media?.url ??
-    null;
-  const typeLabel =
-    linked.type === "blog"
-      ? "Story"
-      : linked.type === "event"
-        ? "Event"
-        : "News";
-  const date = formatPublicDate(
-    linked.type === "event" ? linked.start_date : linked.published_at,
-  );
+  const details = activityDetails(item);
+  if (!details) return null;
+  const { href, title, altText, imageUrl, typeLabel, date } = details;
   const body = (
-    <article className="group grid gap-4 py-5 transition hover:bg-blue-50/60 sm:grid-cols-[64px_minmax(0,1fr)_120px] sm:items-center sm:px-4">
-      <span className="font-[family-name:var(--font-display)] text-2xl font-semibold text-primary/30 transition group-hover:text-primary">
-        {String(index + 1).padStart(2, "0")}
-      </span>
-      <div>
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
-          {[typeLabel, date].filter(Boolean).join(" · ")}
-        </p>
-        <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
-          {linked.title}
-        </h3>
-        {linked.summary ? (
-          <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">
-            {linked.summary}
-          </p>
-        ) : null}
-      </div>
+    <article className="group grid gap-4 py-4 transition sm:grid-cols-[132px_minmax(0,1fr)_auto] sm:items-center">
       {imageUrl ? (
         <PublicImage
           src={imageUrl}
-          alt={linked.featured_media?.alt_text ?? linked.title}
+          alt={altText}
           ratio="logo"
           className="hidden min-h-20 rounded-none sm:block"
-          imageClassName="object-cover"
+          imageClassName="object-cover transition duration-500 group-hover:scale-[1.03]"
         />
       ) : (
-        <ArrowRight className="hidden h-4 w-4 justify-self-end text-primary opacity-0 transition group-hover:translate-x-1 group-hover:opacity-100 sm:block" />
+        <div className="hidden min-h-20 items-center justify-center bg-primary text-xs font-bold tracking-[0.18em] text-white sm:flex">
+          {String(index + 1).padStart(2, "0")}
+        </div>
       )}
+      <div>
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
+          {[typeLabel, date].filter(Boolean).join(" · ")}
+        </p>
+        <h4 className="mt-1 font-[family-name:var(--font-display)] text-lg font-semibold leading-snug text-slate-950 transition group-hover:text-primary sm:text-xl">
+          {title}
+        </h4>
+      </div>
+      <ArrowRight className="hidden h-5 w-5 justify-self-end text-primary transition group-hover:translate-x-1 sm:block" />
     </article>
   );
-  return <LinkWrapper href={linked.href}>{body}</LinkWrapper>;
+  return <LinkWrapper href={href}>{body}</LinkWrapper>;
 }
 
 function NewsLineItem({

@@ -104,6 +104,20 @@ export type HomepageSection = {
   subtitle?: string | null;
   description?: string | null;
   settings?: Record<string, unknown> | null;
+  settings_enriched?: {
+    staff_profile?: {
+      id?: string;
+      title?: string | null;
+      full_name?: string | null;
+      display_name?: string | null;
+      email?: string | null;
+      institutional_role?: string | null;
+      leadership_message?: string | null;
+      photo_id?: string | null;
+      photo_url?: string | null;
+      profile_href?: string | null;
+    } | null;
+  } | null;
   display_order?: number;
   is_enabled?: boolean;
   layout_variant: string;
