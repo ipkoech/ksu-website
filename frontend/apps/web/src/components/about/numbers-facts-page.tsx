@@ -25,19 +25,6 @@ function FactLine({ item }: { item: PublicFactItem }) {
         </>
       )}
       {item.explanation ? <RichTextRenderer content={item.explanation} className="mt-1 block prose-sm text-sm leading-6 text-slate-600" /> : null}
-      <span className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs font-medium text-slate-500">
-        {item.source_url ? (
-          <Link href={item.source_url} className="text-primary underline-offset-4 hover:underline">
-            {item.source_title || "Source evidence"}
-          </Link>
-        ) : item.source_title ? <span>{item.source_title}</span> : null}
-        {item.verified_on ? <span>Verified {new Date(item.verified_on).toLocaleDateString("en-KE", { dateStyle: "medium" })}</span> : null}
-        {item.link_url ? (
-          <Link href={item.link_url} className="text-primary underline-offset-4 hover:underline">
-            {item.link_label || "Read more"}
-          </Link>
-        ) : null}
-      </span>
     </li>
   );
 }
