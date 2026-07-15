@@ -38,7 +38,7 @@ def _validate_link_target(value: str | None, field_name: str) -> str | None:
     raise ValueError(f"{field_name} must start with http://, https://, or /")
 
 
-LEADERSHIP_CONTENT_TYPES = {"news", "event"}
+LEADERSHIP_CONTENT_TYPES = {"news", "blog", "event"}
 
 
 def _validate_leadership_activity_content(content: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -50,13 +50,13 @@ def _validate_leadership_activity_content(content: dict[str, Any] | None) -> dic
     if linked_type in (None, "") and linked_id in (None, ""):
         return content
     if linked_type not in LEADERSHIP_CONTENT_TYPES:
-        raise ValueError("content.linked_content_type must be either news or event")
+        raise ValueError("content.linked_content_type must be news, blog, or event")
     if linked_id in (None, ""):
         raise ValueError("content.linked_content_id is required when linked_content_type is set")
     try:
         content["linked_content_id"] = str(uuid.UUID(str(linked_id)))
     except (TypeError, ValueError) as exc:
-        raise ValueError("content.linked_content_id must be a valid news/event ID") from exc
+        raise ValueError("content.linked_content_id must be a valid news/blog/event ID") from exc
     content["linked_content_type"] = linked_type
     return content
 

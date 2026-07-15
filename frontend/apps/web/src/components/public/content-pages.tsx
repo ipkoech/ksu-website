@@ -9,9 +9,14 @@ import {
   LinkIcon,
   MapPin,
   Newspaper,
+  PlayCircle,
 } from "lucide-react";
 import { RichTextRenderer } from "@ksu/ui/rich-text-renderer";
-import { ListPagination, ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
+import {
+  ListPagination,
+  ScrollReveal,
+  ScrollRevealGroup,
+} from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import {
   MediaGalleryBento,
@@ -41,7 +46,7 @@ import {
 function kindLabel(
   kind: ContentListingData["kind"] | ContentDetailData["kind"],
 ) {
-  if (kind === "blogs") return "Articles";
+  if (kind === "blogs") return "Stories";
   if (kind === "events") return "Events";
   if (kind === "announcements") return "Announcements";
   if (kind === "media") return "Media";
@@ -260,7 +265,7 @@ const mediaDeskSections: Array<{
   },
   {
     id: "articles",
-    title: "Articles",
+    title: "Stories",
     body: "Feature articles, stories, and public explainers.",
     kinds: ["blogs"],
     href: "/media/articles",
@@ -411,64 +416,74 @@ function MediaDeskSections({ records }: { records: ContentRecord[] }) {
       {mediaDeskSections
         .filter((section) => section.id !== "gallery")
         .map((section) => {
-        const sectionRecords = records
-          .filter((record) => section.kinds.includes(record.contentKind))
-          .slice(0, 3);
+          const sectionRecords = records
+            .filter((record) => section.kinds.includes(record.contentKind))
+            .slice(0, 3);
 
-        return (
-          <div key={section.id} id={section.id} className="scroll-mt-32">
-            <ScrollReveal
-              as="section"
-              className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:p-6"
-            >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <SectionKicker>Media Desk</SectionKicker>
-                <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
-                  {section.title}
-                </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
-                  {section.body}
-                </p>
-              </div>
-              <Link
-                href={section.href}
-                className="inline-flex min-h-10 items-center gap-2 rounded-full border border-primary/20 px-4 text-sm font-bold text-primary transition hover:bg-primary hover:text-white"
+          return (
+            <div key={section.id} id={section.id} className="scroll-mt-32">
+              <ScrollReveal
+                as="section"
+                className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:p-6"
               >
-                View all
-                <ArrowRight aria-hidden className="h-4 w-4" />
-              </Link>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <SectionKicker>Media Desk</SectionKicker>
+                    <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
+                      {section.title}
+                    </h2>
+                    <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
+                      {section.body}
+                    </p>
+                  </div>
+                  <Link
+                    href={section.href}
+                    className="inline-flex min-h-10 items-center gap-2 rounded-full border border-primary/20 px-4 text-sm font-bold text-primary transition hover:bg-primary hover:text-white"
+                  >
+                    View all
+                    <ArrowRight aria-hidden className="h-4 w-4" />
+                  </Link>
+                </div>
+
+                {sectionRecords.length ? (
+                  <ScrollRevealGroup
+                    className="mt-5 grid gap-4 md:grid-cols-3"
+                    staggerDelay={60}
+                  >
+                    {sectionRecords.map((record) => (
+                      <RecordCard
+                        key={`${section.id}-${record.contentKind}-${record.id}`}
+                        record={record}
+                        compact
+                      />
+                    ))}
+                  </ScrollRevealGroup>
+                ) : (
+                  <p className="mt-5 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+                    No {section.title.toLowerCase()} records are currently
+                    published.
+                  </p>
+                )}
+              </ScrollReveal>
             </div>
-
-            {sectionRecords.length ? (
-              <ScrollRevealGroup
-                className="mt-5 grid gap-4 md:grid-cols-3"
-                staggerDelay={60}
-              >
-                {sectionRecords.map((record) => (
-                  <RecordCard
-                    key={`${section.id}-${record.contentKind}-${record.id}`}
-                    record={record}
-                    compact
-                  />
-                ))}
-              </ScrollRevealGroup>
-            ) : (
-              <p className="mt-5 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-                No {section.title.toLowerCase()} records are currently published.
-              </p>
-            )}
-            </ScrollReveal>
-          </div>
-        );
-      })}
+          );
+        })}
     </div>
   );
 }
 
-function MediaDeskStack({ data, records }: { data: ContentListingData; records: ContentRecord[] }) {
-  const section = mediaDeskSections.find((item) => item.id === data.mediaDeskSection);
-  const emptyLabel = section?.title.toLowerCase() ?? kindLabel(data.kind).toLowerCase();
+function MediaDeskStack({
+  data,
+  records,
+}: {
+  data: ContentListingData;
+  records: ContentRecord[];
+}) {
+  const section = mediaDeskSections.find(
+    (item) => item.id === data.mediaDeskSection,
+  );
+  const emptyLabel =
+    section?.title.toLowerCase() ?? kindLabel(data.kind).toLowerCase();
 
   if (data.mediaDeskSection === "gallery") {
     return (
@@ -498,7 +513,10 @@ function MediaDeskStack({ data, records }: { data: ContentListingData; records: 
   }
 
   return (
-    <ScrollReveal as="section" className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
+    <ScrollReveal
+      as="section"
+      className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:p-6"
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <SectionKicker>{`${data.total} records`}</SectionKicker>
@@ -580,13 +598,15 @@ function ContentFilters({
 }) {
   const typeOptions =
     data.kind === "media"
-      ? data.categories.map((item) => {
-          const url = new URL(item.href, "https://kisiiuniversity.ac.ke");
-          return {
-            value: url.searchParams.get("type") ?? "",
-            label: item.label,
-          } satisfies ListFilterOption;
-        }).filter((item) => item.value)
+      ? data.categories
+          .map((item) => {
+            const url = new URL(item.href, "https://kisiiuniversity.ac.ke");
+            return {
+              value: url.searchParams.get("type") ?? "",
+              label: item.label,
+            } satisfies ListFilterOption;
+          })
+          .filter((item) => item.value)
       : [];
   const entityTypeOptions: ListFilterOption[] = [
     { value: "school", label: "School" },
@@ -636,22 +656,20 @@ function ContentFilters({
       className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-3"
       searchValue={data.filters.q}
       searchPlaceholder={`Search ${kindLabel(data.kind).toLowerCase()}`}
-      selects={
-        [
-          ...entitySelects,
-          ...(typeOptions.length
-            ? [
-                {
-                  name: "type",
-                  label: "Type",
-                  value: data.filters.type,
-                  allLabel: "All types",
-                  options: typeOptions,
-                },
-              ]
-            : []),
-        ]
-      }
+      selects={[
+        ...entitySelects,
+        ...(typeOptions.length
+          ? [
+              {
+                name: "type",
+                label: "Type",
+                value: data.filters.type,
+                allLabel: "All types",
+                options: typeOptions,
+              },
+            ]
+          : []),
+      ]}
       clearHref={data.href}
       total={data.total}
       visible={visible}
@@ -908,7 +926,10 @@ function StructuredObject({ value }: { value: Record<string, unknown> }) {
 }
 
 function StructuredContentSection({ data }: { data: ContentDetailData }) {
-  if (!data.structuredContent || !visibleStructuredEntries(data.structuredContent).length) {
+  if (
+    !data.structuredContent ||
+    !visibleStructuredEntries(data.structuredContent).length
+  ) {
     return null;
   }
 
@@ -982,6 +1003,69 @@ function GallerySection({ data }: { data: ContentDetailData }) {
   );
 }
 
+function SupportingMediaSection({ data }: { data: ContentDetailData }) {
+  const videos = data.mediaAssets.filter(
+    (asset) => asset.role === "video" && asset.id !== data.coverVideo?.id,
+  );
+  const downloads = data.mediaAssets.filter((asset) =>
+    ["document", "attachment"].includes(asset.role),
+  );
+  if (!videos.length && !downloads.length) return null;
+
+  return (
+    <ScrollReveal as="section" className="grid gap-5">
+      {videos.length ? (
+        <div>
+          <SectionKicker>Videos</SectionKicker>
+          <div className="mt-3 grid gap-4 md:grid-cols-2">
+            {videos.map((asset) => (
+              <figure
+                key={asset.id}
+                className="overflow-hidden rounded-lg border border-slate-200 bg-slate-950"
+              >
+                <video
+                  controls
+                  preload="metadata"
+                  className="aspect-video w-full"
+                  src={asset.url}
+                >
+                  Your browser does not support embedded video.
+                </video>
+                <figcaption className="flex items-center gap-2 bg-white px-4 py-3 text-sm font-semibold text-slate-800">
+                  <PlayCircle aria-hidden className="h-4 w-4 text-primary" />
+                  {asset.title || asset.filename || "Supporting video"}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      {downloads.length ? (
+        <div>
+          <SectionKicker>Downloads and attachments</SectionKicker>
+          <div className="mt-3 divide-y divide-slate-200 border-y border-slate-200">
+            {downloads.map((asset) => (
+              <a
+                key={asset.id}
+                href={asset.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex min-h-14 items-center gap-3 py-3 text-sm font-semibold text-slate-800 transition hover:text-primary"
+              >
+                <FileText aria-hidden className="h-5 w-5 text-primary" />
+                <span className="min-w-0 flex-1 truncate">
+                  {asset.title || asset.filename || "Download attachment"}
+                </span>
+                <Download aria-hidden className="h-4 w-4" />
+              </a>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </ScrollReveal>
+  );
+}
+
 function DetailBody({ data }: { data: ContentDetailData }) {
   if (data.record.contentKind === "media") {
     return (
@@ -1037,7 +1121,8 @@ function DetailHero({ data }: { data: ContentDetailData }) {
           </p>
         ) : null}
         <div className="mt-6 flex flex-wrap items-center gap-3 text-sm font-semibold text-slate-600">
-          {data.record.contentKind === "events" && present(data.record.location) ? (
+          {data.record.contentKind === "events" &&
+          present(data.record.location) ? (
             <span className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 px-3">
               <MapPin aria-hidden className="h-4 w-4 text-primary" />
               {data.record.location}
@@ -1050,7 +1135,19 @@ function DetailHero({ data }: { data: ContentDetailData }) {
 
       <figure className="relative min-h-[300px] border-t border-primary/10 bg-slate-100 sm:min-h-[420px] lg:min-h-[520px]">
         <div className="absolute inset-0">
-          <ContentImage record={data.record} large />
+          {data.coverVideo ? (
+            <video
+              controls
+              preload="metadata"
+              poster={data.videoPoster?.url ?? data.heroImage ?? undefined}
+              className="h-full w-full bg-slate-950 object-contain"
+              src={data.coverVideo.url}
+            >
+              Your browser does not support embedded video.
+            </video>
+          ) : (
+            <ContentImage record={data.record} large />
+          )}
         </div>
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/35 to-transparent" />
         {data.heroImage ? (
@@ -1178,6 +1275,7 @@ export function ContentDetailPage({ data }: { data: ContentDetailData }) {
                 <main className="grid min-w-0 gap-5">
                   <DetailBody data={data} />
                   <GallerySection data={data} />
+                  <SupportingMediaSection data={data} />
                   <StructuredContentSection data={data} />
                   <RelatedContentSection data={data} />
                 </main>

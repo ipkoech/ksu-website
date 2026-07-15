@@ -13,7 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from ksu_common import PaginatedResult
 
-from ..models import ContentWorkflowLog, Event, Media, MediaLink, News, PageSection, PartnershipSpotlight, Person
+from ..models import Blog, ContentWorkflowLog, Event, Media, MediaLink, News, PageSection, PartnershipSpotlight, Person
 from ._base import ilike_any, paginate_query
 from .research_partners import ResearchPartnersProxyService
 
@@ -140,9 +140,11 @@ def _serialize_person(person: Person | None) -> dict[str, Any] | None:
     }
 
 
-def _serialize_linked_content(record: News | Event | None, content_type: str | None) -> dict[str, Any] | None:
+def _serialize_linked_content(record: News | Blog | Event | None, content_type: str | None) -> dict[str, Any] | None:
     if record is None or content_type is None:
         return None
+    route = {"news": "news", "blog": "articles", "event": "events"}.get(content_type)
+    featured_media = _serialize_media(getattr(record, "featured_media", None))
     return {
         "id": str(record.id),
         "type": content_type,
@@ -153,7 +155,8 @@ def _serialize_linked_content(record: News | Event | None, content_type: str | N
         "is_published": getattr(record, "is_published", None),
         "published_at": getattr(record, "published_at", None),
         "start_date": getattr(record, "start_date", None),
-        "href": f"/{'news' if content_type == 'news' else 'events'}/{record.slug}",
+        "featured_media": featured_media,
+        "href": f"/media/{route}/{record.slug}" if route else None,
     }
 
 
@@ -165,8 +168,12 @@ async def _enrich_section_item_content(db: AsyncSession, content: dict[str, Any]
     linked_type = content.get("linked_content_type")
     linked_id = content.get("linked_content_id")
     if linked_type and linked_id:
-        model = News if linked_type == "news" else Event if linked_type == "event" else None
-        linked = await db.get(model, uuid.UUID(str(linked_id))) if model is not None else None
+        model = News if linked_type == "news" else Blog if linked_type == "blog" else Event if linked_type == "event" else None
+        linked = (
+            await db.get(model, uuid.UUID(str(linked_id)), options=[selectinload(model.featured_media)])
+            if model is not None
+            else None
+        )
         enriched["linked_content"] = _serialize_linked_content(linked, str(linked_type))
 
     return enriched or None

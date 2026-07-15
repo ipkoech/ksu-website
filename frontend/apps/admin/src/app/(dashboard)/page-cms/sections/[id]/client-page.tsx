@@ -34,11 +34,17 @@ import {
 } from "@ksu/ui/components";
 import {
   AttachmentManager,
+  MediaPicker,
   type AttachmentRoleOption,
   type PendingMediaAttachment,
   useCommitPendingAttachments,
 } from "@/components/media";
-import { LibraryBranchPicker, ResearchCenterPicker, SchoolPicker } from "@/components/relationships/relationship-pickers";
+import { contentAttachmentRoles } from "@/components/content/content-attachment-roles";
+import {
+  LibraryBranchPicker,
+  ResearchCenterPicker,
+  SchoolPicker,
+} from "@/components/relationships/relationship-pickers";
 import { DateTimePicker } from "@/components/shared/date-time-picker";
 import { usePermissions } from "@/hooks/use-permissions";
 import { PageTransition } from "@/lib/animations";
@@ -64,7 +70,7 @@ import { ExternalLink, Sparkles } from "lucide-react";
 import { EntityPicker } from "@/components/relationships/entity-picker";
 import { PersonPicker } from "@/components/relationships/relationship-pickers";
 import { relationshipAdapters } from "@/components/relationships/relationship-adapters";
-import { eventsApi, newsApi } from "@ksu/api-client";
+import { blogsApi, eventsApi, newsApi } from "@ksu/api-client";
 
 type SectionFormState = {
   page_key: string;
@@ -105,13 +111,17 @@ type SectionItemDraft = {
   pending_attachments: PendingMediaAttachment[];
 };
 
-const MEDIA_ROLE_OPTIONS: AttachmentRoleOption[] = PAGE_CMS_MEDIA_ROLES.map((role) => ({
-  value: role,
-  label: role.replace(/_/g, " "),
-  mediaType: role === "video" ? "video" : role === "gallery" ? "image" : undefined,
-  accept: role === "video" ? "video/*" : role === "gallery" ? "image/*" : undefined,
-  description: `Attach media for the ${role.replace(/_/g, " ")} role.`,
-}));
+const MEDIA_ROLE_OPTIONS: AttachmentRoleOption[] = PAGE_CMS_MEDIA_ROLES.map(
+  (role) => ({
+    value: role,
+    label: role.replace(/_/g, " "),
+    mediaType:
+      role === "video" ? "video" : role === "gallery" ? "image" : undefined,
+    accept:
+      role === "video" ? "video/*" : role === "gallery" ? "image/*" : undefined,
+    description: `Attach media for the ${role.replace(/_/g, " ")} role.`,
+  }),
+);
 
 function toDateTimeInput(value?: string | null) {
   if (!value) return "";
@@ -164,7 +174,8 @@ function createItemDraft(item?: SectionItem): SectionItemDraft {
     video_provider: item?.video_provider ?? "",
     video_url: item?.video_url ?? "",
     video_duration_seconds:
-      item?.video_duration_seconds === null || item?.video_duration_seconds === undefined
+      item?.video_duration_seconds === null ||
+      item?.video_duration_seconds === undefined
         ? ""
         : String(item.video_duration_seconds),
     display_order: item?.display_order ?? 100,
@@ -194,11 +205,15 @@ function withLeadershipContent(
 }
 
 function sectionStaffProfileId(form: SectionFormState) {
-  const value = form.settings?.staff_profile_id ?? form.settings?.leader_profile_id;
+  const value =
+    form.settings?.staff_profile_id ?? form.settings?.leader_profile_id;
   return typeof value === "string" ? value : "";
 }
 
-function withSectionStaffProfile(form: SectionFormState, staffProfileId: string | null): SectionFormState {
+function withSectionStaffProfile(
+  form: SectionFormState,
+  staffProfileId: string | null,
+): SectionFormState {
   const settings = { ...(form.settings ?? {}) };
   delete settings.leader_profile_id;
   if (staffProfileId) {
@@ -228,7 +243,10 @@ function formFromSection(section: PageSection): SectionFormState {
   };
 }
 
-function itemPayloadFromDraft(item: SectionItemDraft, layoutVariant: PageSectionLayoutVariant): SectionItemPayload {
+function itemPayloadFromDraft(
+  item: SectionItemDraft,
+  layoutVariant: PageSectionLayoutVariant,
+): SectionItemPayload {
   const content = { ...(item.content ?? {}) };
   if (layoutVariant === "leadership_activity") {
     delete content.staff_profile_id;
@@ -247,7 +265,9 @@ function itemPayloadFromDraft(item: SectionItemDraft, layoutVariant: PageSection
     media_alt_text: item.media_alt_text || null,
     video_provider: item.video_provider || null,
     video_url: item.video_url || null,
-    video_duration_seconds: item.video_duration_seconds ? Number(item.video_duration_seconds) : null,
+    video_duration_seconds: item.video_duration_seconds
+      ? Number(item.video_duration_seconds)
+      : null,
     display_order: item.display_order,
     is_enabled: item.is_enabled,
   };
@@ -273,7 +293,8 @@ function isEmptyItemDraft(item: SectionItemDraft) {
 
 function workflowButtonsForStatus(status: PageSectionStatus) {
   const buttons: PageSectionWorkflowAction[] = [];
-  if (status === "draft" || status === "changes_requested") buttons.push("submit");
+  if (status === "draft" || status === "changes_requested")
+    buttons.push("submit");
   if (status === "in_review") buttons.push("approve", "request_changes");
   if (status === "approved") buttons.push("publish");
   if (status === "published") buttons.push("unpublish");
@@ -302,7 +323,8 @@ function SectionScopePicker({
   if (scopeType === "university") {
     return (
       <div className="rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
-        This section is managed at university level and does not need a related record.
+        This section is managed at university level and does not need a related
+        record.
       </div>
     );
   }
@@ -377,7 +399,8 @@ function LeadershipSectionProfileControls({
         <div>
           <p className="text-sm font-semibold">Leadership profile</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Select the single VC/staff profile represented by this section. The profile image is resolved automatically from the staff record.
+            Select the single VC/staff profile represented by this section. The
+            profile image is resolved automatically from the staff record.
           </p>
         </div>
         <Badge variant="secondary">section relationship</Badge>
@@ -385,7 +408,9 @@ function LeadershipSectionProfileControls({
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
         <PersonPicker
           value={sectionStaffProfileId(form)}
-          onChange={(value) => onChange(withSectionStaffProfile(form, value || null))}
+          onChange={(value) =>
+            onChange(withSectionStaffProfile(form, value || null))
+          }
           disabled={disabled}
           filters={{ status: "active" }}
           label="VC profile"
@@ -397,15 +422,33 @@ function LeadershipSectionProfileControls({
           {staff?.photo_url ? (
             <div className="flex items-center gap-3">
               <div className="size-16 overflow-hidden rounded-xl border bg-muted">
-                <ImageRenderer src={staff.photo_url} alt={staff.display_name ?? staff.full_name ?? "Leadership profile"} className="h-full border-0" imageClassName="h-full w-full object-cover" />
+                <ImageRenderer
+                  src={staff.photo_url}
+                  alt={
+                    staff.display_name ??
+                    staff.full_name ??
+                    "Leadership profile"
+                  }
+                  className="h-full border-0"
+                  imageClassName="h-full w-full object-cover"
+                />
               </div>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{staff.display_name ?? staff.full_name}</p>
-                <p className="truncate text-xs text-muted-foreground">{staff.institutional_role ?? staff.email ?? "Profile image attached"}</p>
+                <p className="truncate text-sm font-medium">
+                  {staff.display_name ?? staff.full_name}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {staff.institutional_role ??
+                    staff.email ??
+                    "Profile image attached"}
+                </p>
               </div>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Save the section after selecting a profile to load the profile image preview.</p>
+            <p className="text-sm text-muted-foreground">
+              Save the section after selecting a profile to load the profile
+              image preview.
+            </p>
           )}
         </div>
       </div>
@@ -422,8 +465,14 @@ function LeadershipActivityControls({
   disabled?: boolean;
   onChange: (item: SectionItemDraft) => void;
 }) {
-  const [createType, setCreateType] = useState<"news" | "event" | null>(null);
-  const linkedType = leadershipContentValue(item, "linked_content_type") as "news" | "event" | "";
+  const [createType, setCreateType] = useState<
+    "news" | "blog" | "event" | null
+  >(null);
+  const linkedType = leadershipContentValue(item, "linked_content_type") as
+    | "news"
+    | "blog"
+    | "event"
+    | "";
   const linkedId = leadershipContentValue(item, "linked_content_id");
   const linked = item.content_enriched?.linked_content;
 
@@ -431,7 +480,9 @@ function LeadershipActivityControls({
     <div className="rounded-2xl border bg-primary/5 p-4">
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-semibold">Leadership activity relationship</p>
+          <p className="text-sm font-semibold">
+            Leadership activity relationship
+          </p>
           <p className="mt-1 text-sm text-muted-foreground">
             Connect this VC activity to a newsroom story or event record.
           </p>
@@ -448,10 +499,12 @@ function LeadershipActivityControls({
                 value={linkedType || "news"}
                 disabled={disabled}
                 onValueChange={(value) =>
-                  onChange(withLeadershipContent(item, {
-                    linked_content_type: value,
-                    linked_content_id: null,
-                  }))
+                  onChange(
+                    withLeadershipContent(item, {
+                      linked_content_type: value,
+                      linked_content_id: null,
+                    }),
+                  )
                 }
               >
                 <SelectTrigger>
@@ -460,6 +513,7 @@ function LeadershipActivityControls({
                 <SelectContent>
                   <SelectGroup>
                     <SelectItem value="news">News</SelectItem>
+                    <SelectItem value="blog">Story</SelectItem>
                     <SelectItem value="event">Event</SelectItem>
                   </SelectGroup>
                 </SelectContent>
@@ -468,27 +522,64 @@ function LeadershipActivityControls({
             <div className="space-y-2">
               <p className="text-sm font-medium">Linked news/event</p>
               <EntityPicker
-                adapter={relationshipAdapters[linkedType === "event" ? "event" : "news"] as any}
+                adapter={
+                  relationshipAdapters[
+                    linkedType === "event"
+                      ? "event"
+                      : linkedType === "blog"
+                        ? "story"
+                        : "news"
+                  ] as any
+                }
                 value={linkedId}
                 onChange={(value) =>
-                  onChange(withLeadershipContent(item, {
-                    linked_content_type: linkedType || "news",
-                    linked_content_id: value || null,
-                  }))
+                  onChange(
+                    withLeadershipContent(item, {
+                      linked_content_type: linkedType || "news",
+                      linked_content_id: value || null,
+                    }),
+                  )
                 }
                 filters={{ is_main: true }}
                 disabled={disabled}
-                placeholder={linkedType === "event" ? "Select related event" : "Select related news"}
+                placeholder={
+                  linkedType === "event"
+                    ? "Select related event"
+                    : linkedType === "blog"
+                      ? "Select related story"
+                      : "Select related news"
+                }
                 allowClear
               />
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="outline" size="sm" disabled={disabled} onClick={() => setCreateType("news")}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={disabled}
+              onClick={() => setCreateType("news")}
+            >
               Create news
             </Button>
-            <Button type="button" variant="outline" size="sm" disabled={disabled} onClick={() => setCreateType("event")}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={disabled}
+              onClick={() => setCreateType("blog")}
+            >
+              Create story
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={disabled}
+              onClick={() => setCreateType("event")}
+            >
               Create event
             </Button>
             {linked?.href ? (
@@ -503,7 +594,10 @@ function LeadershipActivityControls({
 
           {linked ? (
             <p className="rounded-xl border bg-background/80 p-3 text-sm text-muted-foreground">
-              Linked to <span className="font-medium text-foreground">{linked.title}</span>
+              Linked to{" "}
+              <span className="font-medium text-foreground">
+                {linked.title}
+              </span>
             </p>
           ) : null}
         </div>
@@ -517,10 +611,12 @@ function LeadershipActivityControls({
           if (!open) setCreateType(null);
         }}
         onCreated={(type, id) => {
-          onChange(withLeadershipContent(item, {
-            linked_content_type: type,
-            linked_content_id: id,
-          }));
+          onChange(
+            withLeadershipContent(item, {
+              linked_content_type: type,
+              linked_content_id: id,
+            }),
+          );
           setCreateType(null);
         }}
       />
@@ -535,11 +631,11 @@ function LeadershipLinkedContentDialog({
   onOpenChange,
   onCreated,
 }: {
-  type: "news" | "event" | null;
+  type: "news" | "blog" | "event" | null;
   seedTitle: string;
   seedSummary: string;
   onOpenChange: (open: boolean) => void;
-  onCreated: (type: "news" | "event", id: string) => void;
+  onCreated: (type: "news" | "blog" | "event", id: string) => void;
 }) {
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
@@ -550,6 +646,11 @@ function LeadershipLinkedContentDialog({
   const [location, setLocation] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
   const [isMain, setIsMain] = useState(true);
+  const [featuredMediaId, setFeaturedMediaId] = useState("");
+  const [pendingAttachments, setPendingAttachments] = useState<
+    PendingMediaAttachment[]
+  >([]);
+  const commitPendingAttachments = useCommitPendingAttachments();
 
   useEffect(() => {
     if (!type) return;
@@ -562,6 +663,8 @@ function LeadershipLinkedContentDialog({
     setLocation("");
     setIsFeatured(false);
     setIsMain(true);
+    setFeaturedMediaId("");
+    setPendingAttachments([]);
   }, [seedSummary, seedTitle, type]);
 
   const mutation = useMutation({
@@ -581,29 +684,60 @@ function LeadershipLinkedContentDialog({
         scope_type: "university",
         scope_id: null,
         display_order: 100,
+        featured_media_id: featuredMediaId || null,
       };
       if (type === "news") {
-        return { type, response: await newsApi.create(basePayload) };
+        const response = await newsApi.create(basePayload);
+        if (pendingAttachments.length)
+          await commitPendingAttachments({
+            entityType: "news",
+            entityId: response.data.id,
+            attachments: pendingAttachments,
+          });
+        return { type, response };
+      }
+      if (type === "blog") {
+        const response = await blogsApi.create({
+          ...basePayload,
+          excerpt: summary.trim() || null,
+        });
+        if (pendingAttachments.length)
+          await commitPendingAttachments({
+            entityType: "blog",
+            entityId: response.data.id,
+            attachments: pendingAttachments,
+          });
+        return { type, response };
       }
       if (!startDate) throw new Error("Event start date is required");
-      return {
-        type,
-        response: await eventsApi.create({
-          ...basePayload,
-          start_date: new Date(startDate).toISOString(),
-          end_date: endDate ? new Date(endDate).toISOString() : null,
-          location: location.trim() || null,
-          is_virtual: false,
-        }),
-      };
+      const response = await eventsApi.create({
+        ...basePayload,
+        start_date: new Date(startDate).toISOString(),
+        end_date: endDate ? new Date(endDate).toISOString() : null,
+        location: location.trim() || null,
+        is_virtual: false,
+      });
+      if (pendingAttachments.length)
+        await commitPendingAttachments({
+          entityType: "event",
+          entityId: response.data.id,
+          attachments: pendingAttachments,
+        });
+      return { type, response };
     },
     onSuccess: ({ type: createdType, response }) => {
       const created = response.data;
-      toast.success(`${createdType === "news" ? "News" : "Event"} draft created`);
+      toast.success(
+        `${createdType === "news" ? "News" : createdType === "blog" ? "Story" : "Event"} draft created`,
+      );
       onCreated(createdType, created.id);
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to create linked content");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to create linked content",
+      );
     },
   });
 
@@ -611,41 +745,94 @@ function LeadershipLinkedContentDialog({
     <Dialog open={Boolean(type)} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Create linked {type === "event" ? "event" : "news"}</DialogTitle>
+          <DialogTitle>
+            Create linked{" "}
+            {type === "event" ? "event" : type === "blog" ? "story" : "news"}
+          </DialogTitle>
           <DialogDescription>
-            Creates the same main-site content record used by the News and Events modules, then links it to this leadership activity.
+            Creates the same main-site content record used by the News and
+            Events modules, then links it to this leadership activity.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
           <div className="space-y-2">
             <p className="text-sm font-medium">Title</p>
-            <Input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Leadership activity title" />
+            <Input
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="Leadership activity title"
+            />
           </div>
           <div className="space-y-2">
             <p className="text-sm font-medium">Slug</p>
-            <Input value={slug} onChange={(event) => setSlug(event.target.value)} placeholder="article-or-event-slug" />
+            <Input
+              value={slug}
+              onChange={(event) => setSlug(event.target.value)}
+              placeholder="article-or-event-slug"
+            />
           </div>
           <div className="space-y-2">
             <p className="text-sm font-medium">Short description</p>
-            <Textarea rows={4} value={summary} onChange={(event) => setSummary(event.target.value)} placeholder="Short news/event summary" />
+            <Textarea
+              rows={4}
+              value={summary}
+              onChange={(event) => setSummary(event.target.value)}
+              placeholder="Short news/event summary"
+            />
           </div>
           <div className="space-y-2">
             <p className="text-sm font-medium">Body</p>
-            <RichTextEditor value={content} onChange={setContent} minHeight="240px" placeholder="Write the full story or event description..." />
+            <RichTextEditor
+              value={content}
+              onChange={setContent}
+              minHeight="240px"
+              placeholder="Write the full story or event description..."
+            />
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <MediaPicker
+              value={featuredMediaId}
+              onChange={(value) => setFeaturedMediaId(value ?? "")}
+              mediaType="image"
+              accept="image/*"
+              label="Featured image"
+              helperText="Primary image used in listings and as the fallback cover."
+            />
+            <AttachmentManager
+              entityType={type ?? "news"}
+              roles={contentAttachmentRoles}
+              pendingAttachments={pendingAttachments}
+              onPendingAttachmentsChange={setPendingAttachments}
+              description="Add cover video, poster, gallery media, videos, documents, or attachments."
+            />
           </div>
           {type === "event" ? (
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <p className="text-sm font-medium">Start date</p>
-                <DateTimePicker mode="datetime-local" value={startDate} onChange={setStartDate} placeholder="Select event date" />
+                <DateTimePicker
+                  mode="datetime-local"
+                  value={startDate}
+                  onChange={setStartDate}
+                  placeholder="Select event date"
+                />
               </div>
               <div className="space-y-2">
                 <p className="text-sm font-medium">End date</p>
-                <DateTimePicker mode="datetime-local" value={endDate} onChange={setEndDate} placeholder="Optional end date" />
+                <DateTimePicker
+                  mode="datetime-local"
+                  value={endDate}
+                  onChange={setEndDate}
+                  placeholder="Optional end date"
+                />
               </div>
               <div className="space-y-2">
                 <p className="text-sm font-medium">Location</p>
-                <Input value={location} onChange={(event) => setLocation(event.target.value)} placeholder="Venue or campus" />
+                <Input
+                  value={location}
+                  onChange={(event) => setLocation(event.target.value)}
+                  placeholder="Venue or campus"
+                />
               </div>
             </div>
           ) : null}
@@ -653,25 +840,39 @@ function LeadershipLinkedContentDialog({
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
                 <p className="text-sm font-medium">Main site content</p>
-                <p className="text-xs text-muted-foreground">Available to the university website feed.</p>
+                <p className="text-xs text-muted-foreground">
+                  Available to the university website feed.
+                </p>
               </div>
               <Switch checked={isMain} onCheckedChange={setIsMain} />
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
                 <p className="text-sm font-medium">Featured</p>
-                <p className="text-xs text-muted-foreground">Marks the record for highlighted placement.</p>
+                <p className="text-xs text-muted-foreground">
+                  Marks the record for highlighted placement.
+                </p>
               </div>
               <Switch checked={isFeatured} onCheckedChange={setIsFeatured} />
             </div>
           </div>
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
             Cancel
           </Button>
-          <Button type="button" disabled={mutation.isPending} onClick={() => mutation.mutate()}>
-            {mutation.isPending ? "Creating..." : `Create ${type === "event" ? "event" : "news"} draft`}
+          <Button
+            type="button"
+            disabled={mutation.isPending}
+            onClick={() => mutation.mutate()}
+          >
+            {mutation.isPending
+              ? "Creating..."
+              : `Create ${type === "event" ? "event" : type === "blog" ? "story" : "news"} draft`}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -689,10 +890,13 @@ export default function PageCmsSectionDetailPage() {
   const [form, setForm] = useState<SectionFormState>(createEmptySectionForm());
   const [section, setSection] = useState<PageSection | null>(null);
   const [items, setItems] = useState<SectionItemDraft[]>([createItemDraft()]);
-  const [pendingSectionAttachments, setPendingSectionAttachments] = useState<PendingMediaAttachment[]>([]);
+  const [pendingSectionAttachments, setPendingSectionAttachments] = useState<
+    PendingMediaAttachment[]
+  >([]);
   const [isLoading, setIsLoading] = useState(!isNew);
   const [isSaving, setIsSaving] = useState(false);
-  const [workflowBusy, setWorkflowBusy] = useState<PageSectionWorkflowAction | null>(null);
+  const [workflowBusy, setWorkflowBusy] =
+    useState<PageSectionWorkflowAction | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const canManageSection = hasAnyPermission([
@@ -712,8 +916,15 @@ export default function PageCmsSectionDetailPage() {
     "research_homepage.manage",
     "library_homepage.manage",
   ]);
-  const canReview = hasAnyPermission(["page_sections.review", "page_sections.manage"]);
-  const canPublish = hasAnyPermission(["page_sections.publish", "page_sections.manage", "homepage.publish"]);
+  const canReview = hasAnyPermission([
+    "page_sections.review",
+    "page_sections.manage",
+  ]);
+  const canPublish = hasAnyPermission([
+    "page_sections.publish",
+    "page_sections.manage",
+    "homepage.publish",
+  ]);
   const canArchive = hasAnyPermission([
     "page_sections.delete",
     "page_sections.manage",
@@ -726,7 +937,8 @@ export default function PageCmsSectionDetailPage() {
   const availableWorkflowActions = useMemo(() => {
     if (isNew) return [];
     return workflowButtonsForStatus(form.status).filter((action) => {
-      if (action === "approve" || action === "request_changes") return canReview;
+      if (action === "approve" || action === "request_changes")
+        return canReview;
       if (action === "publish" || action === "unpublish") return canPublish;
       if (action === "archive") return canArchive;
       return canManageSection;
@@ -756,7 +968,11 @@ export default function PageCmsSectionDetailPage() {
         if (!nextSection) throw new Error("Missing section");
         setSection(nextSection);
         setForm(formFromSection(nextSection));
-        setItems(nextSection.items.length ? nextSection.items.map((item) => createItemDraft(item)) : [createItemDraft()]);
+        setItems(
+          nextSection.items.length
+            ? nextSection.items.map((item) => createItemDraft(item))
+            : [createItemDraft()],
+        );
         setPendingSectionAttachments([]);
       } catch {
         if (!cancelled) {
@@ -828,16 +1044,26 @@ export default function PageCmsSectionDetailPage() {
         ? (await pageSectionsApi.create(sectionPayload)).data
         : (await pageSectionsApi.update(sectionId, sectionPayload)).data;
 
-      await persistAttachments("page_section", savedSection.id, pendingSectionAttachments);
+      await persistAttachments(
+        "page_section",
+        savedSection.id,
+        pendingSectionAttachments,
+      );
 
-      const creatableItems = items.filter((item) => item.id || !isEmptyItemDraft(item));
+      const creatableItems = items.filter(
+        (item) => item.id || !isEmptyItemDraft(item),
+      );
       const nextItems: SectionItemDraft[] = [];
       for (const item of creatableItems) {
         const payload = itemPayloadFromDraft(item, form.layout_variant);
         const savedItem = item.id
           ? (await sectionItemsApi.update(item.id, payload)).data
           : (await sectionItemsApi.create(savedSection.id, payload)).data;
-        await persistAttachments("section_item", savedItem.id, item.pending_attachments);
+        await persistAttachments(
+          "section_item",
+          savedItem.id,
+          item.pending_attachments,
+        );
         nextItems.push(createItemDraft(savedItem));
       }
 
@@ -848,7 +1074,9 @@ export default function PageCmsSectionDetailPage() {
       toast.success(isNew ? "Page section created." : "Page section updated.");
 
       if (isNew) {
-        router.replace(`/corporate-communication/page-cms/sections/${savedSection.id}`);
+        router.replace(
+          `/corporate-communication/page-cms/sections/${savedSection.id}`,
+        );
       }
     } catch {
       toast.error("Failed to save the page section.");
@@ -884,7 +1112,9 @@ export default function PageCmsSectionDetailPage() {
     }
   };
 
-  const sectionTitle = isNew ? "New Page Section" : section?.title || section?.section_key || "Edit Page Section";
+  const sectionTitle = isNew
+    ? "New Page Section"
+    : section?.title || section?.section_key || "Edit Page Section";
 
   return (
     <PageTransition>
@@ -895,9 +1125,12 @@ export default function PageCmsSectionDetailPage() {
               <Sparkles className="size-3.5 text-orange-600" />
               Section editor
             </div>
-            <h1 className="text-xl font-semibold tracking-tight md:text-2xl">{sectionTitle}</h1>
+            <h1 className="text-xl font-semibold tracking-tight md:text-2xl">
+              {sectionTitle}
+            </h1>
             <p className="mt-1 text-sm leading-5 text-muted-foreground">
-              Configure scope, layout, media roles and item-level content using the Page CMS backend workflow.
+              Configure scope, layout, media roles and item-level content using
+              the Page CMS backend workflow.
             </p>
           </div>
           <div className="flex flex-col gap-2 lg:items-end">
@@ -907,21 +1140,44 @@ export default function PageCmsSectionDetailPage() {
                   key={action}
                   type="button"
                   size="sm"
-                  variant={action === "publish" ? "default" : action === "archive" ? "destructive" : "outline"}
+                  variant={
+                    action === "publish"
+                      ? "default"
+                      : action === "archive"
+                        ? "destructive"
+                        : "outline"
+                  }
                   disabled={workflowBusy !== null || isSaving}
                   onClick={() => void handleWorkflow(action)}
                 >
-                  {workflowBusy === action ? "Working..." : action.replace(/_/g, " ")}
+                  {workflowBusy === action
+                    ? "Working..."
+                    : action.replace(/_/g, " ")}
                 </Button>
               ))}
-              <Button type="button" size="sm" disabled={!canManageSection || isSaving || isLoading} onClick={() => void handleSave()}>
-                {isSaving ? "Saving..." : isNew ? "Create Section" : "Save Changes"}
+              <Button
+                type="button"
+                size="sm"
+                disabled={!canManageSection || isSaving || isLoading}
+                onClick={() => void handleSave()}
+              >
+                {isSaving
+                  ? "Saving..."
+                  : isNew
+                    ? "Create Section"
+                    : "Save Changes"}
               </Button>
             </div>
             <div className="grid gap-2 sm:grid-cols-3">
-              <DetailMetric label="Items" value={items.filter((item) => !isEmptyItemDraft(item)).length} />
+              <DetailMetric
+                label="Items"
+                value={items.filter((item) => !isEmptyItemDraft(item)).length}
+              />
               <DetailMetric label="Order" value={form.display_order} />
-              <DetailMetric label="Status" value={form.status.replace(/_/g, " ")} />
+              <DetailMetric
+                label="Status"
+                value={form.status.replace(/_/g, " ")}
+              />
             </div>
           </div>
         </div>
@@ -929,7 +1185,9 @@ export default function PageCmsSectionDetailPage() {
 
       {error ? (
         <Card className="mb-6 border-destructive/30">
-          <CardContent className="p-4 text-sm text-destructive">{error}</CardContent>
+          <CardContent className="p-4 text-sm text-destructive">
+            {error}
+          </CardContent>
         </Card>
       ) : null}
 
@@ -938,7 +1196,10 @@ export default function PageCmsSectionDetailPage() {
           <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
             <CardHeader>
               <CardTitle>Section Configuration</CardTitle>
-              <CardDescription>Define where this section renders and how it behaves in the composition workflow.</CardDescription>
+              <CardDescription>
+                Define where this section renders and how it behaves in the
+                composition workflow.
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 lg:grid-cols-2">
               <div className="space-y-2">
@@ -946,7 +1207,12 @@ export default function PageCmsSectionDetailPage() {
                 <Input
                   value={form.page_key}
                   disabled={!canManageSection || isLoading}
-                  onChange={(event) => setForm((current) => ({ ...current, page_key: event.target.value }))}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      page_key: event.target.value,
+                    }))
+                  }
                   placeholder="homepage"
                 />
               </div>
@@ -955,7 +1221,12 @@ export default function PageCmsSectionDetailPage() {
                 <Input
                   value={form.section_key}
                   disabled={!canManageSection || isLoading}
-                  onChange={(event) => setForm((current) => ({ ...current, section_key: event.target.value }))}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      section_key: event.target.value,
+                    }))
+                  }
                   placeholder="hero"
                 />
               </div>
@@ -968,7 +1239,8 @@ export default function PageCmsSectionDetailPage() {
                     setForm((current) => ({
                       ...current,
                       scope_type: value as PageScopeType,
-                      scope_id: value === current.scope_type ? current.scope_id : "",
+                      scope_id:
+                        value === current.scope_type ? current.scope_id : "",
                     }))
                   }
                 >
@@ -987,12 +1259,16 @@ export default function PageCmsSectionDetailPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <p className="text-sm font-medium">{scopeLabel(form.scope_type)}</p>
+                <p className="text-sm font-medium">
+                  {scopeLabel(form.scope_type)}
+                </p>
                 <SectionScopePicker
                   scopeType={form.scope_type}
                   value={form.scope_id}
                   disabled={!canManageSection || isLoading}
-                  onChange={(scopeId) => setForm((current) => ({ ...current, scope_id: scopeId }))}
+                  onChange={(scopeId) =>
+                    setForm((current) => ({ ...current, scope_id: scopeId }))
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -1000,7 +1276,12 @@ export default function PageCmsSectionDetailPage() {
                 <Input
                   value={form.title}
                   disabled={!canManageSection || isLoading}
-                  onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      title: event.target.value,
+                    }))
+                  }
                   placeholder="Homepage Hero"
                 />
               </div>
@@ -1009,7 +1290,12 @@ export default function PageCmsSectionDetailPage() {
                 <Input
                   value={form.subtitle}
                   disabled={!canManageSection || isLoading}
-                  onChange={(event) => setForm((current) => ({ ...current, subtitle: event.target.value }))}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      subtitle: event.target.value,
+                    }))
+                  }
                   placeholder="Supporting section subtitle"
                 />
               </div>
@@ -1019,7 +1305,12 @@ export default function PageCmsSectionDetailPage() {
                   rows={4}
                   value={form.description}
                   disabled={!canManageSection || isLoading}
-                  onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      description: event.target.value,
+                    }))
+                  }
                   placeholder="Section-level copy for this composition block"
                 />
               </div>
@@ -1028,7 +1319,12 @@ export default function PageCmsSectionDetailPage() {
                 <Select
                   value={form.layout_variant}
                   disabled={!canManageSection || isLoading}
-                  onValueChange={(value) => setForm((current) => ({ ...current, layout_variant: value as PageSectionLayoutVariant }))}
+                  onValueChange={(value) =>
+                    setForm((current) => ({
+                      ...current,
+                      layout_variant: value as PageSectionLayoutVariant,
+                    }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select layout variant" />
@@ -1050,13 +1346,22 @@ export default function PageCmsSectionDetailPage() {
                   type="number"
                   value={form.display_order}
                   disabled={!canManageSection || isLoading}
-                  onChange={(event) => setForm((current) => ({ ...current, display_order: Number(event.target.value || 0) }))}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      display_order: Number(event.target.value || 0),
+                    }))
+                  }
                 />
               </div>
               <div className="space-y-2">
                 <p className="text-sm font-medium">Status</p>
                 <div className="flex h-10 items-center rounded-md border px-3">
-                  <Badge variant={form.status === "published" ? "default" : "secondary"}>
+                  <Badge
+                    variant={
+                      form.status === "published" ? "default" : "secondary"
+                    }
+                  >
                     {form.status.replace(/_/g, " ")}
                   </Badge>
                 </div>
@@ -1067,7 +1372,9 @@ export default function PageCmsSectionDetailPage() {
                   mode="datetime-local"
                   value={form.valid_from}
                   disabled={!canManageSection || isLoading}
-                  onChange={(value) => setForm((current) => ({ ...current, valid_from: value }))}
+                  onChange={(value) =>
+                    setForm((current) => ({ ...current, valid_from: value }))
+                  }
                   placeholder="Select start date"
                 />
               </div>
@@ -1077,19 +1384,25 @@ export default function PageCmsSectionDetailPage() {
                   mode="datetime-local"
                   value={form.valid_to}
                   disabled={!canManageSection || isLoading}
-                  onChange={(value) => setForm((current) => ({ ...current, valid_to: value }))}
+                  onChange={(value) =>
+                    setForm((current) => ({ ...current, valid_to: value }))
+                  }
                   placeholder="Select end date"
                 />
               </div>
               <div className="flex items-center justify-between rounded-lg border p-3 lg:col-span-2">
                 <div>
                   <p className="text-sm font-medium">Enabled</p>
-                  <p className="text-sm text-muted-foreground">Disable the section without changing workflow status.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Disable the section without changing workflow status.
+                  </p>
                 </div>
                 <Switch
                   checked={form.is_enabled}
                   disabled={!canManageSection || isLoading}
-                  onCheckedChange={(checked) => setForm((current) => ({ ...current, is_enabled: checked }))}
+                  onCheckedChange={(checked) =>
+                    setForm((current) => ({ ...current, is_enabled: checked }))
+                  }
                 />
               </div>
               {form.layout_variant === "leadership_activity" ? (
@@ -1106,7 +1419,10 @@ export default function PageCmsSectionDetailPage() {
           <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
             <CardHeader>
               <CardTitle>Section Media</CardTitle>
-              <CardDescription>Attach assets to the page section using supported frontend roles.</CardDescription>
+              <CardDescription>
+                Attach assets to the page section using supported frontend
+                roles.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <AttachmentManager
@@ -1126,24 +1442,44 @@ export default function PageCmsSectionDetailPage() {
             <CardHeader className="flex flex-row items-start justify-between gap-4">
               <div>
                 <CardTitle>Section Items</CardTitle>
-                <CardDescription>Manage item-level title, subtitle, description, CTA data, relationships, and attachments.</CardDescription>
+                <CardDescription>
+                  Manage item-level title, subtitle, description, CTA data,
+                  relationships, and attachments.
+                </CardDescription>
               </div>
-              <Button type="button" variant="outline" disabled={!canManageItems || isLoading} onClick={() => setItems((current) => [...current, createItemDraft()])}>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!canManageItems || isLoading}
+                onClick={() =>
+                  setItems((current) => [...current, createItemDraft()])
+                }
+              >
                 Add Item
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
               {items.map((item, index) => (
-                <Card key={item.client_id} className={cn("overflow-hidden bg-background shadow-sm", !item.is_enabled ? "border-dashed opacity-80" : undefined)}>
+                <Card
+                  key={item.client_id}
+                  className={cn(
+                    "overflow-hidden bg-background shadow-sm",
+                    !item.is_enabled ? "border-dashed opacity-80" : undefined,
+                  )}
+                >
                   <CardHeader className="flex flex-row items-start justify-between gap-4">
                     <div>
-                      <CardTitle className="text-lg">Item {index + 1}</CardTitle>
+                      <CardTitle className="text-lg">
+                        Item {index + 1}
+                      </CardTitle>
                       <CardDescription>
                         {item.id ? `Saved item ${item.id}` : "Unsaved item"}
                       </CardDescription>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Badge variant={item.is_enabled ? "default" : "secondary"}>
+                      <Badge
+                        variant={item.is_enabled ? "default" : "secondary"}
+                      >
                         {item.is_enabled ? "Enabled" : "Disabled"}
                       </Badge>
                       <Button
@@ -1154,12 +1490,18 @@ export default function PageCmsSectionDetailPage() {
                           if (item.id) {
                             setItems((current) =>
                               current.map((entry) =>
-                                entry.client_id === item.client_id ? { ...entry, is_enabled: false } : entry,
+                                entry.client_id === item.client_id
+                                  ? { ...entry, is_enabled: false }
+                                  : entry,
                               ),
                             );
                             return;
                           }
-                          setItems((current) => current.filter((entry) => entry.client_id !== item.client_id));
+                          setItems((current) =>
+                            current.filter(
+                              (entry) => entry.client_id !== item.client_id,
+                            ),
+                          );
                         }}
                       >
                         {item.id ? "Disable Item" : "Remove Item"}
@@ -1176,7 +1518,12 @@ export default function PageCmsSectionDetailPage() {
                           onValueChange={(value) =>
                             setItems((current) =>
                               current.map((entry) =>
-                                entry.client_id === item.client_id ? { ...entry, item_type: value as SectionItemType } : entry,
+                                entry.client_id === item.client_id
+                                  ? {
+                                      ...entry,
+                                      item_type: value as SectionItemType,
+                                    }
+                                  : entry,
                               ),
                             )
                           }
@@ -1205,7 +1552,12 @@ export default function PageCmsSectionDetailPage() {
                             setItems((current) =>
                               current.map((entry) =>
                                 entry.client_id === item.client_id
-                                  ? { ...entry, display_order: Number(event.target.value || 0) }
+                                  ? {
+                                      ...entry,
+                                      display_order: Number(
+                                        event.target.value || 0,
+                                      ),
+                                    }
                                   : entry,
                               ),
                             )
@@ -1220,7 +1572,9 @@ export default function PageCmsSectionDetailPage() {
                           onChange={(event) =>
                             setItems((current) =>
                               current.map((entry) =>
-                                entry.client_id === item.client_id ? { ...entry, title: event.target.value } : entry,
+                                entry.client_id === item.client_id
+                                  ? { ...entry, title: event.target.value }
+                                  : entry,
                               ),
                             )
                           }
@@ -1235,7 +1589,9 @@ export default function PageCmsSectionDetailPage() {
                           onChange={(event) =>
                             setItems((current) =>
                               current.map((entry) =>
-                                entry.client_id === item.client_id ? { ...entry, subtitle: event.target.value } : entry,
+                                entry.client_id === item.client_id
+                                  ? { ...entry, subtitle: event.target.value }
+                                  : entry,
                               ),
                             )
                           }
@@ -1253,7 +1609,9 @@ export default function PageCmsSectionDetailPage() {
                         onChange={(event) =>
                           setItems((current) =>
                             current.map((entry) =>
-                              entry.client_id === item.client_id ? { ...entry, body_text: event.target.value } : entry,
+                              entry.client_id === item.client_id
+                                ? { ...entry, body_text: event.target.value }
+                                : entry,
                             ),
                           )
                         }
@@ -1268,7 +1626,9 @@ export default function PageCmsSectionDetailPage() {
                         onChange={(nextItem) =>
                           setItems((current) =>
                             current.map((entry) =>
-                              entry.client_id === item.client_id ? nextItem : entry,
+                              entry.client_id === item.client_id
+                                ? nextItem
+                                : entry,
                             ),
                           )
                         }
@@ -1284,7 +1644,9 @@ export default function PageCmsSectionDetailPage() {
                           onChange={(event) =>
                             setItems((current) =>
                               current.map((entry) =>
-                                entry.client_id === item.client_id ? { ...entry, cta_label: event.target.value } : entry,
+                                entry.client_id === item.client_id
+                                  ? { ...entry, cta_label: event.target.value }
+                                  : entry,
                               ),
                             )
                           }
@@ -1298,7 +1660,9 @@ export default function PageCmsSectionDetailPage() {
                           onChange={(event) =>
                             setItems((current) =>
                               current.map((entry) =>
-                                entry.client_id === item.client_id ? { ...entry, cta_url: event.target.value } : entry,
+                                entry.client_id === item.client_id
+                                  ? { ...entry, cta_url: event.target.value }
+                                  : entry,
                               ),
                             )
                           }
@@ -1313,7 +1677,12 @@ export default function PageCmsSectionDetailPage() {
                           onChange={(event) =>
                             setItems((current) =>
                               current.map((entry) =>
-                                entry.client_id === item.client_id ? { ...entry, cta_description: event.target.value } : entry,
+                                entry.client_id === item.client_id
+                                  ? {
+                                      ...entry,
+                                      cta_description: event.target.value,
+                                    }
+                                  : entry,
                               ),
                             )
                           }
@@ -1330,7 +1699,12 @@ export default function PageCmsSectionDetailPage() {
                           onChange={(event) =>
                             setItems((current) =>
                               current.map((entry) =>
-                                entry.client_id === item.client_id ? { ...entry, video_provider: event.target.value } : entry,
+                                entry.client_id === item.client_id
+                                  ? {
+                                      ...entry,
+                                      video_provider: event.target.value,
+                                    }
+                                  : entry,
                               ),
                             )
                           }
@@ -1344,14 +1718,18 @@ export default function PageCmsSectionDetailPage() {
                           onChange={(event) =>
                             setItems((current) =>
                               current.map((entry) =>
-                                entry.client_id === item.client_id ? { ...entry, video_url: event.target.value } : entry,
+                                entry.client_id === item.client_id
+                                  ? { ...entry, video_url: event.target.value }
+                                  : entry,
                               ),
                             )
                           }
                         />
                       </div>
                       <div className="space-y-2">
-                        <p className="text-sm font-medium">Video Duration (seconds)</p>
+                        <p className="text-sm font-medium">
+                          Video Duration (seconds)
+                        </p>
                         <Input
                           type="number"
                           value={item.video_duration_seconds}
@@ -1360,7 +1738,11 @@ export default function PageCmsSectionDetailPage() {
                             setItems((current) =>
                               current.map((entry) =>
                                 entry.client_id === item.client_id
-                                  ? { ...entry, video_duration_seconds: event.target.value }
+                                  ? {
+                                      ...entry,
+                                      video_duration_seconds:
+                                        event.target.value,
+                                    }
                                   : entry,
                               ),
                             )
@@ -1375,7 +1757,12 @@ export default function PageCmsSectionDetailPage() {
                           onChange={(event) =>
                             setItems((current) =>
                               current.map((entry) =>
-                                entry.client_id === item.client_id ? { ...entry, media_caption: event.target.value } : entry,
+                                entry.client_id === item.client_id
+                                  ? {
+                                      ...entry,
+                                      media_caption: event.target.value,
+                                    }
+                                  : entry,
                               ),
                             )
                           }
@@ -1389,7 +1776,12 @@ export default function PageCmsSectionDetailPage() {
                           onChange={(event) =>
                             setItems((current) =>
                               current.map((entry) =>
-                                entry.client_id === item.client_id ? { ...entry, media_alt_text: event.target.value } : entry,
+                                entry.client_id === item.client_id
+                                  ? {
+                                      ...entry,
+                                      media_alt_text: event.target.value,
+                                    }
+                                  : entry,
                               ),
                             )
                           }
@@ -1405,7 +1797,9 @@ export default function PageCmsSectionDetailPage() {
                       onPendingAttachmentsChange={(attachments) =>
                         setItems((current) =>
                           current.map((entry) =>
-                            entry.client_id === item.client_id ? { ...entry, pending_attachments: attachments } : entry,
+                            entry.client_id === item.client_id
+                              ? { ...entry, pending_attachments: attachments }
+                              : entry,
                           ),
                         )
                       }
@@ -1424,26 +1818,49 @@ export default function PageCmsSectionDetailPage() {
           <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
             <CardHeader>
               <CardTitle>Workflow Summary</CardTitle>
-              <CardDescription>Current lifecycle status and permission-sensitive actions.</CardDescription>
+              <CardDescription>
+                Current lifecycle status and permission-sensitive actions.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="rounded-lg border p-4">
-                <p className="text-sm font-medium text-muted-foreground">Current status</p>
-                <p className="mt-2 text-xl font-semibold">{form.status.replace(/_/g, " ")}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Current status
+                </p>
+                <p className="mt-2 text-xl font-semibold">
+                  {form.status.replace(/_/g, " ")}
+                </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {PAGE_SECTION_STATUSES.map((status) => (
-                    <Badge key={status} variant={status === form.status ? "default" : "outline"}>
+                    <Badge
+                      key={status}
+                      variant={status === form.status ? "default" : "outline"}
+                    >
                       {status.replace(/_/g, " ")}
                     </Badge>
                   ))}
                 </div>
               </div>
               <div className="space-y-2 text-sm text-muted-foreground">
-                <p>Review permissions: {canReview ? "available" : "not available"}</p>
-                <p>Publish permissions: {canPublish ? "available" : "not available"}</p>
-                <p>Section update permissions: {canManageSection ? "available" : "not available"}</p>
-                <p>Item management permissions: {canManageItems ? "available" : "not available"}</p>
-                {hasPermission("homepage.publish") ? <p>Homepage publish override is active.</p> : null}
+                <p>
+                  Review permissions:{" "}
+                  {canReview ? "available" : "not available"}
+                </p>
+                <p>
+                  Publish permissions:{" "}
+                  {canPublish ? "available" : "not available"}
+                </p>
+                <p>
+                  Section update permissions:{" "}
+                  {canManageSection ? "available" : "not available"}
+                </p>
+                <p>
+                  Item management permissions:{" "}
+                  {canManageItems ? "available" : "not available"}
+                </p>
+                {hasPermission("homepage.publish") ? (
+                  <p>Homepage publish override is active.</p>
+                ) : null}
               </div>
             </CardContent>
           </Card>
@@ -1451,12 +1868,24 @@ export default function PageCmsSectionDetailPage() {
           <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
             <CardHeader>
               <CardTitle>Publishing Guidance</CardTitle>
-              <CardDescription>Use this summary to confirm the section is ready for the public homepage.</CardDescription>
+              <CardDescription>
+                Use this summary to confirm the section is ready for the public
+                homepage.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <p>Keep the section enabled when it should render after publication.</p>
-              <p>Use item order to control how calls to action and supporting content appear in the hero layout.</p>
-              <p>Attach media with clear roles so the frontend can select the correct image, background, poster, or gallery asset.</p>
+              <p>
+                Keep the section enabled when it should render after
+                publication.
+              </p>
+              <p>
+                Use item order to control how calls to action and supporting
+                content appear in the hero layout.
+              </p>
+              <p>
+                Attach media with clear roles so the frontend can select the
+                correct image, background, poster, or gallery asset.
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -1465,11 +1894,19 @@ export default function PageCmsSectionDetailPage() {
   );
 }
 
-function DetailMetric({ label, value }: { label: string; value: number | string }) {
+function DetailMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value: number | string;
+}) {
   return (
     <div className="min-w-[112px] rounded-2xl border bg-background/80 p-3 shadow-sm">
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1 text-lg font-semibold tracking-tight capitalize">{value}</p>
+      <p className="mt-1 text-lg font-semibold tracking-tight capitalize">
+        {value}
+      </p>
     </div>
   );
 }

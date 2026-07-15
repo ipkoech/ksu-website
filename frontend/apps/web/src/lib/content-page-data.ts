@@ -99,6 +99,17 @@ export type GalleryImage = {
   height?: number | null;
 };
 
+export type EditorialMediaAsset = {
+  id: string;
+  role: string;
+  url: string;
+  title: string;
+  alt?: string;
+  filename?: string;
+  mediaType?: string;
+  mimeType?: string;
+};
+
 export type ContentDetailData = {
   kind: ContentKind;
   mediaDeskSection?: MediaDeskSection;
@@ -115,11 +126,14 @@ export type ContentDetailData = {
   structuredContent: Record<string, unknown> | null;
   jsonLd: Record<string, unknown>;
   galleryImages: GalleryImage[];
+  mediaAssets: EditorialMediaAsset[];
+  coverVideo: EditorialMediaAsset | null;
+  videoPoster: EditorialMediaAsset | null;
 };
 
 const nav: ContentPageLink[] = [
   { label: "News", href: "/media/news" },
-  { label: "Articles", href: "/media/articles" },
+  { label: "Stories", href: "/media/articles" },
   { label: "Events", href: "/media/events" },
   { label: "Announcements", href: "/media/announcements" },
   { label: "Gallery", href: "/media/gallery" },
@@ -128,7 +142,7 @@ const nav: ContentPageLink[] = [
 const mediaDeskNav: ContentPageLink[] = [
   { label: "News", href: "/media/news" },
   { label: "Events", href: "/media/events" },
-  { label: "Articles", href: "/media/articles" },
+  { label: "Stories", href: "/media/articles" },
   { label: "Announcements", href: "/media/announcements" },
   { label: "Gallery", href: "/media/gallery" },
 ];
@@ -246,7 +260,9 @@ function withKind(
   })) as ContentRecord[];
 }
 
-function normalizeEntityRecord(record: PublicEntityContentRecord): ContentRecord | null {
+function normalizeEntityRecord(
+  record: PublicEntityContentRecord,
+): ContentRecord | null {
   if (record.record_type === "news") {
     return {
       id: record.id,
@@ -431,7 +447,7 @@ export function categoryLabel(record: ContentRecord) {
     return record.is_virtual ? "Virtual event" : "Event";
   if (record.contentKind === "media")
     return present(record.media_type) ?? "Media";
-  return record.contentKind === "blogs" ? "Article" : "News";
+  return record.contentKind === "blogs" ? "Story" : "News";
 }
 
 export function mediaUrl(record: ContentRecord) {
@@ -501,13 +517,12 @@ function relatedLinks(record: ContentRecord): ContentPageLink[] {
 
 function listTitle(kind: ContentKind, mode: ContentListingMode, slug?: string) {
   if (kind === "blogs")
-    return slug
-      ? `${titleFromSlug(slug)} articles`
-      : "University articles and blogs";
+    return slug ? `${titleFromSlug(slug)} articles` : "University stories";
   if (kind === "events")
     return mode === "past" ? "Past events" : "University events";
   if (kind === "announcements") return "Announcements";
-  if (kind === "media") return slug ? `${titleFromSlug(slug)} gallery` : "Gallery";
+  if (kind === "media")
+    return slug ? `${titleFromSlug(slug)} gallery` : "Gallery";
   return slug ? `${titleFromSlug(slug)} news` : "University news";
 }
 
@@ -521,7 +536,7 @@ function titleFromSlug(slug?: string) {
 }
 
 function listingEyebrow(kind: ContentKind) {
-  if (kind === "blogs") return "Articles";
+  if (kind === "blogs") return "Stories";
   if (kind === "events") return "Events";
   if (kind === "announcements") return "Official Notices";
   if (kind === "media") return "Media Desk";
@@ -850,8 +865,7 @@ export async function getContentListingData(
       const firstDate = recordDate(first);
       const secondDate = recordDate(second);
       return (
-        new Date(secondDate ?? 0).getTime() -
-        new Date(firstDate ?? 0).getTime()
+        new Date(secondDate ?? 0).getTime() - new Date(firstDate ?? 0).getTime()
       );
     });
     const featured =
@@ -1080,14 +1094,18 @@ function jsonLd(record: ContentRecord, href: string) {
   return { ...base, "@type": "NewsArticle" };
 }
 
-async function fetchGalleryImages(
+async function fetchEditorialMedia(
   entityType: string,
   entityId: string,
-): Promise<GalleryImage[]> {
+): Promise<EditorialMediaAsset[]> {
   try {
     const response = await mainApi.get<{
       data: Array<{
+        id: string;
+        role: string;
         media: {
+          id: string;
+          filename?: string;
           public_url?: string | null;
           cdn_url?: string | null;
           url?: string;
@@ -1096,12 +1114,12 @@ async function fetchGalleryImages(
           width?: number | null;
           height?: number | null;
           mime_type?: string;
+          media_type?: string;
         } | null;
       }>;
     }>("/api/v1/public/media/links", {
       entity_type: entityType,
       entity_id: entityId,
-      role: "gallery",
     });
 
     return (response.data ?? [])
@@ -1114,11 +1132,14 @@ async function fetchGalleryImages(
           resolvePublicMediaUrl(m.url) ??
           "";
         return {
+          id: item.id,
+          role: item.role,
           url,
           title: m.title || "",
           alt: m.alt_text ?? undefined,
-          width: m.width,
-          height: m.height,
+          filename: m.filename,
+          mediaType: m.media_type,
+          mimeType: m.mime_type,
         };
       })
       .filter((item) => item.url);
@@ -1144,12 +1165,20 @@ export async function getContentDetailData(
     )
     .slice(0, 4);
   const href = recordHref(normalized);
-  const entityType = kind === "blogs" ? "blog" : kind === "media" ? "media" : kind;
+  const entityType =
+    kind === "blogs" ? "blog" : kind === "media" ? "media" : kind;
 
-  const galleryImages =
+  const mediaAssets =
     kind !== "media"
-      ? await fetchGalleryImages(entityType, normalized.id)
+      ? await fetchEditorialMedia(entityType, normalized.id)
       : [];
+  const galleryImages = mediaAssets
+    .filter(
+      (asset) =>
+        asset.role === "gallery" &&
+        (asset.mediaType === "image" || asset.mimeType?.startsWith("image/")),
+    )
+    .map((asset) => ({ url: asset.url, title: asset.title, alt: asset.alt }));
 
   return {
     kind,
@@ -1160,12 +1189,19 @@ export async function getContentDetailData(
     title: recordTitle(normalized),
     summary: summarize(normalized, null),
     body: bodyContent(normalized),
-    heroImage: mediaUrl(normalized),
+    heroImage:
+      mediaAssets.find((asset) => asset.role === "cover-image")?.url ??
+      mediaUrl(normalized),
     meta: detailMeta(normalized),
     related,
     relatedLinks: relatedLinks(normalized),
     structuredContent: structuredContent(normalized),
     jsonLd: jsonLd(normalized, href),
     galleryImages,
+    mediaAssets,
+    coverVideo:
+      mediaAssets.find((asset) => asset.role === "cover-video") ?? null,
+    videoPoster:
+      mediaAssets.find((asset) => asset.role === "video-poster") ?? null,
   };
 }

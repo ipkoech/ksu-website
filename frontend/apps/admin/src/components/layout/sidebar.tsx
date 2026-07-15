@@ -86,7 +86,7 @@ const mainNavigation: NavItem[] = [
         scope: "content.manage_news",
       },
       {
-        title: "Blogs",
+        title: "Stories",
         href: "/content/blogs",
         icon: FileText,
         scope: "content.manage_blogs",
@@ -282,7 +282,11 @@ const researchNavigation: NavItem[] = [
     title: "Main Research",
     href: "/research/main",
     icon: FlaskConical,
-    scope: ["research.view", "research.view_projects", "research.manage_projects"],
+    scope: [
+      "research.view",
+      "research.view_projects",
+      "research.manage_projects",
+    ],
     children: [
       {
         title: "Projects",
@@ -320,37 +324,62 @@ const researchNavigation: NavItem[] = [
         title: "Impact",
         href: "/research/impact",
         icon: Leaf,
-        scope: ["research.view", "research.manage_impact", "sustainability.manage"],
+        scope: [
+          "research.view",
+          "research.manage_impact",
+          "sustainability.manage",
+        ],
       },
       {
         title: "Publications",
         href: "/research/publications",
         icon: BookOpen,
-        scope: ["research.view", "research.manage_publications", "publications.manage"],
+        scope: [
+          "research.view",
+          "research.manage_publications",
+          "publications.manage",
+        ],
       },
       {
         title: "Journals",
         href: "/research/publications/journals",
         icon: BookOpen,
-        scope: ["research.view", "research.manage_publications", "publications.manage"],
+        scope: [
+          "research.view",
+          "research.manage_publications",
+          "publications.manage",
+        ],
       },
       {
         title: "Partnerships",
         href: "/research/partnerships",
         icon: HeartHandshake,
-        scope: ["research.view", "partnerships.manage", "partnerships.manage_partners"],
+        scope: [
+          "research.view",
+          "partnerships.manage",
+          "partnerships.manage_partners",
+        ],
       },
       {
         title: "Innovation & Output",
         href: "/research/innovations",
         icon: Lightbulb,
-        scope: ["research.view", "innovation.review_disclosure", "innovation.manage_ecosystem", "research.manage_reports"],
+        scope: [
+          "research.view",
+          "innovation.review_disclosure",
+          "innovation.manage_ecosystem",
+          "research.manage_reports",
+        ],
       },
       {
         title: "Reports",
         href: "/research/reports",
         icon: FileText,
-        scope: ["research.view", "research.manage_reports", "research.submit_reports"],
+        scope: [
+          "research.view",
+          "research.manage_reports",
+          "research.submit_reports",
+        ],
       },
       {
         title: "Themes",
@@ -366,14 +395,54 @@ const researchNavigation: NavItem[] = [
     icon: Newspaper,
     scope: ["research.view", "content.view"],
     children: [
-      { title: "News", href: "/research/content/news", icon: Newspaper, scope: ["research.view", "content.manage_news"] },
-      { title: "Blogs", href: "/research/content/blogs", icon: FileText, scope: ["research.view", "content.manage_blogs"] },
-      { title: "Events", href: "/research/content/events", icon: Calendar, scope: ["research.view", "content.manage_events"] },
-      { title: "Announcements", href: "/research/content/announcements", icon: Megaphone, scope: ["research.view", "content.manage_announcements"] },
-      { title: "Sliders", href: "/research/content/sliders", icon: Image, scope: ["research.view", "marketing.manage_sliders"] },
-      { title: "Boards", href: "/research/content/boards", icon: Shield, scope: ["research.view", "governance.manage"] },
-      { title: "Staff", href: "/research/content/staff", icon: Users, scope: ["research.view", "staff.manage", "people.manage"] },
-      { title: "Gallery", href: "/research/content/gallery", icon: Image, scope: ["research.view", "media.manage", "media.upload"] },
+      {
+        title: "News",
+        href: "/research/content/news",
+        icon: Newspaper,
+        scope: ["research.view", "content.manage_news"],
+      },
+      {
+        title: "Stories",
+        href: "/research/content/blogs",
+        icon: FileText,
+        scope: ["research.view", "content.manage_blogs"],
+      },
+      {
+        title: "Events",
+        href: "/research/content/events",
+        icon: Calendar,
+        scope: ["research.view", "content.manage_events"],
+      },
+      {
+        title: "Announcements",
+        href: "/research/content/announcements",
+        icon: Megaphone,
+        scope: ["research.view", "content.manage_announcements"],
+      },
+      {
+        title: "Sliders",
+        href: "/research/content/sliders",
+        icon: Image,
+        scope: ["research.view", "marketing.manage_sliders"],
+      },
+      {
+        title: "Boards",
+        href: "/research/content/boards",
+        icon: Shield,
+        scope: ["research.view", "governance.manage"],
+      },
+      {
+        title: "Staff",
+        href: "/research/content/staff",
+        icon: Users,
+        scope: ["research.view", "staff.manage", "people.manage"],
+      },
+      {
+        title: "Gallery",
+        href: "/research/content/gallery",
+        icon: Image,
+        scope: ["research.view", "media.manage", "media.upload"],
+      },
     ],
   },
   {
@@ -382,9 +451,21 @@ const researchNavigation: NavItem[] = [
     icon: Leaf,
     scope: ["research.view", "sustainability.view", "sustainability.manage"],
     children: [
-      { title: "Projects", href: "/research/sustainability/projects", icon: FlaskConical },
-      { title: "Partners", href: "/research/sustainability/partners", icon: HeartHandshake },
-      { title: "Activities", href: "/research/sustainability/activities", icon: Calendar },
+      {
+        title: "Projects",
+        href: "/research/sustainability/projects",
+        icon: FlaskConical,
+      },
+      {
+        title: "Partners",
+        href: "/research/sustainability/partners",
+        icon: HeartHandshake,
+      },
+      {
+        title: "Activities",
+        href: "/research/sustainability/activities",
+        icon: Calendar,
+      },
       { title: "Content", href: "/research/content", icon: Newspaper },
     ],
   },
@@ -395,10 +476,26 @@ const researchNavigation: NavItem[] = [
     scope: ["research.view", "research.manage_projects"],
     children: [
       { title: "Farm Profiles", href: "/research/farm/farms", icon: Sprout },
-      { title: "Projects", href: "/research/farm/projects", icon: FlaskConical },
-      { title: "Partnerships", href: "/research/farm/partnerships", icon: HeartHandshake },
-      { title: "Impact Stories", href: "/research/farm/impact-stories", icon: FileText },
-      { title: "Activities", href: "/research/farm/activities", icon: Calendar },
+      {
+        title: "Projects",
+        href: "/research/farm/projects",
+        icon: FlaskConical,
+      },
+      {
+        title: "Partnerships",
+        href: "/research/farm/partnerships",
+        icon: HeartHandshake,
+      },
+      {
+        title: "Impact Stories",
+        href: "/research/farm/impact-stories",
+        icon: FileText,
+      },
+      {
+        title: "Activities",
+        href: "/research/farm/activities",
+        icon: Calendar,
+      },
       { title: "Focus Areas", href: "/research/farm/focus-areas", icon: Leaf },
     ],
   },
@@ -408,20 +505,52 @@ const researchNavigation: NavItem[] = [
     icon: GraduationCap,
     scope: ["research.view", "training_program.manage", "scholarship.manage"],
     children: [
-      { title: "Training Programs", href: "/research/capacity/training", icon: GraduationCap },
-      { title: "Mentorship Programs", href: "/research/capacity/mentorship", icon: UserCheck },
-      { title: "Mentorship Applications", href: "/research/capacity/mentorship-applications", icon: FileText },
-      { title: "Mentorship Matches", href: "/research/capacity/mentorship-matches", icon: UserCheck },
-      { title: "Scholarships", href: "/research/capacity/scholarships", icon: BookOpen },
-      { title: "Scholarship Applications", href: "/research/capacity/scholarship-applications", icon: FileText },
-      { title: "Consultancies", href: "/research/capacity/consultancies", icon: MessageSquare },
+      {
+        title: "Training Programs",
+        href: "/research/capacity/training",
+        icon: GraduationCap,
+      },
+      {
+        title: "Mentorship Programs",
+        href: "/research/capacity/mentorship",
+        icon: UserCheck,
+      },
+      {
+        title: "Mentorship Applications",
+        href: "/research/capacity/mentorship-applications",
+        icon: FileText,
+      },
+      {
+        title: "Mentorship Matches",
+        href: "/research/capacity/mentorship-matches",
+        icon: UserCheck,
+      },
+      {
+        title: "Scholarships",
+        href: "/research/capacity/scholarships",
+        icon: BookOpen,
+      },
+      {
+        title: "Scholarship Applications",
+        href: "/research/capacity/scholarship-applications",
+        icon: FileText,
+      },
+      {
+        title: "Consultancies",
+        href: "/research/capacity/consultancies",
+        icon: MessageSquare,
+      },
     ],
   },
   {
     title: "Settings",
     href: "/research/settings",
     icon: Settings,
-    scope: ["research.view", "research.manage_guidelines", "donations.settings"],
+    scope: [
+      "research.view",
+      "research.manage_guidelines",
+      "donations.settings",
+    ],
     children: [
       {
         title: "Research Office",
@@ -439,7 +568,11 @@ const researchNavigation: NavItem[] = [
         title: "General Settings",
         href: "/research/settings/general",
         icon: Settings,
-        scope: ["research.view", "research.manage_guidelines", "donations.settings"],
+        scope: [
+          "research.view",
+          "research.manage_guidelines",
+          "donations.settings",
+        ],
       },
       {
         title: "Resources",
@@ -661,46 +794,60 @@ export function Sidebar({
   const { user, logout } = useAuth();
   const { hasScope } = usePermissions();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(() => new Set());
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(
+    () => new Set(),
+  );
 
   const navigation = useMemo(() => navigationMap[service] || [], [service]);
 
-  const hasItemScope = useCallback((item: NavItem) => {
-    if (!item.scope) return true;
-    return Array.isArray(item.scope)
-      ? item.scope.some((scope) => hasScope(scope))
-      : hasScope(item.scope);
-  }, [hasScope]);
+  const hasItemScope = useCallback(
+    (item: NavItem) => {
+      if (!item.scope) return true;
+      return Array.isArray(item.scope)
+        ? item.scope.some((scope) => hasScope(scope))
+        : hasScope(item.scope);
+    },
+    [hasScope],
+  );
 
-  const filterNavItem = useCallback(function filter(item: NavItem): NavItem | null {
-    const children = item.children
-      ?.map(filter)
-      .filter((child): child is NavItem => child !== null);
-    if (!hasItemScope(item) && (!children || children.length === 0)) {
-      return null;
-    }
-    return children && children.length > 0
-      ? { ...item, children }
-      : { ...item, children: undefined };
-  }, [hasItemScope]);
+  const filterNavItem = useCallback(
+    function filter(item: NavItem): NavItem | null {
+      const children = item.children
+        ?.map(filter)
+        .filter((child): child is NavItem => child !== null);
+      if (!hasItemScope(item) && (!children || children.length === 0)) {
+        return null;
+      }
+      return children && children.length > 0
+        ? { ...item, children }
+        : { ...item, children: undefined };
+    },
+    [hasItemScope],
+  );
 
   const filteredNav = useMemo(
-    () => navigation
-      .map(filterNavItem)
-      .filter((item): item is NavItem => item !== null),
+    () =>
+      navigation
+        .map(filterNavItem)
+        .filter((item): item is NavItem => item !== null),
     [filterNavItem, navigation],
   );
 
-  const isNavItemActive = useCallback(function check(item: NavItem): boolean {
-    return (
-      pathname === item.href ||
-      pathname.startsWith(item.href + "/") ||
-      Boolean(item.children?.some(check))
-    );
-  }, [pathname]);
+  const isNavItemActive = useCallback(
+    function check(item: NavItem): boolean {
+      return (
+        pathname === item.href ||
+        pathname.startsWith(item.href + "/") ||
+        Boolean(item.children?.some(check))
+      );
+    },
+    [pathname],
+  );
 
-  const hasActiveChild = useCallback((item: NavItem): boolean =>
-    Boolean(item.children?.some(isNavItemActive)), [isNavItemActive]);
+  const hasActiveChild = useCallback(
+    (item: NavItem): boolean => Boolean(item.children?.some(isNavItemActive)),
+    [isNavItemActive],
+  );
 
   useEffect(() => {
     const activeParents = filteredNav
@@ -742,12 +889,18 @@ export function Sidebar({
   };
 
   const renderChildItems = (children: NavItem[], depth = 0) => (
-    <div className={cn("mt-1 flex flex-col gap-1 border-l border-sidebar-border pl-2", depth === 0 ? "ml-5" : "ml-3")}>
+    <div
+      className={cn(
+        "mt-1 flex flex-col gap-1 border-l border-sidebar-border pl-2",
+        depth === 0 ? "ml-5" : "ml-3",
+      )}
+    >
       {children.map((child) => {
         const ChildIcon = child.icon;
         const childHasChildren = Boolean(child.children?.length);
         const childIsActive = isNavItemActive(child);
-        const childIsExpanded = expandedSections.has(child.href) || hasActiveChild(child);
+        const childIsExpanded =
+          expandedSections.has(child.href) || hasActiveChild(child);
         const childClassName = cn(
           "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs font-medium transition-colors",
           childIsActive
@@ -766,7 +919,11 @@ export function Sidebar({
               >
                 <ChildIcon className="h-3.5 w-3.5" />
                 <span className="min-w-0 flex-1 truncate">{child.title}</span>
-                {childIsExpanded ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                {childIsExpanded ? (
+                  <Minus className="h-3.5 w-3.5" />
+                ) : (
+                  <Plus className="h-3.5 w-3.5" />
+                )}
               </button>
             ) : (
               <Link
@@ -778,7 +935,9 @@ export function Sidebar({
                 <span className="min-w-0 flex-1 truncate">{child.title}</span>
               </Link>
             )}
-            {childHasChildren && childIsExpanded ? renderChildItems(child.children ?? [], depth + 1) : null}
+            {childHasChildren && childIsExpanded
+              ? renderChildItems(child.children ?? [], depth + 1)
+              : null}
           </div>
         );
       })}
@@ -893,11 +1052,20 @@ export function Sidebar({
                           ? "bg-sidebar-primary text-sidebar-primary-foreground"
                           : "text-sidebar-foreground hover:bg-sidebar-accent",
                       )}
-                      aria-expanded={expandedSections.has(item.href) || hasActiveChild(item)}
+                      aria-expanded={
+                        expandedSections.has(item.href) || hasActiveChild(item)
+                      }
                     >
                       <Icon className="h-4 w-4" />
-                      <span className="min-w-0 flex-1 truncate">{item.title}</span>
-                      {expandedSections.has(item.href) || hasActiveChild(item) ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                      <span className="min-w-0 flex-1 truncate">
+                        {item.title}
+                      </span>
+                      {expandedSections.has(item.href) ||
+                      hasActiveChild(item) ? (
+                        <Minus className="h-4 w-4" />
+                      ) : (
+                        <Plus className="h-4 w-4" />
+                      )}
                     </button>
                   ) : (
                     <Link
@@ -914,7 +1082,9 @@ export function Sidebar({
                       <span className="truncate">{item.title}</span>
                     </Link>
                   )}
-                  {item.children && item.children.length > 0 && (expandedSections.has(item.href) || hasActiveChild(item))
+                  {item.children &&
+                  item.children.length > 0 &&
+                  (expandedSections.has(item.href) || hasActiveChild(item))
                     ? renderChildItems(item.children)
                     : null}
                 </div>

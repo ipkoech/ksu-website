@@ -8,13 +8,22 @@ import { z } from "zod";
 import { motion } from "framer-motion";
 import { contentAttachmentRoles } from "@/components/content/content-attachment-roles";
 import { ContentRecordInspector } from "@/components/content/content-record-inspector";
-import { AttachmentManager, MediaPicker, useCommitPendingAttachments, type PendingMediaAttachment } from "@/components/media";
+import {
+  AttachmentManager,
+  MediaPicker,
+  useCommitPendingAttachments,
+  type PendingMediaAttachment,
+} from "@/components/media";
 import { MainScopePicker } from "@/components/relationships";
 import { PageHeader } from "@/components/shared/page-header";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { useRichTextAttachmentUpload } from "@/hooks/use-rich-text-attachment-upload";
 import { useRichTextImageUpload } from "@/hooks/use-rich-text-image-upload";
-import { hasChangedPayload, pickChangedPayloadWithRecord, type PayloadFieldMap } from "@/lib/changed-fields";
+import {
+  hasChangedPayload,
+  pickChangedPayloadWithRecord,
+  type PayloadFieldMap,
+} from "@/lib/changed-fields";
 import {
   Button,
   Card,
@@ -63,7 +72,10 @@ const schema = z
   .refine(
     (values) => {
       if (!values.valid_from || !values.valid_to) return true;
-      return new Date(values.valid_to).getTime() >= new Date(values.valid_from).getTime();
+      return (
+        new Date(values.valid_to).getTime() >=
+        new Date(values.valid_from).getTime()
+      );
     },
     { path: ["valid_to"], message: "Valid to must be after valid from." },
   );
@@ -114,12 +126,21 @@ const blogPayloadFieldMap = {
 
 const relatedLinkFields = [
   { key: "title", label: "Title", placeholder: "Related item" },
-  { key: "url", label: "URL", type: "url" as const, placeholder: "https://..." },
+  {
+    key: "url",
+    label: "URL",
+    type: "url" as const,
+    placeholder: "https://...",
+  },
   { key: "description", label: "Description", placeholder: "Optional context" },
 ];
 
 function slugify(value: string) {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function toDateTimeInput(value?: string | null) {
@@ -143,7 +164,9 @@ function optionalObject(value: unknown) {
 
 function optionalObjectArray(value: unknown) {
   if (!Array.isArray(value)) return null;
-  const items = value.filter((item) => item && typeof item === "object" && Object.keys(item).length);
+  const items = value.filter(
+    (item) => item && typeof item === "object" && Object.keys(item).length,
+  );
   return items.length ? (items as Array<Record<string, unknown>>) : null;
 }
 
@@ -179,8 +202,14 @@ export default function BlogEditorPage() {
   const updateBlog = useUpdateBlog();
   const uploadEditorImage = useRichTextImageUpload();
   const blog = blogQuery.data?.data ?? null;
-  const uploadEditorAttachment = useRichTextAttachmentUpload({ entityType: "blog", entityId: blog?.id, role: "body-attachment" });
-  const [pendingAttachments, setPendingAttachments] = useState<PendingMediaAttachment[]>([]);
+  const uploadEditorAttachment = useRichTextAttachmentUpload({
+    entityType: "blog",
+    entityId: blog?.id,
+    role: "body-attachment",
+  });
+  const [pendingAttachments, setPendingAttachments] = useState<
+    PendingMediaAttachment[]
+  >([]);
   const commitPendingAttachments = useCommitPendingAttachments();
   const isPending = createBlog.isPending || updateBlog.isPending;
 
@@ -218,10 +247,14 @@ export default function BlogEditorPage() {
       if (isNew) {
         const response = await createBlog.mutateAsync(payload);
         if (pendingAttachments.length) {
-          await commitPendingAttachments({ entityType: "blog", entityId: response.data.id, attachments: pendingAttachments });
+          await commitPendingAttachments({
+            entityType: "blog",
+            entityId: response.data.id,
+            attachments: pendingAttachments,
+          });
           setPendingAttachments([]);
         }
-        toast.success("Blog created successfully");
+        toast.success("Story created successfully");
       } else {
         const patch = pickChangedPayloadWithRecord(
           payload,
@@ -237,10 +270,14 @@ export default function BlogEditorPage() {
           await updateBlog.mutateAsync({ id: blog!.id, data: patch });
         }
         if (pendingAttachments.length) {
-          await commitPendingAttachments({ entityType: "blog", entityId: blog!.id, attachments: pendingAttachments });
+          await commitPendingAttachments({
+            entityType: "blog",
+            entityId: blog!.id,
+            attachments: pendingAttachments,
+          });
           setPendingAttachments([]);
         }
-        toast.success("Blog updated successfully");
+        toast.success("Story updated successfully");
       }
       router.push("/content/blogs");
     } catch {
@@ -251,80 +288,198 @@ export default function BlogEditorPage() {
   if (blogQuery.isLoading) return <LoadingSkeleton rows={10} />;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-      <PageHeader title={isNew ? "Create Blog" : "Edit Blog"} description={isNew ? "Create a new blog post" : `Editing: ${blog?.title}`} backHref="/content/blogs" />
-      {!isNew && blog ? <ContentRecordInspector kind="blog" record={blog} /> : null}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <PageHeader
+        title={isNew ? "Create Story" : "Edit Story"}
+        description={
+          isNew ? "Create a new university story" : `Editing: ${blog?.title}`
+        }
+        backHref="/content/blogs"
+      />
+      {!isNew && blog ? (
+        <ContentRecordInspector kind="blog" record={blog} />
+      ) : null}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-3">
             <Card className="lg:col-span-2">
-              <CardHeader><CardTitle>Blog Content</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle>Story Content</CardTitle>
+              </CardHeader>
               <CardContent className="space-y-4">
-                <FormField control={form.control} name="title" render={({ field }) => (
-                  <FormItem><FormLabel>Title *</FormLabel><FormControl><Input placeholder="Blog title" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="slug" render={({ field }) => (
-                  <FormItem><FormLabel>Slug</FormLabel><FormControl><Input placeholder="blog-slug" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="summary" render={({ field }) => (
-                  <FormItem><FormLabel>Summary</FormLabel><FormControl><Textarea rows={4} placeholder="Short summary" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="excerpt" render={({ field }) => (
-                  <FormItem><FormLabel>Excerpt</FormLabel><FormControl><Textarea rows={3} placeholder="Blog excerpt" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="plain_text" render={({ field }) => (
-                  <FormItem><FormLabel>Content</FormLabel><FormControl><RichTextEditor value={field.value ?? ""} onChange={field.onChange} minHeight="18rem" maxHeight="70vh" placeholder="Blog body" onImageUpload={uploadEditorImage} onAttachmentUpload={uploadEditorAttachment} /></FormControl><FormMessage /></FormItem>
-                )} />
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Story title" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="slug"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Slug</FormLabel>
+                      <FormControl>
+                        <Input placeholder="blog-slug" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="summary"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Summary</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          rows={4}
+                          placeholder="Short summary"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="excerpt"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Excerpt</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          rows={3}
+                          placeholder="Story excerpt"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="plain_text"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Content</FormLabel>
+                      <FormControl>
+                        <RichTextEditor
+                          value={field.value ?? ""}
+                          onChange={field.onChange}
+                          minHeight="18rem"
+                          maxHeight="70vh"
+                          placeholder="Story body"
+                          onImageUpload={uploadEditorImage}
+                          onAttachmentUpload={uploadEditorAttachment}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
 
             <Card className="lg:col-span-2">
-              <CardHeader><CardTitle>Metadata And Links</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle>Metadata And Links</CardTitle>
+              </CardHeader>
               <CardContent className="space-y-6">
-                <FormField control={form.control} name="related_links" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Related links</FormLabel>
-                    <JsonObjectEditor mode="array" value={field.value} onChange={field.onChange} fields={relatedLinkFields} itemLabel="Link" addLabel="Add link" emptyLabel="No related links added." />
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                <FormField
+                  control={form.control}
+                  name="related_links"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Related links</FormLabel>
+                      <JsonObjectEditor
+                        mode="array"
+                        value={field.value}
+                        onChange={field.onChange}
+                        fields={relatedLinkFields}
+                        itemLabel="Link"
+                        addLabel="Add link"
+                        emptyLabel="No related links added."
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <div className="grid gap-6 lg:grid-cols-2">
-                  <FormField control={form.control} name="keywords" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Keywords</FormLabel>
-                      <JsonObjectEditor value={field.value} onChange={field.onChange} allowCustomFields emptyLabel="No keywords added." />
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="structured_content" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Structured content</FormLabel>
-                      <JsonObjectEditor value={field.value} onChange={field.onChange} allowCustomFields emptyLabel="No structured content added." />
-                      <FormMessage />
-                    </FormItem>
-                  )} />
+                  <FormField
+                    control={form.control}
+                    name="keywords"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Keywords</FormLabel>
+                        <JsonObjectEditor
+                          value={field.value}
+                          onChange={field.onChange}
+                          allowCustomFields
+                          emptyLabel="No keywords added."
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="structured_content"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Structured content</FormLabel>
+                        <JsonObjectEditor
+                          value={field.value}
+                          onChange={field.onChange}
+                          allowCustomFields
+                          emptyLabel="No structured content added."
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </CardContent>
             </Card>
 
             <div className="space-y-6 lg:col-start-3 lg:row-start-1">
               <Card>
-                <CardHeader><CardTitle>Media</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Media</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
-                  <FormField control={form.control} name="featured_media_id" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Featured image</FormLabel>
-                      <MediaPicker
-                        value={field.value}
-                        onChange={(value) => field.onChange(value)}
-                        mediaType="image"
-                        accept="image/*"
-                        label="Featured image"
-                        helperText="Shown on blog lists, detail pages, and sharing previews."
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )} />
+                  <FormField
+                    control={form.control}
+                    name="featured_media_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Featured image</FormLabel>
+                        <MediaPicker
+                          value={field.value}
+                          onChange={(value) => field.onChange(value)}
+                          mediaType="image"
+                          accept="image/*"
+                          label="Featured image"
+                          helperText="Shown on blog lists, detail pages, and sharing previews."
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <AttachmentManager
                     entityType="blog"
                     entityId={blog?.id}
@@ -336,67 +491,161 @@ export default function BlogEditorPage() {
               </Card>
 
               <Card>
-                <CardHeader><CardTitle>Placement</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Placement</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
                   {(["is_featured", "is_main"] as const).map((name) => (
-                    <FormField key={name} control={form.control} name={name} render={({ field }) => (
-                      <FormItem className="flex items-center justify-between rounded-lg border p-3">
-                        <FormLabel className="cursor-pointer">{name.replace("is_", "").replace("_", " ")}</FormLabel>
-                        <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                      </FormItem>
-                    )} />
+                    <FormField
+                      key={name}
+                      control={form.control}
+                      name={name}
+                      render={({ field }) => (
+                        <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                          <FormLabel className="cursor-pointer">
+                            {name.replace("is_", "").replace("_", " ")}
+                          </FormLabel>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
                   ))}
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
-                    <FormField control={form.control} name="valid_from" render={({ field }) => (
-                      <FormItem><FormLabel>Valid from</FormLabel><FormControl><Input type="datetime-local" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="valid_to" render={({ field }) => (
-                      <FormItem><FormLabel>Valid to</FormLabel><FormControl><Input type="datetime-local" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
+                    <FormField
+                      control={form.control}
+                      name="valid_from"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Valid from</FormLabel>
+                          <FormControl>
+                            <Input type="datetime-local" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="valid_to"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Valid to</FormLabel>
+                          <FormControl>
+                            <Input type="datetime-local" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                  <FormField control={form.control} name="display_order" render={({ field }) => (
-                    <FormItem><FormLabel>Display order</FormLabel><FormControl><Input type="number" min={0} {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
+                  <FormField
+                    control={form.control}
+                    name="display_order"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Display order</FormLabel>
+                        <FormControl>
+                          <Input type="number" min={0} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader><CardTitle>Scope And Ownership</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Scope And Ownership</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
-                  <FormField control={form.control} name="scope_type" render={({ field }) => (
-                    <FormItem>
-                      <MainScopePicker
-                        label="Relationship"
-                        description="Scope this blog post to a school, department, programme, division, or intake."
-                        typeValue={field.value}
-                        idValue={form.watch("scope_id")}
-                        onChange={(value) => {
-                          form.setValue("scope_type", value.type, { shouldDirty: true, shouldValidate: true });
-                          form.setValue("scope_id", value.id, { shouldDirty: true, shouldValidate: true });
-                        }}
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )} />
+                  <FormField
+                    control={form.control}
+                    name="scope_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <MainScopePicker
+                          label="Relationship"
+                          description="Scope this story to a school, department, programme, division, or intake."
+                          typeValue={field.value}
+                          idValue={form.watch("scope_id")}
+                          onChange={(value) => {
+                            form.setValue("scope_type", value.type, {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            });
+                            form.setValue("scope_id", value.id, {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            });
+                          }}
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader><CardTitle>SEO</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>SEO</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
-                  <FormField control={form.control} name="meta_title" render={({ field }) => (
-                    <FormItem><FormLabel>Meta title</FormLabel><FormControl><Input placeholder="SEO title" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={form.control} name="meta_description" render={({ field }) => (
-                    <FormItem><FormLabel>Meta description</FormLabel><FormControl><Textarea rows={3} placeholder="SEO description" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
+                  <FormField
+                    control={form.control}
+                    name="meta_title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Meta title</FormLabel>
+                        <FormControl>
+                          <Input placeholder="SEO title" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="meta_description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Meta description</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            rows={3}
+                            placeholder="SEO description"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </CardContent>
               </Card>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button type="submit" disabled={isPending}>{isPending ? "Saving..." : isNew ? "Create Blog" : "Save Changes"}</Button>
-            <Button type="button" variant="outline" onClick={() => router.push("/content/blogs")}>Cancel</Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending
+                ? "Saving..."
+                : isNew
+                  ? "Create Story"
+                  : "Save Changes"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/content/blogs")}
+            >
+              Cancel
+            </Button>
           </div>
         </form>
       </Form>

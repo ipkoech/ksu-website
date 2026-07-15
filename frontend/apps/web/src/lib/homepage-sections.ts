@@ -77,6 +77,21 @@ export type HomepageSectionItem = {
   video_duration_seconds?: number | null;
   display_order?: number;
   is_enabled?: boolean;
+  content_enriched?: {
+    linked_content?: {
+      id?: string;
+      type?: "news" | "blog" | "event";
+      title?: string;
+      slug?: string;
+      summary?: string | null;
+      status?: string | null;
+      is_published?: boolean | null;
+      published_at?: string | null;
+      start_date?: string | null;
+      href?: string | null;
+      featured_media?: HomepageMedia["media"] | null;
+    } | null;
+  } | null;
 };
 
 export type HomepageSection = {
@@ -197,9 +212,8 @@ export type HomepageCompositionState = {
 export const getComposedHomepage = cache(
   async (): Promise<HomepageCompositionState> => {
     try {
-      const response = await mainApi.get<HomepageCompositionApiResponse>(
-        "/api/v1/homepage",
-      );
+      const response =
+        await mainApi.get<HomepageCompositionApiResponse>("/api/v1/homepage");
       const composition = unwrapHomepageCompositionResponse(response);
       if (!composition) {
         return {
@@ -290,7 +304,9 @@ export function background(
   return sectionMedia(section, "background")[0] ?? null;
 }
 
-export function poster(section: HomepageSection | HomepagePartnershipSpotlight) {
+export function poster(
+  section: HomepageSection | HomepagePartnershipSpotlight,
+) {
   return sectionMedia(section, "poster")[0] ?? null;
 }
 
@@ -342,14 +358,13 @@ function isHomepageCompositionResponse(
     "page_key" in value &&
     "scope_type" in value &&
     Array.isArray((value as HomepageCompositionResponse).sections) &&
-    Array.isArray(
-      (value as HomepageCompositionResponse).partnership_spotlights,
-    )
+    Array.isArray((value as HomepageCompositionResponse).partnership_spotlights)
   );
 }
 
 function isAbortError(error: unknown) {
   return (
-    error instanceof DOMException && error.name === "AbortError"
-  ) || (error instanceof Error && error.name === "AbortError");
+    (error instanceof DOMException && error.name === "AbortError") ||
+    (error instanceof Error && error.name === "AbortError")
+  );
 }

@@ -1,16 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { Calendar, FileText, ImageIcon, Megaphone, Newspaper, ShieldCheck, Users } from "lucide-react";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ksu/ui/components";
+import {
+  Calendar,
+  FileText,
+  ImageIcon,
+  Megaphone,
+  Newspaper,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@ksu/ui/components";
 import { PageHeader } from "@/components/layout";
 import { ContentWorkspaceHeader } from "./_components/content-workspace";
 
 const contentLinks = [
   { title: "News", href: "/research/content/news", icon: Newspaper },
-  { title: "Blogs", href: "/research/content/blogs", icon: FileText },
+  { title: "Stories", href: "/research/content/blogs", icon: FileText },
   { title: "Events", href: "/research/content/events", icon: Calendar },
-  { title: "Announcements", href: "/research/content/announcements", icon: Megaphone },
+  {
+    title: "Announcements",
+    href: "/research/content/announcements",
+    icon: Megaphone,
+  },
   { title: "Sliders", href: "/research/content/sliders", icon: ImageIcon },
   { title: "Boards", href: "/research/content/boards", icon: ShieldCheck },
   { title: "Staff", href: "/research/content/staff", icon: Users },
@@ -35,7 +54,9 @@ export default function ResearchContentPage() {
               <CardHeader>
                 <Icon className="h-5 w-5 text-primary" />
                 <CardTitle className="text-base">{link.title}</CardTitle>
-                <CardDescription>Main content model scoped to research.</CardDescription>
+                <CardDescription>
+                  Main content model scoped to research.
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <Button variant="outline" size="sm" asChild>

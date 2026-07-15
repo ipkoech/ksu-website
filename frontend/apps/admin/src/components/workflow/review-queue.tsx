@@ -64,7 +64,10 @@ export function ReviewQueue() {
     queryKey: ["content-workflow", "queue", filters],
     queryFn: () => contentWorkflowApi.listQueue(filters),
   });
-  const items = useMemo(() => queueQuery.data?.data ?? [], [queueQuery.data?.data]);
+  const items = useMemo(
+    () => queueQuery.data?.data ?? [],
+    [queueQuery.data?.data],
+  );
   const selectedItem =
     items.find((item) => item.id === selectedId) ?? items[0] ?? null;
   const canReview = hasScope("content.review") || hasScope("content.manage");
@@ -148,15 +151,32 @@ export function ReviewQueue() {
                 <Sparkles className="size-3.5 text-orange-600" />
                 Editorial workflow command centre
               </div>
-              <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">Approve, request changes, and publish with context</h2>
+              <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+                Approve, request changes, and publish with context
+              </h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                The queue reflects backend workflow state across newsroom, Page CMS, slider and student-club submissions.
+                The queue reflects backend workflow state across newsroom, Page
+                CMS, slider and student-club submissions.
               </p>
             </div>
             <div className="grid gap-2 sm:grid-cols-3">
               <QueueMetric label="Visible" value={items.length} />
-              <QueueMetric label="Review" value={items.filter((item) => item.status === "in_review" || item.status === "submitted").length} />
-              <QueueMetric label="Approved" value={items.filter((item) => item.status === "approved").length} />
+              <QueueMetric
+                label="Review"
+                value={
+                  items.filter(
+                    (item) =>
+                      item.status === "in_review" ||
+                      item.status === "submitted",
+                  ).length
+                }
+              />
+              <QueueMetric
+                label="Approved"
+                value={
+                  items.filter((item) => item.status === "approved").length
+                }
+              />
             </div>
           </div>
         </section>
@@ -212,7 +232,7 @@ export function ReviewQueue() {
                 }
                 options={[
                   { value: "news", label: "News" },
-                  { value: "blogs", label: "Blogs" },
+                  { value: "blogs", label: "Stories" },
                   { value: "announcements", label: "Announcements" },
                   { value: "events", label: "Events" },
                   { value: "club-events", label: "Club events" },

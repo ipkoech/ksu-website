@@ -9,7 +9,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import PageSection, PartnershipSpotlight, SectionItem
+from app.models import News, PageSection, PartnershipSpotlight, SectionItem
 from app.services.research_partners import ResearchPartnersProxyService
 
 from ._shared import SeedContext
@@ -375,6 +375,39 @@ def _replace_section_items(section: PageSection, item_specs: tuple[dict[str, Any
     ]
 
 
+async def _seed_leadership_activity_news(db: AsyncSession) -> dict[str, uuid.UUID]:
+    now = datetime.now(timezone.utc)
+    records = (
+        ("AI & Data Science Centre launched", "ai-data-science-centre-launched", "Kisii University expands its capacity in artificial intelligence, data science and applied digital innovation."),
+        ("MoU signed with the University of Pretoria", "mou-university-of-pretoria", "A strategic academic partnership supporting collaboration, mobility and shared research."),
+        ("UNESCO delegation visits Kisii University", "unesco-delegation-visits-kisii-university", "University leadership welcomed UNESCO representatives for discussions on education, research and community impact."),
+        ("Student leaders engagement forum", "student-leaders-engagement-forum", "The Vice Chancellor met student representatives to discuss student experience, leadership and institutional priorities."),
+    )
+    linked: dict[str, uuid.UUID] = {}
+    for title, slug, summary in records:
+        item = (await db.execute(select(News).where(News.slug == slug))).scalar_one_or_none()
+        if item is None:
+            item = News(
+                title=title,
+                slug=slug,
+                summary=summary,
+                plain_text=summary,
+                rich_text=f"<p>{summary}</p>",
+                is_featured=False,
+                is_main=True,
+                is_public=True,
+                is_published=True,
+                status="published",
+                workflow_status="published",
+                published_at=now,
+                display_order=100,
+            )
+            db.add(item)
+            await db.flush()
+        linked[title] = item.id
+    return linked
+
+
 async def _seed_homepage_sections(db: AsyncSession) -> None:
     result = await db.execute(select(PageSection))
     existing = {
@@ -384,6 +417,7 @@ async def _seed_homepage_sections(db: AsyncSession) -> None:
     }
 
     now = datetime.now(timezone.utc)
+    leadership_news = await _seed_leadership_activity_news(db)
     for spec in HOMEPAGE_SECTION_SPECS:
         identity = ("homepage", "university", None, spec["section_key"])
         section = existing.get(identity)
@@ -417,7 +451,20 @@ async def _seed_homepage_sections(db: AsyncSession) -> None:
             for field_name, value in payload.items():
                 setattr(section, field_name, value)
 
-        _replace_section_items(section, spec["items"])
+        item_specs = spec["items"]
+        if spec["section_key"] == "leadership-activity":
+            item_specs = tuple(
+                {
+                    **item_spec,
+                    "cta_url": None,
+                    "content": {
+                        "linked_content_type": "news",
+                        "linked_content_id": str(leadership_news[item_spec["title"]]),
+                    },
+                }
+                for item_spec in item_specs
+            )
+        _replace_section_items(section, item_specs)
 
     await db.flush()
 

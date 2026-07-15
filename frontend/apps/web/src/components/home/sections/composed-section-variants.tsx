@@ -1154,23 +1154,30 @@ function campusLifeLanes(items: HomepageSectionItem[]): CampusLifeLaneData[] {
 }
 
 export function LeadershipActivitySection({ section }: SectionVariantProps) {
-  const leaderName = settingText(section, "leaderName") ?? "Vice Chancellor";
+  const leaderName =
+    settingText(section, "leaderName") ?? "Prof. Charles O. Ong’ondo, PhD";
   const leaderTitle = settingText(section, "leaderTitle") ?? "Vice Chancellor";
   const leaderImage =
-    settingText(section, "leaderImage") ?? mediaUrl(heroImage(section));
-  const activities = displayItems(section).slice(0, 5);
+    settingText(section, "leaderImage") ??
+    mediaUrl(heroImage(section)) ??
+    "/images/Home/VCProfSUKUBA.jpg";
+  const activities = displayItems(section)
+    .filter(
+      (item) => item.content_enriched?.linked_content?.is_published === true,
+    )
+    .slice(0, 5);
   return (
     <section
       id={section.section_key}
       className="border-b border-blue-100 bg-white py-12 lg:py-14"
     >
-      <div className="mx-auto grid max-w-[1680px] gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(280px,0.38fr)_minmax(0,0.62fr)] lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto grid max-w-[1680px] gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(250px,0.33fr)_minmax(0,0.67fr)] lg:px-8 xl:px-10 2xl:px-12">
         <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
           <PublicImage
             src={leaderImage}
             alt={`${leaderName}, ${leaderTitle}`}
             ratio="profile"
-            className="min-h-[380px]"
+            className="min-h-[300px] max-h-[430px]"
             imageClassName="object-cover object-top"
           />
           <div className="mt-5">
@@ -1744,7 +1751,23 @@ function ActivityLineItem({
   item: HomepageSectionItem;
   index: number;
 }) {
-  const imageUrl = itemImageUrl(item);
+  const linked = item.content_enriched?.linked_content;
+  if (!linked?.is_published || !linked.title || !linked.href) return null;
+  const imageUrl =
+    linked.featured_media?.thumbnail_url ??
+    linked.featured_media?.cdn_url ??
+    linked.featured_media?.public_url ??
+    linked.featured_media?.url ??
+    null;
+  const typeLabel =
+    linked.type === "blog"
+      ? "Story"
+      : linked.type === "event"
+        ? "Event"
+        : "News";
+  const date = formatPublicDate(
+    linked.type === "event" ? linked.start_date : linked.published_at,
+  );
   const body = (
     <article className="group grid gap-4 py-5 transition hover:bg-blue-50/60 sm:grid-cols-[64px_minmax(0,1fr)_120px] sm:items-center sm:px-4">
       <span className="font-[family-name:var(--font-display)] text-2xl font-semibold text-primary/30 transition group-hover:text-primary">
@@ -1752,21 +1775,21 @@ function ActivityLineItem({
       </span>
       <div>
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
-          {item.subtitle ?? itemContentText(item, "date") ?? "Activity"}
+          {[typeLabel, date].filter(Boolean).join(" · ")}
         </p>
         <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
-          {item.title}
+          {linked.title}
         </h3>
-        {item.body_text ? (
+        {linked.summary ? (
           <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">
-            {item.body_text}
+            {linked.summary}
           </p>
         ) : null}
       </div>
       {imageUrl ? (
         <PublicImage
           src={imageUrl}
-          alt={item.media_alt_text ?? item.title ?? "Activity"}
+          alt={linked.featured_media?.alt_text ?? linked.title}
           ratio="logo"
           className="hidden min-h-20 rounded-none sm:block"
           imageClassName="object-cover"
@@ -1776,11 +1799,7 @@ function ActivityLineItem({
       )}
     </article>
   );
-  return item.cta_url ? (
-    <LinkWrapper href={item.cta_url}>{body}</LinkWrapper>
-  ) : (
-    body
-  );
+  return <LinkWrapper href={linked.href}>{body}</LinkWrapper>;
 }
 
 function NewsLineItem({
