@@ -794,7 +794,7 @@ export async function getHomepageData(): Promise<HomepageData> {
           image: viceChancellor.image,
           message: viceChancellorMessage,
           href: viceChancellor.slug
-            ? `/people/${viceChancellor.slug}`
+            ? `/staff/${viceChancellor.slug}`
             : "/about/university-management",
         }
       : null,
