@@ -1509,8 +1509,6 @@ export function LogoCarouselSection({ section }: SectionVariantProps) {
               }
             `}
           </style>
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-white to-transparent sm:w-20" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-white to-transparent sm:w-20" />
           <div className="overflow-x-auto [scrollbar-width:none] motion-reduce:overflow-x-auto [&::-webkit-scrollbar]:hidden">
             <div
               className={[
@@ -1598,11 +1596,11 @@ function PartnerLogoRailItem({
           alt={duplicate ? "" : (partner.logoAlt ?? partner.name)}
           ratio="logo"
           sizes="220px"
-          className="h-12 bg-transparent opacity-65 grayscale transition duration-300 group-hover/logo:opacity-100 group-hover/logo:grayscale-0"
+          className="h-12 bg-transparent"
           imageClassName="object-contain"
         />
       ) : (
-        <span className="text-center font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-slate-500 grayscale transition duration-300 group-hover/logo:text-primary group-hover/logo:grayscale-0">
+        <span className="text-center font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-primary">
           {partner.name}
         </span>
       )}
