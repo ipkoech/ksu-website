@@ -1192,7 +1192,7 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
     >
       <div className="mx-auto grid max-w-[1680px] lg:grid-cols-[minmax(280px,0.34fr)_minmax(0,0.66fr)]">
         <div className="relative border-b border-primary/10 lg:border-b-0 lg:border-r">
-          <div className="relative min-h-[390px] overflow-hidden bg-primary lg:min-h-[470px]">
+          <div className="relative min-h-[300px] overflow-hidden bg-primary lg:min-h-[350px]">
             <div className="absolute -left-24 top-10 h-72 w-72 rounded-full border border-secondary/20" />
             <div className="absolute left-10 top-20 h-56 w-56 border border-secondary/15 [clip-path:polygon(50%_0,100%_28%,100%_100%,0_100%,0_28%)]" />
             <PublicImage
@@ -1204,36 +1204,36 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
               sizes="(min-width: 1024px) 34vw, 100vw"
             />
           </div>
-          <div className="px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
+          <div className="px-5 py-6 sm:px-8 lg:px-10 lg:py-7">
             <SectionEyebrow value={section.title ?? "Leadership in action"} />
-            <p className="mt-6 text-xs font-bold uppercase tracking-[0.16em] text-primary">
+            <p className="mt-4 text-xs font-bold uppercase tracking-[0.16em] text-primary">
               {leaderTitle}
             </p>
             <h2 className="mt-2 max-w-md font-[family-name:var(--font-display)] text-3xl font-semibold leading-[1.05] text-slate-950 sm:text-4xl">
               {leaderName}
             </h2>
-            <div className="mt-4 h-px w-12 bg-secondary" />
-            <p className="mt-5 max-w-md text-sm leading-7 text-slate-600">
+            <div className="mt-3 h-px w-12 bg-secondary" />
+            <p className="mt-4 max-w-md text-sm leading-6 text-slate-600">
               {leaderMessage}
             </p>
             <Link
               href={leaderHref}
-              className="mt-7 inline-flex min-h-11 items-center gap-3 border-b border-secondary pb-1 text-sm font-bold text-primary transition hover:gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="mt-5 inline-flex min-h-10 items-center gap-3 border-b border-secondary pb-1 text-sm font-bold text-primary transition hover:gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               Meet the Vice Chancellor
               <ArrowRight className="h-4 w-4 text-secondary" aria-hidden />
             </Link>
           </div>
         </div>
-        <div className="px-4 py-10 sm:px-8 lg:px-12 lg:py-14 xl:px-16">
-          <h3 className="font-[family-name:var(--font-display)] text-4xl font-semibold leading-none text-primary sm:text-5xl lg:text-6xl">
+        <div className="px-4 py-8 sm:px-8 lg:px-12 lg:py-10 xl:px-16">
+          <h3 className="font-[family-name:var(--font-display)] text-4xl font-semibold leading-none text-primary sm:text-5xl">
             Recent activities
           </h3>
           <div className="mt-4 h-0.5 w-14 bg-secondary" />
           {featuredActivity ? (
             <FeaturedActivity item={featuredActivity} />
           ) : (
-            <p className="mt-10 border-y border-primary/10 py-8 text-sm text-slate-600">
+            <p className="mt-7 border-y border-primary/10 py-6 text-sm text-slate-600">
               Published leadership activities will appear here.
             </p>
           )}
@@ -1247,7 +1247,7 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
           {activities.length ? (
             <Link
               href="/media/news"
-              className="mt-7 inline-flex min-h-11 items-center gap-3 border-b border-secondary pb-1 text-sm font-bold text-primary transition hover:gap-4"
+              className="mt-5 inline-flex min-h-10 items-center gap-3 border-b border-secondary pb-1 text-sm font-bold text-primary transition hover:gap-4"
             >
               View all activities
               <ArrowRight className="h-4 w-4 text-secondary" aria-hidden />
@@ -1937,9 +1937,9 @@ function FeaturedActivity({ item }: { item: HomepageSectionItem }) {
   return (
     <Link
       href={href}
-      className="group mt-8 block border-b border-primary/15 pb-7"
+      className="group mt-6 block border-b border-primary/15 pb-5"
     >
-      <div className="relative aspect-[16/7] overflow-hidden bg-primary/8">
+      <div className="relative aspect-[16/6] overflow-hidden bg-primary/8">
         {imageUrl ? (
           <PublicImage
             src={imageUrl}
@@ -1955,7 +1955,7 @@ function FeaturedActivity({ item }: { item: HomepageSectionItem }) {
           </div>
         )}
       </div>
-      <div className="grid gap-4 pt-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+      <div className="grid gap-4 pt-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.15em] text-primary">
             {typeLabel}
@@ -1963,11 +1963,11 @@ function FeaturedActivity({ item }: { item: HomepageSectionItem }) {
               <span className="ml-4 font-medium text-slate-500">{date}</span>
             ) : null}
           </p>
-          <h4 className="mt-3 max-w-4xl font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 transition group-hover:text-primary sm:text-3xl">
+          <h4 className="mt-2 max-w-4xl font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 transition group-hover:text-primary">
             {title}
           </h4>
           {summary ? (
-            <p className="mt-3 line-clamp-2 max-w-3xl text-sm leading-6 text-slate-600">
+            <p className="mt-2 line-clamp-2 max-w-3xl text-sm leading-6 text-slate-600">
               {summary}
             </p>
           ) : null}
@@ -1992,17 +1992,17 @@ function ActivityLineItem({
   if (!details) return null;
   const { href, title, altText, imageUrl, typeLabel, date } = details;
   const body = (
-    <article className="group grid gap-4 py-4 transition sm:grid-cols-[132px_minmax(0,1fr)_auto] sm:items-center">
+    <article className="group grid gap-4 py-3 transition sm:grid-cols-[112px_minmax(0,1fr)_auto] sm:items-center">
       {imageUrl ? (
         <PublicImage
           src={imageUrl}
           alt={altText}
           ratio="logo"
-          className="hidden min-h-20 rounded-none sm:block"
+          className="hidden min-h-16 rounded-none sm:block"
           imageClassName="object-cover transition duration-500 group-hover:scale-[1.03]"
         />
       ) : (
-        <div className="hidden min-h-20 items-center justify-center bg-primary text-xs font-bold tracking-[0.18em] text-white sm:flex">
+        <div className="hidden min-h-16 items-center justify-center bg-primary text-xs font-bold tracking-[0.18em] text-white sm:flex">
           {String(index + 1).padStart(2, "0")}
         </div>
       )}
