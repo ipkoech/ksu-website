@@ -60,6 +60,7 @@ export type ProgrammeFinderData = {
 
 const campusHeroImage = "/images/homepage/kisii-administration-campus.jpg";
 const heriAfricaLaunchImage = "/images/HERIAfricaLaunch.jpg";
+const researchImpactBackground = "/images/research/research-impact-bg.png";
 
 export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
   const content = hero?.content;
@@ -1205,41 +1206,147 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
 }
 
 export function ResearchCardsSection({ section }: SectionVariantProps) {
-  const items = displayItems(section).slice(0, 6);
+  const items = researchFocusItems(section);
+  const backgroundImage =
+    settingText(section, "backgroundImage") ??
+    mediaUrl(background(section)) ??
+    researchImpactBackground;
   return (
     <section
       id={section.section_key}
-      className="overflow-hidden border-b border-white/10 bg-primary py-14 text-white lg:py-16"
+      className="relative isolate overflow-hidden border-b border-white/10 bg-primary py-14 text-white lg:py-20"
     >
-      <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <SectionEyebrow
-          value={section.subtitle ?? "Research and innovation"}
-          light
-        />
-        <div className="mt-2 grid gap-8 lg:grid-cols-[minmax(280px,0.34fr)_minmax(0,0.66fr)] lg:items-end">
-          <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
-            <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold sm:text-4xl">
-              {section.title ?? "Transforming Communities Through Research"}
-            </h2>
-            <SectionBody value={section.description} light className="mt-4" />
-            <CtaLink
-              item={{
-                title: "Explore research",
-                cta_label: "Explore research",
-                cta_url: "/research",
-              }}
-              className="mt-6"
-              prominent
-            />
-          </div>
-          <div className="-mr-4 flex snap-x gap-3 overflow-x-auto pb-2 pr-4 sm:-mr-6 sm:pr-6 lg:mr-0 lg:grid lg:grid-cols-3 lg:overflow-visible lg:pr-0 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150">
-            {items.map((item, index) => (
-              <ResearchStoryTile key={item.id} item={item} index={index} />
-            ))}
-          </div>
+      <PublicImage
+        src={backgroundImage}
+        alt=""
+        ratio="fill"
+        className="absolute inset-0 -z-20 h-full w-full rounded-none"
+        imageClassName="object-cover object-center"
+        sizes="100vw"
+      />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,hsl(var(--primary)/.96)_0%,hsl(var(--primary)/.9)_36%,hsl(var(--primary)/.68)_68%,hsl(var(--primary)/.8)_100%)]" />
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_75%_35%,rgba(226,166,25,.16),transparent_34%),linear-gradient(180deg,rgba(2,6,23,.12),rgba(2,6,23,.42))]" />
+
+      <div className="mx-auto grid max-w-[1680px] gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(280px,0.38fr)_minmax(0,0.62fr)] lg:items-end lg:px-8 xl:px-10 2xl:px-12">
+        <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
+          <SectionEyebrow
+            value={section.subtitle ?? "Research and innovation"}
+            light
+          />
+          <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
+            {section.title ?? "Transforming Communities Through Research"}
+          </h2>
+          <SectionBody
+            value={
+              section.description ??
+              "Kisii University research addresses practical challenges across health, agriculture, digital systems, governance, energy and community development."
+            }
+            light
+            className="mt-5 max-w-xl text-white/78"
+          />
+          <CtaLink
+            item={{
+              title: "Explore research",
+              cta_label: "Explore research",
+              cta_url: "/research",
+            }}
+            className="mt-7"
+            prominent
+          />
+        </div>
+
+        <div
+          aria-label="Research focus areas"
+          className="grid gap-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150 sm:grid-cols-2"
+        >
+          {items.map((item, index) => (
+            <ResearchFocusArea key={item.id} item={item} index={index} />
+          ))}
         </div>
       </div>
     </section>
+  );
+}
+
+const researchFocusFallbackItems: HomepageSectionItem[] = [
+  {
+    id: "research-focus-agriculture",
+    title: "Climate-resilient agriculture",
+    body_text: "Improving food security through practical farming innovation.",
+    cta_url: "/research",
+    display_order: 10,
+  },
+  {
+    id: "research-focus-health",
+    title: "Health and medical innovation",
+    body_text: "Advancing solutions for healthier communities.",
+    cta_url: "/research",
+    display_order: 20,
+  },
+  {
+    id: "research-focus-digital",
+    title: "AI, data and digital transformation",
+    body_text: "Developing intelligent systems for African futures.",
+    cta_url: "/research",
+    display_order: 30,
+  },
+  {
+    id: "research-focus-energy",
+    title: "Renewable energy and sustainability",
+    body_text: "Building cleaner and more resilient energy pathways.",
+    cta_url: "/research",
+    display_order: 40,
+  },
+  {
+    id: "research-focus-governance",
+    title: "Law, governance and social justice",
+    body_text: "Promoting justice, equity and accountable institutions.",
+    cta_url: "/research",
+    display_order: 50,
+  },
+  {
+    id: "research-focus-community",
+    title: "Enterprise and community development",
+    body_text: "Turning knowledge into local opportunity and social impact.",
+    cta_url: "/research",
+    display_order: 60,
+  },
+];
+
+function researchFocusItems(section: HomepageSection) {
+  const items = displayItems(section).slice(0, 6);
+  return items.length ? items : researchFocusFallbackItems;
+}
+
+function ResearchFocusArea({
+  item,
+  index,
+}: {
+  item: HomepageSectionItem;
+  index: number;
+}) {
+  const body = (
+    <article className="group border border-white/14 bg-white/[0.075] p-4 text-white backdrop-blur-md transition duration-300 hover:-translate-y-0.5 hover:border-secondary/45 hover:bg-white/[0.11]">
+      <div className="flex gap-4">
+        <span className="font-[family-name:var(--font-display)] text-sm font-semibold text-secondary">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+        <div className="min-w-0">
+          <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold leading-tight text-white">
+            {item.title}
+          </h3>
+          <p className="mt-2 line-clamp-2 text-sm leading-6 text-white/68">
+            {item.body_text ?? item.cta_description}
+          </p>
+        </div>
+      </div>
+    </article>
+  );
+
+  return item.cta_url ? (
+    <LinkWrapper href={item.cta_url}>{body}</LinkWrapper>
+  ) : (
+    body
   );
 }
 
@@ -1667,44 +1774,6 @@ function ActivityLineItem({
       ) : (
         <ArrowRight className="hidden h-4 w-4 justify-self-end text-primary opacity-0 transition group-hover:translate-x-1 group-hover:opacity-100 sm:block" />
       )}
-    </article>
-  );
-  return item.cta_url ? (
-    <LinkWrapper href={item.cta_url}>{body}</LinkWrapper>
-  ) : (
-    body
-  );
-}
-
-function ResearchStoryTile({
-  item,
-  index,
-}: {
-  item: HomepageSectionItem;
-  index: number;
-}) {
-  const body = (
-    <article className="group relative min-h-[290px] w-[78vw] shrink-0 snap-start overflow-hidden border border-white/15 bg-white/10 sm:w-72 lg:w-auto">
-      <PublicImage
-        src={itemImageUrl(item)}
-        alt={item.media_alt_text ?? item.title ?? "Research story"}
-        ratio="news"
-        className="h-40 rounded-none opacity-85"
-        imageClassName="object-cover transition duration-700 group-hover:scale-105"
-      />
-      <div className="p-4">
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
-          {item.subtitle ??
-            itemContentText(item, "category") ??
-            `Impact ${index + 1}`}
-        </p>
-        <h3 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-white">
-          {item.title}
-        </h3>
-        <p className="mt-2 line-clamp-3 text-sm leading-6 text-white/72">
-          {item.body_text ?? item.cta_description}
-        </p>
-      </div>
     </article>
   );
   return item.cta_url ? (

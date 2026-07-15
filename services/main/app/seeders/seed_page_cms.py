@@ -234,7 +234,10 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
         "title": "Transforming Communities Through Research",
         "subtitle": "Research and innovation",
         "description": "Our research addresses real-world challenges and creates sustainable solutions for society.",
-        "settings": {"cta": {"label": "Explore research", "href": "/research"}},
+        "settings": {
+            "backgroundImage": "/images/research/research-impact-bg.png",
+            "cta": {"label": "Explore research", "href": "/research"},
+        },
         "items": (
             {"item_type": "card", "title": "Climate-Resilient Agriculture", "body_text": "Improving food security through innovative farming.", "cta_url": "/research", "display_order": 10, "content": {"imageUrl": "/images/history/KSUGreenLandscapingMay2026-3885.jpg"}},
             {"item_type": "card", "title": "Healthcare Innovation", "body_text": "Advancing health solutions for better communities.", "cta_url": "/research", "display_order": 20, "content": {"imageUrl": "/images/about/about-service-charter-branded.webp"}},
