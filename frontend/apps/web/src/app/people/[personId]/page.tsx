@@ -1,17 +1,19 @@
 import { notFound } from "next/navigation";
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 import {
   ArrowLeft,
   Award,
   BookOpenCheck,
   BriefcaseBusiness,
   Building2,
+  Download,
   ExternalLink,
   Mail,
   MapPin,
   Phone,
   School,
   Sparkles,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
@@ -26,6 +28,7 @@ import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import {
   getPublicPersonProfile,
   type PublicPersonAssignment,
+  type PublicPersonGenericRecord,
   type PublicPersonProfile,
   type PublicPersonPublication,
   type PublicPersonResearchGrant,
@@ -33,6 +36,12 @@ import {
 import { publicFileUrl, resolvePublicMediaUrl } from "@/lib/public-media";
 
 type ProfileLink = { label: string; href: string | null };
+type ProfileRecord = {
+  title: string;
+  meta: string[];
+  description?: string | null;
+  href?: string | null;
+};
 type ProfileFact = {
   icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
   label: string;
@@ -121,12 +130,67 @@ function scopusHref(value?: string | null) {
   return `https://www.scopus.com/authid/detail.uri?authorId=${encodeURIComponent(text)}`;
 }
 
+function cvHref(person: PublicPersonProfile) {
+  return (
+    resolvePublicMediaUrl(person.cv_file_url) ??
+    publicFileUrl(person.cv_file_id) ??
+    null
+  );
+}
+
 function listValues(value?: string[] | null) {
   return (value ?? []).map((item) => present(item)).filter(Boolean) as string[];
 }
 
 function recordList<T>(value?: T[] | null) {
   return (value ?? []).filter(Boolean);
+}
+
+function genericRecordTitle(item: PublicPersonGenericRecord) {
+  return (
+    present(item.title) ??
+    present(item.name) ??
+    present(item.award) ??
+    present(item.recognition) ??
+    present(item.referee) ??
+    present(item.citation) ??
+    "Profile record"
+  );
+}
+
+function genericRecordDescription(item: PublicPersonGenericRecord) {
+  return present(item.description) ?? present(item.summary);
+}
+
+function genericRecordMeta(item: PublicPersonGenericRecord) {
+  return [
+    present(item.category),
+    present(item.type),
+    present(item.role),
+    present(item.venue),
+    present(item.organization),
+    present(item.institution),
+    present(item.funder),
+    present(normalizedYear(item.year ?? item.date)),
+    present(item.contact),
+    present(item.source),
+  ].filter(Boolean) as string[];
+}
+
+function splitPublicationRecords(publications: PublicPersonPublication[]) {
+  const isBook = (item: PublicPersonPublication) => {
+    const text = [item.source, item.venue, item.title, item.citation]
+      .map((value) => present(value))
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return /\b(book|chapter|monograph)\b/.test(text);
+  };
+
+  return {
+    books: publications.filter(isBook),
+    articles: publications.filter((item) => !isBook(item)),
+  };
 }
 
 function qualificationText(item: Record<string, unknown>) {
@@ -238,16 +302,29 @@ function PillList({ items }: { items: string[] }) {
 function ProfileActionRail({
   email,
   links,
+  cvUrl,
 }: {
   email?: string | null;
   links: ProfileLink[];
+  cvUrl?: string | null;
 }) {
   return (
     <div className="flex flex-wrap gap-2">
+      {cvUrl ? (
+        <a
+          href={cvUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary/90"
+        >
+          <Download aria-hidden className="h-4 w-4" />
+          Download CV
+        </a>
+      ) : null}
       {email ? (
         <a
           href={`mailto:${email}`}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary/90"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-primary/20 bg-white px-4 text-sm font-bold text-primary transition hover:bg-primary hover:text-white"
         >
           <Mail aria-hidden className="h-4 w-4" />
           Email
@@ -306,6 +383,7 @@ function ProfileHero({
   departmentName,
   links,
   facts,
+  cvUrl,
 }: {
   person: PublicPersonProfile;
   name: string;
@@ -315,6 +393,7 @@ function ProfileHero({
   departmentName?: string | null;
   links: ProfileLink[];
   facts: ProfileFact[];
+  cvUrl?: string | null;
 }) {
   return (
     <section
@@ -356,7 +435,11 @@ function ProfileHero({
             </p>
           ) : null}
           <div className="mt-4">
-            <ProfileActionRail email={person.email} links={links} />
+            <ProfileActionRail
+              email={person.email}
+              links={links}
+              cvUrl={cvUrl}
+            />
           </div>
         </div>
         {facts.length ? (
@@ -377,7 +460,7 @@ function ContentBlock({
   children,
 }: {
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <section>
@@ -428,7 +511,9 @@ function RoleRelationshipGrid({
               {roleLabel(item) ?? "Staff role"}
             </p>
             <p className="mt-2 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
-              {present(item.entity?.name) ?? present(item.entity_type) ?? "Unit"}
+              {present(item.entity?.name) ??
+                present(item.entity_type) ??
+                "Unit"}
             </p>
           </article>
         ))}
@@ -475,12 +560,16 @@ function ResearchRecordCard({
   title,
   meta,
   icon: Icon,
+  description,
+  href,
 }: {
   title: string;
   meta: string[];
-  icon: typeof BookOpenCheck;
+  icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+  description?: string | null;
+  href?: string | null;
 }) {
-  return (
+  const card = (
     <article className="rounded-lg border border-slate-200 bg-slate-50 p-4">
       <div className="flex gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/[0.08] text-primary">
@@ -495,137 +584,44 @@ function ResearchRecordCard({
               {meta.join(" | ")}
             </p>
           ) : null}
+          {description ? (
+            <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
+              {description}
+            </p>
+          ) : null}
         </div>
       </div>
     </article>
   );
-}
 
-function ResearcherProfileSection({
-  person,
-  researchInterests,
-  publicationLinks,
-}: {
-  person: PublicPersonProfile;
-  researchInterests: string[];
-  publicationLinks: ProfileLink[];
-}) {
-  const publications = recordList(person.publications);
-  const grants = recordList(person.research_grants_won);
-  const hasMetrics = Boolean(person.publications_count || person.h_index);
-  const hasResearchProfiles = publicationLinks.length > 0;
-
-  if (
-    !researchInterests.length &&
-    !publications.length &&
-    !grants.length &&
-    !hasMetrics &&
-    !hasResearchProfiles
-  ) {
-    return null;
-  }
+  if (!href) return card;
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-      <div className="grid gap-5">
-        {researchInterests.length ? (
-          <ContentBlock title="Research Areas">
-            <PillList items={researchInterests} />
-          </ContentBlock>
-        ) : null}
+    <a href={href} target="_blank" rel="noreferrer" className="block">
+      {card}
+    </a>
+  );
+}
 
-        {publications.length ? (
-          <ContentBlock title="Publications">
-            <div className="grid gap-3">
-              {publications.map((item, index) => (
-                <ResearchRecordCard
-                  key={`${publicationTitle(item)}-${index}`}
-                  title={publicationTitle(item)}
-                  meta={[
-                    present(item.venue),
-                    present(normalizedYear(item.year)),
-                    present(item.source),
-                  ].filter(Boolean) as string[]}
-                  icon={BookOpenCheck}
-                />
-              ))}
-            </div>
-          </ContentBlock>
-        ) : null}
-
-        {grants.length ? (
-          <ContentBlock title="Research Grants Won">
-            <div className="grid gap-3">
-              {grants.map((item, index) => (
-                <ResearchRecordCard
-                  key={`${grantTitle(item)}-${index}`}
-                  title={grantTitle(item)}
-                  meta={[
-                    present(item.funder),
-                    present(item.role),
-                    present(item.amount),
-                    present(normalizedYear(item.year)),
-                  ].filter(Boolean) as string[]}
-                  icon={Sparkles}
-                />
-              ))}
-            </div>
-          </ContentBlock>
-        ) : null}
-      </div>
-
-      {hasMetrics || publicationLinks.length ? (
-        <aside className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-          {hasMetrics ? (
-            <>
-              <h2 className="text-sm font-bold text-slate-950">
-                Research Summary
-              </h2>
-              <dl className="mt-4 grid gap-3 text-sm">
-                {person.publications_count || publications.length ? (
-                  <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-3">
-                    <dt className="flex items-center gap-2 font-semibold text-slate-700">
-                      <BookOpenCheck
-                        aria-hidden
-                        className="h-4 w-4 text-primary"
-                      />
-                      Publications
-                    </dt>
-                    <dd className="font-bold text-slate-950">
-                      {person.publications_count || publications.length}
-                    </dd>
-                  </div>
-                ) : null}
-                {person.h_index ? (
-                  <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-3">
-                    <dt className="flex items-center gap-2 font-semibold text-slate-700">
-                      <Award aria-hidden className="h-4 w-4 text-primary" />
-                      H-index
-                    </dt>
-                    <dd className="font-bold text-slate-950">
-                      {person.h_index}
-                    </dd>
-                  </div>
-                ) : null}
-              </dl>
-            </>
-          ) : null}
-        {publicationLinks.length ? (
-          <div
-            className={[
-              hasMetrics ? "mt-5 border-t border-slate-200 pt-4" : "",
-            ].join(" ")}
-          >
-            <h3 className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
-              Research Profiles
-            </h3>
-            <div className="mt-3">
-              <ExternalProfileLinks links={publicationLinks} />
-            </div>
-          </div>
-        ) : null}
-        </aside>
-      ) : null}
+function RecordGrid({
+  records,
+  icon,
+}: {
+  records: ProfileRecord[];
+  icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+}) {
+  return (
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {records.map((record, index) => (
+        <ResearchRecordCard
+          key={`${record.title}-${index}`}
+          title={record.title}
+          meta={record.meta}
+          description={record.description}
+          href={record.href}
+          icon={icon}
+        />
+      ))}
     </div>
   );
 }
@@ -674,6 +670,67 @@ export default async function PublicPersonPage({
   const publicationLinks = links.filter((item) =>
     ["Google Scholar", "ORCID", "ResearchGate", "Scopus"].includes(item.label),
   );
+  const cvUrl = cvHref(person);
+  const publications = recordList(person.publications);
+  const { articles: articlePublications, books: detectedBookPublications } =
+    splitPublicationRecords(publications);
+  const bookPublications = [
+    ...recordList(person.book_publications),
+    ...detectedBookPublications,
+  ];
+  const grants = recordList(person.research_grants_won);
+  const innovations = recordList(person.innovations);
+  const awards = recordList(
+    person.awards_honors as PublicPersonGenericRecord[] | null | undefined,
+  );
+  const outreach = recordList(person.community_outreach);
+  const referees = recordList(person.referees);
+  const publicationRecords: ProfileRecord[] = articlePublications.map(
+    (item) => ({
+      title: publicationTitle(item),
+      meta: [
+        present(item.venue),
+        present(normalizedYear(item.year)),
+        present(item.source),
+        present(item.doi),
+      ].filter(Boolean) as string[],
+      description: present(item.citation),
+      href: externalHref(item.url),
+    }),
+  );
+  const bookPublicationRecords: ProfileRecord[] = bookPublications.map(
+    (item) => ({
+      title: publicationTitle(item),
+      meta: [
+        present(item.venue),
+        present(normalizedYear(item.year)),
+        present(item.source),
+        present(item.doi),
+      ].filter(Boolean) as string[],
+      description: present(item.citation),
+      href: externalHref(item.url),
+    }),
+  );
+  const grantRecords: ProfileRecord[] = grants.map((item) => ({
+    title: grantTitle(item),
+    meta: [
+      present(item.funder),
+      present(item.role),
+      present(item.amount),
+      present(normalizedYear(item.year)),
+      present(item.status),
+      present(item.source),
+    ].filter(Boolean) as string[],
+  }));
+  const genericRecords = (
+    items: PublicPersonGenericRecord[],
+  ): ProfileRecord[] =>
+    items.map((item) => ({
+      title: genericRecordTitle(item),
+      meta: genericRecordMeta(item),
+      description: genericRecordDescription(item),
+      href: externalHref(item.url),
+    }));
   const rawFacts: Array<{
     icon: ProfileFact["icon"];
     label: string;
@@ -693,81 +750,185 @@ export default async function PublicPersonPage({
     const value = present(fact.value);
     return value ? [{ icon: fact.icon, label: fact.label, value }] : [];
   });
-  const hasResearchSection = Boolean(
-    person.is_researcher &&
-      (researchInterests.length ||
-      person.publications_count ||
-      person.h_index ||
-      person.publications?.length ||
-        person.research_grants_won?.length ||
-        publicationLinks.length),
-  );
+  const hasBioContent =
+    Boolean(bio) ||
+    qualifications.length > 0 ||
+    teachingAreas.length > 0 ||
+    courses.length > 0 ||
+    Boolean(person.assignments?.length);
 
   const tabs: PublicPersonTab[] = [
-    bio
+    hasBioContent
       ? {
-          id: "biography",
-          label: "Biography",
+          id: "bio",
+          label: "Bio",
           content: (
             <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-              <ContentBlock title="Biography">
-                <ExpandableRichText text={bio} collapsedLines={8} />
-              </ContentBlock>
+              <div className="grid gap-5">
+                {bio ? (
+                  <ContentBlock title="Biography">
+                    <ExpandableRichText text={bio} collapsedLines={8} />
+                  </ContentBlock>
+                ) : null}
+                {qualifications.length ? (
+                  <QualificationTimeline items={qualifications} />
+                ) : null}
+                {teachingAreas.length || courses.length ? (
+                  <ContentBlock title="Teaching">
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      {teachingAreas.length ? (
+                        <div>
+                          <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+                            Teaching Areas
+                          </p>
+                          <PillList items={teachingAreas} />
+                        </div>
+                      ) : null}
+                      {courses.length ? (
+                        <div>
+                          <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+                            Courses
+                          </p>
+                          <PillList items={courses} />
+                        </div>
+                      ) : null}
+                    </div>
+                  </ContentBlock>
+                ) : null}
+              </div>
               <div className="grid content-start gap-3">
-                <RoleRelationshipGrid
-                  assignments={assignment ? [assignment] : []}
-                />
+                <RoleRelationshipGrid assignments={person.assignments ?? []} />
               </div>
             </div>
           ),
         }
       : null,
-    qualifications.length
+    researchInterests.length
       ? {
-          id: "academics",
-          label: "Academics",
-          content: <QualificationTimeline items={qualifications} />,
+          id: "research-interests",
+          label: "Research Interests",
+          content: <PillList items={researchInterests} />,
         }
       : null,
-    hasResearchSection
+    publicationRecords.length ||
+    person.publications_count ||
+    person.h_index ||
+    publicationLinks.length
       ? {
-          id: "research",
-          label: "Research",
+          id: "publications",
+          label: "Publications",
           content: (
-            <ResearcherProfileSection
-              person={person}
-              researchInterests={researchInterests}
-              publicationLinks={publicationLinks}
-            />
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+              {publicationRecords.length ? (
+                <RecordGrid records={publicationRecords} icon={BookOpenCheck} />
+              ) : (
+                <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
+                  Publication records are summarized from this profile.
+                </p>
+              )}
+              {person.publications_count ||
+              person.h_index ||
+              publicationLinks.length ? (
+                <aside className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                  {person.publications_count || person.h_index ? (
+                    <>
+                      <h2 className="text-sm font-bold text-slate-950">
+                        Publication Metrics
+                      </h2>
+                      <dl className="mt-4 grid gap-3 text-sm">
+                        {person.publications_count ? (
+                          <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-3">
+                            <dt className="font-semibold text-slate-700">
+                              Publications
+                            </dt>
+                            <dd className="font-bold text-slate-950">
+                              {person.publications_count}
+                            </dd>
+                          </div>
+                        ) : null}
+                        {person.h_index ? (
+                          <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-3">
+                            <dt className="font-semibold text-slate-700">
+                              H-index
+                            </dt>
+                            <dd className="font-bold text-slate-950">
+                              {person.h_index}
+                            </dd>
+                          </div>
+                        ) : null}
+                      </dl>
+                    </>
+                  ) : null}
+                  {publicationLinks.length ? (
+                    <div
+                      className={
+                        person.publications_count || person.h_index
+                          ? "mt-5 border-t border-slate-200 pt-4"
+                          : ""
+                      }
+                    >
+                      <h3 className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+                        Research Profiles
+                      </h3>
+                      <div className="mt-3">
+                        <ExternalProfileLinks links={publicationLinks} />
+                      </div>
+                    </div>
+                  ) : null}
+                </aside>
+              ) : null}
+            </div>
           ),
         }
       : null,
-    teachingAreas.length || courses.length
+    innovations.length
       ? {
-          id: "teaching",
-          label: "Teaching",
+          id: "innovations",
+          label: "Innovations",
           content: (
-            <ContentBlock title="Teaching Areas">
-              <div className="grid gap-4 lg:grid-cols-2">
-                {teachingAreas.length ? <PillList items={teachingAreas} /> : null}
-                {courses.length ? (
-                  <div>
-                    <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
-                      Courses
-                    </p>
-                    <PillList items={courses} />
-                  </div>
-                ) : null}
-              </div>
-            </ContentBlock>
+            <RecordGrid records={genericRecords(innovations)} icon={Sparkles} />
           ),
         }
       : null,
-    person.assignments?.length
+    grantRecords.length
       ? {
-          id: "roles",
-          label: "Roles",
-          content: <RoleRelationshipGrid assignments={person.assignments} />,
+          id: "grants-funding",
+          label: "Grants/Funding",
+          content: <RecordGrid records={grantRecords} icon={Sparkles} />,
+        }
+      : null,
+    bookPublicationRecords.length
+      ? {
+          id: "book-publications",
+          label: "Book Publications",
+          content: (
+            <RecordGrid records={bookPublicationRecords} icon={BookOpenCheck} />
+          ),
+        }
+      : null,
+    awards.length
+      ? {
+          id: "awards-recognitions",
+          label: "Awards / Recognitions",
+          content: <RecordGrid records={genericRecords(awards)} icon={Award} />,
+        }
+      : null,
+    outreach.length
+      ? {
+          id: "community-outreach",
+          label: "Community Outreach",
+          content: (
+            <RecordGrid records={genericRecords(outreach)} icon={Users} />
+          ),
+        }
+      : null,
+    referees.length
+      ? {
+          id: "referees",
+          label: "Referees",
+          content: (
+            <RecordGrid records={genericRecords(referees)} icon={Users} />
+          ),
         }
       : null,
   ].filter(Boolean) as PublicPersonTab[];
@@ -804,6 +965,7 @@ export default async function PublicPersonPage({
                 departmentName={departmentName}
                 links={links}
                 facts={facts}
+                cvUrl={cvUrl}
               />
 
               <ScrollReveal>

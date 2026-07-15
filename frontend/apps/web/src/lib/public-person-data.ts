@@ -21,6 +21,29 @@ export type PublicPersonResearchGrant = {
   source?: string | null;
 };
 
+export type PublicPersonGenericRecord = {
+  title?: string | null;
+  name?: string | null;
+  award?: string | null;
+  recognition?: string | null;
+  referee?: string | null;
+  citation?: string | null;
+  description?: string | null;
+  summary?: string | null;
+  year?: string | number | null;
+  date?: string | number | null;
+  venue?: string | null;
+  organization?: string | null;
+  institution?: string | null;
+  funder?: string | null;
+  contact?: string | null;
+  source?: string | null;
+  role?: string | null;
+  url?: string | null;
+  type?: string | null;
+  category?: string | null;
+};
+
 export type PublicPersonProfile = {
   id: string;
   slug?: string | null;
@@ -35,6 +58,8 @@ export type PublicPersonProfile = {
   alternative_phone?: string | null;
   photo_id?: string | null;
   photo_url?: string | null;
+  cv_file_id?: string | null;
+  cv_file_url?: string | null;
   bio?: string | null;
   full_bio?: string | null;
   qualifications?: Array<Record<string, unknown>> | null;
@@ -51,6 +76,10 @@ export type PublicPersonProfile = {
   teaching_areas?: string[] | null;
   publications?: PublicPersonPublication[] | null;
   research_grants_won?: PublicPersonResearchGrant[] | null;
+  innovations?: PublicPersonGenericRecord[] | null;
+  book_publications?: PublicPersonPublication[] | null;
+  community_outreach?: PublicPersonGenericRecord[] | null;
+  referees?: PublicPersonGenericRecord[] | null;
   courses_taught?: string[] | null;
   office_location?: string | null;
   office_hours?: Record<string, unknown> | string | null;
