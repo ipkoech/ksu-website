@@ -1585,6 +1585,7 @@ function PartnerLogoRailItem({
   partner: PartnerDisplayItem;
   duplicate: boolean;
 }) {
+  const external = partner.href ? /^https?:\/\//i.test(partner.href) : false;
   const content = (
     <div
       className="group/logo flex h-20 w-48 shrink-0 items-center justify-center border-r border-blue-100 px-7 sm:w-56 lg:w-64"
@@ -1607,15 +1608,26 @@ function PartnerLogoRailItem({
     </div>
   );
 
-  if (duplicate || !partner.href) return content;
+  if (!partner.href) return content;
 
   return (
-    <LinkWrapper
+    <Link
       href={partner.href}
-      className="group/logo block shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2"
+      target={external ? "_blank" : undefined}
+      rel={external ? "noopener noreferrer" : undefined}
+      title={partner.name}
+      tabIndex={duplicate ? -1 : undefined}
+      aria-hidden={duplicate ? "true" : undefined}
+      className="group/partnerlink relative block shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2"
     >
       {content}
-    </LinkWrapper>
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-2 z-20 max-w-56 -translate-x-1/2 -translate-y-1 rounded-full bg-primary px-3 py-1 text-center text-xs font-semibold leading-tight text-white opacity-0 shadow-lg shadow-slate-900/15 transition duration-200 group-hover/partnerlink:translate-y-0 group-hover/partnerlink:opacity-100 group-focus-visible/partnerlink:translate-y-0 group-focus-visible/partnerlink:opacity-100"
+      >
+        {partner.name}
+      </span>
+    </Link>
   );
 }
 
