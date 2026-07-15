@@ -65,7 +65,7 @@ function displayName(person: PublicPersonProfile) {
     [person.title, person.first_name, person.middle_name, person.last_name]
       .map((value) => present(value))
       .filter(Boolean)
-      .join(" ") || "Staff profile"
+      .join(" ") || null
   );
 }
 
@@ -151,8 +151,7 @@ function genericRecordTitle(item: PublicPersonGenericRecord) {
     present(item.award) ??
     present(item.recognition) ??
     present(item.referee) ??
-    present(item.citation) ??
-    "Profile record"
+    present(item.citation)
   );
 }
 
@@ -443,7 +442,7 @@ function ProfileHero({
 }: {
   person: PublicPersonProfile;
   name: string;
-  role: string;
+  role?: string | null;
   schoolName?: string | null;
   departmentName?: string | null;
   links: ProfileLink[];
@@ -461,9 +460,11 @@ function ProfileHero({
           <h1 className="max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-[2.4rem]">
             {name}
           </h1>
-          <p className="mt-2 text-lg font-bold leading-6 text-amber-600">
-            {role}
-          </p>
+          {role ? (
+            <p className="mt-2 text-lg font-bold leading-6 text-amber-600">
+              {role}
+            </p>
+          ) : null}
           {schoolName || departmentName ? (
             <p className="mt-1 max-w-3xl text-base font-semibold leading-6 text-slate-700">
               {departmentName}
@@ -641,16 +642,15 @@ function ExternalProfileLinks({ links }: { links: ProfileLink[] }) {
 }
 
 function publicationTitle(item: PublicPersonPublication) {
-  return (
-    present(item.title) ||
-    present(item.citation) ||
-    present(item.doi) ||
-    "Publication record"
-  );
+  return present(item.title) || present(item.citation) || present(item.doi);
 }
 
-function grantTitle(item: { title?: string | null }) {
-  return present(item.title) || "Research grant";
+function grantTitle(item: {
+  title?: string | null;
+  funder?: string | null;
+  role?: string | null;
+}) {
+  return present(item.title) || present(item.funder) || present(item.role);
 }
 
 export default async function PublicPersonPage({
@@ -665,12 +665,12 @@ export default async function PublicPersonPage({
 
   const assignment = primaryAssignment(person);
   const name = displayName(person);
+  if (!name) notFound();
   const role =
     roleLabel(assignment) ||
     present(person.institutional_role?.replace(/_/g, " ")) ||
     present(person.academic_rank?.replace(/_/g, " ")) ||
-    present(person.specialization) ||
-    "Kisii University staff";
+    present(person.specialization);
   const bio = present(person.full_bio) || present(person.bio);
   const schoolName =
     assignment?.entity?.entity_type === "school"
@@ -712,60 +712,81 @@ export default async function PublicPersonPage({
   );
   const outreach = recordList(person.community_outreach);
   const referees = recordList(person.referees);
-  const publicationRecords: ProfileRecord[] = articlePublications.map(
-    (item) => ({
-      title: publicationTitle(item),
-      category: present(item.source) || "Publication",
-      meta: [
-        present(item.venue),
-        present(normalizedYear(item.year)),
-        present(item.source),
-        present(item.doi),
-      ].filter(Boolean) as string[],
-      description: present(item.citation),
-      href: externalHref(item.url),
-    }),
+  const publicationRecords: ProfileRecord[] = articlePublications.flatMap(
+    (item) => {
+      const title = publicationTitle(item);
+      if (!title) return [];
+      return {
+        title,
+        category: present(item.source) || "Publication",
+        meta: [
+          present(item.venue),
+          present(normalizedYear(item.year)),
+          present(item.source),
+          present(item.doi),
+        ].filter(Boolean) as string[],
+        description: present(item.citation),
+        href: externalHref(item.url),
+      };
+    },
   );
-  const bookPublicationRecords: ProfileRecord[] = bookPublications.map(
-    (item) => ({
-      title: publicationTitle(item),
-      category: present(item.source) || "Book publication",
-      meta: [
-        present(item.venue),
-        present(normalizedYear(item.year)),
-        present(item.source),
-        present(item.doi),
-      ].filter(Boolean) as string[],
-      description: present(item.citation),
-      href: externalHref(item.url),
-    }),
+  const bookPublicationRecords: ProfileRecord[] = bookPublications.flatMap(
+    (item) => {
+      const title = publicationTitle(item);
+      if (!title) return [];
+      return {
+        title,
+        category: present(item.source) || "Book publication",
+        meta: [
+          present(item.venue),
+          present(normalizedYear(item.year)),
+          present(item.source),
+          present(item.doi),
+        ].filter(Boolean) as string[],
+        description: present(item.citation),
+        href: externalHref(item.url),
+      };
+    },
   );
-  const grantRecords: ProfileRecord[] = grants.map((item) => ({
-    title: grantTitle(item),
-    category: present(item.status) || present(item.source) || "Research grant",
-    meta: [
-      present(item.funder),
-      present(item.role),
-      present(item.amount),
-      present(normalizedYear(item.year)),
-      present(item.status),
-      present(item.source),
-    ].filter(Boolean) as string[],
-  }));
+  const grantRecords: ProfileRecord[] = grants.flatMap((item) => {
+    const title = grantTitle(item);
+    if (!title) return [];
+    return {
+      title,
+      category: present(item.status) || present(item.source) || "Grant/Funding",
+      meta: [
+        present(item.funder),
+        present(item.role),
+        present(item.amount),
+        present(normalizedYear(item.year)),
+        present(item.status),
+        present(item.source),
+      ].filter(Boolean) as string[],
+    };
+  });
   const genericRecords = (
     items: PublicPersonGenericRecord[],
+    fallbackCategory: string,
   ): ProfileRecord[] =>
-    items.map((item) => ({
-      title: genericRecordTitle(item),
-      category:
-        present(item.category) ||
-        present(item.type) ||
-        present(item.source) ||
-        "Profile record",
-      meta: genericRecordMeta(item),
-      description: genericRecordDescription(item),
-      href: externalHref(item.url),
-    }));
+    items.flatMap((item) => {
+      const title = genericRecordTitle(item);
+      if (!title) return [];
+      return {
+        title,
+        category:
+          present(item.category) ||
+          present(item.type) ||
+          present(item.source) ||
+          fallbackCategory,
+        meta: genericRecordMeta(item),
+        description: genericRecordDescription(item),
+        href: externalHref(item.url),
+      };
+    });
+  const innovationRecords = genericRecords(innovations, "Innovation");
+  const awardRecords = genericRecords(awards, "Award");
+  const outreachRecords = genericRecords(outreach, "Community Outreach");
+  const refereeRecords = genericRecords(referees, "Referee");
   const rawFacts: Array<{
     icon: ProfileFact["icon"];
     label: string;
@@ -858,27 +879,19 @@ export default async function PublicPersonPage({
           ),
         }
       : null,
-    publicationRecords.length ||
-    person.publications_count ||
-    person.h_index ||
-    publicationLinks.length
+    publicationRecords.length
       ? {
           id: "publications",
           label: "Publications",
           content: (
             <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
               <PanelCard>
-                {publicationRecords.length ? (
-                  <PublicationRecordBrowser
-                    title="Publications"
-                    records={publicationRecords}
-                    emptyText="Publication records are summarized from this profile."
-                  />
-                ) : (
-                  <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
-                    Publication records are summarized from this profile.
-                  </p>
-                )}
+                <PublicationRecordBrowser
+                  title="Publications"
+                  records={publicationRecords}
+                  itemLabel="publications"
+                  noMatchText="No publications match the selected filters."
+                />
               </PanelCard>
               <ProfileSidebar
                 facts={facts}
@@ -890,13 +903,13 @@ export default async function PublicPersonPage({
           ),
         }
       : null,
-    innovations.length
+    innovationRecords.length
       ? {
           id: "innovations",
           label: "Innovations",
           content: (
             <PanelCard>
-              <InnovationRecordGrid records={genericRecords(innovations)} />
+              <InnovationRecordGrid records={innovationRecords} />
             </PanelCard>
           ),
         }
@@ -921,44 +934,42 @@ export default async function PublicPersonPage({
               <PublicationRecordBrowser
                 title="Book Publications"
                 records={bookPublicationRecords}
-                emptyText="Book publication records are summarized from this profile."
+                itemLabel="book publications"
+                noMatchText="No book publications match the selected filters."
               />
             </PanelCard>
           ),
         }
       : null,
-    awards.length
+    awardRecords.length
       ? {
           id: "awards-recognitions",
           label: "Awards / Recognitions",
           content: (
             <PanelCard>
-              <TimelineRecordList records={genericRecords(awards)} />
+              <TimelineRecordList records={awardRecords} />
             </PanelCard>
           ),
         }
       : null,
-    outreach.length
+    outreachRecords.length
       ? {
           id: "community-outreach",
           label: "Community Outreach",
           content: (
             <PanelCard>
-              <TimelineRecordList
-                records={genericRecords(outreach)}
-                tone="activity"
-              />
+              <TimelineRecordList records={outreachRecords} tone="activity" />
             </PanelCard>
           ),
         }
       : null,
-    referees.length
+    refereeRecords.length
       ? {
           id: "referees",
           label: "Referees",
           content: (
             <PanelCard>
-              <RefereeRecordGrid records={genericRecords(referees)} />
+              <RefereeRecordGrid records={refereeRecords} />
             </PanelCard>
           ),
         }

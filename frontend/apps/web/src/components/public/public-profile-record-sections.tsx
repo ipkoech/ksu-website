@@ -31,8 +31,8 @@ function uniqueValues(values: Array<string | null | undefined>) {
   );
 }
 
-function recordCategory(record: PublicProfileRecord) {
-  return record.category?.trim() || "Record";
+function recordCategory(record: PublicProfileRecord, fallbackCategory: string) {
+  return record.category?.trim() || fallbackCategory;
 }
 
 function recordYear(record: PublicProfileRecord) {
@@ -92,12 +92,16 @@ function SelectControl({
 export function PublicationRecordBrowser({
   title,
   records,
-  emptyText,
+  itemLabel,
+  noMatchText,
+  fallbackCategory = title,
   pageSize = 9,
 }: {
   title: string;
   records: PublicProfileRecord[];
-  emptyText: string;
+  itemLabel: string;
+  noMatchText: string;
+  fallbackCategory?: string;
   pageSize?: number;
 }) {
   const [category, setCategory] = useState("All Categories");
@@ -106,8 +110,13 @@ export function PublicationRecordBrowser({
   const [page, setPage] = useState(1);
 
   const categoryOptions = useMemo(
-    () => ["All Categories", ...uniqueValues(records.map(recordCategory))],
-    [records],
+    () => [
+      "All Categories",
+      ...uniqueValues(
+        records.map((record) => recordCategory(record, fallbackCategory)),
+      ),
+    ],
+    [fallbackCategory, records],
   );
   const yearOptions = useMemo(
     () => [
@@ -122,7 +131,8 @@ export function PublicationRecordBrowser({
   const filteredRecords = useMemo(() => {
     const filtered = records.filter((record) => {
       const matchesCategory =
-        category === "All Categories" || recordCategory(record) === category;
+        category === "All Categories" ||
+        recordCategory(record, fallbackCategory) === category;
       const matchesYear = year === "All Years" || recordYear(record) === year;
       return matchesCategory && matchesYear;
     });
@@ -134,7 +144,7 @@ export function PublicationRecordBrowser({
         ? leftYear.localeCompare(rightYear)
         : rightYear.localeCompare(leftYear);
     });
-  }, [category, records, sort, year]);
+  }, [category, fallbackCategory, records, sort, year]);
 
   const totalPages = Math.max(1, Math.ceil(filteredRecords.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -164,8 +174,8 @@ export function PublicationRecordBrowser({
           <h2 className="text-xl font-bold text-slate-950">{title}</h2>
           <p className="mt-1 text-sm text-slate-600">
             {filteredRecords.length
-              ? `Showing ${start + 1}–${end} of ${filteredRecords.length} records`
-              : emptyText}
+              ? `Showing ${start + 1}–${end} of ${filteredRecords.length} ${itemLabel}`
+              : noMatchText}
           </p>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
@@ -193,7 +203,7 @@ export function PublicationRecordBrowser({
       {visibleRecords.length ? (
         <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
           {visibleRecords.map((record, index) => {
-            const categoryLabel = recordCategory(record);
+            const categoryLabel = recordCategory(record, fallbackCategory);
             const meta = recordMeta(record);
             const yearValue = recordYear(record);
             return (
@@ -261,7 +271,7 @@ export function PublicationRecordBrowser({
         </div>
       ) : (
         <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
-          {emptyText}
+          {noMatchText}
         </p>
       )}
 
