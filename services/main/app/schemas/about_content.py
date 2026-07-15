@@ -31,9 +31,16 @@ class AboutPageContentCreate(StrictContentSchema):
     video_title: str | None = Field(default=None, max_length=255)
     video_url: str | None = Field(default=None, max_length=1024)
     video_transcript_url: str | None = Field(default=None, max_length=1024)
+    virtual_tour_type: Literal["embed", "video"] | None = None
+    virtual_tour_title: str | None = Field(default=None, max_length=255)
+    virtual_tour_provider: str | None = Field(default=None, max_length=64)
+    virtual_tour_url: str | None = Field(default=None, max_length=1024)
+    virtual_tour_accessibility_url: str | None = Field(default=None, max_length=1024)
     hero_media_id: uuid.UUID | None = None
     identity_media_id: uuid.UUID | None = None
     video_poster_media_id: uuid.UUID | None = None
+    virtual_tour_media_id: uuid.UUID | None = None
+    virtual_tour_poster_media_id: uuid.UUID | None = None
     old_campus_media_id: uuid.UUID | None = None
     modern_campus_media_id: uuid.UUID | None = None
     history_document_id: uuid.UUID | None = None
@@ -46,7 +53,12 @@ class AboutPageContentCreate(StrictContentSchema):
             raise ValueError("old and modern campus media must be supplied together")
         if self.video_url and not self.video_transcript_url:
             raise ValueError("video transcript URL is required")
-        for value in (self.video_url, self.video_transcript_url):
+        for value in (
+            self.video_url,
+            self.video_transcript_url,
+            self.virtual_tour_url,
+            self.virtual_tour_accessibility_url,
+        ):
             if not _valid_link(value):
                 raise ValueError("URLs must be internal paths or HTTPS")
         return self

@@ -1,6 +1,14 @@
 import { mainApi } from "@ksu/api-client";
 
-export type PublicMedia = { url?: string | null; alt?: string | null } | null;
+export type PublicMedia = {
+  id?: string | null;
+  url?: string | null;
+  alt?: string | null;
+  alt_text?: string | null;
+  caption?: string | null;
+  media_type?: string | null;
+  mime_type?: string | null;
+} | null;
 
 export type PublicAboutUniversity = {
   name: string;
@@ -50,9 +58,16 @@ export type PublicAboutData = {
     video_title?: string | null;
     video_url?: string | null;
     video_transcript_url?: string | null;
+    virtual_tour_type?: "embed" | "video" | null;
+    virtual_tour_title?: string | null;
+    virtual_tour_provider?: string | null;
+    virtual_tour_url?: string | null;
+    virtual_tour_accessibility_url?: string | null;
     hero_media?: PublicMedia;
     identity_media?: PublicMedia;
     video_poster_media?: PublicMedia;
+    virtual_tour_media?: PublicMedia;
+    virtual_tour_poster_media?: PublicMedia;
     old_campus_media?: PublicMedia;
     modern_campus_media?: PublicMedia;
   } | null;

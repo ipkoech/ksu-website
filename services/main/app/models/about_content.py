@@ -51,9 +51,16 @@ class AboutPageContent(Base, AboutPublishingMixin):
     video_title: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
     video_url: Mapped[Optional[str]] = mapped_column(sa.String(1024), nullable=True)
     video_transcript_url: Mapped[Optional[str]] = mapped_column(sa.String(1024), nullable=True)
+    virtual_tour_type: Mapped[Optional[str]] = mapped_column(sa.String(32), nullable=True)
+    virtual_tour_title: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    virtual_tour_provider: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True)
+    virtual_tour_url: Mapped[Optional[str]] = mapped_column(sa.String(1024), nullable=True)
+    virtual_tour_accessibility_url: Mapped[Optional[str]] = mapped_column(sa.String(1024), nullable=True)
     hero_media_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("media.id", ondelete="SET NULL"), nullable=True)
     identity_media_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("media.id", ondelete="SET NULL"), nullable=True)
     video_poster_media_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("media.id", ondelete="SET NULL"), nullable=True)
+    virtual_tour_media_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("media.id", ondelete="SET NULL"), nullable=True)
+    virtual_tour_poster_media_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("media.id", ondelete="SET NULL"), nullable=True)
     old_campus_media_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("media.id", ondelete="SET NULL"), nullable=True)
     modern_campus_media_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("media.id", ondelete="SET NULL"), nullable=True)
     history_document_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("documents.id", ondelete="SET NULL"), nullable=True)
@@ -63,6 +70,8 @@ class AboutPageContent(Base, AboutPublishingMixin):
     hero_media: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[hero_media_id])
     identity_media: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[identity_media_id])
     video_poster_media: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[video_poster_media_id])
+    virtual_tour_media: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[virtual_tour_media_id])
+    virtual_tour_poster_media: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[virtual_tour_poster_media_id])
     old_campus_media: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[old_campus_media_id])
     modern_campus_media: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[modern_campus_media_id])
     history_document: Mapped[Optional["Document"]] = relationship("Document", foreign_keys=[history_document_id])
@@ -73,6 +82,10 @@ class AboutPageContent(Base, AboutPublishingMixin):
     __table_args__ = (
         sa.Index("uq_about_page_content_university_active", "university_info_id", unique=True, postgresql_where=sa.text("deleted_at IS NULL")),
         sa.CheckConstraint(f"workflow_status IN ({_WORKFLOW_SQL})", name="ck_about_page_content_workflow_status"),
+        sa.CheckConstraint(
+            "virtual_tour_type IS NULL OR virtual_tour_type IN ('embed', 'video')",
+            name="ck_about_page_content_virtual_tour_type",
+        ),
     )
 
 

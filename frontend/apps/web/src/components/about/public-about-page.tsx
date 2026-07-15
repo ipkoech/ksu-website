@@ -45,6 +45,10 @@ function mediaUrl(media: { url?: string | null } | null | undefined, fallback: s
   return media?.url?.trim() || fallback;
 }
 
+function mediaAlt(media: { alt?: string | null; alt_text?: string | null } | null | undefined, fallback: string) {
+  return media?.alt_text?.trim() || media?.alt?.trim() || fallback;
+}
+
 const valueDetails = [
   { title: "Transformative Thinking", icon: Lightbulb, body: "We welcome creativity, inquiry and bold ideas that solve real-world challenges." },
   { title: "Respect", icon: HeartHandshake, body: "We value every person and nurture a culture of dignity and mutual regard." },
@@ -152,22 +156,110 @@ function HistoryDrawer({
   );
 }
 
+function VirtualTourDialog({
+  open,
+  title,
+  provider,
+  type,
+  source,
+  mimeType,
+  poster,
+  accessibilityUrl,
+  onClose,
+}: {
+  open: boolean;
+  title: string;
+  provider?: string | null;
+  type: "embed" | "video";
+  source: string;
+  mimeType?: string | null;
+  poster?: string | null;
+  accessibilityUrl?: string | null;
+  onClose: () => void;
+}) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [onClose, open]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/92 p-4 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="virtual-tour-title">
+      <button type="button" tabIndex={-1} aria-label="Close virtual tour" onClick={onClose} className="absolute inset-0" />
+      <section className="relative z-10 w-full max-w-6xl overflow-hidden rounded-2xl bg-slate-950 shadow-2xl ring-1 ring-white/20">
+        <header className="flex items-start justify-between gap-5 border-b border-white/15 px-5 py-4 text-white sm:px-6">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Virtual campus tour</p>
+            <h2 id="virtual-tour-title" className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold sm:text-3xl">{title}</h2>
+            {provider ? <p className="mt-1 text-xs text-white/60">Presented by {provider}</p> : null}
+          </div>
+          <button ref={closeRef} type="button" onClick={onClose} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-slate-950 transition hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-secondary" aria-label="Close virtual tour">
+            <X className="h-5 w-5" aria-hidden />
+          </button>
+        </header>
+        <div className="bg-black">
+          {type === "embed" ? (
+            <iframe src={source} title={title} className="aspect-video max-h-[72dvh] w-full" allow="accelerometer; autoplay; fullscreen; gyroscope; picture-in-picture; xr-spatial-tracking" allowFullScreen />
+          ) : (
+            <video className="aspect-video max-h-[72dvh] w-full bg-black" controls playsInline preload="metadata" poster={poster || undefined}>
+              <source src={source} type={mimeType || undefined} />
+              Your browser does not support embedded video.
+            </video>
+          )}
+        </div>
+        {accessibilityUrl ? (
+          <div className="border-t border-white/15 px-5 py-4 sm:px-6">
+            <Link href={accessibilityUrl} className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-white hover:text-secondary hover:underline">
+              Open the accessible tour alternative <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          </div>
+        ) : null}
+      </section>
+    </div>
+  );
+}
+
 export function PublicAboutPage({ data, historyInitiallyOpen = false }: { data: PublicAboutData; historyInitiallyOpen?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const [historyOpen, setHistoryOpen] = useState(historyInitiallyOpen);
   const [videoOpen, setVideoOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
   const historyTriggerRef = useRef<HTMLButtonElement>(null);
+  const tourTriggerRef = useRef<HTMLButtonElement>(null);
   const content = data.content;
   const university = data.university;
   const heroParagraphs = paragraphs(content?.hero_introduction || university.overview).slice(0, 1);
   const coreValues = (university.core_values ?? "").split(/[;|\n]+/).map((item) => item.trim()).filter(Boolean);
   const quickFacts = university.quick_facts ?? {};
+  const virtualTourType = content?.virtual_tour_type;
+  const virtualTourSource = virtualTourType === "embed"
+    ? content?.virtual_tour_url?.trim()
+    : content?.virtual_tour_media?.url?.trim();
+  const hasVirtualTour = Boolean(virtualTourType && virtualTourSource);
 
   const setHistory = (open: boolean) => {
     setHistoryOpen(open);
     router.replace(open ? `${pathname}?history=open` : pathname, { scroll: false });
     if (!open) window.setTimeout(() => historyTriggerRef.current?.focus(), 0);
+  };
+
+  const setTour = (open: boolean) => {
+    setTourOpen(open);
+    if (!open) window.setTimeout(() => tourTriggerRef.current?.focus(), 0);
   };
 
   const profile = [
@@ -182,7 +274,7 @@ export function PublicAboutPage({ data, historyInitiallyOpen = false }: { data: 
   return (
     <div className="bg-[#fbfaf6] text-slate-950">
       <section className="relative isolate min-h-[440px] overflow-hidden bg-primary text-white">
-        <Image src={mediaUrl(content?.hero_media, heroFallback)} alt={content?.hero_media?.alt || "Aerial view of Kisii University campus"} fill priority sizes="100vw" className="object-cover motion-safe:animate-[kenburns_24s_ease-in-out_infinite_alternate]" />
+        <Image src={mediaUrl(content?.hero_media, heroFallback)} alt={mediaAlt(content?.hero_media, "Aerial view of Kisii University campus")} fill priority sizes="100vw" className="object-cover motion-safe:animate-[kenburns_24s_ease-in-out_infinite_alternate]" />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,45,30,.96)_0%,rgba(0,45,30,.83)_42%,rgba(0,45,30,.18)_78%)]" />
         <div className="relative mx-auto flex min-h-[440px] w-full flex-col justify-center px-5 py-7 sm:px-8 lg:px-10">
           <nav aria-label="Breadcrumb" className="mb-7 text-xs font-semibold text-white/80"><Link href="/" className="hover:text-white">Home</Link><span className="mx-2">/</span><span>{content?.hero_eyebrow || "About Kisii University"}</span></nav>
@@ -206,7 +298,12 @@ export function PublicAboutPage({ data, historyInitiallyOpen = false }: { data: 
           <Link href="/about/numbers-and-facts" className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-primary hover:underline">Read More About Kisii University <ArrowRight className="h-4 w-4" aria-hidden /></Link>
         </div>
         <div className="relative min-h-[320px] overflow-hidden rounded-xl bg-primary shadow-lg">
-          <Image src={mediaUrl(content?.identity_media, identityFallback)} alt={content?.identity_media?.alt || "Kisii University campus and learning environment"} fill sizes="(min-width:1024px) 58vw, 100vw" className="object-cover transition duration-1000 hover:scale-[1.03] motion-reduce:transition-none" />
+          <Image src={mediaUrl(content?.identity_media, identityFallback)} alt={mediaAlt(content?.identity_media, "Kisii University campus and learning environment")} fill sizes="(min-width:1024px) 58vw, 100vw" className="object-cover transition duration-1000 hover:scale-[1.03] motion-reduce:transition-none" />
+          {hasVirtualTour ? (
+            <button ref={tourTriggerRef} type="button" onClick={() => setTour(true)} className="absolute left-1/2 top-1/2 z-10 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 border-white/80 bg-white text-primary shadow-xl transition hover:scale-105 hover:bg-secondary focus:outline-none focus:ring-4 focus:ring-white/70 motion-reduce:transition-none" aria-label={`Open ${content?.virtual_tour_title || "Kisii University virtual campus tour"}`}>
+              <Play className="ml-1 h-6 w-6 fill-current" aria-hidden />
+            </button>
+          ) : null}
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-primary via-primary/85 to-transparent px-6 pb-6 pt-20 text-white">
             <p className="font-[family-name:var(--font-display)] text-2xl font-semibold">Discover Kisii University</p>
             <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold"><span className="rounded-full bg-white/12 px-3 py-2">Chartered in 2013</span><span className="rounded-full bg-white/12 px-3 py-2">Public University</span><span className="rounded-full bg-white/12 px-3 py-2">Kisii County</span><span className="rounded-full bg-white/12 px-3 py-2">Serving Kenya and Beyond</span></div>
@@ -246,6 +343,19 @@ export function PublicAboutPage({ data, historyInitiallyOpen = false }: { data: 
       </section>
 
       <HistoryDrawer open={historyOpen} milestones={data.history.milestones} historyDocument={data.history.document} onClose={() => setHistory(false)} />
+      {virtualTourType && virtualTourSource ? (
+        <VirtualTourDialog
+          open={tourOpen}
+          title={content?.virtual_tour_title || "Explore Kisii University"}
+          provider={content?.virtual_tour_provider}
+          type={virtualTourType}
+          source={virtualTourSource}
+          mimeType={content?.virtual_tour_media?.mime_type}
+          poster={content?.virtual_tour_poster_media?.url}
+          accessibilityUrl={content?.virtual_tour_accessibility_url}
+          onClose={() => setTour(false)}
+        />
+      ) : null}
       {videoOpen && content?.video_url ? <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/90 p-5" role="dialog" aria-modal="true" aria-label={content.video_title || "Kisii University video"}><button type="button" aria-label="Close video" onClick={() => setVideoOpen(false)} className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-950"><X className="h-5 w-5" /></button><div className="w-full max-w-5xl"><iframe src={content.video_url} title={content.video_title || "Kisii University story"} className="aspect-video w-full rounded-2xl bg-black" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />{content.video_transcript_url ? <Link href={content.video_transcript_url} className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-white hover:underline"><Check className="h-4 w-4" /> Read video transcript</Link> : null}</div></div> : null}
     </div>
   );

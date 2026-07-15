@@ -35,7 +35,10 @@ def is_publicly_publishable(item: Any, *, now: datetime | None = None) -> bool:
 def _media(media: Any) -> dict[str, Any] | None:
     if media is None:
         return None
-    return {"id": str(media.id), "url": media.url, "alt_text": media.alt_text, "caption": media.caption}
+    return {
+        "id": str(media.id), "url": media.url, "alt_text": media.alt_text,
+        "caption": media.caption, "media_type": media.media_type, "mime_type": media.mime_type,
+    }
 
 
 def _document(document: Any) -> dict[str, Any] | None:
@@ -93,6 +96,8 @@ class AboutContentService:
             .options(
                 selectinload(AboutPageContent.hero_media), selectinload(AboutPageContent.identity_media),
                 selectinload(AboutPageContent.video_poster_media), selectinload(AboutPageContent.old_campus_media),
+                selectinload(AboutPageContent.virtual_tour_media),
+                selectinload(AboutPageContent.virtual_tour_poster_media),
                 selectinload(AboutPageContent.modern_campus_media),
                 selectinload(AboutPageContent.history_document).selectinload(Document.file),
                 selectinload(AboutPageContent.milestones).selectinload(HistoryMilestone.image),
@@ -129,8 +134,15 @@ class AboutContentService:
                 "identity_heading": content.identity_heading, "identity_narrative": content.identity_narrative,
                 "mandate_introduction": content.mandate_introduction, "video_title": content.video_title,
                 "video_url": content.video_url, "video_transcript_url": content.video_transcript_url,
+                "virtual_tour_type": content.virtual_tour_type,
+                "virtual_tour_title": content.virtual_tour_title,
+                "virtual_tour_provider": content.virtual_tour_provider,
+                "virtual_tour_url": content.virtual_tour_url,
+                "virtual_tour_accessibility_url": content.virtual_tour_accessibility_url,
                 "hero_media": _media(content.hero_media), "identity_media": _media(content.identity_media),
                 "video_poster_media": _media(content.video_poster_media),
+                "virtual_tour_media": _media(content.virtual_tour_media),
+                "virtual_tour_poster_media": _media(content.virtual_tour_poster_media),
                 "old_campus_media": _media(content.old_campus_media),
                 "modern_campus_media": _media(content.modern_campus_media),
                 "section_settings": content.section_settings,
@@ -234,6 +246,22 @@ class AboutContentAdminService:
                 raise ValueError("Transformation requires old and modern campus media")
             if item.video_url and not item.video_transcript_url:
                 raise ValueError("Video transcript URL is required")
+            tour_fields = (
+                item.virtual_tour_title,
+                item.virtual_tour_provider,
+                item.virtual_tour_url,
+                item.virtual_tour_media_id,
+                item.virtual_tour_poster_media_id,
+                item.virtual_tour_accessibility_url,
+            )
+            if any(tour_fields) and item.virtual_tour_type is None:
+                raise ValueError("Virtual tour type is required")
+            if item.virtual_tour_type == "embed" and not item.virtual_tour_url:
+                raise ValueError("Virtual tour embed URL is required")
+            if item.virtual_tour_type == "video" and not item.virtual_tour_media_id:
+                raise ValueError("Virtual tour video media is required")
+            if item.virtual_tour_type and not item.virtual_tour_accessibility_url:
+                raise ValueError("Virtual tour accessibility URL is required")
         elif isinstance(item, HistoryMilestone):
             if not item.source_title and not item.source_document_id:
                 raise ValueError("Milestone source is required")

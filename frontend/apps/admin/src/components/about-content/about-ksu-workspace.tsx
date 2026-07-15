@@ -23,6 +23,11 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Switch,
   Tabs,
   TabsContent,
@@ -62,9 +67,16 @@ function aboutDefaults(record?: AboutPageContent | null): Partial<AboutPageConte
     video_title: record?.video_title ?? "",
     video_url: record?.video_url ?? "",
     video_transcript_url: record?.video_transcript_url ?? "",
+    virtual_tour_type: record?.virtual_tour_type ?? null,
+    virtual_tour_title: record?.virtual_tour_title ?? "",
+    virtual_tour_provider: record?.virtual_tour_provider ?? "",
+    virtual_tour_url: record?.virtual_tour_url ?? "",
+    virtual_tour_accessibility_url: record?.virtual_tour_accessibility_url ?? "",
     hero_media_id: record?.hero_media_id ?? "",
     identity_media_id: record?.identity_media_id ?? "",
     video_poster_media_id: record?.video_poster_media_id ?? "",
+    virtual_tour_media_id: record?.virtual_tour_media_id ?? "",
+    virtual_tour_poster_media_id: record?.virtual_tour_poster_media_id ?? "",
     old_campus_media_id: record?.old_campus_media_id ?? "",
     modern_campus_media_id: record?.modern_campus_media_id ?? "",
     history_document_id: record?.history_document_id ?? "",
@@ -123,6 +135,7 @@ export function AboutKsuWorkspace() {
   const saveMutation = useMutation({
     mutationFn: () => {
       if (!about) throw new Error("About content has not been seeded");
+      const virtualTourType = values.virtual_tour_type ?? null;
       const payload: Partial<AboutPageContentPayload> = {
         ...values,
         hero_eyebrow: nullable(values.hero_eyebrow),
@@ -134,9 +147,21 @@ export function AboutKsuWorkspace() {
         video_title: nullable(values.video_title),
         video_url: nullable(values.video_url),
         video_transcript_url: nullable(values.video_transcript_url),
+        virtual_tour_type: virtualTourType,
+        virtual_tour_title: virtualTourType ? nullable(values.virtual_tour_title) : null,
+        virtual_tour_provider: virtualTourType ? nullable(values.virtual_tour_provider) : null,
+        virtual_tour_url: virtualTourType === "embed" ? nullable(values.virtual_tour_url) : null,
+        virtual_tour_accessibility_url: virtualTourType
+          ? nullable(values.virtual_tour_accessibility_url)
+          : null,
         hero_media_id: nullable(values.hero_media_id),
         identity_media_id: nullable(values.identity_media_id),
         video_poster_media_id: nullable(values.video_poster_media_id),
+        virtual_tour_media_id:
+          virtualTourType === "video" ? nullable(values.virtual_tour_media_id) : null,
+        virtual_tour_poster_media_id: virtualTourType
+          ? nullable(values.virtual_tour_poster_media_id)
+          : null,
         old_campus_media_id: nullable(values.old_campus_media_id),
         modern_campus_media_id: nullable(values.modern_campus_media_id),
         history_document_id: nullable(values.history_document_id),
@@ -304,6 +329,46 @@ function AboutContentEditor({
             <TextField label="Video URL" value={values.video_url} onChange={(value) => setField("video_url", value)} placeholder="https://..." />
           </div>
           <TextField label="Video transcript URL" value={values.video_transcript_url} onChange={(value) => setField("video_transcript_url", value)} placeholder="Required when a video URL is supplied" />
+          <div className="space-y-4 rounded-xl border bg-muted/20 p-4">
+            <div>
+              <p className="text-sm font-semibold">Virtual campus tour</p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Show a play control over the identity image using either a hosted 360° embed or a video from the media library.
+              </p>
+            </div>
+            <label className="space-y-2 text-sm font-medium">
+              <span>Tour format</span>
+              <Select
+                value={values.virtual_tour_type ?? "none"}
+                onValueChange={(value) =>
+                  setField(
+                    "virtual_tour_type",
+                    value === "none" ? null : (value as "embed" | "video"),
+                  )
+                }
+                disabled={!canManage}
+              >
+                <SelectTrigger><SelectValue placeholder="Select a tour format" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No virtual tour</SelectItem>
+                  <SelectItem value="embed">360° tour embed</SelectItem>
+                  <SelectItem value="video">Uploaded tour video</SelectItem>
+                </SelectContent>
+              </Select>
+            </label>
+            {values.virtual_tour_type ? (
+              <>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <TextField label="Tour title" value={values.virtual_tour_title} onChange={(value) => setField("virtual_tour_title", value)} placeholder="Explore Kisii University" />
+                  <TextField label="Tour provider" value={values.virtual_tour_provider} onChange={(value) => setField("virtual_tour_provider", value)} placeholder="Optional provider name" />
+                </div>
+                {values.virtual_tour_type === "embed" ? (
+                  <TextField label="360° embed URL" value={values.virtual_tour_url} onChange={(value) => setField("virtual_tour_url", value)} placeholder="https://..." />
+                ) : null}
+                <TextField label="Accessible tour alternative" value={values.virtual_tour_accessibility_url} onChange={(value) => setField("virtual_tour_accessibility_url", value)} placeholder="Required before publication" />
+              </>
+            ) : null}
+          </div>
           <div className="flex items-center justify-between rounded-xl border p-4">
             <div><p className="text-sm font-medium">Enabled</p><p className="text-xs text-muted-foreground">Allow this record to participate in public composition.</p></div>
             <Switch checked={values.is_enabled ?? true} onCheckedChange={(checked) => setField("is_enabled", checked)} disabled={!canManage} />
@@ -317,12 +382,18 @@ function AboutContentEditor({
           <MediaPicker value={values.hero_media_id ?? ""} onChange={(value) => setField("hero_media_id", value)} mediaType="image" accept="image/*" label="Hero aerial image" helperText="Large cinematic campus image." />
           <MediaPicker value={values.identity_media_id ?? ""} onChange={(value) => setField("identity_media_id", value)} mediaType="image" accept="image/*" label="Identity campus image" />
           <MediaPicker value={values.video_poster_media_id ?? ""} onChange={(value) => setField("video_poster_media_id", value)} mediaType="image" accept="image/*" label="Video poster image" />
+          {values.virtual_tour_type === "video" ? (
+            <MediaPicker value={values.virtual_tour_media_id ?? ""} onChange={(value) => setField("virtual_tour_media_id", value)} mediaType="video" accept="video/*" label="Virtual tour video" helperText="Select or upload the full tour video." />
+          ) : null}
+          {values.virtual_tour_type ? (
+            <MediaPicker value={values.virtual_tour_poster_media_id ?? ""} onChange={(value) => setField("virtual_tour_poster_media_id", value)} mediaType="image" accept="image/*" label="Virtual tour poster" helperText="Optional cover image displayed before playback." />
+          ) : null}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
             <MediaPicker value={values.old_campus_media_id ?? ""} onChange={(value) => setField("old_campus_media_id", value)} mediaType="image" accept="image/*" label="Old campus image" />
             <MediaPicker value={values.modern_campus_media_id ?? ""} onChange={(value) => setField("modern_campus_media_id", value)} mediaType="image" accept="image/*" label="Modern campus image" />
           </div>
           <TextField label="Full history document ID" value={values.history_document_id} onChange={(value) => setField("history_document_id", value)} placeholder="Optional document UUID" />
-          <p className="rounded-lg bg-muted/50 p-3 text-xs leading-5 text-muted-foreground">Old and modern campus images must be supplied together. Video content requires a transcript URL before publication.</p>
+          <p className="rounded-lg bg-muted/50 p-3 text-xs leading-5 text-muted-foreground">Old and modern campus images must be supplied together. Story videos require a transcript; virtual tours require an accessible alternative before publication.</p>
         </CardContent>
       </Card>
     </div>

@@ -43,9 +43,16 @@ export interface AboutPageContent extends EditorialRecord {
   video_title?: string | null;
   video_url?: string | null;
   video_transcript_url?: string | null;
+  virtual_tour_type?: "embed" | "video" | null;
+  virtual_tour_title?: string | null;
+  virtual_tour_provider?: string | null;
+  virtual_tour_url?: string | null;
+  virtual_tour_accessibility_url?: string | null;
   hero_media_id?: string | null;
   identity_media_id?: string | null;
   video_poster_media_id?: string | null;
+  virtual_tour_media_id?: string | null;
+  virtual_tour_poster_media_id?: string | null;
   old_campus_media_id?: string | null;
   modern_campus_media_id?: string | null;
   history_document_id?: string | null;
