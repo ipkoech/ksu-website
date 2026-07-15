@@ -2,8 +2,6 @@ import { notFound } from "next/navigation";
 import type { ComponentType, ReactNode } from "react";
 import {
   ArrowLeft,
-  Award,
-  BookOpenCheck,
   BriefcaseBusiness,
   Building2,
   Download,
@@ -12,8 +10,6 @@ import {
   MapPin,
   Phone,
   School,
-  Sparkles,
-  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
@@ -23,6 +19,14 @@ import {
   PublicPersonTabs,
   type PublicPersonTab,
 } from "@/components/public/public-person-tabs";
+import {
+  FundingRecordList,
+  InnovationRecordGrid,
+  PublicationRecordBrowser,
+  RefereeRecordGrid,
+  TimelineRecordList,
+  type PublicProfileRecord,
+} from "@/components/public/public-profile-record-sections";
 import { ScrollReveal } from "@ksu/ui/components";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import {
@@ -31,18 +35,11 @@ import {
   type PublicPersonGenericRecord,
   type PublicPersonProfile,
   type PublicPersonPublication,
-  type PublicPersonResearchGrant,
 } from "@/lib/public-person-data";
 import { publicFileUrl, resolvePublicMediaUrl } from "@/lib/public-media";
 
 type ProfileLink = { label: string; href: string | null };
-type ProfileRecord = {
-  title: string;
-  meta: string[];
-  category?: string | null;
-  description?: string | null;
-  href?: string | null;
-};
+type ProfileRecord = PublicProfileRecord;
 type ProfileFact = {
   icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
   label: string;
@@ -652,190 +649,8 @@ function publicationTitle(item: PublicPersonPublication) {
   );
 }
 
-function recordCategory(record: ProfileRecord) {
-  return present(record.category) || "Records";
-}
-
-function compactMeta(meta: string[]) {
-  return Array.from(new Set(meta.map((item) => item.trim()).filter(Boolean)));
-}
-
-function grantTitle(item: PublicPersonResearchGrant) {
+function grantTitle(item: { title?: string | null }) {
   return present(item.title) || "Research grant";
-}
-
-function ResearchRecordCard({
-  title,
-  meta,
-  icon: Icon,
-  description,
-  href,
-}: {
-  title: string;
-  meta: string[];
-  icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
-  description?: string | null;
-  href?: string | null;
-}) {
-  const card = (
-    <article className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-      <div className="flex gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/[0.08] text-primary">
-          <Icon aria-hidden className="h-4 w-4" />
-        </span>
-        <div className="min-w-0">
-          <h3 className="text-sm font-bold leading-6 text-slate-950">
-            {title}
-          </h3>
-          {meta.length ? (
-            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
-              {meta.join(" | ")}
-            </p>
-          ) : null}
-          {description ? (
-            <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
-              {description}
-            </p>
-          ) : null}
-        </div>
-      </div>
-    </article>
-  );
-
-  if (!href) return card;
-
-  return (
-    <a href={href} target="_blank" rel="noreferrer" className="block">
-      {card}
-    </a>
-  );
-}
-
-function RecordGrid({
-  records,
-  icon,
-}: {
-  records: ProfileRecord[];
-  icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
-}) {
-  return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {records.map((record, index) => (
-        <ResearchRecordCard
-          key={`${record.title}-${index}`}
-          title={record.title}
-          meta={record.meta}
-          description={record.description}
-          href={record.href}
-          icon={icon}
-        />
-      ))}
-    </div>
-  );
-}
-
-function GroupedRecordList({
-  records,
-  icon: Icon,
-}: {
-  records: ProfileRecord[];
-  icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
-}) {
-  const groups = records.reduce<
-    Array<{ title: string; items: ProfileRecord[] }>
-  >((collection, record) => {
-    const title = recordCategory(record);
-    const existing = collection.find((item) => item.title === title);
-    if (existing) {
-      existing.items.push(record);
-      return collection;
-    }
-    collection.push({ title, items: [record] });
-    return collection;
-  }, []);
-
-  let itemNumber = 0;
-
-  return (
-    <div className="grid gap-5">
-      {groups.map((group) => (
-        <section
-          key={group.title}
-          className="overflow-hidden rounded-xl border border-slate-200 bg-white"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3">
-            <div className="inline-flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/[0.08] text-primary">
-                <Icon aria-hidden className="h-4 w-4" />
-              </span>
-              <h3 className="text-sm font-bold text-slate-950">
-                {group.title}
-              </h3>
-            </div>
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-600 ring-1 ring-slate-200">
-              {group.items.length}{" "}
-              {group.items.length === 1 ? "record" : "records"}
-            </span>
-          </div>
-          <ol className="divide-y divide-slate-100">
-            {group.items.map((record) => {
-              itemNumber += 1;
-              const meta = compactMeta(
-                record.meta.filter((item) => item !== group.title),
-              );
-              const rowContent = (
-                <div className="grid gap-3 px-4 py-4 transition hover:bg-primary/[0.03] sm:grid-cols-[3rem_minmax(0,1fr)]">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-sm font-bold text-slate-700">
-                    {itemNumber}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold leading-6 text-slate-950">
-                      {record.title}
-                    </p>
-                    {record.description &&
-                    record.description !== record.title ? (
-                      <p className="mt-2 text-sm leading-6 text-slate-600">
-                        {record.description}
-                      </p>
-                    ) : null}
-                    {meta.length ? (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {meta.map((item) => (
-                          <span
-                            key={item}
-                            className="rounded-full bg-slate-100 px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.06em] text-slate-600"
-                          >
-                            {item}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              );
-
-              return (
-                <li key={`${record.title}-${itemNumber}`}>
-                  {record.href ? (
-                    <a
-                      href={record.href}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="block"
-                    >
-                      {rowContent}
-                    </a>
-                  ) : (
-                    rowContent
-                  )}
-                </li>
-              );
-            })}
-          </ol>
-        </section>
-      ))}
-    </div>
-  );
 }
 
 export default async function PublicPersonPage({
@@ -1053,30 +868,17 @@ export default async function PublicPersonPage({
           content: (
             <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
               <PanelCard>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-950">
-                      Publications
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {publicationRecords.length
-                        ? `Showing ${publicationRecords.length} publication records`
-                        : "Publication records are summarized from this profile."}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-5">
-                  {publicationRecords.length ? (
-                    <GroupedRecordList
-                      records={publicationRecords}
-                      icon={BookOpenCheck}
-                    />
-                  ) : (
-                    <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
-                      Publication records are summarized from this profile.
-                    </p>
-                  )}
-                </div>
+                {publicationRecords.length ? (
+                  <PublicationRecordBrowser
+                    title="Publications"
+                    records={publicationRecords}
+                    emptyText="Publication records are summarized from this profile."
+                  />
+                ) : (
+                  <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
+                    Publication records are summarized from this profile.
+                  </p>
+                )}
               </PanelCard>
               <ProfileSidebar
                 facts={facts}
@@ -1094,10 +896,7 @@ export default async function PublicPersonPage({
           label: "Innovations",
           content: (
             <PanelCard>
-              <RecordGrid
-                records={genericRecords(innovations)}
-                icon={Sparkles}
-              />
+              <InnovationRecordGrid records={genericRecords(innovations)} />
             </PanelCard>
           ),
         }
@@ -1108,7 +907,7 @@ export default async function PublicPersonPage({
           label: "Grants/Funding",
           content: (
             <PanelCard>
-              <GroupedRecordList records={grantRecords} icon={Sparkles} />
+              <FundingRecordList records={grantRecords} />
             </PanelCard>
           ),
         }
@@ -1119,9 +918,10 @@ export default async function PublicPersonPage({
           label: "Book Publications",
           content: (
             <PanelCard>
-              <GroupedRecordList
+              <PublicationRecordBrowser
+                title="Book Publications"
                 records={bookPublicationRecords}
-                icon={BookOpenCheck}
+                emptyText="Book publication records are summarized from this profile."
               />
             </PanelCard>
           ),
@@ -1133,10 +933,7 @@ export default async function PublicPersonPage({
           label: "Awards / Recognitions",
           content: (
             <PanelCard>
-              <GroupedRecordList
-                records={genericRecords(awards)}
-                icon={Award}
-              />
+              <TimelineRecordList records={genericRecords(awards)} />
             </PanelCard>
           ),
         }
@@ -1147,7 +944,10 @@ export default async function PublicPersonPage({
           label: "Community Outreach",
           content: (
             <PanelCard>
-              <RecordGrid records={genericRecords(outreach)} icon={Users} />
+              <TimelineRecordList
+                records={genericRecords(outreach)}
+                tone="activity"
+              />
             </PanelCard>
           ),
         }
@@ -1158,7 +958,7 @@ export default async function PublicPersonPage({
           label: "Referees",
           content: (
             <PanelCard>
-              <RecordGrid records={genericRecords(referees)} icon={Users} />
+              <RefereeRecordGrid records={genericRecords(referees)} />
             </PanelCard>
           ),
         }
