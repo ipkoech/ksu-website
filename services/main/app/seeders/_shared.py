@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import uuid
+import hashlib
+import shutil
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
+from app.helpers.storage import get_public_url
 from app.models import (
     AcademicCalendar,
     AdmissionInfo,
@@ -264,8 +269,8 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
                 "year": 2018,
             },
         ],
-        "cv_public_url": "https://kisiiuniversity.ac.ke/storage/public/downloads//CV%20Nathan%20Ogechi.pdf",
-        "cv_file_size": 581632,
+        "cv_asset_filename": "nathan-ogechi-cv.pdf",
+        "cv_source_url": "https://kisiiuniversity.ac.ke/storage/public/downloads//CV%20Nathan%20Ogechi.pdf",
     },
     "dvc_apf": {
         "full_name": "Nathan Oyaro",
@@ -870,17 +875,39 @@ async def get_or_create_person(session: AsyncSession, ctx: SeedContext, key: str
         for field_name, value in payload.items():
             if value is not None:
                 setattr(person, field_name, value)
-    cv_public_url = spec.get("cv_public_url")
-    if cv_public_url:
-        media = await fetch_one(session, Media, public_url=cv_public_url)
+    cv_asset_filename = spec.get("cv_asset_filename")
+    if cv_asset_filename:
+        asset_path = Path(__file__).resolve().parent / "assets" / "staff" / str(cv_asset_filename)
+        if not asset_path.exists():
+            raise FileNotFoundError(f"Missing staff CV seed asset: {asset_path}")
+
+        filename = spec.get("cv_filename") or asset_path.name
+        original_filename = spec.get("cv_original_filename") or f"CV {full_name}.pdf"
+        storage_path = f"seed/staff/{filename}"
+        upload_path = get_settings().upload_dir_path / storage_path
+        upload_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(asset_path, upload_path)
+        file_size = asset_path.stat().st_size
+        file_hash = hashlib.sha256(asset_path.read_bytes()).hexdigest()
+        public_url = get_public_url(storage_path)
+        cv_source_url = spec.get("cv_source_url")
+
+        media_filters = [
+            Media.storage_path == storage_path,
+            Media.public_url == public_url,
+        ]
+        if cv_source_url:
+            media_filters.append(Media.public_url == cv_source_url)
+        media = (await session.execute(select(Media).where(or_(*media_filters)))).scalar_one_or_none()
         media_payload = {
-            "filename": spec.get("cv_filename") or f"{slugify(full_name)}-cv.pdf",
-            "original_filename": spec.get("cv_original_filename") or f"CV {full_name}.pdf",
+            "filename": filename,
+            "original_filename": original_filename,
             "mime_type": "application/pdf",
-            "file_size": spec.get("cv_file_size", 0),
-            "storage_provider": "external",
-            "storage_path": cv_public_url,
-            "public_url": cv_public_url,
+            "file_size": file_size,
+            "file_hash": file_hash,
+            "storage_provider": "local",
+            "storage_path": storage_path,
+            "public_url": public_url,
             "title": spec.get("cv_title") or f"Curriculum Vitae - {full_name}",
             "alt_text": spec.get("cv_alt_text") or f"Curriculum vitae for {full_name}",
             "description": spec.get("cv_description") or "Official curriculum vitae published by Kisii University.",
@@ -892,7 +919,8 @@ async def get_or_create_person(session: AsyncSession, ctx: SeedContext, key: str
             "extra_metadata": {
                 "source": "kisiiuniversity.ac.ke",
                 "seed_asset": True,
-                "source_url": cv_public_url,
+                "source_url": cv_source_url,
+                "source_asset": str(asset_path.relative_to(Path(__file__).resolve().parent)),
             },
         }
         if media is None:
