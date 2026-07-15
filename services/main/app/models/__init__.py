@@ -11,7 +11,7 @@ from .rbac import Permission, Role, RolePermission, UserRole
 
 # Person & Staff
 from .person import Person
-from .staff import ACADEMIC_RANK_ORDER, ENTITY_ROLES, ROLE_HIERARCHY, HierarchyLevel, StaffAssignment
+from .staff import ACADEMIC_RANK_ORDER, ENTITY_ROLES, ROLE_HIERARCHY, StaffAssignment
 
 # Governance
 from .governance import Board, GovernancePageContent, GovernanceRole
@@ -118,7 +118,6 @@ __all__ = [
     # Person & Staff
     "Person",
     "StaffAssignment",
-    "HierarchyLevel",
     "ROLE_HIERARCHY",
     "ENTITY_ROLES",
     "ACADEMIC_RANK_ORDER",

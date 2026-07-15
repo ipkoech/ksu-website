@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime
-from enum import IntEnum
 from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy as sa
@@ -19,26 +18,22 @@ if TYPE_CHECKING:
     from .auth import User
 
 
-class HierarchyLevel(IntEnum):
-    """
-    Hierarchy levels for organizational positions.
-    Lower number = higher in hierarchy.
-
-    Administrative Track: VC → DVCs → Registrars → Directors → Managers → Deputies → Staff → Assistants
-    Academic Track: DVC Academic → Registrar Academic → Deans → CODs/Coordinators → Professors → Staff
-    """
-
-    COUNCIL_CHAIR = 1       # Council Chairperson (supreme governing authority)
-    VICE_CHANCELLOR = 2     # VC + Council Members
-    DEPUTY_VC = 3           # DVCs
-    REGISTRAR = 4           # Registrars, Finance Officer
-    DIRECTOR = 5            # Division Directors, Deans
-    MANAGER = 6             # Managers, Deputy Directors
-    HEAD = 7                # HODs, CODs, Deputies
-    COORDINATOR = 8         # Program Coordinators
-    SENIOR_STAFF = 9        # Senior Lecturers, Senior Officers
-    STAFF = 10              # Lecturers, Admin Staff
-    ASSISTANT = 11          # Assistant Lecturers, Tutorial Fellows, Assistants
+# Hierarchy levels for organizational positions.
+# Lower number = higher in hierarchy.
+#
+# Administrative Track: VC → DVCs → Registrars → Directors → Managers → Deputies → Staff → Assistants
+# Academic Track: DVC Academic → Registrar Academic → Deans → CODs/Coordinators → Professors → Staff
+HIERARCHY_LEVEL_COUNCIL_CHAIR = 1
+HIERARCHY_LEVEL_VICE_CHANCELLOR = 2
+HIERARCHY_LEVEL_DEPUTY_VC = 3
+HIERARCHY_LEVEL_REGISTRAR = 4
+HIERARCHY_LEVEL_DIRECTOR = 5
+HIERARCHY_LEVEL_MANAGER = 6
+HIERARCHY_LEVEL_HEAD = 7
+HIERARCHY_LEVEL_COORDINATOR = 8
+HIERARCHY_LEVEL_SENIOR_STAFF = 9
+HIERARCHY_LEVEL_STAFF = 10
+HIERARCHY_LEVEL_ASSISTANT = 11
 
 
 # Academic rank hierarchy (for Person.academic_rank)
@@ -55,90 +50,90 @@ ACADEMIC_RANK_ORDER = {
 # Role to hierarchy level mapping
 ROLE_HIERARCHY = {
     # Level 1 - Council
-    "chairperson": HierarchyLevel.COUNCIL_CHAIR,
-    "council_chair": HierarchyLevel.COUNCIL_CHAIR,
-    "chancellor": HierarchyLevel.COUNCIL_CHAIR,
+    "chairperson": HIERARCHY_LEVEL_COUNCIL_CHAIR,
+    "council_chair": HIERARCHY_LEVEL_COUNCIL_CHAIR,
+    "chancellor": HIERARCHY_LEVEL_COUNCIL_CHAIR,
 
     # Level 2 - VC & Council
-    "vc": HierarchyLevel.VICE_CHANCELLOR,
-    "vice_chancellor": HierarchyLevel.VICE_CHANCELLOR,
-    "council_member": HierarchyLevel.VICE_CHANCELLOR,
-    "member": HierarchyLevel.VICE_CHANCELLOR,
-    "vice_chairperson": HierarchyLevel.VICE_CHANCELLOR,
-    "ex_officio": HierarchyLevel.VICE_CHANCELLOR,
+    "vc": HIERARCHY_LEVEL_VICE_CHANCELLOR,
+    "vice_chancellor": HIERARCHY_LEVEL_VICE_CHANCELLOR,
+    "council_member": HIERARCHY_LEVEL_VICE_CHANCELLOR,
+    "member": HIERARCHY_LEVEL_VICE_CHANCELLOR,
+    "vice_chairperson": HIERARCHY_LEVEL_VICE_CHANCELLOR,
+    "ex_officio": HIERARCHY_LEVEL_VICE_CHANCELLOR,
 
     # Level 3 - DVCs
-    "dvc": HierarchyLevel.DEPUTY_VC,
-    "deputy_vice_chancellor": HierarchyLevel.DEPUTY_VC,
-    "dvc_arsa": HierarchyLevel.DEPUTY_VC,
-    "dvc_apf": HierarchyLevel.DEPUTY_VC,
+    "dvc": HIERARCHY_LEVEL_DEPUTY_VC,
+    "deputy_vice_chancellor": HIERARCHY_LEVEL_DEPUTY_VC,
+    "dvc_arsa": HIERARCHY_LEVEL_DEPUTY_VC,
+    "dvc_apf": HIERARCHY_LEVEL_DEPUTY_VC,
 
     # Level 4 - Registrars
-    "registrar": HierarchyLevel.REGISTRAR,
-    "registrar_academic": HierarchyLevel.REGISTRAR,
-    "registrar_admin": HierarchyLevel.REGISTRAR,
-    "finance_officer": HierarchyLevel.REGISTRAR,
-    "board_secretary": HierarchyLevel.REGISTRAR,
-    "secretary": HierarchyLevel.REGISTRAR,
+    "registrar": HIERARCHY_LEVEL_REGISTRAR,
+    "registrar_academic": HIERARCHY_LEVEL_REGISTRAR,
+    "registrar_admin": HIERARCHY_LEVEL_REGISTRAR,
+    "finance_officer": HIERARCHY_LEVEL_REGISTRAR,
+    "board_secretary": HIERARCHY_LEVEL_REGISTRAR,
+    "secretary": HIERARCHY_LEVEL_REGISTRAR,
 
     # Level 5 - Deans & Directors
-    "dean": HierarchyLevel.DIRECTOR,
-    "director": HierarchyLevel.DIRECTOR,
-    "librarian": HierarchyLevel.DIRECTOR,
-    "university_librarian": HierarchyLevel.DIRECTOR,
-    "chief_librarian": HierarchyLevel.DIRECTOR,
-    "head_librarian": HierarchyLevel.DIRECTOR,
-    "chief_officer": HierarchyLevel.DIRECTOR,
+    "dean": HIERARCHY_LEVEL_DIRECTOR,
+    "director": HIERARCHY_LEVEL_DIRECTOR,
+    "librarian": HIERARCHY_LEVEL_DIRECTOR,
+    "university_librarian": HIERARCHY_LEVEL_DIRECTOR,
+    "chief_librarian": HIERARCHY_LEVEL_DIRECTOR,
+    "head_librarian": HIERARCHY_LEVEL_DIRECTOR,
+    "chief_officer": HIERARCHY_LEVEL_DIRECTOR,
 
     # Level 6 - Managers
-    "manager": HierarchyLevel.MANAGER,
-    "deputy_director": HierarchyLevel.MANAGER,
-    "deputy_dean": HierarchyLevel.MANAGER,
-    "deputy_librarian": HierarchyLevel.MANAGER,
-    "deputy_registrar": HierarchyLevel.MANAGER,
+    "manager": HIERARCHY_LEVEL_MANAGER,
+    "deputy_director": HIERARCHY_LEVEL_MANAGER,
+    "deputy_dean": HIERARCHY_LEVEL_MANAGER,
+    "deputy_librarian": HIERARCHY_LEVEL_MANAGER,
+    "deputy_registrar": HIERARCHY_LEVEL_MANAGER,
 
     # Level 7 - HODs & CODs
-    "hod": HierarchyLevel.HEAD,
-    "head": HierarchyLevel.HEAD,
-    "cod": HierarchyLevel.HEAD,
-    "section_head": HierarchyLevel.HEAD,
-    "deputy_hod": HierarchyLevel.HEAD,
+    "hod": HIERARCHY_LEVEL_HEAD,
+    "head": HIERARCHY_LEVEL_HEAD,
+    "cod": HIERARCHY_LEVEL_HEAD,
+    "section_head": HIERARCHY_LEVEL_HEAD,
+    "deputy_hod": HIERARCHY_LEVEL_HEAD,
 
     # Level 8 - Coordinators
-    "coordinator": HierarchyLevel.COORDINATOR,
-    "program_coordinator": HierarchyLevel.COORDINATOR,
-    "project_coordinator": HierarchyLevel.COORDINATOR,
-    "postgraduate_coordinator": HierarchyLevel.COORDINATOR,
-    "branch_librarian": HierarchyLevel.COORDINATOR,
-    "principal_investigator": HierarchyLevel.COORDINATOR,
-    "project_lead": HierarchyLevel.COORDINATOR,
+    "coordinator": HIERARCHY_LEVEL_COORDINATOR,
+    "program_coordinator": HIERARCHY_LEVEL_COORDINATOR,
+    "project_coordinator": HIERARCHY_LEVEL_COORDINATOR,
+    "postgraduate_coordinator": HIERARCHY_LEVEL_COORDINATOR,
+    "branch_librarian": HIERARCHY_LEVEL_COORDINATOR,
+    "principal_investigator": HIERARCHY_LEVEL_COORDINATOR,
+    "project_lead": HIERARCHY_LEVEL_COORDINATOR,
 
     # Level 9 - Senior Staff
-    "senior_lecturer": HierarchyLevel.SENIOR_STAFF,
-    "associate_professor": HierarchyLevel.SENIOR_STAFF,
-    "professor": HierarchyLevel.SENIOR_STAFF,
-    "senior_officer": HierarchyLevel.SENIOR_STAFF,
-    "senior_admin": HierarchyLevel.SENIOR_STAFF,
-    "principal_officer": HierarchyLevel.SENIOR_STAFF,
+    "senior_lecturer": HIERARCHY_LEVEL_SENIOR_STAFF,
+    "associate_professor": HIERARCHY_LEVEL_SENIOR_STAFF,
+    "professor": HIERARCHY_LEVEL_SENIOR_STAFF,
+    "senior_officer": HIERARCHY_LEVEL_SENIOR_STAFF,
+    "senior_admin": HIERARCHY_LEVEL_SENIOR_STAFF,
+    "principal_officer": HIERARCHY_LEVEL_SENIOR_STAFF,
 
     # Level 10 - Staff
-    "lecturer": HierarchyLevel.STAFF,
-    "admin": HierarchyLevel.STAFF,
-    "officer": HierarchyLevel.STAFF,
-    "technician": HierarchyLevel.STAFF,
-    "staff": HierarchyLevel.STAFF,
-    "researcher": HierarchyLevel.STAFF,
-    "senior_researcher": HierarchyLevel.STAFF,
-    "staff_rep": HierarchyLevel.STAFF,
-    "student_rep": HierarchyLevel.STAFF,
-    "convenor": HierarchyLevel.STAFF,
+    "lecturer": HIERARCHY_LEVEL_STAFF,
+    "admin": HIERARCHY_LEVEL_STAFF,
+    "officer": HIERARCHY_LEVEL_STAFF,
+    "technician": HIERARCHY_LEVEL_STAFF,
+    "staff": HIERARCHY_LEVEL_STAFF,
+    "researcher": HIERARCHY_LEVEL_STAFF,
+    "senior_researcher": HIERARCHY_LEVEL_STAFF,
+    "staff_rep": HIERARCHY_LEVEL_STAFF,
+    "student_rep": HIERARCHY_LEVEL_STAFF,
+    "convenor": HIERARCHY_LEVEL_STAFF,
 
     # Level 11 - Assistants
-    "assistant_lecturer": HierarchyLevel.ASSISTANT,
-    "tutorial_fellow": HierarchyLevel.ASSISTANT,
-    "graduate_assistant": HierarchyLevel.ASSISTANT,
-    "assistant": HierarchyLevel.ASSISTANT,
-    "admin_assistant": HierarchyLevel.ASSISTANT,
+    "assistant_lecturer": HIERARCHY_LEVEL_ASSISTANT,
+    "tutorial_fellow": HIERARCHY_LEVEL_ASSISTANT,
+    "graduate_assistant": HIERARCHY_LEVEL_ASSISTANT,
+    "assistant": HIERARCHY_LEVEL_ASSISTANT,
+    "admin_assistant": HIERARCHY_LEVEL_ASSISTANT,
 }
 
 # Valid roles per entity type
@@ -401,12 +396,12 @@ class StaffAssignment(Base):
     @property
     def computed_hierarchy_level(self) -> int:
         """Get hierarchy level from role if not explicitly set."""
-        return ROLE_HIERARCHY.get(self.role, HierarchyLevel.STAFF)
+        return ROLE_HIERARCHY.get(self.role, HIERARCHY_LEVEL_STAFF)
 
     @property
     def is_leadership(self) -> bool:
         """Check if this is a leadership position (level 1-7)."""
-        return self.hierarchy_level <= HierarchyLevel.HEAD
+        return self.hierarchy_level <= HIERARCHY_LEVEL_HEAD
 
     @property
     def is_current(self) -> bool:
@@ -456,4 +451,11 @@ class StaffAssignment(Base):
         return f"<StaffAssignment person_id={self.person_id} entity_type={self.entity_type} role={self.role}>"
 
 
-__all__ = ["StaffAssignment", "HierarchyLevel", "ROLE_HIERARCHY", "ENTITY_ROLES", "ACADEMIC_RANK_ORDER"]
+__all__ = [
+    "StaffAssignment",
+    "ROLE_HIERARCHY",
+    "ENTITY_ROLES",
+    "ACADEMIC_RANK_ORDER",
+    "HIERARCHY_LEVEL_HEAD",
+    "HIERARCHY_LEVEL_STAFF",
+]
