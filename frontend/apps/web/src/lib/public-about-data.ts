@@ -67,6 +67,7 @@ export type PublicFactItem = {
   kind?: string | null;
   label: string;
   display_value: string;
+  numeric_value?: number | null;
   prefix?: string | null;
   suffix?: string | null;
   unit?: string | null;
@@ -129,4 +130,3 @@ export async function getPublicFactsData(
     return null;
   }
 }
-
