@@ -47,7 +47,7 @@ import {
 import { AboutWorkflowActions } from "./about-workflow-actions";
 
 const EDITIONS_KEY = ["about-content", "fact-editions"] as const;
-const EVERGREEN_KEY = ["about-content", "fact-groups", "evergreen"] as const;
+const INSTITUTIONAL_FACTS_KEY = ["about-content", "fact-groups", "institutional"] as const;
 const ANNUAL_KEY = ["about-content", "fact-groups", "annual"] as const;
 
 type GroupEditorState = { record: FactGroup | null; kind: "evergreen" | "annual" } | null;
@@ -107,6 +107,14 @@ function itemDefaults(record?: FactItem | null, group?: FactGroup, kind: "evergr
   };
 }
 
+function factKindLabel(kind?: "evergreen" | "annual" | null) {
+  return kind === "evergreen" ? "institutional" : "annual";
+}
+
+function factKindTitle(kind?: "evergreen" | "annual" | null) {
+  return kind === "evergreen" ? "Institutional" : "Annual";
+}
+
 export function NumbersFactsWorkspace() {
   const queryClient = useQueryClient();
   const { hasAnyPermission } = usePermissions();
@@ -129,19 +137,19 @@ export function NumbersFactsWorkspace() {
   }, [editions, selectedEditionId]);
 
   const selectedEdition = editions.find((edition) => edition.id === selectedEditionId) ?? null;
-  const evergreenQuery = useQuery({ queryKey: EVERGREEN_KEY, queryFn: () => factGroupsApi.listEvergreen() });
+  const institutionalFactsQuery = useQuery({ queryKey: INSTITUTIONAL_FACTS_KEY, queryFn: () => factGroupsApi.listEvergreen() });
   const annualQuery = useQuery({
     queryKey: [...ANNUAL_KEY, selectedEditionId],
     queryFn: () => factGroupsApi.listForEdition(selectedEditionId!),
     enabled: Boolean(selectedEditionId),
   });
 
-  const evergreenGroups = useMemo(() => [...(evergreenQuery.data?.data ?? [])].sort((a, b) => a.display_order - b.display_order), [evergreenQuery.data?.data]);
+  const institutionalFactGroups = useMemo(() => [...(institutionalFactsQuery.data?.data ?? [])].sort((a, b) => a.display_order - b.display_order), [institutionalFactsQuery.data?.data]);
   const annualGroups = useMemo(() => [...(annualQuery.data?.data ?? [])].sort((a, b) => a.display_order - b.display_order), [annualQuery.data?.data]);
 
   const refreshEditions = async () => queryClient.invalidateQueries({ queryKey: EDITIONS_KEY });
   const refreshGroups = async () => Promise.all([
-    queryClient.invalidateQueries({ queryKey: EVERGREEN_KEY }),
+    queryClient.invalidateQueries({ queryKey: INSTITUTIONAL_FACTS_KEY }),
     queryClient.invalidateQueries({ queryKey: ANNUAL_KEY }),
   ]);
 
@@ -152,7 +160,7 @@ export function NumbersFactsWorkspace() {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full border bg-background/75 px-2.5 py-0.5 text-xs font-medium text-muted-foreground"><BarChart3 className="size-3.5 text-amber-600" />Verified institutional reporting</div>
             <h1 className="mt-2 text-xl font-semibold tracking-tight md:text-2xl">KSU Numbers & Facts</h1>
-            <p className="mt-1 text-sm leading-5 text-muted-foreground">Evergreen identity remains stable across editions. Annual figures stay attached to the reporting year that verified them.</p>
+            <p className="mt-1 text-sm leading-5 text-muted-foreground">Institutional facts stay available across editions. Annual figures stay attached to the reporting year that verified them.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline"><Link href="/about/numbers-and-facts" target="_blank">Public preview <ExternalLink className="size-4" /></Link></Button>
@@ -167,7 +175,7 @@ export function NumbersFactsWorkspace() {
         <Card className="h-fit">
           <CardHeader><CardTitle>Reporting editions</CardTitle><CardDescription>Select a year to manage its annual groups.</CardDescription></CardHeader>
           <CardContent className="space-y-3">
-            {editionsQuery.isLoading ? <StateMessage label="Loading editions..." /> : null}
+            {editionsQuery.isLoading ? <StateMessage label="Loading editions…" /> : null}
             {editionsQuery.isError ? <StateMessage label="Editions could not be loaded." tone="error" /> : null}
             {editions.map((edition) => (
               <button
@@ -198,7 +206,7 @@ export function NumbersFactsWorkspace() {
           <Tabs defaultValue="annual" className="space-y-4">
             <TabsList className="h-auto w-full justify-start overflow-x-auto p-1 sm:w-fit">
               <TabsTrigger value="annual"><CalendarDays className="mr-2 size-4" />Annual · {selectedEdition?.reporting_year ?? "—"}<Badge variant="secondary" className="ml-2">{annualGroups.length}</Badge></TabsTrigger>
-              <TabsTrigger value="evergreen"><Layers3 className="mr-2 size-4" />Evergreen<Badge variant="secondary" className="ml-2">{evergreenGroups.length}</Badge></TabsTrigger>
+              <TabsTrigger value="evergreen"><Layers3 className="mr-2 size-4" />Institutional Facts<Badge variant="secondary" className="ml-2">{institutionalFactGroups.length}</Badge></TabsTrigger>
             </TabsList>
 
             <TabsContent value="annual">
@@ -218,11 +226,11 @@ export function NumbersFactsWorkspace() {
             </TabsContent>
             <TabsContent value="evergreen">
               <GroupCollection
-                title="Evergreen institutional facts"
-                description="Stable facts automatically composed into every published reporting edition."
+                title="Institutional Facts"
+                description="Standing university facts automatically composed into every published reporting edition."
                 kind="evergreen"
-                groups={evergreenGroups}
-                loading={evergreenQuery.isLoading}
+                groups={institutionalFactGroups}
+                loading={institutionalFactsQuery.isLoading}
                 canManage={canManage}
                 onAdd={() => setGroupEditor({ record: null, kind: "evergreen" })}
                 onEdit={(record) => setGroupEditor({ record, kind: "evergreen" })}
@@ -265,10 +273,10 @@ function EditionSummary({ edition, canManage, onEdit, onClone, onChanged }: { ed
 function GroupCollection({ title, description, kind, groups, loading, canManage, onAdd, onEdit, onAddItem, onEditItem, onChanged }: { title: string; description: string; kind: "evergreen" | "annual"; groups: FactGroup[]; loading: boolean; canManage: boolean; onAdd: () => void; onEdit: (record: FactGroup) => void; onAddItem: (group: FactGroup) => void; onEditItem: (record: FactItem, group: FactGroup) => void; onChanged: () => Promise<unknown> }) {
   return (
     <Card>
-      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><CardTitle>{title}</CardTitle><CardDescription>{description}</CardDescription></div>{canManage ? <Button type="button" onClick={onAdd}><Plus className="size-4" />Add group</Button> : null}</CardHeader>
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><CardTitle>{title}</CardTitle><CardDescription>{description}</CardDescription></div>{canManage ? <Button type="button" onClick={onAdd}><Plus className="size-4" />Add {factKindLabel(kind)} group</Button> : null}</CardHeader>
       <CardContent className="space-y-4">
-        {loading ? <StateMessage label="Loading fact groups..." /> : null}
-        {!loading && groups.length === 0 ? <StateMessage label={`No ${kind} groups have been created.`} /> : null}
+        {loading ? <StateMessage label="Loading fact groups…" /> : null}
+        {!loading && groups.length === 0 ? <StateMessage label={`No ${factKindLabel(kind)} groups have been created.`} /> : null}
         {groups.map((group) => <FactGroupCard key={group.id} group={group} kind={kind} canManage={canManage} onEdit={() => onEdit(group)} onAddItem={() => onAddItem(group)} onEditItem={(item) => onEditItem(item, group)} onChanged={onChanged} />)}
       </CardContent>
     </Card>
@@ -287,11 +295,11 @@ function FactGroupCard({ group, kind, canManage, onEdit, onAddItem, onEditItem, 
   return (
     <section className="overflow-hidden rounded-2xl border">
       <div className="flex flex-col gap-3 border-b bg-muted/25 p-4 sm:flex-row sm:items-start sm:justify-between">
-        <div><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{group.heading}</h3><Badge variant="outline">{kind}</Badge><WorkflowBadge status={group.workflow_status} /></div><p className="mt-1 text-sm text-muted-foreground">{group.summary || `Order ${group.display_order}`}</p></div>
-        <div className="flex flex-wrap gap-2">{canManage ? <Button type="button" size="sm" variant="outline" onClick={onEdit}><Pencil className="size-4" />Edit group</Button> : null}{canManage ? <Button type="button" size="sm" variant="outline" onClick={onAddItem}><Plus className="size-4" />Add fact</Button> : null}<AboutWorkflowActions kind="group" id={group.id} status={group.workflow_status} compact onCompleted={refresh} />{canManage ? <Button type="button" size="icon" variant="ghost" aria-label={`Delete ${group.heading}`} disabled={group.workflow_status === "published" || deleteGroup.isPending} onClick={() => { if (window.confirm(`Delete ${group.heading}?`)) deleteGroup.mutate(); }}><Trash2 className="size-4" /></Button> : null}</div>
+        <div><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{group.heading}</h3><Badge variant="outline">{factKindTitle(kind)}</Badge><WorkflowBadge status={group.workflow_status} /></div><p className="mt-1 text-sm text-muted-foreground">{group.summary || `Order ${group.display_order}`}</p></div>
+        <div className="flex flex-wrap gap-2">{canManage ? <Button type="button" size="sm" variant="outline" onClick={onEdit}><Pencil className="size-4" />Edit group</Button> : null}{canManage ? <Button type="button" size="sm" variant="outline" onClick={onAddItem}><Plus className="size-4" />Add {factKindLabel(kind)} fact</Button> : null}<AboutWorkflowActions kind="group" id={group.id} status={group.workflow_status} compact onCompleted={refresh} />{canManage ? <Button type="button" size="icon" variant="ghost" aria-label={`Delete ${group.heading}`} disabled={group.workflow_status === "published" || deleteGroup.isPending} onClick={() => { if (window.confirm(`Delete ${group.heading}?`)) deleteGroup.mutate(); }}><Trash2 className="size-4" /></Button> : null}</div>
       </div>
       <div className="divide-y">
-        {itemsQuery.isLoading ? <StateMessage label="Loading facts..." /> : null}
+        {itemsQuery.isLoading ? <StateMessage label="Loading facts…" /> : null}
         {!itemsQuery.isLoading && items.length === 0 ? <p className="p-4 text-sm text-muted-foreground">No facts in this group.</p> : null}
         {items.map((item) => <FactItemRow key={item.id} item={item} canManage={canManage} onEdit={() => onEditItem(item)} onChanged={refresh} />)}
       </div>
@@ -324,14 +332,14 @@ function EditionEditorDialog({ record, onOpenChange, onSaved }: { record: FactEd
     onSuccess: async () => { toast.success(editing ? "Edition updated" : "Edition created"); await onSaved(); },
     onError: () => toast.error("Check the reporting year and edition fields"),
   });
-  return <Dialog open={Boolean(record)} onOpenChange={onOpenChange}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl"><DialogHeader><DialogTitle>{editing ? "Edit reporting edition" : "Create reporting edition"}</DialogTitle><DialogDescription>Edition metadata establishes the reporting context for annual facts.</DialogDescription></DialogHeader><div className="grid gap-4 sm:grid-cols-2"><TextField label="Reporting year" type="number" value={values.reporting_year} disabled={Boolean(editing)} onChange={(value) => setValues((current) => ({ ...current, reporting_year: Number(value) }))} /><TextField label="Verification date" type="date" value={values.verified_on} onChange={(value) => setValues((current) => ({ ...current, verified_on: value }))} /></div><TextField label="Title" value={values.title} onChange={(value) => setValues((current) => ({ ...current, title: value }))} /><AreaField label="Introduction" rows={5} value={values.introduction} onChange={(value) => setValues((current) => ({ ...current, introduction: value }))} /><AreaField label="Methodology note" rows={5} value={values.methodology_note} onChange={(value) => setValues((current) => ({ ...current, methodology_note: value }))} /><TextField label="Source document ID" value={values.source_document_id} onChange={(value) => setValues((current) => ({ ...current, source_document_id: value }))} placeholder="Optional document UUID" /><div className="grid gap-3 sm:grid-cols-2"><ToggleField label="Current edition" checked={values.is_current ?? false} onChange={(checked) => setValues((current) => ({ ...current, is_current: checked }))} /><ToggleField label="Enabled" checked={values.is_enabled ?? true} onChange={(checked) => setValues((current) => ({ ...current, is_enabled: checked }))} /></div><DialogFooter><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button type="button" disabled={mutation.isPending} onClick={() => mutation.mutate()}>{mutation.isPending ? "Saving..." : "Save edition"}</Button></DialogFooter></DialogContent></Dialog>;
+  return <Dialog open={Boolean(record)} onOpenChange={onOpenChange}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl"><DialogHeader><DialogTitle>{editing ? "Edit reporting edition" : "Create reporting edition"}</DialogTitle><DialogDescription>Edition metadata establishes the reporting context for annual facts.</DialogDescription></DialogHeader><div className="grid gap-4 sm:grid-cols-2"><TextField label="Reporting year" type="number" value={values.reporting_year} disabled={Boolean(editing)} onChange={(value) => setValues((current) => ({ ...current, reporting_year: Number(value) }))} /><TextField label="Verification date" type="date" value={values.verified_on} onChange={(value) => setValues((current) => ({ ...current, verified_on: value }))} /></div><TextField label="Title" value={values.title} onChange={(value) => setValues((current) => ({ ...current, title: value }))} /><AreaField label="Introduction" rows={5} value={values.introduction} onChange={(value) => setValues((current) => ({ ...current, introduction: value }))} /><AreaField label="Methodology note" rows={5} value={values.methodology_note} onChange={(value) => setValues((current) => ({ ...current, methodology_note: value }))} /><TextField label="Source document ID" value={values.source_document_id} onChange={(value) => setValues((current) => ({ ...current, source_document_id: value }))} placeholder="Optional document UUID" /><div className="grid gap-3 sm:grid-cols-2"><ToggleField label="Current edition" checked={values.is_current ?? false} onChange={(checked) => setValues((current) => ({ ...current, is_current: checked }))} /><ToggleField label="Enabled" checked={values.is_enabled ?? true} onChange={(checked) => setValues((current) => ({ ...current, is_enabled: checked }))} /></div><DialogFooter><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button type="button" disabled={mutation.isPending} onClick={() => mutation.mutate()}>{mutation.isPending ? "Saving…" : "Save edition"}</Button></DialogFooter></DialogContent></Dialog>;
 }
 
 function CloneEditionDialog({ source, onOpenChange, onCloned }: { source: FactEdition | null; onOpenChange: (open: boolean) => void; onCloned: (id: string) => Promise<void> }) {
   const [year, setYear] = useState(new Date().getFullYear() + 1);
   useEffect(() => { if (source) setYear(source.reporting_year + 1); }, [source]);
   const mutation = useMutation({ mutationFn: () => factEditionsApi.clone(source!.id, year), onSuccess: async (response) => { toast.success(`Created ${year} draft from ${source?.reporting_year}`); await onCloned(response.data.id); }, onError: () => toast.error("That reporting year may already exist") });
-  return <Dialog open={Boolean(source)} onOpenChange={onOpenChange}><DialogContent><DialogHeader><DialogTitle>Clone reporting edition</DialogTitle><DialogDescription>Annual groups and facts are copied into a new draft. Evergreen groups remain shared.</DialogDescription></DialogHeader><TextField label="New reporting year" type="number" value={year} onChange={(value) => setYear(Number(value))} /><DialogFooter><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button type="button" disabled={mutation.isPending} onClick={() => mutation.mutate()}>{mutation.isPending ? "Cloning..." : "Clone edition"}</Button></DialogFooter></DialogContent></Dialog>;
+  return <Dialog open={Boolean(source)} onOpenChange={onOpenChange}><DialogContent><DialogHeader><DialogTitle>Clone reporting edition</DialogTitle><DialogDescription>Annual groups and facts are copied into a new draft. Institutional facts remain shared.</DialogDescription></DialogHeader><TextField label="New reporting year" type="number" value={year} onChange={(value) => setYear(Number(value))} /><DialogFooter><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button type="button" disabled={mutation.isPending} onClick={() => mutation.mutate()}>{mutation.isPending ? "Cloning…" : "Clone edition"}</Button></DialogFooter></DialogContent></Dialog>;
 }
 
 function GroupEditorDialog({ state, editionId, onOpenChange, onSaved }: { state: GroupEditorState; editionId: string | null; onOpenChange: (open: boolean) => void; onSaved: () => Promise<void> }) {
@@ -348,7 +356,7 @@ function GroupEditorDialog({ state, editionId, onOpenChange, onSaved }: { state:
     onSuccess: async () => { toast.success(state?.record ? "Fact group updated" : "Fact group created"); await onSaved(); },
     onError: () => toast.error("Check the group name, slug and edition"),
   });
-  return <Dialog open={Boolean(state)} onOpenChange={onOpenChange}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl"><DialogHeader><DialogTitle>{state?.record ? "Edit" : "Add"} {state?.kind} group</DialogTitle><DialogDescription>{state?.kind === "evergreen" ? "This group will appear in every public edition." : "This group belongs only to the selected reporting year."}</DialogDescription></DialogHeader><div className="grid gap-4 sm:grid-cols-2"><TextField label="Slug" value={values.slug} disabled={Boolean(state?.record)} onChange={(value) => setValues((current) => ({ ...current, slug: value }))} /><TextField label="Display order" type="number" value={values.display_order} onChange={(value) => setValues((current) => ({ ...current, display_order: Number(value) }))} /></div><TextField label="Heading" value={values.heading} onChange={(value) => setValues((current) => ({ ...current, heading: value }))} /><AreaField label="Summary" rows={4} value={values.summary} onChange={(value) => setValues((current) => ({ ...current, summary: value }))} /><MediaPicker value={values.image_id ?? ""} onChange={(value) => setValues((current) => ({ ...current, image_id: value }))} mediaType="image" accept="image/*" label="Section image" /><TextField label="Image alt text" value={values.image_alt_text} onChange={(value) => setValues((current) => ({ ...current, image_alt_text: value }))} /><ToggleField label="Enabled" checked={values.is_enabled ?? true} onChange={(checked) => setValues((current) => ({ ...current, is_enabled: checked }))} /><DialogFooter><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button type="button" disabled={mutation.isPending} onClick={() => mutation.mutate()}>{mutation.isPending ? "Saving..." : "Save group"}</Button></DialogFooter></DialogContent></Dialog>;
+  return <Dialog open={Boolean(state)} onOpenChange={onOpenChange}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl"><DialogHeader><DialogTitle>{state?.record ? "Edit" : "Add"} {factKindLabel(state?.kind)} group</DialogTitle><DialogDescription>{state?.kind === "evergreen" ? "This institutional group will appear in every public edition." : "This group belongs only to the selected reporting year."}</DialogDescription></DialogHeader><div className="grid gap-4 sm:grid-cols-2"><TextField label="Slug" value={values.slug} disabled={Boolean(state?.record)} onChange={(value) => setValues((current) => ({ ...current, slug: value }))} /><TextField label="Display order" type="number" value={values.display_order} onChange={(value) => setValues((current) => ({ ...current, display_order: Number(value) }))} /></div><TextField label="Heading" value={values.heading} onChange={(value) => setValues((current) => ({ ...current, heading: value }))} /><AreaField label="Summary" rows={4} value={values.summary} onChange={(value) => setValues((current) => ({ ...current, summary: value }))} /><MediaPicker value={values.image_id ?? ""} onChange={(value) => setValues((current) => ({ ...current, image_id: value }))} mediaType="image" accept="image/*" label="Section image" /><TextField label="Image alt text" value={values.image_alt_text} onChange={(value) => setValues((current) => ({ ...current, image_alt_text: value }))} /><ToggleField label="Enabled" checked={values.is_enabled ?? true} onChange={(checked) => setValues((current) => ({ ...current, is_enabled: checked }))} /><DialogFooter><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button type="button" disabled={mutation.isPending} onClick={() => mutation.mutate()}>{mutation.isPending ? "Saving…" : "Save group"}</Button></DialogFooter></DialogContent></Dialog>;
 }
 
 function ItemEditorDialog({ state, onOpenChange, onSaved }: { state: ItemEditorState; onOpenChange: (open: boolean) => void; onSaved: (groupId: string) => Promise<void> }) {
@@ -366,7 +374,7 @@ function ItemEditorDialog({ state, onOpenChange, onSaved }: { state: ItemEditorS
     onSuccess: async () => { toast.success(state?.record ? "Fact updated" : "Fact created"); await onSaved(state!.group.id); },
     onError: () => toast.error("Check the fact value, source and verification fields"),
   });
-  return <Dialog open={Boolean(state)} onOpenChange={onOpenChange}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl"><DialogHeader><DialogTitle>{state?.record ? "Edit" : "Add"} {state?.kind} fact</DialogTitle><DialogDescription>Display values may be numeric or descriptive. Source and verification are required before publication.</DialogDescription></DialogHeader><div className="grid gap-4 sm:grid-cols-2"><TextField label="Label" value={values.label} onChange={(value) => setValues((current) => ({ ...current, label: value }))} /><TextField label="Display value" value={values.display_value} onChange={(value) => setValues((current) => ({ ...current, display_value: value }))} /></div><div className="grid gap-4 sm:grid-cols-4"><TextField label="Numeric value" type="number" value={values.numeric_value} onChange={(value) => setValues((current) => ({ ...current, numeric_value: value }))} /><TextField label="Prefix" value={values.prefix} onChange={(value) => setValues((current) => ({ ...current, prefix: value }))} /><TextField label="Suffix" value={values.suffix} onChange={(value) => setValues((current) => ({ ...current, suffix: value }))} /><TextField label="Unit" value={values.unit} onChange={(value) => setValues((current) => ({ ...current, unit: value }))} /></div><AreaField label="Explanation" rows={4} value={values.explanation} onChange={(value) => setValues((current) => ({ ...current, explanation: value }))} /><div className="grid gap-4 sm:grid-cols-2"><TextField label="Icon key" value={values.icon_key} onChange={(value) => setValues((current) => ({ ...current, icon_key: value }))} /><TextField label="Display order" type="number" value={values.display_order} onChange={(value) => setValues((current) => ({ ...current, display_order: Number(value) }))} /><TextField label="Link label" value={values.link_label} onChange={(value) => setValues((current) => ({ ...current, link_label: value }))} /><TextField label="Link URL" value={values.link_url} onChange={(value) => setValues((current) => ({ ...current, link_url: value }))} placeholder="https://..." /></div><div className="grid gap-4 sm:grid-cols-2"><TextField label="Source title" value={values.source_title} onChange={(value) => setValues((current) => ({ ...current, source_title: value }))} /><TextField label="Verification date" type="date" value={values.verified_on} onChange={(value) => setValues((current) => ({ ...current, verified_on: value }))} /></div><TextField label="Source URL" value={values.source_url} onChange={(value) => setValues((current) => ({ ...current, source_url: value }))} placeholder="https://..." /><div className="grid gap-3 sm:grid-cols-2"><ToggleField label="Featured" checked={values.is_featured ?? false} onChange={(checked) => setValues((current) => ({ ...current, is_featured: checked }))} /><ToggleField label="Enabled" checked={values.is_enabled ?? true} onChange={(checked) => setValues((current) => ({ ...current, is_enabled: checked }))} /></div><DialogFooter><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button type="button" disabled={mutation.isPending} onClick={() => mutation.mutate()}>{mutation.isPending ? "Saving..." : "Save fact"}</Button></DialogFooter></DialogContent></Dialog>;
+  return <Dialog open={Boolean(state)} onOpenChange={onOpenChange}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl"><DialogHeader><DialogTitle>{state?.record ? "Edit" : "Add"} {factKindLabel(state?.kind)} fact</DialogTitle><DialogDescription>Display values may be numeric or descriptive. Source and verification are required before publication.</DialogDescription></DialogHeader><div className="grid gap-4 sm:grid-cols-2"><TextField label="Label" value={values.label} onChange={(value) => setValues((current) => ({ ...current, label: value }))} /><TextField label="Display value" value={values.display_value} onChange={(value) => setValues((current) => ({ ...current, display_value: value }))} /></div><div className="grid gap-4 sm:grid-cols-4"><TextField label="Numeric value" type="number" value={values.numeric_value} onChange={(value) => setValues((current) => ({ ...current, numeric_value: value }))} /><TextField label="Prefix" value={values.prefix} onChange={(value) => setValues((current) => ({ ...current, prefix: value }))} /><TextField label="Suffix" value={values.suffix} onChange={(value) => setValues((current) => ({ ...current, suffix: value }))} /><TextField label="Unit" value={values.unit} onChange={(value) => setValues((current) => ({ ...current, unit: value }))} /></div><AreaField label="Explanation" rows={4} value={values.explanation} onChange={(value) => setValues((current) => ({ ...current, explanation: value }))} /><div className="grid gap-4 sm:grid-cols-2"><TextField label="Icon key" value={values.icon_key} onChange={(value) => setValues((current) => ({ ...current, icon_key: value }))} /><TextField label="Display order" type="number" value={values.display_order} onChange={(value) => setValues((current) => ({ ...current, display_order: Number(value) }))} /><TextField label="Link label" value={values.link_label} onChange={(value) => setValues((current) => ({ ...current, link_label: value }))} /><TextField label="Link URL" value={values.link_url} onChange={(value) => setValues((current) => ({ ...current, link_url: value }))} placeholder="https://…" /></div><div className="grid gap-4 sm:grid-cols-2"><TextField label="Source title" value={values.source_title} onChange={(value) => setValues((current) => ({ ...current, source_title: value }))} /><TextField label="Verification date" type="date" value={values.verified_on} onChange={(value) => setValues((current) => ({ ...current, verified_on: value }))} /></div><TextField label="Source URL" value={values.source_url} onChange={(value) => setValues((current) => ({ ...current, source_url: value }))} placeholder="https://…" /><div className="grid gap-3 sm:grid-cols-2"><ToggleField label="Featured" checked={values.is_featured ?? false} onChange={(checked) => setValues((current) => ({ ...current, is_featured: checked }))} /><ToggleField label="Enabled" checked={values.is_enabled ?? true} onChange={(checked) => setValues((current) => ({ ...current, is_enabled: checked }))} /></div><DialogFooter><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button type="button" disabled={mutation.isPending} onClick={() => mutation.mutate()}>{mutation.isPending ? "Saving…" : "Save fact"}</Button></DialogFooter></DialogContent></Dialog>;
 }
 
 function TextField({ label, value, onChange, placeholder, type = "text", disabled = false }: { label: string; value: unknown; onChange: (value: string) => void; placeholder?: string; type?: string; disabled?: boolean }) { return <label className="space-y-2 text-sm font-medium"><span>{label}</span><Input type={type} value={String(value ?? "")} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} disabled={disabled} /></label>; }
