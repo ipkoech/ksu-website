@@ -278,10 +278,10 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
     {
         "section_key": "partners",
         "layout_variant": "logo_carousel",
-        "display_order": 120,
-        "title": "Our Partners",
-        "subtitle": "Collaboration and impact",
-        "description": "Working with institutions and organisations that share our commitment to public impact.",
+        "display_order": 95,
+        "title": "A network advancing learning, research and community impact.",
+        "subtitle": "Our partners",
+        "description": "Kisii University works with academic, industry, government and development partners to expand opportunity and translate knowledge into public value.",
         "settings": {"presentation": "wordmarks"},
         "items": tuple(
             {"item_type": "card", "title": name, "display_order": order, "content": {"label": name}}

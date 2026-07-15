@@ -1460,50 +1460,155 @@ export function EventsListSection({ section }: SectionVariantProps) {
 }
 
 export function LogoCarouselSection({ section }: SectionVariantProps) {
-  const logoItems = logos(section);
-  const partnerItems = displayItems(section).slice(0, 8);
+  const partnerItems = partnerDisplayItems(section);
+  const marqueeItems =
+    partnerItems.length > 1 ? [...partnerItems, ...partnerItems] : partnerItems;
   return (
     <section
       id={section.section_key}
-      className="border-b border-blue-100 bg-white py-10"
+      className="relative isolate overflow-hidden border-b border-blue-100 bg-white py-12 lg:py-14"
     >
+      <div className="pointer-events-none absolute right-0 top-0 -z-10 h-full w-1/2 bg-[radial-gradient(circle_at_70%_25%,rgba(3,71,52,.08),transparent_38%)]" />
       <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <SectionEyebrow value={section.subtitle ?? "Our partners"} />
-            <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950 sm:text-3xl">
-              {section.title ?? "Partners and collaborators"}
-            </h2>
-          </div>
-          <SectionBody value={section.description} className="max-w-xl" />
+        <div className="max-w-4xl motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
+          <SectionEyebrow value={section.subtitle ?? "Our partners"} />
+          <h2 className="mt-3 max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-primary sm:text-4xl lg:text-5xl">
+            {section.title ??
+              "A network advancing learning, research and community impact."}
+          </h2>
+          <SectionBody
+            value={
+              section.description ??
+              "Kisii University works with academic, industry, government and development partners to expand opportunity and translate knowledge into public value."
+            }
+            className="mt-4 max-w-3xl text-base leading-7"
+          />
+          <CtaLink
+            item={{
+              title: "Explore partnerships",
+              cta_label: "Explore partnerships",
+              cta_url: "/research/partnerships",
+            }}
+            className="mt-6"
+          />
         </div>
-        <div className="mt-7 flex snap-x gap-8 overflow-x-auto border-y border-blue-100 py-6 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
-          {logoItems.length
-            ? logoItems.map((logo, index) => (
-                <div
-                  key={logo.id ?? logo.media_id ?? index}
-                  className="flex min-h-16 min-w-36 snap-start items-center justify-center sm:min-w-44"
-                >
-                  <PublicImage
-                    src={mediaUrl(logo)}
-                    alt={mediaAlt(logo, "Partner logo")}
-                    ratio="logo"
-                    className="bg-transparent"
-                    imageClassName="object-contain"
-                  />
-                </div>
-              ))
-            : partnerItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex min-h-16 min-w-36 snap-start items-center justify-center text-center font-[family-name:var(--font-display)] text-lg font-semibold text-primary sm:min-w-44"
-                >
-                  {itemContentText(item, "label") ?? item.title}
-                </div>
+
+        <div className="group relative mt-9 overflow-hidden border-y border-blue-100 py-6 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150">
+          <style>
+            {`
+              @keyframes homepage-partner-rail {
+                from { transform: translate3d(0, 0, 0); }
+                to { transform: translate3d(-50%, 0, 0); }
+              }
+              @media (prefers-reduced-motion: reduce) {
+                .homepage-partner-rail {
+                  animation: none !important;
+                  transform: none !important;
+                }
+              }
+            `}
+          </style>
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-white to-transparent sm:w-20" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-white to-transparent sm:w-20" />
+          <div className="overflow-x-auto [scrollbar-width:none] motion-reduce:overflow-x-auto [&::-webkit-scrollbar]:hidden">
+            <div
+              className={[
+                "homepage-partner-rail flex w-max min-w-full items-center gap-0",
+                partnerItems.length > 1
+                  ? "[animation:homepage-partner-rail_42s_linear_infinite] group-hover:[animation-play-state:paused] group-focus-within:[animation-play-state:paused]"
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              {marqueeItems.map((partner, index) => (
+                <PartnerLogoRailItem
+                  key={`${partner.id}-${index}`}
+                  partner={partner}
+                  duplicate={index >= partnerItems.length}
+                />
               ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>
+  );
+}
+
+type PartnerDisplayItem = {
+  id: string;
+  name: string;
+  href?: string;
+  logoUrl?: string;
+  logoAlt?: string;
+};
+
+function partnerDisplayItems(section: HomepageSection): PartnerDisplayItem[] {
+  const logoItems = logos(section)
+    .map((logo, index): PartnerDisplayItem | null => {
+      const logoUrl = mediaUrl(logo);
+      if (!logoUrl) return null;
+      return {
+        id: logo.id ?? logo.media_id ?? `section-logo-${index}`,
+        name: mediaAlt(logo, "Partner logo"),
+        logoAlt: mediaAlt(logo, "Partner logo"),
+        logoUrl,
+      };
+    })
+    .filter((item): item is PartnerDisplayItem => item !== null);
+
+  if (logoItems.length) return logoItems;
+
+  return displayItems(section)
+    .slice(0, 16)
+    .map((item) => ({
+      id: item.id,
+      name: itemContentText(item, "label") ?? item.title ?? "Partner",
+      href: item.cta_url ?? itemContentText(item, "url"),
+      logoUrl: itemContentText(item, "logoUrl") ?? itemImageUrl(item),
+      logoAlt: item.media_alt_text ?? item.title ?? "Partner logo",
+    }));
+}
+
+function PartnerLogoRailItem({
+  partner,
+  duplicate,
+}: {
+  partner: PartnerDisplayItem;
+  duplicate: boolean;
+}) {
+  const content = (
+    <div
+      className="group/logo flex h-20 w-48 shrink-0 items-center justify-center border-r border-blue-100 px-7 sm:w-56 lg:w-64"
+      aria-hidden={duplicate ? "true" : undefined}
+    >
+      {partner.logoUrl ? (
+        <PublicImage
+          src={partner.logoUrl}
+          alt={duplicate ? "" : (partner.logoAlt ?? partner.name)}
+          ratio="logo"
+          sizes="220px"
+          className="h-12 bg-transparent opacity-65 grayscale transition duration-300 group-hover/logo:opacity-100 group-hover/logo:grayscale-0"
+          imageClassName="object-contain"
+        />
+      ) : (
+        <span className="text-center font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-slate-500 grayscale transition duration-300 group-hover/logo:text-primary group-hover/logo:grayscale-0">
+          {partner.name}
+        </span>
+      )}
+    </div>
+  );
+
+  if (duplicate || !partner.href) return content;
+
+  return (
+    <LinkWrapper
+      href={partner.href}
+      className="group/logo block shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2"
+    >
+      {content}
+    </LinkWrapper>
   );
 }
 

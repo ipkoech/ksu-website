@@ -16,7 +16,11 @@ const campusLifeScrollerSource = readFileSync(
   ),
   "utf8",
 );
-const homepageSource = `${variantsSource}\n${campusLifeScrollerSource}`;
+const rendererSource = readFileSync(
+  new URL("../components/home/section-renderer.tsx", import.meta.url),
+  "utf8",
+);
+const homepageSource = `${variantsSource}\n${campusLifeScrollerSource}\n${rendererSource}`;
 
 test("composed homepage cards consume item-level imagery and metadata", () => {
   assert.match(variantsSource, /function itemImageUrl/);
@@ -68,7 +72,7 @@ test("leadership, partner, alumni, and facts sections have complete fallbacks", 
   assert.match(variantsSource, /settingText\(section, "leaderName"\)/);
   assert.match(variantsSource, /settingText\(section, "leaderImage"\)/);
   assert.match(variantsSource, /Recent activities/);
-  assert.match(variantsSource, /displayItems\(section\)\.slice\(0, 8\)/);
+  assert.match(variantsSource, /partnerDisplayItems\(section\)/);
   assert.match(
     variantsSource,
     /itemImageUrl\(item\) \?\? settingText\(section, "imageUrl"\)/,
@@ -106,4 +110,17 @@ test("campus life renders as a full-width editorial mosaic", () => {
   assert.doesNotMatch(homepageSource, /addEventListener\("wheel"/);
   assert.match(variantsSource, /lg:w-screen/);
   assert.match(variantsSource, /displayItems\(section\)/);
+});
+
+test("partners render after research as an infinite logo rail", () => {
+  assert.match(rendererSource, /layout_variant === "research_cards"/);
+  assert.match(rendererSource, /layout_variant === "logo_carousel"/);
+  assert.match(rendererSource, /nextResearchIndex \+ 1/);
+  assert.match(variantsSource, /homepage-partner-rail/);
+  assert.match(variantsSource, /homepage-partner-rail_42s_linear_infinite/);
+  assert.match(variantsSource, /prefers-reduced-motion: reduce/);
+  assert.match(variantsSource, /group-hover:\[animation-play-state:paused\]/);
+  assert.match(variantsSource, /partnerDisplayItems/);
+  assert.match(variantsSource, /PartnerLogoRailItem/);
+  assert.match(variantsSource, /logoUrl/);
 });

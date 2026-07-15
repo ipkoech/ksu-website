@@ -150,27 +150,40 @@ export function HomepageSections({
 }
 
 function orderHomepageSections(sections: HomepageSection[]) {
-  const pulseIndex = sections.findIndex(
+  const nextSections = [...sections];
+  const pulseIndex = nextSections.findIndex(
     (section) => section.layout_variant === "pulse_strip",
   );
-  const partnershipIndex = sections.findIndex(
+  const partnershipIndex = nextSections.findIndex(
     (section) => section.layout_variant === "featured_partnership",
   );
 
   if (
-    pulseIndex < 0 ||
-    partnershipIndex < 0 ||
-    partnershipIndex === pulseIndex + 1
+    pulseIndex >= 0 &&
+    partnershipIndex >= 0 &&
+    partnershipIndex !== pulseIndex + 1
   ) {
-    return sections;
+    const [partnership] = nextSections.splice(partnershipIndex, 1);
+    const nextPulseIndex = nextSections.findIndex(
+      (section) => section.layout_variant === "pulse_strip",
+    );
+    nextSections.splice(nextPulseIndex + 1, 0, partnership);
   }
 
-  const nextSections = [...sections];
-  const [partnership] = nextSections.splice(partnershipIndex, 1);
-  const nextPulseIndex = nextSections.findIndex(
-    (section) => section.layout_variant === "pulse_strip",
+  const researchIndex = nextSections.findIndex(
+    (section) => section.layout_variant === "research_cards",
   );
-  nextSections.splice(nextPulseIndex + 1, 0, partnership);
+  const logoIndex = nextSections.findIndex(
+    (section) => section.layout_variant === "logo_carousel",
+  );
+  if (researchIndex >= 0 && logoIndex >= 0 && logoIndex !== researchIndex + 1) {
+    const [logoSection] = nextSections.splice(logoIndex, 1);
+    const nextResearchIndex = nextSections.findIndex(
+      (section) => section.layout_variant === "research_cards",
+    );
+    nextSections.splice(nextResearchIndex + 1, 0, logoSection);
+  }
+
   return nextSections;
 }
 
