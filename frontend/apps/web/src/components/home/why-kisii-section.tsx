@@ -165,62 +165,82 @@ export function WhyKisiiSection({
         data-visible={isVisible.visible ? "true" : "false"}
         className="mx-auto max-w-[1680px] px-4 transition duration-700 motion-safe:translate-y-4 motion-safe:opacity-0 data-[visible=true]:translate-y-0 data-[visible=true]:opacity-100 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
       >
-        <div className="grid gap-5 lg:min-h-[390px] lg:grid-cols-[minmax(300px,0.36fr)_minmax(0,0.64fr)] lg:items-stretch">
-          <div className="hidden min-h-[380px] grid-cols-5 grid-rows-6 gap-2.5 lg:grid lg:min-h-0">
-            <MosaicImage
-              item={reasons[0]}
-              fallbackSrc={whyKisiiImages[0]}
-              fallbackTitle={section.title}
-              className="col-span-5 row-span-3 sm:col-span-3 sm:row-span-6"
-              priority
-            />
-            <MosaicImage
-              item={reasons[1]}
-              fallbackSrc={whyKisiiImages[1]}
-              fallbackTitle={section.title}
-              className="col-span-3 row-span-1 sm:col-span-2 sm:row-span-2"
-            />
-            <MosaicImage
-              item={reasons[2]}
-              fallbackSrc={whyKisiiImages[2]}
-              fallbackTitle={section.title}
-              className="col-span-2 row-span-4"
-            />
-          </div>
-
-          <div className="flex flex-col justify-center border-y border-border py-4 lg:border-y-0 lg:py-0">
+        <header className="grid gap-3 border-b border-border pb-5 lg:grid-cols-12 lg:items-end lg:gap-6">
+          <div className="lg:col-span-6">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
               {section.subtitle ?? "Why choose KSU"}
             </p>
-            <h2 className="mt-2 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
+            <h2 className="mt-2 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl lg:text-[2.75rem]">
               {section.title ?? "Why Kisii University?"}
             </h2>
+          </div>
+          <div className="lg:col-span-5 lg:col-start-8">
             {section.description ? (
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">
+              <p className="max-w-2xl text-sm leading-7 text-muted-foreground">
                 {section.description}
               </p>
             ) : (
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">
+              <p className="max-w-2xl text-sm leading-7 text-muted-foreground">
                 Kisii University brings together public-service education,
                 applied research and inclusive student support for learners and
                 communities in Kenya and beyond.
               </p>
             )}
-            <div className="mt-5 grid gap-x-6 gap-y-1 sm:grid-cols-2">
-              {reasons.map((item, index) => (
-                <ReasonStatement
-                  key={item.id}
-                  item={item}
-                  index={index}
-                  active={isVisible.visible}
-                />
-              ))}
-            </div>
+          </div>
+        </header>
+
+        <div className="mt-5 grid gap-x-5 sm:grid-cols-2 lg:grid-cols-12 lg:grid-rows-8 lg:gap-3">
+          <MosaicImage
+            fallbackSrc={whyKisiiImages[0]}
+            fallbackTitle="Kisii University's green campus"
+            className="hidden lg:col-span-5 lg:row-span-5 lg:block"
+            sizes="(min-width: 1024px) 40vw, 0px"
+            priority
+          />
+          <div className="border-b border-border sm:pr-4 lg:col-span-4 lg:row-span-2 lg:border-t lg:border-b-0 lg:pr-5">
+            <ReasonStatement
+              item={reasons[0]}
+              index={0}
+              active={isVisible.visible}
+            />
+          </div>
+          <MosaicImage
+            fallbackSrc={whyKisiiImages[1]}
+            fallbackTitle="The Kisii University community"
+            className="hidden lg:col-span-3 lg:row-span-3 lg:block"
+            sizes="(min-width: 1024px) 25vw, 0px"
+          />
+          <div className="border-b border-border sm:pl-4 lg:col-span-4 lg:row-span-3 lg:border-t lg:border-b-0 lg:pl-0 lg:pr-5">
+            <ReasonStatement
+              item={reasons[1]}
+              index={1}
+              active={isVisible.visible}
+            />
+          </div>
+          <div className="border-b border-border sm:pr-4 lg:col-span-4 lg:row-span-3 lg:border-y lg:pr-5">
+            <ReasonStatement
+              item={reasons[2]}
+              index={2}
+              active={isVisible.visible}
+            />
+          </div>
+          <MosaicImage
+            fallbackSrc={whyKisiiImages[2]}
+            fallbackTitle="Kisii University administration building"
+            className="hidden lg:col-span-4 lg:row-span-3 lg:block"
+            sizes="(min-width: 1024px) 32vw, 0px"
+          />
+          <div className="border-b border-border sm:pl-4 lg:col-span-4 lg:row-span-5 lg:flex lg:items-center lg:border-y lg:pl-5">
+            <ReasonStatement
+              item={reasons[3]}
+              index={3}
+              active={isVisible.visible}
+            />
           </div>
         </div>
 
         {facts.length ? (
-          <aside className="mt-4 border-y border-border py-4">
+          <aside className="mt-5 border-y border-border py-4">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
               <p className="shrink-0 text-xs font-bold uppercase tracking-[0.16em] text-secondary lg:max-w-32">
                 {factsSection?.title ?? "KSU at a glance"}
@@ -326,12 +346,14 @@ function MosaicImage({
   fallbackSrc,
   fallbackTitle,
   className,
+  sizes,
   priority = false,
 }: {
   item?: HomepageSectionItem;
   fallbackSrc: string;
   fallbackTitle?: string | null;
   className: string;
+  sizes?: string;
   priority?: boolean;
 }) {
   return (
@@ -349,7 +371,7 @@ function MosaicImage({
         priority={priority}
         className="absolute inset-0 h-full w-full"
         imageClassName="object-cover transition duration-700 hover:scale-[1.03]"
-        sizes="(min-width: 1024px) 62vw, 100vw"
+        sizes={sizes ?? "(min-width: 1024px) 33vw, 100vw"}
       />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.02),rgba(2,6,23,0.22))]" />
     </div>
