@@ -27,6 +27,8 @@ celery_app.conf.update(
     task_routes={
         "main.notifications.dispatch_delivery": {"queue": "main.notifications"},
         "main.notifications.expire": {"queue": "main.maintenance"},
+        "main.newsletters.send": {"queue": "main.email"},
+        "main.newsletters.send_due": {"queue": "main.maintenance"},
         "main.social.queue_publish": {"queue": "main.social"},
         "main.social.publish_due": {"queue": "main.social"},
         "main.email.send_account_created": {"queue": "main.email"},
@@ -43,6 +45,10 @@ celery_app.conf.update(
             "task": "main.social.publish_due",
             "schedule": crontab(minute="*/10"),
         },
+        "send-due-newsletters-every-5-minutes": {
+            "task": "main.newsletters.send_due",
+            "schedule": crontab(minute="*/5"),
+        },
     },
 )
 
@@ -50,6 +56,7 @@ celery_app.autodiscover_tasks(["app.tasks"])
 celery_app.conf.imports = (
     "app.tasks.email",
     "app.tasks.imports",
+    "app.tasks.newsletters",
     "app.tasks.notifications",
     "app.tasks.social_posts",
 )
