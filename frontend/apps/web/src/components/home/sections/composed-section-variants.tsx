@@ -1457,7 +1457,7 @@ export function NewsGridSection({ section, eventsSection }: SectionVariantProps)
           </nav>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.62fr)_minmax(360px,0.66fr)]">
+        <div className="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(280px,0.72fr)_minmax(300px,0.78fr)]">
           {featured ? <FeaturedUpdateItem item={featured} /> : null}
 
           <div className="min-w-0 bg-white/50 xl:px-2">
@@ -1472,7 +1472,7 @@ export function NewsGridSection({ section, eventsSection }: SectionVariantProps)
           <UpcomingComposedEvents items={eventItems} />
         </div>
 
-        <div className="mt-0 grid gap-6 border-t border-primary/10 bg-white/70 px-5 py-5 shadow-[0_-16px_48px_rgba(0,0,0,0.04)] lg:grid-cols-[minmax(0,1fr)_1px_minmax(280px,0.55fr)] lg:items-center lg:px-8">
+        <div className="mt-8 grid gap-6 rounded-md border border-primary/10 bg-white/80 px-5 py-5 shadow-sm lg:grid-cols-[minmax(0,1fr)_1px_minmax(280px,0.55fr)] lg:items-center lg:px-8">
           <div className="grid gap-4 md:grid-cols-[auto_minmax(0,280px)_minmax(280px,1fr)] md:items-center">
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/20">
               <Mail className="h-7 w-7" aria-hidden />
@@ -1516,7 +1516,7 @@ export function NewsGridSection({ section, eventsSection }: SectionVariantProps)
 
 function FeaturedUpdateItem({ item }: { item: HomepageSectionItem }) {
   const content = (
-    <article className="group relative min-h-[420px] overflow-hidden bg-primary text-white">
+    <article className="group relative min-h-[360px] overflow-hidden rounded-md bg-primary text-white sm:min-h-[420px] xl:h-full">
       <PublicImage
         src={updateImageUrl(item)}
         alt={item.media_alt_text ?? item.title ?? "University story"}
@@ -1565,14 +1565,14 @@ function UpdateListItem({
   index: number;
 }) {
   const content = (
-    <article className="group grid min-w-0 grid-cols-[96px_minmax(0,1fr)_auto] gap-4 py-4 sm:grid-cols-[116px_minmax(0,1fr)_auto]">
+    <article className="group grid min-w-0 grid-cols-[84px_minmax(0,1fr)] gap-3 py-4 sm:grid-cols-[116px_minmax(0,1fr)_auto] sm:gap-4">
       <PublicImage
         src={updateImageUrl(item)}
         alt={item.media_alt_text ?? item.title ?? `Story ${index + 1}`}
         ratio="news"
         fallbackContent={<Newspaper className="h-5 w-5" aria-hidden />}
         sizes="116px"
-        className="h-24 rounded-sm"
+        className="h-20 rounded-sm sm:h-24"
         imageClassName="object-cover"
       />
       <div className="min-w-0">
@@ -1591,7 +1591,7 @@ function UpdateListItem({
           {item.body_text ?? item.cta_description}
         </p>
       </div>
-      <ArrowRight className="mt-10 h-5 w-5 text-secondary transition group-hover:translate-x-1" />
+      <ArrowRight className="mt-10 hidden h-5 w-5 text-secondary transition group-hover:translate-x-1 sm:block" />
     </article>
   );
 
@@ -1604,7 +1604,7 @@ function UpdateListItem({
 
 function UpcomingComposedEvents({ items }: { items: HomepageSectionItem[] }) {
   return (
-    <aside className="bg-primary px-5 py-6 text-white shadow-2xl shadow-primary/20 sm:px-7">
+    <aside className="h-full rounded-md bg-primary px-5 py-6 text-white shadow-xl shadow-primary/15 sm:px-7">
       <SectionKicker title="Upcoming events" light />
       {items.length ? (
         <div className="relative mt-6 space-y-0 pl-5 before:absolute before:left-[11px] before:top-4 before:h-[calc(100%-2rem)] before:w-px before:bg-secondary">
@@ -1638,7 +1638,7 @@ function ComposedEventAgendaItem({
 }) {
   const dateParts = composedEventDateParts(item, index);
   const content = (
-    <article className="group relative grid grid-cols-[72px_minmax(0,1fr)_auto] gap-5 border-b border-white/15 py-5">
+    <article className="group relative grid grid-cols-[60px_minmax(0,1fr)] gap-4 border-b border-white/15 py-5 sm:grid-cols-[72px_minmax(0,1fr)_auto] sm:gap-5">
       <span className="absolute -left-[19px] top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-secondary bg-primary" />
       <div className="rounded-md bg-white px-2 py-3 text-center text-primary shadow-sm">
         <span className="block text-xs font-bold uppercase tracking-[0.18em]">
@@ -1664,7 +1664,7 @@ function ComposedEventAgendaItem({
           </p>
         ) : null}
       </div>
-      <ArrowRight className="mt-10 h-5 w-5 text-secondary transition group-hover:translate-x-1" />
+      <ArrowRight className="mt-10 hidden h-5 w-5 text-secondary transition group-hover:translate-x-1 sm:block" />
     </article>
   );
 
