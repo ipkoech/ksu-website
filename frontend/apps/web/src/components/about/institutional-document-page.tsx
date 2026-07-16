@@ -33,6 +33,14 @@ const quoteFallbacks = {
   about: "/images/about/about-mission-vision.webp",
 };
 
+const priorityFallbacks = [
+  "/images/about/about-overview.webp",
+  "/images/HERIAfricaLaunch.jpg",
+  "/images/Home/OurKSU-82.jpg",
+  "/images/about/about-leadership.webp",
+  "/images/about/about-administration.webp",
+];
+
 type PageType = PublicInstitutionalPage["page_type"];
 
 function documentHref(document: PublicInstitutionalPage["primary_document"]) {
@@ -84,7 +92,7 @@ function NarrativeSection({
   type: PageType;
 }) {
   return (
-    <section className="overflow-hidden bg-[#f5f2ea]">
+    <section className="overflow-hidden bg-[#faf8f3]">
       <AboutReveal className="grid lg:grid-cols-2 lg:items-stretch">
         <div className="flex items-center px-5 py-14 sm:px-8 lg:px-10 lg:py-20 xl:px-16">
           <div>
@@ -117,14 +125,14 @@ function CommitmentsSection({ section }: { section: PublicInstitutionalSection }
       <AboutReveal>
         <SectionHeading section={section} centered />
         <div className="relative mt-11 grid gap-8 md:grid-cols-2 lg:grid-cols-4 lg:gap-4">
-          <div className="absolute left-[12.5%] right-[12.5%] top-8 hidden h-px bg-secondary/70 lg:block" aria-hidden />
+          <div className="absolute left-[12.5%] right-[12.5%] top-8 hidden h-px bg-primary/55 lg:block" aria-hidden />
           {section.items.map((item, index) => (
             <article key={item.id} className="group relative text-center">
-              <span className="relative z-10 mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-secondary bg-white text-primary shadow-[0_0_0_8px_white] transition duration-300 group-hover:-translate-y-1 group-hover:bg-primary group-hover:text-white motion-reduce:transform-none">
+              <span className={`relative z-10 mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 bg-white shadow-[0_0_0_8px_white] transition duration-300 group-hover:-translate-y-1 group-hover:text-white motion-reduce:transform-none ${index % 2 === 0 ? "border-primary text-primary group-hover:bg-primary" : "border-secondary text-secondary group-hover:bg-secondary"}`}>
                 <InstitutionalIcon name={item.icon_key} className="h-7 w-7" />
               </span>
-              <p className="mt-5 text-[0.68rem] font-bold uppercase tracking-[0.2em] text-secondary">
-                Commitment {String(index + 1).padStart(2, "0")}
+              <p className="mt-5 text-sm font-bold tracking-[0.2em] text-secondary">
+                {String(index + 1).padStart(2, "0")}
               </p>
               <h3 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold text-primary">
                 {item.title}
@@ -150,7 +158,7 @@ function ProcessSection({ section }: { section: PublicInstitutionalSection }) {
       <AboutReveal>
         <SectionHeading section={section} centered inverse={inverse} />
         <ol className="relative mt-12 grid gap-9 md:grid-cols-2 lg:grid-cols-4 lg:gap-6">
-          <div className={`absolute left-[12.5%] right-[12.5%] top-7 hidden h-px lg:block ${inverse ? "bg-white/25" : "bg-primary/20"}`} aria-hidden />
+          <div className={`absolute left-[12.5%] right-[12.5%] top-7 hidden border-t border-dashed lg:block ${inverse ? "border-white/35" : "border-primary/35"}`} aria-hidden />
           {section.items.map((item, index) => (
             <li key={item.id} className="group relative text-center">
               <span className={`relative z-10 mx-auto flex h-14 w-14 items-center justify-center rounded-full border-2 font-[family-name:var(--font-display)] text-lg font-semibold shadow-[0_0_0_7px_var(--step-ring)] transition duration-300 group-hover:-translate-y-1 motion-reduce:transform-none ${inverse ? "[--step-ring:var(--primary)] border-secondary bg-primary text-secondary" : "[--step-ring:#f5f2ea] border-primary/30 bg-white text-primary"}`}>
@@ -179,23 +187,27 @@ function PrioritiesSection({ section }: { section: PublicInstitutionalSection })
       <AboutReveal>
         <SectionHeading section={section} centered />
         <div className="relative mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-5 lg:gap-0">
-          <div className="absolute left-[10%] right-[10%] top-9 hidden h-0.5 bg-secondary lg:block" aria-hidden />
+          <div className="absolute left-0 right-0 top-9 hidden h-1 bg-secondary lg:block" aria-hidden />
+          <ArrowRight className="absolute -right-1 top-[1.75rem] z-20 hidden h-6 w-6 text-secondary lg:block" aria-hidden />
           {section.items.map((item, index) => (
-            <article key={item.id} className="group relative border border-primary/10 bg-white p-5 transition duration-300 hover:-translate-y-1 hover:border-secondary hover:shadow-xl motion-reduce:transform-none lg:border-y-0 lg:border-l-0 lg:border-r lg:px-5 lg:last:border-r-0">
+            <article key={item.id} className="group relative flex flex-col border border-primary/10 bg-white p-4 transition duration-300 hover:-translate-y-1 hover:border-secondary hover:shadow-xl motion-reduce:transform-none lg:border-y-0 lg:border-l-0 lg:border-r lg:px-4 lg:last:border-r-0">
               <span className="relative z-10 mx-auto flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-2 border-secondary bg-white text-primary shadow-[0_0_0_8px_white] transition group-hover:bg-primary group-hover:text-white">
                 <InstitutionalIcon name={item.icon_key} className="h-7 w-7" />
               </span>
               <p className="mt-5 text-center text-[0.68rem] font-bold uppercase tracking-[0.18em] text-secondary">
                 Priority {String(index + 1).padStart(2, "0")}
               </p>
-              <h3 className="mt-2 text-center font-[family-name:var(--font-display)] text-lg font-semibold leading-snug text-primary">
+              <h3 className="mt-2 font-[family-name:var(--font-display)] text-lg font-semibold leading-snug text-primary">
                 {item.title}
               </h3>
               {item.description ? (
-                <p className="mt-3 text-center text-sm leading-6 text-muted-foreground">
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
                   {item.description}
                 </p>
               ) : null}
+              <div className="relative mt-5 aspect-[4/3] overflow-hidden rounded-sm bg-surface-muted">
+                <Image src={item.image?.url || priorityFallbacks[index] || priorityFallbacks[0]} alt={item.image_alt_text || item.image?.alt_text || item.title} fill sizes="(min-width:1024px) 20vw, 50vw" className="object-cover transition duration-700 group-hover:scale-[1.04] motion-reduce:transition-none" />
+              </div>
             </article>
           ))}
         </div>
@@ -206,28 +218,16 @@ function PrioritiesSection({ section }: { section: PublicInstitutionalSection })
 
 function OutcomesSection({ section }: { section: PublicInstitutionalSection }) {
   return (
-    <section className="bg-[#f5f2ea] px-5 py-14 sm:px-8 lg:px-10 lg:py-20">
-      <AboutReveal className="grid gap-10 lg:grid-cols-[0.68fr_1.32fr] lg:items-start">
-        <SectionHeading section={section} />
-        <div className="grid gap-px overflow-hidden border border-primary/15 bg-primary/15 sm:grid-cols-3">
+    <section className="overflow-hidden bg-[#f5f2ea]">
+      <AboutReveal className="grid lg:grid-cols-[0.95fr_1.05fr] lg:items-stretch">
+        <div className="relative min-h-[340px] lg:min-h-[500px]"><Image src={section.primary_media?.url || "/images/HERIAfricaLaunch.jpg"} alt={section.media_alt_text || section.primary_media?.alt_text || section.heading} fill sizes="(min-width:1024px) 48vw, 100vw" className="object-cover" /></div>
+        <div className="px-5 py-14 sm:px-8 lg:px-12 lg:py-16"><SectionHeading section={section} />
+        <div className="mt-8 grid gap-6">
           {section.items.map((item, index) => (
-            <article key={item.id} className="group bg-white p-6 transition-colors hover:bg-primary hover:text-white">
-              <div className="flex items-center justify-between gap-4">
-                <InstitutionalIcon name={item.icon_key} className="h-7 w-7 text-secondary" />
-                <span className="font-[family-name:var(--font-display)] text-3xl text-primary/20 group-hover:text-white/25">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-              </div>
-              <h3 className="mt-8 font-[family-name:var(--font-display)] text-xl font-semibold text-primary group-hover:text-white">
-                {item.title}
-              </h3>
-              {item.description ? (
-                <p className="mt-3 text-sm leading-6 text-muted-foreground group-hover:text-white/70">
-                  {item.description}
-                </p>
-              ) : null}
+            <article key={item.id} className="group flex gap-4"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/20 text-primary"><InstitutionalIcon name={item.icon_key} className="h-5 w-5" /></span><div><p className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-secondary">Action {String(index + 1).padStart(2, "0")}</p><h3 className="mt-1 font-[family-name:var(--font-display)] text-lg font-semibold text-primary">{item.title}</h3>{item.description ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.description}</p> : null}</div>
             </article>
           ))}
+        </div>
         </div>
       </AboutReveal>
     </section>
@@ -337,23 +337,24 @@ function StructuredSection({
   }
 }
 
-function DocumentSummary({ page }: { page: PublicInstitutionalPage }) {
+function DocumentSummary({ page, promise }: { page: PublicInstitutionalPage; promise?: PublicInstitutionalSection }) {
   const href = documentHref(page.primary_document);
   const charter = page.page_type === "service_charter";
 
   return (
-    <section className="relative z-10 -mt-6 px-5 sm:px-8 lg:px-10">
-      <AboutReveal className="grid overflow-hidden border border-primary/10 bg-white shadow-xl md:grid-cols-[auto_1fr_auto] md:items-center">
-        <div className="flex min-h-28 items-center justify-center bg-secondary px-7 text-primary">
+    <section className="relative z-10 bg-[#fffaf0] px-5 py-6 sm:px-8 lg:px-10">
+      <AboutReveal className="grid overflow-hidden md:grid-cols-[auto_1fr_auto] md:items-center">
+        <div className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-double border-primary/50 bg-white px-7 text-primary">
           {charter ? <Check className="h-11 w-11" aria-hidden /> : <CalendarDays className="h-10 w-10" aria-hidden />}
         </div>
         <div className="px-6 py-6 lg:px-8">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">
             {charter ? "Our public promise" : "Planning horizon"}
           </p>
-          <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-primary">
-            {charter ? "Clear standards. Respectful service. Public accountability." : page.reporting_period_label || "Our current strategic direction"}
+          <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-primary">
+            {charter ? promise?.heading || "Our Promise to You" : page.reporting_period_label || "Our current strategic direction"}
           </h2>
+          {charter && (promise?.body || promise?.summary) ? <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{promise?.body || promise?.summary}</p> : null}
           {(page.effective_date || page.review_date) ? (
             <p className="mt-2 text-sm text-muted-foreground">
               {page.effective_date ? `Effective ${page.effective_date}` : ""}
@@ -364,7 +365,7 @@ function DocumentSummary({ page }: { page: PublicInstitutionalPage }) {
         </div>
         {href ? (
           <div className="px-6 pb-6 md:pb-0 md:pr-8">
-            <Link href={href} className="inline-flex min-h-12 items-center gap-2 border border-primary bg-white px-5 py-3 text-sm font-bold text-primary transition hover:bg-primary hover:text-white">
+            <Link href={href} className="inline-flex min-h-20 items-center gap-3 border border-secondary bg-white px-6 py-4 text-sm font-bold text-primary transition hover:bg-primary hover:text-white">
               <Download className="h-4 w-4" aria-hidden />
               Download document
             </Link>
@@ -419,10 +420,13 @@ function ClosingCta({ type }: { type: PageType }) {
 
 export function InstitutionalDocumentPage({ page }: { page: PublicInstitutionalPage }) {
   const hero = page.hero_media?.url || heroFallbacks[page.page_type];
+  const isCharter = page.page_type === "service_charter";
+  const promise = isCharter ? page.sections.find((section) => section.section_type === "narrative") : undefined;
+  const primaryHref = documentHref(page.primary_document);
 
   return (
     <main className="bg-white">
-      <section className="relative isolate min-h-[370px] overflow-hidden bg-primary text-white">
+      <section className="relative isolate min-h-[430px] overflow-hidden bg-primary text-white">
         <Image
           src={hero}
           alt={page.hero_alt_text || page.hero_media?.alt_text || page.title}
@@ -431,8 +435,8 @@ export function InstitutionalDocumentPage({ page }: { page: PublicInstitutionalP
           sizes="100vw"
           className="object-cover motion-safe:animate-[kenburns_28s_ease-in-out_infinite_alternate]"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,41,33,.97)_0%,rgba(0,41,33,.85)_44%,rgba(0,41,33,.22)_82%)]" />
-        <div className="relative flex min-h-[370px] flex-col justify-center px-5 py-8 sm:px-8 lg:px-10">
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,28,68,.97)_0%,rgba(4,38,83,.84)_44%,rgba(4,38,83,.18)_82%)]" />
+        <div className="relative flex min-h-[430px] flex-col justify-center px-5 py-8 sm:px-8 lg:px-10">
           <nav aria-label="Breadcrumb" className="text-xs font-semibold text-white/72">
             <Link href="/" className="hover:text-white">Home</Link>
             <span className="mx-2" aria-hidden>/</span>
@@ -446,12 +450,13 @@ export function InstitutionalDocumentPage({ page }: { page: PublicInstitutionalP
               {page.title}
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-white/80">{page.introduction}</p>
+            {!isCharter && primaryHref ? <Link href={primaryHref} className="mt-7 inline-flex min-h-12 items-center gap-2 bg-secondary px-5 py-3 text-sm font-bold uppercase text-foreground transition hover:bg-amber-400"><Download className="h-4 w-4" aria-hidden />Download the Strategic Plan</Link> : null}
           </div>
         </div>
       </section>
 
-      <DocumentSummary page={page} />
-      {page.sections.map((section) => (
+      {isCharter ? <DocumentSummary page={page} promise={promise} /> : null}
+      {page.sections.filter((section) => !(isCharter && section.id === promise?.id)).map((section) => (
         <StructuredSection key={section.id} section={section} page={page} />
       ))}
       <ClosingCta type={page.page_type} />
