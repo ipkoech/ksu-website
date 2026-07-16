@@ -1042,13 +1042,39 @@ function SocialMediaLinks({
     label: string;
     href?: string;
     icon: ComponentType<{ className?: string }>;
+    colorClassName: string;
   };
   const allItems: SocialLinkItem[] = [
-    { label: "Facebook", href: links.facebook, icon: Facebook },
-    { label: "X", href: links.twitter, icon: XSocialIcon },
-    { label: "Instagram", href: links.instagram, icon: Instagram },
-    { label: "YouTube", href: links.youtube, icon: Youtube },
-    { label: "LinkedIn", href: links.linkedin, icon: Linkedin },
+    {
+      label: "Facebook",
+      href: links.facebook,
+      icon: Facebook,
+      colorClassName: "text-[#1877F2]",
+    },
+    {
+      label: "X",
+      href: links.twitter,
+      icon: XSocialIcon,
+      colorClassName: "text-black",
+    },
+    {
+      label: "Instagram",
+      href: links.instagram,
+      icon: Instagram,
+      colorClassName: "text-[#E4405F]",
+    },
+    {
+      label: "YouTube",
+      href: links.youtube,
+      icon: Youtube,
+      colorClassName: "text-[#FF0000]",
+    },
+    {
+      label: "LinkedIn",
+      href: links.linkedin,
+      icon: Linkedin,
+      colorClassName: "text-[#0A66C2]",
+    },
   ];
   const items = allItems.filter(
     (item): item is SocialLinkItem & { href: string } => Boolean(item.href),
@@ -1062,14 +1088,17 @@ function SocialMediaLinks({
         Follow Kisii University
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
-        {items.map(({ label, href, icon: Icon }) => (
+        {items.map(({ label, href, icon: Icon, colorClassName }) => (
           <a
             key={label}
             href={href}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`Follow Kisii University on ${label}`}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-primary/15 bg-white text-primary transition hover:border-secondary hover:bg-secondary hover:text-white"
+            className={[
+              "inline-flex h-10 w-10 items-center justify-center rounded-full border border-primary/15 bg-white transition hover:border-current hover:bg-slate-50",
+              colorClassName,
+            ].join(" ")}
           >
             <Icon className="h-4 w-4" aria-hidden />
           </a>
