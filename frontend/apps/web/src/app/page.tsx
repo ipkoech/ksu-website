@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 import {
   ArrowRight,
   AlertTriangle,
@@ -7,7 +7,10 @@ import {
   Building2,
   CalendarDays,
   ClipboardCheck,
+  Facebook,
   GraduationCap,
+  Instagram,
+  Linkedin,
   Mail,
   MapPin,
   Megaphone,
@@ -16,6 +19,7 @@ import {
   ShieldCheck,
   Sparkles,
   Users,
+  Youtube,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
@@ -1034,13 +1038,21 @@ function SocialMediaLinks({
   links: HomeSocialLinks;
   className?: string;
 }) {
-  const items = [
-    ["Facebook", "FB", links.facebook],
-    ["X", "X", links.twitter],
-    ["Instagram", "IG", links.instagram],
-    ["YouTube", "YT", links.youtube],
-    ["LinkedIn", "IN", links.linkedin],
-  ].filter((item): item is [string, string, string] => Boolean(item[2]));
+  type SocialLinkItem = {
+    label: string;
+    href?: string;
+    icon: ComponentType<{ className?: string }>;
+  };
+  const allItems: SocialLinkItem[] = [
+    { label: "Facebook", href: links.facebook, icon: Facebook },
+    { label: "X", href: links.twitter, icon: XSocialIcon },
+    { label: "Instagram", href: links.instagram, icon: Instagram },
+    { label: "YouTube", href: links.youtube, icon: Youtube },
+    { label: "LinkedIn", href: links.linkedin, icon: Linkedin },
+  ];
+  const items = allItems.filter(
+    (item): item is SocialLinkItem & { href: string } => Boolean(item.href),
+  );
 
   if (!items.length) return null;
 
@@ -1050,20 +1062,33 @@ function SocialMediaLinks({
         Follow Kisii University
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
-        {items.map(([label, shortLabel, href]) => (
+        {items.map(({ label, href, icon: Icon }) => (
           <a
             key={label}
             href={href}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`Follow Kisii University on ${label}`}
-            className="inline-flex min-h-10 items-center justify-center rounded-full border border-primary/15 bg-white px-3 text-xs font-bold text-primary transition hover:border-secondary hover:bg-secondary hover:text-white"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-primary/15 bg-white text-primary transition hover:border-secondary hover:bg-secondary hover:text-white"
           >
-            {shortLabel}
+            <Icon className="h-4 w-4" aria-hidden />
           </a>
         ))}
       </div>
     </div>
+  );
+}
+
+function XSocialIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M17.53 3H21l-7.58 8.66L22.34 21h-6.99l-5.47-6.74L3.62 21H.15l8.1-9.25L-.3 3h7.16l4.95 6.18L17.53 3Zm-1.22 16.35h1.92L5.81 4.56H3.75l12.56 14.79Z" />
+    </svg>
   );
 }
 
