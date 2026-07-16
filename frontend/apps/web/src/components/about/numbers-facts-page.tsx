@@ -30,16 +30,14 @@ function FactLine({ item }: { item: PublicFactItem }) {
   );
 }
 
-function FactGroupVisual({ heading }: { heading: string }) {
-  return (
-    <div className="relative flex aspect-[16/10] items-end overflow-hidden bg-primary px-6 py-5 text-white" aria-hidden="true">
-      <div className="absolute inset-0 opacity-25 [background-image:radial-gradient(circle_at_20%_25%,white_0,white_1px,transparent_1.5px),radial-gradient(circle_at_80%_70%,white_0,white_1px,transparent_1.5px)] [background-size:28px_28px,36px_36px]" />
-      <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full border border-white/20" />
-      <div className="absolute -right-4 -top-4 h-32 w-32 rounded-full border border-secondary/50" />
-      <p className="relative max-w-xs font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight">{heading}</p>
-    </div>
-  );
-}
+const factImageFallbacks: Record<string, string> = {
+  "institutional-profile": "/images/backgrounds/about-hero.jpg",
+  "academic-organisation": "/images/backgrounds/KSUB-RollPhotos2025-123.jpg",
+  "student-community": "/images/Home/OurKSU-82.jpg",
+  "access-and-growth": "/images/about/about-overview.webp",
+  "graduate-impact": "/images/about/about-mission-vision.webp",
+  "research-and-knowledge": "/images/HERIAfricaLaunch.jpg",
+};
 
 export function NumbersFactsPage({ data }: { data: PublicFactsData }) {
   const edition = data.edition;
@@ -102,17 +100,16 @@ export function NumbersFactsPage({ data }: { data: PublicFactsData }) {
           {data.groups.map((group) => (
             <AboutReveal key={group.id} className="[content-visibility:auto] [contain-intrinsic-size:auto_34rem]">
               <article>
-              {group.image?.url ? (
-                <div className="relative aspect-[16/10] overflow-hidden bg-surface-muted">
-                  <Image
-                    src={group.image.url}
-                    alt={group.image.alt_text || group.image.alt || group.image_alt_text || group.heading}
-                    fill
-                    sizes="(min-width: 1280px) 32vw, (min-width: 768px) 50vw, 100vw"
-                    className="object-cover transition duration-700 motion-safe:hover:scale-[1.025] motion-reduce:transition-none"
-                  />
-                </div>
-              ) : <FactGroupVisual heading={group.heading} />}
+              <div className="relative aspect-[16/10] overflow-hidden bg-surface-muted">
+                <Image
+                  src={group.image?.url || factImageFallbacks[group.slug] || "/images/backgrounds/about-hero.jpg"}
+                  alt={group.image?.alt_text || group.image?.alt || group.image_alt_text || `${group.heading} at Kisii University`}
+                  fill
+                  sizes="(min-width: 1280px) 32vw, (min-width: 768px) 50vw, 100vw"
+                  className="object-cover transition duration-700 motion-safe:hover:scale-[1.025] motion-reduce:transition-none"
+                />
+                <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-primary/35 to-transparent" aria-hidden />
+              </div>
               <h2 className="mt-5 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-primary">
                 {group.heading}
               </h2>

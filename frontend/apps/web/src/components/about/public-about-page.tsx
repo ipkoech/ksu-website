@@ -29,8 +29,8 @@ import { ImageComparison } from "./image-comparison";
 import { AboutReveal } from "./about-reveal";
 import { InstitutionalIcon } from "./institutional-icon";
 
-const heroFallback = "/images/backgrounds/KSUGreenLandscapingMay2026-3885.jpg";
-const identityFallback = "/images/backgrounds/KSUGreenLandscapingMay2026-7456.jpg";
+const heroFallback = "/images/backgrounds/about-hero.jpg";
+const identityFallback = "/images/about/about-overview.webp";
 
 function paragraphs(value?: string | null) {
   return (value ?? "").split(/\n\s*\n/).map((item) => item.trim()).filter(Boolean);
@@ -313,21 +313,24 @@ export function PublicAboutPage({ data, historyInitiallyOpen = false }: { data: 
         </div>
       </AboutReveal>
 
-      <section className="border-y border-primary/10 bg-white px-5 py-10 sm:px-8 lg:px-10">
+      <section className="border-y border-primary/10 bg-[#f8f6f0] px-5 py-12 sm:px-8 lg:px-10 lg:py-16">
         <AboutReveal className="mx-auto w-full">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Our beliefs</p>
-          <div className="mt-7 grid gap-5 md:grid-cols-3">
+          <div className="mt-8 grid gap-8 md:grid-cols-3 md:gap-0">
             {[{ title: "Our Mission", body: university.mission, icon: Target }, { title: "Our Vision", body: university.vision, icon: Eye }, { title: "Our Philosophy", body: university.philosophy, icon: Sparkles }].map(({ title, body, icon: Icon }) => (
-              <article key={title} className="rounded-xl border border-primary/10 bg-surface p-5 transition hover:-translate-y-1 hover:shadow-lg motion-reduce:transform-none"><span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-secondary"><Icon className="h-5 w-5" aria-hidden /></span><h3 className="mt-4 font-[family-name:var(--font-display)] text-xl font-semibold text-primary">{title}</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">{body || "This institutional statement will appear when published."}</p></article>
+              <article key={title} className="group border-primary/15 py-2 transition hover:-translate-y-1 motion-reduce:transform-none md:border-l md:px-8 md:first:border-l-0 md:first:pl-0"><span className="flex h-12 w-12 items-center justify-center rounded-full border border-primary/20 text-primary transition group-hover:border-secondary group-hover:bg-primary group-hover:text-secondary"><Icon className="h-5 w-5" aria-hidden /></span><h3 className="mt-5 font-[family-name:var(--font-display)] text-2xl font-semibold text-primary">{title}</h3><p className="mt-3 max-w-sm text-sm leading-7 text-muted-foreground">{body || "This institutional statement will appear when published."}</p></article>
             ))}
           </div>
         </AboutReveal>
       </section>
 
-      <AboutReveal className="mx-auto grid w-full gap-8 px-5 py-10 sm:px-8 lg:grid-cols-2 lg:px-10">
-        <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">{coreValuesSection?.eyebrow || "Core values"}</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-primary">{coreValuesSection?.heading || "What guides how we work"}</h2><div className="mt-7 grid gap-5 sm:grid-cols-2">{displayedValues.filter((item) => Boolean(coreValuesSection) || !coreValues.length || coreValues.some((value) => value.toLowerCase().includes(item.title.toLowerCase()))).map((item) => <article key={item.title} className="flex gap-4"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/20 text-primary"><InstitutionalIcon name={item.icon_key} className="h-5 w-5" /></span><div><h3 className="font-bold text-foreground">{item.title}</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{item.description}</p></div></article>)}</div></div>
-        <div className="border-t border-primary/15 pt-10 lg:border-l lg:border-t-0 lg:pl-12 lg:pt-0"><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">{mandateSection?.eyebrow || "Our mandate"}</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-primary">{mandateSection?.heading || "Knowledge in service of society"}</h2><p className="mt-4 text-sm leading-7 text-muted-foreground">{mandateSection?.summary || content?.mandate_introduction}</p><div className="mt-7 grid gap-5 sm:grid-cols-2">{displayedMandate.map((item) => <article key={item.title} className="flex gap-4"><InstitutionalIcon name={item.icon_key} className="mt-1 h-5 w-5 shrink-0 text-primary" /><div><h3 className="font-bold text-foreground">{item.title}</h3><p className="mt-1 text-sm leading-6 text-muted-foreground">{item.description}</p></div></article>)}</div></div>
-      </AboutReveal>
+      <section className="relative overflow-hidden bg-primary px-5 py-14 text-white sm:px-8 lg:px-10 lg:py-20">
+        <div className="absolute -left-20 top-0 h-full w-80 opacity-[0.06] [background-image:radial-gradient(circle_at_center,white_0,white_1px,transparent_1.5px)] [background-size:18px_18px]" aria-hidden />
+        <AboutReveal className="relative mx-auto grid w-full gap-12 lg:grid-cols-2">
+          <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">{coreValuesSection?.eyebrow || "Core values"}</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-white">{coreValuesSection?.heading || "What guides how we work"}</h2><div className="mt-8 grid gap-6 sm:grid-cols-2">{displayedValues.filter((item) => Boolean(coreValuesSection) || !coreValues.length || coreValues.some((value) => value.toLowerCase().includes(item.title.toLowerCase()))).map((item) => <article key={item.title} className="group flex gap-4"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/30 text-secondary transition group-hover:border-secondary group-hover:bg-white/10"><InstitutionalIcon name={item.icon_key} className="h-5 w-5" /></span><div><h3 className="font-bold text-white">{item.title}</h3><p className="mt-2 text-sm leading-6 text-white/70">{item.description}</p></div></article>)}</div></div>
+          <div className="border-t border-white/20 pt-10 lg:border-l lg:border-t-0 lg:pl-12 lg:pt-0"><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">{mandateSection?.eyebrow || "Our mandate"}</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-white">{mandateSection?.heading || "Knowledge in service of society"}</h2><p className="mt-4 text-sm leading-7 text-white/70">{mandateSection?.summary || content?.mandate_introduction}</p><div className="mt-8 grid gap-6 sm:grid-cols-2">{displayedMandate.map((item) => <article key={item.title} className="flex gap-4"><InstitutionalIcon name={item.icon_key} className="mt-1 h-5 w-5 shrink-0 text-secondary" /><div><h3 className="font-bold text-white">{item.title}</h3><p className="mt-1 text-sm leading-6 text-white/70">{item.description}</p></div></article>)}</div></div>
+        </AboutReveal>
+      </section>
 
       {governanceSection ? <section className="border-y border-primary/10 bg-[#f6f4ef] px-5 py-12 sm:px-8 lg:px-10"><AboutReveal className="mx-auto"><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">{governanceSection.eyebrow}</p><div className="mt-3 grid gap-8 lg:grid-cols-[.75fr_1.25fr]"><div><h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold text-primary">{governanceSection.heading}</h2><p className="mt-4 text-sm leading-7 text-muted-foreground">{governanceSection.summary}</p></div><div className="grid gap-4 sm:grid-cols-2">{governanceSection.items.map((item) => <Link key={item.id} href={item.link_url || "/about"} className="group border border-primary/15 bg-white p-5"><InstitutionalIcon name={item.icon_key} className="h-7 w-7 text-primary" /><h3 className="mt-5 font-[family-name:var(--font-display)] text-xl font-semibold text-primary">{item.title}</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{item.description}</p><span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-primary">{item.link_label}<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 motion-reduce:transition-none" aria-hidden /></span></Link>)}</div></div></AboutReveal></section> : null}
 
