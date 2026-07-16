@@ -112,10 +112,14 @@ test("campus life renders as a full-width editorial mosaic", () => {
   assert.match(variantsSource, /displayItems\(section\)/);
 });
 
-test("partners render after research as an infinite logo rail", () => {
-  assert.match(rendererSource, /layout_variant === "research_cards"/);
-  assert.match(rendererSource, /layout_variant === "logo_carousel"/);
-  assert.match(rendererSource, /nextResearchIndex \+ 1/);
+test("homepage journey places partners after research", () => {
+  assert.match(rendererSource, /hero_admissions: 10/);
+  assert.match(rendererSource, /featured_partnership: 30/);
+  assert.match(rendererSource, /leadership_activity: 60/);
+  assert.match(rendererSource, /research_cards: 70/);
+  assert.match(rendererSource, /logo_carousel: 80/);
+  assert.match(rendererSource, /media_mosaic: 90/);
+  assert.match(rendererSource, /news_grid: 100/);
   assert.match(variantsSource, /homepage-partner-rail/);
   assert.match(variantsSource, /homepage-partner-rail_42s_linear_infinite/);
   assert.match(variantsSource, /prefers-reduced-motion: reduce/);

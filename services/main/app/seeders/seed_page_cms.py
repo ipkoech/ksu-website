@@ -119,7 +119,7 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
     {
         "section_key": "why-kisii",
         "layout_variant": "pillar_grid",
-        "display_order": 30,
+        "display_order": 40,
         "title": "Why Kisii University?",
         "subtitle": "Discover your place at Kisii University",
         "description": "Kisii University brings together public-service education, applied research and inclusive student support for learners and communities in Kenya and beyond.",
@@ -134,7 +134,7 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
     {
         "section_key": "featured-partnership",
         "layout_variant": "featured_partnership",
-        "display_order": 40,
+        "display_order": 30,
         "title": "Kisii University & Heri Africa — Building Africa Together.",
         "subtitle": "Strategic partnership",
         "description": "Partnering to advance innovation, entrepreneurship, digital transformation and community impact across Africa.",
@@ -183,7 +183,7 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
     {
         "section_key": "academic-dates",
         "layout_variant": "date_timeline",
-        "display_order": 60,
+        "display_order": 55,
         "title": "Key dates",
         "subtitle": "Admissions and reporting",
         "description": "Confirm official dates before completing an application or reporting to campus.",
@@ -198,7 +198,7 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
     {
         "section_key": "campus-life",
         "layout_variant": "media_mosaic",
-        "display_order": 70,
+        "display_order": 90,
         "title": "Experience More. Become More.",
         "subtitle": "Campus life",
         "description": "From sport to innovation, clubs and culture, campus life creates room to grow.",
@@ -215,7 +215,7 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
     {
         "section_key": "leadership-activity",
         "layout_variant": "leadership_activity",
-        "display_order": 80,
+        "display_order": 60,
         "title": "Leadership in action",
         "subtitle": "Vice Chancellor",
         "description": "Our leadership advances knowledge, nurtures talent and transforms communities.",
@@ -230,7 +230,7 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
     {
         "section_key": "research-impact",
         "layout_variant": "research_cards",
-        "display_order": 90,
+        "display_order": 70,
         "title": "Transforming Communities Through Research",
         "subtitle": "Research and innovation",
         "description": "Our research addresses real-world challenges and creates sustainable solutions for society.",
@@ -278,7 +278,7 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
     {
         "section_key": "partners",
         "layout_variant": "logo_carousel",
-        "display_order": 95,
+        "display_order": 80,
         "title": "A network advancing learning, research and community impact.",
         "subtitle": "Our partners",
         "description": "Kisii University works with academic, industry, government and development partners to expand opportunity and translate knowledge into public value.",
@@ -303,7 +303,7 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
     {
         "section_key": "facts",
         "layout_variant": "facts_strip",
-        "display_order": 140,
+        "display_order": 45,
         "title": "Kisii University at a glance",
         "subtitle": "Key institutional facts for the public homepage.",
         "description": "A concise facts strip for first-time visitors.",

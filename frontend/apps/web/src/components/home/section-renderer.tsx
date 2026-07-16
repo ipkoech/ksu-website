@@ -175,41 +175,44 @@ export function HomepageSections({
 }
 
 function orderHomepageSections(sections: HomepageSection[]) {
-  const nextSections = [...sections];
-  const pulseIndex = nextSections.findIndex(
-    (section) => section.layout_variant === "pulse_strip",
-  );
-  const partnershipIndex = nextSections.findIndex(
-    (section) => section.layout_variant === "featured_partnership",
-  );
+  const priority: Record<HomepageSectionLayoutVariant, number> = {
+    hero_admissions: 10,
+    pulse_strip: 20,
+    featured_partnership: 30,
+    pillar_grid: 40,
+    facts_strip: 41,
+    programme_finder: 50,
+    date_timeline: 51,
+    leadership_activity: 60,
+    research_cards: 70,
+    logo_carousel: 80,
+    media_mosaic: 90,
+    news_grid: 100,
+    events_list: 101,
+    alumni_story: 110,
+  };
 
-  if (
-    pulseIndex >= 0 &&
-    partnershipIndex >= 0 &&
-    partnershipIndex !== pulseIndex + 1
-  ) {
-    const [partnership] = nextSections.splice(partnershipIndex, 1);
-    const nextPulseIndex = nextSections.findIndex(
-      (section) => section.layout_variant === "pulse_strip",
-    );
-    nextSections.splice(nextPulseIndex + 1, 0, partnership);
-  }
-
-  const researchIndex = nextSections.findIndex(
-    (section) => section.layout_variant === "research_cards",
-  );
-  const logoIndex = nextSections.findIndex(
-    (section) => section.layout_variant === "logo_carousel",
-  );
-  if (researchIndex >= 0 && logoIndex >= 0 && logoIndex !== researchIndex + 1) {
-    const [logoSection] = nextSections.splice(logoIndex, 1);
-    const nextResearchIndex = nextSections.findIndex(
-      (section) => section.layout_variant === "research_cards",
-    );
-    nextSections.splice(nextResearchIndex + 1, 0, logoSection);
-  }
-
-  return nextSections;
+  return sections
+    .map((section, index) => ({ section, index }))
+    .sort((first, second) => {
+      const firstPriority = isKnownHomepageLayoutVariant(
+        first.section.layout_variant,
+      )
+        ? priority[first.section.layout_variant]
+        : 1_000;
+      const secondPriority = isKnownHomepageLayoutVariant(
+        second.section.layout_variant,
+      )
+        ? priority[second.section.layout_variant]
+        : 1_000;
+      return (
+        firstPriority - secondPriority ||
+        (first.section.display_order ?? 1_000) -
+          (second.section.display_order ?? 1_000) ||
+        first.index - second.index
+      );
+    })
+    .map(({ section }) => section);
 }
 
 export const SUPPORTED_HOMEPAGE_SECTION_VARIANTS =
