@@ -140,6 +140,9 @@ export function HomepageSections({
   return (
     <>
       {orderedSections.map((section) => {
+        if (section.layout_variant === "alumni_story") {
+          return null;
+        }
         if (hasMergedWhySection && section.layout_variant === "facts_strip") {
           return null;
         }
