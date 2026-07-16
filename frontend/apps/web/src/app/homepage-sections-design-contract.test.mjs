@@ -20,7 +20,18 @@ const rendererSource = readFileSync(
   new URL("../components/home/section-renderer.tsx", import.meta.url),
   "utf8",
 );
-const homepageSource = `${variantsSource}\n${campusLifeScrollerSource}\n${rendererSource}`;
+const programmeFinderSource = readFileSync(
+  new URL(
+    "../components/home/programme-finder-interactive.tsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const globalsSource = readFileSync(
+  new URL("./globals.css", import.meta.url),
+  "utf8",
+);
+const homepageSource = `${variantsSource}\n${campusLifeScrollerSource}\n${rendererSource}\n${programmeFinderSource}\n${globalsSource}`;
 
 test("composed homepage cards consume item-level imagery and metadata", () => {
   assert.match(variantsSource, /function itemImageUrl/);
@@ -31,10 +42,12 @@ test("composed homepage cards consume item-level imagery and metadata", () => {
 });
 
 test("programme finder separates pathways from the five-step joining journey", () => {
-  assert.match(variantsSource, /const categories = .*"category"/s);
   assert.match(variantsSource, /const journey = .*"journey"/s);
   assert.match(variantsSource, /journey\.slice\(0, 5\)/);
-  assert.match(variantsSource, /Search programmes/);
+  assert.match(variantsSource, /What will you become\?/);
+  assert.match(programmeFinderSource, /\.slice\(0, 5\)/);
+  assert.match(programmeFinderSource, /Programme directory/);
+  assert.doesNotMatch(programmeFinderSource, /categories\.slice/);
 });
 
 test("programme finder receives dynamic academic data and admissions dates", () => {
@@ -50,20 +63,17 @@ test("programme finder uses two desktop sticky scroll chapters", () => {
   assert.match(variantsSource, /programme-scroll-scene/);
   assert.match(variantsSource, /programme-panel/);
   assert.match(variantsSource, /lg:sticky/);
-  assert.match(variantsSource, /lg:top-\[calc\(var\(--public-header-offset/);
-  assert.match(variantsSource, /lg:min-h-\[190vh\]/);
+  assert.match(variantsSource, /lg:top-\[var\(--public-header-offset/);
+  assert.doesNotMatch(variantsSource, /programme-scroll-scene[^\n]*min-h/);
   assert.match(
     variantsSource,
     /lg:min-h-\[calc\(100svh-var\(--public-header-offset/,
   );
-  assert.match(variantsSource, /lg:w-screen/);
-  assert.match(variantsSource, /lg:ml-\[calc\(50%-50vw\)\]/);
-  assert.doesNotMatch(
-    variantsSource,
-    /programme-journey"[\s\S]*?lg:top-\[calc\(var\(--public-header-offset,96px\)\+5\.5rem\)/,
-  );
+  assert.match(variantsSource, /programme-admissions-takeover/);
+  assert.match(globalsSource, /margin-top: -2rem/);
+  assert.match(globalsSource, /programme-admissions-rise/);
+  assert.match(globalsSource, /prefers-reduced-motion: reduce/);
   assert.doesNotMatch(variantsSource, /id="programme-dates"/);
-  assert.match(variantsSource, /How to join & key dates/);
   assert.match(variantsSource, /AdmissionDateLine/);
 });
 

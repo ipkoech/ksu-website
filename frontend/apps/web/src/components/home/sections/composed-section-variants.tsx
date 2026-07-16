@@ -638,9 +638,6 @@ export function ProgrammeFinderSection({
   academicDatesSection,
   programmeFinderData,
 }: SectionVariantProps) {
-  const categories = displayItems(section).filter(
-    (item) => itemContentText(item, "group") === "category",
-  );
   const journey = displayItems(section).filter(
     (item) => itemContentText(item, "group") === "journey",
   );
@@ -650,90 +647,67 @@ export function ProgrammeFinderSection({
   const intakes = programmeFinderData?.intakes ?? [];
   const programmes = programmeFinderData?.programmes ?? [];
   const schools = programmeFinderData?.schools ?? [];
-  const categoryLinks = categories.map((item) => ({
-    id: item.id,
-    title: item.title,
-    href: item.cta_url ?? "/academics/programmes",
-  }));
   const hasAdmissionDates = dateItems.length > 0 || intakes.length > 0;
 
   return (
     <section
       id={section.section_key}
-      className="relative isolate border-b border-border bg-accent/40 py-12 lg:py-16"
+      className="relative isolate overflow-clip border-b border-border bg-primary"
     >
-      <PublicImage
-        src="/images/Home/KSUGreenLandscaping.jpg"
-        alt=""
-        ratio="fill"
-        className="absolute inset-0 -z-20 h-full w-full opacity-10"
-        imageClassName="object-cover"
-        sizes="100vw"
-      />
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(255,255,255,.94),rgba(239,246,255,.88)_48%,rgba(255,255,255,.96))]" />
-      <div className="programme-scroll-scene mx-auto max-w-[1680px] px-4 sm:px-6 lg:min-h-[190vh] lg:px-8 xl:px-10 2xl:px-12">
-        <nav
-          aria-label="Programme finder steps"
-          className="mb-6 flex gap-2 overflow-x-auto scroll-smooth lg:sticky lg:top-[calc(var(--public-header-offset,96px)+1rem)] lg:z-40"
-        >
-          {[
-            ["Find programme", "#programme-search"],
-            [
-              hasAdmissionDates ? "How to join & key dates" : "How to join",
-              "#programme-journey",
-            ],
-          ].map(([label, href]) => (
-            <a
-              key={href}
-              href={href}
-              className="inline-flex min-h-9 shrink-0 items-center rounded-full border border-border bg-white/85 px-3 text-xs font-bold text-primary shadow-sm transition hover:border-primary/25 hover:bg-white"
-            >
-              {label}
-            </a>
-          ))}
-        </nav>
-
+      <div className="programme-scroll-scene relative">
         <div
           id="programme-search"
-          className="programme-panel scroll-mt-28 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 lg:sticky lg:top-[calc(var(--public-header-offset,96px)+4.5rem)] lg:z-10 lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px)-4.5rem)] lg:w-screen lg:ml-[calc(50%-50vw)] lg:items-center lg:bg-white lg:px-8 lg:py-10 xl:px-10 2xl:px-12"
+          className="programme-panel programme-search-canvas relative z-10 scroll-mt-28 bg-primary text-white lg:sticky lg:top-[var(--public-header-offset,96px)] lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px))] lg:items-center"
         >
-          <div className="mx-auto grid w-full max-w-[1680px] overflow-hidden bg-white shadow-xl shadow-primary/10 transition duration-500 lg:grid-cols-[0.42fr_0.58fr] lg:shadow-2xl lg:shadow-primary/12">
-            <PublicImage
-              src="/images/Home/OurKSU-82.jpg"
-              alt="Kisii University students in an academic setting"
-              ratio="news"
-              className="hidden min-h-[440px] rounded-none lg:block"
-              imageClassName="object-cover"
-            />
-            <div className="flex flex-col justify-center p-5 sm:p-7 lg:p-8">
-              <SectionEyebrow value={section.subtitle} />
-              <h2 className="mt-2 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-                {section.title ?? "Find a programme"}
+          <PublicImage
+            src="/images/Home/OurKSU-82.jpg"
+            alt="Kisii University students exploring their academic future"
+            ratio="fill"
+            className="absolute inset-0 h-full w-full rounded-none"
+            imageClassName="object-cover object-center opacity-45 lg:object-left"
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,29,78,.9),rgba(5,62,156,.88)_47%,rgba(4,42,106,.96))]" />
+          <div className="programme-orbit programme-orbit-one" aria-hidden />
+          <div className="programme-orbit programme-orbit-two" aria-hidden />
+          <div className="programme-orbit programme-orbit-three" aria-hidden />
+
+          <div className="relative mx-auto grid w-full max-w-[1680px] gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(250px,0.34fr)_minmax(0,0.66fr)] lg:items-center lg:px-8 lg:py-6 xl:px-10 2xl:px-12">
+            <div className="max-w-lg lg:pr-6">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">
+                {section.subtitle ?? "Programmes and academic pathways"}
+              </p>
+              <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.04] text-white sm:text-5xl lg:text-6xl">
+                What will you become?
               </h2>
-              <SectionBody
-                value={
-                  section.description ??
-                  "Search programmes, compare schools and choose the route that fits your goals."
-                }
-                className="mt-3 max-w-2xl"
-              />
-              <div className="mt-7">
-                <ProgrammeFinderInteractive
-                  programmes={programmes}
-                  schools={schools}
-                  categories={categoryLinks}
-                />
+              <p className="mt-5 max-w-md text-base leading-7 text-white/75">
+                {section.description ??
+                  "Search programmes built around your interests, ambitions and future."}
+              </p>
+              <div className="mt-8 hidden items-center gap-3 text-xs font-bold uppercase tracking-[0.16em] text-white/65 lg:flex">
+                <span className="h-px w-14 bg-secondary" />
+                Search. Discover. Apply.
               </div>
+            </div>
+
+            <div className="programme-search-surface border-l border-white/20 lg:pl-8 xl:pl-10">
+              <p className="mb-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-white sm:text-3xl">
+                Find the programme that fits your ambition.
+              </p>
+              <ProgrammeFinderInteractive
+                programmes={programmes}
+                schools={schools}
+              />
             </div>
           </div>
         </div>
 
         <div
           id="programme-journey"
-          className="programme-panel relative z-20 mt-6 scroll-mt-28 lg:sticky lg:top-[calc(var(--public-header-offset,96px)+4.5rem)] lg:mt-0 lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px)-4.5rem)] lg:w-screen lg:ml-[calc(50%-50vw)] lg:items-center lg:bg-accent lg:px-8 lg:py-10 xl:px-10 2xl:px-12 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 motion-safe:delay-150"
+          className="programme-panel programme-admissions-takeover relative z-20 scroll-mt-28 bg-accent lg:sticky lg:top-[var(--public-header-offset,96px)] lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px))] lg:items-center lg:px-8 xl:px-10 2xl:px-12"
         >
           <div
-            className={`mx-auto grid w-full max-w-[1680px] overflow-hidden bg-white shadow-xl shadow-primary/10 transition duration-500 lg:shadow-2xl lg:shadow-primary/14 ${
+            className={`programme-admissions-surface mx-auto grid w-full max-w-[1680px] overflow-hidden bg-white lg:min-h-[calc(100svh-var(--public-header-offset,96px))] ${
               hasAdmissionDates
                 ? "lg:grid-cols-[minmax(0,1.65fr)_minmax(340px,0.85fr)]"
                 : ""

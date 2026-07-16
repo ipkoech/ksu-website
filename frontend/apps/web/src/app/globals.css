@@ -27,3 +27,142 @@
     min-height: 0;
   }
 }
+
+/* Homepage programme discovery: one continuous search-to-admissions canvas. */
+.programme-orbit {
+  pointer-events: none;
+  position: absolute;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 9999px;
+  opacity: 0.72;
+}
+
+.programme-orbit::after {
+  position: absolute;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 9999px;
+  background: hsl(var(--secondary));
+  box-shadow: 0 0 1.5rem rgb(234 88 12 / 0.7);
+  content: "";
+}
+
+.programme-orbit-one {
+  top: 8%;
+  right: 4%;
+  width: 28rem;
+  height: 28rem;
+  animation: programme-orbit-drift 18s ease-in-out infinite alternate;
+}
+
+.programme-orbit-one::after {
+  top: 18%;
+  left: 4%;
+}
+
+.programme-orbit-two {
+  right: 24%;
+  bottom: -12rem;
+  width: 34rem;
+  height: 34rem;
+  animation: programme-orbit-drift 24s ease-in-out -7s infinite
+    alternate-reverse;
+}
+
+.programme-orbit-two::after {
+  top: 8%;
+  right: 19%;
+}
+
+.programme-orbit-three {
+  top: 30%;
+  left: -8rem;
+  width: 19rem;
+  height: 19rem;
+  animation: programme-orbit-drift 21s ease-in-out -12s infinite alternate;
+}
+
+.programme-orbit-three::after {
+  right: 7%;
+  bottom: 23%;
+}
+
+.programme-result {
+  animation: programme-result-enter 320ms ease-out both;
+}
+
+@keyframes programme-orbit-drift {
+  from {
+    transform: translate3d(-0.75rem, 0.4rem, 0) rotate(-2deg);
+  }
+  to {
+    transform: translate3d(1.25rem, -0.75rem, 0) rotate(3deg);
+  }
+}
+
+@keyframes programme-result-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 1024px) {
+  .programme-admissions-takeover {
+    margin-top: -2rem;
+  }
+
+  .programme-admissions-surface {
+    border-radius: 1.5rem 1.5rem 0 0;
+    box-shadow: 0 -1.5rem 4rem rgb(3 29 78 / 0.24);
+  }
+
+  @supports (animation-timeline: view()) {
+    .programme-search-surface {
+      animation: programme-search-release ease-in both;
+      animation-timeline: view();
+      animation-range: exit 0% exit 38%;
+    }
+
+    .programme-admissions-surface {
+      animation: programme-admissions-rise ease-out both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 45%;
+    }
+  }
+}
+
+@keyframes programme-search-release {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0.28;
+    transform: translateY(-1rem);
+  }
+}
+
+@keyframes programme-admissions-rise {
+  from {
+    opacity: 0.6;
+    transform: translateY(4rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .programme-orbit,
+  .programme-result,
+  .programme-search-surface,
+  .programme-admissions-surface {
+    animation: none !important;
+  }
+}

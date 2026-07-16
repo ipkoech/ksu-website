@@ -2,17 +2,12 @@
 
 import Link from "next/link";
 import { useDeferredValue, useMemo, useState } from "react";
-import { ArrowRight, GraduationCap, Search } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import type { HomeProgrammeCard, HomeSchoolCard } from "@/lib/homepage-data";
 
 type ProgrammeFinderInteractiveProps = {
   programmes: HomeProgrammeCard[];
   schools: HomeSchoolCard[];
-  categories: Array<{
-    id: string;
-    title?: string | null;
-    href?: string | null;
-  }>;
 };
 
 const allValue = "all";
@@ -20,7 +15,6 @@ const allValue = "all";
 export function ProgrammeFinderInteractive({
   programmes,
   schools,
-  categories,
 }: ProgrammeFinderInteractiveProps) {
   const [query, setQuery] = useState("");
   const [schoolId, setSchoolId] = useState(allValue);
@@ -41,66 +35,62 @@ export function ProgrammeFinderInteractive({
       ),
     [programmes],
   );
-  const filtered = useMemo(() => {
+  const matchingProgrammes = useMemo(() => {
     const normalizedQuery = deferredQuery.trim().toLowerCase();
-    return programmes
-      .filter((programme) => {
-        const matchesQuery =
-          !normalizedQuery ||
-          [
-            programme.title,
-            programme.body,
-            programme.schoolName,
-            programme.meta,
-          ]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase()
-            .includes(normalizedQuery);
-        const matchesSchool =
-          schoolId === allValue || programme.schoolId === schoolId;
-        const matchesLevel = level === allValue || programme.meta === level;
-        const matchesMode =
-          mode === allValue ||
-          programme.body.toLowerCase().includes(mode.toLowerCase());
-        return matchesQuery && matchesSchool && matchesLevel && matchesMode;
-      })
-      .slice(0, 3);
+    return programmes.filter((programme) => {
+      const matchesQuery =
+        !normalizedQuery ||
+        [programme.title, programme.body, programme.schoolName, programme.meta]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(normalizedQuery);
+      const matchesSchool =
+        schoolId === allValue || programme.schoolId === schoolId;
+      const matchesLevel = level === allValue || programme.meta === level;
+      const matchesMode =
+        mode === allValue ||
+        programme.body.toLowerCase().includes(mode.toLowerCase());
+      return matchesQuery && matchesSchool && matchesLevel && matchesMode;
+    });
   }, [deferredQuery, level, mode, programmes, schoolId]);
 
   const actionHref = programmeSearchHref({ query, schoolId, level, mode });
+  const resultSetKey = [deferredQuery, schoolId, level, mode].join(":");
   const hasActiveFilters =
     query.trim() ||
     schoolId !== allValue ||
     level !== allValue ||
     mode !== allValue;
-  const previewItems = hasActiveFilters ? filtered : programmes.slice(0, 3);
+  const previewItems = (
+    hasActiveFilters ? matchingProgrammes : programmes
+  ).slice(0, 5);
 
   return (
-    <div className="relative z-10">
+    <div className="relative z-10 text-white">
       <form
         action="/academics/programmes"
-        className="overflow-hidden border border-border bg-white shadow-lg shadow-primary/10"
+        className="border-y border-white/25 bg-white/[0.06] backdrop-blur-md"
       >
-        <div className="flex min-h-14 items-center gap-3 border-b border-border px-4">
-          <Search className="h-5 w-5 text-primary" aria-hidden />
+        <div className="flex min-h-16 items-center gap-3 border-b border-white/20 px-4 sm:px-5">
+          <Search className="h-6 w-6 text-secondary" aria-hidden />
           <input
             name="q"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search by programme, school, or keyword"
-            className="min-w-0 flex-1 bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/70"
+            className="min-w-0 flex-1 bg-transparent text-base font-medium text-white outline-none placeholder:text-white/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-secondary sm:text-lg"
             autoComplete="off"
           />
           <button
             type="submit"
-            className="hidden min-h-10 items-center justify-center bg-primary px-4 text-xs font-bold text-white transition hover:bg-primary/90 sm:inline-flex"
+            className="hidden min-h-10 items-center justify-center bg-secondary px-5 text-xs font-bold text-white transition hover:bg-secondary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:inline-flex"
           >
             Search
           </button>
         </div>
 
-        <div className="grid gap-3 p-4 md:grid-cols-3">
+        <div className="grid gap-4 px-4 py-4 sm:px-5 md:grid-cols-3">
           <FilterSelect
             label="School"
             name="school_id"
@@ -128,47 +118,50 @@ export function ProgrammeFinderInteractive({
         </div>
       </form>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        {categories.slice(0, 5).map((category) => (
-          <Link
-            key={category.id}
-            href={category.href ?? "/academics/programmes"}
-            className="inline-flex min-h-9 items-center rounded-full border border-border bg-white px-3 text-xs font-semibold text-primary transition hover:border-primary/25 hover:bg-accent"
-          >
-            {category.title}
-          </Link>
-        ))}
+      <div className="mt-6 flex items-end justify-between gap-4 border-b border-white/25 pb-3">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-secondary">
+            Programme directory
+          </p>
+          <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold text-white">
+            {hasActiveFilters ? "Your matches" : "Explore programmes"}
+          </h3>
+        </div>
+        <p aria-live="polite" className="shrink-0 text-sm text-white/70">
+          <strong className="text-xl text-white">
+            {matchingProgrammes.length}
+          </strong>{" "}
+          {matchingProgrammes.length === 1 ? "programme" : "programmes"}
+        </p>
       </div>
 
-      <div
-        aria-live="polite"
-        className="mt-5 grid gap-2 transition-all duration-300"
-      >
+      <div aria-live="polite" className="divide-y divide-white/20">
         {previewItems.length ? (
-          previewItems.map((programme) => (
+          previewItems.map((programme, index) => (
             <Link
-              key={programme.id ?? programme.href}
+              key={`${resultSetKey}-${programme.id ?? programme.href}`}
               href={programme.href}
-              className="group flex items-center gap-3 border border-border bg-white/92 p-3 transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-sm"
+              className="programme-result group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-3.5 transition duration-300 hover:bg-white/[0.07] focus-visible:bg-white/[0.1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary sm:gap-4 sm:px-2"
+              style={{ transitionDelay: `${index * 35}ms` }}
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-primary">
-                <GraduationCap className="h-5 w-5" aria-hidden />
+              <span className="font-[family-name:var(--font-display)] text-sm font-semibold text-secondary">
+                {String(index + 1).padStart(2, "0")}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="line-clamp-1 block text-sm font-semibold text-foreground">
+                <span className="line-clamp-1 block font-[family-name:var(--font-display)] text-base font-semibold text-white transition group-hover:text-secondary">
                   {programme.title}
                 </span>
-                <span className="mt-1 line-clamp-1 block text-xs text-muted-foreground">
+                <span className="mt-1 line-clamp-1 block text-xs text-white/65">
                   {[programme.schoolName, programme.body]
                     .filter(Boolean)
                     .join(" · ")}
                 </span>
               </span>
-              <ArrowRight className="h-4 w-4 text-primary opacity-0 transition group-hover:translate-x-1 group-hover:opacity-100" />
+              <ArrowRight className="h-4 w-4 text-secondary transition group-hover:translate-x-1" />
             </Link>
           ))
         ) : (
-          <div className="border border-dashed border-border bg-white/70 p-4 text-sm leading-6 text-muted-foreground">
+          <div className="border-b border-white/20 py-5 text-sm leading-6 text-white/70">
             No quick matches in the homepage preview. Open full programme search
             to see all records and filters.
           </div>
@@ -177,7 +170,7 @@ export function ProgrammeFinderInteractive({
 
       <Link
         href={actionHref}
-        className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90"
+        className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 border-b border-secondary pb-1 text-sm font-bold text-white transition hover:text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-secondary"
       >
         View matching programmes
         <ArrowRight className="h-4 w-4" aria-hidden />
@@ -201,14 +194,14 @@ function FilterSelect({
 }) {
   return (
     <label className="block">
-      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+      <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/60">
         {label}
       </span>
       <select
         name={value === allValue ? undefined : name}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-1 h-11 w-full border border-border bg-accent/40 px-3 text-sm font-semibold text-muted-foreground outline-none transition focus:border-primary/40 focus:bg-white"
+        className="mt-1 h-11 w-full border-0 border-b border-white/25 bg-transparent px-1 text-sm font-semibold text-white outline-none transition focus:border-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary [&>option]:text-foreground"
       >
         <option value={allValue}>All</option>
         {options
