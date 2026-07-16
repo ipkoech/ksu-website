@@ -122,44 +122,40 @@ function HistoryDrawer({
           </div>
         </header>
 
-        <ol className="relative flex-1 overflow-y-auto px-6 py-2 sm:px-8 md:px-10 md:py-3">
+        <ol className="relative flex-1 overflow-y-auto px-6 py-2 sm:px-8 md:px-10 md:py-4">
+          <span aria-hidden className="absolute bottom-6 left-1/2 top-6 hidden w-px -translate-x-1/2 bg-primary/20 md:block" />
           {milestones.map((milestone, index) => {
             const isExpanded = expanded === milestone.id;
+            const onLeft = index % 2 === 0;
             return (
-              <li key={milestone.id} className="relative grid grid-cols-[3.5rem_1fr] gap-5 border-b border-primary/10 py-5 last:border-b-0 sm:grid-cols-[4.25rem_1fr] md:gap-6 md:py-6">
-                {index < milestones.length - 1 ? <span aria-hidden className="absolute bottom-0 left-[4.28rem] top-8 w-px bg-primary/20 sm:left-[5.42rem]" /> : null}
-                <p className="pt-0.5 text-sm font-bold tabular-nums text-primary">{milestone.year_label}</p>
-                <article className="relative">
-                  <span aria-hidden className="absolute -left-[1.55rem] top-1.5 h-3 w-3 rounded-full border-[3px] border-white bg-secondary ring-1 ring-secondary/30 md:-left-[1.9rem]" />
-                  <div className="grid gap-4 sm:grid-cols-[1fr_6rem] sm:items-start md:grid-cols-[1fr_7rem]">
-                    <div>
-                      <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold leading-snug text-foreground md:text-xl">{milestone.title}</h3>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{milestone.summary}</p>
-                      {isExpanded && milestone.expanded_body ? <p className="mt-3 border-l-2 border-secondary pl-4 text-sm leading-6 text-muted-foreground">{milestone.expanded_body}</p> : null}
-                      {milestone.expanded_body ? (
-                        <button type="button" onClick={() => setExpanded(isExpanded ? null : milestone.id)} aria-expanded={isExpanded} className="mt-2 inline-flex min-h-9 items-center gap-2 text-xs font-bold uppercase tracking-wide text-primary hover:underline">
-                          {isExpanded ? "Show less" : "Read more"}<ChevronDown className={`h-4 w-4 transition ${isExpanded ? "rotate-180" : ""}`} aria-hidden />
-                        </button>
-                      ) : null}
-                    </div>
-                    <div className="relative hidden aspect-[4/3] overflow-hidden bg-surface-muted sm:block">
-                      <Image src={mediaUrl(milestone.image, index < 3 ? "/images/about/about-history-hero-branded.webp" : "/images/about/about-history-branded.webp")} alt={milestone.image_alt_text || `${milestone.title} historical milestone`} fill sizes="112px" className="object-cover grayscale-[15%] transition duration-500 hover:scale-105 motion-reduce:transition-none" />
-                    </div>
-                  </div>
+              <li key={milestone.id} className="relative grid grid-cols-[3.5rem_1fr] gap-5 border-b border-primary/10 py-5 last:border-b-0 sm:grid-cols-[4.25rem_1fr] md:grid-cols-[1fr_3rem_1fr] md:gap-0 md:border-b-0 md:py-4">
+                {index < milestones.length - 1 ? <span aria-hidden className="absolute bottom-0 left-[4.28rem] top-8 w-px bg-primary/20 sm:left-[5.42rem] md:hidden" /> : null}
+                <p className="pt-0.5 text-sm font-bold tabular-nums text-primary md:hidden">{milestone.year_label}</p>
+                <span aria-hidden className="absolute left-[4.28rem] top-7 z-10 h-3 w-3 -translate-x-1/2 rounded-full border-[3px] border-white bg-secondary ring-1 ring-secondary/30 sm:left-[5.42rem] md:left-1/2 md:top-8" />
+                <article className={`relative md:px-6 ${onLeft ? "md:col-start-1 md:row-start-1 md:text-right" : "md:col-start-3 md:row-start-1"}`}>
+                  <p className="hidden text-xs font-bold uppercase tracking-[0.16em] text-secondary md:block">{milestone.year_label}</p>
+                  <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold leading-snug text-foreground md:mt-1 md:text-xl">{milestone.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{milestone.summary}</p>
+                  {isExpanded && milestone.expanded_body ? <p className={`mt-3 border-l-2 border-secondary pl-4 text-sm leading-6 text-muted-foreground ${onLeft ? "md:border-l-0 md:border-r-2 md:pl-0 md:pr-4" : ""}`}>{milestone.expanded_body}</p> : null}
+                  {milestone.expanded_body ? (
+                    <button type="button" onClick={() => setExpanded(isExpanded ? null : milestone.id)} aria-expanded={isExpanded} className="mt-2 inline-flex min-h-9 items-center gap-2 text-xs font-bold uppercase tracking-wide text-primary hover:underline">
+                      {isExpanded ? "Show less" : "Read more"}<ChevronDown className={`h-4 w-4 transition ${isExpanded ? "rotate-180" : ""}`} aria-hidden />
+                    </button>
+                  ) : null}
                 </article>
               </li>
             );
           })}
         </ol>
 
-        <footer className="shrink-0 border-t border-primary/10 bg-[#f8f6f0] px-6 py-4 sm:px-8 md:px-10">
-          {historyDocument?.url ? (
-            <Link href={historyDocument.url} className="inline-flex min-h-11 w-full items-center justify-center gap-2 bg-primary px-5 py-3 text-sm font-bold text-white transition hover:bg-primary/90">
-              <Download className="h-4 w-4" aria-hidden /> Download Full History
-            </Link>
-          ) : (
-            <button type="button" onClick={onClose} className="inline-flex min-h-11 w-full items-center justify-center gap-2 bg-primary px-5 py-3 text-sm font-bold text-white transition hover:bg-primary/90">Return to About KSU <ArrowRight className="h-4 w-4" aria-hidden /></button>
-          )}
+        <footer className="shrink-0 border-t border-primary/10 bg-primary px-6 py-4 text-white sm:px-8 md:px-10">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Ready to join?</p><p className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold">Begin your Kisii University journey.</p></div>
+            <div className="flex flex-wrap items-center gap-3">
+              {historyDocument?.url ? <Link href={historyDocument.url} className="inline-flex min-h-11 items-center gap-2 px-1 text-xs font-bold text-white hover:underline"><Download className="h-4 w-4" aria-hidden />Full history</Link> : null}
+              <Link href="/admissions/how-to-apply" className="inline-flex min-h-11 items-center gap-2 bg-secondary px-5 py-3 text-sm font-bold text-foreground transition hover:bg-amber-400">Apply Now <ArrowRight className="h-4 w-4" aria-hidden /></Link>
+            </div>
+          </div>
         </footer>
       </aside>
     </div>
