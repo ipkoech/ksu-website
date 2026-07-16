@@ -16,13 +16,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Media, MediaLink, Programme
 
-from .programme_cover_concepts import (
-    ICT_PROGRAMME_COVER_CONCEPTS,
-    ProgrammeCoverConcept,
-)
-
-
-STORAGE_ROOT = "seed/programme-covers/ict"
+from .programme_cover_concepts import ProgrammeCoverConcept, load_programme_cover_concepts
+from .programme_cover_review import ReviewStatus, SchoolReviewManifest, load_manifest
+from .programme_cover_schools import SCHOOL_COVER_SCOPES, SchoolCoverScope
 
 
 class CoverAssetValidationError(ValueError):
@@ -44,6 +40,10 @@ class CoverAssetValidationError(ValueError):
         if self.invalid:
             details.append(f"invalid WebP: {', '.join(self.invalid)}")
         super().__init__("; ".join(details) or "invalid programme cover asset batch")
+
+
+class CoverApprovalError(ValueError):
+    """Raised when a review manifest does not approve an exact school batch."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,10 +77,72 @@ def validate_cover_assets(
     return paths
 
 
+def validate_cover_approval(
+    concepts: Sequence[ProgrammeCoverConcept],
+    *,
+    school_scope: SchoolCoverScope,
+    manifest: SchoolReviewManifest,
+) -> None:
+    """Require an exact, school-matched, human-approved review manifest."""
+
+    if (
+        manifest.school_code != school_scope.code
+        or manifest.school_slug != school_scope.slug
+        or manifest.school_name != school_scope.name
+    ):
+        raise CoverApprovalError(
+            f"Manifest school {manifest.school_code}/{manifest.school_slug} does not match "
+            f"{school_scope.code}/{school_scope.slug}"
+        )
+
+    wrong_school = sorted(
+        concept.slug for concept in concepts if concept.school_code != school_scope.code
+    )
+    if wrong_school:
+        raise CoverApprovalError(
+            f"Concepts do not belong to {school_scope.code}: {', '.join(wrong_school)}"
+        )
+
+    expected = {concept.slug: concept for concept in concepts}
+    actual = set(manifest.items)
+    missing = sorted(set(expected) - actual)
+    unexpected = sorted(actual - set(expected))
+    if missing or unexpected:
+        details = []
+        if missing:
+            details.append(f"missing: {', '.join(missing)}")
+        if unexpected:
+            details.append(f"unexpected: {', '.join(unexpected)}")
+        raise CoverApprovalError("Manifest batch is incomplete: " + "; ".join(details))
+
+    inconsistent = sorted(
+        slug
+        for slug, concept in expected.items()
+        if manifest.items[slug].programme_slug != slug
+        or manifest.items[slug].programme_name != concept.programme_name
+        or manifest.items[slug].department_code != concept.department_code
+    )
+    if inconsistent:
+        raise CoverApprovalError(
+            "Manifest items do not match the selected registry: " + ", ".join(inconsistent)
+        )
+
+    unapproved = sorted(
+        slug
+        for slug, item in manifest.items.items()
+        if item.status is not ReviewStatus.HUMAN_APPROVED
+    )
+    if unapproved:
+        raise CoverApprovalError(
+            "Manifest items are not human_approved: " + ", ".join(unapproved)
+        )
+
+
 def _media_payload(
     concept: ProgrammeCoverConcept,
     destination: Path,
     storage_path: str,
+    school_scope: SchoolCoverScope,
 ) -> dict[str, object]:
     content = destination.read_bytes()
     public_url = f"/uploads/{storage_path}"
@@ -98,7 +160,13 @@ def _media_payload(
         "alt_text": concept.alt_text,
         "description": f"Editorial programme artwork for {concept.programme_name}.",
         "caption": None,
-        "tags": ["kisii-university", "programme-cover", "ict", concept.visual_family],
+        "tags": [
+            "kisii-university",
+            "programme-cover",
+            school_scope.code,
+            school_scope.slug,
+            concept.visual_family,
+        ],
         "credit": "Generated for Kisii University",
         "media_type": "image",
         "width": 1200,
@@ -110,6 +178,8 @@ def _media_payload(
         "is_processed": True,
         "extra_metadata": {
             "source": "generated-editorial-illustration",
+            "school_code": school_scope.code,
+            "school_slug": school_scope.slug,
             "programme_slug": concept.slug,
             "visual_family": concept.visual_family,
         },
@@ -121,25 +191,34 @@ async def import_programme_covers(
     source_dir: Path,
     concepts: Sequence[ProgrammeCoverConcept],
     *,
+    school_scope: SchoolCoverScope,
+    manifest: SchoolReviewManifest,
     upload_root: Path,
 ) -> ImportSummary:
+    validate_cover_approval(concepts, school_scope=school_scope, manifest=manifest)
     assets = validate_cover_assets(source_dir, concepts)
-    destination_root = upload_root / STORAGE_ROOT
-    destination_root.mkdir(parents=True, exist_ok=True)
-    imported = 0
-    updated = 0
+    storage_root = f"seed/programme-covers/{school_scope.slug}"
 
+    programmes: dict[str, Programme] = {}
     for concept in concepts:
         programme = (
             await db.execute(select(Programme).where(Programme.slug == concept.slug))
         ).scalar_one_or_none()
         if programme is None:
             raise LookupError(f"Programme not found for illustration: {concept.slug}")
+        programmes[concept.slug] = programme
 
-        storage_path = f"{STORAGE_ROOT}/{concept.filename}"
+    destination_root = upload_root / storage_root
+    destination_root.mkdir(parents=True, exist_ok=True)
+    imported = 0
+    updated = 0
+
+    for concept in concepts:
+        programme = programmes[concept.slug]
+        storage_path = f"{storage_root}/{concept.filename}"
         destination = destination_root / concept.filename
         shutil.copy2(assets[concept.filename], destination)
-        payload = _media_payload(concept, destination, storage_path)
+        payload = _media_payload(concept, destination, storage_path, school_scope)
         media = (
             await db.execute(select(Media).where(Media.storage_path == storage_path))
         ).scalar_one_or_none()
@@ -189,16 +268,21 @@ async def import_programme_covers(
     return ImportSummary(imported=imported, updated=updated)
 
 
-async def _run_cli(source_dir: Path) -> ImportSummary:
+async def _run_cli(source_dir: Path, school_code: str, manifest_path: Path) -> ImportSummary:
     from app.core.config import get_settings
     from app.core.database import AsyncSessionLocal
 
+    school_scope = SCHOOL_COVER_SCOPES[school_code]
+    concepts = load_programme_cover_concepts(school_code)
+    manifest = load_manifest(manifest_path)
     async with AsyncSessionLocal() as db:
         try:
             summary = await import_programme_covers(
                 db,
                 source_dir,
-                ICT_PROGRAMME_COVER_CONCEPTS,
+                concepts,
+                school_scope=school_scope,
+                manifest=manifest,
                 upload_root=get_settings().upload_dir_path,
             )
             await db.commit()
@@ -208,13 +292,27 @@ async def _run_cli(source_dir: Path) -> ImportSummary:
             raise
 
 
-def main() -> None:
+def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--school", choices=("ict",), default="ict")
+    parser.add_argument(
+        "--school",
+        choices=tuple(sorted(SCHOOL_COVER_SCOPES)),
+        required=True,
+    )
     parser.add_argument("--source", type=Path, required=True)
-    args = parser.parse_args()
-    summary = asyncio.run(_run_cli(args.source.resolve()))
-    print(f"Imported {summary.imported} and updated {summary.updated} ICT programme covers.")
+    parser.add_argument("--manifest", type=Path, required=True)
+    return parser
+
+
+def main(argv: Sequence[str] | None = None) -> None:
+    args = _parser().parse_args(argv)
+    summary = asyncio.run(
+        _run_cli(args.source.resolve(), args.school, args.manifest.resolve())
+    )
+    print(
+        f"Imported {summary.imported} and updated {summary.updated} "
+        f"{args.school} programme covers."
+    )
 
 
 if __name__ == "__main__":
