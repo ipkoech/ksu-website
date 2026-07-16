@@ -103,43 +103,47 @@ function HistoryDrawer({
 
   return (
     <div className="fixed inset-0 z-[80]" role="dialog" aria-modal="true" aria-labelledby="history-title">
-      <button type="button" aria-label="Close history" onClick={onClose} className="absolute inset-0 bg-brand-overlay/45 backdrop-blur-[2px]" />
-      <aside className="absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-3xl bg-surface shadow-2xl motion-safe:animate-in motion-safe:slide-in-from-bottom md:inset-y-0 md:left-auto md:w-[60vw] md:max-w-3xl md:rounded-none md:motion-safe:slide-in-from-right xl:w-[44vw]">
-        <div className="sticky top-0 z-10 border-b border-border/80 bg-surface/95 px-6 py-6 backdrop-blur sm:px-8">
+      <button type="button" aria-label="Close history" onClick={onClose} className="absolute inset-0 bg-[#031d42]/65 backdrop-blur-[3px]" />
+      <aside className="absolute inset-x-0 bottom-0 flex max-h-[90dvh] flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl motion-safe:animate-in motion-safe:slide-in-from-bottom md:inset-y-0 md:left-auto md:max-h-none md:w-[58vw] md:min-w-[40rem] md:max-w-[48rem] md:rounded-none md:motion-safe:slide-in-from-right xl:w-[44vw]">
+        <header className="z-10 shrink-0 border-b border-primary/10 bg-white px-6 py-5 sm:px-8 md:px-10 md:py-7">
           <div className="flex items-start justify-between gap-6">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Our journey</p>
-              <h2 id="history-title" className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-primary sm:text-4xl">Our History</h2>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">Six decades of growth, public service and moments that shaped Kisii University.</p>
+              <h2 id="history-title" className="mt-2 font-[family-name:var(--font-display)] text-3xl font-medium text-primary sm:text-4xl">Our History</h2>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">Six decades of growth, public service and moments that shaped Kisii University.</p>
             </div>
-            <button ref={closeRef} type="button" onClick={onClose} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-primary" aria-label="Close history drawer">
+            <button ref={closeRef} type="button" onClick={onClose} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/25 text-primary transition hover:border-primary hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" aria-label="Close history drawer">
               <X className="h-5 w-5" aria-hidden />
             </button>
           </div>
-        </div>
+          <div className="mt-5 flex items-center gap-2" aria-hidden>
+            <span className="h-1 w-14 bg-secondary" />
+            <span className="h-px flex-1 bg-primary/10" />
+          </div>
+        </header>
 
-        <ol className="relative space-y-0 px-6 py-4 sm:px-8">
+        <ol className="relative flex-1 overflow-y-auto px-6 py-2 sm:px-8 md:px-10 md:py-3">
           {milestones.map((milestone, index) => {
             const isExpanded = expanded === milestone.id;
             return (
-              <li key={milestone.id} className="relative grid grid-cols-[3.5rem_1fr] gap-4 pb-7 sm:grid-cols-[4rem_1fr]">
-                {index < milestones.length - 1 ? <span aria-hidden className="absolute bottom-0 left-[4.25rem] top-7 w-px bg-primary/25 sm:left-[4.75rem]" /> : null}
-                <p className="pt-1 text-sm font-bold text-primary">{milestone.year_label}</p>
-                <article className="relative rounded-2xl border border-border bg-white p-4 shadow-sm">
-                  <span aria-hidden className="absolute -left-[1.15rem] top-6 h-3 w-3 rounded-full border-2 border-[hsl(var(--surface))] bg-secondary sm:-left-[1.15rem]" />
-                  <div className="grid gap-4 sm:grid-cols-[1fr_7rem] sm:items-start">
+              <li key={milestone.id} className="relative grid grid-cols-[3.5rem_1fr] gap-5 border-b border-primary/10 py-5 last:border-b-0 sm:grid-cols-[4.25rem_1fr] md:gap-6 md:py-6">
+                {index < milestones.length - 1 ? <span aria-hidden className="absolute bottom-0 left-[4.28rem] top-8 w-px bg-primary/20 sm:left-[5.42rem]" /> : null}
+                <p className="pt-0.5 text-sm font-bold tabular-nums text-primary">{milestone.year_label}</p>
+                <article className="relative">
+                  <span aria-hidden className="absolute -left-[1.55rem] top-1.5 h-3 w-3 rounded-full border-[3px] border-white bg-secondary ring-1 ring-secondary/30 md:-left-[1.9rem]" />
+                  <div className="grid gap-4 sm:grid-cols-[1fr_6rem] sm:items-start md:grid-cols-[1fr_7rem]">
                     <div>
-                      <h3 className="font-semibold text-foreground">{milestone.title}</h3>
+                      <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold leading-snug text-foreground md:text-xl">{milestone.title}</h3>
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">{milestone.summary}</p>
-                      {isExpanded && milestone.expanded_body ? <p className="mt-3 border-t border-border pt-3 text-sm leading-6 text-muted-foreground">{milestone.expanded_body}</p> : null}
+                      {isExpanded && milestone.expanded_body ? <p className="mt-3 border-l-2 border-secondary pl-4 text-sm leading-6 text-muted-foreground">{milestone.expanded_body}</p> : null}
                       {milestone.expanded_body ? (
-                        <button type="button" onClick={() => setExpanded(isExpanded ? null : milestone.id)} aria-expanded={isExpanded} className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-primary hover:underline">
+                        <button type="button" onClick={() => setExpanded(isExpanded ? null : milestone.id)} aria-expanded={isExpanded} className="mt-2 inline-flex min-h-9 items-center gap-2 text-xs font-bold uppercase tracking-wide text-primary hover:underline">
                           {isExpanded ? "Show less" : "Read more"}<ChevronDown className={`h-4 w-4 transition ${isExpanded ? "rotate-180" : ""}`} aria-hidden />
                         </button>
                       ) : null}
                     </div>
-                    <div className="relative hidden aspect-square overflow-hidden rounded-xl bg-surface-muted sm:block">
-                      <Image src={mediaUrl(milestone.image, index < 3 ? "/images/backgrounds/bg-history.jpg" : identityFallback)} alt={milestone.image_alt_text || `${milestone.title} historical milestone`} fill sizes="112px" className="object-cover grayscale-[20%]" />
+                    <div className="relative hidden aspect-[4/3] overflow-hidden bg-surface-muted sm:block">
+                      <Image src={mediaUrl(milestone.image, index < 3 ? "/images/about/about-history-hero-branded.webp" : "/images/about/about-history-branded.webp")} alt={milestone.image_alt_text || `${milestone.title} historical milestone`} fill sizes="112px" className="object-cover grayscale-[15%] transition duration-500 hover:scale-105 motion-reduce:transition-none" />
                     </div>
                   </div>
                 </article>
@@ -148,15 +152,15 @@ function HistoryDrawer({
           })}
         </ol>
 
-        <div className="sticky bottom-0 border-t border-border bg-surface/95 px-6 py-5 backdrop-blur sm:px-8">
+        <footer className="shrink-0 border-t border-primary/10 bg-[#f8f6f0] px-6 py-4 sm:px-8 md:px-10">
           {historyDocument?.url ? (
-            <Link href={historyDocument.url} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white transition hover:bg-primary/90">
+            <Link href={historyDocument.url} className="inline-flex min-h-11 w-full items-center justify-center gap-2 bg-primary px-5 py-3 text-sm font-bold text-white transition hover:bg-primary/90">
               <Download className="h-4 w-4" aria-hidden /> Download Full History
             </Link>
           ) : (
-            <button type="button" onClick={onClose} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white transition hover:bg-primary/90">Return to About KSU <ArrowRight className="h-4 w-4" aria-hidden /></button>
+            <button type="button" onClick={onClose} className="inline-flex min-h-11 w-full items-center justify-center gap-2 bg-primary px-5 py-3 text-sm font-bold text-white transition hover:bg-primary/90">Return to About KSU <ArrowRight className="h-4 w-4" aria-hidden /></button>
           )}
-        </div>
+        </footer>
       </aside>
     </div>
   );
