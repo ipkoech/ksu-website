@@ -2032,6 +2032,43 @@ export interface Testimonial {
   updated_at: string;
 }
 
+export interface Newsletter {
+  id: string;
+  title: string;
+  slug: string;
+  edition?: string | null;
+  summary?: string | null;
+  content?: string | null;
+  published_at?: string | null;
+  scheduled_send_at?: string | null;
+  sent_at?: string | null;
+  send_status: string;
+  send_error?: string | null;
+  cover_image_id?: string | null;
+  pdf_file_id?: string | null;
+  cover_image?: Media | null;
+  pdf_file?: Media | null;
+  view_count: number;
+  status: string;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NewsletterSubscriber {
+  id: string;
+  email: string;
+  name?: string | null;
+  subscribed_at: string;
+  unsubscribed_at?: string | null;
+  frequency: string;
+  categories?: string[] | null;
+  is_verified: boolean;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Role {
   id: string;
   name: string;

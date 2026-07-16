@@ -123,6 +123,7 @@ COCMS_PERMISSION_NAMES = [
     "marketing.view",
     "marketing.manage_sliders",
     "marketing.manage_testimonials",
+    "marketing.manage_newsletters",
     "support.manage_faqs",
     "support.manage_contacts",
 ]

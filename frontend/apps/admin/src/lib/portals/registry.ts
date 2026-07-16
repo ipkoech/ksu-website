@@ -17,6 +17,7 @@ import {
   Leaf,
   Library,
   LinkIcon,
+  Mail,
   Megaphone,
   MessageSquare,
   Newspaper,
@@ -48,6 +49,7 @@ import {
   libraryServiceApi,
   mediaApi,
   newsApi,
+  newslettersApi,
   personsApi,
   programmesApi,
   researchServiceApi,
@@ -91,6 +93,8 @@ import {
   type Media,
   type MediaFolder,
   type News,
+  type Newsletter,
+  type NewsletterSubscriber,
   type Person,
   type Programme,
   type ResearchGenericPayload,
@@ -178,8 +182,17 @@ const statusOptions = [
 const contentStatusOptions = [
   { label: "Draft", value: "draft" },
   { label: "Under Review", value: "under_review" },
+  { label: "Scheduled", value: "scheduled" },
   { label: "Published", value: "published" },
   { label: "Archived", value: "archived" },
+];
+
+const newsletterSendStatusOptions = [
+  { label: "Draft", value: "draft" },
+  { label: "Scheduled", value: "scheduled" },
+  { label: "Sending", value: "sending" },
+  { label: "Sent", value: "sent" },
+  { label: "Failed", value: "failed" },
 ];
 
 const contactStatusOptions = [
@@ -2849,6 +2862,149 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     manageScopes: ["support.manage_contacts", "content.manage_pages", "content.publish"],
     canDelete: false,
   } as PortalResourceConfig<ContactDirectory>,
+  newsletters: {
+    key: "newsletters",
+    title: "Newsletters",
+    description:
+      "Create newsletter editions, keep drafts, publish them publicly, and schedule subscriber sends.",
+    backHref: "/corporate-communication",
+    queryKey: ["corporate", "newsletters"],
+    fields: [
+      { name: "title", label: "Title", required: true },
+      { name: "slug", label: "Slug" },
+      { name: "edition", label: "Edition" },
+      { name: "summary", label: "Summary", type: "textarea" },
+      { name: "content", label: "Newsletter Body", type: "richtext" },
+      {
+        name: "cover_image_id",
+        label: "Cover Image",
+        type: "media",
+        media: {
+          mediaType: "image",
+          accept: "image/*",
+          helperText: "Optional public cover image for the newsletter edition.",
+          isPublic: true,
+        },
+      },
+      {
+        name: "pdf_file_id",
+        label: "PDF File",
+        type: "media",
+        media: {
+          mediaType: "document",
+          accept: "application/pdf",
+          helperText: "Optional downloadable PDF edition.",
+          isPublic: true,
+        },
+      },
+      {
+        name: "status",
+        label: "Public Status",
+        type: "select",
+        options: contentStatusOptions,
+        defaultValue: "draft",
+      },
+      {
+        name: "published_at",
+        label: "Publish Date",
+        type: "datetime-local",
+      },
+      {
+        name: "scheduled_send_at",
+        label: "Scheduled Send Time",
+        type: "datetime-local",
+        helpText: "Used by newsletter delivery automation when dispatch is enabled.",
+      },
+      {
+        name: "send_status",
+        label: "Send Status",
+        type: "select",
+        options: newsletterSendStatusOptions,
+        defaultValue: "draft",
+      },
+      { name: "is_public", label: "Public", type: "boolean", defaultValue: true },
+    ],
+    listFilters: [
+      { name: "status", label: "Public Status", type: "select", options: contentStatusOptions },
+    ],
+    list: (filters) =>
+      newslettersApi.listAdmin({
+        ...pageParams,
+        fields:
+          "id,title,slug,edition,summary,status,is_public,published_at,scheduled_send_at,sent_at,send_status,send_error,cover_image_id,pdf_file_id,created_at,updated_at",
+        include: "cover_image:id,title,public_url,thumbnail_url,media_type,mime_type;pdf_file:id,title,public_url,media_type,mime_type",
+        ...filters,
+      }),
+    create: (payload) => newslettersApi.create(payload),
+    update: (id, payload) => newslettersApi.update(id, payload),
+    delete: (id) => newslettersApi.delete(id),
+    getRecordTitle: (record) => record.title,
+    getRecordMeta: (record) =>
+      [
+        record.edition,
+        record.status,
+        record.scheduled_send_at
+          ? `Scheduled ${new Date(record.scheduled_send_at).toLocaleString()}`
+          : null,
+        record.sent_at ? `Sent ${new Date(record.sent_at).toLocaleString()}` : null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    emptyMessage: "No newsletter editions were returned.",
+    buildPayload: (values) => {
+      const hasSchedule = Boolean(values.scheduled_send_at);
+      return {
+        ...values,
+        status: values.status || (hasSchedule ? "scheduled" : "draft"),
+        send_status: values.send_status || (hasSchedule ? "scheduled" : "draft"),
+        is_public: values.is_public ?? true,
+      };
+    },
+    viewScopes: ["marketing.view", "marketing.manage_newsletters"],
+    manageScopes: ["marketing.manage_newsletters"],
+  } as PortalResourceConfig<Newsletter>,
+  "newsletter-subscribers": {
+    key: "newsletter-subscribers",
+    title: "Newsletter Subscribers",
+    description:
+      "View the public website audience subscribed to university updates.",
+    backHref: "/corporate-communication",
+    queryKey: ["corporate", "newsletter-subscribers"],
+    fields: [],
+    listFilters: [
+      {
+        name: "status",
+        label: "Status",
+        type: "select",
+        options: [
+          { label: "Active", value: "active" },
+          { label: "Unsubscribed", value: "unsubscribed" },
+        ],
+      },
+    ],
+    list: (filters) => newslettersApi.listSubscribers({ ...pageParams, ...filters }),
+    create: async () => undefined,
+    update: async () => undefined,
+    getRecordTitle: (record) => record.email,
+    getRecordMeta: (record) =>
+      [
+        record.name,
+        record.frequency,
+        record.categories?.join(", "),
+        record.subscribed_at
+          ? `Subscribed ${new Date(record.subscribed_at).toLocaleDateString()}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    emptyMessage: "No newsletter subscribers were returned.",
+    viewScopes: ["marketing.view", "marketing.manage_newsletters"],
+    manageScopes: ["marketing.manage_newsletters"],
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    readOnlyMessage: "Subscribers are created from the public website subscription form.",
+  } as PortalResourceConfig<NewsletterSubscriber>,
   testimonials: {
     key: "testimonials",
     title: "Testimonials",
@@ -3442,6 +3598,8 @@ const corporateResourceHrefs: Record<string, string> = {
   "media-assets": "/corporate-communication/media/assets",
   faqs: "/corporate-communication/engagement/faqs",
   contacts: "/corporate-communication/engagement/contacts",
+  newsletters: "/corporate-communication/engagement/newsletters",
+  "newsletter-subscribers": "/corporate-communication/engagement/newsletter-subscribers",
   testimonials: "/corporate-communication/engagement/testimonials",
   "student-clubs": "/corporate-communication/student-life/club-submissions",
 };
@@ -3468,6 +3626,8 @@ const corporateResourceRouteAliases: Record<string, string> = {
   "media-assets": "media-assets",
   faqs: "faqs",
   contacts: "contacts",
+  newsletters: "newsletters",
+  "newsletter-subscribers": "newsletter-subscribers",
   testimonials: "testimonials",
   "student-clubs": "student-clubs",
   "newsroom/news": "news",
@@ -3480,6 +3640,8 @@ const corporateResourceRouteAliases: Record<string, string> = {
   "media/assets": "media-assets",
   "engagement/faqs": "faqs",
   "engagement/contacts": "contacts",
+  "engagement/newsletters": "newsletters",
+  "engagement/newsletter-subscribers": "newsletter-subscribers",
   "engagement/testimonials": "testimonials",
   "student-life/club-submissions": "student-clubs",
 };
@@ -6885,7 +7047,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
         title: "Engagement",
         href: "/corporate-communication/engagement/faqs",
         icon: ScrollText,
-        scope: "content.manage",
+        scope: ["content.manage", "marketing.manage_newsletters"],
         children: [
           {
             title: "FAQs",
@@ -6898,6 +7060,18 @@ export const portalConfigs: Record<string, PortalConfig> = {
             href: "/corporate-communication/engagement/contacts",
             icon: Users,
             scope: "content.manage",
+          },
+          {
+            title: "Newsletters",
+            href: "/corporate-communication/engagement/newsletters",
+            icon: Mail,
+            scope: "marketing.manage_newsletters",
+          },
+          {
+            title: "Subscribers",
+            href: "/corporate-communication/engagement/newsletter-subscribers",
+            icon: Users,
+            scope: "marketing.manage_newsletters",
           },
           {
             title: "Testimonials",
@@ -6970,6 +7144,24 @@ export const portalConfigs: Record<string, PortalConfig> = {
           ["media.view"],
           ["corporate-communication", "portal-stats", "media_count"],
           () => mainPortalCount("corporate-communication", "media_count"),
+        ),
+        stat(
+          "Newsletters",
+          "Newsletter editions",
+          "/corporate-communication/engagement/newsletters",
+          Mail,
+          ["marketing.manage_newsletters"],
+          ["corporate", "newsletters"],
+          () => newslettersApi.listAdmin({ ...countParams }),
+        ),
+        stat(
+          "Subscribers",
+          "Newsletter audience",
+          "/corporate-communication/engagement/newsletter-subscribers",
+          Users,
+          ["marketing.manage_newsletters"],
+          ["corporate", "newsletter-subscribers"],
+          () => newslettersApi.listSubscribers({ ...countParams, status: "active" }),
         ),
       ],
       corporateCommunicationResources,

@@ -12,6 +12,8 @@ import {
   Handshake,
   Landmark,
   Lightbulb,
+  Mail,
+  MapPin,
   Newspaper,
   PlayCircle,
   Trophy,
@@ -20,6 +22,7 @@ import {
 } from "lucide-react";
 import { AdmissionsCountdown } from "@/components/home/admissions-countdown";
 import { CampusLifeHorizontalScroller } from "@/components/home/campus-life-horizontal-scroller";
+import { NewsletterSubscribeForm } from "@/components/home/newsletter-subscribe-form";
 import { ProgrammeFinderInteractive } from "@/components/home/programme-finder-interactive";
 import { WhyKisiiSection } from "@/components/home/why-kisii-section";
 import { PublicImage } from "@/components/public/public-image";
@@ -49,6 +52,7 @@ type SectionVariantProps = {
   factsSection?: HomepageSection | null;
   partnershipSpotlights?: HomepagePartnershipSpotlight[];
   academicDatesSection?: HomepageSection | null;
+  eventsSection?: HomepageSection | null;
   programmeFinderData?: ProgrammeFinderData;
 };
 
@@ -1406,34 +1410,268 @@ function ResearchFocusArea({
   );
 }
 
-export function NewsGridSection({ section }: SectionVariantProps) {
-  const items = displayItems(section).slice(0, 5);
+export function NewsGridSection({ section, eventsSection }: SectionVariantProps) {
+  const items = displayItems(section).slice(0, 4);
+  const eventItems = eventsSection ? displayItems(eventsSection).slice(0, 3) : [];
   const [featured, ...rest] = items;
   return (
     <section
       id={section.section_key}
-      className="border-b border-blue-100 bg-white py-12 lg:py-14"
+      className="border-b border-primary/10 bg-[linear-gradient(180deg,#fffdf8_0%,#ffffff_54%,#f8f4e8_100%)] py-12 lg:py-14"
     >
       <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="grid gap-8 lg:grid-cols-[minmax(320px,0.44fr)_minmax(0,0.56fr)]">
-          <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
-            <SectionEyebrow value={section.subtitle ?? "Latest news"} />
-            <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
-              {section.title ?? "Latest news and stories"}
+        <div className="mb-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+          <div>
+            <SectionEyebrow value={section.subtitle ?? "Kisii University Updates"} />
+            <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-bold leading-[0.95] text-primary sm:text-5xl lg:text-6xl">
+              {section.title ?? "Stories, News & Events"}
             </h2>
-            <SectionBody value={section.description} className="mt-3" />
-            {featured ? (
-              <NewsLineItem item={featured} index={0} featured />
-            ) : null}
+            <SectionBody
+              value={
+                section.description ??
+                "Discover what is happening across campus—partnerships that create impact, achievements that inspire, and events that bring us together."
+              }
+              className="mt-4 max-w-3xl text-base leading-7 text-slate-700"
+            />
           </div>
-          <div className="divide-y divide-blue-100 border-y border-blue-100 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150">
-            {rest.map((item, index) => (
-              <NewsLineItem key={item.id} item={item} index={index + 1} />
+          <nav
+            className="flex flex-wrap items-center gap-4 text-sm font-bold text-primary sm:gap-7"
+            aria-label="University updates"
+          >
+            {[
+              ["News", "/media/news"],
+              ["Events", "/media/events"],
+              ["Articles", "/media/articles"],
+            ].map(([label, href], index) => (
+              <LinkWrapper
+                key={href}
+                href={href}
+                className={`group inline-flex min-h-11 items-center gap-3 ${
+                  index > 0 ? "sm:border-l sm:border-primary/20 sm:pl-7" : ""
+                }`}
+              >
+                {label}
+                <ArrowRight className="h-4 w-4 text-secondary transition group-hover:translate-x-1" />
+              </LinkWrapper>
             ))}
+          </nav>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.62fr)_minmax(360px,0.66fr)]">
+          {featured ? <FeaturedUpdateItem item={featured} /> : null}
+
+          <div className="min-w-0 bg-white/50 xl:px-2">
+            <SectionKicker title="Latest stories" />
+            <div className="mt-5 divide-y divide-primary/10">
+              {rest.map((item, index) => (
+                <UpdateListItem key={item.id} item={item} index={index} />
+              ))}
+            </div>
           </div>
+
+          <UpcomingComposedEvents items={eventItems} />
+        </div>
+
+        <div className="mt-0 grid gap-6 border-t border-primary/10 bg-white/70 px-5 py-5 shadow-[0_-16px_48px_rgba(0,0,0,0.04)] lg:grid-cols-[minmax(0,1fr)_1px_minmax(280px,0.55fr)] lg:items-center lg:px-8">
+          <div className="grid gap-4 md:grid-cols-[auto_minmax(0,280px)_minmax(280px,1fr)] md:items-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/20">
+              <Mail className="h-7 w-7" aria-hidden />
+            </span>
+            <div>
+              <h3 className="font-[family-name:var(--font-display)] text-2xl font-bold text-primary">
+                Subscribe to updates
+              </h3>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                Get the latest news, events, and stories straight to your inbox.
+              </p>
+            </div>
+            <NewsletterSubscribeForm />
+          </div>
+          <span className="hidden h-20 w-px bg-primary/15 lg:block" />
+          <LinkWrapper
+            href="/contact"
+            className="group flex items-center gap-4 rounded-md p-2 transition hover:bg-primary/5"
+          >
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-secondary text-white shadow-lg shadow-secondary/25">
+              <Newspaper className="h-6 w-6" aria-hidden />
+            </span>
+            <span>
+              <span className="block font-[family-name:var(--font-display)] text-2xl font-bold text-primary">
+                Submit a story
+              </span>
+              <span className="mt-1 block text-sm leading-6 text-slate-600">
+                Have a story to share? Send it to Corporate Communication.
+              </span>
+              <span className="mt-1 inline-flex items-center gap-2 text-sm font-bold text-secondary">
+                Submit your story
+                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+              </span>
+            </span>
+          </LinkWrapper>
         </div>
       </div>
     </section>
+  );
+}
+
+function FeaturedUpdateItem({ item }: { item: HomepageSectionItem }) {
+  const content = (
+    <article className="group relative min-h-[420px] overflow-hidden bg-primary text-white">
+      <PublicImage
+        src={updateImageUrl(item)}
+        alt={item.media_alt_text ?? item.title ?? "University story"}
+        ratio="fill"
+        fallbackContent={<Newspaper className="h-10 w-10" aria-hidden />}
+        sizes="(min-width: 1280px) 42vw, 100vw"
+        className="absolute inset-0 h-full w-full"
+        imageClassName="object-cover transition duration-700 group-hover:scale-105"
+      />
+      <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05)_10%,rgba(0,53,37,0.88)_100%)]" />
+      <div className="absolute inset-x-0 bottom-0 z-10 p-5 sm:p-7">
+        <div className="flex flex-wrap items-center gap-3 text-sm font-semibold">
+          <span className="rounded-full bg-secondary px-3 py-1 text-white">
+            {itemCategoryLabel(item)}
+          </span>
+          {itemDateLabel(item) ? (
+            <span className="text-white/85">{itemDateLabel(item)}</span>
+          ) : null}
+        </div>
+        <h3 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-bold leading-tight sm:text-3xl">
+          {item.title}
+        </h3>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-white/85">
+          {item.body_text ?? item.cta_description}
+        </p>
+        <span className="mt-5 inline-flex items-center gap-3 text-sm font-bold text-secondary">
+          Read story
+          <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+        </span>
+      </div>
+    </article>
+  );
+
+  return item.cta_url ? (
+    <LinkWrapper href={item.cta_url}>{content}</LinkWrapper>
+  ) : (
+    content
+  );
+}
+
+function UpdateListItem({
+  item,
+  index,
+}: {
+  item: HomepageSectionItem;
+  index: number;
+}) {
+  const content = (
+    <article className="group grid min-w-0 grid-cols-[96px_minmax(0,1fr)_auto] gap-4 py-4 sm:grid-cols-[116px_minmax(0,1fr)_auto]">
+      <PublicImage
+        src={updateImageUrl(item)}
+        alt={item.media_alt_text ?? item.title ?? `Story ${index + 1}`}
+        ratio="news"
+        fallbackContent={<Newspaper className="h-5 w-5" aria-hidden />}
+        sizes="116px"
+        className="h-24 rounded-sm"
+        imageClassName="object-cover"
+      />
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold uppercase tracking-[0.12em] text-primary">
+          <span>{itemCategoryLabel(item)}</span>
+          {itemDateLabel(item) ? (
+            <span className="font-medium normal-case tracking-normal text-slate-500">
+              {itemDateLabel(item)}
+            </span>
+          ) : null}
+        </div>
+        <h3 className="mt-2 line-clamp-2 font-[family-name:var(--font-display)] text-lg font-bold leading-5 text-slate-950 transition group-hover:text-primary">
+          {item.title}
+        </h3>
+        <p className="mt-2 line-clamp-2 text-sm leading-5 text-slate-600">
+          {item.body_text ?? item.cta_description}
+        </p>
+      </div>
+      <ArrowRight className="mt-10 h-5 w-5 text-secondary transition group-hover:translate-x-1" />
+    </article>
+  );
+
+  return item.cta_url ? (
+    <LinkWrapper href={item.cta_url}>{content}</LinkWrapper>
+  ) : (
+    content
+  );
+}
+
+function UpcomingComposedEvents({ items }: { items: HomepageSectionItem[] }) {
+  return (
+    <aside className="bg-primary px-5 py-6 text-white shadow-2xl shadow-primary/20 sm:px-7">
+      <SectionKicker title="Upcoming events" light />
+      {items.length ? (
+        <div className="relative mt-6 space-y-0 pl-5 before:absolute before:left-[11px] before:top-4 before:h-[calc(100%-2rem)] before:w-px before:bg-secondary">
+          {items.map((item, index) => (
+            <ComposedEventAgendaItem key={item.id} item={item} index={index} />
+          ))}
+        </div>
+      ) : (
+        <p className="mt-6 rounded-md border border-white/15 bg-white/10 p-4 text-sm leading-6 text-white/80">
+          Upcoming events are being refreshed. Open the events calendar for
+          current listings.
+        </p>
+      )}
+      <LinkWrapper
+        href="/media/events"
+        className="mt-6 inline-flex min-h-11 items-center gap-3 border-t border-white/15 pt-5 text-sm font-bold text-white hover:text-secondary"
+      >
+        View all events
+        <ArrowRight className="h-4 w-4" aria-hidden />
+      </LinkWrapper>
+    </aside>
+  );
+}
+
+function ComposedEventAgendaItem({
+  item,
+  index,
+}: {
+  item: HomepageSectionItem;
+  index: number;
+}) {
+  const dateParts = composedEventDateParts(item, index);
+  const content = (
+    <article className="group relative grid grid-cols-[72px_minmax(0,1fr)_auto] gap-5 border-b border-white/15 py-5">
+      <span className="absolute -left-[19px] top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-secondary bg-primary" />
+      <div className="rounded-md bg-white px-2 py-3 text-center text-primary shadow-sm">
+        <span className="block text-xs font-bold uppercase tracking-[0.18em]">
+          {dateParts.month}
+        </span>
+        <span className="block font-[family-name:var(--font-display)] text-3xl font-bold leading-none">
+          {dateParts.day}
+        </span>
+        <span className="block text-xs font-bold uppercase">{dateParts.weekday}</span>
+      </div>
+      <div className="min-w-0">
+        <h3 className="font-[family-name:var(--font-display)] text-xl font-bold leading-tight text-secondary">
+          {item.title}
+        </h3>
+        <p className="mt-3 flex items-center gap-2 text-sm text-white/85">
+          <CalendarDays className="h-4 w-4" aria-hidden />
+          {dateParts.time}
+        </p>
+        {dateParts.location ? (
+          <p className="mt-2 flex items-center gap-2 text-sm text-white/85">
+            <MapPin className="h-4 w-4" aria-hidden />
+            {dateParts.location}
+          </p>
+        ) : null}
+      </div>
+      <ArrowRight className="mt-10 h-5 w-5 text-secondary transition group-hover:translate-x-1" />
+    </article>
+  );
+
+  return item.cta_url ? (
+    <LinkWrapper href={item.cta_url}>{content}</LinkWrapper>
+  ) : (
+    content
   );
 }
 
@@ -2037,57 +2275,6 @@ function ActivityLineItem({
   );
 }
 
-function NewsLineItem({
-  item,
-  index,
-  featured = false,
-}: {
-  item: HomepageSectionItem;
-  index: number;
-  featured?: boolean;
-}) {
-  const date = itemContentText(item, "date") ?? item.subtitle;
-  const body = featured ? (
-    <article className="group mt-6 overflow-hidden border border-blue-100 bg-blue-50/45 transition hover:bg-blue-50">
-      <PublicImage
-        src={itemImageUrl(item)}
-        alt={item.media_alt_text ?? item.title ?? "News story"}
-        ratio="news"
-        className="rounded-none"
-        imageClassName="object-cover transition duration-700 group-hover:scale-105"
-      />
-      <div className="p-5">
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
-          {date ?? "Featured"}
-        </p>
-        <h3 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
-          {item.title}
-        </h3>
-      </div>
-    </article>
-  ) : (
-    <article className="group grid gap-4 py-5 transition hover:bg-blue-50/60 sm:grid-cols-[56px_minmax(0,1fr)_auto] sm:items-center sm:px-4">
-      <span className="font-[family-name:var(--font-display)] text-2xl font-semibold text-primary/25 transition group-hover:text-primary">
-        {String(index + 1).padStart(2, "0")}
-      </span>
-      <div>
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
-          {date ?? "News"}
-        </p>
-        <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-slate-950">
-          {item.title}
-        </h3>
-      </div>
-      <ArrowRight className="hidden h-4 w-4 text-primary opacity-0 transition group-hover:translate-x-1 group-hover:opacity-100 sm:block" />
-    </article>
-  );
-  return item.cta_url ? (
-    <LinkWrapper href={item.cta_url}>{body}</LinkWrapper>
-  ) : (
-    body
-  );
-}
-
 function EventLineItem({
   item,
   index,
@@ -2175,6 +2362,27 @@ function pulseIcon(item: HomepageSectionItem, index: number): LucideIcon {
     BookOpenCheck,
   ];
   return (icon && icons[icon]) || fallback[index % fallback.length];
+}
+
+function SectionKicker({
+  title,
+  light = false,
+}: {
+  title: string;
+  light?: boolean;
+}) {
+  return (
+    <div>
+      <h3
+        className={`text-xs font-bold uppercase tracking-[0.24em] ${
+          light ? "text-white" : "text-primary"
+        }`}
+      >
+        {title}
+      </h3>
+      <span className="mt-2 block h-px w-12 bg-secondary" />
+    </div>
+  );
 }
 
 function SectionEyebrow({
@@ -2296,6 +2504,93 @@ function itemContentNumber(item: HomepageSectionItem | undefined, key: string) {
 
 function itemImageUrl(item: HomepageSectionItem | undefined) {
   return itemContentText(item, "imageUrl");
+}
+
+function linkedContent(item: HomepageSectionItem | undefined) {
+  return item?.content_enriched?.linked_content;
+}
+
+function linkedMediaUrl(item: HomepageSectionItem | undefined) {
+  const media = linkedContent(item)?.featured_media;
+  return (
+    media?.cdn_url ??
+    media?.public_url ??
+    media?.url ??
+    media?.thumbnail_url ??
+    null
+  );
+}
+
+function updateImageUrl(item: HomepageSectionItem | undefined) {
+  return itemImageUrl(item) ?? linkedMediaUrl(item) ?? undefined;
+}
+
+function itemCategoryLabel(item: HomepageSectionItem) {
+  const linked = linkedContent(item);
+  return (
+    itemContentText(item, "category") ??
+    (linked?.type === "blog"
+      ? "Article"
+      : linked?.type === "event"
+        ? "Event"
+        : undefined) ??
+    item.item_type ??
+    "Update"
+  );
+}
+
+function itemDateLabel(item: HomepageSectionItem) {
+  const linked = linkedContent(item);
+  return (
+    itemContentText(item, "date") ??
+    item.subtitle ??
+    formatPublicDate(
+      linked?.type === "event" ? linked?.start_date : linked?.published_at,
+    ) ??
+    undefined
+  );
+}
+
+function composedEventDateParts(item: HomepageSectionItem, index: number) {
+  const linked = linkedContent(item);
+  const rawDate =
+    itemContentText(item, "date") ??
+    linked?.start_date ??
+    item.subtitle ??
+    null;
+  const date = new Date(rawDate ?? "");
+  const linkedEventLocation = linked as
+    | { venue?: string | null; location?: string | null }
+    | undefined;
+  const location =
+    itemContentText(item, "venue") ??
+    itemContentText(item, "location") ??
+    linkedEventLocation?.venue ??
+    linkedEventLocation?.location ??
+    item.cta_description;
+
+  if (Number.isNaN(date.getTime())) {
+    return {
+      month: "Event",
+      day: String(index + 1).padStart(2, "0"),
+      weekday: "",
+      time: rawDate
+        ? formatPublicDate(rawDate) ?? rawDate
+        : "Time to be confirmed",
+      location,
+    };
+  }
+
+  return {
+    month: date.toLocaleDateString("en-KE", { month: "short" }),
+    day: date.toLocaleDateString("en-KE", { day: "2-digit" }),
+    weekday: date.toLocaleDateString("en-KE", { weekday: "short" }),
+    time: date.toLocaleTimeString("en-KE", {
+      hour: "numeric",
+      minute: "2-digit",
+    }),
+    location,
+  };
 }
 
 function settingText(section: HomepageSection, key: string) {

@@ -23,6 +23,7 @@ import { MiniHeader, PublicFooter, PublicHeader } from "@ksu/ui/layout/public";
 import { CountdownStrip } from "@/components/home/countdown-strip";
 import { AnimatedStatRow } from "@/components/home/animated-stat-row";
 import { HomepageSections } from "@/components/home/section-renderer";
+import { NewsletterSubscribeForm } from "@/components/home/newsletter-subscribe-form";
 import { HeroAdmissionsSection } from "@/components/home/sections/composed-section-variants";
 import {
   ProgressiveImageCard,
@@ -889,100 +890,170 @@ function LatestContentSection({
   events: HomeCard[];
   blog: HomeCard | null;
 }) {
+  const stories = [...newsItems.slice(0, 3), ...(blog ? [blog] : [])];
+  const featured = stories[0];
+  const latestStories = stories.slice(1, 4);
+
   return (
-    <section className="border-b border-blue-100 bg-white py-12">
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <SectionKicker title="News, Events and Notices" />
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-            Follow university announcements, academic events, student notices,
-            and public updates from one editorial view.
-          </p>
-        </div>
-        <Link
-          href="/media/news"
-          className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary hover:text-secondary"
-        >
-          View media centre
-          <ArrowRight className="h-4 w-4" aria-hidden />
-        </Link>
-      </div>
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.24fr)_minmax(300px,0.76fr)]">
-        <div>
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
-              Latest News
-            </h3>
-            <Link
-              href="/media/news"
-              className="inline-flex min-h-11 items-center gap-2 text-xs font-semibold text-primary hover:text-secondary"
-            >
-              View all news
-              <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-            </Link>
+    <section className="-mx-4 border-b border-primary/10 bg-[linear-gradient(180deg,#fffdf8_0%,#ffffff_54%,#f8f4e8_100%)] px-4 py-12 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10 2xl:-mx-12 2xl:px-12">
+      <div className="mx-auto max-w-[1680px]">
+        <div className="mb-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.34em] text-primary">
+              Kisii University Updates
+            </p>
+            <span className="mt-2 block h-px w-16 bg-secondary" />
+            <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-bold leading-[0.95] text-primary sm:text-5xl lg:text-6xl">
+              Stories, News &amp; Events
+            </h2>
+            <p className="mt-4 max-w-3xl text-base leading-7 text-slate-700">
+              Discover what is happening across campus—partnerships that create
+              impact, achievements that inspire, and events that bring us
+              together.
+            </p>
           </div>
-          {newsItems.length ? (
-            <div className="grid gap-4 sm:grid-cols-[1.2fr_0.9fr]">
-              <NewsLead item={newsItems[0]} />
-              <div className="grid gap-3">
-                {newsItems.slice(1, 3).map((item) => (
-                  <NewsMini key={item.href} item={item} />
-                ))}
-              </div>
-            </div>
+          <nav
+            className="flex flex-wrap items-center gap-4 text-sm font-bold text-primary sm:gap-7"
+            aria-label="University updates"
+          >
+            {[
+              ["News", "/media/news"],
+              ["Events", "/media/events"],
+              ["Articles", "/media/articles"],
+            ].map(([label, href], index) => (
+              <Link
+                key={href}
+                href={href}
+                className={`group inline-flex min-h-11 items-center gap-3 ${
+                  index > 0 ? "sm:border-l sm:border-primary/20 sm:pl-7" : ""
+                }`}
+              >
+                {label}
+                <ArrowRight className="h-4 w-4 text-secondary transition group-hover:translate-x-1" />
+              </Link>
+            ))}
+          </nav>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.62fr)_minmax(360px,0.66fr)]">
+          {featured ? (
+            <FeaturedStory item={featured} />
           ) : (
             <HomeEmptyState
-              title="News updates are being refreshed"
+              title="Stories are being refreshed"
               body="Open the news listing for current published university updates."
               actionHref="/media/news"
               actionLabel="Open news"
             />
           )}
+
+          <div className="min-w-0 bg-white/50 p-0 xl:px-2">
+            <SectionKicker title="Latest stories" className="text-primary" />
+            {latestStories.length ? (
+              <div className="mt-5 divide-y divide-primary/10">
+                {latestStories.map((item) => (
+                  <StoryListItem key={item.href} item={item} />
+                ))}
+              </div>
+            ) : (
+              <HomeEmptyState
+                title="More stories are being refreshed"
+                body="Open the media centre for the latest records."
+                actionHref="/media/news"
+                actionLabel="Open media centre"
+              />
+            )}
+          </div>
+
+          <UpcomingEventsPanel events={events} />
         </div>
-        <div className="grid gap-5">
-          <EventsCard events={events} />
-          <LatestBlogCard blog={blog} />
+
+        <div className="mt-0 grid gap-6 border-t border-primary/10 bg-white/70 px-5 py-5 shadow-[0_-16px_48px_rgba(0,0,0,0.04)] lg:grid-cols-[minmax(0,1fr)_1px_minmax(280px,0.55fr)] lg:items-center lg:px-8">
+          <div className="grid gap-4 md:grid-cols-[auto_minmax(0,280px)_minmax(280px,1fr)] md:items-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/20">
+              <Mail className="h-7 w-7" aria-hidden />
+            </span>
+            <div>
+              <h3 className="font-[family-name:var(--font-display)] text-2xl font-bold text-primary">
+                Subscribe to updates
+              </h3>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                Get the latest news, events, and stories straight to your inbox.
+              </p>
+            </div>
+            <NewsletterSubscribeForm />
+          </div>
+          <span className="hidden h-20 w-px bg-primary/15 lg:block" />
+          <Link
+            href="/contact"
+            className="group flex items-center gap-4 rounded-md p-2 transition hover:bg-primary/5"
+          >
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-secondary text-white shadow-lg shadow-secondary/25">
+              <Newspaper className="h-6 w-6" aria-hidden />
+            </span>
+            <span>
+              <span className="block font-[family-name:var(--font-display)] text-2xl font-bold text-primary">
+                Submit a story
+              </span>
+              <span className="mt-1 block text-sm leading-6 text-slate-600">
+                Have a story to share? Send it to Corporate Communication.
+              </span>
+              <span className="mt-1 inline-flex items-center gap-2 text-sm font-bold text-secondary">
+                Submit your story
+                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+              </span>
+            </span>
+          </Link>
         </div>
       </div>
     </section>
   );
 }
 
-function NewsLead({ item }: { item: HomeCard }) {
+function FeaturedStory({ item }: { item: HomeCard }) {
   return (
-    <Link href={item.href} className="group block">
+    <Link
+      href={item.href}
+      className="group relative block min-h-[420px] overflow-hidden bg-primary text-white"
+    >
       <PublicImage
         src={item.imageUrl}
         alt=""
-        ratio="news"
+        ratio="fill"
         fallbackSrc="/logos/ksu-bck1.jpg"
-        fallbackContent={<Newspaper className="h-8 w-8" aria-hidden />}
-        sizes="(min-width: 1280px) 34vw, (min-width: 640px) 54vw, 100vw"
-        className="h-44 rounded-md"
-        imageClassName="transition duration-500 group-hover:scale-105"
+        fallbackContent={<Newspaper className="h-10 w-10" aria-hidden />}
+        sizes="(min-width: 1280px) 42vw, 100vw"
+        className="absolute inset-0 h-full w-full"
+        imageClassName="object-cover transition duration-700 group-hover:scale-105"
       />
-      {item.meta ? (
-        <p className="mt-3 text-xs font-semibold text-slate-500">{item.meta}</p>
-      ) : null}
-      <h3 className="mt-1 line-clamp-2 font-[family-name:var(--font-display)] text-xl font-bold leading-6 text-slate-950 transition group-hover:text-primary">
-        {item.title}
-      </h3>
-      <span className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-primary">
-        Read more
-        <ArrowRight
-          className="h-3.5 w-3.5 transition group-hover:translate-x-1"
-          aria-hidden
-        />
+      <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05)_10%,rgba(0,53,37,0.88)_100%)]" />
+      <span className="absolute inset-x-0 bottom-0 z-10 p-5 sm:p-7">
+        <span className="flex flex-wrap items-center gap-3 text-sm font-semibold">
+          <span className="rounded-full bg-secondary px-3 py-1 text-white">
+            {item.eyebrow ?? "Story"}
+          </span>
+          {item.meta ? <span className="text-white/85">{item.meta}</span> : null}
+        </span>
+        <span className="mt-4 block font-[family-name:var(--font-display)] text-2xl font-bold leading-tight sm:text-3xl">
+          {item.title}
+        </span>
+        <span className="mt-2 block max-w-2xl text-sm leading-6 text-white/85">
+          {item.body}
+        </span>
+        <span className="mt-5 inline-flex items-center gap-3 text-sm font-bold text-secondary">
+          Read story
+          <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+        </span>
       </span>
     </Link>
   );
 }
 
-function NewsMini({ item }: { item: HomeCard }) {
+function StoryListItem({ item }: { item: HomeCard }) {
   return (
     <Link
       href={item.href}
-      className="group grid min-w-0 grid-cols-[82px_minmax(0,1fr)] gap-3"
+      className="group grid min-w-0 grid-cols-[116px_minmax(0,1fr)_auto] gap-4 py-4"
     >
       <PublicImage
         src={item.imageUrl}
@@ -990,58 +1061,39 @@ function NewsMini({ item }: { item: HomeCard }) {
         ratio="news"
         fallbackSrc="/logos/ksu-bck5.jpg"
         fallbackContent={<Newspaper className="h-5 w-5" aria-hidden />}
-        sizes="82px"
-        className="h-20 rounded-md"
+        sizes="116px"
+        className="h-24 rounded-sm"
+        imageClassName="object-cover"
       />
       <span className="min-w-0">
-        {item.meta ? (
-          <span className="block text-[11px] font-semibold text-slate-500">
-            {item.meta}
-          </span>
-        ) : null}
-        <span className="mt-1 line-clamp-2 block text-sm font-bold leading-5 text-slate-950 group-hover:text-primary">
+        <span className="flex flex-wrap items-center gap-3 text-[11px] font-bold uppercase tracking-[0.12em] text-primary">
+          <span>{item.eyebrow ?? "Update"}</span>
+          {item.meta ? (
+            <span className="font-medium normal-case tracking-normal text-slate-500">
+              {item.meta}
+            </span>
+          ) : null}
+        </span>
+        <span className="mt-2 line-clamp-2 block font-[family-name:var(--font-display)] text-lg font-bold leading-5 text-slate-950 transition group-hover:text-primary">
           {item.title}
         </span>
-        <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-primary">
-          Read more <ArrowRight className="h-3 w-3" aria-hidden />
+        <span className="mt-2 line-clamp-2 block text-sm leading-5 text-slate-600">
+          {item.body}
         </span>
       </span>
+      <ArrowRight className="mt-10 h-5 w-5 text-secondary transition group-hover:translate-x-1" />
     </Link>
   );
 }
 
-function EventsCard({ events }: { events: HomeCard[] }) {
+function UpcomingEventsPanel({ events }: { events: HomeCard[] }) {
   return (
-    <aside className="rounded-md border border-blue-100 bg-blue-50/60 p-5">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <SectionKicker title="Upcoming Events" />
-        <Link
-          href="/media/events"
-          className="inline-flex min-h-11 items-center text-xs font-semibold text-primary hover:text-secondary"
-        >
-          View all events
-        </Link>
-      </div>
+    <aside className="bg-primary px-5 py-6 text-white shadow-2xl shadow-primary/20 sm:px-7">
+      <SectionKicker title="Upcoming events" className="text-white" />
       {events.length ? (
-        <div className="divide-y divide-blue-50">
+        <div className="relative mt-6 space-y-0 pl-5 before:absolute before:left-[11px] before:top-4 before:h-[calc(100%-2rem)] before:w-px before:bg-secondary">
           {events.slice(0, 3).map((event) => (
-            <Link
-              key={event.href}
-              href={event.href}
-              className="group grid grid-cols-[48px_1fr] gap-3 py-3"
-            >
-              <span className="rounded-md border border-blue-100 bg-blue-50 px-2 py-2 text-center text-[11px] font-bold uppercase text-primary">
-                {event.meta?.slice(0, 6) ?? "Event"}
-              </span>
-              <span>
-                <span className="block text-sm font-bold leading-5 text-slate-950 group-hover:text-primary">
-                  {event.title}
-                </span>
-                <span className="mt-1 block text-xs leading-5 text-slate-600">
-                  {event.meta ?? event.body}
-                </span>
-              </span>
-            </Link>
+            <EventAgendaItem key={event.href} event={event} />
           ))}
         </div>
       ) : (
@@ -1052,39 +1104,79 @@ function EventsCard({ events }: { events: HomeCard[] }) {
           actionLabel="Open events"
         />
       )}
+      <Link
+        href="/media/events"
+        className="mt-6 inline-flex min-h-11 items-center gap-3 border-t border-white/15 pt-5 text-sm font-bold text-white hover:text-secondary"
+      >
+        View all events
+        <ArrowRight className="h-4 w-4" aria-hidden />
+      </Link>
     </aside>
   );
 }
 
-function LatestBlogCard({ blog }: { blog: HomeCard | null }) {
-  if (!blog) {
-    return (
-      <aside className="rounded-md border border-blue-100 bg-white p-5 shadow-sm shadow-blue-100/60">
-        <SectionKicker title="Latest Blog" />
-        <HomeEmptyState
-          title="Blog updates are being refreshed"
-          body="Open the blog listing for current published articles."
-          actionHref="/media/articles"
-          actionLabel="Open blogs"
-        />
-      </aside>
-    );
-  }
+function EventAgendaItem({ event }: { event: HomeCard }) {
+  const { month, day, weekday, detail } = eventDateParts(event.meta);
 
   return (
-    <aside className="rounded-md border border-blue-100 bg-white p-5 shadow-sm shadow-blue-100/60">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <SectionKicker title="Latest Blog" />
-        <Link
-          href="/media/articles"
-          className="inline-flex min-h-11 items-center text-xs font-semibold text-primary hover:text-secondary"
-        >
-          View all blogs
-        </Link>
-      </div>
-      <NewsMini item={blog} />
-    </aside>
+    <Link
+      href={event.href}
+      className="group relative grid grid-cols-[72px_minmax(0,1fr)_auto] gap-5 border-b border-white/15 py-5"
+    >
+      <span className="absolute -left-[19px] top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-secondary bg-primary" />
+      <span className="rounded-md bg-white px-2 py-3 text-center text-primary shadow-sm">
+        <span className="block text-xs font-bold uppercase tracking-[0.18em]">
+          {month}
+        </span>
+        <span className="block font-[family-name:var(--font-display)] text-3xl font-bold leading-none">
+          {day}
+        </span>
+        <span className="block text-xs font-bold uppercase">{weekday}</span>
+      </span>
+      <span className="min-w-0">
+        <span className="block font-[family-name:var(--font-display)] text-xl font-bold leading-tight text-secondary">
+          {event.title}
+        </span>
+        <span className="mt-3 flex items-center gap-2 text-sm text-white/85">
+          <CalendarDays className="h-4 w-4" aria-hidden />
+          {detail.time}
+        </span>
+        {detail.location ? (
+          <span className="mt-2 flex items-center gap-2 text-sm text-white/85">
+            <MapPin className="h-4 w-4" aria-hidden />
+            {detail.location}
+          </span>
+        ) : null}
+      </span>
+      <ArrowRight className="mt-10 h-5 w-5 text-secondary transition group-hover:translate-x-1" />
+    </Link>
   );
+}
+
+function eventDateParts(meta?: string | null) {
+  const [dateText, locationText] = (meta ?? "").split(" · ");
+  const date = new Date(dateText ?? "");
+  if (Number.isNaN(date.getTime())) {
+    return {
+      month: "Event",
+      day: "",
+      weekday: "",
+      detail: { time: dateText || "Time to be confirmed", location: locationText },
+    };
+  }
+
+  return {
+    month: date.toLocaleDateString("en-KE", { month: "short" }),
+    day: date.toLocaleDateString("en-KE", { day: "2-digit" }),
+    weekday: date.toLocaleDateString("en-KE", { weekday: "short" }),
+    detail: {
+      time: date.toLocaleTimeString("en-KE", {
+        hour: "numeric",
+        minute: "2-digit",
+      }),
+      location: locationText,
+    },
+  };
 }
 
 function ResearchSection() {

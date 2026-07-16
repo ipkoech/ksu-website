@@ -14,6 +14,8 @@ export function generateStaticParams() {
     { resource: "student-clubs" },
     { resource: "faqs" },
     { resource: "contacts" },
+    { resource: "newsletters" },
+    { resource: "newsletter-subscribers" },
     { resource: "testimonials" },
   ];
 }

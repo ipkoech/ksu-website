@@ -31,6 +31,7 @@ type SectionComponent = (props: {
   factsSection?: HomepageSection | null;
   partnershipSpotlights?: HomepagePartnershipSpotlight[];
   academicDatesSection?: HomepageSection | null;
+  eventsSection?: HomepageSection | null;
   programmeFinderData?: ProgrammeFinderData;
 }) => ReactElement | null;
 
@@ -60,6 +61,7 @@ export function HomepageSectionRenderer({
   factsSection,
   partnershipSpotlights,
   academicDatesSection,
+  eventsSection,
   programmeFinderData,
 }: {
   section: HomepageSection;
@@ -67,6 +69,7 @@ export function HomepageSectionRenderer({
   factsSection?: HomepageSection | null;
   partnershipSpotlights?: HomepagePartnershipSpotlight[];
   academicDatesSection?: HomepageSection | null;
+  eventsSection?: HomepageSection | null;
   programmeFinderData?: ProgrammeFinderData;
 }) {
   if (!isKnownHomepageLayoutVariant(section.layout_variant)) {
@@ -84,6 +87,7 @@ export function HomepageSectionRenderer({
       factsSection={factsSection}
       partnershipSpotlights={partnershipSpotlights}
       academicDatesSection={academicDatesSection}
+      eventsSection={eventsSection}
       programmeFinderData={programmeFinderData}
     />
   );
@@ -116,6 +120,12 @@ export function HomepageSections({
       section.layout_variant === "date_timeline" ||
       section.section_key === "academic-dates",
   );
+  const eventsSection = sections.find(
+    (section) => section.layout_variant === "events_list",
+  );
+  const hasMergedNewsEvents = sections.some(
+    (section) => section.layout_variant === "news_grid",
+  );
   const hasMergedProgrammeDates = sections.some(
     (section) => section.layout_variant === "programme_finder",
   );
@@ -132,6 +142,9 @@ export function HomepageSections({
         ) {
           return null;
         }
+        if (hasMergedNewsEvents && section.layout_variant === "events_list") {
+          return null;
+        }
 
         return (
           <HomepageSectionRenderer
@@ -141,6 +154,7 @@ export function HomepageSections({
             factsSection={factsSection}
             partnershipSpotlights={partnershipSpotlights}
             academicDatesSection={academicDatesSection}
+            eventsSection={eventsSection}
             programmeFinderData={programmeFinderData}
           />
         );

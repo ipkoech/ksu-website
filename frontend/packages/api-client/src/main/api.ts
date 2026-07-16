@@ -67,6 +67,8 @@ import type {
   PublicContactDirectory,
   PublicContactDirectoryParams,
   Testimonial,
+  Newsletter,
+  NewsletterSubscriber,
   Role,
   Permission,
   UniversityInfo,
@@ -1837,6 +1839,50 @@ export const testimonialsApi = {
     mainApi.patch<{ data: Testimonial }>(`/api/v1/testimonials/${id}`, data),
 
   delete: (id: string) => mainApi.delete<void>(`/api/v1/testimonials/${id}`),
+};
+
+// Newsletters
+export const newslettersApi = {
+  list: (
+    params?: ListParams<{
+      q?: string;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Newsletter>>("/api/v1/newsletters", params),
+
+  listAdmin: (
+    params?: ListParams<{
+      q?: string;
+      status?: string;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<Newsletter>>(
+      "/api/v1/newsletters/admin",
+      params,
+    ),
+
+  getAdmin: (id: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Newsletter }>(
+      `/api/v1/newsletters/admin/${id}`,
+      params,
+    ),
+
+  create: (data: Partial<Newsletter>) =>
+    mainApi.post<{ data: Newsletter }>("/api/v1/newsletters", data),
+
+  update: (id: string, data: Partial<Newsletter>) =>
+    mainApi.patch<{ data: Newsletter }>(`/api/v1/newsletters/${id}`, data),
+
+  delete: (id: string) => mainApi.delete<void>(`/api/v1/newsletters/${id}`),
+
+  listSubscribers: (
+    params?: ListParams<{
+      status?: string;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<NewsletterSubscriber>>(
+      "/api/v1/newsletters/subscribers",
+      params,
+    ),
 };
 
 // Roles
