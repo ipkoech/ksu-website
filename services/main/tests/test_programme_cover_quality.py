@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from app.seeders.programme_cover_concepts import load_programme_cover_concepts
+from app.seeders.programme_cover_concepts import ProgrammeCoverConcept, load_programme_cover_concepts
 from app.seeders.programme_cover_quality import (
     difference_hash,
     hamming_distance,
@@ -160,6 +160,47 @@ def test_validation_reports_perceptual_distance_below_eight(tmp_path: Path) -> N
     assert report.similarities
     assert report.similarities[0].distance < 8
     assert any("perceptual" in error.lower() for error in report.errors)
+
+
+def test_validation_reports_every_pair_among_three_similar_candidates_without_deleting(
+    tmp_path: Path,
+) -> None:
+    concepts = tuple(
+        ProgrammeCoverConcept(
+            school_code="SOL",
+            programme_name=f"Similar Programme {index}",
+            department_code="LAW",
+            visual_family="legal research",
+            subject=f"Distinct valid subject {index}",
+            alt_text=f"Academic legal illustration {index}",
+            distinctiveness=f"Distinct arrangement {index}",
+        )
+        for index in range(1, 4)
+    )
+    manifest = create_manifest(SCHOOL_COVER_SCOPES["SOL"], concepts)
+    paths: list[Path] = []
+    for concept in concepts:
+        path = tmp_path / "review" / concept.filename
+        _webp(path, "testsrc")
+        paths.append(path)
+        manifest.items[concept.slug] = transition_item(
+            manifest.items[concept.slug],
+            ReviewStatus.GENERATED,
+            candidate_path=f"generated/{concept.slug}/attempt-1.webp",
+            sha256=_sha256(path),
+            attempt=1,
+        )
+
+    report = validate_school_review(tmp_path, manifest, concepts)
+
+    assert {
+        frozenset((match.left_slug, match.right_slug)) for match in report.similarities
+    } == {
+        frozenset((concepts[0].slug, concepts[1].slug)),
+        frozenset((concepts[0].slug, concepts[2].slug)),
+        frozenset((concepts[1].slug, concepts[2].slug)),
+    }
+    assert all(path.is_file() for path in paths)
 
 
 def test_passing_batch_writes_json_report_with_zero_errors(tmp_path: Path) -> None:

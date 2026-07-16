@@ -21,6 +21,8 @@ def render_contact_sheets(
     workspace = Path(workspace)
     output_dir = workspace / "contact-sheets"
     output_dir.mkdir(parents=True, exist_ok=True)
+    for stale_page in output_dir.glob("contact-sheet-*.html"):
+        stale_page.unlink()
     items = list(manifest.items.values())
     paths: list[Path] = []
     for page_index, offset in enumerate(range(0, len(items), cards_per_page), start=1):

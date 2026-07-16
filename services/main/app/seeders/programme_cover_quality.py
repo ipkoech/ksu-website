@@ -97,6 +97,8 @@ def difference_hash(path: Path) -> int:
             str(path),
             "-vf",
             "scale=9:8,format=gray",
+            "-frames:v",
+            "1",
             "-f",
             "rawvideo",
             "-",
