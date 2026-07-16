@@ -315,7 +315,7 @@ export function PublicAboutPage({ data, facts, historyInitiallyOpen = false }: {
         </div>
       </section>
 
-      <AboutReveal className="mx-auto grid w-full gap-10 border-b border-primary/10 px-5 py-14 sm:px-8 lg:grid-cols-[.78fr_1.22fr] lg:items-center lg:px-16 lg:py-16 xl:px-20">
+      <AboutReveal className="mx-auto grid w-full max-w-7xl gap-10 border-b border-primary/10 px-5 py-14 sm:px-8 lg:grid-cols-[.78fr_1.22fr] lg:items-center lg:px-10 lg:py-16">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Our identity</p>
           <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-medium leading-tight text-primary sm:text-5xl">Who We Are</h2>
@@ -335,7 +335,7 @@ export function PublicAboutPage({ data, facts, historyInitiallyOpen = false }: {
       </AboutReveal>
 
       <section className="border-y border-primary/10 bg-white px-5 py-14 sm:px-8 lg:px-16 lg:py-16 xl:px-20">
-        <AboutReveal className="mx-auto w-full">
+        <AboutReveal className="mx-auto w-full max-w-7xl">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Our beliefs</p>
           <div className="mt-8 grid gap-8 md:grid-cols-3 md:gap-0">
             {[{ title: "Mission", body: university.mission, icon: Target }, { title: "Vision", body: university.vision, icon: Eye }, { title: "Philosophy", body: university.philosophy, icon: Sparkles }].map(({ title, body, icon: Icon }) => (
@@ -347,21 +347,21 @@ export function PublicAboutPage({ data, facts, historyInitiallyOpen = false }: {
 
       <section className="relative overflow-hidden bg-[linear-gradient(110deg,#052e63_0%,#074387_100%)] px-5 py-14 text-white sm:px-8 lg:px-16 lg:py-20 xl:px-20">
         <div className="absolute -left-20 top-0 h-full w-80 opacity-[0.06] [background-image:radial-gradient(circle_at_center,white_0,white_1px,transparent_1.5px)] [background-size:18px_18px]" aria-hidden />
-        <AboutReveal className="relative mx-auto grid w-full gap-12 lg:grid-cols-2">
+        <AboutReveal className="relative mx-auto grid w-full max-w-7xl gap-12 lg:grid-cols-2">
           <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">{coreValuesSection?.eyebrow || "Core values"}</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-medium text-white">What Guides Us</h2><div className="mt-9 grid gap-x-8 gap-y-7 sm:grid-cols-2">{displayedValues.filter((item) => Boolean(coreValuesSection) || !coreValues.length || coreValues.some((value) => value.toLowerCase().includes(item.title.toLowerCase()))).map((item) => <article key={item.title} className="group flex gap-4"><span className="flex h-12 w-12 shrink-0 items-center justify-center text-white"><InstitutionalIcon name={item.icon_key} className="h-8 w-8" /></span><div><h3 className="font-[family-name:var(--font-display)] text-xl font-semibold text-white">{item.title}</h3><p className="mt-2 text-sm leading-6 text-white/72">{item.description}</p></div></article>)}</div></div>
           <div className="border-t border-white/20 pt-10 lg:border-l lg:border-t-0 lg:pl-14 lg:pt-0"><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">{mandateSection?.eyebrow || "Our mandate"}</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-medium text-white">Why We Exist</h2><p className="mt-5 max-w-xl text-base leading-8 text-white/75">{mandateSection?.summary || content?.mandate_introduction}</p><ul className="mt-8 space-y-4">{displayedMandate.map((item) => <li key={item.title} className="flex items-center gap-3 text-sm font-semibold text-white"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-lime-400 text-lime-400"><Check className="h-3 w-3" aria-hidden /></span>{item.title}</li>)}</ul></div>
         </AboutReveal>
       </section>
 
       <section className="bg-white px-5 py-14 sm:px-8 lg:px-16 lg:py-16 xl:px-20">
-        <AboutReveal className="mx-auto w-full">
+        <AboutReveal className="mx-auto w-full max-w-7xl">
           <div className="grid gap-5 lg:grid-cols-2 lg:items-end"><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">From Our Roots. To Our Future.</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-primary sm:text-4xl">A Campus in Transformation</h2></div><p className="text-sm leading-7 text-muted-foreground">Our journey is one of growth, vision and impact. From humble beginnings to a modern university, we continue to invest in people, infrastructure and innovation for a better tomorrow.</p></div>
           <div className="mt-8 min-h-[260px] overflow-hidden rounded-sm border border-primary/10"><ImageComparison before={mediaUrl(content?.old_campus_media, "/images/history/KSUGreenLandscapingMay2026-3810.jpg")} after={mediaUrl(content?.modern_campus_media, heroFallback)} beforeAlt={content?.old_campus_media?.alt || "Historic Kisii University campus"} afterAlt={content?.modern_campus_media?.alt || "Modern Kisii University campus"} /></div>
         </AboutReveal>
       </section>
 
       <section className="bg-white px-5 pb-10 sm:px-8 lg:px-16 xl:px-20">
-        <AboutReveal className="mx-auto w-full"><div className="flex flex-col gap-5 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between"><h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-primary">Kisii University at a glance</h2><Link href="/about/numbers-and-facts" className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-primary hover:underline">KSU Numbers & Facts <ArrowRight className="h-4 w-4" aria-hidden /></Link></div><div className="grid grid-cols-2 lg:grid-cols-6">{profile.map(({ label, value, icon: Icon }) => <div key={label} className="border-b border-border px-3 py-6 text-center lg:border-r lg:last:border-r-0"><Icon className="mx-auto h-7 w-7 text-primary" aria-hidden /><p className="mt-3 font-[family-name:var(--font-display)] text-lg font-semibold text-primary">{value}</p><p className="mt-1 text-[0.68rem] font-bold uppercase tracking-wider text-muted-foreground">{label}</p></div>)}</div></AboutReveal>
+        <AboutReveal className="mx-auto w-full max-w-7xl"><div className="flex flex-col gap-5 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between"><h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-primary">Kisii University at a glance</h2><Link href="/about/numbers-and-facts" className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-primary hover:underline">KSU Numbers & Facts <ArrowRight className="h-4 w-4" aria-hidden /></Link></div><div className="grid grid-cols-2 lg:grid-cols-6">{profile.map(({ label, value, icon: Icon }) => <div key={label} className="border-b border-border px-3 py-6 text-center lg:border-r lg:last:border-r-0"><Icon className="mx-auto h-7 w-7 text-primary" aria-hidden /><p className="mt-3 font-[family-name:var(--font-display)] text-lg font-semibold text-primary">{value}</p><p className="mt-1 text-[0.68rem] font-bold uppercase tracking-wider text-muted-foreground">{label}</p></div>)}</div></AboutReveal>
       </section>
 
       <HistoryDrawer open={historyOpen} milestones={data.history.milestones} historyDocument={data.history.document} onClose={() => setHistory(false)} />
