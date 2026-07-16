@@ -7,9 +7,10 @@ import asyncio
 import hashlib
 import shutil
 import uuid
+from collections import Counter
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from collections.abc import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -138,6 +139,42 @@ def validate_cover_approval(
         )
 
 
+def canonical_school_concepts(
+    concepts: Sequence[ProgrammeCoverConcept],
+    school_scope: SchoolCoverScope,
+) -> tuple[ProgrammeCoverConcept, ...]:
+    """Return the canonical registry after rejecting a partial or altered batch."""
+
+    canonical = load_programme_cover_concepts(school_scope.code)
+    canonical_by_slug = {concept.slug: concept for concept in canonical}
+    supplied_by_slug = {concept.slug: concept for concept in concepts}
+    duplicate_slugs = sorted(
+        slug for slug, count in Counter(concept.slug for concept in concepts).items() if count > 1
+    )
+    missing = sorted(set(canonical_by_slug) - set(supplied_by_slug))
+    unexpected = sorted(set(supplied_by_slug) - set(canonical_by_slug))
+    altered = sorted(
+        slug
+        for slug in set(canonical_by_slug) & set(supplied_by_slug)
+        if supplied_by_slug[slug] != canonical_by_slug[slug]
+    )
+    if missing or unexpected or duplicate_slugs or altered:
+        details = []
+        if missing:
+            details.append(f"missing: {', '.join(missing)}")
+        if unexpected:
+            details.append(f"unexpected: {', '.join(unexpected)}")
+        if duplicate_slugs:
+            details.append(f"duplicates: {', '.join(duplicate_slugs)}")
+        if altered:
+            details.append(f"altered: {', '.join(altered)}")
+        raise CoverApprovalError(
+            f"Supplied concepts are not the canonical {school_scope.code} registry: "
+            + "; ".join(details)
+        )
+    return canonical
+
+
 def _media_payload(
     concept: ProgrammeCoverConcept,
     destination: Path,
@@ -195,6 +232,7 @@ async def import_programme_covers(
     manifest: SchoolReviewManifest,
     upload_root: Path,
 ) -> ImportSummary:
+    concepts = canonical_school_concepts(concepts, school_scope)
     validate_cover_approval(concepts, school_scope=school_scope, manifest=manifest)
     assets = validate_cover_assets(source_dir, concepts)
     storage_root = f"seed/programme-covers/{school_scope.slug}"
