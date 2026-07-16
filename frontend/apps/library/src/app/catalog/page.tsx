@@ -169,7 +169,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
           <>
             <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_320px]">
               <SidePanel title="Refine results" eyebrow="Filters">
-                <div className="flex flex-col gap-3 text-sm leading-6 text-slate-600">
+                <div className="flex flex-col gap-3 text-sm leading-6 text-muted-foreground">
                   <p>Branch: {selectedBranch?.name ?? "All branches"}</p>
                   <p>Type: {resourceType ? formatLabel(resourceType) : "All types"}</p>
                   <p>Status: {status ? formatLabel(status) : "All statuses"}</p>
@@ -195,7 +195,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
                 <SearchTips />
                 {selectedBranch ? (
                   <SidePanel title={selectedBranch.name} eyebrow="Selected branch">
-                    <dl className="mt-4 grid gap-3 text-sm text-slate-600">
+                    <dl className="mt-4 grid gap-3 text-sm text-muted-foreground">
                       <Meta label="Location" value={selectedBranch.address} />
                       <Meta label="Phone" value={selectedBranch.phone} />
                       <Meta label="Email" value={selectedBranch.email} />
@@ -242,9 +242,9 @@ function CatalogCard({ resource }: { resource: LibraryResource }) {
 
 function SearchTips() {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-950">Search tips</h2>
-      <ul className="mt-4 flex flex-col gap-3 text-sm leading-6 text-slate-600">
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-lg font-semibold text-foreground">Search tips</h2>
+      <ul className="mt-4 flex flex-col gap-3 text-sm leading-6 text-muted-foreground">
         <li>Use shorter phrases when an exact title does not return results.</li>
         <li>Search by author, ISBN, ISSN, call number, publisher, or subject.</li>
         <li>Change the branch selector if the item may be held elsewhere.</li>
@@ -291,7 +291,7 @@ function Meta({
 
   return (
     <div>
-      <dt className="font-semibold text-slate-950">{label}</dt>
+      <dt className="font-semibold text-foreground">{label}</dt>
       <dd className="mt-1">{value}</dd>
     </div>
   );

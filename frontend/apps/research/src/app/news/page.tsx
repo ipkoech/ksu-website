@@ -233,7 +233,7 @@ function NewsHero({
                     className={`inline-flex min-h-11 items-center gap-3 rounded-md border px-5 text-sm font-semibold transition ${
                       active
                         ? "border-white/20 bg-primary text-white shadow-lg"
-                        : "border-white/55 bg-slate-950/18 text-white hover:bg-white/10"
+                        : "border-white/55 bg-brand-overlay/18 text-white hover:bg-white/10"
                     }`}
                   >
                     <Icon aria-hidden className="h-4 w-4" />
@@ -247,12 +247,12 @@ function NewsHero({
               {activeTab ? <input type="hidden" name="tab" value={activeTab} /> : null}
               <label className="relative min-w-0 flex-1">
                 <span className="sr-only">Search updates</span>
-                <Search aria-hidden className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Search aria-hidden className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
                 <input
                   name="q"
                   defaultValue={query}
                   placeholder="Search updates..."
-                  className="h-11 w-full rounded-md bg-transparent pl-11 pr-3 text-sm text-slate-950 outline-none placeholder:text-slate-500"
+                  className="h-11 w-full rounded-md bg-transparent pl-11 pr-3 text-sm text-foreground outline-none placeholder:text-muted-foreground"
                 />
               </label>
               <button className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-sm font-semibold text-white transition hover:bg-primary/90">
@@ -292,22 +292,22 @@ function StoryCard({
 }) {
   const image = getRecordImage(item.record) || fallbackImages[index % fallbackImages.length];
   const content = (
-    <article className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl">
+    <article className="group overflow-hidden rounded-lg border border-border bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl">
       <div className={`relative overflow-hidden ${priority ? "h-56" : "h-40"}`}>
         <div
           className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-105"
           style={{ backgroundImage: `url(${image})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/42 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-overlay/42 to-transparent" />
         <KindBadge item={item} className="absolute left-3 top-3" />
       </div>
       <div className="p-4">
-        <h2 className={`${priority ? "text-xl" : "text-lg"} line-clamp-2 font-[family-name:var(--font-display)] font-semibold leading-7 text-slate-950`}>
+        <h2 className={`${priority ? "text-xl" : "text-lg"} line-clamp-2 font-[family-name:var(--font-display)] font-semibold leading-7 text-foreground`}>
           {getRecordTitle(item.record, "Research update")}
         </h2>
         <MetaLine record={item.record} className="mt-2" />
         {summaryFor(item.record) ? (
-          <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+          <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
             {summaryFor(item.record)}
           </p>
         ) : null}
@@ -349,22 +349,22 @@ function LatestResearch({ items, title = "Latest from research" }: { items: Cont
 function LatestCard({ item, index }: { item: ContentItem; index: number }) {
   const image = getRecordImage(item.record) || fallbackImages[index % fallbackImages.length];
   const content = (
-    <article className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg">
+    <article className="group overflow-hidden rounded-lg border border-border bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg">
       <div className="relative h-40 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-105"
           style={{ backgroundImage: `url(${image})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/42 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-overlay/42 to-transparent" />
         <KindBadge item={item} className="absolute left-3 top-3" />
       </div>
       <div className="p-4">
-        <h3 className="line-clamp-2 font-[family-name:var(--font-display)] text-lg font-semibold leading-6 text-slate-950">
+        <h3 className="line-clamp-2 font-[family-name:var(--font-display)] text-lg font-semibold leading-6 text-foreground">
           {getRecordTitle(item.record, "Research update")}
         </h3>
         <MetaLine record={item.record} className="mt-2" />
         {summaryFor(item.record) ? (
-          <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{summaryFor(item.record)}</p>
+          <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{summaryFor(item.record)}</p>
         ) : null}
       </div>
     </article>
@@ -375,17 +375,17 @@ function LatestCard({ item, index }: { item: ContentItem; index: number }) {
 function MiniLatestCard({ item, index }: { item: ContentItem; index: number }) {
   const image = getRecordImage(item.record) || fallbackImages[index % fallbackImages.length];
   const content = (
-    <article className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:border-primary/30 hover:shadow-md">
+    <article className="group overflow-hidden rounded-lg border border-border bg-white shadow-sm transition hover:border-primary/30 hover:shadow-md">
       <div className="relative h-20 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-105"
           style={{ backgroundImage: `url(${image})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/55 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-brand-overlay/55 to-transparent" />
         <KindBadge item={item} className="absolute left-3 top-3" compact />
       </div>
       <div className="p-3">
-        <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-950">
+        <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-foreground">
           {getRecordTitle(item.record, "Research update")}
         </h3>
         <MetaLine record={item.record} className="mt-2" />
@@ -407,32 +407,32 @@ function EventsCalendar({ items }: { items: ContentItem[] }) {
       <ScrollReveal className="space-y-4" variant="fade-up">
         <SectionHeader title="Events calendar" href="/news#events" />
         <div className="grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-lg border border-border bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <ChevronLeft aria-hidden className="h-5 w-5 text-primary" />
-              <h3 className="text-sm font-semibold text-slate-950">{monthLabel}</h3>
+              <h3 className="text-sm font-semibold text-foreground">{monthLabel}</h3>
               <ChevronRight aria-hidden className="h-5 w-5 text-primary" />
             </div>
-            <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[10px] font-semibold uppercase text-slate-500">
+            <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[10px] font-semibold uppercase text-muted-foreground">
               {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => <span key={`${day}-${index}`}>{day}</span>)}
             </div>
-            <div className="mt-2 grid grid-cols-7 gap-1 text-center text-xs text-slate-600">
+            <div className="mt-2 grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
               {calendarDays.map((day) => {
                 const active = String(day).padStart(2, "0") === activeDay;
                 return (
                   <span
                     key={day}
-                    className={`flex aspect-square items-center justify-center rounded-full ${active ? "bg-primary text-white" : "text-slate-600"}`}
+                    className={`flex aspect-square items-center justify-center rounded-full ${active ? "bg-primary text-white" : "text-muted-foreground"}`}
                   >
                     {day}
                   </span>
                 );
               })}
             </div>
-            <div className="mt-4 flex flex-wrap gap-3 text-[10px] font-semibold text-slate-500">
+            <div className="mt-4 flex flex-wrap gap-3 text-[10px] font-semibold text-muted-foreground">
               <LegendDot label="Upcoming" className="bg-primary" />
               <LegendDot label="Ongoing" className="bg-secondary" />
-              <LegendDot label="Completed" className="bg-slate-300" />
+              <LegendDot label="Completed" className="bg-surface-muted" />
             </div>
           </div>
           <div className="grid gap-3">
@@ -449,18 +449,18 @@ function EventRow({ item, index }: { item: ContentItem; index: number }) {
   const day = formatDay(recordDate(item.record));
   const ongoing = index === 2;
   const content = (
-    <article className="group grid grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition hover:border-primary/30 hover:shadow-md">
+    <article className="group grid grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border bg-white p-3 shadow-sm transition hover:border-primary/30 hover:shadow-md">
       <div className="overflow-hidden rounded-md border border-primary/15 text-center">
         <div className={`${ongoing ? "bg-secondary" : "bg-primary"} py-1 text-[10px] font-semibold uppercase text-white`}>
           {month}
         </div>
-        <div className="bg-white py-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">{day}</div>
+        <div className="bg-white py-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">{day}</div>
       </div>
       <div className="min-w-0">
-        <h3 className="line-clamp-1 font-[family-name:var(--font-display)] text-lg font-semibold leading-6 text-slate-950">
+        <h3 className="line-clamp-1 font-[family-name:var(--font-display)] text-lg font-semibold leading-6 text-foreground">
           {getRecordTitle(item.record, "Research event")}
         </h3>
-        <p className="mt-1 line-clamp-1 text-sm text-slate-600">
+        <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
           {compactText(item.record.venue ?? item.record.location) || formatDate(recordDate(item.record))}
         </p>
       </div>
@@ -476,17 +476,17 @@ function AnnouncementsPanel({ items }: { items: ContentItem[] }) {
   if (items.length === 0) return null;
   return (
     <div id="announcements">
-      <ScrollReveal className="space-y-4 rounded-lg bg-slate-50/80 p-5" variant="fade-up">
+      <ScrollReveal className="space-y-4 rounded-lg bg-surface-subtle/80 p-5" variant="fade-up">
         <SectionHeader title="Announcements" href="/news#announcements" />
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
           {items.map((item, index) => (
-            <article key={item.record.id} className="grid grid-cols-[48px_minmax(0,1fr)_auto] items-center gap-3 border-b border-slate-200 p-4 last:border-b-0">
+            <article key={item.record.id} className="grid grid-cols-[48px_minmax(0,1fr)_auto] items-center gap-3 border-b border-border p-4 last:border-b-0">
               <PriorityBadge priority={compactText(item.record.priority) || (index === 0 ? "High" : index === 1 ? "Medium" : "Low")} />
               <div className="min-w-0">
-                <h3 className="line-clamp-1 font-[family-name:var(--font-display)] text-base font-semibold text-slate-950">
+                <h3 className="line-clamp-1 font-[family-name:var(--font-display)] text-base font-semibold text-foreground">
                   {getRecordTitle(item.record, "Research announcement")}
                 </h3>
-                <p className="mt-1 text-xs font-semibold text-slate-500">
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">
                   {compactText(item.record.category) || "Research"} {formatDate(item.record.valid_to) ? ` • Due ${formatDate(item.record.valid_to)}` : ""}
                 </p>
               </div>
@@ -506,7 +506,7 @@ function ResearchGallery({ items, flush = false }: { items: ContentItem[]; flush
       <ScrollReveal className={`${flush ? "" : "mt-7"} space-y-4`} variant="fade-up">
         <SectionHeader title="Research gallery" href="/news#gallery" />
         <div className="relative">
-          <button className="absolute -left-4 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white shadow-md">
+          <button className="absolute -left-4 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-white shadow-md">
             <ChevronLeft aria-hidden className="h-5 w-5 text-primary" />
           </button>
           <div className="grid gap-4 overflow-hidden sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-7">
@@ -514,7 +514,7 @@ function ResearchGallery({ items, flush = false }: { items: ContentItem[]; flush
               <GalleryTile key={`${item.kind}-${item.record.id}`} item={item} index={index} />
             ))}
           </div>
-          <button className="absolute -right-4 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white shadow-md">
+          <button className="absolute -right-4 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-white shadow-md">
             <ChevronRight aria-hidden className="h-5 w-5 text-primary" />
           </button>
         </div>
@@ -526,7 +526,7 @@ function ResearchGallery({ items, flush = false }: { items: ContentItem[]; flush
 function GalleryTile({ item, index }: { item: ContentItem; index: number }) {
   const image = getRecordImage(item.record) || fallbackImages[index % fallbackImages.length];
   return (
-    <article className="group h-24 overflow-hidden rounded-lg border border-slate-200 bg-primary/10 shadow-sm">
+    <article className="group h-24 overflow-hidden rounded-lg border border-border bg-primary/10 shadow-sm">
       <div
         className="h-full bg-cover bg-center transition duration-700 group-hover:scale-105"
         style={{ backgroundImage: `url(${image})` }}
@@ -537,7 +537,7 @@ function GalleryTile({ item, index }: { item: ContentItem; index: number }) {
 
 function ResearchUpdatesBand() {
   return (
-    <ScrollReveal className="mt-7 overflow-hidden rounded-lg border border-primary/15 bg-[linear-gradient(135deg,#00234c,#00583d)] text-white shadow-sm" variant="fade-up">
+    <ScrollReveal className="mt-7 overflow-hidden rounded-lg border border-primary/15 bg-[linear-gradient(135deg,#00234c,hsl(var(--primary)/.62))] text-white shadow-sm" variant="fade-up">
       <div className="grid gap-5 p-6 lg:grid-cols-[minmax(260px,0.9fr)_minmax(320px,0.9fr)_minmax(420px,1.2fr)] lg:items-center">
         <div className="flex items-center gap-4">
           <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-secondary text-secondary">
@@ -557,7 +557,7 @@ function ResearchUpdatesBand() {
           <input
             type="email"
             placeholder="Enter your email address"
-            className="h-11 min-w-0 flex-1 rounded-md px-4 text-sm text-slate-950 outline-none placeholder:text-slate-500"
+            className="h-11 min-w-0 flex-1 rounded-md px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
           <button className="h-11 rounded-md bg-primary px-6 text-sm font-semibold text-white">
             Subscribe
@@ -604,7 +604,7 @@ function SectionHeader({ title, href }: { title: string; href: string }) {
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
-        <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+        <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
           {title}
         </h2>
         <span className="h-px w-7 bg-secondary" />
@@ -618,7 +618,7 @@ function SectionHeader({ title, href }: { title: string; href: string }) {
 
 function KindBadge({ item, className = "", compact = false }: { item: ContentItem; className?: string; compact?: boolean }) {
   const label = item.kind === "event" ? "Event" : item.kind === "article" ? "Article" : item.kind === "announcement" ? "Notice" : "News";
-  const tone = item.kind === "event" ? "bg-secondary text-white" : item.kind === "article" ? "bg-blue-700 text-white" : "bg-primary text-white";
+  const tone = item.kind === "event" ? "bg-secondary text-white" : item.kind === "article" ? "bg-primary/85 text-white" : "bg-primary text-white";
   return (
     <span className={`${className} rounded-md px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${tone}`}>
       {compact ? label.toUpperCase() : label}
@@ -629,7 +629,7 @@ function KindBadge({ item, className = "", compact = false }: { item: ContentIte
 function MetaLine({ record, className = "" }: { record: ResearchGenericRecord; className?: string }) {
   const date = formatDate(recordDate(record));
   return (
-    <div className={`${className} flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500`}>
+    <div className={`${className} flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground`}>
       {date ? (
         <>
           <CalendarDays aria-hidden className="h-3.5 w-3.5" />

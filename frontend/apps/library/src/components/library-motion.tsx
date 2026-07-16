@@ -10,7 +10,7 @@ export function LibraryHeroMotion({
 }) {
   return (
     <section
-      className="relative isolate overflow-hidden border-b border-slate-200 bg-primary px-4 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
+      className="relative isolate overflow-hidden border-b border-border bg-primary px-4 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
     >
       {children}
     </section>
@@ -45,7 +45,7 @@ export function LibraryHeroAsideMotion({
 
   return (
     <motion.div
-      className="min-w-0 rounded-lg border border-white/20 bg-slate-950/30 p-4 shadow-2xl shadow-slate-950/20 backdrop-blur-md sm:p-5"
+      className="min-w-0 rounded-lg border border-white/20 bg-brand-overlay/30 p-4 shadow-2xl shadow-primary/20 backdrop-blur-md sm:p-5"
       initial={false}
       animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
       transition={{

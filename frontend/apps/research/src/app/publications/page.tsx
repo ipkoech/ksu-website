@@ -115,10 +115,10 @@ export default async function PublicationsPage({
           <div className="min-w-0">
             <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
               <div className="pt-1">
-                <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
+                <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground">
                   Publication Catalogue
                 </h2>
-                <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
+                <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
                   Search, filter, sort, and inspect publication records without leaving the catalogue.
                 </p>
               </div>
@@ -141,8 +141,8 @@ export default async function PublicationsPage({
 
             {visiblePublications.length > 0 ? (
               <>
-                <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-                  <div className="hidden grid-cols-[minmax(0,1fr)_160px_170px_150px] border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 lg:grid">
+                <div className="mt-6 overflow-hidden rounded-lg border border-border bg-white shadow-sm">
+                  <div className="hidden grid-cols-[minmax(0,1fr)_160px_170px_150px] border-b border-border bg-surface-subtle px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground lg:grid">
                     <span>Publication</span>
                     <span>Type</span>
                     <span>Access</span>
@@ -179,7 +179,7 @@ export default async function PublicationsPage({
                 { label: "Resources & tools", href: "/resources-tools", body: "Access reusable research tools" },
               ]}
             />
-            <aside className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <aside className="rounded-lg border border-border bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">How to read publications</p>
               <div className="mt-3 divide-y divide-slate-200">
                 {["Evidence", "Access", "Related work"].map((label, index) => (
@@ -188,8 +188,8 @@ export default async function PublicationsPage({
                       {index + 1}
                     </span>
                     <div>
-                      <p className="text-sm font-semibold text-slate-950">{label}</p>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                      <p className="text-sm font-semibold text-foreground">{label}</p>
+                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
                         {index === 0
                           ? "Start with the abstract, venue, and year."
                           : index === 1
@@ -255,13 +255,13 @@ function PublicationRow({ publication }: { publication: ResearchPublication }) {
     <PublicationDetailSheet publication={publication}>
       <button
         type="button"
-        className="group grid w-full gap-3 px-4 py-3 text-left transition hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 lg:grid-cols-[minmax(0,1fr)_160px_170px_150px] lg:items-center"
+        className="group grid w-full gap-3 px-4 py-3 text-left transition hover:bg-surface-subtle/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 lg:grid-cols-[minmax(0,1fr)_160px_170px_150px] lg:items-center"
       >
         <span className="min-w-0">
-          <span className="block text-sm font-semibold leading-6 text-slate-950 group-hover:text-primary">
+          <span className="block text-sm font-semibold leading-6 text-foreground group-hover:text-primary">
             {publication.title}
           </span>
-          <span className="mt-1 line-clamp-1 block text-xs leading-5 text-slate-500">
+          <span className="mt-1 line-clamp-1 block text-xs leading-5 text-muted-foreground">
             {[venue, compactText(publication.doi)].filter(Boolean).join(" · ") || compactText(publication.abstract)}
           </span>
         </span>
@@ -276,9 +276,9 @@ function PublicationRow({ publication }: { publication: ResearchPublication }) {
             </span>
           ) : null}
         </span>
-        <span className="flex items-center justify-between gap-3 text-sm font-medium text-slate-600">
+        <span className="flex items-center justify-between gap-3 text-sm font-medium text-muted-foreground">
           {published || compactText(publication.year)}
-          <ArrowRight aria-hidden className="h-4 w-4 text-slate-400 transition group-hover:translate-x-1 group-hover:text-primary" />
+          <ArrowRight aria-hidden className="h-4 w-4 text-muted-foreground/70 transition group-hover:translate-x-1 group-hover:text-primary" />
         </span>
       </button>
     </PublicationDetailSheet>

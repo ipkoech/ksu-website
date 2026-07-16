@@ -47,10 +47,10 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-secondary">
             Library Search
           </p>
-          <h1 className="mt-3 max-w-4xl text-wrap font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-slate-950 sm:text-5xl">
+          <h1 className="mt-3 max-w-4xl text-wrap font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-foreground sm:text-5xl">
             Search catalog records, e-resources, downloads, services, and staff.
           </h1>
-          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
+          <p className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground">
             Use a single query to discover branch catalog items, subscribed platforms,
             public files, support services, and library contacts.
           </p>
@@ -157,9 +157,9 @@ function ResultPanel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-lg font-semibold text-slate-950">{title}</h2>
+        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
         <Link href={href} className="text-sm font-semibold text-primary">
           Open advanced
         </Link>
@@ -168,7 +168,7 @@ function ResultPanel({
         {Children.count(children) > 0 ? (
           children
         ) : (
-          <p className="py-4 text-sm text-slate-600">No records available.</p>
+          <p className="py-4 text-sm text-muted-foreground">No records available.</p>
         )}
       </div>
     </section>
@@ -185,9 +185,9 @@ function ResultRow({
   const details = meta.map(compactText).filter(Boolean);
   return (
     <article className="py-4">
-      <h3 className="text-sm font-semibold leading-6 text-slate-950">{title}</h3>
+      <h3 className="text-sm font-semibold leading-6 text-foreground">{title}</h3>
       {details.length > 0 ? (
-        <p className="mt-1 text-xs leading-5 text-slate-500">
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
           {details.join(" - ")}
         </p>
       ) : null}

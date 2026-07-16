@@ -44,11 +44,11 @@ function CountUpMetricCard({
   }, [value]);
 
   return (
-    <a href={href} className="block rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md">
-      <p className="font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950 sm:text-4xl">
+    <a href={href} className="block rounded-xl border border-border bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md">
+      <p className="font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground sm:text-4xl">
         {count.toLocaleString()}{suffix}
       </p>
-      <p className="mt-1 text-xs font-semibold uppercase text-slate-500">{label}</p>
+      <p className="mt-1 text-xs font-semibold uppercase text-muted-foreground">{label}</p>
       <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-secondary">
         Explore <span aria-hidden>→</span>
       </span>
@@ -70,11 +70,11 @@ export function CountUpMetrics({
   partners: number;
 }) {
   return (
-    <section className="bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <section className="bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_100%)] px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
         <div className="text-center">
           <p className="text-sm font-semibold uppercase text-secondary">Research at a Glance</p>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
+          <p className="mt-2 text-sm leading-7 text-muted-foreground">
             Live counts from the research ecosystem — updated as records are published.
           </p>
         </div>

@@ -338,7 +338,7 @@ export function PublicFooter({
                 <SocialIcon
                   href={socialLinks.twitter}
                   label="Twitter"
-                  className="text-slate-950 hover:bg-slate-950"
+                  className="text-foreground hover:bg-slate-950"
                 >
                   <TwitterIcon />
                 </SocialIcon>

@@ -184,38 +184,38 @@ function InfoPanel({ title, fields }: { title: string; fields: Array<[string, un
     .filter(([, value]) => value);
 
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">{title}</h2>
       {entries.length ? (
         <dl className="mt-4 grid gap-3 text-sm">
           {entries.map(([label, value]) => (
-            <div key={label} className="rounded-md bg-slate-50 p-3">
-              <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-              <dd className="mt-1 break-words font-semibold text-slate-950">{value}</dd>
+            <div key={label} className="rounded-md bg-surface-subtle p-3">
+              <dt className="text-xs font-semibold uppercase text-muted-foreground">{label}</dt>
+              <dd className="mt-1 break-words font-semibold text-foreground">{value}</dd>
             </div>
           ))}
         </dl>
-      ) : <p className="mt-3 text-sm leading-7 text-slate-600">No public details are published yet.</p>}
+      ) : <p className="mt-3 text-sm leading-7 text-muted-foreground">No public details are published yet.</p>}
     </section>
   );
 }
 
 function ContextCard({ title, record, hrefBase, empty }: { title: string; record?: ResearchGenericRecord; hrefBase: string; empty: string }) {
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">{title}</h2>
       {record ? (
         <>
-          <h3 className="mt-4 text-base font-semibold text-slate-950">
+          <h3 className="mt-4 text-base font-semibold text-foreground">
             {record.slug ? (
               <Link href={`${hrefBase}/${record.slug}`} className="transition hover:text-primary">
                 {getRecordTitle(record, title)}
               </Link>
             ) : getRecordTitle(record, title)}
           </h3>
-          {getRecordSummary(record) ? <p className="mt-2 text-sm leading-7 text-slate-600">{getRecordSummary(record)}</p> : null}
+          {getRecordSummary(record) ? <p className="mt-2 text-sm leading-7 text-muted-foreground">{getRecordSummary(record)}</p> : null}
         </>
-      ) : <p className="mt-3 text-sm leading-7 text-slate-600">{empty}</p>}
+      ) : <p className="mt-3 text-sm leading-7 text-muted-foreground">{empty}</p>}
     </section>
   );
 }

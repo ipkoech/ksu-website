@@ -480,7 +480,7 @@ function intakeStatusClass(intake: AdmissionsIntakeSummary) {
   const status = intakeStatus(intake);
   const remainingDays = daysUntil(intakeDeadline(intake));
 
-  if (status === "Deadline passed") return "bg-slate-100 text-slate-700";
+  if (status === "Deadline passed") return "bg-surface-muted text-muted-foreground";
   if (remainingDays !== null && remainingDays <= 14) {
     return "bg-red-50 text-red-700 ring-1 ring-red-100";
   }
@@ -488,7 +488,7 @@ function intakeStatusClass(intake: AdmissionsIntakeSummary) {
     return "bg-amber-50 text-amber-800 ring-1 ring-amber-100";
   }
   if (status === "Open") return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100";
-  return "bg-blue-50 text-primary ring-1 ring-blue-100";
+  return "bg-accent text-primary ring-1 ring-border";
 }
 
 function intakeDeadlineLabel(intake?: AdmissionsIntakeSummary) {
@@ -531,7 +531,7 @@ function SideNav({ currentHref }: { currentHref: string }) {
   return (
     <nav
       aria-label="Admissions navigation"
-      className="border border-slate-200 bg-white p-2 shadow-sm lg:sticky lg:top-24"
+      className="border border-border bg-white p-2 shadow-sm lg:sticky lg:top-24"
     >
       <p className="px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-secondary">
         Admissions
@@ -547,15 +547,15 @@ function SideNav({ currentHref }: { currentHref: string }) {
               href={item.href}
               className={`group flex min-h-12 items-center gap-2 border px-3 py-2 text-sm transition ${
                 active
-                  ? "border-primary/30 bg-primary/5 text-slate-950"
-                  : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950"
+                  ? "border-primary/30 bg-primary/5 text-foreground"
+                  : "border-transparent text-muted-foreground hover:border-border hover:bg-surface-subtle hover:text-foreground"
               }`}
             >
               <span
                 className={`flex h-8 w-8 shrink-0 items-center justify-center ${
                   active
                     ? "bg-primary text-white"
-                    : "bg-slate-100 text-primary group-hover:bg-primary group-hover:text-white"
+                    : "bg-surface-muted text-primary group-hover:bg-primary group-hover:text-white"
                 }`}
               >
                 <Icon aria-hidden className="h-4 w-4" />
@@ -587,7 +587,7 @@ function PageHero({
   const image = heroImages[area] ?? heroImages.landing;
 
   return (
-    <section className="border-b border-slate-200 bg-white px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
+    <section className="border-b border-border bg-white px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
       <div className="w-full">
         <BreadcrumbTrail
           items={[
@@ -601,10 +601,10 @@ function PageHero({
             <p className="text-xs font-bold uppercase tracking-[0.08em] text-secondary">
               {eyebrow}
             </p>
-            <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-[1.08] text-slate-950 sm:text-4xl lg:text-5xl">
+            <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-[1.08] text-foreground sm:text-4xl lg:text-5xl">
               {title}
             </h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">
               {body}
             </p>
             <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
@@ -621,7 +621,7 @@ function PageHero({
           </div>
 
           <div
-            className="relative min-h-[13rem] overflow-hidden border border-slate-200 bg-slate-950"
+            className="relative min-h-[13rem] overflow-hidden border border-border bg-brand-overlay"
             role="img"
             aria-label={image.alt}
           >
@@ -695,8 +695,8 @@ function Section({
       as="section"
       className={
         dark
-          ? "border-y border-slate-900 bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8 lg:py-10"
-          : "border-b border-slate-200 bg-white px-4 py-8 sm:px-6 lg:px-8 lg:py-10"
+          ? "border-y border-border bg-brand-overlay px-4 py-8 text-white sm:px-6 lg:px-8 lg:py-10"
+          : "border-b border-border bg-white px-4 py-8 sm:px-6 lg:px-8 lg:py-10"
       }
     >
       <div className="grid w-full min-w-0 gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
@@ -714,7 +714,7 @@ function Section({
             className={
               dark
                 ? "mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-white sm:text-3xl"
-                : "mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl"
+                : "mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground sm:text-3xl"
             }
           >
             {title}
@@ -724,7 +724,7 @@ function Section({
               className={
                 dark
                   ? "mt-3 text-sm leading-7 text-white/70"
-                  : "mt-3 text-sm leading-7 text-slate-600"
+                  : "mt-3 text-sm leading-7 text-muted-foreground"
               }
             >
               {body}
@@ -743,17 +743,17 @@ function StatStrip({ intakes }: { intakes: AdmissionsIntakeSummary[] }) {
   ).length;
 
   return (
-    <div className="grid border border-slate-200 bg-white md:grid-cols-3">
+    <div className="grid border border-border bg-white md:grid-cols-3">
       {[
         ["Applicant routes", "KUCCPS, self-sponsored, postgraduate, international"],
         ["Published intakes", String(intakes.length || "Portal verified")],
         ["Open records", String(openIntakes || "Check portal")],
       ].map(([label, value]) => (
-        <div key={label} className="border-b border-slate-200 p-5 md:border-b-0 md:border-r last:md:border-r-0">
-          <p className="text-xs font-semibold uppercase text-slate-500">
+        <div key={label} className="border-b border-border p-5 md:border-b-0 md:border-r last:md:border-r-0">
+          <p className="text-xs font-semibold uppercase text-muted-foreground">
             {label}
           </p>
-          <p className="mt-2 text-2xl font-semibold text-slate-950">{value}</p>
+          <p className="mt-2 text-2xl font-semibold text-foreground">{value}</p>
         </div>
       ))}
     </div>
@@ -768,9 +768,9 @@ function ComparisonTable({
   rows: TableRow[];
 }) {
   return (
-    <div className="overflow-x-auto border border-slate-200 bg-white">
+    <div className="overflow-x-auto border border-border bg-white">
       <table className="min-w-[760px] w-full border-collapse text-left">
-        <thead className="bg-slate-950 text-white">
+        <thead className="bg-brand-overlay text-white">
           <tr>
             <th className="w-52 px-5 py-4 text-sm font-semibold">Route</th>
             {headers.map((header) => (
@@ -783,11 +783,11 @@ function ComparisonTable({
         <tbody className="divide-y divide-slate-200">
           {rows.map((row) => (
             <tr key={row.label} className="align-top">
-              <th className="bg-slate-50 px-5 py-4 text-sm font-semibold text-slate-950">
+              <th className="bg-surface-subtle px-5 py-4 text-sm font-semibold text-foreground">
                 {row.label}
               </th>
               {row.cells.map((cell, index) => (
-                <td key={`${row.label}-${index}`} className="px-5 py-4 text-sm leading-7 text-slate-600">
+                <td key={`${row.label}-${index}`} className="px-5 py-4 text-sm leading-7 text-muted-foreground">
                   {cell}
                 </td>
               ))}
@@ -803,15 +803,15 @@ function ProcessTimeline() {
   return (
     <ol className="grid gap-4">
       {applicationSteps.map((step, index) => (
-        <li key={step.title} className="grid gap-4 border border-slate-200 bg-white p-5 sm:grid-cols-[72px_minmax(0,1fr)]">
+        <li key={step.title} className="grid gap-4 border border-border bg-white p-5 sm:grid-cols-[72px_minmax(0,1fr)]">
           <span className="flex h-12 w-12 items-center justify-center bg-primary text-lg font-semibold text-white">
             {index + 1}
           </span>
           <div>
-            <h3 className="text-lg font-semibold text-slate-950">
+            <h3 className="text-lg font-semibold text-foreground">
               {step.title}
             </h3>
-            <p className="mt-2 text-sm leading-7 text-slate-600">{step.body}</p>
+            <p className="mt-2 text-sm leading-7 text-muted-foreground">{step.body}</p>
           </div>
         </li>
       ))}
@@ -890,7 +890,7 @@ function AdmissionsJourneyMap({
         const Icon = stage.icon;
         const statusClass = stage.intake
           ? intakeStatusClass(stage.intake)
-          : "bg-blue-50 text-primary ring-1 ring-blue-100";
+          : "bg-accent text-primary ring-1 ring-border";
         const external = Boolean(stage.external);
         const content = (
           <>
@@ -905,10 +905,10 @@ function AdmissionsJourneyMap({
             <p className="mt-5 text-xs font-bold uppercase tracking-[0.08em] text-secondary">
               Step {index + 1}
             </p>
-            <h3 className="mt-2 text-base font-semibold leading-6 text-slate-950">
+            <h3 className="mt-2 text-base font-semibold leading-6 text-foreground">
               {stage.title}
             </h3>
-            <p className="mt-2 flex-1 text-sm leading-6 text-slate-600">
+            <p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">
               {stage.body}
             </p>
             <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary">
@@ -923,7 +923,7 @@ function AdmissionsJourneyMap({
         );
 
         const className =
-          "group flex min-w-0 flex-col border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/35 hover:bg-primary/5";
+          "group flex min-w-0 flex-col border border-border bg-white p-4 shadow-sm transition hover:border-primary/35 hover:bg-primary/5";
 
         return external ? (
           <a
@@ -967,10 +967,10 @@ function AdmissionsResourcePanel({ data }: { data: AdmissionsPageData }) {
                   <p className="text-xs font-bold uppercase tracking-[0.08em] text-secondary">
                     {formatAdmissionResourceType(record.contentType)}
                   </p>
-                  <h3 className="mt-3 text-base font-semibold leading-6 text-slate-950">
+                  <h3 className="mt-3 text-base font-semibold leading-6 text-foreground">
                     {record.title}
                   </h3>
-                  <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
+                  <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
                     {body}
                   </p>
                   <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
@@ -985,7 +985,7 @@ function AdmissionsResourcePanel({ data }: { data: AdmissionsPageData }) {
               );
 
               const className =
-                "group min-w-0 border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5";
+                "group min-w-0 border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5";
 
               return external ? (
                 <a
@@ -1024,13 +1024,13 @@ function AdmissionsResourcePanel({ data }: { data: AdmissionsPageData }) {
                   href={item.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group min-w-0 border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+                  className="group min-w-0 border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
                 >
                   <Icon aria-hidden className="h-5 w-5 text-primary" />
-                  <h3 className="mt-3 text-base font-semibold text-slate-950">
+                  <h3 className="mt-3 text-base font-semibold text-foreground">
                     {item.title}
                   </h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
                     {item.description}
                   </p>
                   <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
@@ -1046,10 +1046,10 @@ function AdmissionsResourcePanel({ data }: { data: AdmissionsPageData }) {
         <p className="text-xs font-bold uppercase tracking-[0.08em] text-secondary">
           Verification rule
         </p>
-        <h3 className="mt-3 text-xl font-semibold leading-7 text-slate-950">
+        <h3 className="mt-3 text-xl font-semibold leading-7 text-foreground">
           Use official resources before acting.
         </h3>
-        <p className="mt-3 text-sm leading-7 text-slate-700">
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">
           Downloadable forms, booklets, and links are helpful only when they
           match the current intake, programme, fee guidance, and application
           route.
@@ -1076,7 +1076,7 @@ function CheckList({ items, dark = false }: { items: string[]; dark?: boolean })
           className={
             dark
               ? "flex gap-3 border border-white/10 bg-white/[0.04] p-4 text-sm leading-7 text-white/75"
-              : "flex gap-3 border border-slate-200 bg-white p-4 text-sm leading-7 text-slate-600"
+              : "flex gap-3 border border-border bg-white p-4 text-sm leading-7 text-muted-foreground"
           }
         >
           <CheckCircle2
@@ -1108,7 +1108,7 @@ function LinkPanel({
             className={
               dark
                 ? "group border border-white/10 bg-white/[0.04] p-5 transition hover:bg-white/[0.08]"
-                : "group border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+                : "group border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
             }
           >
             <span
@@ -1124,7 +1124,7 @@ function LinkPanel({
               className={
                 dark
                   ? "mt-5 text-lg font-semibold text-white"
-                  : "mt-5 text-lg font-semibold text-slate-950"
+                  : "mt-5 text-lg font-semibold text-foreground"
               }
             >
               {item.title}
@@ -1133,7 +1133,7 @@ function LinkPanel({
               className={
                 dark
                   ? "mt-2 text-sm leading-7 text-white/70"
-                  : "mt-2 text-sm leading-7 text-slate-600"
+                  : "mt-2 text-sm leading-7 text-muted-foreground"
               }
             >
               {item.description}
@@ -1158,11 +1158,11 @@ function LinkPanel({
 function IntakesTable({ intakes }: { intakes: AdmissionsIntakeSummary[] }) {
   if (!intakes.length) {
     return (
-      <div className="border border-slate-200 bg-white p-6">
-        <h3 className="text-xl font-semibold text-slate-950">
+      <div className="border border-border bg-white p-6">
+        <h3 className="text-xl font-semibold text-foreground">
           Live intakes are verified in the online application portal
         </h3>
-        <p className="mt-3 text-sm leading-7 text-slate-600">
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">
           No intake records were returned to this frontend. Applicants should use
           the official portal to confirm open intakes, reporting dates, programme
           availability, and deadlines.
@@ -1177,9 +1177,9 @@ function IntakesTable({ intakes }: { intakes: AdmissionsIntakeSummary[] }) {
   }
 
   return (
-    <div className="overflow-x-auto border border-slate-200 bg-white">
+    <div className="overflow-x-auto border border-border bg-white">
       <table className="min-w-[760px] w-full border-collapse text-left">
-        <thead className="bg-slate-950 text-white">
+        <thead className="bg-brand-overlay text-white">
           <tr>
             <th className="px-5 py-4 text-sm font-semibold">Intake</th>
             <th className="px-5 py-4 text-sm font-semibold">Window</th>
@@ -1191,14 +1191,14 @@ function IntakesTable({ intakes }: { intakes: AdmissionsIntakeSummary[] }) {
           {intakes.map((intake) => (
             <tr key={intake.id}>
               <td className="px-5 py-4">
-                <p className="font-semibold text-slate-950">{intake.name}</p>
+                <p className="font-semibold text-foreground">{intake.name}</p>
                 {intake.lateApplicationEnd ? (
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Late applications to {formatAdmissionDate(intake.lateApplicationEnd)}
                   </p>
                 ) : null}
               </td>
-              <td className="px-5 py-4 text-sm leading-7 text-slate-600">
+              <td className="px-5 py-4 text-sm leading-7 text-muted-foreground">
                 {formatAdmissionDate(intake.applicationStart)} to{" "}
                 {formatAdmissionDate(intake.applicationEnd)}
               </td>
@@ -1207,7 +1207,7 @@ function IntakesTable({ intakes }: { intakes: AdmissionsIntakeSummary[] }) {
                   className={`inline-flex items-center px-3 py-1 text-xs font-semibold ${
                     intakeStatus(intake) === "Open"
                       ? "bg-emerald-50 text-emerald-700"
-                      : "bg-slate-100 text-slate-700"
+                      : "bg-surface-muted text-muted-foreground"
                   }`}
                 >
                   {intakeStatus(intake)}
@@ -1244,10 +1244,10 @@ function RecordInner({
       <p className="text-xs font-semibold uppercase text-secondary">
         {record.contentType.replace(/_/g, " ")}
       </p>
-      <h3 className="mt-3 text-lg font-semibold text-slate-950">
+      <h3 className="mt-3 text-lg font-semibold text-foreground">
         {record.title}
       </h3>
-      <p className="mt-2 line-clamp-3 text-sm leading-7 text-slate-600">
+      <p className="mt-2 line-clamp-3 text-sm leading-7 text-muted-foreground">
         {body}
       </p>
       <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary">
@@ -1303,16 +1303,16 @@ function LandingSections({ data }: { data: AdmissionsPageData }) {
         </div>
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.42fr)]">
           <StatStrip intakes={data.intakes} />
-          <div className="grid gap-5 border border-slate-200 bg-slate-50 p-5">
+          <div className="grid gap-5 border border-border bg-surface-subtle p-5">
             <div className="flex gap-4">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center bg-primary text-white">
                 <Search aria-hidden className="h-5 w-5" />
               </span>
               <div>
-                <h3 className="text-lg font-semibold text-slate-950">
+                <h3 className="text-lg font-semibold text-foreground">
                   Find a programme first
                 </h3>
-                <p className="mt-2 text-sm leading-7 text-slate-600">
+                <p className="mt-2 text-sm leading-7 text-muted-foreground">
                   Compare level, duration, mode, department, and requirements before starting the application.
                 </p>
               </div>
@@ -1359,13 +1359,13 @@ function TaskCard({
   return (
     <Link
       href={href}
-      className="group flex min-h-[12rem] flex-col border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+      className="group flex min-h-[12rem] flex-col border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
     >
       <span className="flex h-12 w-12 items-center justify-center bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
         <Icon aria-hidden className="h-5 w-5" />
       </span>
-      <h3 className="mt-5 text-lg font-semibold text-slate-950">{title}</h3>
-      <p className="mt-3 text-sm leading-7 text-slate-600">{body}</p>
+      <h3 className="mt-5 text-lg font-semibold text-foreground">{title}</h3>
+      <p className="mt-3 text-sm leading-7 text-muted-foreground">{body}</p>
       <span className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-semibold text-primary">
         {action}
         <ArrowRight aria-hidden className="h-4 w-4" />
@@ -1695,7 +1695,7 @@ function ResourceRecords({
                 <a
                   key={record.id}
                   href={href}
-                  className="border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+                  className="border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
                 >
                   <RecordInner record={record} body={body} external />
                 </a>
@@ -1703,7 +1703,7 @@ function ResourceRecords({
                 <Link
                   key={record.id}
                   href={href}
-                  className="border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+                  className="border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
                 >
                   <RecordInner record={record} body={body} />
                 </Link>
@@ -1827,7 +1827,7 @@ function IntakeDetailSections({
             ]}
           />
         ) : (
-          <div className="border border-slate-200 bg-white p-6">
+          <div className="border border-border bg-white p-6">
             <ActionLink href={officialLinks.onlineApplication} primary>
               Check official intakes
             </ActionLink>
@@ -1850,10 +1850,10 @@ function RecordSections({ record }: { record?: AdmissionsInfoSummary }) {
       title={record?.title ?? "Published record unavailable"}
       body={contentExcerpt(body)}
     >
-      <div className="grid gap-5 border border-slate-200 bg-white p-6">
+      <div className="grid gap-5 border border-border bg-white p-6">
         {record?.audienceLevels?.length ? (
-          <p className="text-sm leading-7 text-slate-600">
-            <span className="font-semibold text-slate-950">Audience:</span>{" "}
+          <p className="text-sm leading-7 text-muted-foreground">
+            <span className="font-semibold text-foreground">Audience:</span>{" "}
             {record.audienceLevels.join(", ")}
           </p>
         ) : null}
@@ -2059,7 +2059,7 @@ export function AdmissionsContent({ segments, data }: AdmissionsContentProps) {
           currentHref={currentHref}
         />
 
-        <div className="grid w-full gap-8 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-8 sm:px-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:px-8">
+        <div className="grid w-full gap-8 bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_100%)] px-4 py-8 sm:px-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:px-8">
           <SideNav currentHref={currentHref} />
           <div className="min-w-0">
             <ContentByArea

@@ -150,11 +150,11 @@ function ContextCard({
   empty: string;
 }) {
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">{title}</h2>
       {record ? (
         <>
-          <h3 className="mt-4 text-base font-semibold text-slate-950">
+          <h3 className="mt-4 text-base font-semibold text-foreground">
             {record.slug ? (
               <Link href={`${hrefBase}/${record.slug}`} className="transition hover:text-primary">
                 {getRecordTitle(record, title)}
@@ -164,11 +164,11 @@ function ContextCard({
             )}
           </h3>
           {getRecordSummary(record) ? (
-            <p className="mt-2 text-sm leading-7 text-slate-600">{getRecordSummary(record)}</p>
+            <p className="mt-2 text-sm leading-7 text-muted-foreground">{getRecordSummary(record)}</p>
           ) : null}
         </>
       ) : (
-        <p className="mt-3 text-sm leading-7 text-slate-600">{empty}</p>
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">{empty}</p>
       )}
     </section>
   );

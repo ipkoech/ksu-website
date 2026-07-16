@@ -64,14 +64,14 @@ export default async function LivePage() {
 
         <div className="mt-6">
           <p className="text-sm font-semibold uppercase text-secondary">Live</p>
-          <h1 className="mt-2 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950 sm:text-5xl">
+          <h1 className="mt-2 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground sm:text-5xl">
             {livestream ? livestream.title : "Live events and broadcasts"}
           </h1>
         </div>
 
         {livestream?.videoId ? (
           <div className="mt-8">
-            <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-950 shadow-[0_20px_70px_-44px_rgba(15,23,42,0.55)]">
+            <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border bg-brand-overlay shadow-[0_20px_70px_-44px_rgba(15,23,42,0.55)]">
               <iframe
                 src={`https://www.youtube.com/embed/${livestream.videoId}?autoplay=1&rel=0`}
                 title={livestream.title}
@@ -81,7 +81,7 @@ export default async function LivePage() {
               />
             </div>
             {livestream.youtubeUrl ? (
-              <p className="mt-4 text-center text-sm text-slate-500">
+              <p className="mt-4 text-center text-sm text-muted-foreground">
                 <a
                   href={livestream.youtubeUrl}
                   target="_blank"
@@ -94,11 +94,11 @@ export default async function LivePage() {
             ) : null}
           </div>
         ) : (
-          <div className="mt-10 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-16 text-center">
-            <p className="text-lg font-semibold text-slate-600">
+          <div className="mt-10 rounded-xl border border-dashed border-border bg-surface-subtle px-6 py-16 text-center">
+            <p className="text-lg font-semibold text-muted-foreground">
               No live broadcast is currently active.
             </p>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-muted-foreground">
               When a livestream is scheduled, the video will appear here.
               Check back during university events or follow the university
               on social media for broadcast announcements.

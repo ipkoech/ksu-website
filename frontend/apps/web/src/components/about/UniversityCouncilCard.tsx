@@ -21,7 +21,7 @@ export function UniversityCouncilCard({
 
   const card = (
     <article
-      className={`group relative overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl ${
+      className={`group relative overflow-hidden rounded-lg border border-border bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl ${
         featured ? "mx-auto w-full max-w-[310px]" : secretary ? "mx-auto w-full max-w-[420px]" : "w-full"
       }`}
     >
@@ -35,7 +35,7 @@ export function UniversityCouncilCard({
           imageClassName="object-cover object-top transition duration-500 group-hover:scale-[1.025]"
         />
         <div className={featured ? "p-5 text-center" : "p-3 text-center"}>
-          <h3 className={`font-[family-name:var(--font-display)] font-semibold leading-tight text-slate-950 ${featured ? "text-xl" : "text-sm"}`}>
+          <h3 className={`font-[family-name:var(--font-display)] font-semibold leading-tight text-foreground ${featured ? "text-xl" : "text-sm"}`}>
             {member.name}
           </h3>
           <p className={`mt-2 font-bold uppercase tracking-[0.08em] text-secondary ${featured ? "text-xs" : "text-[10px]"}`}>
@@ -47,7 +47,7 @@ export function UniversityCouncilCard({
             </p>
           ) : null}
           {summary ? (
-            <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600">
+            <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
               {summary}
             </p>
           ) : null}

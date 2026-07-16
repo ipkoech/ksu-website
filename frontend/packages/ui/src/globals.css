@@ -39,6 +39,14 @@
     --accent: 210 40% 96%;
     --accent-foreground: 222 47% 11%;
 
+    /* Public brand surfaces */
+    --surface: 0 0% 100%;
+    --surface-foreground: 222 47% 11%;
+    --surface-subtle: 210 40% 98%;
+    --surface-muted: 210 40% 96%;
+    --surface-strong: 221 83% 38%;
+    --brand-overlay: 222 47% 11%;
+
     /* Semantic Colors */
     --destructive: 0 74% 42%;
     --destructive-foreground: 0 0% 100%;
@@ -176,6 +184,13 @@
 
     --accent: 217 33% 17%;
     --accent-foreground: 210 40% 98%;
+
+    --surface: 222 47% 13%;
+    --surface-foreground: 210 40% 98%;
+    --surface-subtle: 222 47% 15%;
+    --surface-muted: 217 33% 17%;
+    --surface-strong: 217 91% 60%;
+    --brand-overlay: 222 47% 6%;
 
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;

@@ -158,7 +158,7 @@ export function WhyKisiiSection({
   return (
     <section
       id={section.section_key}
-      className="overflow-hidden border-b border-blue-100 bg-white py-8 lg:py-10"
+      className="overflow-hidden border-b border-border bg-white py-8 lg:py-10"
     >
       <div
         ref={isVisible.ref}
@@ -188,19 +188,19 @@ export function WhyKisiiSection({
             />
           </div>
 
-          <div className="flex flex-col justify-center border-y border-blue-100 py-4 lg:border-y-0 lg:py-0">
+          <div className="flex flex-col justify-center border-y border-border py-4 lg:border-y-0 lg:py-0">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
               {section.subtitle ?? "Why choose KSU"}
             </p>
-            <h2 className="mt-2 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+            <h2 className="mt-2 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
               {section.title ?? "Why Kisii University?"}
             </h2>
             {section.description ? (
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">
                 {section.description}
               </p>
             ) : (
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">
                 Kisii University brings together public-service education,
                 applied research and inclusive student support for learners and
                 communities in Kenya and beyond.
@@ -220,7 +220,7 @@ export function WhyKisiiSection({
         </div>
 
         {facts.length ? (
-          <aside className="mt-4 border-y border-blue-100 py-4">
+          <aside className="mt-4 border-y border-border py-4">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
               <p className="shrink-0 text-xs font-bold uppercase tracking-[0.16em] text-secondary lg:max-w-32">
                 {factsSection?.title ?? "KSU at a glance"}
@@ -233,7 +233,7 @@ export function WhyKisiiSection({
                       key={fact.id}
                       className="group flex min-w-40 snap-start items-center gap-2.5 text-primary transition duration-300 hover:-translate-y-0.5 lg:min-w-0"
                     >
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 ring-1 ring-blue-100">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent ring-1 ring-border">
                         <Icon className="h-[18px] w-[18px]" aria-hidden />
                       </span>
                       <span className="min-w-0">
@@ -244,7 +244,7 @@ export function WhyKisiiSection({
                             delay={index * 90}
                           />
                         </span>
-                        <span className="mt-1 line-clamp-2 block text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] text-slate-500">
+                        <span className="mt-1 line-clamp-2 block text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] text-muted-foreground">
                           {factSubtitle(fact)}
                         </span>
                       </span>
@@ -290,14 +290,14 @@ function ReasonStatement({
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-primary ring-1 ring-blue-100 transition group-hover:bg-primary group-hover:text-white">
+          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-primary ring-1 ring-border transition group-hover:bg-primary group-hover:text-white">
             <Icon className="h-4 w-4" aria-hidden />
           </span>
           <div className="min-w-0">
-            <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold leading-snug text-slate-950">
+            <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold leading-snug text-foreground">
               {item.title ?? "Kisii University advantage"}
             </h3>
-            <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">
+            <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
               {item.body_text ?? item.subtitle}
             </p>
           </div>
@@ -335,7 +335,7 @@ function MosaicImage({
   priority?: boolean;
 }) {
   return (
-    <div className={`relative overflow-hidden bg-blue-50 ${className}`}>
+    <div className={`relative overflow-hidden bg-accent ${className}`}>
       <PublicImage
         src={contentText(item, "imageUrl") ?? fallbackSrc}
         alt={

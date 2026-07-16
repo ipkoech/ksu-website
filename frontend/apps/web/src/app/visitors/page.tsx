@@ -68,10 +68,10 @@ export default function VisitorsPage() {
           <p className="text-sm font-semibold uppercase text-secondary">
             Visitors
           </p>
-          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
+          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
             Visitor information
           </h1>
-          <p className="mt-4 text-base leading-8 text-slate-600">
+          <p className="mt-4 text-base leading-8 text-muted-foreground">
             Welcome to Kisii University. Use the links below to explore the
             institution, learn about campus life, find upcoming events, browse
             academic schools, get in touch, or access the official student and
@@ -80,7 +80,7 @@ export default function VisitorsPage() {
         </div>
 
         <section className="mt-10">
-          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
             Useful visitor routes
           </h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -94,16 +94,16 @@ export default function VisitorsPage() {
                   href={item.href}
                   target={isExternal ? "_blank" : undefined}
                   rel={isExternal ? "noopener noreferrer" : undefined}
-                  className="group flex items-start gap-3 rounded-md border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:shadow-md"
+                  className="group flex items-start gap-3 rounded-md border border-border bg-white p-4 shadow-sm transition hover:border-primary/30 hover:shadow-md"
                 >
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <Icon aria-hidden className="h-4 w-4" />
                   </span>
                   <span>
-                    <span className="block text-sm font-semibold text-slate-950">
+                    <span className="block text-sm font-semibold text-foreground">
                       {item.label}
                     </span>
-                    <span className="mt-1 block text-xs leading-5 text-slate-600">
+                    <span className="mt-1 block text-xs leading-5 text-muted-foreground">
                       {item.body}
                     </span>
                     <span className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-primary">

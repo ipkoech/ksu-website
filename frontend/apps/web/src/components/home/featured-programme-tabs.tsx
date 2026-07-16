@@ -48,7 +48,7 @@ export function FeaturedProgrammeTabs({
 
   return (
     <div>
-      <div className="flex gap-1 overflow-x-auto rounded-md bg-blue-50 p-1">
+      <div className="flex gap-1 overflow-x-auto rounded-md bg-accent p-1">
         {(availableTabs.length ? availableTabs : tabOrder).map((label) => (
           <button
             key={label}
@@ -57,7 +57,7 @@ export function FeaturedProgrammeTabs({
             className={`min-h-8 shrink-0 rounded px-2.5 text-xs font-bold transition ${
               activeTab === label
                 ? "bg-white text-primary shadow-sm"
-                : "text-slate-600 hover:bg-white/70 hover:text-primary"
+                : "text-muted-foreground hover:bg-white/70 hover:text-primary"
             }`}
           >
             {label}
@@ -65,16 +65,16 @@ export function FeaturedProgrammeTabs({
         ))}
       </div>
 
-      <div className="mt-3 divide-y divide-blue-50 rounded-md border border-blue-50 bg-white">
+      <div className="mt-3 divide-y divide-border rounded-md border border-border bg-white">
         {(activeProgrammes.length ? activeProgrammes : programmes.slice(0, 4))
           .slice(0, 4)
           .map((programme) => (
             <Link
               key={programme.href}
               href={programme.href}
-              className="group grid grid-cols-[36px_1fr_18px] items-center gap-3 p-2.5 transition hover:bg-blue-50/70"
+              className="group grid grid-cols-[36px_1fr_18px] items-center gap-3 p-2.5 transition hover:bg-accent/70"
             >
-              <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded bg-blue-50 text-primary">
+              <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded bg-accent text-primary">
                 <PublicImage
                   src={programme.imageUrl}
                   alt=""
@@ -86,14 +86,14 @@ export function FeaturedProgrammeTabs({
                 />
               </span>
               <span className="min-w-0">
-                <span className="line-clamp-1 text-xs font-bold text-slate-950 group-hover:text-primary">
+                <span className="line-clamp-1 text-xs font-bold text-foreground group-hover:text-primary">
                   {programme.title}
                 </span>
-                <span className="mt-0.5 block line-clamp-1 text-[11px] text-slate-500">
+                <span className="mt-0.5 block line-clamp-1 text-[11px] text-muted-foreground">
                   {programme.body || "Published academic programme"}
                 </span>
               </span>
-              <ChevronRight className="h-4 w-4 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground/60 transition group-hover:translate-x-0.5 group-hover:text-primary" />
             </Link>
           ))}
       </div>

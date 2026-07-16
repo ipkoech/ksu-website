@@ -25,7 +25,7 @@ const inquiryTopics = [
 ];
 
 const fieldControlClass =
-  "min-h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-950 outline-none ring-primary/20 transition placeholder:text-slate-400 focus:border-primary focus:ring-4 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
+  "min-h-11 w-full rounded-md border border-border bg-white px-3 py-2 text-sm font-medium text-foreground outline-none ring-primary/20 transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-4 disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-muted-foreground";
 
 export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,7 +74,7 @@ export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+      className="rounded-lg border border-border bg-white p-5 shadow-sm"
     >
       <div className="grid gap-5 lg:grid-cols-2">
         <Field label="Full name" htmlFor="sender_name" required>
@@ -190,7 +190,7 @@ export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
       ) : null}
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs leading-5 text-slate-500">
+        <p className="text-xs leading-5 text-muted-foreground">
           Required fields are marked with an asterisk. Please do not submit
           passwords or payment details.
         </p>
@@ -225,7 +225,7 @@ function Field({
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <label
-        className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500"
+        className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground"
         htmlFor={htmlFor}
       >
         {label}

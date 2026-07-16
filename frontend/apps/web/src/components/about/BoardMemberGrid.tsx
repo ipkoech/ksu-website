@@ -14,7 +14,7 @@ export function BoardMemberGrid({ members }: { members: BoardMember[] }) {
       {members.map((member, index) => (
         <article
           key={`${member.name}-${member.role}-${index}`}
-          className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/40"
+          className="rounded-[1.5rem] border border-border bg-white p-5 shadow-lg shadow-primary/40"
         >
           <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#dbeafe,#f8fafc)] font-[family-name:var(--font-display)] text-xl text-primary">
             {member.photoUrl ? (
@@ -33,14 +33,14 @@ export function BoardMemberGrid({ members }: { members: BoardMember[] }) {
                 .join("")
             )}
           </div>
-          <h3 className="mt-4 text-lg font-semibold text-slate-950">
+          <h3 className="mt-4 text-lg font-semibold text-foreground">
             {member.name}
           </h3>
-          <p className="mt-2 text-sm font-medium uppercase tracking-[0.18em] text-slate-500">
+          <p className="mt-2 text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
             {member.role}
           </p>
           {member.note ? (
-            <p className="mt-3 text-sm leading-6 text-slate-600">
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
               {member.note}
             </p>
           ) : null}

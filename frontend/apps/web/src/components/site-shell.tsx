@@ -68,7 +68,7 @@ export async function PageShell({
     : megaMenuData || (await getNavData());
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_38%,#f6f8fc_100%)] text-slate-950">
+    <div className="min-h-screen bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_38%,hsl(var(--surface-muted))_100%)] text-foreground">
       <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
@@ -115,10 +115,10 @@ export function PageHeading({
       <p className="text-sm font-semibold uppercase tracking-[0.24em] text-secondary">
         {eyebrow}
       </p>
-      <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-slate-950 sm:text-5xl">
+      <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-foreground sm:text-5xl">
         {title}
       </h1>
-      <p className="mt-5 text-base leading-7 text-slate-600 sm:text-lg">
+      <p className="mt-5 text-base leading-7 text-muted-foreground sm:text-lg">
         {body}
       </p>
     </div>
@@ -141,10 +141,10 @@ export function SectionHeading({
       <p className="text-sm font-semibold uppercase tracking-[0.24em] text-secondary">
         {eyebrow}
       </p>
-      <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl text-slate-950 sm:text-4xl">
+      <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl text-foreground sm:text-4xl">
         {title}
       </h2>
-      <p className="mt-4 text-base leading-7 text-slate-600 sm:text-lg">
+      <p className="mt-4 text-base leading-7 text-muted-foreground sm:text-lg">
         {body}
       </p>
     </div>
@@ -157,7 +157,7 @@ export function BreadcrumbTrail({
   items: { label: string; href?: string }[];
 }) {
   return (
-    <nav aria-label="Breadcrumb" className="text-sm text-slate-500">
+    <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
       <ol className="flex flex-wrap items-center gap-2">
         {items.map((item, index) => (
           <li key={`${item.label}-${index}`} className="flex items-center gap-2">
@@ -169,7 +169,7 @@ export function BreadcrumbTrail({
                 {item.label}
               </Link>
             ) : (
-              <span className="text-slate-900">{item.label}</span>
+              <span className="text-foreground">{item.label}</span>
             )}
             {index < items.length - 1 ? <span>/</span> : null}
           </li>

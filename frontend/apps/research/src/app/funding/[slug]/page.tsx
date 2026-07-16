@@ -146,8 +146,8 @@ export default async function FundingDetailPage({
             title="Documents"
             records={documents}
           />
-          {compactText(grant.contact_name) || compactText(grant.contact_email) || compactText(grant.contact_phone) ? <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-950">Contact</h2>
+          {compactText(grant.contact_name) || compactText(grant.contact_email) || compactText(grant.contact_phone) ? <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+            <h2 className="text-xl font-semibold text-foreground">Contact</h2>
             <dl className="mt-4 grid gap-3 text-sm">
               <ResearchFact label="Name" value={compactText(grant.contact_name)} />
               <ResearchFact label="Email" value={compactText(grant.contact_email)} />
@@ -174,9 +174,9 @@ function InternalDeadlinePanel({
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Internal grant deadline</p>
-          <h2 className="mt-3 text-2xl font-semibold leading-tight text-slate-950">{deadline.label}</h2>
-          <p className="mt-2 text-lg font-semibold text-slate-800">{deadline.value}</p>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+          <h2 className="mt-3 text-2xl font-semibold leading-tight text-foreground">{deadline.label}</h2>
+          <p className="mt-2 text-lg font-semibold text-foreground">{deadline.value}</p>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">
             This is a Kisii University administered grant. Review eligibility, requirements, documents, and workflow dates before submitting.
           </p>
         </div>
@@ -208,8 +208,8 @@ function WorkflowDates({ grant }: { grant: ResearchGenericRecord }) {
   ];
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">
         Application flow
       </h2>
       <div className="mt-4 grid gap-3 md:grid-cols-2">

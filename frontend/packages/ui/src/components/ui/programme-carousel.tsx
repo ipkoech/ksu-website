@@ -39,7 +39,7 @@ export function ProgrammeCarousel({
         <Carousel.ItemGroup className={cn("overflow-hidden rounded-xl flex-1", height)}>
           {programmes.map((programme, index) => (
             <Carousel.Item key={programme.id} index={index} className="h-full">
-              <div className="relative h-full bg-slate-900 rounded-xl overflow-hidden">
+              <div className="relative h-full bg-brand-overlay rounded-xl overflow-hidden">
                 {programme.coverImage ? (
                   <Image
                     src={programme.coverImage}
@@ -59,11 +59,11 @@ export function ProgrammeCarousel({
                     {programme.name}
                   </h4>
                   {programme.schoolName && (
-                    <p className="mt-2 text-sm text-slate-300">{programme.schoolName}</p>
+                    <p className="mt-2 text-sm text-muted-foreground/60">{programme.schoolName}</p>
                   )}
                   <Link
                     href={`${linkPrefix}/${programme.slug}`}
-                    className="mt-4 inline-flex self-start items-center gap-2 px-4 py-2 bg-white text-slate-900 text-sm font-semibold rounded-lg hover:bg-slate-100 transition-colors"
+                    className="mt-4 inline-flex self-start items-center gap-2 px-4 py-2 bg-white text-foreground text-sm font-semibold rounded-lg hover:bg-surface-muted transition-colors"
                   >
                     View Programme
                     <span aria-hidden="true">→</span>
@@ -112,7 +112,7 @@ export function ProgrammeCarouselHorizontal({
       <Carousel.ItemGroup className={cn("overflow-hidden rounded-xl", height)}>
         {programmes.map((programme, index) => (
           <Carousel.Item key={programme.id} index={index} className="h-full">
-            <div className="relative h-full bg-slate-900 rounded-xl overflow-hidden">
+            <div className="relative h-full bg-brand-overlay rounded-xl overflow-hidden">
               {programme.coverImage ? (
                 <Image
                   src={programme.coverImage}
@@ -131,12 +131,12 @@ export function ProgrammeCarouselHorizontal({
                   </span>
                   <h4 className="text-xl font-bold text-white">{programme.name}</h4>
                   {programme.schoolName && (
-                    <p className="mt-1 text-sm text-slate-300">{programme.schoolName}</p>
+                    <p className="mt-1 text-sm text-muted-foreground/60">{programme.schoolName}</p>
                   )}
                 </div>
                 <Link
                   href={`${linkPrefix}/${programme.slug}`}
-                  className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-white text-slate-900 text-sm font-semibold rounded-lg hover:bg-slate-100 transition-colors"
+                  className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-white text-foreground text-sm font-semibold rounded-lg hover:bg-surface-muted transition-colors"
                 >
                   View Programme
                   <span aria-hidden="true">→</span>

@@ -164,19 +164,19 @@ function SourceContext({
   ].filter(Boolean) as Array<{ label: string; title: string; href: string; body: string }>;
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">Source context</h2>
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">Source context</h2>
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         {cards.map((card) => (
           <Link
             key={card.href}
             href={card.href}
-            className="rounded-md border border-slate-200 p-3 transition hover:border-primary/30 hover:bg-primary/5"
+            className="rounded-md border border-border p-3 transition hover:border-primary/30 hover:bg-primary/5"
           >
             <p className="text-xs font-semibold uppercase text-secondary">{card.label}</p>
-            <h3 className="mt-2 text-base font-semibold text-slate-950">{card.title}</h3>
+            <h3 className="mt-2 text-base font-semibold text-foreground">{card.title}</h3>
             {card.body ? (
-              <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{card.body}</p>
+              <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{card.body}</p>
             ) : null}
           </Link>
         ))}

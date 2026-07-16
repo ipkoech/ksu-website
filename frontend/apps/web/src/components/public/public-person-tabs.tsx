@@ -23,7 +23,7 @@ export function PublicPersonTabs({ tabs }: { tabs: PublicPersonTab[] }) {
       <div
         role="tablist"
         aria-label="Staff profile sections"
-        className="flex gap-3 overflow-x-auto rounded-lg border border-slate-200 bg-white px-4 shadow-sm"
+        className="flex gap-3 overflow-x-auto rounded-lg border border-border bg-white px-4 shadow-sm"
       >
         {tabs.map((tab) => {
           const isActive = tab.id === activeTab.id;
@@ -40,7 +40,7 @@ export function PublicPersonTabs({ tabs }: { tabs: PublicPersonTab[] }) {
                 "inline-flex min-h-14 shrink-0 items-center border-b-2 px-2 text-sm font-semibold transition",
                 isActive
                   ? "border-primary text-primary"
-                  : "border-transparent text-slate-600 hover:border-primary/40 hover:text-primary",
+                  : "border-transparent text-muted-foreground hover:border-primary/40 hover:text-primary",
               ].join(" ")}
             >
               {tab.label}

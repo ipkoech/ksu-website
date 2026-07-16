@@ -4,7 +4,7 @@ import { StatusMessage } from "./research-ui";
 
 export function ResearchRichText({
   content,
-  className = "text-sm leading-7 text-slate-600",
+  className = "text-sm leading-7 text-muted-foreground",
 }: {
   content?: string | null;
   className?: string;
@@ -34,14 +34,14 @@ export function ResearchStoryAccordion({
   }
 
   return (
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <section className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
       {sections.map((section, index) => (
         <details
           key={section.title}
-          className="group border-b border-slate-200 last:border-b-0"
+          className="group border-b border-border last:border-b-0"
           open={index === 0}
         >
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-base font-semibold text-slate-950 transition hover:bg-slate-50">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-base font-semibold text-foreground transition hover:bg-surface-subtle">
             {section.title}
             <span className="text-primary transition group-open:rotate-45">+</span>
           </summary>

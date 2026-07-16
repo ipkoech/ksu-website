@@ -199,7 +199,7 @@ function AdmissionsPanel({
   return (
     <aside
       aria-label="Admissions update"
-      className="w-full max-w-md justify-self-start rounded-md border border-white/20 bg-primary/95 p-5 shadow-xl shadow-slate-950/20 sm:p-6 lg:justify-self-end"
+      className="w-full max-w-md justify-self-start rounded-md border border-white/20 bg-primary/95 p-5 shadow-xl shadow-primary/20 sm:p-6 lg:justify-self-end"
     >
       <div className="flex items-center gap-3 border-b border-white/15 pb-4">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-secondary text-white">
@@ -573,7 +573,7 @@ export function FeaturedPartnershipSection({
   return (
     <section
       id={section.section_key}
-      className="border-b border-blue-100 bg-white py-10 lg:py-12"
+      className="border-b border-border bg-white py-10 lg:py-12"
     >
       <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
@@ -603,14 +603,14 @@ export function FeaturedPartnershipSection({
             <SectionEyebrow
               value={section.subtitle ?? "Featured partnership"}
             />
-            <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl lg:text-5xl">
+            <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl lg:text-5xl">
               {title ?? "Partnership spotlight"}
             </h2>
             <SectionBody
               value={summary}
               className="mt-4 max-w-2xl text-base leading-7"
             />
-            <div className="mt-7 divide-y divide-blue-100 border-y border-blue-100">
+            <div className="mt-7 divide-y divide-blue-100 border-y border-border">
               {pillars.slice(0, 4).map((pillar, index) => (
                 <div
                   key={`${String(pillar.label)}-${index}`}
@@ -660,7 +660,7 @@ export function ProgrammeFinderSection({
   return (
     <section
       id={section.section_key}
-      className="relative isolate border-b border-blue-100 bg-blue-50/40 py-12 lg:py-16"
+      className="relative isolate border-b border-border bg-accent/40 py-12 lg:py-16"
     >
       <PublicImage
         src="/images/Home/KSUGreenLandscaping.jpg"
@@ -686,7 +686,7 @@ export function ProgrammeFinderSection({
             <a
               key={href}
               href={href}
-              className="inline-flex min-h-9 shrink-0 items-center rounded-full border border-blue-100 bg-white/85 px-3 text-xs font-bold text-primary shadow-sm transition hover:border-primary/25 hover:bg-white"
+              className="inline-flex min-h-9 shrink-0 items-center rounded-full border border-border bg-white/85 px-3 text-xs font-bold text-primary shadow-sm transition hover:border-primary/25 hover:bg-white"
             >
               {label}
             </a>
@@ -707,7 +707,7 @@ export function ProgrammeFinderSection({
             />
             <div className="flex flex-col justify-center p-5 sm:p-7 lg:p-8">
               <SectionEyebrow value={section.subtitle} />
-              <h2 className="mt-2 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+              <h2 className="mt-2 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
                 {section.title ?? "Find a programme"}
               </h2>
               <SectionBody
@@ -730,28 +730,28 @@ export function ProgrammeFinderSection({
 
         <div
           id="programme-journey"
-          className="programme-panel relative z-20 mt-6 scroll-mt-28 lg:sticky lg:top-[calc(var(--public-header-offset,96px)+4.5rem)] lg:mt-0 lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px)-4.5rem)] lg:w-screen lg:ml-[calc(50%-50vw)] lg:items-center lg:bg-blue-50 lg:px-8 lg:py-10 xl:px-10 2xl:px-12 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 motion-safe:delay-150"
+          className="programme-panel relative z-20 mt-6 scroll-mt-28 lg:sticky lg:top-[calc(var(--public-header-offset,96px)+4.5rem)] lg:mt-0 lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px)-4.5rem)] lg:w-screen lg:ml-[calc(50%-50vw)] lg:items-center lg:bg-accent lg:px-8 lg:py-10 xl:px-10 2xl:px-12 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 motion-safe:delay-150"
         >
           <div className="mx-auto grid w-full max-w-[1680px] overflow-hidden bg-white shadow-xl shadow-primary/10 transition duration-500 lg:grid-cols-[0.6fr_0.4fr] lg:shadow-2xl lg:shadow-primary/14">
             <div className="flex flex-col justify-center p-5 sm:p-7 lg:p-8">
               <SectionEyebrow value="How to join Kisii University" />
-              <h3 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
+              <h3 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground">
                 From choice to campus reporting.
               </h3>
               <div className="mt-7 grid gap-3 sm:grid-cols-5 lg:grid-cols-1">
                 {journey.slice(0, 5).map((item, index) => (
                   <div
                     key={item.id}
-                    className="group flex gap-4 border-l-2 border-blue-100 py-2 pl-4 transition hover:border-primary sm:block sm:border-l-0 sm:border-t-2 sm:pl-0 sm:pt-4 lg:flex lg:border-l-2 lg:border-t-0 lg:py-2 lg:pl-4 lg:pt-2"
+                    className="group flex gap-4 border-l-2 border-border py-2 pl-4 transition hover:border-primary sm:block sm:border-l-0 sm:border-t-2 sm:pl-0 sm:pt-4 lg:flex lg:border-l-2 lg:border-t-0 lg:py-2 lg:pl-4 lg:pt-2"
                   >
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-white transition group-hover:bg-secondary">
                       {itemContentNumber(item, "step") ?? index + 1}
                     </span>
                     <div className="min-w-0 sm:mt-3 lg:mt-0">
-                      <h4 className="text-sm font-semibold text-slate-950">
+                      <h4 className="text-sm font-semibold text-foreground">
                         {item.title}
                       </h4>
-                      <p className="mt-1 text-xs leading-5 text-slate-600">
+                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
                         {item.body_text}
                       </p>
                     </div>
@@ -838,17 +838,17 @@ export function DateTimelineSection({ section }: SectionVariantProps) {
   return (
     <section
       id={section.section_key}
-      className="border-b border-blue-100 bg-white py-10 lg:py-12"
+      className="border-b border-border bg-white py-10 lg:py-12"
     >
       <div className="mx-auto grid max-w-[1680px] gap-6 px-4 sm:px-6 lg:grid-cols-[minmax(280px,0.36fr)_minmax(0,0.64fr)] lg:px-8 xl:px-10 2xl:px-12">
         <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
           <SectionEyebrow value={section.subtitle ?? "Important dates"} />
-          <h2 className="mt-2 max-w-md font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+          <h2 className="mt-2 max-w-md font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
             {section.title ?? "Important academic dates"}
           </h2>
           <SectionBody value={section.description} className="mt-3 max-w-md" />
         </div>
-        <div className="divide-y divide-blue-100 border-y border-blue-100 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150">
+        <div className="divide-y divide-blue-100 border-y border-border motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150">
           {items.map((item, index) => (
             <DateLineItem key={item.id} item={item} index={index} />
           ))}
@@ -908,9 +908,9 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
   return (
     <section
       id={section.section_key}
-      className="campus-life-scroll-scene relative isolate border-b border-blue-100 bg-white py-12 lg:min-h-[320vh] lg:py-0"
+      className="campus-life-scroll-scene relative isolate border-b border-border bg-white py-12 lg:min-h-[320vh] lg:py-0"
     >
-      <div className="absolute inset-y-0 right-0 -z-10 hidden w-1/2 bg-blue-50/70 lg:block" />
+      <div className="absolute inset-y-0 right-0 -z-10 hidden w-1/2 bg-accent/70 lg:block" />
       <div className="campus-life-sticky-frame mx-auto max-w-[1680px] px-4 sm:px-6 lg:sticky lg:top-[var(--public-header-offset,96px)] lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px))] lg:max-w-none lg:items-center lg:px-0 xl:px-0 2xl:px-0">
         <CampusLifeHorizontalScroller>
           <div className="lg:flex lg:w-max lg:items-stretch lg:gap-4 lg:pr-[12vw]">
@@ -920,7 +920,7 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
                 <div className="flex flex-col justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-6 motion-safe:delay-150">
                   <div className="max-w-xl">
                     <SectionEyebrow value={section.subtitle ?? "Campus life"} />
-                    <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl lg:text-5xl">
+                    <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl lg:text-5xl">
                       Campus life at KSU, clearly mapped.
                     </h2>
                     <SectionBody
@@ -939,7 +939,7 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
                       className="mt-7"
                     />
                   </div>
-                  <div className="student-life-rhythm mt-8 border-y border-blue-100">
+                  <div className="student-life-rhythm mt-8 border-y border-border">
                     {rhythm.map((item, index) => (
                       <div
                         key={item.label}
@@ -949,10 +949,10 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
                           {item.label}
                         </p>
                         <div>
-                          <h3 className="font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-slate-950">
+                          <h3 className="font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-foreground">
                             {item.title}
                           </h3>
-                          <p className="mt-1 text-sm leading-6 text-slate-600">
+                          <p className="mt-1 text-sm leading-6 text-muted-foreground">
                             {item.body}
                           </p>
                         </div>
@@ -1038,7 +1038,7 @@ function CampusLifeLane({
 }) {
   const body = (
     <article
-      className="group flex min-h-[250px] flex-col overflow-hidden border border-blue-100 bg-white transition duration-500 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg hover:shadow-primary/10 lg:min-h-[560px] lg:w-[min(420px,78vw)] lg:snap-start motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
+      className="group flex min-h-[250px] flex-col overflow-hidden border border-border bg-white transition duration-500 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg hover:shadow-primary/10 lg:min-h-[560px] lg:w-[min(420px,78vw)] lg:snap-start motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
       style={{ animationDelay: `${Math.min(index, 5) * 80}ms` }}
     >
       <PublicImage
@@ -1058,10 +1058,10 @@ function CampusLifeLane({
         <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-secondary">
           {lane.audience}
         </p>
-        <h3 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-slate-950">
+        <h3 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-foreground">
           {lane.title}
         </h3>
-        <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
+        <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
           {lane.body}
         </p>
         <span className="mt-auto inline-flex pt-4 text-sm font-semibold text-primary">
@@ -1198,7 +1198,7 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
   return (
     <section
       id={section.section_key}
-      className="overflow-hidden border-b border-primary/10 bg-[#fbfaf6]"
+      className="overflow-hidden border-b border-primary/10 bg-surface"
     >
       <div className="mx-auto grid max-w-[1680px] lg:h-[720px] lg:grid-cols-[minmax(300px,0.34fr)_minmax(0,0.66fr)] xl:h-[740px] 2xl:h-[760px]">
         <div className="relative border-b border-primary/10 lg:grid lg:h-full lg:min-h-0 lg:grid-rows-[52%_48%] lg:border-b-0 lg:border-r">
@@ -1219,11 +1219,11 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
             <p className="mt-3 text-xs font-bold uppercase tracking-[0.16em] text-primary">
               {leaderTitle}
             </p>
-            <h2 className="mt-2 max-w-md font-[family-name:var(--font-display)] text-3xl font-semibold leading-[1.05] text-slate-950 sm:text-4xl lg:text-[2rem] xl:text-4xl">
+            <h2 className="mt-2 max-w-md font-[family-name:var(--font-display)] text-3xl font-semibold leading-[1.05] text-foreground sm:text-4xl lg:text-[2rem] xl:text-4xl">
               {leaderName}
             </h2>
             <div className="mt-3 h-px w-12 bg-secondary" />
-            <p className="mt-3 max-w-md text-sm leading-6 text-slate-600 lg:line-clamp-3">
+            <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground lg:line-clamp-3">
               {leaderMessage}
             </p>
             <Link
@@ -1245,7 +1245,7 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
           {featuredActivity ? (
             <FeaturedActivity item={featuredActivity} />
           ) : (
-            <p className="mt-7 border-y border-primary/10 py-6 text-sm text-slate-600">
+            <p className="mt-7 border-y border-primary/10 py-6 text-sm text-muted-foreground">
               Published leadership activities will appear here.
             </p>
           )}
@@ -1392,7 +1392,7 @@ function ResearchFocusArea({
   index: number;
 }) {
   const body = (
-    <article className="group border border-white/25 bg-slate-950/20 p-4 text-white transition duration-300 hover:-translate-y-0.5 hover:border-secondary/45 hover:bg-slate-950/32">
+    <article className="group border border-white/25 bg-brand-overlay/20 p-4 text-white transition duration-300 hover:-translate-y-0.5 hover:border-secondary/45 hover:bg-brand-overlay/32">
       <div className="flex gap-4">
         <span className="font-[family-name:var(--font-display)] text-sm font-semibold text-secondary">
           {String(index + 1).padStart(2, "0")}
@@ -1427,7 +1427,7 @@ export function NewsGridSection({
   return (
     <section
       id={section.section_key}
-      className="border-b border-primary/10 bg-[linear-gradient(180deg,#fffdf8_0%,#ffffff_54%,#f8f4e8_100%)] py-12 lg:py-14"
+      className="border-b border-primary/10 bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_54%,hsl(var(--surface-muted))_100%)] py-12 lg:py-14"
     >
       <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mb-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
@@ -1441,7 +1441,7 @@ export function NewsGridSection({
                 section.description ??
                 "Discover what is happening across campus—partnerships that create impact, achievements that inspire, and events that bring us together."
               }
-              className="mt-4 max-w-3xl text-base leading-7 text-slate-700"
+              className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground"
             />
           </div>
           <nav
@@ -1491,7 +1491,7 @@ export function NewsGridSection({
               <h3 className="font-[family-name:var(--font-display)] text-2xl font-bold text-primary">
                 Subscribe to updates
               </h3>
-              <p className="mt-1 text-sm leading-6 text-slate-600">
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 Get the latest news, events, and stories straight to your inbox.
               </p>
             </div>
@@ -1510,7 +1510,7 @@ export function NewsGridSection({
                 <span className="block font-[family-name:var(--font-display)] text-xl font-bold text-primary">
                   Contact us
                 </span>
-                <span className="mt-1 block text-sm leading-5 text-slate-600">
+                <span className="mt-1 block text-sm leading-5 text-muted-foreground">
                   Reach the university for official support and enquiries.
                 </span>
                 <span className="mt-1 inline-flex items-center gap-2 text-sm font-bold text-secondary">
@@ -1530,7 +1530,7 @@ export function NewsGridSection({
                 <span className="block font-[family-name:var(--font-display)] text-xl font-bold text-primary">
                   Submit a story
                 </span>
-                <span className="mt-1 block text-sm leading-5 text-slate-600">
+                <span className="mt-1 block text-sm leading-5 text-muted-foreground">
                   Share a story with Corporate Communication.
                 </span>
                 <span className="mt-1 inline-flex items-center gap-2 text-sm font-bold text-secondary">
@@ -1615,7 +1615,7 @@ function ComposedSocialMediaLinks({
             rel="noopener noreferrer"
             aria-label={`Follow Kisii University on ${label}`}
             className={[
-              "inline-flex h-10 w-10 items-center justify-center rounded-full border border-primary/15 bg-white transition hover:border-current hover:bg-slate-50",
+              "inline-flex h-10 w-10 items-center justify-center rounded-full border border-primary/15 bg-white transition hover:border-current hover:bg-surface-subtle",
               colorClassName,
             ].join(" ")}
           >
@@ -1705,15 +1705,15 @@ function UpdateListItem({
         <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold uppercase tracking-[0.12em] text-primary">
           <span>{itemCategoryLabel(item)}</span>
           {itemDateLabel(item) ? (
-            <span className="font-medium normal-case tracking-normal text-slate-500">
+            <span className="font-medium normal-case tracking-normal text-muted-foreground">
               {itemDateLabel(item)}
             </span>
           ) : null}
         </div>
-        <h3 className="mt-2 line-clamp-2 font-[family-name:var(--font-display)] text-lg font-bold leading-5 text-slate-950 transition group-hover:text-primary">
+        <h3 className="mt-2 line-clamp-2 font-[family-name:var(--font-display)] text-lg font-bold leading-5 text-foreground transition group-hover:text-primary">
           {item.title}
         </h3>
-        <p className="mt-2 line-clamp-2 text-sm leading-5 text-slate-600">
+        <p className="mt-2 line-clamp-2 text-sm leading-5 text-muted-foreground">
           {item.body_text ?? item.cta_description}
         </p>
       </div>
@@ -1806,12 +1806,12 @@ export function EventsListSection({ section }: SectionVariantProps) {
   return (
     <section
       id={section.section_key}
-      className="border-b border-blue-100 bg-blue-50/35 py-12 lg:py-14"
+      className="border-b border-border bg-accent/35 py-12 lg:py-14"
     >
       <div className="mx-auto grid max-w-[1680px] gap-7 px-4 sm:px-6 lg:grid-cols-[minmax(280px,0.3fr)_minmax(0,0.7fr)] lg:px-8 xl:px-10 2xl:px-12">
         <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
           <SectionEyebrow value={section.subtitle ?? "Upcoming events"} />
-          <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+          <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
             {section.title ?? "Upcoming events"}
           </h2>
           <SectionBody value={section.description} className="mt-3" />
@@ -1833,7 +1833,7 @@ export function LogoCarouselSection({ section }: SectionVariantProps) {
   return (
     <section
       id={section.section_key}
-      className="relative isolate overflow-hidden border-b border-blue-100 bg-white py-12 lg:py-14"
+      className="relative isolate overflow-hidden border-b border-border bg-white py-12 lg:py-14"
     >
       <div className="pointer-events-none absolute right-0 top-0 -z-10 h-full w-1/2 bg-[radial-gradient(circle_at_70%_25%,rgba(3,71,52,.08),transparent_38%)]" />
       <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
@@ -1860,7 +1860,7 @@ export function LogoCarouselSection({ section }: SectionVariantProps) {
           />
         </div>
 
-        <div className="group relative mt-9 overflow-hidden border-y border-blue-100 py-6 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150">
+        <div className="group relative mt-9 overflow-hidden border-y border-border py-6 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150">
           <style>
             {`
               @keyframes homepage-partner-rail {
@@ -1954,7 +1954,7 @@ function PartnerLogoRailItem({
   const external = partner.href ? /^https?:\/\//i.test(partner.href) : false;
   const content = (
     <div
-      className="group/logo flex h-20 w-48 shrink-0 items-center justify-center border-r border-blue-100 px-7 sm:w-56 lg:w-64"
+      className="group/logo flex h-20 w-48 shrink-0 items-center justify-center border-r border-border px-7 sm:w-56 lg:w-64"
       aria-hidden={duplicate ? "true" : undefined}
     >
       {partner.logoUrl ? (
@@ -1989,7 +1989,7 @@ function PartnerLogoRailItem({
       {content}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-2 z-20 max-w-56 -translate-x-1/2 -translate-y-1 rounded-full bg-primary px-3 py-1 text-center text-xs font-semibold leading-tight text-white opacity-0 shadow-lg shadow-slate-900/15 transition duration-200 group-hover/partnerlink:translate-y-0 group-hover/partnerlink:opacity-100 group-focus-visible/partnerlink:translate-y-0 group-focus-visible/partnerlink:opacity-100"
+        className="pointer-events-none absolute left-1/2 top-2 z-20 max-w-56 -translate-x-1/2 -translate-y-1 rounded-full bg-primary px-3 py-1 text-center text-xs font-semibold leading-tight text-white opacity-0 shadow-lg shadow-primary/15 transition duration-200 group-hover/partnerlink:translate-y-0 group-hover/partnerlink:opacity-100 group-focus-visible/partnerlink:translate-y-0 group-focus-visible/partnerlink:opacity-100"
       >
         {partner.name}
       </span>
@@ -2005,7 +2005,7 @@ export function AlumniStorySection({ section }: SectionVariantProps) {
   return (
     <section
       id={section.section_key}
-      className="border-b border-blue-100 bg-blue-50/35 py-12 lg:py-14"
+      className="border-b border-border bg-accent/35 py-12 lg:py-14"
     >
       <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="grid overflow-hidden bg-white lg:grid-cols-[0.38fr_0.62fr] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
@@ -2016,12 +2016,12 @@ export function AlumniStorySection({ section }: SectionVariantProps) {
             className="min-h-[320px] rounded-none"
             imageClassName="object-cover"
           />
-          <div className="flex flex-col justify-center border border-blue-100 p-6 sm:p-8 lg:border-l-0 lg:p-10">
+          <div className="flex flex-col justify-center border border-border p-6 sm:p-8 lg:border-l-0 lg:p-10">
             <SectionEyebrow value={section.subtitle ?? "Alumni impact"} />
-            <h2 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+            <h2 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
               {item?.title ?? section.title ?? "Alumni story"}
             </h2>
-            <p className="mt-5 max-w-4xl border-l-4 border-secondary pl-5 font-[family-name:var(--font-display)] text-xl leading-8 text-slate-700">
+            <p className="mt-5 max-w-4xl border-l-4 border-secondary pl-5 font-[family-name:var(--font-display)] text-xl leading-8 text-muted-foreground">
               “{item?.body_text ?? section.description}”
             </p>
             <p className="mt-4 text-sm font-semibold text-primary">
@@ -2078,7 +2078,7 @@ export function VideoFeatureSection({ section }: SectionVariantProps) {
         src={mediaUrl(media)}
         alt={mediaAlt(media, section.title ?? "Featured video")}
         ratio="hero"
-        className="mt-8 rounded-md border border-blue-100"
+        className="mt-8 rounded-md border border-border"
       />
     </SectionFrame>
   );
@@ -2098,8 +2098,8 @@ function SectionFrame({
       id={section.section_key}
       className={
         tinted
-          ? "border-b border-blue-100 bg-blue-50/45 py-14 lg:py-16"
-          : "border-b border-blue-100 bg-white py-14 lg:py-16"
+          ? "border-b border-border bg-accent/45 py-14 lg:py-16"
+          : "border-b border-border bg-white py-14 lg:py-16"
       }
     >
       <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
@@ -2122,7 +2122,7 @@ function SectionHeading({
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <SectionEyebrow value={section.subtitle} />
-        <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950 sm:text-4xl">
+        <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground sm:text-4xl">
           {section.title ?? fallback}
         </h2>
         <SectionBody value={section.description} className="mt-3 max-w-3xl" />
@@ -2151,7 +2151,7 @@ function ImageArticleCard({
   const date = itemContentText(item, "date");
   const content = (
     <article
-      className={`group h-full overflow-hidden rounded-md border shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${dark ? "border-white/15 bg-white/10" : "border-blue-100 bg-white"}`}
+      className={`group h-full overflow-hidden rounded-md border shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${dark ? "border-white/15 bg-white/10" : "border-border bg-white"}`}
     >
       <PublicImage
         src={itemImageUrl(item)}
@@ -2168,7 +2168,7 @@ function ImageArticleCard({
       <div className={compact ? "p-4" : "p-5"}>
         <div className="flex items-center gap-2">
           <span
-            className={`flex h-7 w-7 items-center justify-center rounded-full ${dark ? "bg-white/15 text-secondary" : "bg-blue-50 text-primary"}`}
+            className={`flex h-7 w-7 items-center justify-center rounded-full ${dark ? "bg-white/15 text-secondary" : "bg-accent text-primary"}`}
           >
             <Icon className="h-3.5 w-3.5" aria-hidden />
           </span>
@@ -2181,20 +2181,20 @@ function ImageArticleCard({
           ) : null}
         </div>
         <h3
-          className={`mt-3 font-[family-name:var(--font-display)] font-semibold ${compact ? "text-base" : "text-xl"} ${dark ? "text-white" : "text-slate-950"}`}
+          className={`mt-3 font-[family-name:var(--font-display)] font-semibold ${compact ? "text-base" : "text-xl"} ${dark ? "text-white" : "text-foreground"}`}
         >
           {item.title ?? "Learn more"}
         </h3>
         {!compact && (item.body_text || item.subtitle) ? (
           <p
-            className={`mt-2 text-sm leading-6 ${dark ? "text-white/70" : "text-slate-600"}`}
+            className={`mt-2 text-sm leading-6 ${dark ? "text-white/70" : "text-muted-foreground"}`}
           >
             {item.body_text ?? item.subtitle}
           </p>
         ) : null}
         {date && category ? (
           <p
-            className={`mt-3 text-xs ${dark ? "text-white/60" : "text-slate-500"}`}
+            className={`mt-3 text-xs ${dark ? "text-white/60" : "text-muted-foreground"}`}
           >
             {date}
           </p>
@@ -2218,7 +2218,7 @@ function DateLineItem({
 }) {
   const date = itemContentText(item, "date") ?? item.subtitle;
   const body = (
-    <article className="group grid gap-4 py-5 transition hover:bg-blue-50/60 sm:grid-cols-[80px_minmax(0,1fr)_auto] sm:items-center sm:px-4">
+    <article className="group grid gap-4 py-5 transition hover:bg-accent/60 sm:grid-cols-[80px_minmax(0,1fr)_auto] sm:items-center sm:px-4">
       <span className="font-[family-name:var(--font-display)] text-3xl font-semibold text-primary/25 transition group-hover:text-primary">
         {String(index + 1).padStart(2, "0")}
       </span>
@@ -2226,11 +2226,11 @@ function DateLineItem({
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
           {date ?? "Academic date"}
         </p>
-        <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
+        <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">
           {item.title}
         </h3>
         {item.body_text ? (
-          <p className="mt-1 text-sm leading-6 text-slate-600">
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
             {item.body_text}
           </p>
         ) : null}
@@ -2336,14 +2336,14 @@ function FeaturedActivity({ item }: { item: HomepageSectionItem }) {
           <p className="text-xs font-bold uppercase tracking-[0.15em] text-primary">
             {typeLabel}
             {date ? (
-              <span className="ml-4 font-medium text-slate-500">{date}</span>
+              <span className="ml-4 font-medium text-muted-foreground">{date}</span>
             ) : null}
           </p>
-          <h4 className="mt-1.5 line-clamp-2 max-w-4xl font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 transition group-hover:text-primary lg:text-[1.45rem] xl:text-2xl">
+          <h4 className="mt-1.5 line-clamp-2 max-w-4xl font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground transition group-hover:text-primary lg:text-[1.45rem] xl:text-2xl">
             {title}
           </h4>
           {summary ? (
-            <p className="mt-1.5 line-clamp-2 max-w-3xl text-sm leading-5 text-slate-600 lg:line-clamp-1 xl:line-clamp-2">
+            <p className="mt-1.5 line-clamp-2 max-w-3xl text-sm leading-5 text-muted-foreground lg:line-clamp-1 xl:line-clamp-2">
               {summary}
             </p>
           ) : null}
@@ -2387,7 +2387,7 @@ function ActivityLineItem({
         <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
           {[typeLabel, date].filter(Boolean).join(" · ")}
         </p>
-        <h4 className="mt-1 line-clamp-2 font-[family-name:var(--font-display)] text-lg font-semibold leading-tight text-slate-950 transition group-hover:text-primary lg:text-base xl:text-[1.05rem]">
+        <h4 className="mt-1 line-clamp-2 font-[family-name:var(--font-display)] text-lg font-semibold leading-tight text-foreground transition group-hover:text-primary lg:text-base xl:text-[1.05rem]">
           {title}
         </h4>
       </div>
@@ -2411,7 +2411,7 @@ function EventLineItem({
   const date = itemContentText(item, "date") ?? item.subtitle;
   const venue = itemContentText(item, "venue") ?? item.cta_description;
   const body = (
-    <article className="group flex min-h-36 gap-4 border border-blue-100 bg-white p-4 transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm">
+    <article className="group flex min-h-36 gap-4 border border-border bg-white p-4 transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm">
       <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center bg-primary text-center text-white">
         <span className="text-xs font-bold uppercase tracking-[0.12em]">
           {date?.split(" ")[0] ?? String(index + 1).padStart(2, "0")}
@@ -2419,10 +2419,10 @@ function EventLineItem({
         <CalendarDays className="mt-1 h-4 w-4 text-secondary" aria-hidden />
       </div>
       <div className="min-w-0">
-        <h3 className="font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-slate-950">
+        <h3 className="font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-foreground">
           {item.title}
         </h3>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
           {venue ?? item.body_text}
         </p>
       </div>
@@ -2546,7 +2546,7 @@ function SectionBody({
     <p
       className={[
         "text-sm leading-7",
-        light ? "text-white/82" : "text-slate-600",
+        light ? "text-white/82" : "text-muted-foreground",
         className,
       ]
         .filter(Boolean)

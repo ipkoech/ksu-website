@@ -58,7 +58,7 @@ export default async function LibraryHoursPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
             Today
           </p>
-          <p className="mt-2 text-lg font-semibold text-slate-950">
+          <p className="mt-2 text-lg font-semibold text-foreground">
             Check the branch schedule below before visiting.
           </p>
         </div>
@@ -75,16 +75,16 @@ export default async function LibraryHoursPage() {
             groupedHours.map(({ branch, hours }) => (
               <article
                 key={branch.id}
-                className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                className="rounded-lg border border-border bg-white p-5 shadow-sm"
               >
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
                   {formatLabel(branch.library_type ?? "library")}
                 </p>
-                <h2 className="mt-3 text-xl font-semibold text-slate-950">
+                <h2 className="mt-3 text-xl font-semibold text-foreground">
                   {branch.name}
                 </h2>
                 {hours.length === 0 ? (
-                  <p className="mt-4 text-sm leading-6 text-slate-600">
+                  <p className="mt-4 text-sm leading-6 text-muted-foreground">
                     Hours for this branch are being updated.
                   </p>
                 ) : (
@@ -94,17 +94,17 @@ export default async function LibraryHoursPage() {
                         key={item.id}
                         className="grid gap-2 py-3 sm:grid-cols-[160px_1fr]"
                       >
-                        <dt className="font-semibold text-slate-950">
+                        <dt className="font-semibold text-foreground">
                           {formatLabel(item.day_type)}
                         </dt>
-                        <dd className="text-slate-600">
+                        <dd className="text-muted-foreground">
                           {item.is_closed
                             ? "Closed"
                             : `${item.opens_at ?? "Opening time pending"} - ${
                                 item.closes_at ?? "Closing time pending"
                               }`}
                           {item.note ? (
-                            <span className="block text-xs text-slate-500">
+                            <span className="block text-xs text-muted-foreground">
                               {item.note}
                             </span>
                           ) : null}
@@ -121,8 +121,8 @@ export default async function LibraryHoursPage() {
             <div className="divide-y divide-slate-200">
               {branches.data.slice(0, 6).map((branch) => (
                 <article key={branch.id} className="py-3 first:pt-0">
-                  <p className="text-sm font-semibold text-slate-950">{branch.name}</p>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                  <p className="text-sm font-semibold text-foreground">{branch.name}</p>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
                     {branch.address ?? branch.short_name ?? "Location being updated"}
                   </p>
                 </article>

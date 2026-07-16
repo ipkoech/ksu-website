@@ -22,10 +22,10 @@ export default function TermsPage() {
           <p className="text-sm font-semibold uppercase text-secondary">
             Terms of Use
           </p>
-          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
+          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
             Website terms and public use guidance
           </h1>
-          <p className="mt-4 text-base leading-8 text-slate-600">
+          <p className="mt-4 text-base leading-8 text-muted-foreground">
             By accessing and using the Kisii University website, you agree to
             these terms. If you do not agree, please do not use this website.
           </p>
@@ -33,10 +33,10 @@ export default function TermsPage() {
 
         <div className="mt-10 space-y-8">
           <section>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               Purpose of this website
             </h2>
-            <p className="mt-3 text-base leading-8 text-slate-600">
+            <p className="mt-3 text-base leading-8 text-muted-foreground">
               This website provides public information about Kisii University
               programmes, services, policies, news, events, and institutional
               records. It is intended for informational use by students,
@@ -45,10 +45,10 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               Accuracy of information
             </h2>
-            <p className="mt-3 text-base leading-8 text-slate-600">
+            <p className="mt-3 text-base leading-8 text-muted-foreground">
               The university makes reasonable efforts to ensure that
               information published on this website is accurate and current.
               However, users should verify time-sensitive notices, admission
@@ -59,10 +59,10 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               External links and third-party systems
             </h2>
-            <p className="mt-3 text-base leading-8 text-slate-600">
+            <p className="mt-3 text-base leading-8 text-muted-foreground">
               This website links to external university systems including
               the student portal, digital service centre, e-learning
               platform, library catalogue, and research repository. These
@@ -73,10 +73,10 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               Intellectual property
             </h2>
-            <p className="mt-3 text-base leading-8 text-slate-600">
+            <p className="mt-3 text-base leading-8 text-muted-foreground">
               All content on this website — including text, images, logos,
               documents, and multimedia — is the property of Kisii
               University or used under licence. Content may be used for
@@ -87,10 +87,10 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               Acceptable use
             </h2>
-            <p className="mt-3 text-base leading-8 text-slate-600">
+            <p className="mt-3 text-base leading-8 text-muted-foreground">
               Users must not use this website in any way that causes damage,
               impairs availability or accessibility, or is unlawful,
               fraudulent, or harmful. Users must not conduct systematic data
@@ -100,10 +100,10 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               Limitation of liability
             </h2>
-            <p className="mt-3 text-base leading-8 text-slate-600">
+            <p className="mt-3 text-base leading-8 text-muted-foreground">
               To the fullest extent permitted by law, Kisii University shall
               not be liable for any loss or damage arising from the use of
               this website or reliance on its content. This includes direct,
@@ -114,10 +114,10 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               Changes to these terms
             </h2>
-            <p className="mt-3 text-base leading-8 text-slate-600">
+            <p className="mt-3 text-base leading-8 text-muted-foreground">
               These terms may be updated at any time. The current version is
               maintained on this page. Continued use of the website after
               changes constitutes acceptance of the revised terms.
@@ -125,16 +125,16 @@ export default function TermsPage() {
           </section>
         </div>
 
-        <div className="mt-12 rounded-[1.25rem] border border-blue-100 bg-blue-50/60 p-6">
+        <div className="mt-12 rounded-[1.25rem] border border-border bg-accent/60 p-6">
           <div className="flex items-start gap-4">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <FileText aria-hidden className="h-5 w-5" />
             </span>
             <div>
-              <h2 className="text-lg font-semibold text-slate-950">
+              <h2 className="text-lg font-semibold text-foreground">
                 Questions about these terms
               </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 For enquiries about these terms or institutional
                 communications, contact the university through the official
                 channels.

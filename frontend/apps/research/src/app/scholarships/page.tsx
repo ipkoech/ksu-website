@@ -56,7 +56,7 @@ export default async function ScholarshipsPage({ searchParams }: { searchParams?
     : visibleScholarships;
 
   return (
-    <main id="research-main" className="min-h-screen bg-slate-50">
+    <main id="research-main" className="min-h-screen bg-surface-subtle">
       <ScholarshipsMasthead
         resultCount={visibleScholarships.length}
         publishedCount={allScholarships.data.length}
@@ -69,7 +69,7 @@ export default async function ScholarshipsPage({ searchParams }: { searchParams?
         {visibleScholarships.length > 0 ? (
           <>
             {featuredScholarship ? <div className="mt-6"><FeaturedScholarship item={featuredScholarship} /></div> : null}
-            <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
+            <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-border bg-white shadow-sm">
               {rowScholarships.map((item) => <ScholarshipRow key={item.id} item={item} />)}
             </div>
           </>
@@ -138,13 +138,13 @@ function FeaturedScholarship({ item }: { item: ResearchGenericRecord }) {
           {deadline.value ? <DeadlineStatusBadge deadline={deadline} /> : null}
           <FilledBadge>Featured</FilledBadge>
         </div>
-        <h2 className="mt-3 text-lg font-semibold leading-7 text-slate-950">{getRecordTitle(item, "Research scholarship")}</h2>
-        {getRecordSummary(item) || compactText(item.eligibility) ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{getRecordSummary(item) || compactText(item.eligibility)}</p> : null}
-        {coverage.length ? <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Covers {coverage.join(", ")}</p> : null}
+        <h2 className="mt-3 text-lg font-semibold leading-7 text-foreground">{getRecordTitle(item, "Research scholarship")}</h2>
+        {getRecordSummary(item) || compactText(item.eligibility) ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{getRecordSummary(item) || compactText(item.eligibility)}</p> : null}
+        {coverage.length ? <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Covers {coverage.join(", ")}</p> : null}
       </div>
       <dl className="grid gap-2 text-sm">
-        {formatDate(item.application_deadline) ? <div className="rounded-md bg-white p-2.5"><dt className="text-xs font-semibold uppercase text-slate-500">Deadline</dt><dd className="mt-1 font-semibold text-slate-950">{formatDate(item.application_deadline)}</dd></div> : null}
-        {value ? <div className="rounded-md bg-white p-2.5"><dt className="text-xs font-semibold uppercase text-slate-500">Value</dt><dd className="mt-1 font-semibold text-slate-950">{value}</dd></div> : null}
+        {formatDate(item.application_deadline) ? <div className="rounded-md bg-white p-2.5"><dt className="text-xs font-semibold uppercase text-muted-foreground">Deadline</dt><dd className="mt-1 font-semibold text-foreground">{formatDate(item.application_deadline)}</dd></div> : null}
+        {value ? <div className="rounded-md bg-white p-2.5"><dt className="text-xs font-semibold uppercase text-muted-foreground">Value</dt><dd className="mt-1 font-semibold text-foreground">{value}</dd></div> : null}
       </dl>
       <span className="inline-flex min-h-10 items-center justify-center rounded-md border border-primary/20 px-3 text-sm font-semibold text-primary transition group-hover:bg-primary group-hover:text-white">Open scholarship</span>
     </Link>

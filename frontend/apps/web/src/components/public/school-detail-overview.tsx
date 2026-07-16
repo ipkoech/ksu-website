@@ -140,9 +140,9 @@ function ContactRow({
 
   const content = (
     <>
-      <Icon aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-slate-500" />
+      <Icon aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
       <span className="min-w-0 flex-1">
-        <span className="block text-xs font-bold text-slate-950">{label}</span>
+        <span className="block text-xs font-bold text-foreground">{label}</span>
         <span className="mt-0.5 block break-words text-sm font-medium leading-5 text-primary [overflow-wrap:anywhere]">
           {value}
         </span>
@@ -180,7 +180,7 @@ function ContactPanel({
   if (!email && !phone && !office && !website) return null;
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="min-w-0 overflow-hidden rounded-[1.5rem] border border-border bg-white p-4 shadow-sm">
       <SectionKicker>Contact Information</SectionKicker>
       <div className="mt-3 grid min-w-0 gap-1.5">
         <ContactRow icon={MapPin} label="Office" value={office} />
@@ -234,7 +234,7 @@ function SchoolInfoPanel({
   if (!items.length) return null;
 
   return (
-    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="rounded-[1.5rem] border border-border bg-white p-4 shadow-sm">
       <SectionKicker>School Information</SectionKicker>
       <dl className="mt-3 grid gap-2">
         {items.map((item) => {
@@ -250,7 +250,7 @@ function SchoolInfoPanel({
                 className="mt-0.5 h-5 w-5 shrink-0 text-primary"
               />
               <div className="min-w-0 flex-1">
-                <dt className="text-xs font-bold text-slate-950">
+                <dt className="text-xs font-bold text-foreground">
                   {item.label}
                 </dt>
                 <dd className="mt-0.5 break-words text-sm font-medium leading-5 text-primary [overflow-wrap:anywhere]">
@@ -281,7 +281,7 @@ function DeanMessageCard({
   deanEmail: string | null;
 }) {
   return (
-    <section className="overflow-hidden rounded-[1.5rem] bg-slate-950 p-5 text-white shadow-[0_24px_70px_-48px_rgba(15,23,42,0.9)] sm:p-6">
+    <section className="overflow-hidden rounded-[1.5rem] bg-brand-overlay p-5 text-white shadow-[0_24px_70px_-48px_rgba(15,23,42,0.9)] sm:p-6">
       <div className="grid gap-5 sm:grid-cols-[7rem_minmax(0,1fr)] sm:items-center">
         <div className="w-24 overflow-hidden rounded-full bg-white/10 ring-1 ring-white/15 sm:w-auto">
           <div className="aspect-square">
@@ -326,14 +326,14 @@ function AboutCard({
   overview: string;
 }) {
   return (
-    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <section className="rounded-[1.5rem] border border-border bg-white p-5 shadow-sm sm:p-6">
       <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_9rem] md:items-center">
         <div>
           <SectionKicker>About the School</SectionKicker>
-          <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
+          <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground">
             {schoolName}
           </h2>
-          <p className="mt-3 text-sm leading-7 text-slate-700">{overview}</p>
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">{overview}</p>
         </div>
         <div className="hidden h-24 items-center justify-center rounded-[1.25rem] bg-primary/[0.08] text-primary md:flex">
           <Landmark aria-hidden className="h-14 w-14 stroke-[1.25]" />
@@ -356,7 +356,7 @@ function StatementCards({ statements }: { statements: StatementCard[] }) {
         return (
           <article
             key={item.title}
-            className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm"
+            className="rounded-[1.5rem] border border-border bg-white p-4 shadow-sm"
           >
             <div className="flex gap-3 md:block">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary/[0.12] text-secondary md:h-12 md:w-12">
@@ -366,7 +366,7 @@ function StatementCards({ statements }: { statements: StatementCard[] }) {
                 <h3 className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
                   {item.title}
                 </h3>
-                <p className="mt-1.5 text-sm leading-6 text-slate-700">
+                <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
                   {item.body}
                 </p>
               </div>
@@ -438,7 +438,7 @@ export function SchoolDetailOverview({
   return (
     <PageShell header={header}>
       <AboutPageLenis>
-        <section className="w-full bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_68%,#f6f8fc_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <section className="w-full bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_68%,hsl(var(--surface-muted))_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="mb-4">
             <BreadcrumbTrail
               items={[

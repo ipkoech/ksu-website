@@ -84,7 +84,7 @@ export default async function MentorshipPage({
     <main id="research-main" className="min-h-screen bg-white">
       <MentorshipPortfolioHero count={visibleMentorship.length} heroImage={heroImage} />
 
-      <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <section className="border-b border-border bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mx-auto grid max-w-[1680px] gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="min-w-0">
             <MentorshipFilters params={params} years={years} months={months} centers={centers.data} />
@@ -111,7 +111,7 @@ export default async function MentorshipPage({
 
 function MentorshipPortfolioHero({ count, heroImage }: { count: number; heroImage?: string }) {
   return (
-    <section className="relative overflow-hidden border-b border-slate-200 bg-[#061f41] px-4 py-8 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <section className="relative overflow-hidden border-b border-border bg-[hsl(var(--brand-overlay))] px-4 py-8 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(2,22,50,0.96),rgba(0,82,70,0.78)),radial-gradient(circle_at_75%_30%,rgba(245,158,11,0.22),transparent_24%)]" />
       <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 opacity-45 lg:block">
         <MentorshipIllustration />
@@ -156,25 +156,25 @@ function MentorshipFilters({
   centers: ResearchGenericRecord[];
 }) {
   return (
-    <form action="/mentorship" className="mb-5 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+    <form action="/mentorship" className="mb-5 rounded-lg border border-border bg-white p-3 shadow-sm">
       <div className="grid gap-2 lg:grid-cols-[minmax(220px,1fr)_auto_auto_auto]">
         <label className="relative block">
-          <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
           <input
             name="q"
             defaultValue={params.q ?? ""}
             placeholder="Search programme, requirements, benefits..."
-            className="h-11 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm font-medium text-slate-950 outline-none ring-primary/20 transition placeholder:text-slate-400 focus:border-primary focus:ring-4"
+            className="h-11 w-full rounded-md border border-border bg-white pl-9 pr-3 text-sm font-medium text-foreground outline-none ring-primary/20 transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-4"
           />
         </label>
         <button type="submit" className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-white">
           Search
         </button>
         <details className="relative">
-          <summary className="inline-flex h-11 cursor-pointer list-none items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800">
+          <summary className="inline-flex h-11 cursor-pointer list-none items-center justify-center gap-2 rounded-md border border-border bg-white px-4 text-sm font-semibold text-foreground">
             <Filter aria-hidden className="h-4 w-4" /> Filter
           </summary>
-          <div className="absolute right-0 z-20 mt-2 grid w-[320px] gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-xl">
+          <div className="absolute right-0 z-20 mt-2 grid w-[320px] gap-3 rounded-lg border border-border bg-white p-4 shadow-xl">
             <SelectField name="type" label="Type" value={params.type} options={programTypes} />
             <SelectField name="status" label="Status" value={params.status} options={statuses} />
             <SelectField name="year" label="Year" value={params.year} options={years} />
@@ -184,10 +184,10 @@ function MentorshipFilters({
           </div>
         </details>
         <details className="relative">
-          <summary className="inline-flex h-11 cursor-pointer list-none items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800">
+          <summary className="inline-flex h-11 cursor-pointer list-none items-center justify-center gap-2 rounded-md border border-border bg-white px-4 text-sm font-semibold text-foreground">
             <SlidersHorizontal aria-hidden className="h-4 w-4" /> Sort
           </summary>
-          <div className="absolute right-0 z-20 mt-2 w-[260px] rounded-lg border border-slate-200 bg-white p-4 shadow-xl">
+          <div className="absolute right-0 z-20 mt-2 w-[260px] rounded-lg border border-border bg-white p-4 shadow-xl">
             <SelectField name="sort" label="Sort" value={params.sort} options={sortOptions} includeBlank={false} />
           </div>
         </details>
@@ -211,10 +211,10 @@ function FeaturedMentorship({ item }: { item: ResearchGenericRecord }) {
           <DeadlineStatusBadge record={item} />
           <span className="rounded-md bg-primary px-3 py-1 text-xs font-semibold uppercase text-white">Featured</span>
         </div>
-        <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
+        <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground">
           {getRecordTitle(item, "Mentorship programme")}
         </h2>
-        {summary ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{summary}</p> : null}
+        {summary ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{summary}</p> : null}
       </div>
       <dl className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-1">
         <MiniFact label="Cohort" value={formatDate(item.cohort_start_date)} />
@@ -228,10 +228,10 @@ function MentorshipTable({ records }: { records: ResearchGenericRecord[] }) {
   if (records.length === 0) return null;
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
+    <section className="rounded-lg border border-border bg-white shadow-sm">
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase tracking-[0.14em] text-slate-500">
+          <thead className="bg-surface-subtle text-xs uppercase tracking-[0.14em] text-muted-foreground">
             <tr>
               <th className="px-4 py-3">Programme</th>
               <th className="px-4 py-3">Type</th>
@@ -245,21 +245,21 @@ function MentorshipTable({ records }: { records: ResearchGenericRecord[] }) {
             {records.map((item) => {
               const href = item.slug ? `/mentorship/${item.slug}` : "/mentorship";
               return (
-                <tr key={item.id ?? item.slug} className="group transition hover:bg-slate-50">
+                <tr key={item.id ?? item.slug} className="group transition hover:bg-surface-subtle">
                   <td className="px-4 py-3">
                     <Link href={href} className="flex items-start gap-3 rounded-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
                       <img src={getRecordImage(item, "/images/research/research-about-hero.webp")} alt={getRecordTitle(item, "Mentorship programme")} className="mt-0.5 h-12 w-16 shrink-0 rounded-md object-cover" />
                       <span>
-                        <span className="font-semibold text-slate-950 transition group-hover:text-primary">{getRecordTitle(item, "Mentorship programme")}</span>
-                        <span className="mt-1 block line-clamp-1 text-xs text-slate-500">{getRecordSummary(item) || compactText(item.benefits)}</span>
+                        <span className="font-semibold text-foreground transition group-hover:text-primary">{getRecordTitle(item, "Mentorship programme")}</span>
+                        <span className="mt-1 block line-clamp-1 text-xs text-muted-foreground">{getRecordSummary(item) || compactText(item.benefits)}</span>
                       </span>
                     </Link>
                   </td>
                   <td className="px-4 py-3"><Badge>{formatLabel(compactText(item.program_type) || "mentorship")}</Badge></td>
                   <td className="px-4 py-3"><Badge>{formatLabel(compactText(item.status) || "active")}</Badge></td>
                   <td className="px-4 py-3"><DeadlineStatusBadge record={item} /></td>
-                  <td className="px-4 py-3 text-slate-600">{formatDate(item.cohort_start_date)}</td>
-                  <td className="px-4 py-3 text-slate-600">{formatCapacity(item)}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{formatDate(item.cohort_start_date)}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{formatCapacity(item)}</td>
                 </tr>
               );
             })}
@@ -286,19 +286,19 @@ function ChooseYourPathway() {
     { label: "Leadership", body: "Project leadership, team supervision and public engagement.", icon: UsersRound },
   ];
   return (
-    <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-28 xl:self-start">
+    <aside className="rounded-lg border border-border bg-white p-5 shadow-sm xl:sticky xl:top-28 xl:self-start">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Choose your pathway</p>
       <div className="mt-4 grid gap-3">
         {pathways.map((pathway) => {
           const Icon = pathway.icon;
           return (
-            <div key={pathway.label} className="flex gap-3 rounded-lg border border-slate-200 p-3">
+            <div key={pathway.label} className="flex gap-3 rounded-lg border border-border p-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                 <Icon aria-hidden className="h-5 w-5" />
               </span>
               <div>
-                <h2 className="text-sm font-semibold text-slate-950">{pathway.label}</h2>
-                <p className="mt-1 text-xs leading-5 text-slate-500">{pathway.body}</p>
+                <h2 className="text-sm font-semibold text-foreground">{pathway.label}</h2>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">{pathway.body}</p>
               </div>
             </div>
           );
@@ -312,7 +312,7 @@ function ChooseYourPathway() {
         ].map((link) => (
           <Link key={link.href} href={link.href} className="flex items-center justify-between gap-4 py-3 text-sm font-semibold text-primary">
             {link.label}
-            <ArrowRight aria-hidden className="h-4 w-4 text-slate-400" />
+            <ArrowRight aria-hidden className="h-4 w-4 text-muted-foreground/70" />
           </Link>
         ))}
       </div>
@@ -335,8 +335,8 @@ function SelectField({
 }) {
   return (
     <label className="block">
-      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
-      <select name={name} defaultValue={value ?? ""} className="mt-2 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-950">
+      <span className="text-xs font-semibold uppercase text-muted-foreground">{label}</span>
+      <select name={name} defaultValue={value ?? ""} className="mt-2 h-10 w-full rounded-md border border-border bg-white px-3 text-sm font-medium text-foreground">
         {includeBlank ? <option value="">All {label.toLowerCase()}</option> : null}
         {options.map((option) => {
           const normalized = typeof option === "string" ? { value: option, label: formatLabel(option) } : option;
@@ -352,8 +352,8 @@ function MiniFact({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
     <div className="rounded-md bg-white p-2.5">
-      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-      <dd className="mt-1 font-semibold text-slate-950">{value}</dd>
+      <dt className="text-xs font-semibold uppercase text-muted-foreground">{label}</dt>
+      <dd className="mt-1 font-semibold text-foreground">{value}</dd>
     </div>
   );
 }
@@ -375,13 +375,13 @@ function getRecordImage(record: ResearchGenericRecord, fallback: string) {
 
 function getDeadlineState(record: ResearchGenericRecord) {
   const explicit = compactText(record.status);
-  if (explicit === "matching") return { label: "Matching", className: "bg-blue-100 text-blue-800" };
+  if (explicit === "matching") return { label: "Matching", className: "bg-accent text-primary" };
   if (explicit === "active") return { label: "Active", className: "bg-emerald-100 text-emerald-800" };
-  if (explicit === "completed") return { label: "Completed", className: "bg-slate-100 text-slate-700" };
+  if (explicit === "completed") return { label: "Completed", className: "bg-surface-muted text-muted-foreground" };
   const deadline = record.application_deadline ? new Date(String(record.application_deadline)) : null;
   if (!deadline || Number.isNaN(deadline.getTime())) return { label: formatLabel(explicit || "Open"), className: "bg-emerald-100 text-emerald-800" };
   const days = Math.ceil((deadline.getTime() - Date.now()) / 86_400_000);
-  if (days < 0) return { label: "Closed", className: "bg-slate-100 text-slate-700" };
+  if (days < 0) return { label: "Closed", className: "bg-surface-muted text-muted-foreground" };
   if (days <= 14) return { label: "Closing soon", className: "bg-amber-100 text-amber-800" };
   return { label: "Open", className: "bg-emerald-100 text-emerald-800" };
 }

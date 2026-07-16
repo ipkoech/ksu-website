@@ -6,7 +6,7 @@ export interface TimelineItem {
 
 export function Timeline({ items }: { items: TimelineItem[] }) {
   return (
-    <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/50 sm:p-8">
+    <div className="rounded-[2rem] border border-border bg-white p-6 shadow-xl shadow-primary/50 sm:p-8">
       <div className="space-y-8">
         {items.map((item, index) => (
           <div
@@ -19,14 +19,14 @@ export function Timeline({ items }: { items: TimelineItem[] }) {
             <div className="relative flex justify-center">
               <span className="mt-1.5 h-4 w-4 rounded-full border-4 border-secondary bg-white" />
               {index < items.length - 1 ? (
-                <span className="absolute top-6 h-[calc(100%+2rem)] w-px bg-slate-200" />
+                <span className="absolute top-6 h-[calc(100%+2rem)] w-px bg-surface-muted" />
               ) : null}
             </div>
-            <div className="rounded-2xl bg-slate-50 p-5">
-              <h3 className="text-xl font-semibold text-slate-950">
+            <div className="rounded-2xl bg-surface-subtle p-5">
+              <h3 className="text-xl font-semibold text-foreground">
                 {item.title}
               </h3>
-              <p className="mt-2 text-base leading-7 text-slate-600">
+              <p className="mt-2 text-base leading-7 text-muted-foreground">
                 {item.detail}
               </p>
             </div>

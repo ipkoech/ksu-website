@@ -60,25 +60,25 @@ export default async function GalleryDetailPage({
                 {data.eyebrow}
               </span>
               {data.record.contentKind === "media" && data.record.created_at ? (
-                <span className="inline-flex min-h-8 items-center gap-2 rounded-full border border-primary/15 bg-primary/[0.03] px-3 text-xs font-bold uppercase tracking-[0.08em] text-slate-600">
+                <span className="inline-flex min-h-8 items-center gap-2 rounded-full border border-primary/15 bg-primary/[0.03] px-3 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
                   <CalendarDays aria-hidden className="h-3.5 w-3.5 text-primary" />
                   {formatDate(data.record.created_at)}
                 </span>
               ) : null}
             </div>
 
-            <h1 className="mt-4 max-w-4xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] text-slate-950 sm:text-5xl">
+            <h1 className="mt-4 max-w-4xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] text-foreground sm:text-5xl">
               {data.title}
             </h1>
 
             {data.summary ? (
-              <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">
+              <p className="mt-4 max-w-3xl text-base leading-8 text-muted-foreground">
                 {data.summary}
               </p>
             ) : null}
           </div>
 
-          <aside className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-28 lg:self-start">
+          <aside className="rounded-xl border border-border bg-white p-5 shadow-sm lg:sticky lg:top-28 lg:self-start">
             <p className="text-xs font-semibold uppercase text-primary">
               Details
             </p>
@@ -89,10 +89,10 @@ export default async function GalleryDetailPage({
                     key={item.label}
                     className="flex justify-between gap-3 py-2"
                   >
-                    <dt className="font-medium text-slate-500">
+                    <dt className="font-medium text-muted-foreground">
                       {item.label}
                     </dt>
-                    <dd className="font-semibold text-slate-950">
+                    <dd className="font-semibold text-foreground">
                       {item.value}
                     </dd>
                   </div>
@@ -114,7 +114,7 @@ export default async function GalleryDetailPage({
 
             <Link
               href="/media/gallery"
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-md border border-border bg-white px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-surface-subtle"
             >
               <ArrowLeft aria-hidden className="h-4 w-4" />
               Back to gallery
@@ -123,14 +123,14 @@ export default async function GalleryDetailPage({
         </div>
 
         {hasMedia ? (
-          <figure className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+          <figure className="mt-6 overflow-hidden rounded-xl border border-border bg-surface-muted">
             <div className="relative min-h-[300px] sm:min-h-[420px] lg:min-h-[520px]">
               {isVideo && mediaSource ? (
                 <video
                   controls
                   preload="metadata"
                   poster={data.heroImage ?? undefined}
-                  className="absolute inset-0 h-full w-full bg-slate-950 object-contain"
+                  className="absolute inset-0 h-full w-full bg-brand-overlay object-contain"
                 >
                   <source src={mediaSource} />
                 </video>
@@ -142,18 +142,18 @@ export default async function GalleryDetailPage({
                 />
               ) : null}
             </div>
-            <figcaption className="px-5 py-3 text-sm text-slate-600">
+            <figcaption className="px-5 py-3 text-sm text-muted-foreground">
               {data.title}
             </figcaption>
           </figure>
         ) : null}
 
         {data.body ? (
-          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mt-6 rounded-xl border border-border bg-white p-6 shadow-sm">
             <p className="text-sm font-semibold uppercase text-primary">
               Description
             </p>
-            <div className="mt-3 text-sm leading-7 text-slate-700">
+            <div className="mt-3 text-sm leading-7 text-muted-foreground">
               {data.body}
             </div>
           </div>

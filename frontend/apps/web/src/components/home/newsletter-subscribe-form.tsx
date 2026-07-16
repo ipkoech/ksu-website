@@ -48,7 +48,7 @@ export function NewsletterSubscribeForm() {
 
   return (
     <form onSubmit={onSubmit} className="w-full">
-      <div className="flex w-full flex-col overflow-hidden rounded-md border border-slate-300 bg-white shadow-sm sm:flex-row">
+      <div className="flex w-full flex-col overflow-hidden rounded-md border border-border bg-white shadow-sm sm:flex-row">
         <label className="sr-only" htmlFor="homepage-newsletter-email">
           Email address
         </label>
@@ -59,7 +59,7 @@ export function NewsletterSubscribeForm() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder="Enter your email address"
-          className="min-h-12 flex-1 px-4 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-primary/30"
+          className="min-h-12 flex-1 px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground/70 focus:ring-2 focus:ring-primary/30"
           disabled={state === "submitting"}
         />
         <button

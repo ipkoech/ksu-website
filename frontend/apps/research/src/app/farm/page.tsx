@@ -112,7 +112,7 @@ export default async function FarmPage({ searchParams }: { searchParams?: Promis
       >
         <FarmFilters params={params} years={years} months={months} />
         {visibleFarms.length > 0 ? (
-          <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-border bg-white shadow-sm">
             {visibleFarms.map((farm) => <FarmRow key={farm.id} farm={farm} />)}
           </div>
         ) : <div className="mt-7"><StatusMessage>No farm records match the current filters.</StatusMessage></div>}
@@ -178,17 +178,17 @@ function FarmHero({ farmCount, projectCount, partnerCount, activityCount }: { fa
     { label: "Activities", value: activityCount },
   ];
   return (
-    <section className="border-b border-slate-200 bg-white">
+    <section className="border-b border-border bg-white">
       <div className="mx-auto grid min-h-[560px] max-w-[1680px] lg:grid-cols-[minmax(0,0.95fr)_minmax(420px,0.75fr)]">
         <div className="flex flex-col justify-center px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <nav className="mb-5 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
+          <nav className="mb-5 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground" aria-label="Breadcrumb">
             <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-900">University Farm</span>
+            <span className="text-muted-foreground/60">/</span>
+            <span className="text-foreground">University Farm</span>
           </nav>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">University Farm</p>
-          <h1 className="mt-4 max-w-5xl text-balance font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950 sm:text-5xl lg:text-6xl">University Farm: Field Research in Practice</h1>
-          <p className="mt-5 max-w-3xl text-pretty text-base leading-8 text-slate-700 sm:text-lg">Farm facilities, demonstrations, action research, training, partners, and community engagement organized as a living research destination.</p>
+          <h1 className="mt-4 max-w-5xl text-balance font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground sm:text-5xl lg:text-6xl">University Farm: Field Research in Practice</h1>
+          <p className="mt-5 max-w-3xl text-pretty text-base leading-8 text-muted-foreground sm:text-lg">Farm facilities, demonstrations, action research, training, partners, and community engagement organized as a living research destination.</p>
           <div className="mt-7 flex flex-wrap gap-3">
             <PrimaryLink href="#facilities">Explore farm facilities</PrimaryLink>
             <SecondaryLink href="#projects">View farm projects</SecondaryLink>
@@ -196,14 +196,14 @@ function FarmHero({ farmCount, projectCount, partnerCount, activityCount }: { fa
           </div>
           <dl className="mt-8 grid gap-2 sm:grid-cols-4">
             {stats.map((stat) => (
-              <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-3">
-                <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
-                <dd className="mt-1 text-xl font-semibold text-slate-950">{stat.value}</dd>
+              <div key={stat.label} className="rounded-md border border-border bg-surface-subtle px-3 py-3">
+                <dt className="text-[11px] font-semibold uppercase text-muted-foreground">{stat.label}</dt>
+                <dd className="mt-1 text-xl font-semibold text-foreground">{stat.value}</dd>
               </div>
             ))}
           </dl>
         </div>
-        <div className="relative min-h-[320px] overflow-hidden border-t border-slate-200 lg:min-h-full lg:border-l lg:border-t-0">
+        <div className="relative min-h-[320px] overflow-hidden border-t border-border lg:min-h-full lg:border-l lg:border-t-0">
           <Image
             src="/images/research/university-farm-hero-imagegen.webp"
             alt="University farm research demonstration field"
@@ -224,10 +224,10 @@ function FarmHero({ farmCount, projectCount, partnerCount, activityCount }: { fa
 
 function LandingTabs({ items }: { items: { href: string; label: string }[] }) {
   return (
-    <nav className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-8 xl:px-10 2xl:px-12" aria-label="Farm sections">
+    <nav className="sticky top-0 z-20 border-b border-border bg-white/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-8 xl:px-10 2xl:px-12" aria-label="Farm sections">
       <div className="mx-auto flex max-w-[1680px] gap-2 overflow-x-auto">
         {items.map((item) => (
-          <a key={item.href} href={item.href} className="shrink-0 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary/30 hover:text-primary">
+          <a key={item.href} href={item.href} className="shrink-0 rounded-md border border-border bg-white px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:border-primary/30 hover:text-primary">
             {item.label}
           </a>
         ))}
@@ -254,14 +254,14 @@ function FarmOverview({
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-      <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <article className="rounded-lg border border-border bg-white p-5 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Featured facility</p>
         {leadFarm ? (
           <>
-            <h2 className="mt-3 text-2xl font-semibold leading-tight text-slate-950">
+            <h2 className="mt-3 text-2xl font-semibold leading-tight text-foreground">
               {leadFarm.slug ? <Link href={`/farm/${leadFarm.slug}`} className="transition hover:text-primary">{getRecordTitle(leadFarm, "University farm")}</Link> : getRecordTitle(leadFarm, "University farm")}
             </h2>
-            <p className="mt-3 text-sm leading-7 text-slate-600">{getRecordSummary(leadFarm) || compactText(leadFarm.activities) || compactText(leadFarm.products) || "Published farm details will appear when available."}</p>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">{getRecordSummary(leadFarm) || compactText(leadFarm.activities) || compactText(leadFarm.products) || "Published farm details will appear when available."}</p>
             <dl className="mt-5 grid gap-3 sm:grid-cols-3">
               <ResearchFact label="Type" value={formatLabel(leadFarm.farm_type ?? "farm")} />
               <ResearchFact label="Location" value={compactText(leadFarm.location) || compactText(leadFarm.county)} />
@@ -276,8 +276,8 @@ function FarmOverview({
         <FeatureTile eyebrow="Project in the field" title={leadProject?.title} body={compactText(leadProject?.summary) || "Project details will appear when farm-linked records are published."} href={leadProject?.slug ? `/projects/${leadProject.slug}` : undefined} />
         <FeatureTile eyebrow="Demonstration or activity" title={compactText(leadActivity?.title) || compactText(leadActivity?.name)} body={compactText(leadActivity?.summary) || compactText(leadActivity?.description) || "Activity records will appear when published."} />
         {displayFocusAreas.length > 0 ? (
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Focus areas</p>
+          <div className="rounded-lg border border-border bg-surface-subtle p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Focus areas</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {displayFocusAreas.map((area) => (
                 <Badge key={area.id}>{compactText(area.name) || compactText(area.title)}</Badge>
@@ -294,17 +294,17 @@ function FeatureTile({ eyebrow, title, body, href }: { eyebrow: string; title?: 
   const content = (
     <>
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">{eyebrow}</p>
-      <h3 className="mt-3 text-lg font-semibold leading-7 text-slate-950">{title || "Published record"}</h3>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{body}</p>
+      <h3 className="mt-3 text-lg font-semibold leading-7 text-foreground">{title || "Published record"}</h3>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">{body}</p>
     </>
   );
 
   return href ? (
-    <Link href={href} className="block rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30">
+    <Link href={href} className="block rounded-lg border border-border bg-white p-4 shadow-sm transition hover:border-primary/30">
       {content}
     </Link>
   ) : (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">{content}</article>
+    <article className="rounded-lg border border-border bg-white p-4 shadow-sm">{content}</article>
   );
 }
 
@@ -353,13 +353,13 @@ function ProjectCard({ project }: { project: ResearchProject }) {
     compactText(projectRecord.impact as string | number | null | undefined);
 
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="rounded-lg border border-border bg-white p-5 shadow-sm">
       <div className="flex flex-wrap gap-2">
         <Badge>{formatLabel(project.project_type ?? "research")}</Badge>
         {project.status ? <Badge>{formatLabel(project.status)}</Badge> : null}
         {project.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
       </div>
-      <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
+      <h2 className="mt-4 text-xl font-semibold leading-7 text-foreground">
         {project.slug ? (
           <a href={`/projects/${project.slug}`} className="transition hover:text-primary">
             {project.title}
@@ -369,7 +369,7 @@ function ProjectCard({ project }: { project: ResearchProject }) {
         )}
       </h2>
       {description ? (
-        <p className="mt-3 text-sm leading-7 text-slate-600">{description}</p>
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">{description}</p>
       ) : null}
       <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
         <ResearchFact label="Progress" value={`${project.progress_percentage ?? 0}%`} />
@@ -395,8 +395,8 @@ function RecordListPanel({
   dateField?: string;
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">{title}</h2>
       <div className="mt-4 divide-y divide-slate-200">
         {records.slice(0, 8).map((record) => (
           <article key={record.id} className="py-4 first:pt-0 last:pb-0">
@@ -405,16 +405,16 @@ function RecordListPanel({
               {record.event_type ? <Badge>{formatLabel(record.event_type)}</Badge> : null}
               {record.status ? <Badge>{formatLabel(record.status)}</Badge> : null}
             </div>
-            <h3 className="mt-3 text-base font-semibold leading-6 text-slate-950">
+            <h3 className="mt-3 text-base font-semibold leading-6 text-foreground">
               {compactText(record.name) || compactText(record.title) || compactText(record.code)}
             </h3>
             {compactText(record.about) || compactText(record.summary) || compactText(record.description) ? (
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 {compactText(record.about) || compactText(record.summary) || compactText(record.description)}
               </p>
             ) : null}
             {dateField && record[dateField] ? (
-              <p className="mt-2 text-xs font-semibold uppercase text-slate-500">
+              <p className="mt-2 text-xs font-semibold uppercase text-muted-foreground">
                 {formatDate(record[dateField] as string)}
               </p>
             ) : null}

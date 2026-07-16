@@ -170,7 +170,7 @@ export default async function HomePage() {
   );
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_38%,#f6f8fc_100%)] text-slate-950">
+    <div className="min-h-screen bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_38%,hsl(var(--surface-muted))_100%)] text-foreground">
       <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
@@ -252,11 +252,11 @@ export default async function HomePage() {
             </section>
 
             {/* Audience / Action Band */}
-            <section className="border-y border-blue-100 bg-white py-8 lg:py-12">
+            <section className="border-y border-border bg-white py-8 lg:py-12">
               <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
                 <div className="grid gap-5 sm:grid-cols-3">
                   {/* Prospective Students */}
-                  <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-5">
+                  <div className="rounded-xl border border-border bg-accent/60 p-5">
                     <p className="text-xs font-bold uppercase tracking-[0.1em] text-primary">
                       Prospective Students
                     </p>
@@ -284,7 +284,7 @@ export default async function HomePage() {
                         <Link
                           key={item.label}
                           href={item.href}
-                          className={`flex min-h-[44px] items-center gap-3 rounded-md px-2.5 py-2.5 text-sm font-semibold transition ${item.accent ? "bg-secondary/10 text-secondary hover:bg-secondary/20" : "text-slate-700 hover:bg-blue-100 hover:text-primary"}`}
+                          className={`flex min-h-[44px] items-center gap-3 rounded-md px-2.5 py-2.5 text-sm font-semibold transition ${item.accent ? "bg-secondary/10 text-secondary hover:bg-secondary/20" : "text-muted-foreground hover:bg-accent hover:text-primary"}`}
                         >
                           <item.icon className="h-4 w-4 shrink-0" />
                           {item.label}
@@ -294,7 +294,7 @@ export default async function HomePage() {
                   </div>
 
                   {/* Current Students & Staff */}
-                  <div className="rounded-xl border border-blue-100 bg-white p-5 shadow-sm">
+                  <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
                     <p className="text-xs font-bold uppercase tracking-[0.1em] text-primary">
                       Students & Staff
                     </p>
@@ -324,7 +324,7 @@ export default async function HomePage() {
                           href={item.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex min-h-[44px] items-center gap-3 rounded-md px-2.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-primary"
+                          className="flex min-h-[44px] items-center gap-3 rounded-md px-2.5 py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-accent hover:text-primary"
                         >
                           <item.icon className="h-4 w-4 shrink-0" />
                           {item.label}
@@ -334,7 +334,7 @@ export default async function HomePage() {
                   </div>
 
                   {/* Parents & Guardians */}
-                  <div className="rounded-xl border border-blue-100 bg-white p-5 shadow-sm">
+                  <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
                     <p className="text-xs font-bold uppercase tracking-[0.1em] text-primary">
                       Parents & Guardians
                     </p>
@@ -359,7 +359,7 @@ export default async function HomePage() {
                         <Link
                           key={item.label}
                           href={item.href}
-                          className="flex min-h-[44px] items-center gap-3 rounded-md px-2.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-primary"
+                          className="flex min-h-[44px] items-center gap-3 rounded-md px-2.5 py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-accent hover:text-primary"
                         >
                           <item.icon className="h-4 w-4 shrink-0" />
                           {item.label}
@@ -411,7 +411,7 @@ export default async function HomePage() {
 
       {/* Mobile Sticky CTA Bar */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 flex items-stretch gap-1 border-t border-blue-100 bg-white/95 px-2 py-2 backdrop-blur sm:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 flex items-stretch gap-1 border-t border-border bg-white/95 px-2 py-2 backdrop-blur sm:hidden"
         aria-label="Quick actions"
         style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
       >
@@ -517,17 +517,17 @@ function WhyChooseSection({
   ] satisfies Array<{ title: string; body: string; icon: LucideIcon }>;
 
   return (
-    <section className="border-b border-blue-100 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+    <section className="border-b border-border bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_100%)] px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
       <div className="mx-auto grid max-w-[1680px] gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
         <LandingReveal variant="fade-right">
           <div>
             <p className="text-sm font-semibold uppercase text-secondary">
               Why Choose KSU
             </p>
-            <h2 className="mt-2 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950 sm:text-4xl">
+            <h2 className="mt-2 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground sm:text-4xl">
               Why choose Kisii University
             </h2>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
               A student-focused public university combining accredited
               programmes, applied research, and practical support from
               application to graduation.
@@ -541,15 +541,15 @@ function WhyChooseSection({
             {reasons.map((item) => (
               <div
                 key={item.title}
-                className="rounded-md border border-blue-100 bg-white p-5 shadow-sm shadow-blue-100/60 transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+                className="rounded-md border border-border bg-white p-5 shadow-sm shadow-primary/60 transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
               >
-                <span className="flex h-11 w-11 items-center justify-center rounded-md bg-blue-50 text-primary ring-1 ring-blue-100">
+                <span className="flex h-11 w-11 items-center justify-center rounded-md bg-accent text-primary ring-1 ring-border">
                   <item.icon className="h-5 w-5" aria-hidden />
                 </span>
-                <h3 className="mt-4 font-[family-name:var(--font-display)] text-lg font-semibold text-slate-950">
+                <h3 className="mt-4 font-[family-name:var(--font-display)] text-lg font-semibold text-foreground">
                   {item.title}
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   {item.body}
                 </p>
               </div>
@@ -563,7 +563,7 @@ function WhyChooseSection({
         </LandingReveal>
 
         <LandingReveal variant="fade-left" delay={120}>
-          <aside className="rounded-md border border-blue-100 bg-primary p-6 text-white shadow-lg shadow-blue-950/10 xl:sticky xl:top-24">
+          <aside className="rounded-md border border-border bg-primary p-6 text-white shadow-lg shadow-primary/10 xl:sticky xl:top-24">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/70">
               Admissions support
             </p>
@@ -640,7 +640,7 @@ function AcademicsPathwaySection({
   ];
 
   return (
-    <section className="border-b border-blue-100 bg-white py-12 lg:py-14">
+    <section className="border-b border-border bg-white py-12 lg:py-14">
       <div className="mx-auto max-w-[1680px]">
         <LandingReveal>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -648,10 +648,10 @@ function AcademicsPathwaySection({
               <p className="text-sm font-semibold uppercase text-secondary">
                 Academics and Admissions
               </p>
-              <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950 sm:text-4xl">
+              <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground sm:text-4xl">
                 Schools, programmes, and your application journey
               </h2>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
                 Browse schools with sample programmes, scan highlighted academic
                 routes, and move straight into the admission steps.
               </p>
@@ -668,7 +668,7 @@ function AcademicsPathwaySection({
 
         <div className="mt-8 grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(340px,0.75fr)]">
           <LandingReveal variant="fade-right">
-            <div className="rounded-md border border-blue-100 bg-blue-50/40 p-4">
+            <div className="rounded-md border border-border bg-accent/40 p-4">
               <div className="flex items-center justify-between gap-3">
                 <SectionKicker title="Schools" />
                 <Link
@@ -702,7 +702,7 @@ function AcademicsPathwaySection({
           </LandingReveal>
 
           <LandingReveal variant="fade-left" delay={80}>
-            <div className="h-full rounded-md border border-blue-100 bg-slate-950 p-4 text-white shadow-lg shadow-blue-950/10">
+            <div className="h-full rounded-md border border-border bg-brand-overlay p-4 text-white shadow-lg shadow-primary/10">
               <SectionKicker
                 title="Application Journey"
                 className="text-white"
@@ -730,7 +730,7 @@ function AcademicsPathwaySection({
                   </Link>
                 ))}
               </div>
-              <div className="mt-5 rounded-md border border-white/10 bg-white p-4 text-slate-950">
+              <div className="mt-5 rounded-md border border-white/10 bg-white p-4 text-foreground">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
                   {activeIntake && shouldShowCountdown
                     ? "Applications Open"
@@ -741,7 +741,7 @@ function AcademicsPathwaySection({
                     ? `${intakeLabel(activeIntake)} is currently open`
                     : "Prepare your application for the next intake"}
                 </h3>
-                <p className="mt-2 text-xs leading-5 text-slate-600">
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">
                   {activeIntake && shouldShowCountdown
                     ? `Application deadline: ${formatDate(activeDeadline)}.`
                     : "Review the guide, compare programmes, and contact admissions for current routes."}
@@ -756,7 +756,7 @@ function AcademicsPathwaySection({
                   </Link>
                   <Link
                     href="/contact"
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-blue-200 bg-white px-4 text-sm font-semibold text-primary transition hover:bg-blue-50"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-white px-4 text-sm font-semibold text-primary transition hover:bg-accent"
                   >
                     Contact Us
                     <Mail className="h-4 w-4" aria-hidden />
@@ -790,7 +790,7 @@ function hasFutureDeadline(value?: string | null) {
 
 function SchoolCard({ school }: { school: HomeSchoolCard }) {
   return (
-    <article className="group h-full overflow-hidden rounded-md border border-blue-100 bg-white shadow-sm shadow-blue-100/60 transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md hover:shadow-blue-200">
+    <article className="group h-full overflow-hidden rounded-md border border-border bg-white shadow-sm shadow-primary/60 transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md hover:shadow-primary">
       <Link
         href={school.href}
         className="block"
@@ -811,15 +811,15 @@ function SchoolCard({ school }: { school: HomeSchoolCard }) {
           <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-secondary">
             {school.eyebrow ?? "School"}
           </span>
-          <h3 className="mt-1 line-clamp-2 font-[family-name:var(--font-display)] text-lg font-semibold leading-6 text-slate-950 transition group-hover:text-primary">
+          <h3 className="mt-1 line-clamp-2 font-[family-name:var(--font-display)] text-lg font-semibold leading-6 text-foreground transition group-hover:text-primary">
             {school.title}
           </h3>
-          <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600">
+          <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
             {school.body}
           </p>
         </Link>
-        <div className="mt-4 border-t border-blue-100 pt-3">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
+        <div className="mt-4 border-t border-border pt-3">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
             Featured programmes
           </p>
           {school.programmes.length ? (
@@ -828,7 +828,7 @@ function SchoolCard({ school }: { school: HomeSchoolCard }) {
                 <Link
                   key={programme.href}
                   href={programme.href}
-                  className="flex min-h-9 items-center justify-between gap-2 rounded-md px-2 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-primary"
+                  className="flex min-h-9 items-center justify-between gap-2 rounded-md px-2 py-1.5 text-xs font-semibold text-muted-foreground transition hover:bg-accent hover:text-primary"
                 >
                   <span className="line-clamp-1">{programme.title}</span>
                   <ArrowRight className="h-3 w-3 shrink-0" aria-hidden />
@@ -838,7 +838,7 @@ function SchoolCard({ school }: { school: HomeSchoolCard }) {
           ) : (
             <Link
               href={school.href}
-              className="mt-2 inline-flex min-h-9 items-center gap-2 rounded-md px-2 text-xs font-semibold text-primary transition hover:bg-blue-50"
+              className="mt-2 inline-flex min-h-9 items-center gap-2 rounded-md px-2 text-xs font-semibold text-primary transition hover:bg-accent"
             >
               Browse school programmes
               <ArrowRight className="h-3 w-3" aria-hidden />
@@ -852,7 +852,7 @@ function SchoolCard({ school }: { school: HomeSchoolCard }) {
 
 function SectionKicker({
   title,
-  className = "text-slate-950",
+  className = "text-foreground",
 }: {
   title: string;
   className?: string;
@@ -893,7 +893,7 @@ function LatestContentSection({
   const latestStories = stories.slice(1, 4);
 
   return (
-    <section className="-mx-4 border-b border-primary/10 bg-[linear-gradient(180deg,#fffdf8_0%,#ffffff_54%,#f8f4e8_100%)] px-4 py-12 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10 2xl:-mx-12 2xl:px-12">
+    <section className="-mx-4 border-b border-primary/10 bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_54%,hsl(var(--surface-muted))_100%)] px-4 py-12 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10 2xl:-mx-12 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
         <div className="mb-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
           <div>
@@ -904,7 +904,7 @@ function LatestContentSection({
             <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-bold leading-[0.95] text-primary sm:text-5xl lg:text-6xl">
               Stories, News &amp; Events
             </h2>
-            <p className="mt-4 max-w-3xl text-base leading-7 text-slate-700">
+            <p className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground">
               Discover what is happening across campus—partnerships that create
               impact, achievements that inspire, and events that bring us
               together.
@@ -975,7 +975,7 @@ function LatestContentSection({
               <h3 className="font-[family-name:var(--font-display)] text-2xl font-bold text-primary">
                 Subscribe to updates
               </h3>
-              <p className="mt-1 text-sm leading-6 text-slate-600">
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 Get the latest news, events, and stories straight to your inbox.
               </p>
             </div>
@@ -994,7 +994,7 @@ function LatestContentSection({
                 <span className="block font-[family-name:var(--font-display)] text-xl font-bold text-primary">
                   Contact us
                 </span>
-                <span className="mt-1 block text-sm leading-5 text-slate-600">
+                <span className="mt-1 block text-sm leading-5 text-muted-foreground">
                   Reach the university for official support and enquiries.
                 </span>
                 <span className="mt-1 inline-flex items-center gap-2 text-sm font-bold text-secondary">
@@ -1014,7 +1014,7 @@ function LatestContentSection({
                 <span className="block font-[family-name:var(--font-display)] text-xl font-bold text-primary">
                   Submit a story
                 </span>
-                <span className="mt-1 block text-sm leading-5 text-slate-600">
+                <span className="mt-1 block text-sm leading-5 text-muted-foreground">
                   Share a story with Corporate Communication.
                 </span>
                 <span className="mt-1 inline-flex items-center gap-2 text-sm font-bold text-secondary">
@@ -1096,7 +1096,7 @@ function SocialMediaLinks({
             rel="noopener noreferrer"
             aria-label={`Follow Kisii University on ${label}`}
             className={[
-              "inline-flex h-10 w-10 items-center justify-center rounded-full border border-primary/15 bg-white transition hover:border-current hover:bg-slate-50",
+              "inline-flex h-10 w-10 items-center justify-center rounded-full border border-primary/15 bg-white transition hover:border-current hover:bg-surface-subtle",
               colorClassName,
             ].join(" ")}
           >
@@ -1180,15 +1180,15 @@ function StoryListItem({ item }: { item: HomeCard }) {
         <span className="flex flex-wrap items-center gap-3 text-[11px] font-bold uppercase tracking-[0.12em] text-primary">
           <span>{item.eyebrow ?? "Update"}</span>
           {item.meta ? (
-            <span className="font-medium normal-case tracking-normal text-slate-500">
+            <span className="font-medium normal-case tracking-normal text-muted-foreground">
               {item.meta}
             </span>
           ) : null}
         </span>
-        <span className="mt-2 line-clamp-2 block font-[family-name:var(--font-display)] text-lg font-bold leading-5 text-slate-950 transition group-hover:text-primary">
+        <span className="mt-2 line-clamp-2 block font-[family-name:var(--font-display)] text-lg font-bold leading-5 text-foreground transition group-hover:text-primary">
           {item.title}
         </span>
-        <span className="mt-2 line-clamp-2 block text-sm leading-5 text-slate-600">
+        <span className="mt-2 line-clamp-2 block text-sm leading-5 text-muted-foreground">
           {item.body}
         </span>
       </span>
@@ -1292,11 +1292,11 @@ function eventDateParts(meta?: string | null) {
 
 function CampusLifeSection() {
   return (
-    <section className="border-b border-blue-100 bg-white py-12">
+    <section className="border-b border-border bg-white py-12">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <SectionKicker title="Life at Kisii University" />
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
             Student life connects support services, accommodation, clubs,
             wellness, and everyday participation across the university.
           </p>
@@ -1318,7 +1318,7 @@ function CampusLifeSection() {
           <Link
             key={item.href}
             href={item.href}
-            className={`group min-w-0 overflow-hidden rounded-md border border-blue-100 bg-white shadow-sm shadow-blue-100/60 transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md ${
+            className={`group min-w-0 overflow-hidden rounded-md border border-border bg-white shadow-sm shadow-primary/60 transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md ${
               index === 0 ? "lg:col-span-2" : ""
             }`}
           >
@@ -1338,11 +1338,11 @@ function CampusLifeSection() {
             </ProgressiveImageCard>
             <div className="p-4">
               {index === 0 ? (
-                <h3 className="mb-2 font-[family-name:var(--font-display)] text-xl font-bold text-slate-950">
+                <h3 className="mb-2 font-[family-name:var(--font-display)] text-xl font-bold text-foreground">
                   {item.title}
                 </h3>
               ) : null}
-              <p className="line-clamp-3 text-sm leading-6 text-slate-600">
+              <p className="line-clamp-3 text-sm leading-6 text-muted-foreground">
                 {item.body}
               </p>
               <span className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-primary">
@@ -1364,7 +1364,7 @@ function PartnersSection({ partners }: { partners: HomePartner[] }) {
   const marqueePartners = [...partners, ...partners];
 
   return (
-    <section className="border-y border-blue-100 bg-white py-5">
+    <section className="border-y border-border bg-white py-5">
       <SectionKicker title="Our Partners" />
       {partners.length ? (
         <div className="relative mt-4 overflow-hidden bg-white py-2">
@@ -1461,7 +1461,7 @@ function JourneyCta() {
   ];
 
   return (
-    <section className="-mx-4 bg-slate-950 px-4 py-12 text-white sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10 2xl:-mx-12 2xl:px-12">
+    <section className="-mx-4 bg-brand-overlay px-4 py-12 text-white sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10 2xl:-mx-12 2xl:px-12">
       <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/60">
@@ -1541,17 +1541,17 @@ function _ContactStrip({
   ];
 
   return (
-    <section className="mt-5 grid gap-3 rounded-md border border-blue-100 bg-white p-3 shadow-sm shadow-blue-100/60 sm:grid-cols-2 lg:grid-cols-4">
+    <section className="mt-5 grid gap-3 rounded-md border border-border bg-white p-3 shadow-sm shadow-primary/60 sm:grid-cols-2 lg:grid-cols-4">
       {rows.map((row) => (
         <div key={row.label} className="flex gap-3 rounded-md p-2">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-blue-50 text-primary">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-accent text-primary">
             <row.icon className="h-4 w-4" aria-hidden />
           </span>
           <span className="min-w-0">
-            <span className="block text-xs font-bold text-slate-950">
+            <span className="block text-xs font-bold text-foreground">
               {row.label}
             </span>
-            <span className="mt-1 block break-words text-sm font-semibold leading-5 text-slate-600">
+            <span className="mt-1 block break-words text-sm font-semibold leading-5 text-muted-foreground">
               {row.value}
             </span>
           </span>
@@ -1575,22 +1575,22 @@ function HomeEmptyState({
   const external = isExternalHref(actionHref);
 
   return (
-    <div className="rounded-md border border-dashed border-blue-200 bg-white/80 p-6 text-center">
+    <div className="rounded-md border border-dashed border-border bg-white/80 p-6 text-center">
       <Megaphone className="mx-auto h-7 w-7 text-primary" aria-hidden />
-      <h3 className="mt-3 text-sm font-bold text-slate-950">{title}</h3>
-      <p className="mt-2 text-xs leading-5 text-slate-600">{body}</p>
+      <h3 className="mt-3 text-sm font-bold text-foreground">{title}</h3>
+      <p className="mt-2 text-xs leading-5 text-muted-foreground">{body}</p>
       <div className="mt-4 flex flex-col justify-center gap-2 sm:flex-row">
         <Link
           href={actionHref}
           target={external ? "_blank" : undefined}
           rel={external ? "noopener noreferrer" : undefined}
-          className="inline-flex min-h-11 items-center justify-center rounded-md border border-blue-200 bg-white px-3 text-xs font-bold text-primary transition hover:bg-blue-50"
+          className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-white px-3 text-xs font-bold text-primary transition hover:bg-accent"
         >
           {actionLabel}
         </Link>
         <Link
           href="/contact"
-          className="inline-flex min-h-11 items-center justify-center rounded-md border border-blue-200 bg-white px-3 text-xs font-bold text-primary transition hover:bg-blue-50"
+          className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-white px-3 text-xs font-bold text-primary transition hover:bg-accent"
         >
           Contact support
         </Link>

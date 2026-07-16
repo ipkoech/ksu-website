@@ -84,8 +84,8 @@ export default async function LibraryDownloadsPage() {
               <div className="divide-y divide-slate-200">
                 {files.slice(0, 5).map((file) => (
                   <article key={file.id} className="py-3 first:pt-0">
-                    <p className="text-sm font-semibold text-slate-950">{file.title}</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                    <p className="text-sm font-semibold text-foreground">{file.title}</p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
                       {formatLabel(file.file_category ?? "file")} · {file.branch.name}
                     </p>
                   </article>

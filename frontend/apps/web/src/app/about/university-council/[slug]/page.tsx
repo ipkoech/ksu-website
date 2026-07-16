@@ -35,7 +35,7 @@ export default async function UniversityCouncilProfileRoute({
   return (
     <PageShell>
       <main className="bg-white">
-        <section className="border-b border-slate-200 bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
+        <section className="border-b border-border bg-surface-subtle px-4 py-8 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <BreadcrumbTrail
               items={[
@@ -58,7 +58,7 @@ export default async function UniversityCouncilProfileRoute({
         <section className="px-4 py-12 sm:px-6 lg:px-8">
           <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[22rem_minmax(0,1fr)]">
             <aside className="lg:sticky lg:top-24 lg:self-start">
-              <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
                 <PublicImage
                   src={profile.portrait?.url}
                   alt={profile.portrait?.alt || `${profile.name}, ${profile.role}`}
@@ -69,7 +69,7 @@ export default async function UniversityCouncilProfileRoute({
                   <p className="inline-flex rounded-md bg-primary/10 px-2.5 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
                     {profile.role}
                   </p>
-                  <h1 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
+                  <h1 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground">
                     {profile.name}
                   </h1>
                 </div>
@@ -77,21 +77,21 @@ export default async function UniversityCouncilProfileRoute({
             </aside>
 
             <div className="min-w-0 space-y-8">
-              <article className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+              <article className="rounded-lg border border-border bg-white p-6 shadow-sm">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
                   Council Profile
                 </p>
-                <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+                <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
                   Public profile
                 </h2>
-                <p className="mt-4 text-base leading-8 text-slate-700">
+                <p className="mt-4 text-base leading-8 text-muted-foreground">
                   {detail(profile.profile_summary) || "Public profile summary is not currently published."}
                 </p>
               </article>
 
               <section className="grid gap-4 sm:grid-cols-2" aria-label="Council member details">
                 {facts.map(([label, value]) => (
-                  <article key={label} className="rounded-lg border border-slate-200 bg-slate-50 p-5">
+                  <article key={label} className="rounded-lg border border-border bg-surface-subtle p-5">
                     <div className="flex items-center gap-3">
                       {label.includes("institution") || label.includes("office") ? (
                         <Building2 aria-hidden className="h-5 w-5 text-primary" />
@@ -100,11 +100,11 @@ export default async function UniversityCouncilProfileRoute({
                       ) : (
                         <Landmark aria-hidden className="h-5 w-5 text-primary" />
                       )}
-                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
                         {label}
                       </p>
                     </div>
-                    <p className="mt-3 text-sm font-semibold leading-6 text-slate-950">
+                    <p className="mt-3 text-sm font-semibold leading-6 text-foreground">
                       {value}
                     </p>
                   </article>

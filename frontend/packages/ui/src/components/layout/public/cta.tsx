@@ -29,7 +29,7 @@ const bgClasses = {
   primary: "bg-primary",
   secondary: "bg-secondary",
   dark: "bg-gray-900",
-  gradient: "bg-gradient-to-r from-primary to-blue-700",
+  gradient: "bg-gradient-to-r from-primary to-primary/80",
 };
 
 export function CTA({

@@ -18,7 +18,7 @@ export function ImageComparison({
   const [position, setPosition] = useState(50);
 
   return (
-    <div className="relative min-h-[280px] overflow-hidden bg-slate-900">
+    <div className="relative min-h-[280px] overflow-hidden bg-brand-overlay">
       <Image
         src={after}
         alt={afterAlt}
@@ -43,7 +43,7 @@ export function ImageComparison({
           <ChevronsLeftRight className="h-5 w-5" />
         </span>
       </div>
-      <span className="absolute bottom-5 left-5 rounded-full bg-slate-950/75 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white">Then</span>
+      <span className="absolute bottom-5 left-5 rounded-full bg-brand-overlay/75 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white">Then</span>
       <span className="absolute bottom-5 right-5 rounded-full bg-primary/85 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white">Now</span>
       <label className="sr-only" htmlFor="campus-comparison">Compare the historic and modern Kisii University campus images</label>
       <input

@@ -188,7 +188,7 @@
     background:
       radial-gradient(circle at 18% 18%, hsl(var(--secondary) / 0.18), transparent 32%),
       radial-gradient(circle at 82% 22%, hsl(var(--primary) / 0.14), transparent 30%),
-      linear-gradient(135deg, hsl(var(--muted)) 0%, #f8fafc 52%, hsl(var(--accent)) 100%);
+      linear-gradient(135deg, hsl(var(--muted)) 0%, hsl(var(--surface-subtle)) 52%, hsl(var(--accent)) 100%);
   }
 
   .animate-research-marquee:hover,

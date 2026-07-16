@@ -199,7 +199,7 @@ export function PublicHeader({
                 <span
                   className={cn(
                     "mt-1 block text-xs font-semibold leading-none transition-colors motion-reduce:transition-none sm:text-sm lg:text-xs",
-                    isTransparent ? "text-white/80" : "text-slate-600",
+                    isTransparent ? "text-white/80" : "text-muted-foreground",
                   )}
                 >
                   Inclusivity & Borderlessness
@@ -672,7 +672,7 @@ function MegaMenuDropdown({
           "flex min-h-11 items-center gap-1 rounded-full px-3.5 py-2 text-sm font-semibold transition-colors motion-reduce:transition-none",
           isTransparent
             ? "text-white/90 hover:bg-white/10 hover:text-white"
-            : "text-slate-700 hover:bg-primary/10 hover:text-primary",
+            : "text-foreground/85 hover:bg-primary/10 hover:text-primary",
         )}
       >
         {item.label}
@@ -693,7 +693,7 @@ function MegaMenuDropdown({
           "flex min-h-11 items-center overflow-hidden rounded-full text-sm font-semibold transition-colors motion-reduce:transition-none",
           isTransparent
             ? "text-white/90 hover:bg-white/10 hover:text-white"
-            : "text-slate-700 hover:bg-primary/10 hover:text-primary",
+            : "text-foreground/85 hover:bg-primary/10 hover:text-primary",
           isOpen &&
             (isTransparent
               ? "bg-white/10 text-white"

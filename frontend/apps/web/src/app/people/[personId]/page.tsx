@@ -322,7 +322,7 @@ function ProfileActionRail({
           href={item.href ?? undefined}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-primary/30 hover:text-primary"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border bg-white px-4 text-sm font-bold text-muted-foreground transition hover:border-primary/30 hover:text-primary"
         >
           <ExternalLink aria-hidden className="h-4 w-4" />
           {item.label}
@@ -376,7 +376,7 @@ function ContactRow({
   if (!items.length) return null;
 
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-600">
+    <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
       {items.map((item) => {
         const Icon = item.icon;
         const content = (
@@ -411,16 +411,16 @@ function ProfileFactGrid({ facts }: { facts: ProfileFact[] }) {
         return (
           <div
             key={fact.label}
-            className="flex min-w-0 gap-3 rounded-lg border border-slate-200 bg-white p-3"
+            className="flex min-w-0 gap-3 rounded-lg border border-border bg-white p-3"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/[0.08] text-primary">
               <Icon aria-hidden className="h-4 w-4" />
             </span>
             <span className="min-w-0">
-              <span className="block text-[0.68rem] font-bold uppercase tracking-[0.08em] text-slate-500">
+              <span className="block text-[0.68rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                 {fact.label}
               </span>
-              <span className="mt-0.5 block break-words text-sm font-semibold leading-5 text-slate-800">
+              <span className="mt-0.5 block break-words text-sm font-semibold leading-5 text-foreground">
                 {fact.value}
               </span>
             </span>
@@ -449,15 +449,15 @@ function ProfileHero({
   cvUrl?: string | null;
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+    <section className="rounded-lg border border-border bg-white p-4 shadow-sm sm:p-5">
       <div className="grid gap-5 lg:grid-cols-[180px_minmax(0,1fr)_260px] lg:items-center">
         <div className="max-w-[180px]">
-          <div className="aspect-[4/5] overflow-hidden rounded-xl bg-slate-100">
+          <div className="aspect-[4/5] overflow-hidden rounded-xl bg-surface-muted">
             <ProfileImage person={person} name={name} />
           </div>
         </div>
         <div className="min-w-0 self-center py-1">
-          <h1 className="max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-[2.4rem]">
+          <h1 className="max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-[2.4rem]">
             {name}
           </h1>
           {role ? (
@@ -466,10 +466,10 @@ function ProfileHero({
             </p>
           ) : null}
           {schoolName || departmentName ? (
-            <p className="mt-1 max-w-3xl text-base font-semibold leading-6 text-slate-700">
+            <p className="mt-1 max-w-3xl text-base font-semibold leading-6 text-muted-foreground">
               {departmentName}
               {departmentName && schoolName ? (
-                <span className="mx-2 text-slate-300">|</span>
+                <span className="mx-2 text-muted-foreground/60">|</span>
               ) : null}
               {schoolName ? (
                 <span className="text-primary">{schoolName}</span>
@@ -499,7 +499,7 @@ function ContentBlock({
 }) {
   return (
     <section>
-      <h2 className="text-base font-bold text-slate-950">{title}</h2>
+      <h2 className="text-base font-bold text-foreground">{title}</h2>
       <div className="mt-3">{children}</div>
     </section>
   );
@@ -507,7 +507,7 @@ function ContentBlock({
 
 function PanelCard({ children }: { children: ReactNode }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
       {children}
     </section>
   );
@@ -521,8 +521,8 @@ function SidebarCard({
   children: ReactNode;
 }) {
   return (
-    <aside className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      <h2 className="text-base font-bold text-slate-950">{title}</h2>
+    <aside className="rounded-lg border border-border bg-white p-4 shadow-sm">
+      <h2 className="text-base font-bold text-foreground">{title}</h2>
       <div className="mt-4">{children}</div>
     </aside>
   );
@@ -542,18 +542,18 @@ function ProfileMetricsCard({
       <dl className="grid grid-cols-2 gap-3 text-center">
         {publicationsCount ? (
           <div className="rounded-lg bg-primary/[0.06] p-3">
-            <dt className="text-xs font-semibold text-slate-600">
+            <dt className="text-xs font-semibold text-muted-foreground">
               Publications
             </dt>
-            <dd className="mt-1 text-2xl font-bold text-slate-950">
+            <dd className="mt-1 text-2xl font-bold text-foreground">
               {publicationsCount}
             </dd>
           </div>
         ) : null}
         {hIndex ? (
           <div className="rounded-lg bg-amber-50 p-3">
-            <dt className="text-xs font-semibold text-slate-600">h-index</dt>
-            <dd className="mt-1 text-2xl font-bold text-slate-950">{hIndex}</dd>
+            <dt className="text-xs font-semibold text-muted-foreground">h-index</dt>
+            <dd className="mt-1 text-2xl font-bold text-foreground">{hIndex}</dd>
           </div>
         ) : null}
       </dl>
@@ -605,12 +605,12 @@ function QualificationTimeline({ items }: { items: string[] }) {
         {items.map((item, index) => (
           <li
             key={item}
-            className="relative rounded-lg border border-slate-200 bg-slate-50 p-4"
+            className="relative rounded-lg border border-border bg-surface-subtle p-4"
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white">
               {index + 1}
             </span>
-            <p className="mt-3 text-sm font-semibold leading-6 text-slate-800">
+            <p className="mt-3 text-sm font-semibold leading-6 text-foreground">
               {item}
             </p>
           </li>
@@ -631,7 +631,7 @@ function ExternalProfileLinks({ links }: { links: ProfileLink[] }) {
           href={item.href ?? undefined}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex min-h-10 items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 transition hover:border-primary/30 hover:text-primary"
+          className="inline-flex min-h-10 items-center justify-between gap-3 rounded-lg border border-border bg-white px-3 text-sm font-bold text-muted-foreground transition hover:border-primary/30 hover:text-primary"
         >
           <span className="truncate">{item.label}</span>
           <ExternalLink aria-hidden className="h-4 w-4 shrink-0" />
@@ -835,7 +835,7 @@ export default async function PublicPersonPage({
                       <div className="grid gap-4 lg:grid-cols-2">
                         {teachingAreas.length ? (
                           <div>
-                            <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+                            <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
                               Teaching Areas
                             </p>
                             <PillList items={teachingAreas} />
@@ -843,7 +843,7 @@ export default async function PublicPersonPage({
                         ) : null}
                         {courses.length ? (
                           <div>
-                            <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+                            <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
                               Courses
                             </p>
                             <PillList items={courses} />
@@ -979,7 +979,7 @@ export default async function PublicPersonPage({
   return (
     <PageShell>
       <AboutPageLenis>
-        <section className="w-full bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_70%)] px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <section className="w-full bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_70%)] px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="w-full max-w-none">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <BreadcrumbTrail

@@ -311,7 +311,7 @@ export function ResourcesWorkspace({
   ];
 
   return (
-    <div className="w-full max-w-none border-t border-slate-200 bg-white">
+    <div className="w-full max-w-none border-t border-border bg-white">
       <WorkspaceHero
         latestUpdate={latestUpdate}
         params={params}
@@ -365,12 +365,12 @@ function WorkspaceHero({
         secondary={{ label: "View downloads", href: "/resources-tools/downloads" }}
         illustration="projects"
       />
-      <section className="border-b border-slate-200 bg-white px-4 py-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
+      <section className="border-b border-border bg-white px-4 py-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
           <nav className="flex flex-wrap items-center gap-2 font-medium" aria-label="Breadcrumb">
             <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-900">Resources & Tools</span>
+            <span className="text-muted-foreground/60">/</span>
+            <span className="text-foreground">Resources & Tools</span>
           </nav>
           <div className="flex items-center gap-2">
             <span>{latestUpdate ? `Data as of ${latestUpdate}` : "Backend records loaded"}</span>
@@ -380,12 +380,12 @@ function WorkspaceHero({
         <form action="/resources-tools" className="grid gap-3 xl:grid-cols-[minmax(260px,1fr)_repeat(4,minmax(150px,190px))_auto]">
           <label className="relative block">
             <span className="sr-only">Search resources</span>
-            <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
             <input
               name="q"
               defaultValue={params.q}
               placeholder="Search resources, policies, forms, services, outputs..."
-              className="h-11 w-full rounded-md border border-slate-200 bg-white pl-10 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
+              className="h-11 w-full rounded-md border border-border bg-white pl-10 pr-3 text-sm outline-none transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-4 focus:ring-primary/10"
             />
           </label>
           <FilterSelect name="type" label="All Types" value={params.type} options={typeOptions} />
@@ -432,7 +432,7 @@ function FilterSelect({
       <select
         name={name}
         defaultValue={value ?? ""}
-        className="h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+        className="h-11 w-full rounded-md border border-border bg-white px-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
       >
         <option value="">{label}</option>
         {options.map((option) => {
@@ -453,7 +453,7 @@ function WorkspaceSideNav({
 }) {
   return (
     <aside className="lg:sticky lg:top-24 lg:self-start">
-      <nav className="grid gap-1 rounded-lg border border-slate-200 bg-white p-2 shadow-sm lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none" aria-label="Resources workspace sections">
+      <nav className="grid gap-1 rounded-lg border border-border bg-white p-2 shadow-sm lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none" aria-label="Resources workspace sections">
         {items.map((item) => {
           const Icon = item.icon;
           const active = item.id === activeItem;
@@ -461,13 +461,13 @@ function WorkspaceSideNav({
             <a
               key={item.id}
               href={item.href}
-              className={`group flex min-h-11 items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-semibold transition ${active ? "bg-primary text-white shadow-sm" : "text-slate-700 hover:bg-primary/5 hover:text-primary"}`}
+              className={`group flex min-h-11 items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-semibold transition ${active ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:bg-primary/5 hover:text-primary"}`}
             >
               <span className="inline-flex items-center gap-2">
                 <Icon aria-hidden className="h-4 w-4" />
                 {item.label}
               </span>
-              <span className={`rounded-full px-2 py-0.5 text-xs ${active ? "bg-white/90 text-primary" : "bg-slate-100 text-slate-600 group-hover:bg-primary/10 group-hover:text-primary"}`}>
+              <span className={`rounded-full px-2 py-0.5 text-xs ${active ? "bg-white/90 text-primary" : "bg-surface-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"}`}>
                 {item.count}
               </span>
             </a>
@@ -475,8 +475,8 @@ function WorkspaceSideNav({
         })}
       </nav>
       <div className="mt-5 hidden rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm lg:block">
-        <p className="font-semibold text-slate-950">Need access?</p>
-        <p className="mt-2 leading-6 text-slate-700">Contact the research office for resource booking, policy documents, and file access support.</p>
+        <p className="font-semibold text-foreground">Need access?</p>
+        <p className="mt-2 leading-6 text-muted-foreground">Contact the research office for resource booking, policy documents, and file access support.</p>
         <Link href="/connect" className="mt-3 inline-flex text-sm font-semibold text-primary">Contact Research Office</Link>
       </div>
     </aside>
@@ -497,13 +497,13 @@ function ResourceLibraryPanel({
         empty="No resource records match the current filters."
       >
         {resources.slice(0, 6).map((resource) => (
-          <tr key={resource.id} className="border-b border-slate-100 last:border-b-0">
+          <tr key={resource.id} className="border-b border-border last:border-b-0">
             <NameCell title={getRecordTitle(resource, "Research resource")} body={getRecordSummary(resource) || compactText(resource.description)} icon={BookOpen} />
             <td><Badge>{formatLabel(resource.resource_type ?? "resource")}</Badge></td>
             <td><AccessBadge value={resource.access_type ?? "internal"} /></td>
             <td><StatusBadge value={resource.status} /></td>
-            <td className="max-w-[180px] text-sm text-slate-700">{centerNames.get(resource.center_id) || "Not published"}</td>
-            <td className="text-sm text-slate-700">{formatLocation(resource)}</td>
+            <td className="max-w-[180px] text-sm text-muted-foreground">{centerNames.get(resource.center_id) || "Not published"}</td>
+            <td className="text-sm text-muted-foreground">{formatLocation(resource)}</td>
             <td><RowActions detailHref={resource.slug ? `/resources-tools/${resource.slug}` : "/resources-tools"} primaryHref={compactText(resource.booking_url) || compactText(resource.access_url)} primaryLabel={compactText(resource.booking_url) ? "Book" : "Access"} /></td>
           </tr>
         ))}
@@ -530,12 +530,12 @@ function PoliciesPanel({
         {policyRows.map((policy) => {
           const href = getBackendDownloadHref(policy, "Policy") || getDownloadHref(policy);
           return (
-            <tr key={policy.id} className="border-b border-slate-100 last:border-b-0">
+            <tr key={policy.id} className="border-b border-border last:border-b-0">
               <NameCell title={getRecordTitle(policy, "Research guideline")} body={getRecordSummary(policy) || compactText(policy.scope)} icon={FileText} />
               <td><Badge>{formatLabel(policy.guideline_type ?? "policy")}</Badge></td>
-              <td className="text-sm text-slate-700">{compactText(policy.version) || "Not set"}</td>
-              <td className="text-sm text-slate-700">{formatDate(policy.effective_date) || "Not set"}</td>
-              <td className="text-sm text-slate-700">{formatDate(policy.review_date) || "Not set"}</td>
+              <td className="text-sm text-muted-foreground">{compactText(policy.version) || "Not set"}</td>
+              <td className="text-sm text-muted-foreground">{formatDate(policy.effective_date) || "Not set"}</td>
+              <td className="text-sm text-muted-foreground">{formatDate(policy.review_date) || "Not set"}</td>
               <td><StatusBadge value={policy.status} /></td>
               <td>{policy.is_mandatory || policy.is_required ? <FilledBadge>Mandatory</FilledBadge> : <Badge>No</Badge>}</td>
               <td><RowActions detailHref={policy.slug ? `/guidelines/${policy.slug}` : "/guidelines"} primaryHref={href} primaryLabel="Download" download /></td>
@@ -585,13 +585,13 @@ function OutputsPanel({
         empty="No output records match the current filters."
       >
         {outputs.slice(0, 6).map((output) => (
-          <tr key={output.id} className="border-b border-slate-100 last:border-b-0">
+          <tr key={output.id} className="border-b border-border last:border-b-0">
             <NameCell title={getRecordTitle(output, "Research output")} body={getRecordSummary(output)} icon={Database} />
             <td><Badge>{formatLabel(output.output_type ?? "output")}</Badge></td>
             <td><Badge>{formatLabel(output.access_type ?? "not set")}</Badge></td>
             <td><StatusBadge value={output.status} /></td>
-            <td className="text-sm text-slate-700">{centerNames.get(output.center_id) || "Not published"}</td>
-            <td className="text-sm text-slate-700">{formatDate(output.release_date) || formatDate(output.created_at) || "Not set"}</td>
+            <td className="text-sm text-muted-foreground">{centerNames.get(output.center_id) || "Not published"}</td>
+            <td className="text-sm text-muted-foreground">{formatDate(output.release_date) || formatDate(output.created_at) || "Not set"}</td>
             <td><RowActions detailHref={output.slug ? `/outputs/${output.slug}` : "/outputs"} primaryHref={getDownloadHref(output)} primaryLabel="Download" download /></td>
           </tr>
         ))}
@@ -607,7 +607,7 @@ function DownloadsPanel({ downloads }: { downloads: DownloadRecord[] }) {
       {downloads.length ? (
         <div className="grid gap-3 md:grid-cols-2">
           {downloads.slice(0, 10).map((item) => (
-            <article key={item.id} className="flex min-w-0 items-start gap-3 rounded-md border border-slate-200 bg-white p-4">
+            <article key={item.id} className="flex min-w-0 items-start gap-3 rounded-md border border-border bg-white p-4">
               <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/5 text-primary">
                 <FileArchive aria-hidden className="h-5 w-5" />
               </span>
@@ -616,14 +616,14 @@ function DownloadsPanel({ downloads }: { downloads: DownloadRecord[] }) {
                   <Badge>{item.extension}</Badge>
                   <Badge>{item.source}</Badge>
                 </div>
-                <h3 className="mt-2 line-clamp-2 text-sm font-semibold text-slate-950">{item.title}</h3>
-                <p className="mt-1 text-xs text-slate-600">{item.category} {item.updated ? `- ${item.updated}` : ""}</p>
+                <h3 className="mt-2 line-clamp-2 text-sm font-semibold text-foreground">{item.title}</h3>
+                <p className="mt-1 text-xs text-muted-foreground">{item.category} {item.updated ? `- ${item.updated}` : ""}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <a href={item.href} download className="inline-flex min-h-9 items-center gap-2 rounded-md border border-primary/25 px-3 text-xs font-semibold text-primary transition hover:bg-primary/5">
                     <Download aria-hidden className="h-3.5 w-3.5" />
                     Download
                   </a>
-                  <Link href={item.detailsHref} className="inline-flex min-h-9 items-center rounded-md border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition hover:border-primary/30 hover:text-primary">
+                  <Link href={item.detailsHref} className="inline-flex min-h-9 items-center rounded-md border border-border px-3 text-xs font-semibold text-muted-foreground transition hover:border-primary/30 hover:text-primary">
                     Details
                   </Link>
                 </div>
@@ -652,8 +652,8 @@ function WorkspacePanel({
   children: ReactNode;
 }) {
   return (
-    <section id={id} className="scroll-mt-28 rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5">
+    <section id={id} className="scroll-mt-28 rounded-lg border border-border bg-white shadow-sm">
+      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-4 sm:px-5">
         <h2 className="text-lg font-semibold text-primary">{title}</h2>
         <Link href={href} className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
           {action}
@@ -678,7 +678,7 @@ function DesktopTable({
   return (
     <div className="hidden overflow-x-auto lg:block">
       <table className="min-w-full text-left">
-        <thead className="bg-slate-50 text-xs font-semibold text-slate-700">
+        <thead className="bg-surface-subtle text-xs font-semibold text-muted-foreground">
           <tr>
             {columns.map((column) => <th key={column} className="px-4 py-3">{column}</th>)}
           </tr>
@@ -702,12 +702,12 @@ function NameCell({
   return (
     <td className="min-w-[240px] px-4 py-3">
       <div className="flex items-start gap-3">
-        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-primary">
+        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-surface-muted text-primary">
           <Icon aria-hidden className="h-4 w-4" />
         </span>
         <div>
-          <p className="text-sm font-semibold text-slate-950">{title}</p>
-          {body ? <p className="mt-1 line-clamp-1 text-xs text-slate-600">{body}</p> : null}
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          {body ? <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{body}</p> : null}
         </div>
       </div>
     </td>
@@ -737,7 +737,7 @@ function RowActions({
           {primaryLabel}
         </a>
       ) : null}
-      <Link href={detailHref} className="inline-flex min-h-9 items-center rounded-md border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition hover:border-primary/30 hover:text-primary">
+      <Link href={detailHref} className="inline-flex min-h-9 items-center rounded-md border border-border px-3 text-xs font-semibold text-muted-foreground transition hover:border-primary/30 hover:text-primary">
         Details
       </Link>
     </div>
@@ -762,14 +762,14 @@ function MobileList({
         const href = record.slug ? `${hrefBase}/${record.slug}` : hrefBase;
         return (
           <article key={record.id} className="flex items-start gap-3 p-4">
-            <span className="mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-primary">
+            <span className="mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-surface-muted text-primary">
               <BookOpen aria-hidden className="h-4 w-4" />
             </span>
             <div className="min-w-0 flex-1">
-              <h3 className="text-sm font-semibold text-slate-950">{getRecordTitle(record, "Research record")}</h3>
-              <p className="mt-1 text-xs leading-5 text-slate-600">{[formatLabel(record.resource_type ?? record.guideline_type ?? record.service_type ?? record.output_type), formatLabel(record.status), formatLocation(record)].filter(Boolean).join(" - ")}</p>
+              <h3 className="text-sm font-semibold text-foreground">{getRecordTitle(record, "Research record")}</h3>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">{[formatLabel(record.resource_type ?? record.guideline_type ?? record.service_type ?? record.output_type), formatLabel(record.status), formatLocation(record)].filter(Boolean).join(" - ")}</p>
             </div>
-            <Link href={href} className="inline-flex min-h-9 items-center rounded-md border border-slate-200 px-3 text-xs font-semibold text-primary">
+            <Link href={href} className="inline-flex min-h-9 items-center rounded-md border border-border px-3 text-xs font-semibold text-primary">
               {actionLabel}
             </Link>
           </article>
@@ -797,14 +797,14 @@ function CompactCardGrid({
         <Link
           key={record.id}
           href={record.slug ? `${hrefBase}/${record.slug}` : hrefBase}
-          className="rounded-md border border-slate-200 bg-white p-4 transition hover:border-primary/30 hover:bg-primary/5"
+          className="rounded-md border border-border bg-white p-4 transition hover:border-primary/30 hover:bg-primary/5"
         >
           <div className="flex flex-wrap gap-2">
             <Badge>{formatLabel(record.resource_type ?? record.service_type ?? record.guideline_type ?? record.output_type ?? "record")}</Badge>
             {record.status ? <StatusBadge value={record.status} /> : null}
           </div>
-          <h3 className="mt-3 line-clamp-2 text-sm font-semibold text-slate-950">{getRecordTitle(record, "Research record")}</h3>
-          <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600">{getRecordSummary(record) || compactText(record.description) || compactText(record.scope) || "Details are published in the backend record."}</p>
+          <h3 className="mt-3 line-clamp-2 text-sm font-semibold text-foreground">{getRecordTitle(record, "Research record")}</h3>
+          <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">{getRecordSummary(record) || compactText(record.description) || compactText(record.scope) || "Details are published in the backend record."}</p>
         </Link>
       ))}
     </div>
@@ -815,7 +815,7 @@ function StatusBadge({ value }: { value?: unknown }) {
   const text = formatLabel(toCompactString(value) || "active");
   const positive = /active|available|published|open/i.test(text);
   return (
-    <span className={`inline-flex items-center rounded-md border px-3 py-1 text-xs font-semibold ${positive ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-slate-200 bg-slate-50 text-slate-700"}`}>
+    <span className={`inline-flex items-center rounded-md border px-3 py-1 text-xs font-semibold ${positive ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-border bg-surface-subtle text-muted-foreground"}`}>
       {text}
     </span>
   );

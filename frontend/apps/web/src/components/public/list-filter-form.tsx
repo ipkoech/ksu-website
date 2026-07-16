@@ -32,7 +32,7 @@ export function listFilterValue(value?: string | null) {
 }
 
 export function PublicListFilterForm({
-  className = "mb-6 border border-slate-200 bg-white p-4 shadow-sm",
+  className = "mb-6 border border-border bg-white p-4 shadow-sm",
   searchLabel = "Search",
   searchName = "q",
   searchValue,
@@ -135,7 +135,7 @@ export function PublicListFilterForm({
             onRemove={handleRemoveFilter}
           />
         </div>
-        <p className="mt-3 text-sm font-medium text-slate-600">
+        <p className="mt-3 text-sm font-medium text-muted-foreground">
           Showing {visible} of {total} published record
           {total === 1 ? "" : "s"}.
         </p>

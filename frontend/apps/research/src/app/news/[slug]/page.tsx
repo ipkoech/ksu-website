@@ -99,7 +99,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-5">
             {imageUrl ? (
-              <figure className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              <figure className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
                 <Image
                   loader={passthroughImageLoader}
                   unoptimized
@@ -110,7 +110,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
                   className="max-h-[520px] w-full object-cover"
                 />
                 {compactText(record.cover_image_caption) ? (
-                  <figcaption className="border-t border-slate-200 px-5 py-3 text-sm text-slate-600">
+                  <figcaption className="border-t border-border px-5 py-3 text-sm text-muted-foreground">
                     {compactText(record.cover_image_caption)}
                   </figcaption>
                 ) : null}
@@ -125,8 +125,8 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
               ]}
             />
             {tags.length > 0 ? (
-              <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
+              <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+                <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">
                   Topics
                 </h2>
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -194,13 +194,13 @@ function NewsEvidencePanel({ title, fields }: { title: string; fields: Array<[st
   }
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">{title}</h2>
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">{title}</h2>
       <div className="mt-4 flex flex-col gap-4">
         {entries.map((entry) => (
           <div key={entry.label}>
-            <p className="text-xs font-semibold uppercase text-slate-500">{entry.label}</p>
-            <ResearchRichText content={entry.value} className="mt-1 text-sm leading-7 text-slate-600" />
+            <p className="text-xs font-semibold uppercase text-muted-foreground">{entry.label}</p>
+            <ResearchRichText content={entry.value} className="mt-1 text-sm leading-7 text-muted-foreground" />
           </div>
         ))}
       </div>
@@ -269,12 +269,12 @@ function SourceContext({
         <Link
           key={card.href}
           href={card.href}
-          className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:bg-primary/5"
+          className="rounded-lg border border-border bg-white p-5 shadow-sm transition hover:border-primary/30 hover:bg-primary/5"
         >
           <p className="text-xs font-semibold uppercase text-secondary">{card.label}</p>
-          <h2 className="mt-3 text-base font-semibold leading-6 text-slate-950">{card.title}</h2>
+          <h2 className="mt-3 text-base font-semibold leading-6 text-foreground">{card.title}</h2>
           {card.body ? (
-            <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{card.body}</p>
+            <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{card.body}</p>
           ) : null}
         </Link>
       ))}

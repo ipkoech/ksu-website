@@ -122,7 +122,7 @@ export default async function FundingPage({
   const externalGrants = visibleGrants.filter((grant) => grant.grant_type === "external");
 
   return (
-    <main id="research-main" className="min-h-screen bg-slate-50">
+    <main id="research-main" className="min-h-screen bg-surface-subtle">
       <FundingMasthead
         resultCount={visibleGrants.length}
         publishedCount={allGrants.data.length}
@@ -161,7 +161,7 @@ export default async function FundingPage({
                   <FeaturedGrant grant={featuredGrant} />
                 </div>
               ) : null}
-              {rowGrants.length > 0 ? <div className="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              {rowGrants.length > 0 ? <div className="divide-y divide-slate-200 overflow-hidden rounded-lg border border-border bg-white shadow-sm">
                 {rowGrants.map((grant) => (
                   <GrantRow key={grant.id} grant={grant} />
                 ))}
@@ -265,11 +265,11 @@ function GrantTypeSplit({
           className={
             item.active
               ? "inline-flex min-h-10 items-center gap-3 rounded-md border border-primary bg-primary px-4 text-sm font-semibold text-white shadow-sm"
-              : "inline-flex min-h-10 items-center gap-3 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-primary/30 hover:text-primary"
+              : "inline-flex min-h-10 items-center gap-3 rounded-md border border-border bg-white px-4 text-sm font-semibold text-muted-foreground shadow-sm transition hover:border-primary/30 hover:text-primary"
           }
         >
           {item.label}
-          <span className={item.active ? "rounded bg-white/15 px-2 py-0.5 text-white" : "rounded bg-slate-100 px-2 py-0.5 text-slate-700"}>
+          <span className={item.active ? "rounded bg-white/15 px-2 py-0.5 text-white" : "rounded bg-surface-muted px-2 py-0.5 text-muted-foreground"}>
             {item.count}
           </span>
         </Link>
@@ -338,20 +338,20 @@ function GrantRow({ grant }: { grant: ResearchGrant }) {
           {isInternal ? <DeadlineStatusBadge deadline={deadline} /> : null}
           {grant.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
         </div>
-        <h2 className="mt-2 line-clamp-1 text-sm font-semibold text-slate-950 group-hover:text-primary">{grant.title}</h2>
+        <h2 className="mt-2 line-clamp-1 text-sm font-semibold text-foreground group-hover:text-primary">{grant.title}</h2>
         {compactText(grant.summary) || compactText((grant as ResearchGenericRecord).description) ? (
-          <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">
+          <p className="mt-1 line-clamp-1 text-xs leading-5 text-muted-foreground">
             {compactText(grant.summary) || compactText((grant as ResearchGenericRecord).description)}
           </p>
         ) : null}
       </div>
       <div className="text-sm">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Funder</p>
-        <p className="mt-1 line-clamp-1 font-semibold text-slate-800">{compactText(grant.funder_name) || formatLabel(grant.grant_type ?? "funding")}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Funder</p>
+        <p className="mt-1 line-clamp-1 font-semibold text-foreground">{compactText(grant.funder_name) || formatLabel(grant.grant_type ?? "funding")}</p>
       </div>
       <div className="text-sm">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{isInternal ? deadline.label : "Deadline"}</p>
-        <p className="mt-1 font-semibold text-slate-800">{deadline.value || formatDate(grant.deadline)}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{isInternal ? deadline.label : "Deadline"}</p>
+        <p className="mt-1 font-semibold text-foreground">{deadline.value || formatDate(grant.deadline)}</p>
       </div>
       <span className="inline-flex items-center justify-start gap-2 text-sm font-semibold text-primary lg:justify-end">
         Open <ArrowRight aria-hidden className="h-4 w-4 transition group-hover:translate-x-1" />
@@ -379,8 +379,8 @@ function GrantRowContent({
           {isInternal ? <DeadlineStatusBadge deadline={deadline} large /> : null}
           {featured || grant.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
         </div>
-        <h2 className="mt-3 text-lg font-semibold leading-7 text-slate-950">{grant.title}</h2>
-        <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+        <h2 className="mt-3 text-lg font-semibold leading-7 text-foreground">{grant.title}</h2>
+        <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
           {compactText(grant.summary) ||
             compactText((grant as ResearchGenericRecord).description) ||
             ""}
@@ -390,16 +390,16 @@ function GrantRowContent({
         {isInternal ? (
           <div className="rounded-md border border-primary/25 bg-white p-3">
             <dt className="text-xs font-semibold uppercase text-primary">{deadline.label}</dt>
-            <dd className="mt-1 text-lg font-semibold text-slate-950">{deadline.value}</dd>
+            <dd className="mt-1 text-lg font-semibold text-foreground">{deadline.value}</dd>
           </div>
         ) : null}
         {compactText(grant.funder_name) ? <div className="rounded-md bg-white p-2.5">
-          <dt className="text-xs font-semibold uppercase text-slate-500">Funder</dt>
-          <dd className="mt-1 font-semibold text-slate-950">{compactText(grant.funder_name)}</dd>
+          <dt className="text-xs font-semibold uppercase text-muted-foreground">Funder</dt>
+          <dd className="mt-1 font-semibold text-foreground">{compactText(grant.funder_name)}</dd>
         </div> : null}
         {!isInternal && deadline.value ? <div className="rounded-md bg-white p-2.5">
-          <dt className="text-xs font-semibold uppercase text-slate-500">{deadline.label}</dt>
-          <dd className="mt-1 font-semibold text-slate-950">{deadline.value}</dd>
+          <dt className="text-xs font-semibold uppercase text-muted-foreground">{deadline.label}</dt>
+          <dd className="mt-1 font-semibold text-foreground">{deadline.value}</dd>
         </div> : null}
       </dl>
       <span className="inline-flex min-h-10 items-center justify-center rounded-md border border-primary/20 px-3 text-sm font-semibold text-primary transition group-hover:bg-primary group-hover:text-white">
@@ -431,10 +431,10 @@ function SupportPanelItem({ record }: { record: SupportRecord }) {
   const downloadHref = getResearchRecordDownloadHref(record, record.resource_type ? "resource" : "guideline");
   return (
     <article className="py-4 first:pt-0 last:pb-0">
-      <h3 className="text-sm font-semibold text-slate-950">
+      <h3 className="text-sm font-semibold text-foreground">
         {compactText(record.title) || compactText(record.name)}
       </h3>
-      <p className="mt-1 text-xs font-semibold uppercase text-slate-500">
+      <p className="mt-1 text-xs font-semibold uppercase text-muted-foreground">
         {formatLabel(record.guideline_type ?? record.resource_type ?? record.category ?? "resource")}
       </p>
       {downloadHref ? (

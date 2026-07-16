@@ -61,7 +61,7 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
 
   return (
     <div className="bg-white">
-      <section className="relative overflow-hidden bg-slate-950 text-white">
+      <section className="relative overflow-hidden bg-brand-overlay text-white">
         <PublicImage
           src={data.page.hero_image?.url || "/images/backgrounds/KSUB-RollPhotos2025-122.jpg"}
           alt={data.page.hero_image?.alt || title}
@@ -95,7 +95,7 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
 
       {mandate ? (
         <section className="relative z-10 -mt-8 px-4 pb-5 sm:px-6 lg:px-8">
-          <AboutReveal className="mx-auto grid w-full gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-md lg:grid-cols-[3.5rem_minmax(0,1fr)_auto] lg:items-center">
+          <AboutReveal className="mx-auto grid w-full gap-4 rounded-xl border border-border bg-white p-5 shadow-md lg:grid-cols-[3.5rem_minmax(0,1fr)_auto] lg:items-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-secondary">
               <Landmark aria-hidden className="h-6 w-6" />
             </div>
@@ -103,7 +103,7 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
                 {text(mandate.label, "Our Mandate")}
               </p>
-              <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-700">
+              <p className="mt-2 max-w-4xl text-sm leading-6 text-muted-foreground">
                 {text(mandate.description, description)}
               </p>
             </div>
@@ -124,7 +124,7 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
         {data.chairperson ? (
           <UniversityCouncilCard member={data.chairperson} variant="featured" />
         ) : (
-          <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-600">
+          <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
             Chairperson profile is not currently published.
           </p>
         )}
@@ -140,7 +140,7 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
             ))}
           </div>
         ) : (
-          <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-600">
+          <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
             Council member profiles are not currently published.
           </p>
         )}
@@ -150,7 +150,7 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
         {data.secretary ? (
           <UniversityCouncilCard member={data.secretary} variant="secretary" />
         ) : (
-          <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-600">
+          <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
             Secretary to Council profile is not currently published.
           </p>
         )}

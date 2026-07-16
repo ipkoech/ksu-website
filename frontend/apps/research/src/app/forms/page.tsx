@@ -62,19 +62,19 @@ function FormsMasthead({
   ];
 
   return (
-    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <section className="border-b border-border bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(300px,460px)] lg:items-end">
         <div>
-          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
+          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground" aria-label="Breadcrumb">
             <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-slate-300">/</span>
+            <span className="text-muted-foreground/60">/</span>
             <Link href="/funding" className="transition hover:text-primary">Funding</Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-900">Forms</span>
+            <span className="text-muted-foreground/60">/</span>
+            <span className="text-foreground">Forms</span>
           </nav>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Funding / Support</p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">Forms, templates, and practical research resources</h1>
-          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">Search backend-published forms, templates, and guidance records with direct detail links.</p>
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">Forms, templates, and practical research resources</h1>
+          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">Search backend-published forms, templates, and guidance records with direct detail links.</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <PrimaryLink href="/resources-tools">Open resources</PrimaryLink>
             <SecondaryLink href="/guidelines">Guidelines</SecondaryLink>
@@ -82,9 +82,9 @@ function FormsMasthead({
         </div>
         <dl className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
           {stats.map((stat) => (
-            <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-              <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
-              <dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd>
+            <div key={stat.label} className="rounded-md border border-border bg-surface-subtle px-3 py-2">
+              <dt className="text-[11px] font-semibold uppercase text-muted-foreground">{stat.label}</dt>
+              <dd className="mt-1 text-lg font-semibold text-foreground">{stat.value}</dd>
             </div>
           ))}
         </dl>
@@ -94,8 +94,8 @@ function FormsMasthead({
 }
 
 function ResourceColumn({ title, records }: { title: string; records: ResearchGenericRecord[] }) {
-  return <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><h2 className="text-xl font-semibold text-slate-950">{title}</h2><div className="mt-4 divide-y divide-slate-200">{records.map((record) => {
+  return <section className="rounded-lg border border-border bg-white p-5 shadow-sm"><h2 className="text-xl font-semibold text-foreground">{title}</h2><div className="mt-4 divide-y divide-slate-200">{records.map((record) => {
     const downloadHref = getResearchRecordDownloadHref(record, record.resource_type ? "resource" : "guideline");
-    return <article key={record.id} className="py-4 first:pt-0 last:pb-0"><Badge>{formatLabel(record.resource_type ?? record.guideline_type ?? record.category ?? "document")}</Badge><h3 className="mt-3 text-base font-semibold leading-6 text-slate-950">{record.name ?? record.title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{compactText(record.description) || compactText(record.summary) || compactText(record.scope) || "Document details are not published yet."}</p><p className="mt-2 text-xs font-semibold uppercase text-slate-500">{formatDate(record.effective_date) || formatLabel(record.status)}</p><div className="mt-3 flex flex-wrap gap-3">{downloadHref ? <a href={downloadHref} className="inline-flex text-sm font-semibold text-primary">Download</a> : null}{record.slug ? <Link href={record.resource_type ? `/resources-tools/${record.slug}` : `/guidelines/${record.slug}`} className="inline-flex text-sm font-semibold text-primary">Open details</Link> : null}</div></article>;
-  })}{records.length === 0 ? <p className="py-4 text-sm text-slate-600">No records are published yet.</p> : null}</div></section>;
+    return <article key={record.id} className="py-4 first:pt-0 last:pb-0"><Badge>{formatLabel(record.resource_type ?? record.guideline_type ?? record.category ?? "document")}</Badge><h3 className="mt-3 text-base font-semibold leading-6 text-foreground">{record.name ?? record.title}</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{compactText(record.description) || compactText(record.summary) || compactText(record.scope) || "Document details are not published yet."}</p><p className="mt-2 text-xs font-semibold uppercase text-muted-foreground">{formatDate(record.effective_date) || formatLabel(record.status)}</p><div className="mt-3 flex flex-wrap gap-3">{downloadHref ? <a href={downloadHref} className="inline-flex text-sm font-semibold text-primary">Download</a> : null}{record.slug ? <Link href={record.resource_type ? `/resources-tools/${record.slug}` : `/guidelines/${record.slug}`} className="inline-flex text-sm font-semibold text-primary">Open details</Link> : null}</div></article>;
+  })}{records.length === 0 ? <p className="py-4 text-sm text-muted-foreground">No records are published yet.</p> : null}</div></section>;
 }

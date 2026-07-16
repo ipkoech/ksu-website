@@ -146,7 +146,7 @@ export default async function DonatePage({
   const featuredImpact = impacts.data[0];
 
   return (
-    <main id="research-main" className="min-h-screen bg-slate-50">
+    <main id="research-main" className="min-h-screen bg-surface-subtle">
       <DonateMasthead
         priorityCount={priorities.length}
         impactCount={impacts.data.length}
@@ -360,33 +360,33 @@ function DonationSuccessPanel({
       <div className="grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(320px,0.65fr)]">
         <div>
           <Badge>Donation submitted</Badge>
-          <h2 className="mt-4 text-2xl font-semibold leading-8 text-slate-950">
+          <h2 className="mt-4 text-2xl font-semibold leading-8 text-foreground">
             Thank you for your generosity.
           </h2>
-          <p className="mt-3 text-sm leading-7 text-slate-700">
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">
             Your donation request has been recorded for admin follow-up. Use this reference when completing payment or contacting the research office.
           </p>
           <div className="mt-5 rounded-md border border-primary/20 bg-white p-4">
-            <p className="text-xs font-semibold uppercase text-slate-500">Reference code</p>
+            <p className="text-xs font-semibold uppercase text-muted-foreground">Reference code</p>
             <p className="mt-1 break-all font-mono text-lg font-semibold text-primary">{referenceCode}</p>
           </div>
-          <p className="mt-4 text-sm leading-6 text-slate-600">
+          <p className="mt-4 text-sm leading-6 text-muted-foreground">
             The request is visible under admin donation records as a pending donation.
           </p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
-          <h3 className="text-base font-semibold text-slate-950">Donation account details</h3>
+        <div className="rounded-lg border border-border bg-white p-4">
+          <h3 className="text-base font-semibold text-foreground">Donation account details</h3>
           {hasAccountDetails ? (
             <dl className="mt-4 divide-y divide-slate-200">
               {accountRows.map((row) => (
                 <div key={row.label} className="grid gap-1 py-3 sm:grid-cols-[130px_1fr]">
-                  <dt className="text-xs font-semibold uppercase text-slate-500">{row.label}</dt>
-                  <dd className="break-words text-sm font-semibold text-slate-950">{row.value}</dd>
+                  <dt className="text-xs font-semibold uppercase text-muted-foreground">{row.label}</dt>
+                  <dd className="break-words text-sm font-semibold text-foreground">{row.value}</dd>
                 </div>
               ))}
             </dl>
           ) : null}
-          <p className="mt-4 text-sm leading-6 text-slate-600">
+          <p className="mt-4 text-sm leading-6 text-muted-foreground">
             {bank.instructions || `For payment instructions, contact ${contactEmail}.`}
           </p>
         </div>
@@ -494,14 +494,14 @@ function PrioritySelector({ priorities }: { priorities: Priority[] }) {
             className={
               index === 0
                 ? "rounded-lg border border-primary bg-primary/[0.04] p-4 shadow-sm"
-                : "rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30"
+                : "rounded-lg border border-border bg-white p-4 shadow-sm transition hover:border-primary/30"
             }
           >
-            <span className={index === 0 ? "inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary text-white" : "inline-flex h-10 w-10 items-center justify-center rounded-md bg-slate-100 text-primary"}>
+            <span className={index === 0 ? "inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary text-white" : "inline-flex h-10 w-10 items-center justify-center rounded-md bg-surface-muted text-primary"}>
               <Icon aria-hidden className="h-5 w-5" />
             </span>
-            <h2 className="mt-3 text-base font-semibold leading-6 text-slate-950">{priority.title}</h2>
-            <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600">{priority.body}</p>
+            <h2 className="mt-3 text-base font-semibold leading-6 text-foreground">{priority.title}</h2>
+            <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">{priority.body}</p>
           </a>
         );
       })}
@@ -525,12 +525,12 @@ function DonationForm({
   return (
     <form
       action={submitDonation}
-      className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+      className="rounded-lg border border-border bg-white p-5 shadow-sm"
     >
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-secondary">Make a Gift</p>
-          <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950">
+          <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground">
             Giving details
           </h2>
         </div>
@@ -541,7 +541,7 @@ function DonationForm({
       <input type="hidden" name="preferred_payment_method" value={onlineGivingUrl ? "online" : "inquiry"} />
 
       <fieldset className="mt-6">
-        <legend className="text-xs font-semibold uppercase text-slate-500">Amount</legend>
+        <legend className="text-xs font-semibold uppercase text-muted-foreground">Amount</legend>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {amounts.slice(0, 4).map((amount, index) => (
             <label key={amount} className="cursor-pointer">
@@ -552,25 +552,25 @@ function DonationForm({
                 defaultChecked={index === 1}
                 className="peer sr-only"
               />
-              <span className="flex min-h-11 items-center justify-center rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white">
+              <span className="flex min-h-11 items-center justify-center rounded-md border border-border bg-white px-3 text-sm font-semibold text-muted-foreground transition peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white">
                 {currency} {amount.toLocaleString()}
               </span>
             </label>
           ))}
         </div>
         <label className="mt-3 block">
-          <span className="text-xs font-semibold uppercase text-slate-500">Custom amount</span>
+          <span className="text-xs font-semibold uppercase text-muted-foreground">Custom amount</span>
           <input
             name="custom_amount"
             inputMode="decimal"
             placeholder={`${currency} custom amount`}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
         </label>
       </fieldset>
 
       <fieldset className="mt-5">
-        <legend className="text-xs font-semibold uppercase text-slate-500">Gift type</legend>
+        <legend className="text-xs font-semibold uppercase text-muted-foreground">Gift type</legend>
         <div className="mt-3 grid grid-cols-3 gap-3">
           {[
             ["one_time", "One-time"],
@@ -585,7 +585,7 @@ function DonationForm({
                 defaultChecked={index === 0}
                 className="peer sr-only"
               />
-              <span className="flex min-h-11 items-center justify-center rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white">
+              <span className="flex min-h-11 items-center justify-center rounded-md border border-border bg-white px-3 text-sm font-semibold text-muted-foreground transition peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white">
                 {label}
               </span>
             </label>
@@ -595,11 +595,11 @@ function DonationForm({
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
         <label>
-          <span className="text-xs font-semibold uppercase text-slate-500">Giving area</span>
+          <span className="text-xs font-semibold uppercase text-muted-foreground">Giving area</span>
           <select
             name="designation"
             defaultValue={priorities[0]?.value}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             {priorities.map((priority) => (
               <option key={priority.value} value={priority.value}>
@@ -610,18 +610,18 @@ function DonationForm({
         </label>
       </div>
 
-      <div className="mt-6 border-t border-slate-200 pt-5">
-        <h3 className="text-base font-semibold text-slate-950">Donor details</h3>
+      <div className="mt-6 border-t border-border pt-5">
+        <h3 className="text-base font-semibold text-foreground">Donor details</h3>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <InputField name="display_name" label="Name" placeholder="Your name" required />
           <InputField name="email" label="Email" placeholder="you@example.com" type="email" required />
           <InputField name="phone" label="Phone" placeholder="Phone number" />
           <label>
-            <span className="text-xs font-semibold uppercase text-slate-500">Donor type</span>
+            <span className="text-xs font-semibold uppercase text-muted-foreground">Donor type</span>
             <select
               name="donor_type"
               defaultValue="individual"
-              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="individual">Individual</option>
               <option value="alumni">Alumni</option>
@@ -633,16 +633,16 @@ function DonationForm({
         </div>
       </div>
 
-      <details className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <summary className="cursor-pointer text-sm font-semibold text-slate-950">Additional details</summary>
+      <details className="mt-5 rounded-lg border border-border bg-surface-subtle p-4">
+        <summary className="cursor-pointer text-sm font-semibold text-foreground">Additional details</summary>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <InputField name="organization_name" label="Organization" placeholder="Optional organization" />
           <label>
-            <span className="text-xs font-semibold uppercase text-slate-500">Recurring frequency</span>
+            <span className="text-xs font-semibold uppercase text-muted-foreground">Recurring frequency</span>
             <select
               name="recurring_frequency"
               defaultValue="monthly"
-              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="monthly">Monthly</option>
               <option value="quarterly">Quarterly</option>
@@ -650,44 +650,44 @@ function DonationForm({
             </select>
           </label>
           <label>
-            <span className="text-xs font-semibold uppercase text-slate-500">Recognition</span>
+            <span className="text-xs font-semibold uppercase text-muted-foreground">Recognition</span>
             <select
               name="recognition_public"
               defaultValue="false"
-              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="false">Keep private</option>
               <option value="true">May be recognized publicly</option>
             </select>
           </label>
           <label>
-            <span className="text-xs font-semibold uppercase text-slate-500">Anonymous giving</span>
+            <span className="text-xs font-semibold uppercase text-muted-foreground">Anonymous giving</span>
             <select
               name="is_anonymous"
               defaultValue="false"
-              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="false">Use my name internally</option>
               <option value="true">Keep me anonymous</option>
             </select>
           </label>
           <label>
-            <span className="text-xs font-semibold uppercase text-slate-500">Tribute gift</span>
+            <span className="text-xs font-semibold uppercase text-muted-foreground">Tribute gift</span>
             <select
               name="is_tribute"
               defaultValue="false"
-              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="false">No tribute</option>
               <option value="true">In honor or memory</option>
             </select>
           </label>
           <label>
-            <span className="text-xs font-semibold uppercase text-slate-500">Tribute type</span>
+            <span className="text-xs font-semibold uppercase text-muted-foreground">Tribute type</span>
             <select
               name="tribute_type"
               defaultValue="in_honor"
-              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="in_honor">In honor</option>
               <option value="in_memory">In memory</option>
@@ -695,29 +695,29 @@ function DonationForm({
           </label>
           <InputField name="tribute_name" label="Tribute name" placeholder="Optional tribute name" />
           <label className="sm:col-span-2">
-            <span className="text-xs font-semibold uppercase text-slate-500">Purpose or note</span>
+            <span className="text-xs font-semibold uppercase text-muted-foreground">Purpose or note</span>
             <input
               name="purpose"
               placeholder="Optional purpose, fund, project, or scholarship note"
-              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
           </label>
           <label className="sm:col-span-2">
-            <span className="text-xs font-semibold uppercase text-slate-500">Message</span>
+            <span className="text-xs font-semibold uppercase text-muted-foreground">Message</span>
             <textarea
               name="message"
               rows={3}
               placeholder="Optional donor message or pledge note"
-              className="mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="mt-2 w-full rounded-md border border-border bg-white px-3 py-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
           </label>
           <label className="sm:col-span-2">
-            <span className="text-xs font-semibold uppercase text-slate-500">Dedication</span>
+            <span className="text-xs font-semibold uppercase text-muted-foreground">Dedication</span>
             <textarea
               name="dedication"
               rows={3}
               placeholder="Optional dedication text"
-              className="mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="mt-2 w-full rounded-md border border-border bg-white px-3 py-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
           </label>
         </div>
@@ -727,7 +727,7 @@ function DonationForm({
         Continue to giving channel
         <ArrowRight aria-hidden className="h-4 w-4" />
       </button>
-      <p className="mt-3 text-xs leading-5 text-slate-500">
+      <p className="mt-3 text-xs leading-5 text-muted-foreground">
         This creates a pending donation record for admin follow-up. {onlineGivingUrl ? "The giving office can reconcile it with the configured online channel." : `The giving office will respond through ${contactEmail}.`}
       </p>
     </form>
@@ -752,14 +752,14 @@ function DonationAccountPanel({
   if (accountRows.length === 0 && !bank.instructions && !contactEmail) return null;
 
   return (
-    <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <aside className="rounded-lg border border-border bg-white p-5 shadow-sm">
       <div className="flex items-start gap-3">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
           <Banknote aria-hidden className="h-5 w-5" />
         </span>
         <div>
           <Badge>Payment details</Badge>
-          <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-8 text-slate-950">
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-8 text-foreground">
             Donation account details
           </h2>
         </div>
@@ -768,14 +768,14 @@ function DonationAccountPanel({
         <dl className="mt-5 divide-y divide-slate-200">
           {accountRows.map((row) => (
             <div key={row.label} className="grid gap-1 py-3 first:pt-0 sm:grid-cols-[128px_1fr]">
-              <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{row.label}</dt>
-              <dd className="break-words text-sm font-semibold text-slate-950">{row.value}</dd>
+              <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{row.label}</dt>
+              <dd className="break-words text-sm font-semibold text-foreground">{row.value}</dd>
             </div>
           ))}
         </dl>
       ) : null}
       {bank.instructions || contactEmail ? (
-        <p className="mt-4 rounded-md bg-slate-50 p-3 text-sm leading-6 text-slate-600">
+        <p className="mt-4 rounded-md bg-surface-subtle p-3 text-sm leading-6 text-muted-foreground">
           {bank.instructions || `For payment instructions, contact ${contactEmail}.`}
         </p>
       ) : null}
@@ -798,13 +798,13 @@ function InputField({
 }) {
   return (
     <label>
-      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
+      <span className="text-xs font-semibold uppercase text-muted-foreground">{label}</span>
       <input
         name={name}
         type={type}
         required={required}
         placeholder={placeholder}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       />
     </label>
   );
@@ -812,7 +812,7 @@ function InputField({
 
 function ImpactFeature({ impact }: { impact?: ResearchGenericRecord }) {
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <article className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
       <div className="relative aspect-[16/7] min-h-[150px] sm:min-h-[220px]">
         <Image
           src="/images/research/research-events-hero.svg"
@@ -824,10 +824,10 @@ function ImpactFeature({ impact }: { impact?: ResearchGenericRecord }) {
       </div>
       <div className="p-5">
         <Badge>{formatLabel(impact?.impact_type ?? "impact")}</Badge>
-        <h2 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+        <h2 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
           {impact?.title ?? impact?.name ?? "Research impact"}
         </h2>
-        <p className="mt-3 text-sm leading-7 text-slate-600">
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">
           {compactText(impact?.summary) ||
             compactText(impact?.description)}
         </p>
@@ -837,7 +837,7 @@ function ImpactFeature({ impact }: { impact?: ResearchGenericRecord }) {
           <MiniFact label="Year" value={compactText(impact?.reporting_year)} />
         </div>
       </div>
-      <div className="border-t border-slate-200 px-5 py-4">
+      <div className="border-t border-border px-5 py-4">
         <Link href="/community-impact" className="inline-flex text-sm font-semibold text-primary">
           View impact reports
         </Link>
@@ -848,7 +848,7 @@ function ImpactFeature({ impact }: { impact?: ResearchGenericRecord }) {
 
 function MajorGiftPanel({ contactHref }: { contactHref: string }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
       <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
         <div className="flex items-start gap-4">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-secondary text-secondary-foreground">
@@ -856,10 +856,10 @@ function MajorGiftPanel({ contactHref }: { contactHref: string }) {
           </span>
           <div>
             <Badge>Major gifts</Badge>
-            <h2 className="mt-3 text-2xl font-semibold leading-8 text-slate-950">
+            <h2 className="mt-3 text-2xl font-semibold leading-8 text-foreground">
               Discuss endowments, named funds, and institutional support
             </h2>
-            <p className="mt-2 max-w-4xl text-sm leading-7 text-slate-600">
+            <p className="mt-2 max-w-4xl text-sm leading-7 text-muted-foreground">
               For named funds, equipment support, corporate giving, planned giving, or major endowment support, contact the research office before submitting payment.
             </p>
           </div>
@@ -886,9 +886,9 @@ function MajorGiftPanel({ contactHref }: { contactHref: string }) {
 function MiniFact({ label, value }: { label: string; value: string }) {
   if (!value) return null;
   return (
-    <div className="rounded-md bg-slate-50 p-3">
-      <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
-      <p className="mt-1 font-semibold text-slate-950">{value}</p>
+    <div className="rounded-md bg-surface-subtle p-3">
+      <p className="text-xs font-semibold uppercase text-muted-foreground">{label}</p>
+      <p className="mt-1 font-semibold text-foreground">{value}</p>
     </div>
   );
 }

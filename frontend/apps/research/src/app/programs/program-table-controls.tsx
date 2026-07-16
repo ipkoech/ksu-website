@@ -69,7 +69,7 @@ export function ProgramTableControls({
   };
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="rounded-lg border border-border bg-white p-3 shadow-sm">
       <form id={formId} action={action} className="flex flex-col gap-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <label className="block min-w-0 flex-1">
@@ -77,7 +77,7 @@ export function ProgramTableControls({
             <span className="relative block">
               <Search
                 aria-hidden
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70"
               />
               <input
                 form={formId}
@@ -86,7 +86,7 @@ export function ProgramTableControls({
                 defaultValue={searchValue ?? ""}
                 placeholder={searchPlaceholder}
                 autoComplete="off"
-                className="h-11 w-full rounded-md border border-slate-200 bg-white px-3 pl-9 text-sm font-medium text-slate-950 outline-none ring-primary/20 transition placeholder:text-slate-400 focus:border-primary focus:ring-4"
+                className="h-11 w-full rounded-md border border-border bg-white px-3 pl-9 text-sm font-medium text-foreground outline-none ring-primary/20 transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-4"
               />
             </span>
           </label>
@@ -177,12 +177,12 @@ function ProgramSelectField({
 }: ControlSelect & { formId?: string }) {
   return (
     <label className="block min-w-0">
-      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
+      <span className="text-xs font-semibold uppercase text-muted-foreground">{label}</span>
       <select
         form={formId}
         name={name}
         defaultValue={value ?? ""}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-950 outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
+        className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm font-medium text-foreground outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
       >
         {includeAllOption ? <option value="">{allLabel ?? `All ${label.toLowerCase()}`}</option> : null}
         {normalizeOptions(options).map((option) => (

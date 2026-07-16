@@ -118,7 +118,7 @@ export function LandingHero({
           </motion.div>
         </AnimatePresence>
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.72)_0%,rgba(2,20,49,0.28)_55%,rgba(2,20,49,0.04)_100%)]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-overlay/55 via-transparent to-transparent" />
       </div>
 
       {shouldShowArrows ? (
@@ -126,7 +126,7 @@ export function LandingHero({
           <button
             type="button"
             onClick={showPreviousSlide}
-            className="absolute left-3 top-1/2 z-20 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-slate-950/30 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-slate-950/50 sm:h-12 sm:w-12"
+            className="absolute left-3 top-1/2 z-20 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-brand-overlay/30 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-brand-overlay/50 sm:h-12 sm:w-12"
             aria-label="Show previous hero slide"
           >
             <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />
@@ -134,7 +134,7 @@ export function LandingHero({
           <button
             type="button"
             onClick={showNextSlide}
-            className="absolute right-3 top-1/2 z-20 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-slate-950/30 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-slate-950/50 sm:h-12 sm:w-12"
+            className="absolute right-3 top-1/2 z-20 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-brand-overlay/30 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-brand-overlay/50 sm:h-12 sm:w-12"
             aria-label="Show next hero slide"
           >
             <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />

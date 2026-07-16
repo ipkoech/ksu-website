@@ -14,9 +14,9 @@ function present(value?: string | null) {
 
 function LeadershipCard({ member, featured = false, compact = false }: { member: BoardMember; featured?: boolean; compact?: boolean }) {
   const content = (
-    <article className={`group overflow-hidden rounded-lg border border-slate-200 bg-white text-center shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg ${featured ? "w-[280px]" : compact ? "w-full max-w-[205px]" : "w-full max-w-[235px]"}`}>
+    <article className={`group overflow-hidden rounded-lg border border-border bg-white text-center shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg ${featured ? "w-[280px]" : compact ? "w-full max-w-[205px]" : "w-full max-w-[235px]"}`}>
       <PublicImage src={member.photoUrl} alt={`${member.name}, ${member.role}`} ratio="profile" className="aspect-[4/3]" sizes={featured ? "280px" : "235px"} imageClassName="object-cover object-top transition duration-500 group-hover:scale-[1.025]" />
-      <div className={featured ? "min-h-[92px] px-4 py-4" : "min-h-[76px] px-3 py-3"}><h3 className={`font-[family-name:var(--font-display)] font-semibold leading-tight text-slate-950 ${featured ? "text-lg" : compact ? "text-sm" : "text-base"}`}>{member.name}</h3><p className="mt-1.5 text-[11px] font-semibold leading-4 text-secondary">{member.role}</p></div>
+      <div className={featured ? "min-h-[92px] px-4 py-4" : "min-h-[76px] px-3 py-3"}><h3 className={`font-[family-name:var(--font-display)] font-semibold leading-tight text-foreground ${featured ? "text-lg" : compact ? "text-sm" : "text-base"}`}>{member.name}</h3><p className="mt-1.5 text-[11px] font-semibold leading-4 text-secondary">{member.role}</p></div>
     </article>
   );
   return member.profileHref ? <Link href={member.profileHref} className="block rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">{content}</Link> : content;
@@ -74,7 +74,7 @@ export default async function UniversityManagementPage() {
           <AboutReveal className="mx-auto w-full">
             <div className="text-center"><p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Executive leadership</p><h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold uppercase text-primary">Our Leadership Structure</h2><div className="mx-auto mt-2 h-0.5 w-10 bg-secondary" /></div>
 
-            {viceChancellor ? <div className="mt-6 flex justify-center"><LeadershipCard member={viceChancellor} featured /></div> : <p className="mt-8 rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-600">Management profiles have not been published yet.</p>}
+            {viceChancellor ? <div className="mt-6 flex justify-center"><LeadershipCard member={viceChancellor} featured /></div> : <p className="mt-8 rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">Management profiles have not been published yet.</p>}
 
             {deputies.length ? (
               <>
@@ -95,7 +95,7 @@ export default async function UniversityManagementPage() {
               </>
             ) : null}
 
-            <div className="mt-8 grid gap-5 rounded-xl bg-slate-50 p-5 sm:grid-cols-[3.5rem_1fr_auto] sm:items-center"><span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-secondary"><Award className="h-6 w-6" aria-hidden /></span><div><h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-primary">Committed to Excellence</h2><p className="mt-1 text-sm leading-6 text-slate-600">Our management team advances academic quality, innovation and dependable service across the University.</p></div><Link href="/about/university-council" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-bold text-white hover:bg-primary/90">Our Governance <ArrowRight className="h-4 w-4" aria-hidden /></Link></div>
+            <div className="mt-8 grid gap-5 rounded-xl bg-surface-subtle p-5 sm:grid-cols-[3.5rem_1fr_auto] sm:items-center"><span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-secondary"><Award className="h-6 w-6" aria-hidden /></span><div><h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-primary">Committed to Excellence</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">Our management team advances academic quality, innovation and dependable service across the University.</p></div><Link href="/about/university-council" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-bold text-white hover:bg-primary/90">Our Governance <ArrowRight className="h-4 w-4" aria-hidden /></Link></div>
           </AboutReveal>
         </section>
       </AboutPageLenis>

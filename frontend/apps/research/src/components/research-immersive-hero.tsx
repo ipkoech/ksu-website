@@ -79,7 +79,7 @@ export function ResearchImmersiveHero({
 
   return (
     <section
-      className={cn("relative isolate overflow-hidden bg-slate-950", minHeight, className)}
+      className={cn("relative isolate overflow-hidden bg-brand-overlay", minHeight, className)}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onFocus={() => setIsPaused(true)}

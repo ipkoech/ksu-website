@@ -41,7 +41,7 @@ const sections = [
 
 export default function TermsPage() {
   return (
-    <main id="research-main" className="min-h-screen bg-[#f4f6f4]">
+    <main id="research-main" className="min-h-screen bg-[hsl(var(--surface-muted))]">
       <LegalMasthead
         eyebrow="Terms of Use"
         title="Research portal terms and public use guidance"
@@ -52,11 +52,11 @@ export default function TermsPage() {
       <article className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
         <ScrollRevealGroup className="space-y-8" staggerDelay={90}>
           {sections.map((section) => (
-            <section key={section.title} className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+            <section key={section.title} className="rounded-lg border border-border bg-white p-6 shadow-sm">
+              <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
                 {section.title}
               </h2>
-              <p className="mt-3 text-base leading-8 text-slate-600">
+              <p className="mt-3 text-base leading-8 text-muted-foreground">
                 {section.body}
               </p>
             </section>
@@ -69,10 +69,10 @@ export default function TermsPage() {
               <FileText aria-hidden className="h-5 w-5" />
             </span>
             <div>
-              <h2 className="text-lg font-semibold text-slate-950">
+              <h2 className="text-lg font-semibold text-foreground">
                 Questions about these terms
               </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 For enquiries about research portal records, resources,
                 partnerships, or public research communications, contact the
                 REIRM office.
@@ -104,20 +104,20 @@ function LegalMasthead({
   current: string;
 }) {
   return (
-    <section className="border-b border-slate-200 bg-white px-4 py-8 sm:px-6 lg:px-8 lg:py-10 xl:px-10 2xl:px-12">
+    <section className="border-b border-border bg-white px-4 py-8 sm:px-6 lg:px-8 lg:py-10 xl:px-10 2xl:px-12">
       <ScrollReveal className="mx-auto max-w-[1680px]">
-        <nav className="mb-5 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
+        <nav className="mb-5 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground" aria-label="Breadcrumb">
           <Link href="/" className="transition hover:text-primary">Home</Link>
-          <span className="text-slate-300">/</span>
-          <span className="text-slate-900">{current}</span>
+          <span className="text-muted-foreground/60">/</span>
+          <span className="text-foreground">{current}</span>
         </nav>
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-secondary">
           {eyebrow}
         </p>
-        <h1 className="mt-3 max-w-5xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
+        <h1 className="mt-3 max-w-5xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
           {title}
         </h1>
-        <p className="mt-4 max-w-4xl text-base leading-8 text-slate-600">
+        <p className="mt-4 max-w-4xl text-base leading-8 text-muted-foreground">
           {body}
         </p>
       </ScrollReveal>

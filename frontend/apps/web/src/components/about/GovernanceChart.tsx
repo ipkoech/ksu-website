@@ -440,7 +440,7 @@ function NodeCard({
       <div className="min-w-0 flex-1 p-3">
         <h3
           className={`line-clamp-2 font-semibold leading-tight ${
-            isRoot ? "text-base text-slate-950" : "text-sm text-slate-950"
+            isRoot ? "text-base text-foreground" : "text-sm text-foreground"
           }`}
         >
           {data.title}
@@ -454,7 +454,7 @@ function NodeCard({
         </p>
         {data.description ? (
           <p
-            className="mt-2 line-clamp-3 text-xs leading-5 text-slate-500"
+            className="mt-2 line-clamp-3 text-xs leading-5 text-muted-foreground"
           >
             {data.description}
           </p>
@@ -475,8 +475,8 @@ function NodeCard({
           isRoot
             ? "border-primary/25 bg-white"
             : isFunction
-              ? "border-slate-200 bg-slate-50"
-              : "border-slate-200 bg-white"
+              ? "border-border bg-surface-subtle"
+              : "border-border bg-white"
         }`}
       >
         {data.profileHref ? (
@@ -609,20 +609,20 @@ export default function GovernanceChart(props: GovernanceChartProps) {
           <p className="text-sm font-semibold uppercase text-secondary">
             Org Chart
           </p>
-          <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
             {title}
           </h2>
         </div>
         <button
           type="button"
           onClick={() => setIsFullScreen(true)}
-          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-primary shadow-sm transition hover:border-primary/40 hover:bg-primary/[0.03]"
+          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-border bg-white px-4 text-sm font-semibold text-primary shadow-sm transition hover:border-primary/40 hover:bg-primary/[0.03]"
         >
           <Maximize2 aria-hidden className="h-4 w-4" />
           View full screen
         </button>
       </div>
-      <p className="mt-3 text-sm leading-6 text-slate-600">
+      <p className="mt-3 text-sm leading-6 text-muted-foreground">
         {description}
       </p>
 
@@ -632,17 +632,17 @@ export default function GovernanceChart(props: GovernanceChartProps) {
 
       {isFullScreen ? (
         <div className="fixed inset-0 z-50 bg-white">
-          <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4 sm:px-6">
+          <div className="flex h-16 items-center justify-between border-b border-border px-4 sm:px-6">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
                 Full screen org chart
               </p>
-              <h2 className="text-lg font-semibold text-slate-950">{title}</h2>
+              <h2 className="text-lg font-semibold text-foreground">{title}</h2>
             </div>
             <button
               type="button"
               onClick={() => setIsFullScreen(false)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 text-slate-700 transition hover:border-primary/40 hover:text-primary"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border text-muted-foreground transition hover:border-primary/40 hover:text-primary"
               aria-label="Close full screen org chart"
             >
               <X aria-hidden className="h-5 w-5" />

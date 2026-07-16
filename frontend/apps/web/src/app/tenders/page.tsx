@@ -59,10 +59,10 @@ export default async function TendersPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-secondary">
             Tenders
           </p>
-          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
+          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
             Tenders and procurement notices
           </h1>
-          <p className="mt-4 text-base leading-8 text-slate-600">
+          <p className="mt-4 text-base leading-8 text-muted-foreground">
             Access procurement notices, supplier opportunities, and
             tender-related public information through official university
             channels.
@@ -70,12 +70,12 @@ export default async function TendersPage() {
         </header>
 
         <section className="mt-12">
-          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
             Current notices
           </h2>
 
           {notices.length === 0 ? (
-            <p className="mt-4 text-base leading-7 text-slate-600">
+            <p className="mt-4 text-base leading-7 text-muted-foreground">
               No tender-related notices have been published yet. Please check the
               official procurement portal for current tender opportunities.
             </p>
@@ -98,15 +98,15 @@ export default async function TendersPage() {
                   <Link
                     key={notice.id}
                     href={`/media/announcements/${notice.slug}`}
-                    className="group block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md"
+                    className="group block rounded-lg border border-border bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
-                        <h3 className="text-base font-semibold text-slate-950 group-hover:text-primary">
+                        <h3 className="text-base font-semibold text-foreground group-hover:text-primary">
                           {notice.title}
                         </h3>
                         {truncated && (
-                          <p className="mt-1.5 text-sm leading-6 text-slate-600">
+                          <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
                             {truncated}
                           </p>
                         )}
@@ -116,7 +116,7 @@ export default async function TendersPage() {
                       </span>
                     </div>
                     {date && (
-                      <p className="mt-3 text-xs text-slate-400">
+                      <p className="mt-3 text-xs text-muted-foreground/70">
                         Published {date}
                       </p>
                     )}
@@ -128,10 +128,10 @@ export default async function TendersPage() {
         </section>
 
         <section className="mt-12 rounded-lg border border-primary/20 bg-primary/5 p-6 sm:p-8">
-          <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
+          <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">
             Open tenders portal
           </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
             For full details, current tender documents, and submission
             instructions, visit the official procurement portal.
           </p>

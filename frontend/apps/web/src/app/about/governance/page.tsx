@@ -25,12 +25,12 @@ function SectionHeading({
 }) {
   return (
     <div>
-      <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+      <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
         {title}
       </h1>
       <div className="mt-3 h-0.5 w-12 bg-secondary" />
       {children ? (
-        <div className="mt-5 max-w-4xl text-sm leading-7 text-slate-700">
+        <div className="mt-5 max-w-4xl text-sm leading-7 text-muted-foreground">
           {children}
         </div>
       ) : null}
@@ -48,15 +48,15 @@ function IdentityCard({
   body: string;
 }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex h-12 w-12 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-primary">
+    <article className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <div className="flex h-12 w-12 items-center justify-center rounded-md border border-border bg-surface-subtle text-primary">
         <Icon aria-hidden className="h-6 w-6" />
       </div>
-      <h2 className="mt-4 text-lg font-bold leading-tight text-slate-950">
+      <h2 className="mt-4 text-lg font-bold leading-tight text-foreground">
         {title}
       </h2>
       <div className="mt-3 h-0.5 w-10 bg-secondary" />
-      <p className="mt-5 text-sm leading-7 text-slate-700">{body}</p>
+      <p className="mt-5 text-sm leading-7 text-muted-foreground">{body}</p>
     </article>
   );
 }
@@ -90,7 +90,7 @@ function BoardIdentityGrid({
   if (!items.length) return null;
 
   return (
-    <section className="border-t border-slate-200 bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
+    <section className="border-t border-border bg-surface-subtle px-4 py-8 sm:px-6 lg:px-8">
       <div className="grid max-w-none gap-4 md:grid-cols-3">
         {items.map((item) => (
           <IdentityCard
@@ -141,15 +141,15 @@ export default async function GovernancePage() {
                 </Link>
               </SectionHeading>
 
-              <aside className="rounded-lg border border-slate-200 bg-slate-50 p-5">
+              <aside className="rounded-lg border border-border bg-surface-subtle p-5">
                 <Landmark aria-hidden className="h-8 w-8 text-primary" />
                 <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-secondary">
                   University Council
                 </p>
-                <p className="mt-2 text-3xl font-semibold text-slate-950">
+                <p className="mt-2 text-3xl font-semibold text-foreground">
                   {council?.members.length || council?.member_count || 0}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   Published council profiles ordered by hierarchy level.
                 </p>
               </aside>
@@ -160,7 +160,7 @@ export default async function GovernancePage() {
         <BoardIdentityGrid board={council} mandateTitle="Council mandate" />
 
         <section className="bg-white px-4 py-8 sm:px-6 lg:px-8">
-          <div className="max-w-none rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="max-w-none rounded-lg border border-border bg-white p-4 shadow-sm sm:p-6">
             <GovernanceChart
               councilOnly
               title="University Council organogram"

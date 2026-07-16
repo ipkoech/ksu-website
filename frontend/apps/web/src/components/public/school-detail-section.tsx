@@ -153,14 +153,14 @@ function PageIntro({ meta }: { meta: SectionMeta }) {
   const Icon = meta.icon;
 
   return (
-    <section className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="rounded-[1.25rem] border border-border bg-white p-4 shadow-sm">
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_7rem] md:items-center">
         <div>
           <SectionKicker>{meta.eyebrow}</SectionKicker>
-          <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+          <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
             {meta.title}
           </h1>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-700">
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
             {meta.body}
           </p>
         </div>
@@ -184,7 +184,7 @@ function ContactPanel({ data }: { data: SchoolDetailOverviewData }) {
   if (!rows.length) return null;
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white p-3 shadow-sm">
+    <section className="min-w-0 overflow-hidden rounded-[1.25rem] border border-border bg-white p-3 shadow-sm">
       <SectionKicker>Contact Information</SectionKicker>
       <div className="mt-3 grid min-w-0 gap-1.5">
         {rows.map((item) => {
@@ -192,9 +192,9 @@ function ContactPanel({ data }: { data: SchoolDetailOverviewData }) {
 
           return (
             <div key={item.label} className="flex w-full min-w-0 gap-3 rounded-xl p-2">
-              <Icon aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-slate-500" />
+              <Icon aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
               <span className="min-w-0 flex-1">
-                <span className="block text-xs font-bold text-slate-950">
+                <span className="block text-xs font-bold text-foreground">
                   {item.label}
                 </span>
                 <span className="mt-0.5 block break-words text-sm font-medium leading-5 text-primary [overflow-wrap:anywhere]">
@@ -220,7 +220,7 @@ function SchoolInfoPanel({ data }: { data: SchoolDetailOverviewData }) {
   if (!rows.length) return null;
 
   return (
-    <section className="rounded-[1.25rem] border border-slate-200 bg-white p-3 shadow-sm">
+    <section className="rounded-[1.25rem] border border-border bg-white p-3 shadow-sm">
       <SectionKicker>School Information</SectionKicker>
       <dl className="mt-3 grid gap-2">
         {rows.map((item) => {
@@ -230,7 +230,7 @@ function SchoolInfoPanel({ data }: { data: SchoolDetailOverviewData }) {
             <div key={item.label} className="flex w-full min-w-0 gap-3 rounded-xl p-2">
               <Icon aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
               <div className="min-w-0 flex-1">
-                <dt className="text-xs font-bold text-slate-950">{item.label}</dt>
+                <dt className="text-xs font-bold text-foreground">{item.label}</dt>
                 <dd className="mt-0.5 break-words text-sm font-medium leading-5 text-primary [overflow-wrap:anywhere]">
                   {item.value}
                 </dd>
@@ -274,18 +274,18 @@ function ProgrammesSection({ data }: { data: SchoolDetailOverviewData }) {
           <Link
             key={programme.id}
             href={`/academics/programmes/${programme.slug}`}
-            className="group rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
+            className="group rounded-[1.25rem] border border-border bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
           >
             <div className="flex gap-3">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
                 <GraduationCap aria-hidden className="h-5 w-5" />
               </span>
               <div className="min-w-0 flex-1">
-                <h2 className="text-base font-bold text-slate-950 group-hover:text-primary">
+                <h2 className="text-base font-bold text-foreground group-hover:text-primary">
                   {programme.name}
                 </h2>
                 {meta ? (
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
                     {meta}
                   </p>
                 ) : null}
@@ -297,7 +297,7 @@ function ProgrammesSection({ data }: { data: SchoolDetailOverviewData }) {
               </div>
               <ArrowRight
                 aria-hidden
-                className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
+                className="h-4 w-4 shrink-0 text-muted-foreground/60 transition group-hover:translate-x-0.5 group-hover:text-primary"
               />
             </div>
           </Link>
@@ -322,11 +322,11 @@ function PublicationsSection({ data }: { data: SchoolDetailOverviewData }) {
         return (
           <article
             key={person.id}
-            className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm"
+            className="rounded-[1.25rem] border border-border bg-white p-4 shadow-sm"
           >
             <SectionKicker>Publication Records</SectionKicker>
-            <h2 className="mt-2 text-base font-bold text-slate-950">{name}</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
+            <h2 className="mt-2 text-base font-bold text-foreground">{name}</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
               {Number(person.publications_count ?? 0)} publication record
               {Number(person.publications_count ?? 0) === 1 ? "" : "s"} linked
               to this staff profile.
@@ -392,13 +392,13 @@ function MediaSection({
   return (
     <section className="grid gap-3">
       {fallbackCount > 0 && scopedCount === 0 && mediaType !== "gallery" ? (
-        <p className="rounded-[1.25rem] border border-dashed border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
+        <p className="rounded-[1.25rem] border border-dashed border-border bg-white p-4 text-sm leading-6 text-muted-foreground">
           No records are currently published for this school, so the latest
           university-wide {entityMediaTypeTitle(mediaType).toLowerCase()} are shown.
         </p>
       ) : null}
       {!updates.length ? (
-        <p className="rounded-[1.25rem] border border-dashed border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
+        <p className="rounded-[1.25rem] border border-dashed border-border bg-white p-4 text-sm leading-6 text-muted-foreground">
           No {mediaType ? entityMediaTypeTitle(mediaType).toLowerCase() : "media"} records
           are currently published for this school.
         </p>
@@ -408,21 +408,21 @@ function MediaSection({
           <Link
             key={`${item.recordType}-${item.id}`}
             href={mediaHref(item)}
-            className="group rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
+            className="group rounded-[1.25rem] border border-border bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
           >
             <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
               {mediaLabel(item)}
             </p>
-            <h2 className="mt-2 text-base font-bold text-slate-950 group-hover:text-primary">
+            <h2 className="mt-2 text-base font-bold text-foreground group-hover:text-primary">
               {mediaTitle(item)}
             </h2>
             {mediaSummary(item) ? (
-              <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
+              <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
                 {mediaSummary(item)}
               </p>
             ) : null}
             {mediaDate(item) ? (
-              <p className="mt-3 text-xs font-semibold text-slate-500">
+              <p className="mt-3 text-xs font-semibold text-muted-foreground">
                 {mediaDate(item)}
               </p>
             ) : null}
@@ -450,18 +450,18 @@ function DownloadsSection({ data }: { data: SchoolDetailOverviewData }) {
         return (
           <article
             key={document.id}
-            className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm"
+            className="rounded-[1.25rem] border border-border bg-white p-4 shadow-sm"
           >
             <div className="flex gap-3">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
                 <FileText aria-hidden className="h-5 w-5" />
               </span>
               <div className="min-w-0 flex-1">
-                <h2 className="text-base font-bold text-slate-950">
+                <h2 className="text-base font-bold text-foreground">
                   {document.title}
                 </h2>
                 {meta ? (
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
                     {meta}
                   </p>
                 ) : null}
@@ -491,14 +491,14 @@ function ClubsSection({ data }: { data: SchoolDetailOverviewData }) {
       {data.clubs.map((club) => (
         <article
           key={club.id}
-          className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm"
+          className="rounded-[1.25rem] border border-border bg-white p-4 shadow-sm"
         >
           {present(club.club_type) ? (
             <SectionKicker>{club.club_type}</SectionKicker>
           ) : null}
-          <h2 className="mt-2 text-base font-bold text-slate-950">{club.name}</h2>
+          <h2 className="mt-2 text-base font-bold text-foreground">{club.name}</h2>
           {present(club.about ?? club.objectives ?? club.mission) ? (
-            <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
+            <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
               {club.about ?? club.objectives ?? club.mission}
             </p>
           ) : null}
@@ -533,10 +533,10 @@ function ContactSection({ data }: { data: SchoolDetailOverviewData }) {
         return (
           <article
             key={item.label}
-            className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm"
+            className="rounded-[1.25rem] border border-border bg-white p-4 shadow-sm"
           >
             <Icon aria-hidden className="h-5 w-5 text-primary" />
-            <h2 className="mt-4 text-sm font-bold text-slate-950">
+            <h2 className="mt-4 text-sm font-bold text-foreground">
               {item.label}
             </h2>
             <p className="mt-1 break-words text-sm font-semibold leading-6 text-primary [overflow-wrap:anywhere]">
@@ -605,7 +605,7 @@ export function SchoolDetailSection({
   return (
     <PageShell header={header}>
       <AboutPageLenis>
-        <section className="w-full bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_68%,#f6f8fc_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <section className="w-full bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_68%,hsl(var(--surface-muted))_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="mb-4">
             <BreadcrumbTrail
               items={[

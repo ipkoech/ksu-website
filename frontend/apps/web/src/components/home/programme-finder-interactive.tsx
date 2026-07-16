@@ -80,16 +80,16 @@ export function ProgrammeFinderInteractive({
     <div className="relative z-10">
       <form
         action="/academics/programmes"
-        className="overflow-hidden border border-blue-100 bg-white shadow-lg shadow-primary/10"
+        className="overflow-hidden border border-border bg-white shadow-lg shadow-primary/10"
       >
-        <div className="flex min-h-14 items-center gap-3 border-b border-blue-100 px-4">
+        <div className="flex min-h-14 items-center gap-3 border-b border-border px-4">
           <Search className="h-5 w-5 text-primary" aria-hidden />
           <input
             name="q"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search by programme, school, or keyword"
-            className="min-w-0 flex-1 bg-transparent text-sm font-medium text-slate-950 outline-none placeholder:text-slate-400"
+            className="min-w-0 flex-1 bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/70"
             autoComplete="off"
           />
           <button
@@ -133,7 +133,7 @@ export function ProgrammeFinderInteractive({
           <Link
             key={category.id}
             href={category.href ?? "/academics/programmes"}
-            className="inline-flex min-h-9 items-center rounded-full border border-blue-100 bg-white px-3 text-xs font-semibold text-primary transition hover:border-primary/25 hover:bg-blue-50"
+            className="inline-flex min-h-9 items-center rounded-full border border-border bg-white px-3 text-xs font-semibold text-primary transition hover:border-primary/25 hover:bg-accent"
           >
             {category.title}
           </Link>
@@ -149,16 +149,16 @@ export function ProgrammeFinderInteractive({
             <Link
               key={programme.id ?? programme.href}
               href={programme.href}
-              className="group flex items-center gap-3 border border-blue-100 bg-white/92 p-3 transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-sm"
+              className="group flex items-center gap-3 border border-border bg-white/92 p-3 transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-sm"
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-primary">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-primary">
                 <GraduationCap className="h-5 w-5" aria-hidden />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="line-clamp-1 block text-sm font-semibold text-slate-950">
+                <span className="line-clamp-1 block text-sm font-semibold text-foreground">
                   {programme.title}
                 </span>
-                <span className="mt-1 line-clamp-1 block text-xs text-slate-500">
+                <span className="mt-1 line-clamp-1 block text-xs text-muted-foreground">
                   {[programme.schoolName, programme.body]
                     .filter(Boolean)
                     .join(" · ")}
@@ -168,7 +168,7 @@ export function ProgrammeFinderInteractive({
             </Link>
           ))
         ) : (
-          <div className="border border-dashed border-blue-200 bg-white/70 p-4 text-sm leading-6 text-slate-600">
+          <div className="border border-dashed border-border bg-white/70 p-4 text-sm leading-6 text-muted-foreground">
             No quick matches in the homepage preview. Open full programme search
             to see all records and filters.
           </div>
@@ -201,14 +201,14 @@ function FilterSelect({
 }) {
   return (
     <label className="block">
-      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
         {label}
       </span>
       <select
         name={value === allValue ? undefined : name}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-1 h-11 w-full border border-blue-100 bg-blue-50/40 px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-primary/40 focus:bg-white"
+        className="mt-1 h-11 w-full border border-border bg-accent/40 px-3 text-sm font-semibold text-muted-foreground outline-none transition focus:border-primary/40 focus:bg-white"
       >
         <option value={allValue}>All</option>
         {options

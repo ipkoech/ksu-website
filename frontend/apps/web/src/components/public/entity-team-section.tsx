@@ -33,9 +33,9 @@ function TeamCard({ member }: { member: PublicEntityTeamMember }) {
     <Link
       href={`/staff/${encodeURIComponent(profileId)}`}
       aria-label={`View ${member.name}, ${member.position}`}
-      className="group flex min-w-0 items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition hover:border-primary/30 hover:shadow-md sm:flex-col sm:text-center"
+      className="group flex min-w-0 items-center gap-3 rounded-lg border border-border bg-white p-3 shadow-sm transition hover:border-primary/30 hover:shadow-md sm:flex-col sm:text-center"
     >
-      <span className="block h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 sm:h-24 sm:w-24">
+      <span className="block h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-surface-muted sm:h-24 sm:w-24">
         {photoUrl ? (
           <PublicImage
             src={photoUrl}
@@ -51,7 +51,7 @@ function TeamCard({ member }: { member: PublicEntityTeamMember }) {
         )}
       </span>
       <span className="min-w-0">
-        <span className="block text-sm font-bold leading-5 text-slate-950 group-hover:text-primary">
+        <span className="block text-sm font-bold leading-5 text-foreground group-hover:text-primary">
           {member.name}
         </span>
         <span className="mt-1 block text-xs font-semibold leading-5 text-primary">
@@ -73,14 +73,14 @@ export function EntityTeamSection({
 }) {
   if (!team?.tiers.some((tier) => tier.members.length)) {
     return (
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-lg border border-border bg-white p-6 shadow-sm">
         <div className="flex gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/[0.08] text-primary">
             <UserRound aria-hidden className="h-5 w-5" />
           </span>
           <div>
-            <p className="text-sm font-semibold text-slate-950">{emptyTitle}</p>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
+            <p className="text-sm font-semibold text-foreground">{emptyTitle}</p>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
               Published members will appear here once active public assignments
               are attached to this unit.
             </p>
@@ -92,11 +92,11 @@ export function EntityTeamSection({
 
   return (
     <section className="grid gap-6">
-      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="rounded-lg border border-border bg-white p-4 shadow-sm">
         <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
           {team.entity.name}
         </p>
-        <h2 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+        <h2 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
           {title}
         </h2>
       </div>
@@ -110,7 +110,7 @@ export function EntityTeamSection({
             >
               {tier.label}
             </h3>
-            <span className="h-px flex-1 bg-slate-200" />
+            <span className="h-px flex-1 bg-surface-muted" />
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {tier.members.map((member) => (

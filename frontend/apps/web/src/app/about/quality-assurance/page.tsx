@@ -26,7 +26,7 @@ function EmptyState({ label }: { label: string }) {
   return (
     <div
       data-backend-empty-state
-      className="rounded-lg border border-dashed border-slate-300 bg-white/70 p-5 text-sm leading-6 text-slate-500"
+      className="rounded-lg border border-dashed border-border bg-white/70 p-5 text-sm leading-6 text-muted-foreground"
     >
       {label} has not been published yet.
     </div>
@@ -114,14 +114,14 @@ export default async function QualityAssurancePage() {
     <PageShell>
       <AboutPageLenis>
         <main className="max-w-none bg-white">
-          <section className="relative isolate overflow-hidden bg-slate-950 text-white">
+          <section className="relative isolate overflow-hidden bg-brand-overlay text-white">
             <div
               aria-hidden
               className="absolute inset-0 bg-[url('/images/about/about-quality-assurance-branded.webp')] bg-cover bg-center opacity-55 mix-blend-luminosity"
             />
             <div
               aria-hidden
-              className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/88 to-primary/70"
+              className="absolute inset-0 bg-gradient-to-r from-brand-overlay via-brand-overlay/88 to-primary/70"
             />
             <div className="relative px-4 py-8 sm:px-6 lg:px-8">
               <div className="mx-auto w-full max-w-none">
@@ -170,7 +170,7 @@ export default async function QualityAssurancePage() {
             </div>
           </section>
 
-          <section className="bg-slate-50 px-4 py-12 sm:px-6 lg:px-8">
+          <section className="bg-surface-subtle px-4 py-12 sm:px-6 lg:px-8">
             <div className="mx-auto w-full max-w-none">
               <div className="grid gap-4 lg:grid-cols-3">
                 {resourceCards.map((card) => (
@@ -186,10 +186,10 @@ export default async function QualityAssurancePage() {
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
                   Strategic Plan Highlights
                 </p>
-                <h2 className="mt-3 text-3xl font-semibold text-slate-950">
+                <h2 className="mt-3 text-3xl font-semibold text-foreground">
                   Priorities that shape quality review
                 </h2>
-                <p className="mt-4 text-sm leading-7 text-slate-600">
+                <p className="mt-4 text-sm leading-7 text-muted-foreground">
                   These priorities are rendered from the university information
                   record and remain empty until backend content is published.
                 </p>
@@ -240,13 +240,13 @@ export default async function QualityAssurancePage() {
             </div>
           </section>
 
-          <section className="border-t border-slate-200 bg-white px-4 py-12 sm:px-6 lg:px-8">
+          <section className="border-t border-border bg-white px-4 py-12 sm:px-6 lg:px-8">
             <div className="mx-auto grid w-full max-w-none gap-8 lg:grid-cols-[360px_minmax(0,1fr)]">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
                   Official References
                 </p>
-                <h2 className="mt-3 text-3xl font-semibold text-slate-950">
+                <h2 className="mt-3 text-3xl font-semibold text-foreground">
                   Backend-published downloads
                 </h2>
                 <Link
@@ -296,7 +296,7 @@ function QualityResourceCard({
   emptyLabel: string;
 }) {
   return (
-    <article className="flex min-h-[360px] flex-col rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+    <article className="flex min-h-[360px] flex-col rounded-lg border border-border bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between gap-4">
         <div className="rounded-lg bg-primary/10 p-3 text-primary">
           <Icon aria-hidden className="h-5 w-5" />
@@ -305,8 +305,8 @@ function QualityResourceCard({
           {kicker}
         </span>
       </div>
-      <h2 className="mt-5 text-2xl font-semibold text-slate-950">{title}</h2>
-      <p className="mt-3 text-sm leading-7 text-slate-600">{body}</p>
+      <h2 className="mt-5 text-2xl font-semibold text-foreground">{title}</h2>
+      <p className="mt-3 text-sm leading-7 text-muted-foreground">{body}</p>
       <div className="mt-auto pt-6">
         {documents.length ? (
           <DocumentList documents={documents} compact />
@@ -328,12 +328,12 @@ function StrategicHighlightCard({
   body: string;
 }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-slate-50 p-5">
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-sm font-bold text-slate-950">
+    <article className="rounded-lg border border-border bg-surface-subtle p-5">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-sm font-bold text-foreground">
         {String(index).padStart(2, "0")}
       </div>
-      <h3 className="mt-5 text-base font-bold text-slate-950">{title}</h3>
-      <p className="mt-3 text-sm leading-7 text-slate-600">{body}</p>
+      <h3 className="mt-5 text-base font-bold text-foreground">{title}</h3>
+      <p className="mt-3 text-sm leading-7 text-muted-foreground">{body}</p>
     </article>
   );
 }
@@ -349,7 +349,7 @@ function ServiceCommitmentStep({
 }) {
   return (
     <article className="grid gap-4 rounded-lg border border-white/15 bg-white/[0.08] p-5 backdrop-blur sm:grid-cols-[64px_minmax(0,1fr)]">
-      <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-secondary text-base font-bold text-slate-950">
+      <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-secondary text-base font-bold text-foreground">
         {index}
       </div>
       <div>
@@ -373,17 +373,17 @@ function DocumentList({
         const href = publicFileUrl(document.file_id);
         const body = document.description ?? document.document_type ?? document.category;
         const className =
-          "group rounded-lg border border-slate-200 bg-white px-4 py-3 transition hover:border-primary/35 hover:shadow-sm";
+          "group rounded-lg border border-border bg-white px-4 py-3 transition hover:border-primary/35 hover:shadow-sm";
 
         return href ? (
           <a key={document.id} href={href} className={className}>
             <span className="flex items-start justify-between gap-3">
               <span className="min-w-0">
-                <span className="block text-sm font-semibold text-slate-950">
+                <span className="block text-sm font-semibold text-foreground">
                   {document.title}
                 </span>
                 {body ? (
-                  <span className="mt-1 block text-xs leading-5 text-slate-600">
+                  <span className="mt-1 block text-xs leading-5 text-muted-foreground">
                     {body}
                   </span>
                 ) : null}
@@ -402,11 +402,11 @@ function DocumentList({
                 className="mt-0.5 h-4 w-4 shrink-0 text-secondary"
               />
               <span>
-                <span className="block text-sm font-semibold text-slate-950">
+                <span className="block text-sm font-semibold text-foreground">
                   {document.title}
                 </span>
                 {body ? (
-                  <span className="mt-1 block text-xs leading-5 text-slate-600">
+                  <span className="mt-1 block text-xs leading-5 text-muted-foreground">
                     {body}
                   </span>
                 ) : null}

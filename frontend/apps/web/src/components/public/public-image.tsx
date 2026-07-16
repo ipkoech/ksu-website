@@ -52,7 +52,7 @@ export function PublicImage({
   return (
     <div
       className={cn(
-        "relative w-full overflow-hidden bg-blue-50 text-primary",
+        "relative w-full overflow-hidden bg-accent text-primary",
         ratioClasses[ratio],
         className,
       )}
@@ -98,7 +98,7 @@ export function ProgressiveImageCard({
 }: ProgressiveImageCardProps) {
   return (
     <div
-      className={cn("group relative overflow-hidden bg-slate-950", className)}
+      className={cn("group relative overflow-hidden bg-brand-overlay", className)}
     >
       <PublicImage
         {...imageProps}

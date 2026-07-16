@@ -86,7 +86,7 @@ export default async function ConsultanciesPage({
     <main id="research-main" className="min-h-screen bg-white">
       <ConsultancyPortfolioHero count={visibleConsultancies.length} heroImage={heroImage} />
 
-      <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <section className="border-b border-border bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mx-auto grid max-w-[1680px] gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="min-w-0">
             <ConsultancyFilters params={params} years={years} months={months} centers={centers.data} />
@@ -113,7 +113,7 @@ export default async function ConsultanciesPage({
 
 function ConsultancyPortfolioHero({ count, heroImage }: { count: number; heroImage?: string }) {
   return (
-    <section className="relative overflow-hidden border-b border-slate-200 bg-[#061f41] px-4 py-8 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <section className="relative overflow-hidden border-b border-border bg-[hsl(var(--brand-overlay))] px-4 py-8 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(2,22,50,0.96),rgba(0,82,70,0.78)),radial-gradient(circle_at_75%_30%,rgba(245,158,11,0.22),transparent_24%)]" />
       <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 opacity-45 lg:block">
         <ConsultancyIllustration />
@@ -158,25 +158,25 @@ function ConsultancyFilters({
   centers: ResearchGenericRecord[];
 }) {
   return (
-    <form action="/consultancies" className="mb-5 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+    <form action="/consultancies" className="mb-5 rounded-lg border border-border bg-white p-3 shadow-sm">
       <div className="grid gap-2 lg:grid-cols-[minmax(220px,1fr)_auto_auto_auto]">
         <label className="relative block">
-          <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
           <input
             name="q"
             defaultValue={params.q ?? ""}
             placeholder="Search title, client, outcomes, or impact..."
-            className="h-11 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm font-medium text-slate-950 outline-none ring-primary/20 transition placeholder:text-slate-400 focus:border-primary focus:ring-4"
+            className="h-11 w-full rounded-md border border-border bg-white pl-9 pr-3 text-sm font-medium text-foreground outline-none ring-primary/20 transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-4"
           />
         </label>
         <button type="submit" className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-white">
           Search
         </button>
         <details className="relative">
-          <summary className="inline-flex h-11 cursor-pointer list-none items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800">
+          <summary className="inline-flex h-11 cursor-pointer list-none items-center justify-center gap-2 rounded-md border border-border bg-white px-4 text-sm font-semibold text-foreground">
             <Filter aria-hidden className="h-4 w-4" /> Filter
           </summary>
-          <div className="absolute right-0 z-20 mt-2 grid w-[320px] gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-xl">
+          <div className="absolute right-0 z-20 mt-2 grid w-[320px] gap-3 rounded-lg border border-border bg-white p-4 shadow-xl">
             <SelectField name="type" label="Type" value={params.type} options={consultancyTypes} />
             <SelectField name="client" label="Client" value={params.client} options={clientTypes} />
             <SelectField name="status" label="Status" value={params.status} options={consultancyStatuses} />
@@ -187,10 +187,10 @@ function ConsultancyFilters({
           </div>
         </details>
         <details className="relative">
-          <summary className="inline-flex h-11 cursor-pointer list-none items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800">
+          <summary className="inline-flex h-11 cursor-pointer list-none items-center justify-center gap-2 rounded-md border border-border bg-white px-4 text-sm font-semibold text-foreground">
             <SlidersHorizontal aria-hidden className="h-4 w-4" /> Sort
           </summary>
-          <div className="absolute right-0 z-20 mt-2 w-[260px] rounded-lg border border-slate-200 bg-white p-4 shadow-xl">
+          <div className="absolute right-0 z-20 mt-2 w-[260px] rounded-lg border border-border bg-white p-4 shadow-xl">
             <SelectField name="sort" label="Sort" value={params.sort} options={sortOptions} includeBlank={false} />
           </div>
         </details>
@@ -214,10 +214,10 @@ function FeaturedConsultancy({ consultancy }: { consultancy: ResearchGenericReco
           {consultancy.client_type ? <Badge>{formatLabel(consultancy.client_type)}</Badge> : null}
           <span className="rounded-md bg-primary px-3 py-1 text-xs font-semibold uppercase text-white">Featured</span>
         </div>
-        <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
+        <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground">
           {getRecordTitle(consultancy, "Consultancy")}
         </h2>
-        {summary ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{summary}</p> : null}
+        {summary ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{summary}</p> : null}
       </div>
       <dl className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-1">
         <MiniFact label="Client" value={compactText(consultancy.client_name)} />
@@ -231,10 +231,10 @@ function ConsultancyTable({ records }: { records: ResearchGenericRecord[] }) {
   if (records.length === 0) return null;
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
+    <section className="rounded-lg border border-border bg-white shadow-sm">
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase tracking-[0.14em] text-slate-500">
+          <thead className="bg-surface-subtle text-xs uppercase tracking-[0.14em] text-muted-foreground">
             <tr>
               <th className="px-4 py-3">Consultancy</th>
               <th className="px-4 py-3">Client</th>
@@ -248,20 +248,20 @@ function ConsultancyTable({ records }: { records: ResearchGenericRecord[] }) {
             {records.map((consultancy) => {
               const href = consultancy.slug ? `/consultancies/${consultancy.slug}` : "/consultancies";
               return (
-                <tr key={consultancy.id ?? consultancy.slug} className="group transition hover:bg-slate-50">
+                <tr key={consultancy.id ?? consultancy.slug} className="group transition hover:bg-surface-subtle">
                   <td className="px-4 py-3">
                     <Link href={href} className="flex items-start gap-3 rounded-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
                       <img src={getRecordImage(consultancy, "/images/research/research-about-hero.webp")} alt={getRecordTitle(consultancy, "Consultancy")} className="mt-0.5 h-12 w-16 shrink-0 rounded-md object-cover" />
                       <span>
-                        <span className="font-semibold text-slate-950 transition group-hover:text-primary">{getRecordTitle(consultancy, "Consultancy")}</span>
-                        <span className="mt-1 block line-clamp-1 text-xs text-slate-500">{getRecordSummary(consultancy) || compactText(consultancy.outcomes)}</span>
+                        <span className="font-semibold text-foreground transition group-hover:text-primary">{getRecordTitle(consultancy, "Consultancy")}</span>
+                        <span className="mt-1 block line-clamp-1 text-xs text-muted-foreground">{getRecordSummary(consultancy) || compactText(consultancy.outcomes)}</span>
                       </span>
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{compactText(consultancy.client_name)}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{compactText(consultancy.client_name)}</td>
                   <td className="px-4 py-3"><Badge>{formatLabel(compactText(consultancy.consultancy_type) || "consultancy")}</Badge></td>
                   <td className="px-4 py-3"><Badge>{formatLabel(compactText(consultancy.status) || "active")}</Badge></td>
-                  <td className="px-4 py-3 text-slate-600">{getRecordTimelineLabel(consultancy)}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{getRecordTimelineLabel(consultancy)}</td>
                   <td className="px-4 py-3 font-semibold text-primary">{formatMoney(consultancy.contract_value, consultancy.currency)}</td>
                 </tr>
               );
@@ -280,19 +280,19 @@ function EngagementPathways() {
     { label: "Partnerships", body: "Move from client need to collaborative implementation.", icon: Handshake },
   ];
   return (
-    <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-28 xl:self-start">
+    <aside className="rounded-lg border border-border bg-white p-5 shadow-sm xl:sticky xl:top-28 xl:self-start">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Engagement pathways</p>
       <div className="mt-4 grid gap-3">
         {paths.map((path) => {
           const Icon = path.icon;
           return (
-            <div key={path.label} className="flex gap-3 rounded-lg border border-slate-200 p-3">
+            <div key={path.label} className="flex gap-3 rounded-lg border border-border p-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                 <Icon aria-hidden className="h-5 w-5" />
               </span>
               <div>
-                <h2 className="text-sm font-semibold text-slate-950">{path.label}</h2>
-                <p className="mt-1 text-xs leading-5 text-slate-500">{path.body}</p>
+                <h2 className="text-sm font-semibold text-foreground">{path.label}</h2>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">{path.body}</p>
               </div>
             </div>
           );
@@ -306,7 +306,7 @@ function EngagementPathways() {
         ].map((link) => (
           <Link key={link.href} href={link.href} className="flex items-center justify-between gap-4 py-3 text-sm font-semibold text-primary">
             {link.label}
-            <ArrowRight aria-hidden className="h-4 w-4 text-slate-400" />
+            <ArrowRight aria-hidden className="h-4 w-4 text-muted-foreground/70" />
           </Link>
         ))}
       </div>
@@ -329,8 +329,8 @@ function SelectField({
 }) {
   return (
     <label className="block">
-      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
-      <select name={name} defaultValue={value ?? ""} className="mt-2 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-950">
+      <span className="text-xs font-semibold uppercase text-muted-foreground">{label}</span>
+      <select name={name} defaultValue={value ?? ""} className="mt-2 h-10 w-full rounded-md border border-border bg-white px-3 text-sm font-medium text-foreground">
         {includeBlank ? <option value="">All {label.toLowerCase()}</option> : null}
         {options.map((option) => {
           const normalized = typeof option === "string" ? { value: option, label: formatLabel(option) } : option;
@@ -346,8 +346,8 @@ function MiniFact({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
     <div className="rounded-md bg-white p-2.5">
-      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-      <dd className="mt-1 font-semibold text-slate-950">{value}</dd>
+      <dt className="text-xs font-semibold uppercase text-muted-foreground">{label}</dt>
+      <dd className="mt-1 font-semibold text-foreground">{value}</dd>
     </div>
   );
 }

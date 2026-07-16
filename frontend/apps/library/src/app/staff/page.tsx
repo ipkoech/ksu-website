@@ -74,11 +74,11 @@ export default async function LibraryStaffPage() {
               ))}
             </div>
             <SidePanel title="Directory groups" eyebrow="Staff">
-              <div className="flex flex-col gap-3 text-sm leading-6 text-slate-600">
+              <div className="flex flex-col gap-3 text-sm leading-6 text-muted-foreground">
                 {groupedStaff.map(({ branch, staff: members }) => (
                   <p key={branch.id} className="flex justify-between gap-4">
                     <span>{branch.name}</span>
-                    <span className="font-semibold text-slate-950">{members.length}</span>
+                    <span className="font-semibold text-foreground">{members.length}</span>
                   </p>
                 ))}
               </div>
@@ -92,21 +92,21 @@ export default async function LibraryStaffPage() {
 
 function StaffCard({ member }: { member: PublishedStaff }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="rounded-lg border border-border bg-white p-5 shadow-sm">
       <div className="flex h-14 w-14 items-center justify-center rounded-md bg-primary/10 text-lg font-bold text-primary">
         {(member.job_title ?? member.role ?? "LS").slice(0, 2).toUpperCase()}
       </div>
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
         {formatLabel(member.role ?? "library staff")}
       </p>
-      <h2 className="mt-3 text-xl font-semibold text-slate-950">
+      <h2 className="mt-3 text-xl font-semibold text-foreground">
         {member.job_title ?? formatLabel(member.role ?? "Library staff")}
       </h2>
-      <p className="mt-3 text-sm leading-7 text-slate-600">
+      <p className="mt-3 text-sm leading-7 text-muted-foreground">
         {compactText(member.bio) ||
           "Public staff profile details are being updated."}
       </p>
-      <dl className="mt-5 grid gap-3 text-sm text-slate-600">
+      <dl className="mt-5 grid gap-3 text-sm text-muted-foreground">
         <Meta label="Branch" value={member.branch?.name} />
         <Meta label="Department" value={member.department} />
         <Meta label="Specialization" value={member.specialization} />
@@ -125,7 +125,7 @@ function Meta({
   if (!compactText(value)) return null;
   return (
     <div>
-      <dt className="font-semibold text-slate-950">{label}</dt>
+      <dt className="font-semibold text-foreground">{label}</dt>
       <dd className="mt-1">{value}</dd>
     </div>
   );

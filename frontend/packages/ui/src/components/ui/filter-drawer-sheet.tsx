@@ -63,7 +63,7 @@ export function FilterDrawerSheet({
         <Button
           variant="outline"
           className={cn(
-            "inline-flex h-11 items-center gap-2 rounded-md border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary",
+            "inline-flex h-11 items-center gap-2 rounded-md border-border bg-white px-4 text-sm font-semibold text-muted-foreground transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary",
             filterCount ? "border-primary/50 bg-primary/5 text-primary" : "",
             className,
           )}
@@ -85,7 +85,7 @@ export function FilterDrawerSheet({
           !isNarrow && "top-[92px] h-[calc(100dvh-92px)] sm:max-w-md xl:top-[128px] xl:h-[calc(100dvh-128px)]",
         )}
       >
-        <SheetHeader className="flex-row items-center justify-between border-b border-slate-200 px-6 py-4">
+        <SheetHeader className="flex-row items-center justify-between border-b border-border px-6 py-4">
           <SheetTitle className="text-base font-semibold">{title}</SheetTitle>
           <div className="flex items-center gap-2">
             {showReset && onReset ? (
@@ -97,7 +97,7 @@ export function FilterDrawerSheet({
                   onReset();
                   setOpen(false);
                 }}
-                className="h-8 gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700"
+                className="h-8 gap-1.5 text-xs font-semibold text-muted-foreground hover:text-muted-foreground"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
                 Reset
@@ -116,8 +116,8 @@ export function FilterDrawerSheet({
         </SheetHeader>
         <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
         {activeFilters.length > 0 ? (
-          <div className="border-t border-slate-200 px-6 py-3">
-            <p className="mb-2 text-xs font-semibold uppercase text-slate-500">
+          <div className="border-t border-border px-6 py-3">
+            <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
               Active filters
             </p>
             <div className="flex flex-wrap gap-1.5">
@@ -126,7 +126,7 @@ export function FilterDrawerSheet({
                   key={filter.key}
                   type="button"
                   onClick={() => onRemoveFilter?.(filter.key)}
-                  className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+                  className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-subtle px-2.5 py-1 text-xs font-medium text-muted-foreground transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
                 >
                   {filter.label}: {filter.value}
                   <X className="h-3 w-3" />
@@ -135,7 +135,7 @@ export function FilterDrawerSheet({
             </div>
           </div>
         ) : null}
-        <div className="border-t border-slate-200 px-6 py-4">
+        <div className="border-t border-border px-6 py-4">
           <Button
             type="submit"
             form={formId}
@@ -168,7 +168,7 @@ export function ActiveFilterChips({
           key={filter.key}
           type="button"
           onClick={() => onRemove?.(filter.key)}
-          className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-subtle px-2.5 py-1 text-xs font-medium text-muted-foreground transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
         >
           {filter.label}: {filter.value}
           <X className="h-3 w-3" />

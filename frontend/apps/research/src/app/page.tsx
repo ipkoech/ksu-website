@@ -120,7 +120,7 @@ export default async function ResearchPage() {
     Boolean(stats);
 
   return (
-    <main id="research-main" className="min-h-screen bg-background text-slate-950">
+    <main id="research-main" className="min-h-screen bg-background text-foreground">
       <ResearchLandingHero
         slides={heroSliders.data}
       />
@@ -172,7 +172,7 @@ function ResearchLandingHero({
     : heroActions;
 
   return (
-    <section className="relative isolate min-h-[435px] overflow-hidden bg-slate-950 sm:min-h-[475px] lg:min-h-[505px]">
+    <section className="relative isolate min-h-[435px] overflow-hidden bg-brand-overlay sm:min-h-[475px] lg:min-h-[505px]">
       <Image
         src={heroImage}
         alt=""
@@ -181,12 +181,12 @@ function ResearchLandingHero({
         sizes="100vw"
         className="object-cover"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/88 via-slate-950/38 to-slate-950/6" />
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/8 to-slate-950/14" />
+      <div className="absolute inset-0 bg-gradient-to-r from-brand-overlay/88 via-brand-overlay/38 to-brand-overlay/6" />
+      <div className="absolute inset-0 bg-gradient-to-t from-brand-overlay/70 via-brand-overlay/8 to-brand-overlay/14" />
       <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-background via-background/40 to-transparent" />
       <div className="relative mx-auto flex min-h-[435px] max-w-[1920px] items-end px-4 pb-10 pt-24 sm:min-h-[475px] sm:px-6 sm:pb-12 lg:min-h-[505px] lg:px-8 lg:pb-14 xl:px-10 2xl:px-12">
         <ScrollReveal className="relative max-w-5xl">
-          <div aria-hidden className="absolute -inset-x-5 -inset-y-8 -z-10 rounded-[2rem] bg-slate-950/24 blur-2xl sm:-inset-x-8 lg:-inset-x-12 lg:bg-slate-950/18" />
+          <div aria-hidden className="absolute -inset-x-5 -inset-y-8 -z-10 rounded-[2rem] bg-brand-overlay/24 blur-2xl sm:-inset-x-8 lg:-inset-x-12 lg:bg-brand-overlay/18" />
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary drop-shadow-[0_2px_10px_rgba(0,0,0,0.65)] sm:mb-4">
             Research & Innovation
           </p>
@@ -260,13 +260,13 @@ function AboutResearchSection({ headProfile, siteContext }: { headProfile: Resea
       <div className="relative mx-auto grid max-w-[1680px] gap-3 rounded-xl border border-white bg-white p-4 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:p-5 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.78fr)] lg:p-8">
         <article className="rounded-lg bg-card p-6 lg:p-8">
           <SectionKicker>About Research</SectionKicker>
-          <h2 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+          <h2 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
             {compactText(stringish(researchEntity?.name)) || "Research, Extension, Innovation and Resource Mobilization"}
           </h2>
           <div className="mt-5">
             <ResearchRichText
               content={about}
-              className="text-sm leading-7 text-slate-600 sm:text-base sm:leading-8 prose-p:my-0"
+              className="text-sm leading-7 text-muted-foreground sm:text-base sm:leading-8 prose-p:my-0"
             />
             <Link
               href="/about"
@@ -280,14 +280,14 @@ function AboutResearchSection({ headProfile, siteContext }: { headProfile: Resea
             {quickLinks.map((link) => {
               const Icon = link.icon;
               return (
-                <Link key={link.href} href={link.href} className="group rounded-md border border-slate-200 bg-white p-4 transition hover:border-primary/30 hover:shadow-sm">
+                <Link key={link.href} href={link.href} className="group rounded-md border border-border bg-white p-4 transition hover:border-primary/30 hover:shadow-sm">
                   <span className={`inline-flex h-10 w-10 items-center justify-center rounded-md ${link.tone === "secondary" ? "bg-secondary/10 text-secondary" : "bg-primary/10 text-primary"}`}>
                     <Icon aria-hidden className="h-5 w-5" />
                   </span>
-                  <span className="mt-3 block text-sm font-bold text-slate-950 transition group-hover:text-primary">
+                  <span className="mt-3 block text-sm font-bold text-foreground transition group-hover:text-primary">
                     {link.label}
                   </span>
-                  <span className="mt-1 block text-xs leading-5 text-slate-500">
+                  <span className="mt-1 block text-xs leading-5 text-muted-foreground">
                     {link.description}
                   </span>
                 </Link>
@@ -314,14 +314,14 @@ function AboutResearchSection({ headProfile, siteContext }: { headProfile: Resea
             </span>
             <SectionKicker className="mt-5">Message from the Head</SectionKicker>
           </div>
-          <blockquote className="mt-6 max-w-xl text-lg font-medium leading-8 text-slate-950">
+          <blockquote className="mt-6 max-w-xl text-lg font-medium leading-8 text-foreground">
             “{headMessage}”
           </blockquote>
-          <p className="mt-5 text-sm font-semibold text-slate-950">
+          <p className="mt-5 text-sm font-semibold text-foreground">
             {headTitle}
           </p>
           {headProfile?.name ? (
-            <p className="mt-1 text-sm text-slate-600">{headProfile.name}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{headProfile.name}</p>
           ) : null}
           <div className="mt-6 flex flex-wrap gap-3">
             <ActionLink href="/connect" variant="outline">Contact REIRM</ActionLink>
@@ -335,7 +335,7 @@ function AboutResearchSection({ headProfile, siteContext }: { headProfile: Resea
 function ResearchFocusServicesSection({ items }: { items: FocusItem[] }) {
   return (
     <ScrollReveal as="section" className="relative isolate overflow-hidden bg-background px-3 py-3 sm:px-4">
-      <div className="relative mx-auto max-w-[1680px] border-t border-slate-200 bg-card px-4 py-8 sm:px-6 lg:px-8">
+      <div className="relative mx-auto max-w-[1680px] border-t border-border bg-card px-4 py-8 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Research Focus / Services"
           title="Support pathways for research, innovation, extension, and resource mobilization."
@@ -355,15 +355,15 @@ function FocusServiceCard({ item }: { item: FocusItem }) {
   return (
     <Link
       href={item.href}
-      className="group flex min-h-[170px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md"
+      className="group flex min-h-[170px] flex-col rounded-lg border border-border bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md"
     >
       <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
         <Icon aria-hidden className="h-5 w-5" />
       </span>
-      <h3 className="mt-4 text-base font-semibold leading-6 text-slate-950">
+      <h3 className="mt-4 text-base font-semibold leading-6 text-foreground">
         {item.title}
       </h3>
-      <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
+      <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
         {item.summary}
       </p>
       <span className="mt-auto inline-flex items-center gap-2 pt-4 text-xs font-semibold text-primary">
@@ -385,10 +385,10 @@ function FeaturedWorkSection({ items }: { items: FeaturedWorkItem[] }) {
         <div className="grid gap-8 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start">
           <div>
             <SectionKicker>Featured Projects / Grants</SectionKicker>
-            <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+            <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
               Research work and funding records.
             </h2>
-            <p className="mt-5 text-sm leading-7 text-slate-600">
+            <p className="mt-5 text-sm leading-7 text-muted-foreground">
               Active projects, published outputs, innovations, and grants from
               the research portfolio.
             </p>
@@ -445,7 +445,7 @@ function NewsEventsArticlesSection({ items }: { items: NewsItem[] }) {
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <SectionKicker>News, events & articles</SectionKicker>
-            <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
+            <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground sm:text-3xl">
               Latest research updates.
             </h2>
           </div>
@@ -481,13 +481,13 @@ function UpdateGroupCard({
   wide?: boolean;
 }) {
   return (
-    <section className="rounded-md border border-slate-200 bg-slate-50 p-3">
+    <section className="rounded-md border border-border bg-surface-subtle p-3">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
             {group.eyebrow}
           </p>
-          <h3 className="mt-1 font-[family-name:var(--font-display)] text-lg font-semibold leading-6 text-slate-950">
+          <h3 className="mt-1 font-[family-name:var(--font-display)] text-lg font-semibold leading-6 text-foreground">
             {group.title}
           </h3>
         </div>
@@ -515,11 +515,11 @@ function ResearchPartnersSection({ partners }: { partners: ResearchGenericRecord
 
   return (
     <ScrollReveal as="section" className="relative isolate overflow-hidden bg-background px-3 py-3 sm:px-4">
-      <div className="relative mx-auto max-w-[1680px] border-t border-slate-200 bg-card px-4 py-8 sm:px-6 lg:px-8">
+      <div className="relative mx-auto max-w-[1680px] border-t border-border bg-card px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col justify-between gap-3 px-4 sm:flex-row sm:items-end sm:px-6 lg:px-8">
           <div>
             <SectionKicker>Partners</SectionKicker>
-            <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
+            <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground sm:text-3xl">
               Our Partners
             </h2>
           </div>
@@ -542,7 +542,7 @@ function PartnerLogoCard({ partner }: { partner: ResearchGenericRecord }) {
   return (
     <Link
       href={partner.slug ? `/partners/${partner.slug}` : "/partners"}
-      className="group flex min-h-24 flex-col items-center justify-center rounded-lg border border-slate-200 bg-white p-4 text-center text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary hover:shadow-md"
+      className="group flex min-h-24 flex-col items-center justify-center rounded-lg border border-border bg-white p-4 text-center text-sm font-semibold text-muted-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary hover:shadow-md"
     >
       {logo ? (
         <span className="relative mb-3 h-10 w-28 shrink-0 overflow-hidden bg-white">
@@ -567,7 +567,7 @@ function ResourceToolsSection({ items }: { items: ResourceToolItem[] }) {
 
   return (
     <ScrollReveal as="section" className="relative isolate overflow-hidden bg-background px-3 py-3 sm:px-4">
-      <div className="relative mx-auto max-w-[1680px] border-t border-slate-200 bg-card px-4 py-8 sm:px-6 lg:px-8">
+      <div className="relative mx-auto max-w-[1680px] border-t border-border bg-card px-4 py-8 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Resources & Tools"
           title="Policies, forms, downloads, and services for research work."
@@ -588,15 +588,15 @@ function ResourceToolCard({ item }: { item: ResourceToolItem }) {
   return (
     <Link
       href={item.href}
-      className="group flex min-h-[165px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md"
+      className="group flex min-h-[165px] flex-col rounded-lg border border-border bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md"
     >
       <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
         <Icon aria-hidden className="h-5 w-5" />
       </span>
-      <h3 className="mt-4 text-base font-semibold leading-6 text-slate-950">
+      <h3 className="mt-4 text-base font-semibold leading-6 text-foreground">
         {item.title}
       </h3>
-      <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
+      <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
         {item.summary}
       </p>
       <span className="mt-auto inline-flex items-center gap-2 pt-4 text-xs font-semibold text-primary">
@@ -617,24 +617,24 @@ function ResearchFaqSection({ items }: { items: FaqItem[] }) {
       <div className="relative mx-auto grid max-w-[1680px] gap-6 rounded-xl border border-white bg-white px-4 py-12 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:px-6 lg:grid-cols-[360px_minmax(0,1fr)] lg:px-10">
         <div>
           <SectionKicker>Research FAQs</SectionKicker>
-          <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
             Common research support questions.
           </h2>
-          <p className="mt-4 text-sm leading-7 text-slate-600">
+          <p className="mt-4 text-sm leading-7 text-muted-foreground">
             Quick answers for research office contacts, policies, approvals, projects, and funding support.
           </p>
           <TextLink href="/resources-tools">Open resources and policies</TextLink>
         </div>
-        <ScrollRevealGroup className="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200" staggerDelay={60}>
+        <ScrollRevealGroup className="divide-y divide-slate-200 overflow-hidden rounded-lg border border-border" staggerDelay={60}>
           {items.slice(0, 6).map((item, index) => (
-            <details key={item.id} className="group bg-white open:bg-slate-50" open={index === 0}>
-              <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold text-slate-950 marker:hidden">
+            <details key={item.id} className="group bg-white open:bg-surface-subtle" open={index === 0}>
+              <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold text-foreground marker:hidden">
                 <span>{item.question}</span>
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/20 text-primary transition group-open:rotate-45 group-open:bg-primary group-open:text-white">
                   +
                 </span>
               </summary>
-              <div className="px-5 pb-5 text-sm leading-7 text-slate-600">
+              <div className="px-5 pb-5 text-sm leading-7 text-muted-foreground">
                 {item.answer}
               </div>
             </details>
@@ -649,7 +649,7 @@ function FeaturedWorkCard({ item }: { item: FeaturedWorkItem }) {
   return (
     <Link
       href={item.href}
-      className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md"
+      className="group overflow-hidden rounded-lg border border-border bg-white shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md"
     >
       <div className="research-image-fallback relative aspect-[16/8.5]">
         <Image
@@ -664,11 +664,11 @@ function FeaturedWorkCard({ item }: { item: FeaturedWorkItem }) {
         </div>
       </div>
       <div className="p-5">
-        <h3 className="mt-4 font-[family-name:var(--font-display)] text-xl font-semibold leading-7 text-slate-950">
+        <h3 className="mt-4 font-[family-name:var(--font-display)] text-xl font-semibold leading-7 text-foreground">
           {item.title}
         </h3>
         {item.summary ? (
-          <p className="mt-3 line-clamp-3 text-sm leading-7 text-slate-600">
+          <p className="mt-3 line-clamp-3 text-sm leading-7 text-muted-foreground">
             {item.summary}
           </p>
         ) : null}
@@ -698,7 +698,7 @@ function EditorialUpdateCard({
         ? "border-primary/20 bg-primary/5"
         : item.kind === "Announcement"
           ? "border-amber-200 bg-amber-50/60"
-          : "border-slate-200 bg-slate-50";
+          : "border-border bg-surface-subtle";
 
   return (
     <Link
@@ -706,7 +706,7 @@ function EditorialUpdateCard({
       className={`group grid gap-3 rounded-md border p-3 transition hover:border-primary/30 hover:bg-white hover:shadow-sm ${
         compact
           ? `min-h-[88px] ${tone}`
-          : "min-h-[92px] border-slate-200 bg-slate-50 sm:min-h-[118px] sm:grid-cols-[92px_minmax(0,1fr)] xl:block xl:min-h-[190px]"
+          : "min-h-[92px] border-border bg-surface-subtle sm:min-h-[118px] sm:grid-cols-[92px_minmax(0,1fr)] xl:block xl:min-h-[190px]"
       }`}
     >
       {!compact ? (
@@ -725,7 +725,7 @@ function EditorialUpdateCard({
           <Badge>{label}</Badge>
           {item.date ? <Badge>{item.date}</Badge> : null}
         </div>
-        <h3 className="mt-2 line-clamp-2 font-[family-name:var(--font-display)] text-base font-semibold leading-5 text-slate-950">
+        <h3 className="mt-2 line-clamp-2 font-[family-name:var(--font-display)] text-base font-semibold leading-5 text-foreground">
           {item.title}
         </h3>
         <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary">
@@ -756,7 +756,7 @@ function SectionHeader({
     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
       <div className="max-w-4xl">
         <SectionKicker>{eyebrow}</SectionKicker>
-        <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+        <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
           {title}
         </h2>
       </div>

@@ -177,12 +177,12 @@ export default async function InnovationsPage({
   const centerNames = new Map(centers.data.map((center) => [center.id, center.name ?? center.title ?? center.code ?? ""]));
 
   return (
-    <main id="research-main" className="min-h-screen bg-white text-slate-950">
+    <main id="research-main" className="min-h-screen bg-white text-foreground">
       <InnovationHero />
 
       <section
         id="innovation-portfolio"
-        className="bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_44%,#ffffff_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
+        className="bg-[linear-gradient(180deg,#ffffff_0%,hsl(var(--surface-subtle))_44%,#ffffff_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
       >
         <div className="mx-auto grid max-w-[1680px] gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
           <div className="min-w-0">
@@ -215,10 +215,10 @@ export default async function InnovationsPage({
             {visibleInnovations.length > 0 ? (
               <>
                 <div className="mt-5 flex items-center justify-between gap-4">
-                  <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
+                  <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">
                     All innovations
                   </h2>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     {visibleInnovations.length} shown
                   </p>
                 </div>
@@ -260,11 +260,11 @@ export default async function InnovationsPage({
 
 function InnovationHero() {
   return (
-    <section className="relative isolate overflow-hidden bg-[#061A36] px-4 py-6 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div aria-hidden className="absolute inset-0 bg-[linear-gradient(110deg,#061A36_0%,#05274d_44%,#06543f_100%)]" />
+    <section className="relative isolate overflow-hidden bg-[hsl(var(--brand-overlay))] px-4 py-6 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div aria-hidden className="absolute inset-0 bg-[linear-gradient(110deg,hsl(var(--brand-overlay))_0%,#05274d_44%,hsl(var(--primary)/.62)_100%)]" />
       <div aria-hidden className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.045)_1px,transparent_1px)] bg-[size:48px_48px] opacity-50" />
       <InnovationHeroArt />
-      <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[#061A36]/92 via-[#061A36]/64 to-[#061A36]/8" />
+      <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--brand-overlay))]/92 via-[hsl(var(--brand-overlay))]/64 to-[hsl(var(--brand-overlay))]/8" />
       <div className="relative mx-auto flex min-h-[210px] max-w-[1680px] items-center py-2">
         <div className="max-w-2xl">
           <h1 className="font-[family-name:var(--font-display)] text-4xl font-semibold leading-none text-white sm:text-5xl">
@@ -320,7 +320,7 @@ function InnovationHeroArt() {
       className="absolute right-0 top-1/2 hidden h-full w-[72%] -translate-y-1/2 opacity-90 lg:block"
       fill="none"
     >
-      <g stroke="#FDE68A" strokeOpacity="0.42" strokeWidth="1.4">
+      <g stroke="hsl(var(--secondary))" strokeOpacity="0.42" strokeWidth="1.4">
         <circle cx="95" cy="137" r="72" />
         <path d="M95 198V82M95 152c-31-8-51-30-59-67 38 2 62 22 59 67Zm0-10c30-14 49-39 57-75-39 5-62 29-57 75Z" />
         <path d="M420 74h110M500 74v58M474 132h54v64h-54zM446 196h110M386 108l-44 32v62h96v-62l-52-32Zm-20 94v-42h40v42M368 160h35" />
@@ -333,7 +333,7 @@ function InnovationHeroArt() {
       <g stroke="#10B981" strokeOpacity="0.34">
         <path d="M250 140h92M295 92v48M342 140l52-52M394 88h96M530 132h58M736 134h42M878 138h66M1038 120h56" />
         {[250, 295, 342, 394, 490, 530, 588, 736, 878, 944, 1038, 1094].map((x, index) => (
-          <circle key={x} cx={x} cy={index % 2 ? 92 : 140} r="7" fill="#061A36" stroke="#FDE68A" />
+          <circle key={x} cx={x} cy={index % 2 ? 92 : 140} r="7" fill="hsl(var(--brand-overlay))" stroke="hsl(var(--secondary))" />
         ))}
       </g>
     </svg>
@@ -398,15 +398,15 @@ function FeaturedInnovation({
   const partnersCount = asCount(innovation.partners_count);
 
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <article className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
       <div className="grid lg:grid-cols-[280px_minmax(0,1fr)_330px]">
-        <Link href={href} className="group relative min-h-[230px] overflow-hidden bg-slate-100">
+        <Link href={href} className="group relative min-h-[230px] overflow-hidden bg-surface-muted">
           <span className="absolute left-3 top-3 z-10 rounded bg-primary px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
             Featured innovation
           </span>
           <InnovationThumbnail innovation={innovation} large />
         </Link>
-        <div className="border-y border-slate-200 p-5 lg:border-x lg:border-y-0">
+        <div className="border-y border-border p-5 lg:border-x lg:border-y-0">
           <div className="flex flex-wrap gap-2">
             <Badge>{formatLabel(compactText(innovation.development_stage) || "field tested")}</Badge>
             {innovation.ip_status ? <Badge>{formatLabel(innovation.ip_status)}</Badge> : null}
@@ -420,7 +420,7 @@ function FeaturedInnovation({
             </h2>
           </Link>
           {summary ? (
-            <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-700">{summary}</p>
+            <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted-foreground">{summary}</p>
           ) : null}
           <ReadinessTrail innovation={innovation} className="mt-7" />
         </div>
@@ -432,7 +432,7 @@ function FeaturedInnovation({
             <StoryFact label="Lead center" value={centerName} />
           </dl>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap gap-3 text-xs font-semibold text-slate-600">
+            <div className="flex flex-wrap gap-3 text-xs font-semibold text-muted-foreground">
               {outputsCount ? <IconCount icon={PackageCheck} value={outputsCount} label="Outputs" /> : null}
               {partnersCount ? <IconCount icon={UsersRound} value={partnersCount} label="Partners" /> : null}
             </div>
@@ -467,10 +467,10 @@ function InnovationStoryCard({
   return (
     <Link
       href={href}
-      className="group grid min-h-[154px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md sm:grid-cols-[118px_minmax(0,1fr)_170px]"
+      className="group grid min-h-[154px] overflow-hidden rounded-lg border border-border bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md sm:grid-cols-[118px_minmax(0,1fr)_170px]"
     >
       <InnovationThumbnail innovation={innovation} />
-      <div className="min-w-0 border-y border-slate-200 p-4 sm:border-x sm:border-y-0">
+      <div className="min-w-0 border-y border-border p-4 sm:border-x sm:border-y-0">
         <div className="flex flex-wrap gap-1.5">
           {innovation.development_stage ? <Badge>{formatLabel(innovation.development_stage)}</Badge> : null}
           {innovation.ip_status ? <FilledBadge>{formatLabel(innovation.ip_status)}</FilledBadge> : null}
@@ -479,7 +479,7 @@ function InnovationStoryCard({
           {getRecordTitle(innovation, "Innovation")}
         </h3>
         {summary ? (
-          <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">{summary}</p>
+          <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{summary}</p>
         ) : null}
         <ReadinessTrail innovation={innovation} compact className="mt-3" />
       </div>
@@ -494,7 +494,7 @@ function InnovationStoryCard({
               TRL {trl}
             </span>
           ) : null}
-          <span className="font-semibold text-slate-500">.</span>
+          <span className="font-semibold text-muted-foreground">.</span>
           <span className="font-semibold text-primary">{isActive}</span>
         </div>
       </div>
@@ -517,8 +517,8 @@ function InnovationThumbnail({
         variant === "blue"
           ? "bg-[linear-gradient(135deg,#0B4A7A,#0EA5E9)]"
           : variant === "navy"
-            ? "bg-[linear-gradient(135deg,#061A36,#0F3B70)]"
-            : "bg-[linear-gradient(135deg,#064E3B,#166534)]"
+            ? "bg-[linear-gradient(135deg,hsl(var(--brand-overlay)),#0F3B70)]"
+            : "bg-[linear-gradient(135deg,hsl(var(--primary)/.62),#166534)]"
       }`}
     >
       <div aria-hidden className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:24px_24px]" />
@@ -528,10 +528,10 @@ function InnovationThumbnail({
         className={`absolute inset-0 h-full w-full ${large ? "p-8" : "p-6"}`}
         fill="none"
       >
-        <path d="M42 168c31-55 68-82 111-82 26 0 45 10 57 30" stroke="#FDE68A" strokeOpacity="0.4" strokeWidth="3" />
-        <path d="M68 166h104M120 166V84M120 125c-26-9-42-27-48-54 30 2 49 20 48 54Zm0-8c24-11 40-30 47-58-31 4-49 23-47 58Z" stroke="#D1FAE5" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-        <rect x="88" y="34" width="64" height="78" rx="10" fill="#061A36" fillOpacity="0.45" stroke="#D1FAE5" strokeWidth="3" />
-        <path d="M102 58h36M102 78h24M104 98h32" stroke="#FDE68A" strokeWidth="4" strokeLinecap="round" />
+        <path d="M42 168c31-55 68-82 111-82 26 0 45 10 57 30" stroke="hsl(var(--secondary))" strokeOpacity="0.4" strokeWidth="3" />
+        <path d="M68 166h104M120 166V84M120 125c-26-9-42-27-48-54 30 2 49 20 48 54Zm0-8c24-11 40-30 47-58-31 4-49 23-47 58Z" stroke="hsl(var(--secondary)/.55)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="88" y="34" width="64" height="78" rx="10" fill="hsl(var(--brand-overlay))" fillOpacity="0.45" stroke="hsl(var(--secondary)/.55)" strokeWidth="3" />
+        <path d="M102 58h36M102 78h24M104 98h32" stroke="hsl(var(--secondary))" strokeWidth="4" strokeLinecap="round" />
         <circle cx="154" cy="38" r="9" fill="#38BDF8" />
         <path d="M154 22c16 0 29 8 38 22M154 7c28 0 50 14 65 37" stroke="#38BDF8" strokeWidth="5" strokeLinecap="round" opacity="0.8" />
       </svg>
@@ -571,17 +571,17 @@ function ReadinessTrail({
                 } ${
                   active
                     ? "border-primary bg-primary text-white"
-                    : "border-slate-200 bg-white text-slate-500"
+                    : "border-border bg-white text-muted-foreground"
                 }`}
               >
                 <Icon aria-hidden className={compact ? "h-3.5 w-3.5" : "h-5 w-5"} />
               </span>
-              <span className={`${compact ? "text-[9px]" : "text-xs"} text-center font-semibold text-slate-700`}>
+              <span className={`${compact ? "text-[9px]" : "text-xs"} text-center font-semibold text-muted-foreground`}>
                 {step.label}
               </span>
             </div>
             {index < steps.length - 1 ? (
-              <span className="mt-3 text-center text-sm font-semibold text-slate-400">→</span>
+              <span className="mt-3 text-center text-sm font-semibold text-muted-foreground/70">→</span>
             ) : null}
           </div>
         );
@@ -593,7 +593,7 @@ function ReadinessTrail({
 function InnovationAside() {
   return (
     <aside className="grid gap-4 xl:sticky xl:top-24">
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-primary">Innovation pathways</h2>
         <div className="mt-3 divide-y divide-slate-200">
           {pathwayLinks.map((link) => {
@@ -609,7 +609,7 @@ function InnovationAside() {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block font-semibold text-primary group-hover:text-secondary">{link.label}</span>
-                  <span className="mt-1 block text-xs leading-5 text-slate-500">{link.body}</span>
+                  <span className="mt-1 block text-xs leading-5 text-muted-foreground">{link.body}</span>
                 </span>
                 <ArrowRight aria-hidden className="h-4 w-4 text-primary transition group-hover:translate-x-1 group-hover:text-secondary" />
               </Link>
@@ -618,20 +618,20 @@ function InnovationAside() {
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-primary">How to read a record</h2>
         <div className="mt-4 space-y-4">
           {readSteps.map((step, index) => {
             const Icon = step.icon;
             return (
               <div key={step.label} className="grid grid-cols-[48px_24px_minmax(0,1fr)] items-start gap-3">
-                <span className="grid h-11 w-11 place-items-center rounded-full border border-slate-200 text-primary">
+                <span className="grid h-11 w-11 place-items-center rounded-full border border-border text-primary">
                   <Icon aria-hidden className="h-5 w-5" />
                 </span>
-                <span className="pt-2 text-base font-semibold text-slate-700">{index + 1}</span>
+                <span className="pt-2 text-base font-semibold text-muted-foreground">{index + 1}</span>
                 <span>
                   <span className="block font-semibold text-primary">{step.label}</span>
-                  <span className="mt-1 block text-xs leading-5 text-slate-600">{step.body}</span>
+                  <span className="mt-1 block text-xs leading-5 text-muted-foreground">{step.body}</span>
                 </span>
               </div>
             );
@@ -639,12 +639,12 @@ function InnovationAside() {
         </div>
       </section>
 
-      <section className="rounded-lg border border-primary/20 bg-emerald-50/70 p-5 shadow-sm">
+      <section className="rounded-lg border border-primary/20 bg-accent/70 p-5 shadow-sm">
         <div className="flex gap-3">
           <UsersRound aria-hidden className="mt-1 h-6 w-6 shrink-0 text-primary" />
           <div>
             <h2 className="font-semibold text-primary">Have an innovation idea?</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
               We support researchers to validate, develop, and deploy solutions.
             </p>
             <Link href="/connect" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-secondary">
@@ -664,7 +664,7 @@ function StoryFact({ label, value }: { label: string; value: string }) {
   return (
     <div className="py-3 first:pt-0">
       <dt className="font-semibold text-primary">{label}</dt>
-      <dd className="mt-1 line-clamp-2 leading-5 text-slate-600">{value}</dd>
+      <dd className="mt-1 line-clamp-2 leading-5 text-muted-foreground">{value}</dd>
     </div>
   );
 }
@@ -675,7 +675,7 @@ function MiniMeta({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="font-semibold text-primary">{label}</p>
-      <p className="mt-0.5 line-clamp-2 leading-4 text-slate-500">{value}</p>
+      <p className="mt-0.5 line-clamp-2 leading-4 text-muted-foreground">{value}</p>
     </div>
   );
 }
@@ -692,7 +692,7 @@ function IconCount({
   return (
     <span className="inline-flex items-center gap-1.5">
       <Icon aria-hidden className="h-4 w-4 text-primary" />
-      <span className="font-semibold text-slate-950">{value}</span>
+      <span className="font-semibold text-foreground">{value}</span>
       <span>{label}</span>
     </span>
   );
