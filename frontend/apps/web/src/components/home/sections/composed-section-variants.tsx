@@ -30,6 +30,7 @@ import type {
   HomeIntake,
   HomeProgrammeCard,
   HomeSchoolCard,
+  HomeSocialLinks,
 } from "@/lib/homepage-data";
 import {
   background,
@@ -54,6 +55,7 @@ type SectionVariantProps = {
   academicDatesSection?: HomepageSection | null;
   eventsSection?: HomepageSection | null;
   programmeFinderData?: ProgrammeFinderData;
+  socialLinks?: HomeSocialLinks;
 };
 
 export type ProgrammeFinderData = {
@@ -1410,7 +1412,11 @@ function ResearchFocusArea({
   );
 }
 
-export function NewsGridSection({ section, eventsSection }: SectionVariantProps) {
+export function NewsGridSection({
+  section,
+  eventsSection,
+  socialLinks,
+}: SectionVariantProps) {
   const items = displayItems(section).slice(0, 4);
   const eventItems = eventsSection ? displayItems(eventsSection).slice(0, 3) : [];
   const [featured, ...rest] = items;
@@ -1472,7 +1478,7 @@ export function NewsGridSection({ section, eventsSection }: SectionVariantProps)
           <UpcomingComposedEvents items={eventItems} />
         </div>
 
-        <div className="mt-8 grid gap-6 rounded-md border border-primary/10 bg-white/80 px-5 py-5 shadow-sm lg:grid-cols-[minmax(0,1fr)_1px_minmax(280px,0.55fr)] lg:items-center lg:px-8">
+        <div className="mt-8 grid gap-6 rounded-md border border-primary/10 bg-white/80 px-5 py-5 shadow-sm xl:grid-cols-[minmax(0,1fr)_1px_minmax(420px,0.75fr)] xl:items-center xl:px-8">
           <div className="grid gap-4 md:grid-cols-[auto_minmax(0,280px)_minmax(280px,1fr)] md:items-center">
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/20">
               <Mail className="h-7 w-7" aria-hidden />
@@ -1487,30 +1493,96 @@ export function NewsGridSection({ section, eventsSection }: SectionVariantProps)
             </div>
             <NewsletterSubscribeForm />
           </div>
-          <span className="hidden h-20 w-px bg-primary/15 lg:block" />
-          <LinkWrapper
-            href="/contact"
-            className="group flex items-center gap-4 rounded-md p-2 transition hover:bg-primary/5"
-          >
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-secondary text-white shadow-lg shadow-secondary/25">
-              <Newspaper className="h-6 w-6" aria-hidden />
-            </span>
-            <span>
-              <span className="block font-[family-name:var(--font-display)] text-2xl font-bold text-primary">
-                Submit a story
+          <span className="hidden h-24 w-px bg-primary/15 xl:block" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <LinkWrapper
+              href="/contact"
+              className="group flex items-center gap-4 rounded-md p-2 transition hover:bg-primary/5"
+            >
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/20">
+                <Mail className="h-5 w-5" aria-hidden />
               </span>
-              <span className="mt-1 block text-sm leading-6 text-slate-600">
-                Have a story to share? Send it to Corporate Communication.
+              <span>
+                <span className="block font-[family-name:var(--font-display)] text-xl font-bold text-primary">
+                  Contact us
+                </span>
+                <span className="mt-1 block text-sm leading-5 text-slate-600">
+                  Reach the university for official support and enquiries.
+                </span>
+                <span className="mt-1 inline-flex items-center gap-2 text-sm font-bold text-secondary">
+                  Get in touch
+                  <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                </span>
               </span>
-              <span className="mt-1 inline-flex items-center gap-2 text-sm font-bold text-secondary">
-                Submit your story
-                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+            </LinkWrapper>
+            <LinkWrapper
+              href="/contact"
+              className="group flex items-center gap-4 rounded-md p-2 transition hover:bg-primary/5"
+            >
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-secondary text-white shadow-lg shadow-secondary/25">
+                <Newspaper className="h-5 w-5" aria-hidden />
               </span>
-            </span>
-          </LinkWrapper>
+              <span>
+                <span className="block font-[family-name:var(--font-display)] text-xl font-bold text-primary">
+                  Submit a story
+                </span>
+                <span className="mt-1 block text-sm leading-5 text-slate-600">
+                  Share a story with Corporate Communication.
+                </span>
+                <span className="mt-1 inline-flex items-center gap-2 text-sm font-bold text-secondary">
+                  Submit story
+                  <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                </span>
+              </span>
+            </LinkWrapper>
+            <ComposedSocialMediaLinks
+              links={socialLinks}
+              className="sm:col-span-2"
+            />
+          </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function ComposedSocialMediaLinks({
+  links,
+  className,
+}: {
+  links?: HomeSocialLinks;
+  className?: string;
+}) {
+  const items = [
+    ["Facebook", "FB", links?.facebook],
+    ["X", "X", links?.twitter],
+    ["Instagram", "IG", links?.instagram],
+    ["YouTube", "YT", links?.youtube],
+    ["LinkedIn", "IN", links?.linkedin],
+  ].filter((item): item is [string, string, string] => Boolean(item[2]));
+
+  if (!items.length) return null;
+
+  return (
+    <div className={className}>
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+        Follow Kisii University
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {items.map(([label, shortLabel, href]) => (
+          <a
+            key={label}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Follow Kisii University on ${label}`}
+            className="inline-flex min-h-10 items-center justify-center rounded-full border border-primary/15 bg-white px-3 text-xs font-bold text-primary transition hover:border-secondary hover:bg-secondary hover:text-white"
+          >
+            {shortLabel}
+          </a>
+        ))}
+      </div>
+    </div>
   );
 }
 

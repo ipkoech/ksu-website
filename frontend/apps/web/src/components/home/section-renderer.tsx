@@ -24,6 +24,7 @@ import {
   type HomepageSection,
   type HomepageSectionLayoutVariant,
 } from "@/lib/homepage-sections";
+import type { HomeSocialLinks } from "@/lib/homepage-data";
 
 type SectionComponent = (props: {
   section: HomepageSection;
@@ -33,6 +34,7 @@ type SectionComponent = (props: {
   academicDatesSection?: HomepageSection | null;
   eventsSection?: HomepageSection | null;
   programmeFinderData?: ProgrammeFinderData;
+  socialLinks?: HomeSocialLinks;
 }) => ReactElement | null;
 
 export const HOMEPAGE_SECTION_RENDERERS: Record<
@@ -63,6 +65,7 @@ export function HomepageSectionRenderer({
   academicDatesSection,
   eventsSection,
   programmeFinderData,
+  socialLinks,
 }: {
   section: HomepageSection;
   hero?: HomepageResolvedHero | null;
@@ -71,6 +74,7 @@ export function HomepageSectionRenderer({
   academicDatesSection?: HomepageSection | null;
   eventsSection?: HomepageSection | null;
   programmeFinderData?: ProgrammeFinderData;
+  socialLinks?: HomeSocialLinks;
 }) {
   if (!isKnownHomepageLayoutVariant(section.layout_variant)) {
     console.warn(
@@ -89,6 +93,7 @@ export function HomepageSectionRenderer({
       academicDatesSection={academicDatesSection}
       eventsSection={eventsSection}
       programmeFinderData={programmeFinderData}
+      socialLinks={socialLinks}
     />
   );
 }
@@ -98,11 +103,13 @@ export function HomepageSections({
   hero,
   partnershipSpotlights,
   programmeFinderData,
+  socialLinks,
 }: {
   sections: HomepageSection[];
   hero?: HomepageResolvedHero | null;
   partnershipSpotlights?: HomepagePartnershipSpotlight[];
   programmeFinderData?: ProgrammeFinderData;
+  socialLinks?: HomeSocialLinks;
 }) {
   const orderedSections = orderHomepageSections(sections);
   const factsSection = sections.find(
@@ -156,6 +163,7 @@ export function HomepageSections({
             academicDatesSection={academicDatesSection}
             eventsSection={eventsSection}
             programmeFinderData={programmeFinderData}
+            socialLinks={socialLinks}
           />
         );
       })}
